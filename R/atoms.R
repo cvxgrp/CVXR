@@ -86,6 +86,43 @@ setMethod("name", "pnorm", function(object) {
   sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
 })
 
+pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  p <- data[1]
+  x <- arg_objs[1]
+  t <- create_var(c(1,1))
+  constraints <- list()
+  
+  if(p == 2)
+    return(list(t, list(SOC(t, list(x)))))
+  
+  if(p == Inf) {
+    t_ <- promote(t, size(x))
+    return(list(t, list(create_leq(x, t_), create_geq(sum_expr(list(x, t_))))))
+  }
+  
+  if(p >= 1) {
+    absx <- create_var(size(x))
+    constraints <- c(constraints, create_leq(x, absx), create_geq(sum_expr((list(x, absx)))))
+    x <- absx
+  }
+  
+  if(p == 1)
+    return(list(sum_entries(x), constraints))
+  
+  r <- create_var(size(x))
+  t_ <- promote(t, size(x))
+  constraints <- c(constraints, create_eq(sum_entries(r), t))
+  
+  if(p < 0)
+    constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
+  else if(p > 0 && p < 1)
+    constraints <- c(constraints, gm_constrs(r, list(x, t_), c(p, 1-p)))
+  else if(p > 1)
+    constraints <- c(constraints, gm_constrs(x, list(r, t_)), c(1/p, 1-1/p))
+  
+  list(t, constraints)
+}
+
 norm1 <- function(x) { pnorm(x = x, p = 1) }
 norm2 <- function(x) { pnorm(x = x, p = 2) }
 normInf <- function(x) { pnorm(x = x, p = Inf) }
@@ -97,7 +134,7 @@ setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, typ
 #' This class represents the sum of squared entries in X divided by scalar y in CVXR.
 #' \sum_{i,j} X_{i,j}^2/y
 #'
-#' @aliases pnorm
+#' @aliases quad_over_lin
 #' @export
 quad_over_lin <- setClass("quad_over_lin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 setMethod("initialize", "quad_over_lin", function(.Object, ..., x = .Object@x, y = .Object@y) {
@@ -114,5 +151,17 @@ setMethod("validate_args",   "quad_over_lin", function(object) {
   if(!is_scalar(object@y))
     stop("[quad_over_lin: validation] y must be a scalar")
 })
+
+quad_over_lin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  x <- arg_objs[[1]]
+  y <- arg_objs[[2]]
+  v <- create_var(c(1,1))
+  two <- create_const(2, c(1,1))
+  constraints <- list(SOC(sum_expr(c(y, v)),
+                          list(sub_expr(y, v),
+                               mul_expr(two, x, size(x)))),
+                      create_geq(y))
+  list(v, constraints)
+}
 
 setMethod("sum_squares", "Expression", function(expr) { quad_over_lin(x = expr, y = 1) })

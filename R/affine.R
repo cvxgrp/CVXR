@@ -20,6 +20,10 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   .Object@.args <- flatten_list(.Object@.args)   # Need to flatten list of expressions
   return(.Object)
 })
+AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  lapply(arg_objs, function(arg) { if(size(arg) != size) promote(arg, size) else arg })
+  list(sum_expr(arg_objs), list())
+}
 
 UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character"), contains = "AffAtom")
 setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {

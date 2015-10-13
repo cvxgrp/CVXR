@@ -129,30 +129,30 @@ normInf <- function(x) { pnorm(x = x, p = Inf) }
 setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { pnorm(x = x, p = type) })
 
 #'
-#' The quad_over_lin class.
+#' The QuadOverLin class.
 #'
-#' This class represents the sum of squared entries in X divided by scalar y in CVXR.
+#' This class represents the sum of squared entries in X divided by scalar y.
 #' \sum_{i,j} X_{i,j}^2/y
 #'
-#' @aliases quad_over_lin
+#' @aliases QuadOverLin
 #' @export
-quad_over_lin <- setClass("quad_over_lin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
-setMethod("initialize", "quad_over_lin", function(.Object, ..., x = .Object@x, y = .Object@y) {
+QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
+setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
   .Object@y <- y
   callNextMethod(.Object, ..., .args = list(.Object@x, .Object@y))
 })
 
-setMethod("shape_from_args", "quad_over_lin", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "quad_over_lin", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature",  "quad_over_lin", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity",    "quad_over_lin", function(object) { list(SIGNED, DECREASING) })
-setMethod("validate_args",   "quad_over_lin", function(object) {
+setMethod("shape_from_args", "QuadOverLin", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "QuadOverLin", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature",  "QuadOverLin", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity",    "QuadOverLin", function(object) { list(SIGNED, DECREASING) })
+setMethod("validate_args",   "QuadOverLin", function(object) {
   if(!is_scalar(object@y))
-    stop("[quad_over_lin: validation] y must be a scalar")
+    stop("[QuadOverLin: validation] y must be a scalar")
 })
 
-quad_over_lin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   y <- arg_objs[[2]]
   v <- create_var(c(1,1))
@@ -164,4 +164,37 @@ quad_over_lin.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(v, constraints)
 }
 
-setMethod("sum_squares", "Expression", function(expr) { quad_over_lin(x = expr, y = 1) })
+setMethod("sum_squares", "Expression", function(expr) { QuadOverLin(x = expr, y = 1) })
+
+LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
+
+setMethod("validate_args", "LogDet", function(object) {
+  n <- size(object@.args[[1]])[1]
+  m <- size(object@.args[[1]])[2]
+  if(n != m)
+    stop("The argument to LogDet must be a square matrix")
+})
+
+setMethod("initialize", "LogDet", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "LogDet", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
+setMethod("func_curvature",  "LogDet", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
+setMethod("monotonicity",    "LogDet", function(object) { list(NONMONOTONIC) })
+
+LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
+
+setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "LogSumExp", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
+setMethod("func_curvature",  "LogSumExp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity",    "LogSumExp", function(object) { list(INCREASING) })
+
+

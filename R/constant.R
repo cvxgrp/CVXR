@@ -19,6 +19,7 @@ Constant <- setClass("Constant", representation(value = "ConstVal"),
                            (is.data.frame(object@value) && !all(sapply(object@value), is.numeric)))
                           stop("[Constant: validation] value must be a data.frame, matrix, vector, or atomic element containing only numeric entries")
                       }, contains = "Leaf")
+
 setMethod("init_dcp_attr", "Constant", function(object) {
   val_dim = dim(object@value)
   if(is.null(val_dim))

@@ -166,6 +166,156 @@ DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 }
 
 #'
+#' The Conv class.
+#'
+#' This class represents the 1-D discrete convolution of two vectors.
+#'
+#' @slot lh_expr An \S4class{Expression} representing the left-hand vector.
+#' @slot rh_expr An \S4class{Expression} representing the right-hand vector.
+#' @aliases Conv
+#' @export
+Conv <- setClass("Conv", representation(lh_expr = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+
+setMethod("validate_args", "Conv", function(object) {
+  if(!is_vector(object@.args[1]) || !is_vector(object@.args[2]))
+    stop("The arguments to conv must resolve to vectors.")
+  if(!is_constant(object@.args[1]))
+    stop("The first argument to conv must be constant.")
+})
+
+setMethod("initialize", "Conv", function(.Object, ..., lh_expr, rh_expr) {
+  .Object@lh_expr <- lh_expr
+  .Object@rh_expr <- rh_expr
+  callNextMethod(.Object, ..., .args = list(.Object@lh_expr, .Object@rh_expr))
+})
+
+setMethod("shape_from_args", "Conv", function(object) {
+  lh_length <- size(object@args[1])[1]
+  rh_length <- size(object@args[2])[1]
+  Shape(rows = lh_length + rh_length - 1, cols = 1)
+})
+
+setMethod("sign_from_args", "Conv", function(object) {
+  object@.args[1]@dcp_attr@sign * object@.args[2]@dcp_attr@sign
+})
+
+Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  list(conv(arg_objs[1], arg_objs[2], size), list())
+}
+
+Diag <- function(expr) {
+  expr <- cast_to_const(expr)
+  if(is_vector(expr)) {
+    if(size(expr)[2] == 1)
+      return(DiagVec(expr))
+    else {
+      expr <- Reshape(expr, size(expr)[2], 1)
+      return(DiagVec(expr))
+    }
+  } else if(size(expr)[1] == size(expr)[2])
+    return(DiagMat(expr))
+  else
+    stop("Argument to diag must be a vector or square matrix")
+}
+
+DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
+
+setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("shape_from_args", "DiagVec", function(object) {
+  rows <- size(object@.args[[1]])[1]
+  Shape(rows = rows, cols = rows)
+})
+
+DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  list(diag_vec(arg_objs[[1]]), list())
+}
+
+DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
+
+setMethod("initialize", "DiagMat", function(.Object) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("shape_from_args", "DiagMat", function(object) {
+  rows <- size(object@.args[[1]])[1]
+  Shape(rows = rows, cols = 1)
+})
+
+DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  list(diag_mat(arg_objs[[1]]), list())
+}
+
+Diff <- function(x, k = 1) {
+  x <- cast_to_const(x)
+  m <- size(x)[1]
+  n <- size(x)[2]
+  
+  if(k < 0 || k >= m || n != 1)
+    stop("Must have k >= 0 and x must be a 1-D vector with < k elements")
+  
+  d <- x
+  for(i in 1:k)
+    d <- d[2:length(d)] - d[1:(length(d)-1)]
+  d
+}
+
+Kron <- setClass("Kron", representation(lh_expr = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+
+setMethod("validate_args", "Kron", function(object) {
+  if(!is_constant(object@.args[[1]]))
+    stop("The first argument to Kron must be constant.")
+})
+
+setMethod("initialize", "Kron", function(.Object, ..., lh_expr, rh_expr) {
+  .Object@lh_expr <- lh_expr
+  .Object@rh_expr <- rh_expr
+  callNextMethod(.Object, ..., .args = list(.Object@lh_expr, .Object@rh_expr))
+})
+
+setMethod("shape_from_args", "Kron", function(object) {
+  rows <- size(object@.args[[1]])[1] * size(object@.args[[2]])[1]
+  cols <- size(object@.args[[1]])[2] * size(object@.args[[2]])[2]
+  Shape(rows = rows, cols = cols)
+})
+
+setMethod("sign_from_args", "Kron", function(object) {
+  object@.args[[1]]@dcp_attr@sign * object@.args[[2]]@dcp_attr@sign
+})
+
+Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  list(kron(arg_objs[[1]], arg_objs[[2]], size), list())
+}
+
+MulElemwise <- setClass("MulElemwise", representation(lh_const = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+
+setMethod("init_dcp_attr", "MulElemwise", function(object) {
+  mul_elemwise(object@.args[[1]]@dcp_attr, object@.args[[2]]@dcp_attr)
+})
+
+setMethod("validate_args", "MulElemwise", function(object) {
+  if(!is_constant(object@.args[[1]]))
+    stop("The first argument to MulElemwise must be constant.")
+})
+
+setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_expr) {
+  .Object@lh_const <- lh_const
+  .Object@rh_expr <- rh_expr
+  callNextMethod(.Object, ..., .args = list(.Object@lh_const, .Object@rh_expr))
+})
+
+MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  if(size(arg_objs[[1]]) != size(arg_objs[[2]]))
+    list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
+  else
+    list(mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
+}
+
+#'
 #' The Reshape class.
 #'
 #' This class represents the reshaping of an expression. The operator vectorizes the expression,
@@ -269,3 +419,31 @@ setMethod("shape_from_args", "Transpose", function(object) {
 Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(transpose(arg_objs[[1]]), list())  
 }
+
+UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
+
+setMethod("validate_args", "UpperTri", function(object) {
+  if(size(object@.args[[1]])[1] != size(object@.args[[2]])[2])
+    stop("Argument to UpperTri must be a square matrix.")
+})
+
+setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("shape_from_args", "UpperTri", function(object) {
+  rows <- size(object@.args[[1]])[1]
+  cols <- size(object@.args[[2]])[2]
+  Shape(rows = floor(rows*(cols-1)/2), cols = 1)
+})
+
+UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  list(upper_tri(arg_objs[[1]]), list())
+}
+
+Vec <- function(X) {
+  X <- cast_to_const(X)
+  Reshape(expr = X, rows = size(X)[1] * size(X)[2], cols = 1)
+}
+

@@ -1,6 +1,22 @@
 setClass("Constraint", representation(id = "character"), prototype(id = NA_character_), contains = "VIRTUAL")
 setMethod("id", "Constraint", function(object) { object@id })
 
+# TODO: What type should lin_op be? Need linear operator object.
+BoolConstr <- setClass("BoolConstr", representation(lin_op = "ANY", .noncvx_var = "LinOp"), contains = "Constraint")
+
+setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var) {
+  .Object@lin_op <- lin_op
+  if(lin_op == VARIABLE)
+    .Object@.noncvx_var <- .Object@lin_op
+  else
+    .Object@.noncvx_var <- create_var(size(.Object@lin_op))
+  callNextMethod(.Object, ...)
+})
+
+setMethod("size", "BoolConstr", function(object) { size(.Object@lin_op) })
+
+IntConstr <- setClass("IntConstr", contains = "BoolConstr")
+
 LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", .expr = "Expression"),
                            prototype(lh_exp = new("Expression"), rh_exp = new("Expression"), .expr = NULL),
                            validity = function(object) {
@@ -22,6 +38,12 @@ setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
 
 setMethod("is_dcp", "LeqConstraint", function(object) { is_convex(object@.expr) })
 
+setMethod("canonicalize", "LeqConstraint", function(object) {
+  canon <- canonical_form(object@.expr)
+  dual <- create_leq(canon[[1]], constr_id = object@id)
+  c(NA, list(canon[[2]], dual))
+})
+
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })
 
 setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.expr) })
@@ -29,6 +51,12 @@ setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.e
 EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
 
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
+
+setMethod("canonicalize", "EqConstraint", function(object) {
+  canon <- canonical_form(object@.expr)
+  dual <- create_eq(canon[[1]], constr_id = object@id)
+  c(NA, list(canon[[2]], dual))
+})
 
 PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint", 
                            validity = function(object) {
@@ -42,7 +70,7 @@ PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint",
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 
 SOC <- setClass("SOC", representation(t = "numeric", x_elems = "numeric"), 
-                prototype(t = NA_real_, x_elems = NA_real_), contains = "Constraint")
+                       prototype(t = NA_real_, x_elems = NA_real_), contains = "Constraint")
 
 setMethod("show", "SOC", function(object) { cat("SOC(", object@t, ", <", paste(object@x_elems, collapse = ","), ">)", sep = "") })
 
@@ -53,7 +81,7 @@ setMethod("size", "SOC", function(object) {
 })
 
 SDP <- setClass("SDP", representation(A = "numeric", enforce_sym = "logical"),
-                prototype(A = NA_real_, enforce_sym = TRUE), contains = "Constraint")
+                       prototype(A = NA_real_, enforce_sym = TRUE), contains = "Constraint")
 
 setMethod("show", "SDP", function(object) { cat("SDP(", object@A, ")", sep = "") })
 

@@ -1,9 +1,3 @@
-setOldClass("data.frame")
-setOldClass("matrix")
-setOldClass("vector")
-setClassUnion("ConstVal", c("data.frame", "matrix", "vector", "numeric"))
-setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
-
 #'
 #' The Constant class.
 #'

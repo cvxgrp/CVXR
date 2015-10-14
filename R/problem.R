@@ -7,12 +7,14 @@
 #' @aliases Minimize
 #' @export
 Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"))
+
 setMethod("initialize", "Minimize", function(.Object, expr) {
     .Object@expr <- as.Constant(expr)
     if(!all(size(.Object@expr) == c(1,1)))
       stop("The objective must resolve to a scalar")
     return(.Object)
 })
+
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
 
 #'
@@ -55,12 +57,13 @@ setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 #' @aliases Problem
 #' @export
 .Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list"),
-                    prototype(objective = new("Minimize"), constraints = list()),
+                    prototype(constraints = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("Problem objective must be Minimize or Maximize")
                       return(TRUE)
                     })
+
 Problem <- function(objective, constraints = list(), ...) {
   .Problem(objective = objective, constraints = constraints, ...)
 }

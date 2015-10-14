@@ -13,7 +13,7 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 setGeneric("sign_mul", function(sign, curv) { standardGeneric("sign_mul") })
 setGeneric("size", function(object) { standardGeneric("size") })
 setGeneric("dcp_curvature", function(monotonicity, func_curvature, arg_sign, arg_curvature) { standardGeneric("dcp_curvature") })
-setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("mul_elemwise") })
+setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("DCPAttr.mul_elemwise") })
 
 # Expression generic methods
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
@@ -26,6 +26,7 @@ setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
+setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
 # Atom generic methods
 setGeneric("validate_args", function(object) { standardGeneric("validate_args") })
@@ -36,8 +37,10 @@ setGeneric("monotonicity", function(object) { standardGeneric("monotonicity") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("name", function(object) { standardGeneric("name") })
 
-setGeneric("Atom.dcp_curvature", function(curvature, args, monotonicities) { standardGeneric("atom_dcp_curvature") })
+setGeneric("Atom.dcp_curvature", function(curvature, args, monotonicities) { standardGeneric("Atom.dcp_curvature") })
 setGeneric("sum_squares", function(expr) { standardGeneric("sum_squares") })
 
 # Constraint generic methods
 setGeneric("id", function(object) { standardGeneric("id") })
+setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
+setGeneric("cone_size", function(object) { standardGeneric("cone_size") })

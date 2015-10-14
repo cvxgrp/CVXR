@@ -8,10 +8,17 @@
 #' @export
 Expression <- setClass("Expression", representation(dcp_attr = "DCPAttr"), prototype(dcp_attr = new("DCPAttr")))
 
+setOldClass("data.frame")
+setOldClass("matrix")
+setOldClass("vector")
+setClassUnion("ConstVal", c("data.frame", "matrix", "vector", "numeric"))
+setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
+
 setMethod("show", "Expression", function(object) {
   cat("Expression(", as.character(object@dcp_attr@curvature), ", ", as.character(object@dcp_attr@sign), ", ", as.character(object@dcp_attr@shape), ")", sep = "")
 })
-setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
+
+setMethod("canonical_form", "Expression", function(object) { canonicalize(object) })
 
 # Curvature properties
 setMethod("curvature", "Expression", function(object) { object@dcp_attr@curvature })

@@ -6,7 +6,7 @@
 #' @slot sign A \code{character} string specifying the type of sign.
 #' @aliases Sign
 #' @export
-Sign <- setClass("Sign", 
+.Sign <- setClass("Sign", 
                  representation(sign = "character"), 
                  prototype(sign = SIGN_UNKNOWN_KEY),
                  validity = function(object) {
@@ -15,46 +15,55 @@ Sign <- setClass("Sign",
                    else
                      return(TRUE)
                  })
+
+Sign <- function(sign = SIGN_UNKNOWN_KEY) { .Sign(sign = toupper(sign)) }
+Sign.POSITIVE <- Sign(sign = SIGN_POSITIVE_KEY)
+Sign.NEGATIVE <- Sign(sign = SIGN_NEGATIVE_KEY)
+Sign.ZERO <- Sign(sign = SIGN_ZERO_KEY)
+Sign.UNKNOWN <- Sign(sign = SIGN_UNKNOWN_KEY)
+
 setMethod("show", "Sign", function(object) { cat("Sign(", object@sign, ")", sep = "") })
 setMethod("as.character", "Sign", function(x) { paste("Sign(", x@sign, ")", sep = "") })
-setMethod("is_zero", "Sign", function(object) { object@sign == SIGN_ZERO_KEY })
-setMethod("is_positive", "Sign", function(object) { object@sign == SIGN_POSITIVE_KEY })
-setMethod("is_negative", "Sign", function(object) { object@sign == SIGN_NEGATIVE_KEY })
-setMethod("is_unknown", "Sign", function(object) { object@sign == SIGN_UNKNOWN_KEY })
+setMethod("is_zero", "Sign", function(object) { object == Sign.ZERO })
+setMethod("is_positive", "Sign", function(object) { is_zero(object) || object == Sign.POSITIVE })
+setMethod("is_negative", "Sign", function(object) { is_zero(object) || object == Sign.NEGATIVE })
+setMethod("is_unknown", "Sign", function(object) { object == Sign.UNKNOWN })
 
-setMethod("+", c("Sign", "missing"), function(e1, e2) { e1 * Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("-", c("Sign", "missing"), function(e1, e2) { e1 * Sign(sign = SIGN_NEGATIVE_KEY) })
+setMethod("+", c("Sign", "missing"), function(e1, e2) { e1 * Sign.POSITIVE })
+setMethod("-", c("Sign", "missing"), function(e1, e2) { e1 * Sign.NEGATIVE })
 setMethod("+", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) {
   if(is_zero(e1))
     e2
+  else if(is_zero(e2))
+    e1
   else if(is_positive(e1) && is_positive(e2))
     e1
   else if(is_negative(e1) && is_negative(e2))
     e1
   else
-    Sign(sign = SIGN_UNKNOWN_KEY)
+    Sign.UNKNOWN
 })
 setMethod("-", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) { e1 + -e2 })
 setMethod("*", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) {
   if(is_zero(e1) || is_zero(e2))
-    Sign(sign = SIGN_ZERO_KEY)
+    Sign.ZERO
   else if(is_unknown(e1) || is_unknown(e2))
-    Sign(sign = SIGN_UNKNOWN_KEY)
+    Sign.UNKNOWN
   else if(e1 != e2)
-    Sign(sign = SIGN_NEGATIVE_KEY)
+    Sign.NEGATIVE
   else
-    Sign(sign = SIGN_POSITIVE_KEY)
+    Sign.POSITIVE
 })
 setMethod("==", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) { e1@sign == e2@sign })
 setMethod("!=", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) { e1@sign != e2@sign })
 
 val_to_sign <- function(val) {
   if(val > 0)
-    Sign(sign = SIGN_POSITIVE_KEY)
+    Sign.POSITIVE
   else if(val == 0)
-    Sign(sign = SIGN_ZERO_KEY)
+    Sign.ZERO
   else
-    Sign(sign = SIGN_NEGATIVE_KEY)
+    Sign.NEGATIVE
 }
 
 #'

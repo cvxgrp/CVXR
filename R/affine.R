@@ -170,28 +170,28 @@ DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 #'
 #' This class represents the 1-D discrete convolution of two vectors.
 #'
-#' @slot lh_expr An \S4class{Expression} representing the left-hand vector.
-#' @slot rh_expr An \S4class{Expression} representing the right-hand vector.
+#' @slot lh_exp An \S4class{Expression} representing the left-hand vector.
+#' @slot rh_exp An \S4class{Expression} representing the right-hand vector.
 #' @aliases Conv
 #' @export
-Conv <- setClass("Conv", representation(lh_expr = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+Conv <- setClass("Conv", representation(lh_exp = "Expression", rh_exp = "Expression"), contains = "AffAtom")
 
 setMethod("validate_args", "Conv", function(object) {
-  if(!is_vector(object@.args[1]) || !is_vector(object@.args[2]))
+  if(!is_vector(object@.args[[1]]) || !is_vector(object@.args[[2]]))
     stop("The arguments to conv must resolve to vectors.")
-  if(!is_constant(object@.args[1]))
+  if(!is_constant(object@.args[[1]]))
     stop("The first argument to conv must be constant.")
 })
 
-setMethod("initialize", "Conv", function(.Object, ..., lh_expr, rh_expr) {
-  .Object@lh_expr <- lh_expr
-  .Object@rh_expr <- rh_expr
-  callNextMethod(.Object, ..., .args = list(.Object@lh_expr, .Object@rh_expr))
+setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
+  .Object@lh_exp <- lh_exp
+  .Object@rh_exp <- rh_exp
+  callNextMethod(.Object, ..., .args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
 setMethod("shape_from_args", "Conv", function(object) {
-  lh_length <- size(object@args[1])[1]
-  rh_length <- size(object@args[2])[1]
+  lh_length <- size(object@.args[[1]])[1]
+  rh_length <- size(object@.args[[2]])[1]
   Shape(rows = lh_length + rh_length - 1, cols = 1)
 })
 
@@ -264,17 +264,17 @@ Diff <- function(x, k = 1) {
   d
 }
 
-Kron <- setClass("Kron", representation(lh_expr = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+Kron <- setClass("Kron", representation(lh_exp = "Expression", rh_exp = "Expression"), contains = "AffAtom")
 
 setMethod("validate_args", "Kron", function(object) {
   if(!is_constant(object@.args[[1]]))
     stop("The first argument to Kron must be constant.")
 })
 
-setMethod("initialize", "Kron", function(.Object, ..., lh_expr, rh_expr) {
-  .Object@lh_expr <- lh_expr
-  .Object@rh_expr <- rh_expr
-  callNextMethod(.Object, ..., .args = list(.Object@lh_expr, .Object@rh_expr))
+setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
+  .Object@lh_exp <- lh_exp
+  .Object@rh_exp <- rh_exp
+  callNextMethod(.Object, ..., .args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
 setMethod("shape_from_args", "Kron", function(object) {
@@ -291,7 +291,7 @@ Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(kron(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
-MulElemwise <- setClass("MulElemwise", representation(lh_const = "Expression", rh_expr = "Expression"), contains = "AffAtom")
+MulElemwise <- setClass("MulElemwise", representation(lh_const = "Expression", rh_exp = "Expression"), contains = "AffAtom")
 
 setMethod("init_dcp_attr", "MulElemwise", function(object) {
   mul_elemwise(object@.args[[1]]@dcp_attr, object@.args[[2]]@dcp_attr)
@@ -302,10 +302,10 @@ setMethod("validate_args", "MulElemwise", function(object) {
     stop("The first argument to MulElemwise must be constant.")
 })
 
-setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_expr) {
+setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) {
   .Object@lh_const <- lh_const
-  .Object@rh_expr <- rh_expr
-  callNextMethod(.Object, ..., .args = list(.Object@lh_const, .Object@rh_expr))
+  .Object@rh_exp <- rh_exp
+  callNextMethod(.Object, ..., .args = list(.Object@lh_const, .Object@rh_exp))
 })
 
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -384,7 +384,7 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
 
 setMethod("validate_args", "Trace", function(object) {
-  size <- size(object@.args[1])
+  size <- size(object@.args[[1]])
   if(size[1] != size[2])
     stop("Argument to trace must be a square matrix")
 })

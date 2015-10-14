@@ -41,16 +41,40 @@ setMethod("Atom.dcp_curvature", signature(curvature = "Curvature", args = "list"
             Reduce("+", arg_curvatures)
           })
 
+HarmonicMean <- function(x) {
+  x <- cast_to_const(x)
+  prod(size(x)) * Pnorm(x = x, p = -1)
+}
+
+KLDiv <- setClass("KLDiv", representation(x = "Expression", y = "Expression"), contains = "Atom")
+
+setMethod("validate_args", "KLDiv", function(object) {
+  if(!is_scalar(object@.args[[1]]) || !is_scalar(object@.args[[2]]))
+    stop("The arguments to KLDiv must resolve to scalars")
+})
+
+setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
+  .Object@x <- x
+  .Object@y <- y
+  callNextMethod(.Object, ..., .args = list(.Object@x, .Object@y))
+})
+
+setMethod("shape_from_args", "KLDiv", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "KLDiv", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature", "KLDiv", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity", "KLDiv", function(object) { rep(NONMONOTONIC, length(object@.args)) })
+
 #'
-#' The pnorm class.
+#' The Pnorm class.
 #'
-#' This class represents the p-norm expression in CVXR.
+#' This class represents the p-norm expression.
 #'
-#' @aliases pnorm
+#' @aliases Pnorm
 #' @export
-pnorm <- setClass("pnorm", representation(x = "Variable", p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
+Pnorm <- setClass("Pnorm", representation(x = "Variable", p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
                   prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "Atom")
-setMethod("initialize", "pnorm", definition = function(.Object, ..., x, p = 2, max_denom = 1024, .approx_error = NA_real_) {
+
+setMethod("initialize", "Pnorm", definition = function(.Object, ..., x, p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@x <- x
   .Object@max_denom <- max_denom
   
@@ -76,17 +100,16 @@ setMethod("initialize", "pnorm", definition = function(.Object, ..., x, p = 2, m
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
 
-setMethod("shape_from_args", "pnorm", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "pnorm", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature", "pnorm", function(object) { Curvature(curvature = ifelse(object@p >= 1, CURV_CONVEX_KEY, CURV_CONCAVE_KEY)) })
-setMethod("monotonicity", "pnorm", function(object) { list(ifelse(object@p >= 1, SIGNED, INCREASING)) })
+setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "Pnorm", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature",  "Pnorm", function(object) { Curvature(curvature = ifelse(object@p >= 1, CURV_CONVEX_KEY, CURV_CONCAVE_KEY)) })
+setMethod("monotonicity",    "Pnorm", function(object) { ifelse(object@p >= 1, SIGNED, INCREASING) })
 
-setMethod("get_data", "pnorm", function(object) { list(p = object@p) })
-setMethod("name", "pnorm", function(object) { 
+setMethod("name", "Pnorm", function(object) { 
   sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
 })
 
-pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[1]
   x <- arg_objs[1]
   t <- create_var(c(1,1))
@@ -123,10 +146,21 @@ pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-norm1 <- function(x) { pnorm(x = x, p = 1) }
-norm2 <- function(x) { pnorm(x = x, p = 2) }
-normInf <- function(x) { pnorm(x = x, p = Inf) }
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { pnorm(x = x, p = type) })
+setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { Pnorm(x = x, p = type) })
+norm1   <- function(x) { Pnorm(x = x, p = 1) }
+norm2   <- function(x) { Pnorm(x = x, p = 2) }
+normInf <- function(x) { Pnorm(x = x, p = Inf) }
+normNuc <- setClass("normNuc", representation(A = "Expression"), contains = "Atom")
+
+setMethod("initialize", "normNuc", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "normNuc", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "normNuc", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature",  "normNuc", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity",    "normNuc", function(object) { NONMONOTONIC })
 
 #'
 #' The QuadOverLin class.
@@ -164,8 +198,6 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(v, constraints)
 }
 
-setMethod("sum_squares", "Expression", function(expr) { QuadOverLin(x = expr, y = 1) })
-
 LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
 
 setMethod("validate_args", "LogDet", function(object) {
@@ -183,7 +215,7 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
 setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args",  "LogDet", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
 setMethod("func_curvature",  "LogDet", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
-setMethod("monotonicity",    "LogDet", function(object) { list(NONMONOTONIC) })
+setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
 
 LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
 
@@ -197,4 +229,47 @@ setMethod("sign_from_args",  "LogSumExp", function(object) { Sign(sign = SIGN_UN
 setMethod("func_curvature",  "LogSumExp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
 setMethod("monotonicity",    "LogSumExp", function(object) { list(INCREASING) })
 
+MaxEntries <- setClass("MaxEntries", representation(x = "Expression"), contains = "Atom")
+setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
 
+setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@dcp_attr@sign })
+setMethod("func_curvature",  "MaxEntries", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity",    "MaxEntries", function(object) { list(INCREASING) })
+
+MinEntries <- setClass("MinEntries", contains = "MaxEntries")
+
+setMethod("func_curvature", "MinEntries", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
+
+SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
+
+setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "SigmaMax", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "SigmaMax", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature",  "SigmaMax", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity",    "SigmaMax", function(object) { list(NONMONOTONIC) })
+
+SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
+                       validity = function(object) {
+                         if(round(object@k) != object@k || object@k <= 0)
+                           stop("[SumLargest: validation] k must be a positive integer")
+                         }, contains = "Atom")
+
+setMethod("shape_from_args", "SumLargest", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "SumLargest", function(object) { object@.args[[1]]@dcp_attr@sign })
+setMethod("func_curvature", "SumLargest", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity", "SumLargest", function(object) { INCREASING })
+
+SumSmallest <- function(x, k) {
+  x <- cast_to_const(x)
+  -SumLargest(x = -x, k = k)
+}
+
+SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }

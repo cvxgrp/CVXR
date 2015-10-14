@@ -1,5 +1,7 @@
-Variable <- setClass("Variable", representation(rows = "numeric", cols = "numeric", name = "character"),
+.Variable <- setClass("Variable", representation(rows = "numeric", cols = "numeric", name = "character"),
                                  prototype(rows = 1, cols = 1, name = NA_character_), contains = "Leaf")
+
+Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
 setMethod("init_dcp_attr", "Variable", function(object) {
   DCPAttr(sign = Sign(sign = SIGN_UNKNOWN_KEY), curvature = Curvature(curvature = CURV_AFFINE_KEY), shape = Shape(rows = object@rows, cols = object@cols))

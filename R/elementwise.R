@@ -2,8 +2,10 @@ Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
 setMethod("validate_args", "Elementwise", function(object) {
   tot_shape <- object@.args[[1]]@dcp_attr@shape
-  for(arg in object@.args[[-1]])
-    tot_shape <- tot_shape + arg@dcp_attr@shape
+  if(length(object@.args) > 1) {
+    for(arg in object@.args[[-1]])
+      tot_shape <- tot_shape + arg@dcp_attr@shape
+  }
 })
 
 setMethod("shape_from_args", "Elementwise", function(object) {
@@ -19,7 +21,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
 
 setMethod("sign_from_args", "Abs", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
 setMethod("func_curvature", "Abs", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity", "Abs", function(object) { list(SIGNED) })
+setMethod("monotonicity", "Abs", function(object) { SIGNED })
 
 Entr <- setClass("Entr", representation(x = "Expression"), contains = "Elementwise")
 
@@ -30,13 +32,13 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
 
 setMethod("sign_from_args", "Entr", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
 setMethod("func_curvature", "Entr", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
-setMethod("monotonicity", "Entr", function(object) { list(NONMONOTONIC) })
+setMethod("monotonicity", "Entr", function(object) { NONMONOTONIC })
 
 Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 
 setMethod("sign_from_args", "Exp", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
 setMethod("func_curvature", "Exp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity", "Exp", function(object) { list(INCREASING) })
+setMethod("monotonicity", "Exp", function(object) { INCREASING })
 
 Huber <- setClass("Huber", representation(x = "Expression", M = "numeric"), 
                            prototype(M = 1), contains = "Elementwise")
@@ -54,7 +56,7 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
 
 setMethod("sign_from_args", "Huber", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
 setMethod("func_curvature", "Huber", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity", "Huber", function(object) { list(SIGNED) })
+setMethod("monotonicity", "Huber", function(object) { SIGNED })
 
 InvPos <- function(x) { Power(x, -1) }
 
@@ -67,7 +69,7 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
 
 setMethod("sign_from_args", "Log", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
 setMethod("func_curvature", "Log", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
-setMethod("monotonicity", "Log", function(object) { list(INCREASING) })
+setMethod("monotonicity", "Log", function(object) { INCREASING })
 
 Log1p <- setClass("Log1p", contains = "Log")
 setMethod("sign_from_args", "Log1p", function(object) { object@.args[[1]]@dcp_attr@sign })
@@ -83,22 +85,25 @@ Neg <- function(x) { -MinElemwise(x, 0) }
 
 setMethod("sign_from_args", "Logistic", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
 setMethod("func_curvature", "Logistic", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity", "Logistic", function(object) { list(INCREASING) })
+setMethod("monotonicity", "Logistic", function(object) { INCREASING })
 
 Pos <- function(x) { MaxElemwise(x, 0) }
 
-Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric"), 
+.Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric"), 
                           prototype(max_denom = 1024, .w = NA_real_), 
                   validity = function(object) {
                     if(!is.na(object@.w))
                       stop("[Validation: power] .w is an internal variable that should not be set by user")
                     }, contains = "Elementwise")
 
+Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
+
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, .w = NA_real_) {
   # TODO: Fill in p and w accordingly
+  .Object@p <- p
   .Object@x <- x
   .Object@max_denom <- max_denom
-  callNextMethod(.Object, ..., .args = list(x))
+  callNextMethod(.Object, ..., .args = list(.Object@x))
 })
 
 setMethod("sign_from_args", "Power", function(object) {
@@ -123,18 +128,18 @@ setMethod("func_curvature", "Power", function(object) {
 
 setMethod("monotonicity", "Power", function(object) {
   if(object@p ==0)
-    list(INCREASING)
+    INCREASING
   else if(object@p == 1)
-    list(INCREASING)
+    INCREASING
   else if(object@p < 0)
-    list(DECREASING)
+    DECREASING
   else if(object@p > 0 && object@p < 1)
-    list(INCREASING)
+    INCREASING
   else if(object@p > 1) {
     if(is_power2(object@p))
-      list(SIGNED)
+      SIGNED
     else
-      list(INCREASING)
+      INCREASING
   }
   else
     stop("Unknown monotonicity for power p = ", object@p)

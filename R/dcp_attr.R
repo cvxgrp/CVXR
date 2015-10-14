@@ -74,7 +74,7 @@ val_to_sign <- function(val) {
 #' @slot curvature A \code{character} string specifying the type of curvature.
 #' @aliases Curvature
 #' @export
-Curvature <- setClass("Curvature", 
+.Curvature <- setClass("Curvature", 
                        representation(curvature = "character"), 
                        prototype(curvature = CURV_UNKNOWN_KEY),
                        validity = function(object) {
@@ -83,21 +83,30 @@ Curvature <- setClass("Curvature",
                          else
                            return(TRUE)
                         })
+
+Curvature <- function(curvature = CURV_UNKNOWN_KEY) { .Curvature(curvature = curvature) }
+Curvature.CONSTANT <- Curvature(curvature = CURV_CONSTANT_KEY)
+Curvature.AFFINE <- Curvature(curvature = CURV_AFFINE_KEY)
+Curvature.CONVEX <- Curvature(curvature = CURV_CONVEX_KEY)
+Curvature.CONCAVE <- Curvature(curvature = CURV_CONCAVE_KEY)
+Curvature.UNKNOWN <- Curvature(curvature = CURV_UNKNOWN_KEY)
+Curvature.NONCONVEX <- Curvature(curvature = CURV_UNKNOWN_KEY)
+
 setMethod("show", "Curvature", function(object) { cat("Curvature(", object@curvature, ")", sep = "") })
 setMethod("as.character", "Curvature", function(x) { paste("Curvature(", x@curvature, ")", sep = "") })
-setMethod("is_constant", "Curvature", function(object) { object@curvature == CURV_CONSTANT_KEY })
-setMethod("is_affine", "Curvature", function(object) { object@curvature == CURV_AFFINE_KEY })
-setMethod("is_convex", "Curvature", function(object) { object@curvature == CURV_CONVEX_KEY })
-setMethod("is_concave", "Curvature", function(object) { object@curvature == CURV_CONCAVE_KEY })
-setMethod("is_unknown", "Curvature", function(object) { object@curvature == CURV_UNKNOWN_KEY })
-setMethod("is_dcp", "Curvature", function(object) { object@curvature != CURV_UNKNOWN_KEY })
+setMethod("is_constant", "Curvature", function(object) { object == Curvature.CONSTANT })
+setMethod("is_affine", "Curvature", function(object) { is_constant(object) || object == Curvature.AFFINE })
+setMethod("is_convex", "Curvature", function(object) { is_affine(object) || object == Curvature.CONVEX })
+setMethod("is_concave", "Curvature", function(object) { is_affine(object) || object == Curvature.CONCAVE })
+setMethod("is_unknown", "Curvature", function(object) { object == Curvature.UNKNOWN })
+setMethod("is_dcp", "Curvature", function(object) { !is_unknown(object) })
 
 setMethod("+", c("Curvature", "missing"), function(e1, e2) { e1@curvature })
 setMethod("-", c("Curvature", "missing"), function(e1, e2) {
-  if(is_convex(e1))
-    Curvature(curvature = CURV_CONCAVE_KEY)
-  else if(is_concave(e1))
-    Curvature(curvature = CURV_CONVEX_KEY)
+  if(e1 == Curvature.CONVEX)
+    Curvature.CONCAVE
+  else if(e1 == Curvature.CONCAVE)
+    Curvature.CONVEX
   else
     e1
 })
@@ -106,29 +115,30 @@ setMethod("+", signature(e1 = "Curvature", e2 = "Curvature"),
                  if(is_constant(e1))
                    e2
                  else if(is_affine(e1) && is_affine(e2))
-                   Curvature(curvature = CURV_AFFINE_KEY)
+                   Curvature.AFFINE
                  else if(is_convex(e1) && is_convex(e2))
-                   Curvature(curvature = CURV_CONVEX_KEY)
+                   Curvature.CONVEX
                  else if(is_concave(e1) && is_concave(e2))
-                   Curvature(curvature = CURV_CONCAVE_KEY)
+                   Curvature.CONCAVE
                  else
-                   Curvature(curvature = CURV_UNKNOWN_KEY)
+                   Curvature.UNKNOWN
                })
 setMethod("-", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1 + -e2 })
 setMethod("==", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature == e2@curvature })
 setMethod("!=", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature != e2@curvature })
 
-setMethod("sign_mul", signature(sign = "Sign", curv = "Curvature"), function(sign, curv) {
-  if(is_zero(sign))
-    Curvature(curvature = CURV_CONSTANT_KEY)
-  else if(is_positive(sign) || is_affine(curv))
-    curv
-  else if(is_negative(sign)) {
-    new_curv = CURVATURE_NEGATION_MAP(curv@curvature)
+setMethod("*", signature(e1 = "Sign", e2 = "Curvature"), function(e1, e2) {
+  if(is_zero(e1))
+    Curvature.CONSTANT
+  else if(is_positive(e1) || is_affine(e2))
+    e2
+  else if(is_negative(e1)) {
+    new_curv = CURVATURE_NEGATION_MAP(e2@curvature)
     Curvature(curvature = new_curv)
   } else
-    Curvature(curvature = CURV_UNKNOWN_KEY)
+    Curvature.UNKNOWN
 })
+setMethod("*", signature(e1 = "Curvature", e2 = "Sign"), function(e1, e2) { e2 * e1 })
 
 #'
 #' The Shape class.
@@ -139,7 +149,9 @@ setMethod("sign_mul", signature(sign = "Sign", curv = "Curvature"), function(sig
 #' @slot cols The number of columns in the matrix
 #' @aliases Shape
 #' @export
-Shape <- setClass("Shape", representation(rows = "numeric", cols = "numeric"), prototype(rows = NA_integer_, cols = NA_integer_))
+.Shape <- setClass("Shape", representation(rows = "numeric", cols = "numeric"), prototype(rows = NA_integer_, cols = NA_integer_))
+Shape <- function(rows = NA_integer_, cols = NA_integer_) { .Shape(rows = rows, cols = cols) }
+
 setMethod("show", "Shape", function(object) { cat("Shape(", object@rows, ", ", object@cols, ")", sep = "") })
 setMethod("as.character", "Shape", function(x) { paste("Shape(", x@rows, ", ", x@cols, ")", sep = "") })
 

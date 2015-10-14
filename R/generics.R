@@ -10,7 +10,6 @@ setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 
-setGeneric("sign_mul", function(sign, curv) { standardGeneric("sign_mul") })
 setGeneric("size", function(object) { standardGeneric("size") })
 setGeneric("dcp_curvature", function(monotonicity, func_curvature, arg_sign, arg_curvature) { standardGeneric("dcp_curvature") })
 setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("DCPAttr.mul_elemwise") })

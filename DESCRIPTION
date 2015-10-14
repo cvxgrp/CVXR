@@ -6,7 +6,8 @@ Description: CVXR is a modeling language for disciplined convex optimization pro
              It allows the user to express problems in a natural way that follows 
              mathematical convention, rather than the restrictive standard form required 
              by other solvers.
-Depends: R (>= 3.2.2)
+Depends: R (>= 3.2.2),
+         bitops
 License: GPL-2 | GPL-3
 LazyData: true
 Suggests: testthat

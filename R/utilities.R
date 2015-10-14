@@ -11,9 +11,9 @@ CURV_UNKNOWN_KEY = "UNKNOWN"
 CURVATURE_STRINGS = c(CURV_CONSTANT_KEY, CURV_AFFINE_KEY, CURV_CONVEX_KEY, CURV_CONCAVE_KEY, CURV_UNKNOWN_KEY)
 CURVATURE_NEGATION_MAP <- function(curvature) {
   if(curvature == CURV_CONVEX_KEY)
-    CONCAVE_KEY
+    CURV_CONCAVE_KEY
   else if(curvature == CURV_CONCAVE_KEY)
-    CONVEX_KEY
+    CURV_CONVEX_KEY
   else if(curvature %in% CURVATURE_STRINGS)
     curvature
   else
@@ -42,4 +42,11 @@ flatten_list <- function(x) {
   y <- list()
   rapply(x, function(x) y <<- c(y,x))
   y
+}
+
+#'
+#' Power utilities
+#'
+is_power2 <- function(num) {
+  (round(num) == num) && num > 0 && bitwAnd(num, num - 1) == 0 
 }

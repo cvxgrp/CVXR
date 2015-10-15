@@ -108,22 +108,22 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
 
 setMethod("sign_from_args", "Power", function(object) {
   if(object@p == 1)
-    object@.args[1]@dcp_attr@sign
+    object@.args[[1]]@dcp_attr@sign
   else
-    Sign(sign = SIGN_POSITIVE_KEY)
+    Sign.POSITIVE
 })
 
 setMethod("func_curvature", "Power", function(object) {
   if(object@p == 0)
-    Curvature(curvature = CURV_CONSTANT_KEY)
+    Curvature.CONSTANT
   else if(object@p == 1)
-    Curvature(curvature = CURV_AFFINE_KEY)
+    Curvature.AFFINE
   else if(object@p < 0 || object@p > 1)
-    Curvature(curvature = CURV_CONVEX_KEY)
+    Curvature.CONVEX
   else if(object@p > 0 && object@p < 1)
-    Curvature(curvature = CURV_CONCAVE_KEY)
+    Curvature.CONCAVE
   else
-    Curvature(curvature = CURV_UNKNOWN_KEY)
+    Curvature.UNKNOWN
 })
 
 setMethod("monotonicity", "Power", function(object) {

@@ -170,11 +170,12 @@ DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 #'
 #' This class represents the 1-D discrete convolution of two vectors.
 #'
-#' @slot lh_exp An \S4class{Expression} representing the left-hand vector.
-#' @slot rh_exp An \S4class{Expression} representing the right-hand vector.
+#' @slot lh_exp An \S4class{Expression} or R numeric data representing the left-hand vector.
+#' @slot rh_exp An \S4class{Expression} or R numeric data representing the right-hand vector.
 #' @aliases Conv
 #' @export
-Conv <- setClass("Conv", representation(lh_exp = "Expression", rh_exp = "Expression"), contains = "AffAtom")
+.Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("validate_args", "Conv", function(object) {
   if(!is_vector(object@.args[[1]]) || !is_vector(object@.args[[2]]))
@@ -196,29 +197,15 @@ setMethod("shape_from_args", "Conv", function(object) {
 })
 
 setMethod("sign_from_args", "Conv", function(object) {
-  object@.args[1]@dcp_attr@sign * object@.args[2]@dcp_attr@sign
+  object@.args[[1]]@dcp_attr@sign * object@.args[[2]]@dcp_attr@sign
 })
 
 Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(conv(arg_objs[1], arg_objs[2], size), list())
 }
 
-Diag <- function(expr) {
-  expr <- cast_to_const(expr)
-  if(is_vector(expr)) {
-    if(size(expr)[2] == 1)
-      return(DiagVec(expr))
-    else {
-      expr <- Reshape(expr, size(expr)[2], 1)
-      return(DiagVec(expr))
-    }
-  } else if(size(expr)[1] == size(expr)[2])
-    return(DiagMat(expr))
-  else
-    stop("Argument to diag must be a vector or square matrix")
-}
-
-DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
+.DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
+DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
 setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   .Object@expr <- expr
@@ -234,9 +221,10 @@ DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(diag_vec(arg_objs[[1]]), list())
 }
 
-DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
+.DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
+DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
-setMethod("initialize", "DiagMat", function(.Object) {
+setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
@@ -248,6 +236,21 @@ setMethod("shape_from_args", "DiagMat", function(object) {
 
 DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(diag_mat(arg_objs[[1]]), list())
+}
+
+Diag <- function(expr) {
+  expr <- as.Constant(expr)
+  if(is_vector(expr)) {
+    if(size(expr)[2] == 1)
+      return(DiagVec(expr))
+    else {
+      expr <- Reshape(expr, size(expr)[2], 1)
+      return(DiagVec(expr))
+    }
+  } else if(size(expr)[1] == size(expr)[2])
+    return(DiagMat(expr))
+  else
+    stop("Argument to diag must be a vector or square matrix")
 }
 
 Diff <- function(x, k = 1) {
@@ -326,10 +329,11 @@ MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 #' @slot cols The new number of columns.
 #' @aliases Reshape
 #' @export
-Reshape <- setClass("Reshape", representation(expr = "Expression", rows = "numeric", cols = "numeric"), contains = "AffAtom")
+.Reshape <- setClass("Reshape", representation(expr = "Expression", rows = "numeric", cols = "numeric"), contains = "AffAtom")
+Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
 setMethod("validate_args", "Reshape", function(object) {
-  old_len <- size(object@.args[1])[1] * size(object@.args[1])[2]
+  old_len <- size(object@.args[[1]])[1] * size(object@.args[[1]])[2]
   new_len <- object@rows * object@cols
   if(old_len != new_len)
     stop(sprintf("Invalid reshape dimensions (%i, %i)", object@rows, object@cols))
@@ -358,10 +362,10 @@ Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 #' @slot expr The \S4class{Expression} to sum the entries of.
 #' @aliases SumEntries
 #' @export
-SumEntries <- setClass("SumEntries", representation(expr = "Expression"), contains = "AffAtom")
-
+.SumEntries <- setClass("SumEntries", representation(expr = "ConstValORExpr"), contains = "AffAtom")
+SumEntries <- function(expr) { .SumEntries(expr = expr) }
 setMethod("initialize", "SumEntries", function(.Object, ..., expr) {
-  .Object@expr = expr
+  .Object@expr <- expr
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
@@ -381,7 +385,8 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 #' @slot expr The \S4class{Expression} to sum the diagonal of.
 #' @aliases Trace
 #' @export
-Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
+.Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
+Trace <- function(expr) { .Trace(expr = expr) }
 
 setMethod("validate_args", "Trace", function(object) {
   size <- size(object@.args[[1]])

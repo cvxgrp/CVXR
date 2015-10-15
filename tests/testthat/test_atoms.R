@@ -39,6 +39,38 @@ test_that("test the Norm2 class", {
   expect_equal(curvature(Norm2(-atom)), Curvature.CONVEX)
 })
 
+test_that("test the Power class", {
+  for(size in list(c(1,1), c(3,1), c(2,3))) {
+    x_pow <- Variable(size[1], size[2])
+    y_pow <- Variable(size[1], size[2])
+    exp <- x_pow + y_pow
+    
+    for(p in c(0, 1, 2, 3, 2.7, 0.67, -1, -2.3, 4/5)) {
+      atom <- Power(exp, p)
+      expect_equal(size(atom), size)
+      
+      if(p > 1 || p < 0)
+        expect_equal(curvature(atom), Curvature.CONVEX)
+      else if(p == 1)
+        expect_equal(curvature(atom), Curvature.AFFINE)
+      else if(p == 0)
+        expect_equal(curvature(atom), Curvature.CONSTANT)
+      else
+        expect_equal(curvature(atom), Curvature.CONCAVE)
+      
+      if(p != 1)
+        expect_equal(sign(atom), Sign.POSITIVE)
+    }
+  }
+})
+
+test_that("test the HarmonicMean class", {
+  atom <- HarmonicMean(x)
+  expect_equal(size(atom), c(1,1))
+  expect_equal(curvature(atom), Curvature.CONCAVE)
+  expect_equal(sign(atom), Sign.POSITIVE)
+})
+
 test_that("test the Pnorm class", {
   atom <- Pnorm(x, p = 1.5)
   expect_equal(size(atom), c(1,1))
@@ -98,4 +130,83 @@ test_that("test the QuadOverLin class", {
   expect_false(is_dcp(atom))
   
   expect_error(QuadOverLin(x, x))
+})
+
+test_that("test the sign for MaxEntries", {
+  expect_equal(sign(MaxEntries(1)), Sign.POSITIVE)
+  expect_equal(sign(MaxEntries(-2)), Sign.NEGATIVE)
+  expect_equal(sign(MaxEntries(Variable())), Sign.UNKNOWN)
+  expect_equal(sign(MaxEntries(0)), Sign.ZERO)
+})
+
+test_that("test the sign for MinEntries", {
+  expect_equal(sign(MinEntries(1)), Sign.POSITIVE)
+  expect_equal(sign(MinEntries(-2)), Sign.NEGATIVE)
+  expect_equal(sign(MinEntries(Variable())), Sign.UNKNOWN)
+  expect_equal(sign(MinEntries(0)), Sign.ZERO)
+})
+
+test_that("test the SumEntries class", {
+  expect_equal(sign(SumEntries(1)), Sign.POSITIVE)
+  expect_equal(sign(SumEntries(c(1, -1))), Sign.UNKNOWN)
+  expect_equal(curvature(SumEntries(c(1, -1))), Curvature.CONSTANT)
+  expect_equal(sign(SumEntries(Variable(2))), Sign.UNKNOWN)
+  expect_equal(size(SumEntries(Variable(2))), c(1,1))
+  expect_equal(curvature(SumEntries(Variable(2))), Curvature.AFFINE)
+  
+  # Mixed curvature
+  expect_equal(curvature(SumEntries( c(1, -1) * Square(Variable(2)) )), Curvature.UNKNOWN)
+})
+
+test_that("test the Reshape class", {
+  expr <- Reshape(A, 4, 1)
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(4,1))
+  
+  expr <- Reshape(expr, 2, 2)
+  expect_equal(size(expr), c(2,2))
+  
+  expr <- Reshape(Square(x), 1, 2)
+  expect_equal(sign(expr), Sign.POSITIVE)
+  expect_equal(curvature(expr), Curvature.CONVEX)
+  expect_equal(size(expr), c(1,2))
+  
+  expect_error(Reshape(C, 5, 4))
+})
+
+test_that("test the Diag class", {
+  expr <- Diag(x)
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(2,2))
+  
+  expr <- Diag(A)
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(2,1))
+  
+  expect_error(Diag(C))
+})
+
+test_that("test the Trace class", {
+  expr <- Trace(A)
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(1,1))
+  
+  expect_error(Trace(C))
+})
+
+test_that("test the Conv class", {
+  a <- matrix(1, nrow = 3, ncol = 1)
+  b <- Parameter(2, sign = "positive")
+  expr <- Conv(a, b)
+  expect_true(is_positive(expr))
+  expect_equal(size(expr), c(4,1))
+  
+  b <- Parameter(2, sign = "negative")
+  expr <- Conv(a, b)
+  expect_true(is_negative(expr))
+  expect_error(Conv(x, -1))
 })

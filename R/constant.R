@@ -74,19 +74,23 @@ Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "nume
                         else
                           return(TRUE)
                         }, contains = "Leaf")
+.Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
+  Parameter(rows = rows, cols = cols, name = name, sign = toupper(sign), value = value)
+}
+
 setMethod("init_dcp_attr", "Parameter", function(object) {
-  shape = Shape(rows = object@rows, cols = object@cols)
-  DCPAttr(sign = Sign(sign = object@sign), curvature = Curvature(curvature = CURV_CONSTANT_KEY), shape = shape)
+  shape <- Shape(rows = object@rows, cols = object@cols)
+  DCPAttr(sign = Sign(sign = object@sign), curvature = Curvature.CONSTANT, shape = shape)
 })
 
-setMethod("initialize", "Parameter", function(.Object, ..., dcp_attr, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
-  .Object@rows = rows
-  .Object@cols = cols
-  .Object@sign = sign
-  .Object@name = name
-  .Object@value = value
-  .Object@dcp_attr = init_dcp_attr(.Object)
-  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr, rows = .Object@rows, cols = .Object@cols, name = .Object@name, sign = .Object@sign, value = .Object@value)
+setMethod("initialize", "Parameter", function(.Object, ..., rows = .Object@rows, cols = .Object@cols, name = .Object@name, sign = .Object@sign, value = .Object@value) {
+  .Object@rows <- rows
+  .Object@cols <- cols
+  .Object@sign <- sign
+  .Object@name <- name
+  .Object@value <- value
+  .Object@dcp_attr <- init_dcp_attr(.Object)
+  return(.Object)
 })
 
 setMethod("get_data", "Parameter", function(object) {

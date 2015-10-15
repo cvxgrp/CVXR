@@ -45,7 +45,7 @@ setMethod("Atom.dcp_curvature", signature(curvature = "Curvature", args = "list"
           })
 
 HarmonicMean <- function(x) {
-  x <- cast_to_const(x)
+  x <- as.Constant(x)
   prod(size(x)) * Pnorm(x = x, p = -1)
 }
 
@@ -237,7 +237,8 @@ setMethod("sign_from_args",  "LogSumExp", function(object) { Sign(sign = SIGN_UN
 setMethod("func_curvature",  "LogSumExp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
 setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
 
-MaxEntries <- setClass("MaxEntries", representation(x = "Expression"), contains = "Atom")
+.MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
+MaxEntries <- function(x) { .MaxEntries(x = x) }
 setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
@@ -248,7 +249,8 @@ setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@
 setMethod("func_curvature",  "MaxEntries", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
 setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
 
-MinEntries <- setClass("MinEntries", contains = "MaxEntries")
+.MinEntries <- setClass("MinEntries", contains = "MaxEntries")
+MinEntries <- function(x) { .MinEntries(x = x) }
 
 setMethod("func_curvature", "MinEntries", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
 
@@ -276,7 +278,7 @@ setMethod("func_curvature", "SumLargest", function(object) { Curvature(curvature
 setMethod("monotonicity", "SumLargest", function(object) { INCREASING })
 
 SumSmallest <- function(x, k) {
-  x <- cast_to_const(x)
+  x <- as.Constant(x)
   -SumLargest(x = -x, k = k)
 }
 

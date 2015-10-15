@@ -215,9 +215,9 @@ setMethod("*", signature(e1 = "DCPAttr", e2 = "DCPAttr"), function(e1, e2) {
   shape <- e1@shape * e2@shape
   sign <- e1@sign * e2@sign
   if(is_constant(e1@curvature))
-    curvature <- sign_mul(e1@sign, e2@curvature)
+    curvature <- e1@sign * e2@curvature
   else
-    curvature <- sign_mul(e2@sign, e1@curvature)
+    curvature <- e2@sign * e1@curvature
   DCPAttr(sign = sign, curvature = curvature, shape = shape)
 })
 setMethod("/", signature(e1 = "DCPAttr", e2 = "DCPAttr"), function(e1, e2) { e2 * e1 })
@@ -225,7 +225,7 @@ setMethod("/", signature(e1 = "DCPAttr", e2 = "DCPAttr"), function(e1, e2) { e2 
 setMethod("DCPAttr.mul_elemwise", signature(lh_exp = "DCPAttr", rh_exp = "DCPAttr"), function(lh_exp, rh_exp) {
   shape <- lh_exp@shape + rh_exp@shape
   sign <- lh_exp@sign * rh_exp@sign
-  curvature <- sign_mul(lh_exp@sign, rh_exp@curvature)
+  curvature <- lh_exp@sign * rh_exp@curvature
   DCPAttr(sign = sign, curvature = curvature, shape = shape)
 })
 

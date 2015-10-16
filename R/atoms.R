@@ -84,9 +84,77 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
 })
 
 setMethod("shape_from_args", "KLDiv", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "KLDiv", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature", "KLDiv", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("sign_from_args", "KLDiv", function(object) { Sign.POSITIVE })
+setMethod("func_curvature", "KLDiv", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "KLDiv", function(object) { rep(NONMONOTONIC, length(object@.args)) })
+
+.LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
+LambdaMax <- function(A) { .LambdaMax(A = A) }
+
+setMethod("validate_args", "LambdaMax", function(object) {
+  if(size(object@.args[[1]])[1] != size(object@.args[[1]])[2])
+    stop("The argument to LambdaMax must resolve to a square matrix")
+})
+
+setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "LambdaMax", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "LambdaMax", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature", "LambdaMax", function(object) { Curvature.CONVEX })
+setMethod("monotonicity", "LambdaMax", function(object) { NONMONOTONIC })
+setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
+  A <- arg_objs[[1]]
+  n <- size(A)[1]
+  t <- create_var(c(1,1))
+  prom_t <- promote(t, c(n,1))
+  expr <- sub_expr(diag_vec(prom_t), A)
+  list(t, list(SDP(expr)))
+})
+
+.LambdaMin <- setClass("LambdaMin", representation(A = "ConstValORExpr"), contains = "Atom")
+LambdaMin <- function(A) { .LambdaMin(A = A) }
+
+setMethod("validate_args", "LambdaMin", function(object) {
+  if(size(object@.args[[1]])[1] != size(object@.args[[2]])[2])
+    stop("The argument to LambdaMin must resolve to a square matrix")
+})
+
+setMethod("initialize", "LambdaMin", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "LambdaMin", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "LambdaMin", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature", "LambdaMin", function(object) { Curvature.CONCAVE })
+setMethod("monotonicity", "LambdaMin", function(object) { NONMONOTONIC })
+setMethod("graph_implementation", "LambdaMin", function(object, arg_objs, size, data = NA_real_) {
+  A <- arg_objs[[1]]
+  n <- size(A)[1]
+  t <- create_var(c(1,1))
+  prom_t <- promote(t, c(n,1))
+  expr <- sub_expr(A, diag_vec(prom_t))
+  list(t, list(SDP(expr)))
+})
+
+LambdaSumLargest <- function(X, k) {
+  X <- as.Constant(X)
+  if(size(X)[1] != size(X)[2])
+    stop("First argument must be a square matrix")
+  else if(round(k) != k || k <= 0)
+    stop("Second argument must be a positive integer")
+  
+  Z <- Semidef(size(X)[1])
+  k*LambdaMax(X - Z) + Trace(Z)
+}
+
+LambdaSumSmallest <- function(X, k) {
+  X <- as.Constant(X)
+  -LambdaSumLargest(-X, k)
+}
 
 #'
 #' The Pnorm class.
@@ -127,7 +195,7 @@ setMethod("initialize", "Pnorm", definition = function(.Object, ..., x, p = 2, m
 })
 
 setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "Pnorm", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("sign_from_args",  "Pnorm", function(object) { Sign.POSITIVE })
 setMethod("func_curvature",  "Pnorm", function(object) { Curvature(curvature = ifelse(object@p >= 1, CURV_CONVEX_KEY, CURV_CONCAVE_KEY)) })
 setMethod("monotonicity",    "Pnorm", function(object) { ifelse(object@p >= 1, SIGNED, INCREASING) })
 
@@ -184,8 +252,8 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
 })
 
 setMethod("shape_from_args", "NormNuc", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "NormNuc", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature",  "NormNuc", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("sign_from_args",  "NormNuc", function(object) { Sign.POSITIVE })
+setMethod("func_curvature",  "NormNuc", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "NormNuc", function(object) { NONMONOTONIC })
 
 #'
@@ -211,8 +279,8 @@ setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y =
 })
 
 setMethod("shape_from_args", "QuadOverLin", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "QuadOverLin", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature",  "QuadOverLin", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("sign_from_args",  "QuadOverLin", function(object) { Sign.POSITIVE })
+setMethod("func_curvature",  "QuadOverLin", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "QuadOverLin", function(object) { c(SIGNED, DECREASING) })
 
 setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
@@ -242,8 +310,8 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
 })
 
 setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogDet", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
-setMethod("func_curvature",  "LogDet", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
+setMethod("sign_from_args",  "LogDet", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature",  "LogDet", function(object) { Curvature.CONCAVE })
 setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
 
 LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
@@ -254,8 +322,8 @@ setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
 })
 
 setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogSumExp", function(object) { Sign(sign = SIGN_UNKNOWN_KEY) })
-setMethod("func_curvature",  "LogSumExp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
 
 .MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
@@ -267,13 +335,13 @@ setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
 
 setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@dcp_attr@sign })
-setMethod("func_curvature",  "MaxEntries", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("func_curvature",  "MaxEntries", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
 
 .MinEntries <- setClass("MinEntries", contains = "MaxEntries")
 MinEntries <- function(x) { .MinEntries(x = x) }
 
-setMethod("func_curvature", "MinEntries", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
+setMethod("func_curvature", "MinEntries", function(object) { Curvature.CONCAVE })
 
 SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
 
@@ -283,8 +351,8 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
 })
 
 setMethod("shape_from_args", "SigmaMax", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "SigmaMax", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature",  "SigmaMax", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("sign_from_args",  "SigmaMax", function(object) { Sign.POSITIVE })
+setMethod("func_curvature",  "SigmaMax", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "SigmaMax", function(object) { NONMONOTONIC })
 
 SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
@@ -295,7 +363,7 @@ SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numer
 
 setMethod("shape_from_args", "SumLargest", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args", "SumLargest", function(object) { object@.args[[1]]@dcp_attr@sign })
-setMethod("func_curvature", "SumLargest", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("func_curvature", "SumLargest", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "SumLargest", function(object) { INCREASING })
 
 SumSmallest <- function(x, k) {

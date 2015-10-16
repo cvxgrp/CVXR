@@ -18,6 +18,20 @@ test_that("test the Variable class", {
   expect_equal(canonical_form(x)[[2]], list())
 })
 
+test_that("test transposing variables", {
+  var <- t(a)
+  expect_equal(size(var), c(1,1))
+  
+  var <- t(x)
+  expect_equal(size(var), c(1,2))
+  
+  var <- t(C)
+  expect_equal(size(var), c(2,3))
+  
+  var <- t(t(x))
+  expect_equal(size(var), c(2,1))
+})
+
 test_that("test the Constant class", {
   c <- Constant(2)
   expect_equal(size(c), c(1,1))

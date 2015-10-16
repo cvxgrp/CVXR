@@ -146,6 +146,48 @@ test_that("test the sign for MinEntries", {
   expect_equal(sign(MinEntries(0)), Sign.ZERO)
 })
 
+test_that("test sign logic for MaxElemwise", {
+  expect_equal(sign(MaxElemwise(1, 2)), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(1, Variable())), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(1, -2)), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(1, 0)), Sign.POSITIVE)
+  
+  expect_equal(sign(MaxElemwise(Variable(), 0)), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(Variable(), Variable())), Sign.UNKNOWN)
+  expect_equal(sign(MaxElemwise(Variable(), -2)), Sign.UNKNOWN)
+  
+  expect_equal(sign(MaxElemwise(0, 0)), Sign.ZERO)
+  expect_equal(sign(MaxElemwise(0, -2)), Sign.ZERO)
+  
+  expect_equal(sign(MaxElemwise(-3, -2)), Sign.NEGATIVE)
+  
+  expect_equal(sign(MaxElemwise(-2, Variable(), 0, -1, Variable(), -1)), Sign.POSITIVE)
+  
+  expect_equal(sign(MaxElemwise(1, Variable(2))), Sign.POSITIVE)
+  expect_equal(size(MaxElemwise(1, Variable(2))), c(2,1))
+})
+
+test_that("test sign logic for MinElemwise", {
+  expect_equal(sign(MinElemwise(1, 2)), Sign.POSITIVE)
+  expect_equal(sign(MinElemwise(1, Variable())), Sign.UNKNOWN)
+  expect_equal(sign(MinElemwise(1, -2)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(1, 0)), Sign.ZERO)
+  
+  expect_equal(sign(MinElemwise(Variable(), 0)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(Variable(), Variable())), Sign.UNKNOWN)
+  expect_equal(sign(MinElemwise(Variable(), -2)), Sign.NEGATIVE)
+  
+  expect_equal(sign(MinElemwise(0, 0)), Sign.ZERO)
+  expect_equal(sign(MinElemwise(0, -2)), Sign.NEGATIVE)
+  
+  expect_equal(sign(MinElemwise(-3, -2)), Sign.NEGATIVE)
+  
+  expect_equal(sign(MinElemwise(-2, Variable(), 0, -1, Variable(), 1)), Sign.NEGATIVE)
+  
+  expect_equal(sign(MinElemwise(-1, Variable(2))), Sign.NEGATIVE)
+  expect_equal(size(MinElemwise(-1, Variable(2))), c(2, 1))
+})
+
 test_that("test the SumEntries class", {
   expect_equal(sign(SumEntries(1)), Sign.POSITIVE)
   expect_equal(sign(SumEntries(c(1, -1))), Sign.UNKNOWN)
@@ -198,15 +240,39 @@ test_that("test the Trace class", {
   expect_error(Trace(C))
 })
 
+test_that("test the SumLargest class", {
+  expect_error(SumLargest(x, -1))
+  # expect_error(LambdaSumLargest(x, 2.4))   # TODO: Currently unimplemented
+  # expect_error(LambdaSumLargest(Variable(2,2), 2.4))
+})
+
+test_that("test the SumSmallest class", {
+  expect_error(SumSmallest(x, -1))
+  # expect_error(LambdaSumSmallest(Variable(2,2), 2.4))   TODO: Currently unimplemented
+})
+
 test_that("test the Conv class", {
   a <- matrix(1, nrow = 3, ncol = 1)
   b <- Parameter(2, sign = "positive")
   expr <- Conv(a, b)
   expect_true(is_positive(expr))
-  # expect_equal(size(expr), c(4,1))   # TODO: Why is Parameter shape incorrect?
+  expect_equal(size(expr), c(4,1))
   
   b <- Parameter(2, sign = "negative")
   expr <- Conv(a, b)
   expect_true(is_negative(expr))
   expect_error(Conv(x, -1))
+})
+
+test_that("test the Kron class", {
+  a <- matrix(1, nrow = 3, ncol = 2)
+  b <- Parameter(2, sign = "positive")
+  expr <- Kron(a, b)
+  expect_true(is_positive(expr))
+  expect_equal(size(expr), c(6,2))
+  
+  b <- Parameter(2, sign = "negative")
+  expr <- Kron(a, b)
+  expect_true(is_negative(expr))
+  expect_error(Kron(x, -1))
 })

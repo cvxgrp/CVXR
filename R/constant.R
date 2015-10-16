@@ -6,13 +6,14 @@
 #' @slot value A numeric element, data.frame, matrix, or vector.
 #' @aliases Constant
 #' @export
-Constant <- setClass("Constant", representation(value = "ConstVal"), 
+.Constant <- setClass("Constant", representation(value = "ConstVal"), 
                                  prototype(value = NA_real_), 
                       validity = function(object) {
                         if((!is.data.frame(object@value) && !is.numeric(object@value)) ||
                            (is.data.frame(object@value) && !all(sapply(object@value), is.numeric)))
                           stop("[Constant: validation] value must be a data.frame, matrix, vector, or atomic element containing only numeric entries")
                       }, contains = "Leaf")
+Constant <- function(value) { .Constant(value = value) }
 
 setMethod("init_dcp_attr", "Constant", function(object) {
   val_dim = dim(object@value)
@@ -24,15 +25,16 @@ setMethod("init_dcp_attr", "Constant", function(object) {
   DCPAttr(sign = sign, curvature = Curvature(curvature = CURV_CONSTANT_KEY), shape = shape)
 })
 
-setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_) {
-  .Object@value = value
-  .Object@dcp_attr = init_dcp_attr(.Object)
-  callNextMethod(.Object, ..., value = .Object@value)
+setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_real_) {
+  .Object@value <- value
+  .Object@dcp_attr <- init_dcp_attr(.Object)
+  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
 
+setMethod("value", "Constant", function(object) { object@value })
 setMethod("get_data", "Constant", function(object) { list(value = object@value) })
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(object@value, object@size)
+  obj <- create_const(object@value, size(object))
   list(obj, list())
 })
 
@@ -66,7 +68,7 @@ get_sign <- function(constant) {
 #' @slot value Holds the solved numeric value of the parameter.
 #' @aliases Parameter
 #' @export
-Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "numeric", name = "character", sign = "character", value = "numeric"),
+.Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "numeric", name = "character", sign = "character", value = "numeric"),
                                     prototype(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_), 
                       validity = function(object) {
                         if(!(object@sign %in% SIGN_STRINGS))
@@ -74,8 +76,8 @@ Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "nume
                         else
                           return(TRUE)
                         }, contains = "Leaf")
-.Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
-  Parameter(rows = rows, cols = cols, name = name, sign = toupper(sign), value = value)
+Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
+  .Parameter(rows = rows, cols = cols, name = name, sign = toupper(sign), value = value)
 }
 
 setMethod("init_dcp_attr", "Parameter", function(object) {

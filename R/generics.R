@@ -15,6 +15,7 @@ setGeneric("dcp_curvature", function(monotonicity, func_curvature, arg_sign, arg
 setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("DCPAttr.mul_elemwise") })
 
 # Expression generic methods
+setGeneric("value", function(object) { standardGeneric("value") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("init_dcp_attr", function(object) { standardGeneric("init_dcp_attr") })
 setGeneric("curvature", function(object) { standardGeneric("curvature") })
@@ -37,6 +38,7 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("name", function(object) { standardGeneric("name") })
 
 setGeneric("Atom.dcp_curvature", function(curvature, args, monotonicities) { standardGeneric("Atom.dcp_curvature") })
+setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
 setGeneric("sum_squares", function(expr) { standardGeneric("sum_squares") })
 
 # Constraint generic methods

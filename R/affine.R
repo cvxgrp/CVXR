@@ -39,10 +39,10 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
-AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "AddExpression", function(object, arg_objs, size, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) { if(size(arg) != size) promote(arg, size) else arg })
   list(sum_expr(arg_objs), list())
-}
+})
 
 #'
 #' The UnaryOperator class.
@@ -78,9 +78,9 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
 
-NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "NegExpression", function(object, arg_objs, size, data = NA_real_) {
   list(neg_expr(arg_objs[[1]]), list())
-}
+})
 
 #'
 #' The BinaryOperator class.
@@ -122,13 +122,13 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "*")
 })
 
-MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "MulExpression", function(object, arg_objs, size, data = NA_real_) {
   if(size[2] != 1 && all(size(arg_objs[[2]]) == c(1,1))) {
     arg <- promote(arg_objs[[2]], list(size[2], 1))
     arg_objs[2] <- diag_vec(arg)
   }
   list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
-}
+})
 
 #'
 #' The RMulExpression class.
@@ -139,13 +139,13 @@ MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 #' @export
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
-RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, size, data = NA_real_) {
   if(size[1] != 1 && all(size(arg_objs[[1]]) == c(1,1))) {
     arg <- promote(arg_objs[[1]], list(size[1], 1))
     arg_objs[[1]] <- diag_vec(arg)
   }
   list(rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
-}
+})
 
 #'
 #' The DivExpression class.
@@ -161,9 +161,9 @@ setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
 })
 
-DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "DivExpression", function(object, arg_objs, size, data = NA_real_) {
   list(div_expr(arg_objs[[1]], arg_objs[[2]]), list())
-}
+})
 
 #'
 #' The Conv class.
@@ -200,9 +200,9 @@ setMethod("sign_from_args", "Conv", function(object) {
   object@.args[[1]]@dcp_attr@sign * object@.args[[2]]@dcp_attr@sign
 })
 
-Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(conv(arg_objs[1], arg_objs[2], size), list())
-}
+setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data = NA_real_) {
+  list(conv(arg_objs[[1]], arg_objs[[2]], size), list())
+})
 
 .DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
 DiagVec <- function(expr) { .DiagVec(expr = expr) }
@@ -217,9 +217,9 @@ setMethod("shape_from_args", "DiagVec", function(object) {
   Shape(rows = rows, cols = rows)
 })
 
-DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, data = NA_real_) {
   list(diag_vec(arg_objs[[1]]), list())
-}
+})
 
 .DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
 DiagMat <- function(expr) { .DiagMat(expr = expr) }
@@ -234,9 +234,9 @@ setMethod("shape_from_args", "DiagMat", function(object) {
   Shape(rows = rows, cols = 1)
 })
 
-DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, data = NA_real_) {
   list(diag_mat(arg_objs[[1]]), list())
-}
+})
 
 Diag <- function(expr) {
   expr <- as.Constant(expr)
@@ -267,7 +267,8 @@ Diff <- function(x, k = 1) {
   d
 }
 
-Kron <- setClass("Kron", representation(lh_exp = "Expression", rh_exp = "Expression"), contains = "AffAtom")
+.Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("validate_args", "Kron", function(object) {
   if(!is_constant(object@.args[[1]]))
@@ -290,9 +291,9 @@ setMethod("sign_from_args", "Kron", function(object) {
   object@.args[[1]]@dcp_attr@sign * object@.args[[2]]@dcp_attr@sign
 })
 
-Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data = NA_real_) {
   list(kron(arg_objs[[1]], arg_objs[[2]], size), list())
-}
+})
 
 MulElemwise <- setClass("MulElemwise", representation(lh_const = "Expression", rh_exp = "Expression"), contains = "AffAtom")
 
@@ -311,12 +312,12 @@ setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) 
   callNextMethod(.Object, ..., .args = list(.Object@lh_const, .Object@rh_exp))
 })
 
-MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size, data = NA_real_) {
   if(size(arg_objs[[1]]) != size(arg_objs[[2]]))
     list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
   else
     list(mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
-}
+})
 
 #'
 #' The Reshape class.
@@ -350,9 +351,9 @@ setMethod("shape_from_args", "Reshape", function(object) {
   Shape(rows = object@rows, cols = object@cols)
 })
 
-Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(reshape(arg_objs[1], size), list())
-}
+setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, data = NA_real_) {
+  list(reshape(arg_objs[[1]], size), list())
+})
 
 #'
 #' The SumEntries class.
@@ -373,9 +374,9 @@ setMethod("shape_from_args", "SumEntries", function(object){
   Shape(rows = 1, cols = 1)
 })
 
-SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size, data = NA_real_) {
   list(sum_entries(arg_objs[[1]]), list())
-}
+})
 
 #'
 #' The Trace class.
@@ -403,9 +404,9 @@ setMethod("shape_from_args", "Trace", function(object){
   Shape(rows = 1, cols = 1)
 })
 
-Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data = NA_real_) {
   list(trace(arg_objs[[1]]), list())
-}
+})
 
 #'
 #' The Transpose class.
@@ -421,9 +422,9 @@ setMethod("shape_from_args", "Transpose", function(object) {
   Shape(rows = obj_size[2], cols = obj_size[1])
 })
 
-Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {
   list(transpose(arg_objs[[1]]), list())  
-}
+})
 
 UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
 
@@ -443,9 +444,9 @@ setMethod("shape_from_args", "UpperTri", function(object) {
   Shape(rows = floor(rows*(cols-1)/2), cols = 1)
 })
 
-UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, data = NA_real_) {
   list(upper_tri(arg_objs[[1]]), list())
-}
+})
 
 Vec <- function(X) {
   X <- cast_to_const(X)

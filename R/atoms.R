@@ -44,6 +44,27 @@ setMethod("Atom.dcp_curvature", signature(curvature = "Curvature", args = "list"
             Reduce("+", arg_curvatures)
           })
 
+setMethod("canonicalize", "Atom", function(object) {
+  if(is_constant(object)) {
+    if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
+      size <- size(object)
+      param <- CallbackParam(object@value, size[1], size[2])
+      return(canonical_form(param))
+    } else
+      return(canonical_form(Constant(object@value)))
+  } else {
+    arg_objs <- lapply(object@.args, function(arg) { canonical_form(arg)[[1]] })
+    constraints <- lapply(object@.args, function(arg) { canonical_form(arg)[[2]] })
+    data <- get_data(object)
+    graph <- graph_implementation(object, arg_objs, size(object), data)
+    return(list(graph[[1]], c(constraints, graph[[2]])))
+  }
+})
+
+setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) {
+  stop("Unimplemented")
+})
+
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   prod(size(x)) * Pnorm(x = x, p = -1)
@@ -114,9 +135,9 @@ setMethod("name", "Pnorm", function(object) {
   sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
 })
 
-Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  p <- data[1]
-  x <- arg_objs[1]
+setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
+  p <- data[[1]]
+  x <- arg_objs[[1]]
   t <- create_var(c(1,1))
   constraints <- list()
   
@@ -149,7 +170,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     constraints <- c(constraints, gm_constrs(x, list(r, t_)), c(1/p, 1-1/p))
   
   list(t, constraints)
-}
+})
 
 setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { Pnorm(x = x, p = type) })
 Norm1   <- function(x) { Pnorm(x = x, p = 1) }
@@ -194,7 +215,7 @@ setMethod("sign_from_args",  "QuadOverLin", function(object) { Sign(sign = SIGN_
 setMethod("func_curvature",  "QuadOverLin", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
 setMethod("monotonicity",    "QuadOverLin", function(object) { c(SIGNED, DECREASING) })
 
-QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   y <- arg_objs[[2]]
   v <- create_var(c(1,1))
@@ -204,7 +225,7 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
                                mul_expr(two, x, size(x)))),
                       create_geq(y))
   list(v, constraints)
-}
+})
 
 LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
 

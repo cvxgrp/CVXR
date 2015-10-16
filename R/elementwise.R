@@ -1,11 +1,8 @@
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
 setMethod("validate_args", "Elementwise", function(object) {
-  tot_shape <- object@.args[[1]]@dcp_attr@shape
-  if(length(object@.args) > 1) {
-    for(arg in object@.args[[-1]])
-      tot_shape <- tot_shape + arg@dcp_attr@shape
-  }
+  arg_shapes <- lapply(object@.args, function(arg) { arg@dcp_attr@shape })
+  Reduce("+", arg_shapes)
 })
 
 setMethod("shape_from_args", "Elementwise", function(object) {
@@ -79,6 +76,79 @@ Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "E
 setMethod("initialize", "Logistic", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+.MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
+                           if(is.null(object@.args) || length(object@.args) < 2)
+                             stop("[MaxElemwise: validation] args must have at least 2 arguments")
+                           return(TRUE)
+                         }, contains = "Elementwise")
+MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(.args = list(arg1, arg2, ...)) }
+
+setMethod("sign_from_args", "MaxElemwise", function(object) {
+  arg_signs <- lapply(object@.args, function(arg) { arg@dcp_attr@sign })
+  contains <- function(sign, args) {
+    if(is.null(args) || length(args) == 0) return(FALSE)
+    any(sapply(args, function(arg) { arg == sign }))
+  }
+  
+  if(contains(Sign.POSITIVE, arg_signs))
+    max_sign <- Sign.POSITIVE
+  else if(contains(Sign.ZERO, arg_signs)) {
+    if(contains(Sign.UNKNOWN, arg_signs))
+      max_sign <- Sign.POSITIVE
+    else
+      max_sign <- Sign.ZERO
+  } else if(contains(Sign.UNKNOWN, arg_signs))
+    max_sign <- Sign.UNKNOWN
+  else
+    max_sign <- Sign.NEGATIVE
+  max_sign
+})
+setMethod("func_curvature", "MaxElemwise", function(object) { Curvature.CONVEX })
+setMethod("monotonicity", "MaxElemwise", function(object) { rep(INCREASING, length(object@.args)) })
+setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size, data = NA_real_) {
+  t <- create_var(size)
+  constraints <- lapply(arg_objs, function(obj) { 
+      if(size(obj) != size) 
+        obj <- promote(obj, size)
+      create_leq(obj, t) 
+    })
+  list(t, constraints)
+})
+
+.MinElemwise <- setClass("MinElemwise", contains = "MaxElemwise")
+MinElemwise <- function(arg1, arg2, ...) { .MinElemwise(.args = list(arg1, arg2, ...)) }
+
+setMethod("sign_from_args", "MinElemwise", function(object) {
+  arg_signs <- lapply(object@.args, function(arg) { arg@dcp_attr@sign })
+  contains <- function(sign, args) {
+    if(is.null(args) || length(args) == 0) return(FALSE)
+    any(sapply(args, function(arg) { arg == sign }))
+  }
+  
+  if(contains(Sign.NEGATIVE, arg_signs))
+    min_sign <- Sign.NEGATIVE
+  else if(contains(Sign.ZERO, arg_signs)) {
+    if(contains(Sign.UNKNOWN, arg_signs))
+      min_sign <- Sign.NEGATIVE
+    else
+      min_sign <- Sign.ZERO
+  } else if(contains(Sign.UNKNOWN, arg_signs))
+    min_sign <- Sign.UNKNOWN
+  else
+    min_sign <- Sign.POSITIVE
+  min_sign
+})
+setMethod("func_curvature", "MinElemwise", function(object) { Curvature.CONCAVE })
+setMethod("graph_implementation", "MinElemwise", function(object, arg_objs, size, data = NA_real_) {
+  t <- create_var(size)
+  constraints <- lapply(arg_objs, function(obj) { 
+    if(size(obj) != size) 
+      obj <- promote(obj, size)
+    create_leq(t, obj)
+  })
+  list(t, constraints)
 })
 
 Neg <- function(x) { -MinElemwise(x, 0) }

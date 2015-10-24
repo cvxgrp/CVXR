@@ -1,9 +1,9 @@
-.LinOp <- setClass("LinOp", representation(type = "character", size = "numeric", args = "list", data = "ConstValORExpr"),
-                           prototype(args = list(), data = NA_real_))
+.LinOp <- setClass("LinOp", representation(type = "character", size = "numeric", args = "list", data = "ANY"),
+                          prototype(args = list(), data = NA_real_))
 LinOp <- function(type, size, args, data) { .LinOp(type = type, size = size, args = args, data = data) }
 setMethod("size", "LinOp", function(object) { object@size })
 
-.LinConstr <- setClass("LinConstr", representation(expr = "Expression", constr_id = "numeric", size = "numeric"))
+.LinConstr <- setClass("LinConstr", representation(expr = "ANY", constr_id = "numeric", size = "numeric"))
 LinConstr <- function(expr, constr_id, size) { .LinConstr(expr = expr, constr_id = constr_id, size = size) }
 
 LinEqConstr <- setClass("LinEqConstr", contains = "LinConstr")

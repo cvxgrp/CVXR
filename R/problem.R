@@ -16,6 +16,9 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
 })
 
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
+setMethod("variables", "Minimize", function(object) { variables(object@expr) })
+setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
+setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 
 #'
 #' The Maximize class.
@@ -44,7 +47,13 @@ setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Mi
 setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@expr + e2@expr) })
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
-setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
+setMethod("canonicalize", "Maximize", function(object) {
+  canon <- callNextMethod(object)
+  obj <- canon[[1]]
+  constraints <- canon[[2]]
+  list(neg_expr(obj), constraints)
+})
+
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 
 #'
@@ -69,7 +78,8 @@ Problem <- function(objective, constraints = list(), ...) {
 }
 
 setMethod("is_dcp", "Problem", function(object) {
-  all(lapply(c(object@objective, object@constraints), is_dcp))
+  is_dcp_list <- lapply(c(object@objective, object@constraints), is_dcp)
+  all(unlist(is_dcp_list))
 })
 
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
@@ -94,4 +104,16 @@ setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
   canon_constr <- lapply(object@constraints, function(x) { canonical_form(x)[2] })
   list(obj_canon[1], c(obj_canon[2], canon_constr))
+})
+
+setMethod("variables", "Problem", function(object) {
+  vars_ <- variables(object@objective)
+  constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
+  unique(flatten_list(c(vars_, constrs_)))
+})
+
+setMethod("parameters", "Problem", function(object) {
+  params <- parameters(object@objective)
+  constrs_ <- lapply(object@constraints, function(constr) { parameters(constr) })
+  unique(flatten_list(c(params, constrs_)))
 })

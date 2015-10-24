@@ -34,7 +34,7 @@ setMethod("init_dcp_attr", "AddExpression", function(object) {
 setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = list()) {
   .Object@arg_groups <- arg_groups
   .Object <- callNextMethod(.Object, ..., .args = arg_groups)   # Casts R values to Constant objects
-  .Object@.args <- lapply(arg_groups, function(group) { if(is(group,"AddExpression")) group@.args else group })
+  .Object@.args <- lapply(.Object@.args, function(group) { if(is(group,"AddExpression")) group@.args else group })
   .Object@.args <- flatten_list(.Object@.args)   # Need to flatten list of expressions
   return(.Object)
 })
@@ -266,6 +266,19 @@ Diff <- function(x, k = 1) {
     d <- d[2:length(d)] - d[1:(length(d)-1)]
   d
 }
+
+.Index <- setClass("Index", representation(expr = "Expression", key = "numeric"))
+
+setMethod("initialize", "Index", function(.Object, ..., expr, key) {
+  .Object@key <- key   # TODO: Need to validate key
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("shape_from_args", "Index", function(object) {
+  size <- ku_size(object@key, object@.args[[1]]@dcp_attr@shape)
+  Shape(size[1], size[2])
+})
 
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }

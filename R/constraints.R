@@ -1,4 +1,4 @@
-setClass("Constraint", representation(id = "character"), prototype(id = NA_character_), contains = "VIRTUAL")
+setClass("Constraint", representation(id = "character"), prototype(id = UUIDgenerate()), contains = "VIRTUAL")
 setMethod("id", "Constraint", function(object) { object@id })
 
 # TODO: What type should lin_op be? Need linear operator object.
@@ -26,12 +26,11 @@ LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression",
                            },
                             contains = "Constraint")
 
-setMethod("initialize", "LeqConstraint", definition = function(.Object, id, lh_exp, rh_exp, .expr) {
-  .Object@id <- id
+setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_exp, rh_exp, .expr) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
   .Object@.expr <- lh_exp - rh_exp
-  return(.Object)
+  callNextMethod(.Object, ...)
 })
 
 setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
@@ -69,8 +68,9 @@ PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint",
 
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 
-SOC <- setClass("SOC", representation(t = "numeric", x_elems = "numeric"), 
-                       prototype(t = NA_real_, x_elems = NA_real_), contains = "Constraint")
+.SOC <- setClass("SOC", representation(t = "Expression", x_elems = "list"), 
+                       prototype(t = new("Expression"), x_elems = list()), contains = "Constraint")
+SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
 setMethod("show", "SOC", function(object) { cat("SOC(", object@t, ", <", paste(object@x_elems, collapse = ","), ">)", sep = "") })
 

@@ -50,3 +50,16 @@ flatten_list <- function(x) {
 is_power2 <- function(num) {
   (round(num) == num) && num > 0 && bitwAnd(num, num - 1) == 0 
 }
+
+#'
+#' Key utilities
+#'
+ku_size <- function(key, shape) {
+  dims <- c()
+  for (i in 1:2) {
+    selection <- (1:size(shape)[i])[key[i]]
+    size <- size(selection)
+    dims <- c(dims, size)
+  }
+  dims
+}

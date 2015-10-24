@@ -65,6 +65,16 @@ setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data 
   stop("Unimplemented")
 })
 
+setMethod("variables", "Atom", function(object) {
+  var_list <- lapply(object@.args, function(arg) { variables(arg) })
+  unique(flatten_list(var_list))
+})
+
+setMethod("parameters", "Atom", function(object) {
+  param_list <- lapply(object@.args, function(arg) { parameters(arg) })
+  unique(flatten_list(param_list))
+})
+
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   prod(size(x)) * Pnorm(x = x, p = -1)

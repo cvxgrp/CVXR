@@ -1,5 +1,5 @@
-.Variable <- setClass("Variable", representation(rows = "numeric", cols = "numeric", name = "character"),
-                                 prototype(rows = 1, cols = 1, name = NA_character_), contains = "Leaf")
+.Variable <- setClass("Variable", representation(id = "character", rows = "numeric", cols = "numeric", name = "character", primal_value = "numeric"),
+                                 prototype(id = UUIDgenerate(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_), contains = "Leaf")
 
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 

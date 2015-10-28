@@ -10,7 +10,8 @@ setMethod("shape_from_args", "Elementwise", function(object) {
   Reduce("+", obj_shapes)
 })
 
-Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
+.Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
+setMethod("abs", "Expression", function(x) { .Abs(x = x) })
 setMethod("initialize", "Abs", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
@@ -20,7 +21,8 @@ setMethod("sign_from_args", "Abs", function(object) { Sign(sign = SIGN_POSITIVE_
 setMethod("func_curvature", "Abs", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
 setMethod("monotonicity", "Abs", function(object) { SIGNED })
 
-Entr <- setClass("Entr", representation(x = "Expression"), contains = "Elementwise")
+.Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
+Entr <- function(x) { .Entr(x = x) }
 
 setMethod("initialize", "Entr", function(.Object, ..., x) {
   .Object@x <- x
@@ -31,7 +33,13 @@ setMethod("sign_from_args", "Entr", function(object) { Sign(sign = SIGN_UNKNOWN_
 setMethod("func_curvature", "Entr", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
 setMethod("monotonicity", "Entr", function(object) { NONMONOTONIC })
 
-Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
+.Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
+setMethod("exp", "Expression", function(x) { .Exp(x = x) })
+
+setMethod("initialize", "Exp", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
 
 setMethod("sign_from_args", "Exp", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
 setMethod("func_curvature", "Exp", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
@@ -46,7 +54,7 @@ setMethod("validate_args", "Huber", function(object) {
 })
 
 setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
-  .Object@M <- cast_to_const(M)
+  .Object@M <- as.Constant(M)
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
@@ -57,7 +65,8 @@ setMethod("monotonicity", "Huber", function(object) { SIGNED })
 
 InvPos <- function(x) { Power(x, -1) }
 
-Log <- setClass("Log", representation(x = "Expression"), contains = "Elementwise")
+.Log <- setClass("Log", representation(x = "Expression"), contains = "Elementwise")
+setMethod("log", "Expression", function(x) { .Log(x = x) })
 
 setMethod("initialize", "Log", function(.Object, ..., x) {
   .Object@x <- x
@@ -68,15 +77,21 @@ setMethod("sign_from_args", "Log", function(object) { Sign(sign = SIGN_UNKNOWN_K
 setMethod("func_curvature", "Log", function(object) { Curvature(curvature = CURV_CONCAVE_KEY) })
 setMethod("monotonicity", "Log", function(object) { INCREASING })
 
-Log1p <- setClass("Log1p", contains = "Log")
+.Log1p <- setClass("Log1p", contains = "Log")
+setMethod("log1p", "Expression", function(x) { .Log1p(x = x) })
 setMethod("sign_from_args", "Log1p", function(object) { object@.args[[1]]@dcp_attr@sign })
 
-Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
+.Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
+Logistic <- function(x) { .Logistic(x = x) }
 
 setMethod("initialize", "Logistic", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
+
+setMethod("sign_from_args", "Logistic", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
+setMethod("func_curvature", "Logistic", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
+setMethod("monotonicity", "Logistic", function(object) { INCREASING })
 
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
                            if(is.null(object@.args) || length(object@.args) < 2)
@@ -153,10 +168,6 @@ setMethod("graph_implementation", "MinElemwise", function(object, arg_objs, size
 
 Neg <- function(x) { -MinElemwise(x, 0) }
 
-setMethod("sign_from_args", "Logistic", function(object) { Sign(sign = SIGN_POSITIVE_KEY) })
-setMethod("func_curvature", "Logistic", function(object) { Curvature(curvature = CURV_CONVEX_KEY) })
-setMethod("monotonicity", "Logistic", function(object) { INCREASING })
-
 Pos <- function(x) { MaxElemwise(x, 0) }
 
 .Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric"), 
@@ -167,6 +178,7 @@ Pos <- function(x) { MaxElemwise(x, 0) }
                     }, contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
+setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, .w = NA_real_) {
   # TODO: Fill in p and w accordingly
@@ -218,6 +230,6 @@ setMethod("monotonicity", "Power", function(object) {
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 Sqrt <- function(x) { Power(x, 1/2) }
-setMethod("sqrt", "ConstValORExpr", function(x) { Sqrt(x) })
+setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
 
 Square <- function(x) { Power(x, 2) }

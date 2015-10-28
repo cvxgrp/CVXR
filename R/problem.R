@@ -85,10 +85,10 @@ setMethod("is_dcp", "Problem", function(object) {
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
 setMethod("-", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = -e1@objective, constraints = e1@constraints) })
 setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective + e2@objective, constraints = list(e1@constraints, e2@constraints))
+  Problem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
 })
 setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective - e2@objective, constraints = list(e1@constraints, e2@constraints))
+  Problem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
 })
 setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * e2, constraints = e1@constraints)

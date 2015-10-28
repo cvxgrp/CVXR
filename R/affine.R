@@ -254,7 +254,7 @@ Diag <- function(expr) {
 }
 
 Diff <- function(x, k = 1) {
-  x <- cast_to_const(x)
+  x <- as.Constant(x)
   m <- size(x)[1]
   n <- size(x)[2]
   
@@ -267,7 +267,22 @@ Diff <- function(x, k = 1) {
   d
 }
 
-.Index <- setClass("Index", representation(expr = "Expression", key = "numeric"))
+.HStack <- setClass("HStack", contains = "AffAtom")
+
+setMethod("validate_args", "HStack", function(object) {
+  arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
+  if(max(arg_cols) != min(arg_cols))
+    stop("All arguments to HStack must have the same number of rows")
+})
+
+setMethod("shape_from_args", "HStack", function(object) {
+  arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
+  cols <- sum(arg_cols)
+  rows <- size(object@.args[[1]])[1]
+  Shape(rows = rows, cols = cols)
+})
+
+.Index <- setClass("Index", representation(expr = "Expression", key = "numeric"), contains = "AffAtom")
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   .Object@key <- key   # TODO: Need to validate key
@@ -462,7 +477,21 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
 })
 
 Vec <- function(X) {
-  X <- cast_to_const(X)
+  X <- as.Constant(X)
   Reshape(expr = X, rows = size(X)[1] * size(X)[2], cols = 1)
 }
 
+.VStack <- setClass("VStack", contains = "AffAtom")
+
+setMethod("validate_args", "VStack", function(object) {
+  arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
+  if(max(arg_cols) != min(arg_cols))
+    stop("All arguments to VStack must have the same number of columns")
+})
+
+setMethod("shape_from_args", "VStack", function(object) {
+  cols <- size(object@.args[[1]])[2]
+  arg_rows <- sapply(object@.args, function(arg) { size(arg)[1] })
+  rows <- sum(arg_rows)
+  Shape(rows = rows, cols = cols)
+})

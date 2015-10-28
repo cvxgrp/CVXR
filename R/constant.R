@@ -103,3 +103,18 @@ setMethod("canonicalize", "Parameter", function(object) {
   obj <- create_param(object, object@size)
   list(obj, list())
 })
+
+.CallbackParam <- setClass("CallbackParam", representation(.callback = "ConstVal", rows = "numeric", cols = "numeric", name = "character", sign = "character"),
+                                            prototype(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY), contains = "Parameter")
+CallbackParam <- function(.callback, rows, cols, name, sign) {
+  .CallbackParam(.callback = .callback, rows = rows, cols = cols, name = name, sign = sign)
+}
+
+setMethod("initialize", "CallbackParam", function(.Object, ..., .callback, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY) {
+  .Object@.callback <- .callback
+  .Object@rows <- rows
+  .Object@cols <- cols
+  .Object@name <- name
+  .Object@sign <- sign
+  callNextMethod(.Object, ..., list(.Object@rows, .Object@cols, .Object@name, .Object@sign))
+})

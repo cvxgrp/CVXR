@@ -48,10 +48,10 @@ setMethod("canonicalize", "Atom", function(object) {
   if(is_constant(object)) {
     if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
       size <- size(object)
-      param <- CallbackParam(object@value, size[1], size[2])
+      param <- CallbackParam(value(object), size[1], size[2])
       return(canonical_form(param))
     } else
-      return(canonical_form(Constant(object@value)))
+      return(canonical_form(Constant(value(object))))
   } else {
     arg_objs <- lapply(object@.args, function(arg) { canonical_form(arg)[[1]] })
     constraints <- lapply(object@.args, function(arg) { canonical_form(arg)[[2]] })
@@ -73,6 +73,27 @@ setMethod("variables", "Atom", function(object) {
 setMethod("parameters", "Atom", function(object) {
   param_list <- lapply(object@.args, function(arg) { parameters(arg) })
   unique(flatten_list(param_list))
+})
+
+setMethod("value", "Atom", function(object) {
+  if(is_zero(object)) {
+    size <- size(object)
+    result <- matrix(rep(0, size[1] * size[2]), nrow = size[1], ncol = size[2])
+  } else {
+    arg_values <- list()
+    for(arg in object@.args) {
+      if(is.na(value(arg)) && !is_constant(arg))
+        return(NA)
+      else
+        arg_values <- c(arg_values, value(arg))
+    }
+    result <- lapply(arg_values, function(x) { as.matrix(x) })
+  }
+  
+  if(length(result) == 1 && all(dim(result[[1]]) == c(1,1)))
+    as.numeric(result[[1]])
+  else
+    result
 })
 
 HarmonicMean <- function(x) {
@@ -166,6 +187,78 @@ LambdaSumSmallest <- function(X, k) {
   -LambdaSumLargest(-X, k)
 }
 
+LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
+
+setMethod("validate_args", "LogDet", function(object) {
+  n <- size(object@.args[[1]])[1]
+  m <- size(object@.args[[1]])[2]
+  if(n != m)
+    stop("The argument to LogDet must be a square matrix")
+})
+
+setMethod("initialize", "LogDet", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., .args = list(.Object@A))
+})
+
+setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "LogDet", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature",  "LogDet", function(object) { Curvature.CONCAVE })
+setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
+
+LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
+
+setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
+setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
+setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
+
+MatrixFrac <- setClass("MatrixFrac", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+
+setMethod("validate_args", "MatrixFrac", function(object) {
+  x <- object@.args[[1]]
+  P <- object@.args[[2]]
+  if(size(P)[1] != size(P)[2])
+    stop("The second argument to MatrixFrac must be a square matrix")
+  else if(size(x)[2] != 1)
+    stop("The first argument to MatrixFrac must be a column vector")
+  else if(size(x)[1] != size(P)[1])
+    stop("The arguments to MatrixFrac have incompatible dimensions")
+})
+
+setMethod("initialize", "MatrixFrac", function(.Object, ..., x, P) {
+  .Object@x <- x
+  .Object@P <- P
+  callNextMethod(.Object, ..., .args = list(.Object@x, .Object@P))
+})
+
+setMethod("shape_from_args", "MatrixFrac", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "MatrixFrac", function(object) { Sign.POSITIVE })
+setMethod("func_curvature", "MatrixFrac", function(object) { Curvature.CONVEX })
+setMethod("monotonicity", "MatrixFrac", function(object) { rep(NONMONOTONIC, length(object@.args)) })
+
+.MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
+MaxEntries <- function(x) { .MaxEntries(x = x) }
+setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@dcp_attr@sign })
+setMethod("func_curvature",  "MaxEntries", function(object) { Curvature.CONVEX })
+setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
+
+.MinEntries <- setClass("MinEntries", contains = "MaxEntries")
+MinEntries <- function(x) { .MinEntries(x = x) }
+
+setMethod("func_curvature", "MinEntries", function(object) { Curvature.CONCAVE })
+
 #'
 #' The Pnorm class.
 #'
@@ -178,7 +271,7 @@ LambdaSumSmallest <- function(X, k) {
 
 Pnorm <- function(x, p = 2, max_denom = 1024) { .Pnorm(x = x, p = p, max_denom = max_denom) }
 
-setMethod("initialize", "Pnorm", definition = function(.Object, ..., x, p = 2, max_denom = 1024, .approx_error = NA_real_) {
+setMethod("initialize", "Pnorm", function(.Object, ..., x, p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@x <- x
   .Object@max_denom <- max_denom
   
@@ -304,54 +397,6 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
                       create_geq(y))
   list(v, constraints)
 })
-
-LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
-
-setMethod("validate_args", "LogDet", function(object) {
-  n <- size(object@.args[[1]])[1]
-  m <- size(object@.args[[1]])[2]
-  if(n != m)
-    stop("The argument to LogDet must be a square matrix")
-})
-
-setMethod("initialize", "LogDet", function(.Object, ..., A) {
-  .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
-})
-
-setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogDet", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature",  "LogDet", function(object) { Curvature.CONCAVE })
-setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
-
-LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
-
-setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., .args = list(.Object@x))
-})
-
-setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
-
-.MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
-MaxEntries <- function(x) { .MaxEntries(x = x) }
-setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., .args = list(.Object@x))
-})
-
-setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@dcp_attr@sign })
-setMethod("func_curvature",  "MaxEntries", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
-
-.MinEntries <- setClass("MinEntries", contains = "MaxEntries")
-MinEntries <- function(x) { .MinEntries(x = x) }
-
-setMethod("func_curvature", "MinEntries", function(object) { Curvature.CONCAVE })
 
 SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
 

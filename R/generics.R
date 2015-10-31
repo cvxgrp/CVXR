@@ -43,5 +43,6 @@ setGeneric("sum_squares", function(expr) { standardGeneric("sum_squares") })
 
 # Constraint generic methods
 setGeneric("id", function(object) { standardGeneric("id") })
+setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })

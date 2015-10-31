@@ -24,9 +24,21 @@ setMethod("canonicalize", "Variable", function(object) {
 
 # Boolean variable
 Bool <- setClass("Bool", contains = "Variable")
+setMethod("canonicalize", "Bool", function(object) {
+  canon <- callNextMethod(object)
+  obj <- canon[[1]]
+  constr <- canon[[2]]
+  list(obj, c(constr, BoolConstr(obj)))
+})
 
 # Integer variable
 Int <- setClass("Int", contains = "Variable")
+setMethod("canonicalize", "Int", function(object) {
+  canon <- callNextMethod(object)
+  obj <- canon[[1]]
+  constr <- canon[[2]]
+  list(obj, c(constr, IntConstr(obj)))
+})
 
 # Non-negative variable
 NonNegative <- setClass("NonNegative", contains = "Variable")
@@ -35,19 +47,57 @@ setMethod("init_dcp_attr", "NonNegative", function(object) {
   DCPAttr(Sign(sign = SIGN_POSITIVE_KEY), Curvature(curvature = CURV_AFFINE_KEY), Shape(rows = object@rows, cols = object@cols))
 })
 
-# Positive semidefinite matrix
-SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
-
-setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name, n) {
-  .Object@n = n
-  callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1, name = name)
+setMethod("canonicalize", "NonNegative", function(object) {
+  canon <- callNextMethod(object)
+  obj <- canon[[1]]
+  constr <- canon[[2]]
+  list(obj, c(constr, create_geq(obj)))
 })
+
+# Positive semidefinite matrix
+.SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
+SemidefUpperTri <- function(n, name) { 
+  if(missing(name))
+    .SemidefUpperTri(n = n) 
+  else
+    .SemidefUpperTri(n = n, name = name)
+}
+
+setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, n) {
+  .Object@n = n
+  callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1)
+})
+
+setMethod("canonicalize", "SemidefUpperTri", function(object) {
+  upper_tri <- create_var(c(size(object)[1], 1), object@id)
+  fill_coef <- upper_tri_to_full(object@n)
+  fill_coef <- create_const(fill_coef, c(object@n*object@n, size(object)[1]))
+  full_mat = mul_expr(fill_coef, upper_tri, c(object@n*object@n, 1))
+  full_mat <- reshape(full_mat, c(object@n, object@n))
+  list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
+})
+
+Semidef <- function(n, name) {
+  var <- SemidefUpperTri(n, name)
+  fill_mat <- Constant(upper_tri_to_full(n))
+  Reshape(fill_mat*var, n, n)
+}
 
 # Symmetric matrix
 SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
 
-setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name, n) {
+setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, n) {
   .Object@n = n
-  callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1, name = name)
+  callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1)
 })
 
+setMethod("canonicalize", "SemidefUpperTri", function(object) {
+  upper_tri <- create_var(c(size(object)[1], 1), object@id)
+  list(upper_tri, list())
+})
+
+Symmetric <- function(n, name) {
+  var <- SymmetricUpperTri(n, name)
+  fill_mat <- Constant(upper_tri_to_full(n))
+  Reshape(fill_mat*var, round(n), round(n))
+}

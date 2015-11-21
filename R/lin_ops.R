@@ -1,14 +1,4 @@
-.LinOp <- setClass("LinOp", representation(type = "character", size = "numeric", args = "list", data = "ANY"),
-                          prototype(args = list(), data = NA_real_))
-LinOp <- function(type, size, args, data) { .LinOp(type = type, size = size, args = args, data = data) }
-setMethod("size", "LinOp", function(object) { object@size })
-
-.LinConstr <- setClass("LinConstr", representation(expr = "ANY", constr_id = "numeric", size = "numeric"))
-LinConstr <- function(expr, constr_id, size) { .LinConstr(expr = expr, constr_id = constr_id, size = size) }
-
-LinEqConstr <- setClass("LinEqConstr", contains = "LinConstr")
-LinLeqConstr <- setClass("LinLeqConstr", contains = "LinConstr")
-
+# Types of linear operators
 VARIABLE = "variable"
 PROMOTE = "promote"
 MUL = "mul"
@@ -36,13 +26,28 @@ PARAM = "param"
 NO_OP = "no_op"
 CONSTANT_ID = "constant_id"
 
+# Create lists to represent linear operators and constraints
+LinOp <- function(type, size, args = list(), data = NA_real_) {
+  if(!is.character(type)) stop("type must be a character string")
+  if(!is.numeric(size)) stop("size must be a numeric vector")
+  if(!is.list(args)) stop("args must be a list of arguments")
+  list(type = type, size = size, args = args, data = data)
+}
+
+LinConstr <- function(expr, constr_id, size) {
+  if(!is.numeric(constr_id)) stop("constr_id must be an integer")
+  if(!is.numeric(size)) stop("size must be a numeric vector")
+  list(expr = expr, constr_id = constr_id, size = size)
+}
+
+LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size) }
+LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size) }
+
 get_id <- function() {
   sample.int(.Machine$integer.max, 1)
 }
 
-create_var <- function(size, var_id) {
-  if(missing(var_id))
-    var_id <- 12345    # TODO: Get unique ID
+create_var <- function(size, var_id = get_id()) {
   LinOp(VARIABLE, size, list(), var_id)
 }
 

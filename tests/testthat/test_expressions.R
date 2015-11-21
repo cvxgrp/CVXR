@@ -14,7 +14,7 @@ test_that("test the Variable class", {
   expect_equal(size(x), c(2,1))
   expect_equal(size(y), c(1,1))
   expect_equal(curvature(x), Curvature.AFFINE)
-  expect_equal(size(canonical_form(x)[[1]]), c(2,1))
+  expect_equal(canonical_form(x)[[1]]$size, c(2,1))
   expect_equal(canonical_form(x)[[2]], list())
 })
 
@@ -39,7 +39,7 @@ test_that("test the Constant class", {
   expect_equal(sign(c), Sign.POSITIVE)
   expect_equal(sign(Constant(-2)), Sign.NEGATIVE)
   expect_equal(sign(Constant(0)), Sign.ZERO)
-  expect_equal(size(canonical_form(c)[[1]]), c(1,1))
+  expect_equal(canonical_form(c)[[1]]$size, c(1,1))
   expect_equal(canonical_form(c)[[2]], list())
 })
 

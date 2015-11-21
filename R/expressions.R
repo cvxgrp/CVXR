@@ -93,6 +93,7 @@ setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) })
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 # TODO: Should I overload matrix multiplication %*% operator to point to regular multiplication *?
+# TODO: Overload the [ operator for slicing rows/columns from an expression
 
 #'
 #' The Leaf class.

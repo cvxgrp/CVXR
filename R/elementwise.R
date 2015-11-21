@@ -234,7 +234,7 @@ Norm2Elemwise <- setClass("Norm2Elemwise", contains = "Elementwise")
 setMethod("sign_from_args", "Norm2Elemwise", function(object) { Sign.POSITIVE })
 setMethod("func_curvature", "Norm2Elemwise", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "Norm2Elemwise", function(object) { rep(SIGNED, length(object@.args)) })
-Norm2Elemwise <- function(arg_objs, size, data = NA_real_) {
+Norm2Elemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   arg_objs <- lapply(arg_objs, function(obj) {
     if(size(obj) != size)

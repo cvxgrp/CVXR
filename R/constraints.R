@@ -2,7 +2,7 @@ setClass("Constraint", representation(id = "character"), prototype(id = UUIDgene
 setMethod("id", "Constraint", function(object) { object@id })
 
 # TODO: What type should lin_op be? Need linear operator object.
-.BoolConstr <- setClass("BoolConstr", representation(lin_op = "ANY", .noncvx_var = "LinOp"), 
+.BoolConstr <- setClass("BoolConstr", representation(lin_op = "ANY", .noncvx_var = "list"), 
                                       prototype(.noncvx_var = NULL), 
                                       validity = function(object) {
                                         if(!is.null(object@.noncvx_var))

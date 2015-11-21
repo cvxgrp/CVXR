@@ -286,6 +286,7 @@ HStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 }
 
 .Index <- setClass("Index", representation(expr = "Expression", key = "numeric"), contains = "AffAtom")
+Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   .Object@key <- key   # TODO: Need to validate key

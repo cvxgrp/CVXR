@@ -68,7 +68,7 @@ get_sign <- function(constant) {
 #' @slot value Holds the solved numeric value of the parameter.
 #' @aliases Parameter
 #' @export
-.Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "numeric", name = "character", sign = "character", value = "numeric"),
+.Parameter <- setClass("Parameter", representation(rows = "numeric", cols = "numeric", name = "character", sign = "character", value = "ConstVal"),
                                     prototype(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_), 
                       validity = function(object) {
                         if(!(object@sign %in% SIGN_STRINGS))

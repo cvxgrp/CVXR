@@ -199,7 +199,8 @@ LambdaSumSmallest <- function(X, k) {
   -LambdaSumLargest(-X, k)
 }
 
-LogDet <- setClass("LogDet", representation(A = "matrix"), contains = "Atom")
+.LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
+LogDet <- function(A) { .LogDet(A = A) }
 
 setMethod("validate_args", "LogDet", function(object) {
   n <- size(object@.args[[1]])[1]
@@ -566,15 +567,19 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
-  rows <- size(values)[1]
-  cols <- size(values)[2]
+  rows <- size(value)[1]
+  cols <- size(value)[2]
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
-  else if(is_vector(value))
+  else if(is_vector(value))   # L1 norm for vectors
     norm(value[-1] - value[1:(max(rows, cols) - 1)], 1)
-  else {
+  else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
     values <- c(value, args)
-    # TODO: Finish when Norm2Elemwise is done
+    diffs <- lapplt(values, function(mat) {
+      list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
+           mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)])
+    })
+    SumEntries(Norm2Elemwise(.args = flatten_list(diffs)))
   }
 }

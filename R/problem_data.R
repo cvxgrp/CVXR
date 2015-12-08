@@ -41,13 +41,13 @@ setMethod("initialize", "SymData", function(.Object, objective, constraints, sol
 
 SymData.filter_constraints <- function(constraints) {
   constr_map <- list()
-  constr_map[[EQ]] <- constraints[sapply(constraints, function(c) { is(c, "LinEqConstr") })]
-  constr_map[[LEQ]] <- constraints[sapply(constraints, function(c) { is(c, "LinLeqConstr") })]
-  constr_map[[SOC]] <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  constr_map[[SDP]] <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
-  constr_map[[EXP]] <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
+  constr_map[[EQ]]   <- constraints[sapply(constraints, function(c) { is(c, "LinEqConstr") })]
+  constr_map[[LEQ]]  <- constraints[sapply(constraints, function(c) { is(c, "LinLeqConstr") })]
+  constr_map[[SOC]]  <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
+  constr_map[[SDP]]  <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  constr_map[[EXP]]  <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
   constr_map[[BOOL]] <- constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
-  constr_map[[INT]] <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
+  constr_map[[INT]]  <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
   constr_map
 }
 
@@ -84,18 +84,18 @@ SymData.presolve <- function(objective, constr_map) {
     }
     constr_map[[key]] <- new_constraints
   }
-  return(NA)
+  return(NA)   # TODO: Return objective and constr_map as well?
 }
 
 SymData.format_for_solver <- function(constr_map, solver) {
   dims <- list()
-  dims[[EQ_DIM]] <- sum(sapply(constr_map[[EQ]], function(c) { size(c)[1] * size(c)[2] }))
-  dims[[LEQ_DIM]] <- sum(sapply(constr_map[[LEQ]], function(c) { size(c)[1] * size(c)[2] }))
-  dims[[SOC_DIM]] <- list()
-  dims[[SDP_DIM]] <- list()
-  dims[[EXP_DIM]] <- 0
+  dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ]],  function(c) { size(c)[1] * size(c)[2] }))
+  dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ]], function(c) { size(c)[1] * size(c)[2] }))
+  dims[[SOC_DIM]]  <- list()
+  dims[[SDP_DIM]]  <- list()
+  dims[[EXP_DIM]]  <- 0
   dims[[BOOL_IDS]] <- list()
-  dims[[INT_IDS]] <- list()
+  dims[[INT_IDS]]  <- list()
   
   # Formats nonlinear constraints for the solver
   for(constr_type in names(dims)) {
@@ -115,7 +115,12 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   for(constr in nonlinear)
     vars_ <- c(vars_, lapply(variables(constr), function(nonlin_var) { get_expr_vars(nonlin_var) }))
 
-  # TODO: Create var_names, var_sizes, and vert_offset
+  # TODO: Create var_sizes sorted by unique var_id
+  # var_sizes <- sapply(vars_, function(var_names) { var_names[[2]] })
+  # size_prods <- sapply(var_sizes, function(var_size) { var_size[1]*var_size[2] })
+  # var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+  # vert_offset <- sum(size_prods)
+  # list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
 
 #'
@@ -128,4 +133,7 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 #' @slot prev_result A \code{list} representing the result of the last solve
 #' @aliases ProblemData
 #' @export
-ProblemData <- setClass("ProblemData", representation(sym_data = "SymData", matrix_data = "MatrixData", prev_result = "list"))
+.ProblemData <- setClass("ProblemData", representation(sym_data = "SymData", matrix_data = "MatrixData", prev_result = "list"))
+ProblemData <- function(sym_data = NA, matrix_data = NA, prev_result = NA) { 
+  .ProblemData(sym_data = sym_data, matrix_data = matrix_data, prev_result = prev_result)
+}

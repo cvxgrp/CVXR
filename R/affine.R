@@ -226,6 +226,14 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
   Conv.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The DiagVec class.
+#'
+#' This class represents the conversion of a vector into a diagonal matrix.
+#'
+#' @slot expr An \S4class{Expression} representing the vector to convert.
+#' @aliases DiagVec
+#' @export
 .DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
 DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
@@ -247,6 +255,14 @@ setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, da
   DiagVec.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The DiagMat class.
+#'
+#' This class represents the extraction of the diagonal from a square matrix.
+#'
+#' @slot expr An \S4class{Expression} representing the matrix whose diagonal we are interested in.
+#' @aliases DiagMat
+#' @export
 .DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
 DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
@@ -268,6 +284,12 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
   DiagMat.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' Matrix Diagonals
+#' 
+#' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
+#' 
+#' @param x An \S4class{Expression} or numeric constant representing a vector or diagonal matrix.
 setMethod("diag", "Expression", function(x) { 
   x <- as.Constant(x)
   if(is_vector(x)) {

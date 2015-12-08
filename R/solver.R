@@ -24,6 +24,15 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
     stop("The solver ", name(solver), " cannot solve the problem")
 }
 
+setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
+  prob_data <- cached_data[[name(solver)]]
+  if(!is.na(prob_data@sym_data) && (objective != prob_data@sym_data@objective || constraints != prob_data@sym_data@constraints)) {
+    prob_data@sym_data <- NA
+    prob_data@matrix_data <- NA
+  }
+  prob_data
+})
+
 setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cached_data) {
   validate_cache(solver, objective, constraints, cached_data)
   prob_data <- cached_data[[name(solver)]]
@@ -57,11 +66,31 @@ setMethod("get_problem_data", "Solver", function(solver, objective, constraints,
   data[[H]] <- ineq[[2]]
   data[[DIMS]] <- sym_data@dims
   
-  # TODO: non-convex ID to index
-  data[[BOOL_IDX]] <- bool_idx
-  data[[INT_IDX]] <- int_idx
+  conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@var_offsets, sym_data@var_sizes)
+  data[[BOOL_IDX]] <- conv_idx$bool_idx
+  data[[INT_IDX]] <- conv_idx$int_idx
   data
 })
+
+Solver.is_mip <- function(data) {
+  length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+}
+
+Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
+  bool_idx <- lapply(dims[BOOL_IDS], function(var_id) {
+    offset <- var_offsets[var_id]
+    size <- var_sizes[var_id]
+    offset + seq(1, size[1]*size[2], by = 1)
+  })
+  
+  int_idx <- lapply(dims[INT_IDS], function(var_id) {
+    offset <- var_offsets[var_id]
+    size <- var_sizes[var_id]
+    offset + seq(1, size[1]*size[2], by = 1)
+  })
+  
+  list(bool_idx = bool_idx, int_idx = int_idx)
+}
 
 .ECOS <- setClass("ECOS", contains = "Solver")
 
@@ -70,15 +99,15 @@ setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
-  c(constr_map[[EQ]], constr_map[[LEQ]], list())
+  list(eq_constr = constr_map[[EQ]], ineq_constr = constr_map[[LEQ]], nonlin_constr = list())
 })
 
 setMethod("solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(ECOSolveR)
-  data <- get_problem_data(objective, constraints, cached_data)
+  data <- get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
-  # results_dict <- ECOSolveR::solve(data[[C]], data[[G]], data[[H]], data[[DIMS]], data[[A]], data[[B]])
-  format_results(result_dict, data, cached_data)
+  # TODO: results_dict <- ECOSolveR::solve(data[[C]], data[[G]], data[[H]], data[[DIMS]], data[[A]], data[[B]])
+  format_results(solver, result_dict, data, cached_data)
 })
 
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {

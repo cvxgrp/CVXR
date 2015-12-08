@@ -129,6 +129,10 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
+  KLDiv.graph_implementation(arg_objs, size, data)
+})
+
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 LambdaMax <- function(A) { .LambdaMax(A = A) }
 
@@ -156,6 +160,10 @@ LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(SDP(expr)))
 }
 
+setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
+  LambdaMax.graph_implementation(arg_objs, size, data)
+})
+
 .LambdaMin <- setClass("LambdaMin", representation(A = "ConstValORExpr"), contains = "Atom")
 LambdaMin <- function(A) { .LambdaMin(A = A) }
 
@@ -182,6 +190,10 @@ LambdaMin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   expr <- sub_expr(A, diag_vec(prom_t))
   list(t, list(SDP(expr)))
 }
+
+setMethod("graph_implementation", "LambdaMin", function(object, arg_objs, size, data = NA_real_) {
+  LambdaMin.graph_implementation(arg_objs, size, data)
+})
 
 LambdaSumLargest <- function(X, k) {
   X <- as.Constant(X)
@@ -250,7 +262,12 @@ setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
 #   block_eq(X, A, constraints, n, 2*n, n, 2*n)
 # }
 
-LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
+setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
+  LogDet.graph_implementation(arg_objs, size, data)
+})
+
+.LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
+LogSumExp <- function(x) { .LogSumExp(x = x) }
 
 setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
   .Object@x <- x
@@ -283,7 +300,12 @@ LogSumExp.graph_implementation <- function(object) {
   list(t, constraints)
 }
 
-MatrixFrac <- setClass("MatrixFrac", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, data = NA_real_) {
+  LogSumExp.graph_implementation(arg_objs, size, data)
+})
+
+.MatrixFrac <- setClass("MatrixFrac", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+MatrixFrac <- function(x, P) { .MatrixFrac(x = x, P = P) }
 
 setMethod("validate_args", "MatrixFrac", function(object) {
   x <- object@.args[[1]]
@@ -320,6 +342,10 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, c(constraints, SDP(M)))
 }
 
+setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
+  MatrixFrac.graph_implementation(arg_objs, size, data)
+})
+
 .MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
 MaxEntries <- function(x) { .MaxEntries(x = x) }
 setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
@@ -340,6 +366,10 @@ MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size, data = NA_real_) {
+  MaxEntries.graph_implementation(arg_objs, size, data)
+})
+
 .MinEntries <- setClass("MinEntries", contains = "MaxEntries")
 MinEntries <- function(x) { .MinEntries(x = x) }
 
@@ -352,6 +382,10 @@ MinEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- list(create_leq(promoted_t, x))
   list(t, constraints)
 }
+
+setMethod("graph_implementation", "MinEntries", function(object, arg_objs, size, data = NA_real_) {
+  MinEntries.graph_implementation(arg_objs, size, data)
+})
 
 #'
 #' The Pnorm class.
@@ -437,12 +471,19 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
+  Pnorm.graph_implementation(arg_objs, size, data)
+})
+
 setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { Pnorm(x = x, p = type) })
 Norm1   <- function(x) { Pnorm(x = x, p = 1) }
 Norm2   <- function(x) { Pnorm(x = x, p = 2) }
 NormInf <- function(x) { Pnorm(x = x, p = Inf) }
+
 # TODO: MixedNorm implementation
-NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
+
+.NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
+NormNuc <- function(A) { .NormNuc(A = A) }
 
 setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   .Object@A <- A
@@ -464,6 +505,10 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # TODO: Finish implementation once index graph implementation is done
   list()
 }
+
+setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
+  NormNuc.graph_implementation(arg_objs, size, data)
+})
 
 #'
 #' The QuadOverLin class.
@@ -504,7 +549,12 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(v, constraints)
 }
 
-SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
+setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
+  QuadOverLin.graph_implementation(arg_objs, size, data)
+})
+
+.SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
+SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
 setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   .Object@A <- A
@@ -530,11 +580,17 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list()
 }
 
-SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
+setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
+  SigmaMax.graph_implementation(arg_objs, size, data)
+})
+
+.SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
                        validity = function(object) {
                          if(round(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
                          }, contains = "Atom")
+
+SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
 
 setMethod("shape_from_args", "SumLargest", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args", "SumLargest", function(object) { object@.args[[1]]@dcp_attr@sign })
@@ -557,6 +613,10 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constr <- c(constr, create_geq(t))
   list(obj, constr)
 }
+
+setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size, data = NA_real_) {
+  SumLargest.graph_implementation(arg_objs, size, data)
+})
 
 SumSmallest <- function(x, k) {
   x <- as.Constant(x)

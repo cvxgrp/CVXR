@@ -188,7 +188,9 @@ get_expr_params <- function(operator) {
   if(operator$type == PARAM)
     parameters(operator$data)
   else {
-    params <- lapply(operator$args, function(arg) { get_expr_params(arg) })
+    params <- list()
+    for(arg in operator$args)
+      params <- c(params, get_expr_params(arg))
     if(is(operator$data, "LinOp"))
       params <- c(params, get_expr_params(operator$data))
     params
@@ -204,7 +206,9 @@ replace_new_vars <- function(expr, id_to_new_var) {
   if(expr$type == VARIABLE && expr$data %in% id_to_new_var)
     id_to_new_var[expr$data]
   else {
-    new_args <- lapply(expr$args, function(arg) { replace_new_vars(arg, id_to_new_var) })
+    new_args <- list()
+    for(arg in expr$args)
+      new_args <- c(new_args, replace_new_vars(arg, id_to_new_var))
     LinOp(expr$type, expr$size, new_args, expr$data)
   }
 }
@@ -213,7 +217,10 @@ replace_params_with_consts <- function(expr) {
   if(expr$type == PARAM)
     create_const(expr$data$value, expr$size)
   else {
-    new_args <- lapply(expr$args, function(arg) { replace_params_with_consts(arg) })
+    new_args <- list()
+    for(arg in expr$args)
+      new_args <- c(new_args, replace_params_with_consts(arg))
+    # Data could also be a parameter
     if(is(expr$data, "LinOp") && expr$data$type == PARAM) {
       data_lin_op <- expr$data
       data <- create_const(data_lin_op$data$value, data_lin_op$size)

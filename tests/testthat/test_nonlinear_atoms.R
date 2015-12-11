@@ -39,7 +39,7 @@ test_that("Test log problems", {
 
 test_that("Test a problem with entr", {
   for(n in c(5, 10, 25)) {
-    print(n)
+    # print(n)
     x <- Variable(n)
     obj <- Maximize(SumEntries(Entr(x)))
     p <- Problem(obj, list(SumEntries(x) == 1))
@@ -49,7 +49,7 @@ test_that("Test a problem with entr", {
 
 test_that("Test a problem with exp", {
   for(n in c(5, 10, 25)) {
-    print(n)
+    # print(n)
     x <- Variable(n)
     obj <- Minimize(SumEntries(exp(x)))
     p <- Problem(obj, list(SumEntries(x) == 1))
@@ -59,7 +59,7 @@ test_that("Test a problem with exp", {
 
 test_that("Test a problem with log", {
   for(n in c(5, 10, 25)) {
-    print(n)
+    # print(n)
     x <- Variable(n)
     obj <- Maximize(SumEntries(log(x)))
     p <- Problem(obj, list(SumEntries(x) == 1))

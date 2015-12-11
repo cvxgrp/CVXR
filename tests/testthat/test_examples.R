@@ -68,7 +68,7 @@ test_that("Test examples from the README", {
   # expr is an Expression object after each assignment
   expr <- 2*x
   expr <- expr - a
-  expr <- SumEntries(expr) + norm(x, 2)
+  expr <- SumEntries(expr) + Pnorm(x, 2)
   ###########################################
   # Problem data
   n <- 10
@@ -79,7 +79,7 @@ test_that("Test examples from the README", {
   
   # Construct the problem
   x <- Variable(m)
-  objective <- Minimize(SumEntries(Square(A*x - b)) + gamma*norm(x, 1))
+  objective <- Minimize(SumEntries(Square(A*x - b)) + gamma*Pnorm(x, 1))
   p <- Problem(objective)
   ###########################################
   n <- 10
@@ -304,7 +304,7 @@ test_that("Test examples from CVXR introduction", {
   # Construct the problem
   x <- Variable(m)
   error <- SumSquares(A*x - b)
-  obj <- Minimize(error + gamma * norm(x, 1))
+  obj <- Minimize(error + gamma * Pnorm(x, 1))
   prob <- Problem(obj)
   
   # Construct a trade-off curve of ||Ax-b||^2 vs. ||x||_1
@@ -318,9 +318,9 @@ test_that("Test examples from CVXR introduction", {
   A <- matrix(1, nrow = 3, ncol = 5)
   
   # Use size(expr) to get the dimensions
-  cat("dimensions of X:", size(X))
-  cat("\ndimensions of SumEntries(X):", size(SumEntries(X)))
-  cat("\ndimensions of A * X:", size(A * X))
+  # cat("dimensions of X:", size(X))
+  # cat("\ndimensions of SumEntries(X):", size(SumEntries(X)))
+  # cat("\ndimensions of A * X:", size(A * X))
   
   # ValueError raised for invalid dimensions
   expect_error(A + X)

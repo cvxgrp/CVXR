@@ -123,7 +123,7 @@ test_that("Test problems with Norm2", {
   # result <- solve(p)
   
   # Row arguments
-  p <- Problem(Minimize(Norm2(t(x - z)) + 5), list(x >= matrix(c(2,3)), z <= matrix(c(-1-4))))
+  p <- Problem(Minimize(Norm2(t(x - z)) + 5), list(x >= matrix(c(2,3)), z <= matrix(c(-1,-4))))
   # result <- solve(p)
 })
 

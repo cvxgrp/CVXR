@@ -290,7 +290,9 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
 #' 
 #' @param x An \S4class{Expression} or numeric constant representing a vector or diagonal matrix.
-setMethod("diag", "Expression", function(x) { 
+#' @aliases Diag
+#' @export
+Diag <- function(x) {
   x <- as.Constant(x)
   if(is_vector(x)) {
     if(size(x)[2] == 1)
@@ -303,9 +305,8 @@ setMethod("diag", "Expression", function(x) {
     return(DiagMat(x))
   else
     stop("Argument to diag must be a vector or square matrix")
-})
+}
 
-# TODO: Overload diff function in R
 Diff <- function(x, k = 1) {
   x <- as.Constant(x)
   m <- size(x)[1]

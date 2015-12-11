@@ -218,17 +218,17 @@ test_that("test the Reshape class", {
 })
 
 test_that("test the Diag class", {
-  expr <- diag(x)
+  expr <- Diag(x)
   expect_equal(sign(expr), Sign.UNKNOWN)
   expect_equal(curvature(expr), Curvature.AFFINE)
   expect_equal(size(expr), c(2,2))
   
-  expr <- diag(A)
+  expr <- Diag(A)
   expect_equal(sign(expr), Sign.UNKNOWN)
   expect_equal(curvature(expr), Curvature.AFFINE)
   expect_equal(size(expr), c(2,1))
   
-  expect_error(diag(C))
+  expect_error(Diag(C))
 })
 
 test_that("test the Trace class", {

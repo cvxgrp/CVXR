@@ -90,6 +90,7 @@ setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2
 setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 > as.Constant(e2) })
 setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
 
+t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) })
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 # TODO: Should I overload matrix multiplication %*% operator to point to regular multiplication *?

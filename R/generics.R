@@ -46,3 +46,32 @@ setGeneric("id", function(object) { standardGeneric("id") })
 setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
+
+# Solver generic methods
+setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
+setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
+setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
+setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
+setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
+
+setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
+setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
+setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
+setGeneric("solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("solve") })
+setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
+
+# Problem data generic methods
+setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })
+setGeneric(".dummy_constr", function(object) { standardGeneric(".dummy_constr") })
+setGeneric("get_objective", function(object) { standardGeneric("get_objective") })
+setGeneric("get_eq_constr", function(object) { standardGeneric("get_eq_constr") })
+setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_constr") })
+setGeneric(".init_matrix_cache", function(object, constraints, x_length) { standardGeneric(".init_matrix_cache") })
+setGeneric(".lin_matrix", function(object, mat_cache, caching) { standardGeneric(".lin_matrix") })
+setGeneric(".cache_to_matrix", function(object, mat_cache) { standardGeneric(".cache_to_matrix") })
+
+
+
+
+
+

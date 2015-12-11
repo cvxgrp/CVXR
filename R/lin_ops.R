@@ -66,11 +66,11 @@ create_const <- function(value, size, sparse = FALSE) {
 }
 
 sum_expr <- function(operators) {
-  LinOp(SUM, size(operators[1]), operators)
+  LinOp(SUM, operators[[1]]$size, operators)
 }
 
 neg_expr <- function(operator) {
-  LinOp(NEG, size(operator), list(operator))  
+  LinOp(NEG, operator$size, list(operator))  
 }
 
 sub_expr <- function(lh_op, rh_op) {
@@ -86,7 +86,7 @@ rmul_expr <- function(lh_op, rh_op, size) {
 }
 
 mul_elemwise <- function(lh_op, rh_op) {
-  LinOp(MUL_ELEM, size(lh_op), list(rh_op), lh_op)
+  LinOp(MUL_ELEM, lh_op$size, list(rh_op), lh_op)
 }
 
 kron <- function(lh_op, rh_op, size) {
@@ -94,7 +94,7 @@ kron <- function(lh_op, rh_op, size) {
 }
 
 div_expr <- function(lh_op, rh_op) {
-  LinOp(DIV, size(lh_op), list(lh_op), rh_op)
+  LinOp(DIV, lh_op$size, list(lh_op), rh_op)
 }
 
 promote <- function(operator, size) {
@@ -118,7 +118,7 @@ conv <- function(lh_op, rh_op, size) {
 }
 
 transpose <- function(operator) {
-  size = c(size(operator)[2], size(operator)[1])
+  size = c(operator$size[2], operator$size[1])
   LinOp(TRANSPOSE, size, list(operator))
 }
 
@@ -127,18 +127,18 @@ reshape <- function(operator, size) {
 }
 
 diag_vec <- function(operator) {
-  size <- c(size(operator)[1], size(operator)[1])
+  size <- c(operator$size[1], operator$size[1])
   LinOp(DIAG_VEC, size, list(operator))
 }
 
 diag_mat <- function(operator) {
-  size = c(size(operator)[1], 1)
+  size = c(operator$size[1], 1)
   LinOp(DIAG_MAT, size, list(operator))
 }
 
 upper_tri <- function(operator) {
-  entries <- size(operator)[1] * size(operator)[2]
-  size <- c(floor((entries - size(operator)[1])/2), 1)
+  entries <- operator$size[1] * operator$size[2]
+  size <- c(floor((entries - operator$size[1])/2), 1)
   LinOp(UPPER_TRI, size, list(operator))
 }
 
@@ -159,12 +159,12 @@ get_constr_expr <- function(lh_op, rh_op) {
 
 create_eq <- function(lh_op, rh_op, constr_id = get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
-  LinEqConstr(expr, constr_id, size(lh_op))
+  LinEqConstr(expr, constr_id, lh_op$size)
 }
 
 create_leq <- function(lh_op, rh_op, constr_id = get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
-  LinLeqConstr(expr, constr_id, size(lh_op))
+  LinLeqConstr(expr, constr_id, lh_op$size)
 }
 
 create_geq <- function(lh_op, rh_op, constr_id) {
@@ -174,48 +174,51 @@ create_geq <- function(lh_op, rh_op, constr_id) {
 }
 
 get_expr_vars <- function(operator) {
-  if(operator@type == VARIABLE)
-    list(c(operator@data, operator@size))
+  if(operator$type == VARIABLE)
+    list(list(operator$data, operator$size))
   else {
-    lapply(operator@args, function(arg) { get_expr_vars(arg) })
+    vars_ <- list()
+    for(arg in operator$args)
+      vars_ <- c(vars_, get_expr_vars(arg))
+    vars_
   }
 }
 
 get_expr_params <- function(operator) {
-  if(operator@type == PARAM)
-    parameters(operator@data)
+  if(operator$type == PARAM)
+    parameters(operator$data)
   else {
-    params <- lapply(operator@args, function(arg) { get_expr_params(arg) })
-    if(is(operator@data, "LinOp"))
-      params <- c(params, get_expr_params(operator@data))
+    params <- lapply(operator$args, function(arg) { get_expr_params(arg) })
+    if(is(operator$data, "LinOp"))
+      params <- c(params, get_expr_params(operator$data))
     params
   }
 }
 
 copy_constr <- function(constr, func) {
-  expr <- func(constr@expr)
-  new(class(constr), expr, constr@constr_id, constr@size)
+  expr <- func(constr$expr)
+  new(class(constr), expr, constr$constr_id, constr$size)
 }
 
 replace_new_vars <- function(expr, id_to_new_var) {
-  if(expr@type == VARIABLE && expr@data %in% id_to_new_var)
-    id_to_new_var[expr@data]
+  if(expr$type == VARIABLE && expr$data %in% id_to_new_var)
+    id_to_new_var[expr$data]
   else {
-    new_args <- lapply(expr@args, function(arg) { replace_new_vars(arg, id_to_new_var) })
-    LinOp(expr@type, expr@size, new_args, expr@data)
+    new_args <- lapply(expr$args, function(arg) { replace_new_vars(arg, id_to_new_var) })
+    LinOp(expr$type, expr$size, new_args, expr$data)
   }
 }
 
 replace_params_with_consts <- function(expr) {
-  if(expr@type == PARAM)
-    create_const(expr@data@value, expr@size)
+  if(expr$type == PARAM)
+    create_const(expr$data$value, expr$size)
   else {
-    new_args <- lapply(expr@args, function(arg) { replace_params_with_consts(arg) })
-    if(is(expr@data, "LinOp") && expr@data@type == PARAM) {
-      data_lin_op <- expr@data
-      data <- create_const(data_lin_op@data@value, data_lin_op@size)
+    new_args <- lapply(expr$args, function(arg) { replace_params_with_consts(arg) })
+    if(is(expr$data, "LinOp") && expr$data$type == PARAM) {
+      data_lin_op <- expr$data
+      data <- create_const(data_lin_op$data$value, data_lin_op$size)
     } else
-      data <- expr@data
-    LinOp(expr@type, expr@size, new_args, data)
+      data <- expr$data
+    LinOp(expr$type, expr$size, new_args, data)
   }
 }

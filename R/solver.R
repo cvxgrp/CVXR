@@ -1,3 +1,5 @@
+Solver <- setClass("Solver", contains = "VIRTUAL")
+
 Solver.choose_solver <- function(constraints) {
   constr_map <- SymData.filter_constraints(constraints)
   # If no constraints, use ECOS.
@@ -22,7 +24,7 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
      (constr_map[[SOC]] && !socp_capable(solver)) || 
      (length(constraints) == 0 && name(solver) %in% c(SCS, GLPK)))
     stop("The solver ", name(solver), " cannot solve the problem")
-}
+})
 
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
@@ -94,7 +96,7 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 
 .ECOS <- setClass("ECOS", contains = "Solver")
 
-setMethod("name", "ECOS", function(solver) { ECOS })
+setMethod("name", "ECOS", function(object) { ECOS })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 

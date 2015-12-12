@@ -28,17 +28,18 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
 
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
-  if(!is.na(prob_data@sym_data) && (objective != prob_data@sym_data@objective || constraints != prob_data@sym_data@constraints)) {
-    prob_data@sym_data <- NA
-    prob_data@matrix_data <- NA
+  if(!is.null(prob_data@sym_data) && (objective != prob_data@sym_data@objective || constraints != prob_data@sym_data@constraints)) {
+    prob_data@sym_data <- NULL
+    prob_data@matrix_data <- NULL
   }
-  prob_data
+  cached_data[[name(solver)]] <- prob_data
+  cached_data
 })
 
 setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cached_data) {
-  validate_cache(solver, objective, constraints, cached_data)
+  cached_data <- validate_cache(solver, objective, constraints, cached_data)
   prob_data <- cached_data[[name(solver)]]
-  if(is.na(prob_data@sym_data))
+  if(is.null(prob_data@sym_data))
     prob_data@sym_data <- SymData(objective, constraints, solver)
   prob_data@sym_data
 })

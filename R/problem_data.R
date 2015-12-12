@@ -13,16 +13,16 @@
 #' @slot presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
 #' @aliases SymData
 #' @export
-.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", solver = "Solver", .constr_map = "list", .dims = "numeric", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
-                     prototype(.constr_map = NULL, .dims = NA_real_, .var_offsets = NULL, .var_sizes = NULL, .x_length = NA_real_, .presolve_status = NA_character_),
+.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", solver = "Solver", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
+                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_),
                      validity = function(object) {
-                       if(!is.null(object@.constr_map))
+                       if(length(object@.constr_map) > 0)
                          stop("[Validation: SymData] .constr_map is an internal variable that should not be set by user")
-                       if(!is.na(object@.dims))
+                       if(length(object@.dims) > 0)
                          stop("[Validation: SymData] .dims is an internal variable that should not be set by user")
-                       if(!is.null(object@.var_offsets))
+                       if(length(object@.var_offsets) > 0)
                          stop("[Validation: SymData] .var_offsets is an internal variable that should not be set by user")
-                       if(!is.null(object@.var_sizes))
+                       if(length(object@.var_sizes) > 0)
                          stop("[Validation: SymData] .var_sizes is an internal variable that should not be set by user")
                        if(!is.na(object@.x_length))
                          stop("[Validation: SymData] .x_length is an internal variable that should not be set by user")
@@ -35,16 +35,16 @@ SymData <- function(objective, constraints, solver) {
   .SymData(objective = objective, constraints = constraints, solver = solver)
 }
 
-setMethod("initialize", "SymData", function(.Object, objective, constraints, solver, .constr_map = NULL, .dims = NA_real_, .var_offsets = NULL, .var_sizes = NULL, .x_length = NA_real_, .presolve_status = NA_character_) {
+setMethod("initialize", "SymData", function(.Object, objective, constraints, solver, .constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_) {
   .Object@objective <- objective
   .Object@constraints <- constraints
   .Object@.constr_map <- SymData.filter_constraints(constraints)
-  .Object@.presolve_status <- SymData.presolve(objective, .Objective@.constr_map)
+  .Object@.presolve_status <- SymData.presolve(objective, .Object@.constr_map)
   .Object@.dims <- SymData.format_for_solver(.Object@.constr_map, solver)
   
   all_ineq <- c(.Object@.constr_map[[EQ_MAP]], .Object@.constr_map[[LEQ_MAP]])
   # CVXOPT can have variables that only live in NonLinearConstraints.
-  if(name(solver) == CVXOPT)
+  if(name(solver) == CVXOPT_NAME)
     nonlinear <- .Object@.constr_map[[EXP_MAP]]
   else
     nonlinear <- list()
@@ -79,7 +79,7 @@ SymData.presolve <- function(objective, constr_map) {
   # TODO: Deal with the case when constr_maps has no values
   
   # Remove constraints with no variables or parameters.
-  for(key in c(EQ, LEQ)) {
+  for(key in c(EQ_MAP, LEQ_MAP)) {
     new_constraints <- list()
     for(constr in constr_map[[key]]) {
       vars_ <- get_expr_vars(constr@expr)
@@ -93,31 +93,37 @@ SymData.presolve <- function(objective, constr_map) {
         
         # For equality constraint, coeff must be zero.
         # For inequality (i.e. <= 0) constraint, coeff must be negative.
-        if((key == EQ && !is_zero(sign)) || (key == LEQ && !is_negative(sign)))
+        if((key == EQ_MAP && !is_zero(sign)) || (key == LEQ_MAP && !is_negative(sign)))
           return(INFEASIBLE)
       } else
         new_constraints <- c(new_constraints, constr)
     }
     constr_map[[key]] <- new_constraints
   }
-  return(NA)   # TODO: Return objective and constr_map as well?
+  return(NA_character_)   # TODO: Return objective and constr_map as well?
 }
 
 SymData.format_for_solver <- function(constr_map, solver) {
   dims <- list()
-  dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ]],  function(c) { size(c)[1] * size(c)[2] }))
-  dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ]], function(c) { size(c)[1] * size(c)[2] }))
-  dims[[SOC_DIM]]  <- list()
-  dims[[SDP_DIM]]  <- list()
+  if(length(constr_map[[EQ_MAP]]) > 0)
+    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]],  function(c) { size(c)[1] * size(c)[2] }))
+  else
+    dims[[EQ_DIM]] <- 0
+  if(length(constr_map[[LEQ_MAP]]) > 0)
+    dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ_MAP]], function(c) { size(c)[1] * size(c)[2] }))
+  else
+    dims[[LEQ_DIM]] <- 0
+  dims[[SOC_DIM]]  <- c()
+  dims[[SDP_DIM]]  <- c()
   dims[[EXP_DIM]]  <- 0
-  dims[[BOOL_IDS]] <- list()
-  dims[[INT_IDS]]  <- list()
+  dims[[BOOL_IDS]] <- c()
+  dims[[INT_IDS]]  <- c()
   
   # Formats nonlinear constraints for the solver
   for(constr_type in names(dims)) {
-    if(!(constr_type %in% c(EQ, LEQ))) {
+    if(!(constr_type %in% c(EQ_MAP, LEQ_MAP))) {
       for(constr in constr_map[[constr_type]])
-        constr_format(constr, constr_map[[EQ]], constr_map[[LEQ]], dims, solver)
+        constr_format(constr, constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]], dims, solver)
     }
   }
   dims
@@ -141,7 +147,7 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   # Map variable IDs to offsets and size
   var_sizes <- lapply(var_sorted, function(var) { var[[2]] })
   size_prods <- sapply(var_sizes, function(var_size) { var_size[1]*var_size[2] })
-  var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+  var_offsets <- as.list(cumsum(c(0, head(size_prods, n = -1))))
   vert_offset <- sum(size_prods)
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
@@ -320,8 +326,10 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
 #' @slot prev_result A \code{list} representing the result of the last solve
 #' @aliases ProblemData
 #' @export
-.ProblemData <- setClass("ProblemData", representation(sym_data = "SymData", matrix_data = "MatrixData", prev_result = "list"),
-                                        prototype(sym_data = NULL, matrix_data = NULL, prev_result = NULL))
-ProblemData <- function(sym_data, matrix_data, prev_result) { 
+setClassUnion("SymDataORNull", c("SymData", "NULL"))
+setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
+.ProblemData <- setClass("ProblemData", representation(sym_data = "SymDataORNull", matrix_data = "MatrixDataORNull", prev_result = "list"),
+                                        prototype(sym_data = NULL, matrix_data = NULL, prev_result = list()))
+ProblemData <- function(sym_data = NULL, matrix_data = NULL, prev_result = list()) { 
   .ProblemData(sym_data = sym_data, matrix_data = matrix_data, prev_result = prev_result)
 }

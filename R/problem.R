@@ -67,17 +67,50 @@ setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 #' @slot constraints (Optional) A list of constraints on the problem variables.
 #' @aliases Problem
 #' @export
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list"),
-                    prototype(constraints = list()),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
-                        stop("Problem objective must be Minimize or Maximize")
+                        stop("[Problem: objective] objective must be of class Minimize or Maximize")
+                      if(!is.na(object@value))
+                        stop("[Problem: value] value should not be set by user")
+                      if(!is.na(object@status))
+                        stop("[Problem: status] status should not be set by user")
+                      if(length(object@.cached_data) > 0)
+                        stop("[Problem: .cached_data] .cached_data is an internal slot and should not be set by user")
+                      if(length(object@.separable_problems) > 0)
+                        stop("[Problem: .separable_problems] .separable_problems is an internal slot and should not be set by user")
                       return(TRUE)
                     })
 
-Problem <- function(objective, constraints = list(), ...) {
-  .Problem(objective = objective, constraints = constraints, ...)
+Problem <- function(objective, constraints = list()) {
+  .Problem(objective = objective, constraints = constraints)
 }
+
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list()) {
+  .Object@objective <- objective
+  .Object@constraints <- constraints
+  .Object@value <- value
+  .Object@status <- status
+  
+  # Cached processed data for each solver.
+  .Object@.cached_data <- list()
+  .Object <- .reset_cache(.Object)
+  
+  # List of separable (sub)problems
+  .Object@.separable_problems <- .separable_problems
+  .Object
+})
+
+CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints) }
+SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values) }
+
+setMethod(".reset_cache", "Problem", function(object) {
+  for(solver_name in SOLVERS)
+    object@.cached_data[solver_name] <- ProblemData()
+  object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
+  object
+})
 
 setMethod("is_dcp", "Problem", function(object) {
   is_dcp_list <- lapply(c(object@objective, object@constraints), is_dcp)
@@ -148,12 +181,12 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
   sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
   
   # Presolve couldn't solve the problem.
-  if(is.na(sym_data@presolve_status)) {
+  if(is.na(sym_data@.presolve_status)) {
     results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
   # Presolve determined the problem was unbounded or infeasible.
   } else {
     results_dict <- list()
-    results_dict[STATUS] <- sym_data@presolve_status
+    results_dict[[STATUS]] <- sym_data@.presolve_status
   }
   
   object@.update_problem_state(results_dict, sym_data, solver)

@@ -61,8 +61,11 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 setGeneric("ecos_solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("ecos_solve") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
-# Problem data generic methods
+# Problem generic methods
+setGeneric(".reset_cache", function(object) { standardGeneric(".reset_cache") })
 setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
+
+# Problem data generic methods
 setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })
 setGeneric(".dummy_constr", function(object) { standardGeneric(".dummy_constr") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })

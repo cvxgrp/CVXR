@@ -48,19 +48,6 @@ setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 
-# Solver generic methods
-setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
-setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
-setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
-setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
-setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
-
-setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
-setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
-setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
-setGeneric("ecos_solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("ecos_solve") })
-setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
-
 # Problem generic methods
 setGeneric(".reset_cache", function(object) { standardGeneric(".reset_cache") })
 setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
@@ -75,4 +62,17 @@ setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_const
 setGeneric(".init_matrix_cache", function(object, constraints, x_length) { standardGeneric(".init_matrix_cache") })
 setGeneric(".lin_matrix", function(object, mat_cache, caching) { standardGeneric(".lin_matrix") })
 setGeneric(".cache_to_matrix", function(object, mat_cache) { standardGeneric(".cache_to_matrix") })
+
+# Solver generic methods
+setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
+setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
+setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
+setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
+setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
+
+setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
+setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
+setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
+setGeneric("cvxr_solve_int", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("cvxr_solve_int") })
+setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 

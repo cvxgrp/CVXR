@@ -44,7 +44,8 @@ LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size
 LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size) }
 
 get_id <- function() {
-  sample.int(.Machine$integer.max, 1)
+  # sample.int(.Machine$integer.max, 1)
+  UUIDgenerate()
 }
 
 create_var <- function(size, var_id = get_id()) {

@@ -45,16 +45,16 @@ setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cac
 })
 
 setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, cached_data) {
-  sym_data <- get_sym_data(objective, constraints, cached_data)
+  sym_data <- get_sym_data(solver, objective, constraints, cached_data)
   prob_data <- cached_data[[name(solver)]]
-  if(is.na(prob_data@matrix_data))
-    prob_data@matrix_data <- MatrixData(sym_data, matrix_intf(solver), vec_intf(solver), solver)
+  if(is.null(prob_data@matrix_data))
+    prob_data@matrix_data <- MatrixData(sym_data, solver)
   prob_data@matrix_data
 })
 
 setMethod("get_problem_data", "Solver", function(solver, objective, constraints, cached_data) {
-  sym_data <- get_sym_data(objective, constraints, cached_data)
-  matrix_data <- get_matrix_data(objective, constraints, cached_data)
+  sym_data <- get_sym_data(solver, objective, constraints, cached_data)
+  matrix_data <- get_matrix_data(solver, objective, constraints, cached_data)
   
   data <- list()
   obj <- get_objective(matrix_data)
@@ -106,7 +106,7 @@ setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-setMethod("ecos_solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(ECOSolveR)
   data <- get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]

@@ -5,12 +5,12 @@
 #'
 #' @slot objective A \code{list} representing the objective.
 #' @slot constraints A \code{list} of canonicalized constraints.
-#' @slot constr_map A \code{list} mapping constraint type to a list of constraints.
-#' @slot dims A \code{list} of the dimensions of the cones.
-#' @slot var_offsets A \code{list} mapping variable ID to horizontal offset.
-#' @slot var_sizes A \code{list} mapping variable ID to variable dimensions.
-#' @slot x_length The length of the x vector.
-#' @slot presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
+#' @slot .constr_map A \code{list} mapping constraint type to a list of constraints.
+#' @slot .dims A \code{list} of the dimensions of the cones.
+#' @slot .var_offsets A \code{list} mapping variable ID to horizontal offset.
+#' @slot .var_sizes A \code{list} mapping variable ID to variable dimensions.
+#' @slot .x_length The length of the x vector.
+#' @slot .presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
 #' @aliases SymData
 #' @export
 .SymData <- setClass("SymData", representation(objective = "list", constraints = "list", solver = "Solver", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
@@ -170,7 +170,7 @@ setMethod("initialize", "MatrixCache", function(.Object, coo_tup, const_vec, con
   .Object@const_vec <- const_vec
   .Object@constraints <- constraints
   
-  rows <- sum(sapply(constraints, function(c) { size(c)[1] * size(c)[2] }))
+  rows <- sum(sapply(constraints, function(c) { c$size[1] * c$size[2] }))
   cols <- x_length
   .Object@.size <- c(rows, cols)
   .Object@.param_coo_tup <- list(list(), list(), list())
@@ -199,21 +199,21 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, .obj_c
   .Object@sym_data <- sym_data
   
   # Cache everything possible.
-  .Object@obj_cache <- .init_matrix_cache(.dummy_constr(.Object), .Object@sym_data@x_length)
-  .Object@obj_cache <- .lin_matrix(.Object, .Object@obj_cache, caching = TRUE)
+  .Object@.obj_cache <- .init_matrix_cache(.Object, .dummy_constr(.Object), .Object@sym_data@.x_length)
+  .Object@.obj_cache <- .lin_matrix(.Object, .Object@.obj_cache, caching = TRUE)
   
   # Separate constraints based on the solver being used.
-  constr_types <- split_constr(solver, .Object@sym_data@constr_map)
+  constr_types <- split_constr(solver, .Object@sym_data@.constr_map)
   eq_constr <- constr_types[[1]]
   ineq_constr <- constr_types[[2]]
   nonlin_constr <- constr_types[[3]]
   
   # Equality constraints.
-  .Object@.eq_cache <- .init_matrix_cache(eq_constr, .Object@sym_data@x_length)
+  .Object@.eq_cache <- .init_matrix_cache(eq_constr, .Object@sym_data@.x_length)
   .Object@.eq_cache <- .lin_matrix(.Object, .Object@eq_cache, cachine = TRUE)
   
   # Inequality constraints.
-  .Object@.ineq_cache <- .init_matrix_cache(ineq_constr, .Object@sym_data@x_length)
+  .Object@.ineq_cache <- .init_matrix_cache(ineq_constr, .Object@sym_data@.x_length)
   .Object@.ineq_cache <- .lin_matrix(.Object, .Object@.ineq_cache, caching = TRUE)
   
   # TODO: Nonlinear constraints require returning an oracle (function), which R does not support. Need an alternative way.
@@ -238,7 +238,7 @@ setMethod("get_eq_constr", "MatrixData", function(object) { .cache_to_matrix(obj
 setMethod("get_ineq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.ineq_cache) })
 
 setMethod(".init_matrix_cache", "MatrixData", function(object, constraints, x_length) {
-  rows <- sum(sapply(constraints, function(c) { size(c)[1] * size(c)[2] }))
+  rows <- sum(sapply(constraints, function(c) { c$size[1] * c$size[2] }))
   COO <- list(list(), list(), list())
   const_vec <- rep(0, rows)
   MatrixCache(COO, const_vec, constraints, x_length)
@@ -251,7 +251,7 @@ setMethod(".lin_matrix", signature(object = "MatrixData", mat_cache = "MatrixCac
   
   for(constr in mat_cache@constraints) {
     # Process the constraint if it has a parameter and not caching or it doesn't have a parameter and caching.
-    has_param <- length(get_expr_params(constr@expr)) > 0
+    has_param <- length(get_expr_params(constr$expr)) > 0
     if((has_param && !caching) || (!has_param && caching)) {
       # If parameterized, convert the parameters into constant nodes.
       if(has_param)
@@ -259,12 +259,12 @@ setMethod(".lin_matrix", signature(object = "MatrixData", mat_cache = "MatrixCac
       active_constr <- c(active_constr, constr)
       constr_offsets <- c(constr_offsets, vert_offset)
     }
-    vert_offset <- vert_offset + size(constr)[1]*size(constr)[2]
+    vert_offset <- vert_offset + constr$size[1]*constr$size[2]
   }
   
   # Convert the constraints into a matrix and vector offset and add them to the matrix cache.
   if(length(active_constr) > 0) {
-    mat <- get_problem_matrix(active_constr, object@sym_data@var_offsets, constr_offsets)  # TODO: Need to implement for canonInterface
+    mat <- get_problem_matrix(active_constr, object@sym_data@.var_offsets, constr_offsets)  # TODO: Need to implement for canonInterface
     V <- mat[[1]]
     I <- mat[[2]]
     J <- mat[[3]]
@@ -310,8 +310,8 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
 # TODO: Fill this out when nonlinear constraints are finished
 # setMethod(".nonlin_matrix", "MatrixData", function(object, nonlin_constr) {
 #  rows <- sum(sapply(nonlin_constr, function(c) { size(c)[1] * size(c)[2] }))
-#  cols <- object@sym_data@x_length
-#  var_offsets <- object@sym_data@var_offsets
+#  cols <- object@sym_data@.x_length
+#  var_offsets <- object@sym_data@.var_offsets
 #  
 #  big_x <- rep(0, cols)
 # })

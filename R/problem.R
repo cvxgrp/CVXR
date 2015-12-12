@@ -182,7 +182,7 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
   
   # Presolve couldn't solve the problem.
   if(is.na(sym_data@.presolve_status)) {
-    results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
+    results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
   # Presolve determined the problem was unbounded or infeasible.
   } else {
     results_dict <- list()

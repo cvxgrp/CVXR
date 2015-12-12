@@ -4,25 +4,25 @@ Solver.choose_solver <- function(constraints) {
   constr_map <- SymData.filter_constraints(constraints)
   # If no constraints, use ECOS.
   if(length(constraints) == 0)
-    return(ECOS)
+    return(ECOS())
   # If mixed integer constraints, use ECOS_BB.
-  else if(length(constr_map[[BOOL]]) > 0 || length(constr_map[[INT]]) > 0)
-    return(ECOS_BB)
+  else if(length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0)
+    return(ECOS_BB())
   # If SDP, defaults to CVXOPT.
-  else if(constr_map[[SDP]])
-    return(CVXOPT)
+  else if(length(constr_map[[SDP_MAP]]) > 0)
+    return(CVXOPT())
   # Otherwise use ECOS
   else
-    return(ECOS)
+    return(ECOS())
 }
 
 setMethod("validate_solver", "Solver", function(solver, constraints) {
   constr_map <- SymData.filter_constraints(constraints)
-  if(((constr_map[[BOOL]] || constr_map[[INT]]) && !mip_capable(solver)) ||
-     (constr_map[[SDP]] && !sdp_capable(solver)) ||
-     (constr_map[[EXP]] && !exp_capable(solver)) ||
-     (constr_map[[SOC]] && !socp_capable(solver)) || 
-     (length(constraints) == 0 && name(solver) %in% c(SCS, GLPK)))
+  if(( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver)) ||
+     (length(constr_map[[SDP_MAP]]) > 0 && !sdp_capable(solver)) ||
+     (length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver)) ||
+     (length(constr_map[[SOC_MAP]]) > 0 && !socp_capable(solver)) || 
+     (length(constraints) == 0 && name(solver) %in% c(SCS_NAME, GLPK_NAME)))
     stop("The solver ", name(solver), " cannot solve the problem")
 })
 
@@ -94,21 +94,22 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   list(bool_idx = bool_idx, int_idx = int_idx)
 }
 
-.ECOS <- setClass("ECOS", contains = "Solver")
+setClass("ECOS", contains = "Solver")
+ECOS <- function() { new("ECOS") }
 
-setMethod("name", "ECOS", function(object) { ECOS })
+setMethod("name", "ECOS", function(object) { ECOS_NAME })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
-  list(eq_constr = constr_map[[EQ]], ineq_constr = constr_map[[LEQ]], nonlin_constr = list())
+  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-setMethod("solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("ecos_solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(ECOSolveR)
   data <- get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
-  # TODO: results_dict <- ECOSolveR::solve(data[[C]], data[[G]], data[[H]], data[[DIMS]], data[[A]], data[[B]])
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]])
   format_results(solver, result_dict, data, cached_data)
 })
 

@@ -12,6 +12,7 @@
                         if((!is.data.frame(object@value) && !is.numeric(object@value)) ||
                            (is.data.frame(object@value) && !all(sapply(object@value), is.numeric)))
                           stop("[Constant: validation] value must be a data.frame, matrix, vector, or atomic element containing only numeric entries")
+                        return(TRUE)
                       }, contains = "Leaf")
 Constant <- function(value) { .Constant(value = value) }
 
@@ -31,8 +32,8 @@ setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_
   callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
 
+setMethod("get_data", "Constant", function(object) { list(object@value) })
 setMethod("value", "Constant", function(object) { object@value })
-setMethod("get_data", "Constant", function(object) { list(value = object@value) })
 setMethod("canonicalize", "Constant", function(object) {
   obj <- create_const(object@value, size(object))
   list(obj, list())

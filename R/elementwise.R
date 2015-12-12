@@ -247,19 +247,43 @@ Norm2Elemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 
 Pos <- function(x) { MaxElemwise(x, 0) }
 
-.Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric"), 
-                          prototype(max_denom = 1024, .w = NA_real_), 
+.Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric", .approx_error = "numeric"), 
+                          prototype(max_denom = 1024, .w = NA_real_, .approx_error = NA_real_), 
                   validity = function(object) {
                     if(!is.na(object@.w))
                       stop("[Validation: power] .w is an internal variable that should not be set by user")
+                    else if(!is.na(object@.approx_error))
+                      stop("[Validation: power] .approx_error is an internal variable that should not be set by user")
+                    return(TRUE)
                     }, contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, .w = NA_real_) {
-  # TODO: Fill in p and w accordingly
-  .Object@p <- p
+  p_old <- p
+  if(p > 1)
+    pw <- pow_high(p, max_denom)
+  else if(p > 0 && p < 1)
+    pw <- pow_mid(p, max_denom)
+  else if(p < 0)
+    pw <- pow_neg(p, max_denom)
+  
+  p <- pw[[1]]
+  w <- pw[[2]]
+  
+  if(p == 1) {
+    p <- 1
+    w <- NA_real_
+  } else if(p == 0) {
+    p <- 0
+    w <- NA_real_
+  }
+  
+  .Object@p <- as.numeric(p)   # TODO: Need to store this as a fraction object, not a rounded numeric
+  .Object@.w <- w
+  .Object@.approx_error <- abs(.Object@p - p_old)
+  
   .Object@x <- x
   .Object@max_denom <- max_denom
   callNextMethod(.Object, ..., .args = list(.Object@x))
@@ -304,6 +328,8 @@ setMethod("monotonicity", "Power", function(object) {
     stop("Unknown monotonicity for power p = ", object@p)
 })
 
+setMethod("get_data", "Power", function(object) { list(object@p, object@.w) })
+
 Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   p <- data[[1]]
@@ -312,7 +338,7 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   if(p == 1)
     return(list(x, list()))
   else {
-    one <- create_const(matrix(rep(1, size)), size)
+    one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
     if(p == 0)
       return(one, list())
     else {
@@ -329,6 +355,10 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     }
   }
 }
+
+setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
+  Power.graph_implementation(arg_objs, size, data)
+})
 
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 

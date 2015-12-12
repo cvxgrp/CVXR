@@ -28,6 +28,7 @@
                          stop("[Validation: SymData] .x_length is an internal variable that should not be set by user")
                        if(!is.na(object@.presolve_status))
                          stop("[Validation: SymData] .presolve_status is an internal variable that should not be set by user")
+                       return(TRUE)
                       })
 
 SymData <- function(objective, constraints, solver) {
@@ -41,10 +42,10 @@ setMethod("initialize", "SymData", function(.Object, objective, constraints, sol
   .Object@.presolve_status <- SymData.presolve(objective, .Objective@.constr_map)
   .Object@.dims <- SymData.format_for_solver(.Object@.constr_map, solver)
   
-  all_ineq <- c(.Object@.constr_map[[EQ]], .Object@.constr_map[[LEQ]])
+  all_ineq <- c(.Object@.constr_map[[EQ_MAP]], .Object@.constr_map[[LEQ_MAP]])
   # CVXOPT can have variables that only live in NonLinearConstraints.
   if(name(solver) == CVXOPT)
-    nonlinear <- .Object@.constr_map[[EXP]]
+    nonlinear <- .Object@.constr_map[[EXP_MAP]]
   else
     nonlinear <- list()
   var_data <- SymData.get_var_offsets(objective, all_ineq, nonlinear)
@@ -56,13 +57,13 @@ setMethod("initialize", "SymData", function(.Object, objective, constraints, sol
 
 SymData.filter_constraints <- function(constraints) {
   constr_map <- list()
-  constr_map[[EQ]]   <- constraints[sapply(constraints, function(c) { is(c, "LinEqConstr") })]
-  constr_map[[LEQ]]  <- constraints[sapply(constraints, function(c) { is(c, "LinLeqConstr") })]
-  constr_map[[SOC]]  <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  constr_map[[SDP]]  <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
-  constr_map[[EXP]]  <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
-  constr_map[[BOOL]] <- constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
-  constr_map[[INT]]  <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
+  constr_map[[EQ_MAP]]   <- constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
+  constr_map[[LEQ_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
+  constr_map[[SOC_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
+  constr_map[[SDP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  constr_map[[EXP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
+  constr_map[[BOOL_MAP]] <- constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
+  constr_map[[INT_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
   constr_map
 }
 
@@ -124,18 +125,25 @@ SymData.format_for_solver <- function(constr_map, solver) {
 
 SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   vars_ <- get_expr_vars(objective)
-  vars_ <- c(vars_, lapply(constraints, function(constr) { get_expr_vars(constr@expr) }))
+  for(constr in constraints)
+    vars_ <- c(vars_, get_expr_vars(constr@expr))
   
   # If CVXOPT is the solver, some of the variables are in NonLinearConstraints.
-  for(constr in nonlinear)
-    vars_ <- c(vars_, lapply(variables(constr), function(nonlin_var) { get_expr_vars(nonlin_var) }))
+  for(constr in nonlinear) {
+    for(nonlin_var in variables(constr))
+      vars_ <- c(vars_, get_expr_vars(nonlin_var))
+  }
 
-  # TODO: Create var_sizes sorted by unique var_id
-  # var_sizes <- sapply(vars_, function(var_names) { var_names[[2]] })
-  # size_prods <- sapply(var_sizes, function(var_size) { var_size[1]*var_size[2] })
-  # var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
-  # vert_offset <- sum(size_prods)
-  # list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
+  # Sort variables by unique variable ID
+  var_id <- sapply(vars_, function(id_and_size) { id_and_size[[1]] })
+  var_sorted <- vars_[order(var_id)]
+  
+  # Map variable IDs to offsets and size
+  var_sizes <- lapply(var_sorted, function(var) { var[[2]] })
+  size_prods <- sapply(var_sizes, function(var_size) { var_size[1]*var_size[2] })
+  var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+  vert_offset <- sum(size_prods)
+  list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
 
 .MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", const_vec = "numeric", constraints = "list", x_length = "numeric", .size = "numeric", .param_coo_tup = "list"),
@@ -144,7 +152,8 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
                              stop("[Validation: MatrixCache] .size is an internal variable that should not be set by user")
                            if(!is.null(object@.param_coo_tup))
                              stop("[Validation: MatrixCache] .param_coo_tup is an internal variable that should not be set by user")
-                         })
+                           return(TRUE)
+                          })
 
 MatrixCache <- function(coo_tup, const_vec, constraints, x_length) {
   .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, x_length = x_length)
@@ -175,6 +184,7 @@ setMethod("reset_param_data", "MatrixCache", function(object) {
                             stop("[Validation: MatrixData] .eq_cache is an internal variable that should not be set by user")
                           if(!is.null(object@.ineq_cache))
                             stop("[Validation: MatrixData] .ineq_cache is an internal variable that should not be set by user")
+                          return(TRUE)
                         })
 
 MatrixData <- function(sym_data, solver) { .MatrixData(sym_data = sym_data, solver = solver) }

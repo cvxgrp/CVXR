@@ -19,6 +19,7 @@ setMethod("show", "Expression", function(object) {
 })
 
 setMethod("canonical_form", "Expression", function(object) { canonicalize(object) })
+setMethod("get_data", "Expression", function(object) { list() })
 
 # Curvature properties
 setMethod("curvature", "Expression", function(object) { object@dcp_attr@curvature })

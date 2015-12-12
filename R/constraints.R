@@ -1,8 +1,7 @@
 setClass("Constraint", representation(id = "character"), prototype(id = UUIDgenerate()), contains = "VIRTUAL")
 setMethod("id", "Constraint", function(object) { object@id })
 
-# TODO: What type should lin_op be? Need linear operator object.
-.BoolConstr <- setClass("BoolConstr", representation(lin_op = "ANY", .noncvx_var = "list"), 
+.BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"), 
                                       prototype(.noncvx_var = NULL), 
                                       validity = function(object) {
                                         if(!is.null(object@.noncvx_var))
@@ -13,14 +12,14 @@ BoolConstr <- function(lin_op) { .BoolConstr(lin_op = lin_op) }
 
 setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var) {
   .Object@lin_op <- lin_op
-  if(lin_op == VARIABLE)
+  if(lin_op$type == VARIABLE)
     .Object@.noncvx_var <- .Object@lin_op
   else
-    .Object@.noncvx_var <- create_var(size(.Object@lin_op))
+    .Object@.noncvx_var <- create_var(.Object@lin_op$size)
   callNextMethod(.Object, ...)
 })
 
-setMethod("size", "BoolConstr", function(object) { size(.Object@lin_op) })
+setMethod("size", "BoolConstr", function(object) { .Object@lin_op$size })
 
 IntConstr <- setClass("IntConstr", contains = "BoolConstr")
 
@@ -42,9 +41,8 @@ setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_
 })
 
 setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
-
 setMethod("is_dcp", "LeqConstraint", function(object) { is_convex(object@.expr) })
-
+setMethod("canonical_form", "LeqConstraint", function(object) { canonicalize(object) })
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual <- create_leq(canon[[1]], constr_id = object@id)
@@ -190,6 +188,16 @@ setMethod("size", "SDP", function(object) { size(object@A) })
 
 SOCElemwise <- setClass("SOCElemwise", contains = "SOC")
 
+# setMethod("format", "SOCElemwise", function(object, eq_constr, leq_constr, dims, solver) {
+#  .format <- function(object)
+#    list(list(), format_elemwise(list(object$t, object$x_elems)))
+#  
+#  leq_constr <- c(leq_constr, .format(object)[[2]])
+#  for(cone_size in size(object))
+#    dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
+#  # TODO: Need to return everything properly
+# })
+
 setMethod("num_cones", "SOCElemwise", function(object) {
   size(object@t)[1] * size(object@t)[2]
 })
@@ -200,5 +208,5 @@ setMethod("cone_size", "SOCElemwise", function(object) {
 
 setMethod("size", "SOCElemwise", function(object) {
   cone_size <- cone_size(object)
-  rep(cone_size, num_cones(object))
+  lapply(1:num_cones(object), function(i) { cone_size })
 })

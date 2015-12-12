@@ -16,6 +16,7 @@ setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("D
 
 # Expression generic methods
 setGeneric("value", function(object) { standardGeneric("value") })
+setGeneric("save_value", function(object) { standardGeneric("save_value") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("init_dcp_attr", function(object) { standardGeneric("init_dcp_attr") })
 setGeneric("curvature", function(object) { standardGeneric("curvature") })
@@ -57,21 +58,18 @@ setGeneric("get_problem_data", function(solver, objective, constraints, cached_d
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
 setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
-setGeneric("solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("solve") })
+setGeneric("ecos_solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("ecos_solve") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
 # Problem data generic methods
+setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
 setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })
 setGeneric(".dummy_constr", function(object) { standardGeneric(".dummy_constr") })
+setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })
 setGeneric("get_eq_constr", function(object) { standardGeneric("get_eq_constr") })
 setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_constr") })
 setGeneric(".init_matrix_cache", function(object, constraints, x_length) { standardGeneric(".init_matrix_cache") })
 setGeneric(".lin_matrix", function(object, mat_cache, caching) { standardGeneric(".lin_matrix") })
 setGeneric(".cache_to_matrix", function(object, mat_cache) { standardGeneric(".cache_to_matrix") })
-
-
-
-
-
 

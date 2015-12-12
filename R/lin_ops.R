@@ -35,7 +35,7 @@ LinOp <- function(type, size, args = list(), data = NA_real_) {
 }
 
 LinConstr <- function(expr, constr_id, size) {
-  if(!is.numeric(constr_id)) stop("constr_id must be an integer")
+  if(!is.character(constr_id)) stop("constr_id must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   list(expr = expr, constr_id = constr_id, size = size)
 }

@@ -38,7 +38,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  arg_objs <- lapply(arg_objs, function(arg) { if(size(arg) != size) promote(arg, size) else arg })
+  arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) promote(arg, size) else arg })
   list(sum_expr(arg_objs), list())
 }
 
@@ -509,7 +509,7 @@ setMethod("shape_from_args", "SumEntries", function(object){
   Shape(rows = 1, cols = 1)
 })
 
-SumEntries.grpah_implementation <- function(arg_objs, size, data = NA_real_) {
+SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(sum_entries(arg_objs[[1]]), list())
 }
 

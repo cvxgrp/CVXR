@@ -279,3 +279,13 @@ ku_size <- function(key, shape) {
   }
   dims
 }
+
+wrap_neg_index <- function(index, dim) {
+  if(!is.na(index) && index < 0)
+    index <- index %% dim
+  index
+}
+
+index_to_slice <- function(idx) {
+  c(idx, idx+1)
+}

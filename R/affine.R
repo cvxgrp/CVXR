@@ -321,7 +321,7 @@ Diff <- function(x, k = 1) {
   d
 }
 
-.HStack <- setClass("HStack", contains = "AffAtom")
+HStack <- setClass("HStack", contains = "AffAtom")
 
 setMethod("validate_args", "HStack", function(object) {
   arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
@@ -358,6 +358,8 @@ setMethod("shape_from_args", "Index", function(object) {
   Shape(size[1], size[2])
 })
 
+setMethod("get_data", "Index", function(object) { list(object@key) })
+
 Index.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   obj <- index(arg_objs[[1]], size, data[[1]])
   list(obj, list())
@@ -367,8 +369,32 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
   Index.graph_implementation(arg_objs, size, data)
 })
 
+Index.get_special_slice <- function(expr, key) {
+  expr <- as.Constant(expr)
+  # Order the entries of expr and select them using key.
+  idx_mat <- seq(size(expr)[1] * size(expr)[2])
+  idx_mat <- matrix(idx_mat, nrow = size(expr)[1], ncol = size(expr)[2])
+  select_mat <- idx_mat[key]
+  if(is.null(dim(select_mat)) || !any(dim(select_mat) == 1))
+    final_size <- select_mat@shape
+  else   # TODO: Always cast 1-D arrays as column vectors?
+    final_size <- c(length(as.vector(select_mat)), 1)
+  select_vec <- matrix(select_mat, nrow = size(select_mat)[1], ncol = size(select_mat)[2])
+  # Select the chosen entries from expr.
+  identity <- diag(size(expr)[1] * size(expr)[2])
+}
+
+Index.get_index <- function(matrix, constraints, row, col) {
+  key <- list(index_to_slice(row), index_to_slice(col))
+  graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
+  idx <- graph[[1]]
+  idx_constr <- graph[[2]]
+  constraints <- c(constraints, idx_constr)
+  idx   # TODO: Should I return constraints as well?
+}
+
 Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, col_end) {
-  key <- list(c(row_start, row_end, NA), c(col_start, col_end, NA))
+  key <- list(c(row_start, row_end), c(col_start, col_end))
   rows <- row_end - row_start
   cols <- col_end - col_start
   graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
@@ -379,7 +405,7 @@ Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, 
 }
 
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
-  key <- list(c(row_start, row_end, NA), c(col_start, col_end, NA))   # TODO: What is equivalent of Python slice object in R?
+  key <- list(c(row_start, row_end), c(col_start, col_end))
   rows <- row_end - row_start
   cols <- col_end - col_start
   if(!all(size(block) == c(rows, cols)))
@@ -387,7 +413,8 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
   graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
   slc <- graph[[1]]
   idx_constr <- graph[[2]]
-  constraints <- c(constraints, create_leq(slc, block), idx_constr)
+  constraints <- c(constraints, create_eq(slc, block), idx_constr)
+  constraints
 }
 
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
@@ -482,6 +509,8 @@ setMethod("shape_from_args", "Reshape", function(object) {
   Shape(rows = object@rows, cols = object@cols)
 })
 
+setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
+
 Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(reshape(arg_objs[[1]], size), list())
 }
@@ -500,6 +529,7 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @export
 .SumEntries <- setClass("SumEntries", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 SumEntries <- function(expr) { .SumEntries(expr = expr) }
+
 setMethod("initialize", "SumEntries", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., .args = list(.Object@expr))
@@ -573,7 +603,8 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
   Transpose.graph_implementation(arg_objs, size, data)
 })
 
-UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
+.UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
+UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
 setMethod("validate_args", "UpperTri", function(object) {
   if(size(object@.args[[1]])[1] != size(object@.args[[2]])[2])
@@ -627,3 +658,7 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
   VStack.graph_implementation(arg_objs, size, data)
 })
 
+Bmat <- function(block_lists) {
+  row_blocks <- lapply(block_lists, function(blocks) { HStack(unlist(blocks)) })
+  VStack(unlist(row_blocks))
+}

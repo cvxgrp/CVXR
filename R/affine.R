@@ -382,6 +382,7 @@ Index.get_special_slice <- function(expr, key) {
   select_vec <- matrix(select_mat, nrow = size(select_mat)[1], ncol = size(select_mat)[2])
   # Select the chosen entries from expr.
   identity <- diag(size(expr)[1] * size(expr)[2])
+  Reshape(identity[select_vec] * Vec(expr), unlist(final_size))
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {
@@ -390,7 +391,7 @@ Index.get_index <- function(matrix, constraints, row, col) {
   idx <- graph[[1]]
   idx_constr <- graph[[2]]
   constraints <- c(constraints, idx_constr)
-  idx   # TODO: Should I return constraints as well?
+  list(idx = idx, constraints = constraints)
 }
 
 Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, col_end) {
@@ -401,7 +402,7 @@ Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, 
   slc <- graph[[1]]
   idx_constr <- graph[[2]]
   constraints <- c(constraints, idx_constr)
-  slc   # TODO: Should I return constraints as well?
+  list(slc = slc, constraints = constraints)
 }
 
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {

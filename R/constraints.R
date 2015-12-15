@@ -19,12 +19,34 @@ setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var
   callNextMethod(.Object, ...)
 })
 
+setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr, dims, solver) {
+  .format <- function(object) {
+    eq_constr <- list()
+    if(object@noncvx_var != object@lin_op)
+      eq_constr <- c(eq_constr, create_eq(object@lin_op, object@noncvx_var))
+    list(eq_constr, list())
+  }
+  
+  new_eq <- .format(object)[[1]]
+  if(length(new_eq) > 0) {
+    eq_constr <- c(eq_constr, new_eq)
+    dims[EQ_DIM] <- c(dims[EQ_DIM], size(object)[1] * size(object)[2])
+  }
+  
+  bool_id <- get_expr_vars(object@noncvx_var)[[1]][[1]]
+  CONSTR_TYPE <- constr_type(object)
+  dims[CONSTR_TYPE] <- c(dims[CONSTR_TYPE], bool_id)
+})
+
+setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
 setMethod("size", "BoolConstr", function(object) { .Object@lin_op$size })
 
 IntConstr <- setClass("IntConstr", contains = "BoolConstr")
 
-.LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", .expr = "Expression"),
-                           prototype(lh_exp = new("Expression"), rh_exp = new("Expression"), .expr = NULL),
+setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
+
+.LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", .expr = "Expression", dual_variable = "Variable"),
+                           prototype(.expr = NULL, dual_variable = new("Variable")),
                            validity = function(object) {
                              if(!is.null(object@.expr))
                                stop("[LeqConstraint: .expr] .expr is an internal slot and should not be set by user")
@@ -37,12 +59,14 @@ setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
   .Object@.expr <- lh_exp - rh_exp
+  .Object@dual_variable <- Variable(size(.Object@.expr))
   callNextMethod(.Object, ...)
 })
 
 setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
 setMethod("is_dcp", "LeqConstraint", function(object) { is_convex(object@.expr) })
 setMethod("canonical_form", "LeqConstraint", function(object) { canonicalize(object) })
+
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual <- create_leq(canon[[1]], constr_id = object@id)
@@ -50,6 +74,7 @@ setMethod("canonicalize", "LeqConstraint", function(object) {
 })
 
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })
+setMethod("dual_variable", "LeqConstraint", function(object) { value(object@dual_variable) })
 setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.expr) })
 setMethod("value", "LeqConstraint", function(object) {
   if(is.na(value(object@.expr)))
@@ -57,6 +82,7 @@ setMethod("value", "LeqConstraint", function(object) {
   else
     all(value(object@.expr) <= 1e-6)   # TODO: Add tolerance parameter to LeqConstraint
 })
+
 setMethod("violation", "LeqConstraint", function(object) {
   if(is.na(value(object@.expr)))
     NA
@@ -106,7 +132,7 @@ setMethod("violation", "EqConstraint", function(object) {
 setMethod("canonicalize", "EqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual <- create_eq(canon[[1]], constr_id = object@id)
-  c(NA, list(canon[[2]], dual))
+  c(NA, c(canon[[2]], dual))
 })
 
 .ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "NonlinearConstraint")
@@ -168,6 +194,17 @@ SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
 setMethod("show", "SOC", function(object) { cat("SOC(", object@t, ", <", paste(object@x_elems, collapse = ","), ">)", sep = "") })
 
+setMethod("format_constr", "SOC", function(object) {
+  .format <- function(object) {
+    leq_constr <- lapply(object@x_elems, function(elem) { create_geq(elem) })
+    leq_constr <- c(create_geq(object@t), leq_constr)
+    list(list(), leq_constr)
+  }
+  
+  leq_constr <- c(leq_constr, .format(object)[[2]])
+  dims[SOC_DIM] <- c(dims[SOC_DIM], size(object)[1])
+})
+
 setMethod("size", "SOC", function(object) {
   sizes <- sapply(object@x_elems, function(elem) { size(elem)[1] * size(elem)[2] })
   rows <- sum(sizes) + 1
@@ -188,15 +225,15 @@ setMethod("size", "SDP", function(object) { size(object@A) })
 
 SOCElemwise <- setClass("SOCElemwise", contains = "SOC")
 
-# setMethod("format", "SOCElemwise", function(object, eq_constr, leq_constr, dims, solver) {
-#  .format <- function(object)
-#    list(list(), format_elemwise(list(object$t, object$x_elems)))
-#  
-#  leq_constr <- c(leq_constr, .format(object)[[2]])
-#  for(cone_size in size(object))
-#    dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
-#  # TODO: Need to return everything properly
-# })
+setMethod("format_constr", "SOCElemwise", function(object, eq_constr, leq_constr, dims, solver) {
+ .format <- function(object) {
+   list(list(), format_elemwise(list(object@t, object@x_elems)))
+ }
+ 
+ leq_constr <- c(leq_constr, .format(object)[[2]])
+ for(cone_size in size(object))
+   dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
+})
 
 setMethod("num_cones", "SOCElemwise", function(object) {
   size(object@t)[1] * size(object@t)[2]

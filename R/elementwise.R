@@ -549,7 +549,58 @@ QOLElemwise <- function(arg_objs, size, data = NA_real_) {
 
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
-Sqrt <- function(x) { Power(x, 1/2) }
+# Sqrt <- function(x) { Power(x, 1/2) }
 setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
+.Sqrt <- setClass("Sqrt", representation(x = "Expression"), contains = "Elementwise")
+Sqrt <- function(x) { .Sqrt(x = x) }
 
-Square <- function(x) { Power(x, 2) }
+setMethod("initialize", "Sqrt", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+setMethod("sign_from_args", "Sqrt", function(object) { Sign.POSITIVE })
+setMethod("func_curvature", "Sqrt", function(object) { Curvature.CONCAVE })
+setMethod("monotonicity", "Sqrt", function(object) { INCREASING })
+
+Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  x <- arg_objs[[1]]
+  t <- create_var(size)
+  # x >= 0 implied by x >= t^2.
+  # t >= 0 implied because t is only pushed to increase.
+  graph <- Square.graph_implementation(list(t), size)
+  obj <- graph[[1]]
+  constraints <- graph[[2]]
+  list(t, c(constraints, create_leq(obj, x)))
+}
+
+setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
+  Sqrt.graph_implementation(arg_objs, size, data)
+})
+
+# Square <- function(x) { Power(x, 2) }
+.Square <- setClass("Square", representation(x = "Expression"), contains = "Elementwise")
+Square <- function(x) { .Square(x = x) }
+
+setMethod("initialize", "Square", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
+
+setMethod("sign_from_args", "Square", function(object) { Sign.POSITIVE })
+setMethod("func_curvature", "Square", function(object) { Curvature.CONVEX })
+setMethod("monotonicity", "Square", function(object) { SIGNED })
+
+Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  x <- arg_objs[[1]]
+  ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  qol <- QOLElemwise(list(x, ones), size)
+  obj <- qol[[1]]
+  constraints <- qol[[2]]
+  list(obj, constraints)
+}
+
+setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
+  Square.graph_implementation(arg_objs, size, data)
+})
+

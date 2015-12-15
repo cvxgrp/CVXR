@@ -96,12 +96,73 @@ setMethod("value", "Atom", function(object) {
     result
 })
 
+GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
+                               prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
+
+setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
+  .Object@x <- x
+  .Object <- callNextMethod(.Object, ..., .args = list(.Object@x))
+  
+  x <- .Object@.args[[1]]
+  if(size(x)[1] == 1)
+    n <- size(x)[2]
+  else if(size(x)[2] == 1)
+    n <- size(x)[1]
+  else
+    stop("x must be a row or column vector")
+  
+  if(is.na(p))
+    p <- rep(1, n)
+  
+  if(length(p) != n)
+    stop("x and p must have the same number of elements")
+  
+  if(any(p < 0) || sum(p) <= 0)
+    stop("powers must be nonnegative and not all zero")
+  
+  frac <- fracify(p, max_denom)
+  .Object@w <- frac[[1]]
+  .Object@w_dyad <- frac[[2]]
+  .Object@approx_error <- approx_error(p, .Object@w)
+  
+  .Object@tree <- decompose(.Object@w_dyad)
+  
+  # known lower bound on number of cones needed to represent w_dyad
+  .Object@cone_lb <- lower_bound(.Object@w_dyad)
+  
+  # number of cones used past known lower bound
+  .Object@cone_num_over <- over_bound(.Object@w_dyad, .Object@tree)
+  
+  # number of cones used
+  .Object@cone_num <- .Object@cone_lb + .Object@cone_num_over
+  .Object
+})
+
+setMethod("shape_from_args", "GeoMean", function(object) { Shape(rows = 1, cols = 1) })
+setMethod("sign_from_args", "GeoMean", function(object) { Sign.POSITIVE })
+setMethod("func_curvature", "GeoMean", function(object) { Curvature.CONCAVE })
+setMethod("monotonicity", "GeoMean", function(object) { INCREASING })
+setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
+
+GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  w <- data[[1]]
+  w_dyad <- data[[2]]
+  tree <- data[[3]]
+  x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1) })
+  list(t, gm_constrs(t, x_list, w))
+}
+
+setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, data = NA_real_) {
+  GeoMean.graph_implementation(arg_objs, size, data)
+})
+
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   prod(size(x)) * Pnorm(x = x, p = -1)
 }
 
-KLDiv <- setClass("KLDiv", representation(x = "Expression", y = "Expression"), contains = "Atom")
+.KLDiv <- setClass("KLDiv", representation(x = "Expression", y = "Expression"), contains = "Atom")
+KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 
 setMethod("validate_args", "KLDiv", function(object) {
   if(!is_scalar(object@.args[[1]]) || !is_scalar(object@.args[[2]]))
@@ -154,8 +215,10 @@ setMethod("monotonicity", "LambdaMax", function(object) { NONMONOTONIC })
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
   n <- size(A)[1]
+  # SDP constraint.
   t <- create_var(c(1,1))
   prom_t <- promote(t, c(n,1))
+  # I*t - A
   expr <- sub_expr(diag_vec(prom_t), A)
   list(t, list(SDP(expr)))
 }
@@ -164,36 +227,10 @@ setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, 
   LambdaMax.graph_implementation(arg_objs, size, data)
 })
 
-.LambdaMin <- setClass("LambdaMin", representation(A = "ConstValORExpr"), contains = "Atom")
-LambdaMin <- function(A) { .LambdaMin(A = A) }
-
-setMethod("validate_args", "LambdaMin", function(object) {
-  if(size(object@.args[[1]])[1] != size(object@.args[[2]])[2])
-    stop("The argument to LambdaMin must resolve to a square matrix")
-})
-
-setMethod("initialize", "LambdaMin", function(.Object, ..., A) {
-  .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
-})
-
-setMethod("shape_from_args", "LambdaMin", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "LambdaMin", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature", "LambdaMin", function(object) { Curvature.CONCAVE })
-setMethod("monotonicity", "LambdaMin", function(object) { NONMONOTONIC })
-
-LambdaMin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  A <- arg_objs[[1]]
-  n <- size(A)[1]
-  t <- create_var(c(1,1))
-  prom_t <- promote(t, c(n,1))
-  expr <- sub_expr(A, diag_vec(prom_t))
-  list(t, list(SDP(expr)))
+LambdaMin <- function(X) {
+  X <- as.Constant(X)
+  -LambdaMax(-X)
 }
-
-setMethod("graph_implementation", "LambdaMin", function(object, arg_objs, size, data = NA_real_) {
-  LambdaMin.graph_implementation(arg_objs, size, data)
-})
 
 LambdaSumLargest <- function(X, k) {
   X <- as.Constant(X)
@@ -231,36 +268,42 @@ setMethod("sign_from_args",  "LogDet", function(object) { Sign.UNKNOWN })
 setMethod("func_curvature",  "LogDet", function(object) { Curvature.CONCAVE })
 setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
 
-# LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-#   A <- arg_objs[[1]]  # n by n matrix
-#   n <- size(A)[1]
-#   X <- create_var(c(2*n, 2*n))
-#   canon <- canonical_form(Semidef(2*n))
-#   X <- canon[[1]]
-#   constraints <- canon[[2]]
-#   Z <- create_var(c(n,n))
-#   D <- create_var(c(n,1))
-#   
-#   # Require that X and A are PSD
-#   constraints <- c(constraints, SDP(A))
-#   
-#   # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
-#   Z_lower_tri <- upper_tri(transpose(Z))
-#   constraints <- c(constraints, create_eq(Z_lower_tri))
-#   
-#   # D[i,i] = Z[i,i]
-#   constraints <- c(constraints, create_eq(D, diag_mat(Z)))
-#   
-#   # Fix X using the fact that A must be affine by the DCP rules
-#   # X[1:n, 1:n] == D
-#   block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
-#   
-#   # X[1:n, 1:n] == Z
-#   block_eq(X, Z, constraints, 1, n, n, 2*n)
-#   
-#   # X[n:2*n, n:2*n] == A
-#   block_eq(X, A, constraints, n, 2*n, n, 2*n)
-# }
+LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  A <- arg_objs[[1]]  # n by n matrix
+  n <- size(A)[1]
+  X <- create_var(c(2*n, 2*n))
+  canon <- canonical_form(Semidef(2*n))
+  X <- canon[[1]]
+  constraints <- canon[[2]]
+  Z <- create_var(c(n,n))
+  D <- create_var(c(n,1))
+  
+  # Require that X and A are PSD
+  constraints <- c(constraints, SDP(A))
+  
+  # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
+  Z_lower_tri <- upper_tri(transpose(Z))
+  constraints <- c(constraints, create_eq(Z_lower_tri))
+  
+  # D[i,i] = Z[i,i]
+  constraints <- c(constraints, create_eq(D, diag_mat(Z)))
+  
+  # Fix X using the fact that A must be affine by the DCP rules
+  # X[1:n, 1:n] == D
+  constraints <- Index.block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
+  
+  # X[1:n, 1:n] == Z
+  constraints <- Index.block_eq(X, Z, constraints, 1, n, n, 2*n)
+  
+  # X[n:2*n, n:2*n] == A
+  constraints <- Index.block_eq(X, A, constraints, n, 2*n, n, 2*n)
+  
+  # Add the objective sum(log(D[i,i]))
+  graph <- Log.graph_implementation(list(D), c(n, 1))
+  obj <- graph[[1]]
+  constr <- graph[[2]]
+  list(sum_entries(obj), c(constraints, constr))
+}
 
 setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
   LogDet.graph_implementation(arg_objs, size, data)
@@ -279,24 +322,20 @@ setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
 setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
 
-LogSumExp.graph_implementation <- function(object) {
+LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(c(1,1))
   
   # sum(exp(x - t))
   prom_t <- promote(t, size(x))
   expr <- sub_expr(x, prom_t)
-  graph0 <- Exp.graph_implementation(list(expr), size(x))
-  obj <- graph0[[1]]
-  constraints <- graph0[[2]]
-  
-  graph1 <- SumEntries.graph_implementation(list(obj), c(1,1))
-  obj <- graph1[[1]]
-  constr <- graph1[[2]]
-  
+  graph <- Exp.graph_implementation(list(expr), size(x))
+  obj <- sum_entries(graph[[1]])
+  constraints <- graph[[2]]
+
   # obj <= 1
   one <- create_const(1, c(1,1))
-  constraints <- c(constraints, constr, create_leq(obj, one))
+  constraints <- c(constraints, create_leq(obj, one))
   list(t, constraints)
 }
 
@@ -338,7 +377,18 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   M <- create_var(c(n+1, n+1))
   t <- create_var(c(1,1))
   constraints <- list()
-  # TODO: Finish once index graph implementation done
+  
+  # Fix M using the fact that P must be affine by the DCP rules.
+  # M[1:n, 1:n] == P
+  constraints <- Index.block_eq(M, P, constraints, 1, n, 1, n)
+  
+  # M[1:n, n:n+1] == x
+  constraints <- Index.block_eq(M, x, constraints, 1, n, n, n+1)
+  
+  # M[n:n+1, n:n+1] == t
+  constraints <- Index.block_eq(M, t, constraints, n, n+1, n, n+1)
+  
+  # Add SDP constraints.
   list(t, c(constraints, SDP(M)))
 }
 
@@ -348,6 +398,7 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 
 .MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
 MaxEntries <- function(x) { .MaxEntries(x = x) }
+
 setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., .args = list(.Object@x))
@@ -370,22 +421,10 @@ setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size,
   MaxEntries.graph_implementation(arg_objs, size, data)
 })
 
-.MinEntries <- setClass("MinEntries", contains = "MaxEntries")
-MinEntries <- function(x) { .MinEntries(x = x) }
-
-setMethod("func_curvature", "MinEntries", function(object) { Curvature.CONCAVE })
-
-MinEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  t <- create_var(c(1,1))
-  promoted_t <- promote(t, size(x))
-  constraints <- list(create_leq(promoted_t, x))
-  list(t, constraints)
+MinEntries <- function(x) {
+  x <- as.Constant(x)
+  -MaxEntries(-x)
 }
-
-setMethod("graph_implementation", "MinEntries", function(object, arg_objs, size, data = NA_real_) {
-  MinEntries.graph_implementation(arg_objs, size, data)
-})
 
 #'
 #' The Pnorm class.
@@ -427,9 +466,9 @@ setMethod("initialize", "Pnorm", function(.Object, ..., x, p = 2, max_denom = 10
 
 setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args",  "Pnorm", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "Pnorm", function(object) { Curvature(curvature = ifelse(object@p >= 1, CURV_CONVEX_KEY, CURV_CONCAVE_KEY)) })
+setMethod("func_curvature",  "Pnorm", function(object) { ifelse(object@p >= 1, Curvature.CONVEX, Curvature.CONCAVE) })
 setMethod("monotonicity",    "Pnorm", function(object) { ifelse(object@p >= 1, SIGNED, INCREASING) })
-
+setMethod("get_data", "Pnorm", function(object) { object@p })
 setMethod("name", "Pnorm", function(object) { 
   sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
 })
@@ -475,12 +514,32 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) { Pnorm(x = x, p = type) })
+setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) {
+  x <- as.Constant(x)
+  
+  if(p == 1)
+    return(Pnorm(x = x, p = 1))
+  else if(p == "nuc")
+    return(NormNuc(x))
+  else if(p == "fro")
+    return(Pnorm(x = x, p = 2))
+  else if(p == 2) {
+    if(is.matrix(x))
+      return(SigmaMax(x = x))
+    else
+      return(Pnorm(x = x, p = 2))
+  } else
+    return(Pnorm(x = x, p = type))
+})
+
 Norm1   <- function(x) { Pnorm(x = x, p = 1) }
 Norm2   <- function(x) { Pnorm(x = x, p = 2) }
 NormInf <- function(x) { Pnorm(x = x, p = Inf) }
-
-# TODO: MixedNorm implementation
+MixedNorm <- function(X, p = 2, q = 1) {
+  X <- as.Constant(X)
+  vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
+  norm(HStack(unlist(vecnorms)), q)
+}
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 NormNuc <- function(A) { .NormNuc(A = A) }
@@ -500,10 +559,20 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   rows <- size(A)[1]
   cols <- size(A)[2]
   
+  # Create the equivalent problem:
+  # minimize (trace(U) + trace(V))/2
+  # subject to: [U A; t(A) V] is positive semidefinite
   X <- create_var(c(rows+cols, rows+cols))
   constraints <- list()
-  # TODO: Finish implementation once index graph implementation is done
-  list()
+  
+  # Fix X using the fact that A must be affine by the DCP rules.
+  # X[1:rows, rows:rows+cols] == A
+  constraints <- Index.block_eq(X, A, constraints, 1, rows, rows, rows+cols)
+  half <- create_const(0.5, c(1,1))
+  trace <- mul_expr(half, trace(X), c(1, 1))
+  
+  # Add SDP constraint.
+  list(trace, c(SDP(X), constraints))
 }
 
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
@@ -539,13 +608,13 @@ setMethod("monotonicity",    "QuadOverLin", function(object) { c(SIGNED, DECREAS
 
 QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
-  y <- arg_objs[[2]]
+  y <- arg_objs[[2]]   # Known to be a scalar.
   v <- create_var(c(1,1))
   two <- create_const(2, c(1,1))
-  constraints <- list(SOC(sum_expr(c(y, v)),
+  constraints <- list(SOC(sum_expr(list(y, v)),
                           list(sub_expr(y, v),
-                               mul_expr(two, x, size(x)))),
-                      create_geq(y))
+                               mul_expr(two, x, x$size)),
+                      create_geq(y)))
   list(v, constraints)
 }
 
@@ -571,13 +640,25 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   n <- size(A)[1]
   m <- size(A)[2]
   
+  # Create a matrix with Schur complement I*t - (1/t)*t(A)*A
   X <- create_var(c(n+m, n+m))
   t <- create_var(c(1,1))
   constraints <- list()
   
+  # Fix X using the fact that A must be affine by the DCP rules.
+  # X[1:n, 1:n] == I_n*t
   prom_t <- promote(t, c(n,1))
-  # TODO: Finish implementation once index graph implementation is done
-  list()
+  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, 1, n, 1, n)
+  
+  # X[1:n, n:n+1] == A
+  constraints <- Index.block_eq(X, A, constraints, 1, n, n, n+m)
+  
+  # X[n:n+m, n:n+m] == I_m*t
+  prom_t <- promote(t, c(m,1))
+  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n, n+m, n, n+m)
+  
+  # Add SDP constraint.
+  list(t, c(constraints, SDP(X)))
 }
 
 setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
@@ -588,9 +669,21 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
                        validity = function(object) {
                          if(round(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
+                         return(TRUE)
                          }, contains = "Atom")
 
 SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
+
+setMethod("validate_args",   "SumLargest", function(object) {
+  if(round(object@k) != object@k || object@k <= 0)
+    stop("[SumLargest: validation] k must be a positive integer")
+})
+
+setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
+  .Object@x <- x
+  .Object@k <- k
+  callNextMethod(.Object, ..., .args = list(.Object@x))
+})
 
 setMethod("shape_from_args", "SumLargest", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args", "SumLargest", function(object) { object@.args[[1]]@dcp_attr@sign })
@@ -603,14 +696,11 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   q <- create_var(c(1,1))
   t <- create_var(size(x))
   
-  graph <- SumEntries.graph_implementation(list(t), c(1,1))
-  sum_t <- graph[[1]]
-  constr <- graph[[2]]
+  sum_t <- sum_entries(t)
   obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
   prom_q <- promote(q, size(x))
   
-  constr <- c(constr, create_leq(x, sum_expr(list(t, prom_q))))
-  constr <- c(constr, create_geq(t))
+  constr <- c(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
   list(obj, constr)
 }
 
@@ -636,7 +726,7 @@ TotalVariation <- function(value, ...) {
   else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
     values <- c(value, args)
-    diffs <- lapplt(values, function(mat) {
+    diffs <- lapply(values, function(mat) {
       list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
            mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)])
     })

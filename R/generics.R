@@ -47,6 +47,8 @@ setGeneric("id", function(object) { standardGeneric("id") })
 setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
+setGeneric("dual_variable", function(object) { standardGeneric("dual_variable") })
+setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 
 # Problem generic methods
 setGeneric(".reset_cache", function(object) { standardGeneric(".reset_cache") })

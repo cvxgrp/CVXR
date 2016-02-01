@@ -38,10 +38,10 @@ setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { s
 setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + -e2 })
 setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + -e2 })
 setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
-  ifelse(e2 >= 0, Minimize(expr = e1@expr * e2), Maximize(expr = e1@expr * e2))
+  if(e2 >= 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
 setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
-  ifelse(e2 < 0, Minimize(expr = e1@expr * e2), Maximize(expr = e1@expr * e2))
+  if(e2 < 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
 setMethod("/", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 

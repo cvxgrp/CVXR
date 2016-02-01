@@ -466,8 +466,8 @@ setMethod("initialize", "Pnorm", function(.Object, ..., x, p = 2, max_denom = 10
 
 setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args",  "Pnorm", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "Pnorm", function(object) { ifelse(object@p >= 1, Curvature.CONVEX, Curvature.CONCAVE) })
-setMethod("monotonicity",    "Pnorm", function(object) { ifelse(object@p >= 1, SIGNED, INCREASING) })
+setMethod("func_curvature",  "Pnorm", function(object) { if(object@p >= 1) Curvature.CONVEX else Curvature.CONCAVE })
+setMethod("monotonicity",    "Pnorm", function(object) { if(object@p >= 1) SIGNED else INCREASING })
 setMethod("get_data", "Pnorm", function(object) { object@p })
 setMethod("name", "Pnorm", function(object) { 
   sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
@@ -514,16 +514,18 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type) {
+setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "N", "2")) {
   x <- as.Constant(x)
   
-  if(p == 1)
+  if(type == "O" || type == "o" || type == "1")
     return(Pnorm(x = x, p = 1))
-  else if(p == "nuc")
-    return(NormNuc(x))
-  else if(p == "fro")
+  else if(type == "I" || type == "i" || type == "inf")
+    return(Pnorm(x = x, p = Inf))
+  else if(type == "F" || type == "f" || type == "fro")
     return(Pnorm(x = x, p = 2))
-  else if(p == 2) {
+  else if(type == "N" || type == "n" || type == "nuc")
+    return(NormNuc(A = x))
+  else if(type == "2") {
     if(is.matrix(x))
       return(SigmaMax(x = x))
     else

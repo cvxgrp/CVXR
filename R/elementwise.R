@@ -438,22 +438,18 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { 
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, .w = NA_real_) {
   p_old <- p
-  if(p > 1)
-    pw <- pow_high(p, max_denom)
-  else if(p > 0 && p < 1)
-    pw <- pow_mid(p, max_denom)
-  else if(p < 0)
-    pw <- pow_neg(p, max_denom)
   
-  p <- pw[[1]]
-  w <- pw[[2]]
-  
-  if(p == 1) {
-    p <- 1
+  if(p == 1 || p == 0 || p == Inf)
     w <- NA_real_
-  } else if(p == 0) {
-    p <- 0
-    w <- NA_real_
+  else {
+    if(p > 1)
+      pw <- pow_high(p, max_denom)
+    else if(p > 0 && p < 1)
+      pw <- pow_mid(p, max_denom)
+    else if(p < 0)
+      pw <- pow_neg(p, max_denom)
+    p <- pw[[1]]
+    w <- pw[[2]]
   }
   
   .Object@p <- as.numeric(p)   # TODO: Need to store this as a fraction object, not a rounded numeric

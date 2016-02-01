@@ -2,6 +2,8 @@ Package: cvxr
 Title: Disciplined Convex Programming
 Version: 0.0.0.9000
 Authors@R: person("Anqi", "Fu", email = "anqif@alumni.stanford.edu", role = c("aut", "cre"))
+Author: Anqi Fu [aut, cre]
+Maintainer: Anqi Fu <anqif@alumni.stanford.edu>
 Description: CVXR is a modeling language for disciplined convex optimization problems. 
              It allows the user to express problems in a natural way that follows 
              mathematical convention, rather than the restrictive standard form required 

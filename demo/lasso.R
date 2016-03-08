@@ -9,5 +9,6 @@ gamma <- Parameter(sign = "POSITIVE")
 
 # Construct the problem
 x <- Variable(rows = m)
-objective <- Minimize(sum_squares(A*x - b) + gamma*norm(x,1))
+objective <- Minimize(SumSquares(A*x - b) + gamma*Pnorm(x,1))
 p <- Problem(objective)
+cvxr_solve(p, solver = ECOS())

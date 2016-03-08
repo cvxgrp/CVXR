@@ -483,12 +483,12 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     return(list(t, list(SOC(t, list(x)))))
   
   if(p == Inf) {
-    t_ <- promote(t, size(x))
+    t_ <- promote(t, x$size)
     return(list(t, list(create_leq(x, t_), create_geq(sum_expr(list(x, t_))))))
   }
   
   if(p >= 1) {
-    absx <- create_var(size(x))
+    absx <- create_var(x$size)
     constraints <- c(constraints, create_leq(x, absx), create_geq(sum_expr((list(x, absx)))))
     x <- absx
   }
@@ -496,8 +496,8 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   if(p == 1)
     return(list(sum_entries(x), constraints))
   
-  r <- create_var(size(x))
-  t_ <- promote(t, size(x))
+  r <- create_var(x$size)
+  t_ <- promote(t, x$size)
   constraints <- c(constraints, create_eq(sum_entries(r), t))
   
   if(p < 0)
@@ -615,8 +615,8 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   two <- create_const(2, c(1,1))
   constraints <- list(SOC(sum_expr(list(y, v)),
                           list(sub_expr(y, v),
-                               mul_expr(two, x, x$size)),
-                      create_geq(y)))
+                               mul_expr(two, x, x$size))),
+                      create_geq(y))
   list(v, constraints)
 }
 

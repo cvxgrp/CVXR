@@ -168,7 +168,7 @@ create_leq <- function(lh_op, rh_op, constr_id = get_id()) {
   LinLeqConstr(expr, constr_id, lh_op$size)
 }
 
-create_geq <- function(lh_op, rh_op, constr_id) {
+create_geq <- function(lh_op, rh_op, constr_id = get_id()) {
   if(!missing(rh_op))
     rh_op <- neg_expr(rh_op)
   create_leq(neg_expr(lh_op), rh_op, constr_id)

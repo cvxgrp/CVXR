@@ -101,7 +101,7 @@ setMethod("get_data", "Parameter", function(object) {
 })
 setMethod("parameters", "Parameter", function(object) { list(object) })
 setMethod("canonicalize", "Parameter", function(object) {
-  obj <- create_param(object, object@size)
+  obj <- create_param(object, c(object@rows, object@cols))
   list(obj, list())
 })
 

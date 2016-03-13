@@ -188,8 +188,8 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   list(NA, c(constraints, dual_holder))
 })
 
-.SOC <- setClass("SOC", representation(t = "list", x_elems = "list"), 
-                       prototype(t = list(), x_elems = list()), contains = "Constraint")
+.SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"), 
+                       prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
 setMethod("show", "SOC", function(object) { cat("SOC(", object@t, ", <", paste(object@x_elems, collapse = ","), ">)", sep = "") })

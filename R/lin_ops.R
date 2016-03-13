@@ -27,21 +27,21 @@ NO_OP = "no_op"
 CONSTANT_ID = "constant_id"
 
 # Create lists to represent linear operators and constraints
-LinOp <- function(type, size, args = list(), data = NA_real_) {
+LinOp <- function(type, size, args = list(), data = NA_real_, class = "LinOp") {
   if(!is.character(type)) stop("type must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   if(!is.list(args)) stop("args must be a list of arguments")
-  list(type = type, size = size, args = args, data = data)
+  list(type = type, size = size, args = args, data = data, class = "LinOp")
 }
 
-LinConstr <- function(expr, constr_id, size) {
+LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
   if(!is.character(constr_id)) stop("constr_id must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
-  list(expr = expr, constr_id = constr_id, size = size)
+  list(expr = expr, constr_id = constr_id, size = size, class = class)
 }
 
-LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size) }
-LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size) }
+LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinEqConstr") }
+LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinLeqConstr") }
 
 get_id <- function() {
   # sample.int(.Machine$integer.max, 1)

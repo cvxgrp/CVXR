@@ -167,6 +167,17 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
   
   # TODO: Solve in parallel
   
+  print("Calling CVXcanon")
+  if(is(object@objective, "Minimize")) {
+    sense <- "Minimize"
+    canon_objective <- objective
+  } else {
+    sense <- "Maximize"
+    canon_objective <- neg_expr(objective)  # preserve sense
+  }
+  
+  canonInterface.solve(sense, canon_objective, constraints, verbose, ...)
+  
   # Choose a solver/check the chosen solver.
   if(is.null(solver))
     solver <- Solver.choose_solver(constraints)

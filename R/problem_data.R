@@ -316,6 +316,9 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
 #  big_x <- rep(0, cols)
 # })
 
+setClassUnion("SymDataORNull", c("SymData", "NULL"))
+setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
+
 #'
 #' The ProblemData class.
 #'
@@ -326,8 +329,6 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
 #' @slot prev_result A \code{list} representing the result of the last solve
 #' @aliases ProblemData
 #' @export
-setClassUnion("SymDataORNull", c("SymData", "NULL"))
-setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
 .ProblemData <- setClass("ProblemData", representation(sym_data = "SymDataORNull", matrix_data = "MatrixDataORNull", prev_result = "list"),
                                         prototype(sym_data = NULL, matrix_data = NULL, prev_result = list()))
 ProblemData <- function(sym_data = NULL, matrix_data = NULL, prev_result = list()) { 

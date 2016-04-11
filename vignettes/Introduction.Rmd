@@ -1,0 +1,41 @@
+---
+title: "Introduction to CVX R!"
+author: "Stephen Boyd, Steven Diamond, Anqi Fu, Balasubramanian Narasimhan, Paul Rosenfield"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+### Stephen Boyd's ideas
+
+here are my ideas (typed in stream of consciousness) for what we should show R users in a user guide, with the script that goes with it.
+
+1.  hello world. form and solve a problem with two variables, one equality and one inequality constraint.
+
+2. simple regression or ridge regression or lasso.  we mention that we can we do this after using glmnet.  (we do this and show the results are close.)  we point out this is *not* what cvx-r is for.
+
+3. new we add constraints to the parameters in the ridge regression problem.  you can't do this with glmnet!  we could check the model we find and cross validate and show it's better than the one in (2), maybe.
+
+4. now change the loss function in (2) to huber (say).  show an example where we get much better (cross validated) prediction error. (we could then point to a longer set of examples, such as quantile regression, isotonic regression, etc.)
+
+5. more sophisticated examples.  we use rob's new method for including cross terms. (i can give details.)  we can do sparse inverse covariance estimation.  some other ML estimation from exponential family.
+
+6. now we switch to a new problem:   find the maximum entropy distribution on n outcomes that satisfies m expectations (equalities or inequalities).  this is used in, e.g., direct standardization.   we can use it is to estimate a distribution of something from a non-random sample of it, with some known statistics for the whole distribution.
+
+7. if we get cvx-r tied to a solver that does SDP, we can do some great covariance / correlation bounding problems.
+
+8. we can do some cool problems where we maximize/minimize over a set of distributions.
+
+
+### Example figure with caption
+
+```{r, fig.show='hold', fig.cap='Here\'s a caption!'}
+plot(1:10)
+plot(10:1)
+```
+

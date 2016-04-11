@@ -15,7 +15,9 @@ Depends: R (>= 3.2.2),
          uuid
 License: GPL-2 | GPL-3
 LazyData: true
-Suggests: testthat
+Suggests: testthat,
+    knitr,
+    rmarkdown
 Collate: 'generics.R' 
          'utilities.R'
          'dcp_attr.R' 
@@ -30,3 +32,4 @@ Collate: 'generics.R'
          'elementwise.R'
          'solver.R'
          'problem_data.R'
+VignetteBuilder: knitr

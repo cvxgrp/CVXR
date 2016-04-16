@@ -10,9 +10,9 @@
 
 <meta name="author" content="Stephen Boyd, Steven Diamond, Anqi Fu, Balasubramanian Narasimhan, Paul Rosenfield" />
 
-<meta name="date" content="2016-04-11" />
+<meta name="date" content="2016-04-16" />
 
-<title>Introduction to CVX R!</title>
+<title>Introduction to CVXR!</title>
 
 
 
@@ -52,26 +52,79 @@ code > span.er { color: #ff0000; font-weight: bold; }
 
 
 <div id="header">
-<h1 class="title">Introduction to CVX R!</h1>
+<h1 class="title">Introduction to CVXR!</h1>
 <h4 class="author"><em>Stephen Boyd, Steven Diamond, Anqi Fu, Balasubramanian Narasimhan, Paul Rosenfield</em></h4>
-<h4 class="date"><em>2016-04-11</em></h4>
+<h4 class="date"><em>2016-04-16</em></h4>
 </div>
 
 
-<div id="stephen-boyds-ideas" class="section level3">
-<h3>Stephen Boyd’s ideas</h3>
+<p>Welcome to <code>CVXR</code>: a modeling language for describing and solving convex optimization problems that follows the natural, mathematical notation of convex optimization rather than the requirements of any particular solver. The purpose of this document is both to introduce the reader to <code>CVXR</code> and to generate excitement for its possibilities in the field of statistics.</p>
+<p>Convex optimization is a powerful and very general tool. As a practical matter, the set of convex optimization problems includes almost every optimization problem that can be solved exactly and efficiently. If an optimization problem can be solved, it is probably convex. This family of problems becomes even larger if you include those that can be solved <em>approximately</em> and efficiently. While <code>CVXR</code> cannot describe every problem in that family, it can describe many of them through a system called Disciplined Convex Programming. (See <a href="http://dcp.stanford.edu/">dcp.stanford.edu</a> for details.)</p>
+<p>The rest of this document presents a sequence of examples, starting from the simple and mundane and building up towards methods of increasing complexity and novelty, including some methods that are state-of-the-art at the time of writing and others that are as-yet-unexplored to our knowledge.</p>
+<div id="hello-world" class="section level2">
+<h2>Hello World</h2>
+<p>A convex optimization problem has the following form</p>
+<p><span class="math">\[
+\begin{aligned}
+\text{minimize }&amp; f_0(x) \\
+\text{subject to: }&amp; f_i(x) \leq 0, \; i = 1,...,m \\
+&amp; g_i(x) = 0, \; i = 1,...,p,
+\end{aligned}
+\]</span></p>
+<p>where <span class="math">\(f_0\)</span> and <span class="math">\(f_1,...,f_m\)</span> are convex and <span class="math">\(g_1,...,g_p\)</span> are affine. <span class="math">\(f_0\)</span> is called the objective function, the <span class="math">\(f_i\)</span> are called the inequality constraints, and the <span class="math">\(g_i\)</span> are called the equality constraints. We begin with one of the simplest possible problems that presents all three of these features:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Variables used to try to minimize the objective</span>
+x &lt;-<span class="st"> </span><span class="kw">Variable</span>(<span class="dv">1</span>)
+y &lt;-<span class="st"> </span><span class="kw">Variable</span>(<span class="dv">1</span>)
+
+<span class="co"># Problem definition</span>
+objective &lt;-<span class="st"> </span><span class="kw">Minimize</span>(x -<span class="st"> </span>y)
+constraints &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dv">0</span> &lt;=<span class="st"> </span>x +<span class="st"> </span>y,
+                   x +<span class="st"> </span>y &lt;=<span class="st"> </span><span class="dv">1</span>)
+prob &lt;-<span class="st"> </span><span class="kw">Problem</span>(objective, constraints)
+
+<span class="co"># Problem solution</span>
+solution &lt;-<span class="st"> </span><span class="kw">solve</span>(prob)
+solution$opt.value
+solution$x
+solution$y
+
+<span class="co"># The world says `hi' back.</span></code></pre>
+<p>SHOULD I PROVIDE SOME INVESTIGATION INTO THE CONTENTS OF THE <code>solution</code> OBJECT?</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(solution)</code></pre>
+</div>
+<div id="a-canonical-example-regression" class="section level2">
+<h2>A Canonical Example: Regression</h2>
+<p>We are exploring the applications of <code>CVXR</code> to the field of statistics, so it would be remiss of us not to talk about regression. A lot. We begin by showing what a standard regression problem looks like in <code>CVXR</code>.</p>
+<p>WHAT IS OUR DATA? We want something in 2 dimensions that works OK with least squares, better with ridge or lasso, even better with huber loss, and maybe even better with some prior knowledge (like how one of the variables has a limited range, and the response is always positive).</p>
+<p>One way that Huber would definitely do better is if we corrupt the normal noise term with a slightly fatter normal (basically giving it slightly fatter tails). But that may seem like cheating.</p>
+<p>Congratulations! You have just done with <code>CVXR</code> what you already could have done with <code>glmnet</code>. But slower. And with more code. Stick with us, it gets better.</p>
+<p>There is a conspicuous absence from all of these regression problems: constraints! Constraints present a simple way that we can incorporate prior information about the system under study to produce a better prediction.</p>
+<p>Add nuance to existing methods by incorporating prior information, or invent entirely new methods with only a few lines of code.</p>
+</div>
+<div id="stephen-boyds-ideas" class="section level2">
+<h2>Stephen Boyd’s ideas</h2>
 <p>here are my ideas (typed in stream of consciousness) for what we should show R users in a user guide, with the script that goes with it.</p>
 <ol style="list-style-type: decimal">
 <li><p>hello world. form and solve a problem with two variables, one equality and one inequality constraint.</p></li>
 <li><p>simple regression or ridge regression or lasso. we mention that we can we do this after using glmnet. (we do this and show the results are close.) we point out this is <em>not</em> what cvx-r is for.</p></li>
-<li><p>new we add constraints to the parameters in the ridge regression problem. you can’t do this with glmnet! we could check the model we find and cross validate and show it’s better than the one in (2), maybe.</p></li>
-<li><p>now change the loss function in (2) to huber (say). show an example where we get much better (cross validated) prediction error. (we could then point to a longer set of examples, such as quantile regression, isotonic regression, etc.)</p></li>
+</ol>
+<p>Congratulations! You have just done with cvxr what you could have done with lasso2. But slower. And with more code. Stick with us, it gets better.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>new we add constraints to the parameters in the ridge regression problem. you can’t do this with glmnet! we could check the model we find and cross validate and show it’s better than the one in (2), maybe.</li>
+</ol>
+<p>Question: How would constraining the parameters make the cross-validated error better?</p>
+<ol start="4" style="list-style-type: decimal">
+<li>now change the loss function in (2) to huber (say). show an example where we get much better (cross validated) prediction error. (we could then point to a longer set of examples, such as quantile regression, isotonic regression, etc.)</li>
+</ol>
+<p>Agriculture example: custom loss function specifically designed to mimic the curve of fertilizer cost vs. yield gain. Or maybe an asymetric penalty function which ascribes higher cost to underpredicting than overpredicting.</p>
+<p>Yield vs. fertilizer: steep, then less steep, then flat cost vs. fertilizer: linear, or maybe including some kinks in it to account for bulk purchases. Price of corn at time of sale (months into the future) is uncertain. Objective: maximize expected profit Other objective: maximize expected profit over 95% confidence interval of corn prices.</p>
+<p>For data in which the noise has an unknown distribution, perhaps Min Walsh-average distance regression: robust and perhaps more efficient than L1?</p>
+<ol start="5" style="list-style-type: decimal">
 <li><p>more sophisticated examples. we use rob’s new method for including cross terms. (i can give details.) we can do sparse inverse covariance estimation. some other ML estimation from exponential family.</p></li>
 <li><p>now we switch to a new problem: find the maximum entropy distribution on n outcomes that satisfies m expectations (equalities or inequalities). this is used in, e.g., direct standardization. we can use it is to estimate a distribution of something from a non-random sample of it, with some known statistics for the whole distribution.</p></li>
 <li><p>if we get cvx-r tied to a solver that does SDP, we can do some great covariance / correlation bounding problems.</p></li>
 <li><p>we can do some cool problems where we maximize/minimize over a set of distributions.</p></li>
 </ol>
-</div>
 <div id="example-figure-with-caption" class="section level3">
 <h3>Example figure with caption</h3>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="dv">1</span>:<span class="dv">10</span>)
@@ -81,6 +134,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p class="caption">
 Here’s a caption!
 </p>
+</div>
 </div>
 </div>
 

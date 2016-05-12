@@ -1,0 +1,277 @@
+---
+title: "Introduction to CVXR!"
+author: "Stephen Boyd, Steven Diamond, Anqi Fu, Balasubramanian Narasimhan, Paul Rosenfield"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Welcome to `CVXR`: a modeling language for describing and solving convex optimization problems that follows the natural, mathematical notation of convex optimization rather than the requirements of any particular solver. The purpose of this document is both to introduce the reader to `CVXR` and to generate excitement for the possibilities it creates in the field of statistics.
+
+Convex optimization is a powerful and very general tool. As a practical matter, the set of convex optimization problems includes almost every optimization problem that can be solved exactly and efficiently (i.e. without requiring an exhaustive search). If an optimization problem can be solved, it is probably convex. This family of problems becomes even larger if you include those that can be solved _approximately_ and efficiently. To learn more about the mathematics and application of convex optimization, see [Boyd and Vandenberghe 2009](http://stanford.edu/~boyd/cvxbook/).
+
+Convex optimization systems written in other languages are already widely used in practical applications. These include [YALMIP](http://users.isy.liu.se/johanl/yalmip/pmwiki.php?n=Main.WhatIsYALMIP) and [CVX](http://cvxr.com/cvx/) (Matlab), [CVXPY](http://www.cvxpy.org/en/latest/) (Python), and [Convex.jl](http://convexjl.readthedocs.org/en/latest/) (Julia). `CVXR` Shares a lot of its code base with [CVXcannon](http://stanford.edu/class/ee364b/projects/2015projects/reports/miller_quigley_zhu_report.pdf) and CVXPY. As far as we know, this is the first full-featured general convex optimization package for R.
+
+One of the great headaches of conventional numerical optimization is the process of deciding which algorithm to use and how to set its parameters. In convex optimization, the particular algorithm matters much less. So while a user of `CVXR` is still free to choose from a number of different algorithms and to set algorithm parameters as they please, the vast majority of users will not need to do this. `CVXR` will just work.
+
+The uses for convex optimization in statistics are many and varied. Many parameter-fitting methods are convex, including least-squares, ridge, lasso, and isotonic regression, as well as many other kinds of problems such as maximum entropy or minimum Kullback-Leibler divergence over a finite set. All of these examples, at least in their most basic forms, are established enough that they already have well-crafted R packages devoted to them. If you use `CVXR` to solve these problems, it will work. It will probably be slower than a custom-built algorithm---for example glmnet for fitting lasso or ridge regression models---but it will work. However, this is not the true purpose of `CVXR`. If you want to build a well-established model, you should use one of the well-established packages for doing so. If you want to build your _own_ model---one that is a refinement of an existing method, or perhaps even something that has never been tried before---then `CVXR` is the place to do it. The advantage of `CVXR` over glmnet and the like comes from its flexibility: A few lines of code can transform a problem from commonplace to state-of-the-art, and can often do the work of an entire package in the process. (We present an example below where this is literally the case.)
+
+The rest of this document presents a sequence of examples, starting from the simple and mundane and building up towards methods of increasing complexity and novelty, including some methods that are state-of-the-art at the time of writing and others that are as-yet-unexplored to our knowledge. Enjoy!
+
+
+
+
+
+## Hello World
+
+A convex optimization problem has the following form
+
+$$
+\begin{aligned}
+\text{minimize }& f_0(x) \\
+\text{subject to: }& f_i(x) \leq 0, \; i = 1,...,m \\
+& g_i(x) = 0, \; i = 1,...,p,
+\end{aligned}
+$$
+
+where $f_0$ and $f_1,...,f_m$ are convex and $g_1,...,g_p$ are affine. $f_0$ is called the objective function, $f_i \leq 0$ are called the inequality constraints, and $g_i = 0$ are called the equality constraints. We begin with one of the simplest possible problems that presents all three of these features:
+
+### Example 1
+
+```{#numCode .R .numberLines}
+# Variables used to try to minimize the objective
+x <- Variable(1)
+y <- Variable(1)
+
+# Problem definition
+objective <- Minimize(x^2 + y^2)
+constraints <- Constraints(x >= 0,
+                   x + 2*y == 1)
+prob <- Problem(objective, constraints)
+
+# Problem solution
+solution <- Solve(prob)
+solution$status
+solution$opt.value
+solution$x
+solution$y
+
+# The world says 'hi' back.
+```
+
+Note that this problem is simple enough to be solved analytically, so we can confirm that `CVXR` has produced the correct answer.
+
+We now turn to a careful explanation of the code. Lines 2 and 3 create two Variable objects, `x` and `y`. They represent what we are allowed to adjust in our problem in order to obtain the optimal solution. They don't have values yet, and they won't until after we solve the problem. For now, they are just placeholders.
+
+In line 6, the call to `Minimize()` does _not_ return the minimum value of the expression `x^2 + y^2` the way a call to the native R function `min()` would do (after all, `x` and `y` don't have values yet!). Instead, `Minimize()` creates an Objective object, which defines the goal of the optimization we will perform, namely to find values for `x` and `y` which produce the smallest possible value of `x^2 + y^2`.
+
+Lines 7 and 8 define an inequality constraint and an equality constraint, respectively. Again, counter to what you might ordinarily expect, the expression `x >= 0` does not return `TRUE` or `FALSE` the way `1.3 >= 0` would. Instead, the `==` and `>=` operators have been overloaded to return Constraint objects which will be used by the solver to enforce the problem's constraints. (Without them, the solution to our problem would simply be $x = y = 0$.)
+
+In line 9, we define our Problem object, which takes our Objective object and our two Constraint objects as inputs. Problem objects are very flexible in that they can have 0 or more Constraints, and their Objective can be to `Minimize()` a convex expression (as shown above) _or_ to `Maximize()` a concave expression. You can even create a Problem object with no Objective, in which case the corresponding problem is called a "feasibility problem," where the implicit objective is simply to find out whether or not it is possible to simultaneously satisfy all of the given constraints.
+
+The call to `Problem()` still does not actually _solve_ our optimization problem. That happens on line 12 with the call to `Solve()`. Behind the scenes, this call translates the problem into a format that a convex solver can understand, feeds the problem to the solver, and then returns the results to a Solution object.  For the problem above, the Solution object will contain among other things the optimal value of the objective function `x^2 + y^2`, values for `x` and `y` that achieve that optimal objective value, and some accompanying metadata such as `solution$status`, which confirms that the solution was indeed `"optimal"` (see lines 13 through 16).
+
+In general when you apply the `Solve()` method to a Problem, several things can happen:
+
+1. `solution$status == "optimal"`: The problem is solved. Values for the optimization variables are found which satisfy all of the constraints and minimize the objective.
+
+2. `solution$status == "infeasible"`: The problem was _not_ solved because no combination of input variables exists that can satisfy all of the constraints. For a trivial example of when this might happen, consider a problem with optimization variable `x`, and constraints `x >= 1` and `x <= 0`. Obviously, no value of `x` exists that can satisfy both constraints. In this case, `solution$opt.val` is `+Inf` for a minimization problem and `-Inf` for a maximization problem, indicating infinite dissatisfaction with the result. No values are returned for the input variables.
+
+3. `solution$status == "unbounded"`: The problem was _not_ solved because the Objective can be made arbitrarily small for a minimization problem or arbitrarily large for a maximization problem. Hence there is no optimal solution because for any given solution it is always possible to find something even more optimal. In this case, `solution$opt.val` is `-Inf` for a minimization problem and `+Inf` for a maximization problem, indicating infinite satisfaction with the result. Again, no values are returned for the input variables.
+
+4. Others?
+
+Like any normal R object, the Problem, Objective, Constraint, and Solution objects can all be modified and computed on after creation. Here is an example where we modify the problem we created on line 9 by changing its objective and adding a constraint, print the modified problem, check whether it is still convex, and then solve the modified problem:
+
+### Example 2
+
+```{r, eval=FALSE}
+# Modifying the problem from example 1
+prob2 <- prob
+prob2$objective <- Minimize(x^2 + y^2 + abs(x-y))
+prob2$constraints <- c(prob2$constraints, Constraint(y <= 1))
+
+# Analyzing the modified problem
+print(prob2)
+is.convex(prob2)
+
+# Solving the modified problem
+solution2 <- Solve(prob2)
+
+# Examining the solution
+solution2$status
+solution2$opt.val
+solution2$x
+solution2$y
+```
+
+Unfortunately, you can't just type any problem you like into `CVXR`. There are severe restrictions on what kinds of problems can be handled. For example, if we tried to maximize the objective from example 1, we get an error:
+
+### Example 3
+
+```{r, eval=FALSE}
+prob3 <- prob
+prob3$objective <- Maximize(x^2 + y^2)
+Solve(prob3)
+```
+
+If we tried to add the constraint $x^2 == 0.5$, we get a similar error:
+
+### Example 4
+
+```{r, eval=FALSE}
+prob4 <- prob
+prob4$constraints <- c(prob3$constraints, Constraint(x^2 == 0.5))
+```
+
+Some of these restrictions are due to the inherent mathematical limitations of convex optimization---not all problems are convex. Other restrictions come from the fact that neither `CVXR` nor any other system to date is capable of evaluating the convexity of any arbitrary expression. `CVXR` evaluates an expression's convexity using a strict set of rules called Disciplined Convex Programming. To be an effective user of `CVXR` you must understand these rules. For more information, see section [blank].
+
+
+
+## Regression
+
+We are exploring the applications of `CVXR` to the field of statistics, so it would be remiss of us not to talk about regression. A lot. We begin by showing what a standard regression problem looks like in `CVXR`.
+
+
+Basic LS regression. Compare to lm.
+
+
+Then compare nonnegative LS regression. Huge improvement. There is a whole package devoted to this (show the package, show that it produces the same results). Thus we have literally done the work of an entire package with one line of code. Also compare the test errors.
+
+Non-negative elastic net (mixture of lasso and ridge). We did cross validation and obtained this value of lambda.
+
+Change the penalty function: L1 loss.
+
+Then Nonconvex penalty function. Fails. Now we explain why.
+
+## DCP Rules
+
+You must understand these to be an effective user of CVXR
+Start with an example:
+* Original problem is not convex
+* Relaxation *is* convex, but if aren't careful, CVXR won't recognize it as convex.
+* Following DCP rules, the relaxation is recognized as convex.
+
+OR JUST EXPLAIN WHY ELASTIC NET IS CONVEX
+Then Explain DCP rules. Show the convexity parse tree.
+
+GIVE A COUNTER EXAMPLE AND SHOW THE ERROR IT PRODUCES
+
+## Extended Examples
+
+Tibshirani's brand-new method. This is unbelievably useful for research: brand new method by Rob Tibshirani and his grad students. They just uploaded this to archive 10 days ago. We can type it in, and it works. HERE'S SOMETHING COMPLETELY STATE OF THE ART.
+
+Survey Sampling: sample bias correction. find the maximum entropy distribution on n outcomes that satisfies m expectations (equalities or inequalities).  this is used in, e.g., direct standardization.   we can use it is to estimate a distribution of something from a non-random sample of it, with some known statistics for the whole distribution. "Explicit"/"Implicit standardization"
+Hilary vs. Bernie in an online poll. Online poll is super biased towards young people. Bernie is going to take over the world!!! Reweight based on prior information about age in the general population. Now it looks like Hilary is going to take it.
+
+Estimating a covariance matrix given partial information
+
+Fit an increasing cubic spline regression to the Effectiveness vs. Compliance data? Modify to use asymmetric L1 loss for increasing local quantile regression?
+
+
+## Structure of CVXR Objects
+
+Show the tree again.
+
+### Creating New Atoms
+
+As CVXR grows, we will be adding new atoms, but there may well be a function that you want to use that is convex and not representable by the atoms we have. Then, you may want to create your own atom.
+
+
+
+
+# Ideas:
+
+FIND THE SIMPLEST BRILLIANT EXAMPLE WE CAN.
+Nonnegative least squares example. 20 positive coefficients, only 30 observations, and epsilon is not small. Least squares then truncate negative predictions is one approach. Another approach is lasso to produce sparsity. We can do a convex optimization approach that simply constrains the beta's to be >= 0. Show how much better it is.
+
+WHAT IS OUR DATA? We want something in 2 dimensions that works OK with least squares, better with ridge or lasso, even better with huber loss, and maybe even better with some prior knowledge (like how one of the variables has a limited range, and the response is always positive).
+
+One way that Huber would definitely do better is if we corrupt the normal noise term with a slightly fatter normal (basically giving it slightly fatter tails). But that may seem like cheating.
+
+
+Congratulations! You have just done with `CVXR` what you already could have done with `glmnet`. But slower. And with more code. Stick with us, it gets better.
+
+There is a conspicuous absence from all of these regression problems: constraints! Constraints present a simple way that we can incorporate prior information about the system under study to produce a better prediction.
+
+Add nuance to existing methods by incorporating prior information, or invent entirely new methods with only a few lines of code.
+
+
+
+WE CAN REPRODUCE THE FUNCTIONALITY OF AN ENTIRE PACKAGE BY ADDING ONE LINE OF CODE.
+
+
+
+
+
+
+
+## Stephen Boyd's ideas
+
+here are my ideas (typed in stream of consciousness) for what we should show R users in a user guide, with the script that goes with it.
+
+1.  hello world. form and solve a problem with two variables, one equality and one inequality constraint.
+
+2. simple regression or ridge regression or lasso.  we mention that we can we do this after using glmnet.  (we do this and show the results are close.)  we point out this is *not* what cvx-r is for.
+
+
+Congratulations! You have just done with cvxr what you could have done with lasso2. But slower. And with more code. Stick with us, it gets better.
+
+
+
+
+
+
+
+3. new we add constraints to the parameters in the ridge regression problem.  you can't do this with glmnet!  we could check the model we find and cross validate and show it's better than the one in (2), maybe.
+
+
+4. now change the loss function in (2) to huber (say).  show an example where we get much better (cross validated) prediction error. (we could then point to a longer set of examples, such as quantile regression, isotonic regression, etc.)
+
+
+
+Agriculture example: custom loss function specifically designed to mimic the curve of fertilizer cost vs. yield gain. Or maybe an asymetric penalty function which ascribes higher cost to underpredicting than overpredicting.
+
+Yield vs. fertilizer: steep, then less steep, then flat
+cost vs. fertilizer: linear
+Price of corn at time of sale (months into the future) is uncertain.
+Objective: maximize expected profit
+Other objective: maximize expected profit over 95% confidence interval of corn prices.
+
+
+
+For data in which the noise has an unknown distribution, perhaps Min Walsh-average distance regression: robust and perhaps more efficient than L1?
+
+
+
+5. more sophisticated examples.  we use rob's new method for including cross terms. (i can give details.)  we can do sparse inverse covariance estimation.  some other ML estimation from exponential family.
+
+
+
+
+6. now we switch to a new problem:   find the maximum entropy distribution on n outcomes that satisfies m expectations (equalities or inequalities).  this is used in, e.g., direct standardization.   we can use it is to estimate a distribution of something from a non-random sample of it, with some known statistics for the whole distribution. "Explicit"/"Implicit standardization"
+
+7. if we get cvx-r tied to a solver that does SDP, we can do some great covariance / correlation bounding problems.
+
+8. we can do some cool problems where we maximize/minimize over a set of distributions.
+
+
+
+
+Survival problems, regressors are risks, then require that the risks be positive.
+
+
+
+
+### Example figure with caption
+
+```{r, fig.show='hold', fig.cap='Here\'s a caption!'}
+plot(1:10)
+plot(10:1)
+```
+

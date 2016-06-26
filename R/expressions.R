@@ -18,6 +18,10 @@ setMethod("show", "Expression", function(object) {
   cat("Expression(", as.character(object@dcp_attr@curvature), ", ", as.character(object@dcp_attr@sign), ", ", as.character(object@dcp_attr@shape), ")", sep = "")
 })
 
+setMethod("as.character", "Expression", function(x) {
+  paste("Expression(", as.character(x@dcp_attr@curvature), ", ", as.character(x@dcp_attr@sign), ", ", as.character(x@dcp_attr@shape), ")", sep = "")
+})
+
 setMethod("canonical_form", "Expression", function(object) { canonicalize(object) })
 setMethod("get_data", "Expression", function(object) { list() })
 

@@ -192,7 +192,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
                        prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
-setMethod("show", "SOC", function(object) { cat("SOC(", object@t, ", <", paste(object@x_elems, collapse = ","), ">)", sep = "") })
+setMethod("show", "SOC", function(object) { cat("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "") })
 
 setMethod("format_constr", "SOC", function(object) {
   .format <- function(object) {

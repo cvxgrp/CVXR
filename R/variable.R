@@ -1,5 +1,5 @@
 .Variable <- setClass("Variable", representation(id = "character", rows = "numeric", cols = "numeric", name = "character", primal_value = "numeric"),
-                                 prototype(id = UUIDgenerate(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_), 
+                                 prototype(id = uuid::UUIDgenerate(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
                                    if(!is.na(object@primal_value))
                                      stop("[Variable: primal_value] primal_value is an internal slot and should not be set by user")
@@ -28,7 +28,7 @@ setMethod("name", "Variable", function(object) { object@name })
 setMethod("variables", "Variable", function(object) { list(object) })
 setMethod("value", "Variable", function(object) { object@primal_value })
 
-setMethod("save_value", "Variable", function(object) { 
+setMethod("save_value", "Variable", function(object) {
   object@primal_value <- value
   object
 })
@@ -72,9 +72,9 @@ setMethod("canonicalize", "NonNegative", function(object) {
 
 # Positive semidefinite matrix
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
-SemidefUpperTri <- function(n, name) { 
+SemidefUpperTri <- function(n, name) {
   if(missing(name))
-    .SemidefUpperTri(n = n) 
+    .SemidefUpperTri(n = n)
   else
     .SemidefUpperTri(n = n, name = name)
 }

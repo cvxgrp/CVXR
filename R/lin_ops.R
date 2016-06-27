@@ -45,7 +45,7 @@ LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, siz
 
 get_id <- function() {
   # sample.int(.Machine$integer.max, 1)
-  UUIDgenerate()
+    uuid::UUIDgenerate()
 }
 
 create_var <- function(size, var_id = get_id()) {
@@ -71,7 +71,7 @@ sum_expr <- function(operators) {
 }
 
 neg_expr <- function(operator) {
-  LinOp(NEG, operator$size, list(operator))  
+  LinOp(NEG, operator$size, list(operator))
 }
 
 sub_expr <- function(lh_op, rh_op) {

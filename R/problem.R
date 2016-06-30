@@ -107,7 +107,7 @@ SolveResult <- function(opt_value, status, primal_values, dual_values) { list(op
 
 setMethod(".reset_cache", "Problem", function(object) {
   for(solver_name in SOLVERS)
-    object@.cached_data[solver_name] <- ProblemData()
+    object@.cached_data[[solver_name]] <- ProblemData()
   object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
   object
 })

@@ -19,9 +19,9 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   
   p <- Problem(obj, constraints)
   # result <- solve(p)
-  # expect_equal(result, 0.447214, tolerance = 1e-6)
-  # expect_equal(value(r, result), result, tolerance = 1e-6)
-  # expect_equal(value(x_c, result), c(0,0), tolerance = 1e-6)
+  # expect_equal(result$opt_val, 0.447214, tolerance = 1e-6)
+  # expect_equal(result$r, result$opt_val, tolerance = 1e-6)
+  # expect_equal(result$x_c, c(0,0), tolerance = 1e-6)
 })
 
 test_that("Test examples from the README", {
@@ -99,10 +99,10 @@ test_that("Test examples from the README", {
   # result <- solve(p)
   
   # The optimal expected return
-  # print(value(expected_return))
+  # print(result$expected_return)
   
   # The optimal risk
-  # print(value(risk))
+  # print(result$risk)
   ###########################################
   N <- 50
   M <- 40
@@ -138,8 +138,8 @@ test_that("Test log determinant", {
   obj <- Maximize(LogDet(A))
   constraints <- lapply(1:m, function(i) { Norm2(A*as.matrix(x[,i]) + b) <= 1 })
   p <- Problem(obj, constraints)
-  # results <- solve(p)
-  # expect_equal(results, 1.9746, tolerance = 1e-4)
+  # result <- solve(p)
+  # expect_equal(result$opt_val, 1.9746, tolerance = 1e-4)
 })
 
 test_that("Test portfolio problem", {
@@ -164,8 +164,8 @@ test_that("Test examples from CVXR introduction", {
   
   # The optimal objective is returned by solve(prob)
   # result <- solve(prob)
-  # The optimal value for x must be extracted from x
-  # print(value(x, prob))
+  # The optimal value for x
+  # print(result$x)
   # The optimal Lagrange multiplier for a constraint is extracted from constraint
   # print(dual_value(constraints[[1]]))
   
@@ -182,10 +182,10 @@ test_that("Test examples from CVXR introduction", {
   
   # Form and solve problem
   prob <- Problem(obj, constraints)
-  # solve(prob)   # Returns the optimal value
-  # cat("status:", prob@status)
-  # cat("\noptimal value:", value(prob))
-  # cat("\noptimal var:", value(x, prob), value(y, prob))
+  # result <- solve(prob)
+  # cat("status:", result$status)
+  # cat("\noptimal value:", result$opt_val) 
+  # cat("\noptimal var:", result$x, result$y)
   
   ###########################################
   # Create two scalar variables
@@ -200,49 +200,51 @@ test_that("Test examples from CVXR introduction", {
   
   # Form and solve problem
   prob <- Problem(obj, constraints)
-  # solve(prob)   # Returns the optimal value
-  # cat("status:", prob@status)
-  # cat("\noptimal value:", value(prob))
-  # cat("\noptimal var:", value(x, prob), value(y, prob))
+  # result <- solve(prob)
+  # cat("status:", result$status)
+  # cat("\noptimal value:", result$opt_val)
+  # cat("\noptimal var:", result$x, result$y)
   
-  # expect_equal(prob@status, OPTIMAL)
-  # expect_equal(value(prob), 1.0, tolerance = 1e-6)
-  # expect_equal(value(x, prob), 1.0, tolerance = 1e-6)
-  # expect_equal(value(y, prob), 0, tolerance = 1e-6)
+  # expect_equal(result$status, OPTIMAL)
+  # expect_equal(result$opt_val, 1.0, tolerance = 1e-6)
+  # expect_equal(result$x, 1.0, tolerance = 1e-6)
+  # expect_equal(result$y, 0, tolerance = 1e-6)
   
   ###########################################
   # Replace the objective
   prob@objective <- Maximize(x + y)
-  # print("optimal value:", solve(prob))
+  # result <- solve(prob)
+  # print("optimal value:", result$opt_val)
   
-  # expect_equal(value(prob), 1.0, tolerance = 1e-6)
+  # expect_equal(result$opt_val, 1.0, tolerance = 1e-6)
   
   # Replace the constraints (x + y == 1)
   prob@constraints[[1]] <- (x + y <= 3)
-  # print("optimal value:", solve(prob))
+  # result <- solve(prob)
+  # print("optimal value:", result$opt_val)
   
-  # expect_equal(value(prob), 3.0, tolerance = 1e-6)
+  # expect_equal(result$opt_val, 3.0, tolerance = 1e-6)
   
   ###########################################
   x <- Variable()
   
   # An infeasible problem
   prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
-  # solve(prob)
-  # print("status:", prob@status)
-  # print("optimal value:", value(prob))
+  # result <- solve(prob)
+  # print("status:", result$status)
+  # print("optimal value:", result$opt_val)
   
-  # expect_equal(prob@status, INFEASIBLE)
-  # expect_equal(value(prob), Inf)
+  # expect_equal(result$status, INFEASIBLE)
+  # expect_equal(result$opt_val, Inf)
   
   # An unbounded problem
   prob <- Problem(Minimize(x))
-  # solve(prob)
-  # print("status:", prob@status)
-  # print("optimal value:", value(prob))
+  # result <- solve(prob)
+  # print("status:", result$status)
+  # print("optimal value:", result$opt_val)
   
-  # expect_equal(prob@status, UNBOUNDED)
-  # expect_equal(value(prob), -Inf)
+  # expect_equal(result$status, UNBOUNDED)
+  # expect_equal(result$opt_val, -Inf)
   
   ###########################################
   # A scalar variable
@@ -265,11 +267,11 @@ test_that("Test examples from CVXR introduction", {
   objective <- Minimize(SumEntries(Square(A*x - b)))
   constraints <- list(0 <= x, x <= 1)
   prob <- Problem(objective, constraints)
+  # result <- solve(prob)
+  # print("Optimal value:", result$opt_val)
+  # print("Optimal var:", result$x)
   
-  # print("Optimal value:", solve(prob))
-  # print("Optimal var:", value(x, prob))
-  
-  # expect_equal(value(prob), 4.14133859146, tolerance = 1e-6)
+  # expect_equal(result$opt_val, 4.14133859146, tolerance = 1e-6)
   
   ###########################################
   # Positive scalar parameter
@@ -311,7 +313,14 @@ test_that("Test examples from CVXR introduction", {
   sq_penalty <- list()
   l1_penalty <- list()
   x_values <- list()
-  # TODO: Compute penalties in logspace
+  gamma_vals <- 10^seq(-4, 6, length.out = 50)
+  for(val in gamma_vals) {
+    gamma@val <- val
+    # result <- solve(prob)
+    # sq_penalty <- value(error, result)
+    # l1_penalty <- value(Pnorm(x, 1), result)
+    x_values <- c(x_values, result$x)
+  }
   
   ###########################################
   X <- Variable(5, 4)

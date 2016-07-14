@@ -1,8 +1,8 @@
-setClass("Constraint", representation(id = "character"), prototype(id = UUIDgenerate()), contains = "VIRTUAL")
+setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
 setMethod("id", "Constraint", function(object) { object@id })
 
-.BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"), 
-                                      prototype(.noncvx_var = NULL), 
+.BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),
+                                      prototype(.noncvx_var = NULL),
                                       validity = function(object) {
                                         if(!is.null(object@.noncvx_var))
                                           stop("[BoolConstr: .noncvx_var] .noncvx_var is an internal slot and should not be set by user")
@@ -26,13 +26,13 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
       eq_constr <- c(eq_constr, create_eq(object@lin_op, object@noncvx_var))
     list(eq_constr, list())
   }
-  
+
   new_eq <- .format(object)[[1]]
   if(length(new_eq) > 0) {
     eq_constr <- c(eq_constr, new_eq)
     dims[EQ_DIM] <- c(dims[EQ_DIM], size(object)[1] * size(object)[2])
   }
-  
+
   bool_id <- get_expr_vars(object@noncvx_var)[[1]][[1]]
   CONSTR_TYPE <- constr_type(object)
   dims[CONSTR_TYPE] <- c(dims[CONSTR_TYPE], bool_id)
@@ -91,7 +91,7 @@ setMethod("violation", "LeqConstraint", function(object) {
 })
 
 NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "Expression", vars = "list", .x_size = "numeric"),
-                                prototype(vars = list(), .x_size = NA_real_), 
+                                prototype(vars = list(), .x_size = NA_real_),
                                 validity = function(object) {
                                   if(!is.na(.x_size))
                                     stop("[NonlinearConstraint: .x_size] .x_size is an internal slot and should not be set by user")
@@ -147,7 +147,7 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 
 setMethod("size", "ExpCone", function(object) { size(object@x) })
 
-.PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint", 
+.PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint",
                            validity = function(object) {
                              lh_exp <- object@lh_exp
                              rh_exp <- object@rh_exp
@@ -158,7 +158,7 @@ setMethod("size", "ExpCone", function(object) { size(object@x) })
 PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
-setMethod("value", "PSDConstraint", function(object) { 
+setMethod("value", "PSDConstraint", function(object) {
   if(is.na(value(object@.expr)))
     NA
   else {
@@ -188,7 +188,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   list(NA, c(constraints, dual_holder))
 })
 
-.SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"), 
+.SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"),
                        prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
@@ -200,7 +200,7 @@ setMethod("format_constr", "SOC", function(object) {
     leq_constr <- c(create_geq(object@t), leq_constr)
     list(list(), leq_constr)
   }
-  
+
   leq_constr <- c(leq_constr, .format(object)[[2]])
   dims[SOC_DIM] <- c(dims[SOC_DIM], size(object)[1])
 })
@@ -213,7 +213,7 @@ setMethod("size", "SOC", function(object) {
 
 .SDP <- setClass("SDP", representation(A = "numeric", enforce_sym = "logical"),
                        prototype(A = NA_real_, enforce_sym = TRUE), contains = "Constraint")
-SDP <- function(A, enforce_sym = TRUE, constr_id) { 
+SDP <- function(A, enforce_sym = TRUE, constr_id) {
   if(missing(constr_id))
     .SDP(A = A, enforce_sym = enforce_sym)
   else
@@ -229,7 +229,7 @@ setMethod("format_constr", "SOCElemwise", function(object, eq_constr, leq_constr
  .format <- function(object) {
    list(list(), format_elemwise(list(object@t, object@x_elems)))
  }
- 
+
  leq_constr <- c(leq_constr, .format(object)[[2]])
  for(cone_size in size(object))
    dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])

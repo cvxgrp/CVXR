@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -63,6 +63,9 @@ Collate: 'generics.R'
          'elementwise.R'
          'solver.R'
          'problem_data.R'
+	 'rcppUtils.R'
+	 'ProblemData-R6.R'
 	 'LinOp-R6.R'
 	 'RcppExports.R'
 	 'Solution-R6.R'
+	 'canonInterface.R'

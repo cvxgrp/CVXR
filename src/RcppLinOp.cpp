@@ -74,7 +74,7 @@ void LinOp__args_push_back(SEXP xp, SEXP yp) {
   Rcpp::XPtr<LinOp> ptrX(xp);
   Rcpp::XPtr<LinOp> ptrY(yp);
 
-  ptrX->args.push_back(ptrY);
+  (ptrX->args).push_back(ptrY);
 }
 
 //' Perform a push back operation on the \code{size} field of LinOp
@@ -85,7 +85,7 @@ void LinOp__args_push_back(SEXP xp, SEXP yp) {
 void LinOp__size_push_back(SEXP xp, int intVal) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOp> ptr(xp);
-  ptr->size.push_back(intVal);
+  (ptr->size).push_back(intVal);
 }
 
 //' Set the field named \code{type} for the LinOp object
@@ -97,6 +97,9 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   OperatorType oType;
   int err = 0; // to signal error
   switch (typeValue) {
+  case 0:
+    oType = VARIABLE;
+    break;
   case 1:
     oType = PROMOTE;
     break;
@@ -154,6 +157,21 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   case 19:
     oType = KRON;
     break;
+  case 20:
+    oType = EQ;     // equality constraint
+    break;
+  case 21:
+    oType = LEQ;    // non-negative orthant
+    break;
+  case 22:
+    oType = SOC;    // second-order cone
+    break;
+  case 23:
+    oType = EXP;    // exponential cone
+    break;
+  case 24:
+    oType = SDP;    // semi-definite cone
+    break;
   default:
     err = 1;
     // std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
@@ -178,6 +196,9 @@ int LinOp__get_type(SEXP xp) {
   int oType;
 
   switch (ptr->type) {
+  case VARIABLE:
+    oType = 0;
+    break;
   case PROMOTE:
     oType = 1;
     break;
@@ -235,8 +256,23 @@ int LinOp__get_type(SEXP xp) {
   case KRON:
     oType = 19;
     break;
+  case EQ:
+    oType = 20;
+    break;
+  case LEQ:
+    oType = 21;
+    break;
+  case SOC:
+    oType = 22;
+    break;
+  case EXP:
+    oType = 23;
+    break;
+  case SDP:
+    oType = 24;
+    break;
   default:
-    oType = 0;
+    oType = -1;
     Rcpp::stop("Error: LinOp type invalid");
   }
   return oType;
@@ -250,7 +286,7 @@ int LinOp__get_type(SEXP xp) {
 void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOp> ptr(xp);
-  ptr->slice.push_back(intVec);
+  (ptr->slice).push_back(intVec);
 }
 
 //' Get the slice field of the LinOp Object

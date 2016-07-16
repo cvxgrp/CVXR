@@ -176,7 +176,7 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     canon_objective <- neg_expr(objective)  # preserve sense
   }
   
-  canonInterface.solve(sense, canon_objective, constraints, verbose, ...)
+  solve(sense, canon_objective, constraints, verbose, ...)
   
   # Choose a solver/check the chosen solver.
   if(is.null(solver))

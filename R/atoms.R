@@ -53,8 +53,13 @@ setMethod("canonicalize", "Atom", function(object) {
     } else
       return(canonical_form(Constant(value(object))))
   } else {
-    arg_objs <- lapply(object@.args, function(arg) { canonical_form(arg)[[1]] })
-    constraints <- lapply(object@.args, function(arg) { canonical_form(arg)[[2]] })
+    arg_objs <- list()
+    constraints<- list()
+    for(arg in object@.args) {
+      canon <- canonical_form(arg)
+      arg_objs[[length(arg_objs) + 1]] <- canon[[1]]
+      constraints <- c(constraints, canon[[2]])
+    }
     data <- get_data(object)
     graph <- graph_implementation(object, arg_objs, size(object), data)
     return(list(graph[[1]], c(constraints, graph[[2]])))

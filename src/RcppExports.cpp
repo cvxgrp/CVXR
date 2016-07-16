@@ -6,6 +6,138 @@
 
 using namespace Rcpp;
 
+// LinOp__new
+SEXP LinOp__new();
+RcppExport SEXP cvxr_LinOp__new() {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    __result = Rcpp::wrap(LinOp__new());
+    return __result;
+END_RCPP
+}
+// LinOp__get_sparse_data
+Eigen::SparseMatrix<double> LinOp__get_sparse_data(SEXP xp);
+RcppExport SEXP cvxr_LinOp__get_sparse_data(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    __result = Rcpp::wrap(LinOp__get_sparse_data(xp));
+    return __result;
+END_RCPP
+}
+// LinOp__set_sparse_data
+void LinOp__set_sparse_data(SEXP xp, SEXP sparseMat);
+RcppExport SEXP cvxr_LinOp__set_sparse_data(SEXP xpSEXP, SEXP sparseMatSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sparseMat(sparseMatSEXP);
+    LinOp__set_sparse_data(xp, sparseMat);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__get_dense_data
+Eigen::MatrixXd LinOp__get_dense_data(SEXP xp);
+RcppExport SEXP cvxr_LinOp__get_dense_data(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    __result = Rcpp::wrap(LinOp__get_dense_data(xp));
+    return __result;
+END_RCPP
+}
+// LinOp__set_dense_data
+void LinOp__set_dense_data(SEXP xp, SEXP denseMat);
+RcppExport SEXP cvxr_LinOp__set_dense_data(SEXP xpSEXP, SEXP denseMatSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type denseMat(denseMatSEXP);
+    LinOp__set_dense_data(xp, denseMat);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__args_push_back
+void LinOp__args_push_back(SEXP xp, SEXP yp);
+RcppExport SEXP cvxr_LinOp__args_push_back(SEXP xpSEXP, SEXP ypSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type yp(ypSEXP);
+    LinOp__args_push_back(xp, yp);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__size_push_back
+void LinOp__size_push_back(SEXP xp, int intVal);
+RcppExport SEXP cvxr_LinOp__size_push_back(SEXP xpSEXP, SEXP intValSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type intVal(intValSEXP);
+    LinOp__size_push_back(xp, intVal);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__set_type
+void LinOp__set_type(SEXP xp, int typeValue);
+RcppExport SEXP cvxr_LinOp__set_type(SEXP xpSEXP, SEXP typeValueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type typeValue(typeValueSEXP);
+    LinOp__set_type(xp, typeValue);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__get_type
+int LinOp__get_type(SEXP xp);
+RcppExport SEXP cvxr_LinOp__get_type(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    __result = Rcpp::wrap(LinOp__get_type(xp));
+    return __result;
+END_RCPP
+}
+// LinOp__slice_push_back
+void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec);
+RcppExport SEXP cvxr_LinOp__slice_push_back(SEXP xpSEXP, SEXP intVecSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type intVec(intVecSEXP);
+    LinOp__slice_push_back(xp, intVec);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp__get_slice
+std::vector<std::vector<int> > LinOp__get_slice(SEXP xp);
+RcppExport SEXP cvxr_LinOp__get_slice(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    __result = Rcpp::wrap(LinOp__get_slice(xp));
+    return __result;
+END_RCPP
+}
+// LinOp__set_slice
+std::vector<std::vector<int> > LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > sliceValue);
+RcppExport SEXP cvxr_LinOp__set_slice(SEXP xpSEXP, SEXP sliceValueSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type sliceValue(sliceValueSEXP);
+    __result = Rcpp::wrap(LinOp__set_slice(xp, sliceValue));
+    return __result;
+END_RCPP
+}
 // ProblemData__new
 SEXP ProblemData__new();
 RcppExport SEXP cvxr_ProblemData__new() {
@@ -223,138 +355,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<int> >::type icp(icpSEXP);
     ProblemData__set_col_ptrs(xp, icp);
     return R_NilValue;
-END_RCPP
-}
-// LinOp__new
-SEXP LinOp__new();
-RcppExport SEXP cvxr_LinOp__new() {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    __result = Rcpp::wrap(LinOp__new());
-    return __result;
-END_RCPP
-}
-// LinOp__get_sparse_data
-Eigen::SparseMatrix<double> LinOp__get_sparse_data(SEXP xp);
-RcppExport SEXP cvxr_LinOp__get_sparse_data(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    __result = Rcpp::wrap(LinOp__get_sparse_data(xp));
-    return __result;
-END_RCPP
-}
-// LinOp__set_sparse_data
-void LinOp__set_sparse_data(SEXP xp, SEXP sparseMat);
-RcppExport SEXP cvxr_LinOp__set_sparse_data(SEXP xpSEXP, SEXP sparseMatSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type sparseMat(sparseMatSEXP);
-    LinOp__set_sparse_data(xp, sparseMat);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__get_dense_data
-Eigen::MatrixXd LinOp__get_dense_data(SEXP xp);
-RcppExport SEXP cvxr_LinOp__get_dense_data(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    __result = Rcpp::wrap(LinOp__get_dense_data(xp));
-    return __result;
-END_RCPP
-}
-// LinOp__set_dense_data
-void LinOp__set_dense_data(SEXP xp, SEXP denseMat);
-RcppExport SEXP cvxr_LinOp__set_dense_data(SEXP xpSEXP, SEXP denseMatSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type denseMat(denseMatSEXP);
-    LinOp__set_dense_data(xp, denseMat);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__args_push_back
-void LinOp__args_push_back(SEXP xp, SEXP yp);
-RcppExport SEXP cvxr_LinOp__args_push_back(SEXP xpSEXP, SEXP ypSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type yp(ypSEXP);
-    LinOp__args_push_back(xp, yp);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__size_push_back
-void LinOp__size_push_back(SEXP xp, int intVal);
-RcppExport SEXP cvxr_LinOp__size_push_back(SEXP xpSEXP, SEXP intValSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< int >::type intVal(intValSEXP);
-    LinOp__size_push_back(xp, intVal);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__set_type
-void LinOp__set_type(SEXP xp, int typeValue);
-RcppExport SEXP cvxr_LinOp__set_type(SEXP xpSEXP, SEXP typeValueSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< int >::type typeValue(typeValueSEXP);
-    LinOp__set_type(xp, typeValue);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__get_type
-int LinOp__get_type(SEXP xp);
-RcppExport SEXP cvxr_LinOp__get_type(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    __result = Rcpp::wrap(LinOp__get_type(xp));
-    return __result;
-END_RCPP
-}
-// LinOp__slice_push_back
-void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec);
-RcppExport SEXP cvxr_LinOp__slice_push_back(SEXP xpSEXP, SEXP intVecSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type intVec(intVecSEXP);
-    LinOp__slice_push_back(xp, intVec);
-    return R_NilValue;
-END_RCPP
-}
-// LinOp__get_slice
-std::vector<std::vector<int> > LinOp__get_slice(SEXP xp);
-RcppExport SEXP cvxr_LinOp__get_slice(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    __result = Rcpp::wrap(LinOp__get_slice(xp));
-    return __result;
-END_RCPP
-}
-// LinOp__set_slice
-std::vector<std::vector<int> > LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > sliceValue);
-RcppExport SEXP cvxr_LinOp__set_slice(SEXP xpSEXP, SEXP sliceValueSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type sliceValue(sliceValueSEXP);
-    __result = Rcpp::wrap(LinOp__set_slice(xp, sliceValue));
-    return __result;
 END_RCPP
 }
 // Solution__new

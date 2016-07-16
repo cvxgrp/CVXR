@@ -14,7 +14,7 @@ To install, make sure you have the development tools for R available, including 
 2. In R, execute
 ```
 library(devtools)
-install("anqif/cvxr")
+install_github("anqif/cvxr")
 ```
 
 ## Support

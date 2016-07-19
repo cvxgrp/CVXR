@@ -1,5 +1,6 @@
-.Variable <- setClass("Variable", representation(id = "character", rows = "numeric", cols = "numeric", name = "character", primal_value = "numeric"),
-                                 prototype(id = uuid::UUIDgenerate(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
+.Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "numeric"),
+                      ##prototype(id = uuid::UUIDgenerate(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
+                                 prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
                                    if(!is.na(object@primal_value))
                                      stop("[Variable: primal_value] primal_value is an internal slot and should not be set by user")

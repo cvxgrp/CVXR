@@ -35,7 +35,8 @@ LinOp <- function(type, size, args = list(), data = NA_real_, class = "LinOp") {
 }
 
 LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
-  if(!is.character(constr_id)) stop("constr_id must be a character string")
+    ##if(!is.character(constr_id)) stop("constr_id must be a character string")
+  if(!is.integer(constr_id)) stop("constr_id must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   list(expr = expr, constr_id = constr_id, size = size, class = class)
 }
@@ -43,10 +44,10 @@ LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
 LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinEqConstr") }
 LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinLeqConstr") }
 
-get_id <- function() {
-  # sample.int(.Machine$integer.max, 1)
-    uuid::UUIDgenerate()
-}
+## get_id <- function() {
+##   # sample.int(.Machine$integer.max, 1)
+##     uuid::UUIDgenerate()
+## }
 
 create_var <- function(size, var_id = get_id()) {
   LinOp(VARIABLE, size, list(), var_id)

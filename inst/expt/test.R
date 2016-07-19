@@ -21,9 +21,14 @@ b <- matrix(c(1, 2, 3), nrow=m)
 # Construct the problem.
 x <- Variable(n)
 objective <- Minimize(SumSquares(A*x - b))
-objective <- canonicalize(objective)
+##objective <- canonicalize(objective)
 constraint <- list( 1 <= x)
 prob <- Problem(objective, constraint)
+
+debug(cvxr_solve)
+debug(build_lin_op_tree)
+
+cvxr_solve(prob)
 
 # The optimal objective is returned by prob.solve().
 result = prob.solve()

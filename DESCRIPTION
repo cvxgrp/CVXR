@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -38,7 +38,6 @@ Imports:
         RcppEigen,
         bitops,
         MASS,
-        uuid,
         hashmap,
         rstackdeque
 Suggests:
@@ -49,7 +48,8 @@ LinkingTo: Rcpp, RcppEigen
 License: GPL-2 | GPL-3
 LazyData: true
 Suggests: testthat
-Collate: 'generics.R'
+Collate: 'globals.R'
+	 'generics.R'
          'utilities.R'
          'dcp_attr.R'
          'expressions.R'
@@ -68,4 +68,5 @@ Collate: 'generics.R'
 	 'LinOp-R6.R'
 	 'RcppExports.R'
 	 'Solution-R6.R'
+	 'Deque.R'
 	 'canonInterface.R'

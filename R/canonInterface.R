@@ -52,8 +52,8 @@ format_matrix <- function(matrix, format='dense') {
     } else if (format == 'sparse') {
         Matrix::Matrix(matrix, sparse = TRUE)
     } else if (format == 'scalar') {
-        ## Should this be a 1x1 matrix?
-        as.numeric(matrix)
+        ## Should this be a 1x1 matrix?  YESSSSS as I later found out.
+        as.matrix(matrix)
     } else {
         stop(sprintf("format_matrix: format %s unknown", format))
     }
@@ -64,7 +64,7 @@ set_matrix_data <- function(linC, linR) {
     ## Calls the appropriate CVXCanon function to set the matrix
     ## data field of our C++ linOp.
 
-    if ("LinOp" %in% class(linR$data)) {
+    if (linR$data$class == "LinOp") {
         if (linR$data$type == 'sparse_const') {
             linC$sparse_data <- format_matrix(linR$data$data, 'sparse')
         } else if (linR$data$type == 'dense_const') {
@@ -149,13 +149,12 @@ linop_types <- c("VARIABLE",
 linop_type2Int <- hashmap::hashmap(linop_types, seq.int(from = 0, to = length(linop_types) - 1))
 
 build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
-    Q <- rstackdeque::rdeque()
+    Q <- Deque$new()
     root_linC <- CVXCanon.LinOp$new()
-    insert_back(Q, list(linR = root_linR, linC = root_linC))
+    Q$append(list(linR = root_linR, linC = root_linC))
 
-    while(length(Q) > 0) {
-        node <- rstackdeque::peek_front(Q)
-        Q <- rstackdeque::without_front(Q)
+    while(Q$length() > 0) {
+        node <- Q$popleft()
         linR <- node$linR
         linC <- node$linC
 
@@ -164,13 +163,13 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
         for(argR in linR$args) {
             tree <- CVXCanon.LinOp$new()
             tmp <- c(tmp, tree)
-            rstackdeque::insert_back(Q, list(linR = argR, linC = tree))
+            Q$append(list(linR = argR, linC = tree))
             linC$args_push_back(tree)
         }
 
         ## Setting the type of our LinOp; at the C level, it is an ENUM!
         ## Can we avoid this case conversion and use UPPER CASE to match C?
-        linC$type <- linop_type2Int[[toupper(linR$type)]] ## Check with Anqi
+        linC$type <- toupper(linR$type) ## Check with Anqi
 
         ## Setting size
         linC$size_push_back(as.integer(linR$size[1]))

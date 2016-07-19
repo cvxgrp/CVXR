@@ -1,4 +1,5 @@
-setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
+##setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
+setClass("Constraint", representation(id = "integer"), prototype(id = get_id()), contains = "VIRTUAL")
 setMethod("id", "Constraint", function(object) { object@id })
 
 .BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),

@@ -13,7 +13,8 @@ objective <- Minimize(A*x)
 constraint <- list(1 <= x)
 prob <- Problem(objective, constraint)
 
-debug(cvxr_solve)
+debug(solve)
+
 debug(build_lin_op_tree)
 
 cvxr_solve(prob)

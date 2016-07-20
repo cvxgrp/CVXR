@@ -1,5 +1,5 @@
 ## Solution class shadowing CPP class
-CVXCanon.Solution <- R6::R6Class("CVXCanon.Solution",
+CVXcanon.Solution <- R6::R6Class("CVXcanon.Solution",
                                  private = list(
                                      pkg = NA,
                                      myClassName = NA,

@@ -138,6 +138,39 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// LinOpVector__new
+SEXP LinOpVector__new();
+RcppExport SEXP cvxr_LinOpVector__new() {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    __result = Rcpp::wrap(LinOpVector__new());
+    return __result;
+END_RCPP
+}
+// LinOpVector__push_back
+void LinOpVector__push_back(SEXP xp, SEXP lp);
+RcppExport SEXP cvxr_LinOpVector__push_back(SEXP xpSEXP, SEXP lpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type lp(lpSEXP);
+    LinOpVector__push_back(xp, lp);
+    return R_NilValue;
+END_RCPP
+}
+// LinOp_at_index
+SEXP LinOp_at_index(SEXP lvec, int i);
+RcppExport SEXP cvxr_LinOp_at_index(SEXP lvecSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type lvec(lvecSEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    __result = Rcpp::wrap(LinOp_at_index(lvec, i));
+    return __result;
+END_RCPP
+}
 // ProblemData__new
 SEXP ProblemData__new();
 RcppExport SEXP cvxr_ProblemData__new() {

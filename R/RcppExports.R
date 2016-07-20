@@ -96,6 +96,29 @@ LinOp__set_slice <- function(xp, sliceValue) {
     .Call('cvxr_LinOp__set_slice', PACKAGE = 'cvxr', xp, sliceValue)
 }
 
+#' Create a new LinOpVector object.
+#'
+#' @return an external ptr (Rcpp::XPtr) to a CVXCanon.LinOpVector object instance.
+LinOpVector__new <- function() {
+    .Call('cvxr_LinOpVector__new', PACKAGE = 'cvxr')
+}
+
+#' Call the push_back method on a LinOpVector object instance
+#'
+#' @param xp the LinOpVector Object XPtr
+#' @param lp the LinOp Object XPtr
+LinOpVector__push_back <- function(xp, lp) {
+    invisible(.Call('cvxr_LinOpVector__push_back', PACKAGE = 'cvxr', xp, lp))
+}
+
+#' Return the LinOp element at index i (0-based)
+#'
+#' @param lvec the LinOpVector Object XPtr
+#' @param i the index
+LinOp_at_index <- function(lvec, i) {
+    .Call('cvxr_LinOp_at_index', PACKAGE = 'cvxr', lvec, i)
+}
+
 #' Create a new ProblemData object.
 #'
 #' @return an external ptr (Rcpp::XPtr) to a ProblemData object instance.

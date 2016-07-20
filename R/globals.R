@@ -1,12 +1,12 @@
 ##
 ## Global variable for package cvxr
 ##
-cvxr.options <- list(idCounter = 0L)
+.cvxr.options <- list(idCounter = 0L)
 
 #' Set the cvxr idCounter
 #'
 #' @param value, the value to assign
-#' @return the changed value of the package global \code{cvxr.options}
+#' @return the changed value of the package global \code{.cvxr.options}
 #' @export
 #' @examples
 #' \dontrun{
@@ -14,14 +14,14 @@ cvxr.options <- list(idCounter = 0L)
 #' }
 #'
 setIdCounter <- function(value = 0L) {
-    cvxr.options$idCounter <- value
-    assignInMyNamespace("cvxr.options", cvxr.options)
-    cvxr.options
+    .cvxr.options$idCounter <- value
+    assignInMyNamespace(".cvxr.options", .cvxr.options)
+    .cvxr.options
 }
 
-#' Reset the global package variable \code{cvxr.options}
+#' Reset the global package variable \code{.cvxr.options}
 #'
-#' @return the default value value of cvxr package global \code{cvxr.options}
+#' @return the default value value of cvxr package global \code{.cvxr.options}
 #' @export
 #' @examples
 #' \dontrun{
@@ -29,8 +29,8 @@ setIdCounter <- function(value = 0L) {
 #' }
 #'
 resetOptions <- function() {
-    assignInMyNamespace("cvxr.options", list(idCounter = 0L))
-    cvxr.options
+    assignInMyNamespace(".cvxr.options", list(idCounter = 0L))
+    .cvxr.options
 }
 
 #' Get the next identifier value
@@ -43,8 +43,7 @@ resetOptions <- function() {
 #' }
 #'
 get_id <- function() {
-    id <- cvxr.options$idCounter + 1L
-    cvxr.options$idCounter <- id
-    assignInMyNamespace("cvxr.options", cvxr.options)
+    id <- .cvxr.options$idCounter <- .cvxr.options$idCounter + 1L
+    assignInMyNamespace(".cvxr.options", .cvxr.options)
     id
 }

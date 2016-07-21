@@ -198,7 +198,7 @@ get_constraint_node <- function(c, tmp) {
     root <- CVXcanon.LinOp$new() ## create a C linop
     if(is.list(c)) {
         c_size <- c$size
-        c_constr_id <- c@constr_id
+        c_constr_id <- c$constr_id
     } else {
         c_size <- size(c)
         c_constr_id <- c@constr_id

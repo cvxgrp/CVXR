@@ -176,7 +176,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
         linC$size_push_back(as.integer(linR$size[2]))
 
         ## Loading the problem data into the approriate array format
-        if(!is.na(linR$data)) {
+        if(!is.null(linR$data)) {
             if(length(linR$data) == 2 && is(linR$data[1], 'slice'))
                 ## ASK Anqi about this
                 set_slice_data(linC, linR)  ## TODO

@@ -27,7 +27,7 @@ NO_OP = "no_op"
 CONSTANT_ID = "constant_id"
 
 # Create lists to represent linear operators and constraints
-LinOp <- function(type, size, args = list(), data = NA_real_, class = "LinOp") {
+LinOp <- function(type, size, args = list(), data = NULL, class = "LinOp") {
   if(!is.character(type)) stop("type must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   if(!is.list(args)) stop("args must be a list of arguments")

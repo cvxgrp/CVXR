@@ -4,6 +4,6 @@
 ##
 rcppMungedName <- function(cppClassName, methodName, thisPkg = getPackageName()) {
     ## Remove the CVXCanon. prefix from all the class names.
-    paste0(thisPkg, "_", gsub("^CVXCanon\\.", "", cppClassName) , "__", methodName)
+    paste0(thisPkg, "_", gsub("^CVXcanon\\.", "", cppClassName) , "__", methodName)
 }
 

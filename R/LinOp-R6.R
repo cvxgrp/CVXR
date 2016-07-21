@@ -1,5 +1,5 @@
 ## LinOp class shadowing CPP class
-CVXCanon.LinOp <- R6::R6Class("CVXCanon.LinOp",
+CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                               private = list(
                                   operatorType = c( ## from LinOp.hpp
                                       "VARIABLE",
@@ -110,11 +110,11 @@ CVXCanon.LinOp <- R6::R6Class("CVXCanon.LinOp",
                                                            PACKAGE = pkg)
                                   }
                                  ,
-                                  args_push_back = function(value) {
+                                  args_push_back = function(R6LinOp) {
                                       rcppFn <- rcppMungedName(cppClassName = private$myClassName,
                                                                methodName = "args_push_back",
                                                                thisPkg = private$pkg)
-                                      .Call(rcppFn, private$ptr, value$getXPtr(), PACKAGE = private$pkg)
+                                      .Call(rcppFn, private$ptr, R6LinOp$getXPtr(), PACKAGE = private$pkg)
                                   }
                                  ,
                                   getXPtr = function() {

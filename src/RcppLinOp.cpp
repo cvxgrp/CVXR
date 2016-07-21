@@ -315,5 +315,50 @@ std::vector<std::vector<int> >  LinOp__set_slice(SEXP xp, std::vector<std::vecto
   return ptr->slice = sliceValue;
 }
 
+class LinOpVector {
+public:
+  std::vector<LinOp *> lin_op_vec;
+
+  /* Constructor */
+  LinOpVector() {};
+};
+
+//' Create a new LinOpVector object.
+//'
+//' @return an external ptr (Rcpp::XPtr) to a CVXCanon.LinOpVector object instance.
+// [[Rcpp::export]]
+SEXP LinOpVector__new() {
+  // create a pointer to an LinOpVector object and wrap it
+  // as an external pointer
+  Rcpp::XPtr<LinOpVector> ptr( new LinOpVector( ), true );
+
+  // return the external pointer to the R side
+  return ptr;
+}
+
+//' Call the push_back method on a LinOpVector object instance
+//'
+//' @param xp the LinOpVector Object XPtr
+//' @param lp the LinOp Object XPtr
+// [[Rcpp::export]]
+void LinOpVector__push_back(SEXP xp , SEXP lp) {
+  // grab the object as a XPtr (smart pointer)
+  Rcpp::XPtr<LinOpVector> ptrX(xp);
+  Rcpp::XPtr<LinOp> ptrL(lp);
+  (ptrX->lin_op_vec).push_back(ptrL);
+}
+
+//' Return the LinOp element at index i (0-based)
+//'
+//' @param lvec the LinOpVector Object XPtr
+//' @param i the index
+// [[Rcpp::export]]
+SEXP LinOp_at_index(SEXP lvec, int i) {
+  Rcpp::XPtr<LinOpVector> vPtr(lvec);
+  return Rcpp::XPtr<LinOp>((vPtr->lin_op_vec)[i]);
+}
+
+
+
 
 

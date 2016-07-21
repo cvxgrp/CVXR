@@ -71,7 +71,7 @@ setMethod("canonical_form", "LeqConstraint", function(object) { canonicalize(obj
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual <- create_leq(canon[[1]], constr_id = object@id)
-  c(NA, c(canon[[2]], dual))
+  list(NA, c(canon[[2]], list(dual)))
 })
 
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })

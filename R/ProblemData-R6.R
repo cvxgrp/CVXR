@@ -1,5 +1,5 @@
-## CVXCanon.ProblemData class shadowing CPP class
-CVXCanon.ProblemData <- R6::R6Class("CVXCanon.ProblemData",
+## CVXcanon.ProblemData class shadowing CPP class
+CVXcanon.ProblemData <- R6::R6Class("CVXcanon.ProblemData",
                                     private = list(
                                         pkg = NA,
                                         myClassName = NA,

@@ -4,9 +4,9 @@ library(rstackdeque)
 
 get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     linOps <- lapply(constrs, function(constr) { constr$expr })
-    lin_vec <- CVXcanon.LinOpVector()
+    lin_vec <- CVXcanon.LinOpVector$new()
 
-    id_to_col_C <- CVXcanon.IntIntMap()
+    id_to_col_C <- CVXcanon.IntIntMap$new()
     if (is.na(id_to_col))
         id_to_col <- list()
 
@@ -61,7 +61,7 @@ format_matrix <- function(matrix, format='dense') {
 
 
 set_matrix_data <- function(linC, linR) {
-    ## Calls the appropriate CVXCanon function to set the matrix
+    ## Calls the appropriate CVXcanon function to set the matrix
     ## data field of our C++ linOp.
 
     if (linR$data$class == "LinOp") {
@@ -150,7 +150,7 @@ linop_type2Int <- hashmap::hashmap(linop_types, seq.int(from = 0, to = length(li
 
 build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
     Q <- Deque$new()
-    root_linC <- CVXCanon.LinOp$new()
+    root_linC <- CVXcanon.LinOp$new()
     Q$append(list(linR = root_linR, linC = root_linC))
 
     while(Q$length() > 0) {
@@ -161,7 +161,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
         ## Updating the arguments our LinOp
         ## tmp is a list
         for(argR in linR$args) {
-            tree <- CVXCanon.LinOp$new()
+            tree <- CVXcanon.LinOp$new()
             tmp <- c(tmp, tree)
             Q$append(list(linR = argR, linC = tree))
             linC$args_push_back(tree)
@@ -195,7 +195,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
 
 get_constraint_node <- function(c, tmp) {
     ## c is the constraint, tmp is what is returned
-    root <- CVXcanon.LinOp() ## create a C linop
+    root <- CVXcanon.LinOp$new() ## create a C linop
     if(is.list(c)) {
         c_size <- c$size
         c_constr_id <- c@constr_id
@@ -251,7 +251,7 @@ solve <- function(sense, objective, constraints, verbose, solver_options) {
 
     C_objective <- build_lin_op_tree(objective, tmp)
 
-    C_constraints <- CVXcanon.LinOpVector()
+    C_constraints <- CVXcanon.LinOpVector$new()
     for(constr in constraints) {
         ## Gets the constraint node
         root <- get_constraint_node(constr, tmp)

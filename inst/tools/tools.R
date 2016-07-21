@@ -40,3 +40,7 @@ makeR6Class(className = "CVXCanon.Solution",
 makeR6Class(className = "CVXCanon.LinOp",
             publicFields = c("sparse_data", "dense_data", "type", "slice"),
             publicMethods = c("args_push_back", "size_push_back"))
+
+makeR6Class(className = "CVXCanon.LinOpVector",
+            publicFields = c(),
+            publicMethods = c("push_back"))

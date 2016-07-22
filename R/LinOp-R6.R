@@ -75,9 +75,9 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                           ## make 1-based index
                                           private$operatorType[index + 1]
                                       } else {
-                                          value <- match.arg(value, private$operatorType)
+                                          ##value <- match.arg(value, private$operatorType)
                                           ## Make zero based index!
-                                          index <- which(value == private$operatorType) - 1
+                                          index <- match(value, private$operatorType) - 1
                                           rcppFn <- rcppMungedName(cppClassName = private$myClassName,
                                                                    methodName = "set_type",
                                                                    thisPkg = private$pkg)

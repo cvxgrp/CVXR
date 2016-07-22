@@ -92,11 +92,11 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@constraints <- constraints
   .Object@value <- value
   .Object@status <- status
-  
+
   # Cached processed data for each solver.
   .Object@.cached_data <- list()
   .Object <- .reset_cache(.Object)
-  
+
   # List of separable (sub)problems
   .Object@.separable_problems <- .separable_problems
   .Object
@@ -128,7 +128,7 @@ setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
 setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * e2, constraints = e1@constraints)
 })
-setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { 
+setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) {
   Problem(objective = e2 * e1@objective, constraints = e1@constraints)
 })
 setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
@@ -137,7 +137,7 @@ setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
 
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
-  canon_constr <- lapply(object@constraints, function(x) { canonical_form(x)[[2]] })
+  canon_constr <- sapply(object@constraints, function(x) { canonical_form(x)[[2]] })
   list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
 })
 
@@ -160,13 +160,13 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     else
       stop("Problem does not follow DCP rules.")
   }
-  
+
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
-  
+
   # TODO: Solve in parallel
-  
+
   print("Calling CVXcanon")
   if(is(object@objective, "Minimize")) {
     sense <- "Minimize"
@@ -175,9 +175,9 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     sense <- "Maximize"
     canon_objective <- neg_expr(objective)  # preserve sense
   }
-  
+
   solve(sense, canon_objective, constraints, verbose, ...)
-  
+
   # Choose a solver/check the chosen solver.
   if(is.null(solver))
     solver <- Solver.choose_solver(constraints)
@@ -188,9 +188,9 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     validate_solver(solver, constraints)
   } else
     stop("Unknown solver.")
-  
+
   sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-  
+
   # Presolve couldn't solve the problem.
   if(is.na(sym_data@.presolve_status)) {
     results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
@@ -199,7 +199,7 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     results_dict <- list()
     results_dict[[STATUS]] <- sym_data@.presolve_status
   }
-  
+
   object@.update_problem_state(results_dict, sym_data, solver)
   object@value
 })

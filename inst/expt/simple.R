@@ -13,9 +13,12 @@ objective <- Minimize(A*x)
 constraint <- list(1 <= x)
 prob <- Problem(objective, constraint)
 
-debug(solve)
+base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
 
-debug(build_lin_op_tree)
+##debug(cvxr_solve)
+
+##debug(build_lin_op_tree)
 
 cvxr_solve(prob)
+
 

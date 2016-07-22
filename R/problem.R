@@ -171,39 +171,35 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
 
   # TODO: Solve in parallel
 
-  print("Calling CVXcanon")
-  if(is(object@objective, "Minimize")) {
-    sense <- "Minimize"
+  if(is(object@objective, "Minimize"))
     canon_objective <- objective
-  } else {
-    sense <- "Maximize"
-    canon_objective <- neg_expr(objective)  # preserve sense
-  }
+  else
+    canon_objective <- neg_expr(objective)
 
-  solve(sense, canon_objective, constraints, verbose, ...)
+  solve(object@objective, canon_objective, constraints, verbose, ...)
 
   # Choose a solver/check the chosen solver.
-  if(is.null(solver))
-    solver <- Solver.choose_solver(constraints)
-  else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
-    validate_solver(solver, constraints)
-  else if(is.character(solver) && solver %in% SOLVERS) {
-    solver <- new(solver)
-    validate_solver(solver, constraints)
-  } else
-    stop("Unknown solver.")
+  # if(is.null(solver))
+  #  solver <- Solver.choose_solver(constraints)
+  # else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
+  #  validate_solver(solver, constraints)
+  # else if(is.character(solver) && solver %in% SOLVERS) {
+  #  solver <- new(solver)
+  #  validate_solver(solver, constraints)
+  # } else
+  #  stop("Unknown solver.")
 
-  sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+  # sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
 
   # Presolve couldn't solve the problem.
-  if(is.na(sym_data@.presolve_status)) {
-    results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
+  # if(is.na(sym_data@.presolve_status)) {
+  #  results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
   # Presolve determined the problem was unbounded or infeasible.
-  } else {
-    results_dict <- list()
-    results_dict[[STATUS]] <- sym_data@.presolve_status
-  }
+  # } else {
+  #  results_dict <- list()
+  #  results_dict[[STATUS]] <- sym_data@.presolve_status
+  # }
 
-  object@.update_problem_state(results_dict, sym_data, solver)
-  object@value
+  # object@.update_problem_state(results_dict, sym_data, solver)
+  # object@value
 })

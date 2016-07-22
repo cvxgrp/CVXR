@@ -84,7 +84,7 @@ SymData.presolve <- function(objective, constr_map) {
     for(constr in constr_map[[key]]) {
       vars_ <- get_expr_vars(constr@expr)
       if(length(vars_) == 0 && is.na(get_expr_params(constr@expr))) {
-        prob <- get_problem_matrix(list(constr))   # TODO: Call to canonInterface
+        prob <- get_problem_matrix(list(constr))
         V <- prob[[1]]
         I <- prob[[2]]
         J <- prob[[3]]

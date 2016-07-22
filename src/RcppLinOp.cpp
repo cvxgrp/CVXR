@@ -155,21 +155,33 @@ void LinOp__set_type(SEXP xp, int typeValue) {
     oType = VSTACK;
     break;
   case 19:
-    oType = KRON;
+    oType = SCALAR_CONST;
     break;
   case 20:
-    oType = EQ;     // equality constraint
+    oType = DENSE_CONST;
     break;
   case 21:
-    oType = LEQ;    // non-negative orthant
+    oType = SPARSE_CONST;
     break;
   case 22:
-    oType = SOC;    // second-order cone
+    oType = NO_OP;
     break;
   case 23:
-    oType = EXP;    // exponential cone
+    oType = KRON;
     break;
   case 24:
+    oType = EQ;     // equality constraint
+    break;
+  case 25:
+    oType = LEQ;    // non-negative orthant
+    break;
+  case 26:
+    oType = SOC;    // second-order cone
+    break;
+  case 27:
+    oType = EXP;    // exponential cone
+    break;
+  case 28:
     oType = SDP;    // semi-definite cone
     break;
   default:

@@ -1,7 +1,4 @@
 ## Added format_matrix and set_matrix_data.
-
-library(rstackdeque)
-
 get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     linOps <- lapply(constrs, function(constr) { constr$expr })
     lin_vec <- CVXcanon.LinOpVector$new()
@@ -64,7 +61,7 @@ set_matrix_data <- function(linC, linR) {
     ## Calls the appropriate CVXcanon function to set the matrix
     ## data field of our C++ linOp.
 
-    if (linR$data$class == "LinOp") {
+    if (is.list(linR$data) && linR$data$class == "LinOp") {
         if (linR$data$type == 'sparse_const') {
             linC$sparse_data <- format_matrix(linR$data$data, 'sparse')
         } else if (linR$data$type == 'dense_const') {
@@ -116,38 +113,6 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
     }
 }
 
-linop_types <- c("VARIABLE",
-                 "PROMOTE",
-                 "MUL",
-                 "RMUL",
-                 "MUL_ELEM",
-                 "DIV",
-                 "SUM",
-                 "NEG",
-                 "INDEX",
-                 "TRANSPOSE",
-                 "SUM_ENTRIES",
-                 "TRACE",
-                 "RESHAPE",
-                 "DIAG_VEC",
-                 "DIAG_MAT",
-                 "UPPER_TRI",
-                 "CONV",
-                 "HSTACK",
-                 "VSTACK",
-                 "SCALAR_CONST",
-                 "DENSE_CONST",
-                 "SPARSE_CONST",
-                 "NO_OP",
-                 "KRON",
-                 "EQ",
-                 "LEQ",
-                 "SOC",
-                 "EXP",
-                 "SDP")
-
-linop_type2Int <- hashmap::hashmap(linop_types, seq.int(from = 0, to = length(linop_types) - 1))
-
 build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
     Q <- Deque$new()
     root_linC <- CVXcanon.LinOp$new()
@@ -186,8 +151,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
                 linC$dense_data <- format_matrix(linR$data$data, 'scalar')
             else
                 set_matrix_data(linC, linR)
-        } else
-            set_matrix_data(linC, linR)
+        }
     }
 
     root_linC
@@ -203,40 +167,40 @@ get_constraint_node <- function(c, tmp) {
         c_size <- size(c)
         c_constr_id <- c@constr_id
     }
-    root.size.push_back(c_size[0])
-    root.size.push_back(c_size[1])
+    root$size_push_back(c_size[1])
+    root$size_push_back(c_size[2])
 
-                                        # add ID as dense_data
-    root.set_dense_data(format_matrix(c_constr_id, "scalar"))
+    ## add ID as dense_data
+    root$dense_data <- format_matrix(c_constr_id, "scalar")
 
     if(is.list(c) && c$class == "LinEqConstr") {
-        root.type <- CVXcanon.EQ
+        root$type <- LINOP_TYPES["EQ"]
         expr <- build_lin_op_tree(c$expr, tmp)
         tmp <- c(tmp, expr)
-        root.args.push_back(expr)
+        root$args_push_back(expr)
     } else if(is.list(c) && c$class == "LinLeqConstr") {
-        root.type <- CVXcanon.LEQ
+        root$type <- LINOP_TYPES["LEQ"]
         expr <- build_lin_op_tree(c$expr, tmp)
         tmp <- c(tmp, expr)
-        root.args.push_back(expr)
+        root$args_push_back(expr)
     } else if(is(c, "SOC")) {
-        root.type <- CVXcanon.SOC
+        root$type <- LINOP_TYPES["SOC"]
         t <- build_lin_op_tree(c@t, tmp)
         tmp <- c(tmp, t)
-        root.args.push_back(t)
+        root$args_push_back(t)
         for(elem in c@x_elems) {
             x_elem <- build_lin_op_tree(elem, tmp)
             tmp <- c(tmp, x_elem)
-            root.args.push_back(x_elem)
+            root$args_push_back(x_elem)
         }
     } else if(is(c, "ExpCone")) {
-        root.type <- CVXcanon.EXP
+        root$type <- LINOP_TYPES["EXP"]
         x <- build_lin_op_tree(c@x, tmp)
         y <- build_lin_op_tree(c@y, tmp)
         z <- build_lin_op_tree(c@z, tmp)
-        root.args.push_back(x)
-        root.args.push_back(y)
-        root.args.push_back(z)
+        root$args_push_back(x)
+        root$args_push_back(y)
+        root$args_push_back(z)
         tmp <- c(tmp, list(x, y, z))
     } else if(is(c, "SDP"))
         stop("Unimplemented: SDP")
@@ -256,7 +220,7 @@ solve <- function(sense, objective, constraints, verbose, solver_options) {
         ## Gets the constraint node
         root <- get_constraint_node(constr, tmp)
         tmp <- c(tmp, root)
-        C_constraints.push_back(root)
+        C_constraints$push_back(root)
     }
 
     if(is(sense, "Minimize"))

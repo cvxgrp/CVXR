@@ -84,9 +84,22 @@ public:
    * where slice = (start, end, step_size) */
   std::vector<std::vector<int> > slice;
 
+  /* uuid */
+  boost::uuids::uuid id;
+
   /* Constructor */
   LinOp() {
+    id = boost::uuids::random_generator()();
+#ifdef CVXCANON_DEBUG
+    Rcpp::Rcout << "LinOp id " << id << " Created!" << std::endl;
+#endif
     sparse = false; // dense by default
+  }
+
+  ~LinOp() {
+#ifdef CVXCANON_DEBUG
+    Rcpp::Rcout << "LinOp id " << id << " ; type " << type << " Destroyed!!" << std::endl;
+#endif
   }
 
   /* Checks if LinOp is constant type */

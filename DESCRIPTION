@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9005
+Version: 0.0.0.9006
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -36,15 +36,14 @@ Imports:
         Matrix,
         Rcpp (>= 0.12.5),
         RcppEigen,
+	BH,
         bitops,
-        MASS,
-        hashmap,
-        rstackdeque
+        MASS
 Suggests:
         knitr,
         rmarkdown,
         testthat
-LinkingTo: Rcpp, RcppEigen
+LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true
 Suggests: testthat
@@ -64,10 +63,12 @@ Collate: 'globals.R'
          'solver.R'
          'problem_data.R'
 	 'rcppUtils.R'
+	 'R6List.R'
 	 'ProblemData-R6.R'
 	 'LinOp-R6.R'
 	 'LinOpVector-R6.R'
 	 'RcppExports.R'
 	 'Solution-R6.R'
+	 'CVXcanon-R6.R'
 	 'Deque.R'
 	 'canonInterface.R'

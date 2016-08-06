@@ -1,3 +1,4 @@
+## Some crude tools for my use; will polish up later (BN)
 ## <CLASSNAME> class shadowing CPP class
 <CLASSNAME> <- R6::R6Class("<CLASSNAME>",
                            private = list(

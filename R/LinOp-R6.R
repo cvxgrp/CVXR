@@ -31,6 +31,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                       "SOC",
                                       "EXP",
                                       "SDP"),
+                                  args = NA,
                                   pkg = NA,
                                   myClassName = NA,
                                   ptr = NA
@@ -85,6 +86,21 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                       }
                                   }
                                  ,
+                                  size = function(value) {
+                                      if (missing(value)) {
+                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
+                                                                   methodName = "get_size",
+                                                                   thisPkg = private$pkg)
+                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                      } else {
+                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
+                                                                   methodName = "set_size",
+                                                                   thisPkg = private$pkg)
+                                          ## value is an integer vector
+                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                      }
+                                  }
+                                 ,
                                   slice = function(value) {
                                       if (missing(value)) {
                                           rcppFn <- rcppMungedName(cppClassName = private$myClassName,
@@ -102,15 +118,20 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                               ),
                               public = list(
                                   initialize = function() {
+                                      private$args = R6List$new()
                                       private$pkg <- pkg <- getPackageName()
                                       private$myClassName <- myClassName <- class(self)[1]
+                                      ## Create a new LinOp on the C side
                                       private$ptr <- .Call(rcppMungedName(cppClassName = myClassName,
                                                                           methodName = "new",
                                                                           thisPkg = pkg),
                                                            PACKAGE = pkg)
+                                      ## Associate args on R side with the args on the C side.
+
                                   }
                                  ,
                                   args_push_back = function(R6LinOp) {
+                                      private$args$append(R6LinOp)
                                       rcppFn <- rcppMungedName(cppClassName = private$myClassName,
                                                                methodName = "args_push_back",
                                                                thisPkg = private$pkg)
@@ -120,11 +141,36 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   getXPtr = function() {
                                       private$ptr
                                   }
+                                  ,
+                                  getArgs = function() {
+                                      private$args
+                                  }
                                  ,
+                                  get_id = function() {
+                                      rcppFn <- rcppMungedName(cppClassName = private$myClassName,
+                                                               methodName = "get_id",
+                                                               thisPkg = private$pkg)
+                                      .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                  }
+                                  ,
                                   size_push_back = function(value) {
                                       rcppFn <- rcppMungedName(cppClassName = private$myClassName,
                                                                methodName = "size_push_back",
                                                                thisPkg = private$pkg)
                                       .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
                                   }
+                                 ,
+                                  toString = function() {
+                                      sprintf("LinOp(id=%s, type=%s, size=[%s], args=%s, data=[%s])",
+                                              self$get_id(),
+                                              self$type,
+                                              paste(self$size, collapse=", "),
+                                              private$args$toString(),
+                                              paste(self$dense_data, collapse=", "))
+                                  }
+                                 ,
+                                  print = function() {
+                                      print(self$toString())
+                                  }
+
                               ))

@@ -24,7 +24,9 @@
 #include "BuildMatrix.hpp"
 #include "LinOp.hpp"
 #include "LinOpOperations.hpp"
-#include "EcosProblem.hpp"
+#include "RcppEcosProblem.hpp"
+
+#include "RcppLinOpVector.hpp"
 
 /**
  * Takes as list of contraints as input. Returns a map from constraint
@@ -48,19 +50,37 @@ filter_constraints(std::vector<LinOp *> constraints) {
   constr_map.insert(std::pair<OperatorType,
                     std::vector<LinOp *> >(EXP, std::vector<LinOp *>()));
 
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "In filter_constraints" << std::endl;
+  for (int i = 0; i < constraints.size(); ++i) {
+    Rcpp::Rcout << constraints[i]->type << std::endl;
+  }
+#endif
+
   for (int i = 0; i < constraints.size(); i++) {
     constr_map[constraints[i]->type].push_back(constraints[i]);
   }
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "In filter_constraints (before return)" << std::endl;
+#endif
 
   return constr_map;
 }
 
 int accumulate_size(std::vector<LinOp *> constraints) {
   int size = 0;
+
+  // for (int i = 0; i < constraints.size(); i++) {
+  //   LinOp constr = *constraints[i];
+  //   size += constr.size[0] * constr.size[1];
+  // }
+
   for (int i = 0; i < constraints.size(); i++) {
-    LinOp constr = *constraints[i];
-    size += constr.size[0] * constr.size[1];
+    // LinOp constr = *constraints[i];
+    size += (constraints[i]->size[0]) * (constraints[i]->size[1]);
   }
+
   return size;
 }
 
@@ -146,23 +166,93 @@ std::vector<Variable> get_vars_and_offsets(LinOp *objective,
   return vars;
 }
 
-Solution solve(Sense sense, LinOp* objective, std::vector<LinOp *> constraints,
-               std::map<std::string, double> solver_options) {
+// Make a map out of an Rcpp List. Caller's responsibility
+// to ensure proper names etc.
+std::map<std::string, double>  makeMap(Rcpp::List L) {
+  std::map<std::string, double> result;
+  Rcpp::StringVector s = L.names();
+  for (int i = 0; i < s.size(); i++) {
+    result[Rcpp::as<std::string>(s[i])] = L[i];
+  }
+  return(result);
+}
+
+// [[Rcpp::export]]
+SEXP CVXcanon__solve(int sense, Rcpp::XPtr<LinOp> objective, Rcpp::XPtr<LinOpVector> constraintsLinOpVector,
+		     SEXP solverOptions) {
+
+  std::vector<LinOp *> constraints = constraintsLinOpVector->linvec;
+
+#ifdef CVXCANON_DEBUG
+  for (int i = 0; i < constraints.size(); ++i) {
+    Rcpp::Rcout << constraints[i]->type << std::endl;
+  }
+  Rcpp::Rcout << "After constraints" << std::endl;
+#endif
+
+  std::map<std::string, double> solver_options = makeMap(solverOptions);
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "After solver options" << std::endl;
+#endif
+
   /* Pre-process constraints */
   std::map<OperatorType, std::vector<LinOp *> > constr_map;
   std::map<OperatorType, std::vector<int> > dims_map;
+
+#ifdef CVXCANON_DEBUG
+  for (int i = 0; i < constraints.size(); ++i) {
+    Rcpp::Rcout << constraints[i]->type << std::endl;
+  }
+#endif
+
   constr_map = filter_constraints(constraints);
+
+#ifdef CVXCANON_DEBUG
+  for (int i = 0; i < constraints.size(); ++i) {
+    Rcpp::Rcout << constraints[i]->type << std::endl;
+  }
+
+  Rcpp::Rcout << "After constr_map" << std::endl;
+#endif
+
   dims_map = compute_dimensions(constr_map);
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "After compute_dimensions" << std::endl;
+#endif
 
   std::map<int, int> var_offsets;
   std::vector<Variable> variables;
   variables = get_vars_and_offsets(objective, constraints, var_offsets);
 
-  /* Instantiate problem data */
-  EcosProblem problem = EcosProblem(sense, objective, constr_map,
-                                    dims_map, variables, var_offsets);
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "After get_vars_and_offsets" << std::endl;
+#endif
 
-  Solution solution = problem.solve(solver_options);
+  /* Instantiate problem data */
+  objectivesense oSense;
+  if (sense == 0) {
+    oSense = MINIMIZE;
+  } else {
+    oSense = MAXIMIZE;
+  }
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "Before Ecos" << std::endl;
+#endif
+
+  EcosProblem problem = EcosProblem(oSense, objective, constr_map,
+				    dims_map, variables, var_offsets);
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "after Ecos" << std::endl;
+#endif
+
+  SEXP solution = problem.solve(solver_options);
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "After solution " << std::endl;
+#endif
 
   /* Temporary for debugging */
   // std::cout << "SOLVER STATUS: " << solution.status << std::endl;
@@ -180,6 +270,5 @@ Solution solve(Sense sense, LinOp* objective, std::vector<LinOp *> constraints,
   //  std::cout<< "ID: " << it->first << std::endl;
   //  std::cout<< it->second << std::endl;
   // }
-
   return solution;
 }

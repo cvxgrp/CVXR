@@ -1,4 +1,4 @@
-#include "EcosProblem.hpp"
+#include "RcppEcosProblem.hpp"
 #include <ecos.h>
 #include <map>
 #include <string>
@@ -166,12 +166,19 @@ std::vector<LinOp *> format_exp_constrs(std::vector<LinOp *> &constrs) {
 
 std::vector<Variable> get_dual_variables(std::vector<LinOp *> constrs) {
   std::vector<Variable> vars;
+  // for (int i = 0; i < constrs.size(); i++) {
+  //   LinOp constr = *constrs[i];
+  //   vars.push_back(Variable());
+  //   vars[i].id = static_cast<int>(constr.dense_data(0, 0));
+  //   vars[i].size = constr.size;
+  //   vars[i].type = constr.type;
+  // }
   for (int i = 0; i < constrs.size(); i++) {
-    LinOp constr = *constrs[i];
+    // LinOp constr = *constrs[i];
     vars.push_back(Variable());
-    vars[i].id = static_cast<int>(constr.dense_data(0, 0));
-    vars[i].size = constr.size;
-    vars[i].type = constr.type;
+    vars[i].id = static_cast<int>(constrs[i]->dense_data(0, 0));
+    vars[i].size = constrs[i]->size;
+    vars[i].type = constrs[i]->type;
   }
   return vars;
 }
@@ -292,22 +299,41 @@ EcosProblem::EcosProblem(Sense sense, LinOp * objective, std::map<OperatorType,
   ineq_dual_vars = get_dual_variables(concatenate(constr_map[LEQ],
                                       constr_map[SOC], constr_map[EXP]));
 
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "before problem data" << std::endl;
+#endif
+
   /* get problem data */
   std::vector<LinOp *> objVec;
   objVec.push_back(objective);
 
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "after problem data" << std::endl;
+#endif
+
   /* Format for ECOS solver */
   std::vector<LinOp *> eq_constrs = format_affine_constr(constr_map[EQ]);
-
+  Rcpp::Rcout << "after eq constrs" << std::endl;
   std::vector<LinOp *> leq_constrs = format_affine_constr(constr_map[LEQ]);
+  Rcpp::Rcout << "after leq constrs" << std::endl;
   std::vector<LinOp *> soc_constrs = format_soc_constrs(constr_map[SOC]);
+  Rcpp::Rcout << "after soc constrs" << std::endl;
   std::vector<LinOp *> exp_constrs = format_exp_constrs(constr_map[EXP]);
+  Rcpp::Rcout << "after ineq constrs" << std::endl;
   std::vector<LinOp *> ineq_constrs = concatenate(leq_constrs, soc_constrs,
                                                   exp_constrs);
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "before objdata" << std::endl;
+#endif
 
   ProblemData objData = build_matrix(objVec, var_offsets);
   ProblemData eqData = build_matrix(eq_constrs, var_offsets);
   ProblemData ineqData = build_matrix(ineq_constrs, var_offsets);
+
+#ifdef CVXCANON_DEBUG
+  Rcpp::Rcout << "after build_matrix" << std::endl;
+#endif
 
   /* Problem Dimensions */
   int num_variables = get_num_variables(variables);
@@ -339,16 +365,18 @@ EcosProblem::EcosProblem(Sense sense, LinOp * objective, std::map<OperatorType,
     c = negate(c);
   }
 
-  // std::cout << "DEBUG DIMENSIONS: " << std::endl;
-  // std::cout << "N: " << n << std::endl;
-  // std::cout << "M: " << m << std::endl;
-  // std::cout << "P: " << p << std::endl;
-  // std::cout << "L: " << l << std::endl;
-  // std::cout << "NCONES: " << ncones << std::endl;
-  // std::cout << "Q: " << std::endl;
-  // print(q);
-  // std::cout << "E: " << e << std::endl;
-  // std::cout << "OFFSET: " << offset << std::endl;
+#ifdef CVXCANON_DEBUG
+  std::cout << "DEBUG DIMENSIONS: " << std::endl;
+  std::cout << "N: " << n << std::endl;
+  std::cout << "M: " << m << std::endl;
+  std::cout << "P: " << p << std::endl;
+  std::cout << "L: " << l << std::endl;
+  std::cout << "NCONES: " << ncones << std::endl;
+  std::cout << "Q: " << std::endl;
+  print(q);
+  std::cout << "E: " << e << std::endl;
+  std::cout << "OFFSET: " << offset << std::endl;
+#endif
 
   problem = ECOS_setup(n, m, p, l, ncones, &q[0], e,
                        &Gpr[0], &Gjc[0], &Gir[0],
@@ -360,18 +388,19 @@ EcosProblem::~EcosProblem() {
   ECOS_cleanup(problem, 0);  // TODO(john): keepvars for warmstart?
 }
 
-Solution EcosProblem::solve(std::map<std::string, double> solver_options) {
+SEXP EcosProblem::solve(std::map<std::string, double> solver_options) {
   set_solver_options(problem, solver_options);
   idxint status = ECOS_solve(problem);
-  Solution soln;
-  soln.status = canonicalize_status(status);
-  soln.optimal_value = problem->info->pcost + offset;
+  Rcpp::XPtr<Solution> soln( new Solution( ), true );
+
+  soln->status = canonicalize_status(status);
+  soln->optimal_value = problem->info->pcost + offset;
   if (prob_sense == MAXIMIZE) {  // account for negating the objective
-    soln.optimal_value *= -1;
+    soln->optimal_value *= -1;
   }
 
-  save_values(soln.primal_values, primal_vars, problem->x, primal_offsets);
-  save_dual_values(soln.dual_values, problem->y, eq_dual_vars, EQ);
-  save_dual_values(soln.dual_values, problem->z, ineq_dual_vars, LEQ);
+  save_values(soln->primal_values, primal_vars, problem->x, primal_offsets);
+  save_dual_values(soln->dual_values, problem->y, eq_dual_vars, EQ);
+  save_dual_values(soln->dual_values, problem->z, ineq_dual_vars, LEQ);
   return soln;
 }

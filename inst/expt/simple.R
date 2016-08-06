@@ -11,14 +11,24 @@ A <- matrix(c(17, 19), nrow=m, byrow=TRUE)
 x <- Variable(n)
 objective <- Minimize(A*x)
 constraint <- list(1 <= x)
+
+##base::trace("canonicalize", tracer=browser, exit = browser, signature = c("Variable"))
 prob <- Problem(objective, constraint)
 
-base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
+##base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
 
 ##debug(cvxr_solve)
 
 ##debug(build_lin_op_tree)
 
-cvxr_solve(prob)
+result <- cvxr_solve(prob)
+
+cat("Solver Status: ", result$status, "\n")
+
+cat("Primal Solution:\n")
+print(result$primal_values)
+
+cat("Dual Solution:\n")
+print(result$dual_values)
 
 

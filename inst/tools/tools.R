@@ -1,3 +1,4 @@
+## Crude tools for my use; will polish up later (BN)
 makeR6Class <- function(className, publicFields=NULL, publicMethods=NULL, filename=paste0(className, "-R6.R")) {
     template <- readLines("template.R")
     template <- gsub("<CLASSNAME>", className, template)

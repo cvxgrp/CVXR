@@ -18,6 +18,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <boost/uuid/uuid.hpp>            // uuid class
+#include <boost/uuid/uuid_generators.hpp> // generators
+#include <boost/lexical_cast.hpp>         // lexical cast
+#include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
+
 #include <Rcpp.h>
 #include <RcppEigen.h>
 

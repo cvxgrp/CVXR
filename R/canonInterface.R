@@ -14,10 +14,10 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     }
 
     ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- list()
+    tmp <- R6List$new()
     for (lin in linOps) {
         tree <- build_lin_op_tree(lin, tmp)
-        tmp <- c(tmp, tree)
+        tmp$append(tree)
         lin_vec.push_back(tree)
     }
 
@@ -127,7 +127,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
         ## tmp is a list
         for(argR in linR$args) {
             tree <- CVXcanon.LinOp$new()
-            tmp <- c(tmp, tree)
+            tmp$append(tree)
             Q$append(list(linR = argR, linC = tree))
             linC$args_push_back(tree)
         }
@@ -176,21 +176,21 @@ get_constraint_node <- function(c, tmp) {
     if(is.list(c) && c$class == "LinEqConstr") {
         root$type <- LINOP_TYPES["EQ"]
         expr <- build_lin_op_tree(c$expr, tmp)
-        tmp <- c(tmp, expr)
+        tmp$append(expr)
         root$args_push_back(expr)
     } else if(is.list(c) && c$class == "LinLeqConstr") {
         root$type <- LINOP_TYPES["LEQ"]
         expr <- build_lin_op_tree(c$expr, tmp)
-        tmp <- c(tmp, expr)
+        tmp$append(expr)
         root$args_push_back(expr)
     } else if(is(c, "SOC")) {
         root$type <- LINOP_TYPES["SOC"]
-        t <- build_lin_op_tree(c@t, tmp)
-        tmp <- c(tmp, t)
-        root$args_push_back(t)
+        tt <- build_lin_op_tree(c@t, tmp)
+        tmp$append(tt)
+        root$args_push_back(tt)
         for(elem in c@x_elems) {
             x_elem <- build_lin_op_tree(elem, tmp)
-            tmp <- c(tmp, x_elem)
+            tmp$append(x_elem)
             root$args_push_back(x_elem)
         }
     } else if(is(c, "ExpCone")) {
@@ -201,7 +201,7 @@ get_constraint_node <- function(c, tmp) {
         root$args_push_back(x)
         root$args_push_back(y)
         root$args_push_back(z)
-        tmp <- c(tmp, list(x, y, z))
+        tmp$append(list(x, y, z))
     } else if(is(c, "SDP"))
         stop("Unimplemented: SDP")
     else
@@ -209,9 +209,9 @@ get_constraint_node <- function(c, tmp) {
     return(root)
 }
 
-solve <- function(sense, objective, constraints, verbose, solver_options) {
+solve <- function(sense, objective, constraints, verbose, solver_options = ecos.control()) {
     ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- list()
+    tmp <- R6List$new()
 
     C_objective <- build_lin_op_tree(objective, tmp)
 
@@ -219,23 +219,31 @@ solve <- function(sense, objective, constraints, verbose, solver_options) {
     for(constr in constraints) {
         ## Gets the constraint node
         root <- get_constraint_node(constr, tmp)
-        tmp <- c(tmp, root)
+        tmp$append(root)
         C_constraints$push_back(root)
     }
 
-    if(is(sense, "Minimize"))
-        C_sense <- CVXcanon.MINIMIZE
-    else if(is(sense, "Maximize"))
-        C_sense <- CVXcanon.MAXIMIZE
+    cat("Objective:\n")
+    print(C_objective$toString())
+
+    cat("Constraints:\n")
+    print(C_constraints$toString())
+
+    if(sense == "Minimize")
+        C_sense <- 0L ## CVXcanon.MINIMIZE
+    else if(sense == "Maximize")
+        C_sense <- 1L ##CVXcanon.MAXIMIZE
     else
         stop("Unimplemented")
 
-    C_opts <- CVXcanon.StringDoubleMap(solver_options)
-    C_opts['verbose'] <- as.numeric(verbose)
+    C_opts <- solver_options
+    C_opts['verbose'] <- 1L
 
-    solution <- CVXcanon.solve(C_sense, C_objective, C_constraints, C_opts)
+    C_opts <- list(verbose = 1L)
+    cvxCanon <- CVXcanon$new()
+    solution <- cvxCanon$solve(C_sense, C_objective, C_constraints, C_opts)
 
-    print(paste("CVXcanon optimal value", solution$optimal_value))
+    ## print(paste("CVXcanon optimal value", solution$optimal_value))
 
     return(solution)
 }

@@ -17,7 +17,7 @@ public:
               std::map<int, int> var_offsets);
 
   ~EcosProblem();
-  Solution solve(std::map<std::string, double> solver_options);
+  SEXP solve(std::map<std::string, double> solver_options);
 
 private:
   /* ECOS problem */

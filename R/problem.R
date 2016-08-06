@@ -137,13 +137,6 @@ setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
 
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
-<<<<<<< HEAD
-=======
-  # canon_constr <- obj_canon[[2]]
-  # for(constr in object@constraints)
-  #  canon_constr <- c(canon_constr, canonical_form(constr)[[2]])
-  # list(obj_canon[[1]], canon_constr)
->>>>>>> anqif/master
   canon_constr <- sapply(object@constraints, function(x) { canonical_form(x)[[2]] })
   list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
 })
@@ -174,7 +167,6 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
 
   # TODO: Solve in parallel
 
-<<<<<<< HEAD
   print("Calling CVXcanon")
   if(is(object@objective, "Minimize")) {
     sense <- "Minimize"
@@ -186,59 +178,33 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
 
   solve(sense, canon_objective, constraints, verbose, ...)
 
-  # Choose a solver/check the chosen solver.
-  if(is.null(solver))
-    solver <- Solver.choose_solver(constraints)
-  else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
-    validate_solver(solver, constraints)
-  else if(is.character(solver) && solver %in% SOLVERS) {
-    solver <- new(solver)
-    validate_solver(solver, constraints)
-  } else
-    stop("Unknown solver.")
-
-  sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-=======
-  if(is(object@objective, "Minimize"))
-    canon_objective <- objective
-  else
-    canon_objective <- neg_expr(objective)
-
-  solve(object@objective, canon_objective, constraints, verbose, ...)
+  ## Start of section commented out by Naras
 
   # Choose a solver/check the chosen solver.
-  # if(is.null(solver))
-  #  solver <- Solver.choose_solver(constraints)
-  # else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
-  #  validate_solver(solver, constraints)
-  # else if(is.character(solver) && solver %in% SOLVERS) {
-  #  solver <- new(solver)
-  #  validate_solver(solver, constraints)
-  # } else
-  #  stop("Unknown solver.")
+  ## if(is.null(solver))
+  ##   solver <- Solver.choose_solver(constraints)
+  ## else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
+  ##   validate_solver(solver, constraints)
+  ## else if(is.character(solver) && solver %in% SOLVERS) {
+  ##   solver <- new(solver)
+  ##   validate_solver(solver, constraints)
+  ## } else
+  ##   stop("Unknown solver.")
 
-  # sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
->>>>>>> anqif/master
+  ## sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
 
-  # Presolve couldn't solve the problem.
-  # if(is.na(sym_data@.presolve_status)) {
-  #  results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
-  # Presolve determined the problem was unbounded or infeasible.
-<<<<<<< HEAD
-  } else {
-    results_dict <- list()
-    results_dict[[STATUS]] <- sym_data@.presolve_status
-  }
+  ## # Presolve couldn't solve the problem.
+  ## if(is.na(sym_data@.presolve_status)) {
+  ##   results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
+  ## # Presolve determined the problem was unbounded or infeasible.
+  ## } else {
+  ##   results_dict <- list()
+  ##   results_dict[[STATUS]] <- sym_data@.presolve_status
+  ## }
 
-  object@.update_problem_state(results_dict, sym_data, solver)
-  object@value
-=======
-  # } else {
-  #  results_dict <- list()
-  #  results_dict[[STATUS]] <- sym_data@.presolve_status
-  # }
+  ## object@.update_problem_state(results_dict, sym_data, solver)
+  ## object@value
 
-  # object@.update_problem_state(results_dict, sym_data, solver)
-  # object@value
->>>>>>> anqif/master
+  ## End of section commented out by Naras
+
 })

@@ -35,7 +35,9 @@ setMethod("save_value", "Variable", function(object) {
 })
 
 setMethod("canonicalize", "Variable", function(object) {
-  obj <- create_var(size(object))
+    ## Changed by naras to match python
+    ## obj <- create_var(size(object))
+  obj <- create_var(size(object), object@id)
   list(obj, list())
 })
 

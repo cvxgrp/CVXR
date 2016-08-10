@@ -1,6 +1,6 @@
 ##setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
-setClass("Constraint", representation(id = "integer"), prototype(id = get_id()), contains = "VIRTUAL")
-setMethod("id", "Constraint", function(object) { object@id })
+setClass("Constraint", representation(constr_id = "integer"), prototype(constr_id = get_id()), contains = "VIRTUAL")
+setMethod("id", "Constraint", function(object) { object@constr_id })
 
 .BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),
                                       prototype(.noncvx_var = NULL),
@@ -70,7 +70,7 @@ setMethod("canonical_form", "LeqConstraint", function(object) { canonicalize(obj
 
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
-  dual <- create_leq(canon[[1]], constr_id = object@id)
+  dual <- create_leq(canon[[1]], constr_id = object@constr_id)
   list(NA, c(canon[[2]], list(dual)))
 })
 
@@ -132,7 +132,7 @@ setMethod("violation", "EqConstraint", function(object) {
 
 setMethod("canonicalize", "EqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
-  dual <- create_eq(canon[[1]], constr_id = object@id)
+  dual <- create_eq(canon[[1]], constr_id = object@constr_id)
   c(NA, c(canon[[2]], dual))
 })
 
@@ -185,7 +185,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   constraints <- canon[[2]]
   half <- create_const(0.5, c(1,1))
   symm <- mul_expr(half, sum_expr(list(obj, transpose(obj))), size(obj))
-  dual_holder <- SDP(symm, enforce_sym = FALSE, constr_id = object@id)
+  dual_holder <- SDP(symm, enforce_sym = FALSE, constr_id = object@constr_id)
   list(NA, c(constraints, dual_holder))
 })
 
@@ -207,7 +207,12 @@ setMethod("format_constr", "SOC", function(object) {
 })
 
 setMethod("size", "SOC", function(object) {
-  sizes <- sapply(object@x_elems, function(elem) { size(elem)[1] * size(elem)[2] })
+  sizes <- sapply(object@x_elems, function(elem) {
+    if(is.list(elem))
+      prod(elem$size)
+    else
+      prod(size(elem))
+  })
   rows <- sum(sizes) + 1
   c(rows, 1)
 })

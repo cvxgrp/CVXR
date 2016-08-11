@@ -23,6 +23,10 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                             private$ptr
                                         }
                                        ,
+                                        getList = function() {
+                                            private$linOps
+                                        }
+                                       ,
                                         push_back = function(R6LinOp) {
                                             n <- length(private$linOps)
                                             private$linOps[[n+1]] <- R6LinOp

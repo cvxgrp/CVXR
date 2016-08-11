@@ -1,0 +1,2 @@
+Solve the problem in SolverTest in CVXcanon to figure out exactly the
+matrices we generate.

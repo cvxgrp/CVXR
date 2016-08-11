@@ -117,7 +117,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   }
                               ),
                               public = list(
-                                  initialize = function() {
+                                  initialize = function(type = NULL, size = NULL, args = NULL, data = NULL) {
                                       private$args = R6List$new()
                                       private$pkg <- pkg <- getPackageName()
                                       private$myClassName <- myClassName <- class(self)[1]
@@ -127,7 +127,19 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                                                           thisPkg = pkg),
                                                            PACKAGE = pkg)
                                       ## Associate args on R side with the args on the C side.
-
+                                      ##browser()
+                                      if (!is.null(type)) {
+                                          self$type <- type
+                                      }
+                                      if (!is.null(size)) {
+                                          self$size <- size
+                                      }
+                                      if (!is.null(args)) {
+                                          for (x in args) self$args_push_back(x)
+                                      }
+                                      if (!is.null(data)) {
+                                          self$dense_data <- data
+                                      }
                                   }
                                  ,
                                   args_push_back = function(R6LinOp) {

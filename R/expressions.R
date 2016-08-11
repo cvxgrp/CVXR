@@ -11,7 +11,8 @@ Expression <- setClass("Expression", representation(dcp_attr = "DCPAttr"), proto
 setOldClass("data.frame")
 setOldClass("matrix")
 setOldClass("vector")
-setClassUnion("ConstVal", c("data.frame", "matrix", "vector", "numeric"))
+setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
+setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 
 setMethod("show", "Expression", function(object) {

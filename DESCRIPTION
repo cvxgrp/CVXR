@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9006
+Version: 0.0.0.9007
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",

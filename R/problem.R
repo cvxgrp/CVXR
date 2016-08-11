@@ -137,7 +137,11 @@ setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
 
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
-  canon_constr <- sapply(object@constraints, function(x) { canonical_form(x)[[2]] })
+  # canon_constr <- sapply(object@constraints, function(x) { canonical_form(x)[[2]] })
+  # list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
+  canon_constr <- list()
+  for(constr in object@constraints)
+    canon_constr <- c(canon_constr, canonical_form(constr)[[2]])
   list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
 })
 

@@ -37,6 +37,10 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
+setMethod("to_numeric", "AddExpression", function(object, values) {
+  Reduce("+", values)
+})
+
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) promote(arg, size) else arg })
   list(sum_expr(arg_objs), list())
@@ -78,6 +82,10 @@ NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 
 setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
+})
+
+setMethod("to_numeric", "NegExpression", function(object, values) {
+  return(-values[[1]])
 })
 
 NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {

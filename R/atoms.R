@@ -54,7 +54,7 @@ setMethod("canonicalize", "Atom", function(object) {
       return(canonical_form(Constant(value(object))))
   } else {
     arg_objs <- list()
-    constraints<- list()
+    constraints <- list()
     for(arg in object@.args) {
       canon <- canonical_form(arg)
       arg_objs[[length(arg_objs) + 1]] <- canon[[1]]
@@ -83,20 +83,25 @@ setMethod("parameters", "Atom", function(object) {
 setMethod("value", "Atom", function(object) {
   if(is_zero(object)) {
     size <- size(object)
-    result <- matrix(rep(0, size[1] * size[2]), nrow = size[1], ncol = size[2])
+    result <- matrix(0, nrow = size[1], ncol = size[2])
   } else {
     arg_values <- list()
+    idx <- 1
     for(arg in object@.args) {
-      if(is.na(value(arg)) && !is_constant(arg))
+      arg_val <- value(arg)
+      if(is.na(arg_val) && !is_constant(object))
         return(NA)
-      else
-        arg_values <- c(arg_values, value(arg))
+      else {
+        arg_values[[idx]] <- arg_val
+        idx <- idx + 1
+      }
     }
-    result <- lapply(arg_values, function(x) { as.matrix(x) })
+    result <- to_numeric(object, arg_values)
   }
   
-  if(length(result) == 1 && all(dim(result[[1]]) == c(1,1)))
-    as.numeric(result[[1]])
+  # Reduce to scalar if possible
+  if(is.list(result) && length(result) == 1 && (length(result[[1]]) == 1 || all(dim(result[[1]]) == c(1,1))))
+    result[[1]]
   else
     result
 })

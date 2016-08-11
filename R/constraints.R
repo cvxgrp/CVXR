@@ -1,6 +1,6 @@
-##setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
-setClass("Constraint", representation(id = "integer"), prototype(id = get_id()), contains = "VIRTUAL")
-setMethod("id", "Constraint", function(object) { object@id })
+## setClass("Constraint", representation(id = "character"), prototype(id = uuid::UUIDgenerate()), contains = "VIRTUAL")
+setClass("Constraint", representation(constr_id = "integer"), prototype(constr_id = get_id()), contains = "VIRTUAL")
+setMethod("id", "Constraint", function(object) { object@constr_id })
 
 .BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),
                                       prototype(.noncvx_var = NULL),
@@ -70,7 +70,7 @@ setMethod("canonical_form", "LeqConstraint", function(object) { canonicalize(obj
 
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
-  dual <- create_leq(canon[[1]], constr_id = object@id)
+  dual <- create_leq(canon[[1]], constr_id = object@constr_id)
   list(NA, c(canon[[2]], list(dual)))
 })
 
@@ -91,28 +91,6 @@ setMethod("violation", "LeqConstraint", function(object) {
     max(value(object@.expr), 0)
 })
 
-NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "Expression", vars = "list", .x_size = "numeric"),
-                                prototype(vars = list(), .x_size = NA_real_),
-                                validity = function(object) {
-                                  if(!is.na(.x_size))
-                                    stop("[NonlinearConstraint: .x_size] .x_size is an internal slot and should not be set by user")
-                                  is_var <- sapply(vars, function(var) { is(var, "Variable") })
-                                  if(!all(is_var))
-                                    stop("[NonlinearConstraint: vars] vars must be a list of Variable objects")
-                                  return(TRUE)
-                                  }, contains = "Constraint")
-
-setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars) {
-  object@f <- f
-  object@vars <- vars
-  cols <- size(object@vars[[1]])[2]
-  rows <- sum(sapply(object@vars, function(var) { size(var)[1] }))
-  object@.x_size <- c(rows*cols, 1)
-  callNextMethod(.Object, ...)
-})
-
-setMethod("variables", "NonlinearConstraint", function(object) { object@vars })
-
 EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
 
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
@@ -132,21 +110,19 @@ setMethod("violation", "EqConstraint", function(object) {
 
 setMethod("canonicalize", "EqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
-  dual <- create_eq(canon[[1]], constr_id = object@id)
-  c(NA, c(canon[[2]], dual))
+  dual <- create_eq(canon[[1]], constr_id = object@constr_id)
+  list(NA, c(canon[[2]], list(dual)))
 })
 
-.ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "NonlinearConstraint")
+.ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "Constraint")
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
-setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
-  .Object@x <- x
-  .Object@y <- y
-  .Object@z <- z
-  callNextMethod("ExpCone", .Object, ..., vars = list(.Object@x, .Object@y, .Object@z))
+setMethod("size", "ExpCone", function(object) {
+  if(is.list(object@x))
+    object@x$size
+  else
+    size(object@x)
 })
-
-setMethod("size", "ExpCone", function(object) { size(object@x) })
 
 .PSDConstraint <- setClass("PSDConstraint", contains = "LeqConstraint",
                            validity = function(object) {
@@ -185,8 +161,8 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   constraints <- canon[[2]]
   half <- create_const(0.5, c(1,1))
   symm <- mul_expr(half, sum_expr(list(obj, transpose(obj))), size(obj))
-  dual_holder <- SDP(symm, enforce_sym = FALSE, constr_id = object@id)
-  list(NA, c(constraints, dual_holder))
+  dual_holder <- SDP(symm, enforce_sym = FALSE, constr_id = object@constr_id)
+  list(NA, c(constraints, list(dual_holder)))
 })
 
 .SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"),
@@ -207,7 +183,12 @@ setMethod("format_constr", "SOC", function(object) {
 })
 
 setMethod("size", "SOC", function(object) {
-  sizes <- sapply(object@x_elems, function(elem) { size(elem)[1] * size(elem)[2] })
+  sizes <- sapply(object@x_elems, function(elem) {
+    if(is.list(elem))
+      prod(elem$size)
+    else
+      prod(size(elem))
+  })
   rows <- sum(sizes) + 1
   c(rows, 1)
 })

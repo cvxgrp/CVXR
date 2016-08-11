@@ -72,7 +72,7 @@ setMethod("monotonicity", "Entr", function(object) { NONMONOTONIC })
 Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
-  ones <- create_const(matrix(rep(1, size)), size)
+  ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   list(t, list(ExpCone(t, x, ones)))
 }
 

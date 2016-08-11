@@ -37,6 +37,7 @@ setGeneric("func_curvature", function(object) { standardGeneric("func_curvature"
 setGeneric("monotonicity", function(object) { standardGeneric("monotonicity") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("name", function(object) { standardGeneric("name") })
+setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric") })
 
 setGeneric("Atom.dcp_curvature", function(curvature, args, monotonicities) { standardGeneric("Atom.dcp_curvature") })
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })

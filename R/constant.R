@@ -9,9 +9,9 @@
 .Constant <- setClass("Constant", representation(value = "ConstVal"), 
                                  prototype(value = NA_real_), 
                       validity = function(object) {
-                        if((!is.data.frame(object@value) && !is.numeric(object@value)) ||
-                           (is.data.frame(object@value) && !all(sapply(object@value), is.numeric)))
-                          stop("[Constant: validation] value must be a data.frame, matrix, vector, or atomic element containing only numeric entries")
+                        if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
+                           ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
+                          stop("[Constant: validation] value must be a data.frame, matrix (CsparseMatrix, TsparseMatrix, or R default), vector, or atomic element containing only numeric entries")
                         return(TRUE)
                       }, contains = "Leaf")
 Constant <- function(value) { .Constant(value = value) }
@@ -49,8 +49,8 @@ as.Constant <- function(expr) {
 get_sign <- function(constant) {
   if(!is(constant, "ConstVal"))
     stop("constant must be a data.frame, matrix, vector, or atomic value")
-  if((!is.data.frame(constant) && !is.numeric(constant)) ||
-     (is.data.frame(constant) && !all(sapply(constant), is.numeric)))
+  if((!is(constant, "ConstSparseVal") && !is.data.frame(constant) && !is.numeric(constant)) ||
+     ((is(constant, "ConstSparseVal") || is.data.frame(constant)) && !all(sapply(constant, is.numeric))))
     stop("constant must contain only numeric values")
   max_sign <- val_to_sign(max(constant))
   min_sign <- val_to_sign(min(constant))

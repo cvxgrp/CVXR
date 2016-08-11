@@ -1,5 +1,5 @@
 dnl R interface to ecos Embedded Conic Solver routines
-dnl 
+dnl
 dnl This configure inspired and hacked from Rcsdp
 dnl
 dnl By default the included ecos code is built and linked, otherwise the user can supply
@@ -37,12 +37,19 @@ AC_ARG_WITH([ecos-dir],
     ECOS_DIR=$withval,
     ECOS_DIR="")
 
+if test [-n "$DEBUG"] ; then
+    DEBUG_FLAGS="-g -DCVXCANON_DEBUG"
+else
+    DEBUG_FLAGS=""
+fi
+
+
 if test [-z "$FOUND_ALL" -a -n "$ECOS_DIR"] ; then
     if test [! -d "$ECOS_DIR"] ; then
 	AC_MSG_ERROR([ECOS installation directory $ECOS_DIR does not exist])
     fi
 
-    PKG_CPPFLAGS="-I$ECOS_DIR/include -I$ECOS_DIR/external/ldl/include -I$ECOS_DIR/external/amd/include -I$ECOS_DIR/external/SuiteSparse_config"
+    PKG_CPPFLAGS="-I$ECOS_DIR/include -I$ECOS_DIR/external/ldl/include -I$ECOS_DIR/external/amd/include -I$ECOS_DIR/external/SuiteSparse_config $DEBUG_FLAGS"
     PKG_LIBS="-L$ECOS_DIR"
     FOUND_ALL="yes"
 fi
@@ -50,7 +57,7 @@ fi
 dnl No location given so build and link provided ecos
 if test [-z "$FOUND_ALL"] ; then
     echo "Using bundled ECOS"
-    PKG_CPPFLAGS="-Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config"
+    PKG_CPPFLAGS="-Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config $DEBUG_FLAGS"
     PKG_LIBS="-Lecos -lecos -lecos_bb"
     ECOS_TS="ecos.ts"
 else
@@ -80,12 +87,12 @@ if test [-n "$FOUND_ALL"] ; then
     LIBS="${PKG_LIBS}"
     CFLAGS="${CFLAGS} ${PKG_CFLAGS}"
     CPPFLAGS="${CPPFLAGS} ${PKG_CPPFLAGS}"
-    
+
     AC_CHECK_HEADER(ecos.h)
     if test "${ac_cv_header_ecos_h}" == no; then
 	AC_MSG_ERROR([ECOS header ecos.h not found in provided location])
     fi
-    
+
     AC_SEARCH_LIBS(ECOS_setup,ecos,,AC_MSG_ERROR([Could not link ECOS library using $PKG_LIBS]))
 fi
 

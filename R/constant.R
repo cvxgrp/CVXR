@@ -6,8 +6,8 @@
 #' @slot value A numeric element, data.frame, matrix, or vector.
 #' @aliases Constant
 #' @export
-.Constant <- setClass("Constant", representation(value = "ConstVal"), 
-                                 prototype(value = NA_real_), 
+.Constant <- setClass("Constant", representation(value = "ConstVal", .sparse = "logical"), 
+                                 prototype(value = NA_real_, .sparse = NA), 
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -26,8 +26,9 @@ setMethod("init_dcp_attr", "Constant", function(object) {
   DCPAttr(sign = sign, curvature = Curvature(curvature = CURV_CONSTANT_KEY), shape = shape)
 })
 
-setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_real_) {
+setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_real_, .sparse = NA) {
   .Object@value <- value
+  .Object@.sparse <- is(value, "ConstSparseVal")
   .Object@dcp_attr <- init_dcp_attr(.Object)
   callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
@@ -35,7 +36,7 @@ setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_
 setMethod("get_data", "Constant", function(object) { list(object@value) })
 setMethod("value", "Constant", function(object) { object@value })
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(object@value, size(object))
+  obj <- create_const(object@value, size(object), object@.sparse)
   list(obj, list())
 })
 

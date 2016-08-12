@@ -3,7 +3,7 @@
                                  prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
                                    if(!is.na(object@primal_value))
-                                     stop("[Variable: primal_value] primal_value is an internal slot and should not be set by user")
+                                     stop("[Variable: validation] primal_value is an internal slot and should not be set by user")
                                    return(TRUE)
                                  }, contains = "Leaf")
 

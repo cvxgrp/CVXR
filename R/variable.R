@@ -3,7 +3,7 @@
                                  prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
                                    if(!is.na(object@primal_value))
-                                     stop("[Variable: primal_value] primal_value is an internal slot and should not be set by user")
+                                     stop("[Variable: validation] primal_value is an internal slot and should not be set by user")
                                    return(TRUE)
                                  }, contains = "Leaf")
 
@@ -13,15 +13,17 @@ setMethod("init_dcp_attr", "Variable", function(object) {
   DCPAttr(sign = Sign(sign = SIGN_UNKNOWN_KEY), curvature = Curvature(curvature = CURV_AFFINE_KEY), shape = Shape(rows = object@rows, cols = object@cols))
 })
 
-setMethod("initialize", "Variable", function(.Object, ..., rows = 1, cols = 1, name = NA_character_) {
+setMethod("initialize", "Variable", function(.Object, ..., dcp_attr, id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
   .Object@rows <- rows
   .Object@cols <- cols
+  .Object@id <- id
   if(is.na(name))
     .Object@name <- sprintf("%s%s", VAR_PREFIX, .Object@id)
   else
     .Object@name <- name
-  .Object@dcp_attr = init_dcp_attr(.Object)
-  callNextMethod(.Object, ...)
+  .Object@primal_value <- primal_value
+  .Object@dcp_attr <- init_dcp_attr(.Object)
+  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
 
 setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })

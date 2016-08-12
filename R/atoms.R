@@ -25,13 +25,13 @@ setMethod("init_dcp_attr", "Atom", function(object) {
 
 setMethod("validate_args", "Atom", function(object) { })
 
-setMethod("initialize", "Atom", function(.Object, ..., .args = list()) {
+setMethod("initialize", "Atom", function(.Object, ..., dcp_attr, .args = list()) {
   # excl_names = c(".args", slotNames("Expression"))
   # .Object@.args = get_slots(.Object, exclude = excl_names)
   .Object@.args <- lapply(.args, as.Constant)
   .Object@dcp_attr <- init_dcp_attr(.Object)
   validate_args(.Object)
-  callNextMethod(.Object, ...)
+  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
 
 setMethod("Atom.dcp_curvature", signature(curvature = "Curvature", args = "list", monotonicities = "character"),

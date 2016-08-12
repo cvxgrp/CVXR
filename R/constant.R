@@ -6,8 +6,8 @@
 #' @slot value A numeric element, data.frame, matrix, or vector.
 #' @aliases Constant
 #' @export
-.Constant <- setClass("Constant", representation(value = "ConstVal"), 
-                                 prototype(value = NA_real_), 
+.Constant <- setClass("Constant", representation(value = "ConstVal", .sparse = "logical"), 
+                                 prototype(value = NA_real_, .sparse = NA), 
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -26,8 +26,9 @@ setMethod("init_dcp_attr", "Constant", function(object) {
   DCPAttr(sign = sign, curvature = Curvature(curvature = CURV_CONSTANT_KEY), shape = shape)
 })
 
-setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_real_) {
+setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_real_, .sparse = NA) {
   .Object@value <- value
+  .Object@.sparse <- is(value, "ConstSparseVal")
   .Object@dcp_attr <- init_dcp_attr(.Object)
   callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
@@ -35,7 +36,7 @@ setMethod("initialize", "Constant", function(.Object, ..., dcp_attr, value = NA_
 setMethod("get_data", "Constant", function(object) { list(object@value) })
 setMethod("value", "Constant", function(object) { object@value })
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(object@value, size(object))
+  obj <- create_const(object@value, size(object), object@.sparse)
   list(obj, list())
 })
 
@@ -86,14 +87,14 @@ setMethod("init_dcp_attr", "Parameter", function(object) {
   DCPAttr(sign = Sign(sign = object@sign), curvature = Curvature.CONSTANT, shape = shape)
 })
 
-setMethod("initialize", "Parameter", function(.Object, ..., rows = .Object@rows, cols = .Object@cols, name = .Object@name, sign = .Object@sign, value = .Object@value) {
+setMethod("initialize", "Parameter", function(.Object, ..., dcp_attr, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
   .Object@rows <- rows
   .Object@cols <- cols
   .Object@sign <- sign
   .Object@name <- name
   .Object@value <- value
   .Object@dcp_attr <- init_dcp_attr(.Object)
-  return(.Object)
+  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
 })
 
 setMethod("get_data", "Parameter", function(object) {
@@ -105,17 +106,12 @@ setMethod("canonicalize", "Parameter", function(object) {
   list(obj, list())
 })
 
-.CallbackParam <- setClass("CallbackParam", representation(.callback = "ConstVal", rows = "numeric", cols = "numeric", name = "character", sign = "character"),
-                                            prototype(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY), contains = "Parameter")
-CallbackParam <- function(.callback, rows, cols, name, sign) {
+.CallbackParam <- setClass("CallbackParam", representation(.callback = "ConstVal"), contains = "Parameter")
+CallbackParam <- function(.callback, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY) {
   .CallbackParam(.callback = .callback, rows = rows, cols = cols, name = name, sign = sign)
 }
 
-setMethod("initialize", "CallbackParam", function(.Object, ..., .callback, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY) {
+setMethod("initialize", "CallbackParam", function(.Object, ..., .callback) {
   .Object@.callback <- .callback
-  .Object@rows <- rows
-  .Object@cols <- cols
-  .Object@name <- name
-  .Object@sign <- sign
-  callNextMethod(.Object, ..., list(.Object@rows, .Object@cols, .Object@name, .Object@sign))
+  callNextMethod(.Object, ...)
 })

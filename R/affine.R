@@ -85,7 +85,7 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
 })
 
 setMethod("to_numeric", "NegExpression", function(object, values) {
-  return(-values[[1]])
+  -values[[1]]
 })
 
 NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -121,6 +121,10 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   .Object@rh_exp = rh_exp
   .Object@op_name = op_name
   callNextMethod(.Object, ..., .args = list(.Object@lh_exp, .Object@rh_exp))
+})
+
+setMethod("to_numeric", "BinaryOperator", function(object, values) {
+  Reduce(op_name, values)
 })
 
 #'
@@ -216,6 +220,10 @@ setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., .args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+setMethod("to_numeric", "Conv", function(object, values) {
+  convolve(as.vector(values[[1]]), as.vector(values[[2]]))
+})
+
 setMethod("shape_from_args", "Conv", function(object) {
   lh_length <- size(object@.args[[1]])[1]
   rh_length <- size(object@.args[[2]])[1]
@@ -250,6 +258,10 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
+setMethod("to_numeric", "DiagVec", function(object, values) {
+  diag(values[[1]])
+})
+
 setMethod("shape_from_args", "DiagVec", function(object) {
   rows <- size(object@.args[[1]])[1]
   Shape(rows = rows, cols = rows)
@@ -277,6 +289,10 @@ DiagMat <- function(expr) { .DiagMat(expr = expr) }
 setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("to_numeric", "DiagMat", function(object, values) {
+  diag(values[[1]])
 })
 
 setMethod("shape_from_args", "DiagMat", function(object) {
@@ -335,6 +351,10 @@ setMethod("validate_args", "HStack", function(object) {
   arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to HStack must have the same number of rows")
+})
+
+setMethod("to_numeric", "HStack", function(object, values) {
+  Reduce("rbind", values)
 })
 
 setMethod("shape_from_args", "HStack", function(object) {
@@ -440,6 +460,10 @@ setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., .args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+setMethod("to_numeric", "Kron", function(object, values) {
+  kronecker(values[[1]], values[[2]])
+})
+
 setMethod("shape_from_args", "Kron", function(object) {
   rows <- size(object@.args[[1]])[1] * size(object@.args[[2]])[1]
   cols <- size(object@.args[[1]])[2] * size(object@.args[[2]])[2]
@@ -473,6 +497,10 @@ setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) 
   .Object@lh_const <- lh_const
   .Object@rh_exp <- rh_exp
   callNextMethod(.Object, ..., .args = list(.Object@lh_const, .Object@rh_exp))
+})
+
+setMethod("to_numeric", "MulElemwise", function(object, values) {
+  values[[1]] * values[[2]]
 })
 
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -514,6 +542,11 @@ setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
+setMethod("to_numeric", "Reshape", function(object, values) {
+  dim(values) <- c(object@rows, object@cols)
+  values
+})
+
 setMethod("shape_from_args", "Reshape", function(object) {
   Shape(rows = object@rows, cols = object@cols)
 })
@@ -534,14 +567,20 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' This class represents sum of all the entries in an expression.
 #'
 #' @slot expr The \S4class{Expression} to sum the entries of.
+#' @slot axis The axis to sum the entries along.
 #' @aliases SumEntries
 #' @export
-.SumEntries <- setClass("SumEntries", representation(expr = "ConstValORExpr"), contains = "AffAtom")
-SumEntries <- function(expr) { .SumEntries(expr = expr) }
+.SumEntries <- setClass("SumEntries", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = 1), contains = "AffAtom")
+SumEntries <- function(expr, axis = 1) { .SumEntries(expr = expr, axis = axis) }
 
-setMethod("initialize", "SumEntries", function(.Object, ..., expr) {
+setMethod("initialize", "SumEntries", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
+  .Object@axis <- axis
   callNextMethod(.Object, ..., .args = list(.Object@expr))
+})
+
+setMethod("to_numeric", "SumEntries", function(object, values) {
+  apply(values[[1]], object@axis, sum)
 })
 
 setMethod("shape_from_args", "SumEntries", function(object){
@@ -578,6 +617,10 @@ setMethod("initialize", "Trace", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
+setMethod("to_numeric", "Trace", function(object, values) {
+  sum(diag(values[[1]]))
+})
+
 setMethod("shape_from_args", "Trace", function(object){
   Shape(rows = 1, cols = 1)
 })
@@ -598,6 +641,10 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #' @aliases Transpose
 #' @export
 Transpose <- setClass("Transpose", contains = "AffAtom")
+
+setMethod("to_numeric", "Transpose", function(object, values) {
+  t(values[[1]])
+})
 
 setMethod("shape_from_args", "Transpose", function(object) {
   obj_size = size(object@.args[[1]])
@@ -625,6 +672,11 @@ setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
+setMethod("to_numeric", "UpperTri", function(object, values) {
+  tridx <- upper.tri(values[[1]], diag = FALSE)
+  values[[1]][tridx]
+})
+
 setMethod("shape_from_args", "UpperTri", function(object) {
   rows <- size(object@.args[[1]])[1]
   cols <- size(object@.args[[2]])[2]
@@ -650,6 +702,10 @@ setMethod("validate_args", "VStack", function(object) {
   arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to VStack must have the same number of columns")
+})
+
+setMethod("to_numeric", "VStack", function(object, values) {
+  Reduce("cbind", values)
 })
 
 setMethod("shape_from_args", "VStack", function(object) {

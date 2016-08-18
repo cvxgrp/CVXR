@@ -26,7 +26,7 @@
 #include "LinOpOperations.hpp"
 #include "RcppEcosProblem.hpp"
 
-#include "RcppLinOpVector.hpp"
+#include "cvxr.h"
 
 /**
  * Takes as list of contraints as input. Returns a map from constraint

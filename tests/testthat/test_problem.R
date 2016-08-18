@@ -27,6 +27,14 @@ test_that("test the parameters method", {
   mapply(function(p, r) { expect_equal(p, r) }, params, ref)
 })
 
+test_that("test the constants method", {
+  c1 <- matrix(randn(2), nrow = 1, ncol = 2)
+  c2 <- matrix(randn(2), nrow = 2, ncol = 1)
+  p <- Problem(Minimize(c1*x), list(x >= c2))
+  # constants_ <- constants(p)
+  # TODO: Compare with reference
+})
+
 test_that("test the is_dcp method", {
   p <- Problem(Minimize(NormInf(a)))
   expect_true(is_dcp(p))

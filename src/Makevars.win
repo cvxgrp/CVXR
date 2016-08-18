@@ -1,5 +1,5 @@
 # To debug CVXCanon, add -DCVXCANON_DEBUG to PKG_CFLAGS
-PKG_CPPFLAGS=-Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config
+PKG_CPPFLAGS=-I../inst/include -Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config
 
 PKG_LIBS=-Lecos -lecos -lecos_bb
 

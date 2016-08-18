@@ -1,3 +1,5 @@
+TOL <- 1e-6
+
 test_that("Find the largest Euclidean ball in the polyhedron", {
   # Create the input data
   a1 <- matrix(c(2,1))
@@ -19,9 +21,9 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   
   p <- Problem(obj, constraints)
   # result <- solve(p)
-  # expect_equal(result$opt_val, 0.447214, tolerance = 1e-6)
-  # expect_equal(result$r, result$opt_val, tolerance = 1e-6)
-  # expect_equal(result$x_c, c(0,0), tolerance = 1e-6)
+  # expect_equal(result$opt_val, 0.447214, tolerance = TOL)
+  # expect_equal(result$r, result$opt_val, tolerance = TOL)
+  # expect_equal(result$x_c, c(0,0), tolerance = TOL)
 })
 
 test_that("Test examples from the README", {
@@ -36,6 +38,14 @@ test_that("Test examples from the README", {
   objective <- Minimize(SumEntries(Square(A*x - b)))
   constraints <- list(x >= 0, x <= 1)
   p <- Problem(objective, constraints)
+  
+  # The optimal objective is returned by solve(p)
+  # result <- solve(p)
+  # The optimal value for x is stored in result$x
+  # print(result$x)
+  # The optimal Lagrange multiplier for a constraint
+  # is stored in constraint$dual_value
+  # print(constraints[1].dual_value)
 
   ###########################################
   # Scalar variable
@@ -46,6 +56,7 @@ test_that("Test examples from the README", {
   
   # Matrix variable with 4 rows and 7 columns
   A <- Variable(4, 7)
+  
   ###########################################
   # Positive scalar parameter
   m <- Parameter(sign = "positive")
@@ -68,7 +79,8 @@ test_that("Test examples from the README", {
   # expr is an Expression object after each assignment
   expr <- 2*x
   expr <- expr - a
-  expr <- SumEntries(expr) + Pnorm(x, 2)
+  expr <- SumEntries(expr) + norm(x, 2)
+  
   ###########################################
   # Problem data
   n <- 10
@@ -81,21 +93,41 @@ test_that("Test examples from the README", {
   x <- Variable(m)
   objective <- Minimize(SumEntries(Square(A*x - b)) + gamma*Pnorm(x, 1))
   p <- Problem(objective)
+  
+  # Assign a value to gamma and find the optimal x
+  get_x <- function(gamma_value) {
+    gamma@value <- gamma_value
+    result <- solve(p)
+    x@value
+  }
+  
+  gammas <- 10^seq(-1, 2, length.out = 2)
+  # Serial computation
+  x_values <- sapply(gammas, function(value) { get_x(value) })
+  
   ###########################################
   n <- 10
   
   mu <- matrix(rnorm(n), nrow = 1, ncol = n)
   sigma <- matrix(rnorm(n^2), nrow = n, ncol = n)
-  sigma <- t(sigma) * sigma
+  sigma <- t(sigma) %*% sigma
   gamma <- Parameter(sign = "positive")
   gamma@value <- 1
   x <- Variable(n)
   
-  expected_return <- mu*x
-  # risk <- QuadForm(x, sigma)
+  # Constants:
+  # mu is the vector of expected returns.
+  # sigma is the covariance matrix.
+  # gamma is a Parameter that trades off risk and return.
   
-  # objective <- Maximize(expected_return - gamma*risk)
-  # p <- Problem(objective, list(SumEntries(x) == 1))
+  # Variables:
+  # x i s a vector of stock holdings as fractions of total assets.
+  
+  expected_return <- mu*x
+  risk <- QuadForm(x, sigma)
+  
+  objective <- Maximize(expected_return - gamma*risk)
+  p <- Problem(objective, list(SumEntries(x) == 1))
   # result <- solve(p)
   
   # The optimal expected return
@@ -103,6 +135,7 @@ test_that("Test examples from the README", {
   
   # The optimal risk
   # print(result$risk)
+  
   ###########################################
   N <- 50
   M <- 40
@@ -122,8 +155,22 @@ test_that("Test examples from the README", {
     sample <- x[[2]]
     Pos(1 - label*(t(sample)*a - b))
   })
-  # objective <- Minimize(norm(a, 2) * gamma * Reduce("+", slack))
-  # p <- Problem(objective)
+  objective <- Minimize(norm(a, 2) * gamma * Reduce("+", slack))
+  p <- Problem(objective)
+  # result <- solve(p)
+  
+  # Count misclassifications
+  errors <- 0
+  for(v in data) {
+    label <- v[[1]]
+    sample <- v[[2]]
+    if(label * (t(sample)*a - b)@value < 0)
+      errors <- errors + 1
+  }
+  
+  # print(errors)
+  # print(a@value)
+  # print(b@value)
 })
 
 test_that("Test log determinant", {
@@ -136,10 +183,10 @@ test_that("Test log determinant", {
   A <- Variable(n, n)
   b <- Variable(n)
   obj <- Maximize(LogDet(A))
-  constraints <- lapply(1:m, function(i) { Norm2(A*as.matrix(x[,i]) + b) <= 1 })
+  constraints <- lapply(1:m, function(i) { norm(A*as.matrix(x[,i]) + b, 2) <= 1 })
   p <- Problem(obj, constraints)
   # result <- solve(p)
-  # expect_equal(result$opt_val, 1.9746, tolerance = 1e-4)
+  # expect_equal(result$opt_val, 1.9746, tolerance = 1e-2)
 })
 
 test_that("Test portfolio problem", {
@@ -187,24 +234,6 @@ test_that("Test examples from CVXR introduction", {
   # cat("\noptimal value:", result$opt_val) 
   # cat("\noptimal var:", result$x, result$y)
   
-  ###########################################
-  # Create two scalar variables
-  x <- Variable()
-  y <- Variable()
-  
-  # Create two constraints
-  constraints <- list(x + y == 1, x - y >= 1)
-  
-  # Form objective
-  obj <- Minimize(Square(x - y))
-  
-  # Form and solve problem
-  prob <- Problem(obj, constraints)
-  # result <- solve(prob)
-  # cat("status:", result$status)
-  # cat("\noptimal value:", result$opt_val)
-  # cat("\noptimal var:", result$x, result$y)
-  
   # expect_equal(result$status, OPTIMAL)
   # expect_equal(result$opt_val, 1.0, tolerance = 1e-6)
   # expect_equal(result$x, 1.0, tolerance = 1e-6)
@@ -216,14 +245,14 @@ test_that("Test examples from CVXR introduction", {
   # result <- solve(prob)
   # print("optimal value:", result$opt_val)
   
-  # expect_equal(result$opt_val, 1.0, tolerance = 1e-6)
+  # expect_equal(result$opt_val, 1.0, tolerance = TOL)
   
   # Replace the constraints (x + y == 1)
   prob@constraints[[1]] <- (x + y <= 3)
   # result <- solve(prob)
   # print("optimal value:", result$opt_val)
   
-  # expect_equal(result$opt_val, 3.0, tolerance = 1e-6)
+  # expect_equal(result$opt_val, 3.0, tolerance = TOL)
   
   ###########################################
   x <- Variable()
@@ -306,7 +335,7 @@ test_that("Test examples from CVXR introduction", {
   # Construct the problem
   x <- Variable(m)
   error <- SumSquares(A*x - b)
-  obj <- Minimize(error + gamma * Pnorm(x, 1))
+  obj <- Minimize(error + gamma * norm(x, 1))
   prob <- Problem(obj)
   
   # Construct a trade-off curve of ||Ax-b||^2 vs. ||x||_1
@@ -317,8 +346,8 @@ test_that("Test examples from CVXR introduction", {
   for(val in gamma_vals) {
     gamma@val <- val
     # result <- solve(prob)
-    # sq_penalty <- value(error, result)
-    # l1_penalty <- value(Pnorm(x, 1), result)
+    # sq_penalty <- c(sq_penalty, value(error, result))
+    # l1_penalty <- c(l1_penalty, value(norm(x, 1), result))
     x_values <- c(x_values, result$x)
   }
   
@@ -367,8 +396,10 @@ test_that("Test the LogSumExp function", {
   n <- 2
   X <- matrix(1, nrow = m, ncol = n)
   w <- Variable(n)
+  
   # expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] * w)) })
   # expr3 <- sum(expr2)
   # obj <- Minimize(expr3)
   # p <- Problem(obj)
+  # solve(p, solver = "SCS", max_iters = 1)
 })

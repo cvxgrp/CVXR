@@ -49,7 +49,7 @@ if test [-z "$FOUND_ALL" -a -n "$ECOS_DIR"] ; then
 	AC_MSG_ERROR([ECOS installation directory $ECOS_DIR does not exist])
     fi
 
-    PKG_CPPFLAGS="-I$ECOS_DIR/include -I$ECOS_DIR/external/ldl/include -I$ECOS_DIR/external/amd/include -I$ECOS_DIR/external/SuiteSparse_config $DEBUG_FLAGS"
+    PKG_CPPFLAGS="-I../inst/include -I$ECOS_DIR/include -I$ECOS_DIR/external/ldl/include -I$ECOS_DIR/external/amd/include -I$ECOS_DIR/external/SuiteSparse_config $DEBUG_FLAGS"
     PKG_LIBS="-L$ECOS_DIR"
     FOUND_ALL="yes"
 fi
@@ -57,7 +57,7 @@ fi
 dnl No location given so build and link provided ecos
 if test [-z "$FOUND_ALL"] ; then
     echo "Using bundled ECOS"
-    PKG_CPPFLAGS="-Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config $DEBUG_FLAGS"
+    PKG_CPPFLAGS="-I../inst/include -Iecos/include -Iecos/external/ldl/include -Iecos/external/amd/include -Iecos/external/SuiteSparse_config $DEBUG_FLAGS"
     PKG_LIBS="-Lecos -lecos -lecos_bb"
     ECOS_TS="ecos.ts"
 else

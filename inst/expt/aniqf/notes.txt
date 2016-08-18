@@ -1,2 +1,0 @@
-1. Why is the sparse matrix being tagged as dense_const?
-

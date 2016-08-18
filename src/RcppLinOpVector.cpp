@@ -1,4 +1,4 @@
-#include "RcppLinOpVector.hpp"
+#include "cvxr.h"
 
 //' Create a new LinOpVector object.
 //'

@@ -482,7 +482,7 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
   Kron.graph_implementation(arg_objs, size, data)
 })
 
-.MulElemwise <- setClass("MulElemwise", representation(lh_const = "Expression", rh_exp = "Expression"), contains = "AffAtom")
+.MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
 setMethod("init_dcp_attr", "MulElemwise", function(object) {

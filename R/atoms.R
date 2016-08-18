@@ -128,8 +128,9 @@ setMethod("validate_args", "AxisAtom", function(object) {
      stop("Invalid argument for axis")
 })
 
-GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
+.GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
                                prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
+GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x

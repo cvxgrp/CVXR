@@ -1,3 +1,5 @@
+TOL <- 1e-5
+
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")
@@ -37,6 +39,10 @@ test_that("test the Norm2 class", {
   expect_equal(curvature(atom), Curvature.CONVEX)
   expect_equal(curvature(Norm2(atom)), Curvature.CONVEX)
   expect_equal(curvature(Norm2(-atom)), Curvature.CONVEX)
+  
+  # TODO: Test with axis arg
+  # expr <- norm(A, 2, axis = 0)
+  # expect_equal(size(expr), c(1, 2))
 })
 
 test_that("test the Power class", {
@@ -62,6 +68,13 @@ test_that("test the Power class", {
         expect_equal(sign(atom), Sign.POSITIVE)
     }
   }
+})
+
+test_that("test the GeoMean class", {
+  atom <- GeoMean(x)
+  expect_equal(size(atom), c(1, 1))
+  expect_equal(curvature(atom), Curvature.CONCAVE)
+  expect_equal(sign(atom), Sign.POSITIVE)
 })
 
 test_that("test the HarmonicMean class", {
@@ -132,11 +145,35 @@ test_that("test the QuadOverLin class", {
   expect_error(QuadOverLin(x, x))
 })
 
+test_that("test the arg count for MaxElemwise and MinElemwise", {
+  expect_error(MaxElemwise(1))
+  expect_error(MinElemwise(1))
+})
+
+test_that("test the MatrixFrac class", {
+  atom <- MatrixFrac(x, A)
+  expect_equal(size(atom), c(1, 1))
+  expect_equal(curvature(atom), Curvature.CONVEX)
+  
+  # Test MatrixFrac size validation
+  expect_error(MatrixFrac(x, C))
+  expect_error(MatrixFrac(Variable(3), A))
+})
+
 test_that("test the sign for MaxEntries", {
   expect_equal(sign(MaxEntries(1)), Sign.POSITIVE)
   expect_equal(sign(MaxEntries(-2)), Sign.NEGATIVE)
   expect_equal(sign(MaxEntries(Variable())), Sign.UNKNOWN)
   expect_equal(sign(MaxEntries(0)), Sign.ZERO)
+  
+  # TODO: Test with axis argument
+  # expect_equal(size(MaxEntries(Variable(2), axis = 0)), c(1, 1))
+  # expect_equal(size(MaxEntries(Variable(2), axis = 1)), c(2, 1))
+  # expect_equal(size(MaxEntries(Variable(2, 3), axis = 0)), c(1, 3))
+  # expect_equal(size(MaxEntries(Variable(2, 3), axis = 1)), c(2, 1))
+  
+  # TODO: Invalid axis
+  # expect_error(MaxEntries(x, axis = 4))
 })
 
 test_that("test the sign for MinEntries", {
@@ -144,6 +181,15 @@ test_that("test the sign for MinEntries", {
   expect_equal(sign(MinEntries(-2)), Sign.NEGATIVE)
   expect_equal(sign(MinEntries(Variable())), Sign.UNKNOWN)
   expect_equal(sign(MinEntries(0)), Sign.ZERO)
+  
+  # TODO: Test with axis argument
+  # expect_equal(size(MinEntries(Variable(2), axis = 0)), c(1, 1))
+  # expect_equal(size(MinEntries(Variable(2), axis = 1)), c(2, 1))
+  # expect_equal(size(MinEntries(Variable(2, 3), axis = 0)), c(1, 3))
+  # expect_equal(size(MinEntries(Variable(2, 3), axis = 1)), c(2, 1))
+  
+  # TODO: Invalid axis
+  # expect_error(MinEntries(x, axis = 4))
 })
 
 test_that("test sign logic for MaxElemwise", {
@@ -161,8 +207,10 @@ test_that("test sign logic for MaxElemwise", {
   
   expect_equal(sign(MaxElemwise(-3, -2)), Sign.NEGATIVE)
   
+  # Many args
   expect_equal(sign(MaxElemwise(-2, Variable(), 0, -1, Variable(), -1)), Sign.POSITIVE)
   
+  # Promotion
   expect_equal(sign(MaxElemwise(1, Variable(2))), Sign.POSITIVE)
   expect_equal(size(MaxElemwise(1, Variable(2))), c(2,1))
 })
@@ -182,8 +230,10 @@ test_that("test sign logic for MinElemwise", {
   
   expect_equal(sign(MinElemwise(-3, -2)), Sign.NEGATIVE)
   
+  # Many args
   expect_equal(sign(MinElemwise(-2, Variable(), 0, -1, Variable(), 1)), Sign.NEGATIVE)
   
+  # Promotion
   expect_equal(sign(MinElemwise(-1, Variable(2))), Sign.NEGATIVE)
   expect_equal(size(MinElemwise(-1, Variable(2))), c(2, 1))
 })
@@ -198,6 +248,51 @@ test_that("test the SumEntries class", {
   
   # Mixed curvature
   expect_equal(curvature(SumEntries( c(1, -1) * Square(Variable(2)) )), Curvature.UNKNOWN)
+  
+  # TODO: Test with axis argument
+  # expect_equal(size(SumEntries(Variable(2), axis = 0)), c(1, 1))
+  # expect_equal(size(SumEntries(Variable(2), axis = 1)), c(2, 1))
+  # expect_equal(size(SumEntries(Variable(2, 3), axis = 0)), c(1, 3))
+  # expect_equal(size(SumEntries(Variable(2, 3), axis = 1)), c(2, 1))
+  
+  # TODO: Invalid axis
+  # expect_error(SumEntries(x, axis = 4))
+})
+
+test_that("test the MulElemwise class", {
+  expect_equal(sign(MulElemwise(c(1, -1), x)), Sign.UNKNOWN)
+  expect_equal(curvature(MulElemwise(c(1, -1), x)), Curvature.AFFINE)
+  expect_equal(size(MulElemwise(c(1, -1), x)), c(2, 1))
+  pos_param <- Parameter(2, sign = "positive")
+  neg_param <- Parameter(2, sign = "negative")
+  expect_equal(sign(MulElemwise(pos_param, pos_param)), Sign.POSITIVE)
+  expect_equal(sign(MulElemwise(pos_param, neg_param)), Sign.NEGATIVE)
+  expect_equal(sign(MulElemwise(neg_param, neg_param)), Sign.POSITIVE)
+  
+  expect_equal(curvature(MulElemwise(neg_param, Square(x))), Curvature.CONCAVE)
+  
+  # Test promotion
+  expect_equal(size(MulElemwise(c(1, -1), 1)), c(2, 1))
+  expect_equal(size(MulElemwise(1, C)), size(C))
+  expect_error(MulElemwise(x, c(1, -1)))
+})
+
+test_that("test the VStack class", {
+  # atom <- VStack(x, y, x)
+  # expect_equal(size(atom), c(6, 1))
+  
+  # atom <- VStack(A, C, B)
+  # expect_equal(size(atom), c(7, 2))
+  
+  # entries <- list()
+  # for(i in 1:size(x)[1]) {
+  #   for(j in 1:size(x)[2]) {
+  #     entries <- c(entries, x[i, j])
+  #   }
+  # }
+  # atom <- VStack(unlist(entries))
+  
+  # expect_error(VStack(C, 1))
 })
 
 test_that("test the Reshape class", {
@@ -217,6 +312,21 @@ test_that("test the Reshape class", {
   expect_error(Reshape(C, 5, 4))
 })
 
+test_that("test the Vec class", {
+  expr <- Vec(C)
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(6, 1))
+  
+  expr <- Vec(x)
+  expect_equal(size(expr), c(2, 1))
+  
+  expr <- Vec(Square(a))
+  expect_equal(sign(expr), Sign.POSITIVE)
+  expect_equal(curvature(expr), Curvature.CONVEX)
+  expect_equal(size(expr), c(1, 1))
+})
+
 test_that("test the Diag class", {
   expr <- Diag(x)
   expect_equal(sign(expr), Sign.UNKNOWN)
@@ -227,6 +337,11 @@ test_that("test the Diag class", {
   expect_equal(sign(expr), Sign.UNKNOWN)
   expect_equal(curvature(expr), Curvature.AFFINE)
   expect_equal(size(expr), c(2,1))
+  
+  expr <- Diag(t(x))
+  expect_equal(sign(expr), Sign.UNKNOWN)
+  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(size(expr), c(2, 2))
   
   expect_error(Diag(C))
 })
@@ -240,15 +355,51 @@ test_that("test the Trace class", {
   expect_error(Trace(C))
 })
 
+test_that("test the Log1p class", {
+  expr <- Log1p(1)
+  expect_equal(sign(expr), Sign.POSITIVE)
+  expect_equal(curvature(expr), Curvature.CONSTANT)
+  expect_equal(size(expr), c(1, 1))
+  expr <- Log1p(-0.5)
+  expect_equal(sign(expr), Sign.NEGATIVE)
+})
+
+test_that("test the UpperTri class", {
+  expect_error(UpperTri(C))
+})
+
+test_that("test the Huber class", {
+  Huber(x, 1)
+  expect_error(Huber(x, -1))
+  expect_error(Huber(x, c(1,1)))
+  
+  # M parameter
+  M <- Parameter(sign = "positive")
+  # Valid
+  Huber(x, M)
+  M@value <- 1
+  expect_equal(value(Huber(2, M)), 3, tolerance = TOL)
+  # Invalid
+  M <- Parameter(sign = "negative")
+  expect_error(Huber(x, M))
+})
+
 test_that("test the SumLargest class", {
   expect_error(SumLargest(x, -1))
-  # expect_error(LambdaSumLargest(x, 2.4))   # TODO: Currently unimplemented
-  # expect_error(LambdaSumLargest(Variable(2,2), 2.4))
+  expect_error(LambdaSumLargest(x, 2.4))
+  expect_error(LambdaSumLargest(Variable(2,2), 2.4))
 })
 
 test_that("test the SumSmallest class", {
   expect_error(SumSmallest(x, -1))
-  # expect_error(LambdaSumSmallest(Variable(2,2), 2.4))   TODO: Currently unimplemented
+  expect_error(LambdaSumSmallest(Variable(2,2), 2.4))
+})
+
+test_that("test the Bmat class", {
+  v_np <- matrix(1, nrow = 3, ncol = 1)
+  expr <- Bmat(list(list(v_np, v_np), list(list(0, 0), list(1, 2))))
+  expect_equal(size(expr), c(5, 2))
+  # TODO: Check against true numpy bmat
 })
 
 test_that("test the Conv class", {
@@ -257,11 +408,11 @@ test_that("test the Conv class", {
   expr <- Conv(a, b)
   expect_true(is_positive(expr))
   expect_equal(size(expr), c(4,1))
-  
   b <- Parameter(2, sign = "negative")
   expr <- Conv(a, b)
   expect_true(is_negative(expr))
   expect_error(Conv(x, -1))
+  expect_error(Conv(cbind(c(0, 1), c(0, 1)), x))
 })
 
 test_that("test the Kron class", {
@@ -270,9 +421,27 @@ test_that("test the Kron class", {
   expr <- Kron(a, b)
   expect_true(is_positive(expr))
   expect_equal(size(expr), c(6,2))
-  
   b <- Parameter(2, sign = "negative")
   expr <- Kron(a, b)
   expect_true(is_negative(expr))
   expect_error(Kron(x, -1))
+})
+
+test_that("test the NonNegative Variable class", {
+  x <- NonNegative()
+  p <- Problem(Minimize(5+x), list(x >= 3))
+  # cvxr_solve(p)
+  # expect_equal(value(p), 8, tolerance = TOL)
+  # expect_equal(value(x), 3, tolerance = TOL)
+})
+
+test_that("test whether changing an array constant breaks DCP", {
+  # c <- matrix(c(1, 2))
+  # expr <- t(c) * Square(x)
+  # x@value <- c(1, 1)
+  # expect_equal(value(expr), 3, tolerance = TOL)
+  # expect_true(is_dcp(expr))
+  # c[1] <- -1
+  # expect_equal(value(expr), 3, tolerance = TOL)
+  # expect_true(is_dcp(expr))
 })

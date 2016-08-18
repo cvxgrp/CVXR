@@ -106,6 +106,28 @@ setMethod("value", "Atom", function(object) {
     result
 })
 
+AxisAtom <- setClass("AxisAtom", representation(expr = "Expression", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
+
+setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
+  .Object@axis <- axis
+  .Object <- callNextMethod(.Object, ..., .args = list(expr))
+})
+
+setMethod("size", "AxisAtom", function(object) {
+  if(is.na(object@axis))
+    c(1, 1)
+  else if(object@axis == 0)
+    c(1, size(object@.args[[1]])[2])
+  else   # axis == 1
+    c(size(object@.args[[1]])[1], 1)
+})
+setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
+
+setMethod("validate_args", "AxisAtom", function(object) {
+  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(0, 1)))
+     stop("Invalid argument for axis")
+})
+
 GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
                                prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 

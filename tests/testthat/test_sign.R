@@ -16,7 +16,7 @@ test_that("test sign multiplication", {
   expect_equal(Sign.UNKNOWN * Sign.POSITIVE, Sign.UNKNOWN)
   expect_equal(Sign.POSITIVE * Sign.NEGATIVE, Sign.NEGATIVE)
   expect_equal(Sign.POSITIVE * Sign.POSITIVE, Sign.POSITIVE)
-  expect_equal(Sign.POSITIVE * Sign("positive"), Sign.POSITIVE)
+  expect_equal(Sign.POSITIVE * Sign(sign = "positive"), Sign.POSITIVE)
   expect_equal(Sign.NEGATIVE * Sign.NEGATIVE, Sign.POSITIVE)
   expect_equal(Sign.ZERO * Sign.UNKNOWN, Sign.ZERO)
 })
@@ -40,5 +40,5 @@ test_that("test if sign is positive, negative, or zero", {
   expect_true(is_zero(Sign.ZERO))
   expect_false(is_zero(Sign.NEGATIVE))
   
-  expect_true(is_unknown(Sign.UNKNOWN))
+  expect_false(is_positive(Sign.UNKNOWN) || is_negative(Sign.UNKNOWN))
 })

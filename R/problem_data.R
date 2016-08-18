@@ -316,8 +316,8 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
 #  big_x <- rep(0, cols)
 # })
 
-setClassUnion("SymDataORNull", c("SymData", "NULL"))
-setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
+setClassUnion("SymDataORNull", c("SymData", NULL))
+setClassUnion("MatrixDataORNull", c("MatrixData", NULL))
 
 #'
 #' The ProblemData class.

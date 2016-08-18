@@ -44,36 +44,47 @@ setMethod("canonicalize", "Variable", function(object) {
 })
 
 # Boolean variable
-Bool <- setClass("Bool", contains = "Variable")
+.Bool <- setClass("Bool", contains = "Variable")
+Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
+
 setMethod("canonicalize", "Bool", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
   constr <- canon[[2]]
-  list(obj, c(constr, BoolConstr(obj)))
+  list(obj, c(constr, list(BoolConstr(obj))))
 })
 
+setMethod("is_positive", "Bool", function(object) { TRUE })
+setMethod("is_negative", "Bool", function(object) { FALSE })
+
 # Integer variable
-Int <- setClass("Int", contains = "Variable")
+.Int <- setClass("Int", contains = "Variable")
+Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
+
 setMethod("canonicalize", "Int", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
   constr <- canon[[2]]
-  list(obj, c(constr, IntConstr(obj)))
+  list(obj, c(constr, list(IntConstr(obj))))
 })
 
 # Non-negative variable
-NonNegative <- setClass("NonNegative", contains = "Variable")
+.NonNegative <- setClass("NonNegative", contains = "Variable")
+NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
 
 setMethod("init_dcp_attr", "NonNegative", function(object) {
-  DCPAttr(Sign(sign = SIGN_POSITIVE_KEY), Curvature(curvature = CURV_AFFINE_KEY), Shape(rows = object@rows, cols = object@cols))
+  DCPAttr(sign = Sign(sign = SIGN_POSITIVE_KEY), curvature = Curvature(curvature = CURV_AFFINE_KEY), shape = Shape(rows = object@rows, cols = object@cols))
 })
 
 setMethod("canonicalize", "NonNegative", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
   constr <- canon[[2]]
-  list(obj, c(constr, create_geq(obj)))
+  list(obj, c(constr, list(create_geq(obj))))
 })
+
+setMethod("is_positive", "NonNegative", function(object) { TRUE })
+setMethod("is_negative", "NonNegative", function(object) { FALSE })
 
 # Positive semidefinite matrix
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
@@ -88,6 +99,8 @@ setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, n)
   .Object@n = n
   callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1)
 })
+
+setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, object@name) })
 
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
@@ -105,12 +118,20 @@ Semidef <- function(n, name) {
 }
 
 # Symmetric matrix
-SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
+.SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
+SymmetricUpperTri <- function(n, name) {
+  if(missing(name))
+    .SymmetricUpperTri(n = n)
+  else
+    .SymmetricUpperTri(n = n, name = name)
+}
 
 setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, n) {
   .Object@n = n
   callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1)
 })
+
+setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, object@name) })
 
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
   upper_tri <- create_var(c(size(object)[1], 1), object@id)

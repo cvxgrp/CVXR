@@ -1,0 +1,73 @@
+TOL <- 1e-6
+
+test_that("Test quadratic form with a singular matrix", {
+  # Solve a quadratic program
+  for(n in c(3,4,5)) {
+    for(i in 1:5) {
+      # Construct a random 1-d finite distribution
+      v <- exp(rnorm(n))
+      v <- v / sum(v)
+      
+      # Construct a random positive definite matrix
+      A <- matrix(rnorm(n^2), nrow = n, ncol = n)
+      Q <- A %*% t(A)
+      
+      # Project onto the orthogonal complement of v
+      # This turns Q into a singular matrix with a known nullspace
+      E <- eye(n) - v %*% t(v) / as.numeric(t(v) %*% v)
+      Q <- E %*% (Q %*% t(E))
+      observed_rank <- rankMatrix(Q)
+      desired_rank <- n-1
+      expect_equal(observed_rank, desired_rank)
+      
+      for(action in c("minimize", "maximize")) {
+        # Look for the extremum of the quadratic form under the simplex constraint
+        x <- Variable(n)
+        if(action == "minimize") {
+          q <- QuadForm(x, Q)
+          objective <- Minimize(q)
+        } else if(action == "maximize") {
+          q <- QuadForm(x, -Q)
+          objective <- Maximize(q)
+        }
+        constraints <- list(x >= 0, SumEntries(x) == 1)
+        p <- Problem(objective, constraints)
+        # result <- solve(p)
+        
+        # Check that CVXR found the right answer
+        # xopt <- sum(result$x * as.vector(A))
+        # yopt <- xopt %*% (Q %*% t(xopt))
+        # sapply(yopt, function(y) { expect_equal(y, 0, tolerance = 1e-3) })
+        # sapply(xopt, function(x) { expect_equal(x, v, tolerance = 1e-3) })
+      }
+    }
+  }
+})
+
+test_that("Test quadratic form with a sparse matrix", {
+  Q <- sparseMatrix(i = 1:2, j = 1:2, x = rep(1, 2))
+  x <- Variable(2)
+  cost <- QuadForm(x, Q)
+  prob <- Problem(Minimize(cost), list(x == c(1, 2)))
+  # result <- solve(prob)
+  # expect_equal(result$optimal_value, 5, tolerance = TOL)
+})
+
+test_that("Test when P is constant and not symmetric", {
+  P <- rbind(c(2, 2), c(3, 4))
+  x <- Variable(2)
+  cost <- QuadForm(x, P)
+  prob <- Problem(Minimize(cost), list(x == c(1, 2)))
+  # result <- solve(prob)
+  # expect_equal(result$optimal_value, 28, tolerance = TOL)
+})
+
+test_that("Test error when P is symmetric but not definite", {
+  P <- rbind(c(1, 0), c(0, -1))
+  x <- Variable(2)
+  
+  # Forming quadratic form is okay
+  cost <- QuadForm(x, P)
+  prob <- Problem(Minimize(cost), list(x == c(1, 2)))
+  # expect_error(solve(prob))
+})

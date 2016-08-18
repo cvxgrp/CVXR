@@ -123,7 +123,7 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #' @slot M A numeric value that represents the second argument.
 #' @aliases Huber
 #' @export
-.Huber <- setClass("Huber", representation(x = "Expression", M = "numeric"), 
+.Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"), 
                            prototype(M = 1), contains = "Elementwise")
 Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 
@@ -138,6 +138,7 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
 
+setMethod("to_numeric", "Huber", function(object, values) { huber(values[[1]], k = value(M)) })
 setMethod("sign_from_args", "Huber", function(object) { Sign.POSITIVE })
 setMethod("func_curvature", "Huber", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "Huber", function(object) { SIGNED })
@@ -181,7 +182,7 @@ InvPos <- function(x) { Power(x, -1) }
 #' @slot x The \S4class{Expression} that is being operated upon.
 #' @aliases Log
 #' @export
-.Log <- setClass("Log", representation(x = "Expression"), contains = "Elementwise")
+.Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 Log <- function(x) { .Log(x = x) }
 setMethod("log", "Expression", function(x) { .Log(x = x) })
 
@@ -424,14 +425,7 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' @aliases Power
 #' @export
 .Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", .w = "numeric", .approx_error = "numeric"), 
-                          prototype(max_denom = 1024, .w = NA_real_, .approx_error = NA_real_), 
-                  validity = function(object) {
-                    if(!is.na(object@.w))
-                      stop("[Validation: power] .w is an internal variable that should not be set by user")
-                    else if(!is.na(object@.approx_error))
-                      stop("[Validation: power] .approx_error is an internal variable that should not be set by user")
-                    return(TRUE)
-                    }, contains = "Elementwise")
+                          prototype(max_denom = 1024, .w = NA_real_, .approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })

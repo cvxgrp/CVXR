@@ -7,7 +7,7 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-test_that("Test log problems", {
+test_that("Test log problem", {
   # Log in objective
   obj <- Maximize(SumEntries(log(x)))
   constr <- list(x <= as.matrix(c(1, exp(1))))
@@ -48,7 +48,30 @@ test_that("Test a problem with KL-divergence", {
   kK <- 50
   kSeed <- 10
   
-  # TODO: Finish this test
+  # Generate a random reference distribution
+  # TODO: Generate random state based on kSeed
+  npSPriors <- matrix(runif(kK), nrow = kK, ncol = 1)
+  npSPriors <- npSPriors/sum(npSPriors)
+  
+  # Reference distribution
+  p_refProb <- Parameter(kK, 1, sign = "positive")
+  # Distribution to be estimated
+  v_prob <- Variable(kK, 1)
+  objkl <- 0.0
+  con <- 0.0
+  for(k in 1:kK) {
+    objkl <- objkl + KLDiv(v_prob[k,1], p_refProb[k,1])
+    con <- con + v_prob[k,1]
+  }
+  
+  constrs <- list(con == 1)
+  klprob <- Problem(Minimize(objkl), constrs)
+  p_refProb@value <- npSPriors
+  
+  # result <- solve(klprob, solver = "SCS", verbose = TRUE)
+  # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
+  # result <- solve(klprob, solver = "ECOS", verbose = TRUE)
+  # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
 })
 
 test_that("Test a problem with Entr", {

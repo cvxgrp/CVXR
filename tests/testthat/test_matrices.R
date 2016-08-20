@@ -78,7 +78,8 @@ test_that("Test sparseMatrix objects from the Matrix library", {
   A <- matrix(1:8, nrow = 4, ncol = 2)
   A <- Matrix(A, sparse = TRUE)
   A <- Matrix(i = 1:2, j = 1:2, x = rep(1, 2))
-  # TODO: Finish slice operations
+  Aidx <- A[1,]
+  Aidx <- A[1:2,]
   # expect_equal(dim(Aidx), c(1, 2))
   # expect_equal(Aidx[1,1], 1)
   # expect_equal(Aidx[1,2], 0)

@@ -2,10 +2,10 @@ TOL <- 1e-6
 
 test_that("Find the largest Euclidean ball in the polyhedron", {
   # Create the input data
-  a1 <- matrix(c(2,1))
-  a2 <- matrix(c(2,-1))
-  a3 <- matrix(c(-1,2))
-  a4 <- matrix(c(-1,-2))
+  a1 <- matrix(c(2,1), nrow = 2, ncol = 1)
+  a2 <- matrix(c(2,-1), nrow = 2, ncol = 1)
+  a3 <- matrix(c(-1,2), nrow = 2, ncol = 1)
+  a4 <- matrix(c(-1,-2), nrow = 2, ncol = 1)
   b <- rep(1,4)
   
   # Create and solve the model
@@ -22,7 +22,7 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   p <- Problem(obj, constraints)
   # result <- solve(p)
   # expect_equal(result$opt_val, 0.447214, tolerance = TOL)
-  # expect_equal(result$r, result$opt_val, tolerance = TOL)
+  # expect_equal(result$r, result$optimal_value, tolerance = TOL)
   # expect_equal(result$x_c, c(0,0), tolerance = TOL)
 })
 
@@ -173,6 +173,33 @@ test_that("Test examples from the README", {
   # print(b@value)
 })
 
+test_that("Test advanced tutorial", {
+  # Solving a problem with different solvers
+  x <- Variable(2)
+  obj <- Minimize(x[1] + norm(x, 1))
+  constraints <- list(x >= 2)
+  prob <- Problem(obj, constraints)
+  
+  # Solve with ECOS
+  result <- solve(prob, solver = "ECOS")
+  print(paste("optimal value with ECOS:", result$optimal_value))
+  expect_equal(result$optimal_value, 6, tolerance = TOL)
+  
+  # Solve with SCS
+  result <- solve(prob, solver = "SCS")
+  print(paste("optimal value with SCS:", result$optimal_value))
+  expect_equal(result$optimal_value, 6, tolerance = TOL)
+  
+  x <- Variable()
+  prob <- Problem(Minimize(Square(x)), list(x == 2))
+  
+  # Get ECOS arguments
+  data <- get_problem_data(prob, "ECOS")
+  
+  # Get SCS arguments
+  data <- get_problem_data(prob, "SCS")
+})
+
 test_that("Test log determinant", {
   x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
@@ -186,20 +213,34 @@ test_that("Test log determinant", {
   constraints <- lapply(1:m, function(i) { norm(A*as.matrix(x[,i]) + b, 2) <= 1 })
   p <- Problem(obj, constraints)
   # result <- solve(p)
-  # expect_equal(result$opt_val, 1.9746, tolerance = 1e-2)
+  # expect_equal(result$optimal_value, 1.9746, tolerance = 1e-2)
 })
 
 test_that("Test portfolio problem", {
+  set.seed(5)
   n <- 100
   m <- 10
   pbar <- matrix(1, nrow = n, ncol = 1) * 0.03 +
           c(matrix(rnorm(n-1), nrow = n-1, ncol = 1), 0) * 0.12
-  # TODO: Finish this using sparse matrix package
+  
+  Fmat <- rsparsematrix(m, n, density = 0.01)
+  Fmat@x <- rep(1, length(Fmat@x))
+  D <- sparseMatrix(1:n, 1:n, x = rep(1,n))
+  D@x <- rnorm(length(D@x))^2
+  Z <- matrix(rnorm(m), nrow = m, ncol = 1)
+  Z <- Z %*% t(Z)
+  
+  x <- Variable(n)
+  y <- Fmat %*% x
+  mu <- 1
+  ret <- t(pbar) * x
+  risk <- Square(norm(D %*% x)) + Square(Z*y)
 })
 
 test_that("Test examples from CVXR introduction", {
   m <- 30
   n <- 20
+  set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), nrow = m, ncol = 1)
   
@@ -235,24 +276,24 @@ test_that("Test examples from CVXR introduction", {
   # cat("\noptimal var:", result$x, result$y)
   
   # expect_equal(result$status, OPTIMAL)
-  # expect_equal(result$opt_val, 1.0, tolerance = 1e-6)
-  # expect_equal(result$x, 1.0, tolerance = 1e-6)
-  # expect_equal(result$y, 0, tolerance = 1e-6)
+  # expect_equal(result$optimal_value, 1.0, tolerance = TOL)
+  # expect_equal(result$x, 1.0, tolerance = TOL)
+  # expect_equal(result$y, 0, tolerance = TOL)
   
   ###########################################
   # Replace the objective
   prob@objective <- Maximize(x + y)
   # result <- solve(prob)
-  # print("optimal value:", result$opt_val)
+  # cat("optimal value:", result$optimal_value)
   
-  # expect_equal(result$opt_val, 1.0, tolerance = TOL)
+  # expect_equal(result$optimal_value, 1.0, tolerance = TOL)
   
   # Replace the constraints (x + y == 1)
   prob@constraints[[1]] <- (x + y <= 3)
   # result <- solve(prob)
-  # print("optimal value:", result$opt_val)
+  # cat("optimal value:", result$optimal_value)
   
-  # expect_equal(result$opt_val, 3.0, tolerance = TOL)
+  # expect_equal(result$optimal_value, 3.0, tolerance = TOL)
   
   ###########################################
   x <- Variable()
@@ -260,20 +301,20 @@ test_that("Test examples from CVXR introduction", {
   # An infeasible problem
   prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
   # result <- solve(prob)
-  # print("status:", result$status)
-  # print("optimal value:", result$opt_val)
+  # cat("status:", result$status)
+  # cat("optimal value:", result$optimal_value)
   
-  # expect_equal(result$status, INFEASIBLE)
-  # expect_equal(result$opt_val, Inf)
+  # expect_equal(result$status, "INFEASIBLE")
+  # expect_equal(result$optimal_value, Inf)
   
   # An unbounded problem
   prob <- Problem(Minimize(x))
   # result <- solve(prob)
-  # print("status:", result$status)
-  # print("optimal value:", result$opt_val)
+  # cat("status:", result$status)
+  # cat("optimal value:", result$optimal_value)
   
-  # expect_equal(result$status, UNBOUNDED)
-  # expect_equal(result$opt_val, -Inf)
+  # expect_equal(result$status, "UNBOUNDED")
+  # expect_equal(result$optimal_value, -Inf)
   
   ###########################################
   # A scalar variable
@@ -288,6 +329,7 @@ test_that("Test examples from CVXR introduction", {
   ###########################################
   m <- 10
   n <- 5
+  set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), nrow = m, ncol = 1)
   
@@ -296,11 +338,12 @@ test_that("Test examples from CVXR introduction", {
   objective <- Minimize(SumEntries(Square(A*x - b)))
   constraints <- list(0 <= x, x <= 1)
   prob <- Problem(objective, constraints)
-  # result <- solve(prob)
-  # print("Optimal value:", result$opt_val)
-  # print("Optimal var:", result$x)
   
-  # expect_equal(result$opt_val, 4.14133859146, tolerance = 1e-6)
+  # result <- solve(prob)
+  # cat("Optimal value:", result$optimal_value)
+  # cat("Optimal var:", result$x)
+  
+  # expect_equal(result$optimal_value, 4.14133859146, tolerance = TOL)
   
   ###########################################
   # Positive scalar parameter
@@ -327,6 +370,7 @@ test_that("Test examples from CVXR introduction", {
   # Problem data
   n <- 15
   m <- 10
+  set.seed(1)
   A <- matrix(rnorm(n*m), nrow = n, ncol = m)
   b <- matrix(rnorm(n), nrow = n, ncol = 1)
   # gamma must be positive due to DCP rules
@@ -365,6 +409,7 @@ test_that("Test examples from CVXR introduction", {
 })
 
 test_that("Test image in-painting", {
+  set.seed(1)
   rows <- 100
   cols <- 100
   
@@ -373,7 +418,7 @@ test_that("Test image in-painting", {
   rows <- nrow(Uorig)
   cols <- ncol(Uorig)
   
-  # Know is 1 if the pixel is known, 0 if the pixel was corrupted
+  # Known is 1 if the pixel is known, 0 if the pixel was corrupted
   Known <- matrix(0, nrow = rows, ncol = cols)
   for(i in 1:rows) {
     for(j in 1:cols) {
@@ -392,13 +437,14 @@ test_that("Test image in-painting", {
 })
 
 test_that("Test the LogSumExp function", {
+  set.seed(1)
   m <- 5
   n <- 2
   X <- matrix(1, nrow = m, ncol = n)
   w <- Variable(n)
   
   # expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] * w)) })
-  # expr3 <- sum(expr2)
+  # expr3 <- Reduce("+", expr2)
   # obj <- Minimize(expr3)
   # p <- Problem(obj)
   # solve(p, solver = "SCS", max_iters = 1)

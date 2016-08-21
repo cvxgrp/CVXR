@@ -1,3 +1,5 @@
+TOL <- 1e-6
+
 x <- Variable(2, name = "x")
 y <- Variable(2, name = "y")
 
@@ -10,36 +12,48 @@ test_that("test log problem", {
   obj <- Maximize(SumEntries(log(x)))
   constr <- list(x <= matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
+  # result <- solve(p, solver = "SCS)
+  # expect_equal(result$optimal_value, 1, tolerance = TOL)
+  # expect_equal(result$x, c(1, exp(1)), tolerance = TOL)
   
   # Log in constraint
   obj <- Minimize(SumEntries(x))
   constr <- list(log(x) >= 0, x <= matrix(c(1,1)))
   p <- Problem(obj, constr)
+  # result <- solve(p, solver = "SCS")
+  # expect_equal(result$optimal_value, 2, tolerance = TOL)
+  # expect_equal(result$x, c(1, 1))
   
   # Index into log
   # obj <- Maximize(log(x)[2])
-  # constr <- list(x <= matrix(c(1, exp(1))))
+  # constr <- list(x <= c(1, exp(1)))
   # p <- Problem(obj, constr)
+  # result <- solve(p, solver = "SCS")
+  # expect_equal(result$optimal_value, 1, tolerance = TOL)
 })
 
 test_that("Test sigma max", {
-  const <- Constant(cbind(c(1,2,3), c(4,5,6)))
+  const <- Constant(rbind(c(1,2,3), c(4,5,6)))
   constr <- list(C == const)
-  prob <- Problem(Minimize(Pnorm(C, 2)), constr)
+  prob <- Problem(Minimize(norm(C, 2)), constr)
+  # result <- solve(prob, solver = "SCS")
+  # expect_equal(result, value(norm(const, 2)), tolerance = TOL)
+  # expect_equal(result$C, value(const))
 })
 
-test_that("Test a problem with exp", {
-  for(n in c(5, 10, 25)) {
-    x <- Variable(n)
-    obj <- Minimize(SumEntries(exp(x)))
-    p <- Problem(obj, list(SumEntries(x) == 1))
-  }
+test_that("Test sdp variable", {
+  const <- Constant(rbind(c(1,2,3), c(4,5,6), c(7,8,9)))
+  x <- Semidef(3)
+  prob <- Problem(Minimize(0), list(X == const))
+  # result <- solve(prob, verbose = TRUE, solver = "SCS")
+  # expect_equal(result$status, "INFEASIBLE")
 })
 
-test_that("Test a problem with log", {
-  for(n in c(5, 10, 25)) {
-    x <- Variable(n)
-    obj <- Maximize(SumEntries(log(x)))
-    p <- Problem(obj, list(SumEntries(x) == 1))
-  }
+test_that("Test warm starting", {
+  x <- Variable(10)
+  obj <- Minimize(SumEntries(exp(x)))
+  prob <- Problem(obj, list(SumEntries(x) == 1))
+  # result <- solve(prob, solver = "SCS")
+  # expect_equal(solve(prob, solver = "SCS"), result)
+  # expect_false(solve(prob, solver = "SCS", warm_start = TRUE, verbose = TRUE) == result)
 })

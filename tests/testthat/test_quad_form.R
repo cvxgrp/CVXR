@@ -3,7 +3,7 @@ TOL <- 1e-6
 test_that("Test quadratic form with a singular matrix", {
   # Solve a quadratic program
   for(n in c(3,4,5)) {
-    for(i in 1:5) {
+    for(i in 0:4) {
       # Construct a random 1-d finite distribution
       v <- exp(rnorm(n))
       v <- v / sum(v)

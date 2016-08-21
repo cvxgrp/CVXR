@@ -31,6 +31,28 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// LinOp__get_sparse
+bool LinOp__get_sparse(SEXP xp);
+RcppExport SEXP cvxr_LinOp__get_sparse(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    __result = Rcpp::wrap(LinOp__get_sparse(xp));
+    return __result;
+END_RCPP
+}
+// LinOp__set_sparse
+void LinOp__set_sparse(SEXP xp, SEXP sparseSEXP);
+RcppExport SEXP cvxr_LinOp__set_sparse(SEXP xpSEXP, SEXP sparseSEXPSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sparseSEXP(sparseSEXPSEXP);
+    LinOp__set_sparse(xp, sparseSEXP);
+    return R_NilValue;
+END_RCPP
+}
 // LinOp__get_sparse_data
 Eigen::SparseMatrix<double> LinOp__get_sparse_data(SEXP xp);
 RcppExport SEXP cvxr_LinOp__get_sparse_data(SEXP xpSEXP) {

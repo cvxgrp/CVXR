@@ -13,6 +13,31 @@ SEXP LinOp__new() {
   return ptr;
 }
 
+//' Get the \code{sparse} flag field for the LinOp object
+//'
+//' @param xp the LinOp Object XPtr
+//' @return TRUE or FALSE
+// [[Rcpp::export]]
+bool LinOp__get_sparse(SEXP xp) {
+  // grab the object as a XPtr (smart pointer)
+  Rcpp::XPtr<LinOp> ptr(xp);
+  return ptr->sparse;
+}
+
+//' Set the flag \code{sparse} of the LinOp object
+//'
+//' @param xp the LinOp Object XPtr
+//' @param sparse an R boolean
+// [[Rcpp::export]]
+void LinOp__set_sparse(SEXP xp, SEXP sparseSEXP) {
+  // grab the object as a XPtr (smart pointer)
+  Rcpp::XPtr<LinOp> ptr(xp);
+
+  // Set the result
+  ptr->sparse = Rcpp::as<bool>(sparseSEXP);
+}
+
+
 //' Get the field named \code{sparse_data} from the LinOp object
 //'
 //' @param xp the LinOp Object XPtr
@@ -36,6 +61,7 @@ void LinOp__set_sparse_data(SEXP xp, SEXP sparseMat) {
 
   // Map to Eigen::SparseMatrix<double> which is Matrix courtesy of Utils.hpp typedef
   ptr->sparse_data = Rcpp::as<Eigen::SparseMatrix<double> >(sparseMat);
+  ptr->sparse = true;
 
 }
 

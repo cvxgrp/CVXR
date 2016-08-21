@@ -37,6 +37,21 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   ptr = NA
                               ),
                               active = list(
+                                  sparse = function(value) {
+                                      if (missing(value)) {
+                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
+                                                                   methodName = "get_sparse",
+                                                                   thisPkg = private$pkg)
+                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                      } else {
+                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
+                                                                   methodName = "set_sparse",
+                                                                   thisPkg = private$pkg)
+                                          ## value should be a boolean
+                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                      }
+                                  }
+                                 ,
                                   sparse_data = function(value) {
                                       if (missing(value)) {
                                           rcppFn <- rcppMungedName(cppClassName = private$myClassName,
@@ -173,12 +188,19 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   }
                                  ,
                                   toString = function() {
-                                      sprintf("LinOp(id=%s, type=%s, size=[%s], args=%s, data=[%s])",
+                                      sparse <- self$sparse
+                                      if (sparse) {
+                                          data <- paste(self$sparse_data, collapse=", ")
+                                      } else {
+                                          data <- paste(self$dense_data, collapse=", ")
+                                      }
+                                      sprintf("LinOp(id=%s, type=%s, size=[%s], args=%s, sparse=%s, data=[%s])",
                                               self$get_id(),
                                               self$type,
                                               paste(self$size, collapse=", "),
                                               private$args$toString(),
-                                              paste(self$dense_data, collapse=", "))
+                                              sparse,
+                                              data)
                                   }
                                  ,
                                   print = function() {

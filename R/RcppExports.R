@@ -12,6 +12,22 @@ LinOp__new <- function() {
     .Call('cvxr_LinOp__new', PACKAGE = 'cvxr')
 }
 
+#' Get the \code{sparse} flag field for the LinOp object
+#'
+#' @param xp the LinOp Object XPtr
+#' @return TRUE or FALSE
+LinOp__get_sparse <- function(xp) {
+    .Call('cvxr_LinOp__get_sparse', PACKAGE = 'cvxr', xp)
+}
+
+#' Set the flag \code{sparse} of the LinOp object
+#'
+#' @param xp the LinOp Object XPtr
+#' @param sparse an R boolean
+LinOp__set_sparse <- function(xp, sparseSEXP) {
+    invisible(.Call('cvxr_LinOp__set_sparse', PACKAGE = 'cvxr', xp, sparseSEXP))
+}
+
 #' Get the field named \code{sparse_data} from the LinOp object
 #'
 #' @param xp the LinOp Object XPtr

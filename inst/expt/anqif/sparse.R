@@ -24,5 +24,6 @@ prob <- Problem(objective, constraint)
 # debug(build_lin_op_tree)
 base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
 result <- cvxr_solve(prob)
+
 result$optimal_value
 result$primal_values[[y@id]]

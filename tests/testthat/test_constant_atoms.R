@@ -183,5 +183,44 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 }
 
 test_that("Test all constant atoms", {
-  
+  for(a in atoms) {
+    atom_list <- a[[1]]
+    objective_type <- a[[2]]
+    for(al in atom_list) {
+      atom <- al[[1]]
+      size <- al[[2]]
+      args <- al[[3]]
+      obj_val <- al[[4]]
+      for(row in 1:size[1]) {
+        for(col in 1:size[2]) {
+          for(solver in c("ECOS", "SCS")) {
+            # Atoms with Constant arguments
+            const_args <- lapply(args, function(arg) { Constant(arg) })
+            run_atom(atom, Problem(objective_type(atom(unlist(const_args))[row, col])),
+                     value(obj_val[row, col]), solver)
+            
+            # Atoms with Variable arguments
+            variables <- list()
+            constraints <- list()
+            for(expr in args) {
+              expr_size <- size(expr)
+              variables <- c(variables, Variable(expr_size[1], expr_size[2]))
+              constraints <- c(constraints, variables[-1] == expr)
+            }
+            run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
+            
+            # Atoms with Parameter arguments
+            parameters <- list()
+            for(expr in args) {
+              expr_size <- size(expr)
+              parameters <- c(parameters, Parameter(expr_size[1], expr_size[2]))
+              parameters[-1]@value <- const_to_matrix(expr)
+            }
+            objective <- objective_type(atom(unlist(parameters))[row, col])
+            run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
+          }
+        }
+      }
+    }
+  }
 })

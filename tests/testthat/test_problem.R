@@ -452,6 +452,74 @@ test_that("Test multiplying by constant atoms", {
   # expect_equal(result$a, 2, tolerance = TOL)
 })
 
+test_that("Test recovery of dual variables", {
+  for(solver in c("ECOS", "SCS")) {
+    if(solver == "SCS")
+      acc <- 1e-1
+    else
+      acc <- 1e-5
+    P <- Problem(Minimize(Norm1(x + z)), list(x >= c(2,3), rbind(c(1,2), c(3,4)) * z == c(-1,4), Norm2(x + z) <= 100))
+    result <- solve(p, solver = solver)
+    expect_equal(result$optimal_value, 4, tolerance = acc)
+    expect_equal(result$x, c(4,3), tolerance = acc)
+    expect_equal(result$z, c(-4,1), tolerance = acc)
+    
+    # Dual values
+    expect_equal(result$constraints[1]$dual_value, c(0,1), tolerance = acc)
+    expect_equal(result$constraints[2]$dual_value, c(-1,0.5), tolerance = acc)
+    expect_equal(result$constraints[3]$dual_value, 0, tolerance = acc)
+    
+    Tmat <- matrix(1, nrow = 2, ncol = 3) * 2
+    c <- matrix(c(3,4), nrow = 1, ncol = 2)
+    p <- Problem(Minimize(1), list(A >= Tmat*C, A == B, C == t(Tmat)))
+    result <- solve(p, solver = solver)
+    
+    # Dual values
+    expect_equal(result$constraints[1]$dual_value, rep(0,4), tolerance = acc)
+    expect_equal(result$constraints[2]$dual_value, rep(0,4), tolerance = acc)
+    expect_equal(result$constraints[3]$dual_value, rep(0,6), tolerance = acc)
+  }
+})
+
+test_that("Test problems with indexing", {
+  # Vector variables
+  p <- Problem(Maximize(x[1,1]), list(x[1,1] <= 2, x[2,1] == 3))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 2, tolerance = TOL)
+  expect_equal(result$x, c(2,3))
+  
+  n <- 10
+  A <- matrix(0:(n^2-1), nrow = n, ncol = n)
+  x <- Variable(n,n)
+  p <- Problem(Minimize(SumEntries(x)), list(x == A))
+  result <- solve(p)
+  answer <- n*n*(n*n+1)/2 - n*n
+  expect_equal(result$optimal_value, answer)
+  
+  # Matrix variables
+  obj <- A[1,1] + A[1,2] + A[2,2] + A[2,1]
+  p <- Problem(Maximize(obj), list(A <= rbind(c(1,-2), c(-3,4))))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 0, tolerance = TOL)
+  expect_equal(result$A, c(1,-2,-3,4))
+  
+  # Indexing arithmetic expressions
+  exp <- rbind(c(1,2), c(3,4)) * z + x
+  p <- Problem(Minimize(exp[2,1]), list(x == z, z == c(1,2)))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 12, tolerance = TOL)
+  expect_equal(result$x, result$z, tolerance = TOL)
+})
+
+test_that("Test problems with slicing", {
+  p <- Problem(Maximize(SumEntries(C)), list(C[2:4,] <= 2, C[1,] == 1))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 10, tolerance = TOL)
+  expect_equal(result$C, 2*c(1,2,2))
+  
+  # TODO: Finish this
+})
+
 test_that("Test using a CVXR expression as an objective", {
   expect_error(Problem(x+2))
 })

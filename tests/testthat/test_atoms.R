@@ -40,7 +40,7 @@ test_that("test the Norm2 class", {
   expect_equal(curvature(Norm2(atom)), Curvature.CONVEX)
   expect_equal(curvature(Norm2(-atom)), Curvature.CONVEX)
   
-  # TODO: Test with axis arg
+  # Test with axis arg
   # expr <- norm(A, 2, axis = 0)
   # expect_equal(size(expr), c(1, 2))
 })
@@ -166,13 +166,13 @@ test_that("test the sign for MaxEntries", {
   expect_equal(sign(MaxEntries(Variable())), Sign.UNKNOWN)
   expect_equal(sign(MaxEntries(0)), Sign.ZERO)
   
-  # TODO: Test with axis argument
+  # Test with axis argument
   # expect_equal(size(MaxEntries(Variable(2), axis = 0)), c(1, 1))
   # expect_equal(size(MaxEntries(Variable(2), axis = 1)), c(2, 1))
   # expect_equal(size(MaxEntries(Variable(2, 3), axis = 0)), c(1, 3))
   # expect_equal(size(MaxEntries(Variable(2, 3), axis = 1)), c(2, 1))
   
-  # TODO: Invalid axis
+  # Invalid axis
   # expect_error(MaxEntries(x, axis = 4))
 })
 
@@ -182,13 +182,13 @@ test_that("test the sign for MinEntries", {
   expect_equal(sign(MinEntries(Variable())), Sign.UNKNOWN)
   expect_equal(sign(MinEntries(0)), Sign.ZERO)
   
-  # TODO: Test with axis argument
+  # Test with axis argument
   # expect_equal(size(MinEntries(Variable(2), axis = 0)), c(1, 1))
   # expect_equal(size(MinEntries(Variable(2), axis = 1)), c(2, 1))
   # expect_equal(size(MinEntries(Variable(2, 3), axis = 0)), c(1, 3))
   # expect_equal(size(MinEntries(Variable(2, 3), axis = 1)), c(2, 1))
   
-  # TODO: Invalid axis
+  # Invalid axis
   # expect_error(MinEntries(x, axis = 4))
 })
 
@@ -247,15 +247,15 @@ test_that("test the SumEntries class", {
   expect_equal(curvature(SumEntries(Variable(2))), Curvature.AFFINE)
   
   # Mixed curvature
-  expect_equal(curvature(SumEntries( c(1, -1) * Square(Variable(2)) )), Curvature.UNKNOWN)
+  expect_equal(curvature(SumEntries( c(1,-1) * Square(Variable(2)) )), Curvature.UNKNOWN)
   
-  # TODO: Test with axis argument
+  # Test with axis argument
   # expect_equal(size(SumEntries(Variable(2), axis = 0)), c(1, 1))
   # expect_equal(size(SumEntries(Variable(2), axis = 1)), c(2, 1))
   # expect_equal(size(SumEntries(Variable(2, 3), axis = 0)), c(1, 3))
   # expect_equal(size(SumEntries(Variable(2, 3), axis = 1)), c(2, 1))
   
-  # TODO: Invalid axis
+  # Invalid axis
   # expect_error(SumEntries(x, axis = 4))
 })
 
@@ -278,21 +278,21 @@ test_that("test the MulElemwise class", {
 })
 
 test_that("test the VStack class", {
-  # atom <- VStack(x, y, x)
-  # expect_equal(size(atom), c(6, 1))
+  atom <- VStack(x, y, x)
+  expect_equal(size(atom), c(6, 1))
   
-  # atom <- VStack(A, C, B)
-  # expect_equal(size(atom), c(7, 2))
+  atom <- VStack(A, C, B)
+  expect_equal(size(atom), c(7, 2))
   
-  # entries <- list()
-  # for(i in 1:size(x)[1]) {
-  #   for(j in 1:size(x)[2]) {
-  #     entries <- c(entries, x[i, j])
-  #   }
-  # }
-  # atom <- VStack(unlist(entries))
+  entries <- list()
+  for(i in 1:size(x)[1]) {
+    for(j in 1:size(x)[2]) {
+      entries <- c(entries, x[i, j])
+    }
+  }
+  atom <- VStack(unlist(entries))
   
-  # expect_error(VStack(C, 1))
+  expect_error(VStack(C, 1))
 })
 
 test_that("test the Reshape class", {
@@ -397,9 +397,10 @@ test_that("test the SumSmallest class", {
 
 test_that("test the Bmat class", {
   v_np <- matrix(1, nrow = 3, ncol = 1)
-  expr <- Bmat(list(list(v_np, v_np), list(list(0, 0), list(1, 2))))
+  expr <- Bmat(list(list(v_np, v_np), list(c(0,0), c(1,2))))
   expect_equal(size(expr), c(5, 2))
-  # TODO: Check against true numpy bmat
+  const <- rbind(cbind(v_np, v_np), cbind(c(0,0), c(1,2)))
+  expect_equal(value(expr), const)
 })
 
 test_that("test the Conv class", {
@@ -427,6 +428,193 @@ test_that("test the Kron class", {
   expect_error(Kron(x, -1))
 })
 
+test_that("test DCP properties of partial optimize", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  xval <- rep(-5, dims)
+  p2 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
+  # g <- partial_optimize(p2, list(t), list(x))
+  # expect_equal(curvature(g), Curvature.CONVEX)
+  
+  p2 <- Problem(Maximize(SumEntries(t)), list(-t <= x, x <= t))
+  # g <- partial_optimize(p2, list(t), list(x))
+  # expect_equal(curvature(g), Curvature.CONCAVE)
+  
+  p2 <- Problem(Maximize(Square(t[1])), list(-t <= x, x <= t))
+  # g <- partial_optimize(p2, list(t), list(x))
+  # expect_false(is_convex(g))
+  # expect_false(is_concave(g))
+})
+
+test_that("test the partial_optimize eval 1-norm", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  xval <- rep(-5, dims)
+  p1 <- Problem(Minimize(SumEntries(t)), list(-t <= xval, xval <= t))
+  result1 <- solve(p1)
+  
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
+  # g <- partial_optimize(p2, list(t), list(x))
+  # p3 <- Problem(Minimize(g), list(x == xval))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, -result3$optimal_value)
+  
+  # Try leaving out args
+  
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
+  # g <- partial_optimize(p2, opt_vars = list(t))
+  # p3 <- Problem(Minimize(g), list(x == xval))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+  
+  # Minimize the 1-norm via partial_optimize
+  # g <- partial_optimize(p2, dont_opt_vars = list(x))
+  # p3 <- Problem(Minimize(g), list(x == xval))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+  
+  # expect_error(partial_optimize(p2))
+  # expect_error(partial_optimize(p2, list(), list(x)))
+})
+
+test_that("test partial_optimize min 1-norm", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
+  
+  # Minimize the 1-norm via partial_optimize
+  # g <- partial_optimize(p1, list(t), list(x))
+  # p2 <- Problem(Minimize(g))
+  # result2 <- solve(p2)
+  
+  result1 <- solve(p1)
+  # expect_equal(result1$optimal_value, result2$optimal_value)
+})
+
+test_that("test partial_optimize simple problem", {
+  x <- Variable(1)
+  y <- Variable(1)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  # g <- partial_optimize(p2, list(y), list(x))
+  # p3 <- Problem(Minimize(x+g), list(x >= 5))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+})
+
+test_that("test partial_optimize special var", {
+  x <- Bool(1)
+  y <- Int(1)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  # g <- partial_optimize(p2, list(y), list(x))
+  # p3 <- Problem(Minimize(x+g), list(x >= 5))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+})
+
+test_that("test partial_optimize special constr", {
+  x <- Variable(1)
+  y <- Variable(1)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
+  # g <- partial_optimize(p2, list(y), list(x))
+  # p3 <- Problem(Minimize(x+g), list(x >= 5))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+})
+
+test_that("test partial_optimize with parameters", {
+  x <- Variable(1)
+  y <- Variable(1)
+  gamma <- Parameter()
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
+  gamma@value <- 3
+  result1 <- solve(p1)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
+  # g <- partial_optimize(p2, list(y), list(x))
+  # p3 <- Problem(Minimize(x+g), list(x >= 5))
+  # result3 <- solve(p3)
+  # expect_equal(result1$optimal_value, result3$optimal_value)
+})
+
+test_that("test partial_optimize numeric function", {
+  x <- Variable(1)
+  y <- Variable(1)
+  xval <- 4
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(y), list(xval+y >= 3))
+  result1 <- solve(p1)
+  
+  # Solve the two-stage problem via partial_optimize
+  constr <- list(y >= -100)
+  p2 <- Problem(Minimize(y), c(x+y >= 3, constr))
+  # g <- partial_optimize(p2, list(y), list(x))
+  # x@value <- xval
+  # y@value <- 42
+  # const[1]@dual_variable@value <- 42
+  # result <- g@value
+  # expect_equal(result, result1$optimal_value)
+  # expect_equal(y@value, 42)
+  # expect_equal(constr[1]@dual_value, 42)
+  
+  # No variables optimized over
+  p2 <- Problem(Minimize(y), list(x+y >= 3))
+  # g <- partial_optimize(p2, list(), list(x,y))
+  # x@value <- xval
+  # y@value <- 42
+  # p2@constraints[1]@dual_variable@value <- 42
+  # result <- g@value
+  # expect_equal(result, y@value)
+  # expect_equal(y@value, 42)
+  # expect_equal(p2@constraints[1]@dual_value, 42)
+})
+
+test_that("test partial_optimize stacked", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
+  
+  # Minimize the 1-norm via partial_optimize
+  # g <- partial_optimize(p1, list(t), list(x))
+  # g2 <- partial_optimize(Problem(Minimize(g)), list(x))
+  # p2 <- Problem(Minimize(g2))
+  # result2 <- solve(p2)
+  
+  result1 <- solve(p1)
+  # expect_equal(result1$optimal_value, result2$optimal_value)
+})
+
 test_that("test the NonNegative Variable class", {
   x <- NonNegative()
   p <- Problem(Minimize(5+x), list(x >= 3))
@@ -436,12 +624,12 @@ test_that("test the NonNegative Variable class", {
 })
 
 test_that("test whether changing an array constant breaks DCP", {
-  # c <- matrix(c(1, 2))
-  # expr <- t(c) * Square(x)
-  # x@value <- c(1, 1)
-  # expect_equal(value(expr), 3, tolerance = TOL)
-  # expect_true(is_dcp(expr))
-  # c[1] <- -1
-  # expect_equal(value(expr), 3, tolerance = TOL)
-  # expect_true(is_dcp(expr))
+  c <- matrix(c(1, 2), nrow = 2, ncol = 1)
+  expr <- t(c) * Square(x)
+  x@value <- c(1, 1)
+  expect_equal(value(expr), 3, tolerance = TOL)
+  expect_true(is_dcp(expr))
+  c[1] <- -1
+  expect_equal(value(expr), 3, tolerance = TOL)
+  expect_true(is_dcp(expr))
 })

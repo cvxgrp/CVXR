@@ -650,10 +650,10 @@ test_that("Test problems with slicing", {
   expect_equal(result$optimal_value, 10, tolerance = TOL)
   expect_equal(result$C, 2*c(1,2,2))
   
-  # TODO: Finish this
+  p <- Problem(Maximize(SumEntries(C[seq(1,4,2),2])), list(C[2:4,] <= 2, C[1,] == 1))
   result <- solve(p)
   expect_equal(result$optimal_value, 3, tolerance = TOL)
-  # TODO
+  expect_equal(result$C[seq(1,4,2),2], c(1,2))
   
   p <- Problem(Maximize(SumEntries(C[1:3,] + A)[,1:3]), list(C[2:4,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
                                                              (A + B)[,2] == 2, B == 1))
@@ -942,7 +942,7 @@ test_that("Tests problems with Reshape", {
   obj <- Minimize(SumEntries(mat * expr))
   prob <- Problem(obj, list(C == C_mat))
   result <- solve(prob)
-  # TODO: reshaped = np.reshape(C_mat, (2,3), "F")
+  reshaped = matrix(C_mat, nrow = 2, ncol = 3, byrow = FALSE)
   expect_equal(result$optimal_value, sum(mat %*% reshaped), tolerance = TOL)
   expect_equal(value(expr, result), C_mat, tolerance = TOL)
   

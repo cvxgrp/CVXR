@@ -144,7 +144,9 @@ test_that("Test that variables and constraints keep a consistent order", {
     sym_data <- SymData(objective, constraints, "ECOS")
     
     # Sort by offset
-    # TODO: Finish this
+    offsets <- sym_data@var_offsets
+    keys <- sapply(offsets, function(key_val) { key_val[[2]] })
+    vars_ <- offsets[order(keys, decreasing = FALSE)]
     vars_lists <- c(vars_lists, vars_)
     ineqs_lists <- c(ineqs_lists, sym_data@constr_map[LEQ_MAP])
   }
@@ -649,6 +651,36 @@ test_that("Test problems with slicing", {
   expect_equal(result$C, 2*c(1,2,2))
   
   # TODO: Finish this
+  result <- solve(p)
+  expect_equal(result$optimal_value, 3, tolerance = TOL)
+  # TODO
+  
+  p <- Problem(Maximize(SumEntries(C[1:3,] + A)[,1:3]), list(C[2:4,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
+                                                             (A + B)[,2] == 2, B == 1))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 12, tolerance = TOL)
+  expect_equal(result$C[1:3,], c(1,2,1,2), tolerance = TOL)
+  expect_equal(result$A, c(2,2,1,1), tolerance = TOL)
+  
+  p <- Problem(Maximize(matrix(c(3,4), nrow = 1, ncol = 2) * (C[1:3,] + A)[,1]),
+               list(C[2:4,] <= 2, C[1,] == 1, matrix(c(1,2), nrow = 1, ncol = 2)*(A + B)[,1] == 3,
+                    (A + B)[,2] == 2, B == 1, 3*A[,1] <= 3))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 12, tolerance = TOL)
+  expect_equal(result$C[1:3,1], c(1,2), tolerance = TOL)
+  expect_equal(result$A, c(1,-0.5,1,1), tolerance = TOL)
+  
+  p <- Problem(Minimize(Norm2(C[1:3,] + A)[,1]), list(C[2:4,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 3, tolerance = TOL)
+  expect_equal(result$C[1:3,1], c(1,-2), tolerance = TOL)
+  expect_equal(result$A, c(2,2,1,1), tolerance = TOL)
+  
+  # Transpose of slice
+  p <- Problem(Maximize(SumEntries(C)), list(t(C[2:4,]) <= 2, t(C[1,]) == 1))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 10, tolerance = TOL)
+  expect_equal(result$C, 2*c(1,2,2))
 })
 
 test_that("Test the Vstack atom", {
@@ -853,7 +885,13 @@ test_that("Tests problems with MulElemwise", {
   expect_equal(value(expr, result), c(5,-5) + c(10,-10), tolerance = TOL)
   
   # Test with a sparse matrix
-  # TODO
+  c <- sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
+  expr <- MulElemwise(c, x)
+  obj <- Minimize(NormInf(expr))
+  p <- Problem(obj, list(x == 5))
+  result <- solve(p)
+  expect_equal(result$optimal_value, 10, tolerance = TOL)
+  expect_equal(value(expr, result), c(5,10))
   
   # Test promotion
   c <- rbind(c(1,-1), c(2,-2))
@@ -1107,8 +1145,23 @@ test_that("Test GeoMean", {
   x <- as.vector(result$x)
   x_true <- p/sum(p)
   
-  # TODO: Finish this
+  expect_equal(result$optimal_value, value(GeoMean(list(x), p)), tolerance = TOL)
+  expect_equal(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
+  expect_equal(x, x_true, tolerance = 1e-3)
   
+  # Check that we get the right answer for max GeoMean(x) s.t. norm(x) <= 1
+  x <- Variable(5)
+  prob <- Problem(Maximize(GeoMean(x, p)), list(norm(x) <= 1))
+  result <- solve(prob)
+  x <- as.vector(result$x)
+  x_true <- sqrt(p/sum(p))
+  
+  expect_true(result$optimal_value, value(GeoMean(list(x), p)), tolerance = TOL)
+  expect_true(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
+  expect_true(x, x_true, tolerance = 1e-3)
+  
+  # The following 3 tests check Vstack and Hstack input to GeoMean
+  # The following 3 formulations should be equivalent
   n <- 5
   x_true <- rep(1,n)
   x <- Variable(n)
@@ -1117,7 +1170,19 @@ test_that("Test GeoMean", {
   xval <- as.vector(result$x)
   expect_equal(xval, x_true, tolerance = 1e-3)
   
-  # TODO: Finish this
+  arg <- list()
+  for(i in 1:n) 
+    args <- c(args, x[i])
+  
+  y <- VStack(unlist(args))
+  result <- solve(Problem(Maximize(GeoMean(y))), list(x <= 1))
+  xval <- as.vector(result$x)
+  expect_true(xval, x_true, tolerance = 1e-3)
+  
+  y <- HStack(unlist(args))
+  result <- solve(Problem(Maximize(GeoMean(y))), list(x <= 1))
+  xval <- as.vector(result$x)
+  expect_true(xval, x_true, tolerance = 1e-3)
 })
 
 test_that("Test Pnorm", {

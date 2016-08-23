@@ -430,9 +430,9 @@ test_that("test the Kron class", {
 test_that("test the NonNegative Variable class", {
   x <- NonNegative()
   p <- Problem(Minimize(5+x), list(x >= 3))
-  # cvxr_solve(p)
-  # expect_equal(value(p), 8, tolerance = TOL)
-  # expect_equal(value(x), 3, tolerance = TOL)
+  # result <- solve(p)
+  # expect_equal(result$optimal_value, 8, tolerance = TOL)
+  # expect_equal(result$x, 3, tolerance = TOL)
 })
 
 test_that("test whether changing an array constant breaks DCP", {

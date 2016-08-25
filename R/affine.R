@@ -131,14 +131,14 @@ setMethod("to_numeric", "BinaryOperator", function(object, values) {
 #' The MulExpression class.
 #'
 #' This class represents the matrix product of two linear expressions.
-#' See MulElemwise for the elementwise product
+#' See MulElemwise for the elementwise product.
 #'
 #' @aliases MulExpression
 #' @export
 MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 
 setMethod("initialize", "MulExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "%*%")   # TODO: Need to convert operators to matrix multiplication
+  callNextMethod(.Object, ..., op_name = "%*%")
 })
 
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -156,7 +156,7 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #'
 #' The RMulExpression class.
 #'
-#' This class represents matrix product of an expression with a constant on the right.
+#' This class represents the matrix product of an expression with a constant on the right.
 #'
 #' @aliases RMulExpression
 #' @export
@@ -184,7 +184,6 @@ setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, s
 DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
 
 setMethod("initialize", "DivExpression", function(.Object, ...) {
-  .Object@op_name = "/"
   callNextMethod(.Object, ..., op_name = "/")
 })
 

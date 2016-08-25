@@ -248,7 +248,7 @@ test_that("test the SumEntries class", {
   expect_equal(curvature(SumEntries(Variable(2))), Curvature.AFFINE)
   
   # Mixed curvature
-  expect_equal(curvature(SumEntries( c(1,-1) * Square(Variable(2)) )), Curvature.UNKNOWN)
+  expect_equal(curvature(SumEntries( c(1,-1) %*% Square(Variable(2)) )), Curvature.UNKNOWN)
   
   # Test with axis argument
   expect_equal(size(SumEntries(Variable(2), axis = 1)), c(2, 1))
@@ -629,7 +629,7 @@ test_that("test the NonNegative Variable class", {
 test_that("test whether changing an array constant breaks DCP", {
   c <- matrix(c(1, 2), nrow = 2, ncol = 1)
   x@primal_value <- c(1, 1)
-  expr <- t(c) * Square(x)
+  expr <- t(c) %*% Square(x)
   expect_equal(value(expr), 3, tolerance = TOL)
   expect_true(is_dcp(expr))
   

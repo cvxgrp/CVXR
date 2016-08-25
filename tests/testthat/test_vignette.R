@@ -23,7 +23,7 @@ test_that("Test non-negative least squares", {
   
   # Construct the OLS problem without constraints
   beta <- Variable(m)
-  objective <- Minimize(SumSquares(y - X*beta))
+  objective <- Minimize(SumSquares(y - X %*% beta))
   prob <- Problem(objective)
   
   # Solve the OLS problem for beta
@@ -64,19 +64,19 @@ test_that("Test catenary problem", {
   x <- Variable(2*n)
   B <- diag(2*n)
   B[1:n, 1:n] <- 0
-  objective <- Minimize(SumEntries(B*x))
+  objective <- Minimize(SumEntries(B %*% x))
   
   # Form constraints
   A <- matrix(0, nrow = 4, ncol = 2*n)
   A[1, 1] <- A[2, n] <- A[3, n+1] <- A[4, 2*n] <- 1
   b <- matrix(c(0, 1, 1, 1), nrow=4)
-  constraints = list(x >= 0, A*x == b)
+  constraints = list(x >= 0, A %*% x == b)
   
   for (i in seq.int(n-1)) {
     A <- matrix(numeric(2*2*n), nrow = 2)
     A[1, i] <- -1; A[1, i+1] <- 1
     A[2, n+i] <- -1; A[2, n+i+1] <- 1
-    constraints <- c(constraints, Norm2(A*x) <= h)
+    constraints <- c(constraints, Norm2(A %*% x) <= h)
   }
   
   # Solve the catenary problem

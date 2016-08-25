@@ -56,6 +56,16 @@ setMethod("*", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) {
 })
 setMethod("==", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) { e1@sign == e2@sign })
 setMethod("!=", signature(e1 = "Sign", e2 = "Sign"), function(e1, e2) { e1@sign != e2@sign })
+setMethod("%*%", signature(x = "Sign", y = "Sign"), function(x, y) {
+  if(is_zero(x) || is_zero(y))
+    Sign.ZERO
+  else if(is_unknown(x) || is_unknown(y))
+    Sign.UNKNOWN
+  else if(x != y)
+    Sign.NEGATIVE
+  else
+    Sign.POSITIVE
+})
 
 val_to_sign <- function(val) {
   if(val > 0)
@@ -124,9 +134,6 @@ setMethod("+", signature(e1 = "Curvature", e2 = "Curvature"),
                    Curvature.UNKNOWN
                })
 setMethod("-", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1 + -e2 })
-setMethod("==", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature == e2@curvature })
-setMethod("!=", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature != e2@curvature })
-
 setMethod("*", signature(e1 = "Sign", e2 = "Curvature"), function(e1, e2) {
   if(is_zero(e1))
     Curvature.CONSTANT
@@ -139,6 +146,21 @@ setMethod("*", signature(e1 = "Sign", e2 = "Curvature"), function(e1, e2) {
     Curvature.UNKNOWN
 })
 setMethod("*", signature(e1 = "Curvature", e2 = "Sign"), function(e1, e2) { e2 * e1 })
+setMethod("==", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature == e2@curvature })
+setMethod("!=", signature(e1 = "Curvature", e2 = "Curvature"), function(e1, e2) { e1@curvature != e2@curvature })
+
+setMethod("%*%", signature(x = "Sign", y = "Curvature"), function(x, y) {
+  if(is_zero(x))
+    Curvature.CONSTANT
+  else if(is_positive(x) || is_affine(y))
+    y
+  else if(is_negative(x)) {
+    new_curv = CURVATURE_NEGATION_MAP(y@curvature)
+    Curvature(curvature = new_curv)
+  } else
+    Curvature.UNKNOWN
+})
+setMethod("%*%", signature(x = "Curvature", y = "Sign"), function(x, y) { y * x })
 
 #'
 #' The Shape class.
@@ -172,12 +194,22 @@ setMethod("*", signature(e1 = "Shape", e2 = "Shape"), function(e1, e2) {
     e2
   else if(all(size(e2) == c(1,1)))
     e1
-  else if(e1@cols == e2@rows)
-    Shape(rows = e1@rows, cols = e2@cols)
+  else if(e1@rows == e2@rows && e1@cols == e2@cols)
+    Shape(rows = e1@rows, cols = e1@cols)
   else
     stop("Incompatible dimensions: ", as.character(e1), " vs. ", as.character(e2))
 })
 setMethod("/", signature(e1 = "Shape", e2 = "Shape"), function(e1, e2) { e1 })
+setMethod("%*%", signature(x = "Shape", y = "Shape"), function(x, y) {
+  if(all(size(x) == c(1,1)))
+    y
+  else if(all(size(y) == c(1,1)))
+    x
+  else if(x@cols == y@rows)
+    Shape(rows = x@rows, cols = y@cols)
+  else
+    stop("Incompatible dimensions: ", as.character(x), " vs. ", as.character(y))
+})
 
 #'
 #' The DCPAttr class.
@@ -221,6 +253,15 @@ setMethod("*", signature(e1 = "DCPAttr", e2 = "DCPAttr"), function(e1, e2) {
   DCPAttr(sign = sign, curvature = curvature, shape = shape)
 })
 setMethod("/", signature(e1 = "DCPAttr", e2 = "DCPAttr"), function(e1, e2) { e2 * e1 })
+setMethod("%*%", signature(x = "DCPAttr", y = "DCPAttr"), function(x, y) {
+  shape <- x@shape %*% y@shape
+  sign <- x@sign %*% y@sign
+  if(is_constant(x@curvature))
+    curvature <- x@sign %*% y@curvature
+  else
+    curvature <- y@sign %*% x@curvature
+  DCPAttr(sign = sign, curvature = curvature, shape = shape)
+})
 
 setMethod("DCPAttr.mul_elemwise", signature(lh_exp = "DCPAttr", rh_exp = "DCPAttr"), function(lh_exp, rh_exp) {
   shape <- lh_exp@shape + rh_exp@shape

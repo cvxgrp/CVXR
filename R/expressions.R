@@ -55,19 +55,7 @@ setMethod("+", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("-", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 + -e2 })
 setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 + -e2 })
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e2 - e1 })
-setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if(!is_constant(e1) && !is_constant(e2))
-    stop("Cannot multiply two non-constants")
-  else if(is_constant(e1)) {
-    if(size(e1)[1] == size(e2)[1] && size(e1)[2] != size(e2)[1] && is(e1, "Constant"))
-      MulExpression(lh_exp = t(e1), rh_exp = e2)
-    else
-      MulExpression(lh_exp = e1, rh_exp = e2)
-  } else if(is_scalar(e1) || is_scalar(e2))
-    MulExpression(lh_exp = e2, rh_exp = e1)
-  else
-    RMulExpression(lh_exp = e1, rh_exp = e2)
-})
+setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { MulElemwise(lh_const = e1, rh_exp = e2) })
 setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 * as.Constant(e2) })
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
@@ -99,7 +87,21 @@ setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) })
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
-# TODO: Change * to %*% and define separate methods for elementwise multiplication with MulElemwise
+setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
+  if(!is_constant(x) && !is_constant(y))
+    stop("Cannot multiply two non-constants")
+  else if(is_constant(x)) {
+    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant"))
+      MulExpression(lh_exp = t(x), rh_exp = y)
+    else
+      MulExpression(lh_exp = x, rh_exp = y)
+  } else if(is_scalar(x) || is_scalar(y))
+    MulExpression(lh_exp = y, rh_exp = x)
+  else
+    RMulExpression(lh_exp = x, rh_exp = y)
+})
+setMethod("%*%", signature(x = "Expression", y = "ConstVal"), function(x, y) { x %*% as.Constant(y) })
+setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { as.Constant(x) %*% y })
 # TODO: Overload the [ operator for slicing rows/columns from an expression
 
 #'

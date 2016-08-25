@@ -119,7 +119,7 @@ rmul_expr <- function(lh_op, rh_op, size) {
 }
 
 mul_elemwise <- function(lh_op, rh_op) {
-  LinOp(MUL_ELEM, size(lh_op), list(rh_op), lh_op)
+  LinOp(MUL_ELEM, lh_op$size, list(rh_op), lh_op)
 }
 
 kron <- function(lh_op, rh_op, size) {

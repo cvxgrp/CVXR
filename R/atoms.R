@@ -106,25 +106,27 @@ setMethod("value", "Atom", function(object) {
     result
 })
 
-AxisAtom <- setClass("AxisAtom", representation(expr = "Expression", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
+  .Object@expr <- expr
   .Object@axis <- axis
-  .Object <- callNextMethod(.Object, ..., .args = list(expr))
+  .Object <- callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
 setMethod("size", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
-  else if(object@axis == 0)
-    c(1, size(object@.args[[1]])[2])
-  else   # axis == 1
+  else if(object@axis == 1)
     c(size(object@.args[[1]])[1], 1)
+  else   # axis == 2
+    c(1, size(object@.args[[1]])[2])
 })
+
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 
 setMethod("validate_args", "AxisAtom", function(object) {
-  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(0, 1)))
+  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1, 2)))
      stop("Invalid argument for axis")
 })
 
@@ -342,14 +344,15 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
   LogDet.graph_implementation(arg_objs, size, data)
 })
 
-.LogSumExp <- setClass("LogSumExp", representation(x = "Expression"), contains = "Atom")
-LogSumExp <- function(x) { .LogSumExp(x = x) }
+.LogSumExp <- setClass("LogSumExp", contains = "AxisAtom")
+LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
-setMethod("initialize", "LogSumExp", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., .args = list(.Object@x))
+setMethod("to_numeric", "LogSumExp", function(object, values) {
+  if(is.na(object@axis))
+    log(sum(exp(values[[1]])))
+  else
+    log(apply(exp(values[[1]]), object@axis, sum))
 })
-
 setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
 setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
 setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
@@ -429,16 +432,17 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
   MatrixFrac.graph_implementation(arg_objs, size, data)
 })
 
-.MaxEntries <- setClass("MaxEntries", representation(x = "ConstValORExpr"), contains = "Atom")
-MaxEntries <- function(x) { .MaxEntries(x = x) }
+.MaxEntries <- setClass("MaxEntries", contains = "AxisAtom")
+MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
-setMethod("initialize", "MaxEntries", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., .args = list(.Object@x))
+setMethod("to_numeric", "MaxEntries", function(object, values) {
+  if(is.na(object@axis))
+    max(values[[1]])
+  else
+    apply(values[[1]], axis, max)
 })
-
 setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "MaxEntries", function(object) { object@.args[[1]]@dcp_attr@sign })
+setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@.args[[1]], is_negative(object@.args[[1]]))) })
 setMethod("func_curvature",  "MaxEntries", function(object) { Curvature.CONVEX })
 setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
 
@@ -454,9 +458,9 @@ setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size,
   MaxEntries.graph_implementation(arg_objs, size, data)
 })
 
-MinEntries <- function(x) {
+MinEntries <- function(x, axis = NA_real_) {
   x <- as.Constant(x)
-  -MaxEntries(-x)
+  -MaxEntries(-x, axis = axis)
 }
 
 #'
@@ -466,13 +470,12 @@ MinEntries <- function(x) {
 #'
 #' @aliases Pnorm
 #' @export
-.Pnorm <- setClass("Pnorm", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
-                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "Atom")
+.Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
+                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "AxisAtom")
 
-Pnorm <- function(x, p = 2, max_denom = 1024) { .Pnorm(x = x, p = p, max_denom = max_denom) }
+Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom) }
 
-setMethod("initialize", "Pnorm", function(.Object, ..., x, p = 2, max_denom = 1024, .approx_error = NA_real_) {
-  .Object@x <- x
+setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@max_denom <- max_denom
   
   p_old <- p
@@ -488,13 +491,38 @@ setMethod("initialize", "Pnorm", function(.Object, ..., x, p = 2, max_denom = 10
   # else if(p == 1)
   #  .Object@p <- 1
   # else
-  #  stop("[pnorm: validation] Invalid value for p ", p)
+  #  stop("[Pnorm: validation] Invalid value for p ", p)
   
   if(.Object@p == Inf)
     .Object@.approx_error <- 0
   else
     .Object@.approx_error <- abs(.Object@p - p_old)
-  callNextMethod(.Object, ..., .args = list(.Object@x))
+  callNextMethod(.Object, ...)
+})
+
+setMethod("validate_args", "Pnorm", function(object) {
+  callNextMethod()
+  if(!is.na(object@axis) && object@p != 2)
+    stop("The axis parameter is only supported for p = 2")
+})
+
+setMethod("to_numeric", "Pnorm", function(object, values) {
+  if(is.na(object@axis))
+    values <- as.vector(values[[1]])
+  else
+    values <- as.matrix(values[[1]])
+  
+  if(object@p < 1 && any(values < 0))
+    return(-Inf)
+  
+  if(object@p < 0 && any(values == 0))
+    return(0)
+  
+  if(is.na(object@axis))
+    retval <- norm(values[[1]], object@p)
+  else
+    retval <- apply(values, object@axis, function(x) { norm(x, object@p) })
+  return(retval)
 })
 
 setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
@@ -550,7 +578,7 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "N", "2")) {
   x <- as.Constant(x)
   
-  if(type == "O" || type == "o" || type == "1")
+  if(type == "O" || type == "o" || type == "1" || is_scalar(x))
     return(Pnorm(x = x, p = 1))
   else if(type == "I" || type == "i" || type == "inf")
     return(Pnorm(x = x, p = Inf))
@@ -559,7 +587,7 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
   else if(type == "N" || type == "n" || type == "nuc")
     return(NormNuc(A = x))
   else if(type == "2") {
-    if(is.matrix(x))
+    if(is_matrix(x))
       return(SigmaMax(x = x))
     else
       return(Pnorm(x = x, p = 2))
@@ -567,9 +595,9 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
     return(Pnorm(x = x, p = type))
 })
 
-Norm1   <- function(x) { Pnorm(x = x, p = 1) }
-Norm2   <- function(x) { Pnorm(x = x, p = 2) }
-NormInf <- function(x) { Pnorm(x = x, p = Inf) }
+Norm1   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 1, axis = axis) }
+Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
+NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
   vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
@@ -752,8 +780,9 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
-  rows <- size(value)[1]
-  cols <- size(value)[2]
+  val_size <- size(value)
+  rows <- val_size[1]
+  cols <- val_size[2]
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
   else if(is_vector(value))   # L1 norm for vectors
@@ -765,6 +794,8 @@ TotalVariation <- function(value, ...) {
       list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
            mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)])
     })
-    SumEntries(Norm2Elemwise(.args = flatten_list(diffs)))
+    length <- size(diffs[1])[1] * size(diffs[2])[2]
+    stacked <- VStack(unlist(lapply(diffs, function(diff) { matrix(diff, nrow = 1, ncol = length) })))
+    SumEntries(norm(stacked, p = "F", axis = 1))
   }
 }

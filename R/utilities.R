@@ -118,6 +118,52 @@ NONMONOTONIC = "NONMONOTONIC"
 MONOTONICITY_STRINGS = c(INCREASING, DECREASING, SIGNED, NONMONOTONIC)
 
 #'
+#' Utility functions for shape
+#' 
+sum_shapes <- function(shapes) {
+  rows <- max(sapply(shapes, function(shape) { shape[1] }))
+  cols <- max(sapply(shapes, function(shape) { shape[2] }))
+  
+  # Validate shapes
+  for(shape in shapes) {
+    if(!all(shape == c(1,1)) && !all(shape == c(rows,cols)))
+      stop("Incompatible dimensions")
+  }
+  c(rows, cols)
+}
+
+mul_shapes <- function(lh_shape, rh_shape) {
+  if(all(lh_shape == c(1,1)))
+    return(rh_shape)
+  else if(all(rh_shape == c(1,1)))
+    return(lh_shape)
+  else {
+    if(lh_shape[2] != rh_shape[1])
+      stop("Incompatible dimensions")
+    return(lh_shape[1], rh_shape[2])
+  }
+}
+
+#' 
+#' Utility functions for sign
+#' 
+sum_signs <- function(exprs) {
+  is_pos <- all(sapply(exprs, function(expr) { is_positive(expr) }))
+  is_neg <- all(sapply(exprs, function(expr) { is_negative(expr) }))
+  c(is_pos, is_neg)
+}
+
+mul_sign <- function(lh_expr, rh_expr) {
+  # ZERO * ANYTHING == ZERO
+  # POSITIVE * POSITIVE == POSITIVE
+  # NEGATIVE * POSITIVE == NEGATIVE
+  # NEGATIVE * NEGATIVE == POSITIVE
+  is_pos <- (is_zero(lh_expr) || is_zero(rh_expr)) || (is_positive(lh_expr) && is_positive(rh_expr)) || (is_negative(lh_expr) && is_negative(rh_expr))
+  is_neg <- (is_zero(lh_expr) || is_zero(rh_expr)) || (is_positive(lh_expr) && is_negative(rh_expr)) || (is_negative(lh_expr) && is_positive(rh_expr))
+  c(is_pos, is_neg)
+}
+
+#'
 #' Utility functions for constraints
 #' 
 format_elemwise <- function(vars_) {

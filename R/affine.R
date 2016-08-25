@@ -504,6 +504,14 @@ setMethod("to_numeric", "MulElemwise", function(object, values) {
   values[[1]] * values[[2]]
 })
 
+setMethod("size", "MulElemwise", function(object) { 
+  sum_shapes(lapply(object@.args, function(arg) { size(arg) }))
+})
+
+setMethod("sign_from_args", "MulElemwise", function(object) {
+  mul_sign(object@.args[[1]], object@.args[[2]])
+})
+
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   if(size(arg_objs[[1]]) != size(arg_objs[[2]]))
     list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
@@ -571,17 +579,14 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @slot axis The axis to sum the entries along.
 #' @aliases SumEntries
 #' @export
-.SumEntries <- setClass("SumEntries", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = 1), contains = "AffAtom")
-SumEntries <- function(expr, axis = 1) { .SumEntries(expr = expr, axis = axis) }
-
-setMethod("initialize", "SumEntries", function(.Object, ..., expr, axis) {
-  .Object@expr <- expr
-  .Object@axis <- axis
-  callNextMethod(.Object, ..., .args = list(.Object@expr))
-})
+.SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
+SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
 setMethod("to_numeric", "SumEntries", function(object, values) {
-  apply(values[[1]], object@axis, sum)
+  if(is.na(object@axis))
+    sum(values[[1]])
+  else
+    apply(values[[1]], object@axis, sum)
 })
 
 setMethod("shape_from_args", "SumEntries", function(object){

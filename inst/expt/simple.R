@@ -9,7 +9,7 @@ A <- matrix(c(17, 19), nrow=m, byrow=TRUE)
 
 # Construct the problem.
 x <- Variable(n)
-objective <- Minimize(A*x)
+objective <- Minimize(A %*% x)
 constraint <- list(1 <= x)
 
 ##base::trace("canonicalize", tracer=browser, exit = browser, signature = c("Variable"))

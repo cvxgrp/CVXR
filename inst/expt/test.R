@@ -20,7 +20,7 @@ b <- matrix(c(1, 2, 3), nrow=m)
 
 # Construct the problem.
 x <- Variable(n)
-objective <- Minimize(SumSquares(A*x - b))
+objective <- Minimize(SumSquares(A %*% x - b))
 ##objective <- canonicalize(objective)
 constraint <- list( 1 <= x)
 prob <- Problem(objective, constraint)

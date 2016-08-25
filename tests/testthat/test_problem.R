@@ -683,56 +683,56 @@ test_that("Test problems with slicing", {
   expect_equal(result$C, 2*c(1,2,2))
 })
 
-test_that("Test the Vstack atom", {
+test_that("Test the VStack atom", {
   c <- matrix(1, nrow = 1, ncol = 5)
-  p <- Problem(Minimize(c * Vstack(x, y)), list(x == c(1,2), y == c(3,4,5)))
+  p <- Problem(Minimize(c * VStack(x, y)), list(x == c(1,2), y == c(3,4,5)))
   result <- solve(p)
   expect_equal(result$optimal_value, 15, tolerance = TOL)
   
   c <- matrix(1, nrow = 1, ncol = 4)
-  p <- Problem(Minimize(c * Vstack(x, y)), list(x == c(1,2)))
+  p <- Problem(Minimize(c * VStack(x, y)), list(x == c(1,2)))
   result <- solve(p)
   expect_equal(result$optimal_value, 6, tolerance = TOL)
   
   c <- matrix(1, nrow = 2, ncol = 2)
-  p <- Problem(Minimize(SumEntries(Vstack(A, C))), list(A >= 2*c, C == -2))
+  p <- Problem(Minimize(SumEntries(VStack(A, C))), list(A >= 2*c, C == -2))
   result <- solve(p)
   expect_equal(result$optimal_value, -4, tolerance = TOL)
   
   c <- matrix(1, nrow = 1, ncol = 2)
-  p <- Problem(Minimize(SumEntries(Vstack(c * A, c * B))), list(A >= 2, B == -2))
+  p <- Problem(Minimize(SumEntries(VStack(c * A, c * B))), list(A >= 2, B == -2))
   result <- solve(p)
   expect_equal(result$optimal_value, 0, tolerance = TOL)
   
   c <- matrix(c(1,-1), nrow = 1, ncol = 2)
-  p <- Problem(Minimize(t(c) * Vstack(Square(a), Sqrt(b))), list(a == 2, b == 16))
+  p <- Problem(Minimize(t(c) * VStack(Square(a), Sqrt(b))), list(a == 2, b == 16))
   expect_error(solve(p))
 })
 
-test_that("Test the Hstack atom", {
+test_that("Test the HStack atom", {
   c <- matrix(1, nrow = 1, ncol = 5)
-  p <- Problem(Minimize(c * Hstack(t(x), t(y))), list(x == c(1,2), y == c(3,4,5)))
+  p <- Problem(Minimize(c * HStack(t(x), t(y))), list(x == c(1,2), y == c(3,4,5)))
   result <- solve(p)
   expect_equal(result$optimal_value, 15, tolerance = TOL)
   
   c <- matrix(1, nrow = 1, ncol = 4)
-  p <- Problem(Minimize(c * t(Hstack(t(x), t(x)))), list(x == c(1,2)))
+  p <- Problem(Minimize(c * t(HStack(t(x), t(x)))), list(x == c(1,2)))
   result <- solve(p)
   expect_equal(result$optimal_value, 6, tolerance = TOL)
   
   c <- matrix(1, nrow = 2, ncol = 2)
-  p <- Problem(Minimize(SumEntries(Hstack(t(A), t(C)))), list(A >= 2*c, C == -2))
+  p <- Problem(Minimize(SumEntries(HStack(t(A), t(C)))), list(A >= 2*c, C == -2))
   result <- solve(p)
   expect_equal(result$optimal_value, -4, tolerance = TOL)
   
   D <- Variable(3,3)
-  expr <- Hstack(C, D)
-  p <- Problem(Minimize(expr[1,2] + SumEntries(Hstack(expr, expr))), list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3))
+  expr <- HStack(C, D)
+  p <- Problem(Minimize(expr[1,2] + SumEntries(HStack(expr, expr))), list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3))
   result <- solve(p)
   expect_equal(result$optimal_value, 13, tolerance = TOL)
   
   c <- matrix(c(1,-1), nrow = 1, ncol = 2)
-  p <- Problem(Minimize(t(c) * t(Hstack(t(Square(a)), t(sqrt(b))))), list(a == 2, b == 16))
+  p <- Problem(Minimize(t(c) * t(HStack(t(Square(a)), t(sqrt(b))))), list(a == 2, b == 16))
   expect_error(solve(p))
 })
 
@@ -1160,7 +1160,7 @@ test_that("Test GeoMean", {
   expect_true(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
   expect_true(x, x_true, tolerance = 1e-3)
   
-  # The following 3 tests check Vstack and Hstack input to GeoMean
+  # The following 3 tests check VStack and HStack input to GeoMean
   # The following 3 formulations should be equivalent
   n <- 5
   x_true <- rep(1,n)

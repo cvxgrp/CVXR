@@ -100,6 +100,10 @@ setMethod("initialize", "Parameter", function(.Object, ..., dcp_attr, rows = 1, 
 setMethod("get_data", "Parameter", function(object) {
   list(rows = object@rows, cols = object@cols, name = object@name, sign = object@sign, value = object@value)
 })
+
+setMethod("value", "Parameter", function(object) { object@value })
+setMethod("value<-", "Parameter", function(object, value) { object@value <- validate_value(object, value) })
+
 setMethod("parameters", "Parameter", function(object) { list(object) })
 setMethod("canonicalize", "Parameter", function(object) {
   obj <- create_param(object, c(object@rows, object@cols))

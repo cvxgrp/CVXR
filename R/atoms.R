@@ -81,6 +81,7 @@ setMethod("parameters", "Atom", function(object) {
 })
 
 setMethod("value", "Atom", function(object) {
+  # Catch the case when the expression is known to be zero through DCP analysis
   if(is_zero(object)) {
     size <- size(object)
     result <- matrix(0, nrow = size[1], ncol = size[2])
@@ -88,6 +89,8 @@ setMethod("value", "Atom", function(object) {
     arg_values <- list()
     idx <- 1
     for(arg in object@.args) {
+      # An argument without a value makes all higher level values NA.
+      # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value(arg)
       if(is.na(arg_val) && !is_constant(object))
         return(NA)

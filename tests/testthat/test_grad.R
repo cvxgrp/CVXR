@@ -650,7 +650,7 @@ test_that("Test grad for affine atoms", {
   expect_equal(as.matrix(grad(expr)[[A@id]]), val)
   
   z <- Variable(3)
-  expr <- Vstack(x, z)
+  expr <- VStack(x, z)
   x@value <- c(1,2)
   z@value <- c(1,2,3)
   val <- matrix(0, nrow = 2, ncol = 5)

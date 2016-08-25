@@ -99,7 +99,7 @@ setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) })
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
-# TODO: Should I overload matrix multiplication %*% operator to point to regular multiplication *?
+# TODO: Change * to %*% and define separate methods for elementwise multiplication with MulElemwise
 # TODO: Overload the [ operator for slicing rows/columns from an expression
 
 #'
@@ -111,4 +111,29 @@ Leaf <- setClass("Leaf", contains = "Expression")
 
 setMethod("variables", "Leaf", function(object) { list() })
 setMethod("parameters", "Leaf", function(object) { list() })
-
+setMethod("constants", "Leaf", function(object) { list() })
+setMethod("is_convex", "Leaf", function(object) { TRUE })
+setMethod("is_concave", "Leaf", function(object) { TRUE })
+setMethod("domain", "Leaf", function(object) { list() })
+setMethod("validate_value", "Leaf", function(object, val) { 
+  if(!is.na(val)) {
+    # Convex val to the proper matrix type
+    val <- as.matrix(val)
+    dims <- dim(val)
+    if(dims != size(object))
+      stop("Invalid dimensions for value")
+    
+    # All signs are valid if sign is unknown
+    # Otherwise value sign must match declared sign
+    pos_val <- min(val) >= 0
+    neg_val <- max(val) <= 0
+    if(is_positive(object) && !pos_val || is_negative(object) && !neg_val)
+      stop("Invalid sign for value")
+    # Round to correct sign
+    else if(is_positive(object))
+      val <- max(val, 0)
+    else if(is_negative(object))
+      val <- min(val, 0)
+  }
+  return(val)
+})

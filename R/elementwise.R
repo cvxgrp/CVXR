@@ -138,7 +138,24 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
 
-setMethod("to_numeric", "Huber", function(object, values) { huber(values[[1]], k = value(M)) })
+setMethod("to_numeric", "Huber", function(object, values) {
+  huber_loss <- function(delta, r) {
+    if(delta < 0)
+      return(Inf)
+    else if(delta >= 0 && abs(r) <= delta)
+      return(r^2/2)
+    else
+      return(delta * (abs(r) - delta/2))
+  }
+  M_val <- value(object@M)
+  val <- values[[1]]
+  if(is.null(dim(val)))
+    2*huber_loss(M_val, val)
+  else if(is.vector(val))
+    2*sapply(val, huber_loss(M_val, v))
+  else
+    2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
+})
 setMethod("sign_from_args", "Huber", function(object) { Sign.POSITIVE })
 setMethod("func_curvature", "Huber", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "Huber", function(object) { SIGNED })
@@ -577,6 +594,7 @@ setMethod("initialize", "Square", function(.Object, ..., x) {
   callNextMethod(.Object, ..., .args = list(.Object@x))
 })
 
+setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 setMethod("sign_from_args", "Square", function(object) { Sign.POSITIVE })
 setMethod("func_curvature", "Square", function(object) { Curvature.CONVEX })
 setMethod("monotonicity", "Square", function(object) { SIGNED })

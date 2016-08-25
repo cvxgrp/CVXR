@@ -16,6 +16,7 @@ setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("D
 
 # Expression generic methods
 setGeneric("value", function(object) { standardGeneric("value") })
+setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
 setGeneric("save_value", function(object) { standardGeneric("save_value") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("init_dcp_attr", function(object) { standardGeneric("init_dcp_attr") })
@@ -26,6 +27,9 @@ setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
 setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
+setGeneric("constants", function(object) { standardGeneric("constants") })
+setGeneric("domain", function(object) { standardGeneric("domain") })
+setGeneric("validate_value", function(object, val) { standardGeneric("validate_value") })
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 

@@ -106,7 +106,7 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, si
 #' @slot op_name A \code{character} string indicating the binary operation.
 #' @aliases BinaryOperator
 #' @export
-BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "Expression", rh_exp = "Expression", op_name = "character"), contains = "AffAtom")
+BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), contains = "AffAtom")
 
 setMethod("init_dcp_attr", "BinaryOperator", function(object) {
   .Primitive(object@op_name)(object@.args[[1]]@dcp_attr, object@.args[[2]]@dcp_attr)
@@ -124,20 +124,21 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
 })
 
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
-  Reduce(op_name, values)
+  Reduce(object@op_name, values)
 })
 
 #'
 #' The MulExpression class.
 #'
-#' This class represents the product of two linear expressions.
+#' This class represents the matrix product of two linear expressions.
+#' See MulElemwise for the elementwise product
 #'
 #' @aliases MulExpression
 #' @export
 MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 
 setMethod("initialize", "MulExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "*")
+  callNextMethod(.Object, ..., op_name = "%*%")   # TODO: Need to convert operators to matrix multiplication
 })
 
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -155,7 +156,7 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #'
 #' The RMulExpression class.
 #'
-#' This class represents product of an expression with a constant on the right.
+#' This class represents matrix product of an expression with a constant on the right.
 #'
 #' @aliases RMulExpression
 #' @export
@@ -345,7 +346,8 @@ Diff <- function(x, k = 1) {
   d
 }
 
-HStack <- setClass("HStack", contains = "AffAtom")
+.HStack <- setClass("HStack", contains = "AffAtom")
+HStack <- function(...) { .HStack(.args = list(...)) }
 
 setMethod("validate_args", "HStack", function(object) {
   arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
@@ -354,11 +356,11 @@ setMethod("validate_args", "HStack", function(object) {
 })
 
 setMethod("to_numeric", "HStack", function(object, values) {
-  Reduce("rbind", values)
+  Reduce("cbind", values)
 })
 
 setMethod("shape_from_args", "HStack", function(object) {
-  arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
+  arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
   cols <- sum(arg_cols)
   rows <- size(object@.args[[1]])[1]
   Shape(rows = rows, cols = cols)
@@ -702,7 +704,8 @@ Vec <- function(X) {
   Reshape(expr = X, rows = size(X)[1] * size(X)[2], cols = 1)
 }
 
-VStack <- setClass("VStack", contains = "AffAtom")
+.VStack <- setClass("VStack", contains = "AffAtom")
+VStack <- function(...) { .VStack(.args = list(...)) }
 
 setMethod("validate_args", "VStack", function(object) {
   arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
@@ -711,7 +714,7 @@ setMethod("validate_args", "VStack", function(object) {
 })
 
 setMethod("to_numeric", "VStack", function(object, values) {
-  Reduce("cbind", values)
+  Reduce("rbind", values)
 })
 
 setMethod("shape_from_args", "VStack", function(object) {
@@ -730,6 +733,6 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
 })
 
 Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { HStack(unlist(blocks)) })
-  VStack(unlist(row_blocks))
+  row_blocks <- lapply(block_lists, function(blocks) { .HStack(.args = blocks) })
+  .VStack(.args = row_blocks)
 }

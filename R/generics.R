@@ -8,6 +8,7 @@ setGeneric("is_constant", function(object) { standardGeneric("is_constant") })
 setGeneric("is_affine", function(object) { standardGeneric("is_affine") })
 setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
+setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 
 setGeneric("size", function(object) { standardGeneric("size") })
@@ -29,9 +30,13 @@ setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 setGeneric("constants", function(object) { standardGeneric("constants") })
 setGeneric("domain", function(object) { standardGeneric("domain") })
-setGeneric("validate_value", function(object, val) { standardGeneric("validate_value") })
+setGeneric("validate_val", function(object, val) { standardGeneric("validate_value") })
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
+
+# Positive definite inequalities
+setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
+setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
 # Atom generic methods
 setGeneric("validate_args", function(object) { standardGeneric("validate_args") })

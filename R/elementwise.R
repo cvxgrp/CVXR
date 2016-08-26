@@ -191,6 +191,70 @@ setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data
 
 InvPos <- function(x) { Power(x, -1) }
 
+.KLDiv <- setClass("KLDiv", representation(x = "Expression", y = "Expression"), contains = "Elementwise")
+KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
+
+setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
+  .Object@x <- x
+  .Object@y <- y
+  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
+})
+
+setMethod("validate_args", "KLDiv", function(object) {
+  if(!is_scalar(object@.args[[1]]) || !is_scalar(object@.args[[2]]))
+    stop("The arguments to KLDiv must resolve to scalars")
+})
+
+setMethod("to_numeric", "KLDiv", function(object, values) {
+  x <- values[[1]]
+  y <- values[[2]]
+  # TODO: Return Inf outside domain
+  xlogy <- function(x,y) {
+    tmp <- x*log(y)
+    tmp[x == 0] <- 0
+    tmp
+  }
+  xlogy(x, x/y) - x + y
+})
+
+setMethod("sign_from_args", "KLDiv", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "KLDiv", function(object) { TRUE })
+setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
+setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
+setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
+
+# TODO: Finish KLDiv gradient implementation
+.grad.KLDiv <- function(object, values) {
+  if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
+    return(list(NA, NA))
+  else {
+    div <- values[[1]]/values[[2]]
+    grad_vals <- list(log(div), 1-div)
+    grad_list <- list()
+    for(idx in 1:length(values)) {
+      rows <- prod(size(object@args[[idx]]))
+      cols <- prod(size(object))
+      grad_list <- c(grad_list, list(KLDiv.elemwise_grad_to_diag(grad_vals[[idx]], rows, cols)))
+    }
+    return(grad_list)
+  }
+}
+.domain.KLDiv <- function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) }
+
+KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  x <- Elementwise.promote(arg_objs[[1]], size)   # TODO: Implement elementwise promotion
+  y <- Elementwise.promote(arg_objs[[2]], size)
+  t <- create_var(c(1,1))
+  constraints <- list(ExpCone(t, x, y), create_geq(y))   # y >= 0
+  # -t - x + y
+  obj <- sub_expr(y, sum_expr(list(x, y)))
+  list(obj, constraints)
+}
+
+setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
+  KLDiv.graph_implementation(arg_objs, size, data)
+})
+
 #'
 #' The Log class.
 #'

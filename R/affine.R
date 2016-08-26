@@ -346,10 +346,10 @@ Diff <- function(x, k = 1) {
 }
 
 .HStack <- setClass("HStack", contains = "AffAtom")
-HStack <- function(...) { .HStack(.args = list(...)) }
+HStack <- function(...) { .HStack(args = list(...)) }
 
 setMethod("validate_args", "HStack", function(object) {
-  arg_cols <- sapply(object@.args, function(arg) { size(arg)[1] })
+  arg_cols <- sapply(object@args, function(arg) { size(arg)[1] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to HStack must have the same number of rows")
 })
@@ -359,9 +359,9 @@ setMethod("to_numeric", "HStack", function(object, values) {
 })
 
 setMethod("shape_from_args", "HStack", function(object) {
-  arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
+  arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   cols <- sum(arg_cols)
-  rows <- size(object@.args[[1]])[1]
+  rows <- size(object@args[[1]])[1]
   Shape(rows = rows, cols = cols)
 })
 
@@ -704,10 +704,10 @@ Vec <- function(X) {
 }
 
 .VStack <- setClass("VStack", contains = "AffAtom")
-VStack <- function(...) { .VStack(.args = list(...)) }
+VStack <- function(...) { .VStack(args = list(...)) }
 
 setMethod("validate_args", "VStack", function(object) {
-  arg_cols <- sapply(object@.args, function(arg) { size(arg)[2] })
+  arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to VStack must have the same number of columns")
 })
@@ -717,8 +717,8 @@ setMethod("to_numeric", "VStack", function(object, values) {
 })
 
 setMethod("shape_from_args", "VStack", function(object) {
-  cols <- size(object@.args[[1]])[2]
-  arg_rows <- sapply(object@.args, function(arg) { size(arg)[1] })
+  cols <- size(object@args[[1]])[2]
+  arg_rows <- sapply(object@args, function(arg) { size(arg)[1] })
   rows <- sum(arg_rows)
   Shape(rows = rows, cols = cols)
 })
@@ -732,6 +732,6 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
 })
 
 Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { .HStack(.args = blocks) })
-  .VStack(.args = row_blocks)
+  row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
+  .VStack(args = row_blocks)
 }

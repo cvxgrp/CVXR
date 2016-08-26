@@ -5,79 +5,99 @@
 #'
 #' @aliases Atom
 #' @export
-Atom <- setClass("Atom", representation(.args = "list"), prototype(.args = list()), contains = c("VIRTUAL", "Expression"))
+Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_), 
+                 validity = function(object) {
+                   if(length(object@args) == 0)
+                     stop("[Atom: args] no arguments given to ", class(object))
+                   return(TRUE)
+                 }, contains = c("VIRTUAL", "Expression"))
 
-# setGeneric("get_slots", function(object, exclude) { standardGeneric("get_slots") })
-# setMethod("get_slots", "Atom", function(object, exclude = c()) {
-#   slot_names <- slotNames(object)
-#   slot_names <- slot_names[which(!(slot_names %in% exclude))]
-#   obj_slots <- lapply(slot_names, function(n) { slot(object, n) })
-#   names(obj_slots) <- slot_names
-#   obj_slots
-# })
+setMethod("initialize", "Atom", function(.Object, ..., args = list(), .size = NA_real_) {
+  .Object@args <- lapply(args, function(arg) { as.Constant(arg) })
+  validate_args(.Object)
+  .Object@.size <- size_from_args(.Object)
+  callNextMethod(.Object, ...)
+})
 
-setMethod("init_dcp_attr", "Atom", function(object) {
-  shape <- shape_from_args(object)
-  sign <- sign_from_args(object)
-  curvature <- Atom.dcp_curvature(func_curvature(object), object@.args, monotonicity(object))
-  DCPAttr(sign = sign, curvature = curvature, shape = shape)
+setMethod("show", "Atom", function(object) {
+  cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
 setMethod("validate_args", "Atom", function(object) { })
-
-setMethod("initialize", "Atom", function(.Object, ..., dcp_attr, .args = list()) {
-  # excl_names = c(".args", slotNames("Expression"))
-  # .Object@.args = get_slots(.Object, exclude = excl_names)
-  .Object@.args <- lapply(.args, as.Constant)
-  .Object@dcp_attr <- init_dcp_attr(.Object)
-  validate_args(.Object)
-  callNextMethod(.Object, ..., dcp_attr = .Object@dcp_attr)
+setMethod("size", "Atom", function(object) { object@.size })
+setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
+setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
+setMethod("is_convex", "Atom", function(object) { 
+  # Applies DCP composition rule
+  if(is_constant(object))
+    return(TRUE)
+  else if(is_atom_convex(object)) {
+    idx <- 1
+    for(arg in object@args) {
+      if(!(is_affine(arg) || (is_convex(arg) && is_incr(object, idx)) || (is_concave(arg) && is_decr(object, idx))))
+        return(FALSE)
+      idx <- idx + 1
+    }
+    return(TRUE)
+  } else
+    return(FALSE)
 })
 
-setMethod("Atom.dcp_curvature", signature(curvature = "Curvature", args = "list", monotonicities = "character"),
-          function(curvature, args, monotonicities) {
-            if(length(args) != length(monotonicities))
-              stop("The number of args must be equal to the number of monotonicities")
-            arg_curvatures = mapply(function(arg, monotonicity) {
-              dcp_curvature(monotonicity = monotonicity, func_curvature = curvature, arg_sign = arg@dcp_attr@sign, arg_curvature = arg@dcp_attr@curvature)
-            }, args, monotonicities)
-            Reduce("+", arg_curvatures)
-          })
+setMethod("is_concave", "Atom", function(object) {
+  # Applies DCP composition rule
+  if(is_constant(object))
+    return(TRUE)
+  else if(is_atom_concave(object)) {
+    idx <- 1
+    for(arg in object@args) {
+      if(!(is_affine(arg) || (is_concave(arg) && is_incr(object, idx)) || (is_convex(arg) && is_decr(object, idx))))
+        return(FALSE)
+      idx <- idx + 1
+    }
+    return(TRUE)
+  } else
+    return(FALSE)
+})
 
 setMethod("canonicalize", "Atom", function(object) {
+  # Constant atoms are treated as a leaf
   if(is_constant(object)) {
+    # Parameterized expressions are evaluated later
     if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
       size <- size(object)
       param <- CallbackParam(value(object), size[1], size[2])
       return(canonical_form(param))
+    # Non-parameterized expressions are evaluated immediately
     } else
       return(canonical_form(Constant(value(object))))
   } else {
     arg_objs <- list()
     constraints <- list()
-    for(arg in object@.args) {
+    for(arg in object@args) {
       canon <- canonical_form(arg)
       arg_objs[[length(arg_objs) + 1]] <- canon[[1]]
       constraints <- c(constraints, canon[[2]])
     }
+    # Special info required by the graph implementation
     data <- get_data(object)
     graph <- graph_implementation(object, arg_objs, size(object), data)
     return(list(graph[[1]], c(constraints, graph[[2]])))
   }
 })
 
-setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) {
-  stop("Unimplemented")
-})
-
 setMethod("variables", "Atom", function(object) {
-  var_list <- lapply(object@.args, function(arg) { variables(arg) })
+  var_list <- lapply(object@args, function(arg) { variables(arg) })
   unique(flatten_list(var_list))
 })
 
 setMethod("parameters", "Atom", function(object) {
-  param_list <- lapply(object@.args, function(arg) { parameters(arg) })
+  param_list <- lapply(object@args, function(arg) { parameters(arg) })
   unique(flatten_list(param_list))
+})
+
+setMethod("constants", "Atom", function(object) {
+  const_list <- lapply(object@args, function(arg) { constants(arg) })
+  unique(flatten_list(const_list))   # TODO: Is this the correct way to remove duplicates?
 })
 
 setMethod("value", "Atom", function(object) {
@@ -103,10 +123,63 @@ setMethod("value", "Atom", function(object) {
   }
   
   # Reduce to scalar if possible
-  if(is.list(result) && length(result) == 1 && (length(result[[1]]) == 1 || all(dim(result[[1]]) == c(1,1))))
-    result[[1]]
+  if(all(intf_size(result) == c(1,1)))
+    intf_scalar_value(result)
   else
     result
+})
+
+.grad.Atom <- function(object) { stop("Unimplemented") }
+setMethod("grad", "Atom", function(object) {
+  # Short-circuit to all zeros if known to be constant
+  if(is_constant(object))
+    return(constant_grad(object))
+  
+  # Returns NA if variable values are not supplied
+  arg_values <- list()
+  for(arg in object@args) {
+    arg_val <- value(arg)
+    if(is.na(arg_val))
+      return(error_grad(object))
+    else
+      arg_values <- c(arg_values, arg_val)
+  }
+  
+  # A list of gradients wrt arguments
+  grad_self <- .grad(arg_values)
+  
+  # The chain rule
+  result <- list()
+  idx <- 1
+  for(arg in object@args) {
+    # A dictionary of gradients wrt variables
+    # Partial argument / partial x
+    grad_arg <- grad(arg)
+    for(key in names(grad_arg)) {   # TODO: Check if this usage of key matches CVXPY
+      # None indicates gradient is not defined
+      if(is.na(grad_arg[key]) || is.na(grad_self[idx]))
+        result[key] <- NA
+      else {
+        D <- grad_arg[key] * grad_self[idx]
+        # Convert 1x1 matrices to scalars
+        if(is.matrix(D) && dim(D) == c(1,1))
+          D <- D[1,1]
+        
+        if(key in result)
+          result[key] <- result[key] + D
+        else
+          result[key] <- D
+      }
+    }
+  }
+  return(result)
+})
+
+.domain.Atom <- function(object) { list() }
+setMethod("domain", "Atom", function(object) {
+  doms <- lapply(object@args, function(arg) { domain(arg) })
+  cons <- lapply(doms, function(dom) { dom })
+  c(.domain(object), cons)
 })
 
 AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
@@ -117,7 +190,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object <- callNextMethod(.Object, ..., .args = list(.Object@expr))
 })
 
-setMethod("size", "AxisAtom", function(object) {
+setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
   else if(object@axis == 1)
@@ -133,15 +206,89 @@ setMethod("validate_args", "AxisAtom", function(object) {
      stop("Invalid argument for axis")
 })
 
+.axis_grad.AxisAtom <- function(object, values) {
+  m <- size(object@args[[1]])[1]
+  n <- size(object@args[[1]])[2]
+  if(is.na(object@axis)) {
+    value <- matrix(t(values[[1]]), nrow = m*n, ncol = 1)
+    D <- .column_grad(object, value)
+    if(!is.na(D))
+      D <- Matrix(D, sparse = TRUE)
+  } else {
+    if(object@axis == 2) {   # Function apply to each column
+      D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, n))
+      for(i in 1:n) {
+        value <- values[[1]][,i]
+        d <- t(.column_grad(object, value))
+        if(is.na(d))
+          return(list(NA))
+        row <- seq(i*n, i*n+m-1)
+        col <- rep(1,m) * i
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, n))
+      }
+    } else {   # Function apply to each row
+      values <- t(values[[1]])
+      D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, m))
+      for(i in 1:m) {
+        value <- values[,i]
+        d <- t(.column_grad(value))
+        if(is.na(d))
+          return(list(NA))
+        row <- seq(i, i+(n-1)*m)
+        col <- rep(1,n)*i
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, m))
+      }
+    }
+  }
+  list(D)
+}
+.column_grad.AxisAtom <- function(object, value) { stop("Unimplemented") }
+
+.AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
+AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
+
+setMethod("initialize", "AffineProd", function(.Object, ..., x, y) {
+  .Object@x <- x
+  .Object@y <- y
+  callNextMethod(.Object, ..., args = list(x, y))
+})
+
+setMethod("validate_args", "AffineProd", function(object) {
+  if(!is_affine(object@args[[1]]) || !is_affine(object@args[[2]]))
+    stop("The arguments to AffineProd must be affine")
+  mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
+})
+
+setMethod("to_numeric", "AffineProd", function(object) { values[[1]] %*% values[[2]] })
+setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
+setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
+setMethod("is_atom_concave", "AffineProd", function(object) { FALSE })
+setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@args[[2-idx]]) })
+setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
+setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
+
+.grad.AffineProd <- function(object, values) {
+  X <- values[[1]]
+  Y <- values[[2]]
+  
+  DX_rows <- prod(size(object@args[[1]]))
+  cols <- size(object@args[[1]])[1] * size(object@args[[2]])[2]
+  
+  # TODO: Finish AffineProd gradient implementation
+  list(DX, DY)
+}
+
 .GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
-                               prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
+                                prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 
+# TODO: Finish implementing GeoMean. Need to handle fractions properly and add slots for tree, cone_lb, etc
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x
-  .Object <- callNextMethod(.Object, ..., .args = list(.Object@x))
+  .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
   
-  x <- .Object@.args[[1]]
+  x <- .Object@args[[1]]
   if(size(x)[1] == 1)
     n <- size(x)[2]
   else if(size(x)[2] == 1)
@@ -176,17 +323,50 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object
 })
 
-setMethod("shape_from_args", "GeoMean", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "GeoMean", function(object) { Sign.POSITIVE })
-setMethod("func_curvature", "GeoMean", function(object) { Curvature.CONCAVE })
-setMethod("monotonicity", "GeoMean", function(object) { INCREASING })
+setMethod("validate_args", "GeoMean", function(object) { })
+setMethod("to_numeric", "GeoMean", function(object, values) {
+  values <- as.vector(values[[1]])
+  val <- 1.0
+  for(idx in length(values)) {
+    x <- values[[idx]]
+    p <- object@w[idx]
+    val <- val * x^p
+  }
+  val
+})
+
+.domain.GeoMean <- function(object) { list(object@args[[1]][object@w > 0] >= 0) }
+.grad.GeoMean <- function(object, values) {
+  x <- as.matrix(values[[1]])
+  # No special case when only one non-zero weight
+  w_arr <- as.vector(object@w)
+  # Outside domain
+  if(any(x[w_arr > 0] <= 0))
+    return(list(NA))
+  else {
+    D <- w_arr/as.vector(x) * to_numeric(object, values)
+    return(list(t(Matrix(D, sparse = TRUE))))
+  }
+}
+
+setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
+setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "GeoMean", function(object) { FALSE })
+setMethod("is_atom_concave", "GeoMean", function(object) { TRUE })
+setMethod("is_incr", "GeoMean", function(object, idx) { TRUE })
+setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
 GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   w <- data[[1]]
   w_dyad <- data[[2]]
   tree <- data[[3]]
-  x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1) })
+  t <- create_var(c(1,1))
+  
+  if(size(arg_objs[[1]])[2] == 1)
+    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1) })
+  else if(size(arg_objs[[1]])[1] == 1)
+    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), 1, i) })
   list(t, gm_constrs(t, x_list, w))
 }
 
@@ -199,56 +379,44 @@ HarmonicMean <- function(x) {
   prod(size(x)) * Pnorm(x = x, p = -1)
 }
 
-.KLDiv <- setClass("KLDiv", representation(x = "Expression", y = "Expression"), contains = "Atom")
-KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
-
-setMethod("validate_args", "KLDiv", function(object) {
-  if(!is_scalar(object@.args[[1]]) || !is_scalar(object@.args[[2]]))
-    stop("The arguments to KLDiv must resolve to scalars")
-})
-
-setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
-  .Object@x <- x
-  .Object@y <- y
-  callNextMethod(.Object, ..., .args = list(.Object@x, .Object@y))
-})
-
-setMethod("shape_from_args", "KLDiv", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "KLDiv", function(object) { Sign.POSITIVE })
-setMethod("func_curvature", "KLDiv", function(object) { Curvature.CONVEX })
-setMethod("monotonicity", "KLDiv", function(object) { rep(NONMONOTONIC, length(object@.args)) })
-
-KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  y <- arg_objs[[2]]
-  t <- create_var(c(1,1))
-  constraints <- list(ExpCone(t, x, y), create_geq(y))   # y >= 0
-  # -t - x + y
-  obj <- sub_expr(y, sum_expr(list(x, y)))
-  list(obj, constraints)
-}
-
-setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
-  KLDiv.graph_implementation(arg_objs, size, data)
-})
-
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 LambdaMax <- function(A) { .LambdaMax(A = A) }
 
+setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., args = list(.Object@A))
+})
+
 setMethod("validate_args", "LambdaMax", function(object) {
-  if(size(object@.args[[1]])[1] != size(object@.args[[1]])[2])
+  if(size(object@args[[1]])[1] != size(object@args[[1]])[2])
     stop("The argument to LambdaMax must resolve to a square matrix")
 })
 
-setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
-  .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
+setMethod("to_numeric", "LambdaMax", function(object, values) {
+  if(!all(t(values[[1]]) == values[[1]]))
+    stop("LambdaMax called on a non-symmetric matrix")
+  max(eigen(values[[1]], only.values = TRUE))
 })
 
-setMethod("shape_from_args", "LambdaMax", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "LambdaMax", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature", "LambdaMax", function(object) { Curvature.CONVEX })
-setMethod("monotonicity", "LambdaMax", function(object) { NONMONOTONIC })
+setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
+setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
+setMethod("is_atom_convex", "LambdaMax", function(object) { FALSE })
+setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
+setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
+setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
+
+.domain.LambdaMax <- function(object) { list(t(object@args[[1]]) == object@args[[1]]) }
+.grad.LambdaMax <- function(object, values) {
+  r <- eigen(values[[1]], only.values = FALSE)
+  v <- r$vectors  # eigenvectors
+  w <- r$values   # eigenvalues
+  
+  d <- rep(0, length(w))
+  d[length(d)] <- 1
+  d <- diag(d)
+  D <- v %*% d %*% t(v)
+  list(t(Matrix(as.vector(D), sparse = TRUE)))
+}
 
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
@@ -274,7 +442,7 @@ LambdaSumLargest <- function(X, k) {
   X <- as.Constant(X)
   if(size(X)[1] != size(X)[2])
     stop("First argument must be a square matrix")
-  else if(round(k) != k || k <= 0)
+  else if(as.integer(k) != k || k <= 0)
     stop("Second argument must be a positive integer")
   
   Z <- Semidef(size(X)[1])
@@ -289,22 +457,43 @@ LambdaSumSmallest <- function(X, k) {
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
 LogDet <- function(A) { .LogDet(A = A) }
 
+setMethod("initialize", "LogDet", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., args = list(.Object@A))
+})
+
 setMethod("validate_args", "LogDet", function(object) {
-  n <- size(object@.args[[1]])[1]
-  m <- size(object@.args[[1]])[2]
-  if(n != m)
+  size <- size(object@args[[1]])
+  if(size[1] != size[2])
     stop("The argument to LogDet must be a square matrix")
 })
 
-setMethod("initialize", "LogDet", function(.Object, ..., A) {
-  .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
+setMethod("to_numeric", "LogDet", function(object, values) {
+  logdet <- determinant(values[[1]], logarithm = TRUE)
+  if(logdet$sign == 1)
+    return(as.numeric(logdet$modulus))
+  else
+    return(-Inf)
 })
 
-setMethod("shape_from_args", "LogDet", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogDet", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature",  "LogDet", function(object) { Curvature.CONCAVE })
-setMethod("monotonicity",    "LogDet", function(object) { NONMONOTONIC })
+setMethod("size_from_args", "LogDet", function(object) { c(1, 1) })
+setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "LogDet", function(object) { FALSE })
+setMethod("is_atom_concave", "LogDet", function(object) { TRUE })
+setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
+setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
+
+.grad.LogDet <- function(object, values) {
+  X <- as.matrix(values[[1]])
+  eigen_val <- eigen(X, only.values = TRUE)
+  if(min(eigen_val) > 0) {
+    # Grad: t(X^(-1))
+    D <- t(solve(X))
+    return(list(t(Matrix(as.vector(D), sparse = TRUE))))
+  } else   # Outside domain
+    return(list(NA))
+}
+.domain.LogDet <- function(object) { list(object@args[[1]] %>>% 0) }
 
 LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]  # n by n matrix
@@ -330,7 +519,7 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # X[1:n, 1:n] == D
   constraints <- Index.block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
   
-  # X[1:n, 1:n] == Z
+  # X[1:n, n:2*n] == Z
   constraints <- Index.block_eq(X, Z, constraints, 1, n, n, 2*n)
   
   # X[n:2*n, n:2*n] == A
@@ -356,25 +545,62 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
   else
     log(apply(exp(values[[1]]), object@axis, sum))
 })
-setMethod("shape_from_args", "LogSumExp", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "LogSumExp", function(object) { Sign.UNKNOWN })
-setMethod("func_curvature",  "LogSumExp", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "LogSumExp", function(object) { INCREASING })
+
+.grad.LogSumExp <- function(object, values) { .axis_grad(object, values) }
+.column_grad.LogSumExp <- function(object, value) {
+  denom <- log(sum(exp(value)))
+  nom <- exp(value)
+  D <- nom/denom
+  D
+}
+
+setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
+setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
+setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
+setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
 LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
-  t <- create_var(c(1,1))
+  axis <- data[[1]]
+  t <- create_var(size)
   
-  # sum(exp(x - t))
-  prom_t <- promote(t, size(x))
-  expr <- sub_expr(x, prom_t)
-  graph <- Exp.graph_implementation(list(expr), size(x))
-  obj <- sum_entries(graph[[1]])
-  constraints <- graph[[2]]
+  # sum(exp(x - t)) <= 1
+  if(is.na(axis)) {
+    prom_t <- promot(t, size(x))
+    expr <- sub_expr(x, prom_t)
+    graph <- Exp.graph_implementation(list(expr), size(x))
+    obj <- graph[[1]]
+    constraints <- graph[[2]]
+    obj <- sum_entries(obj)
+  } else if(axis == 2) {
+    prom_size <- c(size(x)[1], 1)
+    ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
+    prom_t <- mul_expr(ones, t, size(x))
+    expr <- sub_expr(x, prom_t)
+    graph <- Exp.graph_implementation(list(expr), size(x))
+    obj <- graph[[1]]
+    constraints <- graph[[2]]
+    
+    const_size <- c(1, size(x)[1])
+    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
+    obj <- mul_expr(ones, obj, size)
+  } else {    # axis == 1
+    prom_size <- c(1, size(x)[2])
+    ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
+    prom_t <- rmul_expr(t, ones, size(x))
+    expr <- sub_expr(x, prom_t)
+    graph <- Exp.graph_implementation(list(expr), size(x))
+    obj <- graph[[1]]
+    constraints <- graph[[2]]
+    
+    const_size <- c(size(x)[2], 1)
+    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
+    obj <- rmul_expr(obj, ones, size)
+  }
 
-  # obj <= 1
-  one <- create_const(1, c(1,1))
-  constraints <- c(constraints, create_leq(obj, one))
+  ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  constraints <- c(constraints, create_leq(obj, ones))
   list(t, constraints)
 }
 
@@ -382,53 +608,83 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
   LogSumExp.graph_implementation(arg_objs, size, data)
 })
 
-.MatrixFrac <- setClass("MatrixFrac", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
-MatrixFrac <- function(x, P) { .MatrixFrac(x = x, P = P) }
+.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
+
+setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
+  .Object@X <- X
+  .Object@P <- P
+  callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
+})
 
 setMethod("validate_args", "MatrixFrac", function(object) {
-  x <- object@.args[[1]]
-  P <- object@.args[[2]]
+  X <- object@args[[1]]
+  P <- object@args[[2]]
   if(size(P)[1] != size(P)[2])
     stop("The second argument to MatrixFrac must be a square matrix")
-  else if(size(x)[2] != 1)
-    stop("The first argument to MatrixFrac must be a column vector")
-  else if(size(x)[1] != size(P)[1])
+  else if(size(X)[1] != size(P)[1])
     stop("The arguments to MatrixFrac have incompatible dimensions")
 })
 
-setMethod("initialize", "MatrixFrac", function(.Object, ..., x, P) {
-  .Object@x <- x
-  .Object@P <- P
-  callNextMethod(.Object, ..., .args = list(.Object@x, .Object@P))
+setMethod("to_numeric", "MatrixFrac", function(object, values) {
+  # TODO: Raise error if not invertible?
+  X <- values[[1]]
+  P <- values[[2]]
+  sum(diag(t(X) %*% solve(P) %*% X))
 })
 
-setMethod("shape_from_args", "MatrixFrac", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "MatrixFrac", function(object) { Sign.POSITIVE })
-setMethod("func_curvature", "MatrixFrac", function(object) { Curvature.CONVEX })
-setMethod("monotonicity", "MatrixFrac", function(object) { rep(NONMONOTONIC, length(object@.args)) })
+setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
+setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "MatrixFrac", function(object) { TRUE })
+setMethod("is_atom_concave", "MatrixFrac", function(object) { FALSE })
+setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
+setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
+setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+
+.domain.MatrixFrac <- function(object) { list(object@args[[2]] %>>% 0) }
+.grad.MatrixFrac <- function(object, values) {
+  X <- as.matrix(values[[1]])
+  P <- as.matrix(values[[2]])
+  P_inv <- solve(P)
+  
+  # partial_X = (P^-1+P^-T)X
+  # partial_P = (P^-1 * X * X^T * P^-1)^T
+  DX <- (P_inv + t(P_inv)) %*% X
+  DX <- as.vector(t(DX))
+  DX <- t(Matrix(DX, sparse = TRUE))
+  
+  DP <- P_inv %*% X
+  DP <- DP %*% t(X)
+  DP <- DP %*% P_inv
+  DP <- -t(DP)
+  DP <- t(Matrix(as.vector(t(DP))))
+  list(DX, DP)
+}
 
 MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
+  X <- arg_objs[[1]]   # n by m matrix
   P <- arg_objs[[2]]   # n by n matrix
-  n <- size(P)[1]
+  size <- size(X)
+  n <- size[1]
+  m <- size[2]
   
-  # Create a matrix with Schur complement t - t(x)P^(-1)x
-  M <- create_var(c(n+1, n+1))
-  t <- create_var(c(1,1))
+  # Create a matrix with Schur complement Tmat - t(X) * P^-1 * X
+  M <- create_var(c(n+m, n+m))
+  Tmat <- create_var(c(m, m))
   constraints <- list()
   
   # Fix M using the fact that P must be affine by the DCP rules.
   # M[1:n, 1:n] == P
   constraints <- Index.block_eq(M, P, constraints, 1, n, 1, n)
   
-  # M[1:n, n:n+1] == x
-  constraints <- Index.block_eq(M, x, constraints, 1, n, n, n+1)
+  # M[1:n, n:n+m] == X
+  constraints <- Index.block_eq(M, X, constraints, 1, n, n, n+m)
   
-  # M[n:n+1, n:n+1] == t
-  constraints <- Index.block_eq(M, t, constraints, n, n+1, n, n+1)
+  # M[n:n+m, n:n+m] == Tmat
+  constraints <- Index.block_eq(M, Tmat, constraints, n, n+m, n, n+m)
   
   # Add SDP constraints.
-  list(t, c(constraints, SDP(M)))
+  list(trace(Tmat), c(constraints, list(SDP(M))))
 }
 
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
@@ -444,16 +700,41 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
   else
     apply(values[[1]], axis, max)
 })
-setMethod("shape_from_args", "MaxEntries", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@.args[[1]], is_negative(object@.args[[1]]))) })
-setMethod("func_curvature",  "MaxEntries", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "MaxEntries", function(object) { INCREASING })
+
+setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
+setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
+setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
+setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
+setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
+
+.grad.MaxEntries <- function(object, values) { .axis_grad(object, values) }
+.column_grad.MaxEntries(object, value) {
+  # Grad: 1 for a largest index
+  value <- as.vector(value)
+  idx <- which.max(value)
+  D <- rep(0, length(value))
+  D[idx] <- 1
+  D
+}
 
 MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  t <- create_var(c(1,1))
-  promoted_t <- promote(t, size(x))
-  constraints <- list(create_leq(x, promoted_t))
+  axis <- data[[1]]
+  if(is.na(axis)) {
+    t <- create_var(c(1,1))
+    promoted_t <- promote(t, size(arg_objs[[1]]))
+  } else if(axis == 2) {
+    t <- create_var(c(1, size(arg_objs[[1]])[2]))
+    const_size <- c(size(arg_objs[[1]])[1], 1)
+    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
+    promoted_t <- mul_expr(ones, t, size(arg_objs[[1]]))
+  } else {   # axis == 1
+    t <- create_var(c(size(arg_objs[[1]])[1], 1))
+    const_size <- c(1, size(arg_objs[[1]])[2])
+    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
+    promoted_t <- rmul_expr(t, ones, size(arg_objs[[1]]))
+  }
+
+  constraints <- list(create_leq(arg_objs[[1]], promoted_t))
   list(t, constraints)
 }
 
@@ -581,30 +862,56 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "N", "2")) {
   x <- as.Constant(x)
   
+  # Norms for scalars same as absolute value
   if(type == "O" || type == "o" || type == "1" || is_scalar(x))
-    return(Pnorm(x = x, p = 1))
+    Pnorm(x = x, p = 1)
   else if(type == "I" || type == "i" || type == "inf")
-    return(Pnorm(x = x, p = Inf))
+    Pnorm(x = x, p = Inf)
   else if(type == "F" || type == "f" || type == "fro")
-    return(Pnorm(x = x, p = 2))
+    Pnorm(x = x, p = 2)
   else if(type == "N" || type == "n" || type == "nuc")
-    return(NormNuc(A = x))
+    NormNuc(A = x)
   else if(type == "2") {
     if(is_matrix(x))
-      return(SigmaMax(x = x))
+      SigmaMax(x = x)
     else
-      return(Pnorm(x = x, p = 2))
+      Pnorm(x = x, p = 2)
   } else
-    return(Pnorm(x = x, p = type))
+    Pnorm(x = x, p = type)
 })
+
+Norm <- function(x, p = 2, axis = NA_real_) {
+  x <- as.Constant(x)
+  
+  # Norms for scalars same as absolute value
+  if(p == 1 || is_scalar(x))
+    Pnorm(x = x, p = 1, axis = axis)
+  else if(p == "inf" || p == Inf)
+    Pnorm(x = x, p = Inf, axis = axis)
+  else if(p == "nuc")
+    NormNuc(A = x)
+  else if(p == "fro")
+    Pnorm(x = x, p = 2, axis = axis)
+  else if(p == 2) {
+    if(is.na(axis) && is_matrix(x))
+      SigmaMax(x = x)
+    else
+      Pnorm(x = x, p = 2, axis = axis)
+  } else
+    Pnorm(x = x, p = p, axis = axis)
+}
 
 Norm1   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 1, axis = axis) }
 Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
 NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
+  
+  # Inner norms
   vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
-  norm(HStack(unlist(vecnorms)), q)
+  
+  # Outer norms
+  norm(.HStack(args = vecnorms), q)
 }
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
@@ -612,18 +919,33 @@ NormNuc <- function(A) { .NormNuc(A = A) }
 
 setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
+  callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-setMethod("shape_from_args", "NormNuc", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "NormNuc", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "NormNuc", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "NormNuc", function(object) { NONMONOTONIC })
+setMethod("to_numeric", "NormNuc", function(object, values) {
+  # Returns the nuclear norm (i.e. the sum of the singular values) of A
+  sum(svd(values[[1]])$d)
+})
+
+setMethod("size_from_args", "NormNuc", function(object) { c(1, 1) })
+setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "NormNuc", function(object) { TRUE })
+setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
+setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
+setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
+
+.grad.NormNuc <- function(object, values) {
+  # Grad: UV^T
+  s <- svd(val_svd)
+  D <- s$u %*% t(s$v)
+  list(t(Matrix(as.vector(D), sparse = TRUE)))
+}
 
 NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
-  rows <- size(A)[1]
-  cols <- size(A)[2]
+  size <- size(A)
+  rows <- size[1]
+  cols <- size[2]
   
   # Create the equivalent problem:
   # minimize (trace(U) + trace(V))/2
@@ -638,7 +960,7 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   trace <- mul_expr(half, trace(X), c(1, 1))
   
   # Add SDP constraint.
-  list(trace, c(SDP(X), constraints))
+  list(trace, c(list(SDP(X)), constraints))
 }
 
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
@@ -786,10 +1108,11 @@ TotalVariation <- function(value, ...) {
   val_size <- size(value)
   rows <- val_size[1]
   cols <- val_size[2]
+  
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
   else if(is_vector(value))   # L1 norm for vectors
-    norm(value[-1] - value[1:(max(rows, cols) - 1)], 1)
+    Norm(value[-1] - value[1:(max(rows, cols)-1)], 1)
   else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
     values <- c(value, args)

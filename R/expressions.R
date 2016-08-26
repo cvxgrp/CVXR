@@ -3,10 +3,9 @@
 #'
 #' This class represents an expression in CVXR.
 #'
-#' @slot dcp_attr A \code{DCPAttr} object specifying the DCP attributes of the expression.
 #' @aliases Expression
 #' @export
-Expression <- setClass("Expression", representation(dcp_attr = "DCPAttr"), prototype(dcp_attr = new("DCPAttr")))
+Expression <- setClass("Expression")
 
 setOldClass("data.frame")
 setOldClass("matrix")
@@ -15,12 +14,21 @@ setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 
+# Casts the second argument of a binary operator as an Expression
+.cast_other <- function(binary_op) {
+  cast_op <- function(object, other) {
+    other <- as.Constant(other)
+    binary_op(object, other)
+  }
+  cast_op
+}
+
 setMethod("show", "Expression", function(object) {
-  cat("Expression(", as.character(object@dcp_attr@curvature), ", ", as.character(object@dcp_attr@sign), ", ", as.character(object@dcp_attr@shape), ")", sep = "")
+  cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
 
 setMethod("as.character", "Expression", function(x) {
-  paste("Expression(", as.character(x@dcp_attr@curvature), ", ", as.character(x@dcp_attr@sign), ", ", as.character(x@dcp_attr@shape), ")", sep = "")
+  paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
 
 setMethod("canonical_form", "Expression", function(object) { canonicalize(object) })
@@ -147,7 +155,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #'
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
-Leaf <- setClass("Leaf", contains = "Expression")
+Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
 setMethod("variables", "Leaf", function(object) { list() })
 setMethod("parameters", "Leaf", function(object) { list() })
@@ -157,26 +165,26 @@ setMethod("is_concave", "Leaf", function(object) { TRUE })
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
-# TODO: Check this is doing the correct thing
 setMethod("validate_val", "Leaf", function(object, val) {
   if(!is.na(val)) {
     # Convert val to the proper matrix type
     val <- as.matrix(val)
-    dims <- dim(val)
-    if(dims != size(object))
-      stop("Invalid dimensions for value")
+    size <- intf_size(val)
+    if(size != size(object))
+      stop("Invalid dimensions (", size[1], ", ", size[2], ") for ", class(object), " value")
     
     # All signs are valid if sign is unknown
     # Otherwise value sign must match declared sign
-    pos_val <- min(val) >= -1e-5
-    neg_val <- max(val) <= 1e-5
+    sign <- intf_sign(val)
+    pos_val <- sign[1]
+    neg_val <- sign[2]
     if(is_positive(object) && !pos_val || is_negative(object) && !neg_val)
-      stop("Invalid sign for value")
+      stop("Invalid sign for ", class(object), " value")
     # Round to correct sign
-    else if(is_positive(object))
-      val <- max(val, 0)
+    else if(is_positive(object))   # TODO: Need elementwise max/min of sparse matrices
+      val <- pmax(val, 0)
     else if(is_negative(object))
-      val <- min(val, 0)
+      val <- pmin(val, 0)
   }
   return(val)
 })

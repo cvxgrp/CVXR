@@ -50,6 +50,7 @@ Suggests: testthat
 Collate: 'globals.R'
 	 'generics.R'
          'utilities.R'
+         'interface.R'
          'dcp_attr.R'
          'expressions.R'
          'constant.R'

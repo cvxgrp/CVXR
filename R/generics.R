@@ -26,6 +26,7 @@ setGeneric("is_scalar", function(object) { standardGeneric("is_scalar") })
 setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
 setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
+setGeneric("name", function(object) { standardGeneric("name") })
 setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 setGeneric("constants", function(object) { standardGeneric("constants") })
@@ -54,6 +55,7 @@ setGeneric("sum_squares", function(expr) { standardGeneric("sum_squares") })
 
 # Constraint generic methods
 setGeneric("id", function(object) { standardGeneric("id") })
+setGeneric("residual", function(object) { standardGeneric("residual") })
 setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })

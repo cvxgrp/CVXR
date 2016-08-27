@@ -7,12 +7,34 @@
 #' @export
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
-setMethod("func_curvature", "AffAtom", function(object) { Curvature(curvature = CURV_AFFINE_KEY) })
-setMethod("sign_from_args", "AffAtom", function(object) { 
-  arg_signs <- lapply(object@.args, function(arg) { arg@dcp_attr@sign })
-  Reduce("+", arg_signs)
-})
-setMethod("monotonicity", "AffAtom", function(object) { rep(INCREASING, length(object@.args)) })
+setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
+setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
+setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
+setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
+setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
+setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
+
+# TODO: Finish gradient method for affine atoms (can we just pass this along to CVXcanon?)
+.grad.AffAtom <- function(object, values) {
+  fake_args <- list()
+  var_offsets <- list()
+  offset <- 0
+  idx <- 1
+  for(arg in object@args) {
+    if(is_constant(arg))
+      fake_args <- c(fake_args, list(create_const(value(arg), size(arg))))
+    else {
+      fake_args <- c(fake_args, list(create_var(size(arg), idx)))
+      var_offsets[idx] <- offset
+      offset <- offset + prod(size(arg))
+    }
+    idx <- idx + 1
+  }
+  graph <- graph_implementation(object, fake_args, size(object), get_data(object))
+  fake_expr <- graph[[1]]
+  
+  # Get the matrix representation of the function
+}
 
 #'
 #' The AddExpression class.

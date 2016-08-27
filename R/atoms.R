@@ -762,8 +762,8 @@ Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x
 setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@max_denom <- max_denom
   
-  p_old <- p
-  .Object@p <- p
+  # TODO: Deal with fractional powers correctly
+  # p_old <- p
   # if(p == Inf)
   #  .Object@p <- Inf
   # else if(p < 0)
@@ -776,7 +776,8 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   #  .Object@p <- 1
   # else
   #  stop("[Pnorm: validation] Invalid value for p ", p)
-  
+
+  .Object@p <- p  
   if(.Object@p == Inf)
     .Object@.approx_error <- 0
   else
@@ -789,6 +790,21 @@ setMethod("validate_args", "Pnorm", function(object) {
   if(!is.na(object@axis) && object@p != 2)
     stop("The axis parameter is only supported for p = 2")
 })
+
+setMethod("name", "Pnorm", function(object) { 
+  sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
+})
+
+p_norm <- function(x, p) {
+  if(p == Inf)
+    max(abs(x))
+  else if(p == 0)
+    sum(x != 0)
+  else if(p >= 1)
+    sum(abs(x)^p)^(1/p)
+  else
+    sum(x^p)^(1/p)
+}
 
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
@@ -803,35 +819,73 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     return(0)
   
   if(is.na(object@axis))
-    retval <- norm(values[[1]], object@p)
+    retval <- p_norm(values[[1]], object@p)
   else
-    retval <- apply(values, object@axis, function(x) { norm(x, object@p) })
-  return(retval)
+    retval <- apply(values, object@axis, function(x) { p_norm(x, object@p) })
+  retval
 })
 
-setMethod("shape_from_args", "Pnorm", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "Pnorm", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "Pnorm", function(object) { if(object@p >= 1) Curvature.CONVEX else Curvature.CONCAVE })
-setMethod("monotonicity",    "Pnorm", function(object) { if(object@p >= 1) SIGNED else INCREASING })
-setMethod("get_data", "Pnorm", function(object) { object@p })
-setMethod("name", "Pnorm", function(object) { 
-  sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
-})
+setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
+setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
+setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
+setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
+setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
+
+.grad.Pnorm <- function(object, values) { .axis_grad(values) }
+.column_grad.Pnorm <-function(object, value) {
+  rows <- prod(size(object@args[[1]]))
+  value <- as.matrix(value)
+  
+  # Outside domain
+  if(object@p < 1 && any(value <= 0))
+    return(NA)
+  D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
+  if(object@p == 1) {
+    D_null <- D_null + (value > 0)
+    D_null <- D_null - (value < 0)
+    return(t(Matrix(as.vector(D_null), sparse = TRUE)))   # TODO: Is this redundant? Check against CVXPY
+  }
+  denominator <- p_norm(value, object@p)
+  denominator <- denominator^(object@p - 1)
+  
+  # Subgrad is 0 when denom is 0 (or undefined)
+  if(denominator == 0) {
+    if(object@p >= 1)
+      return(D_null)
+    else
+      return(NA)
+  } else {
+    nominator <- value^(object@p - 1)
+    frac <- nominator / denominator
+    return(matrix(as.vector(frac)))
+  }
+}
 
 Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[[1]]
+  axis <- data[[2]]
   x <- arg_objs[[1]]
   t <- create_var(c(1,1))
   constraints <- list()
   
-  if(p == 2)
-    return(list(t, list(SOC(t, list(x)))))
+  # First, take care of special cases p = 2, Inf, and 1
+  if(p == 2) {
+    if(is.na(axis))
+      return(list(t, list(SOC(t, list(x)))))
+    else {
+      t <- create_var(size)
+      return(list(t, list(SOCAxis(reshape(t, c(prod(t$size), 1)), x, axis))))
+    }
+  }
   
   if(p == Inf) {
     t_ <- promote(t, x$size)
     return(list(t, list(create_leq(x, t_), create_geq(sum_expr(list(x, t_))))))
   }
   
+  # We need absolute value constraint for symmetric convex branches (p >= 1)
+  # We alias |x| as x from this point forward to make code pretty
   if(p >= 1) {
     absx <- create_var(x$size)
     constraints <- c(constraints, create_leq(x, absx), create_geq(sum_expr((list(x, absx)))))
@@ -841,10 +895,13 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   if(p == 1)
     return(list(sum_entries(x), constraints))
   
+  # Now take care of remaining convex/concave branches
+  # To create rational powers, need new variable r and constraint sum(r) == t
   r <- create_var(x$size)
   t_ <- promote(t, x$size)
   constraints <- c(constraints, create_eq(sum_entries(r), t))
   
+  # TODO: Make p a fraction so input weight to gm_constrs is nice tuple of fractions
   if(p < 0)
     constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
   else if(p > 0 && p < 1)
@@ -967,6 +1024,60 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   NormNuc.graph_implementation(arg_objs, size, data)
 })
 
+.decomp_quad <- function(P, cond = NA, rcond = NA) {
+  eig <- eigen(P, only.values = FALSE)
+  w <- eig$values
+  V <- eig$vectors
+  
+  if(is.na(rcond))
+    cond <- rcond
+  if(cond %in% c(NA, -1))
+    cond <- 1e6 * .Machine$double.eps   # TODO: Check this is doing the correct thing
+  
+  scale <- max(abs(w))
+  w_scaled <- w / scale
+  maskp <- w_scaled > cond
+  maskn <- w_scaled <- -cond
+  
+  # TODO Allow indefinite QuadForm
+  if(any(maskp) && any(maskn))
+    warn("Forming a non-convex expression QuadForm(x, indefinite)")
+  M1 <- V[,maskp] %*% sqrt(w_scaled[maskp])
+  M2 <- V[,maskn] %*% sqrt(-w_scaled[maskn])
+  list(scale = scale, M1 = M1, M2 = M2)
+}
+
+QuadForm <- function(x, P) {
+  # x^T P x
+  x <- as.Constant(x)
+  P <- as.Constant(P)
+  
+  # Check dimensions
+  n <- size(P)[1]
+  if(size(P)[2] != n || any(size(x) != c(n,1)))
+    stop("Invalid dimensions for arguments")
+  if(is_constant(x))
+    return(t(x) %*% P %*% x)
+  else if(is_constant(P)) {
+    P <- as.matrix(value(P))
+    
+    # Force symmetry
+    P <- (P + t(P)) / 2.0
+    decomp <- .decomp_quad(P)
+    scale <- decomp[[1]]
+    M1 <- decomp[[2]]
+    M2 <- decomp[[3]]
+    
+    ret <- 0
+    if(length(M1) > 0)
+      ret <- ret + scale * SumSquares(Constant(t(M1)) * x)
+    else if(length(M2) > 0)
+      ret <- ret - scale * SumSquares(Cosntant(t(M2)) * x)
+    return(ret)
+  } else
+    stop("At least one argument to QuadForm must be constant")
+}
+
 #'
 #' The QuadOverLin class.
 #'
@@ -978,21 +1089,41 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
-setMethod("validate_args",   "QuadOverLin", function(object) {
-  if(!is_scalar(object@.args[[2]]))
-    stop("[QuadOverLin: validation] y must be a scalar")
-})
-
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
   .Object@y <- y
-  callNextMethod(.Object, ..., .args = list(.Object@x, .Object@y))
+  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
-setMethod("shape_from_args", "QuadOverLin", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "QuadOverLin", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "QuadOverLin", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "QuadOverLin", function(object) { c(SIGNED, DECREASING) })
+setMethod("validate_args",   "QuadOverLin", function(object) {
+  if(!is_scalar(object@args[[2]]))
+    stop("[QuadOverLin: validation] y must be a scalar")
+})
+
+setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
+setMethod("size_from_args", "QuadOverLin", function(object) { c(1, 1) })
+setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
+setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
+setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_positive(object@args[[idx]]) })
+setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 1) })
+setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+
+.domain.QuadOverLin <- function(object) { list(object@args[[2]] >= 0) }
+.grad.QuadOverLin <- function(object, values) {
+  X <- values[[1]]
+  y <- values[[2]]
+  if(y <= 0)
+    return(list(NA, NA))
+  else {
+    # DX = 2X/y, Dy = -||X||^2_2/y^2
+    Dy <- -sum(X^2)/y^2
+    Dy <- Matrix(Dy, sparse = TRUE)
+    DX <- 2.0*X/y
+    DX <- Matrix(as.vector(DX), sparse = TRUE)
+    return(list(DX, Dy))
+  }
+}
 
 QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -1015,18 +1146,31 @@ SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
 setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., .args = list(.Object@A))
+  callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-setMethod("shape_from_args", "SigmaMax", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args",  "SigmaMax", function(object) { Sign.POSITIVE })
-setMethod("func_curvature",  "SigmaMax", function(object) { Curvature.CONVEX })
-setMethod("monotonicity",    "SigmaMax", function(object) { NONMONOTONIC })
+setMethod("to_numeric", "SigmaMax", function(object, values) { norm(values[[1]], type = "2") })
+setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
+setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })
+setMethod("is_atom_concave", "SigmaMax", function(object) { FALSE })
+setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
+setMethod("is_decr", "SigmaMax", function(object, idx) { FALSE })
+
+.grad.SigmaMax <- function(object, values) {
+  # Grad: U diag(e_1) t(V)
+  s <- svd(values[[1]])
+  ds <- rep(0, length(s$d))
+  ds[1] <- 1
+  D <- s$u %*% diag(ds) %*% t(s$v)
+  t(Matrix(as.vector(D), sparse = TRUE))
+}
 
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]   # n by m matrix
-  n <- size(A)[1]
-  m <- size(A)[2]
+  size <- dim(A)
+  n <- size[1]
+  m <- size[2]
   
   # Create a matrix with Schur complement I*t - (1/t)*t(A)*A
   X <- create_var(c(n+m, n+m))
@@ -1038,7 +1182,7 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   prom_t <- promote(t, c(n,1))
   constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, 1, n, 1, n)
   
-  # X[1:n, n:n+1] == A
+  # X[1:n, n:n+m] == A
   constraints <- Index.block_eq(X, A, constraints, 1, n, n, n+m)
   
   # X[n:n+m, n:n+m] == I_m*t
@@ -1046,7 +1190,7 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n, n+m, n, n+m)
   
   # Add SDP constraint.
-  list(t, c(constraints, SDP(X)))
+  list(t, c(constraints, list(SDP(X))))
 }
 
 setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
@@ -1055,38 +1199,61 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 
 .SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
                        validity = function(object) {
-                         if(round(object@k) != object@k || object@k <= 0)
+                         if(as.integer(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
                          return(TRUE)
                          }, contains = "Atom")
 
 SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
 
-setMethod("validate_args",   "SumLargest", function(object) {
-  if(round(object@k) != object@k || object@k <= 0)
-    stop("[SumLargest: validation] k must be a positive integer")
-})
-
 setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
   .Object@x <- x
   .Object@k <- k
-  callNextMethod(.Object, ..., .args = list(.Object@x))
+  callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-setMethod("shape_from_args", "SumLargest", function(object) { Shape(rows = 1, cols = 1) })
-setMethod("sign_from_args", "SumLargest", function(object) { object@.args[[1]]@dcp_attr@sign })
-setMethod("func_curvature", "SumLargest", function(object) { Curvature.CONVEX })
-setMethod("monotonicity", "SumLargest", function(object) { INCREASING })
+setMethod("validate_args",   "SumLargest", function(object) {
+  if(as.integer(object@k) != object@k || object@k <= 0)
+    stop("[SumLargest: validation] k must be a positive integer")
+})
+
+setMethod("to_numeric", "SumLargest", function(object, values) {
+  # Return the sum of the k largest entries of the matrix
+  value <- as.vector(values[[1]])
+  k <- min(object@k, length(value))
+  val_sort <- sort(value, decreasing = FALSE)
+  sum(val_sort[1:k])
+})
+
+setMethod("size_from_args", "SumLargest", function(object) { c(1, 1) })
+setMethod("sign_from_args", "SumLargest", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
+setMethod("is_atom_convex", "SumLargest", function(object) { TRUE })
+setMethod("is_atom_concave", "SumLargest", function(object) { FALSE })
+setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
+setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
+setMethod("get_data", "SumLargest", function(object) { list(object@k) })
+
+.grad.SumLargest <- function(object, values) {
+  # Grad: 1 for each of the k largest indices
+  value <- as.vector(values[[1]])
+  k <- min(object@k, length(value))
+  indices <- order(value, decreasing = TRUE)
+  D <- rep(0, prod(size(object@args[[1]])))
+  D[indices[1:k]] <- 1
+  list(Matrix(D, sparse = TRUE))
+}
 
 SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  # min SumEntries(t) + k*q
+  # s.t. x <= t + q, t >= 0
   x <- arg_objs[[1]]
   k <- create_const(data[[1]], c(1,1))
   q <- create_var(c(1,1))
-  t <- create_var(size(x))
+  t <- create_var(x$size)
   
   sum_t <- sum_entries(t)
   obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
-  prom_q <- promote(q, size(x))
+  prom_q <- promote(q, x$size)
   
   constr <- c(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
   list(obj, constr)
@@ -1115,13 +1282,14 @@ TotalVariation <- function(value, ...) {
     Norm(value[-1] - value[1:(max(rows, cols)-1)], 1)
   else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
-    values <- c(value, args)
-    diffs <- lapply(values, function(mat) {
-      list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
-           mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)])
-    })
-    length <- size(diffs[1])[1] * size(diffs[2])[2]
-    stacked <- VStack(unlist(lapply(diffs, function(diff) { matrix(diff, nrow = 1, ncol = length) })))
-    SumEntries(norm(stacked, p = "F", axis = 1))
+    values <- c(list(value), args)
+    diffs <- list()
+    for(mat in values) {
+      diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
+                             mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
+    }
+    length <- size(diffs[[1]])[1] * size(diffs[[2]])[2]
+    stacked <- .VStack(args = lapply(diffs, function(diff) { matrix(diff, nrow = 1, ncol = length) }))
+    SumEntries(Pnorm(stacked, p = "fro", axis = 1))
   }
 }

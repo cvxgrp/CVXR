@@ -108,7 +108,7 @@ setMethod("value", "Atom", function(object) {
   } else {
     arg_values <- list()
     idx <- 1
-    for(arg in object@.args) {
+    for(arg in object@args) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value(arg)
@@ -187,16 +187,16 @@ AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
   .Object@axis <- axis
-  .Object <- callNextMethod(.Object, ..., .args = list(.Object@expr))
+  .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
 setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
   else if(object@axis == 1)
-    c(size(object@.args[[1]])[1], 1)
+    c(size(object@args[[1]])[1], 1)
   else   # axis == 2
-    c(1, size(object@.args[[1]])[2])
+    c(1, size(object@args[[1]])[2])
 })
 
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
@@ -792,7 +792,7 @@ setMethod("validate_args", "Pnorm", function(object) {
 })
 
 setMethod("name", "Pnorm", function(object) { 
-  sprintf("%s(%s, %s)", class(object), name(object@.args[1]), object@p) 
+  sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p) 
 })
 
 p_norm <- function(x, p) {

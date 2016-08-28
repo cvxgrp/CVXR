@@ -267,14 +267,22 @@ flatten_list <- function(x) {
 #'
 gm <- function(t, x, y) {
   two <- create_const(2, c(1, 1))
-  SOCElemwise(sum_expr(list(x, y)), list(sub_expr(x, y), mul_expr(two, t, t$size)))  
+  length <- prod(size(t))
+  SOCAxis(reshape(sum_expr(list(x, y)), c(length, 1)),
+          vstack(list(
+              reshape(sub_expr(x, y), c(1, length)),
+              reshape(mul_expr(two, t, size(t)), c(1, length))
+            ), c(2, length)), 0)
 }
 
 gm_constrs <- function(t, x_list, p) {
   if(!is_weight(p)) stop("p must be a valid weight vector")
   w <- dyad_completion(p)
-  
+
   # TODO: I have no idea what the tree decomposition means
+  tree <- decompose(w)
+  d <- create_var(size(t))
+  d[w] <- t
   
   if(length(x_list) < length(w))
     x_list <- c(x_list, t)
@@ -282,35 +290,101 @@ gm_constrs <- function(t, x_list, p) {
   if(length(x_list) != length(w))
     stop("Expected length of x_list to be equal to length of w, but got ", length(x_list), " != ", length(w))
   
-  # TODO: Iterate through elements in tree
+  for(i in 1:length(w)) {
+    p <- w[i]
+    v <- x_list[[i]]
+    
+    if(p > 0) {
+      tmp <- rep(0, length(w))
+      tmp[i] <- 1
+      d[tmp] <- v
+    }
+  }
   
   constraints <- list()
+  nams <- names(tree)   # Need names to allow for numeric "keys" like in Python
+  for(i in 1:length(tree)) {
+    elem <- nams[i]
+    children <- tree[i]
+    if(!(1 %in% elem))
+      constraints <- c(constraints, list(gm(d[elem], d[children[1]], d[children[2]])))
+  }
   constraints
 }
 
-pow_high <- function(p, max_denom = 1024, cycles = 3) {
-  require(MASS)
+get_num(frac) {
+  if(!is(frac, "fractions")) stop("frac must be of class fractions")
+  fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
+  as.numeric(fchar[1])
+}
+
+get_denom(frac) {
+  if(!is(frac, "fractions")) stop("frac must be of class fractions")
+  fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
+  if(length(fchar) == 1)
+    return(1)
+  else
+    as.numeric(fchar[2])
+}
+
+pow_high <- function(p, max_denom = 1024, cycles = 10) {
   if(p <= 1) stop("Must have p > 1")
   p <- fractions(1/p, cycles = cycles, max.denominator = max_denom)
+  if(1/p == as.integer(1/p))
+    return(list(as.integer(1/p)), c(p, 1-p))
   list(1/p, c(p, 1-p))
 }
 
-pow_mid <- function(p, max_denom = 1024, cycles = 3) {
-  require(MASS)
+pow_mid <- function(p, max_denom = 1024, cycles = 10) {
   if(p >= 1 || p <= 0) stop("Must have 0 < p < 1")
   p <- fractions(p, cycles = cycles, max.denominator = max_denom)
   list(p, c(p, 1-p))
 }
 
-pow_neg <- function(p, max_denom = 1024, cycles = 3) {
-  require(MASS)
+pow_neg <- function(p, max_denom = 1024, cycles = 10) {
   if(p >= 0) stop("must have p < 0")
+  p <- fractions(p)
   p <- fractions(p/(p-1), cycles = cycles, max.denominator = max_denom)
   list(p/(p-1), c(p, 1-p))
 }
 
 is_power2 <- function(num) {
   (round(num) == num) && num > 0 && bitwAnd(num, num - 1) == 0 
+}
+
+is_dyad <- function(frac) {
+  if((round(frac) == frac) && frac >= 0)
+    TRUE
+  else if(is(frac, "fractions") && frac >= 0 && is_power2(get_denom(frac)))
+    TRUE
+  else
+    FALSE
+}
+
+is_dyad_weight <- function(w) {
+  is_weight(w) && all(sapply(w, function(f) { is_dyad(f) }))
+}
+
+is_weight <- function(w) {
+  if(is.matrix(w) || is.vector(w))
+    w <- as.list(w)
+  valid_elems <- all(sapply(w, function(v) {
+    v >= 0 && ((round(v) == v) || is(v, "fractions"))
+  }))
+  valid_elems && sum(w) == 1
+}
+
+next_pow2 <- function(n) {
+  if(n <= 0) return(1)
+  n2 <- bitwShiftL(1, bit_length(n))  # TODO: Implement bit_length
+  if(bitwShiftR(n2, 1) == n)
+    return(n)
+  else
+    return(n2)
+}
+
+get_max_denom <- function(tup) {
+  max(sapply(tup, function(f) { get_denom(fractions(f)) }))
 }
 
 #'

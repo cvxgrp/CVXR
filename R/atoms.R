@@ -763,7 +763,7 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   .Object@max_denom <- max_denom
   
   # TODO: Deal with fractional powers correctly
-  # p_old <- p
+  p_old <- p
   # if(p == Inf)
   #  .Object@p <- Inf
   # else if(p < 0)
@@ -1041,7 +1041,7 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   
   # TODO Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
-    warn("Forming a non-convex expression QuadForm(x, indefinite)")
+    warning("Forming a non-convex expression QuadForm(x, indefinite)")
   M1 <- V[,maskp] %*% sqrt(w_scaled[maskp])
   M2 <- V[,maskn] %*% sqrt(-w_scaled[maskn])
   list(scale = scale, M1 = M1, M2 = M2)

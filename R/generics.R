@@ -15,9 +15,8 @@ setGeneric("size", function(object) { standardGeneric("size") })
 # Expression generic methods
 setGeneric("value", function(object) { standardGeneric("value") })
 setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
-setGeneric("save_value", function(object) { standardGeneric("save_value") })
+setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
-setGeneric("init_dcp_attr", function(object) { standardGeneric("init_dcp_attr") })
 setGeneric("curvature", function(object) { standardGeneric("curvature") })
 setGeneric("is_scalar", function(object) { standardGeneric("is_scalar") })
 setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
@@ -49,7 +48,6 @@ setGeneric("is_atom_concave", function(object) { standardGeneric("is_atom_concav
 setGeneric("is_incr", function(object, idx) { standardGeneric("is_incr") })
 setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
-setGeneric("sum_squares", function(expr) { standardGeneric("sum_squares") })
 
 # Constraint generic methods
 setGeneric("id", function(object) { standardGeneric("id") })
@@ -57,7 +55,7 @@ setGeneric("residual", function(object) { standardGeneric("residual") })
 setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
-setGeneric("dual_variable", function(object) { standardGeneric("dual_variable") })
+setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 
@@ -83,7 +81,7 @@ setGeneric("validate_solver", function(solver, constraints) { standardGeneric("v
 setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
 setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
-setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
+# setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
 
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })

@@ -37,15 +37,15 @@ setMethod("get_data", "Expression", function(object) { list() })
 # Curvature properties
 setMethod("curvature", "Expression", function(object) {
   if(is_constant(object))
-    curvature_str <- Curvature.CONSTANT
+    curvature_str <- CONSTANT
   else if(is_affine(object))
-    curvature_str <- Curvature.AFFINE
+    curvature_str <- AFFINE
   else if(is_convex(object))
-    curvature_str <- Curvature.CONVEX
+    curvature_str <- CONVEX
   else if(is_concave(object))
-    curvature_str <- Curvature.CONCAVE
+    curvature_str <- CONCAVE
   else
-    curvature_str <- Curvature.UNKNOWN
+    curvature_str <- UNKNOWN
   curvature_str
 })
 setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) })
@@ -58,20 +58,20 @@ setMethod("is_quadratic", "Expression", function(object) { FALSE })
 # Sign properties
 setMethod("sign", "Expression", function(x) {
   if(is_zero(x))
-    sign_str <- Sign.ZERO
+    sign_str <- ZERO
   else if(is_positive(x))
-    sign_str <- Sign.POSITIVE
+    sign_str <- POSITIVE
   else if(is_negative(x))
-    sign_str <- Sign.NEGATIVE
+    sign_str <- NEGATIVE
   else
-    sign_str <- Sign.UNKNOWN
+    sign_str <- UNKNOWN
   sign_str
 })
 setMethod("is_zero", "Expression", function(object) { is_positive(object) && is_negative(object) })
 setMethod("is_positive", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_negative", "Expression", function(object) { stop("Unimplemented") })
 setMethod("size", "Expression", function(object) { stop("Unimplemented") })
-setMethod("is_scalar", "Expression", function(object) { all(size(self) == c(1,1)) })
+setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,1)) })
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
@@ -98,8 +98,8 @@ setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 # Matrix operators
-t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) }   # Need S3 method dispatch as well
-setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(.args = list(x)) })
+t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
+setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
 # TODO: Overload the [ operator for slicing rows/columns from an expression
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # Multiplying by a constant on the right is handled differently
@@ -117,7 +117,7 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # When both expressions are not constant, allow affine * affine, but raise DCPError otherwise
   # Cannot multiply two non-constant expressions
   } else if(is_affine(x) && is_affine(y)) {
-    warn("Forming a non-convex expression (affine) * (affine)")
+    warning("Forming a non-convex expression (affine) * (affine)")
     return(AffineProd(x = x, y = y))
   } else
     stop("Cannot multiply ", curvature(x), "and", curvature(y))

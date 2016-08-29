@@ -231,7 +231,7 @@ setMethod("constants", "Problem", function(object) {
 
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
-setMethod("get_problem_data", "Problem", function(object, solver) {
+get_problem_data.Problem <- function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
@@ -239,7 +239,7 @@ setMethod("get_problem_data", "Problem", function(object, solver) {
   # Raise an error if the solver cannot handle the problem
   validate_solver(solver, constraints)
   get_problem_data(solver, objective, constraints, object@.cached_data)
-})
+}
 
 setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {

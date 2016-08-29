@@ -52,7 +52,7 @@ setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, 
   prob_data@matrix_data
 })
 
-setMethod("get_problem_data", "Solver", function(solver, objective, constraints, cached_data) {
+get_problem_data.Solver <- function(solver, objective, constraints, cached_data) {
   sym_data <- get_sym_data(solver, objective, constraints, cached_data)
   matrix_data <- get_matrix_data(solver, objective, constraints, cached_data)
   
@@ -73,7 +73,7 @@ setMethod("get_problem_data", "Solver", function(solver, objective, constraints,
   data[[BOOL_IDX]] <- conv_idx$bool_idx
   data[[INT_IDX]] <- conv_idx$int_idx
   data
-})
+}
 
 Solver.is_mip <- function(data) {
   length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0

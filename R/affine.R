@@ -80,7 +80,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 })
 
 setMethod("to_numeric", "AddExpression", function(object, values) { Reduce("+", values)  })
-setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(object@args) })
+setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) promote(arg, size) else arg })

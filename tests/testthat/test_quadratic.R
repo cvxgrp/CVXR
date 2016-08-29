@@ -5,7 +5,7 @@ test_that("test elementwise power", {
   expect_true(is_affine(x))
   expect_true(is_quadratic(x))
   
-  s <- Power(t(x)*y, 0)
+  s <- Power(t(x) %*% y, 0)
   expect_true(is_constant(s))
   expect_true(is_affine(s))
   expect_true(is_quadratic(s))
@@ -35,7 +35,7 @@ test_that("test matrix multiplication", {
   expect_true(is_affine(x))
   expect_true(is_quadratic(x))
   
-  s <- t(x)*y
+  s <- t(x) %*% y
   expect_false(is_constant(s))
   expect_false(is_affine(s))
   expect_true(is_quadratic(s))
@@ -67,14 +67,14 @@ test_that("test MatrixFrac class", {
   expect_false(is_constant(s))
   expect_false(is_affine(s))
   expect_true(is_quadratic(s))
-  epxect_true(is_dcp(s))
+  expect_true(is_dcp(s))
 })
 
 test_that("test quadratic form", {
   x <- Variable(5)
   P <- matrix(rnorm(25), nrow = 5, ncol = 5)
   q <- matrix(5, nrow = 5, ncol = 1)
-  s <- t(x)*P*x + t(Q)*x
+  s <- t(x) %*% P %*% x + t(q) %*% x
   expect_false(is_constant(s))
   expect_false(is_affine(s))
   expect_true(is_quadratic(s))
@@ -87,7 +87,7 @@ test_that("test SumSquares class", {
   Q <- matrix(rnorm(28), nrow = 4, ncol = 7)
   M <- matrix(rnorm(21), nrow = 3, ncol = 7)
   
-  y <- P*X*Q + M
+  y <- P %*% X %*% Q + M
   expect_false(is_constant(y))
   expect_true(is_affine(y))
   expect_true(is_quadratic(y))
@@ -113,11 +113,11 @@ test_that("test indefinite quadratic", {
   y <- Variable()
   z <- Variable()
   
-  s <- y*z
+  s <- y %*% z
   expect_true(is_quadratic(s))
   expect_false(is_dcp(s))
   
-  t <- (x+y)^2 - s - z*z
+  t <- (x+y)^2 - s - z %*% z
   expect_true(is_quadratic(t))
   expect_false(is_dcp(t))
 })
@@ -127,17 +127,17 @@ test_that("test non-quadratic", {
   y <- Variable()
   z <- Variable()
   
-  expect_error(is_quadratic(x*y*z))
+  expect_error(is_quadratic(x %*% y %*% z))
   
   s <- MaxEntries(VStack(x^2, Power(y, 2), z))
-  expect_false(is_quadratic(t))
+  expect_false(is_quadratic(s))
 })
 
 test_that("test affine product", {
   x <- Variable(3, 5)
   y <- Variable(5, 4)
   
-  s <- x*y
+  s <- x %*% y
   
   expect_false(is_constant(s))
   expect_false(is_affine(s))

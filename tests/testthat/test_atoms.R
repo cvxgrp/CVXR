@@ -14,11 +14,11 @@ test_that("test the NormInf class", {
   atom <- NormInf(exp)
   
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
   expect_true(is_convex(atom))
   expect_true(is_concave(-atom))
-  expect_equal(curvature(NormInf(atom)), Curvature.CONVEX)
-  expect_equal(curvature(NormInf(-atom)), Curvature.CONVEX)
+  expect_equal(curvature(NormInf(atom)), CONVEX)
+  expect_equal(curvature(NormInf(-atom)), CONVEX)
 })
 
 test_that("test the Norm1 class", {
@@ -26,9 +26,9 @@ test_that("test the Norm1 class", {
   atom <- Norm1(exp)
   
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(curvature(Norm1(atom)), Curvature.CONVEX)
-  expect_equal(curvature(Norm1(-atom)), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(curvature(Norm1(atom)), CONVEX)
+  expect_equal(curvature(Norm1(-atom)), CONVEX)
 })
 
 test_that("test the Norm2 class", {
@@ -36,9 +36,9 @@ test_that("test the Norm2 class", {
   atom <- Norm2(exp)
   
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(curvature(Norm2(atom)), Curvature.CONVEX)
-  expect_equal(curvature(Norm2(-atom)), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(curvature(Norm2(atom)), CONVEX)
+  expect_equal(curvature(Norm2(-atom)), CONVEX)
   
   # Test with axis arg
   expr <- Pnorm(A, 2, axis = 1)
@@ -56,16 +56,16 @@ test_that("test the Power class", {
       expect_equal(size(atom), size)
       
       if(p > 1 || p < 0)
-        expect_equal(curvature(atom), Curvature.CONVEX)
+        expect_equal(curvature(atom), CONVEX)
       else if(p == 1)
-        expect_equal(curvature(atom), Curvature.AFFINE)
+        expect_equal(curvature(atom), AFFINE)
       else if(p == 0)
-        expect_equal(curvature(atom), Curvature.CONSTANT)
+        expect_equal(curvature(atom), CONSTANT)
       else
-        expect_equal(curvature(atom), Curvature.CONCAVE)
+        expect_equal(curvature(atom), CONCAVE)
       
       if(p != 1)
-        expect_equal(sign(atom), Sign.POSITIVE)
+        expect_equal(sign(atom), POSITIVE)
     }
   }
 })
@@ -74,73 +74,73 @@ test_that("test the GeoMean class", {
   # TODO: Need to implement fracify for this to work
   # atom <- GeoMean(x)
   # expect_equal(size(atom), c(1, 1))
-  # expect_equal(curvature(atom), Curvature.CONCAVE)
-  # expect_equal(sign(atom), Sign.POSITIVE)
+  # expect_equal(curvature(atom), CONCAVE)
+  # expect_equal(sign(atom), POSITIVE)
 })
 
 test_that("test the HarmonicMean class", {
   atom <- HarmonicMean(x)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
 })
 
 test_that("test the Pnorm class", {
   atom <- Pnorm(x, p = 1.5)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = 1)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = 2)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = Inf)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = 0.5)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = 0.7)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = -0.1)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = -1)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
   
   atom <- Pnorm(x, p = -1.3)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONCAVE)
-  expect_equal(sign(atom), Sign.POSITIVE)
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), POSITIVE)
 })
 
 test_that("test the QuadOverLin class", {
   atom <- QuadOverLin(Square(x), a)
-  expect_equal(curvature(atom), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
   
   atom <- QuadOverLin(-Square(x), a)
-  expect_equal(curvature(atom), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
   
   atom <- QuadOverLin(Sqrt(x), a)
-  expect_equal(curvature(atom), Curvature.UNKNOWN)
+  expect_equal(curvature(atom), UNKNOWN)
   expect_false(is_dcp(atom))
   
   expect_error(QuadOverLin(x, x))
@@ -154,7 +154,7 @@ test_that("test the arg count for MaxElemwise and MinElemwise", {
 test_that("test the MatrixFrac class", {
   atom <- MatrixFrac(x, A)
   expect_equal(size(atom), c(1, 1))
-  expect_equal(curvature(atom), Curvature.CONVEX)
+  expect_equal(curvature(atom), CONVEX)
   
   # Test MatrixFrac size validation
   expect_error(MatrixFrac(x, C))
@@ -162,10 +162,10 @@ test_that("test the MatrixFrac class", {
 })
 
 test_that("test the sign for MaxEntries", {
-  expect_equal(sign(MaxEntries(1)), Sign.POSITIVE)
-  expect_equal(sign(MaxEntries(-2)), Sign.NEGATIVE)
-  expect_equal(sign(MaxEntries(Variable())), Sign.UNKNOWN)
-  expect_equal(sign(MaxEntries(0)), Sign.ZERO)
+  expect_equal(sign(MaxEntries(1)), POSITIVE)
+  expect_equal(sign(MaxEntries(-2)), NEGATIVE)
+  expect_equal(sign(MaxEntries(Variable())), UNKNOWN)
+  expect_equal(sign(MaxEntries(0)), ZERO)
   
   # Test with axis argument
   expect_equal(size(MaxEntries(Variable(2), axis = 1)), c(2, 1))
@@ -178,10 +178,10 @@ test_that("test the sign for MaxEntries", {
 })
 
 test_that("test the sign for MinEntries", {
-  expect_equal(sign(MinEntries(1)), Sign.POSITIVE)
-  expect_equal(sign(MinEntries(-2)), Sign.NEGATIVE)
-  expect_equal(sign(MinEntries(Variable())), Sign.UNKNOWN)
-  expect_equal(sign(MinEntries(0)), Sign.ZERO)
+  expect_equal(sign(MinEntries(1)), POSITIVE)
+  expect_equal(sign(MinEntries(-2)), NEGATIVE)
+  expect_equal(sign(MinEntries(Variable())), UNKNOWN)
+  expect_equal(sign(MinEntries(0)), ZERO)
   
   # Test with axis argument
   expect_equal(size(MinEntries(Variable(2), axis = 1)), c(2, 1))
@@ -194,61 +194,61 @@ test_that("test the sign for MinEntries", {
 })
 
 test_that("test sign logic for MaxElemwise", {
-  expect_equal(sign(MaxElemwise(1, 2)), Sign.POSITIVE)
-  expect_equal(sign(MaxElemwise(1, Variable())), Sign.POSITIVE)
-  expect_equal(sign(MaxElemwise(1, -2)), Sign.POSITIVE)
-  expect_equal(sign(MaxElemwise(1, 0)), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(1, 2)), POSITIVE)
+  expect_equal(sign(MaxElemwise(1, Variable())), POSITIVE)
+  expect_equal(sign(MaxElemwise(1, -2)), POSITIVE)
+  expect_equal(sign(MaxElemwise(1, 0)), POSITIVE)
   
-  expect_equal(sign(MaxElemwise(Variable(), 0)), Sign.POSITIVE)
-  expect_equal(sign(MaxElemwise(Variable(), Variable())), Sign.UNKNOWN)
-  expect_equal(sign(MaxElemwise(Variable(), -2)), Sign.UNKNOWN)
+  expect_equal(sign(MaxElemwise(Variable(), 0)), POSITIVE)
+  expect_equal(sign(MaxElemwise(Variable(), Variable())), UNKNOWN)
+  expect_equal(sign(MaxElemwise(Variable(), -2)), UNKNOWN)
   
-  expect_equal(sign(MaxElemwise(0, 0)), Sign.ZERO)
-  expect_equal(sign(MaxElemwise(0, -2)), Sign.ZERO)
+  expect_equal(sign(MaxElemwise(0, 0)), ZERO)
+  expect_equal(sign(MaxElemwise(0, -2)), ZERO)
   
-  expect_equal(sign(MaxElemwise(-3, -2)), Sign.NEGATIVE)
+  expect_equal(sign(MaxElemwise(-3, -2)), NEGATIVE)
   
   # Many args
-  expect_equal(sign(MaxElemwise(-2, Variable(), 0, -1, Variable(), -1)), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(-2, Variable(), 0, -1, Variable(), -1)), POSITIVE)
   
   # Promotion
-  expect_equal(sign(MaxElemwise(1, Variable(2))), Sign.POSITIVE)
+  expect_equal(sign(MaxElemwise(1, Variable(2))), POSITIVE)
   expect_equal(size(MaxElemwise(1, Variable(2))), c(2,1))
 })
 
 test_that("test sign logic for MinElemwise", {
-  expect_equal(sign(MinElemwise(1, 2)), Sign.POSITIVE)
-  expect_equal(sign(MinElemwise(1, Variable())), Sign.UNKNOWN)
-  expect_equal(sign(MinElemwise(1, -2)), Sign.NEGATIVE)
-  expect_equal(sign(MinElemwise(1, 0)), Sign.ZERO)
+  expect_equal(sign(MinElemwise(1, 2)), POSITIVE)
+  expect_equal(sign(MinElemwise(1, Variable())), UNKNOWN)
+  expect_equal(sign(MinElemwise(1, -2)), NEGATIVE)
+  expect_equal(sign(MinElemwise(1, 0)), ZERO)
   
-  expect_equal(sign(MinElemwise(Variable(), 0)), Sign.NEGATIVE)
-  expect_equal(sign(MinElemwise(Variable(), Variable())), Sign.UNKNOWN)
-  expect_equal(sign(MinElemwise(Variable(), -2)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(Variable(), 0)), NEGATIVE)
+  expect_equal(sign(MinElemwise(Variable(), Variable())), UNKNOWN)
+  expect_equal(sign(MinElemwise(Variable(), -2)), NEGATIVE)
   
-  expect_equal(sign(MinElemwise(0, 0)), Sign.ZERO)
-  expect_equal(sign(MinElemwise(0, -2)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(0, 0)), ZERO)
+  expect_equal(sign(MinElemwise(0, -2)), NEGATIVE)
   
-  expect_equal(sign(MinElemwise(-3, -2)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(-3, -2)), NEGATIVE)
   
   # Many args
-  expect_equal(sign(MinElemwise(-2, Variable(), 0, -1, Variable(), 1)), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(-2, Variable(), 0, -1, Variable(), 1)), NEGATIVE)
   
   # Promotion
-  expect_equal(sign(MinElemwise(-1, Variable(2))), Sign.NEGATIVE)
+  expect_equal(sign(MinElemwise(-1, Variable(2))), NEGATIVE)
   expect_equal(size(MinElemwise(-1, Variable(2))), c(2, 1))
 })
 
 test_that("test the SumEntries class", {
-  expect_equal(sign(SumEntries(1)), Sign.POSITIVE)
-  expect_equal(sign(SumEntries(c(1, -1))), Sign.UNKNOWN)
-  expect_equal(curvature(SumEntries(c(1, -1))), Curvature.CONSTANT)
-  expect_equal(sign(SumEntries(Variable(2))), Sign.UNKNOWN)
+  expect_equal(sign(SumEntries(1)), POSITIVE)
+  expect_equal(sign(SumEntries(c(1, -1))), UNKNOWN)
+  expect_equal(curvature(SumEntries(c(1, -1))), CONSTANT)
+  expect_equal(sign(SumEntries(Variable(2))), UNKNOWN)
   expect_equal(size(SumEntries(Variable(2))), c(1,1))
-  expect_equal(curvature(SumEntries(Variable(2))), Curvature.AFFINE)
+  expect_equal(curvature(SumEntries(Variable(2))), AFFINE)
   
   # Mixed curvature
-  expect_equal(curvature(SumEntries( c(1,-1) %*% Square(Variable(2)) )), Curvature.UNKNOWN)
+  expect_equal(curvature(SumEntries( c(1,-1) %*% Square(Variable(2)) )), UNKNOWN)
   
   # Test with axis argument
   expect_equal(size(SumEntries(Variable(2), axis = 1)), c(2, 1))
@@ -261,16 +261,16 @@ test_that("test the SumEntries class", {
 })
 
 test_that("test the MulElemwise class", {
-  expect_equal(sign(MulElemwise(c(1, -1), x)), Sign.UNKNOWN)
-  expect_equal(curvature(MulElemwise(c(1, -1), x)), Curvature.AFFINE)
+  expect_equal(sign(MulElemwise(c(1, -1), x)), UNKNOWN)
+  expect_equal(curvature(MulElemwise(c(1, -1), x)), AFFINE)
   expect_equal(size(MulElemwise(c(1, -1), x)), c(2, 1))
   pos_param <- Parameter(2, sign = "positive")
   neg_param <- Parameter(2, sign = "negative")
-  expect_equal(sign(MulElemwise(pos_param, pos_param)), Sign.POSITIVE)
-  expect_equal(sign(MulElemwise(pos_param, neg_param)), Sign.NEGATIVE)
-  expect_equal(sign(MulElemwise(neg_param, neg_param)), Sign.POSITIVE)
+  expect_equal(sign(MulElemwise(pos_param, pos_param)), POSITIVE)
+  expect_equal(sign(MulElemwise(pos_param, neg_param)), NEGATIVE)
+  expect_equal(sign(MulElemwise(neg_param, neg_param)), POSITIVE)
   
-  expect_equal(curvature(MulElemwise(neg_param, Square(x))), Curvature.CONCAVE)
+  expect_equal(curvature(MulElemwise(neg_param, Square(x))), CONCAVE)
   
   # Test promotion
   expect_equal(size(MulElemwise(c(1, -1), 1)), c(2, 1))
@@ -298,16 +298,16 @@ test_that("test the VStack class", {
 
 test_that("test the Reshape class", {
   expr <- Reshape(A, 4, 1)
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(4, 1))
   
   expr <- Reshape(expr, 2, 2)
   expect_equal(size(expr), c(2, 2))
   
   expr <- Reshape(Square(x), 1, 2)
-  expect_equal(sign(expr), Sign.POSITIVE)
-  expect_equal(curvature(expr), Curvature.CONVEX)
+  expect_equal(sign(expr), POSITIVE)
+  expect_equal(curvature(expr), CONVEX)
   expect_equal(size(expr), c(1, 2))
   
   expect_error(Reshape(C, 5, 4))
@@ -315,33 +315,33 @@ test_that("test the Reshape class", {
 
 test_that("test the Vec class", {
   expr <- Vec(C)
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(6, 1))
   
   expr <- Vec(x)
   expect_equal(size(expr), c(2, 1))
   
   expr <- Vec(Square(a))
-  expect_equal(sign(expr), Sign.POSITIVE)
-  expect_equal(curvature(expr), Curvature.CONVEX)
+  expect_equal(sign(expr), POSITIVE)
+  expect_equal(curvature(expr), CONVEX)
   expect_equal(size(expr), c(1, 1))
 })
 
 test_that("test the Diag class", {
   expr <- Diag(x)
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(2,2))
   
   expr <- Diag(A)
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(2, 1))
   
   expr <- Diag(t(x))
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(2, 2))
   
   expect_error(Diag(C))
@@ -349,8 +349,8 @@ test_that("test the Diag class", {
 
 test_that("test the Trace class", {
   expr <- Trace(A)
-  expect_equal(sign(expr), Sign.UNKNOWN)
-  expect_equal(curvature(expr), Curvature.AFFINE)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
   expect_equal(size(expr), c(1, 1))
   
   expect_error(Trace(C))
@@ -358,11 +358,11 @@ test_that("test the Trace class", {
 
 test_that("test the Log1p class", {
   expr <- Log1p(1)
-  expect_equal(sign(expr), Sign.POSITIVE)
-  expect_equal(curvature(expr), Curvature.CONSTANT)
+  expect_equal(sign(expr), POSITIVE)
+  expect_equal(curvature(expr), CONSTANT)
   expect_equal(size(expr), c(1, 1))
   expr <- Log1p(-0.5)
-  expect_equal(sign(expr), Sign.NEGATIVE)
+  expect_equal(sign(expr), NEGATIVE)
 })
 
 test_that("test the UpperTri class", {
@@ -439,11 +439,11 @@ test_that("test DCP properties of partial optimize", {
   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
   p2 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
   # g <- partial_optimize(p2, list(t), list(x))
-  # expect_equal(curvature(g), Curvature.CONVEX)
+  # expect_equal(curvature(g), CONVEX)
   
   p2 <- Problem(Maximize(SumEntries(t)), list(-t <= x, x <= t))
   # g <- partial_optimize(p2, list(t), list(x))
-  # expect_equal(curvature(g), Curvature.CONCAVE)
+  # expect_equal(curvature(g), CONCAVE)
   
   p2 <- Problem(Maximize(Square(t[1])), list(-t <= x, x <= t))
   # g <- partial_optimize(p2, list(t), list(x))

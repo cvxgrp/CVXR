@@ -36,7 +36,7 @@ setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })
 setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })
 setMethod("name", "Variable", function(object) { object@name })
 
-setMethod("save_value", "Variable", function(object) {
+setMethod("save_value", "Variable", function(object, value) {
   object@primal_value <- value
   object
 })

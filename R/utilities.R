@@ -79,43 +79,17 @@ DIMS = "dims"
 BOOL_IDX = "bool_vars_idx"
 INT_IDX = "int_vars_idx"
 
-#'
-#' Curvature types as strings
-#'
-CURV_CONSTANT_KEY = "CONSTANT"
-CURV_AFFINE_KEY = "AFFINE"
-CURV_CONVEX_KEY = "CONVEX"
-CURV_CONCAVE_KEY = "CONCAVE"
-CURV_UNKNOWN_KEY = "UNKNOWN"
-CURVATURE_STRINGS = c(CURV_CONSTANT_KEY, CURV_AFFINE_KEY, CURV_CONVEX_KEY, CURV_CONCAVE_KEY, CURV_UNKNOWN_KEY)
-CURVATURE_NEGATION_MAP <- function(curvature) {
-  if(curvature == CURV_CONVEX_KEY)
-    CURV_CONCAVE_KEY
-  else if(curvature == CURV_CONCAVE_KEY)
-    CURV_CONVEX_KEY
-  else if(curvature %in% CURVATURE_STRINGS)
-    curvature
-  else
-    stop("Curvature type ", curvature, " not recognized")
-}
-  
-#'
-#' Sign types as strings
-#'
-SIGN_POSITIVE_KEY = "POSITIVE"
-SIGN_NEGATIVE_KEY = "NEGATIVE"
-SIGN_UNKNOWN_KEY = "UNKNOWN"
-SIGN_ZERO_KEY = "ZERO"
-SIGN_STRINGS = c(SIGN_POSITIVE_KEY, SIGN_NEGATIVE_KEY, SIGN_UNKNOWN_KEY, SIGN_ZERO_KEY)
+# Keys for curvature and sign
+CONSTANT = "CONSTANT"
+AFFINE = "AFFINE"
+CONVEX = "CONVEX"
+CONCAVE = "CONCAVE"
+ZERO = "ZERO"
+POSITIVE = "POSITIVE"
+NEGATIVE = "NEGATIVE"
+UNKNOWN = "UNKNOWN"
 
-#'
-#' Monotonicity types as strings
-#' 
-INCREASING = "INCREASING"
-DECREASING = "DECREASING"
-SIGNED = "SIGNED"
-NONMONOTONIC = "NONMONOTONIC"
-MONOTONICITY_STRINGS = c(INCREASING, DECREASING, SIGNED, NONMONOTONIC)
+SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 
 #'
 #' Utility functions for shape
@@ -140,7 +114,7 @@ mul_shapes <- function(lh_shape, rh_shape) {
   else {
     if(lh_shape[2] != rh_shape[1])
       stop("Incompatible dimensions")
-    return(lh_shape[1], rh_shape[2])
+    return(c(lh_shape[1], rh_shape[2]))
   }
 }
 
@@ -313,12 +287,14 @@ gm_constrs <- function(t, x_list, p) {
 }
 
 get_num <- function(frac) {
+  require(MASS)
   if(!is(frac, "fractions")) stop("frac must be of class fractions")
   fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
   as.numeric(fchar[1])
 }
 
 get_denom <- function(frac) {
+  require(MASS)
   if(!is(frac, "fractions")) stop("frac must be of class fractions")
   fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
   if(length(fchar) == 1)
@@ -328,20 +304,23 @@ get_denom <- function(frac) {
 }
 
 pow_high <- function(p, max_denom = 1024, cycles = 10) {
+  require(MASS)
   if(p <= 1) stop("Must have p > 1")
   p <- fractions(1/p, cycles = cycles, max.denominator = max_denom)
   if(1/p == as.integer(1/p))
-    return(list(as.integer(1/p)), c(p, 1-p))
+    return(list(as.integer(1/p), c(p, 1-p)))
   list(1/p, c(p, 1-p))
 }
 
 pow_mid <- function(p, max_denom = 1024, cycles = 10) {
+  require(MASS)
   if(p >= 1 || p <= 0) stop("Must have 0 < p < 1")
   p <- fractions(p, cycles = cycles, max.denominator = max_denom)
   list(p, c(p, 1-p))
 }
 
 pow_neg <- function(p, max_denom = 1024, cycles = 10) {
+  require(MASS)
   if(p >= 0) stop("must have p < 0")
   p <- fractions(p)
   p <- fractions(p/(p-1), cycles = cycles, max.denominator = max_denom)
@@ -353,6 +332,7 @@ is_power2 <- function(num) {
 }
 
 is_dyad <- function(frac) {
+  require(MASS)
   if((round(frac) == frac) && frac >= 0)
     TRUE
   else if(is(frac, "fractions") && frac >= 0 && is_power2(get_denom(frac)))

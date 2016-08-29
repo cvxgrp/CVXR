@@ -87,18 +87,18 @@ get_sign <- function(constant) {
 #' @aliases Parameter
 #' @export
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
-                                    prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = SIGN_UNKNOWN_KEY, value = NA_real_), 
+                                    prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
                       validity = function(object) {
                         if(!(object@sign_str %in% SIGN_STRINGS))
                           stop("[Sign: validation] sign_str must be in ", paste(SIGN_STRINGS, collapse = ", "))
                         else
                           return(TRUE)
                         }, contains = "Leaf")
-Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY, value = NA_real_) {
+Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }
 
-setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = SIGN_UNKNOWN_KEY, value = NA_real_) {
+setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_) {
   .Object@id <- id
   .Object@rows <- rows
   .Object@cols <- cols
@@ -125,8 +125,8 @@ setMethod("get_data", "Parameter", function(object) {
 
 setMethod("name", "Parameter", function(object) { object@name })
 setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
-setMethod("is_positive", "Parameter", function(object) { object@sign_str == SIGN_ZERO_KEY || toupper(object@sign_str) == SIGN_POSITIVE_KEY })
-setMethod("is_negative", "Parameter", function(object) { object@sign_str == SIGN_ZERO_KEY || toupper(object@sign_str) == SIGN_NEGATIVE_KEY })
+setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
+setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
 setMethod("value", "Parameter", function(object) { object@value })
 setReplaceMethod("value", "Parameter", function(object, value) {
   object@value <- validate_val(object, value)
@@ -140,7 +140,7 @@ setMethod("canonicalize", "Parameter", function(object) {
 })
 
 .CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal"), contains = "Parameter")
-CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = SIGN_UNKNOWN_KEY) {
+CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN) {
   .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
 }
 

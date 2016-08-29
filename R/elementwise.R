@@ -579,15 +579,19 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   p_old <- p
   
   # How we convert p to a rational depends on the branch of the function
-  if(p > 1)
+  if(p > 1) {
     pw <- pow_high(p, max_denom)
-  else if(p > 0 && p < 1)
+    p <- pw[[1]]
+    w <- pw[[2]]
+  } else if(p > 0 && p < 1) {
     pw <- pow_mid(p, max_denom)
-  else if(p < 0)
+    p <- pw[[1]]
+    w <- pw[[2]]
+  } else if(p < 0) {
     pw <- pow_neg(p, max_denom)
-  
-  p <- pw[[1]]
-  w <- pw[[2]]
+    p <- pw[[1]]
+    w <- pw[[2]]
+  }
   
   if(p == 1) {
     # In case p is a fraction equivalent to 1

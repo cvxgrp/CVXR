@@ -744,17 +744,12 @@ QOLElemwise <- function(arg_objs, size, data = NA_real_) {
 setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
 
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
-.Sqrt <- setClass("Sqrt", representation(x = "Expression"), contains = "Elementwise")
-Sqrt <- function(x) { .Sqrt(x = x) }
-
-setMethod("initialize", "Sqrt", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
-})
+.Sqrt <- setClass("Sqrt", contains = "AxisAtom")
+Sqrt <- function(x, axis = NA_real_) { .Sqrt(expr = x, axis = axis) }
 
 setMethod("validate_args", "Sqrt", function(object) {})
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
-setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
+setMethod("get_data", "Sqrt", function(object) { list(0.5, object@axis) })
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
@@ -796,17 +791,12 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
-.Square <- setClass("Square", representation(x = "Expression"), contains = "Elementwise")
-Square <- function(x) { .Square(x = x) }
-
-setMethod("initialize", "Square", function(.Object, ..., x) {
-  .Object@x <- x
-  callNextMethod(.Object, ..., .args = list(.Object@x))
-})
+.Square <- setClass("Square", contains = "AxisAtom")
+Square <- function(x, axis = NA_real_) { .Square(expr = x, axis = axis) }
 
 setMethod("validate_args", "Square", function(object) {})
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
-setMethod("get_data", "Square", function(object) { list(0.5, c(2, -1)) })
+setMethod("get_data", "Square", function(object) { list(2, object@axis) })
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Square", function(object) { TRUE })
 setMethod("is_atom_concave", "Square", function(object) { FALSE })

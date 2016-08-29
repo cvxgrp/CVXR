@@ -20,7 +20,10 @@ setMethod("canonical_form", "Minimize", function(object) { canonicalize(object) 
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
 setMethod("variables", "Minimize", function(object) { variables(object@expr) })
 setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
+setMethod("constants", "Minimize", function(object) { constants(object@expr) })
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
+setMethod("value", "Minimie", function(object) { value(object@expr) })
+Minimize.primal_to_result <- function(result) { result }
 
 #'
 #' The Maximize class.
@@ -35,7 +38,7 @@ Maximize <- setClass("Maximize", contains = "Minimize")
 setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@expr) })
 setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@expr + e2@expr) })
 setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
-setMethod("+", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 & e2 == 0) e1 else stop("Unimplemented") })
+setMethod("+", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
 setMethod("+", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 + e1 })
 setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
 setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + (-e2) })
@@ -164,13 +167,6 @@ Problem <- function(objective, constraints = list()) {
 CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints) }
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values) }
 
-.reset_cache.Problem <- function(object) {
-  for(solver_name in SOLVERS)
-    object@.cached_data[solver_name] <- ProblemData()
-  object@.cached_data[PARALLEL] <- CachedProblem(NA, NULL)
-  object
-}
-
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
@@ -178,6 +174,12 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@status <- status
 
   # Cached processed data for each solver.
+  .reset_cache <- function(object) {
+    for(solver_name in SOLVERS)
+      object@.cached_data[[solver_name]] <- ProblemData()
+    object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
+    object
+  }
   .Object@.cached_data <- .cached_data
   .Object <- .reset_cache(.Object)
 

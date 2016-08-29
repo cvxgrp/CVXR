@@ -86,6 +86,7 @@ setMethod("canonicalize", "LeqConstraint", function(object) {
 
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })
 setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.expr) })
+setMethod("constants", "LeqConstraint", function(object) { constants(object@.expr) })
 setMethod("residual", "LeqConstraint", function(object) { MaxElemwise(object@.expr, 0) })
 setMethod("value", "LeqConstraint", function(object) {
   resid <- value(residual(object))

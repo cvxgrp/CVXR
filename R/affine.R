@@ -452,10 +452,10 @@ Index.get_special_slice <- function(expr, key) {
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
   select_mat <- idx_mat[key$row_slice, key$col_slice]
   
-  if(!is.null(dim(select_mat)))
+  if(!is.null(dim(select_mat))) {
     final_size <- dim(select_mat)
     sel_size <- final_size
-  else   # Always cast 1-D arrays as column vectors
+  } else   # Always cast 1-D arrays as column vectors
     final_size <- c(length(select_mat), 1)
   
   # TODO: Is this casting redundant? Check against CVXPY logic

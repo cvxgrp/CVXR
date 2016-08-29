@@ -312,13 +312,13 @@ gm_constrs <- function(t, x_list, p) {
   constraints
 }
 
-get_num(frac) {
+get_num <- function(frac) {
   if(!is(frac, "fractions")) stop("frac must be of class fractions")
   fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
   as.numeric(fchar[1])
 }
 
-get_denom(frac) {
+get_denom <- function(frac) {
   if(!is(frac, "fractions")) stop("frac must be of class fractions")
   fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
   if(length(fchar) == 1)
@@ -390,6 +390,37 @@ get_max_denom <- function(tup) {
 #'
 #' Key utilities
 #'
+validate_key <- function(key, shape) {
+  rows <- shape[1]
+  cols <- shape[2]
+  
+  # Change single indices for vectors into double indices
+  if(length(key) != 2) {
+    if(rows == 1)
+      key <- c(c(1), key)
+    else if(cols == 1)
+      key <- c(key, c(1))
+    else
+      stop("Invalid index/slice")
+  }
+  
+  # Change numbers into slices and ensure all slices have a start and stop.
+  # key <- format_slice(key[1], shape[1]), format_slice(key[2], shape[2])
+  key <- mapply(function(slc, dim) { format_slice(slc, dim) }, slc = key, dim = shape)
+  names(key) <- c("rows", "cols")
+  key
+}
+
+to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
+
+wrap_neg_index <- function(index, dim) {
+  if(!is.na(index) && index < 0)
+    index <- index %% dim
+  index
+}
+
+index_to_slice <- function(idx) { c(idx, idx+1) }
+
 ku_size <- function(key, shape) {
   dims <- c()
   for (i in 1:2) {
@@ -398,12 +429,6 @@ ku_size <- function(key, shape) {
     dims <- c(dims, size)
   }
   dims
-}
-
-wrap_neg_index <- function(index, dim) {
-  if(!is.na(index) && index < 0)
-    index <- index %% dim
-  index
 }
 
 index_to_slice <- function(idx) {

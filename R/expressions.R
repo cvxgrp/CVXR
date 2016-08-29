@@ -56,12 +56,12 @@ setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_con
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
 
 # Sign properties
-setMethod("sign", "Expression", function(object) {
-  if(is_zero(object))
+setMethod("sign", "Expression", function(x) {
+  if(is_zero(x))
     sign_str <- Sign.ZERO
-  else if(is_positive(object))
+  else if(is_positive(x))
     sign_str <- Sign.POSITIVE
-  else if(is_negative(object))
+  else if(is_negative(x))
     sign_str <- Sign.NEGATIVE
   else
     sign_str <- Sign.UNKNOWN

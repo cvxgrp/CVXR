@@ -62,7 +62,73 @@ setMethod("canonicalize", "Maximize", function(object) {
 
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
-Maximize.primal_to_result(result) { -result }
+Maximize.primal_to_result <- function(result) { -result }
+
+.SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"), 
+                         prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
+SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
+  solve_time <- NA_real_
+  setup_time <- NA_real_
+  num_iters <- NA_real_
+  
+  if(SOLVE_TIME %in% names(results_dict))
+    solve_time <- results_dict[SOLVE_TIME]
+  if(SETUP_TIME %in% names(results_dict))
+    setup_time <- results_dict[SETUP_TIME]
+  if(NUM_ITERS %in% names(results_dict))
+    num_iters <- results_dict[NUM_ITERS]
+  .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
+}
+
+.SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
+                                                       max_data_dimension = "numeric", max_big_small_squared = "numeric"),
+                         prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
+                                   max_data_dimension = NA_real_, max_big_small_squared = NA_real_))
+
+SizeMetrics <- function(problem) {
+  # num_scalar_variables
+  num_scalar_variables <- 0
+  for(var in variables(problem))
+    num_scalar_variables <- num_scalar_variables + prod(size(var))
+  
+  # num_scalar_data, max_data_dimension, and max_big_small_squared
+  max_data_dimension <- 0
+  num_scalar_data <- 0
+  max_big_small_squared <- 0
+  for(const in c(constants(problem), parameters(problem))) {
+    big <- 0
+    # Compute number of data
+    num_scalar_data <- num_scalar_data + prod(size(const))
+    big <- max(size(const))
+    small <- min(size(const))
+    
+    # Get max data dimension
+    if(max_data_dimension < big)
+      max_data_dimension <- big
+    
+    if(max_big_small_squared < big*small*small)
+      max_big_small_squared <- big*small*small
+    
+    # num_scalar_eq_constr
+    num_scalar_eq_constr <- 0
+    for(constraint in problem@constraints) {
+      if(is(constraint, "EqConstraint"))
+        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@expr))
+    }
+    
+    # num_Scalar_leq_constr
+    num_scalar_leq_constr <- 0
+    for(constraint in problem@constraints) {
+      if(is(constraint, "LeqConstraint"))
+        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@expr))
+    }
+  }
+  
+  .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,
+               max_data_dimension = max_data_dimension, max_big_small_squared = max_big_small_squared)
+}
+
+setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 
 #'
 #' The Problem class.
@@ -73,8 +139,8 @@ Maximize.primal_to_result(result) { -result }
 #' @slot constraints (Optional) A list of constraints on the problem variables.
 #' @aliases Problem
 #' @export
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetrics", .solve_stats = "list"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solve_stats = list()),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solve_stats = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solve_stats = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be of class Minimize or Maximize")
@@ -242,7 +308,7 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
   ## End of section commented out by Naras
 })
 
-.update_problem_state <- function(object, results_dict, sym_data, solver) {
+.update_problem_state.Problem <- function(object, results_dict, sym_data, solver) {
   if(results_dict[STATUS] %in% SOLUTION_PRESENT) {
     object <- .save_values(results_dict[PRIMAL], variables(object), sym_data@var_offsets)
     # Not all solvers provide dual variables
@@ -310,12 +376,15 @@ unpack_results.Problem <- function(object, solve, results_dict) {
   if(length(result_vec) > 0)   # Cast to desired matrix type
     result_vec <- as.matrix(result_vec)
   
+  objects_new <- list()
   for(obj in objects) {
     size <- size(obj)
     rows <- size[1]
     cols <- size[2]
-    if(as.character(obj@id) in offset_map) {
-      offset <- offset_map[as.character(obj@id)]
+    id_char <- as.character(obj@id)
+    if(id_char %in% names(offset_map)) {
+      offset <- offset_map[id_char]
+      
       # Handle scalars
       if(all(c(rows, cols) == c(1,1)))
         value <- index(result_vec, c(offset, 0))
@@ -327,8 +396,9 @@ unpack_results.Problem <- function(object, solve, results_dict) {
     } else  # The variable was multiplied by zero
       value <- matrix(0, nrow = rows, ncol = cols)
     obj <- save_value(obj, value)
+    objects_new <- c(objects_new, obj)
   }
-  # TODO: What do we return?
+  objects_new
 }
 
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
@@ -349,67 +419,4 @@ setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
 setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 * e1 })
 setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
-})
-
-.SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"), 
-                                        prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
-SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
-  solve_time <- NA_real_
-  setup_time <- NA_real_
-  num_iters <- NA_real_
-  
-  if(SOLVE_TIME %in% names(results_dict))
-    solve_time <- results_dict[SOLVE_TIME]
-  if(SETUP_TIME %in% names(results_dict))
-    setup_time <- results_dict[SETUP_TIME]
-  if(NUM_ITERS %in% names(results_dict))
-    num_iters <- results_dict[NUM_ITERS]
-  .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
-}
-
-.SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
-                                                       max_data_dimension = "numeric", max_big_small_squared = "numeric"),
-                                        prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
-                                                  max_data_dimension = NA_real_, max_big_small_squared = NA_real_))
-SizeMetrics <- function(problem) {
-  # num_scalar_variables
-  num_scalar_variables <- 0
-  for(var in variables(problem))
-    num_scalar_variables <- num_scalar_variables + prod(size(var))
-  
-  # num_scalar_data, max_data_dimension, and max_big_small_squared
-  max_data_dimension <- 0
-  num_scalar_data <- 0
-  max_big_small_squared <- 0
-  for(const in c(constants(problem), parameters(problem))) {
-    big <- 0
-    # Compute number of data
-    num_scalar_data <- num_scalar_data + prod(size(const))
-    big <- max(size(const))
-    small <- min(size(const))
-    
-    # Get max data dimension
-    if(max_data_dimension < big)
-      max_data_dimension <- big
-    
-    if(max_big_small_squared < big*small*small)
-      max_big_small_squared <- big*small*small
-    
-    # num_scalar_eq_constr
-    num_scalar_eq_constr <- 0
-    for(constraint in problem@constraints) {
-      if(is(constraint, "EqConstraint"))
-        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@expr))
-    }
-    
-    # num_Scalar_leq_constr
-    num_scalar_leq_constr <- 0
-    for(constraint in problem@constraints) {
-      if(is(constraint, "LeqConstraint"))
-        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@expr))
-    }
-  }
-  
-  .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,
-               max_data_dimension = max_data_dimension, max_big_small_squared = max_big_small_Squared)
 })

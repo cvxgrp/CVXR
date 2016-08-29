@@ -42,13 +42,15 @@ setMethod("save_value", "Variable", function(object) {
 })
 setMethod("value", "Variable", function(object) { object@primal_value })
 setReplaceMethod("value", "Variable", function(object, value) {
-  value <- validate_value(value)
+  value <- validate_val(value)
   object <- save_value(object, value)
   object
 })
 setMethod("grad", "Variable", function(object) {
   len <- prod(size(object))
-  list(as.character(object@id) = sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
+  result <- list(sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
+  names(result) <- as.character(object@id)
+  result
 })
 setMethod("variables", "Variable", function(object) { list(object) })
 setMethod("canonicalize", "Variable", function(object) {

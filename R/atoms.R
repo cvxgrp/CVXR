@@ -165,7 +165,7 @@ setMethod("grad", "Atom", function(object) {
         if(is.matrix(D) && dim(D) == c(1,1))
           D <- D[1,1]
         
-        if(key in result)
+        if(key %in% names(result))
           result[key] <- result[key] + D
         else
           result[key] <- D
@@ -708,7 +708,7 @@ setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
 
 .grad.MaxEntries <- function(object, values) { .axis_grad(object, values) }
-.column_grad.MaxEntries(object, value) {
+.column_grad.MaxEntries <- function(object, value) {
   # Grad: 1 for a largest index
   value <- as.vector(value)
   idx <- which.max(value)

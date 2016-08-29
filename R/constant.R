@@ -129,7 +129,7 @@ setMethod("is_positive", "Parameter", function(object) { object@sign_str == SIGN
 setMethod("is_negative", "Parameter", function(object) { object@sign_str == SIGN_ZERO_KEY || toupper(object@sign_str) == SIGN_NEGATIVE_KEY })
 setMethod("value", "Parameter", function(object) { object@value })
 setReplaceMethod("value", "Parameter", function(object, value) {
-  object@value <- validate_value(object, value)
+  object@value <- validate_val(object, value)
   object
 })
 setMethod("grad", "Parameter", function(object) { list() })

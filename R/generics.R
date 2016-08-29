@@ -10,10 +10,7 @@ setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
-
 setGeneric("size", function(object) { standardGeneric("size") })
-setGeneric("dcp_curvature", function(monotonicity, func_curvature, arg_sign, arg_curvature) { standardGeneric("dcp_curvature") })
-setGeneric("DCPAttr.mul_elemwise", function(lh_exp, rh_exp) { standardGeneric("DCPAttr.mul_elemwise") })
 
 # Expression generic methods
 setGeneric("value", function(object) { standardGeneric("value") })
@@ -30,8 +27,9 @@ setGeneric("name", function(object) { standardGeneric("name") })
 setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 setGeneric("constants", function(object) { standardGeneric("constants") })
+setGeneric("grad", function(object) { standardGeneric("grad") })
 setGeneric("domain", function(object) { standardGeneric("domain") })
-setGeneric("validate_val", function(object, val) { standardGeneric("validate_value") })
+setGeneric("validate_val", function(object, val) { standardGeneric("validate_val") })
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
@@ -41,13 +39,9 @@ setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
 # Atom generic methods
 setGeneric("validate_args", function(object) { standardGeneric("validate_args") })
-setGeneric("shape_from_args", function(object) { standardGeneric("shape_from_args") })
 setGeneric("size_from_args", function(object) { standardGeneric("size_from_args") })
 setGeneric("sign_from_args", function(object) { standardGeneric("sign_from_args") })
-setGeneric("func_curvature", function(object) { standardGeneric("func_curvature") })
-setGeneric("monotonicity", function(object) { standardGeneric("monotonicity") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
-setGeneric("name", function(object) { standardGeneric("name") })
 setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric") })
 
 setGeneric("is_atom_convex", function(object) { standardGeneric("is_atom_convex") })
@@ -68,13 +62,15 @@ setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 
 # Problem generic methods
+setGeneric("status", function(object) { standardGeneric("status") })
+setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
+setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric(".reset_cache", function(object) { standardGeneric(".reset_cache") })
 setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
 
 # Problem data generic methods
 setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })
 setGeneric(".dummy_constr", function(object) { standardGeneric(".dummy_constr") })
-setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })
 setGeneric("get_eq_constr", function(object) { standardGeneric("get_eq_constr") })
 setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_constr") })

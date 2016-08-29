@@ -6,7 +6,7 @@
 #' @slot expr The expression to minimize.
 #' @aliases Minimize
 #' @export
-Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"))
+Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
 
 setMethod("initialize", "Minimize", function(.Object, expr) {
     .Object@expr <- as.Constant(expr)
@@ -116,14 +116,14 @@ SizeMetrics <- function(problem) {
     num_scalar_eq_constr <- 0
     for(constraint in problem@constraints) {
       if(is(constraint, "EqConstraint"))
-        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@expr))
+        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@.expr))
     }
     
     # num_Scalar_leq_constr
     num_scalar_leq_constr <- 0
     for(constraint in problem@constraints) {
       if(is(constraint, "LeqConstraint"))
-        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@expr))
+        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@.expr))
     }
   }
   
@@ -142,8 +142,8 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @slot constraints (Optional) A list of constraints on the problem variables.
 #' @aliases Problem
 #' @export
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solve_stats = "list"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solve_stats = list()),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be of class Minimize or Maximize")
@@ -158,7 +158,7 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
                       if(length(object@.solver_stats) > 0)
                         stop("[Problem: .solver_stats] .solver_stats is an internal slot and should not be set by user")
                       return(TRUE)
-                    })
+                    }, contains = "Canonical")
 
 Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
@@ -224,11 +224,7 @@ setMethod("parameters", "Problem", function(object) {
 setMethod("constants", "Problem", function(object) {
   constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
   constants_ <- c(constants(object@objective), constants_)
-  
-  # Remove duplicates based on constant ID
-  const_nams <- sapply(constants_, function(constant) { id(constant) })
-  dupe_idx <- duplicated(const_nams)
-  constants_[-dupe_idx]
+  unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
 })
 
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
@@ -243,7 +239,7 @@ get_problem_data.Problem <- function(object, solver) {
   get_problem_data(solver, objective, constraints, object@.cached_data)
 }
 
-setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
+setMethod("cvxr_solve", "Problem", function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
       print("Problem does not follow DCP rules. Solving a convex relaxation.")
@@ -251,16 +247,16 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
       stop("Problem does not follow DCP rules.")
   }
   
-  if(solver == LS) {
-    validate_solver(solver, object)
-    objective <- object@objective
-    constraints <- object@constraints
-    
-    sym_data <- get_sym_data(solver, objective, constraints)
-    results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_Start, verbose, ...)
-    object <- .update_problem_data(results_dict, sym_data, solver)
-    return(value(object))
-  }
+  ## if(solver == LS_NAME) {
+  ##  validate_solver(solver, object)
+  ##  objective <- object@objective
+  ##  constraints <- object@constraints
+  ##  
+  ##  sym_data <- get_sym_data(solver, objective, constraints)
+  ##  results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_Start, verbose, ...)
+  ##  object <- .update_problem_data(results_dict, sym_data, solver)
+  ##  return(value(object))
+  ## }
 
   # Standard cone problem
   canon <- canonicalize(object)

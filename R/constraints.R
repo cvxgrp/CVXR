@@ -54,7 +54,7 @@ setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
                                stop("[LeqConstraint: .expr] .expr is an internal slot and should not be set by user")
                              return(TRUE)
                            },
-                            contains = "Constraint")
+                            contains = c("Canonical", "Constraint"))
 LeqConstraint <- function(lh_exp, rh_exp) { .LeqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_exp, rh_exp, args = list(), .expr, dual_variable = Variable()) {

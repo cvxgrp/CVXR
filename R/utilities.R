@@ -1,4 +1,15 @@
 #'
+#' Canonical class
+#'
+setClass("Canonical", contains = "VIRTUAL")
+setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
+setMethod("variables", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("parameters", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("constants", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("get_data", "Canonical", function(object) { list() })
+
+#'
 #' CVXR Package Constants
 #'
 # Constants for operators.
@@ -30,12 +41,22 @@ INF_OR_UNB = c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURAT
 
 # Solver names.
 CVXOPT_NAME = "CVXOPT"
+GLPK_NAME = "GLPK"
+GLPK_MI_NAME = "GLPK_MI"
+CBC_NAME = "CBC"
 ECOS_NAME = "ECOS"
 ECOS_BB_NAME = "ECOS_BB"
-SOLVERS <- c(ECOS_NAME)
+SCS_NAME = "SCS"
+GUROBI_NAME = "GUROBI"
+MOSEK_NAME = "MOSEK"
+LS_NAME = "LS"
+SOLVERS <- c(ECOS_NAME)   # TODO: Add more when we implement other solvers
 
 # Parallel (meta) solver
 PARALLEL = "parallel"
+
+# Robust CVXOPT LDL KKT solver
+ROBUST_KKTSOLVER = "robust"
 
 # Map of constraint types
 EQ_MAP = 1
@@ -66,6 +87,9 @@ OBJ_OFFSET = "obj_offset"
 PRIMAL = "primal"
 EQ_DUAL = "eq_dual"
 INEQ_DUAL = "ineq_dual"
+SOLVE_TIME = "solve_time"  # in seconds
+SETUP_TIME = "setup_time"  # in seconds
+NUM_ITERS = "num_iters"    # number of iterations
 
 # Keys for problem data dict.
 C = "c"

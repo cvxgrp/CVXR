@@ -5,7 +5,7 @@
 #'
 #' @aliases Expression
 #' @export
-Expression <- setClass("Expression")
+Expression <- setClass("Expression", contains = "Canonical")
 
 setOldClass("data.frame")
 setOldClass("matrix")
@@ -30,9 +30,6 @@ setMethod("show", "Expression", function(object) {
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
-
-setMethod("canonical_form", "Expression", function(object) { canonicalize(object) })
-setMethod("get_data", "Expression", function(object) { list() })
 
 # Curvature properties
 setMethod("curvature", "Expression", function(object) {

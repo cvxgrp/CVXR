@@ -169,7 +169,7 @@ SolveResult <- function(opt_value, status, primal_values, dual_values) { list(op
     object@.cached_data[solver_name] <- ProblemData()
   object@.cached_data[PARALLEL] <- CachedProblem(NA, NULL)
   object
-})
+}
 
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective

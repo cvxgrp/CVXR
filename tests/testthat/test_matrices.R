@@ -4,7 +4,7 @@ c <- Variable(name = "c")
 
 x <- Variable(2, name = "x")
 y <- Variable(3, name = "y")
-z <- Variable(2, naem = "z")
+z <- Variable(2, name = "z")
 
 A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
@@ -47,8 +47,8 @@ test_that("Test R matrices", {
   
   # Matrix
   Amat <- matrix(1:8, nrow = 4, ncol = 2)
-  assert_expression(Amat*x, c(4, 1))
-  assert_expression((t(Amat) %*% Amat) * x, c(2, 1))
+  assert_expression(Amat %*% x, c(4, 1))
+  assert_expression((t(Amat) %*% Amat) %*% x, c(2, 1))
   
   # PSD inequalities
   Amat <- matrix(rep(1, 4), nrow = 2, ncol = 2)
@@ -74,10 +74,12 @@ test_that("Test R scalars", {
 })
 
 test_that("Test sparseMatrix objects from the Matrix library", {
+  require(Matrix)
+  
   # Constants
   A <- matrix(1:8, nrow = 4, ncol = 2)
   A <- Matrix(A, sparse = TRUE)
-  A <- Matrix(i = 1:2, j = 1:2, x = rep(1, 2))
+  A <- sparseMatrix(i = 1:2, j = 1:2, x = rep(1, 2))
   Aidx <- A[1,]
   Aidx <- A[1:2,]
   # expect_equal(dim(Aidx), c(1, 2))

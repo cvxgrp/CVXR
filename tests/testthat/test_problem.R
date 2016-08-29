@@ -278,7 +278,7 @@ test_that("test problem linear combinations", {
 test_that("test solving problems in parallel", {
   p <- Parameter()
   problem <- Problem(Minimize(Square(a) + Square(b) + p), list(b >= 2, a >= 1))
-  p@value <- 1
+  value(p) <- 1
   
   # Ensure that parallel solver still works after repeated calls
   for(i in 1:2) {
@@ -332,7 +332,7 @@ test_that("Test scalar LP problems", {
   exp <- Maximize(a)
   p <- Problem(exp, list(a <= 2))
   # result <- solve(p, solver = "ECOS")
-  # expect_equal(result$optimal_value, p@value)
+  # expect_equal(result$optimal_value, value(p))
   # expect_equal(result$status, "OPTIMAL")
   # expect_false(is.na(result$a))
   # expect_false(is.na(p@constraints[1]@dual_value))
@@ -351,7 +351,7 @@ test_that("Test scalar LP problems", {
   # p.constraints[1].save_value(2)
   
   # result <- solve(p, solver = "ECOS")
-  # expect_equal(result$optimal_value, p@value)
+  # expect_equal(result$optimal_value, value(p))
   # expect_equal(result$status, "INFEASIBLE")
   # expect_equal(result$optimal_value, Inf)
   # expect_true(result$optimal_value < 0)
@@ -360,7 +360,7 @@ test_that("Test scalar LP problems", {
   
   p <- Problem(Minimize(-a), list(a >= 2, a <= 1))
   # result <- solve(p, solver = "ECOS")
-  # expect_equal(result$optimal_value, p@value)
+  # expect_equal(result$optimal_value, value(p))
   # expect_equal(result$status, "INFEASIBLE")
   # expect_true(result$optimal_value, Inf)
   # expect_true(result$optimal_value > 0)
@@ -385,23 +385,23 @@ test_that("Test vector LP problems", {
 })
 
 test_that("Test ECOS with no inequality constraints", {
-  T <- Constant(matrix(1, nrow = 2, ncol = 2))@value
-  p <- Problem(Minimize(1), list(A == T))
+  Tmat <- Constant(matrix(1, nrow = 2, ncol = 2))@value
+  p <- Problem(Minimize(1), list(A == Tmat))
   # result <- solve(p, solver = "ECOS")
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
   # expect_equal(result$A, T, tolerance = TOL)
 })
 
 test_that("Test matrix LP problems", {
-  T <- Constant(matrix(1, nrow = 2, ncol = 2))@value
-  p <- Problem(Minimize(1), list(A == T))
+  Tmat <- Constant(matrix(1, nrow = 2, ncol = 2))@value
+  p <- Problem(Minimize(1), list(A == Tmat))
   # result <- solve(p)
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
   # expect_equal(result$A, T, tolerance = TOL)
   
   T <- Constant(matrix(1, nrow = 2, ncol = 3)*2)@value
   c <- Constant(matrix(c(3,4), nrow = 2, ncol = 1))@value
-  p <- Problem(Minimize(1), list(A >= T*C, A == B, C == t(T)))
+  p <- Problem(Minimize(1), list(A >= T*C, A == B, C == t(Tmat)))
   # result <- solve(p)
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
   # expect_equal(result$A, result$B, tolerance = TOL)
@@ -433,8 +433,8 @@ test_that("Test variable promotion", {
 test_that("Test parameter promotion", {
   a <- Parameter()
   exp <- rbind(c(1,2), c(3,4))*a
-  a@value <- 2
-  expect_false(any(exp@value - 2*cbind(c(1,2), c(3,4))))
+  value(a) <- 2
+  expect_false(any(value(exp) - 2*cbind(c(1,2), c(3,4))))
 })
 
 test_that("test problems with parameters", {
@@ -1053,21 +1053,21 @@ test_that("Test interaction of caching with changing constraints", {
 test_that("Test positive definite constraints", {
   C <- Variable(3,3)
   obj <- Maximize(C[1,3])
-  # constraints <- list(Diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == t(C), C >> 0)
+  constraints <- list(Diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == t(C), C %>>% 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$optimal_value, 0.583151, tolerance = 1e-2)
   
   C <- Variable(2,2)
   obj <- Maximize(C[1,2])
-  # constraints <- list(C == 1, C >> rbind(c(2,0), c(0,2)))
+  constraints <- list(C == 1, C %>>% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$status, "INFEASIBLE")
   
   C <- Symmetric(2,2)
   obj <- Minimize(C[1,1])
-  constraints <- list(C << rbind(c(2,0), c(0,2)))
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$status, "UNBOUNDED")
@@ -1076,7 +1076,7 @@ test_that("Test positive definite constraints", {
 test_that("Test the duals of PSD constraints", {
   C <- Symmetric(2,2)
   obj <- Maximize(C[1,1])
-  # constraints <- list(C << rbind(c(2,0), c(0,2)))
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$optimal_value, 2, tolerance = 1e-4)
@@ -1093,7 +1093,7 @@ test_that("Test the duals of PSD constraints", {
   # Test dual values with SCS that have off-diagonal entries
   C <- Symmetric(2,2)
   obj <- Maximize(C[1,2] + C[2,1])
-  constraints <- list(C << rbind(c(2,0), c(0,2)), C >= 0)
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)), C >= 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$optimal_value, 4, tolerance = 1e-3)

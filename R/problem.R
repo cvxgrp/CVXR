@@ -22,7 +22,7 @@ setMethod("variables", "Minimize", function(object) { variables(object@expr) })
 setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
 setMethod("constants", "Minimize", function(object) { constants(object@expr) })
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
-setMethod("value", "Minimie", function(object) { value(object@expr) })
+setMethod("value", "Minimize", function(object) { value(object@expr) })
 Minimize.primal_to_result <- function(result) { result }
 
 #'

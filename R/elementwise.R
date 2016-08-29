@@ -503,7 +503,8 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
-  Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
+  # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
+  Reduce("pmax", values)
 })
 
 setMethod("sign_from_args", "MaxElemwise", function(object) {

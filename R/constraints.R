@@ -101,7 +101,7 @@ setMethod("save_value", "LeqConstraint", function(object, value) { save_value(ob
 EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
 
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
-setMethod("residual", "EqConstraint", function(object) { abs(object@.exp) })
+setMethod("residual", "EqConstraint", function(object) { abs(object@.expr) })
 setMethod("canonicalize", "EqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual_holder <- create_eq(canon[[1]], constr_id = object@constr_id)
@@ -151,7 +151,7 @@ PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_e
 
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 setMethod("residual", "PSDConstraint", function(object) {
-  min_eig <- LambdaMin(object@.exp + t(object@.exp))/2
+  min_eig <- LambdaMin(object@.expr + t(object@.expr))/2
   -MinElemwise(min_eig, 0)
 })
 

@@ -1,5 +1,8 @@
 useDynLib(cvxr)
+export("%>>%")
+export("%<<%")
 exportPattern("^[[:alpha:]]+")
 import(methods)
 import(Rcpp)
 import(Matrix)
+import(MASS)

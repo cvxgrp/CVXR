@@ -347,7 +347,7 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #' @slot x The \S4class{Expression} that is being operated upon.
 #' @aliases Log
 #' @export
-.Log <- setClass("Log", representation(x = "Expression"), contains = "Elementwise")
+.Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 Log <- function(x) { .Log(x = x) }
 setMethod("log", "Expression", function(x) { .Log(x = x) })
 

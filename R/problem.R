@@ -111,20 +111,20 @@ SizeMetrics <- function(problem) {
     
     if(max_big_small_squared < big*small*small)
       max_big_small_squared <- big*small*small
+  }
+  
+  # num_scalar_eq_constr
+  num_scalar_eq_constr <- 0
+  for(constraint in problem@constraints) {
+    if(is(constraint, "EqConstraint"))
+      num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@.expr))
+  }
     
-    # num_scalar_eq_constr
-    num_scalar_eq_constr <- 0
-    for(constraint in problem@constraints) {
-      if(is(constraint, "EqConstraint"))
-        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@.expr))
-    }
-    
-    # num_Scalar_leq_constr
-    num_scalar_leq_constr <- 0
-    for(constraint in problem@constraints) {
-      if(is(constraint, "LeqConstraint"))
-        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@.expr))
-    }
+  # num_scalar_leq_constr
+  num_scalar_leq_constr <- 0
+  for(constraint in problem@constraints) {
+    if(is(constraint, "LeqConstraint"))
+      num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@.expr))
   }
   
   .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,

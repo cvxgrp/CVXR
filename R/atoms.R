@@ -395,7 +395,7 @@ setMethod("validate_args", "LambdaMax", function(object) {
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
     stop("LambdaMax called on a non-symmetric matrix")
-  max(eigen(values[[1]], only.values = TRUE))
+  max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
@@ -485,7 +485,7 @@ setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
 
 .grad.LogDet <- function(object, values) {
   X <- as.matrix(values[[1]])
-  eigen_val <- eigen(X, only.values = TRUE)
+  eigen_val <- eigen(X, only.values = TRUE)$values
   if(min(eigen_val) > 0) {
     # Grad: t(X^(-1))
     D <- t(solve(X))

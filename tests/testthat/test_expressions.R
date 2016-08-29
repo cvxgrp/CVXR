@@ -1,3 +1,5 @@
+TOL <- 1e-6
+
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")
@@ -13,7 +15,7 @@ test_that("Test the Variable class", {
   y <- Variable()
   expect_equal(size(x), c(2,1))
   expect_equal(size(y), c(1,1))
-  expect_equal(curvature(x), Curvature.AFFINE)
+  expect_equal(curvature(x), AFFINE)
   expect_equal(canonical_form(x)[[1]]$size, c(2,1))
   expect_equal(canonical_form(x)[[2]], list())
 })
@@ -21,47 +23,49 @@ test_that("Test the Variable class", {
 test_that("Test assigning a value to a variable", {
   # Scalar variable
   a <- Variable()
-  a@value <- 1
-  expect_equal(a@value, 1)
-  expect_error(a@value <- c(2, 1))
+  value(a) <- 1
+  expect_equal(value(a), matrix(1))
+  expect_error(value(a) <- c(2,1))
   
   # Test assigning None
-  a@value <- 1
-  a@value <- NA
-  expect_true(is.na(a@value))
+  value(a) <- 1
+  value(a) <- NA
+  expect_true(is.na(value(a)))
   
   # Vector variable
   x <- Variable(2)
-  x@value <- c(2, 1)
-  expect_equal(x@value, c(2, 1), tolerance = TOL)
+  value(x) <- c(2,1)
+  expect_equal(value(x), matrix(c(2,1)), tolerance = TOL)
   
   # Matrix variable
   A <- Variable(3, 2)
-  A@value <- matrix(1, nrow = 3, ncol = 2)
-  expect_equal(A@value, matrix(1, nrow = 3, ncol = 2))
+  value(A) <- matrix(1, nrow = 3, ncol = 2)
+  expect_equal(value(A), matrix(1, nrow = 3, ncol = 2))
   
   # Test assigning negative val to non-negative variable
   x <- NonNegative()
-  expect_error(x@value <- -2)
+  expect_error(value(x) <- -2)
   
   # Small negative values are rounded to zero
-  x@value <- -1e-8
-  expect_equal(x@value, 0)
+  value(x) <- -1e-8
+  expect_equal(value(x), matrix(0))
 })
 
 test_that("Test transposing variables", {
   var <- t(a)
   expect_equal(size(var), c(1,1))
   
-  # a.save_value(2)
-  # expect_equal(var@value, 2)
+  a <- save_value(a, 2)
+  var <- t(a)
+  expect_equal(value(var), 2)
   
   var <- t(x)
   expect_equal(size(var), c(1,2))
   
-  # x.save_value(matrix(c(1, 2), nrow = 2, ncol = 1))
-  # expect_equal(var@value[1,1], 1)
-  # expect_equal(var@value[1,2], 2)
+  x <- save_value(x, matrix(c(1, 2), nrow = 2, ncol = 1))
+  var <- t(x)
+  expect_equal(value(var)[1,1], 1)
+  expect_equal(value(var)[1,2], 2)
   
   var <- t(C)
   expect_equal(size(var), c(2,3))
@@ -75,7 +79,7 @@ test_that("Test transposing variables", {
 
 test_that("Test the Constant class", {
   c <- Constant(2)
-  expect_equal(value(c), 2)
+  expect_equal(value(c), matrix(2))
   expect_equal(size(c), c(1,1))
   expect_equal(curvature(c), CONSTANT)
   expect_equal(sign(c), POSITIVE)
@@ -95,22 +99,22 @@ test_that("Test the Constant class", {
   
   # Test sign of a complex expression
   c <- Constant(matrix(c(1,2), nrow = 2, ncol = 1))
-  A <- Constant(matrix(1, nrow = 2, ncol = 2))
-  exp <- t(c)*A*c
+  Acon <- Constant(matrix(1, nrow = 2, ncol = 2))
+  exp <- t(c) %*% Acon %*% c
   expect_equal(sign(exp), POSITIVE)
-  expect_equal(sign(t(c) * c), POSITIVE)
+  expect_equal(sign(t(c) %*% c), POSITIVE)
   exp <- t(t(c))
   expect_equal(sign(exp), POSITIVE)
-  exp <- t(c)*A
+  exp <- t(c) %*% A
   expect_equal(sign(exp), UNKNOWN)
 })
 
 test_that("test R vectors as constants", {
   c <- c(1,2)
   p  <- Parameter(2)
-  p@value <- c(1,1)
-  expect_equal(value(c*p), 3)
-  expect_equal(size(c*x), c(1,1))
+  value(p) <- c(1,1)
+  expect_equal(value(c %*% p), matrix(3))
+  expect_equal(size(c %*% x), c(1,1))
 })
 
 test_that("test the Parameters class", {
@@ -119,29 +123,29 @@ test_that("test the Parameters class", {
   expect_equal(size(p), c(1,1))
   
   p <- Parameter(4, 3, sign = "positive")
-  expect_error(p@value <- 1)
+  expect_error(value(p) <- 1)
   
   val <- matrix(-1, nrow = 4, ncol = 3)
   val[1,1] <- 2
   
   p <- Parameter(4, 3, sign = "positive")
-  expect_error(p@value <- val)
+  expect_error(value(p) <- val)
   
   p <- Parameter(4, 3, sign = "negative")
-  expect_error(p@value <- val)
+  expect_error(value(p) <- val)
   
   # No error for unknown sign
   p <- Parameter(4, 3)
-  p@value <- val
+  value(p) <- val
   
   # Initialize a parameter with a value
   p <- Parameter(value = 10)
   expect_equal(value(p), 10)
   
   # Test assigning NA
-  p@value <- 10
-  p@value <- NA
-  expect_true(is.na(p@value))
+  value(p) <- 10
+  value(p) <- NA
+  expect_true(is.na(value(p)))
   
   expect_error(p <- Parameter(2, 1, sign = "negative", value = c(2,1)))
   expect_error(p <- Parameter(4, 3, sign = "positive", value = c(1,2)))
@@ -170,7 +174,7 @@ test_that("test the AddExpression class", {
   
   # Test that sum is flattened
   exp <- x + c + x
-  expect_equal(length(exp@.args), 3)
+  expect_equal(length(exp@args), 3)
 })
 
 test_that("test the SubExpression class", {
@@ -197,7 +201,7 @@ test_that("test the SubExpression class", {
 test_that("test the MulExpression class", {
   # Vectors
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
-  exp <- c*x
+  exp <- c %*% x
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(c[1]*x), UNKNOWN)
   expect_equal(canonical_form(exp)[[1]]$size, c(1,1))
@@ -207,7 +211,7 @@ test_that("test the MulExpression class", {
   expect_error(matrix(c(2,2,3), nrow = 3, ncol = 1) * x)
   
   # Matrices
-  expect_error(rbind(c(2,1), c(2,2)) * c)
+  expect_error(rbind(c(2,1), c(2,2)) %*% c)
   
   # Affine times affine is okay
   q <- A * B
@@ -224,7 +228,7 @@ test_that("test the MulExpression class", {
   
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2, 2, -2), nrow = 1, ncol = 3))
-  exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c * C
+  exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
   expect_equal(sign(exp), UNKNOWN)
   
   # Scalar constants on the right should be moved left
@@ -253,15 +257,15 @@ test_that("test matrix multiplication operator %*%", {
   expect_error(Constant(rbind(c(2,1), c(2,2))) %*% C)
   
   # Affine times affine is okay
-  q <- A %*% B
+  expect_warning(q <- A %*% B)
   expect_true(is_quadratic(q))
   
   # Non-affine times non-constant raises error
-  expect_error(A %*% B %*% A)
+  expect_error(expect_warning(A %*% B %*% A))
   
   # Constant expressions
-  T <- Constant(rbind(c(1,2,3), c(3,5,5)))
-  exp <- (T + T) %*% B
+  Tmat <- Constant(rbind(c(1,2,3), c(3,5,5)))
+  exp <- (Tmat + Tmat) %*% B
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
   
@@ -292,7 +296,7 @@ test_that("test the DivExpression class", {
   # Parameters
   p <- Parameter(sign = "positive")
   exp <- 2/p
-  p@value <- 2
+  value(p) <- 2
   expect_equal(value(exp), 1)
   
   rho <- Parameter(sign = "positive")
@@ -532,12 +536,12 @@ test_that("test powers", {
 
 test_that("test built-in sum (not good usage)", {
   a_copy <- a
-  a_copy@value <- 1
+  value(a_copy) <- 1
   expr <- sum(a_copy)
   expect_equal(value(expr), 1)
   
   x_copy <- x
-  x_copy@value <- c(1,2)
+  value(x_copy) <- c(1,2)
   expr <- sum(x)
   expect_equal(value(expr), 3)
 })

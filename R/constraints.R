@@ -89,7 +89,7 @@ setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.e
 setMethod("residual", "LeqConstraint", function(object) { MaxElemwise(object@.expr, 0) })
 setMethod("value", "LeqConstraint", function(object) {
   resid <- value(residual(object))
-  if(is.na(resid))
+  if(length(resid) == 1 && is.na(resid))
     return(NA)
   else
     return(all(resid <= 1e-4))   # TODO: Add TOLERANCE parameter to LeqConstraint

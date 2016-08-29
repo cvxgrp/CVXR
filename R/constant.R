@@ -107,7 +107,11 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows 
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
     .Object@name <- name
-  .Object@value <- value
+  
+  # Initialize with value if provided
+  .Object@value <- NA_real_
+  if(!(length(value) == 1 && is.na(value)))
+    value(.Object) <- value
   callNextMethod(.Object, ...)
 })
 

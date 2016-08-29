@@ -161,6 +161,16 @@ Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
+CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints) }
+SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values) }
+
+.reset_cache.Problem <- function(object) {
+  for(solver_name in SOLVERS)
+    object@.cached_data[solver_name] <- ProblemData()
+  object@.cached_data[PARALLEL] <- CachedProblem(NA, NULL)
+  object
+})
+
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
@@ -168,7 +178,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@status <- status
 
   # Cached processed data for each solver.
-  .Object@.cached_data <- cached_data
+  .Object@.cached_data <- .cached_data
   .Object <- .reset_cache(.Object)
 
   # List of separable (sub)problems
@@ -178,18 +188,8 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@.size_metrics <- SizeMetrics(.Object)
   
   # Benchmarks reported by the solver
-  .Object@.solver_stats <- .solve_stats
+  .Object@.solver_stats <- .solver_stats
   .Object
-})
-
-CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints) }
-SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values) }
-
-setMethod(".reset_cache", "Problem", function(object) {
-  for(solver_name in SOLVERS)
-    object@.cached_data[solver_name] <- ProblemData()
-  object@.cached_data[PARALLEL] <- CachedProblem(NA, NULL)
-  object
 })
 
 setMethod("value", "Problem", function(object) { object@value })

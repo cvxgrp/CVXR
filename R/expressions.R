@@ -166,11 +166,11 @@ setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
 setMethod("validate_val", "Leaf", function(object, val) {
-  if(!is.na(val)) {
+  if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
     # Convert val to the proper matrix type
     val <- as.matrix(val)
     size <- intf_size(val)
-    if(size != size(object))
+    if(any(size != size(object)))
       stop("Invalid dimensions (", size[1], ", ", size[2], ") for ", class(object), " value")
     
     # All signs are valid if sign is unknown

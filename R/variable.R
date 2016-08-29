@@ -1,4 +1,4 @@
-.Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "numeric"),
+.Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "ConstVal"),
                                  prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
                                    if(!is.na(object@primal_value))
@@ -42,7 +42,7 @@ setMethod("save_value", "Variable", function(object, value) {
 })
 setMethod("value", "Variable", function(object) { object@primal_value })
 setReplaceMethod("value", "Variable", function(object, value) {
-  value <- validate_val(value)
+  value <- validate_val(object, value)
   object <- save_value(object, value)
   object
 })

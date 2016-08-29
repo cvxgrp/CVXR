@@ -32,11 +32,15 @@ setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 #' @export
 Maximize <- setClass("Maximize", contains = "Minimize")
 
-setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = - e1@expr) })
+setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@expr) })
 setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@expr + e2@expr) })
 setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
-setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + -e2 })
-setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + -e2 })
+setMethod("+", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 & e2 == 0) e1 else stop("Unimplemented") })
+setMethod("+", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 + e1 })
+setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) -e1 else stop("Unimplemented") })
 setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
   if(e2 >= 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
@@ -45,7 +49,7 @@ setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
 })
 setMethod("/", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
-setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(-e1@expr) })
+setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@expr) })
 setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@expr + e2@expr) })
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
@@ -57,6 +61,8 @@ setMethod("canonicalize", "Maximize", function(object) {
 })
 
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
+setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
+Maximize.primal_to_result(result) { -result }
 
 #'
 #' The Problem class.
@@ -67,8 +73,8 @@ setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 #' @slot constraints (Optional) A list of constraints on the problem variables.
 #' @aliases Problem
 #' @export
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list()),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetrics", .solve_stats = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solve_stats = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be of class Minimize or Maximize")
@@ -80,6 +86,8 @@ setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
                         stop("[Problem: .cached_data] .cached_data is an internal slot and should not be set by user")
                       if(length(object@.separable_problems) > 0)
                         stop("[Problem: .separable_problems] .separable_problems is an internal slot and should not be set by user")
+                      if(length(object@.solver_stats) > 0)
+                        stop("[Problem: .solver_stats] .solver_stats is an internal slot and should not be set by user")
                       return(TRUE)
                     })
 
@@ -87,18 +95,24 @@ Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
-setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list()) {
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
   .Object@value <- value
   .Object@status <- status
 
   # Cached processed data for each solver.
-  .Object@.cached_data <- list()
+  .Object@.cached_data <- cached_data
   .Object <- .reset_cache(.Object)
 
   # List of separable (sub)problems
   .Object@.separable_problems <- .separable_problems
+  
+  # Information about the size of the problem and its constituent parts
+  .Object@.size_metrics <- SizeMetrics(.Object)
+  
+  # Benchmarks reported by the solver
+  .Object@.solver_stats <- .solve_stats
   .Object
 })
 
@@ -107,42 +121,24 @@ SolveResult <- function(opt_value, status, primal_values, dual_values) { list(op
 
 setMethod(".reset_cache", "Problem", function(object) {
   for(solver_name in SOLVERS)
-    object@.cached_data[[solver_name]] <- ProblemData()
-  object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
+    object@.cached_data[solver_name] <- ProblemData()
+  object@.cached_data[PARALLEL] <- CachedProblem(NA, NULL)
   object
 })
 
+setMethod("value", "Problem", function(object) { object@value })
+setMethod("status", "Problem", function(object) { object@status })
 setMethod("is_dcp", "Problem", function(object) {
-  is_dcp_list <- lapply(c(object@objective, object@constraints), is_dcp)
-  all(unlist(is_dcp_list))
-})
-
-setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
-setMethod("-", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = -e1@objective, constraints = e1@constraints) })
-setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
-})
-setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
-})
-setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
-  Problem(objective = e1@objective * e2, constraints = e1@constraints)
-})
-setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e2 * e1@objective, constraints = e1@constraints)
-})
-setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
-  Problem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
+  all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
-  # canon_constr <- sapply(object@constraints, function(x) { canonical_form(x)[[2]] })
-  # list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
-  canon_constr <- list()
+  canon_constr <- obj_canon[[2]]
+  
   for(constr in object@constraints)
     canon_constr <- c(canon_constr, canonical_form(constr)[[2]])
-  list(obj_canon[[1]], c(obj_canon[[2]], canon_constr))
+  list(obj_canon[[1]], canon_constr)
 })
 
 setMethod("variables", "Problem", function(object) {
@@ -157,6 +153,28 @@ setMethod("parameters", "Problem", function(object) {
   unique(flatten_list(c(params, constrs_)))
 })
 
+setMethod("constants", "Problem", function(object) {
+  constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
+  constants_ <- c(constants(object@objective), constants_)
+  
+  # Remove duplicates based on constant ID
+  const_nams <- sapply(constants_, function(constant) { id(constant) })
+  dupe_idx <- duplicated(const_nams)
+  constants_[-dupe_idx]
+})
+
+setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
+setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
+setMethod("get_problem_data", "Problem", function(object, solver) {
+  canon <- canonicalize(object)
+  objective <- canon[[1]]
+  constraints <- canon[[2]]
+  
+  # Raise an error if the solver cannot handle the problem
+  validate_solver(solver, constraints)
+  get_problem_data(solver, objective, constraints, object@.cached_data)
+})
+
 setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
@@ -164,7 +182,19 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
     else
       stop("Problem does not follow DCP rules.")
   }
+  
+  if(solver == LS) {
+    validate_solver(solver, object)
+    objective <- object@objective
+    constraints <- object@constraints
+    
+    sym_data <- get_sym_data(solver, objective, constraints)
+    results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_Start, verbose, ...)
+    object <- .update_problem_data(results_dict, sym_data, solver)
+    return(value(object))
+  }
 
+  # Standard cone problem
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
@@ -198,17 +228,188 @@ setMethod("cvxr_solve", "Problem", function(object, solver = NULL, ignore_dcp = 
   ## sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
 
   ## # Presolve couldn't solve the problem.
-  ## if(is.na(sym_data@.presolve_status)) {
-  ##   results_dict <- cvxr_solve_int(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
+  ## if(is.na(sym_data@presolve_status)) {
+  ##   results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
   ## # Presolve determined the problem was unbounded or infeasible.
   ## } else {
-  ##   results_dict <- list()
-  ##   results_dict[[STATUS]] <- sym_data@.presolve_status
+  ##   results_dict <- list(sym_data@presolve_status)
+  ##   names(results_dict) <- STATUS
   ## }
 
-  ## object@.update_problem_state(results_dict, sym_data, solver)
-  ## object@value
+  ## object <- .update_problem_state(results_dict, sym_data, solver)
+  ## value(object)
 
   ## End of section commented out by Naras
+})
 
+.update_problem_state <- function(object, results_dict, sym_data, solver) {
+  if(results_dict[STATUS] %in% SOLUTION_PRESENT) {
+    object <- .save_values(results_dict[PRIMAL], variables(object), sym_data@var_offsets)
+    # Not all solvers provide dual variables
+    if(EQ_DUAL %in% names(results_dict))
+      object <- .save_dual_values(object, results_dict[EQ_DUAL], sym_data@constr_map[EQ], list(EqConstraint))
+    if(INEQ_DUAL %in% names(results_dict))
+      object <- .save_dual_values(object, results_dict[INEQ_DUAL], sym_data@constr_map[LEQ], list(LeqConstraints, PSDConstraint))
+    
+    # Correct optimal value if the objective was Maximize
+    value <- results_dict[VALUE]
+    object@value <- primal_to_result(object@objective, value)
+  } else if(results_dict[STATUS] %in% INF_OR_UNB)   # Infeasible or unbounded
+    object <- .handle_no_solution(object, results_dict[STATUS])
+  else   # Solver failed to solve
+    stop("Solver failed. Try another.")
+  object@status <- results_dict[STATUS]
+  object@solver_stats <- SolverStats(results_dict, solver)
+  object
+}
+
+unpack_results.Problem <- function(object, solve, results_dict) {
+  canon <- canonicalize(object)
+  objective <- canon[[1]]
+  constraints <- canon[[2]]
+  sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+  data <- list(sym_data@dims, 0)
+  names(data) <- c(DIMS, OFFSET)
+  results_dict <- format_results(solver, results_dict, data, object@.cached_data)
+  .update_problem_state(object, results_dict, sym_data, solver)
+}
+
+.handle_no_solution.Problem <- function(object, status) {
+  # Set all primal and dual variable values to NA
+  for(var_ in variables(object))
+    object <- .save_value(var_, NA)
+  for(constr in object@constraints)
+    object <- save_value(constr, NA)   # TODO: Check this returns and saves correct value
+  
+  # Set the problem value
+  if(status %in% c("INFEASIBLE", "INFEASIBLE_INACCURATE"))
+    object@value <- primal_to_result(object@objective, Inf)
+  else if(status %in% c("UNBOUNDED", "UNBOUNDED_INACCURATE"))
+    object@value <- primal_to_result(object@objective, -Inf)
+  object
+}
+
+.save_dual_values.Problem <- function(object, result_vec, constraints, constr_types) {
+  constr_offsets <- list()
+  offset <- 0
+  for(constr in constraints) {
+    constr_offsets[constr@constr_id] <- offset
+    offset <- offset + prod(size(constr))
+  }
+  
+  active_constraints <- list()
+  for(constr in object@constraints) {
+    # Ignore constraints of the wrong type
+    if(class(constr) %in% constr_types)
+      active_constraints <- c(active_constraints, constr)
+  }
+  .save_values(object, result_vec, active_constraints, constr_offsets)
+}
+
+.save_values.Problem <- function(object, result_vec, objects, offset_map) {
+  if(length(result_vec) > 0)   # Cast to desired matrix type
+    result_vec <- as.matrix(result_vec)
+  
+  for(obj in objects) {
+    size <- size(obj)
+    rows <- size[1]
+    cols <- size[2]
+    if(as.character(obj@id) in offset_map) {
+      offset <- offset_map[as.character(obj@id)]
+      # Handle scalars
+      if(all(c(rows, cols) == c(1,1)))
+        value <- index(result_vec, c(offset, 0))
+      else {
+        value <- matrix(0, nrow = rows, ncol = cols)
+        value <- block_add(value, result_vec[offset:(offset + rows*cols)], 1, 1, rows, cols)
+        offset <- offset + rows * cols
+      }
+    } else  # The variable was multiplied by zero
+      value <- matrix(0, nrow = rows, ncol = cols)
+    obj <- save_value(obj, value)
+  }
+  # TODO: What do we return?
+}
+
+setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
+setMethod("-", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = -e1@objective, constraints = e1@constraints) })
+setMethod("+", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
+setMethod("+", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 + e1 })
+setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
+  Problem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+})
+setMethod("-", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { if(length(e1) == 1 && e2 == 0) -e2 else stop("Unimplemented") })
+setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
+  Problem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+})
+setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
+  Problem(objective = e1@objective * e2, constraints = e1@constraints)
+})
+setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 * e1 })
+setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
+  Problem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
+})
+
+.SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"), 
+                                        prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
+SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
+  solve_time <- NA_real_
+  setup_time <- NA_real_
+  num_iters <- NA_real_
+  
+  if(SOLVE_TIME %in% names(results_dict))
+    solve_time <- results_dict[SOLVE_TIME]
+  if(SETUP_TIME %in% names(results_dict))
+    setup_time <- results_dict[SETUP_TIME]
+  if(NUM_ITERS %in% names(results_dict))
+    num_iters <- results_dict[NUM_ITERS]
+  .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
+}
+
+.SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
+                                                       max_data_dimension = "numeric", max_big_small_squared = "numeric"),
+                                        prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
+                                                  max_data_dimension = NA_real_, max_big_small_squared = NA_real_))
+SizeMetrics <- function(problem) {
+  # num_scalar_variables
+  num_scalar_variables <- 0
+  for(var in variables(problem))
+    num_scalar_variables <- num_scalar_variables + prod(size(var))
+  
+  # num_scalar_data, max_data_dimension, and max_big_small_squared
+  max_data_dimension <- 0
+  num_scalar_data <- 0
+  max_big_small_squared <- 0
+  for(const in c(constants(problem), parameters(problem))) {
+    big <- 0
+    # Compute number of data
+    num_scalar_data <- num_scalar_data + prod(size(const))
+    big <- max(size(const))
+    small <- min(size(const))
+    
+    # Get max data dimension
+    if(max_data_dimension < big)
+      max_data_dimension <- big
+    
+    if(max_big_small_squared < big*small*small)
+      max_big_small_squared <- big*small*small
+    
+    # num_scalar_eq_constr
+    num_scalar_eq_constr <- 0
+    for(constraint in problem@constraints) {
+      if(is(constraint, "EqConstraint"))
+        num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@expr))
+    }
+    
+    # num_Scalar_leq_constr
+    num_scalar_leq_constr <- 0
+    for(constraint in problem@constraints) {
+      if(is(constraint, "LeqConstraint"))
+        num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@expr))
+    }
+  }
+  
+  .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,
+               max_data_dimension = max_data_dimension, max_big_small_squared = max_big_small_Squared)
 })

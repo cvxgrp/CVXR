@@ -120,7 +120,7 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
     warning("Forming a non-convex expression (affine) * (affine)")
     return(AffineProd(x = x, y = y))
   } else
-    stop("Cannot multiply ", curvature(x), "and", curvature(y))
+    stop("Cannot multiply ", curvature(x), " and ", curvature(y))
 })
 setMethod("%*%", signature(x = "Expression", y = "ConstVal"), function(x, y) { x %*% as.Constant(y) })
 setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { as.Constant(x) %*% y })

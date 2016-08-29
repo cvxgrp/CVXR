@@ -19,7 +19,7 @@ test_that("test curvature addition", {
 
 test_that("test curvature subtraction", {
   expect_equal(curvature(const - cvx), curvature(ccv))
-  expect_equal(curvature(unknown_curv - ccv), curvature(cvx))
+  expect_equal(curvature(unknown_curv - ccv), curvature(unknown_curv))
   expect_equal(curvature(cvx - ccv), curvature(cvx))
   expect_equal(curvature(cvx - cvx), curvature(unknown_curv))
   expect_equal(curvature(aff - ccv), curvature(cvx))

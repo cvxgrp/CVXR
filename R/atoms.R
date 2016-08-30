@@ -1070,9 +1070,9 @@ QuadForm <- function(x, P) {
     
     ret <- 0
     if(length(M1) > 0)
-      ret <- ret + scale * SumSquares(Constant(t(M1)) * x)
+      ret <- ret + scale * SumSquares(Constant(t(M1)) %*% x)
     else if(length(M2) > 0)
-      ret <- ret - scale * SumSquares(Cosntant(t(M2)) * x)
+      ret <- ret - scale * SumSquares(Cosntant(t(M2)) %*% x)
     return(ret)
   } else
     stop("At least one argument to QuadForm must be constant")
@@ -1106,7 +1106,7 @@ setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
 setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
 setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_positive(object@args[[idx]]) })
-setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 1) })
+setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 2) })
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 .domain.QuadOverLin <- function(object) { list(object@args[[2]] >= 0) }

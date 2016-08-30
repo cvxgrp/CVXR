@@ -1,3 +1,7 @@
+v_np <- matrix(c(-1, 2, -2), nrow = 1, ncol = 3)
+LogSumExpAxis1 <- function(x) { LogSumExp(x, axis = 1) }
+LogSumExpAxis2 <- function(x) { LogSumExp(x, axis = 2) }
+
 atoms <- list(
   list(
     list(
@@ -19,7 +23,7 @@ atoms <- list(
       list(LambdaMax, c(1,1), list(rbind(c(5,7), c(7,-3))), Constant(9.06225775)),
       list(function(x) { LambdaSumLargest(x,2) }, c(1,1), list(rbind(c(1,2,3), c(2,4,5), c(3,5,6))), Constant(11.51572947)),
       list(LogSumExp, c(1,1), list(rbind(c(5,7), c(0,-3))), Constant(7.1277708268)),
-      list(LogSumExpAxis0, c(1,2), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(7.12910890, 6.00259878)))),
+      list(LogSumExpAxis2, c(1,2), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(7.12910890, 6.00259878)))),
       list(LogSumExpAxis1, c(3,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(5.00671535, 7.0000454, 6.0067153))),
       list(Logistic, c(2,2), list(rbind(c(log(5), log(7)), c(0, log(0.3)))), Constant(rbind(c(log(6),log(8)), c(log(2),log(1.3))))),
       list(MatrixFrac, c(1,1), list(1:3, diag(rep(1,3))), Constant(14)),
@@ -82,12 +86,12 @@ atoms <- list(
       list(SumSquares, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(30)),
       list(Trace, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(3+7+11)),
       list(Trace, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(-5+1)),
-      list(TV, c(1,1), list(c(1,-1,2)), Constant(5)),
-      list(TV, c(1,1), list(matrix(c(1,-1,2), nrow = 1, ncol = 3)), Constant(5)),
-      list(TV, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(sqrt(53))),
-      list(TV, c(1,1), list(rbind(c(-5,2), c(-3,1)), rbind(c(6,5), c(-4,3)), rbind(c(8,0), c(15,9))),
-           Constant(norm(c(7,-1,-8,2,-10,7),2))),
-      list(TV, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(4*sqrt(10))),
+      list(TotalVariation, c(1,1), list(c(1,-1,2)), Constant(5)),
+      list(TotalVariation, c(1,1), list(matrix(c(1,-1,2), nrow = 1, ncol = 3)), Constant(5)),
+      list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(sqrt(53))),
+      list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1)), rbind(c(6,5), c(-4,3)), rbind(c(8,0), c(15,9))),
+           Constant(norm(matrix(c(7,-1,-8,2,-10,7)), "2"))),
+      list(TotalVariation, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(4*sqrt(10))),
       list(UpperTri, c(3,1), list(rbind(3:5, 6:8, 9:11)), Constant(c(6,9,10))),
       
       # Advanced indexing
@@ -142,7 +146,7 @@ atoms <- list(
       list(function(x) { x^0.25 }, c(1,1), list(7.45), Constant(7.45^0.25)),
       list(function(x) { x^0.32 }, c(2,1), list(c(7.45,3.9)), Constant(matrix(c(7.45,3.9), nrow = 2, ncol = 1)^0.32)),
       list(function(x) { x^0.9 }, c(2,2), list(rbind(c(7.45,2.2), c(4,7))), Constant(cbind(c(7.45,2.2), c(4,7))^0.9)),
-      list(Sqrt, c(2,2), list(rbind(c(2,4), c(16,1))), Constant(rbind(1.414213562373095,2), c(4,1))),
+      list(Sqrt, c(2,2), list(rbind(c(2,4), c(16,1))), Constant(rbind(c(1.414213562373095,2), c(4,1)))),
       list(function(x) { SumSmallest(x,3) }, c(1,1), list(c(-1,2,3,4,5)), Constant(-1+2+3)),
       list(function(x) { SumSmallest(x,4) }, c(1,1), list(rbind(c(-3,-4,5), c(6,7,8), c(9,10,11))), Constant(-3-4+5+6)),
       list(function(x) { (x + Constant(0))^0.5 }, c(2,2), list(rbind(c(2,4), c(16,1))), Constant(rbind(c(1.414213562373095,2), c(4,1))))

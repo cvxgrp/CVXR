@@ -14,7 +14,7 @@ test_that("Test quadratic form with a singular matrix", {
       
       # Project onto the orthogonal complement of v
       # This turns Q into a singular matrix with a known nullspace
-      E <- eye(n) - v %*% t(v) / as.numeric(t(v) %*% v)
+      E <- diag(rep(1,n)) - v %*% t(v) / as.numeric(t(v) %*% v)
       Q <- E %*% (Q %*% t(E))
       observed_rank <- rankMatrix(Q)
       desired_rank <- n-1
@@ -45,6 +45,7 @@ test_that("Test quadratic form with a singular matrix", {
 })
 
 test_that("Test quadratic form with a sparse matrix", {
+  require(Matrix)
   Q <- sparseMatrix(i = 1:2, j = 1:2, x = rep(1, 2))
   x <- Variable(2)
   cost <- QuadForm(x, Q)

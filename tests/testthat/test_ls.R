@@ -12,7 +12,7 @@ test_that("Test regression", {
   
   # Generate data
   x_data <- matrix(runif(n) * 5, nrow = n, ncol = 1)
-  x_data_expanded <- t(cbind(x_data, x_data^2, x_data^3, x_data^4))
+  x_data_expanded <- cbind(x_data, x_data^2, x_data^3)
   y_data <- x_data_expanded %*% true_coeffs + 0.5 * matrix(runif(n, 1), nrow = n, ncol = 1)
   
   slope <- Variable()
@@ -27,7 +27,7 @@ test_that("Test regression", {
   quadratic_coeff <- Variable()
   slope <- Variable()
   offset <- Variable()
-  quadratic <- offset + x_data * slope + quadratic_coeff * x_data^2
+  quadratic <- offset + x_data %*% slope + quadratic_coeff %*% x_data^2
   residuals <- quadratic - y_data
   fit_error <- SumSquares(residuals)
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
@@ -117,12 +117,12 @@ test_that("Test equivalent forms", {
   
   x <- Variable(n)
   
-  obj1 <- SumSquares(A*x - b)
-  obj2 <- SumEntries(Square(A*x - b))
-  obj3 <- QuadForm(x, P) + t(q)*x + r
-  obj4 <- MatrixFrac(x, Pinv) + t(x)*x + r
+  obj1 <- SumSquares(A %*% x - b)
+  obj2 <- SumEntries(Square(A %*% x - b))
+  obj3 <- QuadForm(x, P) + t(q) %*% x + r
+  obj4 <- MatrixFrac(x, Pinv) + t(x) %*% x + r
   
-  cons <- list(G*x == h)
+  cons <- list(G %*% x == h)
   
   # v1 <- solve(Problem(Minimize(obj1), cons), solver = "LS")$optimal_value
   # v2 <- solve(Problem(Minimize(obj2), cons), solver = "LS")$optimal_value
@@ -145,7 +145,7 @@ test_that("Test smooth ridge", {
   A <- matrix(runif(k*n), nrow = k, ncol = n)
   b <- matrix(runif(k), nrow = k, ncol = 1)
   x <- Variable(n)
-  obj <- SumSquares(A*x - b) + delta*SumSquares(x[1:(n-1)]-x[2:n]) + eta*SumSquares(x)
+  obj <- SumSquares(A %*% x - b) + delta*SumSquares(x[1:(n-1)]-x[2:n]) + eta*SumSquares(x)
   # optval <- solve(Problem(Minimize(obj), list()), solver = "LS")$optimal_value
   # expect_equal(optval, 0.24989717371, tolerance = TOL)
 })

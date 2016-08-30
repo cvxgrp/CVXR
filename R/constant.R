@@ -36,11 +36,11 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_
 })
 
 setMethod("show", "Constant", function(object) {
-  cat("Constant(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
+  cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
 })
 
 setMethod("as.character", "Constant", function(x) {
-  paste("Constant(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
+  paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
 
 setMethod("constants", "Constant", function(object) { list(object) })

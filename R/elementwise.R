@@ -549,8 +549,8 @@ setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size
   MaxElemwise.graph_implementation(arg_objs, size, data)
 })
 
-MinElemwise <- function(...) {
-  min_args <- lapply(list(...), function(arg) { -as.Constant(arg) })
+MinElemwise <- function(arg1, arg2, ...) {
+  min_args <- lapply(c(arg1, arg2, list(...)), function(arg) { -as.Constant(arg) })
   -.MaxElemwise(args = min_args)
 }
 
@@ -744,12 +744,12 @@ QOLElemwise <- function(arg_objs, size, data = NA_real_) {
 setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
 
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
-.Sqrt <- setClass("Sqrt", contains = "AxisAtom")
-Sqrt <- function(x, axis = NA_real_) { .Sqrt(expr = x, axis = axis) }
+.Sqrt <- setClass("Sqrt", contains = "Elementwise")
+Sqrt <- function(x) { .Sqrt(args = list(x)) }
 
 setMethod("validate_args", "Sqrt", function(object) {})
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
-setMethod("get_data", "Sqrt", function(object) { list(0.5, object@axis) })
+setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
@@ -791,12 +791,12 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
-.Square <- setClass("Square", contains = "AxisAtom")
-Square <- function(x, axis = NA_real_) { .Square(expr = x, axis = axis) }
+.Square <- setClass("Square", contains = "Elementwise")
+Square <- function(x) { .Square(args = list(x)) }
 
 setMethod("validate_args", "Square", function(object) {})
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
-setMethod("get_data", "Square", function(object) { list(2, object@axis) })
+setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Square", function(object) { TRUE })
 setMethod("is_atom_concave", "Square", function(object) { FALSE })

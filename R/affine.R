@@ -293,6 +293,64 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
   Conv.graph_implementation(arg_objs, size, data)
 })
 
+.CumSum <- setClass("CumSum", contains = "AffAtom")
+CumSum <- function(expr, axis = 1) { .CumSum(expr = expr, axis = axis) }
+
+setMethod("initialize", "CumSum", function(.Object, ..., expr, axis = 1) {
+  .Object@expr <- expr
+  .Object@axis <- axis
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+})
+
+setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
+setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
+setMethod("get_data", "CumSum", function(object) { list(object@axis) })
+
+get_diff_mat <- function(dim, axis) {
+  # Construct a sparse matrix representation
+  val_arr <- c()
+  row_arr <- c()
+  col_arr <- c()
+  
+  for(i in 1:dim) {
+    val_arr <- c(val_arr, 1)
+    row_arr <- c(row_arr, i)
+    col_arr <- c(col_arr, i)
+    if(i > 1) {
+      val_arr <- c(val_arr, -1)
+      row_arr <- c(row_arr, i)
+      col_arr <- c(col_arr, i-1)
+    }
+  }
+  
+  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(dim, dim))
+  
+  if(axis == 2)
+    mat
+  else
+    t(mat)
+}
+
+CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  # Implicit 0(n) definition:
+  # X = Y[:1,:] - Y[1:,:]
+  Y <- create_var(size)
+  axis <- data[[1]]
+  dim <- size[axis]
+  diff_mat <- get_diff_mat(dim, axis)
+  diff_matt <- create_const(diff_mat, c(dim, dim))
+  
+  if(axis == 2)
+    diff <- mul_expr(diff_mat, Y, size)
+  else
+    diff <- rmul_expr(Y, diff_mat, size)
+  list(Y, list(create_eq(arg_objs[[1]], diff)))
+}
+
+setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, data = NA_real_) {
+  CumSum.graph_implementation(arg_objs, size, data)
+})
+
 #'
 #' The DiagVec class.
 #'
@@ -378,19 +436,25 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix")
 }
 
-Diff <- function(x, k = 1) {
+Diff <- function(x, k = 1, axis = 1) {
   x <- as.Constant(x)
+  if(axis == 1)
+    x <- t(x)
+  
   size <- size(x)
   m <- size[1]
   n <- size[2]
-  
   if(k < 0 || k >= m || n != 1)
     stop("Must have k >= 0 and x must be a 1-D vector with < k elements")
   
   d <- x
   for(i in 1:k)
     d <- d[2:length(d)] - d[1:(length(d)-1)]
-  d
+  
+  if(axis == 1)
+    t(d)
+  else
+    d
 }
 
 .HStack <- setClass("HStack", contains = "AffAtom")

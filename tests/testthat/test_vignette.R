@@ -94,3 +94,75 @@ test_that("Test catenary problem", {
   curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
   grid()
 })
+
+test_that("Test direct standardization problem", {
+  skew_sample <- function(data, bias) {
+    if(missing(bias))
+      bias <- rep(1.0, ncol(data))
+    num <- exp(data %*% bias)
+    return(num / sum(num))
+  }
+  
+  plot_cdf <- function(data, probs, color = 'k') {
+    if(missing(probs))
+      probs <- rep(1.0/length(data), length(data))
+    distro <- cbind(data, probs)
+    dsort <- distro[order(distro[,1]),]
+    ecdf <- cumsum(dsort[,2])
+    lines(dsort[,1], ecdf, col = color)
+  }
+  
+  # Problem data
+  n <- 2
+  m <- 1000
+  msub <- 100
+  
+  # Generate original distribution
+  sex <- rbinom(m, 1, 0.5)
+  age <- sample(10:60, m, replace = TRUE)
+  mu <- 5 * sex + 0.1 * age
+  X <- cbind(sex, age)
+  y <- rnorm(mu, 1.0)
+  b <- as.matrix(apply(X, 2, mean))
+  
+  # Generate skewed subsample
+  skew <- skew_sample(X, c(-0.95, -0.05))
+  sub <- sample(1:m, msub, replace = TRUE, prob = skew)
+  
+  # Construct the direct standardization problem
+  w <- Variable(msub)
+  objective <- SumEntries(Entr(w))
+  constraints <- list(w >= 0, SumEntries(w) == 1, t(X[sub,]) %*% w == b)
+  prob <- Problem(Maximize(objective), constraints)
+  
+  # Solve for the distribution weights
+  result <- cvxr_solve(prob)
+  result$optimal_value
+  result$primal_values[[as.character(w@id)]]
+  weights <- result$primal_values[[as.character(w@id)]]
+  
+  cl <- rainbow(3)
+  plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
+  plot_cdf(y, color = cl[1])
+  plot_cdf(y[sub], color = cl[2])
+  plot_cdf(y[sub], weights, color = cl[3])
+  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+})
+
+test_that("Test risk-return trade-off in portfolio optimization", {
+  pbar <- matrix(c(0.12, 0.10, 0.07, 0.03), nrow = 4, ncol = 1)
+  sigma <- rbind(c( 0.0064, 0.0008, -0.0011, 0),
+                 c( 0.0008, 0.0025,  0,      0),
+                 c(-0.0011, 0,       0.0004, 0),
+                 c( 0,      0,       0,      0))
+  
+  x <- Variable(4)
+  mu <- Parameter(sign = "positive")
+  objective <- -t(pbar) %*% x + mu * t(x) %*% sigma %*% x
+  constraints <- list(SumEntries(x) == 1, x >= 0)
+  prob <- Problem(Minimize(objective), constraints)
+   
+  # result <- cvxr_solve(prob)
+  # result$optimal_value
+  # result$primal_values
+})

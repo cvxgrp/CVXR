@@ -3,8 +3,10 @@ intf_size <- function(constant) {
     return(c(1,1))
   else if(is.vector(constant))
     return(c(1,length(constant)))
-  else if(is.matrix(constant))
+  else if(is.matrix(constant) || is(constant, "Matrix"))
     return(dim(constant))
+  else
+    stop("Unknown class: ", class(constant))
 }
 
 intf_sign <- function(constant, tol = 1e-5) {

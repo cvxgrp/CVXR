@@ -370,8 +370,8 @@ is_dyad_weight <- function(w) {
 }
 
 is_weight <- function(w) {
-  if(is.matrix(w) || is.vector(w))
-    w <- as.list(w)
+  # if(is.matrix(w) || is.vector(w))
+  #  w <- as.list(w)
   valid_elems <- all(sapply(w, function(v) {
     v >= 0 && ((round(v) == v) || is(v, "fractions"))
   }))

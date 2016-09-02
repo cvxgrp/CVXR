@@ -162,7 +162,7 @@ setMethod("grad", "Atom", function(object) {
       else {
         D <- grad_arg[key] * grad_self[idx]
         # Convert 1x1 matrices to scalars
-        if(is.matrix(D) && dim(D) == c(1,1))
+        if((is.matrix(D) || is(D, "Matrix")) && dim(D) == c(1,1))
           D <- D[1,1]
         
         if(key %in% names(result))

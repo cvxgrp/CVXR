@@ -114,6 +114,14 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 .ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "Constraint")
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
+# TODO: Is this the correct size method for the exponential cone class?
+setMethod("size", "ExpCone", function(object) {
+  if(is.list(object@x))
+    object@x$size
+  else
+    size(object@x)
+})
+
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })

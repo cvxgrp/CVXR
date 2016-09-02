@@ -239,6 +239,7 @@ get_problem_data.Problem <- function(object, solver) {
   get_problem_data(solver, objective, constraints, object@.cached_data)
 }
 
+# TODO: How to define default input parameters in setMethod?
 setMethod("cvxr_solve", "Problem", function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)

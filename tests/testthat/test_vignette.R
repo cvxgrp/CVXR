@@ -150,17 +150,18 @@ test_that("Test direct standardization problem", {
 })
 
 test_that("Test risk-return trade-off in portfolio optimization", {
-  pbar <- matrix(c(0.12, 0.10, 0.07, 0.03), nrow = 4, ncol = 1)
-  sigma <- rbind(c( 0.0064, 0.0008, -0.0011, 0),
-                 c( 0.0008, 0.0025,  0,      0),
-                 c(-0.0011, 0,       0.0004, 0),
-                 c( 0,      0,       0,      0))
+  n <- 10
+  mu <- matrix(abs(rnorm(n)), nrow = n)
+  Sigma <- matrix(rnorm(n*n), nrow = n, ncol = n)
+  Sigma <- t(Sigma) %*% Sigma
   
-  x <- Variable(4)
-  mu <- Parameter(sign = "positive")
-  objective <- -t(pbar) %*% x + mu * t(x) %*% sigma %*% x
-  constraints <- list(SumEntries(x) == 1, x >= 0)
-  prob <- Problem(Minimize(objective), constraints)
+  w <- Variable(n)
+  gamma <- Parameter(sign = "positive")
+  ret <- t(mu) %*% w
+  risk <- QuadForm(w, Sigma)
+  objective <- ret - gamma * risk
+  constraints <- list(SumEntries(w) == 1, w >= 0)
+  prob <- Problem(Maximize(objective), constraints)
    
   # result <- cvxr_solve(prob)
   # result$optimal_value

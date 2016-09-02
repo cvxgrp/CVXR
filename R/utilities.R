@@ -394,7 +394,7 @@ get_max_denom <- function(tup) {
 #'
 #' Key utilities
 #'
-validate_key <- function(key, shape) {
+ku_validate_key <- function(key, shape) {
   rows <- shape[1]
   cols <- shape[2]
   
@@ -409,21 +409,30 @@ validate_key <- function(key, shape) {
   }
   
   # Change numbers into slices and ensure all slices have a start and stop.
-  # key <- format_slice(key[1], shape[1]), format_slice(key[2], shape[2])
-  key <- mapply(function(slc, dim) { format_slice(slc, dim) }, slc = key, dim = shape)
+  # key <- ku_format_slice(key[1], shape[1]), ku_format_slice(key[2], shape[2])
+  key <- mapply(function(slc, dim) { ku_format_slice(slc, dim) }, slc = key, dim = shape)
   names(key) <- c("rows", "cols")
   key
 }
 
-to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
+ku_format_slice <- function(key_val, dim) {
+  key_val <- ku_to_int(key_val)
+  key_val <- ku_wrap_neg_index(key_val, dim)
+  if(key_val >= 0 && key_val < dim)
+    list(key_val, key_val + 1, 1)
+  else
+    stop("Index/slice out of bounds")
+}
 
-wrap_neg_index <- function(index, dim) {
+ku_to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
+
+ku_wrap_neg_index <- function(index, dim) {
   if(!is.na(index) && index < 0)
     index <- index %% dim
   index
 }
 
-index_to_slice <- function(idx) { c(idx, idx+1) }
+ku_index_to_slice <- function(idx) { c(idx, idx+1) }
 
 ku_size <- function(key, shape) {
   dims <- c()
@@ -433,8 +442,4 @@ ku_size <- function(key, shape) {
     dims <- c(dims, size)
   }
   dims
-}
-
-index_to_slice <- function(idx) {
-  c(idx, idx+1)
 }

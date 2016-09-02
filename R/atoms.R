@@ -1037,9 +1037,9 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   scale <- max(abs(w))
   w_scaled <- w / scale
   maskp <- w_scaled > cond
-  maskn <- w_scaled <- -cond
+  maskn <- w_scaled < -cond
   
-  # TODO Allow indefinite QuadForm
+  # TODO: Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
     warning("Forming a non-convex expression QuadForm(x, indefinite)")
   M1 <- V[,maskp] %*% sqrt(w_scaled[maskp])

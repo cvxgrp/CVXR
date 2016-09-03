@@ -394,6 +394,9 @@ get_max_denom <- function(tup) {
 #'
 #' Key utilities
 #'
+.Slice <- setClass("Slice", representation(start = "numeric", stop = "numeric", step = "numeric"), prototype(step = NA_integer_))
+Slice <- function(start, stop, step = NA_integer_) { .Slice(start = start, stop = stop, step = step) }
+
 ku_validate_key <- function(key, shape) {
   rows <- shape[1]
   cols <- shape[2]
@@ -401,9 +404,9 @@ ku_validate_key <- function(key, shape) {
   # Change single indices for vectors into double indices
   if(length(key) != 2) {
     if(rows == 1)
-      key <- c(c(1), key)
+      key <- c(Slice(1, 2, NA), key)
     else if(cols == 1)
-      key <- c(key, c(1))
+      key <- c(key, Slice(1, 2, NA))
     else
       stop("Invalid index/slice")
   }
@@ -416,30 +419,61 @@ ku_validate_key <- function(key, shape) {
 }
 
 ku_format_slice <- function(key_val, dim) {
-  key_val <- ku_to_int(key_val)
-  key_val <- ku_wrap_neg_index(key_val, dim)
-  if(key_val >= 0 && key_val < dim)
-    list(key_val, key_val + 1, 1)
-  else
-    stop("Index/slice out of bounds")
+  is(is(key_val, "Slice")) {
+    key_val <- Slice(ku_to_int(key_val@start), ku_to_int(key_val@stop), ku_to_int(key_val@step))
+    return(key_val)
+  } else {
+    # Convert to integer
+    key_val <- ku_to_int(key_val)
+    key_val <- ku_wrap_neg_index(key_val, dim)
+    if(key_val >= 0 && key_val < dim)
+      Slice(key_val, key_val + 1, 1)
+    else
+      stop("Index/slice out of bounds")
+  }
 }
 
 ku_to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
 
 ku_wrap_neg_index <- function(index, dim) {
   if(!is.na(index) && index < 0)
-    index <- index %% dim
+    # index <- index %% dim
+    stop("Negative indexing currently unimplemented")   # TODO: Need negative indexing to match R
   index
 }
 
-ku_index_to_slice <- function(idx) { c(idx, idx+1) }
+ku_index_to_slice <- function(idx) { Slice(idx, idx+1, NA) }
+
+ku_slice_to_str <- function(slc) {
+  if(ku_is_single_index(slc))
+    return(as.character(slc@start))
+  endpoints <- sapply(c(slc@start, slc@stop), function(val) { ku_none_to_empty(val) })
+  if(!is.na(slc@step) && slc@step != 1)
+    sprintf("%s:%s:%s", endpoints[1], endpoints[2], slc@step)
+  else
+    sprintf("%s:%s", endpoints[1], endpoints[2])
+}
+
+ku_none_to_empty <- function(val) { if(is.na(val)) '' else val }
+
+ku_is_single_index <- function(slc) {
+  if(is.na(slc@step))
+    step <- 1
+  else
+    step <- slc@step
+  !is.na(slc@start) && !is.na(slc@stop) && (slc@start + step >= slc@stop)
+}
 
 ku_size <- function(key, shape) {
   dims <- c()
   for (i in 1:2) {
-    selection <- (1:size(shape)[i])[key[i]]
-    size <- size(selection)
+    selection <- (1:shape[i])[key[i]]
+    size <- length(selection)
     dims <- c(dims, size)
   }
   dims
 }
+
+ku_to_str <- function(key) { c(slice_to_str(key[1], slice_to_str(key[2]))) }
+
+# TODO: Implement is_special_slice

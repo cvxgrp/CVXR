@@ -182,6 +182,15 @@ setMethod("domain", "Atom", function(object) {
   c(.domain(object), cons)
 })
 
+#'
+#' The AxisAtom class.
+#'
+#' This virtual class represents atomic expressions that can be applied along an axis in CVXR.
+#'
+#' @slot expr A numeric element, data.frame, matrix, vector, or Expression.
+#' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
+#' @aliases AxisAtom
+#' @export
 AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
@@ -747,6 +756,35 @@ MinEntries <- function(x, axis = NA_real_) {
   -MaxEntries(-x, axis = axis)
 }
 
+max.Expression <- function(..., na.rm = FALSE) {
+  if(!na.rm)
+    warning("na.rm is unimplemented for Expression objects")
+  
+  vals <- list(...)
+  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
+  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr = expr) })
+  if(!all(is_expr)) {
+    max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
+    max_args <- c(max_args, max_num)
+  }
+  .MaxElemwise(args = max_args)
+}
+
+min.Expression <- function(..., na.rm = FALSE) {
+  if(!na.rm)
+    warning("na.rm is unimplemented for Expression objects")
+  
+  vals <- list(...)
+  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
+  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr = expr) })
+  if(!all(is_expr)) {
+    min_num <- min(sapply(vals[!is_expr], function(v) { min(v, na.rm = na.rm) }))
+    min_args <- c(min_args, min_num)
+  }
+  min_args <- lapply(min_args, function(arg) { -as.Constant(arg) })
+  -.MaxElemwise(args = min_args)
+}
+
 #'
 #' The Pnorm class.
 #'
@@ -916,25 +954,23 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "N", "2")) {
+setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "M", "2")) {
   x <- as.Constant(x)
   
   # Norms for scalars same as absolute value
-  if(type == "O" || type == "o" || type == "1" || is_scalar(x))
-    Pnorm(x = x, p = 1)
-  else if(type == "I" || type == "i" || type == "inf")
-    Pnorm(x = x, p = Inf)
-  else if(type == "F" || type == "f" || type == "fro")
-    Pnorm(x = x, p = 2)
-  else if(type == "N" || type == "n" || type == "nuc")
-    NormNuc(A = x)
-  else if(type == "2") {
-    if(is_matrix(x))
-      SigmaMax(x = x)
-    else
-      Pnorm(x = x, p = 2)
-  } else
-    Pnorm(x = x, p = type)
+  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
+  else if(type == "I" || type == "i")             # Maximum absolute row sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
+  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
+    Pnorm(x = x, p = 2, axis = NA_real_)
+  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
+    MaxEntries(Abs(x = x))
+  else if(type == "2")                            # Spectral norm (largest singular value of x)
+    # Sqrt(LambdaMax(A = t(x) %*% x))
+    stop("Spectral norm is currently unimplemented")
+  else
+    stop("Unrecognized type ", type)
 })
 
 Norm <- function(x, p = 2, axis = NA_real_) {
@@ -968,7 +1004,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
   vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
   
   # Outer norms
-  norm(.HStack(args = vecnorms), q)
+  Norm(.HStack(args = vecnorms), q)
 }
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")

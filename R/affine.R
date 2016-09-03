@@ -721,6 +721,29 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
   SumEntries.graph_implementation(arg_objs, size, data)
 })
 
+sum.Expression <- function(..., na.rm = FALSE) {
+  if(!na.rm)
+    warning("na.rm is unimplemented for Expression objects")
+  
+  vals <- list(...)
+  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
+  sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
+  if(all(is_expr))
+    Reduce("+", expr_sum)
+  else {
+    sum_num <- sum(sapply(vals[!is_expr], function(v) { sum(v, na.rm = na.rm) }))
+    Reduce("+", sum_expr) + sum_num
+  }
+}
+
+mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
+  if(!na.rm)
+    stop("na.rm is unimplemented for Expression objects")
+  if(trim != 0)
+    stop("trim is unimplemented for Expression objects")
+  SumEntries(expr = x) / prod(size(x))
+}
+
 #'
 #' The Trace class.
 #'

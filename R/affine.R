@@ -295,6 +295,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 
 .CumSum <- setClass("CumSum", contains = "AffAtom")
 CumSum <- function(expr, axis = 1) { .CumSum(expr = expr, axis = axis) }
+cumsum.Expression <- function(x) { CumSum(expr = Vec(x)) }   # Flatten matrix in column-major order to match R's behavior
 
 setMethod("initialize", "CumSum", function(.Object, ..., expr, axis = 1) {
   .Object@expr <- expr
@@ -836,6 +837,7 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
   UpperTri.graph_implementation(arg_objs, size, data)
 })
 
+# Flattens the matrix X into a vector in column-major order
 Vec <- function(X) {
   X <- as.Constant(X)
   Reshape(expr = X, rows = prod(size(X)), cols = 1)

@@ -23,7 +23,7 @@ y <- X %*% b + rnorm(n, 0, s)
 
 # Construct the OLS problem without constraints
 beta <- Variable(m)
-objective <- Minimize(SumSquares(y - X * beta))
+objective <- Minimize(SumSquares(y - X %*% beta))
 prob <- Problem(objective)
 
 # Solve the OLS problem for beta

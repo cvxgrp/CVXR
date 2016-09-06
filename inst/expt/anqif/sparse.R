@@ -16,7 +16,7 @@ n <- ncol(A)
 
 # Construct the problem
 y <- Variable(n)
-objective <- Minimize(SumEntries(A*y))
+objective <- Minimize(SumEntries(A %*% y))
 constraint <- list(1 <= y)
 prob <- Problem(objective, constraint)
 

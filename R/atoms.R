@@ -1078,8 +1078,10 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   # TODO: Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
     warning("Forming a non-convex expression QuadForm(x, indefinite)")
-  M1 <- V[,maskp] %*% sqrt(w_scaled[maskp])
-  M2 <- V[,maskn] %*% sqrt(-w_scaled[maskn])
+  # M1 <- sweep(as.matrix(V[,maskp]), 2, sqrt(w_scaled[maskp]), "*")
+  # M2 <- sweep(as.matrix(V[,maskn]), 2, sqrt(-w_scaled[maskn]), "*")
+  M1 <- as.matrix(V[,maskp]) %*% diag(sqrt(w_scaled[maskp]))
+  M2 <- as.matrix(V[,maskn]) %*% diag(sqrt(-w_scaled[maskn]))
   list(scale = scale, M1 = M1, M2 = M2)
 }
 

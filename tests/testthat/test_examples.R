@@ -123,7 +123,7 @@ test_that("Test examples from the README", {
   # Variables:
   # x i s a vector of stock holdings as fractions of total assets.
   
-  expected_return <- mu*x
+  expected_return <- mu %*% x
   risk <- QuadForm(x, sigma)
   
   objective <- Maximize(expected_return - gamma*risk)

@@ -419,7 +419,7 @@ ku_validate_key <- function(key, shape) {
 }
 
 ku_format_slice <- function(key_val, dim) {
-  is(is(key_val, "Slice")) {
+  if(is(key_val, "Slice")) {
     key_val <- Slice(ku_to_int(key_val@start), ku_to_int(key_val@stop), ku_to_int(key_val@step))
     return(key_val)
   } else {

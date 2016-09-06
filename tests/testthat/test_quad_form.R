@@ -1,6 +1,8 @@
 TOL <- 1e-6
 
 test_that("Test quadratic form with a singular matrix", {
+  require(Matrix)
+  
   # Solve a quadratic program
   for(n in c(3,4,5)) {
     for(i in 0:4) {
@@ -16,7 +18,8 @@ test_that("Test quadratic form with a singular matrix", {
       # This turns Q into a singular matrix with a known nullspace
       E <- diag(rep(1,n)) - v %*% t(v) / as.numeric(t(v) %*% v)
       Q <- E %*% (Q %*% t(E))
-      observed_rank <- rankMatrix(Q)
+      Q_rank <- rankMatrix(Q)
+      observed_rank <- Q_rank[1]
       desired_rank <- n-1
       expect_equal(observed_rank, desired_rank)
       
@@ -68,7 +71,7 @@ test_that("Test error when P is symmetric but not definite", {
   x <- Variable(2)
   
   # Forming quadratic form is okay
-  cost <- QuadForm(x, P)
+  expect_warning(cost <- QuadForm(x, P))
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
   # expect_error(solve(prob))
 })

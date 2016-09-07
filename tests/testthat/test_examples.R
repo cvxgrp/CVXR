@@ -20,8 +20,8 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   )
   
   p <- Problem(obj, constraints)
-  # result <- solve(p)
-  # expect_equal(result$opt_val, 0.447214, tolerance = TOL)
+  result <- solve(p)
+  expect_equal(result$optimal_value, 0.447214, tolerance = TOL)
   # expect_equal(result$r, result$optimal_value, tolerance = TOL)
   # expect_equal(result$x_c, c(0,0), tolerance = TOL)
 })
@@ -40,11 +40,10 @@ test_that("Test examples from the README", {
   p <- Problem(objective, constraints)
   
   # The optimal objective is returned by solve(p)
-  # result <- solve(p)
+  result <- solve(p)
   # The optimal value for x is stored in result$x
   # print(result$x)
-  # The optimal Lagrange multiplier for a constraint
-  # is stored in constraint$dual_value
+  # The optimal Lagrange multiplier for a constraint is stored in constraint$dual_value
   # print(constraints[1].dual_value)
 
   ###########################################

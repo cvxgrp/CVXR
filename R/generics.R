@@ -63,7 +63,6 @@ setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
-setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
 
 # Problem data generic methods
 setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })

@@ -458,7 +458,7 @@ test_that("test the partial_optimize eval 1-norm", {
   t <- Variable(dims)
   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
   p1 <- Problem(Minimize(SumEntries(t)), list(-t <= xval, xval <= t))
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Minimize the 1-norm via partial_optimize
   p2 <- Problem(Minimize(SumEntries(t)), list(-t <= x, x <= t))
@@ -498,7 +498,7 @@ test_that("test partial_optimize min 1-norm", {
   # p2 <- Problem(Minimize(g))
   # result2 <- solve(p2)
   
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   # expect_equal(result1$optimal_value, result2$optimal_value)
 })
 
@@ -508,7 +508,7 @@ test_that("test partial_optimize simple problem", {
   
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
@@ -524,7 +524,7 @@ test_that("test partial_optimize special var", {
   
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
@@ -540,7 +540,7 @@ test_that("test partial_optimize special constr", {
   
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
@@ -558,7 +558,7 @@ test_that("test partial_optimize with parameters", {
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
   gamma@value <- 3
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
@@ -575,7 +575,7 @@ test_that("test partial_optimize numeric function", {
   
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(y), list(xval+y >= 3))
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   constr <- list(y >= -100)
@@ -614,15 +614,15 @@ test_that("test partial_optimize stacked", {
   # p2 <- Problem(Minimize(g2))
   # result2 <- solve(p2)
   
-  # result1 <- solve(p1)
+  result1 <- solve(p1)
   # expect_equal(result1$optimal_value, result2$optimal_value)
 })
 
 test_that("test the NonNegative Variable class", {
   x <- NonNegative()
   p <- Problem(Minimize(5+x), list(x >= 3))
-  # result <- solve(p)
-  # expect_equal(result$optimal_value, 8, tolerance = TOL)
+  result <- solve(p)
+  expect_equal(result$optimal_value, 8, tolerance = TOL)
   # expect_equal(result$x, 3, tolerance = TOL)
 })
 

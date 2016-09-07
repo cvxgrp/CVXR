@@ -20,10 +20,10 @@ objective <- Minimize(SumEntries(A %*% y))
 constraint <- list(1 <= y)
 prob <- Problem(objective, constraint)
 
-# debug(cvxr_solve)
+# debug(solve)
 # debug(build_lin_op_tree)
-base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
-result <- cvxr_solve(prob)
+base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
+result <- solve(prob)
 
 result$optimal_value
 result$primal_values[[y@id]]

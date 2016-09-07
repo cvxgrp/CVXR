@@ -209,7 +209,7 @@ get_constraint_node <- function(c, tmp) {
     return(root)
 }
 
-solve <- function(sense, objective, constraints, verbose, solver_options = ecos.control()) {
+solve_int <- function(sense, objective, constraints, verbose, solver_options = ecos.control()) {
     ## This array keeps variables data in scope after build_lin_op_tree returns
     tmp <- R6List$new()
 

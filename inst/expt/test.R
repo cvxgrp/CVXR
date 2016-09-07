@@ -25,10 +25,10 @@ objective <- Minimize(SumSquares(A %*% x - b))
 constraint <- list( 1 <= x)
 prob <- Problem(objective, constraint)
 
-debug(cvxr_solve)
+debug(solve)
 debug(build_lin_op_tree)
 
-cvxr_solve(prob)
+solve(prob)
 
 # The optimal objective is returned by prob.solve().
 result = prob.solve()

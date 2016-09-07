@@ -1,5 +1,5 @@
 test_that("Test non-negative least squares", {
-  library(MASS)
+  require(MASS)
   
   # Generate problem data
   s <- 1
@@ -27,7 +27,7 @@ test_that("Test non-negative least squares", {
   prob <- Problem(objective)
   
   # Solve the OLS problem for beta
-  system.time(result <- cvxr_solve(prob))
+  system.time(result <- solve(prob))
   result$optimal_value
   result$primal_values[[as.character(beta@id)]]
   beta_ols <- result$primal_values[[as.character(beta@id)]]
@@ -37,7 +37,7 @@ test_that("Test non-negative least squares", {
   prob2 <- Problem(objective, constraints)
   
   # Solve the NNLS problem for beta
-  system.time(result2 <- cvxr_solve(prob2))
+  system.time(result2 <- solve(prob2))
   result2$optimal_value
   result2$primal_values[[as.character(beta@id)]]
   beta_nnls <- result2$primal_values[[as.character(beta@id)]]
@@ -81,7 +81,7 @@ test_that("Test catenary problem", {
   
   # Solve the catenary problem
   prob <- Problem(objective, constraints)
-  system.time(result <- cvxr_solve(prob))
+  system.time(result <- solve(prob))
   
   # Plot results
   x <- result$primal_values[[as.character(x@id)]]
@@ -136,7 +136,7 @@ test_that("Test direct standardization problem", {
   prob <- Problem(Maximize(objective), constraints)
   
   # Solve for the distribution weights
-  result <- cvxr_solve(prob)
+  result <- solve(prob)
   result$optimal_value
   result$primal_values[[as.character(w@id)]]
   weights <- result$primal_values[[as.character(w@id)]]
@@ -163,7 +163,7 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   constraints <- list(SumEntries(w) == 1, w >= 0)
   prob <- Problem(Maximize(objective), constraints)
    
-  # result <- cvxr_solve(prob)
+  # result <- solve(prob)
   # result$optimal_value
   # result$primal_values
 })

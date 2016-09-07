@@ -43,14 +43,14 @@ constraint <- list(1 <= x)
 ##base::trace("canonicalize", tracer=browser, exit = browser, signature = c("Variable"))
 prob <- Problem(objective, constraint)
 
-##base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
+##base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
 
-##debug(cvxr_solve)
+##debug(solve)
 
 ##debug(build_lin_op_tree)
 
 
-result <- cvxr_solve(prob)
+result <- solve(prob)
 
 cat("Solver Status: ", result$status, "\n")
 

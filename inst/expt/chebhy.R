@@ -23,8 +23,8 @@ constraints <- list(
 )
 
 p <- Problem(obj, constraints)
-##base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
-result <- cvxr_solve(p)
+##base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
+result <- solve(p)
 result$optimal_value
 result$primal_values
 

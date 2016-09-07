@@ -17,11 +17,10 @@ x_c <- Variable(2, name = "x_c")
 obj <- Maximize(r)
 constraints <- list(
     t(a1)*x_c + norm(a1,"F")*r <= b[1] )
-)
 
 p <- Problem(obj, constraints)
-##base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
-result <- cvxr_solve(p)
+##base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
+result <- solve(p)
 result$optimal_value
 result$primal_values
 

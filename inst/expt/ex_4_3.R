@@ -20,11 +20,11 @@ x <- Variable(n)
 objective <- Minimize(  0.5 * quad_form(x, P)  + q.T * x + r )
 constraints = list( x >= -1, x <= 1)
 
-base::trace("cvxr_solve", tracer=browser, exit = browser, signature = c("Problem"))
+base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
 
-##debug(cvxr_solve)
+##debug(solve)
 
 ##debug(build_lin_op_tree)
 
-w <- cvxr_solve(prob)
+w <- solve(prob)
 

@@ -402,18 +402,18 @@ setMethod("as.vector", signature(x = "Slice"), function(x, mode = "any") {
   else
     seq(x@start, x@stop, x@step)
 })
-Key <- function(row = NA, col = NA) { list(row = row, col = col) }
+Key <- function(row = NA_integer_, col = NA_integer_) { list(row = row, col = col) }
 
 ku_validate_key <- function(key, shape) {
   rows <- shape[1]
   cols <- shape[2]
   
   # Change single indices for vectors into double indices
-  if(length(key) != 2 || is.na(key$row) || is.na(key$col)) {
+  if(length(key) != 2 || all(is.na(key$row)) || all(is.na(key$col))) {
     if(rows == 1)
-      key <- Key(Slice(1, 2, NA), key$col)
+      key <- Key(Slice(1, 2, NA_integer_), key$col)
     else if(cols == 1)
-      key <- Key(key$row, Slice(1, 2, NA))
+      key <- Key(key$row, Slice(1, 2, NA_integer_))
     else
       stop("Invalid index/slice")
   }
@@ -439,7 +439,7 @@ ku_format_slice <- function(key_val, dim) {
   }
 }
 
-ku_to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
+ku_to_int <- function(val) { sapply(val, function(v) { if(is.na(v)) v else as.integer(v) }) }
 
 ku_wrap_neg_index <- function(index, dim) {
   if(!is.na(index) && index < 0)
@@ -448,7 +448,7 @@ ku_wrap_neg_index <- function(index, dim) {
   index
 }
 
-ku_index_to_slice <- function(idx) { Slice(idx, idx+1, NA) }
+ku_index_to_slice <- function(idx) { Slice(idx, idx+1, NA_integer_) }
 
 ku_slice_to_str <- function(slc) {
   if(ku_is_single_index(slc))
@@ -473,22 +473,30 @@ ku_is_single_index <- function(slc) {
 ku_size <- function(key, shape) {
   dims <- c()
   for (i in 1:2) {
-    selection <- (1:shape[i])[key[i]]
+    idx <- as.vector(key[[i]])
+    selection <- (1:shape[i])[idx]
     size <- length(selection)
     dims <- c(dims, size)
   }
   dims
 }
 
-ku_to_str <- function(key) { c(slice_to_str(key[1], slice_to_str(key[2]))) }
+ku_to_str <- function(key) { c(slice_to_str(key$row, slice_to_str(key$col))) }
 
 ku_is_special_slice <- function(key) {
   # Key is either a tuple of row, column keys, or a single row key.
   if(length(key) > 2)
     stop("Invalid index/slice")
-  else if(length(key) == 2)
-    key_elems <- list(key[[1]], key[[2]])
-  else
+  else if(length(key) == 2) {
+    if(!any(is.na(key$row)) && !any(is.na(key$col)))
+      key_elems <- list(key$row, key$col)
+    else if(all(is.na(key$col)))
+      key_elems <- list(key$row)
+    else if(all(is.na(key$row)))
+      key_elems <- list(key$col)
+    else
+      stop("Cannot have NAs in row or column indices")
+  } else
     key_elems <- list(key[[1]])
   
   # Slices and int-like numbers are fine.

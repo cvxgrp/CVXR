@@ -421,7 +421,7 @@ ku_validate_key <- function(key, shape) {
   # Change numbers into slices and ensure all slices have a start and stop.
   # key <- ku_format_slice(key[1], shape[1]), ku_format_slice(key[2], shape[2])
   key <- mapply(function(slc, dim) { ku_format_slice(slc, dim) }, slc = key, dim = shape)
-  Key(row = key[1], col = key[2])
+  Key(row = key[[1]], col = key[[2]])
 }
 
 ku_format_slice <- function(key_val, dim) {
@@ -432,7 +432,7 @@ ku_format_slice <- function(key_val, dim) {
     # Convert to integer
     key_val <- ku_to_int(key_val)
     key_val <- ku_wrap_neg_index(key_val, dim)
-    if(key_val >= 0 && key_val < dim)
+    if(key_val >= 1 && key_val <= dim)
       Slice(key_val, key_val + 1, 1)
     else
       stop("Index/slice out of bounds")
@@ -487,9 +487,9 @@ ku_is_special_slice <- function(key) {
   if(length(key) > 2)
     stop("Invalid index/slice")
   else if(length(key) == 2)
-    key_elems <- list(key[1], key[2])
+    key_elems <- list(key[[1]], key[[2]])
   else
-    key_elems <- list(key)
+    key_elems <- list(key[[1]])
   
   # Slices and int-like numbers are fine.
   for(elem in key_elems) {

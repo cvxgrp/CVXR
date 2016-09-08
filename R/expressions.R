@@ -74,7 +74,13 @@ setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && s
 
 # Slice operators
 setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) {
-  key <- Key(i, j)
+  if(missing(i))
+    key <- Key(col = j)
+  else if(missing(j))
+    key <- Key(row = i)
+  else
+    key <- Key(row = i, col = j)
+  
   if(ku_is_special_slice(key))
     Index.get_special_slice(x, key)
   else
@@ -111,7 +117,7 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {
-    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant") && is_1d_array(x))
+    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant") && x@is_1D_array)
       x <- t(x)
     return(MulExpression(lh_exp = x, rh_exp = y))
   } else if(is_constant(y)) {

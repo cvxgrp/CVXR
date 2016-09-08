@@ -520,7 +520,17 @@ Index.get_special_slice <- function(expr, key) {
   
   idx_mat <- seq(expr_prod)
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
-  select_mat <- idx_mat[key$row, key$col]
+  
+  if(all(is.na(key$row)) && all(is.na(key$col)))
+    select_mat <- idx_mat
+  else if(all(is.na(key$row)))
+    select_mat <- idx_mat[, key$col]
+  else if(all(is.na(key$col)))
+    select_mat <- idx_mat[key$row,]
+  else if(any(is.na(key$row)) || any(is.na(key$col)))
+    stop("Cannot have NAs in row or column indices")
+  else
+    select_mat <- idx_mat[key$row, key$col]
   
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
@@ -528,11 +538,11 @@ Index.get_special_slice <- function(expr, key) {
     final_size <- c(length(select_mat), 1)
   
   # TODO: Is this casting redundant? Check against CVXPY logic
-  select_vec <- as.matrix(select_mat)
+  select_vec <- as.vector(select_mat)
   
   # Select the chosen entries from expr.
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
-  Reshape(identity[select_vec] %*% Vec(expr), final_size[1], final_size[2])
+  Reshape(identity[select_vec,] %*% Vec(expr), final_size[1], final_size[2])
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {

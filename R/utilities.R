@@ -396,17 +396,24 @@ get_max_denom <- function(tup) {
 #'
 .Slice <- setClass("Slice", representation(start = "numeric", stop = "numeric", step = "numeric"), prototype(step = NA_integer_))
 Slice <- function(start, stop, step = NA_integer_) { .Slice(start = start, stop = stop, step = step) }
+setMethod("as.vector", signature(x = "Slice"), function(x, mode = "any") {
+  if(is.na(x@step))
+    seq(x@start, x@stop)
+  else
+    seq(x@start, x@stop, x@step)
+})
+Key <- function(row = NA, col = NA) { list(row = row, col = col) }
 
 ku_validate_key <- function(key, shape) {
   rows <- shape[1]
   cols <- shape[2]
   
   # Change single indices for vectors into double indices
-  if(length(key) != 2) {
+  if(length(key) != 2 || is.na(key$row) || is.na(key$col)) {
     if(rows == 1)
-      key <- c(Slice(1, 2, NA), key)
+      key <- Key(Slice(1, 2, NA), key$col)
     else if(cols == 1)
-      key <- c(key, Slice(1, 2, NA))
+      key <- Key(key$row, Slice(1, 2, NA))
     else
       stop("Invalid index/slice")
   }
@@ -414,8 +421,7 @@ ku_validate_key <- function(key, shape) {
   # Change numbers into slices and ensure all slices have a start and stop.
   # key <- ku_format_slice(key[1], shape[1]), ku_format_slice(key[2], shape[2])
   key <- mapply(function(slc, dim) { ku_format_slice(slc, dim) }, slc = key, dim = shape)
-  names(key) <- c("rows", "cols")
-  key
+  Key(row = key[1], col = key[2])
 }
 
 ku_format_slice <- function(key_val, dim) {
@@ -476,4 +482,19 @@ ku_size <- function(key, shape) {
 
 ku_to_str <- function(key) { c(slice_to_str(key[1], slice_to_str(key[2]))) }
 
-# TODO: Implement is_special_slice
+ku_is_special_slice <- function(key) {
+  # Key is either a tuple of row, column keys, or a single row key.
+  if(length(key) > 2)
+    stop("Invalid index/slice")
+  else if(length(key) == 2)
+    key_elems <- list(key[1], key[2])
+  else
+    key_elems <- list(key)
+  
+  # Slices and int-like numbers are fine.
+  for(elem in key_elems) {
+    if(!is.numeric(elem) && !is(elem, "Slice"))
+      return(TRUE)
+  }
+  return(FALSE)
+}

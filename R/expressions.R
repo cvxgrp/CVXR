@@ -72,6 +72,15 @@ setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
+# Slice operators
+setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) {
+  key <- Key(i, j)
+  if(ku_is_special_slice(key))
+    Index.get_special_slice(x, key)
+  else
+    Index(x, key)
+})
+
 # Arithmetic operators
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
 setMethod("-", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { NegExpression(expr = e1) })

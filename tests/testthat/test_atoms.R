@@ -285,13 +285,14 @@ test_that("test the VStack class", {
   atom <- VStack(A, C, B)
   expect_equal(size(atom), c(7, 2))
   
-  entries <- list()
-  for(i in 1:size(x)[1]) {
-    for(j in 1:size(x)[2]) {
-      entries <- c(entries, x[i, j])
-    }
-  }
-  atom <- VStack(unlist(entries))
+  # entries <- list()
+  # for(i in 1:size(x)[1]) {
+  #  for(j in 1:size(x)[2]) {
+  #    entries <- c(entries, x[i, j])
+  #  }
+  # }
+  # atom <- VStack(unlist(entries))
+  atom <- VStack(x[1,1], x[2,1])
   
   expect_error(VStack(C, 1))
 })

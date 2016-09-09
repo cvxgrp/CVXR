@@ -42,9 +42,10 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 })
 
 setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
-setMethod("size", "BoolConstr", function(object) { .Object@lin_op$size })
+setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 
-IntConstr <- setClass("IntConstr", contains = "BoolConstr")
+.IntConstr <- setClass("IntConstr", contains = "BoolConstr")
+IntConstr <- function(lin_op) { .IntConstr(lin_op = lin_op) }
 setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
 
 .LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", args = "list", .expr = "Expression", dual_variable = "Variable"),
@@ -99,7 +100,8 @@ setMethod("violation", "LeqConstraint", function(object) { value(residual(object
 setMethod("dual_value", "LeqConstraint", function(object) { value(object@dual_variable) })
 setMethod("save_value", "LeqConstraint", function(object, value) { save_value(object@dual_variable, value) })
 
-EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
+.EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
+EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
 setMethod("residual", "EqConstraint", function(object) { abs(object@.expr) })

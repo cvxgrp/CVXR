@@ -487,13 +487,13 @@ setMethod("graph_implementation", "HStack", function(object, arg_objs, size, dat
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
-  .Object@key <- ku_validate_key(key, size(expr))   # key is a list with key$row and key$col, which are Slice objects
+  .Object@key <- ku_validate_key(key, size(expr))   # TODO: Double check key validation
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
 setMethod("to_numeric", "Index", function(object) {
-  values[[1]][as.vector(object@key$row), as.vector(object@key$col)]
+  ku_slice_mat(values[[1]], object@key$row, object@key$col)
 })
 
 setMethod("size_from_args", "Index", function(object) {
@@ -511,7 +511,7 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
   Index.graph_implementation(arg_objs, size, data)
 })
 
-Index.get_special_slice <- function(expr, key) {
+Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
   
   # Order the entries of expr and select them using key.
@@ -520,33 +520,21 @@ Index.get_special_slice <- function(expr, key) {
   
   idx_mat <- seq(expr_prod)
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
-  
-  if(all(is.na(key$row)) && all(is.na(key$col)))
-    select_mat <- idx_mat
-  else if(all(is.na(key$row)))
-    select_mat <- idx_mat[, key$col]
-  else if(all(is.na(key$col)))
-    select_mat <- idx_mat[key$row,]
-  else if(any(is.na(key$row)) || any(is.na(key$col)))
-    stop("Cannot have NAs in row or column indices")
-  else
-    select_mat <- idx_mat[key$row, key$col]
+  select_mat <- idx_mat[row, col]
   
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
   else   # Always cast 1-D arrays as column vectors
     final_size <- c(length(select_mat), 1)
   
-  # TODO: Is this casting redundant? Check against CVXPY logic
-  select_vec <- as.vector(select_mat)
-  
   # Select the chosen entries from expr.
+  select_vec <- as.vector(select_mat)
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
   Reshape(identity[select_vec,] %*% Vec(expr), final_size[1], final_size[2])
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {
-  key <- Key(index_to_slice(row), index_to_slice(col))
+  key <- Key(row, col)
   graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
   idx <- graph[[1]]
   idx_constr <- graph[[2]]
@@ -554,19 +542,8 @@ Index.get_index <- function(matrix, constraints, row, col) {
   list(idx = idx, constraints = constraints)
 }
 
-Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, col_end) {
-  key <- Key(Slice(row_start, row_end, NA), Slice(col_start, col_end, NA))
-  rows <- row_end - row_start
-  cols <- col_end - col_start
-  graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
-  slc <- graph[[1]]
-  idx_constr <- graph[[2]]
-  constraints <- c(constraints, idx_constr)
-  list(slc = slc, constraints = constraints)
-}
-
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
-  key <- Key(Slice(row_start, row_end, NA), Slice(col_start, col_end, NA))
+  key <- Key(row_start:row_end, col_start:col_end)
   rows <- row_end - row_start
   cols <- col_end - col_start
   if(!all(size(block) == c(rows, cols)))

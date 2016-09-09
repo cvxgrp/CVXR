@@ -427,115 +427,57 @@ get_max_denom <- function(tup) {
 #'
 #' Key utilities
 #'
-.Slice <- setClass("Slice", representation(start = "numeric", stop = "numeric", step = "numeric"), prototype(step = NA_integer_))
-Slice <- function(start, stop, step = NA_integer_) { .Slice(start = start, stop = stop, step = step) }
-setMethod("as.vector", signature(x = "Slice"), function(x, mode = "any") {
-  if(is.na(x@step))
-    seq(x@start, x@stop)
-  else
-    seq(x@start, x@stop, x@step)
-})
-Key <- function(row = NA_integer_, col = NA_integer_) { list(row = row, col = col) }
+Key <- function(row, col) {
+  if(missing(row)) row <- "all"   # TODO: Missing row/col index implies that we select all rows/cols
+  if(missing(col)) row <- "all"
+  list(row = row, col = col, class = "key")
+}
 
 ku_validate_key <- function(key, shape) {
-  rows <- shape[1]
-  cols <- shape[2]
+  nrow <- shape[1]
+  ncol <- shape[2]
   
-  # Change single indices for vectors into double indices
-  if(length(key) != 2 || all(is.na(key$row)) || all(is.na(key$col))) {
-    if(rows == 1)
-      key <- Key(Slice(1, 2, NA_integer_), key$col)
-    else if(cols == 1)
-      key <- Key(key$row, Slice(1, 2, NA_integer_))
+  if(length(key) > 2)
+    stop("Invalid index/slice")
+  else if(length(key) == 2) {
+    key <- Key(row = key$row, col = key$col)
+  } else if(length(key) == 1) {
+    # Change single indices for vectors into double indices
+    if(nrow == 1)
+      key <- Key(1, key$col)
+    else if(ncol == 1)
+      key <- Key(key$row, 1)
     else
       stop("Invalid index/slice")
-  }
-  
-  # Change numbers into slices and ensure all slices have a start and stop.
-  # key <- ku_format_slice(key[1], shape[1]), ku_format_slice(key[2], shape[2])
-  key <- mapply(function(slc, dim) { ku_format_slice(slc, dim) }, slc = key, dim = shape)
-  Key(row = key[[1]], col = key[[2]])
+  } else
+    stop("key cannot be empty")
+  return(key)
 }
 
-ku_format_slice <- function(key_val, dim) {
-  if(is(key_val, "Slice")) {
-    key_val <- Slice(ku_to_int(key_val@start), ku_to_int(key_val@stop), ku_to_int(key_val@step))
-    return(key_val)
-  } else {
-    # Convert to integer
-    key_val <- ku_to_int(key_val)
-    key_val <- ku_wrap_neg_index(key_val, dim)
-    if(key_val >= 1 && key_val <= dim)
-      Slice(key_val, key_val + 1, 1)
-    else
-      stop("Index/slice out of bounds")
-  }
-}
-
-ku_to_int <- function(val) { sapply(val, function(v) { if(is.na(v)) v else as.integer(v) }) }
-
-ku_wrap_neg_index <- function(index, dim) {
-  if(!is.na(index) && index < 0)
-    # index <- index %% dim
-    stop("Negative indexing currently unimplemented")   # TODO: Need negative indexing to match R
-  index
-}
-
-ku_index_to_slice <- function(idx) { Slice(idx, idx+1, NA_integer_) }
-
-ku_slice_to_str <- function(slc) {
-  if(ku_is_single_index(slc))
-    return(as.character(slc@start))
-  endpoints <- sapply(c(slc@start, slc@stop), function(val) { ku_none_to_empty(val) })
-  if(!is.na(slc@step) && slc@step != 1)
-    sprintf("%s:%s:%s", endpoints[1], endpoints[2], slc@step)
+ku_slice_mat <- function(mat, key) {
+  if(key$row == "all" && key$col == "all")
+    select_mat <- mat
+  else if(key$row == "all")
+    select_mat <- mat[, key$col]
+  else if(key$col == "all")
+    select_mat <- mat[key$row, ]
   else
-    sprintf("%s:%s", endpoints[1], endpoints[2])
-}
-
-ku_none_to_empty <- function(val) { if(is.na(val)) '' else val }
-
-ku_is_single_index <- function(slc) {
-  if(is.na(slc@step))
-    step <- 1
-  else
-    step <- slc@step
-  !is.na(slc@start) && !is.na(slc@stop) && (slc@start + step >= slc@stop)
+    select_mat <- mat[key$row, key$col]
+  select_mat
 }
 
 ku_size <- function(key, shape) {
   dims <- c()
-  for (i in 1:2) {
-    idx <- as.vector(key[[i]])
-    selection <- (1:shape[i])[idx]
-    size <- length(selection)
+  
+  for(i in 1:2) {
+    idx <- key[[i]]
+    if(idx == "all")
+      size <- shape[i]
+    else {
+      selection <- (1:shape[i])[idx]
+      size <- length(selection)
+    }
     dims <- c(dims, size)
   }
   dims
-}
-
-ku_to_str <- function(key) { c(slice_to_str(key$row, slice_to_str(key$col))) }
-
-ku_is_special_slice <- function(key) {
-  # Key is either a tuple of row, column keys, or a single row key.
-  if(length(key) > 2)
-    stop("Invalid index/slice")
-  else if(length(key) == 2) {
-    if(!any(is.na(key$row)) && !any(is.na(key$col)))
-      key_elems <- list(key$row, key$col)
-    else if(all(is.na(key$col)))
-      key_elems <- list(key$row)
-    else if(all(is.na(key$row)))
-      key_elems <- list(key$col)
-    else
-      stop("Cannot have NAs in row or column indices")
-  } else
-    key_elems <- list(key[[1]])
-  
-  # Slices and int-like numbers are fine.
-  for(elem in key_elems) {
-    if(!is.numeric(elem) && !is(elem, "Slice"))
-      return(TRUE)
-  }
-  return(FALSE)
 }

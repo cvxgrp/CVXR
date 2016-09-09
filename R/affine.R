@@ -736,14 +736,14 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 })
 
 sum.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
   if(all(is_expr))
-    Reduce("+", expr_sum)
+    Reduce("+", sum_expr)
   else {
     sum_num <- sum(sapply(vals[!is_expr], function(v) { sum(v, na.rm = na.rm) }))
     Reduce("+", sum_expr) + sum_num
@@ -751,7 +751,7 @@ sum.Expression <- function(..., na.rm = FALSE) {
 }
 
 mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
-  if(!na.rm)
+  if(na.rm)
     stop("na.rm is unimplemented for Expression objects")
   if(trim != 0)
     stop("trim is unimplemented for Expression objects")

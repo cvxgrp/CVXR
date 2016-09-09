@@ -64,7 +64,7 @@ test_that("Test catenary problem", {
   x <- Variable(2*n)
   B <- diag(2*n)
   B[1:n, 1:n] <- 0
-  objective <- Minimize(SumEntries(B %*% x))
+  objective <- Minimize(sum(B %*% x))
   
   # Form constraints
   A <- matrix(0, nrow = 4, ncol = 2*n)
@@ -131,8 +131,8 @@ test_that("Test direct standardization problem", {
   
   # Construct the direct standardization problem
   w <- Variable(msub)
-  objective <- SumEntries(Entr(w))
-  constraints <- list(w >= 0, SumEntries(w) == 1, t(X[sub,]) %*% w == b)
+  objective <- sum(Entr(w))
+  constraints <- list(w >= 0, sum(w) == 1, t(X[sub,]) %*% w == b)
   prob <- Problem(Maximize(objective), constraints)
   
   # Solve for the distribution weights
@@ -160,7 +160,7 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   ret <- t(mu) %*% w
   risk <- QuadForm(w, Sigma)
   objective <- ret - gamma * risk
-  constraints <- list(SumEntries(w) == 1, w >= 0)
+  constraints <- list(sum(w) == 1, w >= 0)
   prob <- Problem(Maximize(objective), constraints)
    
   # result <- solve(prob)

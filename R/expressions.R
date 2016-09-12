@@ -13,6 +13,15 @@ setOldClass("vector")
 setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
+setClassUnion("ListORExpr", c("list", "Expression"))
+
+# Helper function since syntax is different for LinOp (list) vs. Expression object
+setMethod("size", "ListORExpr", function(object) {
+  if(is.list(object))
+    object$size
+  else
+    size(object)
+})
 
 # Casts the second argument of a binary operator as an Expression
 .cast_other <- function(binary_op) {
@@ -64,6 +73,7 @@ setMethod("sign", "Expression", function(x) {
     sign_str <- UNKNOWN
   sign_str
 })
+
 setMethod("is_zero", "Expression", function(object) { is_positive(object) && is_negative(object) })
 setMethod("is_positive", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_negative", "Expression", function(object) { stop("Unimplemented") })
@@ -71,6 +81,9 @@ setMethod("size", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,1)) })
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
+
+# Slice operators
+setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) { Index.get_special_slice(x, i, j) })
 
 # Arithmetic operators
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
@@ -92,17 +105,23 @@ setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
 })
 setMethod("/", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 / as.Constant(e2) })
 setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) / e2 })
-setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
+setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
+  if(e2 == 2)
+    Square(x = e1)
+  else if(e2 == 0.5)
+    Sqrt(x = e1)
+  else
+    Power(x = e1, p = e2)
+})
 
 # Matrix operators
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
-# TODO: Overload the [ operator for slicing rows/columns from an expression
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {
-    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant") && is_1d_array(x))
+    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant") && x@is_1D_array)
       x <- t(x)
     return(MulExpression(lh_exp = x, rh_exp = y))
   } else if(is_constant(y)) {

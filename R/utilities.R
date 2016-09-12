@@ -164,9 +164,42 @@ mul_sign <- function(lh_expr, rh_expr) {
 #'
 #' Utility functions for constraints
 #' 
+format_axis <- function(t, X, axis) {
+  # Reduce to norms of columns
+  if(axis == 1)
+    X <- transpose(X)
+  
+  # Create matcies Tmat, Xmat such that Tmat*t + Xmat*X
+  # gives the format for the elementwise cone constraints.
+  cone_size <- 1 + size(X)[1]
+  terms <- list()
+  
+  # Make t_mat
+  mat_size <- c(cone_size, 1)
+  prod_size <- c(cone_size, size(t)[1])
+  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_size)
+  t_mat <- create_const(t_mat, mat_size, sparse = TRUE)
+  terms <- c(terms, mul_expr(t_mat, transpose(t), prod_size))
+
+  # Make X_mat
+  mat_size <- c(cone_size, size(X)[1])
+  prod_size <- c(cone_size, size(X)[2])
+  val_arr <- rep(1.0, cone_size - 1)
+  row_arr <- 2:cone_size
+  col_arr <- 1:(cone_size-1)   # TODO: Check row_arr and col_arr indices are correct
+  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_size)
+  X_mat <- create_const(X_mat, mat_size, sparse = TRUE)
+  terms <- c(terms, mul_expr(X_mat, X, prod_size))
+  list(create_geq(sum_expr(terms)))
+}
+
 format_elemwise <- function(vars_) {
+  # Create matcies A_i such that 0 <= A_0*x_0 + ... + A_n*x_n
+  # gives the format for the elementwise cone constraints.
   spacing <- length(vars_)
   prod_size <- c(spacing * vars_[[1]]$size[1], vars_[[1]]$size[2])
+  
+  # Matrix spaces out columns of the LinOp expressions
   mat_size <- c(spacing * vars_[[1]]$size[1], vars_[[1]]$size[1])
   
   mat <- lapply(1:spacing, function(i) { get_spacing_matrix(mat_size, spacing, i) })
@@ -394,86 +427,57 @@ get_max_denom <- function(tup) {
 #'
 #' Key utilities
 #'
-.Slice <- setClass("Slice", representation(start = "numeric", stop = "numeric", step = "numeric"), prototype(step = NA_integer_))
-Slice <- function(start, stop, step = NA_integer_) { .Slice(start = start, stop = stop, step = step) }
+Key <- function(row, col) {
+  if(missing(row)) row <- "all"   # TODO: Missing row/col index implies that we select all rows/cols
+  if(missing(col)) row <- "all"
+  list(row = row, col = col, class = "key")
+}
 
 ku_validate_key <- function(key, shape) {
-  rows <- shape[1]
-  cols <- shape[2]
+  nrow <- shape[1]
+  ncol <- shape[2]
   
-  # Change single indices for vectors into double indices
-  if(length(key) != 2) {
-    if(rows == 1)
-      key <- c(Slice(1, 2, NA), key)
-    else if(cols == 1)
-      key <- c(key, Slice(1, 2, NA))
+  if(length(key) > 2)
+    stop("Invalid index/slice")
+  else if(length(key) == 2) {
+    key <- Key(row = key$row, col = key$col)
+  } else if(length(key) == 1) {
+    # Change single indices for vectors into double indices
+    if(nrow == 1)
+      key <- Key(1, key$col)
+    else if(ncol == 1)
+      key <- Key(key$row, 1)
     else
       stop("Invalid index/slice")
-  }
-  
-  # Change numbers into slices and ensure all slices have a start and stop.
-  # key <- ku_format_slice(key[1], shape[1]), ku_format_slice(key[2], shape[2])
-  key <- mapply(function(slc, dim) { ku_format_slice(slc, dim) }, slc = key, dim = shape)
-  names(key) <- c("rows", "cols")
-  key
+  } else
+    stop("key cannot be empty")
+  return(key)
 }
 
-ku_format_slice <- function(key_val, dim) {
-  if(is(key_val, "Slice")) {
-    key_val <- Slice(ku_to_int(key_val@start), ku_to_int(key_val@stop), ku_to_int(key_val@step))
-    return(key_val)
-  } else {
-    # Convert to integer
-    key_val <- ku_to_int(key_val)
-    key_val <- ku_wrap_neg_index(key_val, dim)
-    if(key_val >= 0 && key_val < dim)
-      Slice(key_val, key_val + 1, 1)
-    else
-      stop("Index/slice out of bounds")
-  }
-}
-
-ku_to_int <- function(val) { if(is.na(val)) val else as.integer(val) }
-
-ku_wrap_neg_index <- function(index, dim) {
-  if(!is.na(index) && index < 0)
-    # index <- index %% dim
-    stop("Negative indexing currently unimplemented")   # TODO: Need negative indexing to match R
-  index
-}
-
-ku_index_to_slice <- function(idx) { Slice(idx, idx+1, NA) }
-
-ku_slice_to_str <- function(slc) {
-  if(ku_is_single_index(slc))
-    return(as.character(slc@start))
-  endpoints <- sapply(c(slc@start, slc@stop), function(val) { ku_none_to_empty(val) })
-  if(!is.na(slc@step) && slc@step != 1)
-    sprintf("%s:%s:%s", endpoints[1], endpoints[2], slc@step)
+ku_slice_mat <- function(mat, key) {
+  if(key$row == "all" && key$col == "all")
+    select_mat <- mat
+  else if(key$row == "all")
+    select_mat <- mat[, key$col]
+  else if(key$col == "all")
+    select_mat <- mat[key$row, ]
   else
-    sprintf("%s:%s", endpoints[1], endpoints[2])
-}
-
-ku_none_to_empty <- function(val) { if(is.na(val)) '' else val }
-
-ku_is_single_index <- function(slc) {
-  if(is.na(slc@step))
-    step <- 1
-  else
-    step <- slc@step
-  !is.na(slc@start) && !is.na(slc@stop) && (slc@start + step >= slc@stop)
+    select_mat <- mat[key$row, key$col]
+  select_mat
 }
 
 ku_size <- function(key, shape) {
   dims <- c()
-  for (i in 1:2) {
-    selection <- (1:shape[i])[key[i]]
-    size <- length(selection)
+  
+  for(i in 1:2) {
+    idx <- key[[i]]
+    if(idx == "all")
+      size <- shape[i]
+    else {
+      selection <- (1:shape[i])[idx]
+      size <- length(selection)
+    }
     dims <- c(dims, size)
   }
   dims
 }
-
-ku_to_str <- function(key) { c(slice_to_str(key[1], slice_to_str(key[2]))) }
-
-# TODO: Implement is_special_slice

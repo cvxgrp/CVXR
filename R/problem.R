@@ -239,8 +239,7 @@ get_problem_data.Problem <- function(object, solver) {
   get_problem_data(solver, objective, constraints, object@.cached_data)
 }
 
-# TODO: How to define default input parameters in setMethod?
-setMethod("cvxr_solve", "Problem", function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
+solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
       print("Problem does not follow DCP rules. Solving a convex relaxation.")
@@ -248,24 +247,13 @@ setMethod("cvxr_solve", "Problem", function(object, solver = ECOS_NAME, ignore_d
       stop("Problem does not follow DCP rules.")
   }
   
-  ## if(solver == LS_NAME) {
-  ##  validate_solver(solver, object)
-  ##  objective <- object@objective
-  ##  constraints <- object@constraints
-  ##  
-  ##  sym_data <- get_sym_data(solver, objective, constraints)
-  ##  results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_Start, verbose, ...)
-  ##  object <- .update_problem_data(results_dict, sym_data, solver)
-  ##  return(value(object))
-  ## }
-
   # Standard cone problem
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
-
+  
   # TODO: Solve in parallel
-
+  
   print("Calling CVXcanon")
   if(is(object@objective, "Minimize")) {
     sense <- "Minimize"
@@ -274,38 +262,9 @@ setMethod("cvxr_solve", "Problem", function(object, solver = ECOS_NAME, ignore_d
     sense <- "Maximize"
     canon_objective <- neg_expr(objective)  # preserve sense
   }
-
-  solve(sense, canon_objective, constraints, verbose, ...)
-
-  ## Start of section commented out by Naras
-
-  # Choose a solver/check the chosen solver.
-  ## if(is.null(solver))
-  ##   solver <- Solver.choose_solver(constraints)
-  ## else if(is(solver, "Solver") && name(solver) %in% SOLVERS)
-  ##   validate_solver(solver, constraints)
-  ## else if(is.character(solver) && solver %in% SOLVERS) {
-  ##   solver <- new(solver)
-  ##   validate_solver(solver, constraints)
-  ## } else
-  ##   stop("Unknown solver.")
-
-  ## sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-
-  ## # Presolve couldn't solve the problem.
-  ## if(is.na(sym_data@presolve_status)) {
-  ##   results_dict <- solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
-  ## # Presolve determined the problem was unbounded or infeasible.
-  ## } else {
-  ##   results_dict <- list(sym_data@presolve_status)
-  ##   names(results_dict) <- STATUS
-  ## }
-
-  ## object <- .update_problem_state(results_dict, sym_data, solver)
-  ## value(object)
-
-  ## End of section commented out by Naras
-})
+  
+  solve_int(sense, canon_objective, constraints, verbose, ...)
+}
 
 .update_problem_state.Problem <- function(object, results_dict, sym_data, solver) {
   if(results_dict[STATUS] %in% SOLUTION_PRESENT) {

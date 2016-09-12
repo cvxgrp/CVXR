@@ -22,7 +22,7 @@ for (i in seq.int(n-1)) {
     constraints <- c(constraints, Norm2(A %*% x) <= h)
 }
 prob <- Problem(objective, constraints)
-system.time(sole <- cvxr_solve(prob))
+system.time(sole <- solve(prob))
 
 x <- sole$primal_values[[1]]
 xs <- x[1:n, 1, drop=TRUE]; ys <- x[(n+1):(2*n), 1, drop=TRUE]

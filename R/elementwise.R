@@ -574,7 +574,6 @@ pos <- Pos
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
-setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, w = NA_real_, approx_error = NA_real_) {
   p_old <- p
@@ -713,9 +712,9 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       if(p > 0 && p < 1)
         return(list(t, gm_constrs(t, list(x, one), w)))
       else if(p > 1)
-        return(list(t, gm_constrs(x, list(t, one)), w))
+        return(list(t, gm_constrs(x, list(t, one), w)))
       else if(p < 0)
-        return(list(t, gm_constrs(one, list(x, t)), w))
+        return(list(t, gm_constrs(one, list(x, t), w)))
       else
         stop("This power is not yet supported")
     }
@@ -732,11 +731,12 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 QOLElemwise <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   y <- arg_objs[[2]]
+  
   t <- create_var(size(x))
   two <- create_const(2, c(1, 1))
-  constraints <- list(SOCAxis(sum_expr(list(y, t)),
-                                  list(sub_expr(y, t), mul_expr(two, x, size(x))),
-                                  create_geq(y)), 1)
+  constraints <- list(SOCElemwise(sum_expr(list(y, t)),
+                          list(sub_expr(y, t), mul_expr(two, x, size(x)))),
+                      create_geq(y))
   list(t, constraints)
 }
 

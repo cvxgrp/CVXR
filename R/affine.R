@@ -487,12 +487,15 @@ setMethod("graph_implementation", "HStack", function(object, arg_objs, size, dat
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
-  .Object@key <- ku_validate_key(key, size(expr))   # TODO: Need to validate key
+  .Object@key <- ku_validate_key(key, size(expr))   # TODO: Double check key validation
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-setMethod("to_numeric", "Index", function(object) { values[[1]][object@key$row_slice, object@key$col_slice] })
+setMethod("to_numeric", "Index", function(object) {
+  ku_slice_mat(values[[1]], object@key$row, object@key$col)
+})
+
 setMethod("size_from_args", "Index", function(object) {
   ku_size(object@key, size(object@args[[1]]))
 })
@@ -508,32 +511,30 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
   Index.graph_implementation(arg_objs, size, data)
 })
 
-Index.get_special_slice <- function(expr, key) {
+Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
   
   # Order the entries of expr and select them using key.
   expr_size <- size(expr)
-  idx_mat <- seq(prod(expr_size))
-  idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
-  select_mat <- idx_mat[key$row_slice, key$col_slice]
+  expr_prod <- prod(expr_size)
   
-  if(!is.null(dim(select_mat))) {
+  idx_mat <- seq(expr_prod)
+  idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
+  select_mat <- idx_mat[row, col]
+  
+  if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
-    sel_size <- final_size
-  } else   # Always cast 1-D arrays as column vectors
+  else   # Always cast 1-D arrays as column vectors
     final_size <- c(length(select_mat), 1)
   
-  # TODO: Is this casting redundant? Check against CVXPY logic
-  select_vec <- as.matrix(select_mat)
-  
   # Select the chosen entries from expr.
-  expr_prod <- prod(expr_size)
+  select_vec <- as.vector(select_mat)
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
-  Reshape(identity[select_vec] * Vec(expr), final_size[1], final_size[2])
+  Reshape(identity[select_vec,] %*% Vec(expr), final_size[1], final_size[2])
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {
-  key <- list(index_to_slice(row), index_to_slice(col))
+  key <- Key(row, col)
   graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
   idx <- graph[[1]]
   idx_constr <- graph[[2]]
@@ -541,19 +542,8 @@ Index.get_index <- function(matrix, constraints, row, col) {
   list(idx = idx, constraints = constraints)
 }
 
-Index.get_slice <- function(matrix, constraints, row_start, row_end, col_start, col_end) {
-  key <- list(c(row_start, row_end), c(col_start, col_end))
-  rows <- row_end - row_start
-  cols <- col_end - col_start
-  graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
-  slc <- graph[[1]]
-  idx_constr <- graph[[2]]
-  constraints <- c(constraints, idx_constr)
-  list(slc = slc, constraints = constraints)
-}
-
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
-  key <- list(c(row_start, row_end), c(col_start, col_end))
+  key <- Key(row_start:row_end, col_start:col_end)
   rows <- row_end - row_start
   cols <- col_end - col_start
   if(!all(size(block) == c(rows, cols)))
@@ -723,14 +713,14 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 })
 
 sum.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
   if(all(is_expr))
-    Reduce("+", expr_sum)
+    Reduce("+", sum_expr)
   else {
     sum_num <- sum(sapply(vals[!is_expr], function(v) { sum(v, na.rm = na.rm) }))
     Reduce("+", sum_expr) + sum_num
@@ -738,7 +728,7 @@ sum.Expression <- function(..., na.rm = FALSE) {
 }
 
 mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
-  if(!na.rm)
+  if(na.rm)
     stop("na.rm is unimplemented for Expression objects")
   if(trim != 0)
     stop("trim is unimplemented for Expression objects")

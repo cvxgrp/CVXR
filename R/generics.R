@@ -63,24 +63,18 @@ setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
-setGeneric("cvxr_solve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, ...) { standardGeneric("cvxr_solve") })
 
 # Problem data generic methods
-setGeneric("reset_param_data", function(object) { standardGeneric("reset_param_data") })
-setGeneric(".dummy_constr", function(object) { standardGeneric(".dummy_constr") })
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })
 setGeneric("get_eq_constr", function(object) { standardGeneric("get_eq_constr") })
 setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_constr") })
-setGeneric(".init_matrix_cache", function(object, constraints, x_length) { standardGeneric(".init_matrix_cache") })
-setGeneric(".lin_matrix", function(object, mat_cache, caching) { standardGeneric(".lin_matrix") })
-setGeneric(".cache_to_matrix", function(object, mat_cache) { standardGeneric(".cache_to_matrix") })
+setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_constr") })
 
 # Solver generic methods
 setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
 setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
 setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
-# setGeneric("get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_problem_data") })
 
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })

@@ -27,7 +27,7 @@ objective <- Minimize(SumSquares(y - X %*% beta))
 prob <- Problem(objective)
 
 # Solve the OLS problem for beta
-result <- cvxr_solve(prob)
+result <- solve(prob)
 result$optimal_value
 result$primal_values[[beta@id]]
 beta_ols <- result$primal_values[[beta@id]]
@@ -37,7 +37,7 @@ constraints <- list(beta >= 0)
 prob2 <- Problem(objective, constraints)
 
 # Solve the NNLS problem for beta
-result2 <- cvxr_solve(prob2)
+result2 <- solve(prob2)
 result2$optimal_value
 result2$primal_values[[beta@id]]
 beta_nnls <- result2$primal_values[[beta@id]]

@@ -42,9 +42,10 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 })
 
 setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
-setMethod("size", "BoolConstr", function(object) { .Object@lin_op$size })
+setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 
-IntConstr <- setClass("IntConstr", contains = "BoolConstr")
+.IntConstr <- setClass("IntConstr", contains = "BoolConstr")
+IntConstr <- function(lin_op) { .IntConstr(lin_op = lin_op) }
 setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
 
 .LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", args = "list", .expr = "Expression", dual_variable = "Variable"),
@@ -71,7 +72,7 @@ setMethod("show", "LeqConstraint", function(object) {
   cat(class(object), "(", as.character(object@args[[1]]), ", ", as.character(object@args[[2]]), ")", sep = "")
 })
 
-setMethod("as.character", "Constant", function(x) {
+setMethod("as.character", "LeqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))   # TODO: Add OP_NAME parameter to LeqConstraint
 })
 
@@ -99,7 +100,8 @@ setMethod("violation", "LeqConstraint", function(object) { value(residual(object
 setMethod("dual_value", "LeqConstraint", function(object) { value(object@dual_variable) })
 setMethod("save_value", "LeqConstraint", function(object, value) { save_value(object@dual_variable, value) })
 
-EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
+.EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
+EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
 setMethod("residual", "EqConstraint", function(object) { abs(object@.expr) })
@@ -115,12 +117,7 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
 # TODO: Is this the correct size method for the exponential cone class?
-setMethod("size", "ExpCone", function(object) {
-  if(is.list(object@x))
-    object@x$size
-  else
-    size(object@x)
-})
+setMethod("size", "ExpCone", function(object) { size(object@x) })
 
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
@@ -195,12 +192,7 @@ setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, 
 })
 
 setMethod("size", "SOC", function(object) {
-  sizes <- sapply(object@x_elems, function(elem) {
-    if(is.list(elem))
-      prod(elem$size)
-    else
-      prod(size(elem))
-  })
+  sizes <- sapply(object@x_elems, function(elem) { prod(size(elem)) })
   rows <- sum(sizes) + 1
   c(rows, 1)
 })
@@ -308,7 +300,7 @@ setMethod("as.character", "SOCAxis", function(x) {
 
 setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, dims, solver) {
  .format <- function(object) {
-   list(list(), format_elemwise(object@t, object@x_elems[[1]], object@axis))
+   list(list(), format_axis(object@t, object@x_elems[[1]], object@axis))
  }
 
  leq_constr <- c(leq_constr, .format(object)[[2]])
@@ -322,6 +314,33 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
 setMethod("num_cones", "SOCAxis", function(object) { size(object@t)[1] })
 setMethod("cone_size", "SOCAxis", function(object) { c(1 + size(object@x_elems[[1]])[object@axis], 1) })
 setMethod("size", "SOCAxis", function(object) {
+  cone_size <- cone_size(object)
+  lapply(1:num_cones(object), function(i) { cone_size })
+})
+
+# TODO: Get rid of SOCElemwise once Fraction handling is implemented in Power
+.SOCElemwise <- setClass("SOCElemwise", contains = "SOC")
+SOCElemwise <- function(t, x_elems) { .SOCElemwise(t = t, x_elems = x_elems) }
+
+setMethod("format_constr", "SOCElemwise", function(object, eq_constr, leq_constr, dims, solver) {
+  .format <- function(object) {
+    list(list(), format_elemwise(list(object@t, object@x_elems)))
+  }
+  
+  # Update dims
+  leq_constr <- c(leq_constr, .format(object)[[2]])
+  for(cone_size in size(object))
+    dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
+  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
+})
+
+setMethod("num_cones", "SOCElemwise", function(object) { size(object@t)[1] })
+
+setMethod("cone_size", "SOCElemwise", function(object) {
+  c(1 + length(object@x_elems), 1)
+})
+
+setMethod("size", "SOCElemwise", function(object) {
   cone_size <- cone_size(object)
   lapply(1:num_cones(object), function(i) { cone_size })
 })

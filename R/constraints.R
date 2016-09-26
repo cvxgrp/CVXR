@@ -281,21 +281,16 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
   list(eq_constr = eq_constr, leq_constr = leq_cosntr, dims = dims)
 })
 
-.SOCAxis <- setClass("SOCAxis", representation(X = "Expression", axis = "numeric"), 
+.SOCAxis <- setClass("SOCAxis", representation(axis = "numeric"), 
                     validity = function(object) {
                       if(size(object@t)[2] != 1)
                         stop("[SOCAxis: t] t must have second dimension equal to 1")
                       return(TRUE)
                     }, contains = "SOC")
-SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, X = X, axis = axis) }
-
-setMethod("initialize", "SOCAxis", function(.Object, ..., X, axis) {
-  .Object@axis <- axis
-  callNextMethod(.Object, ..., x_elems = list(X))
-})
+SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
 
 setMethod("as.character", "SOCAxis", function(x) { 
-  paste("SOCAxis(", as.character(x@t), ", ", as.character(x@X), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
+  paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
 })
 
 setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, dims, solver) {
@@ -314,33 +309,6 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
 setMethod("num_cones", "SOCAxis", function(object) { size(object@t)[1] })
 setMethod("cone_size", "SOCAxis", function(object) { c(1 + size(object@x_elems[[1]])[object@axis], 1) })
 setMethod("size", "SOCAxis", function(object) {
-  cone_size <- cone_size(object)
-  lapply(1:num_cones(object), function(i) { cone_size })
-})
-
-# TODO: Get rid of SOCElemwise once Fraction handling is implemented in Power
-.SOCElemwise <- setClass("SOCElemwise", contains = "SOC")
-SOCElemwise <- function(t, x_elems) { .SOCElemwise(t = t, x_elems = x_elems) }
-
-setMethod("format_constr", "SOCElemwise", function(object, eq_constr, leq_constr, dims, solver) {
-  .format <- function(object) {
-    list(list(), format_elemwise(list(object@t, object@x_elems)))
-  }
-  
-  # Update dims
-  leq_constr <- c(leq_constr, .format(object)[[2]])
-  for(cone_size in size(object))
-    dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
-  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
-})
-
-setMethod("num_cones", "SOCElemwise", function(object) { size(object@t)[1] })
-
-setMethod("cone_size", "SOCElemwise", function(object) {
-  c(1 + length(object@x_elems), 1)
-})
-
-setMethod("size", "SOCElemwise", function(object) {
   cone_size <- cone_size(object)
   lapply(1:num_cones(object), function(i) { cone_size })
 })

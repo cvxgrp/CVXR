@@ -727,19 +727,6 @@ setMethod("graph_implementation", "Power", function(object, arg_objs, size, data
 
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
-# TODO: Get rid of QOLElemwise once Fraction handling is implemented in Power
-QOLElemwise <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  y <- arg_objs[[2]]
-  
-  t <- create_var(size(x))
-  two <- create_const(2, c(1, 1))
-  constraints <- list(SOCElemwise(sum_expr(list(y, t)),
-                          list(sub_expr(y, t), mul_expr(two, x, size(x)))),
-                      create_geq(y))
-  list(t, constraints)
-}
-
 # Sqrt <- function(x) { Power(x, 1/2) }
 setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
 
@@ -769,20 +756,18 @@ setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]
 .domain.Sqrt <- function(object) { list(object@args[[1]] >= 0) }
 
 Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # x <- arg_objs[[1]]
-  # one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-  # t <- create_var(size)
-  # list(t, gm_constrs(t, list(x, one), w))
-  
   x <- arg_objs[[1]]
   t <- create_var(size)
-  
-  # x >= 0 implied by x >= t^2.
-  # t >= 0 implied because t is only pushed to increase.
-  graph <- Square.graph_implementation(list(t), size)
-  obj <- graph[[1]]
-  constraints <- graph[[2]]
-  list(t, c(constraints, create_leq(obj, x)))
+  one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  two <- create_const(2, c(1, 1))
+  length <- prod(size(x))
+  constraints <- list(SOCAxis(reshape(sum_expr(list(x, one)), c(length, 1)),
+                              vstack(list(
+                              reshape(sub_expr(x, one), c(1, length)),
+                              reshape(mul_expr(two, t, size(t)), c(1, length))
+                              ), c(2, length)),
+                            2))
+  list(t, constraints)
 }
 
 setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
@@ -814,16 +799,18 @@ setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[id
 .domain.Square <- function(object) { list() }
 
 Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # x <- arg_objs[[1]]
-  # t <- create_var(size)
-  # list(t, gm_constrs(t, list(x, one), w))
-  
   x <- arg_objs[[1]]
-  ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-  qol <- QOLElemwise(list(x, ones), size)
-  obj <- qol[[1]]
-  constraints <- qol[[2]]
-  list(obj, constraints)
+  t <- create_var(size)
+  one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  two <- create_const(2, c(1, 1))
+  length <- prod(size(x))
+  constraints <- list(SOCAxis(reshape(sum_expr(list(t, one)), c(length, 1)),
+                              vstack(list(
+                                reshape(sub_expr(t, one), c(1, length)),
+                                reshape(mul_expr(two, x, size(x)), c(1, length))
+                                ), c(2, length)),
+                              2))
+  list(t, constraints)
 }
 
 setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {

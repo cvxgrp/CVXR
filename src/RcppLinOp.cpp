@@ -242,7 +242,7 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   default:
     err = 1;
     // std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
-    Rcpp::stop("Error: LinOp type invalid");
+    Rcpp::stop("LinOp type invalid");
   }
   if (err < 1) {
     // grab the object as a XPtr (smart pointer)

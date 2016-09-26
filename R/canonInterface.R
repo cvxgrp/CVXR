@@ -164,6 +164,9 @@ get_constraint_node <- function(c, tmp) {
         c_size <- c$size
         c_constr_id <- c$constr_id
     } else {
+      if(is(c, "SOCAxis"))
+        c_size <- cone_size(c)   # Dimension of a single cone
+      else
         c_size <- size(c)
         c_constr_id <- c@constr_id
     }
@@ -184,7 +187,10 @@ get_constraint_node <- function(c, tmp) {
         tmp$append(expr)
         root$args_push_back(expr)
     } else if(is(c, "SOC")) {
-        root$type <- LINOP_TYPES["SOC"]
+        if(is(c, "SOCAxis"))   # Note: SOCAxis is a subclass of SOC
+          root$type <- LINOP_TYPES["SOC_AXIS"]
+        else
+          root$type <- LINOP_TYPES["SOC"]
         tt <- build_lin_op_tree(c@t, tmp)
         tmp$append(tt)
         root$args_push_back(tt)

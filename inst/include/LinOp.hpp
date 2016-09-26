@@ -55,6 +55,7 @@ enum operatortype {
   EQ,     // equality constraint
   LEQ,    // non-negative orthant
   SOC,    // second-order cone
+  SOC_AXIS,   // column-wise second-order cone
   EXP,    // exponential cone
   SDP,    // semi-definite cone
 };

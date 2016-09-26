@@ -219,41 +219,17 @@ get_spacing_matrix <- function(size, spacing, offset) {
 #'
 #' Solver capabilities
 #'
-ECOS.LP_CAPABLE = TRUE
-ECOS.SOCP_CAPABLE = TRUE
-ECOS.SDP_CAPABLE = FALSE
-ECOS.EXP_CAPABLE = TRUE
-ECOS.MIP_CAPABLE = FALSE
+LP_CAPABLE.ECOS <- function(solver) { TRUE }
+SOCP_CAPABLE.ECOS <- function(solver) { TRUE }
+SDP_CAPABLE.ECOS <- function(solver) { FALSE }
+EXP_CAPABLE.ECOS <- function(solver) { TRUE }
+MIP_CAPABLE.ECOS <- function(solver) { FALSE }
 
-lp_capable <- function(solver) {
-  if(class(solver) == "ECOS")
-    return(ECOS.LP_CAPABLE)
-  else stop("Unrecognized solver ", name(solver))
-}
-
-socp_capable <- function(solver) {
-  if(class(solver) == "ECOS")
-    return(ECOS.SOCP_CAPABLE)
-  else stop("Unrecognized solver ", name(solver))
-}
-
-sdp_capable <- function(solver) {
-  if(class(solver) == "ECOS")
-    return(ECOS.SDP_CAPABLE)
-  else stop("Unrecognized solver ", name(solver))
-}
-
-exp_capable <- function(solver) {
-  if(class(solver) == "ECOS")
-    return(ECOS.EXP_CAPABLE)
-  else stop("Unrecognized solver ", name(solver))
-}
-
-mip_capable <- function(solver) {
-  if(class(solver) == "ECOS")
-    return(ECOS.LP_CAPABLE)
-  else stop("Unrecognized solver ", name(solver))
-}
+LP_CAPABLE.SCS <- function(solver) { TRUE }
+SOCP_CAPABLE.SCS <- function(solver) { TRUE }
+SDP_CAPABLE.SCS <- function(solver) { TRUE }
+EXP_CAPABLE.SCS <- function(solver) { TRUE }
+MIP_CAPABLE.SCS <- function(solver) { FALSE }
 
 #'
 #' Solver exit codes
@@ -270,7 +246,7 @@ mip_capable <- function(solver) {
 # ECOS_FATAL    (-7)  Unknown problem in solver
 
 # Map of ECOS status to CVXPY status.
-ECOS.STATUS_MAP <- function(status) {
+STATUS_MAP.ECOS <- function(solver, status) {
   if(status == 0) OPTIMAL
   else if(status == 1) INFEASIBLE
   else if(status == 2) UNBOUNDED
@@ -281,10 +257,16 @@ ECOS.STATUS_MAP <- function(status) {
   else stop("ECOS status unrecognized: ", status)
 }
 
-status_map <- function(solver, status) {
-  if(class(solver) == "ECOS")
-    ECOS.STATUS_MAP(status)
-  else stop("Unrecognized solver ", name(solver))
+# Map of SCS status to CVXPY status.
+STATUS_MAP.SCS <- function(solver, status) {
+  if(status == "Solved") OPTIMAL
+  else if(status == "Solved/Inaccurate") OPTIMAL_INACCURATE
+  else if(status == "Unbounded") UNBOUNDED
+  else if(status == "Unbounded/Inaccurate") UNBOUNDED_INACCURATE
+  else if(status == "Infeasible") INFEASIBLE
+  else if(status == "Infeasible/Inaccurate") INFEASIBLE_INACCURATE
+  else if(status %in% c("Failure", "Indeterminate")) SOLVER_ERROR
+  else stop("SCS status unrecognized: ", status)
 }
 
 flatten_list <- function(x) {

@@ -164,8 +164,8 @@ Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
-CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints) }
-SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values) }
+CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints, class = "CachedProblem") }
+SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
@@ -175,7 +175,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
 
   # Cached processed data for each solver.
   .reset_cache <- function(object) {
-    for(solver_name in SOLVERS)
+    for(solver_name in sapply(SOLVERS, name))
       object@.cached_data[[solver_name]] <- ProblemData()
     object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
     object
@@ -229,15 +229,29 @@ setMethod("constants", "Problem", function(object) {
 
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
-get_problem_data.Problem <- function(object, solver) {
+
+# solve.Problem <- function(object, method, ...) {
+#  if(missing(method))
+#    .solve(object, ...)
+#  else {
+#    func <- Problem.REGISTERED_SOLVE_METHODS[func_name]
+#    func(object, ...)
+#  }
+# }
+
+# register_solve <- function(cls, name, func) {
+#  cls.REGISTERED_SOLVE_METHODS[name] <- func
+# }
+
+setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
   
   # Raise an error if the solver cannot handle the problem
-  validate_solver(solver, constraints)
-  get_problem_data(solver, objective, constraints, object@.cached_data)
-}
+  validate_solver(SOLVERS[solver], constraints)
+  get_problem_data(SOLVERS[solver], objective, constraints, object@.cached_data)
+})
 
 solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
@@ -252,7 +266,18 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
   objective <- canon[[1]]
   constraints <- canon[[2]]
   
-  # TODO: Solve in parallel
+  # Solve in parallel
+  if(parallel) {
+    # Check if the objective or constraint has changed
+    if(objective != object@.cached_data[PARALLEL]@objective ||
+       constraints != object@.cached_data[PARALLEL]@constraints) {
+      object@.separable_problems <- get_separable_problems(object)
+      object@.cached_data[PARALLEL] <- CachedProblem(objective, constraints)
+    }
+    
+    if(length(object@.separable_problems) > 1)
+      .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
+  }
   
   print("Calling CVXcanon")
   if(is(object@objective, "Minimize")) {
@@ -264,6 +289,52 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
   }
   
   solve_int(sense, canon_objective, constraints, verbose, ...)
+}
+
+.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSe, warm_start = FALSe, verbose = FALSE, ...) {
+  .solve_problem <- function(problem) {
+    result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
+    opt_value <- result$optimal_value
+    status <- result$status
+    primal_values <- result$primal_values
+    dual_values <- result$dual_values
+    return(SolveResults(opt_value, status, primal_values, dual_values))
+  }
+  
+  # TODO: Finish implementation of parallel solve
+  statuses <- sapply(solve_results, function(solve_result) { solve_result$status })
+  
+  # Check if at least one subproblem is infeasible or inaccurate
+  for(status in INF_OR_UNB) {
+    if(status %in% statuses) {
+      .handle_no_solution(object, status)
+      break
+    } else {
+      for(i in 1:length(solve_results)) {
+        subproblem <- object@separable_problems[i]
+        solve_result <- solve_results[i]
+        
+        for(j in 1:length(solve_result$primal_values)) {
+          var <- variables(subproblem)[j]
+          primal_value <- solve_result$primal_values[j]
+          subproblem <- .save_value(var, primal_value)   # TODO: Fix this since R makes copies
+        }
+        
+        for(j in 1:length(solve_result$dual_values)) {
+          constr <- subproblem@constraints[j]
+          dual_value <- solve_result$dual_values[j]
+          subproblem <- .save_value(constr, dual_value)   # TODO: Fix this since R makes copies
+        }
+      }
+      
+      object@value <- sum(sapply(solve_results, function(solve_result) { solve_result$optimal_value }))
+      if(OPTIMAL_INACCURATE %in% statuses)
+        object@status <- OPTIMAL_INACCURATE
+      else
+        object@status <- OPTIMAL
+    }
+  }
+  object
 }
 
 .update_problem_state.Problem <- function(object, results_dict, sym_data, solver) {
@@ -300,10 +371,12 @@ unpack_results.Problem <- function(object, solve, results_dict) {
 
 .handle_no_solution.Problem <- function(object, status) {
   # Set all primal and dual variable values to NA
+  # TODO: This won't work since R creates copies
   for(var_ in variables(object))
     object <- .save_value(var_, NA)
-  for(constr in object@constraints)
-    object <- save_value(constr, NA)   # TODO: Check this returns and saves correct value
+  
+  for(i in 1:length(object@constraints))
+    object@constraints[i] <- .save_value(object@constraints[i], NA)
   
   # Set the problem value
   if(status %in% c("INFEASIBLE", "INFEASIBLE_INACCURATE"))

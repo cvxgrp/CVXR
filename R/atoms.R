@@ -973,6 +973,10 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
     stop("Unrecognized type ", type)
 })
 
+setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type = 2) {
+  Norm(x, p = type, axis = NA_real_)
+})
+
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
   

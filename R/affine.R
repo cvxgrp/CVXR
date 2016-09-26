@@ -293,7 +293,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
   Conv.graph_implementation(arg_objs, size, data)
 })
 
-.CumSum <- setClass("CumSum", contains = "AffAtom")
+.CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 CumSum <- function(expr, axis = 1) { .CumSum(expr = expr, axis = axis) }
 cumsum.Expression <- function(x) { CumSum(expr = Vec(x)) }   # Flatten matrix in column-major order to match R's behavior
 
@@ -305,7 +305,6 @@ setMethod("initialize", "CumSum", function(.Object, ..., expr, axis = 1) {
 
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
-setMethod("get_data", "CumSum", function(object) { list(object@axis) })
 
 get_diff_mat <- function(dim, axis) {
   # Construct a sparse matrix representation
@@ -330,6 +329,23 @@ get_diff_mat <- function(dim, axis) {
     mat
   else
     t(mat)
+}
+
+.grad.CumSum <- function(object, values) {
+  # TODO: This is inefficient
+  dim <- dim(values[[1]])[object@axis]
+  mat <- matrix(0, nrow = dim, ncol = dim)
+  for(i in 1:dim) {
+    for(j in 1:(i+1))
+      mat[i,j] <- 1
+  }
+  size <- size(object@args[[1]])
+  var <- Variable(size[1], size[2])
+  if(object@axis == 2)
+    grad <- .grad(MulExpression(mat, var), values)[2]
+  else
+    grad <- .grad(RMulExpression(var, t(mat)), values)[1]
+  list(grad)
 }
 
 CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {

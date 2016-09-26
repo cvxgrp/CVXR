@@ -63,6 +63,7 @@ setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
+setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
 
 # Problem data generic methods
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })

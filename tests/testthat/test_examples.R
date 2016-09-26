@@ -35,7 +35,7 @@ test_that("Test examples from the README", {
   
   # Construct the problem
   x <- Variable(n)
-  objective <- Minimize(SumEntries(Square(A %*% x - b)))
+  objective <- Minimize(sum((A %*% x - b)^2))
   constraints <- list(x >= 0, x <= 1)
   p <- Problem(objective, constraints)
   
@@ -78,7 +78,7 @@ test_that("Test examples from the README", {
   # expr is an Expression object after each assignment
   expr <- 2*x
   expr <- expr - a
-  expr <- SumEntries(expr) + Norm(x, 2)
+  expr <- sum(expr) + norm(x, 2)
   
   ###########################################
   # Problem data
@@ -90,7 +90,7 @@ test_that("Test examples from the README", {
   
   # Construct the problem
   x <- Variable(m)
-  objective <- Minimize(SumEntries(Square(A %*% x - b)) + gamma*Norm(x, 1))
+  objective <- Minimize(sum((A %*% x - b)^2) + gamma*norm(x, 1))
   p <- Problem(objective)
   
   # TODO: Assign a value to gamma and find the optimal x
@@ -126,7 +126,7 @@ test_that("Test examples from the README", {
   risk <- QuadForm(x, sigma)
   
   objective <- Maximize(expected_return - gamma*risk)
-  p <- Problem(objective, list(SumEntries(x) == 1))
+  p <- Problem(objective, list(sum(x) == 1))
   # result <- solve(p)
   
   # The optimal expected return
@@ -154,7 +154,7 @@ test_that("Test examples from the README", {
     sample <- x[[2]]
     Pos(1 - label*(t(sample)*a - b))
   })
-  objective <- Minimize(Norm(a, 2) * gamma * Reduce("+", slack))
+  objective <- Minimize(norm(a, 2) * gamma * Reduce("+", slack))
   p <- Problem(objective)
   # result <- solve(p)
   
@@ -175,7 +175,7 @@ test_that("Test examples from the README", {
 test_that("Test advanced tutorial", {
   # Solving a problem with different solvers
   x <- Variable(2)
-  obj <- Minimize(x[1] + Norm(x, 1))
+  obj <- Minimize(x[1] + norm(x, 1))
   constraints <- list(x >= 2)
   prob <- Problem(obj, constraints)
   
@@ -190,7 +190,7 @@ test_that("Test advanced tutorial", {
   expect_equal(result$optimal_value, 6, tolerance = TOL)
   
   x <- Variable()
-  prob <- Problem(Minimize(Square(x)), list(x == 2))
+  prob <- Problem(Minimize(x^2), list(x == 2))
   
   # Get ECOS arguments
   data <- get_problem_data(prob, "ECOS")
@@ -209,7 +209,7 @@ test_that("Test log determinant", {
   A <- Variable(n, n)
   b <- Variable(n)
   obj <- Maximize(LogDet(A))
-  constraints <- lapply(1:m, function(i) { Norm(A %*% as.matrix(x[,i]) + b, 2) <= 1 })
+  constraints <- lapply(1:m, function(i) { norm(A %*% as.matrix(x[,i]) + b, 2) <= 1 })
   p <- Problem(obj, constraints)
   # result <- solve(p)
   # expect_equal(result$optimal_value, 1.9746, tolerance = 1e-2)
@@ -234,7 +234,7 @@ test_that("Test portfolio problem", {
   y <- Fmat %*% x
   mu <- 1
   ret <- t(pbar) %*% x
-  risk <- Square(Norm(D %*% x)) + Square(Z %*% y)
+  risk <- norm(D %*% x)^2 + (Z %*% y)^2
   
   # objective <- Minimize(risk)
   # result <- solve(Problem(objective))
@@ -269,7 +269,7 @@ test_that("Test examples from CVXR introduction", {
   constraints <- list(x + y == 1, x - y >= 1)
   
   # Form objective
-  obj <- Minimize(Square(x - y))
+  obj <- Minimize((x - y)^2)
   
   # Form and solve problem
   prob <- Problem(obj, constraints)
@@ -338,7 +338,7 @@ test_that("Test examples from CVXR introduction", {
   
   # Construct the problem
   x <- Variable(n)
-  objective <- Minimize(SumEntries(Square(A %*% x - b)))
+  objective <- Minimize(sum((A %*% x - b)^2))
   constraints <- list(0 <= x, x <= 1)
   prob <- Problem(objective, constraints)
   

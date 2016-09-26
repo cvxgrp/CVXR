@@ -101,9 +101,8 @@ ECOS <- function() { new("ECOS") }
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
-
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
-  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())  
 })
 
 setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
@@ -116,14 +115,47 @@ setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cac
 
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
-  status <- status_map(solver, results_dict['info']['exitFlag'])
-  new_results[[STATUS]] <- status
-  if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+  status <- STATUS_MAP(solver, results_dict['info']['exitFlag'])
+  new_results[STATUS] <- status
+  
+  # Timing data
+  new_results[SOLVER_TIME] <- results_dict["info"]["timing"]["tsolve"]
+  new_results[SETUP_TIME] <- results_dict["info"]["timing"]["tsetup"]
+  new_results[NUM_ITERS] <- results_dict["info"]["iter"]
+  
+  if(new_results[STATUS] %in% SOLUTION_PRESENT) {
     primal_val <- results_dict['info']['pcost']
-    new_results[[VALUE]] <- primal_val + data[[OFFSET]]
-    new_results[[PRIMAL]] <- results_dict['x']
-    new_results[[EQ_DUAL]] <- results_dict['y']
-    new_results[[INEQ_DUAL]] <- results_dict['z']
+    new_results[VALUE] <- primal_val + data[OFFSET]
+    new_results[PRIMAL] <- results_dict['x']
+    new_results[EQ_DUAL] <- results_dict['y']
+    new_results[INEQ_DUAL] <- results_dict['z']
   }
   new_results
 })
+
+setClass("SCS", contains = "Solver")
+SCS <- function() { new("SCS") }
+
+setMethod("name", "SCS", function(object) { SCS_NAME })
+setMethod("split_constr", "SCS", function(solver, constr_map) {
+  list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
+})
+
+# TODO: Finish SCS interface
+
+#'
+#' Solver utilities
+#'
+# solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
+solver_intf <- list(ECOS(), SCS())
+SOLVERS <- solver_intf
+names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
+
+installed_solvers <- function() {
+  installed <- list()
+  for(i in 1:length(SOLVERS)) {
+    if(is_installed(SOLVERS[i]))
+      installed <- c(installed, names(SOLVERS)[i])
+  }
+  installed
+}

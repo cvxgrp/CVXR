@@ -278,6 +278,7 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
     if(length(object@.separable_problems) > 1)
       .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
   }
+  # sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
   
   print("Calling CVXcanon")
   if(is(object@objective, "Minimize")) {

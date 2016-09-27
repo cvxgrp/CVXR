@@ -53,13 +53,13 @@ SymData <- function(objective, constraints, solver) {
 
 SymData.filter_constraints <- function(constraints) {
   constr_map <- list()
-  constr_map[[EQ_MAP]]   <- constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
-  constr_map[[LEQ_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
-  constr_map[[SOC_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  constr_map[[SDP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
-  constr_map[[EXP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
-  constr_map[[BOOL_MAP]] <- constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
-  constr_map[[INT_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
+  constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
+  constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
+  constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
+  constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
+  constr_map[[BOOL_MAP]] <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
+  constr_map[[INT_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
   constr_map
 }
 

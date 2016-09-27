@@ -1,3 +1,4 @@
+TOL <- 1e-6
 v_np <- matrix(c(-1, 2, -2), nrow = 1, ncol = 3)
 LogSumExpAxis1 <- function(x) { LogSumExp(x, axis = 1) }
 LogSumExpAxis2 <- function(x) { LogSumExp(x, axis = 2) }
@@ -159,7 +160,15 @@ check_solver <- function(prob, solver_name) {
   canon <- canonicalize(prob)
   objective <- canon[[1]]
   constraints <- canon[[2]]
-  validate_solver(solver_name, constraints)
+  solver <- SOLVERS[[solver_name]]
+  tryCatch(
+    validate_solver(solver, constraints),
+    error = function(e) {
+      stop(e)
+      return(FALSE)
+    }
+  )
+  return(TRUE)
 }
 
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
@@ -197,30 +206,32 @@ test_that("Test all constant atoms", {
       obj_val <- al[[4]]
       for(row in 1:size[1]) {
         for(col in 1:size[2]) {
-          for(solver in c("ECOS", "SCS")) {
+          # TODO: Add more solvers as we connect them to CVXcanon
+          for(solver in c("ECOS")) {
             # Atoms with Constant arguments
             const_args <- lapply(args, function(arg) { Constant(arg) })
-            run_atom(atom, Problem(objective_type(atom(unlist(const_args))[row, col])),
+            run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
                      value(obj_val[row, col]), solver)
             
             # Atoms with Variable arguments
             variables <- list()
             constraints <- list()
             for(expr in args) {
-              expr_size <- size(expr)
+              expr_size <- intf_size(expr)
               variables <- c(variables, Variable(expr_size[1], expr_size[2]))
-              constraints <- c(constraints, variables[-1] == expr)
+              constraints <- c(constraints, variables[[length(variables)]] == expr)
             }
+            objective <- objective_type(do.call(atom, variables)[row, col])
             run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments
             parameters <- list()
             for(expr in args) {
-              expr_size <- size(expr)
+              expr_size <- intf_size(expr)
               parameters <- c(parameters, Parameter(expr_size[1], expr_size[2]))
-              parameters[-1]@value <- const_to_matrix(expr)
+              value(parameters[[length(parameters)]]) <- as.matrix(expr)
             }
-            objective <- objective_type(atom(unlist(parameters))[row, col])
+            objective <- objective_type(do.call(atom, parameters)[row, col])
             run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
           }
         }

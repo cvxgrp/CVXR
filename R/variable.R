@@ -67,7 +67,7 @@ setMethod("show", "Bool", function(object) {
   cat("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
-setMethod("as.character", "Variable", function(x) {
+setMethod("as.character", "Bool", function(x) {
   size <- size(x)
   paste("Bool(", size[1], ", ", size[2], ")", sep = "")
 })

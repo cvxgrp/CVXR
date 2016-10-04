@@ -225,14 +225,14 @@ test_that("Test all constant atoms", {
             run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments
-            parameters <- list()
-            for(expr in args) {
-              expr_size <- intf_size(expr)
-              parameters <- c(parameters, Parameter(expr_size[1], expr_size[2]))
-              value(parameters[[length(parameters)]]) <- as.matrix(expr)
-            }
-            objective <- objective_type(do.call(atom, parameters)[row, col])
-            run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
+            # parameters <- list()
+            # for(expr in args) {
+            #  expr_size <- intf_size(expr)
+            #  parameters <- c(parameters, Parameter(expr_size[1], expr_size[2]))
+            #  value(parameters[[length(parameters)]]) <- as.matrix(expr)
+            # }
+            # objective <- objective_type(do.call(atom, parameters)[row, col])
+            # run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
           }
         }
       }

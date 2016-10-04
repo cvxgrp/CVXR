@@ -32,6 +32,9 @@ setGeneric("validate_val", function(object, val) { standardGeneric("validate_val
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
+setGeneric(".grad", function(object, values) { standardGeneric(".grad") })
+setGeneric(".domain", function(object) { standardGeneric(".domain") })
+
 # Positive definite inequalities
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })

@@ -50,6 +50,7 @@ setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
 setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
   if(e2 < 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
+setMethod("*", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 * e1 })
 setMethod("/", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
 setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@expr) })
@@ -239,7 +240,7 @@ setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 #  }
 # }
 
-# register_solve <- function(cls, name, func) {
+# Problem.register_solve <- function(cls, name, func) {
 #  cls.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
@@ -249,8 +250,8 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   constraints <- canon[[2]]
   
   # Raise an error if the solver cannot handle the problem
-  validate_solver(SOLVERS[solver], constraints)
-  get_problem_data(SOLVERS[solver], objective, constraints, object@.cached_data)
+  validate_solver(SOLVERS[[solver]], constraints)
+  Solver.get_problem_data(SOLVERS[[solver]], objective, constraints, object@.cached_data)
 })
 
 solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {

@@ -14,6 +14,7 @@ setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
+setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
 setMethod("size", "ListORExpr", function(object) {
@@ -95,7 +96,7 @@ setMethod("-", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
 setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 + (-e2) })
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { MulElemwise(lh_const = e1, rh_exp = e2) })
-setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 * as.Constant(e2) })
+setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { as.Constant(e2) * e1 })
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e2) && is_scalar(e2))

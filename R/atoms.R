@@ -958,29 +958,6 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "M", "2")) {
-  x <- as.Constant(x)
-  
-  # Norms for scalars same as absolute value
-  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
-  else if(type == "I" || type == "i")             # Maximum absolute row sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
-  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
-    Pnorm(x = x, p = 2, axis = NA_real_)
-  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
-    MaxEntries(Abs(x = x))
-  else if(type == "2")                            # Spectral norm (largest singular value of x)
-    # Sqrt(LambdaMax(A = t(x) %*% x))
-    stop("Spectral norm is currently unimplemented")
-  else
-    stop("Unrecognized type ", type)
-})
-
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type = 2) {
-  Norm(x, p = type, axis = NA_real_)
-})
-
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
   
@@ -995,7 +972,7 @@ Norm <- function(x, p = 2, axis = NA_real_) {
     Pnorm(x = x, p = 2, axis = axis)
   else if(p == 2) {
     if(is.na(axis) && is_matrix(x))
-      SigmaMax(x = x)
+      SigmaMax(A = x)
     else
       Pnorm(x = x, p = 2, axis = axis)
   } else
@@ -1014,6 +991,28 @@ MixedNorm <- function(X, p = 2, q = 1) {
   # Outer norms
   Norm(.HStack(args = vecnorms), q)
 }
+
+setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
+  x <- as.Constant(x)
+  
+  # Norms for scalars same as absolute value
+  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
+  else if(type == "I" || type == "i")             # Maximum absolute row sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
+  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
+    Pnorm(x = x, p = 2, axis = NA_real_)
+  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
+    MaxEntries(Abs(x = x))
+  else if(type == "2")                            # Spectral norm (largest singular value of x)
+    # Sqrt(LambdaMax(A = t(x) %*% x))
+    stop("Spectral norm is currently unimplemented")
+  else
+    stop("Unrecognized type ", type)
+})
+
+setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type, ...) { Norm(x, p = type, axis = NA_real_) })
+setMethod("norm", signature(x = "Expression", type = "missing"), function(x, type, ...) { Norm(x, p = 2, axis = NA_real_) })
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 NormNuc <- function(A) { .NormNuc(A = A) }
@@ -1118,7 +1117,7 @@ QuadForm <- function(x, P) {
     if(length(M1) > 0)
       ret <- ret + scale * SumSquares(Constant(t(M1)) %*% x)
     else if(length(M2) > 0)
-      ret <- ret - scale * SumSquares(Cosntant(t(M2)) %*% x)
+      ret <- ret - scale * SumSquares(Constant(t(M2)) %*% x)
     return(ret)
   } else
     stop("At least one argument to QuadForm must be constant")

@@ -52,7 +52,7 @@ setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, 
   prob_data@matrix_data
 })
 
-get_problem_data.Solver <- function(solver, objective, constraints, cached_data) {
+setMethod("Solver.get_problem_data", "Solver", function(solver, objective, constraints, cached_data) {
   sym_data <- get_sym_data(solver, objective, constraints, cached_data)
   matrix_data <- get_matrix_data(solver, objective, constraints, cached_data)
   
@@ -73,7 +73,7 @@ get_problem_data.Solver <- function(solver, objective, constraints, cached_data)
   data[[BOOL_IDX]] <- conv_idx$bool_idx
   data[[INT_IDX]] <- conv_idx$int_idx
   data
-}
+})
 
 Solver.is_mip <- function(data) {
   length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
@@ -97,6 +97,36 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 
 setClass("ECOS", contains = "Solver")
 ECOS <- function() { new("ECOS") }
+
+# ECOS capabilities
+setMethod("lp_capable", "ECOS", function(solver) { TRUE })
+setMethod("socp_capable", "ECOS", function(solver) { TRUE })
+setMethod("sdp_capable", "ECOS", function(solver) { FALSE })
+setMethod("exp_capable", "ECOS", function(solver) { TRUE })
+setMethod("mip_capable", "ECOS", function(solver) { FALSE })
+
+# EXITCODES from ECOS
+# ECOS_OPTIMAL  (0)   Problem solved to optimality
+# ECOS_PINF     (1)   Found certificate of primal infeasibility
+# ECOS_DINF     (2)   Found certificate of dual infeasibility
+# ECOS_INACC_OFFSET (10)  Offset exitflag at inaccurate results
+# ECOS_MAXIT    (-1)  Maximum number of iterations reached
+# ECOS_NUMERICS (-2)  Search direction unreliable
+# ECOS_OUTCONE  (-3)  s or z got outside the cone, numerics?
+# ECOS_SIGINT   (-4)  solver interrupted by a signal/ctrl-c
+# ECOS_FATAL    (-7)  Unknown problem in solver
+
+# Map of ECOS status to CVXPY status.
+setMethod("status_map", "ECOS", function(solver, status) {
+  if(status == 0) OPTIMAL
+  else if(status == 1) INFEASIBLE
+  else if(status == 2) UNBOUNDED
+  else if(status == 10) OPTIMAL_INACCURATE
+  else if(status == 11) INFEASIBLE_INACCURATE
+  else if(status == 12) UNBOUNDED_INACCURATE
+  else if(status %in% c(-1, -2, -3, -4, -7)) SOLVER_ERROR
+  else stop("ECOS status unrecognized: ", status)
+})
 
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
@@ -135,6 +165,25 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 
 setClass("SCS", contains = "Solver")
 SCS <- function() { new("SCS") }
+
+# SCS capabilities
+setMethod("lp_capable", "SCS", function(solver) { TRUE })
+setMethod("socp_capable", "SCS", function(solver) { TRUE })
+setMethod("sdp_capable", "SCS", function(solver) { TRUE })
+setMethod("exp_capable", "SCS", function(solver) { TRUE })
+setMethod("mip_capable", "SCS", function(solver) { FALSE })
+
+# Map of SCS status to CVXPY status.
+setMethod("status_map", "SCS", function(solver, status) {
+  if(status == "Solved") OPTIMAL
+  else if(status == "Solved/Inaccurate") OPTIMAL_INACCURATE
+  else if(status == "Unbounded") UNBOUNDED
+  else if(status == "Unbounded/Inaccurate") UNBOUNDED_INACCURATE
+  else if(status == "Infeasible") INFEASIBLE
+  else if(status == "Infeasible/Inaccurate") INFEASIBLE_INACCURATE
+  else if(status %in% c("Failure", "Indeterminate")) SOLVER_ERROR
+  else stop("SCS status unrecognized: ", status)
+})
 
 setMethod("name", "SCS", function(object) { SCS_NAME })
 setMethod("split_constr", "SCS", function(solver, constr_map) {

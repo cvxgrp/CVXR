@@ -159,14 +159,14 @@ upper_tri_to_full <- function(n) {
       col_arr <- c(col_arr, count)
       
       # Index in the filled matrix
-      row_arr <- c(row_arr, j*n + i)
+      row_arr <- c(row_arr, (j-1)*n + i)
       val_arr <- c(val_arr, 1.0)
       if(i != j) {
         # Index in the original matrix
         col_arr <- c(col_arr, count)
         
         # Index in the filled matrix
-        row_arr <- c(row_arr, i*n + j)
+        row_arr <- c(row_arr, (i-1)*n + j)
         val_arr <- c(val_arr, 1.0)
       }
       count <- count + 1
@@ -184,10 +184,10 @@ setMethod("canonicalize", "SemidefUpperTri", function(object) {
   list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
 })
 
-Semidef <- function(n, name) {
+Semidef <- function(n, name = NA_character_) {
   var <- SemidefUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))
-  Reshape(fill_mat*var, n, n)
+  Reshape(fill_mat %*% var, n, n)
 }
 
 # Symmetric matrix

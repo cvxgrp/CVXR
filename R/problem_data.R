@@ -14,22 +14,7 @@
 #' @aliases SymData
 #' @export
 .SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
-                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_),
-                     validity = function(object) {
-                       if(length(object@.constr_map) > 0)
-                         stop("[Validation: SymData] .constr_map is an internal variable that should not be set by user")
-                       if(length(object@.dims) > 0)
-                         stop("[Validation: SymData] .dims is an internal variable that should not be set by user")
-                       if(length(object@.var_offsets) > 0)
-                         stop("[Validation: SymData] .var_offsets is an internal variable that should not be set by user")
-                       if(length(object@.var_sizes) > 0)
-                         stop("[Validation: SymData] .var_sizes is an internal variable that should not be set by user")
-                       if(!is.na(object@.x_length))
-                         stop("[Validation: SymData] .x_length is an internal variable that should not be set by user")
-                       if(!is.na(object@.presolve_status))
-                         stop("[Validation: SymData] .presolve_status is an internal variable that should not be set by user")
-                       return(TRUE)
-                      })
+                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
 
 SymData <- function(objective, constraints, solver) {
   constr_map <- SymData.filter_constraints(constraints)

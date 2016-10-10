@@ -787,7 +787,7 @@ setMethod("is_atom_convex", "Square", function(object) { TRUE })
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
-setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[idx]]) })
+setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
 setMethod(".grad", "Square", function(object, values) {
   rows <- prod(size(object@args[[1]]))

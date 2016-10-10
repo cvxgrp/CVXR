@@ -1,6 +1,7 @@
 useDynLib(cvxr)
 export("%>>%")
 export("%<<%")
+export("norm")
 exportPattern("^[[:alpha:]]+")
 import(methods)
 import(Rcpp)

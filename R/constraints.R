@@ -197,7 +197,7 @@ setMethod("size", "SOC", function(object) {
   c(rows, 1)
 })
 
-.SDP <- setClass("SDP", representation(A = "Expression", enforce_sym = "logical"),
+.SDP <- setClass("SDP", representation(A = "ListORExpr", enforce_sym = "logical"),
                        prototype(enforce_sym = TRUE), contains = "Constraint")
 SDP <- function(A, enforce_sym = TRUE, constr_id = NA_real_) { .SDP(A = A, enforce_sym = enforce_sym, constr_id = constr_id) }
 

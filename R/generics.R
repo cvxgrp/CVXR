@@ -32,6 +32,9 @@ setGeneric("validate_val", function(object, val) { standardGeneric("validate_val
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
+setGeneric(".grad", function(object, values) { standardGeneric(".grad") })
+setGeneric(".domain", function(object) { standardGeneric(".domain") })
+
 # Positive definite inequalities
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
@@ -76,6 +79,7 @@ setGeneric("validate_solver", function(solver, constraints) { standardGeneric("v
 setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
 setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
+setGeneric("Solver.get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("Solver.get_problem_data") })
 
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
@@ -83,3 +87,10 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 setGeneric("cvxr_solve_int", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("cvxr_solve_int") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
+# Solver capabilities
+setGeneric("lp_capable", function(solver) { standardGeneric("lp_capable") })
+setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
+setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
+setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
+setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
+setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })

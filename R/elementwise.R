@@ -111,7 +111,7 @@ setMethod("is_atom_concave", "Entr", function(object) { TRUE })
 setMethod("is_incr", "Entr", function(object, idx) { FALSE })
 setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 
-.grad.Entr <- function(object, values) {
+setMethod(".grad", "Entr", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   
@@ -122,9 +122,9 @@ setMethod("is_decr", "Entr", function(object, idx) { FALSE })
     grad_vals <- -log(values[[1]]) - 1
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
   }
-}
+})
 
-.domain.Entr <- function(object) { list(object@args[[1]] >= 0) }
+setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
 
 Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
@@ -161,12 +161,12 @@ setMethod("is_atom_concave", "Exp", function(object) { FALSE })
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
-.grad.Exp <- function(object, values) {
+setMethod(".grad", "Exp", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   grad_vals <- exp(values[[1]])
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
 Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
@@ -232,7 +232,7 @@ setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[i
 setMethod("is_decr", "Huber", function(object, idx) { is_negative(object@args[[idx]]) })
 setMethod("get_data", "Huber", function(object) { list(object@M) })
 
-.grad.Huber <- function(object, values) {
+setMethod(".grad", "Huber", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
 
@@ -242,7 +242,7 @@ setMethod("get_data", "Huber", function(object) { list(object@M) })
   
   grad_vals <- 2*(sign(values[[1]]) * min_val)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
 Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   M <- data[[1]]
@@ -306,7 +306,7 @@ setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
 setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
 setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
-.grad.KLDiv <- function(object, values) {
+setMethod(".grad", "KLDiv", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
     return(list(NA, NA))   # Non-differentiable
   else {
@@ -320,9 +320,9 @@ setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
     }
     return(grad_list)
   }
-}
+})
 
-.domain.KLDiv <- function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) }
+setMethod(".domain", "KLDiv", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
 
 KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- Elementwise.promote(arg_objs[[1]], size)
@@ -363,7 +363,7 @@ setMethod("is_atom_concave", "Log", function(object) { TRUE })
 setMethod("is_incr", "Log", function(object, idx) { TRUE })
 setMethod("is_decr", "Log", function(object, idx) { FALSE })
 
-.grad.Log <- function(object, values) {
+setMethod(".grad", "Log", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   
@@ -374,9 +374,9 @@ setMethod("is_decr", "Log", function(object, idx) { FALSE })
     grad_vals <- 1.0/values[[1]]
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
   }
-}
+})
 
-.domain.Log <- function(object) { list(object@args[[1]] >= 0) }
+setMethod(".domain", "Log", function(object) { list(object@args[[1]] >= 0) })
 
 Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
@@ -404,7 +404,7 @@ setMethod("log1p", "Expression", function(x) { .Log1p(x = x) })
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
-.grad.Log1p <- function(object, values) {
+setMethod(".grad", "Log1p", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   
@@ -415,9 +415,9 @@ setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@arg
     grad_vals <- 1.0/(values[[1]] + 1)
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
   }
-}
+})
 
-.domain <- function(object) { list(object@args[[1]] >= -1) }
+setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
 Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -454,13 +454,13 @@ setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
 setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
 setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
 
-.grad.Logistic <- function(object, values) {
+setMethod(".grad", "Logistic", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   exp_val <- exp(values[[1]])
   grad_vals <- exp_val/(1 + exp_val)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
 Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -518,7 +518,7 @@ setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 
-.grad.MaxElemwise <- function(object, values) {
+setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(values)
   dims <- dim(max_vals)
   unused <- matrix(TRUE, nrow = dims[1], ncol = dims[2])
@@ -534,7 +534,7 @@ setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
     grad_list <- c(grad_list, list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
   }
   grad_list
-}
+})
 
 MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
@@ -669,7 +669,7 @@ setMethod("is_quadratic", "Power", function(object) {
     is_constant(object@args[[1]])
 })
 
-.grad.Power <- function(object, values) {
+setMethod(".grad", "Power", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   
@@ -686,14 +686,14 @@ setMethod("is_quadratic", "Power", function(object) {
   
   grad_vals <- object@p * (values[[1]]^(object@p - 1))
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
-.domain.Power <- function(object) {
+setMethod(".domain", "Power", function(object) {
   if((object@p < 1 && object@p != 0) || (object@p > 1 && !is_power2(object@p)))
     list(object@args[[1]] >= 0)
   else
     list()
-}
+})
 
 Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -744,16 +744,16 @@ setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
 setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
-.grad.Sqrt <- function(object, values) {
+setMethod(".grad", "Sqrt", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   if(min(values[[1]]) <= 0)
     return(list(NA))
   grad_vals <- 0.5*values[[1]]^(-0.5)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
-.domain.Sqrt <- function(object) { list(object@args[[1]] >= 0) }
+setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
 Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -787,16 +787,16 @@ setMethod("is_atom_convex", "Square", function(object) { TRUE })
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
-setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[idx]]) })
+setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
-.grad.Square <- function(object, values) {
+setMethod(".grad", "Square", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   grad_vals <- 2*values[[1]]
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
-}
+})
 
-.domain.Square <- function(object) { list() }
+setMethod(".domain", "Square", function(object) { list() })
 
 Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]

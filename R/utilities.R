@@ -217,56 +217,27 @@ get_spacing_matrix <- function(size, spacing, offset) {
 }
 
 #'
-#' Solver capabilities
+#' Utility functions for gradients
 #'
-LP_CAPABLE.ECOS <- function(solver) { TRUE }
-SOCP_CAPABLE.ECOS <- function(solver) { TRUE }
-SDP_CAPABLE.ECOS <- function(solver) { FALSE }
-EXP_CAPABLE.ECOS <- function(solver) { TRUE }
-MIP_CAPABLE.ECOS <- function(solver) { FALSE }
-
-LP_CAPABLE.SCS <- function(solver) { TRUE }
-SOCP_CAPABLE.SCS <- function(solver) { TRUE }
-SDP_CAPABLE.SCS <- function(solver) { TRUE }
-EXP_CAPABLE.SCS <- function(solver) { TRUE }
-MIP_CAPABLE.SCS <- function(solver) { FALSE }
-
-#'
-#' Solver exit codes
-#'
-# EXITCODES from ECOS
-# ECOS_OPTIMAL  (0)   Problem solved to optimality
-# ECOS_PINF     (1)   Found certificate of primal infeasibility
-# ECOS_DINF     (2)   Found certificate of dual infeasibility
-# ECOS_INACC_OFFSET (10)  Offset exitflag at inaccurate results
-# ECOS_MAXIT    (-1)  Maximum number of iterations reached
-# ECOS_NUMERICS (-2)  Search direction unreliable
-# ECOS_OUTCONE  (-3)  s or z got outside the cone, numerics?
-# ECOS_SIGINT   (-4)  solver interrupted by a signal/ctrl-c
-# ECOS_FATAL    (-7)  Unknown problem in solver
-
-# Map of ECOS status to CVXPY status.
-STATUS_MAP.ECOS <- function(solver, status) {
-  if(status == 0) OPTIMAL
-  else if(status == 1) INFEASIBLE
-  else if(status == 2) UNBOUNDED
-  else if(status == 10) OPTIMAL_INACCURATE
-  else if(status == 11) INFEASIBLE_INACCURATE
-  else if(status == 12) UNBOUNDED_INACCURATE
-  else if(status %in% c(-1, -2, -3, -4, -7)) SOLVER_ERROR
-  else stop("ECOS status unrecognized: ", status)
+constant_grad <- function(expr) {
+  grad <- list()
+  for(var in variables(expr)) {
+    rows <- prod(size(var))
+    cols <- prod(size(expr))
+    # Scalars -> 0
+    if(rows == 1 && cols == 1)
+      grad[var@id] = 0.0
+    else
+      grad[var@id] = sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
+  }
+  grad
 }
 
-# Map of SCS status to CVXPY status.
-STATUS_MAP.SCS <- function(solver, status) {
-  if(status == "Solved") OPTIMAL
-  else if(status == "Solved/Inaccurate") OPTIMAL_INACCURATE
-  else if(status == "Unbounded") UNBOUNDED
-  else if(status == "Unbounded/Inaccurate") UNBOUNDED_INACCURATE
-  else if(status == "Infeasible") INFEASIBLE
-  else if(status == "Infeasible/Inaccurate") INFEASIBLE_INACCURATE
-  else if(status %in% c("Failure", "Indeterminate")) SOLVER_ERROR
-  else stop("SCS status unrecognized: ", status)
+error_grad <- function(expr) {
+  vars <- variables(expr)
+  grad <- lapply(vars, function(var){ NA })
+  names(grad) <- sapply(vars, function(var) { var@id })
+  grad
 }
 
 flatten_list <- function(x) {

@@ -129,7 +129,7 @@ setMethod("value", "Atom", function(object) {
     result
 })
 
-.grad.Atom <- function(object) { stop("Unimplemented") }
+setMethod(".grad", "Atom", function(object) { stop("Unimplemented") })
 setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
   if(is_constant(object))
@@ -175,10 +175,13 @@ setMethod("grad", "Atom", function(object) {
   return(result)
 })
 
-.domain.Atom <- function(object) { list() }
+setMethod(".domain", "Atom", function(object) { list() })
 setMethod("domain", "Atom", function(object) {
-  doms <- lapply(object@args, function(arg) { domain(arg) })
-  cons <- lapply(doms, function(dom) { dom })
+  cons <- list()
+  for(arg in object@args) {
+    for(con in domain(arg))
+      cons <- c(cons, con)
+  }
   c(.domain(object), cons)
 })
 
@@ -277,7 +280,7 @@ setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@ar
 setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
 setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 
-.grad.AffineProd <- function(object, values) {
+setMethod(".grad", "AffineProd", function(object, values) {
   X <- values[[1]]
   Y <- values[[2]]
   
@@ -286,7 +289,7 @@ setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
   
   # TODO: Finish AffineProd gradient implementation
   list(DX, DY)
-}
+})
 
 .GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
@@ -344,8 +347,8 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
   val
 })
 
-.domain.GeoMean <- function(object) { list(object@args[[1]][object@w > 0] >= 0) }
-.grad.GeoMean <- function(object, values) {
+setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
+setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
   w_arr <- as.vector(object@w)
@@ -356,7 +359,7 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
     D <- w_arr/as.vector(x) * to_numeric(object, values)
     return(list(t(Matrix(D, sparse = TRUE))))
   }
-}
+})
 
 setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
@@ -414,8 +417,8 @@ setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
-.domain.LambdaMax <- function(object) { list(t(object@args[[1]]) == object@args[[1]]) }
-.grad.LambdaMax <- function(object, values) {
+setMethod(".domain", "LambdaMax", function(object) { list(t(object@args[[1]]) == object@args[[1]]) })
+setMethod(".grad", "LambdaMax", function(object, values) {
   r <- eigen(values[[1]], only.values = FALSE)
   v <- r$vectors  # eigenvectors
   w <- r$values   # eigenvalues
@@ -425,7 +428,7 @@ setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
   d <- diag(d)
   D <- v %*% d %*% t(v)
   list(t(Matrix(as.vector(D), sparse = TRUE)))
-}
+})
 
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
@@ -492,7 +495,7 @@ setMethod("is_atom_concave", "LogDet", function(object) { TRUE })
 setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
 setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
 
-.grad.LogDet <- function(object, values) {
+setMethod(".grad", "LogDet", function(object, values) {
   X <- as.matrix(values[[1]])
   eigen_val <- eigen(X, only.values = TRUE)$values
   if(min(eigen_val) > 0) {
@@ -501,8 +504,9 @@ setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
     return(list(t(Matrix(as.vector(D), sparse = TRUE))))
   } else   # Outside domain
     return(list(NA))
-}
-.domain.LogDet <- function(object) { list(object@args[[1]] %>>% 0) }
+})
+
+setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
 
 LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]  # n by n matrix
@@ -555,7 +559,7 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
     log(apply(exp(values[[1]]), object@axis, sum))
 })
 
-.grad.LogSumExp <- function(object, values) { .axis_grad(object, values) }
+setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
 .column_grad.LogSumExp <- function(object, value) {
   denom <- log(sum(exp(value)))
   nom <- exp(value)
@@ -650,8 +654,8 @@ setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
 setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
 setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
-.domain.MatrixFrac <- function(object) { list(object@args[[2]] %>>% 0) }
-.grad.MatrixFrac <- function(object, values) {
+setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
+setMethod(".grad", "MatrixFrac", function(object, values) {
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
   P_inv <- solve(P)
@@ -668,7 +672,7 @@ setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args
   DP <- -t(DP)
   DP <- t(Matrix(as.vector(t(DP))))
   list(DX, DP)
-}
+})
 
 MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   X <- arg_objs[[1]]   # n by m matrix
@@ -716,7 +720,7 @@ setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
 
-.grad.MaxEntries <- function(object, values) { .axis_grad(object, values) }
+setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
 .column_grad.MaxEntries <- function(object, value) {
   # Grad: 1 for a largest index
   value <- as.vector(value)
@@ -870,7 +874,7 @@ setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p 
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
-.grad.Pnorm <- function(object, values) { .axis_grad(values) }
+setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(values) })
 .column_grad.Pnorm <-function(object, value) {
   rows <- prod(size(object@args[[1]]))
   value <- as.matrix(value)
@@ -954,29 +958,6 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-setMethod("norm", signature(x = "Expression", type = "character"), function(x, type = c("O", "I", "F", "M", "2")) {
-  x <- as.Constant(x)
-  
-  # Norms for scalars same as absolute value
-  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
-  else if(type == "I" || type == "i")             # Maximum absolute row sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
-  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
-    Pnorm(x = x, p = 2, axis = NA_real_)
-  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
-    MaxEntries(Abs(x = x))
-  else if(type == "2")                            # Spectral norm (largest singular value of x)
-    # Sqrt(LambdaMax(A = t(x) %*% x))
-    stop("Spectral norm is currently unimplemented")
-  else
-    stop("Unrecognized type ", type)
-})
-
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type = 2) {
-  Norm(x, p = type, axis = NA_real_)
-})
-
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
   
@@ -991,7 +972,7 @@ Norm <- function(x, p = 2, axis = NA_real_) {
     Pnorm(x = x, p = 2, axis = axis)
   else if(p == 2) {
     if(is.na(axis) && is_matrix(x))
-      SigmaMax(x = x)
+      SigmaMax(A = x)
     else
       Pnorm(x = x, p = 2, axis = axis)
   } else
@@ -1010,6 +991,28 @@ MixedNorm <- function(X, p = 2, q = 1) {
   # Outer norms
   Norm(.HStack(args = vecnorms), q)
 }
+
+setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
+  x <- as.Constant(x)
+  
+  # Norms for scalars same as absolute value
+  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
+  else if(type == "I" || type == "i")             # Maximum absolute row sum
+    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
+  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
+    Pnorm(x = x, p = 2, axis = NA_real_)
+  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
+    MaxEntries(Abs(x = x))
+  else if(type == "2")                            # Spectral norm (largest singular value of x)
+    # Sqrt(LambdaMax(A = t(x) %*% x))
+    stop("Spectral norm is currently unimplemented")
+  else
+    stop("Unrecognized type ", type)
+})
+
+setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type, ...) { Norm(x, p = type, axis = NA_real_) })
+setMethod("norm", signature(x = "Expression", type = "missing"), function(x, type, ...) { Norm(x, p = 2, axis = NA_real_) })
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 NormNuc <- function(A) { .NormNuc(A = A) }
@@ -1031,12 +1034,12 @@ setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
 setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
 setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
 
-.grad.NormNuc <- function(object, values) {
+setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
   s <- svd(val_svd)
   D <- s$u %*% t(s$v)
   list(t(Matrix(as.vector(D), sparse = TRUE)))
-}
+})
 
 NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
@@ -1114,7 +1117,7 @@ QuadForm <- function(x, P) {
     if(length(M1) > 0)
       ret <- ret + scale * SumSquares(Constant(t(M1)) %*% x)
     else if(length(M2) > 0)
-      ret <- ret - scale * SumSquares(Cosntant(t(M2)) %*% x)
+      ret <- ret - scale * SumSquares(Constant(t(M2)) %*% x)
     return(ret)
   } else
     stop("At least one argument to QuadForm must be constant")
@@ -1151,8 +1154,8 @@ setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_pos
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 2) })
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
-.domain.QuadOverLin <- function(object) { list(object@args[[2]] >= 0) }
-.grad.QuadOverLin <- function(object, values) {
+setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
+setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
   y <- values[[2]]
   if(y <= 0)
@@ -1165,7 +1168,7 @@ setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@arg
     DX <- Matrix(as.vector(DX), sparse = TRUE)
     return(list(DX, Dy))
   }
-}
+})
 
 QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -1199,14 +1202,14 @@ setMethod("is_atom_concave", "SigmaMax", function(object) { FALSE })
 setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
 setMethod("is_decr", "SigmaMax", function(object, idx) { FALSE })
 
-.grad.SigmaMax <- function(object, values) {
+setMethod(".grad", "SigmaMax", function(object, values) {
   # Grad: U diag(e_1) t(V)
   s <- svd(values[[1]])
   ds <- rep(0, length(s$d))
   ds[1] <- 1
   D <- s$u %*% diag(ds) %*% t(s$v)
   t(Matrix(as.vector(D), sparse = TRUE))
-}
+})
 
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]   # n by m matrix
@@ -1275,7 +1278,7 @@ setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
 setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
 setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
-.grad.SumLargest <- function(object, values) {
+setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
   value <- as.vector(values[[1]])
   k <- min(object@k, length(value))
@@ -1283,7 +1286,7 @@ setMethod("get_data", "SumLargest", function(object) { list(object@k) })
   D <- rep(0, prod(size(object@args[[1]])))
   D[indices[1:k]] <- 1
   list(Matrix(D, sparse = TRUE))
-}
+})
 
 SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # min SumEntries(t) + k*q

@@ -33,9 +33,9 @@ test_that("test log problem", {
 })
 
 test_that("Test sigma max", {
-  const <- Constant(rbind(c(1,2,3), c(4,5,6)))
+  const <- Constant(rbind(c(1,2), c(3,4), c(5,6)))
   constr <- list(C == const)
-  prob <- Problem(Minimize(norm(C, 2)), constr)
+  prob <- Problem(Minimize(norm(C, "F")), constr)
   # result <- solve(prob, solver = "SCS")
   # expect_equal(result, value(norm(const, 2)), tolerance = TOL)
   # expect_equal(result$C, value(const))
@@ -43,7 +43,7 @@ test_that("Test sigma max", {
 
 test_that("Test sdp variable", {
   const <- Constant(rbind(c(1,2,3), c(4,5,6), c(7,8,9)))
-  x <- Semidef(3)
+  X <- Semidef(3)
   prob <- Problem(Minimize(0), list(X == const))
   # result <- solve(prob, verbose = TRUE, solver = "SCS")
   # expect_equal(result$status, "INFEASIBLE")

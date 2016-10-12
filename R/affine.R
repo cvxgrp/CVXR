@@ -422,7 +422,7 @@ setMethod("size_from_args", "DiagMat", function(object) {
   c(rows, 1)
 })
 
-DiagMat.graph_implementation <- function(object, arg_objs, size, data = NA_real_) {
+DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(diag_mat(arg_objs[[1]]), list())
 }
 

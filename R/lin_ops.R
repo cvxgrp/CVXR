@@ -16,18 +16,50 @@ DIAG_VEC = "diag_vec"
 DIAG_MAT = "diag_mat"
 UPPER_TRI = "upper_tri"
 CONV = "conv"
-KRON = "kron"
 HSTACK = "hstack"
 VSTACK = "vstack"
 SCALAR_CONST = "scalar_const"
 DENSE_CONST = "dense_const"
 SPARSE_CONST = "sparse_const"
-PARAM = "param"
 NO_OP = "no_op"
+KRON = "kron"
+
+LINOP_TYPES <- c(VARIABLE = "VARIABLE",
+                 PROMOTE = "PROMOTE",
+                 MUL = "MUL",
+                 RMUL = "RMUL",
+                 MUL_ELEM = "MUL_ELEM",
+                 DIV = "DIV",
+                 SUM = "SUM",
+                 NEG = "NEG",
+                 INDEX = "INDEX",
+                 TRANSPOSE = "TRANSPOSE",
+                 SUM_ENTRIES = "SUM_ENTRIES",
+                 TRACE = "TRACE",
+                 RESHAPE = "RESHAPE",
+                 DIAG_VEC = "DIAG_VEC",
+                 DIAG_MAT = "DIAG_MAT",
+                 UPPER_TRI = "UPPER_TRI",
+                 CONV = "CONV",
+                 HSTACK = "HSTACK",
+                 VSTACK = "VSTACK",
+                 SCALAR_CONST = "SCALAR_CONST",
+                 DENSE_CONST = "DENSE_CONST",
+                 SPARSE_CONST = "SPARSE_CONST",
+                 NO_OP = "NO_OP",
+                 KRON = "KRON",
+                 EQ = "EQ",
+                 LEQ = "LEQ",
+                 SOC = "SOC",
+                 SOC_AXIS = "SOC_AXIS",
+                 EXP = "EXP",
+                 SDP = "SDP")
+
+PARAM = "param"
 CONSTANT_ID = "constant_id"
 
 # Create lists to represent linear operators and constraints
-LinOp <- function(type, size, args = list(), data = NA_real_, class = "LinOp") {
+LinOp <- function(type, size, args = list(), data = NULL, class = "LinOp") {
   if(!is.character(type)) stop("type must be a character string")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   if(!is.list(args)) stop("args must be a list of arguments")
@@ -35,7 +67,8 @@ LinOp <- function(type, size, args = list(), data = NA_real_, class = "LinOp") {
 }
 
 LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
-  if(!is.character(constr_id)) stop("constr_id must be a character string")
+    ##if(!is.character(constr_id)) stop("constr_id must be a character string")
+  if(!is.integer(constr_id)) stop("constr_id must be an integer!")
   if(!is.numeric(size)) stop("size must be a numeric vector")
   list(expr = expr, constr_id = constr_id, size = size, class = class)
 }
@@ -43,10 +76,10 @@ LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
 LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinEqConstr") }
 LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinLeqConstr") }
 
-get_id <- function() {
-  # sample.int(.Machine$integer.max, 1)
-  UUIDgenerate()
-}
+## get_id <- function() {
+##   # sample.int(.Machine$integer.max, 1)
+##     uuid::UUIDgenerate()
+## }
 
 create_var <- function(size, var_id = get_id()) {
   LinOp(VARIABLE, size, list(), var_id)
@@ -71,7 +104,7 @@ sum_expr <- function(operators) {
 }
 
 neg_expr <- function(operator) {
-  LinOp(NEG, operator$size, list(operator))  
+  LinOp(NEG, operator$size, list(operator))
 }
 
 sub_expr <- function(lh_op, rh_op) {

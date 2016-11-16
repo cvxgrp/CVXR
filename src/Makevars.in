@@ -1,0 +1,13 @@
+# To debug CVXCanon, add -DCVXCANON_DEBUG to PKG_CFLAGS
+PKG_CFLAGS=@PKG_CFLAGS@
+PKG_CPPFLAGS=@PKG_CPPFLAGS@
+PKG_LIBS=@PKG_LIBS@
+
+$(SHLIB): @ECOS_TS@
+
+ecos.ts:
+	(cd ecos && \
+	(cp ecos-unix.mk ecos.mk && \
+	$(MAKE) libecos.a CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" && \
+	$(MAKE) libecos_bb.a CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)") && \
+	touch $@)

@@ -1,26 +1,56 @@
 Package: cvxr
+Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9000
-Authors@R: person("Anqi", "Fu", email = "anqif@alumni.stanford.edu", role = c("aut", "cre"))
-Author: Anqi Fu [aut, cre]
-Maintainer: Anqi Fu <anqif@alumni.stanford.edu>
-Description: CVXR is a modeling language for disciplined convex optimization problems. 
-             It allows the user to express problems in a natural way that follows 
-             mathematical convention, rather than the restrictive standard form required 
+Version: 0.0.0.9009
+VignetteBuilder: knitr
+Authors@R: c(
+           person("Anqi", "Fu",
+                  role=c("aut", "cre"),
+                   email = "anqif@alumni.stanford.edu"),
+           person("Balasubramanian", "Narasimhan",
+                  role=c("aut"),
+                   email = "naras@stat.Stanford.EDU"),
+           person("Steven", "Diamond",
+                  role=c("aut"),
+                   email = "stevend2@stanford.edu"),
+           person("John", "Miller",
+                  role=c("aut"),
+                   email = "millerjp@stanford.edu"),
+           person("Steven", "Boyd",
+                  role=c("ctb"),
+                  email = "Stephen.Boyd@stanford.edu"),
+           person("Paul Kunsberg", "Rosenfield",
+                  role=c("ctb"),
+                  email = "paulkr@stanford.edu")
+           )
+URL: https://github.com/anqif/cvxr
+SystemRequirements: GNU make
+BugReports: https://github.com/anqif/cvxr/issues
+Description: CVXR is a modeling language for disciplined convex optimization problems.
+             It allows the user to express problems in a natural way that follows
+             mathematical convention, rather than the restrictive standard form required
              by other solvers.
-Depends: R (>= 3.2.2),
-         bitops,
-         MASS,
-         Matrix,
-         uuid
+Imports:
+        methods,
+        R6,
+        Matrix,
+        Rcpp (>= 0.12.5),
+        RcppEigen,
+	      BH,
+        bitops,
+        MASS
+Suggests:
+        knitr,
+        rmarkdown,
+        testthat
+LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true
-Suggests: testthat,
-    knitr,
-    rmarkdown
-Collate: 'generics.R' 
+Suggests: testthat
+Collate: 'globals.R'
+	       'generics.R'
          'utilities.R'
-         'dcp_attr.R' 
+         'interface.R'
          'expressions.R'
          'constant.R'
          'variable.R'
@@ -28,8 +58,17 @@ Collate: 'generics.R'
          'atoms.R'
          'affine.R'
          'problem.R'
-         'constraints.R' 
+         'constraints.R'
          'elementwise.R'
          'solver.R'
          'problem_data.R'
-VignetteBuilder: knitr
+      	 'rcppUtils.R'
+      	 'R6List.R'
+      	 'ProblemData-R6.R'
+      	 'LinOp-R6.R'
+      	 'LinOpVector-R6.R'
+      	 'RcppExports.R'
+      	 'Solution-R6.R'
+      	 'CVXcanon-R6.R'
+      	 'Deque.R'
+      	 'canonInterface.R'

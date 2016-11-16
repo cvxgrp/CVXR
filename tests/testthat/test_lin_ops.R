@@ -1,3 +1,5 @@
+require(Matrix)
+
 test_that("Test creating a variable", {
   var <- create_var(c(5, 4), var_id = 1)
   expect_equal(var$size, c(5, 4))

@@ -1,0 +1,343 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> > options(STERM='iESS', str.dendrogram.last="'", editor='emacsclient', show.error.locations=TRUE)
+> library(ECOSolveR)
+library(Matrix)
+G <- Matrix(diag(c(-1,-1)), sparse=T)
+h <- c(-1, -1)
+>
+> > > debug(ECOS_csolve)
+> retval <- ECOS_csolve(c(17, 19), G=G, h=h, dims = list(l = 2L, q=NULL, e = 0L), A = NULL, b=c())
+debugging in: ECOS_csolve(c(17, 19), G = G, h = h, dims = list(l = 2L, q = NULL,
+    e = 0L), A = NULL, b = c())
+debug: {
+    if (!is.null(optionCheck <- checkOptions(control))) {
+        stop(optionCheck)
+    }
+    if (!isNontrivialNumericVector(c)) {
+        stop("c should be a nontrivial numeric vector")
+    }
+    nullG <- is.null(G)
+    nontrivialH <- isNontrivialNumericVector(h)
+    if ((nullG && nontrivialH) || (!nullG && !nontrivialH)) {
+        stop("G and h must be supplied together")
+    }
+    nullA <- is.null(A)
+    nontrivialB <- isNontrivialNumericVector(b)
+    if ((nullA && nontrivialB) || (!nullA && !nontrivialB)) {
+        stop("A and b must be supplied together")
+    }
+    if (nullG) {
+        m <- 0
+        n1 <- length(c)
+        Gpr <- Gir <- Gjc <- NULL
+    }
+    else {
+        if (!inherits(G, "CsparseMatrix")) {
+            stop("G is required to be of class dgCMatrix")
+        }
+        m <- nrow(G)
+        n1 <- ncol(G)
+        if (m != length(h)) {
+            stop("h has incompatible dimension with G")
+        }
+        Gpr <- G@x
+        Gir <- G@i
+        Gjc <- G@p
+    }
+    if (nullA) {
+        p <- 0
+        n2 <- n1
+        Apr <- Air <- Ajc <- NULL
+    }
+    else {
+        if (!inherits(A, "CsparseMatrix")) {
+            stop("A is required to be of class dgCMatrix")
+        }
+        p <- nrow(A)
+        n2 <- ncol(A)
+        if (p != length(b)) {
+            stop("b has incompatible dimension with A")
+        }
+        Apr <- A@x
+        Air <- A@i
+        Ajc <- A@p
+    }
+    if (n1 != n2) {
+        stop("Columns of A and G don't match")
+    }
+    if (is.null(dims)) {
+        stop("dims must be a non-null list")
+    }
+    l <- dims$l
+    if (is.null(l)) {
+        l <- 0L
+    }
+    else {
+        if (!isNonnegativeInt(l))
+            stop("dims['l'] should be a non-negative int")
+    }
+    q <- dims$q
+    if (!is.null(q)) {
+        if (typeof(q) != "integer" || !all(q > 0))
+            stop("dims['q'] should be an integer vector of positive integers")
+    }
+    e <- dims$e
+    if (is.null(e)) {
+        e <- 0L
+    }
+    else {
+        if (!isNonnegativeInt(e))
+            stop("dims['e'] should be a non-negative int")
+    }
+    if (typeof(bool_vars) != "integer" || (length(bool_vars) >
+        0) && any(bool_vars < 1 | bool_vars > n1)) {
+        stop(sprintf("bool_vars must integers between 1 and %d",
+            n1))
+    }
+    else {
+        bool_vars <- sort.int(bool_vars - 1L)
+    }
+    if (typeof(int_vars) != "integer" || (length(int_vars) >
+        0) && any(int_vars < 1 | int_vars > n1)) {
+        stop(sprintf("int_vars must integers between 1 and %d",
+            n1))
+    }
+    else {
+        int_vars <- sort.int(int_vars - 1L)
+    }
+    mnp <- as.integer(c(m, n1, p))
+    result <- .Call("ecos_csolve", mnp, l, q, e, Gpr, Gjc, Gir,
+        Apr, Ajc, Air, c, h, b, bool_vars, int_vars, control,
+        package = "ECOSolveR")
+    result
+}
+Browse[2]> n
+debug: if (!is.null(optionCheck <- checkOptions(control))) {
+    stop(optionCheck)
+}
+Browse[2]> n
+debug: if (!isNontrivialNumericVector(c)) {
+    stop("c should be a nontrivial numeric vector")
+}
+Browse[2]> n
+debug: nullG <- is.null(G)
+Browse[2]> n
+debug: nontrivialH <- isNontrivialNumericVector(h)
+Browse[2]> n
+debug: if ((nullG && nontrivialH) || (!nullG && !nontrivialH)) {
+    stop("G and h must be supplied together")
+}
+Browse[2]> n
+debug: nullA <- is.null(A)
+Browse[2]> n
+debug: nontrivialB <- isNontrivialNumericVector(b)
+Browse[2]> n
+debug: if ((nullA && nontrivialB) || (!nullA && !nontrivialB)) {
+    stop("A and b must be supplied together")
+}
+Browse[2]> n
+debug: if (nullG) {
+    m <- 0
+    n1 <- length(c)
+    Gpr <- Gir <- Gjc <- NULL
+} else {
+    if (!inherits(G, "CsparseMatrix")) {
+        stop("G is required to be of class dgCMatrix")
+    }
+    m <- nrow(G)
+    n1 <- ncol(G)
+    if (m != length(h)) {
+        stop("h has incompatible dimension with G")
+    }
+    Gpr <- G@x
+    Gir <- G@i
+    Gjc <- G@p
+}
+Browse[2]> n
+debug: if (!inherits(G, "CsparseMatrix")) {
+    stop("G is required to be of class dgCMatrix")
+}
+Browse[2]> n
+debug: m <- nrow(G)
+Browse[2]> n
+debug: n1 <- ncol(G)
+Browse[2]> n
+debug: if (m != length(h)) {
+    stop("h has incompatible dimension with G")
+}
+Browse[2]> n
+debug: Gpr <- G@x
+Browse[2]> n
+debug: Gir <- G@i
+Browse[2]> n
+debug: Gjc <- G@p
+Browse[2]> n
+debug: if (nullA) {
+    p <- 0
+    n2 <- n1
+    Apr <- Air <- Ajc <- NULL
+} else {
+    if (!inherits(A, "CsparseMatrix")) {
+        stop("A is required to be of class dgCMatrix")
+    }
+    p <- nrow(A)
+    n2 <- ncol(A)
+    if (p != length(b)) {
+        stop("b has incompatible dimension with A")
+    }
+    Apr <- A@x
+    Air <- A@i
+    Ajc <- A@p
+}
+Browse[2]> n
+debug: p <- 0
+Browse[2]> n
+debug: n2 <- n1
+Browse[2]> n
+debug: Apr <- Air <- Ajc <- NULL
+Browse[2]> n
+debug: if (n1 != n2) {
+    stop("Columns of A and G don't match")
+}
+Browse[2]> n
+debug: if (is.null(dims)) {
+    stop("dims must be a non-null list")
+}
+Browse[2]> n
+debug: l <- dims$l
+Browse[2]> n
+debug: if (is.null(l)) {
+    l <- 0L
+} else {
+    if (!isNonnegativeInt(l))
+        stop("dims['l'] should be a non-negative int")
+}
+Browse[2]> n
+debug: if (!isNonnegativeInt(l)) stop("dims['l'] should be a non-negative int")
+Browse[2]> n
+debug: q <- dims$q
+Browse[2]> n
+debug: if (!is.null(q)) {
+    if (typeof(q) != "integer" || !all(q > 0))
+        stop("dims['q'] should be an integer vector of positive integers")
+}
+Browse[2]> n
+debug: e <- dims$e
+Browse[2]> n
+debug: if (is.null(e)) {
+    e <- 0L
+} else {
+    if (!isNonnegativeInt(e))
+        stop("dims['e'] should be a non-negative int")
+}
+Browse[2]> n
+debug: if (!isNonnegativeInt(e)) stop("dims['e'] should be a non-negative int")
+Browse[2]> n
+debug: if (typeof(bool_vars) != "integer" || (length(bool_vars) > 0) &&
+    any(bool_vars < 1 | bool_vars > n1)) {
+    stop(sprintf("bool_vars must integers between 1 and %d",
+        n1))
+} else {
+    bool_vars <- sort.int(bool_vars - 1L)
+}
+Browse[2]> n
+debug: bool_vars <- sort.int(bool_vars - 1L)
+Browse[2]> n
+debug: if (typeof(int_vars) != "integer" || (length(int_vars) > 0) &&
+    any(int_vars < 1 | int_vars > n1)) {
+    stop(sprintf("int_vars must integers between 1 and %d", n1))
+} else {
+    int_vars <- sort.int(int_vars - 1L)
+}
+Browse[2]> n
+debug: int_vars <- sort.int(int_vars - 1L)
+Browse[2]> n
+debug: mnp <- as.integer(c(m, n1, p))
+Browse[2]> n
+debug: result <- .Call("ecos_csolve", mnp, l, q, e, Gpr, Gjc, Gir, Apr,
+    Ajc, Air, c, h, b, bool_vars, int_vars, control, package = "ECOSolveR")
+Browse[2]> mnp
+[1] 2 2 0
+Browse[2]> l
+[1] 2
+Browse[2]> q
+NULL
+Browse[2]> e
+[1] 0
+Browse[2]> Gpr
+[1] -1 -1
+Browse[2]> Gjc
+[1] 0 1 2
+Browse[2]> Gir
+[1] 0 1
+Browse[2]> Apr
+NULL
+Browse[2]> Ajc
+NULL
+Browse[2]> Air
+NULL
+Browse[2]> print(c)
+[1] 17 19
+Browse[2]> h
+[1] -1 -1
+Browse[2]> b
+NULL
+Browse[2]> control
+$MAXIT
+[1] 100
+
+$FEASTOL
+[1] 1e-08
+
+$RELTOL
+[1] 1e-08
+
+$ABSTOL
+[1] 1e-08
+
+$FEASTOL_INACC
+[1] 1e-04
+
+$ABSTOL_INACC
+[1] 5e-05
+
+$RELTOL_INACC
+[1] 5e-05
+
+$VERBOSE
+[1] 0
+
+$MI_MAX_ITERS
+[1] 1000
+
+$MI_INT_TOL
+[1] 1e-04
+
+$MI_ABS_EPS
+[1] 1e-06
+
+$MI_REL_EPS
+[1] 1e-06
+
+Browse[2]> Q
+> q()
+
+Process R finished at Thu Aug  4 13:55:15 2016

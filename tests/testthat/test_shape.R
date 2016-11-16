@@ -1,18 +1,17 @@
-test_that("test shape size", {
-  expect_equal(size(Shape(1,3)), c(1,3))
-  expect_equal(size(Shape(2,1)), c(2,1))
-})
-
 test_that("test shape addition", {
-  expect_equal(size(Shape(3,4) + Shape(3,4)), c(3,4))
-  expect_error(Shape(1,3) + Shape(4,3))
-  expect_equal(size(Shape(3,4) + Shape(1,1)), c(3,4))
-  expect_equal(size(Shape(1,1) + Shape(3,4)), c(3,4))
+  expect_equal(sum_shapes(list(c(3,4), c(3,4))), c(3,4))
+  expect_error(sum_shapes(list(c(1,3), c(4,3))))
+  
+  # Promotion
+  expect_equal(sum_shapes(list(c(3,4), c(1,1))), c(3,4))
+  expect_equal(sum_shapes(list(c(1,1), c(3,4))), c(3,4))
 })
 
 test_that("test shape multiplication", {
-  expect_equal(size(Shape(5,9) * Shape(9,2)), c(5,2))
-  expect_error(Shape(5,3) * Shape(9,2))
-  expect_equal(size(Shape(3,4) * Shape(1,1)), c(3,4))
-  expect_equal(size(Shape(1,1) * Shape(3,4)), c(3,4))
+  expect_equal(mul_shapes(c(5,9), c(9,2)), c(5,2))
+  expect_error(mul_shapes(c(5,3), c(9,2)))
+  
+  # Promotion
+  expect_equal(mul_shapes(c(3,4), c(1,1)), c(3,4))
+  expect_equal(mul_shapes(c(1,1), c(3,4)), c(3,4))
 })

@@ -13,57 +13,38 @@
 #' @slot .presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
 #' @aliases SymData
 #' @export
-.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", solver = "Solver", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
-                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_),
-                     validity = function(object) {
-                       if(length(object@.constr_map) > 0)
-                         stop("[Validation: SymData] .constr_map is an internal variable that should not be set by user")
-                       if(length(object@.dims) > 0)
-                         stop("[Validation: SymData] .dims is an internal variable that should not be set by user")
-                       if(length(object@.var_offsets) > 0)
-                         stop("[Validation: SymData] .var_offsets is an internal variable that should not be set by user")
-                       if(length(object@.var_sizes) > 0)
-                         stop("[Validation: SymData] .var_sizes is an internal variable that should not be set by user")
-                       if(!is.na(object@.x_length))
-                         stop("[Validation: SymData] .x_length is an internal variable that should not be set by user")
-                       if(!is.na(object@.presolve_status))
-                         stop("[Validation: SymData] .presolve_status is an internal variable that should not be set by user")
-                       return(TRUE)
-                      })
+.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
+                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
 
 SymData <- function(objective, constraints, solver) {
-  .SymData(objective = objective, constraints = constraints, solver = solver)
-}
-
-setMethod("initialize", "SymData", function(.Object, objective, constraints, solver, .constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_) {
-  .Object@objective <- objective
-  .Object@constraints <- constraints
-  .Object@.constr_map <- SymData.filter_constraints(constraints)
-  .Object@.presolve_status <- SymData.presolve(objective, .Object@.constr_map)
-  .Object@.dims <- SymData.format_for_solver(.Object@.constr_map, solver)
+  constr_map <- SymData.filter_constraints(constraints)
+  tmp <- SymData.presolve(objective, constr_map)
+  constr_map <- tmp$constr_map
+  presolve_status <- tmp$status
   
-  all_ineq <- c(.Object@.constr_map[[EQ_MAP]], .Object@.constr_map[[LEQ_MAP]])
+  tmp <- SymData.format_for_solver(constr_map, solver)
+  constr_map <- tmp$constr_map
+  dims <- tmp$dims
+  
+  all_ineq <- c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]])
   # CVXOPT can have variables that only live in NonLinearConstraints.
   if(name(solver) == CVXOPT_NAME)
-    nonlinear <- .Object@.constr_map[[EXP_MAP]]
+    nonlinear <- constr_map[[EXP_MAP]]
   else
     nonlinear <- list()
   var_data <- SymData.get_var_offsets(objective, all_ineq, nonlinear)
-  .Object@.var_offsets <- var_data[[1]]
-  .Object@.var_sizes <- var_data[[2]]
-  .Object@.x_length <- var_data[[3]]
-  .Object
-})
+  .SymData(objective = objective, constraints = constraints, .constr_map = constr_map, .dims = dims, .var_offsets = var_data[[1]], .var_sizes = var_data[[2]], .x_length = var_data[[3]], .presolve_status = presolve_status)
+}
 
 SymData.filter_constraints <- function(constraints) {
   constr_map <- list()
-  constr_map[[EQ_MAP]]   <- constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
-  constr_map[[LEQ_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
-  constr_map[[SOC_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  constr_map[[SDP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "SDP") })]
-  constr_map[[EXP_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
-  constr_map[[BOOL_MAP]] <- constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
-  constr_map[[INT_MAP]]  <- constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
+  constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
+  constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
+  constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
+  constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
+  constr_map[[BOOL_MAP]] <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
+  constr_map[[INT_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
   constr_map
 }
 
@@ -71,20 +52,25 @@ SymData.presolve <- function(objective, constr_map) {
   # Remove redundant constraints
   constr_map <- lapply(constr_map, function(constraints) { 
       constr_ids <- sapply(constraints, function(c) { c@constr_id })
-       constraints[!duplicated(constr_ids)]
-    })
+      constraints[!duplicated(constr_ids)]
+  })
   
   # If there are no constraints, the problem is unbounded if any of the coefficients are non-zero.
   # If all the coefficients are zero, then return the constant term and set all variables to zero.
+  
   # TODO: Deal with the case when constr_maps has no values
+  if(length(constr_map) == 0) {
+    warning("Handling of empty constraint map is unfinished")
+    print(objective)
+  }
   
   # Remove constraints with no variables or parameters.
   for(key in c(EQ_MAP, LEQ_MAP)) {
     new_constraints <- list()
     for(constr in constr_map[[key]]) {
       vars_ <- get_expr_vars(constr@expr)
-      if(length(vars_) == 0 && is.na(get_expr_params(constr@expr))) {
-        prob <- get_problem_matrix(list(constr))   # TODO: Call to canonInterface
+      if(length(vars_) == 0 && length(get_expr_params(constr@expr)) == 0) {
+        prob <- get_problem_matrix(list(constr))
         V <- prob[[1]]
         I <- prob[[2]]
         J <- prob[[3]]
@@ -93,24 +79,24 @@ SymData.presolve <- function(objective, constr_map) {
         
         # For equality constraint, coeff must be zero.
         # For inequality (i.e. <= 0) constraint, coeff must be negative.
-        if((key == EQ_MAP && !is_zero(sign)) || (key == LEQ_MAP && !is_negative(sign)))
-          return(INFEASIBLE)
+        if((key == EQ_MAP && !(is_pos && is_neg)) || (key == LEQ_MAP && !is_neg))
+          return(list(constr_map = constr_map, status = INFEASIBLE))
       } else
         new_constraints <- c(new_constraints, constr)
     }
     constr_map[[key]] <- new_constraints
   }
-  return(NA_character_)   # TODO: Return objective and constr_map as well?
+  list(constr_map = constr_map, status = NA_character_)
 }
 
 SymData.format_for_solver <- function(constr_map, solver) {
   dims <- list()
   if(length(constr_map[[EQ_MAP]]) > 0)
-    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]],  function(c) { size(c)[1] * size(c)[2] }))
+    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]],  function(c) { prod(size(c)) }))
   else
     dims[[EQ_DIM]] <- 0
   if(length(constr_map[[LEQ_MAP]]) > 0)
-    dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ_MAP]], function(c) { size(c)[1] * size(c)[2] }))
+    dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ_MAP]], function(c) { prod(size(c)) }))
   else
     dims[[LEQ_DIM]] <- 0
   dims[[SOC_DIM]]  <- c()
@@ -122,11 +108,15 @@ SymData.format_for_solver <- function(constr_map, solver) {
   # Formats nonlinear constraints for the solver
   for(constr_type in names(dims)) {
     if(!(constr_type %in% c(EQ_MAP, LEQ_MAP))) {
-      for(constr in constr_map[[constr_type]])
-        constr_format(constr, constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]], dims, solver)
+      for(constr in constr_map[[constr_type]]) {
+        tmp <- format_constr(constr, constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]], dims, solver)
+        constr_map[[EQ_MAP]] <- tmp$eq_constr
+        constr_map[[LEQ_MAP]] <- tmp$leq_constr
+        dims <- tmp$dims
+      }
     }
   }
-  dims
+  list(constr_map = constr_map, dims = dims)
 }
 
 SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
@@ -140,20 +130,20 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
       vars_ <- c(vars_, get_expr_vars(nonlin_var))
   }
 
-  # Sort variables by unique variable ID
+  # TODO: Ensure variables are always in same order for same problem.
   var_id <- sapply(vars_, function(id_and_size) { id_and_size[[1]] })
   var_sorted <- vars_[order(var_id)]
   
   # Map variable IDs to offsets and size
   var_sizes <- lapply(var_sorted, function(var) { var[[2]] })
-  size_prods <- sapply(var_sizes, function(var_size) { var_size[1]*var_size[2] })
+  size_prods <- sapply(var_sizes, function(var_size) { prod(var_size) })
   var_offsets <- as.list(cumsum(c(0, head(size_prods, n = -1))))
   vert_offset <- sum(size_prods)
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
 
-.MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", const_vec = "numeric", constraints = "list", x_length = "numeric", .size = "numeric", .param_coo_tup = "list"),
-                         prototype(.size = NA_real_, .param_coo_tup = NULL), validity = function(object) {
+.MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", .param_coo_tup = "list", const_vec = "numeric", constraints = "list", .size = "numeric"),
+                         prototype(.size = NA_real_, .param_coo_tup = list(c(), c(), c())), validity = function(object) {
                            if(!is.na(object@.size))
                              stop("[Validation: MatrixCache] .size is an internal variable that should not be set by user")
                            if(!is.null(object@.param_coo_tup))
@@ -162,27 +152,17 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
                           })
 
 MatrixCache <- function(coo_tup, const_vec, constraints, x_length) {
-  .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, x_length = x_length)
+  rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+  cols <- x_length
+  .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, .size = c(rows, cols), .param_coo_tup = list(c(), c(), c()))
 }
 
-setMethod("initialize", "MatrixCache", function(.Object, coo_tup, const_vec, constraints, x_length, .size = NA_real_, .param_coo_tup = NULL) {
-  .Object@coo_tup <- coo_tup
-  .Object@const_vec <- const_vec
-  .Object@constraints <- constraints
-  
-  rows <- sum(sapply(constraints, function(c) { c$size[1] * c$size[2] }))
-  cols <- x_length
-  .Object@.size <- c(rows, cols)
-  .Object@.param_coo_tup <- list(list(), list(), list())
-  .Object
-})
-
-setMethod("reset_param_data", "MatrixCache", function(object) {
-  object@.param_coo_tup <- list(list(), list(), list())
+reset_param_data <- function(object) {
+  object@.param_coo_tup <- list(c(), c(), c())
   object
-})
+}
 
-.MatrixData <- setClass("MatrixData", representation(sym_data = "SymData", solver = "Solver", .obj_cache = "MatrixCache", .eq_cache = "MatrixCache", .ineq_cache = "MatrixCache"),
+.MatrixData <- setClass("MatrixData", representation(sym_data = "SymData", solver = "Solver", nonlin = "logical", .obj_cache = "MatrixCache", .eq_cache = "MatrixCache", .ineq_cache = "MatrixCache"),
                         prototype(.obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL), validity = function(object) {
                           if(!is.null(object@.obj_cache))
                             stop("[Validation: MatrixData] .obj_cache is an internal variable that should not be set by user")
@@ -193,7 +173,7 @@ setMethod("reset_param_data", "MatrixCache", function(object) {
                           return(TRUE)
                         })
 
-MatrixData <- function(sym_data, solver) { .MatrixData(sym_data = sym_data, solver = solver) }
+MatrixData <- function(sym_data, solver, nonlin = FALSE) { .MatrixData(sym_data = sym_data, solver = solver, nonlin = nonlin) }
 
 setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, .obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL) {
   .Object@sym_data <- sym_data
@@ -210,19 +190,22 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, .obj_c
   
   # Equality constraints.
   .Object@.eq_cache <- .init_matrix_cache(eq_constr, .Object@sym_data@.x_length)
-  .Object@.eq_cache <- .lin_matrix(.Object, .Object@eq_cache, cachine = TRUE)
+  .Object@.eq_cache <- .lin_matrix(.Object, .Object@eq_cache, caching = TRUE)
   
   # Inequality constraints.
   .Object@.ineq_cache <- .init_matrix_cache(ineq_constr, .Object@sym_data@.x_length)
   .Object@.ineq_cache <- .lin_matrix(.Object, .Object@.ineq_cache, caching = TRUE)
   
   # TODO: Nonlinear constraints require returning an oracle (function), which R does not support. Need an alternative way.
+  if(nonlin) stop("Nonlinear constraints are unimplemented")
+  # if(nonlin)
+  #  .Object@F <- .nonlin_matrix(nonlin_constr)
+  # else
+  #  .Object@F <- NULL
   .Object
 })
 
-setMethod(".dummy_constr", "MatrixData", function(object) {
-  list(create_eq(object@sym_data@objective))
-})
+.dummy_constr <- function(object) { list(create_eq(object@sym_data@objective)) }
 
 setMethod("get_objective", "MatrixData", function(object) {
   mat <- .cache_to_matrix(object, object@.mat_cache)
@@ -236,22 +219,23 @@ setMethod("get_objective", "MatrixData", function(object) {
 
 setMethod("get_eq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.eq_cache) })
 setMethod("get_ineq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.ineq_cache) })
+setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 
-setMethod(".init_matrix_cache", "MatrixData", function(object, constraints, x_length) {
-  rows <- sum(sapply(constraints, function(c) { c$size[1] * c$size[2] }))
-  COO <- list(list(), list(), list())
+.init_matrix_cache <- function(object, constraints, x_length) {
+  rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+  COO <- list(c(), c(), c())
   const_vec <- rep(0, rows)
   MatrixCache(COO, const_vec, constraints, x_length)
-})
+}
 
-setMethod(".lin_matrix", signature(object = "MatrixData", mat_cache = "MatrixCache", caching = "logical"), function(object, mat_cache, caching = FALSE) {
+.lin_matrix <- function(object, mat_cache, caching = FALSE) {
   active_constr <- list()
-  constr_offsets <- list()
+  constr_offsets <- c()
   vert_offset <- 0
   
   for(constr in mat_cache@constraints) {
     # Process the constraint if it has a parameter and not caching or it doesn't have a parameter and caching.
-    has_param <- length(get_expr_params(constr$expr)) > 0
+    has_param <- length(get_expr_params(constr@expr)) > 0
     if((has_param && !caching) || (!has_param && caching)) {
       # If parameterized, convert the parameters into constant nodes.
       if(has_param)
@@ -259,29 +243,32 @@ setMethod(".lin_matrix", signature(object = "MatrixData", mat_cache = "MatrixCac
       active_constr <- c(active_constr, constr)
       constr_offsets <- c(constr_offsets, vert_offset)
     }
-    vert_offset <- vert_offset + constr$size[1]*constr$size[2]
+    vert_offset <- vert_offset + prod(size(constr))
   }
   
   # Convert the constraints into a matrix and vector offset and add them to the matrix cache.
   if(length(active_constr) > 0) {
-    mat <- get_problem_matrix(active_constr, object@sym_data@.var_offsets, constr_offsets)  # TODO: Need to implement for canonInterface
+    mat <- get_problem_matrix(active_constr, object@sym_data@.var_offsets, constr_offsets)
     V <- mat[[1]]
     I <- mat[[2]]
     J <- mat[[3]]
     const_vec <- mat[[4]]
     
-    mat_cache@const_vec <- mat_cache@const_vec + const_vec
+    # Convert the constant offset to the correct data type.
+    conv_vec <- as.matrix(const_vec)
+    
+    mat_cache@const_vec[1:length(conv_vec)] <- mat_cache@const_vec[1:length(conv_vec)] + conv_vec
     mat_cache@coo_tup[[1]] <- c(mat_cache@coo_tup[[1]], V)
     mat_cache@coo_tup[[2]] <- c(mat_cache@coo_tup[[2]], I)
     mat_cache@coo_tup[[3]] <- c(mat_cache@coo_tup[[3]], J)
   }
   mat_cache
-})
+}
 
-setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "MatrixCache"), function(object, mat_cache) {
+.cache_to_matrix <- function(object, mat_cache) {
   # Get parameter values.
-  param_cache <- .init_matrix_cache(mat_cache@constraints, mat_cache@.size[1])
-  param_cache <- .lin_matrix(object, param_cache)   # TODO: Need to re-assign this
+  param_cache <- .init_matrix_cache(object, mat_cache@constraints, mat_cache@.size[1])
+  param_cache <- .lin_matrix(object, param_cache)
   mat_size <- mat_cache@.size
   rows <- mat_size[1]
   cols <- mat_size[2]
@@ -301,20 +288,65 @@ setMethod(".cache_to_matrix", signature(object = "MatrixData", mat_cache = "Matr
     mat <- sparseMatrix(i = I + Ip, j = J + Jp, x = V + Vp, dims = c(rows, cols))
     mat <- as.matrix(mat)
   } else   # Empty matrix
-    mat <- matrix(0, rows = rows, cols = cols)
+    mat <- matrix(0, nrow = rows, ncol = cols)
   
-  const_vec <- mat_cache@const_vec + param_cache@const_vec
+  # Convert 2D ND arrays to 1D
+  combo_vec <- mat_cache@const_vec + param_cache@const_vec
+  const_vec <- as.vector(combo_vec)
   list(mat, -const_vec)
-})
+}
 
 # TODO: Fill this out when nonlinear constraints are finished
-# setMethod(".nonlin_matrix", "MatrixData", function(object, nonlin_constr) {
-#  rows <- sum(sapply(nonlin_constr, function(c) { size(c)[1] * size(c)[2] }))
-#  cols <- object@sym_data@.x_length
-#  var_offsets <- object@sym_data@.var_offsets
-#  
-#  big_x <- rep(0, cols)
-# })
+# .nonlin_matrix <- function(object, nonlin_constr) {
+#   rows <- sum(sapply(nonlin_constr, function(c) { prod(size(c)) }))
+#   cols <- object@sym_data@.x_length
+#   var_offsets <- object@sym_data@.var_offsets
+#    
+#   big_x <- rep(0, nrow = cols, ncol = 1)
+#   for(constr in nonlin_constr)
+#     constr <- place_x0(constr, big_x, var_offsets)
+#   
+#   # Oracle for function value, gradient, and Hessian
+#   foo <- function(x = NA, z = NA) {
+#     if(is.na(x))
+#       return(rows, big_x)
+#     big_f <- matrix(0, nrow = rows, ncol = 1)
+#     big_Df <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
+#     if(!is.na(z))
+#       big_H <- sparseMatrix(i = c(), j = c(), dims = c(cols, cols))
+#     offset <- 0
+#     
+#     for(constr in nonlin_constr) {
+#       constr_entries <- prod(size(constr))
+#       local_x <- extract_variables(constr, x, var_offsets)
+#       if(!is.na(z)) {
+#         tmp <- constr.f(local_x, z[offset:(offset + constr_entries)])
+#         f <- tmp[[1]]
+#         Df <- tmp[[2]]
+#         H <- tmp[[3]]
+#       } else {
+#         result <- constr.f(local_x)
+#         if(!is.na(result)) {
+#           f <- result[[1]]
+#           Df <- result[[2]]
+#         } else
+#           return(NA)
+#       }
+#       
+#       big_f[offset:(offset + constr_entries)] <- f
+#       constr <- place_Df(constr, big_Df, Df, var_offsets, offset)
+#       if(!is.na(z))
+#         constr <- place_H(constr, big_H, H, var_offsets)
+#       offset <- offset + constr_entries
+#     }
+#     
+#     if(is.na(z))
+#       return(list(big_f, big_Df))
+#     return(list(big_f, big_Df, big_H))
+#   }
+#   
+#   return(foo)
+# }
 
 setClassUnion("SymDataORNull", c("SymData", "NULL"))
 setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))

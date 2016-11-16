@@ -16,7 +16,7 @@ vignette: >
 library(MASS)
 library(ggplot2)
 library(Rmisc)
-#library(CVXR)
+library(cvxr)
 ```
 
 # 1 Introduction
@@ -102,16 +102,15 @@ y <- Variable(1)
 
 # Problem definition
 objective <- Minimize(x^2 + y^2)
-constraints <- Constraints(x >= 0,
-                   x + 2*y == 1)
+constraints <- list(x >= 0, x + 2*y == 1)
 prob2.1 <- Problem(objective, constraints)
 
 # Problem solution
-solution2.1 <- Solve(prob2.1)
-solution2.1$opt.val
-solution2.1$x
-solution2.1$y
+solution2.1 <- solve(prob2.1)
 solution2.1$status
+solution2.1$optimal_value
+solution2.1$primal_values[[as.character(x@id)]]
+solution2.1$primal_values[[as.character(y@id)]]
 
 # The world says 'hi' back.
 ```
@@ -136,8 +135,7 @@ This call to `Minimize()` does _not_ return the minimum value of the expression 
 The next line defines two constraints---an inequality constraint and an equality constraint, respectively. 
 
 ```{r, eval=FALSE}
-constraints <- Constraints(x >= 0,
-                           x + 2*y == 1)
+constraints <- list(x >= 0, x + 2*y == 1)
 ```
 
 Again, counter to what you might ordinarily expect, the expression `x >= 0` does not return `TRUE` or `FALSE` the way `1.3 >= 0` would. Instead, the `==` and `>=` operators have been overloaded to return Constraint objects which will be used by the solver to enforce the problem's constraints. (Without them, the solution to our problem would simply be $x = y = 0$.)
@@ -153,16 +151,16 @@ Problem objects are very flexible in that they can have 0 or more Constraints, a
 The call to `Problem()` still does not actually _solve_ our optimization problem. That only happens with the call to `Solve()`. 
 
 ```{r, eval=FALSE}
-solution2.1 <- Solve(prob2.1)
+solution2.1 <- solve(prob2.1)
 ```
 
 Behind the scenes, this call translates the problem into a format that a convex solver can understand, feeds the problem to the solver, and then returns the results to a Solution object.  For this problem, the Solution object will contain among other things the optimal value of the objective function `x^2 + y^2`, values for `x` and `y` that achieve that optimal objective value, and some accompanying metadata such as `solution2.1$status`, which confirms that the solution was indeed `"optimal"`.
 
 ```{r, eval=FALSE}
-solution2.1$opt.val
-solution2.1$x
-solution2.1$y
 solution2.1$status
+solution2.1$optimal_value
+solution2.1$primal_values[[as.character(x@id)]]
+solution2.1$primal_values[[as.character(y@id)]]
 ```
 
 In general when you apply the `Solve()` method to a Problem, several things can happen:
@@ -180,21 +178,21 @@ Like any normal R object, the Problem, Objective, Constraint, and Solution objec
 ```{r, eval=FALSE}
 # Modifying the problem from example 1
 prob2.2 <- prob2.1
-prob2.2$objective <- Minimize(x^2 + y^2 + abs(x-y))
-prob2.2$constraints <- list(prob2.2$constraints, Constraint(y <= 1))
+prob2.2@objective <- Minimize(x^2 + y^2 + abs(x-y))
+prob2.2@constraints <- c(prob2.2@constraints, y <= 1)
 
 # Analyzing the modified problem
 print(prob2.2)
-is.convex(prob2.2)
+is_convex(prob2.2)
 
 # Solving the modified problem
-solution2.2 <- Solve(prob2.2)
+solution2.2 <- solve(prob2.2)
 
 # Examining the solution
 solution2.2$status
-solution2.2$opt.val
-solution2.2$x
-solution2.2$y
+solution2.2$optimal_value
+solution2.2$primval_values[[as.character(x@id)]]   # TODO: Make a R6 function for retrieving primal values cleanly
+solution2.2$primal_values[[as.character(y@id)]]
 ```
 
 ## 2.3 An Invalid Problem
@@ -203,8 +201,8 @@ Unfortunately, you can't just type any arbitrary problem you like into `CVXR`. T
 
 ```{r, eval=FALSE}
 prob2.3 <- prob2.1
-prob2.3$objective <- Maximize(x^2 + y^2)
-Solve(prob2.3)
+prob2.3@objective <- Maximize(x^2 + y^2)
+solve(prob2.3)
 ```
 
 We would get a similar error if we tried to add the constraint `norm(x, 2) == 1`. This is because `CVXR` uses a strict set of rules called Disciplined Convex Programming (DCP) to evaluate the convexity of any given problem. If you follow these rules, you are guaranteed that your problem is convex. If you don't follow these rules, `CVXR` will throw an exception. See section 5 for a complete description of DCP.
@@ -248,14 +246,14 @@ prob3.1 <- Problem(objective)
 Here,  `y` is the response, `X` is the matrix of predictors, `n` is the number of observations, and `beta` is a vector of coefficients on the predictors. The Ordinary Least-Squares (OLS) solution for `beta` minimizes `1/n` times the the L2-norm of the residuals (i.e. the root-mean-squared-error). As we can see below, `CVXR`'s solution matches the solution obtained by using `lm`.
 
 ```{r, eval=FALSE}
-CVXR_solution3.1 <- Solve(prob3.1)
+CVXR_solution3.1 <- solve(prob3.1)
 lm_solution3.1 <- lm(y ~ 0 + X)
 ```
 
 ```{r, echo=FALSE, fig.height = 5, fig.width = 7}
 lmBeta <- c(-0.1564, 3.3242, 1.2300, -1.7095, -0.7192, -1.0866, -0.8085, -2.4432, 0.5941, 1.7332)
-CVXRBeta <- c(-0.1564, 3.3242, 1.2300, -1.7095, -0.7192, -1.0866, -0.8085, -2.4432, 0.5941, 1.7332)
-coefs <- data.frame( estimate = c(lmBeta, CVXRBeta),
+cvxrBeta <- c(-0.1564, 3.3242, 1.2300, -1.7095, -0.7192, -1.0866, -0.8085, -2.4432, 0.5941, 1.7332)
+coefs <- data.frame( estimate = c(lmBeta, cvxrBeta),
                      method = c(rep("lm", 10), rep("CVXR", 10)),
                      beta = rep(paste("beta", 0:9, sep=""), 2))
 ggplot(data = coefs, aes(x = as.factor(beta), y = estimate, fill = method)) + 
@@ -271,14 +269,14 @@ Looking at Example 3.1, you may notice that the OLS regression problem has an ob
 
 ```{r, eval=FALSE}
 prob3.2 <- prob3.1
-prob3.2$constraints <- Constraints(beta >= 0)
-solution3.2 <- Solve(prob3.2)
+prob3.2@constraints <- list(beta >= 0)
+solution3.2 <- solve(prob3.2)
 ```
 
 <img src="images\CVX-Example01.png" width="700">
 
 ```{r, echo=FALSE, out.width=700}
-CVXRBeta <- c(0.0000, 1.1852, 0.0000, 1.0208, 0.1623, 0.0000, 0.5166, 0.7748, 0.0531, 1.0133)
+cvxrBeta <- c(0.0000, 1.1852, 0.0000, 1.0208, 0.1623, 0.0000, 0.5166, 0.7748, 0.0531, 1.0133)
 ```
 
 As we can see in the figure above, adding that one constraint produced a massive improvement in the accuracy of the estimates. Not only are the non-negative least-squares estimates much closer to the true signal than the OLS estimates, they have even managed to recover the correct sparsity structure in this case.
@@ -348,15 +346,15 @@ n <- sum(Sample)
 ```{r, eval=FALSE}
 p <- Variable(n)
 objective <- Maximize(sum(entr(p)))
-constraints <- Constraints( sum(p) == 1,
-                            p >= 0,
-                            sum(p[sample[,5]==1]) == mean(cat==1),
-                            sum(p[sample[,5]==2]) == mean(cat==2),
-                            sum(p[sample[,5]==3]) == mean(cat==3),
-                            t(p) %*% sample[, 1:4] == colMeans(X[,1:4]) )
+constraints <- list( sum(p) == 1,
+                     p >= 0,
+                     sum(p[sample[,5]==1]) == mean(cat==1),
+                     sum(p[sample[,5]==2]) == mean(cat==2),
+                     sum(p[sample[,5]==3]) == mean(cat==3),
+                     t(p) %*% sample[, 1:4] == colMeans(X[,1:4]) )
 
 prob3.3 <- Problem(objective, constraints)
-solution3.3 <- Solve(prob3.3)
+solution3.3 <- solve(prob3.3)
 ```
 
 As you can see in the figure below, the resulting standardized sample is quite close to the population distribution.
@@ -409,9 +407,9 @@ X <- Variable(5, 4)
 A <- matrix(1, nrow = 3, ncol = 5)
 
 # Use dim to get the dimensions.
-paste0("dimensions of X: ", X$size)
-paste0("dimensions of sum_entries(X): ", sum_entries(X)$size)
-paste0("dimensions of A*X: ", (A*X)$size)
+paste0("dimensions of X: ", size(X))
+paste0("dimensions of sum_entries(X): ", size(sum_entries(X)))
+paste0("dimensions of A*X: ", size(A*X))
 ```
 
 `CVXR` uses DCP analysis to determine the sign and curvature of each expression.
@@ -441,10 +439,10 @@ x <- Variable()
 a <- Parameter(sign="negative")
 b <- c(1, -1)
 
-paste0("sign of x: ", x$sign)
-paste0("sign of a: ", a$sign)
-paste0("sign of square(x): ", square(x)$sign)
-paste0("sign of c*a: ", (c*a)$sign)
+paste0("sign of x: ", sign(x))
+paste0("sign of a: ", sign(a))
+paste0("sign of square(x): ", sign(square(x)))
+paste0("sign of c*a: ", sign(c*a))
 ```
 
 ## 4.3 Curvature
@@ -494,10 +492,10 @@ The curvature of an expression is stored as `expr$curvature`:
 x = Variable()
 a = Parameter(sign="positive")
 
-paste0("curvature of x: ", x$curvature)
-paste0("curvature of a: ", a$curvature)
-paste0("curvature of square(x): ", square(x)$curvature)
-paste0("curvature of sqrt(x): ", sqrt(x)$curvature)
+paste0("curvature of x: ", curvature(x))
+paste0("curvature of a: ", curvature(a))
+paste0("curvature of square(x): ", curvature(square(x)))
+paste0("curvature of sqrt(x): ", curvature(sqrt(x)))
 ```
 
 The infix operators `+, -, *, /` are treated exactly like functions. The infix operators `+` and `-` are affine, so the rules above are used to flag the curvature. For example, `expr1 + expr2` is flagged as convex if `expr1` and `expr2` are convex.
@@ -532,8 +530,8 @@ The arithmetic operator `+` is affine and increasing, so the composition `1 + sq
 In fact, `sqrt(1 + square(x))` is a convex function of x, but the DCP rules are not able to verify convexity. If the expression is written as `norm(c(1, x), 2)`, the L2 norm of the vector `[1] 1 2`, which has the same value as `sqrt(1 + square(x))`, then it will be certified as convex using the DCP rules.
 
 ```{r, eval=FALSE}
-paste0("sqrt(1 + square(x)) curvature: ", sqrt(1 + square(x))$curvature)
-paste0("norm(vstack(1, x), 2) curvature: ", norm(c(1, x), 2)$curvature)
+paste0("sqrt(1 + square(x)) curvature: ", curvature(sqrt(1 + square(x))))
+paste0("norm(vstack(1, x), 2) curvature: ", curvature(norm(c(1, x), 2)))
 ```
 
 
@@ -550,7 +548,7 @@ The list of supported convex constraints is
 Note that an affine expression is both convex and concave, so a constraint like
 
 ```{r, eval=FALSE}
-Constraints( abs(x) <= y ) )
+list( abs(x) <= y ) )
 ```
 
 is valid because `y` is affine and thus also concave. Non-equality `!=` is not supported because they are almost never convex.

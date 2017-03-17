@@ -110,8 +110,8 @@ SizeMetrics <- function(problem) {
     if(max_data_dimension < big)
       max_data_dimension <- big
     
-    if(max_big_small_squared < big*small*small)
-      max_big_small_squared <- big*small*small
+    if(max_big_small_squared < as.numeric(big)*small*small)
+      max_big_small_squared <- as.numeric(big)*small*small
   }
   
   # num_scalar_eq_constr

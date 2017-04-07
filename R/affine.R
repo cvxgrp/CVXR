@@ -464,7 +464,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
   
   d <- x
   for(i in 1:k)
-    d <- d[(1+lag):length(d)] - d[1:(length(d)-lag)]
+    d <- d[(1+lag):m] - d[1:(m-lag)]
   
   if(axis == 2)
     t(d)

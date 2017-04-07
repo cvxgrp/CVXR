@@ -294,6 +294,7 @@ setMethod(".grad", "AffineProd", function(object, values) {
 .GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
+geo_mean <- GeoMean
 
 # TODO: Finish implementing GeoMean. Need to handle fractions properly and add slots for tree, cone_lb, etc
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
@@ -766,7 +767,7 @@ max.Expression <- function(..., na.rm = FALSE) {
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr = expr) })
+  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
   if(!all(is_expr)) {
     max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
     max_args <- c(max_args, max_num)
@@ -780,7 +781,7 @@ min.Expression <- function(..., na.rm = FALSE) {
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr = expr) })
+  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
   if(!all(is_expr)) {
     min_num <- min(sapply(vals[!is_expr], function(v) { min(v, na.rm = na.rm) }))
     min_args <- c(min_args, min_num)
@@ -992,6 +993,9 @@ MixedNorm <- function(X, p = 2, q = 1) {
   Norm(.HStack(args = vecnorms), q)
 }
 
+norm1 <- Norm1
+norm2 <- Norm2
+norminf <- NormInf
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
   x <- as.Constant(x)
   
@@ -1122,6 +1126,7 @@ QuadForm <- function(x, P) {
   } else
     stop("At least one argument to QuadForm must be constant")
 }
+quad_form <- QuadForm
 
 #'
 #' The QuadOverLin class.
@@ -1133,6 +1138,7 @@ QuadForm <- function(x, P) {
 #' @export
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
+quad_over_lin <- QuadOverLin
 
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x

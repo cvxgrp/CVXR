@@ -931,7 +931,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # We alias |x| as x from this point forward to make code pretty
   if(p >= 1) {
     absx <- create_var(x$size)
-    constraints <- c(constraints, create_leq(x, absx), create_geq(sum_expr((list(x, absx)))))
+    constraints <- c(constraints, list(create_leq(x, absx), create_geq(sum_expr(list(x, absx))) ))
     x <- absx
   }
   
@@ -1330,7 +1330,7 @@ TotalVariation <- function(value, ...) {
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
   else if(is_vector(value))   # L1 norm for vectors
-    Norm(value[-1] - value[1:(max(rows, cols)-1)], 1)
+    Pnorm(value[-1] - value[1:(max(rows, cols)-1)], 1)
   else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
     values <- c(list(value), args)
@@ -1340,7 +1340,7 @@ TotalVariation <- function(value, ...) {
                              mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
     }
     length <- size(diffs[[1]])[1] * size(diffs[[2]])[2]
-    stacked <- .VStack(args = lapply(diffs, function(diff) { matrix(diff, nrow = 1, ncol = length) }))
-    SumEntries(Pnorm(stacked, p = "fro", axis = 1))
+    stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, rows = 1, cols = length) }))
+    SumEntries(Norm(stacked, p = "fro", axis = 2))
   }
 }

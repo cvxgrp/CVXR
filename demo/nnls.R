@@ -1,7 +1,6 @@
-library(cvxr)
+# Generate problem data
 library(MASS)
 
-# Generate problem data
 s <- 1
 m <- 10
 n <- 300
@@ -24,13 +23,16 @@ y <- X %*% b + rnorm(n, 0, s)
 # Construct the OLS problem without constraints
 beta <- Variable(m)
 objective <- Minimize(SumSquares(y - X %*% beta))
+# TODO: SOC_AXIS LinOp unimplemented?
+# objective <- Minimize(sum((y - X %*% beta)^2))
 prob <- Problem(objective)
 
 # Solve the OLS problem for beta
 result <- solve(prob)
+# TODO: More user-friendly functions to retrieve results
 result$optimal_value
-result$primal_values[[beta@id]]
-beta_ols <- result$primal_values[[beta@id]]
+result$primal_values[[as.character(beta@id)]]
+beta_ols <- result$primal_values[[as.character(beta@id)]]
 
 # Add non-negativity constraint on beta
 constraints <- list(beta >= 0)
@@ -39,8 +41,9 @@ prob2 <- Problem(objective, constraints)
 # Solve the NNLS problem for beta
 result2 <- solve(prob2)
 result2$optimal_value
-result2$primal_values[[beta@id]]
-beta_nnls <- result2$primal_values[[beta@id]]
+# TODO: More user-friendly functions to retrieve results
+result2$primal_values[[as.character(beta@id)]]
+beta_nnls <- result2$primal_values[[as.character(beta@id)]]
 all(beta_nnls >= 0)   # All resulting beta should be non-negative
 
 # Calculate the fitted y values
@@ -51,4 +54,4 @@ fit_nnls <- X %*% beta_nnls
 coeff <- cbind(b, beta_ols, beta_nnls)
 colnames(coeff) <- c("Actual", "OLS", "NNLS")
 rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
-barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
+barplot(t(coeff), main = "Least Squares Coefficients", beside = TRUE, legend = TRUE, col = c(1,2,4))

@@ -762,7 +762,7 @@ MinEntries <- function(x, axis = NA_real_) {
 }
 
 max.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)
@@ -776,7 +776,7 @@ max.Expression <- function(..., na.rm = FALSE) {
 }
 
 min.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)

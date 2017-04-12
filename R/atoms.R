@@ -294,6 +294,7 @@ setMethod(".grad", "AffineProd", function(object, values) {
 .GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
+geo_mean <- GeoMean
 
 # TODO: Finish implementing GeoMean. Need to handle fractions properly and add slots for tree, cone_lb, etc
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
@@ -761,12 +762,12 @@ MinEntries <- function(x, axis = NA_real_) {
 }
 
 max.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr = expr) })
+  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
   if(!all(is_expr)) {
     max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
     max_args <- c(max_args, max_num)
@@ -775,12 +776,12 @@ max.Expression <- function(..., na.rm = FALSE) {
 }
 
 min.Expression <- function(..., na.rm = FALSE) {
-  if(!na.rm)
+  if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
   
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr = expr) })
+  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
   if(!all(is_expr)) {
     min_num <- min(sapply(vals[!is_expr], function(v) { min(v, na.rm = na.rm) }))
     min_args <- c(min_args, min_num)
@@ -930,7 +931,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # We alias |x| as x from this point forward to make code pretty
   if(p >= 1) {
     absx <- create_var(x$size)
-    constraints <- c(constraints, create_leq(x, absx), create_geq(sum_expr((list(x, absx)))))
+    constraints <- c(constraints, list(create_leq(x, absx), create_geq(sum_expr(list(x, absx))) ))
     x <- absx
   }
   
@@ -992,6 +993,9 @@ MixedNorm <- function(X, p = 2, q = 1) {
   Norm(.HStack(args = vecnorms), q)
 }
 
+norm1 <- Norm1
+norm2 <- Norm2
+norminf <- NormInf
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
   x <- as.Constant(x)
   
@@ -1122,6 +1126,7 @@ QuadForm <- function(x, P) {
   } else
     stop("At least one argument to QuadForm must be constant")
 }
+quad_form <- QuadForm
 
 #'
 #' The QuadOverLin class.
@@ -1133,6 +1138,7 @@ QuadForm <- function(x, P) {
 #' @export
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
+quad_over_lin <- QuadOverLin
 
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
@@ -1324,7 +1330,7 @@ TotalVariation <- function(value, ...) {
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
   else if(is_vector(value))   # L1 norm for vectors
-    Norm(value[-1] - value[1:(max(rows, cols)-1)], 1)
+    Pnorm(value[-1] - value[1:(max(rows, cols)-1)], 1)
   else {   # L2 norm for matrices
     args <- lapply(list(...), function(arg) { as.Constant(arg) })
     values <- c(list(value), args)
@@ -1334,7 +1340,7 @@ TotalVariation <- function(value, ...) {
                              mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
     }
     length <- size(diffs[[1]])[1] * size(diffs[[2]])[2]
-    stacked <- .VStack(args = lapply(diffs, function(diff) { matrix(diff, nrow = 1, ncol = length) }))
-    SumEntries(Pnorm(stacked, p = "fro", axis = 1))
+    stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, rows = 1, cols = length) }))
+    SumEntries(Norm(stacked, p = "fro", axis = 2))
   }
 }

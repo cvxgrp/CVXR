@@ -277,6 +277,7 @@ setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data
 })
 
 InvPos <- function(x) { Power(x, -1) }
+inv_pos <- InvPos
 
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }

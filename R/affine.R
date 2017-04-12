@@ -297,12 +297,6 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 CumSum <- function(expr, axis = 1) { .CumSum(expr = expr, axis = axis) }
 cumsum.Expression <- function(x) { CumSum(expr = Vec(x)) }   # Flatten matrix in column-major order to match R's behavior
 
-setMethod("initialize", "CumSum", function(.Object, ..., expr, axis = 1) {
-  .Object@expr <- expr
-  .Object@axis <- axis
-  callNextMethod(.Object, ..., args = list(.Object@expr))
-})
-
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
@@ -453,25 +447,33 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix")
 }
 
-Diff <- function(x, k = 1, axis = 1) {
+Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
-  if(axis == 1)
+  if(axis == 2)
     x <- t(x)
   
   size <- size(x)
   m <- size[1]
   n <- size[2]
-  if(k < 0 || k >= m || n != 1)
-    stop("Must have k >= 0 and x must be a 1-D vector with < k elements")
+  if(n != 1)
+    stop("x must be a 1-D vector")
+  if(k <= 0 || k >= m)
+    stop("Must have 0 < k < number of elements in x")
+  if(lag <= 0 || lag >= m)
+    stop("Must have 0 < lag < number of elements in x")
   
   d <- x
   for(i in 1:k)
-    d <- d[2:length(d)] - d[1:(length(d)-1)]
+    d <- d[(1+lag):m] - d[1:(m-lag)]
   
-  if(axis == 1)
+  if(axis == 2)
     t(d)
   else
     d
+}
+
+diff.Expression <- function(x, lag = 1, differences = 1, ...) {
+  Diff(x, lag = lag, k = differences, ...)
 }
 
 .HStack <- setClass("HStack", contains = "AffAtom")

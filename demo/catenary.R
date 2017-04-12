@@ -1,5 +1,3 @@
-library(cvxr)
-
 # Generate data
 n <- 51
 L <- 2

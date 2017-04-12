@@ -31,7 +31,7 @@ m <- 1; n <- 2
 A <- matrix(c(17, 19), nrow = m, byrow = TRUE)
 ## Construct the problem.
 x <- Variable(n)
-objective <- Minimize(A*x)
+objective <- Minimize(A %*% x)
 constraint <- list(1 <= x)
 prob <- Problem(objective, constraint)
 result <- solve(prob)

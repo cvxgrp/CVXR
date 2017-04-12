@@ -16,7 +16,7 @@ n <- ncol(A)
 
 # Construct the problem
 y <- Variable(n)
-objective <- Minimize(SumEntries(A %*% y))
+objective <- Minimize(sum(A %*% y))
 constraint <- list(1 <= y)
 prob <- Problem(objective, constraint)
 
@@ -26,4 +26,4 @@ base::trace("solve", tracer=browser, exit = browser, signature = c("Problem"))
 result <- solve(prob)
 
 result$optimal_value
-result$primal_values[[y@id]]
+result$primal_values[[as.character(y@id)]]

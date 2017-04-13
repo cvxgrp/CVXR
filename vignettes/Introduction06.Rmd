@@ -274,7 +274,7 @@ cvxrBetaNNLS <- solution3.2$primal_values[[as.character(beta@id)]]
 coefsNNLS <- data.frame ( estimate = c(trueBeta, lmBeta, cvxrBetaNNLS),
                           method = c(rep("Actual", 10), rep("OLS", 10), rep("NNLS", 10)),
                           beta = rep(paste("beta", 0:9, sep = ""), 3))
-ggplot(data = coefsNNLS, aes(x = as.factor(beta), y = estimate, fill = method)) +
+ggplot(data = coefsNNLS, aes(x = factor(beta), y = estimate, fill = method)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Least Squares Coefficients", x = "coefficient", y = "")
 ```
@@ -285,7 +285,53 @@ As with ordinary least squares, there are already R packages available which imp
 
 
 ## 3.3 Support Vector Machines
+
 TODO: WRITE UP BINARY SUPPORT VECTOR CLASSIFIER
+
+```{r, echo=FALSE}
+# Generate data
+set.seed(10)
+n <- 2
+m <- 50
+
+X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+y <- c(rep(-1, m/2), rep(1, m/2))
+X[y == 1,] = X[y == 1,] + 1
+```
+
+$$
+\begin{array}{ll}
+  \mbox{minimize} & \frac{1}{2}\Vert\beta\Vert^2 + C\sum_{i=1}^m \xi_i  \\
+	\mbox{subject to} & \xi_i \geq 0, \quad y_i(x_i^T\beta + \beta_0) \geq 1 - \xi_i, \quad i = 1,\ldots,m
+\end{array}
+$$
+
+```{r}
+# Define variables
+cost <- 10
+beta0 <- Variable()
+beta <- Variable(n)
+slack <- Variable(m)
+
+# Form problem
+objective <- (1/2)*SumSquares(VStack(beta, beta0)) + cost*sum(slack)
+constraints <- list(y * (X %*% beta + beta0) >= 1 - slack, slack >= 0)
+prob3.3 <- Problem(Minimize(objective), constraints)
+solution3.3 <- solve(prob3.3)
+```
+
+```{r, echo=FALSE, fig.width = 7}
+b0 <- solution3.3$primal_values[[as.character(beta0@id)]]
+b <- solution3.3$primal_values[[as.character(beta@id)]]
+
+# Plot support vector and classified points
+plotdata <- data.frame(cbind(y, X))
+colnames(plotdata) <- c("y", "X1", "X2")
+ggplot(data = plotdata, aes(x = X1, y = X2)) +
+  geom_point(size = 3, color = factor(3-plotdata$y)) +
+  geom_abline(slope = -b[1]/b[2], intercept = (1 - b0)/b[2]) +
+  labs(title = "Binary Support Vector Classifier")
+```
 
 ## 3.4 Direct Standardization -- Correcting Bias in a Sample
 
@@ -361,16 +407,16 @@ Often in imaging applications, portions of a picture or video may be lost due to
 
 One approach to this problem is via convex optimization. We represent an image as a matrix of pixel values $U \in \mathbf{R}^{m \times n}$. Then, we minimize the total variation of $U$ subject to it matching the known pixels in our given image. We use the $l2$-norm based total variation,
 $$
-  \mathbf{tv}(U) = \sum_{i=1}^{m-1} \sum_{j=1}^{n-1} \left\Vert\left[\begin{array}{c}
-    U_{i+1,j} - U_{ij} \\
-    U_{i,j+1} - U_{ij}
-  \end{array}\right]\right\Vert_2
+\mathbf{tv}(U) = \sum_{i=1}^{m-1} \sum_{j=1}^{n-1} \left\Vert\left[\begin{array}{c}
+  U_{i+1,j} - U_{ij} \\
+  U_{i,j+1} - U_{ij}
+\end{array}\right]\right\Vert_2
 $$
 which measures the degree of fluctuation in a matrix. This function is employed in a variety of image processing tasks, such as reconstruction, denoising, and deblurring, because of its ability to preserve sharp edges.
 
 For our example, we are given a corrupted image of Lena in which certain pixels have been overwritten.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width = 7}
 data(lena)         # True
 data(lena_corr)    # Corrupted
 rows <- nrow(lena)
@@ -401,7 +447,7 @@ solution3.5 <- solve(prob3.5)
 
 As you can see, the reconstructed image is visually very similar to the original:
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width = 7}
 lena_recon <- solution3.5$primal_values[[as.character(U@id)]]
 image(lena, main = "Original Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
 image(lena_recon, main = "Reconstructed Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))

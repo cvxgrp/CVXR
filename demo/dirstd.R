@@ -4,16 +4,16 @@ data(dssamp)  # Skewed sample
 
 y <- dspop[,1]
 X <- dspop[,-1]
-ysam <- dssamp[,1]
-Xsam <- dssamp[,-1]
+ysamp <- dssamp[,1]
+Xsamp <- dssamp[,-1]
 
 # Given population mean of features
 b <- as.matrix(apply(X, 2, mean))
 
 # Construct the direct standardization problem
-w <- Variable(nrow(Xsam))
+w <- Variable(nrow(Xsamp))
 objective <- sum(Entr(w))
-constraints <- list(w >= 0, sum(w) == 1, t(Xsam) %*% w == b)
+constraints <- list(w >= 0, sum(w) == 1, t(Xsamp) %*% w == b)
 prob <- Problem(Maximize(objective), constraints)
 
 # Solve for the distribution weights

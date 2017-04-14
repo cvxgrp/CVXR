@@ -48,15 +48,13 @@ Happy optimizing!
 
 # 2 Convex Optimization
 
-A convex optimization problem has the following form
-
+A convex optimization problem has the following form:
 $$
 \begin{array}{ll} \mbox{minimize} & f_0(x)\\
 	\mbox{subject to} & f_i(x) \leq 0, \quad i=1,\ldots,m\\
 	& g_i(x) = 0, \quad i=1,\ldots,p
 	\end{array}
 $$
-
 where $x$ is the variable, $f_0$ and $f_1,...,f_m$ are convex and $g_1,...,g_p$ are affine. $f_0$ is called the objective function, $f_i \leq 0$ are called the inequality constraints, and $g_i = 0$ are called the equality constraints.
 
 A convex function ...
@@ -206,8 +204,6 @@ We would get a similar error if we tried to add the constraint `Norm2(x) == 1`. 
 
 # 4 Examples
 
-WE'LL FIGURE OUT LATER WHAT EXAMPLES TO PUT IN HERE. OLS, NNLS, (ONE OTHER, HUBER IF WE HAVE IT), DIRECT STANDARDIZATION
-
 We begin by showing what a standard linear regression problem looks like in `CVXR`:
 
 ## 3.1 Ordinary Least Squares
@@ -239,7 +235,7 @@ objective <- Minimize(SumSquares(y - X %*% beta))
 prob3.1 <- Problem(objective)
 ```
 
-Here, `y` is the response, `X` is the matrix of predictors, `n` is the number of observations, and `beta` is a vector of coefficients on the predictors. The Ordinary Least-Squares (OLS) solution for `beta` minimizes `1/n` times the the l2-norm of the residuals (i.e. the root-mean-squared-error). As we can see below, `CVXR`'s solution matches the solution obtained by using `lm`.
+Here, `y` is the response, `X` is the matrix of predictors, `n` is the number of observations, and `beta` is a vector of coefficients on the predictors. The Ordinary Least-Squares (OLS) solution for `beta` minimizes `1/n` times the the $l_2$-norm of the residuals (i.e. the root-mean-squared error). As we can see below, `CVXR`'s solution matches the solution obtained by using `lm`.
 
 ```{r}
 CVXR_solution3.1 <- solve(prob3.1)
@@ -281,12 +277,23 @@ ggplot(data = coefsNNLS, aes(x = factor(beta), y = estimate, fill = method)) +
 
 As we can see in the figure above, adding that one constraint produced a massive improvement in the accuracy of the estimates. Not only are the non-negative least-squares estimates much closer to the true signal than the OLS estimates, they have even managed to recover the correct sparsity structure in this case.
 
-As with ordinary least squares, there are already R packages available which implement non-negative least squares, such as the package `nnls`. But that is actually an excellent demonstration of the power of `CVXR`: A single line of code here, namely `prob3.2$constraints <- list(beta >= 0)`, is doing the work of an entire package.
+Like with OLS, there are already R packages available which implement non-negative least squares, such as the package `nnls`. But that is actually an excellent demonstration of the power of `CVXR`: A single line of code here, namely `prob3.2$constraints <- list(beta >= 0)`, is doing the work of an entire package.
 
 
-## 3.3 Support Vector Machines
+## 3.3 Support Vector Classifiers
 
-TODO: WRITE UP BINARY SUPPORT VECTOR CLASSIFIER
+Another common statistical tool is the support vector classifier (SVC). The SVC is an affine function (hyperplane) that separates two sets of points by the widest margin. When the sets are not linearly separable, the SVC is determined by a trade-off between the width of the margin and the number of points that are misclassified.
+
+For the binary case, where the response $y_i \in \{-1,1\}$, the SVC is obtained by solving
+$$
+\begin{array}{ll}
+  \mbox{minimize} & \frac{1}{2}\Vert\beta\Vert^2 + C\sum_{i=1}^m \xi_i  \\
+	\mbox{subject to} & \xi_i \geq 0, \quad y_i(x_i^T\beta + \beta_0) \geq 1 - \xi_i, \quad i = 1,\ldots,m
+\end{array}
+$$
+with variables $(\beta,\xi)$. Here, $\xi$ is the amount by which a point can violate the separating hyperplane, and $C > 0$ is a user-chosen penalty on the total violation. As $C$ increases, fewer misclassifications will be allowed. 
+
+Below, we fit a SVC in `CVXR` with $C = 10$.
 
 ```{r, echo=FALSE}
 # Generate data
@@ -298,13 +305,6 @@ X <- matrix(rnorm(m*n), nrow = m, ncol = n)
 y <- c(rep(-1, m/2), rep(1, m/2))
 X[y == 1,] = X[y == 1,] + 1
 ```
-
-$$
-\begin{array}{ll}
-  \mbox{minimize} & \frac{1}{2}\Vert\beta\Vert^2 + C\sum_{i=1}^m \xi_i  \\
-	\mbox{subject to} & \xi_i \geq 0, \quad y_i(x_i^T\beta + \beta_0) \geq 1 - \xi_i, \quad i = 1,\ldots,m
-\end{array}
-$$
 
 ```{r}
 # Define variables

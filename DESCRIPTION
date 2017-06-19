@@ -6,10 +6,10 @@ VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
                   role=c("aut", "cre"),
-                   email = "anqif@alumni.stanford.edu"),
+                   email = "anqif@stanford.edu"),
            person("Balasubramanian", "Narasimhan",
                   role=c("aut"),
-                   email = "naras@stat.Stanford.EDU"),
+                   email = "naras@stat.stanford.edu"),
            person("Steven", "Diamond",
                   role=c("aut"),
                    email = "stevend2@stanford.edu"),
@@ -18,7 +18,7 @@ Authors@R: c(
                    email = "millerjp@stanford.edu"),
            person("Steven", "Boyd",
                   role=c("ctb"),
-                  email = "Stephen.Boyd@stanford.edu"),
+                  email = "boyd@stanford.edu"),
            person("Paul Kunsberg", "Rosenfield",
                   role=c("ctb"),
                   email = "paulkr@stanford.edu")

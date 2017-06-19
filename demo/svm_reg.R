@@ -1,5 +1,3 @@
-library(cvxr)
-
 # SVM classifier with L1 regularization
 n <- 20
 m <- 1000
@@ -23,11 +21,6 @@ beta <- Variable(n)
 v <- Variable()
 loss <- sum(Pos(1 - y * (X %*% beta - v)))
 reg <- Norm1(beta)
-# lambd <- 1
-# prob <- Problem(Minimize(loss/m + lambd*reg))
-# result <- solve(prob)
-# result$optimal_value
-# result$primal_values[[as.character(beta@id)]]
 
 # Compute a trade-off curve and record train/test error
 TRIALS <- 5

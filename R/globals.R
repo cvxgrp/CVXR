@@ -21,7 +21,7 @@ setIdCounter <- function(value = 0L) {
 
 #' Reset the global package variable \code{.cvxr.options}
 #'
-#' @return the default value value of cvxr package global \code{.cvxr.options}
+#' @return the default value of cvxr package global \code{.cvxr.options}
 #' @export
 #' @examples
 #' \dontrun{

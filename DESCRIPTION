@@ -38,7 +38,9 @@ Imports:
         RcppEigen,
 	      BH,
         bitops,
-        MASS
+        MASS,
+        gmp,
+        R.utils
 Suggests:
         knitr,
         rmarkdown,

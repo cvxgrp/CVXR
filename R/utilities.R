@@ -296,85 +296,240 @@ gm_constrs <- function(t, x_list, p) {
   constraints
 }
 
-get_num <- function(frac) {
-  require(MASS)
-  if(!is(frac, "fractions")) stop("frac must be of class fractions")
-  fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
-  as.numeric(fchar[1])
-}
-
-get_denom <- function(frac) {
-  require(MASS)
-  if(!is(frac, "fractions")) stop("frac must be of class fractions")
-  fchar <- strsplit(attr(frac, "fracs"), "/", fixed = TRUE)[[1]]
-  if(length(fchar) == 1)
-    return(1)
-  else
-    as.numeric(fchar[2])
-}
-
-pow_high <- function(p, max_denom = 1024, cycles = 10) {
-  require(MASS)
+# Return (t,1,x) power tuple: x <= t^(1/p) 1^(1-1/p)
+pow_high <- function(p) {
   if(p <= 1) stop("Must have p > 1")
-  p <- fractions(1/p, cycles = cycles, max.denominator = max_denom)
+  p <- 1/as.bigq(p)
   if(1/p == as.integer(1/p))
     return(list(as.integer(1/p), c(p, 1-p)))
   list(1/p, c(p, 1-p))
 }
 
-pow_mid <- function(p, max_denom = 1024, cycles = 10) {
-  require(MASS)
+# Return (x,1,t) power tuple: t <= x^p 1^(1-p)
+pow_mid <- function(p) {
   if(p >= 1 || p <= 0) stop("Must have 0 < p < 1")
-  p <- fractions(p, cycles = cycles, max.denominator = max_denom)
+  p <- as.bigq(p)
   list(p, c(p, 1-p))
 }
 
+# Return (x,t,1) power tuple: 1 <= x^(p/(p-1)) t^(-1/(p-1))
 pow_neg <- function(p, max_denom = 1024, cycles = 10) {
-  require(MASS)
   if(p >= 0) stop("must have p < 0")
-  p <- fractions(p)
-  p <- fractions(p/(p-1), cycles = cycles, max.denominator = max_denom)
+  p <- as.bigq(p)
+  p <- p/(p-1)
   list(p/(p-1), c(p, 1-p))
 }
 
+# Test if num is a positive integer power of 2
 is_power2 <- function(num) {
-  (round(num) == num) && num > 0 && bitwAnd(num, num - 1) == 0 
+  num > 0 && is.whole(log2(num))
 }
 
+# Test if frac is a non-negative dyadic fraction or integer
 is_dyad <- function(frac) {
-  require(MASS)
-  if((round(frac) == frac) && frac >= 0)
+  if(is.whole(frac) && frac >= 0)
     TRUE
-  else if(is(frac, "fractions") && frac >= 0 && is_power2(get_denom(frac)))
+  else if(is.bigq(frac) && frac >= 0 && is_power2(denominator(frac)))
     TRUE
   else
     FALSE
 }
 
+# Test if a vector is a valid dyadic weight vector
 is_dyad_weight <- function(w) {
-  is_weight(w) && all(sapply(w, function(f) { is_dyad(f) }))
+  is_weight(w) && all(sapply(w, is_dyad))
 }
 
+# Test if w is a valid weight vector, which consists of non-negative integer or fraction elements that sum to 1
 is_weight <- function(w) {
   # if(is.matrix(w) || is.vector(w))
   #  w <- as.list(w)
   valid_elems <- all(sapply(w, function(v) {
-    v >= 0 && ((round(v) == v) || is(v, "fractions"))
+    v >= 0 && (is.whole(v) || is.bigq(v))
   }))
   valid_elems && sum(w) == 1
 }
 
+# Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
+# When the input tuple contains only integers and fractions, "fracify" will try to represent the weights exactly
+fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
+  if(any(a < 0))
+    stop("Input powers must be non-negative")
+  if(!(is.whole(max_denom) && max_denom > 0))
+    stop("Input denominator must be an integer")
+  # if(is.matrix(a) || is.vector(a))
+  #  a <- as.list(a)
+  total <- sum(a)
+  
+  if(force_dyad)
+    w_frac <- make_frac(a, max_denom)
+  else if(all(sapply(a, function(v) { is.whole(v) || is.bigq(v) }))) {
+    w_frac <- sapply(a, function(v) { as.bigq(v, total) })
+    d <- max(sapply(w_frac, denominator))
+    if(d > max_denom)
+      stop("Can't reliably represent the weight vector. Try increasing 'max_denom' or checking the denominators of your input fractions.")
+  } else {
+    # fall through code
+    w_frac <- sapply(a, function(v) { as.bigq(as.double(v)/total) })
+    if(sum(w_frac) != 1)
+      w_frac <- make_frac(a, max_denom)
+  }
+  list(w_frac, dyad_completion(w_frac))
+}
+
+# Approximate "a/sum(a)" with tuple of fractions with denominator exactly "denom"
+make_frac <- function(a, denom) {
+  a <- as.double(a)/sum(a)
+  b <- sapply(a, function(v) { v * denom })
+  b <- as.matrix(as.integer(b))
+  err <- b/as.double(denom) - a
+  
+  inds <- order(err)[1:(denom - sum(b) + 1)]
+  b[inds] <- b[inds] + 1
+  
+  denom <- as.integer(denom)
+  sapply(b, function(v) { as.bigq(v, denom) })
+}
+
+# Return the dyadic completion of "w"
+dyad_completion <- function(w) {
+  # TODO: Need to handle whole decimal numbers here, e.g.
+  # w <- c(1, 0, 0.0, as.bigq(0,1)) should give c(Bigq(1,1), Bigq(0,1), Bigq(0,1), Bigq(0,1))
+  for(i in 1:length(w))
+    w[i] <- as.bigq(w[i])
+  d <- as.bigq(max(denominator(w)))
+  
+  # if extra_index
+  p <- next_pow2(d)
+  if(p == d)
+    # the tuple of fractions is already dyadic
+    return(w)
+  else {
+    # need to add dummy variable to represent as dyadic
+    orig <- rep(as.bigq(0), length(w))
+    for(i in 1:length(w))
+      orig[i] <- as.bigq(w[i]*d, p)
+    return(c(orig, as.bigq(p-d,p)))
+  }
+}
+
+# Return the l_infinity norm error from approximating the vector a_orig/sum(a_orig) with the weight vector w_approx
+approx_error <- function(a_orig, w_approx) {
+  if(!all(a_orig >= 0))
+    stop("a_orig must be a non-negative vector")
+  if(!is_weight(w_approx))
+    stop("w_approx must be a weight vector")
+  if(length(a_orig) != length(w_approx))
+    stop("a_orig and w_approx must have the same length")
+  
+  w_orig <- as.matrix(a_orig)/sum(a_orig)
+  
+  as.double(max(abs(w_orig - w_approx)))
+}
+
+# Return first power of 2 >= n
 next_pow2 <- function(n) {
   if(n <= 0) return(1)
-  n2 <- bitwShiftL(1, bit_length(n))  # TODO: Implement bit_length
+  
+  require(R.utils)
+  len <- nchar(intToBin(n))
+  n2 <- bitwShiftL(1, len)
   if(bitwShiftR(n2, 1) == n)
     return(n)
   else
     return(n2)
 }
 
+# Check that w_dyad is a valid dyadic completion of w
+check_dyad <- function(w, w_dyad) {
+  if(!(is_weight(w) && is_dyad_weight(w_dyad)))
+    return(FALSE)
+  
+  if(length(w) == length(w_dyad) && all(w == w_dyad))
+    # w is its own dyadic completion
+    return(TRUE)
+  
+  if(length(w_dyad) == length(w) + 1) {
+    if(length(w) == 0)
+      return(TRUE)
+    
+    denom <- 1-w_dyad[length(w_dyad)]
+    cmp <- rep(as.bigq(0), length(w_dyad)-1)
+    for(i in 1:(length(w_dyad)-1))
+      cmp[i] <- as.bigq(w_dyad[i], denom)
+    return(all(w == cmp))
+  } else
+    return(FALSE)
+}
+
+# Split a tuple of dyadic rationals into two children so d_tup = 1/2*(child1 + child2)
+split <- function(w_dyad) {
+  # vector is all zeros with single 1, so can't be split and no children
+  if(1 %in% w_dyad)
+    return()
+  
+  bit <- as.bigq(1, 1)
+  child1 <- rep(as.bigq(0), length(w_dyad))
+  child2 <- lapply(w_dyad, function(f) { 2*f })    # assign twice the parent's value to child 2
+  
+  while(TRUE) {
+    ind <- 1
+    for(val in child2) {
+      if(val >= bit) {
+        child2[ind] <- child2[ind] - bit
+        child1[ind] <- child1[ind] + bit
+      }
+      if(sum(child1) == 1)
+        return(list(child1, child2))
+      ind <- ind + 1
+    }
+    bit <- bit/2
+  }
+  stop("Something wrong with input w_dyad")
+}
+
+decompose <- function(w_dyad) {
+  if(!is_dyad_weight(w_dyad))
+    stop("input must be a dyadic weight vector")
+  
+  tree <- list()
+  todo <- list(as.vector(w_dyad))
+  for(t in todo) {
+    if(!(t %in% tree)) {
+      tree[t] <- split(t)
+      todo <- todo + list(tree[t])
+    }
+  }
+  tree
+}
+
+# Get the maximum denominator in a sequence of "BigQ" and "int" objects
 get_max_denom <- function(tup) {
-  max(sapply(tup, function(f) { get_denom(fractions(f)) }))
+  denom <- rep(as.bigq(0), length(tup))
+  for(i in 1:length(tup)) {
+    denom[i] <- denominator(as.bigq(tup[i]))
+  }
+  max(denom)
+}
+
+# Return lower bound on number of cones needed to represent tuple
+lower_bound <- function(w_dyad) {
+  require(R.utils)
+  if(!is_dyad_weight(w_dyad))
+    stop("w_dyad must be a dyadic weight")
+  md <- get_max_denom(w_dyad)
+  
+  lb1 <- nchar(intToBin(md))-1
+  
+  # don't include zero entries
+  lb2 <- sum(w_dyad != 0) - 1
+  max(lb1, lb2)
+}
+
+# Return number of cones in tree beyond known lower bounds
+over_bound <- function(w_dyad, tree) {
+  nonzeros <- sum(w_dyad != 0)
+  return(length(tree) - lower_bound(w_dyad) - nonzeros)
 }
 
 #'

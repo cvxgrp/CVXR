@@ -263,7 +263,6 @@ gm_constrs <- function(t, x_list, p) {
   if(!is_weight(p)) stop("p must be a valid weight vector")
   w <- dyad_completion(p)
 
-  # TODO: I have no idea what the tree decomposition means
   tree <- decompose(w)
   d <- create_var(size(t))
   d[w] <- t
@@ -355,8 +354,10 @@ is_weight <- function(w) {
 fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
   if(any(a < 0))
     stop("Input powers must be non-negative")
+  
   if(!(is.whole(max_denom) && max_denom > 0))
     stop("Input denominator must be an integer")
+  
   # if(is.matrix(a) || is.vector(a))
   #  a <- as.list(a)
   total <- sum(a)
@@ -380,15 +381,18 @@ fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
 # Approximate "a/sum(a)" with tuple of fractions with denominator exactly "denom"
 make_frac <- function(a, denom) {
   a <- as.double(a)/sum(a)
-  b <- sapply(a, function(v) { v * denom })
+  b <- sapply(a, function(v) { as.double(v * denom) })
   b <- as.matrix(as.integer(b))
   err <- b/as.double(denom) - a
   
-  inds <- order(err)[1:(denom - sum(b) + 1)]
+  inds <- order(err)[1:(denom - sum(b))]
   b[inds] <- b[inds] + 1
   
   denom <- as.integer(denom)
-  sapply(b, function(v) { as.bigq(v, denom) })
+  bout <- rep(as.bigq(0), length(b))
+  for(i in 1:length(b))
+    bout[i] <- as.bigq(b[i], denom)
+  bout
 }
 
 # Return the dyadic completion of "w"

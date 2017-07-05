@@ -571,7 +571,7 @@ pos <- Pos
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @aliases Power
 #' @export
-.Power <- setClass("Power", representation(x = "Expression", p = "numeric", max_denom = "numeric", w = "numeric", approx_error = "numeric"), 
+.Power <- setClass("Power", representation(x = "Expression", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
@@ -603,9 +603,9 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
     w <- NA_real_
   }
   
-  .Object@p <- as.numeric(p)   # TODO: Need to store this as a fraction object, not a rounded numeric
+  .Object@p <- p
   .Object@w <- w
-  .Object@approx_error <- abs(.Object@p - p_old)
+  .Object@approx_error <- as.double(abs(.Object@p - p_old))
   
   .Object@x <- x
   .Object@max_denom <- max_denom
@@ -615,13 +615,13 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
 setMethod("validate_args", "Power", function(object) { })
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 setMethod("to_numeric", "Power", function(object, values) {
-  # TODO: Throw error if negative and Power doesn't handle that
-  if(object@p == 0) {
-    size <- size(object)
-    matrix(1, nrow = size[1], ncol = size[2])
-  } else {
-    values[[1]]^(object@p)
-  }
+  # Throw error if negative and Power doesn't handle that
+  if(object@p < 0 && min(values[[1]]) <= 0)
+    stop("Power cannot be applied to negative or zero values")
+  else if(is_power2(object@p) && object@p != 0 && min(values[[1]]) < 0)
+    stop("Power cannot be applied to negative values")
+  else
+    return(values[[1]]^(as.double(object@p)))
 })
 
 setMethod("sign_from_args", "Power", function(object) {
@@ -633,13 +633,13 @@ setMethod("sign_from_args", "Power", function(object) {
 
 setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@p >= 1 })
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
-setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
+setMethod("is_constant", "Power", function(object) { object@p == 0 || is_constant(callNextMethod()) })
 
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
     return(TRUE)
   else if(object@p > 1) {
-    if(is_power2(object@p))   # TODO: Need to implement is_power2
+    if(is_power2(object@p))
       return(is_positive(object@args[[idx]]))
     else
       return(TRUE)
@@ -661,13 +661,13 @@ setMethod("is_decr", "Power", function(object, idx) {
 
 setMethod("is_quadratic", "Power", function(object) {
   if(object@p == 0)
-    TRUE
+    return(TRUE)
   else if(object@p == 1)
-    is_quadratic(object@args[[1]])
+    return(is_quadratic(object@args[[1]]))
   else if(object@p == 2)
-    is_affine(object@args[[1]])
+    return(is_affine(object@args[[1]]))
   else
-    is_constant(object@args[[1]])
+    return(is_constant(object@args[[1]]))
 })
 
 setMethod(".grad", "Power", function(object, values) {
@@ -685,7 +685,7 @@ setMethod(".grad", "Power", function(object, values) {
       values[[1]] <- ifelse(values[[1]] >= 0, values[[1]], 0)
   }
   
-  grad_vals <- object@p * (values[[1]]^(object@p - 1))
+  grad_vals <- as.double(object@p) * (values[[1]]^(as.double(object@p) - 1))
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 

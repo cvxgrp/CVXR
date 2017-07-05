@@ -15,6 +15,7 @@ setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", 
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
+setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
 setMethod("size", "ListORExpr", function(object) {

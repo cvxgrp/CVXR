@@ -259,13 +259,19 @@ gm <- function(t, x, y) {
             ), c(2, length)), 0)
 }
 
+# Form internal constraints for weighted geometric mean t <= x^p
 gm_constrs <- function(t, x_list, p) {
   if(!is_weight(p)) stop("p must be a valid weight vector")
   w <- dyad_completion(p)
 
+  # Note: This function requires a Python-style defaultdict to build and traverse a tree.
+  # Currently, the closest solution is the R dict library, which is available on Github: https://github.com/mkuhn/dict
+  if(!require(devtools)) install.packages("devtools")
+  devtools::install_github("mkuhn/dict")
+  
   tree <- decompose(w)
-  d <- create_var(size(t))
-  d[w] <- t
+  # TODO: R dict must allow lists of numbers/bigq/bigz objects as keys
+  d <- dict(init_keys = w, init_values = t)
   
   if(length(x_list) < length(w))
     x_list <- c(x_list, t)
@@ -285,12 +291,19 @@ gm_constrs <- function(t, x_list, p) {
   }
   
   constraints <- list()
-  nams <- names(tree)   # Need names to allow for numeric "keys" like in Python
-  for(i in 1:length(tree)) {
-    elem <- nams[i]
-    children <- tree[i]
-    if(!(1 %in% elem))
+  for(item in tree$items()) {
+    elem <- item$key
+    children <- item$value
+    if(!(1 %in% elem)) {
+      # If key doesn't exist, then create key and assign default value = create_var(size(key))
+      if(!(elem %in% d))
+        d[elem] <- create_var(size(elem))
+      if(!(children[1] %in% d))
+        d[children[1]] <- create_var(size(children[1]))
+      if(!(children[2] %in% d))
+        d[children[2]] <- create_var(size(children[2]))
       constraints <- c(constraints, list(gm(d[elem], d[children[1]], d[children[2]])))
+    }
   }
   constraints
 }
@@ -312,7 +325,7 @@ pow_mid <- function(p) {
 }
 
 # Return (x,t,1) power tuple: 1 <= x^(p/(p-1)) t^(-1/(p-1))
-pow_neg <- function(p, max_denom = 1024, cycles = 10) {
+pow_neg <- function(p) {
   if(p >= 0) stop("must have p < 0")
   p <- as.bigq(p)
   p <- p/(p-1)
@@ -358,20 +371,26 @@ fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
   if(!(is.whole(max_denom) && max_denom > 0))
     stop("Input denominator must be an integer")
   
+  # TODO: Handle case where a contains mixture of BigQ, BigZ, and regular R numbers
   # if(is.matrix(a) || is.vector(a))
   #  a <- as.list(a)
+  max_denom <- next_pow2(max_denom)
   total <- sum(a)
   
   if(force_dyad)
     w_frac <- make_frac(a, max_denom)
   else if(all(sapply(a, function(v) { is.whole(v) || is.bigq(v) }))) {
-    w_frac <- sapply(a, function(v) { as.bigq(v, total) })
-    d <- max(sapply(w_frac, denominator))
+    w_frac <- rep(as.bigq(0), length(a))
+    for(i in 1:length(a))
+      w_frac[i] <- as.bigq(a[i], total)
+    d <- max(denominator(w_frac))
     if(d > max_denom)
       stop("Can't reliably represent the weight vector. Try increasing 'max_denom' or checking the denominators of your input fractions.")
   } else {
     # fall through code
-    w_frac <- sapply(a, function(v) { as.bigq(as.double(v)/total) })
+    w_frac <- rep(as.bigq(0), length(a))
+    for(i in 1:length(a))
+      w_frac[i] <- as.bigq(as.double(a[i])/total)
     if(sum(w_frac) != 1)
       w_frac <- make_frac(a, max_denom)
   }
@@ -474,37 +493,55 @@ split <- function(w_dyad) {
   
   bit <- as.bigq(1, 1)
   child1 <- rep(as.bigq(0), length(w_dyad))
-  child2 <- lapply(w_dyad, function(f) { 2*f })    # assign twice the parent's value to child 2
+  child2 <- sapply(as.list(w_dyad), function(f) { 2*f })
   
   while(TRUE) {
-    ind <- 1
-    for(val in child2) {
+    for(ind in 1:length(child2)) {
+      val <- child2[ind]
       if(val >= bit) {
         child2[ind] <- child2[ind] - bit
         child1[ind] <- child1[ind] + bit
       }
       if(sum(child1) == 1)
         return(list(child1, child2))
-      ind <- ind + 1
     }
     bit <- bit/2
   }
   stop("Something wrong with input w_dyad")
 }
 
+# Recursively split dyadic tuples to produce a DAG
 decompose <- function(w_dyad) {
   if(!is_dyad_weight(w_dyad))
     stop("input must be a dyadic weight vector")
   
-  tree <- list()
+  tree <- dict()
   todo <- list(as.vector(w_dyad))
   for(t in todo) {
     if(!(t %in% tree)) {
       tree[t] <- split(t)
-      todo <- todo + list(tree[t])
+      todo <- c(todo, list(tree[t]))
     }
   }
   tree
+}
+
+# String representation of objects in a vector
+prettyvec <- function(t) {
+  paste("(", paste(t, collapse = ", "), ")", sep = "")
+}
+
+# Print keys of dictionary with children indented underneath
+prettydict <- function(d) {
+  # TODO: keys = sorted(list(d.keys()), key = get_max_denom, reverse = True)
+  result <- ""
+  for(vec in keys) {
+    # TODO: children = sorted(d[vec], key = get_max_denom, reverse = False)
+    result <- paste(result, prettyvec(vec), "\n", sep = "")
+    for(child in children)
+      result <- paste(result, " ", prettyvec(child), "\n", sep = "")
+  }
+  result
 }
 
 # Get the maximum denominator in a sequence of "BigQ" and "int" objects

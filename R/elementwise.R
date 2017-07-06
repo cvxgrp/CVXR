@@ -581,15 +581,15 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   
   # How we convert p to a rational depends on the branch of the function
   if(p > 1) {
-    pw <- pow_high(p, max_denom)
+    pw <- pow_high(p)
     p <- pw[[1]]
     w <- pw[[2]]
   } else if(p > 0 && p < 1) {
-    pw <- pow_mid(p, max_denom)
+    pw <- pow_mid(p)
     p <- pw[[1]]
     w <- pw[[2]]
   } else if(p < 0) {
-    pw <- pow_neg(p, max_denom)
+    pw <- pow_neg(p)
     p <- pw[[1]]
     w <- pw[[2]]
   }
@@ -633,7 +633,7 @@ setMethod("sign_from_args", "Power", function(object) {
 
 setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@p >= 1 })
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
-setMethod("is_constant", "Power", function(object) { object@p == 0 || is_constant(callNextMethod()) })
+setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
@@ -709,6 +709,12 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       return(one, list())
     else {
       t <- create_var(size)
+      
+      # TODO: Temporary hack for powers of 1/2 and 2 until gm_constrs works
+      if(p == 1/2)
+        return(list(t, gm_constrs_spec(t, list(x, one), w)))
+      if(p == 2)
+        return(list(t, gm_constrs_spec(x, list(t, one), w)))
       
       if(p > 0 && p < 1)
         return(list(t, gm_constrs(t, list(x, one), w)))

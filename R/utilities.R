@@ -267,10 +267,9 @@ gm_constrs <- function(t, x_list, p) {
   # Note: This function requires a Python-style defaultdict to build and traverse a tree.
   # Currently, the closest solution is the R dict library, which is available on Github: https://github.com/mkuhn/dict
   if(!require(devtools)) install.packages("devtools")
-  devtools::install_github("mkuhn/dict")
+  if(!require(dict)) devtools::install_github("mkuhn/dict")
   
   tree <- decompose(w)
-  # TODO: R dict must allow lists of numbers/bigq/bigz objects as keys
   d <- dict(init_keys = w, init_values = t)
   
   if(length(x_list) < length(w))
@@ -306,6 +305,11 @@ gm_constrs <- function(t, x_list, p) {
     }
   }
   constraints
+}
+
+# TODO: For powers of 2 and 1/2 only. Get rid of this when gm_constrs is working in general.
+gm_constrs_spec <- function(t, x_list, p) {
+  list(gm(t, x_list[[1]], x_list[[2]]))
 }
 
 # Return (t,1,x) power tuple: x <= t^(1/p) 1^(1-1/p)
@@ -493,7 +497,12 @@ split <- function(w_dyad) {
   
   bit <- as.bigq(1, 1)
   child1 <- rep(as.bigq(0), length(w_dyad))
-  child2 <- sapply(as.list(w_dyad), function(f) { 2*f })
+  if(is.list(w_dyad)) {
+    child2 <- rep(as.bigq(0), length(w_dyad))
+    for(i in 1:length(w_dyad))
+      child2[i] <- 2*w_dyad[[i]]
+  } else
+    child2 <- 2*w_dyad
   
   while(TRUE) {
     for(ind in 1:length(child2)) {
@@ -517,8 +526,11 @@ decompose <- function(w_dyad) {
   
   tree <- dict()
   todo <- list(as.vector(w_dyad))
+  
+  # TODO: This goes into an infinite loop because dict cannot handle vector-valued keys
+  stop("Unimplemented: need R dictionary with keys that are numeric/bigz/bigq vectors")
   for(t in todo) {
-    if(!(t %in% tree)) {
+    if(!(t %in% tree$keys())) {
       tree[t] <- split(t)
       todo <- c(todo, list(tree[t]))
     }

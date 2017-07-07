@@ -711,10 +711,10 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       t <- create_var(size)
       
       # TODO: Temporary hack for powers of 1/2 and 2 until gm_constrs works
-      if(p == 1/2)
-        return(list(t, gm_constrs_spec(t, list(x, one), w)))
-      if(p == 2)
-        return(list(t, gm_constrs_spec(x, list(t, one), w)))
+      # if(p == 1/2)
+      #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
+      # else if(p == 2)
+      #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
       
       if(p > 0 && p < 1)
         return(list(t, gm_constrs(t, list(x, one), w)))

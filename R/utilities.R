@@ -247,6 +247,80 @@ flatten_list <- function(x) {
 }
 
 #'
+#' R dictionary (inefficient, hacked together implementation)
+#' Note: This allows arbitrary types as both keys and values
+#'
+setClass("Rdict", representation(keys = "list", values = "list"), prototype(keys = list(), values = list()),
+         validity = function(object) {
+           if(length(object@keys) != length(object@values))
+             return("Number of keys must match number of values")
+           if(!all(unique(object@keys) != object@keys))
+             return("Keys must be unique")
+           return(TRUE)
+         })
+
+Rdict <- function(keys = list(), values = list()) {
+  new("Rdict", keys = keys, values = values)
+}
+
+setMethod("$", signature(x = "Rdict"), function(x, name) {
+  if(name == "items") {
+    items <- rep(list(list()), length(x))
+    for(i in 1:length(x)) {
+      tmp <- list(key = x@keys[[i]], value = x@values[[i]])
+      items[[i]] <- tmp
+    }
+    return(items)
+  } else
+    slot(x, name)
+})
+
+setMethod("length", signature(x = "Rdict"), function(x) { length(x@keys) })
+setMethod("is.element", signature(el = "ANY", set = "Rdict"), function(el, set) {
+  for(k in set@keys) {
+    if(identical(k, el))
+      return(TRUE)
+  }
+  return(FALSE)
+})
+
+setMethod("[", signature(x = "Rdict"), function(x, i, j, ..., drop = TRUE) {
+  for(k in 1:length(x@keys)) {
+    if(length(x@keys[[k]]) == length(i) && all(x@keys[[k]] == i))
+      return(x@values[[k]])
+  }
+  stop("key ", i, " was not found")
+})
+
+setMethod("[<-", signature(x = "Rdict"), function(x, i, j, ..., value) {
+  if(is.element(i, x))
+    x@values[[i]] <- value
+  else {
+    x@keys <- c(x@keys, list(i))
+    x@values <- c(x@values, list(value))
+  }
+  return(x)
+})
+
+setClass("Rdictdefault", representation(default = "function"), contains = "Rdict")
+
+Rdictdefault <- function(keys = list(), values = list(), default) {
+  new("Rdictdefault", keys = keys, values = values, default = default)
+}
+
+setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE) {
+  for(k in 1:length(x@keys)) {
+    if(length(x@keys[[k]]) == length(i) && all(x@keys[[k]] == i))
+      return(x@values[[k]])
+  }
+  
+  # If key doesn't exist, create it with default function value
+  x@keys <- c(x@keys, list(i))
+  x@values <- c(x@values, list(x@default(i)))
+  return(x@values[[length(x@values)]])
+})
+
+#'
 #' Power utilities
 #'
 gm <- function(t, x, y) {
@@ -264,13 +338,10 @@ gm_constrs <- function(t, x_list, p) {
   if(!is_weight(p)) stop("p must be a valid weight vector")
   w <- dyad_completion(p)
 
-  # Note: This function requires a Python-style defaultdict to build and traverse a tree.
-  # Currently, the closest solution is the R dict library, which is available on Github: https://github.com/mkuhn/dict
-  if(!require(devtools)) install.packages("devtools")
-  if(!require(dict)) devtools::install_github("mkuhn/dict")
-  
   tree <- decompose(w)
-  d <- dict(init_keys = w, init_values = t)
+  t_var <- create_var(size(t))
+  d <- Rdictdefault(default = function(key) { t_var })
+  d[w] <- t
   
   if(length(x_list) < length(w))
     x_list <- c(x_list, t)
@@ -288,29 +359,23 @@ gm_constrs <- function(t, x_list, p) {
       d[tmp] <- v
     }
   }
-  
+
   constraints <- list()
-  for(item in tree$items()) {
+  for(item in tree$items) {
     elem <- item$key
     children <- item$value
-    if(!(1 %in% elem)) {
-      # If key doesn't exist, then create key and assign default value = create_var(size(key))
-      if(!(elem %in% d))
-        d[elem] <- create_var(size(elem))
-      if(!(children[1] %in% d))
-        d[children[1]] <- create_var(size(children[1]))
-      if(!(children[2] %in% d))
-        d[children[2]] <- create_var(size(children[2]))
-      constraints <- c(constraints, list(gm(d[elem], d[children[1]], d[children[2]])))
+    
+    if(!any(elem == 1)) {
+      constraints <- c(constraints, list(gm(d[elem], d[children[[1]]], d[children[[2]]])))
     }
   }
   constraints
 }
 
 # TODO: For powers of 2 and 1/2 only. Get rid of this when gm_constrs is working in general.
-gm_constrs_spec <- function(t, x_list, p) {
-  list(gm(t, x_list[[1]], x_list[[2]]))
-}
+# gm_constrs_spec <- function(t, x_list, p) {
+#  list(gm(t, x_list[[1]], x_list[[2]]))
+# }
 
 # Return (t,1,x) power tuple: x <= t^(1/p) 1^(1-1/p)
 pow_high <- function(p) {
@@ -492,8 +557,8 @@ check_dyad <- function(w, w_dyad) {
 # Split a tuple of dyadic rationals into two children so d_tup = 1/2*(child1 + child2)
 split <- function(w_dyad) {
   # vector is all zeros with single 1, so can't be split and no children
-  if(1 %in% w_dyad)
-    return()
+  if(any(w_dyad == 1))
+    return(list())
   
   bit <- as.bigq(1, 1)
   child1 <- rep(as.bigq(0), length(w_dyad))
@@ -524,16 +589,19 @@ decompose <- function(w_dyad) {
   if(!is_dyad_weight(w_dyad))
     stop("input must be a dyadic weight vector")
   
-  tree <- dict()
+  tree <- Rdict()
   todo <- list(as.vector(w_dyad))
-  
-  # TODO: This goes into an infinite loop because dict cannot handle vector-valued keys
-  stop("Unimplemented: need R dictionary with keys that are numeric/bigz/bigq vectors")
-  for(t in todo) {
-    if(!(t %in% tree$keys())) {
+
+  i <- 1
+  len <- length(todo)
+  while(i <= len) {
+    t <- todo[[i]]
+    if(!is.element(t, tree)) {
       tree[t] <- split(t)
-      todo <- c(todo, list(tree[t]))
+      todo <- c(todo, tree[t])
+      len <- length(todo)
     }
+    i <- i + 1
   }
   tree
 }
@@ -545,10 +613,12 @@ prettyvec <- function(t) {
 
 # Print keys of dictionary with children indented underneath
 prettydict <- function(d) {
-  # TODO: keys = sorted(list(d.keys()), key = get_max_denom, reverse = True)
+  key_sort <- order(sapply(d$keys, get_max_denom), decreasing = TRUE)
+  keys <- d$keys[key_sort]
   result <- ""
   for(vec in keys) {
-    # TODO: children = sorted(d[vec], key = get_max_denom, reverse = False)
+    child_order <- order(sapply(d[vec], get_max_denom), decreasing = FALSE)
+    children <- d[vec][child_order]
     result <- paste(result, prettyvec(vec), "\n", sep = "")
     for(child in children)
       result <- paste(result, " ", prettyvec(child), "\n", sep = "")

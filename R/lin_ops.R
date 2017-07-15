@@ -51,7 +51,6 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  EQ = "EQ",
                  LEQ = "LEQ",
                  SOC = "SOC",
-                 SOC_AXIS = "SOC_AXIS",
                  EXP = "EXP",
                  SDP = "SDP")
 

@@ -293,7 +293,7 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
   solve_int(sense, canon_objective, constraints, verbose, ...)
 }
 
-.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSe, warm_start = FALSe, verbose = FALSE, ...) {
+.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
   .solve_problem <- function(problem) {
     result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
     opt_value <- result$optimal_value

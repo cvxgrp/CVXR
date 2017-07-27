@@ -19,3 +19,10 @@ intf_scalar_value <- function(constant) {
   else
     as.numeric(constant)
 }
+
+intf_convert_if_scalar <- function(constant) {
+  if(all(intf_size(constant) == c(1,1)))
+    intf_scalar_value(constant)
+  else
+    constant
+}

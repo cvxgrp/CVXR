@@ -13,7 +13,7 @@ atoms <- list(
       list(Huber, c(2,2), list(rbind(c(0.5,-1.5), c(4,0))), Constant(rbind(c(0.25,2), c(7,0)))),
       list(function(x) { Huber(x,2.5) }, c(2,2), list(rbind(c(0.5,-1.5), c(4,0))), Constant(rbind(c(0.25,2), c(7,0)))),
       list(InvPos, c(2,2), list(rbind(c(1,2), c(3,4))), Constant(rbind(c(1,1.0/2), c(1.0/3,1.0/4)))),
-      list(function(x) { (x + Constant(0))^1 }, c(2,2), list(rbind(c(1,2), c(3,4))), Constant(rbind(c(1,1.0/2), c(1.0/3,1.0/4)))),
+      list(function(x) { (x + Constant(0))^-1 }, c(2,2), list(rbind(c(1,2), c(3,4))), Constant(rbind(c(1,1.0/2), c(1.0/3,1.0/4)))),
       list(KLDiv, c(1,1), list(exp(1), 1), Constant(1)),
       list(KLDiv, c(1,1), list(exp(1), exp(1)), Constant(0)),
       list(KLDiv, c(2,1), list(c(exp(1), 1), 1), Constant(c(1,0))),
@@ -22,28 +22,29 @@ atoms <- list(
       list(LambdaMax, c(1,1), list(rbind(c(2,0), c(0,1))), Constant(2)),
       list(LambdaMax, c(1,1), list(rbind(c(2,0,0), c(0,3,0), c(0,0,1))), Constant(3)),
       list(LambdaMax, c(1,1), list(rbind(c(5,7), c(7,-3))), Constant(9.06225775)),
-      list(function(x) { LambdaSumLargest(x,2) }, c(1,1), list(rbind(c(1,2,3), c(2,4,5), c(3,5,6))), Constant(11.51572947)),
+      # list(function(x) { LambdaSumLargest(x,2) }, c(1,1), list(rbind(c(1,2,3), c(2,4,5), c(3,5,6))), Constant(11.51572947)),
       list(LogSumExp, c(1,1), list(rbind(c(5,7), c(0,-3))), Constant(7.1277708268)),
-      list(LogSumExpAxis2, c(1,2), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(7.12910890, 6.00259878)))),
-      list(LogSumExpAxis1, c(3,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(5.00671535, 7.0000454, 6.0067153))),
+      list(LogSumExpAxis1, c(2,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(7.12910890, 6.00259878))),
+      list(LogSumExpAxis2, c(1,3), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(5.00671535, 7.0000454, 6.0067153)))),
       list(Logistic, c(2,2), list(rbind(c(log(5), log(7)), c(0, log(0.3)))), Constant(rbind(c(log(6),log(8)), c(log(2),log(1.3))))),
-      list(MatrixFrac, c(1,1), list(1:3, diag(rep(1,3))), Constant(14)),
+      list(MatrixFrac, c(1,1), list(1:3, diag(1,3)), Constant(14)),
       list(MatrixFrac, c(1,1), list(1:3, rbind(c(67,78,90), c(78,94,108), c(90,108,127))), Constant(0.46557377049180271)),
-      list(MatrixFrac, c(1,1), list(rbind(1:3, 4:6), rbind(c(67,78,90), c(78,94,108), c(90,108,127))), Constant(0.768852459016)),
+      list(MatrixFrac, c(1,1), list(cbind(1:3, 4:6), rbind(c(67,78,90), c(78,94,108), c(90,108,127))), Constant(0.768852459016)),
       list(MaxElemwise, c(2,1), list(c(-5,2), c(-3,1), 0, c(-1,2)), Constant(c(0,2))),
       list(MaxElemwise, c(2,2), list(rbind(c(-5,2), c(-3,1)), 0, rbind(c(5,4), c(-1,2))), Constant(rbind(c(5,4), c(0,2)))),
       list(MaxEntries, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(2)),
       list(MaxEntries, c(1,1), list(c(-5,-10)), Constant(-5)),
-      list(function(x) { MaxEntries(x, axis = 0) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), t(Constant(c(2,1)))),
-      list(function(x) { norm(x,2) }, c(1,1), list(v_np), Constant(3)),
-      list(function(x) { norm(x,"fro") }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(5.47722557)),
-      list(function(x) { norm(x,1) }, c(1,1), list(v_np), Constant(5)),
-      list(function(x) { norm(x,1) }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(10)),
-      list(function(x) { norm(x,Inf) }, c(1,1), list(v_np), Constant(2)),
-      list(function(x) { norm(x,Inf) }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(4)),
-      list(function(x) { norm(x,"nuc") }, c(1,1), list(rbind(c(2,0), c(0,1))), Constant(3)),
-      list(function(x) { norm(x,"nuc") }, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(23.173260452512931)),
-      list(function(x) { norm(x,"nuc") }, c(1,1), list(rbind(3:5, 6:8)), Constant(14.618376738088918)),
+      list(function(x) { MaxEntries(x, axis = 1) }, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(2,1))),
+      list(function(x) { MaxEntries(x, axis = 2) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), t(Constant(c(-3,2)))),
+      list(function(x) { Norm(x,2) }, c(1,1), list(v_np), Constant(3)),
+      list(function(x) { Norm(x,"fro") }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(5.47722557)),
+      list(function(x) { Norm(x,1) }, c(1,1), list(v_np), Constant(5)),
+      list(function(x) { Norm(x,1) }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(10)),
+      list(function(x) { Norm(x,Inf) }, c(1,1), list(v_np), Constant(2)),
+      list(function(x) { Norm(x,Inf) }, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(4)),
+      list(function(x) { Norm(x,"nuc") }, c(1,1), list(rbind(c(2,0), c(0,1))), Constant(3)),
+      list(function(x) { Norm(x,"nuc") }, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(23.173260452512931)),
+      list(function(x) { Norm(x,"nuc") }, c(1,1), list(rbind(3:5, 6:8)), Constant(14.618376738088918)),
       list(function(x) { SumLargest(abs(x),3) }, c(1,1), list(c(1,2,3,-4,-5)), Constant(5+4+3)),
       list(function(x) { MixedNorm(x,1,1) }, c(1,1), list(rbind(c(1,2), c(3,4), c(5,6))), Constant(21)),
       list(function(x) { MixedNorm(x,1,1) }, c(1,1), list(rbind(1:3, 4:6)), Constant(21)),
@@ -91,7 +92,7 @@ atoms <- list(
       list(TotalVariation, c(1,1), list(matrix(c(1,-1,2), nrow = 1, ncol = 3)), Constant(5)),
       list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(sqrt(53))),
       list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1)), rbind(c(6,5), c(-4,3)), rbind(c(8,0), c(15,9))),
-           Constant(norm(matrix(c(7,-1,-8,2,-10,7)), "2"))),
+           Constant(norm(c(7,-1,-8,2,-10,7), "2"))),
       list(TotalVariation, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(4*sqrt(10))),
       list(UpperTri, c(3,1), list(rbind(3:5, 6:8, 9:11)), Constant(c(6,9,10))),
       
@@ -210,19 +211,21 @@ test_that("Test all constant atoms", {
           for(solver in c("ECOS")) {
             # Atoms with Constant arguments
             const_args <- lapply(args, function(arg) { Constant(arg) })
+            print(atom)
+            print(value(obj_val[row, col]))
             run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
                      value(obj_val[row, col]), solver)
             
             # Atoms with Variable arguments
-            variables <- list()
-            constraints <- list()
-            for(expr in args) {
-              expr_size <- intf_size(expr)
-              variables <- c(variables, Variable(expr_size[1], expr_size[2]))
-              constraints <- c(constraints, variables[[length(variables)]] == expr)
-            }
-            objective <- objective_type(do.call(atom, variables)[row, col])
-            run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
+            # variables <- list()
+            # constraints <- list()
+            # for(expr in args) {
+            #   expr_size <- intf_size(expr)
+            #   variables <- c(variables, Variable(expr_size[1], expr_size[2]))
+            #   constraints <- c(constraints, variables[[length(variables)]] == expr)
+            # }
+            # objective <- objective_type(do.call(atom, variables)[row, col])
+            # run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments
             # parameters <- list()

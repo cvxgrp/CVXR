@@ -712,7 +712,7 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
     max(values[[1]])
   else
-    apply(values[[1]], axis, max)
+    apply(values[[1]], object@axis, max)
 })
 
 setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
@@ -987,7 +987,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
   
   # Inner norms
-  vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
+  vecnorms <- lapply(1:size(X)[1], function(i) { Norm(X[i,], p) })
   
   # Outer norms
   Norm(.HStack(args = vecnorms), q)

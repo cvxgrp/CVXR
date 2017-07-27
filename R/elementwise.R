@@ -289,8 +289,8 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
 })
 
 setMethod("to_numeric", "KLDiv", function(object, values) {
-  x <- values[[1]]
-  y <- values[[2]]
+  x <- intf_convert_if_scalar(values[[1]])
+  y <- intf_convert_if_scalar(values[[2]])
   
   # TODO: Return Inf outside domain
   xlogy <- function(x, y) {
@@ -449,6 +449,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })

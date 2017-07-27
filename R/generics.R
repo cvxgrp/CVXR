@@ -75,6 +75,8 @@ setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_const
 setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_constr") })
 
 # Solver generic methods
+setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
+setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
 setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
 setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
 setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })

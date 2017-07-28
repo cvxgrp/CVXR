@@ -79,7 +79,10 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
-setMethod("to_numeric", "AddExpression", function(object, values) { Reduce("+", values)  })
+setMethod("to_numeric", "AddExpression", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  Reduce("+", values)
+})
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -154,7 +157,10 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-setMethod("to_numeric", "BinaryOperator", function(object, values) { Reduce(object@op_name, values) })
+setMethod("to_numeric", "BinaryOperator", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  Reduce(object@op_name, values)
+})
 setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #'

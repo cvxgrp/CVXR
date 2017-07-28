@@ -8,7 +8,7 @@ atoms <- list(
     list(
       list(Abs, c(2,2), list(rbind(c(-5,2), c(-3,1))), Constant(rbind(c(5,2), c(3,1)))),
       list(Diag, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(-5,1))),
-      list(Diag, c(2,2), list(c(-5,1)), Constant(rbind(c(-5,0), c(0,1)))),
+      list(Diag, c(2,2), list(matrix(c(-5,1))), Constant(rbind(c(-5,0), c(0,1)))),
       list(Exp, c(2,2), list(rbind(c(1,0), c(2,-1))), Constant(rbind(c(exp(1),1), c(exp(2), exp(-1))))),
       list(Huber, c(2,2), list(rbind(c(0.5,-1.5), c(4,0))), Constant(rbind(c(0.25,2), c(7,0)))),
       list(function(x) { Huber(x,2.5) }, c(2,2), list(rbind(c(0.5,-1.5), c(4,0))), Constant(rbind(c(0.25,2), c(7,0)))),
@@ -16,7 +16,7 @@ atoms <- list(
       list(function(x) { (x + Constant(0))^-1 }, c(2,2), list(rbind(c(1,2), c(3,4))), Constant(rbind(c(1,1.0/2), c(1.0/3,1.0/4)))),
       list(KLDiv, c(1,1), list(exp(1), 1), Constant(1)),
       list(KLDiv, c(1,1), list(exp(1), exp(1)), Constant(0)),
-      list(KLDiv, c(2,1), list(c(exp(1), 1), 1), Constant(c(1,0))),
+      list(KLDiv, c(2,1), list(matrix(c(exp(1), 1)), 1), Constant(c(1,0))),
       list(function(x) { Kron(rbind(c(1,2), c(3,4)), x) }, c(4,4), list(rbind(c(5,6), c(7,8))), 
            Constant(kronecker(rbind(c(1,2), c(3,4)), rbind(c(5,6), c(7,8))))),
       list(LambdaMax, c(1,1), list(rbind(c(2,0), c(0,1))), Constant(2)),
@@ -54,8 +54,8 @@ atoms <- list(
       list(Pnorm, c(1,1), list(1:3), Constant(3.7416573867739413)),
       list(function(x) { Pnorm(x,1) }, c(1,1), list(c(1.1,2,-3)), Constant(6.1)),
       list(function(x) { Pnorm(x,2) }, c(1,1), list(c(1.1,2,-3)), Constant(3.7696153649941531)),
-      list(function(x) { Pnorm(x,2,axis=0) }, c(1,2), list(rbind(c(1,2), c(3,4))), t(Constant(c(sqrt(5), 5)))),
-      list(function(x) { Pnorm(x,2,axis=1) }, c(2,1), list(rbind(c(1,2), c(4,5))), Constant(c(sqrt(17), sqrt(29)))),
+      list(function(x) { Pnorm(x,2,axis=1) }, c(2,1), list(rbind(c(1,2), c(3,4))), Constant(c(sqrt(5), 5))),
+      list(function(x) { Pnorm(x,2,axis=2) }, c(1,2), list(rbind(c(1,2), c(4,5))), t(Constant(c(sqrt(17), sqrt(29))))),
       list(function(x) { Pnorm(x,Inf) }, c(1,1), list(c(1.1,2,-3)), Constant(3)),
       list(function(x) { Pnorm(x,3) }, c(1,1), list(c(1.1,2,-3)), Constant(3.3120161866074733)),
       list(function(x) { Pnorm(x,5.6) }, c(1,1), list(c(1.1,2,-3)), Constant(3.0548953718931089)),
@@ -71,28 +71,28 @@ atoms <- list(
       list(function(x) { Power(x,-1) }, c(1,1), list(7.45), Constant(0.1342281879194631)),
       list(function(x) { Power(x,-0.7) }, c(1,1), list(7.45), Constant(0.24518314363015764)),
       list(function(x) { Power(x,-1.34) }, c(1,1), list(7.45), Constant(0.06781263100321579)),
-      list(function(x) { Power(x,1.34) }, c(1,1), list(7.45), Constant(14.746515290825071)),
+      # list(function(x) { Power(x,1.34) }, c(1,1), list(7.45), Constant(14.746515290825071)),
       
       list(QuadOverLin, c(1,1), list(rbind(c(-1,2,-2), c(-1,2,-2)), 2), Constant(2*4.5)),
       list(QuadOverLin, c(1,1), list(v_np,2), Constant(4.5)),
-      list(function(x) { norm(x,2) }, c(1,1), list(rbind(c(2,0), c(0,1))),  Constant(2)),
-      list(function(x) { norm(x,2) }, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(22.368559552680377)),
+      list(function(x) { Norm(x,2) }, c(1,1), list(rbind(c(2,0), c(0,1))),  Constant(2)),
+      list(function(x) { Norm(x,2) }, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(22.368559552680377)),
       list(function(x) { Scalene(x,2,3) }, c(2,2), list(rbind(c(-5,2), c(-3,1))), Constant(rbind(c(15,4), c(9.2)))),
       list(Square, c(2,2), list(rbind(c(-5,2), c(-3,1))), Constant(rbind(c(25,4), c(9,1)))),
       list(SumEntries, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(-5)),
-      list(function(x) { SumEntries(x, axis=0) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), Constant(matrix(c(-3,-2), nrow = 1, ncol = 2))),
-      list(function(x) { SumEntries(x, axis=1) }, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(-8,3))),
+      list(function(x) { SumEntries(x, axis=1) }, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(-3,-2))),
+      list(function(x) { SumEntries(x, axis=2) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), Constant(matrix(c(-8,3), nrow = 1, ncol = 2))),
       list(function(x) { (x + Constant(0))^2 }, c(2,2), list(rbind(c(-5,2), c(-3,1))), Constant(rbind(c(25,4), c(9,1)))),
       list(function(x) { SumLargest(x,3) }, c(1,1), list(1:5), Constant(5+4+3)),
       list(function(x) { SumLargest(x,3) }, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(9+10+11)),
       list(SumSquares, c(1,1), list(rbind(c(-1,2), c(3,-4))), Constant(30)),
       list(Trace, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(3+7+11)),
       list(Trace, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(-5+1)),
-      list(TotalVariation, c(1,1), list(c(1,-1,2)), Constant(5)),
+      list(TotalVariation, c(1,1), list(matrix(c(1,-1,2))), Constant(5)),
       list(TotalVariation, c(1,1), list(matrix(c(1,-1,2), nrow = 1, ncol = 3)), Constant(5)),
       list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1))), Constant(sqrt(53))),
       list(TotalVariation, c(1,1), list(rbind(c(-5,2), c(-3,1)), rbind(c(6,5), c(-4,3)), rbind(c(8,0), c(15,9))),
-           Constant(norm(c(7,-1,-8,2,-10,7), "2"))),
+           Constant(base::norm(c(7,-1,-8,2,-10,7), "2"))),
       list(TotalVariation, c(1,1), list(rbind(3:5, 6:8, 9:11)), Constant(4*sqrt(10))),
       list(UpperTri, c(3,1), list(rbind(3:5, 6:8, 9:11)), Constant(c(6,9,10))),
       
@@ -191,6 +191,11 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
       }
       diff <- (result$optimal_value - obj_val)/(1+abs(obj_val))
       expect_true(abs(diff) <= tolerance)
+      
+      if(abs(diff) > tolerance) {
+        print(atom)
+        print(obj_val)
+      }
     } else
       stop("Problem status is sub-optimal: ", result$status)
   }

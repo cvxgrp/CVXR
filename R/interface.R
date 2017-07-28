@@ -1,5 +1,6 @@
 intf_size <- function(constant) {
-  if((is.null(dim(constant)) && length(constant) == 1) || all(dim(constant) == c(1,1)))
+  if((is.null(dim(constant)) && length(constant) == 1) || 
+     (!is.null(dim(constant)) && all(dim(constant) == c(1,1))))
     return(c(1,1))
   else if(is.vector(constant))
     return(c(1,length(constant)))

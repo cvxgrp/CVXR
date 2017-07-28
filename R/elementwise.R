@@ -257,7 +257,7 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     M <- create_const(value(M), c(1,1))
   
   # n^2 + 2*M*|s|
-  power_graph <- Power.graph_implementation(list(n), size, list(2, c(1/2, 1/2)))  # TODO: Check last argument is correct nested list
+  power_graph <- Power.graph_implementation(list(n), size, list(2, c(as.bigq(1,2), as.bigq(1,2)) ))  # TODO: Check last argument is correct nested list
   n2 <- power_graph[[1]]
   constr_sq <- power_graph[[2]]
   abs_graph <- Abs.graph_implementation(list(s), size)

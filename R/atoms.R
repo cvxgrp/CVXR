@@ -112,7 +112,7 @@ setMethod("value", "Atom", function(object) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value(arg)
-      if(is.na(arg_val) && !is_constant(object))
+      if(any(is.na(arg_val)) && !is_constant(object))
         return(NA)
       else {
         arg_values[[idx]] <- arg_val
@@ -581,7 +581,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   
   # sum(exp(x - t)) <= 1
   if(is.na(axis)) {
-    prom_t <- promot(t, size(x))
+    prom_t <- promote(t, size(x))
     expr <- sub_expr(x, prom_t)
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
@@ -862,7 +862,7 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     return(0)
   
   if(is.na(object@axis))
-    retval <- p_norm(values[[1]], object@p)
+    retval <- p_norm(values, object@p)
   else
     retval <- apply(values, object@axis, function(x) { p_norm(x, object@p) })
   retval
@@ -990,7 +990,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
   vecnorms <- lapply(1:size(X)[1], function(i) { Norm(X[i,], p) })
   
   # Outer norms
-  Norm(.HStack(args = vecnorms), q)
+  Norm(new("HStack", args = vecnorms), q)
 }
 
 norm1 <- Norm1
@@ -1200,7 +1200,7 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-setMethod("to_numeric", "SigmaMax", function(object, values) { norm(values[[1]], type = "2") })
+setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })

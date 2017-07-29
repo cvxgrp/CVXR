@@ -85,7 +85,12 @@ setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 }
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
 # Slice operators
-setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) { Index.get_special_slice(x, i, j) })
+setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) {
+  if(missing(j) && is_vector(x) && size(x)[1] < size(x)[2])
+    Index.get_special_slice(x, j, i)   # If only first index given, apply it along longer dimension of vector
+  else
+    Index.get_special_slice(x, i, j)
+})
 
 # Arithmetic operators
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })

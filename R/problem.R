@@ -282,14 +282,15 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
   # sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
   
   print("Calling CVXcanon")
-  if(is(object@objective, "Minimize")) {
-    sense <- "Minimize"
-    canon_objective <- objective
-  } else {
+  if(is(object@objective, "Maximize")) {
     sense <- "Maximize"
     canon_objective <- neg_expr(objective)  # preserve sense
+  } else {
+    sense <- "Minimize"
+    canon_objective <- objective
   }
   
+  # TODO: Flip the sign of the optimal_value for maximization problems
   solve_int(sense, canon_objective, constraints, verbose, ...)
 }
 

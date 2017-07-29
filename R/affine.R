@@ -469,8 +469,11 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     stop("Must have 0 < lag < number of elements in x")
   
   d <- x
-  for(i in 1:k)
-    d <- d[(1+lag):m] - d[1:(m-lag)]
+  len <- m
+  for(i in 1:k) {
+    d <- d[(1+lag):m,] - d[1:(m-lag),]
+    m <- m-1
+  }
   
   if(axis == 2)
     t(d)
@@ -629,7 +632,11 @@ setMethod("validate_args", "MulElemwise", function(object) {
     stop("The first argument to MulElemwise must be constant.")
 })
 
-setMethod("to_numeric", "MulElemwise", function(object, values) { values[[1]] * values[[2]] })
+setMethod("to_numeric", "MulElemwise", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  values[[1]] * values[[2]]
+})
+
 setMethod("size_from_args", "MulElemwise", function(object) { 
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })

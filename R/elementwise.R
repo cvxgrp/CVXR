@@ -98,7 +98,7 @@ setMethod("to_numeric", "Entr", function(object, values) {
   }
   
   x <- values[[1]]
-  results <- xlogy(x, x)
+  results <- -xlogy(x, x)
   
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
@@ -552,7 +552,7 @@ setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size
 })
 
 MinElemwise <- function(arg1, arg2, ...) {
-  min_args <- lapply(c(arg1, arg2, list(...)), function(arg) { -as.Constant(arg) })
+  min_args <- lapply(c(list(arg1), list(arg2), list(...)), function(arg) { -as.Constant(arg) })
   -.MaxElemwise(args = min_args)
 }
 

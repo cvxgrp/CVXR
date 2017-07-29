@@ -283,15 +283,25 @@ setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 setMethod(".grad", "AffineProd", function(object, values) {
   X <- values[[1]]
   Y <- values[[2]]
+  size11 <- size(object@args[[1]])[1]
+  size22 <- size(object@args[[2]])[2]
   
   DX_rows <- prod(size(object@args[[1]]))
-  cols <- size(object@args[[1]])[1] * size(object@args[[2]])[2]
+  cols <- size11 * size22
   
-  # TODO: Finish AffineProd gradient implementation
+  # DX = [diag(Y11), diag(Y12), ...]
+  #      [diag(Y21), diag(Y22), ...]
+  #      [  ...        ...      ...]
+  DX <- do.call("rbind", apply(Y, 1, function(row) {
+      do.call("cbind", lapply(row, function(x) { sparseMatrix(i = 1:size11, j = 1:size11, x = x) }))
+    }))
+  DY <- bdiag(lapply(1:size22, function(i) { t(X) }))
   list(DX, DY)
 })
 
-.GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
+.GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
+                                               w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict", 
+                                               cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 geo_mean <- GeoMean
@@ -339,13 +349,20 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 setMethod("validate_args", "GeoMean", function(object) { })
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.vector(values[[1]])
-  val <- 1.0
-  for(idx in length(values)) {
-    x <- values[[idx]]
-    p <- object@w[idx]
-    val <- val * x^p
+  
+  if("Rmpfr" %in% installed.packages()) {
+    require(Rmpfr)
+    val <- 1.0
+    for(idx in 1:length(values)) {
+      x <- values[[idx]]
+      p <- object@w[idx]
+      val <- val * mpfr(x, getPrec(x))^p
+    }
+    return(asNumeric(val))   # TODO: Handle mpfr objects in the backend later
   }
-  val
+  
+  val <- mapply(function(x, p) { x^p }, values, asNumeric(object@w))
+  Reduce("*", val)
 })
 
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
@@ -1248,7 +1265,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
   SigmaMax.graph_implementation(arg_objs, size, data)
 })
 
-.SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
+.SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"), 
                        validity = function(object) {
                          if(as.integer(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
@@ -1272,7 +1289,7 @@ setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.vector(values[[1]])
   k <- min(object@k, length(value))
-  val_sort <- sort(value, decreasing = FALSE)
+  val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
 })
 

@@ -737,6 +737,7 @@ setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
+setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
 .column_grad.MaxEntries <- function(object, value) {
@@ -890,6 +891,7 @@ setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
+setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(values) })

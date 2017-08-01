@@ -9,6 +9,7 @@ setGeneric("is_affine", function(object) { standardGeneric("is_affine") })
 setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
+setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 setGeneric("size", function(object) { standardGeneric("size") })
 
@@ -67,6 +68,7 @@ setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
+setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 
 # Problem data generic methods
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })
@@ -86,7 +88,7 @@ setGeneric("Solver.get_problem_data", function(solver, objective, constraints, c
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
 setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
-setGeneric("cvxr_solve_int", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("cvxr_solve_int") })
+setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("Solver.solve") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
 # Solver capabilities

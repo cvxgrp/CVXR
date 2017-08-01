@@ -48,7 +48,8 @@ Solver._reject_problem <- function(solver, reason) {
 
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
-  if(!is.null(prob_data@sym_data) && (objective != prob_data@sym_data@objective || constraints != prob_data@sym_data@constraints)) {
+  if(!is.null(prob_data@sym_data) && (!isTRUE(all.equal(objective, prob_data@sym_data@objective)) || 
+                                      !isTRUE(all.equal(constraints, prob_data@sym_data@constraints)))) {
     prob_data@sym_data <- NULL
     prob_data@matrix_data <- NULL
   }
@@ -163,7 +164,7 @@ setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())  
 })
 
-setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(ECOSolveR)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
@@ -219,7 +220,7 @@ setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
-setMethod("cvxr_solve_int", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(scs)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   

@@ -62,6 +62,7 @@ setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
+setMethod("is_pwl", "Expression", function(object) { FALSE })
 
 # Sign properties
 setMethod("sign", "Expression", function(x) {
@@ -200,6 +201,7 @@ setMethod("constants", "Leaf", function(object) { list() })
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
+setMethod("is_pwl", "Leaf", function(object) { TRUE })
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
 setMethod("validate_val", "Leaf", function(object, val) {

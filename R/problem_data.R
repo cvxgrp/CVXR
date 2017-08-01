@@ -68,8 +68,8 @@ SymData.presolve <- function(objective, constr_map) {
   for(key in c(EQ_MAP, LEQ_MAP)) {
     new_constraints <- list()
     for(constr in constr_map[[key]]) {
-      vars_ <- get_expr_vars(constr@expr)
-      if(length(vars_) == 0 && length(get_expr_params(constr@expr)) == 0) {
+      vars_ <- get_expr_vars(constr$expr)
+      if(length(vars_) == 0 && length(get_expr_params(constr$expr)) == 0) {
         prob <- get_problem_matrix(list(constr))
         V <- prob[[1]]
         I <- prob[[2]]
@@ -122,7 +122,7 @@ SymData.format_for_solver <- function(constr_map, solver) {
 SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   vars_ <- get_expr_vars(objective)
   for(constr in constraints)
-    vars_ <- c(vars_, get_expr_vars(constr@expr))
+    vars_ <- c(vars_, get_expr_vars(constr$expr))
   
   # If CVXOPT is the solver, some of the variables are in NonLinearConstraints.
   for(constr in nonlinear) {
@@ -143,16 +143,13 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 }
 
 .MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", .param_coo_tup = "list", const_vec = "numeric", constraints = "list", .size = "numeric"),
-                         prototype(.size = NA_real_, .param_coo_tup = list(c(), c(), c())), validity = function(object) {
-                           if(!is.na(object@.size))
-                             stop("[Validation: MatrixCache] .size is an internal variable that should not be set by user")
-                           if(!is.null(object@.param_coo_tup))
-                             stop("[Validation: MatrixCache] .param_coo_tup is an internal variable that should not be set by user")
-                           return(TRUE)
-                          })
+                         prototype(.size = NA_real_, .param_coo_tup = list(c(), c(), c())))
 
 MatrixCache <- function(coo_tup, const_vec, constraints, x_length) {
-  rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+  if(length(constraints) == 0)
+    rows <- 0
+  else
+    rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
   cols <- x_length
   .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, .size = c(rows, cols), .param_coo_tup = list(c(), c(), c()))
 }
@@ -175,7 +172,7 @@ reset_param_data <- function(object) {
 
 MatrixData <- function(sym_data, solver, nonlin = FALSE) { .MatrixData(sym_data = sym_data, solver = solver, nonlin = nonlin) }
 
-setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, .obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL) {
+setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, nonlin, .obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL) {
   .Object@sym_data <- sym_data
   
   # Cache everything possible.
@@ -189,14 +186,15 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, .obj_c
   nonlin_constr <- constr_types[[3]]
   
   # Equality constraints.
-  .Object@.eq_cache <- .init_matrix_cache(eq_constr, .Object@sym_data@.x_length)
-  .Object@.eq_cache <- .lin_matrix(.Object, .Object@eq_cache, caching = TRUE)
+  .Object@.eq_cache <- .init_matrix_cache(.Object, eq_constr, .Object@sym_data@.x_length)
+  .Object@.eq_cache <- .lin_matrix(.Object, .Object@.eq_cache, caching = TRUE)
   
   # Inequality constraints.
-  .Object@.ineq_cache <- .init_matrix_cache(ineq_constr, .Object@sym_data@.x_length)
+  .Object@.ineq_cache <- .init_matrix_cache(.Object, ineq_constr, .Object@sym_data@.x_length)
   .Object@.ineq_cache <- .lin_matrix(.Object, .Object@.ineq_cache, caching = TRUE)
   
   # TODO: Nonlinear constraints require returning an oracle (function), which R does not support. Need an alternative way.
+  .Object@nonlin <- nonlin
   if(nonlin) stop("Nonlinear constraints are unimplemented")
   # if(nonlin)
   #  .Object@F <- .nonlin_matrix(nonlin_constr)
@@ -222,7 +220,10 @@ setMethod("get_ineq_constr", "MatrixData", function(object) { .cache_to_matrix(o
 setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 
 .init_matrix_cache <- function(object, constraints, x_length) {
-  rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+  if(length(constraints) == 0)
+    rows <- 0
+  else
+    rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
   COO <- list(c(), c(), c())
   const_vec <- rep(0, rows)
   MatrixCache(COO, const_vec, constraints, x_length)
@@ -235,12 +236,12 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   
   for(constr in mat_cache@constraints) {
     # Process the constraint if it has a parameter and not caching or it doesn't have a parameter and caching.
-    has_param <- length(get_expr_params(constr@expr)) > 0
+    has_param <- length(get_expr_params(constr$expr)) > 0
     if((has_param && !caching) || (!has_param && caching)) {
       # If parameterized, convert the parameters into constant nodes.
       if(has_param)
         constr <- copy_constr(constr, replace_params_with_consts)   # TODO: Don't think I need to copy constraint since R automatically creates copies
-      active_constr <- c(active_constr, constr)
+      active_constr <- c(active_constr, list(constr))
       constr_offsets <- c(constr_offsets, vert_offset)
     }
     vert_offset <- vert_offset + prod(size(constr))

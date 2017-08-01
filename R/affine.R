@@ -13,6 +13,7 @@ setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
 setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
+setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 .grad.AffAtom <- function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this

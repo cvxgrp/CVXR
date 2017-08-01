@@ -545,3 +545,23 @@ test_that("test built-in sum (not good usage)", {
   expr <- sum(x)
   expect_equal(value(expr), 3)
 })
+
+test_that("test piecewise linear", {
+  A <- matrix(rnorm(6), nrow = 2, ncol = 3)
+  b <- matrix(rnorm(2))
+  
+  expr <- A %*% y - b
+  expect_true(is_pwl(expr))
+  
+  expr <- MaxElemwise(1, 3*y)
+  expect_true(is_pwl(expr))
+  
+  expr <- abs(y)
+  expect_true(is_pwl(expr))
+  
+  expr <- Pnorm(3*y, 1)
+  expect_true(is_pwl(expr))
+  
+  expr <- Pnorm(3*y^2, 1)
+  expect_false(is_pwl(expr))
+})

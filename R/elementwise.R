@@ -50,6 +50,7 @@ setMethod("is_atom_convex", "Abs", function(object) { TRUE })
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
+setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
 .grad.Abs <- function(object, values) {
   # Grad: +1 if positive, -1 if negative
@@ -519,6 +520,7 @@ setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
+setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(values)

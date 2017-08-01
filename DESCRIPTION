@@ -37,10 +37,12 @@ Imports:
         Rcpp (>= 0.12.5),
         RcppEigen,
 	      BH,
+	      bit64,
         bitops,
         MASS,
         gmp,
-        R.utils
+        R.utils,
+        signal
 Suggests:
         knitr,
         rmarkdown,

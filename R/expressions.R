@@ -85,11 +85,25 @@ setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 }
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
 # Slice operators
-setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) {
-  if(missing(j) && is_vector(x) && size(x)[1] < size(x)[2])
-    Index.get_special_slice(x, j, i)   # If only first index given, apply it along longer dimension of vector
+setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
+setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(is_vector(x) && size(x)[1] < size(x)[2])
+    Index.get_special_slice(x, NULL, i)   # If only first index given, apply it along longer dimension of vector
   else
-    Index.get_special_slice(x, i, j)
+    Index.get_special_slice(x, i, NULL)
+})
+setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, NULL, j)
+})
+setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, i, j)
+})
+setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  # This follows conventions in Matrix package, but differs from base handling of matrices
+  Index.get_special_slice(x, i, NULL)
+})
+setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  stop("Invalid or unimplemented Expression slice operation")
 })
 
 # Arithmetic operators

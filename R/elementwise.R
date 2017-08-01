@@ -572,7 +572,7 @@ pos <- Pos
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @aliases Power
 #' @export
-.Power <- setClass("Power", representation(x = "Expression", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
+.Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }

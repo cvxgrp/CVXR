@@ -278,7 +278,8 @@ setMethod("validate_args", "Conv", function(object) {
 })
 
 setMethod("to_numeric", "Conv", function(object, values) {
-  convolve(as.vector(values[[1]]), as.vector(values[[2]]))
+  require(signal)
+  conv(as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
 setMethod("size_from_args", "Conv", function(object) {
@@ -547,7 +548,14 @@ Index.get_special_slice <- function(expr, row, col) {
   
   idx_mat <- seq(expr_prod)
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
-  select_mat <- idx_mat[row, col]
+  if(is.matrix(row) && is.null(col))
+    select_mat <- idx_mat[row]
+  else if(is.null(row) && !is.null(col))
+    select_mat <- idx_mat[,col]
+  else if(!is.null(row) && is.null(col))
+    select_mat <- idx_mat[row,]
+  else
+    select_mat <- idx_mat[row, col]
   
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
@@ -823,7 +831,7 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
   Transpose.graph_implementation(arg_objs, size, data)
 })
 
-.UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
+.UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {

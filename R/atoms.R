@@ -319,7 +319,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   else
     stop("x must be a row or column vector")
   
-  if(is.na(p))
+  if(any(is.na(p)))
     p <- rep(1, n)
   
   if(length(p) != n)
@@ -430,7 +430,7 @@ setMethod("to_numeric", "LambdaMax", function(object, values) {
 
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
-setMethod("is_atom_convex", "LambdaMax", function(object) { FALSE })
+setMethod("is_atom_convex", "LambdaMax", function(object) { TRUE })
 setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })

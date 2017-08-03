@@ -1,8 +1,6 @@
 ## CVXcanon.LinOpVector class shadowing CPP class
 CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                     private = list(
-                                        pkg = NA,
-                                        myClassName = NA,
                                         linOps = NA,
                                         ptr = NA ## the rcpp XPtr
                                     ),
@@ -11,12 +9,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                     public = list(
                                         initialize = function() {
                                             private$linOps <- list()
-                                            private$pkg <- pkg <- getPackageName()
-                                            private$myClassName <- myClassName <- class(self)[1]
-                                            private$ptr <- .Call(rcppMungedName(cppClassName = myClassName,
-                                                                                methodName = "new",
-                                                                                thisPkg = pkg),
-                                                                 PACKAGE = pkg)
+                                            private$ptr <- .Call("_cvxr_LinOpVector__new", PACKAGE = "cvxr")
                                         }
                                        ,
                                         getXPtr = function() {
@@ -31,10 +24,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                             n <- length(private$linOps)
                                             private$linOps[[n+1]] <- R6LinOp
                                             ## Needs modification by hand for arguments
-                                            rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                     methodName = "push_back",
-                                                                     thisPkg = private$pkg)
-                                            .Call(rcppFn, private$ptr , R6LinOp$getXPtr(), PACKAGE = private$pkg)
+                                            .Call("_cvxr_LinOp__push_back", private$ptr , R6LinOp$getXPtr(), PACKAGE = "cvxr")
                                         }
                                        ,
                                         toString = function() {

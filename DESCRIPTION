@@ -34,7 +34,7 @@ Imports:
         methods,
         R6,
         Matrix,
-        Rcpp (>= 0.12.5),
+        Rcpp (>= 0.12.12),
         RcppEigen,
 	      BH,
         bitops,

@@ -224,21 +224,6 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   case 23:
     oType = KRON;
     break;
-  case 24:
-    oType = EQ;     // equality constraint
-    break;
-  case 25:
-    oType = LEQ;    // non-negative orthant
-    break;
-  case 26:
-    oType = SOC;    // second-order cone
-    break;
-  case 27:
-    oType = EXP;    // exponential cone
-    break;
-  case 28:
-    oType = SDP;    // semi-definite cone
-    break;
   default:
     err = 1;
     // std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
@@ -249,7 +234,7 @@ void LinOp__set_type(SEXP xp, int typeValue) {
     Rcpp::XPtr<LinOp> ptr(xp);
     ptr->type = oType;
 
-#ifdef CVXCANON_DEBUG
+#ifdef _R_DEBUG
     Rcpp::Rcout << "LinOp Id " << ptr->id << " type now " << ptr->type << std::endl;
 #endif
 
@@ -340,23 +325,8 @@ int LinOp__get_type(SEXP xp) {
   case KRON:
     oType = 23;
     break;
-  case EQ:
-    oType = 24;
-    break;
-  case LEQ:
-    oType = 25;
-    break;
-  case SOC:
-    oType = 26;
-    break;
-  case EXP:
-    oType = 27;
-    break;
-  case SDP:
-    oType = 28;
-    break;
   default:
-    oType = -1;
+    oType = -255;
     Rcpp::stop("Error: LinOp type invalid");
   }
   return oType;

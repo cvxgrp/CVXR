@@ -1,0 +1,2 @@
+BuildMatrix.cpp synced up to CVXCanon.cpp
+LinOpOperations.cpp synced up to LinOpOperations.cpp

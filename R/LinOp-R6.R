@@ -25,122 +25,74 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                       "DENSE_CONST",
                                       "SPARSE_CONST",
                                       "NO_OP",
-                                      "KRON",
-                                      "EQ",
-                                      "LEQ",
-                                      "SOC",
-                                      "EXP",
-                                      "SDP"),
+                                      "KRON"),
                                   args = NA,
-                                  pkg = NA,
-                                  myClassName = NA,
                                   ptr = NA
                               ),
                               active = list(
                                   sparse = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_sparse",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__get_sparse", private$ptr, PACKAGE = "cvxr")
                                       } else {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_sparse",
-                                                                   thisPkg = private$pkg)
                                           ## value should be a boolean
-                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_sparse",  private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
                                   sparse_data = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_sparse_data",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__get_sparse_data", private$ptr, PACKAGE = "cvxr")
                                       } else {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_sparse_data",
-                                                                   thisPkg = private$pkg)
                                           ## value should be a dgCMatrix-class
-                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_sparse", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
                                   dense_data = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_dense_data",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__get_dense_data", private$ptr, PACKAGE = "cvxr")
                                       } else {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_dense_data",
-                                                                   thisPkg = private$pkg)
                                           ## value should be a matrix
-                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_sparse_data", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
                                   type = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_type",
-                                                                   thisPkg = private$pkg)
-                                          index <- .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          index <- .Call("_cvxr_LinOp__get_type", private$ptr, PACKAGE = "cvxr")
                                           ## make 1-based index
                                           private$operatorType[index + 1]
                                       } else {
                                           ##value <- match.arg(value, private$operatorType)
                                           ## Make zero based index!
                                           index <- match(value, private$operatorType) - 1
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_type",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, index, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_type", private$ptr, index, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
                                   size = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_size",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__get_size", private$ptr, PACKAGE = "cvxr")
                                       } else {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_size",
-                                                                   thisPkg = private$pkg)
                                           ## value is an integer vector
-                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_type", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
                                   slice = function(value) {
                                       if (missing(value)) {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "get_slice",
-                                                                   thisPkg = private$pkg)
-                                          .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__get_slice", private$ptr, PACKAGE = "cvxr")
                                       } else {
-                                          rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                   methodName = "set_slice",
-                                                                   thisPkg = private$pkg)
                                           ## value is a list of integer vectors
-                                          .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                          .Call("_cvxr_LinOp__set_slice", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                               ),
                               public = list(
                                   initialize = function(type = NULL, size = NULL, args = NULL, data = NULL) {
                                       private$args = R6List$new()
-                                      private$pkg <- pkg <- getPackageName()
-                                      private$myClassName <- myClassName <- class(self)[1]
                                       ## Create a new LinOp on the C side
-                                      private$ptr <- .Call(rcppMungedName(cppClassName = myClassName,
-                                                                          methodName = "new",
-                                                                          thisPkg = pkg),
-                                                           PACKAGE = pkg)
+                                      private$ptr <- .Call("_cvxr_LinOp__new", PACKAGE = "cvxr")
                                       ## Associate args on R side with the args on the C side.
                                       ##browser()
                                       if (!is.null(type)) {
@@ -159,10 +111,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                  ,
                                   args_push_back = function(R6LinOp) {
                                       private$args$append(R6LinOp)
-                                      rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                               methodName = "args_push_back",
-                                                               thisPkg = private$pkg)
-                                      .Call(rcppFn, private$ptr, R6LinOp$getXPtr(), PACKAGE = private$pkg)
+                                      .Call("_cvxr_LinOp__args_push_back", private$ptr, R6LinOp$getXPtr(), PACKAGE = "cvxr")
                                   }
                                  ,
                                   getXPtr = function() {
@@ -174,17 +123,11 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   }
                                  ,
                                   get_id = function() {
-                                      rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                               methodName = "get_id",
-                                                               thisPkg = private$pkg)
-                                      .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                      .Call("_cvxr_LinOp__get_id", private$ptr, PACKAGE = "cvxr")
                                   }
                                   ,
                                   size_push_back = function(value) {
-                                      rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                               methodName = "size_push_back",
-                                                               thisPkg = private$pkg)
-                                      .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                      .Call("_cvxr_LinOp__size_push_back", private$ptr, value, PACKAGE = "cvxr")
                                   }
                                  ,
                                   toString = function() {

@@ -1,26 +1,23 @@
-//    This file is part of CVXcanon.
+//   Copyright 2017 Steven Diamond
 //
-//    CVXcanon is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
 //
-//    CVXcanon is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
+//       http://www.apache.org/licenses/LICENSE-2.0
 //
-//    You should have received a copy of the GNU General Public License
-//    along with CVXcanon.  If not, see <http://www.gnu.org/licenses/>.
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
 
+#include "LinOp.hpp"
 #include "LinOpOperations.hpp"
+#include "Utils.hpp"
 #include <cassert>
 #include <map>
-#include <vector>
 #include <iostream>
-#include "LinOp.hpp"
-#include "Utils.hpp"
-
 
 /***********************
  * FUNCTION PROTOTYPES *
@@ -59,70 +56,70 @@ std::vector<Matrix> get_kron_mat(LinOp &lin);
  * Returns: std::vector of sparse coefficient matrices for LIN
  */
 std::vector<Matrix> get_func_coeffs(LinOp& lin) {
-  std::vector<Matrix> coeffs;
-  switch (lin.type) {
-  case PROMOTE:
-    coeffs = get_promote_mat(lin);
-    break;
-  case MUL:
-    coeffs = get_mul_mat(lin);
-    break;
-  case RMUL:
-    coeffs = get_rmul_mat(lin);
-    break;
-  case MUL_ELEM:
-    coeffs = get_mul_elemwise_mat(lin);
-    break;
-  case DIV:
-    coeffs = get_div_mat(lin);
-    break;
-  case SUM:
-    coeffs = get_sum_coefficients(lin);
-    break;
-  case NEG:
-    coeffs = get_neg_mat(lin);
-    break;
-  case INDEX:
-    coeffs = get_index_mat(lin);
-    break;
-  case TRANSPOSE:
-    coeffs = get_transpose_mat(lin);
-    break;
-  case SUM_ENTRIES:
-    coeffs = get_sum_entries_mat(lin);
-    break;
-  case TRACE:
-    coeffs = get_trace_mat(lin);
-    break;
-  case RESHAPE:
-    coeffs = get_reshape_mat(lin);
-    break;
-  case DIAG_VEC:
-    coeffs = get_diag_vec_mat(lin);
-    break;
-  case DIAG_MAT:
-    coeffs = get_diag_matrix_mat(lin);
-    break;
-  case UPPER_TRI:
-    coeffs = get_upper_tri_mat(lin);
-    break;
-  case CONV:
-    coeffs = get_conv_mat(lin);
-    break;
-  case HSTACK:
-    coeffs = get_hstack_mat(lin);
-    break;
-  case VSTACK:
-    coeffs = get_vstack_mat(lin);
-    break;
-  case KRON:
-    coeffs = get_kron_mat(lin);
-    break;
-  default:
-    std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
-    exit(-1);
-  }
-  return coeffs;
+	std::vector<Matrix> coeffs;
+	switch (lin.type) {
+	case PROMOTE:
+		coeffs = get_promote_mat(lin);
+		break;
+	case MUL:
+		coeffs = get_mul_mat(lin);
+		break;
+	case RMUL:
+		coeffs = get_rmul_mat(lin);
+		break;
+	case MUL_ELEM:
+		coeffs = get_mul_elemwise_mat(lin);
+		break;
+	case DIV:
+		coeffs = get_div_mat(lin);
+		break;
+	case SUM:
+		coeffs = get_sum_coefficients(lin);
+		break;
+	case NEG:
+		coeffs = get_neg_mat(lin);
+		break;
+	case INDEX:
+		coeffs = get_index_mat(lin);
+		break;
+	case TRANSPOSE:
+		coeffs = get_transpose_mat(lin);
+		break;
+	case SUM_ENTRIES:
+		coeffs = get_sum_entries_mat(lin);
+		break;
+	case TRACE:
+		coeffs = get_trace_mat(lin);
+		break;
+	case RESHAPE:
+		coeffs = get_reshape_mat(lin);
+		break;
+	case DIAG_VEC:
+		coeffs = get_diag_vec_mat(lin);
+		break;
+	case DIAG_MAT:
+		coeffs = get_diag_matrix_mat(lin);
+		break;
+	case UPPER_TRI:
+		coeffs = get_upper_tri_mat(lin);
+		break;
+	case CONV:
+		coeffs = get_conv_mat(lin);
+		break;
+	case HSTACK:
+		coeffs = get_hstack_mat(lin);
+		break;
+	case VSTACK:
+		coeffs = get_vstack_mat(lin);
+		break;
+	case KRON:
+		coeffs = get_kron_mat(lin);
+		break;
+	default:
+		std::cerr << "Error: linOp type invalid." << std::endl;
+		exit(-1);
+	}
+	return coeffs;
 }
 
 /*******************
@@ -133,18 +130,18 @@ std::vector<Matrix> get_func_coeffs(LinOp& lin) {
  * Returns a vector containing the sparse matrix MAT
  */
 std::vector<Matrix> build_vector(Matrix &mat) {
-  std::vector<Matrix> vec;
-  vec.push_back(mat);
-  return vec;
+	std::vector<Matrix> vec;
+	vec.push_back(mat);
+	return vec;
 }
 
 /**
  * Returns an N x N sparse identity matrix.
  */
-Matrix sparse_eye(int n) {
-  Matrix eye_n(n, n);
-  eye_n.setIdentity();
-  return eye_n;
+Matrix sparse_eye (int n) {
+	Matrix eye_n(n, n);
+	eye_n.setIdentity();
+	return eye_n;
 }
 
 /**
@@ -153,10 +150,11 @@ Matrix sparse_eye(int n) {
  * TODO: This function returns a sparse representation of a dense matrix,
  * which might not be extremely efficient, but does make it easier downstream.
  */
-Matrix sparse_ones(int rows, int cols) {
-  Eigen::MatrixXd ones = Eigen::MatrixXd::Ones(rows, cols);
-  Matrix mat = ones.sparseView();
-  return mat;
+Matrix sparse_ones(int rows, int cols)
+{
+	Eigen::MatrixXd ones = Eigen::MatrixXd::Ones(rows, cols);
+	Matrix mat = ones.sparseView();
+	return mat;
 }
 
 /**
@@ -168,19 +166,20 @@ Matrix sparse_ones(int rows, int cols) {
  */
 
 Matrix sparse_reshape_to_vec(Matrix &mat) {
-  int rows = mat.rows();
-  int cols = mat.cols();
-  Matrix out(rows * cols, 1);
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(rows * cols);
-  for (int k = 0; k < mat.outerSize(); ++k) {
-    for (Matrix::InnerIterator it(mat, k); it; ++it) {
-      tripletList.push_back(Triplet(it.col() * rows + it.row(), 0, it.value()));
-    }
-  }
-  out.setFromTriplets(tripletList.begin(), tripletList.end());
-  out.makeCompressed();
-  return out;
+	int rows = mat.rows();
+	int cols = mat.cols();
+	Matrix out(rows * cols, 1);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(rows * cols);
+	for ( int k = 0; k < mat.outerSize(); ++k) {
+		for (Matrix::InnerIterator it(mat, k); it; ++it) {
+			tripletList.push_back(Triplet(it.col() * rows + it.row(), 0,
+			                              it.value()));
+		}
+	}
+	out.setFromTriplets(tripletList.begin(), tripletList.end());
+	out.makeCompressed();
+	return out;
 }
 
 /**
@@ -195,48 +194,48 @@ Matrix sparse_reshape_to_vec(Matrix &mat) {
  * the columns are laid out in the order of the arguments.
  *
  * Parameters: linOP LIN that performs a stacking operation (HSTACK or VSTACK)
- *             boolean VERTICAL: True if vertical stack. False otherwise.
+ * 						 boolean VERTICAL: True if vertical stack. False otherwise.
  *
  * Returns: vector COEFF_MATS containing the stacked coefficient matrices
- *          for each argument.
+ * 					for each argument.
  *
  */
 std::vector<Matrix> stack_matrices(LinOp &lin, bool vertical) {
-  std::vector<Matrix> coeffs_mats;
-  int offset = 0;
-  int num_args = lin.args.size();
-  for (int idx = 0; idx < num_args; idx++) {
-    LinOp arg = *lin.args[idx];
+	std::vector<Matrix> coeffs_mats;
+	int offset = 0;
+	int num_args = lin.args.size();
+	for (int idx = 0; idx < num_args; idx++) {
+		LinOp arg = *lin.args[idx];
 
-    /* If VERTICAL, columns that are interleaved. Otherwise, they are
-       laid out in order. */
-    int column_offset;
-    int offset_increment;
-    if (vertical) {
-      column_offset = lin.size[0];
-      offset_increment = arg.size[0];
-    } else {
-      column_offset = arg.size[0];
-      offset_increment = arg.size[0] * arg.size[1];
-    }
+		/* If VERTICAL, columns that are interleaved. Otherwise, they are
+			 laid out in order. */
+		int column_offset;
+		int offset_increment;
+		if (vertical) {
+			column_offset = lin.size[0];
+			offset_increment = arg.size[0];
+		} else {
+			column_offset = arg.size[0];
+			offset_increment = arg.size[0] * arg.size[1];
+		}
 
-    std::vector<Triplet> tripletList;
-    tripletList.reserve(arg.size[0] * arg.size[1]);
-    for (int i = 0; i < arg.size[0]; i++) {
-      for (int j = 0; j < arg.size[1]; j++) {
-        int row_idx = i + (j * column_offset) + offset;
-        int col_idx = i + (j * arg.size[0]);
-        tripletList.push_back(Triplet(row_idx, col_idx, 1));
-      }
-    }
+		std::vector<Triplet> tripletList;
+		tripletList.reserve(arg.size[0] * arg.size[1]);
+		for (int i = 0; i < arg.size[0]; i++) {
+			for (int j = 0; j < arg.size[1]; j++) {
+				int row_idx = i + (j * column_offset) + offset;
+				int col_idx = i + (j * arg.size[0]);
+				tripletList.push_back(Triplet(row_idx, col_idx, 1));
+			}
+		}
 
-    Matrix coeff(lin.size[0] * lin.size[1], arg.size[0] * arg.size[1]);
-    coeff.setFromTriplets(tripletList.begin(), tripletList.end());
-    coeff.makeCompressed();
-    coeffs_mats.push_back(coeff);
-    offset += offset_increment;
-  }
-  return coeffs_mats;
+		Matrix coeff(lin.size[0] * lin.size[1], arg.size[0] * arg.size[1]);
+		coeff.setFromTriplets(tripletList.begin(), tripletList.end());
+		coeff.makeCompressed();
+		coeffs_mats.push_back(coeff);
+		offset += offset_increment;
+	}
+	return coeffs_mats;
 }
 
 /******************
@@ -257,38 +256,38 @@ std::vector<Matrix> stack_matrices(LinOp &lin, bool vertical) {
  * sparse matrix operations in build_matrix.
  *
  * Params: LinOp LIN with DATA containing a 2d vector representation of a
- *         matrix. boolean COLUMN
+ * 				 matrix. boolean COLUMN
  *
  * Returns: sparse eigen matrix COEFFS
  *
  */
 Matrix get_constant_data(LinOp &lin, bool column) {
-  Matrix coeffs;
-  if (lin.sparse) {
-    if (column) {
-      coeffs = sparse_reshape_to_vec(lin.sparse_data);
-    } else {
-      coeffs = lin.sparse_data;
-    }
-  } else {
-    if (column) {
-      Eigen::Map<Eigen::MatrixXd> column(lin.dense_data.data(),
-                                         lin.dense_data.rows() *
-                                         lin.dense_data.cols(), 1);
-      coeffs = column.sparseView();
-    } else {
-      coeffs = lin.dense_data.sparseView();
-    }
-  }
-  coeffs.makeCompressed();
-  return coeffs;
+	Matrix coeffs;
+	if (lin.sparse) {
+		if (column) {
+			coeffs = sparse_reshape_to_vec(lin.sparse_data);
+		} else {
+			coeffs = lin.sparse_data;
+		}
+	} else {
+		if (column) {
+			Eigen::Map<Eigen::MatrixXd> column(lin.dense_data.data(),
+			                                   lin.dense_data.rows() *
+			                                   lin.dense_data.cols(), 1);
+			coeffs = column.sparseView();
+		} else {
+			coeffs = lin.dense_data.sparseView();
+		}
+	}
+	coeffs.makeCompressed();
+	return coeffs;
 }
 
 /**
  * Interface for the INDEX linOp to retrieve slice data. Assumes that the
  * INDEX linOp stores slice data in the following format
  *
- *    vector(row_data, col_data),
+ * 		vector(row_data, col_data),
  *
  * where row_data = vector(start_idx, end_idx, step_size) and
  * col_data = vector(start_idx, end_idx, step_size).
@@ -300,59 +299,48 @@ Matrix get_constant_data(LinOp &lin, bool column) {
  * Parameters: linOp LIN with type INDEX and slice data.
  *
  * Returns: a std::vector containing 2 std::vector of ints.
- *          The first vector is the row slice data in the form
- *              (start, end, step_size)
- *          The second the vector is the column slice data in the form
- *              (start, end, step_size)
+ * 					The first vector is the row slice data in the form
+ * 							(start, end, step_size)
+ * 					The second the vector is the column slice data in the form
+ * 							(start, end, step_size)
  */
 std::vector<std::vector<int> > get_slice_data(LinOp &lin, int rows, int cols) {
-  assert(lin.type == INDEX);
-  std::vector<int> row_slice = lin.slice[0];
-  std::vector<int> col_slice = lin.slice[1];
-  assert(row_slice.size() == 3);
-  assert(col_slice.size() == 3);
-
-  if (row_slice[0] < 0) {
-    row_slice[0] = rows + row_slice[0];
-  }
-  if (row_slice[1] < 0) {
-    row_slice[1] = rows + row_slice[1];
-  }
-
-  if (col_slice[0] < 0) {
-    col_slice[0] = cols + col_slice[0];
-  }
-  if (col_slice[1] < 0) {
-    col_slice[1] = cols + col_slice[1];
-  }
-  std::vector<std::vector<int> > slices;
-  slices.push_back(row_slice);
-  slices.push_back(col_slice);
-  return slices;
+	assert(lin.type == INDEX);
+	std::vector<int> row_slice = lin.slice[0];
+	std::vector<int> col_slice = lin.slice[1];
+	assert(row_slice.size() == 3);
+	assert(col_slice.size() == 3);
+  
+	std::vector<std::vector<int> > slices;
+	slices.push_back(row_slice);
+	slices.push_back(col_slice);
+	return slices;
 }
 
 /**
  * Interface for the DIV linOp to retrieve the constant divisor.
  *
- * Parameters: linOp LIN of type DIV with a scalar divisor stored in the 0,0 component of the DENSE_DATA matrix.
+ * Parameters: linOp LIN of type DIV with a scalar divisor stored in the
+ * 							0,0 component of the DENSE_DATA matrix.
  *
  * Returns: scalar divisor
  */
 double get_divisor_data(LinOp &lin) {
-  assert(lin.type == DIV);
-  return lin.dense_data(0, 0);
+	assert(lin.type == DIV);
+	return lin.dense_data(0, 0);
 }
 
 /**
  * Interface for the VARIABLE linOp to retrieve its variable ID.
  *
- * Parameters: linOp LIN of type VARIABLE with a variable ID in the 0,0 component of the DENSE_DATA matrix.
+ * Parameters: linOp LIN of type VARIABLE with a variable ID in the
+ * 							0,0 component of the DENSE_DATA matrix.
  *
  * Returns: integer variable ID
  */
 int get_id_data(LinOp &lin) {
-  assert(lin.type == VARIABLE);
-  return static_cast<int>(lin.dense_data(0, 0));
+	assert(lin.type == VARIABLE);
+	return int(lin.dense_data(0, 0));
 }
 
 /*****************************
@@ -362,39 +350,39 @@ int get_id_data(LinOp &lin) {
  * Return the coefficients for KRON.
  *
  * Parameters: linOp LIN with type KRON
- * Returns: vector containing the coefficient matrix for the Kronecker product.
+ * Returns: vector containing the coefficient matrix for the Kronecker
+ 						product.
  */
 std::vector<Matrix> get_kron_mat(LinOp &lin) {
-  assert(lin.type == KRON);
-  Matrix constant = get_constant_data(lin, false);
-  int lh_rows = constant.rows();
-  int lh_cols = constant.cols();
-  int rh_rows =  lin.args[0]->size[0];
-  int rh_cols =  lin.args[0]->size[1];
+	assert(lin.type == KRON);
+	Matrix constant = get_constant_data(lin, false);
+	int lh_rows = constant.rows();
+	int lh_cols = constant.cols();
+	int rh_rows =  lin.args[0]->size[0];
+	int rh_cols =  lin.args[0]->size[1];
 
-  int rows = rh_rows * rh_cols * lh_rows * lh_cols;
-  int cols = rh_rows * rh_cols;
-  Matrix coeffs(rows, cols);
+	int rows = rh_rows * rh_cols * lh_rows * lh_cols;
+	int cols = rh_rows * rh_cols;
+	Matrix coeffs(rows, cols);
 
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(rh_rows * rh_cols * constant.nonZeros());
-  for ( int k = 0; k < constant.outerSize(); ++k ) {
-    for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
-      int row = (rh_rows * rh_cols * (lh_rows * it.col()))
-                + (it.row() * rh_rows);
-      int col = 0;
-      for (int j = 0; j < rh_cols; j++) {
-        for (int i = 0; i < rh_rows; i++) {
-          tripletList.push_back(Triplet(row + i, col, it.value()));
-          col++;
-        }
-        row += lh_rows * rh_rows;
-      }
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(rh_rows * rh_cols * constant.nonZeros());
+	for ( int k = 0; k < constant.outerSize(); ++k ) {
+		for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
+			int row = (rh_rows * rh_cols * (lh_rows * it.col())) + (it.row() * rh_rows);
+			int col = 0;
+			for(int j = 0; j < rh_cols; j++){
+				for(int i = 0; i < rh_rows; i++) {
+					tripletList.push_back(Triplet(row + i, col, it.value()));
+					col++;
+				}
+				row += lh_rows * rh_rows;
+			}
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -404,8 +392,8 @@ std::vector<Matrix> get_kron_mat(LinOp &lin) {
  * Returns: vector of coefficient matrices for each argument.
  */
 std::vector<Matrix> get_vstack_mat(LinOp &lin) {
-  assert(lin.type == VSTACK);
-  return stack_matrices(lin, true);
+	assert(lin.type == VSTACK);
+	return stack_matrices(lin, true);
 }
 
 /**
@@ -415,8 +403,8 @@ std::vector<Matrix> get_vstack_mat(LinOp &lin) {
  * Returns: vector of coefficient matrices for each argument.
  */
 std::vector<Matrix> get_hstack_mat(LinOp &lin) {
-  assert(lin.type == HSTACK);
-  return stack_matrices(lin, false);
+	assert(lin.type == HSTACK);
+	return stack_matrices(lin, false);
 }
 
 /**
@@ -426,33 +414,33 @@ std::vector<Matrix> get_hstack_mat(LinOp &lin) {
  * to convolution.
  *
  * Parameters: linOp LIN with type CONV. Data should should contain a
- *             column vector that the variables are convolved with.
+ *						 column vector that the variables are convolved with.
  *
  * Returns: vector of coefficients for convolution linOp
  */
 std::vector<Matrix> get_conv_mat(LinOp &lin) {
-  assert(lin.type == CONV);
-  Matrix constant = get_constant_data(lin, false);
-  int rows = lin.size[0];
-  int nonzeros = constant.rows();
-  int cols = lin.args[0]->size[0];
+	assert(lin.type == CONV);
+	Matrix constant = get_constant_data(lin, false);
+	int rows = lin.size[0];
+	int nonzeros = constant.rows();
+	int cols = lin.args[0]->size[0];
 
-  Matrix toeplitz(rows, cols);
+	Matrix toeplitz(rows, cols);
 
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(nonzeros * cols);
-  for (int col = 0; col < cols; col++) {
-    int row_start = col;
-    for ( int k = 0; k < constant.outerSize(); ++k ) {
-      for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
-        int row_idx = row_start + it.row();
-        tripletList.push_back(Triplet(row_idx, col, it.value()));
-      }
-    }
-  }
-  toeplitz.setFromTriplets(tripletList.begin(), tripletList.end());
-  toeplitz.makeCompressed();
-  return build_vector(toeplitz);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(nonzeros * cols);
+	for (int col = 0; col < cols; col++) {
+		int row_start = col;
+		for ( int k = 0; k < constant.outerSize(); ++k ) {
+			for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
+				int row_idx = row_start + it.row();
+				tripletList.push_back(Triplet(row_idx, col, it.value()));
+			}
+		}
+	}
+	toeplitz.setFromTriplets(tripletList.begin(), tripletList.end());
+	toeplitz.makeCompressed();
+	return build_vector(toeplitz);
 }
 
 /**
@@ -464,31 +452,31 @@ std::vector<Matrix> get_conv_mat(LinOp &lin) {
  * Returns: vector of coefficients for upper triangular matrix linOp
  */
 std::vector<Matrix> get_upper_tri_mat(LinOp &lin) {
-  assert(lin.type == UPPER_TRI);
-  int rows = lin.args[0]->size[0];
-  int cols = lin.args[0]->size[1];
+	assert(lin.type == UPPER_TRI);
+	int rows = lin.args[0]->size[0];
+	int cols = lin.args[0]->size[1];
 
-  int entries = lin.size[0];
-  Matrix coeffs(entries, rows * cols);
+	int entries = lin.size[0];
+	Matrix coeffs(entries, rows * cols);
 
-  std::vector<Triplet> tripletList;
-  tripletList.reserve((rows * cols) / 2.0);
-  int count = 0;
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      if (j > i) {
-        // index in the extracted vector
-        int row_idx = count;
-        count++;
-        // index in the original matrix
-        int col_idx = j * rows + i;
-        tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
-      }
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(entries);
+	int count = 0;
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			if (j > i) {
+				// index in the extracted vector
+				int row_idx = count;
+				count++;
+				// index in the original matrix
+				int col_idx = j * rows + i;
+				tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+			}
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -502,23 +490,23 @@ std::vector<Matrix> get_upper_tri_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_diag_matrix_mat(LinOp &lin) {
-  assert(lin.type == DIAG_MAT);
-  int rows = lin.size[0];
+	assert(lin.type == DIAG_MAT);
+	int rows = lin.size[0];
 
-  Matrix coeffs(rows, rows * rows);
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(rows);
-  for (int i = 0; i < rows; i++) {
-    // index in the extracted vector
-    int row_idx = i;
-    // index in the original matrix
-    int col_idx = i * rows + i;
-    tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
-  }
+	Matrix coeffs(rows, rows * rows);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(rows);
+	for (int i = 0; i < rows; i++) {
+		// index in the extracted vector
+		int row_idx = i;
+		// index in the original matrix
+		int col_idx = i * rows + i;
+		tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+	}
 
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -532,22 +520,22 @@ std::vector<Matrix> get_diag_matrix_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_diag_vec_mat(LinOp &lin) {
-  assert(lin.type == DIAG_VEC);
-  int rows = lin.size[0];
+	assert(lin.type == DIAG_VEC);
+	int rows = lin.size[0];
 
-  Matrix coeffs(rows * rows, rows);
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(rows);
-  for (int i = 0; i < rows; i++) {
-    // index in the diagonal matrix
-    int row_idx = i * rows + i;
-    // index in the original vector
-    int col_idx = i;
-    tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	Matrix coeffs(rows * rows, rows);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(rows);
+	for (int i = 0; i < rows; i++) {
+		// index in the diagonal matrix
+		int row_idx = i * rows + i;
+		//index in the original vector
+		int col_idx = i;
+		tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -561,24 +549,24 @@ std::vector<Matrix> get_diag_vec_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_transpose_mat(LinOp &lin) {
-  assert(lin.type == TRANSPOSE);
-  int rows = lin.size[0];
-  int cols = lin.size[1];
+	assert(lin.type == TRANSPOSE);
+	int rows = lin.size[0];
+	int cols = lin.size[1];
 
-  Matrix coeffs(rows * cols, rows * cols);
+	Matrix coeffs(rows * cols, rows * cols);
 
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(rows * cols);
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      int row_idx = rows * j + i;
-      int col_idx = i * cols + j;
-      tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(rows * cols);
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			int row_idx = rows * j + i;
+			int col_idx = i * cols + j;
+			tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -593,59 +581,59 @@ std::vector<Matrix> get_transpose_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_index_mat(LinOp &lin) {
-  assert(lin.type == INDEX);
-  int rows = lin.args[0]->size[0];
-  int cols = lin.args[0]->size[1];
-  Matrix coeffs(lin.size[0] * lin.size[1], rows * cols);
+	assert(lin.type == INDEX);
+	int rows = lin.args[0]->size[0];
+	int cols = lin.args[0]->size[1];
+	Matrix coeffs (lin.size[0] * lin.size[1], rows * cols);
 
-  /* If slice is empty, return empty matrix */
-  if (coeffs.rows() * coeffs.cols() == 0) {
-    return build_vector(coeffs);
-  }
+	/* If slice is empty, return empty matrix */
+	if (coeffs.rows () == 0 ||  coeffs.cols() == 0) {
+		return build_vector(coeffs);
+	}
 
-  std::vector<std::vector<int> > slices = get_slice_data(lin, rows, cols);
+	std::vector<std::vector<int> > slices = get_slice_data(lin, rows, cols);
 
-  /* Row Slice Data */
-  int row_start = slices[0][0];
-  int row_end = slices[0][1];
-  int row_step = slices[0][2];
+	/* Row Slice Data */
+	int row_start = slices[0][0];
+	int row_end = slices[0][1];
+	int row_step = slices[0][2];
 
-  /* Column Slice Data */
-  int col_start = slices[1][0];
-  int col_end = slices[1][1];
-  int col_step = slices[1][2];
+	/* Column Slice Data */
+	int col_start = slices[1][0];
+	int col_end = slices[1][1];
+	int col_step = slices[1][2];
 
-  /* Set the index coefficients by looping over the column selection
-   * first to remain consistent with CVXPY. */
-  std::vector<Triplet> tripletList;
-  int col = col_start;
-  int counter = 0;
-  while (true) {
-    if (col < 0 || col >= cols) {
-      break;
-    }
-    int row = row_start;
-    while (true) {
-      if (row < 0 || row >= rows) {
-        break;
-      }
-      int row_idx = counter;
-      int col_idx = col * rows + row;
-      tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
-      counter++;
-      row += row_step;
-      if ((row_step > 0 && row >= row_end) || (row_step < 0 && row < row_end)) {
-        break;
-      }
-    }
-    col += col_step;
-    if ((col_step > 0 && col >= col_end) || (col_step < 0 && col < col_end)) {
-      break;
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	/* Set the index coefficients by looping over the column selection
+	 * first to remain consistent with CVXPY. */
+	std::vector<Triplet> tripletList;
+	int col = col_start;
+	int counter = 0;
+	while (true) {
+		if (col < 0 || col >= cols) {
+			break;
+		}
+		int row = row_start;
+		while (true) {
+			if (row < 0 || row >= rows) {
+				break;
+			}
+			int row_idx = counter;
+			int col_idx = col * rows + row;
+			tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+			counter++;
+			row += row_step;
+			if ((row_step > 0 && row >= row_end) || (row_step < 0 && row <= row_end)) {
+				break;
+			}
+		}
+		col += col_step;
+		if ((col_step > 0 && col >= col_end) || (col_step < 0 && col <= col_end)) {
+			break;
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -659,22 +647,22 @@ std::vector<Matrix> get_index_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_mul_elemwise_mat(LinOp &lin) {
-  assert(lin.type == MUL_ELEM);
-  Matrix constant = get_constant_data(lin, true);
-  int n = constant.rows();
+	assert(lin.type == MUL_ELEM);
+	Matrix constant = get_constant_data(lin, true);
+	int n = constant.rows();
 
-  // build a giant diagonal matrix
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(n);
-  for ( int k = 0; k < constant.outerSize(); ++k ) {
-    for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
-      tripletList.push_back(Triplet(it.row(), it.row(), it.value()));
-    }
-  }
-  Matrix coeffs(n, n);
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	// build a giant diagonal matrix
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(n);
+	for ( int k = 0; k < constant.outerSize(); ++k ) {
+		for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
+			tripletList.push_back(Triplet(it.row(), it.row(), it.value()));
+		}
+	}
+	Matrix coeffs(n, n);
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -688,32 +676,32 @@ std::vector<Matrix> get_mul_elemwise_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_rmul_mat(LinOp &lin) {
-  assert(lin.type == RMUL);
-  Matrix constant = get_constant_data(lin, false);
-  int rows = constant.rows();
-  int cols = constant.cols();
-  int n = lin.size[0];
+	assert(lin.type == RMUL);
+	Matrix constant = get_constant_data(lin, false);
+	int rows = constant.rows();
+	int cols = constant.cols();
+	int n = lin.size[0];
 
-  Matrix coeffs(cols * n, rows * n);
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(n * constant.nonZeros());
-  for ( int k = 0; k < constant.outerSize(); ++k ) {
-    for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
-      double val = it.value();
+	Matrix coeffs(cols * n, rows * n);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(n * constant.nonZeros());
+	for ( int k = 0; k < constant.outerSize(); ++k ) {
+		for ( Matrix::InnerIterator it(constant, k); it; ++it ) {
+			double val = it.value();
 
-      // each element of CONSTANT occupies an N x N block in the matrix
-      int row_start = it.col() * n;
-      int col_start = it.row() * n;
-      for (int i = 0; i < n; i++) {
-        int row_idx = row_start + i;
-        int col_idx = col_start + i;
-        tripletList.push_back(Triplet(row_idx, col_idx, val));
-      }
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+			// each element of CONSTANT occupies an N x N block in the matrix
+			int row_start = it.col() * n;
+			int col_start = it.row() * n;
+			for (int i = 0; i < n; i++) {
+				int row_idx = row_start + i;
+				int col_idx = col_start + i;
+				tripletList.push_back(Triplet(row_idx, col_idx, val));
+			}
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -727,34 +715,34 @@ std::vector<Matrix> get_rmul_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_mul_mat(LinOp &lin) {
-  assert(lin.type == MUL);
-  Matrix block = get_constant_data(lin, false);
-  int block_rows = block.rows();
-  int block_cols = block.cols();
+	assert(lin.type == MUL);
+	Matrix block = get_constant_data(lin, false);
+	int block_rows = block.rows();
+	int block_cols = block.cols();
 
-  // Don't replicate scalars
-  if (block_rows == 1 && block_cols == 1) {
-    return build_vector(block);
-  }
+	// Don't replicate scalars
+	if(block_rows == 1 && block_cols == 1){
+		return build_vector(block);
+	}
 
-  int num_blocks = lin.size[1];
-  Matrix coeffs(num_blocks * block_rows, num_blocks * block_cols);
+	int num_blocks = lin.size[1];
+	Matrix coeffs (num_blocks * block_rows, num_blocks * block_cols);
 
-  std::vector<Triplet> tripletList;
-  tripletList.reserve(num_blocks * block.nonZeros());
-  for (int curr_block = 0; curr_block < num_blocks; curr_block++) {
-    int start_i = curr_block * block_rows;
-    int start_j = curr_block * block_cols;
-    for ( int k = 0; k < block.outerSize(); ++k ) {
-      for ( Matrix::InnerIterator it(block, k); it; ++it ) {
-        tripletList.push_back(Triplet(start_i + it.row(), start_j + it.col(),
-                                      it.value()));
-      }
-    }
-  }
-  coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(num_blocks * block.nonZeros());
+	for (int curr_block = 0; curr_block < num_blocks; curr_block++) {
+		int start_i = curr_block * block_rows;
+		int start_j = curr_block * block_cols;
+		for ( int k = 0; k < block.outerSize(); ++k ) {
+			for ( Matrix::InnerIterator it(block, k); it; ++it ) {
+				tripletList.push_back(Triplet(start_i + it.row(), start_j + it.col(),
+				                              it.value()));
+			}
+		}
+	}
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -768,11 +756,11 @@ std::vector<Matrix> get_mul_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_promote_mat(LinOp &lin) {
-  assert(lin.type == PROMOTE);
-  int num_entries = lin.size[0] * lin.size[1];
-  Matrix ones = sparse_ones(num_entries, 1);
-  ones.makeCompressed();
-  return build_vector(ones);
+	assert(lin.type == PROMOTE);
+	int num_entries = lin.size[0] * lin.size[1];
+	Matrix ones = sparse_ones(num_entries, 1);
+	ones.makeCompressed();
+	return build_vector(ones);
 }
 
 /**
@@ -786,11 +774,11 @@ std::vector<Matrix> get_promote_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_reshape_mat(LinOp &lin) {
-  assert(lin.type == RESHAPE);
-  Matrix one(1, 1);
-  one.insert(0, 0) = 1;
-  one.makeCompressed();
-  return build_vector(one);
+	assert(lin.type == RESHAPE);
+	Matrix one(1, 1);
+	one.insert(0, 0) = 1;
+	one.makeCompressed();
+	return build_vector(one);
 }
 
 /**
@@ -803,14 +791,14 @@ std::vector<Matrix> get_reshape_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_div_mat(LinOp &lin) {
-  assert(lin.type == DIV);
-  // assumes scalar divisor
-  double divisor = get_divisor_data(lin);
-  int n = lin.size[0] * lin.size[1];
-  Matrix coeffs = sparse_eye(n);
-  coeffs /= divisor;
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	assert(lin.type == DIV);
+	// assumes scalar divisor
+	double divisor = get_divisor_data(lin);
+	int n = lin.size[0] * lin.size[1];
+	Matrix coeffs = sparse_eye(n);
+	coeffs /= divisor;
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -821,12 +809,12 @@ std::vector<Matrix> get_div_mat(LinOp &lin) {
  * Returns: vector containing the coefficient matrix COEFFS
  */
 std::vector<Matrix> get_neg_mat(LinOp &lin) {
-  assert(lin.type == NEG);
-  int n = lin.size[0] * lin.size[1];
-  Matrix coeffs = sparse_eye(n);
-  coeffs *= -1;
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	assert(lin.type == NEG);
+	int n = lin.size[0] * lin.size[1];
+	Matrix coeffs = sparse_eye(n);
+	coeffs *= -1;
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -840,14 +828,14 @@ std::vector<Matrix> get_neg_mat(LinOp &lin) {
  *
  */
 std::vector<Matrix> get_trace_mat(LinOp &lin) {
-  assert(lin.type == TRACE);
-  int rows = lin.args[0]->size[0];
-  Matrix coeffs(1, rows * rows);
-  for (int i = 0; i < rows; i++) {
-    coeffs.insert(0, i * rows + i) = 1;
-  }
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	assert(lin.type == TRACE);
+	int rows = lin.args[0]->size[0];
+	Matrix coeffs (1, rows * rows);
+	for (int i = 0; i < rows; i++) {
+		coeffs.insert(0, i * rows + i) = 1;
+	}
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -859,13 +847,13 @@ std::vector<Matrix> get_trace_mat(LinOp &lin) {
  * Returns: vector containing the coefficient matrix COEFFS
  */
 std::vector<Matrix> get_sum_entries_mat(LinOp &lin) {
-  assert(lin.type == SUM_ENTRIES);
-  // assumes all args have the same size
-  int rows = lin.args[0]->size[0];
-  int cols = lin.args[0]->size[1];
-  Matrix coeffs = sparse_ones(1, rows * cols);
-  coeffs.makeCompressed();
-  return build_vector(coeffs);
+	assert(lin.type == SUM_ENTRIES);
+	// assumes all args have the same size
+	int rows = lin.args[0]->size[0];
+	int cols = lin.args[0]->size[1];
+	Matrix coeffs = sparse_ones(1, rows * cols);
+	coeffs.makeCompressed();
+	return build_vector(coeffs);
 }
 
 /**
@@ -878,16 +866,16 @@ std::vector<Matrix> get_sum_entries_mat(LinOp &lin) {
  * Returns: A vector of length N where each element is a 1x1 matrix
  */
 std::vector<Matrix> get_sum_coefficients(LinOp &lin) {
-  assert(lin.type == SUM);
-  int n = lin.args.size();
-  std::vector<Matrix> coeffs;
-  Matrix scalar(1, 1);
-  scalar.insert(0, 0) = 1;
-  scalar.makeCompressed();
-  for (int i = 0; i < n; i++) {
-    coeffs.push_back(scalar);
-  }
-  return coeffs;
+	assert(lin.type == SUM);
+	int n = lin.args.size();
+	std::vector<Matrix> coeffs;
+	Matrix scalar(1, 1);
+	scalar.insert(0, 0) = 1;
+	scalar.makeCompressed();
+	for (int i = 0; i < n; i++) {
+		coeffs.push_back(scalar);
+	}
+	return coeffs;
 }
 
 /**
@@ -901,16 +889,16 @@ std::vector<Matrix> get_sum_coefficients(LinOp &lin) {
  *
  */
 std::map<int, Matrix> get_variable_coeffs(LinOp &lin) {
-  assert(lin.type == VARIABLE);
-  std::map<int, Matrix> id_to_coeffs;
-  int id = get_id_data(lin);
+	assert(lin.type == VARIABLE);
+	std::map<int, Matrix> id_to_coeffs;
+	int id = get_id_data(lin);
 
-  // create a giant identity matrix
-  int n = lin.size[0] * lin.size[1];
-  Matrix coeffs = sparse_eye(n);
-  coeffs.makeCompressed();
-  id_to_coeffs[id] = coeffs;
-  return id_to_coeffs;
+	// create a giant identity matrix
+	int n = lin.size[0] * lin.size[1];
+	Matrix coeffs = sparse_eye(n);
+	coeffs.makeCompressed();
+	id_to_coeffs[id] = coeffs;
+	return id_to_coeffs;
 }
 
 /**
@@ -925,13 +913,13 @@ std::map<int, Matrix> get_variable_coeffs(LinOp &lin) {
  * Returns: map from CONSTANT_ID to the coefficient matrix COEFFS for LIN.
  */
 std::map<int, Matrix> get_const_coeffs(LinOp &lin) {
-  assert(lin.has_constant_type());
-  std::map<int, Matrix> id_to_coeffs;
-  int id = CONSTANT_ID;
+	assert(lin.has_constant_type());
+	std::map<int, Matrix> id_to_coeffs;
+	int id = CONSTANT_ID;
 
-  // get coeffs as a column vector
-  Matrix coeffs = get_constant_data(lin, true);
-  coeffs.makeCompressed();
-  id_to_coeffs[id] = coeffs;
-  return id_to_coeffs;
+	// get coeffs as a column vector
+	Matrix coeffs = get_constant_data(lin, true);
+	coeffs.makeCompressed();
+	id_to_coeffs[id] = coeffs;
+	return id_to_coeffs;
 }

@@ -47,12 +47,7 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  DENSE_CONST = "DENSE_CONST",
                  SPARSE_CONST = "SPARSE_CONST",
                  NO_OP = "NO_OP",
-                 KRON = "KRON",
-                 EQ = "EQ",
-                 LEQ = "LEQ",
-                 SOC = "SOC",
-                 EXP = "EXP",
-                 SDP = "SDP")
+                 KRON = "KRON")
 
 PARAM = "param"
 CONSTANT_ID = "constant_id"

@@ -62,6 +62,7 @@ setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
+setMethod("is_pwl", "Expression", function(object) { FALSE })
 
 # Sign properties
 setMethod("sign", "Expression", function(x) {
@@ -85,7 +86,26 @@ setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 }
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
 # Slice operators
-setMethod("[", signature(x = "Expression"), function(x, i, j, ..., drop = TRUE) { Index.get_special_slice(x, i, j) })
+setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
+setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(is_vector(x) && size(x)[1] < size(x)[2])
+    Index.get_special_slice(x, NULL, i)   # If only first index given, apply it along longer dimension of vector
+  else
+    Index.get_special_slice(x, i, NULL)
+})
+setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, NULL, j)
+})
+setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, i, j)
+})
+setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  # This follows conventions in Matrix package, but differs from base handling of matrices
+  Index.get_special_slice(x, i, NULL)
+})
+setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  stop("Invalid or unimplemented Expression slice operation")
+})
 
 # Arithmetic operators
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
@@ -181,6 +201,7 @@ setMethod("constants", "Leaf", function(object) { list() })
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
+setMethod("is_pwl", "Leaf", function(object) { TRUE })
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
 setMethod("validate_val", "Leaf", function(object, val) {

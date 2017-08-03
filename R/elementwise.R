@@ -50,6 +50,7 @@ setMethod("is_atom_convex", "Abs", function(object) { TRUE })
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
+setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
 .grad.Abs <- function(object, values) {
   # Grad: +1 if positive, -1 if negative
@@ -98,7 +99,7 @@ setMethod("to_numeric", "Entr", function(object, values) {
   }
   
   x <- values[[1]]
-  results <- xlogy(x, x)
+  results <- -xlogy(x, x)
   
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
@@ -257,7 +258,7 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     M <- create_const(value(M), c(1,1))
   
   # n^2 + 2*M*|s|
-  power_graph <- Power.graph_implementation(list(n), size, list(2, c(1/2, 1/2)))  # TODO: Check last argument is correct nested list
+  power_graph <- Power.graph_implementation(list(n), size, list(2, c(as.bigq(1,2), as.bigq(1,2)) ))  # TODO: Check last argument is correct nested list
   n2 <- power_graph[[1]]
   constr_sq <- power_graph[[2]]
   abs_graph <- Abs.graph_implementation(list(s), size)
@@ -289,8 +290,8 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
 })
 
 setMethod("to_numeric", "KLDiv", function(object, values) {
-  x <- values[[1]]
-  y <- values[[2]]
+  x <- intf_convert_if_scalar(values[[1]])
+  y <- intf_convert_if_scalar(values[[2]])
   
   # TODO: Return Inf outside domain
   xlogy <- function(x, y) {
@@ -449,6 +450,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
@@ -518,6 +520,7 @@ setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
+setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(values)
@@ -551,7 +554,7 @@ setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size
 })
 
 MinElemwise <- function(arg1, arg2, ...) {
-  min_args <- lapply(c(arg1, arg2, list(...)), function(arg) { -as.Constant(arg) })
+  min_args <- lapply(c(list(arg1), list(arg2), list(...)), function(arg) { -as.Constant(arg) })
   -.MaxElemwise(args = min_args)
 }
 
@@ -571,7 +574,7 @@ pos <- Pos
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @aliases Power
 #' @export
-.Power <- setClass("Power", representation(x = "Expression", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
+.Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }

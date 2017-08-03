@@ -176,7 +176,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
 
   # Cached processed data for each solver.
   .reset_cache <- function(object) {
-    for(solver_name in sapply(SOLVERS, name))
+    for(solver_name in names(SOLVERS))
       object@.cached_data[[solver_name]] <- ProblemData()
     object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
     object
@@ -201,6 +201,14 @@ setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
+setMethod("is_qp", "Problem", function(object) {
+  for(c in object@constraints) {
+    if(!(is(c, "EqConstraint") || is_pwl(c@expr)))
+      return(FALSE)
+  }
+  return(is_dcp(object) && is_quadratic(object@objective@expr))
+})
+
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
   canon_constr <- obj_canon[[2]]
@@ -213,13 +221,13 @@ setMethod("canonicalize", "Problem", function(object) {
 setMethod("variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
-  unique(flatten_list(c(vars_, constrs_)))
+  unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
 })
 
 setMethod("parameters", "Problem", function(object) {
   params <- parameters(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { parameters(constr) })
-  unique(flatten_list(c(params, constrs_)))
+  unique(flatten_list(c(params, constrs_)))   # Remove duplicates
 })
 
 setMethod("constants", "Problem", function(object) {
@@ -240,8 +248,8 @@ setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 #  }
 # }
 
-# Problem.register_solve <- function(cls, name, func) {
-#  cls.REGISTERED_SOLVE_METHODS[name] <- func
+# Problem.register_solve <- function(name, func) {
+#  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
@@ -254,7 +262,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   Solver.get_problem_data(SOLVERS[[solver]], objective, constraints, object@.cached_data)
 })
 
-solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
+solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
       print("Problem does not follow DCP rules. Solving a convex relaxation.")
@@ -279,21 +287,44 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
     if(length(object@.separable_problems) > 1)
       .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
   }
-  # sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
   
-  print("Calling CVXcanon")
-  if(is(object@objective, "Minimize")) {
-    sense <- "Minimize"
-    canon_objective <- objective
-  } else {
-    sense <- "Maximize"
-    canon_objective <- neg_expr(objective)  # preserve sense
+  # Choose a solver/check the chosen solver
+  if(missing(solver) || is.null(solver) || is.na(solver))
+    solver <- Solver.choose_solver(constraints)
+  else if(solver %in% names(SOLVERS)) {
+    solver <- SOLVERS[[solver]]
+    validate_solver(solver, constraints)
+  } else
+    stop("Unknown solver")
+  
+  cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+  object@.cached_data <- cached_data
+  sym_data <- cached_data[[name(solver)]]@sym_data
+  # Presolve couldn't solve the problem.
+  if(is.na(sym_data@.presolve_status))
+    results_dict <- Solver.solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
+  # Presolve determined problem was unbounded or infeasible
+  else {
+    results_dict <- list(sym_data@.presolve_status)
+    names(results_dict) <- STATUS
   }
+  object <- .update_problem_state(object, results_dict, sym_data, solver)
+  return(object)
   
-  solve_int(sense, canon_objective, constraints, verbose, ...)
+  # print("Calling CVXcanon")
+  # if(is(object@objective, "Maximize")) {
+  #   sense <- "Maximize"
+  #   canon_objective <- neg_expr(objective)  # preserve sense
+  # } else {
+  #   sense <- "Minimize"
+  #   canon_objective <- objective
+  # }
+  # 
+  # # TODO: Flip the sign of the optimal_value for maximization problems
+  # solve_int(sense, canon_objective, constraints, verbose, ...)
 }
 
-.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSe, warm_start = FALSe, verbose = FALSE, ...) {
+.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
   .solve_problem <- function(problem) {
     result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
     opt_value <- result$optimal_value
@@ -342,6 +373,7 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
 .update_problem_state.Problem <- function(object, results_dict, sym_data, solver) {
   if(results_dict[STATUS] %in% SOLUTION_PRESENT) {
     object <- .save_values(results_dict[PRIMAL], variables(object), sym_data@var_offsets)
+    
     # Not all solvers provide dual variables
     if(EQ_DUAL %in% names(results_dict))
       object <- .save_dual_values(object, results_dict[EQ_DUAL], sym_data@constr_map[EQ], list(EqConstraint))
@@ -355,6 +387,7 @@ solve.Problem <- function(object, solver = ECOS_NAME, ignore_dcp = FALSE, warm_s
     object <- .handle_no_solution(object, results_dict[STATUS])
   else   # Solver failed to solve
     stop("Solver failed. Try another.")
+  
   object@status <- results_dict[STATUS]
   object@solver_stats <- SolverStats(results_dict, solver)
   object
@@ -364,7 +397,8 @@ unpack_results.Problem <- function(object, solve, results_dict) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
   constraints <- canon[[2]]
-  sym_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+  object@.cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+  sym_data <- object@.cached_data[[name(solver)]]@sym_data
   data <- list(sym_data@dims, 0)
   names(data) <- c(DIMS, OFFSET)
   results_dict <- format_results(solver, results_dict, data, object@.cached_data)

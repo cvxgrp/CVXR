@@ -112,7 +112,7 @@ setMethod("value", "Atom", function(object) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value(arg)
-      if(is.na(arg_val) && !is_constant(object))
+      if(any(is.na(arg_val)) && !is_constant(object))
         return(NA)
       else {
         arg_values[[idx]] <- arg_val
@@ -283,15 +283,25 @@ setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 setMethod(".grad", "AffineProd", function(object, values) {
   X <- values[[1]]
   Y <- values[[2]]
+  size11 <- size(object@args[[1]])[1]
+  size22 <- size(object@args[[2]])[2]
   
   DX_rows <- prod(size(object@args[[1]]))
-  cols <- size(object@args[[1]])[1] * size(object@args[[2]])[2]
+  cols <- size11 * size22
   
-  # TODO: Finish AffineProd gradient implementation
+  # DX = [diag(Y11), diag(Y12), ...]
+  #      [diag(Y21), diag(Y22), ...]
+  #      [  ...        ...      ...]
+  DX <- do.call("rbind", apply(Y, 1, function(row) {
+      do.call("cbind", lapply(row, function(x) { sparseMatrix(i = 1:size11, j = 1:size11, x = x) }))
+    }))
+  DY <- bdiag(lapply(1:size22, function(i) { t(X) }))
   list(DX, DY)
 })
 
-.GeoMean <- setClass("GeoMean", representation(x = "Expression", p = "numeric", max_denom = "numeric"),
+.GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
+                                               w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict", 
+                                               cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 geo_mean <- GeoMean
@@ -309,7 +319,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   else
     stop("x must be a row or column vector")
   
-  if(is.na(p))
+  if(any(is.na(p)))
     p <- rep(1, n)
   
   if(length(p) != n)
@@ -339,13 +349,20 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 setMethod("validate_args", "GeoMean", function(object) { })
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.vector(values[[1]])
-  val <- 1.0
-  for(idx in length(values)) {
-    x <- values[[idx]]
-    p <- object@w[idx]
-    val <- val * x^p
+  
+  if("Rmpfr" %in% installed.packages()) {
+    require(Rmpfr)
+    val <- 1.0
+    for(idx in 1:length(values)) {
+      x <- values[[idx]]
+      p <- object@w[idx]
+      val <- val * mpfr(x, getPrec(x))^p
+    }
+    return(asNumeric(val))   # TODO: Handle mpfr objects in the backend later
   }
-  val
+  
+  val <- mapply(function(x, p) { x^p }, values, asNumeric(object@w))
+  Reduce("*", val)
 })
 
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
@@ -413,7 +430,7 @@ setMethod("to_numeric", "LambdaMax", function(object, values) {
 
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
-setMethod("is_atom_convex", "LambdaMax", function(object) { FALSE })
+setMethod("is_atom_convex", "LambdaMax", function(object) { TRUE })
 setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
@@ -581,7 +598,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   
   # sum(exp(x - t)) <= 1
   if(is.na(axis)) {
-    prom_t <- promot(t, size(x))
+    prom_t <- promote(t, size(x))
     expr <- sub_expr(x, prom_t)
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
@@ -712,7 +729,7 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
     max(values[[1]])
   else
-    apply(values[[1]], axis, max)
+    apply(values[[1]], object@axis, max)
 })
 
 setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
@@ -720,6 +737,7 @@ setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
+setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
 .column_grad.MaxEntries <- function(object, value) {
@@ -862,7 +880,7 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     return(0)
   
   if(is.na(object@axis))
-    retval <- p_norm(values[[1]], object@p)
+    retval <- p_norm(values, object@p)
   else
     retval <- apply(values, object@axis, function(x) { p_norm(x, object@p) })
   retval
@@ -873,6 +891,7 @@ setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
+setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(values) })
@@ -987,10 +1006,10 @@ MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
   
   # Inner norms
-  vecnorms <- lapply(1:size(X)[1], function(i) { norm(X[i,], p) })
+  vecnorms <- lapply(1:size(X)[1], function(i) { Norm(X[i,], p) })
   
   # Outer norms
-  Norm(.HStack(args = vecnorms), q)
+  Norm(new("HStack", args = vecnorms), q)
 }
 
 norm1 <- Norm1
@@ -1200,7 +1219,7 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-setMethod("to_numeric", "SigmaMax", function(object, values) { norm(values[[1]], type = "2") })
+setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })
@@ -1248,7 +1267,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
   SigmaMax.graph_implementation(arg_objs, size, data)
 })
 
-.SumLargest <- setClass("SumLargest", representation(x = "Expression", k = "numeric"), 
+.SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"), 
                        validity = function(object) {
                          if(as.integer(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
@@ -1272,7 +1291,7 @@ setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.vector(values[[1]])
   k <- min(object@k, length(value))
-  val_sort <- sort(value, decreasing = FALSE)
+  val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
 })
 

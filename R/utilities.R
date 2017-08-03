@@ -401,9 +401,48 @@ pow_neg <- function(p) {
   list(p/(p-1), c(p, 1-p))
 }
 
+limit_denominator <- function(num, max_denominator = 10^6) {
+  # Adapted from the Python 2.7 fraction library: https://github.com/python/cpython/blob/2.7/Lib/fractions.py
+  if(max_denominator < 1)
+    stop("max_denominator should be at least 1")
+  if(denominator(num) <= max_denominator)
+    return(as.bigq(num))
+  
+  p0 <- 0
+  q0 <- 1
+  p1 <- 1
+  q1 <- 0
+  
+  n <- as.double(numerator(num))
+  d <- as.double(denominator(num))
+  
+  while(TRUE) {
+    a <- floor(n/d)
+    q2 <- q0 + a*q1
+    if(q2 > max_denominator)
+      break
+    
+    p0 <- p1
+    q0 <- q1
+    p1 <- p0 + a*p1
+    q1 <- q2
+    
+    n <- d
+    d <- n - a*d
+  }
+  
+  k <- floor((max_denominator - q0)/q1)
+  bound1 <- as.bigq(p0 + k*p1, q0 + k*q1)
+  bound2 <- as.bigq(p1, q1)
+  if(abs(bound2 - num) <= abs(bound1 - num))
+    return(bound2)
+  else
+    return(bound1)
+}
+
 # Test if num is a positive integer power of 2
 is_power2 <- function(num) {
-  num > 0 && is.whole(log2(num))
+  num > 0 && is.whole(log2(as.double(num)))
 }
 
 # Test if frac is a non-negative dyadic fraction or integer
@@ -428,7 +467,7 @@ is_weight <- function(w) {
   valid_elems <- all(sapply(w, function(v) {
     v >= 0 && (is.whole(v) || is.bigq(v))
   }))
-  valid_elems && sum(w) == 1
+  valid_elems && sum(as.double(w)) == 1
 }
 
 # Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
@@ -460,7 +499,7 @@ fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
     w_frac <- rep(as.bigq(0), length(a))
     for(i in 1:length(a))
       w_frac[i] <- as.bigq(as.double(a[i])/total)
-    if(sum(w_frac) != 1)
+    if(as.double(sum(w_frac)) != 1)     # TODO: Do we need to limit the denominator with gmp?
       w_frac <- make_frac(a, max_denom)
   }
   list(w_frac, dyad_completion(w_frac))
@@ -523,13 +562,15 @@ approx_error <- function(a_orig, w_approx) {
 next_pow2 <- function(n) {
   if(n <= 0) return(1)
   
-  require(R.utils)
-  len <- nchar(intToBin(n))
-  n2 <- bitwShiftL(1, len)
-  if(bitwShiftR(n2, 1) == n)
-    return(n)
-  else
-    return(n2)
+  # require(R.utils)
+  # len <- nchar(intToBin(n))
+  # n2 <- bitwShiftL(1, len)
+  # if(bitwShiftR(n2, 1) == n)
+  #   return(n)
+  # else
+  #   return(n2)
+  p <- log2(as.double(n))
+  return(2^ceiling(p))
 }
 
 # Check that w_dyad is a valid dyadic completion of w
@@ -642,7 +683,16 @@ lower_bound <- function(w_dyad) {
     stop("w_dyad must be a dyadic weight")
   md <- get_max_denom(w_dyad)
   
-  lb1 <- nchar(intToBin(md))-1
+  if(is(md, "bigq") || is(md, "bigz")) {
+    require(bit64)
+    md_int <- as.integer64(asNumeric(md))
+    bstr <- sub("^[0]+", "", as.bitstring(md_int))   # Get rid of leading zeros
+    lb1 <- nchar(bstr)
+    # TODO: Should use formatBin in mpfr, but running into problems with precision
+  } else {
+    require(R.utils)
+    lb1 <- nchar(intToBin(md))-1
+  }
   
   # don't include zero entries
   lb2 <- sum(w_dyad != 0) - 1

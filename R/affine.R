@@ -13,6 +13,7 @@ setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
 setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
+setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 .grad.AffAtom <- function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this
@@ -79,7 +80,10 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
-setMethod("to_numeric", "AddExpression", function(object, values) { Reduce("+", values)  })
+setMethod("to_numeric", "AddExpression", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  Reduce("+", values)
+})
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -154,7 +158,10 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-setMethod("to_numeric", "BinaryOperator", function(object, values) { Reduce(object@op_name, values) })
+setMethod("to_numeric", "BinaryOperator", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  Reduce(object@op_name, values)
+})
 setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #'
@@ -272,7 +279,8 @@ setMethod("validate_args", "Conv", function(object) {
 })
 
 setMethod("to_numeric", "Conv", function(object, values) {
-  convolve(as.vector(values[[1]]), as.vector(values[[2]]))
+  require(signal)
+  conv(as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
 setMethod("size_from_args", "Conv", function(object) {
@@ -463,8 +471,11 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     stop("Must have 0 < lag < number of elements in x")
   
   d <- x
-  for(i in 1:k)
-    d <- d[(1+lag):m] - d[1:(m-lag)]
+  len <- m
+  for(i in 1:k) {
+    d <- d[(1+lag):m,] - d[1:(m-lag),]
+    m <- m-1
+  }
   
   if(axis == 2)
     t(d)
@@ -538,7 +549,14 @@ Index.get_special_slice <- function(expr, row, col) {
   
   idx_mat <- seq(expr_prod)
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
-  select_mat <- idx_mat[row, col]
+  if(is.matrix(row) && is.null(col))
+    select_mat <- idx_mat[row]
+  else if(is.null(row) && !is.null(col))
+    select_mat <- idx_mat[,col]
+  else if(!is.null(row) && is.null(col))
+    select_mat <- idx_mat[row,]
+  else
+    select_mat <- idx_mat[row, col]
   
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
@@ -623,7 +641,11 @@ setMethod("validate_args", "MulElemwise", function(object) {
     stop("The first argument to MulElemwise must be constant.")
 })
 
-setMethod("to_numeric", "MulElemwise", function(object, values) { values[[1]] * values[[2]] })
+setMethod("to_numeric", "MulElemwise", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  values[[1]] * values[[2]]
+})
+
 setMethod("size_from_args", "MulElemwise", function(object) { 
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
@@ -810,7 +832,7 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
   Transpose.graph_implementation(arg_objs, size, data)
 })
 
-.UpperTri <- setClass("UpperTri", representation(expr = "Expression"), contains = "AffAtom")
+.UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {

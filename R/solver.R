@@ -9,26 +9,47 @@ Solver.choose_solver <- function(constraints) {
   else if(length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0)
     return(ECOS_BB())
   # If SDP, defaults to CVXOPT.
-  else if(length(constr_map[[SDP_MAP]]) > 0)
-    return(CVXOPT())
+  else if(length(constr_map[[SDP_MAP]]) > 0) {
+    if("cvxopt" %in% installed.packages()) {
+      require(cvxopt)
+      return(CVXOPT())
+    } else
+      return(SCS())
+  }
   # Otherwise use ECOS
   else
     return(ECOS())
 }
 
 setMethod("validate_solver", "Solver", function(solver, constraints) {
+  # Check the solver is installed.
+  if(!import_solver(solver))
+    stop("The solver ", name(solver), " is not installed.")
+  
+  # Check the solver can solve the problem.
   constr_map <- SymData.filter_constraints(constraints)
-  if(( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver)) ||
-     (length(constr_map[[SDP_MAP]]) > 0 && !sdp_capable(solver)) ||
-     (length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver)) ||
-     (length(constr_map[[SOC_MAP]]) > 0 && !socp_capable(solver)) || 
-     (length(constraints) == 0 && name(solver) %in% c(SCS_NAME, GLPK_NAME)))
-    stop("The solver ", name(solver), " cannot solve the problem")
+  
+  if( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver))
+    Solver._reject_problem(solver, "it cannot solve mixed-integer problems")
+  else if(length(constr_map[[SDP_MAP]]) > 0 && !sdp_capable(solver))
+    Solver._reject_problem(solver, "it cannot solve semidefinite problems")
+  else if(length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver))
+    Solver._reject_problem(solver, "it cannot solve exponential cone problems")
+  else if(length(constr_map[[SOC_MAP]]) > 0 && !socp_capable(solver))
+    Solver._reject_problem(solver, "it cannot solve second-order cone problems")
+  else if(length(constraints) == 0 && name(solver) %in% c("SCS", "GLPK"))
+    Solver._reject_problem(solver, "it cannot solve unconstrained problems")
 })
+
+Solver._reject_problem <- function(solver, reason) {
+  message <- paste("The solver", name(solver), "cannot solve the problem because", reason)
+  stop(message)
+}
 
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
-  if(!is.null(prob_data@sym_data) && (objective != prob_data@sym_data@objective || constraints != prob_data@sym_data@constraints)) {
+  if(!is.null(prob_data@sym_data) && (!isTRUE(all.equal(objective, prob_data@sym_data@objective)) || 
+                                      !isTRUE(all.equal(constraints, prob_data@sym_data@constraints)))) {
     prob_data@sym_data <- NULL
     prob_data@matrix_data <- NULL
   }
@@ -41,20 +62,25 @@ setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cac
   prob_data <- cached_data[[name(solver)]]
   if(is.null(prob_data@sym_data))
     prob_data@sym_data <- SymData(objective, constraints, solver)
-  prob_data@sym_data
+  cached_data[[name(solver)]] <- prob_data
+  cached_data
 })
 
 setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, cached_data) {
-  sym_data <- get_sym_data(solver, objective, constraints, cached_data)
+  cached_data <- get_sym_data(solver, objective, constraints, cached_data)
+  sym_data <- cached_data[[name(solver)]]@sym_data
   prob_data <- cached_data[[name(solver)]]
   if(is.null(prob_data@matrix_data))
     prob_data@matrix_data <- MatrixData(sym_data, solver)
-  prob_data@matrix_data
+  cached_data[[name(solver)]] <- prob_data
+  cached_data
 })
 
 setMethod("Solver.get_problem_data", "Solver", function(solver, objective, constraints, cached_data) {
-  sym_data <- get_sym_data(solver, objective, constraints, cached_data)
-  matrix_data <- get_matrix_data(solver, objective, constraints, cached_data)
+  cached_data <- get_sym_data(solver, objective, constraints, cached_data)
+  sym_data <- cached_data[[name(solver)]]@sym_data
+  cached_data <- get_matrix_data(solver, objective, constraints, cached_data)
+  matrix_data <- cached_data[[name(solver)]]@matrix_data
   
   data <- list()
   obj <- get_objective(matrix_data)
@@ -74,6 +100,8 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data[[INT_IDX]] <- conv_idx$int_idx
   data
 })
+
+setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
 Solver.is_mip <- function(data) {
   length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
@@ -129,17 +157,18 @@ setMethod("status_map", "ECOS", function(solver, status) {
 })
 
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
+setMethod("import_solver", "ECOS", function(solver) { require(ECOSolveR) })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())  
 })
 
-setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(ECOSolveR)
-  data <- get_problem_data(solver, objective, constraints, cached_data)
+  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
-  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]])
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]], control = c(list(VERBOSE = verbose), solver_opts))
   format_results(solver, result_dict, data, cached_data)
 })
 
@@ -149,7 +178,7 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
   new_results[STATUS] <- status
   
   # Timing data
-  new_results[SOLVER_TIME] <- results_dict["info"]["timing"]["tsolve"]
+  new_results[SOLVE_TIME] <- results_dict["info"]["timing"]["tsolve"]
   new_results[SETUP_TIME] <- results_dict["info"]["timing"]["tsetup"]
   new_results[NUM_ITERS] <- results_dict["info"]["iter"]
   
@@ -163,7 +192,7 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
   new_results
 })
 
-setClass("SCS", contains = "Solver")
+setClass("SCS", contains = "ECOS")
 SCS <- function() { new("SCS") }
 
 # SCS capabilities
@@ -186,13 +215,14 @@ setMethod("status_map", "SCS", function(solver, status) {
 })
 
 setMethod("name", "SCS", function(object) { SCS_NAME })
+setMethod("import_solver", "SCS", function(solver) { require(scs) })
 setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
-setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
-  require(SCSolveR)
-  data <- get_problem_data(solver, objective, constraints, cached_data)
+setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+  require(scs)
+  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   
   # Set the options to be VERBOSE plus any user-specific options
   solver_opts["verbose"] <- verbose
@@ -200,14 +230,16 @@ setMethod("cvxr_solve_int", "ECOS", function(solver, objective, constraints, cac
   
   # If warm starting, add old primal and dual variables
   solver_cache <- cached_data[name(solver)]
-  if(warm_start & !is.na(solver_cache@prev_result)) {
+  if(warm_start && !is.na(solver_cache@prev_result)) {
+    stop("Warm start currently unimplemented")
     scs_args["x"] <- solver_cache@prev_result["x"]
     scs_args["y"] <- solver_cache@prev_result["y"]
     scs_args["s"] <- solver_cache@prev_result["s"]
   }
   
-  results_dict <- SCSolveR::SCS_csolve(scs_args, data[DIMS], solver_opts)
-  return(format_results(results_dict, data, cached_data))
+  # results_dict <- do.call(scs::scs, c(scs_args, list(cone = data[[DIMS]]), solver_opts))
+  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], solver_opts)
+  format_results(solver, results_dict, data, cached_data)
 })
 
 setMethod("format_results", "SCS", function(solver, results_dict, data, cached_data) {

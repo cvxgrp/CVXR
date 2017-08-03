@@ -199,7 +199,7 @@ setMethod("size", "SOC", function(object) {
 
 .SDP <- setClass("SDP", representation(A = "ListORExpr", enforce_sym = "logical"),
                        prototype(enforce_sym = TRUE), contains = "Constraint")
-SDP <- function(A, enforce_sym = TRUE, constr_id = NA_real_) { .SDP(A = A, enforce_sym = enforce_sym, constr_id = constr_id) }
+SDP <- function(A, enforce_sym = TRUE, constr_id = NA_integer_) { .SDP(A = A, enforce_sym = enforce_sym, constr_id = constr_id) }
 
 setMethod("as.character", "SDP", function(x) {
   paste("SDP(", x@A, ")", sep = "")

@@ -1,0 +1,5 @@
+# To debug CVXCanon, add -DCVXCANON_DEBUG to PKG_CFLAGS
+
+PKG_CFLAGS=-D_R_INTERFACE_ -I"../inst/include"
+PKG_CPPFLAGS=-D_R_INTERFACE_ -I"../inst/include"
+PKG_CXXFLAGS=-D_R_INTERFACE_ -I"../inst/include"

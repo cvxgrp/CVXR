@@ -14,10 +14,12 @@
 
 // Some useful defines for Matricies/etc.
 
+#ifndef _R_INTERFACE_
+
 #include "../include/Eigen/Sparse"
 #include "../include/Eigen/Core"
 
-#ifdef _R_INTERFACE_
+#else
 
 #include <boost/uuid/uuid.hpp>            // uuid class
 #include <boost/uuid/uuid_generators.hpp> // generators

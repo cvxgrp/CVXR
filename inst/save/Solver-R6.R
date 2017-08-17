@@ -1,12 +1,12 @@
 ## R6Solver class like solver.py in cvxpy
 R6Solver <- R6::R6Class("R6Solver",
                         private = list(
-                            name = NA,
-                            LP_CAPABLE = NA,
-                            SOCP_CAPABLE = NA,
-                            SDP_CAPABLE = NA,
-                            EXP_CAPABLE = NA,
-                            MIP_CAPABLE = NA,
+                            solver_name = NA,
+                            IS_LP_CAPABLE = NA,
+                            IS_SOCP_CAPABLE = NA,
+                            IS_SDP_CAPABLE = NA,
+                            IS_EXP_CAPABLE = NA,
+                            IS_MIP_CAPABLE = NA,
                             reject_problem = function(reason) {
                                 ##Raise an error indicating that the solver cannot solve a problem.
                                 ##Parameters
@@ -38,56 +38,58 @@ R6Solver <- R6::R6Class("R6Solver",
 
                                 list(bool_idx = bool_idx, int_idx = int_idx)
                             }
-                        ),
+                        )
+                       ,
                         active = list(
                             name = function(value) {
                                 if (missing(value)) {
-                                    private$name <- value
+                                    private$solver_name <- value
                                 } else {
-                                    private$name
+                                    private$solver_name
                                 }
                             }
                            ,
                             LP_CAPABLE = function(value) {
                                 if (missing(value)) {
-                                    private$LP_CAPABLE <- value
+                                    private$IS_LP_CAPABLE <- value
                                 } else {
-                                    private$LP_CAPABLE
+                                    private$IS_LP_CAPABLE
                                 }
                             }
                            ,
                             SOCP_CAPABLE = function(value) {
                                 if (missing(value)) {
-                                    private$SOCP_CAPABLE <- value
+                                    private$IS_SOCP_CAPABLE <- value
                                 } else {
-                                    private$SOCP_CAPABLE
+                                    private$IS_SOCP_CAPABLE
                                 }
                             }
                            ,
                             SDP_CAPABLE = function(value) {
                                 if (missing(value)) {
-                                    private$SDP_CAPABLE <- value
+                                    private$IS_SDP_CAPABLE <- value
                                 } else {
-                                    private$SDP_CAPABLE
+                                    private$IS_SDP_CAPABLE
                                 }
                             }
                            ,
                             EXP_CAPABLE = function(value) {
                                 if (missing(value)) {
-                                    private$EXP_CAPABLE <- value
+                                    private$IS_EXP_CAPABLE <- value
                                 } else {
-                                    private$EXP_CAPABLE
+                                    private$IS_EXP_CAPABLE
                                 }
                             }
                            ,
                             MIP_CAPABLE = function(value) {
                                 if (missing(value)) {
-                                    private$MIP_CAPABLE <- value
+                                    private$IS_MIP_CAPABLE <- value
                                 } else {
-                                    private$MIP_CAPABLE
+                                    private$IS_MIP_CAPABLE
                                 }
                             }
-                        ),
+                        )
+                       ,
                         public = list(
                             import_solver = function() {
                                 ## Imports the solver

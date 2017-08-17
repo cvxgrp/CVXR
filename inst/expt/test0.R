@@ -1,28 +1,11 @@
-## d <- Deque$new()
-## d$push_back(1)
-## d$push_back(list(x=1, y=2))
-## d$pop()
-## d
-
-
 library(cvxr)
 
 # Problem data.
-
-
-m <- 3
 n <- 2
-# numpy.random.seed(1)
-# A = numpy.random.randn(m, n)
-# b = numpy.random.randn(m)
-
-A <- matrix(c(1, 2, 3, 4, 2, 1), nrow=m, byrow=TRUE)
-b <- matrix(c(1, 2, 3), nrow=m)
-
+A <- diag(c(1, 1))
 # Construct the problem.
 x <- Variable(n)
-objective <- Minimize(SumSquares(A %*% x - b))
-##objective <- canonicalize(objective)
+objective <- Minimize(SumEntries(A %*% x))
 constraint <- list( 1 <= x)
 prob <- Problem(objective, constraint)
 

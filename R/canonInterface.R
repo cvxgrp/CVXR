@@ -1,43 +1,56 @@
 ## Added format_matrix and set_matrix_data.
 get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
+    cvxCanon <- CVXcanon$new()
     linOps <- lapply(constrs, function(constr) { constr$expr })
     lin_vec <- CVXcanon.LinOpVector$new()
 
-    id_to_col_C <- CVXcanon.IntIntMap$new()
+    ## KLUDGE: Anqi, fix id_to_col to have proper names!
+    if (is.null(names(id_to_col))) names(id_to_col) <- unlist(id_to_col)
+    ## END OF KLUDGE
+
+    id_to_col_C <- id_to_col
+    ## The following ensures that id_to_col_C is an integer vector
+    ## with names retained. This is the C equivalent of map<int, int> in R
+    storage.mode(id_to_col_C) <- "integer"
+
     if (is.na(id_to_col))
         id_to_col <- list()
 
     ## Loading the variable offsets from our R list into a C++ map
-    for (id in names(id_to_col)) {
-        col <- id_to_col[[id]]
-        id_to_col_C[as.integer(id)] <- as.integer(col)
-    }
+
+    ## for (id in names(id_to_col)) {
+    ##     col <- id_to_col[[id]]
+    ##     id_to_col_C$map(key = as.integer(id), value = as.integer(col))
+    ## }
 
     ## This array keeps variables data in scope after build_lin_op_tree returns
     tmp <- R6List$new()
     for (lin in linOps) {
         tree <- build_lin_op_tree(lin, tmp)
         tmp$append(tree)
-        lin_vec.push_back(tree)
+        lin_vec$push_back(tree)
     }
 
     if (is.na(constr_offsets))
-        problemData <- CVXcanon.build_matrix(lin_vec, id_to_col_C)
+        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
     else {
         ## Load constraint offsets into a C++ vector
-        constr_offsets_C <- CVXcanon.IntVector()
-        for (offset in constr_offsets)
-            constr_offsets_C.push_back(as.integer(offset))
-        problemData <- CVXcanon.build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
+        ##constr_offsets_C <- CVXCanon.IntVector$new()
+        ##for (offset in constr_offsets)
+        ##    constr_offsets_C$push_back(as.integer(offset))
+        constr_offsets_C <- constr_offsets
+        storage.mode(constr_offsets_C) <- "integer"
+        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
     }
 
     ## Unpacking
-    V <- problemData.getV(length(problemData.V))
-    I <- problemData.getI(length(problemData.I))
-    J <- problemData.getJ(length(problemData.J))
-    const_vec <- problemData.getConstVec(length(problemData.const_vec))
+    ## V <- problemData$getV()
+    ## I <- problemData$getI()
+    ## J <- problemData$getJ()
+    ## const_vec <- problemData$getConstVec()
 
-    list(V = V, I = I, J = J, const_vec = const_vec.reshape(-1, 1))
+    list(V = problemData$getV(), I = problemData$getI(), J = problemData$getJ(),
+         const_vec = matrix(problemData$getConstVec(), ncol = 1))
 }
 
 format_matrix <- function(matrix, format='dense') {
@@ -78,14 +91,10 @@ set_matrix_data <- function(linC, linR) {
     }
 }
 
-## What does this do?
 set_slice_data <- function(linC, linR) {  ## What does this do?
     for (i in seq_int(length(linR$data))) {
         sl <- linR$data[[i]]
-        #$vec <- CVXcanon.IntVector()
-        vec <- list()
-
-        ## In R this is just a list of int vectors.
+        ## In R this is just a vector of ints
 
         start_idx <- 0
         if (!is.na(sl$start_idx))
@@ -106,10 +115,10 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
             stop_idx <- tmp
         }
 
-        for(var in c(start_idx, stop_idx, step))
-            vec.push_back(var)
-
-        linC.slice.push_back(vec)
+        ##for(var in c(start_idx, stop_idx, step))
+        ##    vec$push_back(var)
+        vec <- c(start_idx, stop_idx, step)
+        linC$slice_push_back(vec)
     }
 }
 

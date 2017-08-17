@@ -1,4 +1,4 @@
-## SCSS class like scs_int.py in cvxpy
+ ## SCSS class like scs_int.py in cvxpy
 SCS_PACKAGE <- "scs"
 
 tri_to_full <- function(lower_tri, n, off_diag_scale = 1.0 / sqrt(2.0)) {
@@ -21,17 +21,17 @@ tri_to_full <- function(lower_tri, n, off_diag_scale = 1.0 / sqrt(2.0)) {
 
 
 SCS <- R6::R6Class("SCS",
-                   inherits = "R6Solver",
+                   inherit = R6Solver,
                    private = list(
                    ),
                    public = list(
                        initialize = function() {
-                           private$name <- "SCS"
-                           private$LP_CAPABLE <- TRUE
-                           private$SOCP_CAPABLE <- TRUE
-                           private$SDP_CAPABLE <- TRUE
-                           private$EXPP_CAPABLE <- TRUE
-                           private$MIP_CAPABLE <- FALSE
+                           private$solver_name <- "SCS"
+                           private$IS_LP_CAPABLE <- TRUE
+                           private$IS_SOCP_CAPABLE <- TRUE
+                           private$IS_SDP_CAPABLE <- TRUE
+                           private$IS_EXP_CAPABLE <- TRUE
+                           private$IS_MIP_CAPABLE <- FALSE
                        }
                       ,
                        import_solver = function() {

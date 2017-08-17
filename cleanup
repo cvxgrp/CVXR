@@ -1,9 +1,4 @@
 #!/bin/sh
 
-(cd src/ecos;
-    if test -f Makefile; then
-       make purge
-    fi)
-
-rm -f config.* autom4te.cache src/ecos.ts src/Makevars
+rm -f src/*.o src/*.so 
 

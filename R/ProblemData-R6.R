@@ -1,172 +1,80 @@
 ## CVXcanon.ProblemData class shadowing CPP class
 CVXcanon.ProblemData <- R6::R6Class("CVXcanon.ProblemData",
                                     private = list(
-                                        pkg = NA,
-                                        myClassName = NA,
                                         ptr = NA
                                     ),
                                     active = list(
                                         V = function(value) {
                                             if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_V",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_V', private$ptr, PACKAGE = "cvxr")
                                             } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_V",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__set_V', private$ptr, value, PACKAGE = "cvxr")
                                             }
                                         }
                                        ,
                                         I = function(value) {
                                             if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_I",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_I', private$ptr, PACKAGE = "cvxr")
                                             } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_I",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__set_I', private$ptr, value, PACKAGE = "cvxr")
                                             }
                                         }
                                        ,
                                         J = function(value) {
                                             if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_J",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_J', private$ptr, PACKAGE = "cvxr")
                                             } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_J",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__set_J', private$ptr, value, PACKAGE = "cvxr")
+                                            }
+                                        }
+                                       ,
+                                        const_vec = function(value) {
+                                            if (missing(value)) {
+                                                .Call('_cvxr_ProblemData__get_const_vec', private$ptr, PACKAGE = "cvxr")
+                                            } else {
+                                                .Call('_cvxr_ProblemData__set_const_vec', private$ptr, value, PACKAGE = "cvxr")
                                             }
                                         }
                                        ,
                                         id_to_col = function(value) {
                                             if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_id_to_col",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_id_to_col', private$ptr, PACKAGE = "cvxr")
+
                                             } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_id_to_col",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__set_id_to_col', private$ptr, value, PACKAGE = "cvxr")
                                             }
                                         }
                                        ,
                                         const_to_row = function(value) {
                                             if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_const_to_row",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_const_to_row', private$ptr, PACKAGE = "cvxr")
                                             } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_const_to_row",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
-                                            }
-                                        }
-                                       ,
-                                        num_constraints = function(value) {
-                                            if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_num_constraints",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
-                                            } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_num_constraints",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
-                                            }
-                                        }
-                                       ,
-                                        vals = function(value) {
-                                            if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_vals",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
-                                            } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_vals",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
-                                            }
-                                        }
-                                       ,
-                                        row_idxs = function(value) {
-                                            if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_row_idxs",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
-                                            } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_row_idxs",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
-                                            }
-                                        }
-                                       ,
-                                        col_ptrs = function(value) {
-                                            if (missing(value)) {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "get_col_ptrs",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
-                                            } else {
-                                                rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                         methodName = "set_col_ptrs",
-                                                                         thisPkg = private$pkg)
-                                                .Call(rcppFn, private$ptr, value, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__set_const_to_row', private$ptr, value, PACKAGE = "cvxr")
                                             }
                                         }
                                     ),
                                     public = list(
-                                        initialize = function() {
-                                            private$pkg <- pkg <- getPackageName()
-                                            private$myClassName <- myClassName <- class(self)[1]
-                                            private$ptr <- .Call(rcppMungedName(cppClassName = rcppClassName,
-                                                                                methodName = "new",
-                                                                                thisPkg = pkg),
-                                                                 PACKAGE = pkg)
+                                        initialize = function(ptr = NULL) {
+                                            private$ptr <- if (is.null(ptr)) {
+                                                               .Call('_cvxr_ProblemData__new', PACKAGE = 'cvxr')
+                                                           } else {
+                                                               ptr
+                                                           }
                                         }
                                        ,
                                         getV = function() {
-                                            rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                     methodName = "getV",
-                                                                     thisPkg = private$pkg)
-                                            .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_V', private$ptr, PACKAGE = "cvxr")
                                         }
                                        ,
                                         getI = function() {
-                                            rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                     methodName = "getI",
-                                                                     thisPkg = private$pkg)
-                                            .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                                .Call('_cvxr_ProblemData__get_I', private$ptr, PACKAGE = "cvxr")
                                         }
                                        ,
                                         getJ = function() {
-                                            rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                     methodName = "getJ",
-                                                                     thisPkg = private$pkg)
-                                            .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                            .Call('_cvxr_ProblemData__get_J', private$ptr, PACKAGE = "cvxr")
                                         }
                                        ,
                                         getConstVec = function() {
-                                            rcppFn <- rcppMungedName(cppClassName = private$myClassName,
-                                                                     methodName = "getConstVec",
-                                                                     thisPkg = private$pkg)
-                                            .Call(rcppFn, private$ptr, PACKAGE = private$pkg)
+                                            .Call('_cvxr_ProblemData__get_const_vec', private$ptr, PACKAGE = "cvxr")
                                         }
                                     ))

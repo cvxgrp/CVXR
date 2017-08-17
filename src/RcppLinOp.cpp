@@ -335,7 +335,7 @@ int LinOp__get_type(SEXP xp) {
 //' Perform a push back operation on the \code{slice} field of LinOp
 //'
 //' @param xp the LinOp Object XPtr
-//' @param intVec an intVector to push back
+//' @param intVec an integer vector to push back
 // [[Rcpp::export]]
 void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec) {
   // grab the object as a XPtr (smart pointer)
@@ -356,10 +356,24 @@ std::vector<std::vector<int> >  LinOp__get_slice(SEXP xp) {
   return ptr->slice;
 }
 
-//' Get the slice field of the LinOp Object
+//' Set the slice field of the LinOp Object
 //'
 //' @param xp the LinOp Object XPtr
+//' @param value a list of integer vectors, e.g. \code{list(1:10, 2L, 11:15)}
 //' @return the value of the slice field of the LinOp Object
+// [[Rcpp::export]]
+void LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > value) {
+  // grab the object as a XPtr (smart pointer)
+  Rcpp::XPtr<LinOp> ptr(xp);
+  // set the result
+  ptr->slice = value;
+}
+
+
+//' Get the id field of the LinOp Object
+//'
+//' @param xp the LinOp Object XPtr
+//' @return the value of the id field of the LinOp Object
 // [[Rcpp::export]]
 std::string LinOp__get_id(SEXP xp) {
   // grab the object as a XPtr (smart pointer)

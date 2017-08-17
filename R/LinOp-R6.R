@@ -44,7 +44,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                           .Call("_cvxr_LinOp__get_sparse_data", private$ptr, PACKAGE = "cvxr")
                                       } else {
                                           ## value should be a dgCMatrix-class
-                                          .Call("_cvxr_LinOp__set_sparse", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_cvxr_LinOp__set_sparse_data", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
@@ -53,7 +53,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                           .Call("_cvxr_LinOp__get_dense_data", private$ptr, PACKAGE = "cvxr")
                                       } else {
                                           ## value should be a matrix
-                                          .Call("_cvxr_LinOp__set_sparse_data", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_cvxr_LinOp__set_dense_data", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
@@ -75,7 +75,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                           .Call("_cvxr_LinOp__get_size", private$ptr, PACKAGE = "cvxr")
                                       } else {
                                           ## value is an integer vector
-                                          .Call("_cvxr_LinOp__set_type", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_cvxr_LinOp__set_size", private$ptr, value, PACKAGE = "cvxr")
                                       }
                                   }
                                  ,
@@ -112,6 +112,11 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   args_push_back = function(R6LinOp) {
                                       private$args$append(R6LinOp)
                                       .Call("_cvxr_LinOp__args_push_back", private$ptr, R6LinOp$getXPtr(), PACKAGE = "cvxr")
+                                  }
+                                 ,
+                                  slice_push_back = function(anIntVector) {
+                                      .Call("_cvxr_LinOp__slice_push_back", private$ptr,
+                                            anIntVector, PACKAGE = "cvxr")
                                   }
                                  ,
                                   getXPtr = function() {

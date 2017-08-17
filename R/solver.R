@@ -25,10 +25,10 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
   # Check the solver is installed.
   if(!import_solver(solver))
     stop("The solver ", name(solver), " is not installed.")
-  
+
   # Check the solver can solve the problem.
   constr_map <- SymData.filter_constraints(constraints)
-  
+
   if( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver))
     Solver._reject_problem(solver, "it cannot solve mixed-integer problems")
   else if(length(constr_map[[SDP_MAP]]) > 0 && !sdp_capable(solver))
@@ -48,7 +48,7 @@ Solver._reject_problem <- function(solver, reason) {
 
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
-  if(!is.null(prob_data@sym_data) && (!isTRUE(all.equal(objective, prob_data@sym_data@objective)) || 
+  if(!is.null(prob_data@sym_data) && (!isTRUE(all.equal(objective, prob_data@sym_data@objective)) ||
                                       !isTRUE(all.equal(constraints, prob_data@sym_data@constraints)))) {
     prob_data@sym_data <- NULL
     prob_data@matrix_data <- NULL
@@ -81,12 +81,12 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   sym_data <- cached_data[[name(solver)]]@sym_data
   cached_data <- get_matrix_data(solver, objective, constraints, cached_data)
   matrix_data <- cached_data[[name(solver)]]@matrix_data
-  
+
   data <- list()
   obj <- get_objective(matrix_data)
   eq <- get_eq_constr(matrix_data)
   ineq <- get_ineq_constr(matrix_data)
-  
+
   data[[C]] <- obj[[1]]
   data[[OFFSET]] <- obj[[2]]
   data[[A]] <- eq[[1]]
@@ -94,7 +94,7 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data[[G]] <- ineq[[1]]
   data[[H]] <- ineq[[2]]
   data[[DIMS]] <- sym_data@dims
-  
+
   conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@var_offsets, sym_data@var_sizes)
   data[[BOOL_IDX]] <- conv_idx$bool_idx
   data[[INT_IDX]] <- conv_idx$int_idx
@@ -113,18 +113,21 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
     size <- var_sizes[var_id]
     offset + seq(1, size[1]*size[2], by = 1)
   })
-  
+
   int_idx <- lapply(dims[INT_IDS], function(var_id) {
     offset <- var_offsets[var_id]
     size <- var_sizes[var_id]
     offset + seq(1, size[1]*size[2], by = 1)
   })
-  
+
   list(bool_idx = bool_idx, int_idx = int_idx)
 }
 
 setClass("ECOS", contains = "Solver")
-ECOS <- function() { new("ECOS") }
+ECOS <- function() {
+    new("ECOS")
+    ##ECOS$new()
+}
 
 # ECOS capabilities
 setMethod("lp_capable", "ECOS", function(solver) { TRUE })
@@ -161,7 +164,7 @@ setMethod("import_solver", "ECOS", function(solver) { require(ECOSolveR) })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
-  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())  
+  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
 setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
@@ -176,12 +179,12 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
   new_results <- list()
   status <- STATUS_MAP(solver, results_dict["info"]["exitFlag"])
   new_results[STATUS] <- status
-  
+
   # Timing data
   new_results[SOLVE_TIME] <- results_dict["info"]["timing"]["tsolve"]
   new_results[SETUP_TIME] <- results_dict["info"]["timing"]["tsetup"]
   new_results[NUM_ITERS] <- results_dict["info"]["iter"]
-  
+
   if(new_results[STATUS] %in% SOLUTION_PRESENT) {
     primal_val <- results_dict['info']['pcost']
     new_results[VALUE] <- primal_val + data[OFFSET]
@@ -193,7 +196,10 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 })
 
 setClass("SCS", contains = "ECOS")
-SCS <- function() { new("SCS") }
+SCS <- function() {
+    new("SCS")
+    ##SCS$new()
+}
 
 # SCS capabilities
 setMethod("lp_capable", "SCS", function(solver) { TRUE })
@@ -223,11 +229,11 @@ setMethod("split_constr", "SCS", function(solver, constr_map) {
 setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   require(scs)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
-  
+
   # Set the options to be VERBOSE plus any user-specific options
   solver_opts["verbose"] <- verbose
   scs_args <- list(c = data[[C]], A = data[[A]], b = data[[B]])
-  
+
   # If warm starting, add old primal and dual variables
   solver_cache <- cached_data[name(solver)]
   if(warm_start && !is.na(solver_cache@prev_result)) {
@@ -236,7 +242,7 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
     scs_args["y"] <- solver_cache@prev_result["y"]
     scs_args["s"] <- solver_cache@prev_result["s"]
   }
-  
+
   # results_dict <- do.call(scs::scs, c(scs_args, list(cone = data[[DIMS]]), solver_opts))
   results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], solver_opts)
   format_results(solver, results_dict, data, cached_data)
@@ -248,12 +254,12 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
   new_results <- list()
   status <- status_map(solver, results_dict["info"]["status"])
   new_results[STATUS] <- status
-  
+
   # Timing and iteration data
   new_results[SOLVER_TIME] <- results_dict["info"]["solveTime"]/1000
   new_results[SETUP_TIME] <- results_dict["info"]["setupTime"]/1000
   new_results[NUM_ITERS] <- results_dict["info"]["iter"]
-  
+
   if(new_results[STATUS] %in% SOLUTION_PRESENT) {
     # Save previous result for possible future warm start
     solver_cache@prev_result <- list(x = results_dict["x"], y = results_dict["y"], s = results_dict["s"])
@@ -261,7 +267,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
     new_results[VALUE] <- primal_val + data[OFFSET]
     new_results[PRIMAL] <- results_dict["x"]
     new_results[EQ_DUAL] <- results_dict["y"][1:dims[EQ_DIM]]
-    
+
     y <- results_dict["y"][(dims[EQ_DIM]+1):length(results_dict["y"])]
     old_sdp_sizes <- sum(sapply(dims[SDP_DIM], function(n) { floor(n*(n+1)/2) }))
     new_sdp_sizes <- sum(dims[SDP_DIM]^2)
@@ -269,7 +275,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
     y_offset <- dims[LEQ_DIM] + sum(dims[SOC_DIM])
     y_true_offset <- y_offset
     y_true[1:y_true_offset] <- y[1:y_offset]
-    
+
     # Expand SDP duals from lower triangular to full matrix, scaling off diagonal entries by 1/sqrt(2)
     for(n in dims[SDP_DIM]) {
       tri <- y[y_offset:(y_offset + floor(n*(n+1)/2))]
@@ -277,7 +283,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
       y_true_offset <- y_true_offset + n^2
       y_offset <- y_offset + floor(n*(n+1)/2)
     }
-    
+
     y_true[(y_true_offset+1):length(y_true)] <-y[(y_offset+1):length(y)]
     new_results[INEQ_DUAL] <- y_true
   } else {

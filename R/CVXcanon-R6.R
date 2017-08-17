@@ -1,9 +1,8 @@
-## Solution class shadowing CPP class
-CVXcanon <- R6::R6Class("CVXcanon.CVXcanon",
+## CVXcanon class shadowing CVXcannon.cpp code, exposing merely the two
+## build_matrix methods
+CVXcanon <- R6::R6Class("CVXcanon",
                         private = list(
-                            pkg = NA,
-                            myClassName = NA,
-                            solution = NA
+                            ptr = NA
                         )
                        ,
                         active = list(
@@ -11,18 +10,31 @@ CVXcanon <- R6::R6Class("CVXcanon.CVXcanon",
                        ,
                         public = list(
                             initialize = function() {
-                                private$pkg <- getPackageName()
-                                private$myClassName <- class(self)[1]
                             }
                            ,
-                            solve = function(sense, objective, constraints, solverOptions) {
-                                pkg <- private$pkg
-                                ptr <- .Call(rcppMungedName(cppClassName = private$myClassName,
-                                                            methodName = "solve",
-                                                            thisPkg = pkg),
-                                             sense, objective$getXPtr(), constraints$getXPtr(),
-                                             solverOptions,
-                                             PACKAGE = pkg)
-                                CVXcanon.Solution$new(ptr)
+                            getXPtr = function() {
+                                private$ptr
+                            }
+                           ,
+                            build_matrix = function(constraints, id_to_col, constr_offsets) {
+                                ## constraints is a vector of Linops (LinOpVector-R6 in R)
+                                ## id_to_col is an integer vector with names that are
+                                ## integers converted to chacracters
+                                ## constr_offsets is a standard integer vector in R
+                                if (missing(constr_offsets)) {
+                                    objPtr <- .Call('_cvxr_build_matrix_0',
+                                                    constraints$getXPtr(),
+                                                    id_to_col,
+                                                    PACKAGE = 'cvxr')
+                                } else {
+                                    objPtr <- .Call('_cvxr_build_matrix_1',
+                                                    constraints$getXPtr(),
+                                                    id_to_col,
+                                                    constr_offsets,
+                                                    PACKAGE = 'cvxr')
+                                }
+                                cat("Instantiating ProblemData-R6", "\n")
+                                ##browser()
+                                CVXcanon.ProblemData$new(objPtr)
                             }
                         ))

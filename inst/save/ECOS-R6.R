@@ -2,17 +2,17 @@
 ECOS_PACKAGE <- "ECOSolveR"
 
 ECOS <- R6::R6Class("ECOS",
-                    inherits = "R6Solver",
+                    inherit = R6Solver,
                     private = list(
                     ),
                     public = list(
                         initialize = function() {
-                            private$name = "ECOS"
-                            private$LP_CAPABLE <- TRUE
-                            private$SOCP_CAPABLE <- TRUE
-                            private$SDP_CAPABLE <- FALSE
-                            private$EXPP_CAPABLE <- TRUE
-                            private$MIP_CAPABLE <- FALSE
+                            private$solver_name <- "ECOS"
+                            private$IS_LP_CAPABLE <- TRUE
+                            private$IS_SOCP_CAPABLE <- TRUE
+                            private$IS_SDP_CAPABLE <- FALSE
+                            private$IS_EXP_CAPABLE <- TRUE
+                            private$IS_MIP_CAPABLE <- FALSE
                         }
                         ,
                         import_solver = function() {

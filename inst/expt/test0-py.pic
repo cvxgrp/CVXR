@@ -1,0 +1,57 @@
+(None,
+  [LinLeqConstr(
+     expr=LinOp(type='sum', size=(2, 1),
+	        args=[ LinOp(type='promote', size=(2, 1),
+		             args=[ LinOp(type='scalar_const', size=(1, 1), args=[], data=1)],
+			     data=None),
+		       LinOp(type='neg', size=(2, 1),
+		             args=[LinOp(type='variable', size=(2, 1), args=[], data=4)],
+			     data=None)
+		     ],
+	        data=None),
+     constr_id=6,
+     size=(2, 1))
+  ]
+)
+
+mm <- list(NA,
+     list(
+         list(
+             expr =
+                 list(
+                     type = 'sum',
+                     size = c(2, 1),
+                     args = list(
+                         list(
+                             type = 'promote',
+                             size = c(2, 1),
+                             args = list(
+                                 list(
+                                     type = 'scalar_const',
+                                     size = c(1, 1),
+                                     args = list(),
+                                     data = 1),
+                                 class = 'LinOp')
+                         ),
+                         data = NULL,
+                         class = 'LinOp')
+                     ),
+             list(
+                 type = 'neg',
+                 size = c(2, 1),
+                 args = list(
+                     list(
+                         type = 'variable',
+                         size = c(2, 1),
+                         args = list(),
+                         data = 5L,
+                         class = 'LinOp')
+                     ),
+                 data = NULL,
+                 class = 'LinOp'),
+             data = NULL,
+             class = 'LinOp'),
+         constr_id = 3L,
+         size = c(2, 1),
+         class = 'LinLeqConstr')
+     )

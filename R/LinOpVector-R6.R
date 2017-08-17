@@ -1,4 +1,4 @@
-## CVXcanon.LinOpVector class shadowing CPP class
+## LinOpVector class shadowing CPP class
 CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                     private = list(
                                         linOps = NA,
@@ -24,7 +24,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                             n <- length(private$linOps)
                                             private$linOps[[n+1]] <- R6LinOp
                                             ## Needs modification by hand for arguments
-                                            .Call("_cvxr_LinOp__push_back", private$ptr , R6LinOp$getXPtr(), PACKAGE = "cvxr")
+                                            .Call("_cvxr_LinOpVector__push_back", private$ptr , R6LinOp$getXPtr(), PACKAGE = "cvxr")
                                         }
                                        ,
                                         toString = function() {
@@ -32,7 +32,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                             result <- paste(result, collapse = ", ")
                                             sprintf("[ %s ]", result)
                                         }
-                                        ,
+                                       ,
                                         print = function() {
                                             print(self$toString())
                                         }

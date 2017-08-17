@@ -7,17 +7,28 @@
 
 using namespace Rcpp;
 
-// CVXcanon__solve
-SEXP CVXcanon__solve(int sense, Rcpp::XPtr<LinOp> objective, Rcpp::XPtr<LinOpVector> constraintsLinOpVector, SEXP solverOptions);
-RcppExport SEXP _cvxr_CVXcanon__solve(SEXP senseSEXP, SEXP objectiveSEXP, SEXP constraintsLinOpVectorSEXP, SEXP solverOptionsSEXP) {
+// build_matrix_0
+SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v);
+RcppExport SEXP _cvxr_build_matrix_0(SEXP xpSEXP, SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type sense(senseSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<LinOp> >::type objective(objectiveSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<LinOpVector> >::type constraintsLinOpVector(constraintsLinOpVectorSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type solverOptions(solverOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(CVXcanon__solve(sense, objective, constraintsLinOpVector, solverOptions));
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_matrix_0(xp, v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// build_matrix_1
+SEXP build_matrix_1(SEXP xp, Rcpp::IntegerVector v1, Rcpp::IntegerVector v2);
+RcppExport SEXP _cvxr_build_matrix_1(SEXP xpSEXP, SEXP v1SEXP, SEXP v2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type v1(v1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type v2(v2SEXP);
+    rcpp_result_gen = Rcpp::wrap(build_matrix_1(xp, v1, v2));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -185,6 +196,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// LinOp__set_slice
+void LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > value);
+RcppExport SEXP _cvxr_LinOp__set_slice(SEXP xpSEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type value(valueSEXP);
+    LinOp__set_slice(xp, value);
+    return R_NilValue;
+END_RCPP
+}
 // LinOp__get_id
 std::string LinOp__get_id(SEXP xp);
 RcppExport SEXP _cvxr_LinOp__get_id(SEXP xpSEXP) {
@@ -239,14 +261,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ProblemData__getV
-std::vector<double> ProblemData__getV(SEXP xp);
-RcppExport SEXP _cvxr_ProblemData__getV(SEXP xpSEXP) {
+// ProblemData__get_V
+std::vector<double> ProblemData__get_V(SEXP xp);
+RcppExport SEXP _cvxr_ProblemData__get_V(SEXP xpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(ProblemData__getV(xp));
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_V(xp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -261,36 +283,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// ProblemData__getConstVec
-std::vector<double> ProblemData__getConstVec(SEXP xp);
-RcppExport SEXP _cvxr_ProblemData__getConstVec(SEXP xpSEXP) {
+// ProblemData__get_I
+std::vector<int> ProblemData__get_I(SEXP xp);
+RcppExport SEXP _cvxr_ProblemData__get_I(SEXP xpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(ProblemData__getConstVec(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ProblemData__set_const_vec
-void ProblemData__set_const_vec(SEXP xp, std::vector<double> cvp);
-RcppExport SEXP _cvxr_ProblemData__set_const_vec(SEXP xpSEXP, SEXP cvpSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type cvp(cvpSEXP);
-    ProblemData__set_const_vec(xp, cvp);
-    return R_NilValue;
-END_RCPP
-}
-// ProblemData__getI
-std::vector<int> ProblemData__getI(SEXP xp);
-RcppExport SEXP _cvxr_ProblemData__getI(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(ProblemData__getI(xp));
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_I(xp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -305,14 +305,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// ProblemData__getJ
-std::vector<int> ProblemData__getJ(SEXP xp);
-RcppExport SEXP _cvxr_ProblemData__getJ(SEXP xpSEXP) {
+// ProblemData__get_J
+std::vector<int> ProblemData__get_J(SEXP xp);
+RcppExport SEXP _cvxr_ProblemData__get_J(SEXP xpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(ProblemData__getJ(xp));
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_J(xp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -324,6 +324,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type jp(jpSEXP);
     ProblemData__set_J(xp, jp);
+    return R_NilValue;
+END_RCPP
+}
+// ProblemData__get_const_vec
+std::vector<double> ProblemData__get_const_vec(SEXP xp);
+RcppExport SEXP _cvxr_ProblemData__get_const_vec(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_const_vec(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ProblemData__set_const_vec
+void ProblemData__set_const_vec(SEXP xp, std::vector<double> cvp);
+RcppExport SEXP _cvxr_ProblemData__set_const_vec(SEXP xpSEXP, SEXP cvpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type cvp(cvpSEXP);
+    ProblemData__set_const_vec(xp, cvp);
     return R_NilValue;
 END_RCPP
 }
@@ -371,70 +393,10 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// Solution__new
-SEXP Solution__new();
-RcppExport SEXP _cvxr_Solution__new() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(Solution__new());
-    return rcpp_result_gen;
-END_RCPP
-}
-// Solution__get_status
-int Solution__get_status(SEXP xp);
-RcppExport SEXP _cvxr_Solution__get_status(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solution__get_status(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Solution__get_optimal_value
-double Solution__get_optimal_value(SEXP xp);
-RcppExport SEXP _cvxr_Solution__get_optimal_value(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solution__get_optimal_value(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Solution__get_primal_values
-std::map<int, Eigen::MatrixXd> Solution__get_primal_values(SEXP xp);
-RcppExport SEXP _cvxr_Solution__get_primal_values(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solution__get_primal_values(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Solution__get_dual_values
-std::map<int, Eigen::MatrixXd> Solution__get_dual_values(SEXP xp);
-RcppExport SEXP _cvxr_Solution__get_dual_values(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solution__get_dual_values(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
-
-RcppExport SEXP _cvxr_LinOp__push_back(SEXP, SEXP);
-RcppExport SEXP _cvxr_LinOp__set_slice(SEXP, SEXP);
-RcppExport SEXP rcppFn(SEXP);
-RcppExport SEXP rcppFn(SEXP, SEXP);
-RcppExport SEXP rcppFn(SEXP);
-RcppExport SEXP rcppFn(SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cvxr_CVXcanon__solve", (DL_FUNC) &_cvxr_CVXcanon__solve, 4},
+    {"_cvxr_build_matrix_0", (DL_FUNC) &_cvxr_build_matrix_0, 2},
+    {"_cvxr_build_matrix_1", (DL_FUNC) &_cvxr_build_matrix_1, 3},
     {"_cvxr_LinOp__new", (DL_FUNC) &_cvxr_LinOp__new, 0},
     {"_cvxr_LinOp__get_sparse", (DL_FUNC) &_cvxr_LinOp__get_sparse, 1},
     {"_cvxr_LinOp__set_sparse", (DL_FUNC) &_cvxr_LinOp__set_sparse, 2},
@@ -450,32 +412,24 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cvxr_LinOp__get_type", (DL_FUNC) &_cvxr_LinOp__get_type, 1},
     {"_cvxr_LinOp__slice_push_back", (DL_FUNC) &_cvxr_LinOp__slice_push_back, 2},
     {"_cvxr_LinOp__get_slice", (DL_FUNC) &_cvxr_LinOp__get_slice, 1},
+    {"_cvxr_LinOp__set_slice", (DL_FUNC) &_cvxr_LinOp__set_slice, 2},
     {"_cvxr_LinOp__get_id", (DL_FUNC) &_cvxr_LinOp__get_id, 1},
     {"_cvxr_LinOpVector__new", (DL_FUNC) &_cvxr_LinOpVector__new, 0},
     {"_cvxr_LinOpVector__push_back", (DL_FUNC) &_cvxr_LinOpVector__push_back, 2},
     {"_cvxr_LinOp_at_index", (DL_FUNC) &_cvxr_LinOp_at_index, 2},
     {"_cvxr_ProblemData__new", (DL_FUNC) &_cvxr_ProblemData__new, 0},
-    {"_cvxr_ProblemData__getV", (DL_FUNC) &_cvxr_ProblemData__getV, 1},
+    {"_cvxr_ProblemData__get_V", (DL_FUNC) &_cvxr_ProblemData__get_V, 1},
     {"_cvxr_ProblemData__set_V", (DL_FUNC) &_cvxr_ProblemData__set_V, 2},
-    {"_cvxr_ProblemData__getConstVec", (DL_FUNC) &_cvxr_ProblemData__getConstVec, 1},
-    {"_cvxr_ProblemData__set_const_vec", (DL_FUNC) &_cvxr_ProblemData__set_const_vec, 2},
-    {"_cvxr_ProblemData__getI", (DL_FUNC) &_cvxr_ProblemData__getI, 1},
+    {"_cvxr_ProblemData__get_I", (DL_FUNC) &_cvxr_ProblemData__get_I, 1},
     {"_cvxr_ProblemData__set_I", (DL_FUNC) &_cvxr_ProblemData__set_I, 2},
-    {"_cvxr_ProblemData__getJ", (DL_FUNC) &_cvxr_ProblemData__getJ, 1},
+    {"_cvxr_ProblemData__get_J", (DL_FUNC) &_cvxr_ProblemData__get_J, 1},
     {"_cvxr_ProblemData__set_J", (DL_FUNC) &_cvxr_ProblemData__set_J, 2},
+    {"_cvxr_ProblemData__get_const_vec", (DL_FUNC) &_cvxr_ProblemData__get_const_vec, 1},
+    {"_cvxr_ProblemData__set_const_vec", (DL_FUNC) &_cvxr_ProblemData__set_const_vec, 2},
     {"_cvxr_ProblemData__get_id_to_col", (DL_FUNC) &_cvxr_ProblemData__get_id_to_col, 1},
     {"_cvxr_ProblemData__set_id_to_col", (DL_FUNC) &_cvxr_ProblemData__set_id_to_col, 2},
     {"_cvxr_ProblemData__get_const_to_row", (DL_FUNC) &_cvxr_ProblemData__get_const_to_row, 1},
     {"_cvxr_ProblemData__set_const_to_row", (DL_FUNC) &_cvxr_ProblemData__set_const_to_row, 2},
-    {"_cvxr_Solution__new", (DL_FUNC) &_cvxr_Solution__new, 0},
-    {"_cvxr_Solution__get_status", (DL_FUNC) &_cvxr_Solution__get_status, 1},
-    {"_cvxr_Solution__get_optimal_value", (DL_FUNC) &_cvxr_Solution__get_optimal_value, 1},
-    {"_cvxr_Solution__get_primal_values", (DL_FUNC) &_cvxr_Solution__get_primal_values, 1},
-    {"_cvxr_Solution__get_dual_values", (DL_FUNC) &_cvxr_Solution__get_dual_values, 1},
-    {"_cvxr_LinOp__push_back",       (DL_FUNC) &_cvxr_LinOp__push_back,       2},
-    {"_cvxr_LinOp__set_slice",       (DL_FUNC) &_cvxr_LinOp__set_slice,       2},
-    {"rcppFn",                       (DL_FUNC) &rcppFn,                       1},
-    {"rcppFn",                       (DL_FUNC) &rcppFn,                       2},
     {NULL, NULL, 0}
 };
 

@@ -20,7 +20,23 @@
 #include "Utils.hpp"
 #include "ProblemData.hpp"
 
+#ifdef _R_INTERFACE_
+
+// Top Level Entry point
+void build_matrix_2(std::vector< LinOp* > constraints,
+		    std::map<int, int> id_to_col,
+		    Rcpp::XPtr<ProblemData> prob_data);
+
+void build_matrix_3(std::vector<LinOp*> constraints,
+		    std::map<int, int> id_to_col,
+		    std::vector<int> constr_offsets,
+		    Rcpp::XPtr<ProblemData> prob_data);
+#else
+
 // Top Level Entry point
 ProblemData build_matrix(std::vector< LinOp* > constraints, std::map<int, int> id_to_col);
 ProblemData build_matrix(std::vector< LinOp* > constraints, std::map<int, int> id_to_col, std::vector<int> constr_offsets);
+
+#endif
+
 #endif

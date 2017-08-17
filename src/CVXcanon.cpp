@@ -206,6 +206,76 @@ int get_total_constraint_length(std::vector<LinOp*> &constraints,
 	return offset_end;
 }
 
+
+#ifdef _R_INTERFACE_
+
+/* function: build_matrix
+*
+* Description: Given a list of linear operations, this function returns a data
+* structure containing a sparse matrix representation of the cone program.
+*
+* Input: std::vector<LinOp *> constraints, our list of constraints represented
+* as a linear operation tree and an Rcpp XPtr to a newly created ProblemData instance,
+* a data structure which contains a sparse representation
+* of the coefficient matrix, a dense representation of the constant vector,
+* and maps containing our mapping from variables, and a map from the rows of our
+* matrix to their corresponding constraint.
+* Output: None
+*
+*/
+void build_matrix_2(std::vector< LinOp* > constraints,
+		    std::map<int, int> id_to_col,
+		    Rcpp::XPtr<ProblemData> prob_data) {
+  int num_rows = get_total_constraint_length(constraints);
+  prob_data->const_vec = std::vector<double> (num_rows, 0);
+  prob_data->id_to_col = id_to_col;
+  int vert_offset = 0;
+  int horiz_offset  = 0;
+  
+  /* Build matrix one constraint at a time */
+  for (unsigned i = 0; i < constraints.size(); i++){
+    LinOp *constr = constraints[i];
+    process_constraint(*constr, prob_data->V, prob_data->I, prob_data->J,
+		       prob_data->const_vec, vert_offset,
+		       prob_data->id_to_col, horiz_offset);
+    prob_data->const_to_row[i] = vert_offset;
+    vert_offset += constr->size[0] * constr->size[1];
+  }
+
+}
+
+/*  See comment above for build_matrix. Requires specification of a vertical
+    offset, VERT_OFFSET, for each constraint in the vector CONSTR_OFFSETS. 
+    
+    Valid CONSTR_OFFSETS assume that a vertical offset is provided for each 
+    constraint and that the offsets are not overlapping. In particular, 
+    the vertical offset for constraint i + the size of constraint i must be
+    less than the vertical offset for constraint i+1.
+*/
+void build_matrix_3(std::vector<LinOp*> constraints,
+		    std::map<int, int> id_to_col,
+		    std::vector<int> constr_offsets,
+		    Rcpp::XPtr<ProblemData> prob_data){
+  
+  /* Function also verifies the offsets are valid */
+  int num_rows = get_total_constraint_length(constraints, constr_offsets);
+  prob_data->const_vec = std::vector<double> (num_rows, 0);
+  prob_data->id_to_col = id_to_col;
+  int horiz_offset  = 0;
+  
+  /* Build matrix one constraint at a time */
+  for (unsigned i = 0; i < constraints.size(); i++){
+    LinOp *constr = constraints[i];
+    int vert_offset = constr_offsets[i];
+    process_constraint(*constr, prob_data->V, prob_data->I, prob_data->J,
+		       prob_data->const_vec, vert_offset,
+		       prob_data->id_to_col, horiz_offset);
+    prob_data->const_to_row[i] = vert_offset;
+  }
+}
+
+#else
+
 /* function: build_matrix
 *
 * Description: Given a list of linear operations, this function returns a data
@@ -230,16 +300,6 @@ ProblemData build_matrix(std::vector< LinOp* > constraints,
 	int horiz_offset  = 0;
 
 	/* Build matrix one constraint at a time */
-#ifdef _R_INTERFACE_
-	for (unsigned i = 0; i < constraints.size(); i++){
-		LinOp *constr = constraints[i];
-		process_constraint(*constr, prob_data.V, prob_data.I, prob_data.J,
-		                   prob_data.const_vec, vert_offset,
-		                   prob_data.id_to_col, horiz_offset);
-		prob_data.const_to_row[i] = vert_offset;
-		vert_offset += constr->size[0] * constr->size[1];
-	}
-#else
 	for (unsigned i = 0; i < constraints.size(); i++){
 		LinOp constr = *constraints[i];
 		process_constraint(constr, prob_data.V, prob_data.I, prob_data.J,
@@ -248,9 +308,9 @@ ProblemData build_matrix(std::vector< LinOp* > constraints,
 		prob_data.const_to_row[i] = vert_offset;
 		vert_offset += constr.size[0] * constr.size[1];
 	}
-#endif
 	return prob_data;
 }
+
 
 /*  See comment above for build_matrix. Requires specification of a vertical
 		offset, VERT_OFFSET, for each constraint in the vector CONSTR_OFFSETS. 
@@ -272,16 +332,6 @@ ProblemData build_matrix(std::vector<LinOp*> constraints,
 	int horiz_offset  = 0;
 
 	/* Build matrix one constraint at a time */
-#ifdef _R_INTERFACE_
-	for (unsigned i = 0; i < constraints.size(); i++){
-		LinOp *constr = constraints[i];
-		int vert_offset = constr_offsets[i];
-		process_constraint(*constr, prob_data.V, prob_data.I, prob_data.J,
-		                   prob_data.const_vec, vert_offset,
-		                   prob_data.id_to_col, horiz_offset);
-		prob_data.const_to_row[i] = vert_offset;
-	}
-#else	
 	for (unsigned i = 0; i < constraints.size(); i++){
 		LinOp constr = *constraints[i];
 		int vert_offset = constr_offsets[i];
@@ -290,6 +340,7 @@ ProblemData build_matrix(std::vector<LinOp*> constraints,
 		                   prob_data.id_to_col, horiz_offset);
 		prob_data.const_to_row[i] = vert_offset;
 	}
-#endif
 	return prob_data;
 }
+
+#endif

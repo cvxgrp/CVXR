@@ -1,0 +1,6 @@
+data returned from get_problem_data is: a data dict with elements
+
+{'A': <0x3 sparse matrix of type '<type 'numpy.float64'>'
+	with 0 stored elements in Compressed Sparse Column format>, 'c': array([ 0.,  0.,  1.]), 'b': array([], dtype=float64), 'G': <7x3 sparse matrix of type '<type 'numpy.float64'>'
+	with 10 stored elements in Compressed Sparse Column format>, 'F': None, 'bool_vars_idx': [], 'h': array([-1., -1.,  1.,  1., -0., -0., -0.]), 'dims': {'q': [5], 's': [], 'f': 0, 'l': 2, 'ep': 0}, 'offset': 0.0, 'int_vars_idx': []}
+	

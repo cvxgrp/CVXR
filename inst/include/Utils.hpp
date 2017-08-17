@@ -14,6 +14,9 @@
 
 // Some useful defines for Matricies/etc.
 
+#ifndef UTILS_H
+#define UTILS_H
+
 #ifndef _R_INTERFACE_
 
 #include "../include/Eigen/Sparse"
@@ -37,3 +40,5 @@ typedef Eigen::Matrix<int, Eigen::Dynamic, 1> Vector;
 typedef Eigen::SparseMatrix<double> Matrix;
 typedef std::map<int, Matrix> CoeffMap;
 typedef Eigen::Triplet<double> Triplet;
+
+#endif

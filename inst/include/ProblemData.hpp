@@ -89,6 +89,11 @@ public:
 			values[i] = const_vec[i];
 		}
 	}
+#ifdef _R_INTERFACE_
+  ~ProblemData() {
+    Rcpp::Rcout << "ProblemData was destroyed!" <<std::endl;
+  }
+#endif
 };
 
 #endif

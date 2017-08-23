@@ -371,7 +371,7 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
 }
 
 .update_problem_state.Problem <- function(object, results_dict, sym_data, solver) {
-  if(results_dict[STATUS] %in% SOLUTION_PRESENT) {
+  if(results_dict[[STATUS]] %in% SOLUTION_PRESENT) {
     object <- .save_values(results_dict[PRIMAL], variables(object), sym_data@var_offsets)
     
     # Not all solvers provide dual variables

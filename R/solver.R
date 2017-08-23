@@ -191,25 +191,25 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   solver_opts[names(other_opts)] <- other_opts
   
   results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]], control = solver_opts)
-  format_results(solver, result_dict, data, cached_data)
+  format_results(solver, results_dict, data, cached_data)
 })
 
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
-  status <- status_map(solver, results_dict["info"]["exitFlag"])
-  new_results[STATUS] <- status
+  status <- status_map(solver, results_dict$retcodes[["exitFlag"]])
+  new_results[[STATUS]] <- status
 
   # Timing data
-  new_results[SOLVE_TIME] <- results_dict["info"]["timing"]["tsolve"]
-  new_results[SETUP_TIME] <- results_dict["info"]["timing"]["tsetup"]
-  new_results[NUM_ITERS] <- results_dict["info"]["iter"]
+  new_results[[SOLVE_TIME]] <- results_dict$timing[["tsolve"]]
+  new_results[[SETUP_TIME]] <- results_dict$timing[["tsetup"]]
+  new_results[[NUM_ITERS]] <- results_dict$retcodes[["iter"]]
 
-  if(new_results[STATUS] %in% SOLUTION_PRESENT) {
-    primal_val <- results_dict['info']['pcost']
-    new_results[VALUE] <- primal_val + data[OFFSET]
-    new_results[PRIMAL] <- results_dict['x']
-    new_results[EQ_DUAL] <- results_dict['y']
-    new_results[INEQ_DUAL] <- results_dict['z']
+  if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+    primal_val <- results_dict$summary[["pcost"]]
+    new_results[[VALUE]] <- primal_val + data[[OFFSET]]
+    new_results[[PRIMAL]] <- results_dict$x
+    new_results[[EQ_DUAL]] <- results_dict$y
+    new_results[[INEQ_DUAL]] <- results_dict$z
   }
   new_results
 })

@@ -59,14 +59,14 @@ PARALLEL = "parallel"
 ROBUST_KKTSOLVER = "robust"
 
 # Map of constraint types
-EQ_MAP = 1
-LEQ_MAP = 2
-SOC_MAP = 3
-SOC_EW_MAP = 4
-SDP_MAP = 5
-EXP_MAP = 6
-BOOL_MAP = 7
-INT_MAP = 8
+EQ_MAP = "1"
+LEQ_MAP = "2"
+SOC_MAP = "3"
+SOC_EW_MAP = "4"
+SDP_MAP = "5"
+EXP_MAP = "6"
+BOOL_MAP = "7"
+INT_MAP = "8"
 
 # Keys in the dictionary of cone dimensions.
 EQ_DIM = "f"
@@ -74,6 +74,7 @@ LEQ_DIM = "l"
 SOC_DIM = "q"
 SDP_DIM = "s"
 EXP_DIM = "ep"
+
 # Keys for non-convex constraints.
 BOOL_IDS = "bool_ids"
 BOOL_IDX = "bool_idx"
@@ -244,6 +245,211 @@ flatten_list <- function(x) {
   y <- list()
   rapply(x, function(x) y <<- c(y,x))
   y
+}
+
+#'
+#' The QuadCoeffExtractor class
+#' 
+#' Given a quadratic expression of size m*n, this class extracts the coefficients 
+#' (Ps, Q, R) such that the (i,j) entry of the expression is given by 
+#' t(X) %*% Ps[[k]] %*% x + Q[k,] %*% x + R[k]
+#' where k = i + j*m. x is the vectorized variables indexed by id_map
+#' 
+setClass("QuadCoeffExtractor", representation(id_map = "list", N = "numeric"))
+
+get_coeffs.QuadCoeffExtractor <- function(object, expr) {
+  if(is_constant(expr))
+    return(.coeffs_constant(object, expr))
+  else if(is_affine(expr))
+    return(.coeffs_affine(object, expr))
+  else if(is(expr, "AffineProd"))
+    return(.coeffs_affine_prod(object, expr))
+  else if(is(expr, "QuadOverLin"))
+    return(.coeffs_quad_over_lin(object, expr))
+  else if(is(expr, "Power"))
+    return(.coeffs_power(object, expr))
+  else if(is(expr, "MatrixFrac"))
+    return(.coeffs_matrix_frac(object, expr))
+  else if(is(expr, "AffAtom"))
+    return(.coeffs_affine_atom(object, expr))
+  else
+    stop("Unknown expression type: ", class(expr))
+}
+
+.coeffs_constant.QuadCoeffExtractor <- function(object, expr) {
+  if(is_scalar(expr)) {
+    sz <- 1
+    R <- matrix(value(expr))
+  } else {
+    sz <- prod(size(expr))
+    R <- matrix(value(expr), nrow = sz)    # TODO: Check if this should be transposed
+  }
+  Ps <- lapply(1:sz, function(i) { sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N)) })
+  Q <- sparseMatrix(i = c(), j = c(), dims = c(sz, object@N))
+  list(Ps, Q, R)
+}
+
+.coeffs_affine.QuadCoeffExtractor <- function(object, expr) {
+  sz <- prod(size(expr))
+  canon <- canonical_form(expr)
+  prob_mat <- canonInterface.get_problem_matrix(list(create_eq(canon[[1]])), object@id_map)
+  
+  V <- prob_mat[[1]]
+  I <- prob_mat[[2]]
+  J <- prob_mat[[3]]
+  R <- prob_mat[[4]]
+  
+  Q <- sparseMatrix(i = I, j = J, x = V, dims = c(sz, object@N))
+  Ps <- lapply(1:sz, function(i) { sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N)) })
+  list(Ps, Q, as.vector(R))   # TODO: Check if R is flattened correctly
+}
+
+.coeffs_affine_prod.QuadCoeffExtractor <- function(object, expr) {
+  XPQR <- .coeffs_affine(expr@args[[1]])
+  YPQR <- .coeffs_affine(expr@args[[2]])
+  Xsize <- size(expr@args[[1]])
+  Ysize <- size(expr@args[[2]])
+  
+  XQ <- XPQR[[2]]
+  XR <- XPQR[[3]]
+  YQ <- YPQR[[2]]
+  YR <- YPQR[[3]]
+  m <- Xsize[1]
+  p <- Xsize[2]
+  n <- Ysize[2]
+  
+  Ps  <- list()
+  Q <- sparseMatrix(i = c(), j = c(), dims = c(m*n, object@N))
+  R <- rep(0, m*n)
+  
+  ind <- 0
+  for(j in 1:n) {
+    for(i in 1:m) {
+      M <- sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N))
+      for(k in 1:p) {
+        Xind <- k*m + i
+        Yind <- j*p + k
+        
+        a <- XQ[Xind,]
+        b <- XR[Xind]
+        c <- YQ[Yind,]
+        d <- YR[Yind]
+        
+        M <- M + t(a) %*% c
+        Q[ind,] <- Q[ind,] + b*c + d*a
+        R[ind] <- R[ind] + b*d
+      }
+      Ps <- c(Ps, Matrix(M, sparse = TRUE))
+      ind <- ind + 1
+    }
+  }
+  list(Ps, Matrix(Q, sparse = TRUE), R)
+}
+
+.coeffs_quad_over_lin.QuadCoeffExtractor <- function(object, expr) {
+  coeffs <- .coeffs_affine(object, expr@args[[1]])
+  A <- coeffs[[2]]
+  b <- coeffs[[3]]
+  
+  P <- t(A) %*% A
+  q <- Matrix(2*t(b) %*% A)
+  r <- sum(b*b)
+  y <- value(expr@args[[2]])
+  list(list(P/y), q/y, r/y)
+}
+
+.coeffs_power.QuadCoeffExtractor <- function(object, expr) {
+  if(expr@p == 1)
+    return(get_coeffs(object, expr@args[[1]]))
+  else if(expr@p == 2) {
+    coeffs <- .coeffs_affine(object, expr@args[[1]])
+    A <- coeffs[[2]]
+    b <- coeffs[[3]]
+    
+    Ps <- lapply(1:nrow(A), function(i) { Matrix(t(A[i,]) %*% A[i,], sparse = TRUE) })
+    Q <- 2*Matrix(diag(b) %*% A, sparse = TRUE)
+    R <- b^2
+    return(list(Ps, Q, R))
+  } else
+    stop("Error while processing Power")
+}
+
+.coeffs_matrix_frac <- function(object, expr) {
+  coeffs <- .coeffs_affine(expr@args[[1]])
+  A <- coeffs[[2]]
+  b <- coeffs[[3]]
+  arg_size <- size(expr@args[[1]])
+  m <- arg_size[1]
+  n <- arg_size[2]
+  Pinv <- solve(value(expr@args[[2]]))
+  
+  M <- sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N))
+  Q <- sparseMatrix(i = c(), j = c(), dims = c(1, object@N))
+  R <- 0
+  
+  for(i in seq(1, m*n, m)) {
+    A2 <- A[i:(i+m),]
+    b2 <- b[i:(i+m)]
+    
+    M <- M + t(A2) %*% Pinv %*% A2
+    Q <- Q + 2*t(A2) %*% (Pinv %*% b2)
+    R <- R + sum(b2 * (Pinv %*% b2))
+  }
+  list(list(Matrix(M, sparse = TRUE)), Matrix(Q, sparse = TRUE), R)
+}
+
+.coeffs_affine_atom <- function(object, expr) {
+  sz <- prod(size(expr))
+  Ps <- lapply(1:sz, function(i) { sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N)) })
+  Q <- sparseMatrix(i = c(), j = c(), dims = c(sz, object@N))
+  Parg <- NA
+  Qarg <- NA
+  Rarg <- NA
+  
+  fake_args <- list()
+  offsets <- list()
+  offset <- 0
+  for(idx in 1:length(expr@args)) {
+    arg <- expr@args[[idx]]
+    if(is_constant(arg))
+      fake_args <- c(fake_args, list(create_const(value(arg), size(arg))))
+    else {
+      coeffs <- get_coeffs(object, arg)
+      if(is.na(Parg)) {
+        Parg <- coeffs[[1]]
+        Qarg <- coeffs[[2]]
+        Rarg <- coeffs[[3]]
+      } else {
+        Parg <- Parg + coeffs[[1]]
+        Qarg <- rbind(Qarg, q)
+        Rarg <- c(Rarg, r)
+      }
+      fake_args <- c(fake_args, list(create_var(size(arg), idx)))
+      offsets[idx] <- offset
+      offset <- offset + prod(size(arg))
+    }
+  }
+  graph <- graph_implementation(expr, fake_args, size(expr), get_data(expr))
+  
+  # Get the matrix representation of the function
+  prob_mat <- canonInterface.get_problem_matrix(list(create_eq(graph[[1]])), offsets)
+  V <- prob_mat[[1]]
+  I <- prob_mat[[2]]
+  J <- prob_mat[[3]]
+  R <- as.vector(prob_mat[[4]])   # TODO: Check matrix is flattened correctly
+  
+  # Return AX + b
+  for(idx in 1:length(V)) {
+    v <- V[idx]
+    i <- I[idx]
+    j <- J[idx]
+    
+    Ps[[i]] <- Ps[[i]] + v*Parg[j]
+    Q[i,] <- Q[i,] + v*Qarg[j,]
+    R[i] <- R[i] + v*Rarg[j]
+  }
+  Ps <- lapply(Ps, function(P) { Matrix(P, sparse = TRUE) })
+  list(Ps, Matrix(Q, sparse = TRUE), R)
 }
 
 #'

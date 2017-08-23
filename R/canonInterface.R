@@ -5,7 +5,7 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     lin_vec <- CVXcanon.LinOpVector$new()
 
     ## KLUDGE: Anqi, fix id_to_col to have proper names!
-    if (is.null(names(id_to_col))) names(id_to_col) <- unlist(id_to_col)
+    # if (is.null(names(id_to_col))) names(id_to_col) <- unlist(id_to_col)
     ## END OF KLUDGE
 
     id_to_col_C <- id_to_col
@@ -14,7 +14,7 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     storage.mode(id_to_col_C) <- "integer"
 
     if (is.na(id_to_col))
-        id_to_col <- list()
+        id_to_col <- c()
 
     ## Loading the variable offsets from our R list into a C++ map
 

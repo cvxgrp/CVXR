@@ -88,7 +88,7 @@ setGeneric("Solver.get_problem_data", function(solver, objective, constraints, c
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
 setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
-setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("Solver.solve") })
+setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { standardGeneric("Solver.solve") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
 # Solver capabilities

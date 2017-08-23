@@ -71,7 +71,7 @@ setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, 
   sym_data <- cached_data[[name(solver)]]@sym_data
   prob_data <- cached_data[[name(solver)]]
   if(is.null(prob_data@matrix_data))
-    prob_data@matrix_data <- MatrixData(sym_data, solver)
+    prob_data@matrix_data <- MatrixData(sym_data, solver)   # TODO: Update this constructor for nonlinear constraints
   cached_data[[name(solver)]] <- prob_data
   cached_data
 })
@@ -93,9 +93,10 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data[[B]] <- eq[[2]]
   data[[G]] <- ineq[[1]]
   data[[H]] <- ineq[[2]]
-  data[[DIMS]] <- sym_data@dims
+  data[[DIMS]] <- sym_data@.dims
 
-  conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@var_offsets, sym_data@var_sizes)
+  conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@.var_offsets, sym_data@.var_sizes)
+  data[[DIMS]] <- conv_idx$dims
   data[[BOOL_IDX]] <- conv_idx$bool_idx
   data[[INT_IDX]] <- conv_idx$int_idx
   data
@@ -108,19 +109,27 @@ Solver.is_mip <- function(data) {
 }
 
 Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
-  bool_idx <- lapply(dims[BOOL_IDS], function(var_id) {
-    offset <- var_offsets[var_id]
-    size <- var_sizes[var_id]
-    offset + seq(1, size[1]*size[2], by = 1)
-  })
+  if(BOOL_IDS %in% names(dims)) {
+    bool_idx <- lapply(dims[[BOOL_IDS]], function(var_id) {
+      offset <- var_offsets[var_id]
+      size <- var_sizes[var_id]
+      offset + seq(1, size[1]*size[2], by = 1)
+    })
+    dims[[BOOL_IDS]] <- NULL
+  } else
+    bool_idx <- list()
 
-  int_idx <- lapply(dims[INT_IDS], function(var_id) {
-    offset <- var_offsets[var_id]
-    size <- var_sizes[var_id]
-    offset + seq(1, size[1]*size[2], by = 1)
-  })
+  if(INT_IDS %in% names(dims)) {
+    int_idx <- lapply(dims[[INT_IDS]], function(var_id) {
+      offset <- var_offsets[var_id]
+      size <- var_sizes[var_id]
+      offset + seq(1, size[1]*size[2], by = 1)
+    })
+    dims[[INT_IDS]] <- NULL
+  } else
+    int_idx <- list()
 
-  list(bool_idx = bool_idx, int_idx = int_idx)
+  list(dims = dims, bool_idx = bool_idx, int_idx = int_idx)
 }
 
 setClass("ECOS", contains = "Solver")
@@ -167,11 +176,18 @@ setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   require(ECOSolveR)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
-  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]], control = c(list(VERBOSE = verbose), solver_opts))
+  
+  # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
+  solver_opts <- ECOSolveR::ecos.control()
+  solver_opts$verbose <- as.integer(verbose)
+  other_opts <- list(...)
+  solver_opts[names(other_opts)] <- other_opts
+  
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]], control = solver_opts)
   format_results(solver, result_dict, data, cached_data)
 })
 
@@ -226,13 +242,13 @@ setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
-setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   require(scs)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
   # Set the options to be VERBOSE plus any user-specific options
   solver_opts["verbose"] <- verbose
-  scs_args <- list(c = data[[C]], A = data[[A]], b = data[[B]])
+  scs_args <- list(A = data[[A]], b = data[[B]], obj = data[[C]])
 
   # If warm starting, add old primal and dual variables
   solver_cache <- cached_data[name(solver)]
@@ -243,8 +259,12 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
     scs_args["s"] <- solver_cache@prev_result["s"]
   }
 
+  solver_opts <- list(...)
   # results_dict <- do.call(scs::scs, c(scs_args, list(cone = data[[DIMS]]), solver_opts))
-  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], solver_opts)
+  if(length(solver_opts) == 0)
+    results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
+  else
+    results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })
 

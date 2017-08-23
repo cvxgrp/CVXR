@@ -7,14 +7,14 @@
 #' @slot constraints A \code{list} of canonicalized constraints.
 #' @slot .constr_map A \code{list} mapping constraint type to a list of constraints.
 #' @slot .dims A \code{list} of the dimensions of the cones.
-#' @slot .var_offsets A \code{list} mapping variable ID to horizontal offset.
+#' @slot .var_offsets A \code{numeric} vector mapping variable ID to horizontal offset.
 #' @slot .var_sizes A \code{list} mapping variable ID to variable dimensions.
 #' @slot .x_length The length of the x vector.
 #' @slot .presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
 #' @aliases SymData
 #' @export
-.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "list", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
-                     prototype(.constr_map = list(), .dims = list(), .var_offsets = list(), .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
+.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "numeric", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
+                     prototype(.constr_map = list(), .dims = list(), .var_offsets = NA_integer_, .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
 
 SymData <- function(objective, constraints, solver) {
   constr_map <- SymData.filter_constraints(constraints)
@@ -106,7 +106,7 @@ SymData.format_for_solver <- function(constr_map, solver) {
   dims[[INT_IDS]]  <- c()
 
   # Formats nonlinear constraints for the solver
-  for(constr_type in names(dims)) {
+  for(constr_type in names(constr_map)) {
     if(!(constr_type %in% c(EQ_MAP, LEQ_MAP))) {
       for(constr in constr_map[[constr_type]]) {
         tmp <- format_constr(constr, constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]], dims, solver)
@@ -137,7 +137,8 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   # Map variable IDs to offsets and size
   var_sizes <- lapply(var_sorted, function(var) { var[[2]] })
   size_prods <- sapply(var_sizes, function(var_size) { prod(var_size) })
-  var_offsets <- as.list(cumsum(c(0, head(size_prods, n = -1))))
+  var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+  names(var_sizes) <- names(var_offsets) <- var_id
   vert_offset <- sum(size_prods)
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
@@ -207,7 +208,7 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, nonlin
 .dummy_constr <- function(object) { list(create_eq(object@sym_data@objective)) }
 
 setMethod("get_objective", "MatrixData", function(object) {
-  mat <- .cache_to_matrix(object, object@.mat_cache)
+  mat <- .cache_to_matrix(object, object@.obj_cache)
   c <- mat[[1]]
   offset <- mat[[2]]
   c <- as.vector(t(c))

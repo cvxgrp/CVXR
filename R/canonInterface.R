@@ -13,7 +13,7 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     ## with names retained. This is the C equivalent of map<int, int> in R
     storage.mode(id_to_col_C) <- "integer"
 
-    if (is.na(id_to_col))
+    if (any(is.na(id_to_col)))
         id_to_col <- c()
 
     ## Loading the variable offsets from our R list into a C++ map

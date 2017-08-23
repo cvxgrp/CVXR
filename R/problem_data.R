@@ -38,8 +38,8 @@ SymData <- function(objective, constraints, solver) {
 
 SymData.filter_constraints <- function(constraints) {
   constr_map <- list()
-  constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "EqConstraint") })]
-  constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "LeqConstraint") })]
+  constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinEqConstr" })]
+  constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinLeqConstr" })]
   constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
   constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
   constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
@@ -51,7 +51,14 @@ SymData.filter_constraints <- function(constraints) {
 SymData.presolve <- function(objective, constr_map) {
   # Remove redundant constraints
   constr_map <- lapply(constr_map, function(constraints) {
-      constr_ids <- sapply(constraints, function(c) { c@constr_id })
+      constr_ids <- sapply(constraints, function(c) {
+        if(is(c, "Constraint")) 
+          c@constr_id 
+        else if(is.list(c) && !is.null(c$constr_id)) 
+          c$constr_id
+        else
+          stop("Invalid constraint class ", class(c))
+        })
       constraints[!duplicated(constr_ids)]
   })
 
@@ -82,7 +89,7 @@ SymData.presolve <- function(objective, constr_map) {
         if((key == EQ_MAP && !(is_pos && is_neg)) || (key == LEQ_MAP && !is_neg))
           return(list(constr_map = constr_map, status = INFEASIBLE))
       } else
-        new_constraints <- c(new_constraints, constr)
+        new_constraints <- c(new_constraints, list(constr))
     }
     constr_map[[key]] <- new_constraints
   }
@@ -92,7 +99,7 @@ SymData.presolve <- function(objective, constr_map) {
 SymData.format_for_solver <- function(constr_map, solver) {
   dims <- list()
   if(length(constr_map[[EQ_MAP]]) > 0)
-    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]],  function(c) { prod(size(c)) }))
+    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]], function(c) { prod(size(c)) }))
   else
     dims[[EQ_DIM]] <- 0
   if(length(constr_map[[LEQ_MAP]]) > 0)
@@ -160,6 +167,7 @@ reset_param_data <- function(object) {
   object
 }
 
+# TODO: Incorporate matrix_intf and vec_intf for each solver
 .MatrixData <- setClass("MatrixData", representation(sym_data = "SymData", solver = "Solver", nonlin = "logical", .obj_cache = "MatrixCache", .eq_cache = "MatrixCache", .ineq_cache = "MatrixCache"),
                         prototype(.obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL), validity = function(object) {
                           if(!is.null(object@.obj_cache))
@@ -287,11 +295,13 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   Ip <- param_coo_tup[[2]]
   Jp <- param_coo_tup[[3]]
 
-  if(length(V) + length(Vp) > 0) {
-    mat <- sparseMatrix(i = I + Ip, j = J + Jp, x = V + Vp, dims = c(rows, cols))
-    mat <- as.matrix(mat)
+  if((length(V) + length(Vp)) > 0) {
+    # TODO: R uses 1-indexing, but get_problem_matrix in canonInterface returns with 0-indexing
+    mat <- sparseMatrix(i = c(I, Ip) + 1, j = c(J, Jp) + 1, x = c(V, Vp), dims = c(rows, cols))
+    # mat <- as.matrix(mat)
   } else   # Empty matrix
-    mat <- matrix(0, nrow = rows, ncol = cols)
+    # mat <- matrix(0, nrow = rows, ncol = cols)
+    mat <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
 
   # Convert 2D ND arrays to 1D
   combo_vec <- mat_cache@const_vec + param_cache@const_vec

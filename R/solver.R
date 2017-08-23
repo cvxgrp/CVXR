@@ -182,6 +182,9 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
   
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
+  if(prod(dim(data[[G]])) == 0) data[[G]] <- NULL
+  if(prod(dim(data[[A]])) == 0) data[[A]] <- NULL
+  data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
   solver_opts <- ECOSolveR::ecos.control()
   solver_opts$verbose <- as.integer(verbose)
   other_opts <- list(...)
@@ -193,7 +196,7 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
 
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
-  status <- STATUS_MAP(solver, results_dict["info"]["exitFlag"])
+  status <- status_map(solver, results_dict["info"]["exitFlag"])
   new_results[STATUS] <- status
 
   # Timing data

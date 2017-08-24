@@ -1,4 +1,9 @@
-setClass("Constraint", representation(constr_id = "integer"), prototype(constr_id = get_id()), contains = "VIRTUAL")
+setClass("Constraint", representation(constr_id = "integer"), contains = "VIRTUAL")
+
+setMethod("initialize", "Constraint", function(.Object, constr_id = get_id()) {
+  .Object@constr_id <- constr_id
+  .Object
+})
 
 .BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),
                                       prototype(.noncvx_var = NULL),

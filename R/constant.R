@@ -87,7 +87,7 @@ get_sign <- function(constant) {
 #' @aliases Parameter
 #' @export
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
-                                    prototype(id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
+                                    prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
                       validity = function(object) {
                         if(!(object@sign_str %in% SIGN_STRINGS))
                           stop("[Sign: validation] sign_str must be in ", paste(SIGN_STRINGS, collapse = ", "))

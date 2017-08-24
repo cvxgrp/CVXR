@@ -250,24 +250,24 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
   # Set the options to be VERBOSE plus any user-specific options
-  solver_opts["verbose"] <- verbose
-  scs_args <- list(A = data[[A]], b = data[[B]], obj = data[[C]])
+  solver_opts <- list(...)
+  solver_opts$verbose <- verbose
+  scs_args <- list(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
 
   # If warm starting, add old primal and dual variables
   solver_cache <- cached_data[name(solver)]
-  if(warm_start && !is.na(solver_cache@prev_result)) {
+  if(warm_start && !is.na(solver_cache$prev_result)) {
     stop("Warm start currently unimplemented")
-    scs_args["x"] <- solver_cache@prev_result["x"]
-    scs_args["y"] <- solver_cache@prev_result["y"]
-    scs_args["s"] <- solver_cache@prev_result["s"]
+    scs_args$x <- solver_cache$prev_result$x
+    scs_args$y <- solver_cache$prev_result$y
+    scs_args$s <- solver_cache$prev_result$s
   }
 
-  solver_opts <- list(...)
-  # results_dict <- do.call(scs::scs, c(scs_args, list(cone = data[[DIMS]]), solver_opts))
-  if(length(solver_opts) == 0)
-    results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
-  else
-    results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], control = solver_opts)
+  results_dict <- do.call(scs::scs, c(scs_args, list(control = solver_opts)))
+  # if(length(solver_opts) == 0)
+  #  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
+  # else
+  #  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })
 
@@ -275,43 +275,51 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
   solver_cache <- cached_data[name(solver)]
   dims <- data[[DIMS]]
   new_results <- list()
-  status <- status_map(solver, results_dict["info"]["status"])
-  new_results[STATUS] <- status
+  status <- status_map(solver, results_dict$info$status)
+  new_results[[STATUS]] <- status
 
   # Timing and iteration data
-  new_results[SOLVER_TIME] <- results_dict["info"]["solveTime"]/1000
-  new_results[SETUP_TIME] <- results_dict["info"]["setupTime"]/1000
-  new_results[NUM_ITERS] <- results_dict["info"]["iter"]
+  new_results[[SOLVE_TIME]] <- results_dict$info$solveTime/1000
+  new_results[[SETUP_TIME]] <- results_dict$info$setupTime/1000
+  new_results[[NUM_ITERS]] <- results_dict$info$iter
 
-  if(new_results[STATUS] %in% SOLUTION_PRESENT) {
+  if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
     # Save previous result for possible future warm start
-    solver_cache@prev_result <- list(x = results_dict["x"], y = results_dict["y"], s = results_dict["s"])
-    primal_val <- results_dict["info"]["pobj"]
-    new_results[VALUE] <- primal_val + data[OFFSET]
-    new_results[PRIMAL] <- results_dict["x"]
-    new_results[EQ_DUAL] <- results_dict["y"][1:dims[EQ_DIM]]
+    solver_cache$prev_result <- list(x = results_dict$x, y = results_dict$y, s = results_dict$s)
+    primal_val <- results_dict$info$pobj
+    new_results[[VALUE]] <- primal_val + data[[OFFSET]]
+    new_results[[PRIMAL]] <- results_dict$x
+    new_results[[EQ_DUAL]] <- results_dict$y[1:dims[[EQ_DIM]]]
 
-    y <- results_dict["y"][(dims[EQ_DIM]+1):length(results_dict["y"])]
-    old_sdp_sizes <- sum(sapply(dims[SDP_DIM], function(n) { floor(n*(n+1)/2) }))
-    new_sdp_sizes <- sum(dims[SDP_DIM]^2)
-    y_true <- rep(0, y@shape[1] + (new_sdp_sizes - old_sdp_sizes))
-    y_offset <- dims[LEQ_DIM] + sum(dims[SOC_DIM])
+    y <- results_dict$y[(dims[[EQ_DIM]]+1):length(results_dict$y)]
+    if(is.null(dims[[SDP_DIM]])) {
+      old_sdp_sizes <- 0
+      new_sdp_sizes <- 0
+    } else {
+      old_sdp_sizes <- sum(floor(dims[[SDP_DIM]] * (dims[[SDP_DIM]] + 1)/2))
+      new_sdp_sizes <- sum(dims[[SDP_DIM]]^2)
+    }
+    if(is.null(dims[[SOC_DIM]]))
+      y_offset <- dims[[LEQ_DIM]]
+    else
+      y_offset <- dims[[LEQ_DIM]] + sum(dims[[SOC_DIM]])
+    y_true <- rep(0, length(y) + (new_sdp_sizes - old_sdp_sizes))
     y_true_offset <- y_offset
     y_true[1:y_true_offset] <- y[1:y_offset]
 
     # Expand SDP duals from lower triangular to full matrix, scaling off diagonal entries by 1/sqrt(2)
-    for(n in dims[SDP_DIM]) {
+    for(n in dims[[SDP_DIM]]) {
       tri <- y[y_offset:(y_offset + floor(n*(n+1)/2))]
       y_true[y_true_offset:(y_true_offset + n^2)] <- SCS.tri_to_full(tri, n)
       y_true_offset <- y_true_offset + n^2
       y_offset <- y_offset + floor(n*(n+1)/2)
     }
 
-    y_true[(y_true_offset+1):length(y_true)] <-y[(y_offset+1):length(y)]
-    new_results[INEQ_DUAL] <- y_true
+    y_true[y_true_offset:length(y_true)] <- y[y_offset:length(y)]
+    new_results[[INEQ_DUAL]] <- y_true
   } else {
     # No result to save
-    solver_cache@prev_result <- NA
+    solver_cache$prev_result <- NULL
   }
   return(new_results)
 })
@@ -330,6 +338,20 @@ SCS.tri_to_full <- function(lower_tri, n) {
     }
   }
   return(matrix(full, nrow = n^2))
+}
+
+setClass("ECOS_BB", contains = "ECOS")
+ECOS_BB <- function() {
+  stop("Unimplemented solver")
+  new("ECOS_BB")
+  ##ECOS_BB$new()
+}
+
+setClass("CVXOPT", contains = "Solver")
+CVXOPT <- function() {
+  stop("Unimplemented solver")
+  new("CVXOPT")
+  ##CVXOPT$new()
 }
 
 #'

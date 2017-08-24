@@ -85,6 +85,9 @@ setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
+setMethod("nrow", "Expression", function(x) { size(x)[1] })
+setMethod("ncol", "Expression", function(x) { size(x)[2] })
+
 # Slice operators
 setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {

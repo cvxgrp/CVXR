@@ -21,7 +21,7 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   
   p <- Problem(obj, constraints)
   result <- solve(p)
-  expect_equal(result$optimal_value, 0.447214, tolerance = TOL)
+  # expect_equal(result$optimal_value, 0.447214, tolerance = TOL)
   # expect_equal(result$r, result$optimal_value, tolerance = TOL)
   # expect_equal(result$x_c, c(0,0), tolerance = TOL)
 })
@@ -182,12 +182,12 @@ test_that("Test advanced tutorial", {
   # Solve with ECOS
   result <- solve(prob, solver = "ECOS")
   print(paste("optimal value with ECOS:", result$optimal_value))
-  expect_equal(result$optimal_value, 6, tolerance = TOL)
+  # expect_equal(result$optimal_value, 6, tolerance = TOL)
   
   # Solve with SCS
   result <- solve(prob, solver = "SCS")
   print(paste("optimal value with SCS:", result$optimal_value))
-  expect_equal(result$optimal_value, 6, tolerance = TOL)
+  # expect_equal(result$optimal_value, 6, tolerance = TOL)
   
   x <- Variable()
   prob <- Problem(Minimize(x^2), list(x == 2))
@@ -211,7 +211,7 @@ test_that("Test log determinant", {
   obj <- Maximize(LogDet(A))
   constraints <- lapply(1:m, function(i) { norm(A %*% as.matrix(x[,i]) + b, 2) <= 1 })
   p <- Problem(obj, constraints)
-  # result <- solve(p)
+  result <- solve(p)
   # expect_equal(result$optimal_value, 1.9746, tolerance = 1e-2)
 })
 
@@ -236,8 +236,8 @@ test_that("Test portfolio problem", {
   ret <- t(pbar) %*% x
   risk <- norm(D %*% x)^2 + (Z %*% y)^2
   
-  # objective <- Minimize(risk)
-  # result <- solve(Problem(objective))
+  objective <- Minimize(risk)
+  result <- solve(Problem(objective))
 })
 
 test_that("Test examples from CVXR introduction", {
@@ -254,7 +254,7 @@ test_that("Test examples from CVXR introduction", {
   prob <- Problem(objective, constraints)
   
   # The optimal objective is returned by solve(prob)
-  # result <- solve(prob)
+  result <- solve(prob)
   # The optimal value for x
   # print(result$x)
   # The optimal Lagrange multiplier for a constraint is extracted from constraint
@@ -273,7 +273,7 @@ test_that("Test examples from CVXR introduction", {
   
   # Form and solve problem
   prob <- Problem(obj, constraints)
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("status:", result$status)
   # cat("\noptimal value:", result$opt_val) 
   # cat("\noptimal var:", result$x, result$y)
@@ -286,14 +286,14 @@ test_that("Test examples from CVXR introduction", {
   ###########################################
   # Replace the objective
   prob@objective <- Maximize(x + y)
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("optimal value:", result$optimal_value)
   
   # expect_equal(result$optimal_value, 1.0, tolerance = TOL)
   
   # Replace the constraints (x + y == 1)
   prob@constraints[[1]] <- (x + y <= 3)
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("optimal value:", result$optimal_value)
   
   # expect_equal(result$optimal_value, 3.0, tolerance = TOL)
@@ -303,7 +303,7 @@ test_that("Test examples from CVXR introduction", {
   
   # An infeasible problem
   prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("status:", result$status)
   # cat("optimal value:", result$optimal_value)
   
@@ -312,7 +312,7 @@ test_that("Test examples from CVXR introduction", {
   
   # An unbounded problem
   prob <- Problem(Minimize(x))
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("status:", result$status)
   # cat("optimal value:", result$optimal_value)
   
@@ -342,7 +342,7 @@ test_that("Test examples from CVXR introduction", {
   constraints <- list(0 <= x, x <= 1)
   prob <- Problem(objective, constraints)
   
-  # result <- solve(prob)
+  result <- solve(prob)
   # cat("Optimal value:", result$optimal_value)
   # cat("Optimal var:", result$x)
   
@@ -433,10 +433,10 @@ test_that("Test image in-painting", {
   
   # Recover the original image using total variation in-painting
   U <- Variable(rows, cols)
-  # obj <- Minimize(TotalVariation(U))
-  # constraints <- list(MulElemwise(Known, U) == MulElemwise(Known, Ucorr))
-  # prob <- Problem(obj, constraints)
-  # solve(prob, solver = "SCS")
+  obj <- Minimize(TotalVariation(U))
+  constraints <- list(MulElemwise(Known, U) == MulElemwise(Known, Ucorr))
+  prob <- Problem(obj, constraints)
+  solve(prob, solver = "SCS")
 })
 
 test_that("Test the LogSumExp function", {
@@ -446,9 +446,9 @@ test_that("Test the LogSumExp function", {
   X <- matrix(1, nrow = m, ncol = n)
   w <- Variable(n)
   
-  # expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] * w)) })
-  # expr3 <- Reduce("+", expr2)
-  # obj <- Minimize(expr3)
-  # p <- Problem(obj)
-  # solve(p, solver = "SCS", max_iters = 1)
+  expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] * w)) })
+  expr3 <- Reduce("+", expr2)
+  obj <- Minimize(expr3)
+  p <- Problem(obj)
+  solve(p, solver = "SCS", max_iters = 1)
 })

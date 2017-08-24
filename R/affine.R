@@ -280,7 +280,7 @@ setMethod("validate_args", "Conv", function(object) {
 
 setMethod("to_numeric", "Conv", function(object, values) {
   require(signal)
-  conv(as.vector(values[[1]]), as.vector(values[[2]]))
+  signal::conv(as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
 setMethod("size_from_args", "Conv", function(object) {

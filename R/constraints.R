@@ -32,12 +32,12 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
   if(length(new_eq) > 0) {
     eq_constr <- c(eq_constr, new_eq)
     size <- size(object)
-    dims[EQ_DIM] <- c(dims[EQ_DIM], size[1] * size[2])
+    dims[[EQ_DIM]] <- c(dims[[EQ_DIM]], size[1] * size[2])
   }
 
   # Record the .noncvx_var id
   bool_id <- get_expr_vars(object@.noncvx_var)[[1]][[1]]
-  dims[BOOL_IDS] <- c(dims[BOOL_IDS], bool_id)
+  dims[[BOOL_IDS]] <- c(dims[[BOOL_IDS]], bool_id)
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
@@ -132,16 +132,16 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
     list(list(), format_elemwise(list(object@x, object@y, object@z)))
   }
   
-  if(solver == "CVXOPT")
+  if(is(solver, "CVXOPT"))
     stop("CVXOPT formatting has not been implemented")
-  else if(solver == "SCS")
+  else if(is(solver, "SCS"))
     leq_constr <- c(leq_constr, .scs_format(object)[[2]])
-  else if(solver == "ECOS")
+  else if(is(solver, "ECOS"))
     leq_constr <- c(leq_constr, .ecos_format(object)[[2]])
   else
     stop("Solver does not support exponential cone")
   # Update dims
-  dims[EXP_DIM] <- c(dims[EXP_DIM], prod(size(object)))
+  dims[[EXP_DIM]] <- c(dims[[EXP_DIM]], prod(size(object)))
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
@@ -187,7 +187,7 @@ setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, 
   }
 
   leq_constr <- c(leq_constr, .format(object)[[2]])
-  dims[SOC_DIM] <- c(dims[SOC_DIM], size(object)[1])
+  dims[[SOC_DIM]] <- c(dims[[SOC_DIM]], size(object)[1])
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
@@ -256,7 +256,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
     list(list(eq_constr), list(leq_constr))
   }
   
-  if(solver %IN% c("CVXOPT", "MOSEK"))
+  if(is(solver, "CVXOPT") || is(solver, "MOSEK"))
     stop("Formatting unimplemented for CVXOPT and MOSEK")
   else if(solver == "SCS") {
     scs_form <- .scs_format(object)
@@ -271,13 +271,13 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
     
     # Update dims
     size <- size(object)
-    dims[EQ_DIM] <- c(EQ_DIM, size[1]*(size[2] - 1)/2)
+    dims[[EQ_DIM]] <- c(dims[[EQ_DIM]], size[1]*(size[2] - 1)/2)
   }
   # 0 <= A
   leq_constr <- c(leq_constr, new_leq_constr)
   
   # Update dims
-  dims[SDP_DIM] <- c(SDP_DIM, size(object)[1])
+  dims[[SDP_DIM]] <- c(dims[[SDP_DIM]], size(object)[1])
   list(eq_constr = eq_constr, leq_constr = leq_cosntr, dims = dims)
 })
 
@@ -302,7 +302,7 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
  
  # Update dims
  for(cone_size in size(object))
-   dims[SOC_DIM] <- c(dims[SOC_DIM], cone_size[1])
+   dims[[SOC_DIM]] <- c(dims[[SOC_DIM]], cone_size[1])
  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 

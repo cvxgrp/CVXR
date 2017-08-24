@@ -31,7 +31,7 @@ get_problem_matrix <- function(constrs, id_to_col = integer(0), constr_offsets =
         lin_vec$push_back(tree)
     }
 
-    if (length(constr_offsets) == 0)
+    if (any(is.na(constr_offsets)))
         problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
     else {
         ## Load constraint offsets into a C++ vector

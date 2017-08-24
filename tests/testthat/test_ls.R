@@ -31,7 +31,7 @@ test_that("Test regression", {
   residuals <- quadratic - y_data
   fit_error <- SumSquares(residuals)
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
-  # result2 <- solve(Problem(Minimize(fit_erro), list()), solver = "ECOS")
+  result2 <- solve(Problem(Minimize(fit_error), list()), solver = "ECOS")
   # optval <- result$optimal_value
   # optval2 <- result2$optimal_value
   # expect_equal(optval, 139.225650756, tolerance = TOL)

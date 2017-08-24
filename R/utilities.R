@@ -180,7 +180,7 @@ format_axis <- function(t, X, axis) {
   prod_size <- c(cone_size, size(t)[1])
   t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_size)
   t_mat <- create_const(t_mat, mat_size, sparse = TRUE)
-  terms <- c(terms, mul_expr(t_mat, transpose(t), prod_size))
+  terms <- c(terms, list(mul_expr(t_mat, transpose(t), prod_size)))
 
   # Make X_mat
   mat_size <- c(cone_size, size(X)[1])
@@ -190,7 +190,7 @@ format_axis <- function(t, X, axis) {
   col_arr <- 1:(cone_size-1)   # TODO: Check row_arr and col_arr indices are correct
   X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_size)
   X_mat <- create_const(X_mat, mat_size, sparse = TRUE)
-  terms <- c(terms, mul_expr(X_mat, X, prod_size))
+  terms <- c(terms, list(mul_expr(X_mat, X, prod_size)))
   list(create_geq(sum_expr(terms)))
 }
 

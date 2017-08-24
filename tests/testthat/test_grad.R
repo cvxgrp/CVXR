@@ -75,20 +75,20 @@ test_that("Test gradient for LogSumExp", {
 })
 
 test_that("Test gradient for GeoMean", {
-  # expr <- GeoMean(x)
-  # value(x) <- c(1,2)
-  # expect_equal(as.matrix(grad(expr)[[x@id]]), c(sqrt(2)/2, 1.0/2/sqrt(2)))
+  expr <- GeoMean(x)
+  value(x) <- c(1,2)
+  expect_equal(as.matrix(grad(expr)[[x@id]]), c(sqrt(2)/2, 1.0/2/sqrt(2)))
   
-  # value(x) <- c(0,2)
-  # expect_equal(grad(expr)[[x@id]], NA)
+  value(x) <- c(0,2)
+  expect_equal(grad(expr)[[x@id]], NA)
   
-  # expr <- GeoMean(x, c(1,0))
-  # value(x) <- c(1,2)
-  # expect_equal(as.matrix(grad(expr)[[x@id]]), c(1,0))
+  expr <- GeoMean(x, c(1,0))
+  value(x) <- c(1,2)
+  expect_equal(as.matrix(grad(expr)[[x@id]]), c(1,0))
   
   # No exception for single weight
-  # value(x) <- c(-1,2)
-  # expect_equal(grad(expr)[[x@id]], NA)
+  value(x) <- c(-1,2)
+  expect_equal(grad(expr)[[x@id]], NA)
 })
 
 test_that("Test gradient for LambdaMax", {

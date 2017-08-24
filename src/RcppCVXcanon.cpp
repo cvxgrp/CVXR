@@ -25,11 +25,13 @@ SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOpVector> ptrX(xp);
   std::map<int, int> id_to_col;
-  Rcpp::StringVector s = v.names();
-  for (int i = 0; i < s.size(); i++) {
-    id_to_col[atoi(s[i])] = v[i];
+  if (v.size() > 0) {
+    Rcpp::StringVector s = v.names();
+    for (int i = 0; i < s.size(); i++) {
+      id_to_col[atoi(s[i])] = v[i];
+    }
   }
-  Rcpp::Rcout << "Before Build Matrix" <<std::endl;
+  Rcpp::Rcout << "Before Build Matrix 0" <<std::endl;
   //  ProblemData res = build_matrix(ptrX->linvec, id_to_col);
   //  Rcpp::Rcout << "After Build Matrix" <<std::endl;  
   //  Rcpp::XPtr<ProblemData> resPtr(&res, true);
@@ -51,16 +53,18 @@ SEXP build_matrix_1(SEXP xp, Rcpp::IntegerVector v1, Rcpp::IntegerVector v2) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOpVector> ptrX(xp);
   std::map<int, int> id_to_col;
-  Rcpp::StringVector s = v1.names();
-  for (int i = 0; i < s.size(); i++) {
-    id_to_col[atoi(s[i])] = v1[i];
+  if (v1.size() > 0 ) {
+    Rcpp::StringVector s = v1.names();
+    for (int i = 0; i < s.size(); i++) {
+      id_to_col[atoi(s[i])] = v1[i];
+    }
   }
   std::vector<int> constr_offsets;
   for (int i = 0; i < v2.size(); i++) {
     constr_offsets.push_back(v2[i]);
   }
   
-  Rcpp::Rcout << "Before Build Matrix" <<std::endl;
+  Rcpp::Rcout << "Before Build Matrix 1" <<std::endl;
   // ProblemData res = build_matrix(ptrX->linvec, id_to_col, constr_offsets);
   // Rcpp::Rcout << "After Build Matrix" <<std::endl;    
   // Rcpp::XPtr<ProblemData> resPtr(&res, true);

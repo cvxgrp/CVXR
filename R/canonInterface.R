@@ -1,5 +1,5 @@
 ## Added format_matrix and set_matrix_data.
-get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
+get_problem_matrix <- function(constrs, id_to_col = integer(0), constr_offsets = integer(0)) {
     cvxCanon <- CVXcanon$new()
     linOps <- lapply(constrs, function(constr) { constr$expr })
     lin_vec <- CVXcanon.LinOpVector$new()
@@ -13,8 +13,8 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
     ## with names retained. This is the C equivalent of map<int, int> in R
     storage.mode(id_to_col_C) <- "integer"
 
-    if (any(is.na(id_to_col)))
-        id_to_col <- c()
+    ##if (any(is.na(id_to_col)))
+    ##    id_to_col <- c()
 
     ## Loading the variable offsets from our R list into a C++ map
 
@@ -31,7 +31,7 @@ get_problem_matrix <- function(constrs, id_to_col = NA, constr_offsets = NA) {
         lin_vec$push_back(tree)
     }
 
-    if (is.na(constr_offsets))
+    if (length(constr_offsets) == 0)
         problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
     else {
         ## Load constraint offsets into a C++ vector

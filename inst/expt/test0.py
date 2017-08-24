@@ -17,7 +17,7 @@ prob = Problem(objective, constraints)
 
 # Set breakpoint at build_matrix of CVXcanon
 ##b CVXcanon.build_matrix
-## b canonInterface.get_problem_matrix
+##b canonInterface.get_problem_matrix
 # The optimal objective is returned by prob.solve().
 result = prob.solve()
 # The optimal value for x is stored in x.value.

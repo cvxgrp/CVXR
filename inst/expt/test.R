@@ -12,9 +12,6 @@ library(cvxr)
 
 m <- 3
 n <- 2
-# numpy.random.seed(1)
-# A = numpy.random.randn(m, n)
-# b = numpy.random.randn(m)
 
 A <- matrix(c(1, 2, 3, 4, 2, 1), nrow=m, byrow=TRUE)
 b <- matrix(c(1, 2, 3), nrow=m)
@@ -22,33 +19,9 @@ b <- matrix(c(1, 2, 3), nrow=m)
 # Construct the problem.
 x <- Variable(n)
 objective <- Minimize(SumSquares(A %*% x - b))
-##objective <- canonicalize(objective)
 constraint <- list( 1 <= x)
 prob <- Problem(objective, constraint)
 
-##base::trace("Solver.solve", tracer=browser, exit = browser, signature = c("ECOS"))
-
-#base::trace("Solver.get_problem_data", tracer=browser, exit = browser, signature = c("ECOS"))
-
-##debug(solve)
-##debug(build_lin_op_tree)
-##debug(get_matrix_data)
-
-#base::trace("", tracer=browser, exit = browser, signature = c("ECOS"))
-##debug(cvxr:::.lin_matrix)
-#debug(cvxr:::build_lin_op_tree)
 debug(get_problem_matrix)
 solve(prob)
 
-# The optimal objective is returned by prob.solve().
-result = prob.solve()
-# The optimal value for x is stored in x.value.
-print x.value
-# The optimal Lagrange multiplier for a constraint
-# is stored in constraint.dual_value.
-print constraints[0].dual_value
-
-tmp <- list()
-##C_objective <- build_lin_op_tree(objective, tmp)
-
-root_linR <- objective

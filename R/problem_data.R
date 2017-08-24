@@ -137,15 +137,17 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
       vars_ <- c(vars_, get_expr_vars(nonlin_var))
   }
 
-  # TODO: Ensure variables are always in same order for same problem.
-  var_id <- sapply(vars_, function(id_and_size) { id_and_size[[1]] })
-  var_sorted <- vars_[order(var_id)]
+  # Ensure variables are always in same order for same problem.
+  var_names <- unique(vars_)
+  var_ids <- sapply(var_names, function(id_and_size) { id_and_size[[1]] })
+  names(var_names) <- var_ids
+  var_names <- var_names[order(var_ids)]
 
   # Map variable IDs to offsets and size
-  var_sizes <- lapply(var_sorted, function(var) { var[[2]] })
+  var_sizes <- lapply(var_names, function(var) { var[[2]] })
   size_prods <- sapply(var_sizes, function(var_size) { prod(var_size) })
   var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
-  names(var_sizes) <- names(var_offsets) <- var_id
+  names(var_offsets) <- names(var_names)
   vert_offset <- sum(size_prods)
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }

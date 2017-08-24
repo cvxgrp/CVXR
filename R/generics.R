@@ -12,6 +12,7 @@ setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 setGeneric("size", function(object) { standardGeneric("size") })
+setGeneric("primal_to_result", function(object, result) { standardGeneric("primal_to_result") })
 
 # Expression generic methods
 setGeneric("value", function(object) { standardGeneric("value") })
@@ -69,6 +70,11 @@ setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
+setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })
+setGeneric(".handle_no_solution", function(object, status) { standardGeneric(".handle_no_solution") })
+setGeneric("Problem.save_values", function(object, result_vec, objects, offset_map) { standardGeneric("Problem.save_values") })
+setGeneric(".save_dual_values", function(object, result_vec, constraints, constr_types) { standardGeneric(".save_dual_values") })
+setGeneric(".update_problem_state", function(object, results_dict, sym_data, solver) { standardGeneric(".update_problem_state") })
 
 # Problem data generic methods
 setGeneric("get_objective", function(object) { standardGeneric("get_objective") })

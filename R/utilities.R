@@ -195,13 +195,13 @@ format_axis <- function(t, X, axis) {
 }
 
 format_elemwise <- function(vars_) {
-  # Create matcies A_i such that 0 <= A_0*x_0 + ... + A_n*x_n
+  # Create matrices A_i such that 0 <= A_0*x_0 + ... + A_n*x_n
   # gives the format for the elementwise cone constraints.
   spacing <- length(vars_)
-  prod_size <- c(spacing * vars_[[1]]$size[1], vars_[[1]]$size[2])
+  prod_size <- c((spacing + 1)* vars_[[1]]$size[1], vars_[[1]]$size[2])
   
   # Matrix spaces out columns of the LinOp expressions
-  mat_size <- c(spacing * vars_[[1]]$size[1], vars_[[1]]$size[1])
+  mat_size <- c((spacing + 1) * vars_[[1]]$size[1], vars_[[1]]$size[1])
   
   mat <- lapply(1:spacing, function(i) { get_spacing_matrix(mat_size, spacing, i) })
   terms <- lapply(vars_, function(var) { mul_expr(mat, var, prod_size) })
@@ -211,7 +211,7 @@ format_elemwise <- function(vars_) {
 get_spacing_matrix <- function(size, spacing, offset) {
   require(Matrix)
   col_arr <- 1:size[2]
-  row_arr <- spacing * col_arr + offset
+  row_arr <- (spacing + 1) * (col_arr - 1) + 1 + offset
   val_arr <- rep(1.0, size[2])
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
   create_const(mat, size, sparse = TRUE)

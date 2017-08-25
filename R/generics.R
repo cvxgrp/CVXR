@@ -64,6 +64,12 @@ setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 
+setGeneric("block_add", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step, horiz_step) { standardGeneric("block_add") })
+setGeneric("place_x0", function(object, big_x, var_offsets) { standardGeneric("place_x0") })
+setGeneric("place_Df", function(object, big_Df, Df, var_offsets, vert_offset) { standardGeneric("place_Df") })
+setGeneric("place_H", function(object, big_H, H, var_offsets) { standardGeneric("place_H") })
+setGeneric("extract_variables", function(object, x, var_offsets) { standardGeneric("extract_variables") })
+
 # Problem generic methods
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })

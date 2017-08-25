@@ -169,7 +169,6 @@ reset_param_data <- function(object) {
   object
 }
 
-# TODO: Incorporate matrix_intf and vec_intf for each solver
 .MatrixData <- setClass("MatrixData", representation(sym_data = "SymData", solver = "Solver", nonlin = "logical", .obj_cache = "MatrixCache", .eq_cache = "MatrixCache", .ineq_cache = "MatrixCache"),
                         prototype(.obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL), validity = function(object) {
                           if(!is.null(object@.obj_cache))
@@ -311,57 +310,57 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   list(mat, -const_vec)
 }
 
-# TODO: Fill this out when nonlinear constraints are finished
-# .nonlin_matrix <- function(object, nonlin_constr) {
-#   rows <- sum(sapply(nonlin_constr, function(c) { prod(size(c)) }))
-#   cols <- object@sym_data@.x_length
-#   var_offsets <- object@sym_data@.var_offsets
-#
-#   big_x <- rep(0, nrow = cols, ncol = 1)
-#   for(constr in nonlin_constr)
-#     constr <- place_x0(constr, big_x, var_offsets)
-#
-#   # Oracle for function value, gradient, and Hessian
-#   foo <- function(x = NA, z = NA) {
-#     if(is.na(x))
-#       return(rows, big_x)
-#     big_f <- matrix(0, nrow = rows, ncol = 1)
-#     big_Df <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
-#     if(!is.na(z))
-#       big_H <- sparseMatrix(i = c(), j = c(), dims = c(cols, cols))
-#     offset <- 0
-#
-#     for(constr in nonlin_constr) {
-#       constr_entries <- prod(size(constr))
-#       local_x <- extract_variables(constr, x, var_offsets)
-#       if(!is.na(z)) {
-#         tmp <- constr.f(local_x, z[offset:(offset + constr_entries)])
-#         f <- tmp[[1]]
-#         Df <- tmp[[2]]
-#         H <- tmp[[3]]
-#       } else {
-#         result <- constr.f(local_x)
-#         if(!is.na(result)) {
-#           f <- result[[1]]
-#           Df <- result[[2]]
-#         } else
-#           return(NA)
-#       }
-#
-#       big_f[offset:(offset + constr_entries)] <- f
-#       constr <- place_Df(constr, big_Df, Df, var_offsets, offset)
-#       if(!is.na(z))
-#         constr <- place_H(constr, big_H, H, var_offsets)
-#       offset <- offset + constr_entries
-#     }
-#
-#     if(is.na(z))
-#       return(list(big_f, big_Df))
-#     return(list(big_f, big_Df, big_H))
-#   }
-#
-#   return(foo)
-# }
+# TODO: Double-check scoping of the returned oracle function
+.nonlin_matrix <- function(object, nonlin_constr) {
+  rows <- sum(sapply(nonlin_constr, function(c) { prod(size(c)) }))
+  cols <- object@sym_data@.x_length
+  var_offsets <- object@sym_data@.var_offsets
+
+  big_x <- matrix(0, nrow = cols, ncol = 1)
+  for(constr in nonlin_constr)
+    constr <- place_x0(constr, big_x, var_offsets)
+
+  # Oracle for function value, gradient, and Hessian
+  oracle <- function(x = NA, z = NA) {
+    if(is.na(x))
+      return(list(rows, big_x))
+    big_f <- matrix(0, nrow = rows, ncol = 1)
+    big_Df <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
+    if(!is.na(z))
+      big_H <- sparseMatrix(i = c(), j = c(), dims = c(cols, cols))
+    offset <- 0
+
+    for(constr in nonlin_constr) {
+      constr_entries <- prod(size(constr))
+      local_x <- extract_variables(constr, x, var_offsets)
+      if(!is.na(z)) {
+        tmp <- constr@f(local_x, z[offset:(offset + constr_entries)])
+        f <- tmp[[1]]
+        Df <- tmp[[2]]
+        H <- tmp[[3]]
+      } else {
+        result <- constr@f(local_x)
+        if(!is.na(result)) {
+          f <- result[[1]]
+          Df <- result[[2]]
+        } else
+          return(NA)
+      }
+
+      big_f[offset:(offset + constr_entries)] <- f
+      big_Df <- place_Df(constr, big_Df, Df, var_offsets, offset)
+      if(!is.na(z))
+        big_H <- place_H(constr, big_H, H, var_offsets)
+      offset <- offset + constr_entries
+    }
+
+    if(is.na(z))
+      return(list(big_f, big_Df))
+    return(list(big_f, big_Df, big_H))
+  }
+
+  return(oracle)
+}
 
 setClassUnion("SymDataORNull", c("SymData", "NULL"))
 setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))

@@ -53,7 +53,7 @@ setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 IntConstr <- function(lin_op) { .IntConstr(lin_op = lin_op) }
 setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
 
-.LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "Expression", rh_exp = "Expression", args = "list", .expr = "Expression", dual_variable = "Variable"),
+.LeqConstraint <- setClass("LeqConstraint", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", args = "list", .expr = "Expression", dual_variable = "Variable"),
                            prototype(args = list(), .expr = NULL, dual_variable = Variable()),
                            validity = function(object) {
                              if(!is.null(object@.expr))
@@ -117,9 +117,86 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 })
 
 # TODO: Do I need the NonlinearConstraint class?
+.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"), 
+                                 prototype(.x_size = NA_integer_), contains = "Constraint")
+NonlinearConstraint <- function(f, vars_) { .NonlinearConstraint(f = f, vars_ = vars_) }
 
-.ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "Constraint")
+setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) {
+  .Object@f <- f
+  .Object@vars_ <- vars_
+  
+  # The shape of vars_ in f(vars_)
+  cols <- size(.Object@vars_[[1]])[2]
+  rows <- sum(sapply(.Object@vars_, function(var) { size(var)[1] }))
+  .Object@.x_size <- c(rows*cols, 1)
+  callNextMethod(.Object, ...)
+})
+
+setMethod("variables", "NonlinearConstraint", function(object) { object@vars_ })
+setMethod("block_add", "NonlinearConstraint", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
+  row_seq <- seq(vert_offset, rows + vert_offset, vert_step)
+  col_seq <- seq(horiz_offset, cols + horiz_offset, horiz_step)
+  mat[row_seq, col_seq] <- mat[row_seq, col_seq] + block
+  mat
+})
+
+setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets) {
+  tmp <- object@f()
+  m <- tmp[[1]]
+  x0 <- tmp[[2]]
+  offset <- 0
+  for(var in variables(object)) {
+    var_size <- prod(size(var))
+    var_x0 <- x0[offset:(offset + var_size)]
+    big_x <- block_add(object, big_x, var_x0, var_offsets[get_data(var)], 0, var_size, 1)
+    offset <- offset + var_size
+  }
+  big_x
+})
+
+setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_offsets, vert_offset) {
+  horiz_offset <- 0
+  for(var in variables(object)) {
+    var_size <- prod(size(var))
+    var_Df <- Df[, horiz_offset:(horiz_offset + var_size)]
+    big_Df <- block_add(object, big_Df, var_Df, vert_offset, var_offsets[get_data(var)], prod(size(object)), var_size)
+    horiz_offset <- horiz_offset + var_size
+  }
+  big_Df
+})
+
+setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offsets) {
+  offset <- 0
+  for(var in variables(object)) {
+    var_size <- prod(size(var))
+    var_H <- H[offset:(offset + var_size), offset:(offset + var_size)]
+    big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_size, var_size)
+    offset <- offset + var_size
+  }
+  big_H
+})
+
+setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_offsets) {
+  local_x <- matrix(0, nrow = object@.x_size[1], ncol = object@.x_size[2])
+  offset <- 0
+  for(var in variables(object)) {
+    var_size <- prod(size(var))
+    value <- x[var_offsets[get_data(var)]:(var_offsets[get_data(var)] + var_size)]
+    local_x <- block_add(object, local_x, value, offset, 0, var_size, 1)
+    offset <- offset + var_size
+  }
+  local_x
+})
+
+.ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "Constraint")
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
+
+setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
+  .Object@x <- x
+  .Object@y <- y
+  .Object@z <- z
+  callNextMethod(.Object, ...)
+})
 
 # TODO: Is this the correct size method for the exponential cone class?
 setMethod("size", "ExpCone", function(object) { size(object@x) })

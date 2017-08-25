@@ -9,6 +9,7 @@
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
 setMethod("initialize", "Variable", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
+  .Object@id <- id
   .Object@rows <- rows
   .Object@cols <- cols
   if(is.na(name))

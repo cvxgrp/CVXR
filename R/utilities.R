@@ -93,13 +93,13 @@ SETUP_TIME = "setup_time"  # in seconds
 NUM_ITERS = "num_iters"    # number of iterations
 
 # Keys for problem data dict.
-C = "c"
+C_KEY = "c"
 OFFSET = "offset"
-A = "A"
-B = "b"
-G = "G"
-H = "h"
-F = "F"
+A_KEY = "A"
+B_KEY = "b"
+G_KEY = "G"
+H_KEY = "h"
+F_KEY = "F"
 DIMS = "dims"
 BOOL_IDX = "bool_vars_idx"
 INT_IDX = "int_vars_idx"

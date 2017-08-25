@@ -278,10 +278,10 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
   # Solve in parallel
   if(parallel) {
     # Check if the objective or constraint has changed
-    if(objective != object@.cached_data[PARALLEL]@objective ||
-       constraints != object@.cached_data[PARALLEL]@constraints) {
+    if(objective != object@.cached_data[[PARALLEL]]@objective ||
+       constraints != object@.cached_data[[PARALLEL]]@constraints) {
       object@.separable_problems <- get_separable_problems(object)
-      object@.cached_data[PARALLEL] <- CachedProblem(objective, constraints)
+      object@.cached_data[[PARALLEL]] <- CachedProblem(objective, constraints)
     }
     
     if(length(object@.separable_problems) > 1)

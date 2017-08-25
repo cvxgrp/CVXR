@@ -87,12 +87,12 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   eq <- get_eq_constr(matrix_data)
   ineq <- get_ineq_constr(matrix_data)
 
-  data[[C]] <- obj[[1]]
+  data[[C_KEY]] <- obj[[1]]
   data[[OFFSET]] <- obj[[2]]
-  data[[A]] <- eq[[1]]
-  data[[B]] <- eq[[2]]
-  data[[G]] <- ineq[[1]]
-  data[[H]] <- ineq[[2]]
+  data[[A_KEY]] <- eq[[1]]
+  data[[B_KEY]] <- eq[[2]]
+  data[[G_KEY]] <- ineq[[1]]
+  data[[H_KEY]] <- ineq[[2]]
   data[[DIMS]] <- sym_data@.dims
 
   conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@.var_offsets, sym_data@.var_sizes)
@@ -182,15 +182,15 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
   
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
-  if(prod(dim(data[[G]])) == 0) data[[G]] <- NULL
-  if(prod(dim(data[[A]])) == 0) data[[A]] <- NULL
+  if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
+  if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
   data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
   solver_opts <- ECOSolveR::ecos.control()
   solver_opts$verbose <- as.integer(verbose)
   other_opts <- list(...)
   solver_opts[names(other_opts)] <- other_opts
   
-  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C]], G = data[[G]], h = data[[H]], dims = data[[DIMS]], A = data[[A]], b = data[[B]], control = solver_opts)
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = data[[DIMS]], A = data[[A_KEY]], b = data[[B_KEY]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })
 
@@ -252,7 +252,7 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
   # Set the options to be VERBOSE plus any user-specific options
   solver_opts <- list(...)
   solver_opts$verbose <- verbose
-  scs_args <- list(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
+  scs_args <- list(A = data[[A_KEY]], b = data[[B_KEY]], obj = data[[C_KEY]], cone = data[[DIMS]])
 
   # If warm starting, add old primal and dual variables
   solver_cache <- cached_data[name(solver)]
@@ -265,9 +265,9 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
 
   results_dict <- do.call(scs::scs, c(scs_args, list(control = solver_opts)))
   # if(length(solver_opts) == 0)
-  #  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]])
+  #  results_dict <- scs::scs(A = data[[A_KEY]], b = data[[B_KEY]], obj = data[[C_KEY]], cone = data[[DIMS]])
   # else
-  #  results_dict <- scs::scs(A = data[[A]], b = data[[B]], obj = data[[C]], cone = data[[DIMS]], control = solver_opts)
+  #  results_dict <- scs::scs(A = data[[A_KEY]], b = data[[B_KEY]], obj = data[[C_KEY]], cone = data[[DIMS]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })
 

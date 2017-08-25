@@ -257,6 +257,12 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
                         prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
+setMethod("initialize", "SOC", function(.Object, ..., t, x_elems) {
+  .Object@t <- t
+  .Object@x_elems <- x_elems
+  callNextMethod(.Object, ...)
+})
+
 setMethod("as.character", "SOC", function(x) { 
   paste("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "") 
 })
@@ -264,7 +270,7 @@ setMethod("as.character", "SOC", function(x) {
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
     leq_constr <- lapply(object@x_elems, function(elem) { create_geq(elem) })
-    leq_constr <- c(create_geq(object@t), leq_constr)
+    leq_constr <- c(list(create_geq(object@t)), leq_constr)
     list(list(), leq_constr)
   }
 
@@ -281,13 +287,23 @@ setMethod("size", "SOC", function(object) {
 
 .SDP <- setClass("SDP", representation(A = "ListORExpr", enforce_sym = "logical"),
                        prototype(enforce_sym = TRUE), contains = "Constraint")
-SDP <- function(A, enforce_sym = TRUE, constr_id = NA_integer_) { .SDP(A = A, enforce_sym = enforce_sym, constr_id = constr_id) }
+SDP <- function(A, enforce_sym = TRUE, constr_id) {
+  if(missing(constr_id))
+    .SDP(A = A, enforce_sym = enforce_sym)
+  else
+    .SDP(A = A, enforce_sym = enforce_sym, constr_id = constr_id)
+}
 
-setMethod("as.character", "SDP", function(x) {
-  paste("SDP(", x@A, ")", sep = "")
+setMethod("initialize", "SDP", function(.Object, ..., A, enforce_sym = TRUE) {
+  .Object@A <- A
+  .Object@enforce_sym <- enforce_sym
+  callNextMethod(.Object, ...)
 })
 
+setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "") })
+
 .scaled_lower_tri <- function(object) {
+  require(Matrix)
   rows <- size(object)[1]
   cols <- rows
   entries <- rows*(cols + 1)/2
@@ -300,7 +316,7 @@ setMethod("as.character", "SDP", function(x) {
     for(i in 1:rows) {
       if(j <= i) {
         # Index in the original matrix
-        col_arr <- c(col_arr, j*rows + i)
+        col_arr <- c(col_arr, (j-1)*rows + i)
         
         # Index in the extracted vector
         row_arr <- c(row_arr, count)
@@ -329,8 +345,8 @@ setMethod("as.character", "SDP", function(x) {
 setMethod("size", "SDP", function(object) { size(object@A) })
 setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, solver) {
   .scs_format <- function(object) {
-    eq_constr <- get_eq_constr(object)
-    term <- scaled_lower_tri(object)
+    eq_constr <- .get_eq_constr(object)
+    term <- .scaled_lower_tri(object)
     if(is.na(object@constr_id))
       leq_constr <- create_geq(term)
     else
@@ -340,7 +356,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
   
   if(is(solver, "CVXOPT") || is(solver, "MOSEK"))
     stop("Formatting unimplemented for CVXOPT and MOSEK")
-  else if(solver == "SCS") {
+  else if(is(solver, "SCS")) {
     scs_form <- .scs_format(object)
     new_eq_constr <- scs_form[[1]]
     new_leq_constr <- scs_form[[2]]
@@ -360,7 +376,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
   
   # Update dims
   dims[[SDP_DIM]] <- c(dims[[SDP_DIM]], size(object)[1])
-  list(eq_constr = eq_constr, leq_constr = leq_cosntr, dims = dims)
+  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
 .SOCAxis <- setClass("SOCAxis", representation(axis = "numeric"), 

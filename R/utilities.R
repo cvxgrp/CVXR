@@ -292,7 +292,7 @@ get_coeffs.QuadCoeffExtractor <- function(object, expr) {
 .coeffs_affine.QuadCoeffExtractor <- function(object, expr) {
   sz <- prod(size(expr))
   canon <- canonical_form(expr)
-  prob_mat <- canonInterface.get_problem_matrix(list(create_eq(canon[[1]])), object@id_map)
+  prob_mat <- get_problem_matrix(list(create_eq(canon[[1]])), object@id_map)
   
   V <- prob_mat[[1]]
   I <- prob_mat[[2]]
@@ -432,7 +432,7 @@ get_coeffs.QuadCoeffExtractor <- function(object, expr) {
   graph <- graph_implementation(expr, fake_args, size(expr), get_data(expr))
   
   # Get the matrix representation of the function
-  prob_mat <- canonInterface.get_problem_matrix(list(create_eq(graph[[1]])), offsets)
+  prob_mat <- get_problem_matrix(list(create_eq(graph[[1]])), offsets)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]]
   J <- prob_mat[[3]]

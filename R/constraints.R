@@ -285,7 +285,7 @@ setMethod("as.character", "SOC", function(x) {
 
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
-    leq_constr <- lapply(object@x_elems, function(elem) { list(create_geq(elem)) })
+    leq_constr <- lapply(object@x_elems, function(elem) { create_geq(elem) })
     leq_constr <- c(list(create_geq(object@t)), leq_constr)
     list(list(), leq_constr)
   }

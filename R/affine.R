@@ -36,7 +36,7 @@ setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, functi
   fake_expr <- graph[[1]]
   
   # Get the matrix representation of the function
-  prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets, NA)  # TODO: Call to canonInterface
+  prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets, NA)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]]
   J <- prob_mat[[3]]

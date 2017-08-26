@@ -776,7 +776,7 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
                               reshape(sub_expr(x, one), c(1, length)),
                               reshape(mul_expr(two, t, size(t)), c(1, length))
                               ), c(2, length)),
-                            2))
+                            1))
   list(t, constraints)
 }
 
@@ -819,7 +819,7 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
                                 reshape(sub_expr(t, one), c(1, length)),
                                 reshape(mul_expr(two, x, size(x)), c(1, length))
                                 ), c(2, length)),
-                              2))
+                              1))
   list(t, constraints)
 }
 

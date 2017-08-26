@@ -7,12 +7,12 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-test_that("test log problem", {
+test_that("Test log problem", {
   # Log in objective
   obj <- Maximize(SumEntries(log(x)))
   constr <- list(x <= matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
-  # result <- solve(p, solver = "SCS)
+  result <- solve(p, solver = "SCS")
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
   # expect_equal(result$x, c(1, exp(1)), tolerance = TOL)
   
@@ -25,10 +25,10 @@ test_that("test log problem", {
   # expect_equal(result$x, c(1, 1))
   
   # Index into log
-  # obj <- Maximize(log(x)[2])
-  # constr <- list(x <= c(1, exp(1)))
-  # p <- Problem(obj, constr)
-  # result <- solve(p, solver = "SCS")
+  obj <- Maximize(log(x)[2])
+  constr <- list(x <= c(1, exp(1)))
+  p <- Problem(obj, constr)
+  result <- solve(p, solver = "SCS")
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
 })
 

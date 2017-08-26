@@ -154,7 +154,7 @@ test_that("Test examples from the README", {
     sample <- x[[2]]
     Pos(1 - label*(t(sample)*a - b))
   })
-  objective <- Minimize(norm(a, 2) * gamma * Reduce("+", slack))
+  objective <- Minimize(p_norm(a, 2) * gamma * Reduce("+", slack))
   p <- Problem(objective)
   # result <- solve(p)
   

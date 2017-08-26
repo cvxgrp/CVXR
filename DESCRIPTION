@@ -46,7 +46,9 @@ Imports:
 Suggests:
         knitr,
         rmarkdown,
-        testthat
+        testthat,
+        scs,
+        ECOSolveR
 LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true

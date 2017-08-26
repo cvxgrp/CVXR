@@ -332,7 +332,7 @@ SCS.tri_to_full <- function(lower_tri, n) {
       idx <- row - col + floor(n*(n+1)/2) - floor((n-col)*(n-col+1)/2)
       if(row != col) {
         full[row, col] <- lower_tri[idx]/sqrt(2)
-        full[col, row] <- lower_trie[idx]/sqrt(2)
+        full[col, row] <- lower_tri[idx]/sqrt(2)
       } else
         full[row, col] <- lower_tri[idx]
     }

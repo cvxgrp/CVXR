@@ -65,7 +65,7 @@ SymData.presolve <- function(objective, constr_map) {
   # If there are no constraints, the problem is unbounded if any of the coefficients are non-zero.
   # If all the coefficients are zero, then return the constant term and set all variables to zero.
 
-  # TODO: Deal with the case when constr_maps has no values
+  # TODO: Deal with the case when constr_map has no values
   if(length(constr_map) == 0) {
     warning("Handling of empty constraint map is unfinished")
     print(objective)

@@ -36,8 +36,7 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
   # If an equality constraint was introduced, update eq_constr and dims
   if(length(new_eq) > 0) {
     eq_constr <- c(eq_constr, new_eq)
-    size <- size(object)
-    dims[[EQ_DIM]] <- c(dims[[EQ_DIM]], size[1] * size[2])
+    dims[[EQ_DIM]] <- dims[[EQ_DIM]] + prod(size(object))
   }
 
   # Record the .noncvx_var id
@@ -188,6 +187,7 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
   local_x
 })
 
+# TODO: This should inherit from NonlinearConstraint once that is complete
 .ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "Constraint")
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
@@ -206,6 +206,19 @@ setMethod("as.character", "ExpCone", function(x) {
 })
 setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
 setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, dims, solver) {
+  .cvxopt_format <- function(object) {
+    constraints <- list()
+    for(i in 1:length(object@vars_)) {
+      var <- vars_[[i]]
+      if(var$type != VARIABLE) {
+        lone_var <- create_var(var$size)
+        constraints <- c(constraints, list(create_eq(lone_var, var)))
+        object@vars_[[i]] <- lone_var
+      }
+    }
+    list(constraints, list(), object)
+  }
+  
   .ecos_format <- function(object) {
     list(list(), format_elemwise(list(object@x, object@y, object@z)))
   }
@@ -216,6 +229,9 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
   
   if(is(solver, "CVXOPT"))
     stop("CVXOPT formatting has not been implemented")
+    # tmp <- .cvxopt_format(object)
+    # object <- tmp[[3]]   # TODO: Need to pass along updated constraint object
+    # eq_constr <- c(eq_constr, tmp[[1]])
   else if(is(solver, "SCS"))
     leq_constr <- c(leq_constr, .scs_format(object)[[2]])
   else if(is(solver, "ECOS"))
@@ -223,7 +239,7 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
   else
     stop("Solver does not support exponential cone")
   # Update dims
-  dims[[EXP_DIM]] <- c(dims[[EXP_DIM]], prod(size(object)))
+  dims[[EXP_DIM]] <- dims[[EXP_DIM]] + prod(size(object))
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
@@ -269,7 +285,7 @@ setMethod("as.character", "SOC", function(x) {
 
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
-    leq_constr <- lapply(object@x_elems, function(elem) { create_geq(elem) })
+    leq_constr <- lapply(object@x_elems, function(elem) { list(create_geq(elem)) })
     leq_constr <- c(list(create_geq(object@t)), leq_constr)
     list(list(), leq_constr)
   }
@@ -332,7 +348,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
   size <- c(entries, rows*cols)
   coeff <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
   coeff <- create_const(coeff, size, sparse = TRUE)
-  vect <- reshape(A, c(rows*cols, 1))
+  vect <- reshape(object@A, c(rows*cols, 1))
   mul_expr(coeff, vect, c(entries, 1))
 }
 
@@ -369,7 +385,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
     
     # Update dims
     size <- size(object)
-    dims[[EQ_DIM]] <- c(dims[[EQ_DIM]], size[1]*(size[2] - 1)/2)
+    dims[[EQ_DIM]] <- dims[[EQ_DIM]] + floor(size[1]*(size[2] - 1)/2)
   }
   # 0 <= A
   leq_constr <- c(leq_constr, new_leq_constr)
@@ -386,6 +402,11 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
                       return(TRUE)
                     }, contains = "SOC")
 SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
+
+setMethod("initialize", "SOCAxis", function(.Object, ..., axis) {
+  .Object@axis <- axis
+  callNextMethod(.Object, ...)
+})
 
 setMethod("as.character", "SOCAxis", function(x) { 
   paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")

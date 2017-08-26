@@ -203,8 +203,8 @@ format_elemwise <- function(vars_) {
   # Matrix spaces out columns of the LinOp expressions
   mat_size <- c((spacing + 1) * vars_[[1]]$size[1], vars_[[1]]$size[1])
   
-  mat <- lapply(1:spacing, function(i) { get_spacing_matrix(mat_size, spacing, i) })
-  terms <- lapply(vars_, function(var) { mul_expr(mat, var, prod_size) })
+  mats <- lapply(1:spacing, function(i) { get_spacing_matrix(mat_size, spacing, i) })
+  terms <- mapply(function(var, mat) { list(mul_expr(mat, var, prod_size)) }, vars_, mats)
   list(create_geq(sum_expr(terms)))
 }
 

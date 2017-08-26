@@ -12,7 +12,7 @@ test_that("Test log problem", {
   obj <- Maximize(SumEntries(log(x)))
   constr <- list(x <= as.matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
-  # result <- solve(p)
+  result <- solve(p)
   # expect_equal(result, 1, tolerance = TOL)
   # expect_equal(value(p, x), c(1, exp(1)), tolerance = TOL)
   
@@ -20,7 +20,7 @@ test_that("Test log problem", {
   obj <- Minimize(SumEntries(x))
   constr <- list(log(x) >= 0, x <= as.matrix(c(1,1)))
   p <- Problem(obj, constr)
-  # result <- solve(p)
+  result <- solve(p)
   # expect_equal(result, 2, tolerance = TOL)
   # expect_equal(value(p, x), c(1, 1), tolerance = TOL)
 

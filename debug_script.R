@@ -11,16 +11,7 @@ library(cvxr)
 ## base::trace("format_constr", tracer = browser, exit = browser, signature = c("SDP"))
 ## debug(get_problem_matrix)
 ## debug("SymData.get_var_offsets")
-# solve(prob, solver = "SCS")
-
-# TEST: test_atoms.R
-# Passing wrong dims to ECOS.
-# SCS matrices A and b are too large.
-y <- Variable(1)
-p1 <- Problem(Minimize(exp(y)))
-# base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("SCS"))
-base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("SCS"))
-result1 <- solve(p1, solver = "SCS")
+# result <- solve(prob, solver = "SCS")
 
 # TEST: test_ls.R
 # Crashes in get_problem_matrix from SymData.presolve due to constraint mishandling
@@ -45,11 +36,11 @@ result1 <- solve(p1, solver = "SCS")
 # solve(Problem(Minimize(fit_error)), solver = "ECOS")
 
 # TEST: test_non_optimal.R
-# Should I pass axis = 1 or 2 into SOCAxis in Sqrt.graph_implementation?
-# SCS matrices A and b are incorrect. Freezing in MatrixData initialization.
-# x <- Variable(1)
-# prob <- Problem(Maximize(sqrt(x)))
-# # base::trace("format_constr", tracer = browser, exit = browser, signature = c("SOCAxis"))
-# # base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("SCS"))
-# debug(cvxr:::.lin_matrix)
-# result <- solve(prob, solver = "SCS")
+x <- Variable(1)
+prob <- Problem(Minimize(Power(x, 1.5)))
+# base::trace("format_constr", tracer = browser, exit = browser, signature = c("SOCAxis"))
+# base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("SCS"))
+# base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("SCS"))
+# debug(format_axis)
+# debug(SymData.format_for_solver)
+result <- solve(prob, solver = "SCS")

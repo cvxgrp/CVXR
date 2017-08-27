@@ -170,7 +170,7 @@ format_axis <- function(t, X, axis) {
   if(axis == 1)
     X <- transpose(X)
   
-  # Create matcies Tmat, Xmat such that Tmat*t + Xmat*X
+  # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
   # gives the format for the elementwise cone constraints.
   cone_size <- 1 + size(X)[1]
   terms <- list()
@@ -187,7 +187,7 @@ format_axis <- function(t, X, axis) {
   prod_size <- c(cone_size, size(X)[2])
   val_arr <- rep(1.0, cone_size - 1)
   row_arr <- 2:cone_size
-  col_arr <- 1:(cone_size-1)   # TODO: Check row_arr and col_arr indices are correct
+  col_arr <- 1:(cone_size - 1)   # TODO: Check row_arr and col_arr indices are correct
   X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_size)
   X_mat <- create_const(X_mat, mat_size, sparse = TRUE)
   terms <- c(terms, list(mul_expr(X_mat, X, prod_size)))
@@ -198,12 +198,12 @@ format_elemwise <- function(vars_) {
   # Create matrices A_i such that 0 <= A_0*x_0 + ... + A_n*x_n
   # gives the format for the elementwise cone constraints.
   spacing <- length(vars_)
-  prod_size <- c((spacing + 1)* vars_[[1]]$size[1], vars_[[1]]$size[2])
+  prod_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[2])
   
   # Matrix spaces out columns of the LinOp expressions
-  mat_size <- c((spacing + 1) * vars_[[1]]$size[1], vars_[[1]]$size[1])
+  mat_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[1])
   
-  mats <- lapply(1:spacing, function(i) { get_spacing_matrix(mat_size, spacing, i) })
+  mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_size, spacing, offset) })
   terms <- mapply(function(var, mat) { list(mul_expr(mat, var, prod_size)) }, vars_, mats)
   list(create_geq(sum_expr(terms)))
 }
@@ -211,7 +211,7 @@ format_elemwise <- function(vars_) {
 get_spacing_matrix <- function(size, spacing, offset) {
   require(Matrix)
   col_arr <- 1:size[2]
-  row_arr <- (spacing + 1) * (col_arr - 1) + 1 + offset
+  row_arr <- spacing*(col_arr - 1) + 1 + offset
   val_arr <- rep(1.0, size[2])
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
   create_const(mat, size, sparse = TRUE)
@@ -536,7 +536,7 @@ gm <- function(t, x, y) {
           vstack(list(
               reshape(sub_expr(x, y), c(1, length)),
               reshape(mul_expr(two, t, size(t)), c(1, length))
-            ), c(2, length)), 0)
+            ), c(2, length)), 2)
 }
 
 # Form internal constraints for weighted geometric mean t <= x^p

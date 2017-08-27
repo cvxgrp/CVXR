@@ -395,10 +395,13 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
+# Assumes t is a vector the same length as X's rows (columns) for axis == 1 (2)
 .SOCAxis <- setClass("SOCAxis", representation(axis = "numeric"), 
                     validity = function(object) {
                       if(size(object@t)[2] != 1)
                         stop("[SOCAxis: t] t must have second dimension equal to 1")
+                      if(!(length(object@axis) == 1 && object@axis %in% c(1,2)))
+                        stop("[SOCAxis: axis] axis must equal 1 (row) or 2 (column)")
                       return(TRUE)
                     }, contains = "SOC")
 SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
@@ -426,7 +429,14 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
 })
 
 setMethod("num_cones", "SOCAxis", function(object) { size(object@t)[1] })
-setMethod("cone_size", "SOCAxis", function(object) { c(1 + size(object@x_elems[[1]])[object@axis], 1) })
+setMethod("cone_size", "SOCAxis", function(object) {
+  if(object@axis == 1)   # Return ncols if applying along each row
+    c(1 + size(object@x_elems[[1]])[2], 1)
+  else if(object@axis == 2)   # Return nrows if applying along each column
+    c(1 + size(object@x_elems[[1]])[1], 1)
+  else
+    stop("Invalid axis ", object@axis)
+})
 setMethod("size", "SOCAxis", function(object) {
   cone_size <- cone_size(object)
   lapply(1:num_cones(object), function(i) { cone_size })

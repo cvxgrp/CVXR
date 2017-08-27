@@ -524,7 +524,7 @@ test_that("test partial_optimize special var", {
   
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
-  result1 <- solve(p1)
+  # result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
@@ -558,7 +558,7 @@ test_that("test partial_optimize with parameters", {
   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
   p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
   gamma@value <- 3
-  result1 <- solve(p1)
+  # result1 <- solve(p1)
   
   # Solve the two-stage problem via partial_optimize
   p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))

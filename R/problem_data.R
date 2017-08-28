@@ -220,7 +220,7 @@ setMethod("get_objective", "MatrixData", function(object) {
   mat <- .cache_to_matrix(object, object@.obj_cache)
   c <- mat[[1]]
   offset <- mat[[2]]
-  c <- as.vector(t(c))
+  c <- as.numeric(t(c))
   offset <- as.numeric(offset[[1]])
   # Negate offset because was negated before.
   list(c, -offset)

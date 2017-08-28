@@ -550,7 +550,7 @@ gm_constrs <- function(t, x_list, p) {
   d[w] <- t
   
   if(length(x_list) < length(w))
-    x_list <- c(x_list, t)
+    x_list <- c(x_list, list(t))
   
   if(length(x_list) != length(w))
     stop("Expected length of x_list to be equal to length of w, but got ", length(x_list), " != ", length(w))

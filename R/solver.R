@@ -305,17 +305,21 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
       y_offset <- dims[[LEQ_DIM]] + sum(dims[[SOC_DIM]])
     y_true <- rep(0, length(y) + (new_sdp_sizes - old_sdp_sizes))
     y_true_offset <- y_offset
-    y_true[1:y_true_offset] <- y[1:y_offset]
+    if(y_true_offset > 0)
+      y_true[1:y_true_offset] <- y[1:y_offset]
 
     # Expand SDP duals from lower triangular to full matrix, scaling off diagonal entries by 1/sqrt(2)
     for(n in dims[[SDP_DIM]]) {
-      tri <- y[y_offset:(y_offset + floor(n*(n+1)/2))]
-      y_true[y_true_offset:(y_true_offset + n^2)] <- SCS.tri_to_full(tri, n)
-      y_true_offset <- y_true_offset + n^2
-      y_offset <- y_offset + floor(n*(n+1)/2)
+      if(n > 0) {
+        tri <- y[(y_offset + 1):(y_offset + floor(n*(n+1)/2))]
+        y_true[(y_true_offset + 1):(y_true_offset + n^2)] <- SCS.tri_to_full(tri, n)
+        y_true_offset <- y_true_offset + n^2
+        y_offset <- y_offset + floor(n*(n+1)/2)
+      }
     }
 
-    y_true[y_true_offset:length(y_true)] <- y[y_offset:length(y)]
+    if(length(y_true) > y_true_offset)
+      y_true[(y_true_offset + 1):length(y_true)] <- y[(y_offset + 1):length(y)]
     new_results[[INEQ_DUAL]] <- y_true
   } else {
     # No result to save

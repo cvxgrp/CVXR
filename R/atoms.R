@@ -674,21 +674,22 @@ setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args
 
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
 setMethod(".grad", "MatrixFrac", function(object, values) {
+  require(Matrix)
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
-  P_inv <- solve(P)
+  P_inv <- base::solve(P)
   
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
   DX <- (P_inv + t(P_inv)) %*% X
-  DX <- as.vector(t(DX))
+  DX <- as.numeric(t(DX))
   DX <- t(Matrix(DX, sparse = TRUE))
   
   DP <- P_inv %*% X
   DP <- DP %*% t(X)
   DP <- DP %*% P_inv
   DP <- -t(DP)
-  DP <- t(Matrix(as.vector(t(DP))))
+  DP <- t(Matrix(as.numeric(t(DP))))
   list(DX, DP)
 })
 

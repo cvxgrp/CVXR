@@ -210,7 +210,8 @@ setMethod("domain", "Leaf", function(object) { list() })   # Default is full dom
 setMethod("validate_val", "Leaf", function(object, val) {
   if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
     # Convert val to the proper matrix type
-    val <- as.matrix(val)
+    if(!(is.null(dim(val)) && length(val) == 1))
+      val <- as.matrix(val)
     size <- intf_size(val)
     if(any(size != size(object)))
       stop("Invalid dimensions (", size[1], ", ", size[2], ") for ", class(object), " value")

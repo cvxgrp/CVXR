@@ -566,7 +566,8 @@ Index.get_special_slice <- function(expr, row, col) {
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
-  Reshape(identity[select_vec,] %*% Vec(expr), final_size[1], final_size[2])
+  idmat <- matrix(identity[select_vec,], ncol = expr_prod)
+  Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {

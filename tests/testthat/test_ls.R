@@ -27,11 +27,10 @@ test_that("Test regression", {
   quadratic_coeff <- Variable()
   slope <- Variable()
   offset <- Variable()
-  quadratic <- offset + x_data %*% slope + quadratic_coeff %*% x_data^2
+  quadratic <- offset + x_data * slope + quadratic_coeff * x_data^2
   residuals <- quadratic - y_data
   fit_error <- SumSquares(residuals)
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
-  result2 <- solve(Problem(Minimize(fit_error), list()), solver = "ECOS")
   # optval <- result$optimal_value
   # optval2 <- result2$optimal_value
   # expect_equal(optval, 139.225650756, tolerance = TOL)

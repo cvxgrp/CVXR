@@ -550,7 +550,7 @@ test_that("test built-in sum (not good usage)", {
   
   x_copy <- x
   value(x_copy) <- c(1,2)
-  expr <- sum(x)
+  expr <- sum(x_copy)
   expect_equal(value(expr), 3)
 })
 

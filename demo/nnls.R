@@ -22,9 +22,7 @@ y <- X %*% b + rnorm(n, 0, s)
 
 # Construct the OLS problem without constraints
 beta <- Variable(m)
-objective <- Minimize(SumSquares(y - X %*% beta))
-# TODO: SOC_AXIS LinOp unimplemented?
-# objective <- Minimize(sum((y - X %*% beta)^2))
+objective <- Minimize(sum((y - X %*% beta)^2))
 prob <- Problem(objective)
 
 # Solve the OLS problem for beta

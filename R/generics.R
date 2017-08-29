@@ -36,6 +36,8 @@ setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
 setGeneric(".grad", function(object, values) { standardGeneric(".grad") })
 setGeneric(".domain", function(object) { standardGeneric(".domain") })
+setGeneric(".axis_grad", function(object, values) { standardGeneric(".axis_grad") })
+setGeneric(".column_grad", function(object, value) { standardGeneric(".column_grad") })
 
 # Positive definite inequalities
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })

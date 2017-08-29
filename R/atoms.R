@@ -139,14 +139,14 @@ setMethod("grad", "Atom", function(object) {
   arg_values <- list()
   for(arg in object@args) {
     arg_val <- value(arg)
-    if(is.na(arg_val))
+    if(is.null(arg_val) || any(is.na(arg_val)))
       return(error_grad(object))
     else
-      arg_values <- c(arg_values, arg_val)
+      arg_values <- c(arg_values, list(arg_val))
   }
   
   # A list of gradients wrt arguments
-  grad_self <- .grad(arg_values)
+  grad_self <- .grad(object, arg_values)
   
   # The chain rule
   result <- list()
@@ -155,20 +155,20 @@ setMethod("grad", "Atom", function(object) {
     # A dictionary of gradients wrt variables
     # Partial argument / partial x
     grad_arg <- grad(arg)
-    for(key in names(grad_arg)) {   # TODO: Check if this usage of key matches CVXPY
+    for(key in names(grad_arg)) {
       # None indicates gradient is not defined
-      if(is.na(grad_arg[key]) || is.na(grad_self[idx]))
-        result[key] <- NA
+      if(is.null(grad_arg[[key]]) || is.null(grad_self[[idx]]))
+        result[[key]] <- NULL
       else {
-        D <- grad_arg[key] * grad_self[idx]
+        D <- grad_arg[[key]] %*% grad_self[[idx]]
         # Convert 1x1 matrices to scalars
         if((is.matrix(D) || is(D, "Matrix")) && dim(D) == c(1,1))
           D <- D[1,1]
         
         if(key %in% names(result))
-          result[key] <- result[key] + D
+          result[[key]] <- result[[key]] + D
         else
-          result[key] <- D
+          result[[key]] <- D
       }
     }
   }
@@ -218,13 +218,13 @@ setMethod("validate_args", "AxisAtom", function(object) {
      stop("Invalid argument for axis")
 })
 
-.axis_grad.AxisAtom <- function(object, values) {
+setMethod(".axis_grad", "AxisAtom", function(object, values) {
   m <- size(object@args[[1]])[1]
   n <- size(object@args[[1]])[2]
   if(is.na(object@axis)) {
     value <- matrix(t(values[[1]]), nrow = m*n, ncol = 1)
     D <- .column_grad(object, value)
-    if(!is.na(D))
+    if(!is.null(D))
       D <- Matrix(D, sparse = TRUE)
   } else {
     if(object@axis == 2) {   # Function apply to each column
@@ -232,29 +232,30 @@ setMethod("validate_args", "AxisAtom", function(object) {
       for(i in 1:n) {
         value <- values[[1]][,i]
         d <- t(.column_grad(object, value))
-        if(is.na(d))
-          return(list(NA))
+        if(is.null(d))
+          return(list(NULL))
         row <- seq(i*n, i*n+m-1)
         col <- rep(1,m) * i
-        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, n))
+        D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, n))
       }
     } else {   # Function apply to each row
       values <- t(values[[1]])
       D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, m))
       for(i in 1:m) {
         value <- values[,i]
-        d <- t(.column_grad(value))
-        if(is.na(d))
-          return(list(NA))
+        d <- t(.column_grad(object, value))
+        if(is.null(d))
+          return(list(NULL))
         row <- seq(i, i+(n-1)*m)
         col <- rep(1,n)*i
-        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, m))
+        D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, m))
       }
     }
   }
   list(D)
-}
-.column_grad.AxisAtom <- function(object, value) { stop("Unimplemented") }
+})
+
+setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
@@ -292,6 +293,8 @@ setMethod(".grad", "AffineProd", function(object, values) {
   # DX = [diag(Y11), diag(Y12), ...]
   #      [diag(Y21), diag(Y22), ...]
   #      [  ...        ...      ...]
+  if(!(is.matrix(Y) || is(Y, "Matrix")))
+    Y <- as.matrix(Y)
   DX <- do.call("rbind", apply(Y, 1, function(row) {
       do.call("cbind", lapply(row, function(x) { sparseMatrix(i = 1:size11, j = 1:size11, x = x) }))
     }))
@@ -348,7 +351,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 
 setMethod("validate_args", "GeoMean", function(object) { })
 setMethod("to_numeric", "GeoMean", function(object, values) {
-  values <- as.vector(values[[1]])
+  values <- as.numeric(values[[1]])
   
   if("Rmpfr" %in% installed.packages()) {
     require(Rmpfr)
@@ -369,13 +372,13 @@ setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@
 setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
-  w_arr <- as.vector(object@w)
+  w_arr <- as.numeric(object@w)
   # Outside domain
   if(any(x[w_arr > 0] <= 0))
-    return(list(NA))
+    return(list(NULL))
   else {
-    D <- w_arr/as.vector(x) * to_numeric(object, values)
-    return(list(t(Matrix(D, sparse = TRUE))))
+    D <- w_arr/as.numeric(x) * to_numeric(object, values)
+    return(list(Matrix(D, sparse = TRUE)))
   }
 })
 
@@ -445,7 +448,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   d[length(d)] <- 1
   d <- diag(d)
   D <- v %*% d %*% t(v)
-  list(t(Matrix(as.vector(D), sparse = TRUE)))
+  list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -518,8 +521,8 @@ setMethod(".grad", "LogDet", function(object, values) {
   eigen_val <- eigen(X, only.values = TRUE)$values
   if(min(eigen_val) > 0) {
     # Grad: t(X^(-1))
-    D <- t(solve(X))
-    return(list(t(Matrix(as.vector(D), sparse = TRUE))))
+    D <- t(base::solve(X))
+    return(list(Matrix(as.numeric(D), sparse = TRUE)))
   } else   # Outside domain
     return(list(NA))
 })
@@ -578,12 +581,12 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
 })
 
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
-.column_grad.LogSumExp <- function(object, value) {
+setMethod(".column_grad", "LogSumExp", function(object, value) {
   denom <- log(sum(exp(value)))
   nom <- exp(value)
   D <- nom/denom
   D
-}
+})
 
 setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
 setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
@@ -674,7 +677,6 @@ setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args
 
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
 setMethod(".grad", "MatrixFrac", function(object, values) {
-  require(Matrix)
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
   P_inv <- base::solve(P)
@@ -683,13 +685,13 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   # partial_P = (P^-1 * X * X^T * P^-1)^T
   DX <- (P_inv + t(P_inv)) %*% X
   DX <- as.numeric(t(DX))
-  DX <- t(Matrix(DX, sparse = TRUE))
+  DX <- Matrix(DX, sparse = TRUE)
   
   DP <- P_inv %*% X
   DP <- DP %*% t(X)
   DP <- DP %*% P_inv
   DP <- -t(DP)
-  DP <- t(Matrix(as.numeric(t(DP))))
+  DP <- Matrix(as.numeric(t(DP)), sparse = TRUE)
   list(DX, DP)
 })
 
@@ -741,14 +743,14 @@ setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
 setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
-.column_grad.MaxEntries <- function(object, value) {
+setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
-  value <- as.vector(value)
+  value <- as.numeric(value)
   idx <- which.max(value)
   D <- rep(0, length(value))
   D[idx] <- 1
   D
-}
+})
 
 MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
@@ -862,15 +864,21 @@ p_norm <- function(x, p) {
     max(abs(x))
   else if(p == 0)
     sum(x != 0)
+  else if(p == 1)
+    norm1(x)
+  else if(p == 2)
+    norm2(x)
+  else if(p %% 2 == 0)
+    sum(x^p)^(1/p)
   else if(p >= 1)
     sum(abs(x)^p)^(1/p)
   else
-    sum(x^p)^(1/p)
+    stop("Invalid p = ", p)
 }
 
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
-    values <- as.vector(values[[1]])
+    values <- as.numeric(values[[1]])
   else
     values <- as.matrix(values[[1]])
   
@@ -895,19 +903,19 @@ setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negati
 setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
-setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(values) })
-.column_grad.Pnorm <-function(object, value) {
+setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
+setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- prod(size(object@args[[1]]))
   value <- as.matrix(value)
   
   # Outside domain
   if(object@p < 1 && any(value <= 0))
-    return(NA)
+    return(NULL)
   D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
   if(object@p == 1) {
     D_null <- D_null + (value > 0)
     D_null <- D_null - (value < 0)
-    return(t(Matrix(as.vector(D_null), sparse = TRUE)))   # TODO: Is this redundant? Check against CVXPY
+    return(Matrix(as.numeric(D_null), sparse = TRUE))   # TODO: Is this redundant? Check against CVXPY
   }
   denominator <- p_norm(value, object@p)
   denominator <- denominator^(object@p - 1)
@@ -917,13 +925,13 @@ setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(values) })
     if(object@p >= 1)
       return(D_null)
     else
-      return(NA)
+      return(NULL)
   } else {
-    nominator <- value^(object@p - 1)
-    frac <- nominator / denominator
-    return(matrix(as.vector(frac)))
+    numerator <- value^(object@p - 1)
+    frac <- numerator / denominator
+    return(matrix(as.numeric(frac)))
   }
-}
+})
 
 Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[[1]]
@@ -1060,9 +1068,9 @@ setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
 
 setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
-  s <- svd(val_svd)
+  s <- svd(values[[1]])
   D <- s$u %*% t(s$v)
-  list(t(Matrix(as.vector(D), sparse = TRUE)))
+  list(Matrix(as.numeric(D), sparse = TRUE))   # TODO: Make sure D is vectorized correctly
 })
 
 NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -1185,13 +1193,13 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
   y <- values[[2]]
   if(y <= 0)
-    return(list(NA, NA))
+    return(list(NULL, NULL))
   else {
     # DX = 2X/y, Dy = -||X||^2_2/y^2
     Dy <- -sum(X^2)/y^2
     Dy <- Matrix(Dy, sparse = TRUE)
     DX <- 2.0*X/y
-    DX <- Matrix(as.vector(DX), sparse = TRUE)
+    DX <- Matrix(as.numeric(t(DX)), sparse = TRUE)
     return(list(DX, Dy))
   }
 })
@@ -1234,7 +1242,7 @@ setMethod(".grad", "SigmaMax", function(object, values) {
   ds <- rep(0, length(s$d))
   ds[1] <- 1
   D <- s$u %*% diag(ds) %*% t(s$v)
-  t(Matrix(as.vector(D), sparse = TRUE))
+  list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -1290,7 +1298,7 @@ setMethod("validate_args",   "SumLargest", function(object) {
 
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
-  value <- as.vector(values[[1]])
+  value <- as.numeric(values[[1]])
   k <- min(object@k, length(value))
   val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
@@ -1306,10 +1314,10 @@ setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
 setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
-  value <- as.vector(values[[1]])
+  value <- as.numeric(values[[1]])
   k <- min(object@k, length(value))
   indices <- order(value, decreasing = TRUE)
-  D <- rep(0, prod(size(object@args[[1]])))
+  D <- matrix(0, nrow = prod(size(object@args[[1]])), ncol = 1)
   D[indices[1:k]] <- 1
   list(Matrix(D, sparse = TRUE))
 })

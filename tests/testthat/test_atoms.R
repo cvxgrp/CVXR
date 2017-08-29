@@ -247,7 +247,8 @@ test_that("test the SumEntries class", {
   expect_equal(curvature(SumEntries(Variable(2))), AFFINE)
   
   # Mixed curvature
-  expect_equal(curvature(SumEntries( c(1,-1) %*% Square(Variable(2)) )), UNKNOWN)
+  mat <- matrix(c(1,-1), nrow = 1, ncol = 2)
+  expect_equal(curvature(SumEntries( mat %*% Square(Variable(2)) )), UNKNOWN)
   
   # Test with axis argument
   expect_equal(size(SumEntries(Variable(2), axis = 1)), c(2, 1))

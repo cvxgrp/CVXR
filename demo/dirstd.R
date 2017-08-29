@@ -2,18 +2,19 @@
 data(dspop)   # Population
 data(dssamp)  # Skewed sample
 
-y <- dspop[,1]
-X <- dspop[,-1]
-ysamp <- dssamp[,1]
-Xsamp <- dssamp[,-1]
+ypop <- dspop[,1]
+Xpop <- dspop[,-1]
+y <- dssamp[,1]
+X <- dssamp[,-1]
+m <- nrow(X)
 
 # Given population mean of features
-b <- as.matrix(apply(X, 2, mean))
+b <- as.matrix(apply(Xpop, 2, mean))
 
 # Construct the direct standardization problem
-w <- Variable(nrow(Xsamp))
+w <- Variable(m)
 objective <- sum(Entr(w))
-constraints <- list(w >= 0, sum(w) == 1, t(Xsamp) %*% w == b)
+constraints <- list(w >= 0, sum(w) == 1, t(X) %*% w == b)
 prob <- Problem(Maximize(objective), constraints)
 
 # Solve for the distribution weights
@@ -36,7 +37,7 @@ plot_cdf <- function(data, probs, color = 'k') {
 # Compare weighted with original distribution
 cl <- rainbow(3)
 plot(NA, main = "Cumulative Distribution Function", xlab = "y", ylab = NA, xlim = c(-2, 12), ylim = c(0, 1))
-plot_cdf(y, color = cl[1])
-plot_cdf(ysam, color = cl[2])
-plot_cdf(ysam, weights, color = cl[3])
+plot_cdf(ypop, color = cl[1])
+plot_cdf(y, color = cl[2])
+plot_cdf(y, weights, color = cl[3])
 legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)

@@ -1,3 +1,5 @@
+TOL <- 1e-6
+
 x_bool <- Bool()
 y_int <- Int()
 A_bool <- Bool(3,2)
@@ -9,7 +11,7 @@ test_that("Test that MIP problems are deterministic", {
   for(i in 1:5) {
     obj <- Minimize(Square(y_int - 0.2))
     p <- Problem(obj, list(A_bool == 0, x_bool == B_int))
-    # data_recs <- c(data_recs, get_problem_data(p, "ECOS_BB"))
+    # data_recs <- c(data_recs, get_problem_data(p, ECOS_BB()))
   }
   
   # Check that problem data and result is always the same

@@ -23,7 +23,7 @@ test_that("Test non-negative least squares", {
   
   # Construct the OLS problem without constraints
   beta <- Variable(m)
-  objective <- Minimize(SumSquares(y - X %*% beta))
+  objective <- Minimize(sum((y - X %*% beta)^2))
   prob <- Problem(objective)
   
   # Solve the OLS problem for beta
@@ -56,37 +56,28 @@ test_that("Test non-negative least squares", {
 
 test_that("Test catenary problem", {
   # Problem data
-  n <- 51
+  m <- 51
   L <- 2
-  h <- L/(n-1)
+  h <- L/(m-1)
   
   # Form objective
-  x <- Variable(2*n)
-  B <- diag(2*n)
-  B[1:n, 1:n] <- 0
-  objective <- Minimize(sum(B %*% x))
+  x <- Variable(m)
+  y <- Variable(m)
+  objective <- Minimize(sum(y))
   
   # Form constraints
-  A <- matrix(0, nrow = 4, ncol = 2*n)
-  A[1, 1] <- A[2, n] <- A[3, n+1] <- A[4, 2*n] <- 1
-  b <- matrix(c(0, 1, 1, 1), nrow=4)
-  constraints = list(x >= 0, A %*% x == b)
-  
-  for (i in seq.int(n-1)) {
-    A <- matrix(numeric(2*2*n), nrow = 2)
-    A[1, i] <- -1; A[1, i+1] <- 1
-    A[2, n+i] <- -1; A[2, n+i+1] <- 1
-    constraints <- c(constraints, Norm2(A %*% x) <= h)
-  }
+  constraints <- list(x[1] == 0, y[1] == 1, x[n] == 1, y[n] == 1, 
+                      diff(x)^2 + diff(y)^2 <= h^2)
   
   # Solve the catenary problem
   prob <- Problem(objective, constraints)
   system.time(result <- solve(prob))
   
-  # Plot results
+  # Plot and compare with ideal catenary
   x <- result$primal_values[[as.character(x@id)]]
-  xs <- x[1:n, 1, drop = TRUE]
-  ys <- x[(n+1):(2*n), 1, drop = TRUE]
+  y <- result$primal_values[[as.character(y@id)]]
+  xs <- x[1:m, 1, drop = TRUE]
+  ys <- y[1:m, 1, drop = TRUE]
   plot(c(0, 1), c(0, 1), type = 'n')
   lines(xs, ys, col = "blue", lwd = 2)
   
@@ -150,20 +141,57 @@ test_that("Test direct standardization problem", {
 })
 
 test_that("Test risk-return trade-off in portfolio optimization", {
+  # Problem data
   n <- 10
   mu <- matrix(abs(rnorm(n)), nrow = n)
-  Sigma <- matrix(rnorm(n*n), nrow = n, ncol = n)
+  Sigma <- matrix(rnorm(n^2), nrow = n, ncol = n)
   Sigma <- t(Sigma) %*% Sigma
   
+  # Form problem
   w <- Variable(n)
-  gamma <- Parameter(sign = "positive")
   ret <- t(mu) %*% w
   risk <- QuadForm(w, Sigma)
-  objective <- ret - gamma * risk
-  constraints <- list(sum(w) == 1, w >= 0)
-  prob <- Problem(Maximize(objective), constraints)
+  constraints <- list(w >= 0, sum(w) == 1)
+  
+  # Risk aversion parameters
+  SAMPLES <- 100
+  gammas <- 10^seq(-2, 3, length.out = SAMPLES)
+  ret_data <- rep(0, SAMPLES)
+  risk_data <- rep(0, SAMPLES)
+  
+  # Compute trade-off curve
+  for(gamma in gammas) {
+    objective <- ret - gamma * risk
+    prob <- Problem(Maximize(objective), constraints)
+    # result <- solve(prob)
+    
+    # Evaluate risk/return for current solution
+    # ret_data[i] <- result$value(ret)
+    # risk_data[i] <- result$value(risk)
+  }
    
-  # result <- solve(prob)
-  # result$optimal_value
-  # result$primal_values
+  # Plot trade-off curve
+  plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
+  points(diag(Sigma), mu, col = "red")
+})
+
+test_that("Test worst-case risk analysis", {
+  n <- 5
+  w <- rexp(n)
+  w <- w / sum(w)
+  mu <- abs(matrix(rnorm(n), nrow = n, ncol = 1))/15
+  Sigma_nom <- matrix(runif(n^2, -0.15, 0.8), nrow = n, ncol = n)
+  Sigma_nom <- t(Sigma_nom) %*% Sigma_nom
+  
+  # Known upper and lower bounds
+  Delta <- matrix(0.2, nrow = n, ncol = n)
+  diag(Delta) <- 0
+  U <- Sigma_nom + Delta
+  L <- Sigma_nom - Delta
+  
+  Sigma <- Semidef(n)
+  obj <- QuadForm(w, Sigma)
+  constr <- list(L <= Sigma, Sigma <= U, Sigma == Symmetric(n))
+  prob <- Problem(Maximize(obj), constr)
+  result <- solve(prob)
 })

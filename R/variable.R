@@ -217,5 +217,5 @@ setMethod("canonicalize", "SymmetricUpperTri", function(object) {
 Symmetric <- function(n, name = NA_character_) {
   var <- SymmetricUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))
-  Reshape(fill_mat*var, as.integer(n), as.integer(n))
+  Reshape(fill_mat %*% var, as.integer(n), as.integer(n))
 }

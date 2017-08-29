@@ -35,7 +35,7 @@ test_that("Test quadratic form with a singular matrix", {
         }
         constraints <- list(x >= 0, SumEntries(x) == 1)
         p <- Problem(objective, constraints)
-        # result <- solve(p)
+        result <- solve(p)
         
         # Check that CVXR found the right answer
         # xopt <- sum(result$x * as.vector(A))
@@ -53,7 +53,7 @@ test_that("Test quadratic form with a sparse matrix", {
   x <- Variable(2)
   cost <- QuadForm(x, Q)
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-  # result <- solve(prob)
+  result <- solve(prob)
   # expect_equal(result$optimal_value, 5, tolerance = TOL)
 })
 
@@ -62,7 +62,7 @@ test_that("Test when P is constant and not symmetric", {
   x <- Variable(2)
   cost <- QuadForm(x, P)
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-  # result <- solve(prob)
+  result <- solve(prob)
   # expect_equal(result$optimal_value, 28, tolerance = TOL)
 })
 
@@ -73,5 +73,5 @@ test_that("Test error when P is symmetric but not definite", {
   # Forming quadratic form is okay
   expect_warning(cost <- QuadForm(x, P))
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-  # expect_error(solve(prob))
+  expect_error(solve(prob))
 })

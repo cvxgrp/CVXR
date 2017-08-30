@@ -139,7 +139,7 @@ setMethod("grad", "Atom", function(object) {
   arg_values <- list()
   for(arg in object@args) {
     arg_val <- value(arg)
-    if(is.null(arg_val) || any(is.na(arg_val)))
+    if(any(is.na(arg_val)))
       return(error_grad(object))
     else
       arg_values <- c(arg_values, list(arg_val))
@@ -157,8 +157,8 @@ setMethod("grad", "Atom", function(object) {
     grad_arg <- grad(arg)
     for(key in names(grad_arg)) {
       # None indicates gradient is not defined
-      if(is.null(grad_arg[[key]]) || is.null(grad_self[[idx]]))
-        result[[key]] <- NULL
+      if(any(is.na( as.numeric(grad_arg[[key]]) )) || any(is.na( as.numeric(grad_self[[idx]]) )))
+        result[[key]] <- NA_real_
       else {
         D <- grad_arg[[key]] %*% grad_self[[idx]]
         # Convert 1x1 matrices to scalars
@@ -171,6 +171,7 @@ setMethod("grad", "Atom", function(object) {
           result[[key]] <- D
       }
     }
+    idx <- idx + 1
   }
   return(result)
 })
@@ -224,7 +225,7 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   if(is.na(object@axis)) {
     value <- matrix(values[[1]], nrow = m*n, ncol = 1)
     D <- .column_grad(object, value)
-    if(!is.null(D))
+    if(is(D, "Matrix") || !any(is.na(D)))
       D <- Matrix(D, sparse = TRUE)
   } else {
     if(object@axis == 2) {   # Function apply to each column
@@ -232,8 +233,8 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
       for(i in 1:n) {
         value <- values[[1]][,i]
         d <- t(.column_grad(object, value))
-        if(is.null(d))
-          return(list(NULL))
+        if(any(is.na(as.numeric(d))))
+          return(list(NA_real_))
         row <- seq((i-1)*n+1, (i-1)*n+m, length.out = m)
         col <- rep(1,m) * i
         D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, n))
@@ -244,8 +245,8 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
       for(i in 1:m) {
         value <- values[,i]
         d <- t(.column_grad(object, value))
-        if(is.null(d))
-          return(list(NULL))
+        if(any(is.na(as.numeric(d))))
+          return(list(NA_real_))
         row <- seq(i, i+(n-1)*m, length.out = n)
         col <- rep(1,n)*i
         D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, m))
@@ -375,7 +376,7 @@ setMethod(".grad", "GeoMean", function(object, values) {
   w_arr <- as.numeric(object@w)
   # Outside domain
   if(any(x[w_arr > 0] <= 0))
-    return(list(NULL))
+    return(list(NA_real_))
   else {
     D <- w_arr/as.numeric(x) * to_numeric(object, values)
     return(list(Matrix(D, sparse = TRUE)))
@@ -664,7 +665,7 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
   P <- values[[2]]
-  sum(diag(t(X) %*% solve(P) %*% X))
+  sum(diag(t(X) %*% base::solve(P) %*% X))
 })
 
 setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
@@ -679,7 +680,11 @@ setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>%
 setMethod(".grad", "MatrixFrac", function(object, values) {
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
-  P_inv <- base::solve(P)
+  P_inv <- tryCatch({ 
+    base::solve(P)
+  }, error = function(e) {
+      return(list(NA_real_, NA_real_))
+  })
   
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
@@ -906,7 +911,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   
   # Outside domain
   if(object@p < 1 && any(value <= 0))
-    return(NULL)
+    return(NA_real_)
   D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
   if(object@p == 1) {
     D_null <- D_null + (value > 0)
@@ -921,7 +926,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
     if(object@p >= 1)
       return(D_null)
     else
-      return(NULL)
+      return(NA_real_)
   } else {
     numerator <- value^(object@p - 1)
     frac <- numerator / denominator
@@ -1189,7 +1194,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
   y <- values[[2]]
   if(y <= 0)
-    return(list(NULL, NULL))
+    return(list(NA_real_, NA_real_))
   else {
     # DX = 2X/y, Dy = -||X||^2_2/y^2
     Dy <- -sum(X^2)/y^2

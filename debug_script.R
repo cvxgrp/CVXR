@@ -1,4 +1,6 @@
 library(cvxr)
+library(testthat)
+setwd("~/Documents/software/cvxr/tests/testthat")
 
 # TEST
 # A <- Variable(2, 2, name = "A")
@@ -35,11 +37,11 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-value(A) <- diag(rep(1, 2))
-value(B) <- diag(rep(1, 2))
-expr <- MatrixFrac(A, B)
+value(A) <- rbind(c(1,2), c(3,4))
+expr <- Log(A)
 
 # base::trace("grad", tracer = browser, exit = browser, signature = c("Atom"))
+# base::trace(cvxr:::.grad, tracer = browser, exit = browser, signature = c("MatrixFrac"))
 # base::trace(cvxr:::.axis_grad, tracer = browser, exit = browser, signature = c("AxisAtom"))
 # base::trace(cvxr:::.column_grad, tracer = browser, exit = browser, signature = c("LogSumExp"))
 grad(expr)

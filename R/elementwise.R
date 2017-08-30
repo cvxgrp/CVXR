@@ -16,7 +16,7 @@ setMethod("size_from_args", "Elementwise", function(object) {
 })
 
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
-  value <- as.vector(value)
+  value <- as.numeric(value)
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
@@ -52,7 +52,7 @@ setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
 setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
-.grad.Abs <- function(object, values) {
+setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -62,7 +62,7 @@ setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
   D <- D + (values[[1]] > 0)
   D <- D - (values[[1]] < 0)
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
-}
+})
 
 Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
@@ -118,7 +118,7 @@ setMethod(".grad", "Entr", function(object, values) {
   
   # Outside domain or on boundary
   if(min(values[[1]]) <= 0)
-    return(list(NA))   # Non-differentiable
+    return(list(NA_real_))   # Non-differentiable
   else {
     grad_vals <- -log(values[[1]]) - 1
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -310,7 +310,7 @@ setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
 setMethod(".grad", "KLDiv", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
-    return(list(NA, NA))   # Non-differentiable
+    return(list(NA_real_, NA_real_))   # Non-differentiable
   else {
     div <- values[[1]]/values[[2]]
     grad_vals <- list(log(div), 1-div)
@@ -371,7 +371,7 @@ setMethod(".grad", "Log", function(object, values) {
   
   # Outside domain or on boundary
   if(min(values[[1]]) <= 0)
-    return(list(NA))   # Non-differentiable
+    return(list(NA_real_))   # Non-differentiable
   else {
     grad_vals <- 1.0/values[[1]]
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -412,7 +412,7 @@ setMethod(".grad", "Log1p", function(object, values) {
   
   # Outside domain or on boundary
   if(min(values[[1]]) <= -1)
-    return(list(NA))   # Non-differentiable
+    return(list(NA_real_))   # Non-differentiable
   else {
     grad_vals <- 1.0/(values[[1]] + 1)
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -683,7 +683,7 @@ setMethod(".grad", "Power", function(object, values) {
   # Outside domain or on boundary
   if(!is_power2(object@p) && min(values[[1]]) <= 0) {
     if(object@p < 1)
-      return(list(NA))  # Non-differentiable
+      return(list(NA_real_))  # Non-differentiable
     else   # Round up to zero
       values[[1]] <- ifelse(values[[1]] >= 0, values[[1]], 0)
   }
@@ -758,7 +758,7 @@ setMethod(".grad", "Sqrt", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
   if(min(values[[1]]) <= 0)
-    return(list(NA))
+    return(list(NA_real_))
   grad_vals <- 0.5*values[[1]]^(-0.5)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })

@@ -15,7 +15,7 @@ setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
 setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
-.grad.AffAtom <- function(object, values) {
+setMethod(".grad", "AffAtom", function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this
   # Make a fake LinOp tree for the function
   fake_args <- list()
@@ -60,7 +60,7 @@ setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, functi
     }
   }
   grad_list
-}
+})
 
 #'
 #' The AddExpression class.
@@ -333,7 +333,7 @@ get_diff_mat <- function(dim, axis) {
     t(mat)
 }
 
-.grad.CumSum <- function(object, values) {
+setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
   dim <- dim(values[[1]])[object@axis]
   mat <- matrix(0, nrow = dim, ncol = dim)
@@ -348,7 +348,7 @@ get_diff_mat <- function(dim, axis) {
   else
     grad <- .grad(RMulExpression(var, t(mat)), values)[1]
   list(grad)
-}
+})
 
 CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Implicit 0(n) definition:

@@ -81,8 +81,11 @@ SymData.presolve <- function(objective, constr_map) {
         V <- prob[[1]]
         I <- prob[[2]]
         J <- prob[[3]]
+        
         coeff <- prob[[4]]
-        sign <- sign(coeff)
+        sign <- intf_sign(coeff)
+        is_pos <- sign[1]
+        is_neg <- sign[2]
 
         # For equality constraint, coeff must be zero.
         # For inequality (i.e. <= 0) constraint, coeff must be negative.
@@ -257,6 +260,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
     }
     vert_offset <- vert_offset + prod(size(constr))
   }
+  storage.mode(constr_offsets) <- "integer"
 
   # Convert the constraints into a matrix and vector offset and add them to the matrix cache.
   if(length(active_constr) > 0) {

@@ -222,7 +222,7 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   m <- size(object@args[[1]])[1]
   n <- size(object@args[[1]])[2]
   if(is.na(object@axis)) {
-    value <- matrix(t(values[[1]]), nrow = m*n, ncol = 1)
+    value <- matrix(values[[1]], nrow = m*n, ncol = 1)
     D <- .column_grad(object, value)
     if(!is.null(D))
       D <- Matrix(D, sparse = TRUE)
@@ -234,7 +234,7 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
         d <- t(.column_grad(object, value))
         if(is.null(d))
           return(list(NULL))
-        row <- seq(i*n, i*n+m-1)
+        row <- seq((i-1)*n+1, (i-1)*n+m, length.out = m)
         col <- rep(1,m) * i
         D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, n))
       }
@@ -246,7 +246,7 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
         d <- t(.column_grad(object, value))
         if(is.null(d))
           return(list(NULL))
-        row <- seq(i, i+(n-1)*m)
+        row <- seq(i, i+(n-1)*m, length.out = n)
         col <- rep(1,n)*i
         D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, m))
       }
@@ -582,7 +582,7 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
 
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
 setMethod(".column_grad", "LogSumExp", function(object, value) {
-  denom <- log(sum(exp(value)))
+  denom <- sum(exp(value))
   nom <- exp(value)
   D <- nom/denom
   D
@@ -864,10 +864,6 @@ p_norm <- function(x, p) {
     max(abs(x))
   else if(p == 0)
     sum(x != 0)
-  else if(p == 1)
-    norm1(x)
-  else if(p == 2)
-    norm2(x)
   else if(p %% 2 == 0)
     sum(x^p)^(1/p)
   else if(p >= 1)

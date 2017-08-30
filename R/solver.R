@@ -180,16 +180,16 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   require(ECOSolveR)
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
-  
+
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
   if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
   if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
   data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
   solver_opts <- ECOSolveR::ecos.control()
-  solver_opts$verbose <- as.integer(verbose)
+  solver_opts$VERBOSE <- as.integer(verbose)
   other_opts <- list(...)
   solver_opts[names(other_opts)] <- other_opts
-  
+
   results_dict <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = data[[DIMS]], A = data[[A_KEY]], b = data[[B_KEY]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })

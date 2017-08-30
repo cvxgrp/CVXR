@@ -1,5 +1,7 @@
 library(cvxr)
 
+
+set.seed(123)
 n <- 100
 
 # Specify the true value of the variable
@@ -17,6 +19,9 @@ residuals <- line - y_data
 fit_error <- SumSquares(residuals)
 # fit_error <- sum(residuals^2)
 
-debug("SymData.presolve")
-debug("get_problem_matrix")
-result <- solve(Problem(Minimize(fit_error)), solver = "SCS")
+##debug("SymData.presolve")
+##debug("get_problem_matrix")
+##base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("ECOS"))
+##base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("SCS"))
+result <- solve(Problem(Minimize(fit_error)), solver = "SCS", verbose=1L)
+result <- solve(Problem(Minimize(fit_error)), verbose=1L)

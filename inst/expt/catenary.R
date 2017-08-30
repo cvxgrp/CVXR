@@ -1,3 +1,5 @@
+## This is a working example
+
 library(cvxr)
 
 # Generate data
@@ -29,7 +31,8 @@ for(i in seq.int(n-1)) {
 # Solve problem
 prob <- Problem(objective, constraints)
 system.time(sole <- solve(prob))
-x <- sole$primal_values[[as.character(x@id)]]
+x <- matrix(sole$primal, ncol = 1)
+
 
 # Plot and compare with ideal catenary
 xs <- x[1:n, 1, drop = TRUE]

@@ -1,0 +1,362 @@
+First time: This matches the python version
+
+Browse[2]> root_linR
+$type
+[1] "neg"
+
+$size
+[1] 1 1
+
+$args
+$args[[1]]
+$args[[1]]$type
+[1] "variable"
+
+$args[[1]]$size
+[1] 1 1
+
+$args[[1]]$args
+list()
+
+$args[[1]]$data
+[1] 3
+
+$args[[1]]$class
+[1] "LinOp"
+
+
+
+$data
+NULL
+
+$class
+[1] "LinOp"
+
+
+Second time: this does not match the python version.
+
+Browse[2]> root_linR
+$type
+[1] "neg"
+
+$size
+[1] 4 1
+
+$args
+$args[[1]]
+$args[[1]]$type
+[1] "sum"
+
+$args[[1]]$size
+[1] 4 1
+
+$args[[1]]$args
+$args[[1]]$args[[1]]
+$args[[1]]$args[[1]]$type
+[1] "mul"
+
+$args[[1]]$args[[1]]$size
+[1] 4 1
+
+$args[[1]]$args[[1]]$args
+$args[[1]]$args[[1]]$args[[1]]
+$args[[1]]$args[[1]]$args[[1]]$type
+[1] "variable"
+
+$args[[1]]$args[[1]]$args[[1]]$size
+[1] 1 1
+
+$args[[1]]$args[[1]]$args[[1]]$args
+list()
+
+$args[[1]]$args[[1]]$args[[1]]$data
+[1] 3
+
+$args[[1]]$args[[1]]$args[[1]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[1]]$data
+$args[[1]]$args[[1]]$data[[1]]
+$args[[1]]$args[[1]]$data[[1]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[1]]$data[[1]]$size
+[1] 4 1
+
+$args[[1]]$args[[1]]$data[[1]]$args
+list()
+
+$args[[1]]$args[[1]]$data[[1]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] 1
+[3,] .
+[4,] .
+
+$args[[1]]$args[[1]]$data[[1]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[1]]$data[[2]]
+$args[[1]]$args[[1]]$data[[2]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[1]]$data[[2]]$size
+[1] 4 1
+
+$args[[1]]$args[[1]]$data[[2]]$args
+list()
+
+$args[[1]]$args[[1]]$data[[2]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] 1
+[4,] .
+
+$args[[1]]$args[[1]]$data[[2]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[1]]$data[[3]]
+$args[[1]]$args[[1]]$data[[3]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[1]]$data[[3]]$size
+[1] 4 1
+
+$args[[1]]$args[[1]]$data[[3]]$args
+list()
+
+$args[[1]]$args[[1]]$data[[3]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] .
+[4,] 1
+
+$args[[1]]$args[[1]]$data[[3]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[1]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[2]]
+$args[[1]]$args[[2]]$type
+[1] "mul"
+
+$args[[1]]$args[[2]]$size
+[1] 4 1
+
+$args[[1]]$args[[2]]$args
+$args[[1]]$args[[2]]$args[[1]]
+$args[[1]]$args[[2]]$args[[1]]$type
+[1] "scalar_const"
+
+$args[[1]]$args[[2]]$args[[1]]$size
+[1] 1 1
+
+$args[[1]]$args[[2]]$args[[1]]$args
+list()
+
+$args[[1]]$args[[2]]$args[[1]]$data
+     [,1]
+[1,]    1
+
+$args[[1]]$args[[2]]$args[[1]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[2]]$data
+$args[[1]]$args[[2]]$data[[1]]
+$args[[1]]$args[[2]]$data[[1]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[2]]$data[[1]]$size
+[1] 4 1
+
+$args[[1]]$args[[2]]$data[[1]]$args
+list()
+
+$args[[1]]$args[[2]]$data[[1]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] 1
+[3,] .
+[4,] .
+
+$args[[1]]$args[[2]]$data[[1]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[2]]$data[[2]]
+$args[[1]]$args[[2]]$data[[2]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[2]]$data[[2]]$size
+[1] 4 1
+
+$args[[1]]$args[[2]]$data[[2]]$args
+list()
+
+$args[[1]]$args[[2]]$data[[2]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] 1
+[4,] .
+
+$args[[1]]$args[[2]]$data[[2]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[2]]$data[[3]]
+$args[[1]]$args[[2]]$data[[3]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[2]]$data[[3]]$size
+[1] 4 1
+
+$args[[1]]$args[[2]]$data[[3]]$args
+list()
+
+$args[[1]]$args[[2]]$data[[3]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] .
+[4,] 1
+
+$args[[1]]$args[[2]]$data[[3]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[2]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[3]]
+$args[[1]]$args[[3]]$type
+[1] "mul"
+
+$args[[1]]$args[[3]]$size
+[1] 4 1
+
+$args[[1]]$args[[3]]$args
+$args[[1]]$args[[3]]$args[[1]]
+$args[[1]]$args[[3]]$args[[1]]$type
+[1] "variable"
+
+$args[[1]]$args[[3]]$args[[1]]$size
+[1] 1 1
+
+$args[[1]]$args[[3]]$args[[1]]$args
+list()
+
+$args[[1]]$args[[3]]$args[[1]]$data
+[1] 2
+
+$args[[1]]$args[[3]]$args[[1]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[3]]$data
+$args[[1]]$args[[3]]$data[[1]]
+$args[[1]]$args[[3]]$data[[1]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[3]]$data[[1]]$size
+[1] 4 1
+
+$args[[1]]$args[[3]]$data[[1]]$args
+list()
+
+$args[[1]]$args[[3]]$data[[1]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] 1
+[3,] .
+[4,] .
+
+$args[[1]]$args[[3]]$data[[1]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[3]]$data[[2]]
+$args[[1]]$args[[3]]$data[[2]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[3]]$data[[2]]$size
+[1] 4 1
+
+$args[[1]]$args[[3]]$data[[2]]$args
+list()
+
+$args[[1]]$args[[3]]$data[[2]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] 1
+[4,] .
+
+$args[[1]]$args[[3]]$data[[2]]$class
+[1] "LinOp"
+
+
+$args[[1]]$args[[3]]$data[[3]]
+$args[[1]]$args[[3]]$data[[3]]$type
+[1] "sparse_const"
+
+$args[[1]]$args[[3]]$data[[3]]$size
+[1] 4 1
+
+$args[[1]]$args[[3]]$data[[3]]$args
+list()
+
+$args[[1]]$args[[3]]$data[[3]]$data
+4 x 1 sparse Matrix of class "dgCMatrix"
+      
+[1,] .
+[2,] .
+[3,] .
+[4,] 1
+
+$args[[1]]$args[[3]]$data[[3]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$args[[3]]$class
+[1] "LinOp"
+
+
+
+$args[[1]]$data
+NULL
+
+$args[[1]]$class
+[1] "LinOp"
+
+
+
+$data
+NULL
+
+$class
+[1] "LinOp"

@@ -1,0 +1,14 @@
+First time: matches the R version
+
+ipdb> root_linPy
+LinOp(type='neg', size=(1, 1), args=[LinOp(type='variable', size=(1, 1), args=[], data=1)], data=None)
+
+Second time: Does not match the R version
+
+ipdb> root_linPy
+LinOp(type='neg', size=(3, 1), args=[LinOp(type='sum', size=(3, 1), args=[LinOp(type='mul', size=(3, 1), args=[LinOp(type='variable', size=(1, 1), args=[], data=1)], data=LinOp(type='sparse_const', size=(3, 1), args=[], data=<3x1 sparse matrix of type '<type 'numpy.float64'>'
+	with 1 stored elements in Compressed Sparse Column format>)), LinOp(type='mul', size=(3, 1), args=[LinOp(type='variable', size=(1, 1), args=[], data=0)], data=LinOp(type='sparse_const', size=(3, 1), args=[], data=<3x1 sparse matrix of type '<type 'numpy.float64'>'
+	with 1 stored elements in Compressed Sparse Column format>)), LinOp(type='mul', size=(3, 1), args=[LinOp(type='scalar_const', size=(1, 1), args=[], data=1.0)], data=LinOp(type='sparse_const', size=(3, 1), args=[], data=<3x1 sparse matrix of type '<type 'numpy.float64'>'
+	with 1 stored elements in Compressed Sparse Column format>))], data=None)], data=None)
+ipdb>
+

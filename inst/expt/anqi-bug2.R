@@ -1,0 +1,5 @@
+library(cvxr)
+x <- Variable(1)
+obj <- Maximize(Log(x))
+prob <- Problem(obj)
+solve(prob)

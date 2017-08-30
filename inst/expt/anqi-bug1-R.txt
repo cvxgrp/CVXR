@@ -1,0 +1,67 @@
+> library(cvxr)
+> n <- 2
+> A <- diag(c(1, 1))
+> x <- Variable(n)
+> objective <- Minimize(sum(A %*% x))
+> constraint <- list(x >= 0, x <= 1)
+> prob <- Problem(objective, constraint)
+> solve(prob, solver = "SCS", verbose = TRUE)
+Before Build Matrix 1
+After constructing external ptr
+Instantiating ProblemData-R6 
+Before Build Matrix 1
+After constructing external ptr
+Instantiating ProblemData-R6 
+----------------------------------------------------------------------------
+	SCS v1.2.1 - Splitting Conic Solver
+	(c) Brendan O'Donoghue, Stanford University, 2012-2016
+----------------------------------------------------------------------------
+Lin-sys: sparse-direct, nnz in A = 2
+eps = 1.00e-03, alpha = 1.50, max_iters = 2500, normalize = 1, scale = 1.00
+Variables n = 2, constraints m = 2
+Cones:	linear vars: 2
+Setup time: 1.63e-04s
+----------------------------------------------------------------------------
+ Iter | pri res | dua res | rel gap | pri obj | dua obj | kap/tau | time (s)
+----------------------------------------------------------------------------
+     0| 1.33e+00  1.17e+03  6.53e-01 -1.89e+00 -0.00e+00  0.00e+00  1.46e-04 
+    20| 1.75e-09  1.02e-06  2.47e-09 -2.47e-09 -0.00e+00  9.36e-20  1.62e-04 
+----------------------------------------------------------------------------
+Status: Solved
+Timing: Solve time: 1.65e-04s
+	Lin-sys: nnz in L factor: 6, avg solve time: 7.91e-08s
+	Cones: avg projection time: 4.09e-08s
+----------------------------------------------------------------------------
+Error metrics:
+dist(s, K) = 6.6201e-20, dist(y, K*) = 0.0000e+00, s'y/|s||y| = -1.0000e+00
+|Ax + s - b|_2 / (1 + |b|_2) = 1.7479e-09
+|A'y + c|_2 / (1 + |c|_2) = 1.0208e-06
+|c'x + b'y| / (1 + |c'x| + |b'y|) = 2.4719e-09
+----------------------------------------------------------------------------
+c'x = -0.0000, -b'y = -0.0000
+============================================================================
+$status
+[1] "optimal"
+
+$solve_time
+[1] 0.000165247
+
+$setup_time
+[1] 0.000162597
+
+$num_iters
+[1] 20
+
+$value
+[1] -2.471873e-09
+
+$primal
+[1] -1.235936e-09 -1.235936e-09
+
+$eq_dual
+[1] 1.000002
+
+$ineq_dual
+[1] 1.000002 1.000002
+
+> 

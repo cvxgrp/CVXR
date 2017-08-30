@@ -1,11 +1,4 @@
-import cvxopt
 import numpy as np
-from pylab import *
-import math
-import pdb
-
-# from cvxpy import numpy as my_numpy
-
 from cvxpy import *
 
 # Taken from CVX website http://cvxr.com/cvx/examples/
@@ -28,18 +21,20 @@ radius = Variable(1)
 center = Variable(2)
 
 # constraints
-a1 = cvxopt.matrix([2,1], (2,1))
-a2 = cvxopt.matrix([2,-1], (2,1))
-a3 = cvxopt.matrix([-1,2], (2,1))
-a4 = cvxopt.matrix([-1,-2], (2,1))
+A = np.array([[2, 2, -1, -1],
+              [1, -1, 2, -2]])
 
-b = cvxopt.matrix(1, (4,1))
+a1 = np.array([[2, 1]])
+a2 = np.array([[2,-1]])
+a3 = np.array([[-1, 2]])
+a4 = np.array([[-1,-2]])
 
+b = np.array([1, 1, 1, 1])
 
-constraints = [ a1.T*center + np.linalg.norm(a1, 2)*radius <= b[0],
-                a2.T*center + np.linalg.norm(a2, 2)*radius <= b[1],
-                a3.T*center + np.linalg.norm(a3, 2)*radius <= b[2],
-                a4.T*center + np.linalg.norm(a4, 2)*radius <= b[3] ]
+constraints = [ a1 * center + norm(a1, 2) * radius <= b[0],
+                a2 * center + norm(a2, 2) * radius <= b[1],
+                a3 * center + norm(a3, 2) * radius <= b[2],
+                a4 * center + norm(a4, 2) * radius <= b[3] ]
 
 # objective
 objective = Maximize(radius)

@@ -20,7 +20,6 @@ Type 'q()' to quit R.
 > > if(identical(getOption('pager'), file.path(R.home('bin'), 'pager'))) # rather take the ESS one
 +       options(pager='cat')
 > options(STERM='iESS', str.dendrogram.last="'", editor='emacsclient', show.error.locations=TRUE)
-> ## An example that currently gives wrong answers, for instance!
 > library(cvxr)
 a1 <- matrix(c(2,1))
 a2 <- matrix(c(2,-1))
@@ -29,69 +28,200 @@ a4 <- matrix(c(-1,-2))
 
 Attaching package: ‘cvxr’
 
-The following object is masked from ‘package:stats’:
+The following objects are masked from ‘package:stats’:
 
-    reshape
+    decompose, reshape
 
 The following objects are masked from ‘package:base’:
 
-    F, trace
+    F, split, trace
 
+Warning messages:
+1: replacing previous import ‘Matrix::crossprod’ by ‘gmp::crossprod’ when loading ‘cvxr’ 
+2: replacing previous import ‘Matrix::tcrossprod’ by ‘gmp::tcrossprod’ when loading ‘cvxr’ 
 > > > > > b <- rep(1,4)
+> a
+Error: object 'a' not found
+> a1
+     [,1]
+[1,]    2
+[2,]    1
 > r <- Variable(name = "r")
 > x_c <- Variable(2, name = "x_c")
 > obj <- Maximize(r)
 > constraints <- list(
-+     t(a1)*x_c + norm(a1,"F")*r <= b[1] )
-Error in sum_shapes(lapply(object@args, function(arg) { : 
-  Incompatible dimensions
-> library(cvxr)
-> a1 <- matrix(c(2,1))
-> a2 <- matrix(c(2,-1))
-> a3 <- matrix(c(-1,2))
-> a4 <- matrix(c(-1,-2))
-> b <- rep(1,4)
-> r <- Variable(name = "r")
-> x_c <- Variable(2, name = "x_c")
-> obj <- Maximize(r)
-> constraints <- list(
-+     t(a1) %*% x_c + norm(a1,"F")*r <= b[1],
-+     t(a2) %*% x_c + norm(a2,"F")*r <= b[2],
-+     t(a3) %*% x_c + norm(a3,"F")*r <= b[3],
-+     t(a4) %*% x_c + norm(a4,"F")*r <= b[4]
++     t(a1) %*% x_c + Pnorm(a1, 2) * r <= b[1],
++     t(a2) %*% x_c + Pnorm(a2, 2) * r <= b[2],
++     t(a3) %*% x_c + Pnorm(a3, 2) * r <= b[3],
++     t(a4) %*% x_c + Pnorm(a4, 2) * r <= b[4]
 + )
 > p <- Problem(obj, constraints)
 > result <- solve(p)
-[1] "Calling CVXcanon"
-Objective:
-[1] "LinOp(id=9c3329de-63ae-476c-877b-9d36768661ea, type=NEG, size=[1, 1], args=[ LinOp(id=370f2d77-6412-468b-96d2-c98b878d298c, type=VARIABLE, size=[1, 1], args=[  ], sparse=FALSE, data=[7]) ], sparse=FALSE, data=[])"
-Constraints:
-[1] "[ LinOp(id=1574cde9-caff-46c3-8aeb-67871863510b, type=LEQ, size=[1, 1], args=[ LinOp(id=30103f60-8e83-4684-be4e-0e7ddffc976c, type=SUM, size=[1, 1], args=[ LinOp(id=3a9ff849-d987-4c6a-8c91-2de89a50a4a4, type=MUL, size=[1, 1], args=[ LinOp(id=27929f02-ab1b-449a-a93a-75748eaf7fb0, type=VARIABLE, size=[2, 1], args=[  ], sparse=FALSE, data=[8]) ], sparse=FALSE, data=[2, 1]), LinOp(id=5aeb1f52-8372-4a3f-a509-98b952d16224, type=MUL_ELEM, size=[1, 1], args=[ LinOp(id=63757561-e31b-473b-a526-950d3a666cf6, type=VARIABLE, size=[1, 1], args=[  ], sparse=FALSE, data=[7]) ], sparse=FALSE, data=[2.23606797749979]), LinOp(id=6ccb8a4d-823f-435f-8e9b-665f7e12894c, type=SCALAR_CONST, size=[1, 1], args=[  ], sparse=FALSE, data=[-1]) ], sparse=FALSE, data=[]) ], sparse=FALSE, data=[3]), LinOp(id=b5bdb319-6e30-4d74-8537-54591a9b23bd, type=LEQ, size=[1, 1], args=[ LinOp(id=92002f4f-f5d3-49ea-be7f-c0f9d93e6664, type=SUM, size=[1, 1], args=[ LinOp(id=bfdcc0be-4b90-4d26-9fea-1deff85e135e, type=MUL, size=[1, 1], args=[ LinOp(id=c55b3242-3c50-4ff2-8b0c-3c6a66a59fa3, type=VARIABLE, size=[2, 1], args=[  ], sparse=FALSE, data=[8]) ], sparse=FALSE, data=[2, -1]), LinOp(id=f01d5b13-0847-471c-b975-5c9d4556fb24, type=MUL_ELEM, size=[1, 1], args=[ LinOp(id=e3e434dc-6237-4b78-8467-9d6a99d336d9, type=VARIABLE, size=[1, 1], args=[  ], sparse=FALSE, data=[7]) ], sparse=FALSE, data=[2.23606797749979]), LinOp(id=694f0ed5-93b2-41be-ba64-d02013d412c9, type=SCALAR_CONST, size=[1, 1], args=[  ], sparse=FALSE, data=[-1]) ], sparse=FALSE, data=[]) ], sparse=FALSE, data=[3]), LinOp(id=70e2b227-9935-4bf3-8dad-2d2a7d6c66aa, type=LEQ, size=[1, 1], args=[ LinOp(id=955d9be7-3270-4da2-8ea2-6168ada9e5e6, type=SUM, size=[1, 1], args=[ LinOp(id=9a23bf26-3279-4282-89c9-77f355712572, type=MUL, size=[1, 1], args=[ LinOp(id=7b6782b7-cc44-4715-b2d6-8fd5c1c4febd, type=VARIABLE, size=[2, 1], args=[  ], sparse=FALSE, data=[8]) ], sparse=FALSE, data=[-1, 2]), LinOp(id=68ffb33d-140f-4038-ab91-3dcf54ddf303, type=MUL_ELEM, size=[1, 1], args=[ LinOp(id=6ec401e3-888d-48dd-87c8-8d5da3c8c738, type=VARIABLE, size=[1, 1], args=[  ], sparse=FALSE, data=[7]) ], sparse=FALSE, data=[2.23606797749979]), LinOp(id=a729d0c5-4d13-4f0f-b787-6b81c9641402, type=SCALAR_CONST, size=[1, 1], args=[  ], sparse=FALSE, data=[-1]) ], sparse=FALSE, data=[]) ], sparse=FALSE, data=[3]), LinOp(id=e7baf0be-0f93-4ee7-af4a-9d99f7ecbb73, type=LEQ, size=[1, 1], args=[ LinOp(id=b065a290-9adc-40cd-859e-56774b367f8c, type=SUM, size=[1, 1], args=[ LinOp(id=4812f037-dec0-4b90-b5c2-195ca4d6fd77, type=MUL, size=[1, 1], args=[ LinOp(id=4bf7c70a-5b6d-4597-94e2-8e9ad7d5882a, type=VARIABLE, size=[2, 1], args=[  ], sparse=FALSE, data=[8]) ], sparse=FALSE, data=[-1, -2]), LinOp(id=923bae60-1c7e-43a4-be93-7506b7334824, type=MUL_ELEM, size=[1, 1], args=[ LinOp(id=1f720642-ca55-4245-904a-681156d3ca22, type=VARIABLE, size=[1, 1], args=[  ], sparse=FALSE, data=[7]) ], sparse=FALSE, data=[2.23606797749979]), LinOp(id=313a21c7-e0d7-4664-9f7c-5480a3cd69b2, type=SCALAR_CONST, size=[1, 1], args=[  ], sparse=FALSE, data=[-1]) ], sparse=FALSE, data=[]) ], sparse=FALSE, data=[3]) ]"
+Loading required package: ECOSolveR
 
-ECOS 2.0.4 - (C) embotech GmbH, Zurich Switzerland, 2012-15. Web: www.embotech.com/ECOS
+Attaching package: ‘ECOSolveR’
 
-It     pcost       dcost      gap   pres   dres    k/t    mu     step   sigma     IR    |   BT
- 0  -4.472e-01  -4.740e-01  +7e-03  1e-02  3e-02  1e+00  2e-01    ---    ---    0  1  - |  -  - 
- 1  -4.471e-01  -4.475e-01  +2e-04  1e-04  3e-04  1e-02  2e-03  0.9890  1e-04   1  1  1 |  0  0
- 2  -4.472e-01  -4.472e-01  +3e-06  1e-06  4e-06  1e-04  2e-05  0.9890  1e-04   1  1  1 |  0  0
- 3  -4.472e-01  -4.472e-01  +4e-08  1e-08  4e-08  1e-06  3e-07  0.9890  1e-04   1  0  0 |  0  0
- 4  -4.472e-01  -4.472e-01  +5e-10  2e-10  5e-10  1e-08  3e-09  0.9890  1e-04   2  0  0 |  0  0
+The following object is masked from ‘package:cvxr’:
 
-OPTIMAL (within feastol=4.6e-10, reltol=1.2e-09, abstol=5.5e-10).
-Runtime: 0.000150 seconds.
+    ecos.control
 
-> result$optimal_value
+Before Build Matrix 1
+Processing constraint 0
+After constructing external ptr
+Instantiating ProblemData-R6 
+Before Build Matrix 1
+Processing constraint 0
+Processing constraint 1
+Processing constraint 2
+Processing constraint 3
+After constructing external ptr
+Instantiating ProblemData-R6 
+ProblemData was destroyed!
+> result
+$status
+[1] "optimal"
+
+$solve_time
+[1] 0.00060757
+
+$setup_time
+[1] 0.000752613
+
+$num_iters
+[1] 4
+
+$value
 [1] -0.4472136
-> result$primal_values
-$`7`
-          [,1]
-[1,] 0.4472136
 
-$`8`
-              [,1]
-[1,] -2.643728e-10
-[2,] -5.614499e-17
+$primal
+[1]  4.472136e-01 -2.643728e-10 -5.614499e-17
+
+$eq_dual
+numeric(0)
+
+$ineq_dual
+[1] 0.0745356 0.0745356 0.1490712 0.1490712
+
+> value(center)
+Error in value(center) : object 'center' not found
+> x_c
+Variable(2, 1)> 
+> valeu(x_c)
+Error in valeu(x_c) : could not find function "valeu"
+> value(x_c)
+[1] NA
+> solve(p, verbose = TRUE)
+Before Build Matrix 1
+Processing constraint 0
+After constructing external ptr
+Instantiating ProblemData-R6 
+Before Build Matrix 1
+Processing constraint 0
+Processing constraint 1
+Processing constraint 2
+Processing constraint 3
+After constructing external ptr
+Instantiating ProblemData-R6 
+ProblemData was destroyed!
+ProblemData was destroyed!
+$status
+[1] "optimal"
+
+$solve_time
+[1] 2.1823e-05
+
+$setup_time
+[1] 1.7378e-05
+
+$num_iters
+[1] 4
+
+$value
+[1] -0.4472136
+
+$primal
+[1]  4.472136e-01 -2.643728e-10 -5.614499e-17
+
+$eq_dual
+numeric(0)
+
+$ineq_dual
+[1] 0.0745356 0.0745356 0.1490712 0.1490712
+
+> solve(p, verbose = TRUE)
+Before Build Matrix 1
+Processing constraint 0
+After constructing external ptr
+Instantiating ProblemData-R6 
+Before Build Matrix 1
+Processing constraint 0
+Processing constraint 1
+Processing constraint 2
+Processing constraint 3
+After constructing external ptr
+Instantiating ProblemData-R6 
+ProblemData was destroyed!
+ProblemData was destroyed!
+$status
+[1] "optimal"
+
+$solve_time
+[1] 2.1076e-05
+
+$setup_time
+[1] 1.9751e-05
+
+$num_iters
+[1] 4
+
+$value
+[1] -0.4472136
+
+$primal
+[1]  4.472136e-01 -2.643728e-10 -5.614499e-17
+
+$eq_dual
+numeric(0)
+
+$ineq_dual
+[1] 0.0745356 0.0745356 0.1490712 0.1490712
+
+> solve(p, verbose = TRUE)
+Before Build Matrix 1
+Processing constraint 0
+After constructing external ptr
+Instantiating ProblemData-R6 
+Before Build Matrix 1
+Processing constraint 0
+Processing constraint 1
+Processing constraint 2
+Processing constraint 3
+After constructing external ptr
+Instantiating ProblemData-R6 
+$status
+[1] "optimal"
+
+$solve_time
+[1] 2.3054e-05
+
+$setup_time
+[1] 2.0774e-05
+
+$num_iters
+[1] 4
+
+$value
+[1] -0.4472136
+
+$primal
+[1]  4.472136e-01 -2.643728e-10 -5.614499e-17
+
+$eq_dual
+numeric(0)
+
+$ineq_dual
+[1] 0.0745356 0.0745356 0.1490712 0.1490712
 
 > q()
 
-Process R finished at Thu Aug 17 14:54:54 2017
+Process R finished at Fri Aug 25 16:45:44 2017

@@ -25,25 +25,4 @@ prob <- Problem(objective, constraint)
 #base::trace("format_results", tracer = browser, exit = browser, signature = c("SCS"))
 solve(prob, solver = "ECOS")
 
-# The optimal objective is returned by prob.solve().
-result = prob.solve()
-# The optimal value for x is stored in x.value.
-print x.value
-# The optimal Lagrange multiplier for a constraint
-# is stored in constraint.dual_value.
-print constraints[0].dual_value
-
-tmp <- list()
-##C_objective <- build_lin_op_tree(objective, tmp)
-
-root_linR <- objective
-
-m <- 3
-n <- 2
-A <- matrix(c(1, 2, 3, 4, 2, 1), nrow=m, byrow=TRUE)
-b <- matrix(c(1, 2, 3), nrow=m)
-x <- Variable(n)
-objective <- Minimize(SumSquares(A %*% x - b))
-constraint <- list(1 <= x)
-prob <- Problem(objective, constraint)
-solve(prob)
+solve(prob, solver = "SCS")

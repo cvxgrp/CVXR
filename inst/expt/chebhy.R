@@ -16,10 +16,10 @@ r <- Variable(name = "r")
 x_c <- Variable(2, name = "x_c")
 obj <- Maximize(r)
 constraints <- list(
-    t(a1) %*% x_c + norm(a1,"F")*r <= b[1],
-    t(a2) %*% x_c + norm(a2,"F")*r <= b[2],
-    t(a3) %*% x_c + norm(a3,"F")*r <= b[3],
-    t(a4) %*% x_c + norm(a4,"F")*r <= b[4]
+    t(a1) %*% x_c + Pnorm(a1, 2) * r <= b[1],
+    t(a2) %*% x_c + Pnorm(a2, 2) * r <= b[2],
+    t(a3) %*% x_c + Pnorm(a3, 2) * r <= b[3],
+    t(a4) %*% x_c + Pnorm(a4, 2) * r <= b[4]
 )
 
 p <- Problem(obj, constraints)

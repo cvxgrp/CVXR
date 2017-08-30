@@ -208,10 +208,10 @@ test_that("test the MulExpression class", {
   expect_equal(canonical_form(exp)[[2]], list())
   expect_equal(size(exp), c(1,1))
   
-  expect_error(matrix(c(2,2,3), nrow = 3, ncol = 1) * x)
+  expect_error(matrix(c(2,2,3), nrow = 3, ncol = 1) %*% x)
   
   # Matrices
-  expect_error(cbind(c(2,1), c(2,2)) %*% c)
+  expect_error(Constant(cbind(c(2,1), c(2,2))) %*% C)
   
   # Affine times affine is okay
   q <- A %*% B
@@ -228,7 +228,7 @@ test_that("test the MulExpression class", {
   
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2, 2, -2), nrow = 1, ncol = 3))
-  exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
+  exp <- matrix(c(1,2)) + c %*% C
   expect_equal(sign(exp), UNKNOWN)
   
   # Scalar constants on the right should be moved left

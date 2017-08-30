@@ -2,7 +2,7 @@ TOL <- 1e-6
 
 X <- Semidef(2)
 Y <- Variable(2, 2)
-Fmat <- cbind(c(1,0), c(0,-1))
+Fmat <- rbind(c(1,0), c(0,-1))
 
 test_that("SDP in objective and constraint", {
   # SDP in objective

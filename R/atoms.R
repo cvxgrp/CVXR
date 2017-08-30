@@ -445,7 +445,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   w <- r$values   # eigenvalues
   
   d <- rep(0, length(w))
-  d[length(d)] <- 1
+  d[1] <- 1
   d <- diag(d)
   D <- v %*% d %*% t(v)
   list(Matrix(as.numeric(D), sparse = TRUE))

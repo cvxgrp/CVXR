@@ -766,7 +766,7 @@ test_that("Test variable transpose", {
   result <- solve(p)
   expect_equal(result$optimal_value, -2, tolerance = TOL)
   
-  c <- matrix(1, nrow = 1, ncol = 2)
+  c <- matrix(c(1,-1), nrow = 2, ncol = 1)
   p <- Problem(Minimize(MaxElemwise(t(c), 2, 2 + t(c))[2]))
   result <- solve(p)
   expect_equal(result$optimal_value, 2, tolerance = TOL)
@@ -917,13 +917,13 @@ test_that("Tests problems with Reshape", {
   # Test vector to matrix
   x <- Variable(4)
   mat <- cbind(c(1,-1), c(2,-2))
-  vec <- matrix(1:4, nrow = 1, ncol = 4)
+  vec <- matrix(1:4)
   vec_mat <- cbind(c(1,2), c(3,4))
   expr <- Reshape(x,2,2)
-  obj <- Minimize(SumEntries(mat * expr))
+  obj <- Minimize(SumEntries(mat %*% expr))
   prob <- Problem(obj, list(x == vec))
   result <- solve(prob)
-  expect_equal(result$optimal_value, sum(mat * vec_mat))
+  expect_equal(result$optimal_value, sum(mat %*% vec_mat))
   
   # Test on matrix to vector
   c <- 1:4
@@ -949,14 +949,14 @@ test_that("Tests problems with Reshape", {
   
   # Test promoted expressions
   c <- cbind(c(1,-1), c(2,-2))
-  expr <- Reshape(c*a,1,4)
-  obj <- Minimize(expr*(1:4))
+  expr <- Reshape(c %*% a,1,4)
+  obj <- Minimize(expr %*% (1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
   expect_equal(result$optimal_value, -6, tolerance = TOL)
   expect_equal(value(expr, result), 2*c, tolerance = TOL)
   
-  expr <- Reshape(c*a,4,1)
+  expr <- Reshape(c %*% a,4,1)
   obj <- Minimize(t(expr)*(1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)

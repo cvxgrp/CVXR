@@ -2,14 +2,6 @@ library(cvxr)
 library(testthat)
 setwd("~/Documents/software/cvxr/tests/testthat")
 
-# TEST: Problem should return unbounded
-x <- Variable(1)
-obj <- Maximize(Log(x))
-prob <- Problem(obj)
-data <- get_problem_data(prob, "ECOS")
-
-solve(prob, verbose = TRUE)
-
 # TEST: Problem isn't DCP, but still goes through.
 # Warning: m less than n, problem likely degenerate
 # A <- Variable(2, 2, name = "A")
@@ -37,23 +29,23 @@ solve(prob, verbose = TRUE)
 # result <- solve(prob)
 
 # TEST: test_examples.R
-# Problem in Index.block_eq
-# x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
-#                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
-# n <- nrow(x)
-# m <- ncol(x)
-# 
-# # Create and solve the model
-# A <- Variable(n, n)
-# b <- Variable(n)
-# obj <- Maximize(LogDet(A))
-# constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
-# p <- Problem(obj, constraints)
-# 
-# result <- solve(p)
+# Problem in one of the MatrixData init functions
+x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
+                  c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
+n <- nrow(x)
+m <- ncol(x)
+
+# Create and solve the model
+A <- Variable(n, n)
+b <- Variable(n)
+obj <- Maximize(LogDet(A))
+constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
+p <- Problem(obj, constraints)
+
+result <- solve(p)
 
 # TEST: test_ls.R
-# Problem in Index.block_eq
+# Problem in one of the MatrixData init functions
 # m <- 100
 # n <- 80
 # r <- 70

@@ -590,14 +590,14 @@ Index.get_index <- function(matrix, constraints, row, col) {
 
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
   key <- Key(row_start:row_end, col_start:col_end)
-  rows <- row_end - row_start
-  cols <- col_end - col_start
+  rows <- row_end - row_start + 1
+  cols <- col_end - col_start + 1
   if(!all(size(block) == c(rows, cols)))
     stop("Block must have rows = ", rows, " and cols = ", cols)
   graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
   slc <- graph[[1]]
   idx_constr <- graph[[2]]
-  constraints <- c(constraints, create_eq(slc, block), idx_constr)
+  constraints <- c(constraints, list(create_eq(slc, block)), idx_constr)
   constraints
 }
 

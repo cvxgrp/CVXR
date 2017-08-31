@@ -525,7 +525,7 @@ setMethod(".grad", "LogDet", function(object, values) {
     D <- t(base::solve(X))
     return(list(Matrix(as.numeric(D), sparse = TRUE)))
   } else   # Outside domain
-    return(list(NA))
+    return(list(NA_real_))
 })
 
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
@@ -541,24 +541,24 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   D <- create_var(c(n,1))
   
   # Require that X and A are PSD
-  constraints <- c(constraints, SDP(A))
+  constraints <- c(constraints, list(SDP(A)))
   
   # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
   Z_lower_tri <- upper_tri(transpose(Z))
-  constraints <- c(constraints, create_eq(Z_lower_tri))
+  constraints <- c(constraints, list(create_eq(Z_lower_tri)))
   
   # D[i,i] = Z[i,i]
-  constraints <- c(constraints, create_eq(D, diag_mat(Z)))
+  constraints <- c(constraints, list(create_eq(D, diag_mat(Z))))
   
   # Fix X using the fact that A must be affine by the DCP rules
   # X[1:n, 1:n] == D
   constraints <- Index.block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
   
-  # X[1:n, n:2*n] == Z
-  constraints <- Index.block_eq(X, Z, constraints, 1, n, n, 2*n)
+  # X[1:n, (n+1):(2*n)] == Z
+  constraints <- Index.block_eq(X, Z, constraints, 1, n, n+1, 2*n)
   
-  # X[n:2*n, n:2*n] == A
-  constraints <- Index.block_eq(X, A, constraints, n, 2*n, n, 2*n)
+  # X[(n+1):(2*n), (n+1):(2*n)] == A
+  constraints <- Index.block_eq(X, A, constraints, n+1, 2*n, n+1, 2*n)
   
   # Add the objective sum(log(D[i,i]))
   graph <- Log.graph_implementation(list(D), c(n, 1))
@@ -719,14 +719,14 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # M[1:n, 1:n] == P
   constraints <- Index.block_eq(M, P, constraints, 1, n, 1, n)
   
-  # M[1:n, n:n+m] == X
-  constraints <- Index.block_eq(M, X, constraints, 1, n, n, n+m)
+  # M[1:n, (n+1):(n+m)] == X
+  constraints <- Index.block_eq(M, X, constraints, 1, n, n+1, n+m)
   
-  # M[n:n+m, n:n+m] == Tmat
-  constraints <- Index.block_eq(M, Tmat, constraints, n, n+m, n, n+m)
+  # M[(n+1):(n+m), (n+1):(n+m)] == Tmat
+  constraints <- Index.block_eq(M, Tmat, constraints, n+1, n+m, n+1, n+m)
   
   # Add SDP constraints.
-  list(trace(Tmat), c(constraints, list(SDP(M))))
+  list(cvxr::trace(Tmat), c(constraints, list(SDP(M))))
 }
 
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
@@ -1090,13 +1090,13 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- list()
   
   # Fix X using the fact that A must be affine by the DCP rules.
-  # X[1:rows, rows:rows+cols] == A
-  constraints <- Index.block_eq(X, A, constraints, 1, rows, rows, rows+cols)
+  # X[1:rows, (rows+1):(rows+cols)] == A
+  constraints <- Index.block_eq(X, A, constraints, 1, rows, rows+1, rows+cols)
   half <- create_const(0.5, c(1,1))
-  trace <- mul_expr(half, trace(X), c(1, 1))
+  trace_expr <- mul_expr(half, cvxr::trace(X), c(1, 1))
   
   # Add SDP constraint.
-  list(trace, c(list(SDP(X)), constraints))
+  list(trace_expr, c(list(SDP(X)), constraints))
 }
 
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
@@ -1265,12 +1265,12 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   prom_t <- promote(t, c(n,1))
   constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, 1, n, 1, n)
   
-  # X[1:n, n:n+m] == A
-  constraints <- Index.block_eq(X, A, constraints, 1, n, n, n+m)
+  # X[1:n, (n+1):(n+m)] == A
+  constraints <- Index.block_eq(X, A, constraints, 1, n, n+1, n+m)
   
-  # X[n:n+m, n:n+m] == I_m*t
+  # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
   prom_t <- promote(t, c(m,1))
-  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n, n+m, n, n+m)
+  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n+1, n+m, n+1, n+m)
   
   # Add SDP constraint.
   list(t, c(constraints, list(SDP(X))))

@@ -220,7 +220,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
   val <- values[[1]]
   if(is.null(dim(val)))
     2*huber_loss(M_val, val)
-  else if(is.vector(val))
+  else if(is.atomic(val))
     2*sapply(val, huber_loss(M_val, v))
   else
     2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })

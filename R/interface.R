@@ -2,7 +2,7 @@ intf_size <- function(constant) {
   if((is.null(dim(constant)) && length(constant) == 1) || 
      (!is.null(dim(constant)) && all(dim(constant) == c(1,1))))
     return(c(1,1))
-  else if(is.vector(constant))
+  else if(is.atomic(constant))
     return(c(1,length(constant)))
   else if(is.matrix(constant) || is(constant, "Matrix"))
     return(dim(constant))

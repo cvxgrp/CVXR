@@ -23,7 +23,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_
     .Object@value <- Matrix(value, sparse = TRUE)
     .Object@sparse <- TRUE
   } else {
-    if(is.vector(value) && length(vector) > 1)
+    if(is.atomic(value) && length(vector) > 1)
       .Object@is_1D_array <- TRUE
     .Object@value <- as.matrix(value)
     .Object@sparse <- FALSE

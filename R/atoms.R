@@ -1108,12 +1108,12 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   w <- eig$values
   V <- eig$vectors
   
-  if(is.na(rcond))
+  if(!is.na(rcond))
     cond <- rcond
   if(cond %in% c(NA, -1))
     cond <- 1e6 * .Machine$double.eps   # TODO: Check this is doing the correct thing
   
-  scale <- max(abs(w))
+  scale <- max(base::abs(w))
   w_scaled <- w / scale
   maskp <- w_scaled > cond
   maskn <- w_scaled < -cond

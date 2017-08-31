@@ -147,7 +147,10 @@ setMethod("as.character", "SemidefUpperTri", function(x) {
 setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, object@name) })
 
 upper_tri_to_full <- function(n) {
-  entries <- n*(n+1)/2
+  if(n == 0)
+    return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
+  
+  entries <- floor(n*(n+1)/2)
   
   val_arr <- c()
   row_arr <- c()
@@ -172,14 +175,15 @@ upper_tri_to_full <- function(n) {
       count <- count + 1
     }
   }
-  sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n*n, entries))
+  sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
 }
 
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
+  # Variable must be semidefinite and symmetric
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
   fill_coef <- upper_tri_to_full(object@n)
-  fill_coef <- create_const(fill_coef, c(object@n*object@n, size(object)[1]), sparse = TRUE)
-  full_mat = mul_expr(fill_coef, upper_tri, c(object@n*object@n, 1))
+  fill_coef <- create_const(fill_coef, c(object@n^2, size(object)[1]), sparse = TRUE)
+  full_mat = mul_expr(fill_coef, upper_tri, c(object@n^2, 1))
   full_mat <- reshape(full_mat, c(object@n, object@n))
   list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
 })

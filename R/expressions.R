@@ -119,7 +119,12 @@ setMethod("+", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("-", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
 setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 + (-e2) })
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
-setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { MulElemwise(lh_const = e1, rh_exp = e2) })
+setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
+  if(is_constant(e1))
+    MulElemwise(lh_const = e1, rh_exp = e2)
+  else
+    MulElemwise(lh_const = e2, rh_exp = e1)
+})
 setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { as.Constant(e2) * e1 })
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
@@ -143,6 +148,9 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
+  if(is_scalar(x) || is_scalar(y))
+    stop("Scalar operands are not allowed, use '*' instead")
+  
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {

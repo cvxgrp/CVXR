@@ -480,7 +480,7 @@ test_that("test indexing with logical matrices", {
   
   # Logical vectors for rows and columns
   expr <- C[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]
-  expect_equal(size(expr), c(3,1))
+  expect_equal(size(expr), c(3,3))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)], value(expr))
 })
@@ -499,13 +499,13 @@ test_that("test indexing with vectors/matrices of indices", {
   expr <- C[c(1,3),4]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(A[c(1,3),4], value(expr))
+  expect_equal(matrix(A[c(1,3),4]), value(expr))
   
   # Index for rows, vector for columns
   expr <- C[2,c(1,3)]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(A[2,c(1,3)], value(expr))
+  expect_equal(matrix(A[2,c(1,3)]), value(expr))
   
   # Vector for rows, slice for columns
   expr <- C[c(1,3),2:3]
@@ -521,13 +521,13 @@ test_that("test indexing with vectors/matrices of indices", {
   
   # Matrix for rows, vector for columns
   expr <- C[matrix(c(1,2)), c(2,4)]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(size(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[matrix(c(1,2)), c(2,4)], value(expr))
   
   # Matrix for rows and columns
   expr <- C[matrix(c(1,2)), matrix(c(2,4))]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(size(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[matrix(c(1,2)), matrix(c(2,4))], value(expr))
 })

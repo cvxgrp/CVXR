@@ -102,6 +102,15 @@ setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "A
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
+setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, i, j)
+})
+setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, i, j)
+})
+setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index.get_special_slice(x, i, j)
+})
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices
   Index.get_special_slice(x, i, NULL)

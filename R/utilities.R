@@ -668,7 +668,7 @@ is_dyad_weight <- function(w) {
 
 # Test if w is a valid weight vector, which consists of non-negative integer or fraction elements that sum to 1
 is_weight <- function(w) {
-  # if(is.matrix(w) || is.atomic(w))
+  # if(is.matrix(w) || is.vector(w))
   #  w <- as.list(w)
   valid_elems <- all(sapply(w, function(v) {
     v >= 0 && (is.whole(v) || is.bigq(v))
@@ -686,7 +686,7 @@ fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
     stop("Input denominator must be an integer")
   
   # TODO: Handle case where a contains mixture of BigQ, BigZ, and regular R numbers
-  # if(is.matrix(a) || is.atomic(a))
+  # if(is.matrix(a) || is.vector(a))
   #  a <- as.list(a)
   max_denom <- next_pow2(max_denom)
   total <- sum(a)
@@ -916,7 +916,7 @@ over_bound <- function(w_dyad, tree) {
 #'
 Key <- function(row, col) {
   if(missing(row)) row <- "all"   # TODO: Missing row/col index implies that we select all rows/cols
-  if(missing(col)) row <- "all"
+  if(missing(col)) col <- "all"
   list(row = row, col = col, class = "key")
 }
 

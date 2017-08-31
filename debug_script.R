@@ -2,6 +2,14 @@ library(cvxr)
 library(testthat)
 setwd("~/Documents/software/cvxr/tests/testthat")
 
+# TEST: Problem should return unbounded
+x <- Variable(1)
+obj <- Maximize(Log(x))
+prob <- Problem(obj)
+data <- get_problem_data(prob, "ECOS")
+
+solve(prob, verbose = TRUE)
+
 # TEST: Problem isn't DCP, but still goes through.
 # Warning: m less than n, problem likely degenerate
 # A <- Variable(2, 2, name = "A")

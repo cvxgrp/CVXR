@@ -24,7 +24,7 @@ test_that("Test assigning a value to a variable", {
   # Scalar variable
   a <- Variable()
   value(a) <- 1
-  expect_equal(value(a), matrix(1))
+  expect_equal(value(a), 1)
   expect_error(value(a) <- c(2,1))
   
   # Test assigning None
@@ -48,7 +48,7 @@ test_that("Test assigning a value to a variable", {
   
   # Small negative values are rounded to zero
   value(x) <- -1e-8
-  expect_equal(value(x), matrix(0))
+  expect_equal(value(x), 0)
 })
 
 test_that("Test transposing variables", {
@@ -110,10 +110,10 @@ test_that("Test the Constant class", {
 })
 
 test_that("test R vectors as constants", {
-  c <- c(1,2)
+  c <- matrix(c(1,2), nrow = 1, ncol = 2)
   p  <- Parameter(2)
   value(p) <- c(1,1)
-  expect_equal(value(c %*% p), matrix(3))
+  expect_equal(value(c %*% p), 3)
   expect_equal(size(c %*% x), c(1,1))
 })
 
@@ -214,7 +214,7 @@ test_that("test the MulExpression class", {
   expect_error(Constant(cbind(c(2,1), c(2,2))) %*% C)
   
   # Affine times affine is okay
-  q <- A %*% B
+  expect_warning(q <- A %*% B)
   expect_true(is_quadratic(q))
   
   # Non-affine times non-constant raises error
@@ -228,7 +228,7 @@ test_that("test the MulExpression class", {
   
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2, 2, -2), nrow = 1, ncol = 3))
-  exp <- matrix(c(1,2)) + c %*% C
+  exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
   expect_equal(sign(exp), UNKNOWN)
   
   # Scalar constants on the right should be moved left
@@ -295,12 +295,12 @@ test_that("test the DivExpression class", {
   
   # Parameters
   p <- Parameter(sign = "positive")
-  exp <- 2/p
   value(p) <- 2
+  exp <- 2/p
   expect_equal(value(exp), 1)
   
   rho <- Parameter(sign = "positive")
-  rho@value <- 1
+  value(rho) <- 1
   
   expect_equal(sign(rho), POSITIVE)
   expect_equal(sign(Constant(2)), POSITIVE)
@@ -447,46 +447,45 @@ test_that("test indexing with logical matrices", {
   expr <- C[A <= 2]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[A <= 2]), value(expr))
+  expect_equal(A[A <= 2], value(expr))
   
   expr <- C[A %% 2 == 0]
   expect_equal(size(expr), c(6,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[A %% 2 == 0]), value(expr))
+  expect_equal(A[A %% 2 == 0], value(expr))
   
   # Logical vector for rows, index for columns
   expr <- C[c(TRUE, FALSE, TRUE), 4]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(TRUE, FALSE, TRUE), 4]), value(expr))
+  expect_equal(A[c(TRUE, FALSE, TRUE), 4], value(expr))
   
   # Index for rows, logical vector for columns
   expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[2, c(TRUE, FALSE, FALSE, TRUE)]), value(expr))
+  expect_equal(A[2, c(TRUE, FALSE, FALSE, TRUE)], value(expr))
   
   # Logical vector for rows, slice for columns
   expr <- C[c(TRUE, TRUE, TRUE), 2:3]
   expect_equal(size(expr), c(3,2))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(TRUE, TRUE, TRUE), 2:3]), value(expr))
+  expect_equal(A[c(TRUE, TRUE, TRUE), 2:3], value(expr))
   
   # Slice for rows, logical vector for columns
   expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]
   expect_equal(size(expr), c(1,3))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE)]), value(expr))
+  expect_equal(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE)], value(expr))
   
   # Logical vectors for rows and columns
   expr <- C[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]
   expect_equal(size(expr), c(3,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]), value(expr))
+  expect_equal(A[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)], value(expr))
 })
 
 test_that("test indexing with vectors/matrices of indices", {
-  require(Matrix)
   A <- rbind(1:4, 5:8, 9:12)
   C <- Constant(A)
   
@@ -494,43 +493,43 @@ test_that("test indexing with vectors/matrices of indices", {
   expr <- C[c(1,2)]
   expect_equal(size(expr), c(2,4))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(1,2),]), value(expr))
+  expect_equal(A[c(1,2),], value(expr))
   
   # Vector for rows, index for columns
   expr <- C[c(1,3),4]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(1,3),4]), value(expr))
+  expect_equal(A[c(1,3),4], value(expr))
   
   # Index for rows, vector for columns
   expr <- C[2,c(1,3)]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[2,c(1,3)]), value(expr))
+  expect_equal(A[2,c(1,3)], value(expr))
   
   # Vector for rows, slice for columns
   expr <- C[c(1,3),2:3]
   expect_equal(size(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(1,3), 2:3]), value(expr))
+  expect_equal(A[c(1,3), 2:3], value(expr))
   
   # Vector for rows and columns
   expr <- C[c(1,2), c(2,4)]
   expect_equal(size(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[c(1,2), c(2,4)]), value(expr))
+  expect_equal(A[c(1,2), c(2,4)], value(expr))
   
   # Matrix for rows, vector for columns
   expr <- C[matrix(c(1,2)), c(2,4)]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[matrix(c(1,2)), c(2,4)]), value(expr))
+  expect_equal(A[matrix(c(1,2)), c(2,4)], value(expr))
   
   # Matrix for rows and columns
   expr <- C[matrix(c(1,2)), matrix(c(2,4))]
   expect_equal(size(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(Matrix(A[matrix(c(1,2)), matrix(c(2,4))]), value(expr))
+  expect_equal(A[matrix(c(1,2)), matrix(c(2,4))], value(expr))
 })
 
 test_that("test powers", {

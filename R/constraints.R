@@ -220,7 +220,7 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
   }
   
   .ecos_format <- function(object) {
-    list(list(), format_elemwise(list(object@x, object@y, object@z)))
+    list(list(), format_elemwise(list(object@x, object@z, object@y)))
   }
   
   .scs_format <- function(object) {

@@ -41,7 +41,7 @@ test_that("Test log problem", {
 
 test_that("Test the Entr atom", {
   expect_equal(value(Entr(0)), 0)
-  expect_equal(value(Entr(-1)), -Inf)
+  expect_warning(expect_equal(value(Entr(-1)), -Inf))
 })
 
 test_that("Test a problem with KL-divergence", {
@@ -68,9 +68,9 @@ test_that("Test a problem with KL-divergence", {
   klprob <- Problem(Minimize(objkl), constrs)
   value(p_refProb) <- npSPriors
   
-  result <- solve(klprob, solver = "SCS", verbose = TRUE)
+  # result <- solve(klprob, solver = "SCS", verbose = TRUE)
   # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
-  result <- solve(klprob, solver = "ECOS", verbose = TRUE)
+  # result <- solve(klprob, solver = "ECOS", verbose = TRUE)
   # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
 })
 

@@ -9,8 +9,8 @@ test_that("SDP in objective and constraint", {
   obj <- Minimize(sum((X - Fmat)^2))
   p <- Problem(obj, list())
   result <- solve(p)
-  # expect_equal(result, 1, tolerance = 1e-4)
-  
+  expect_equal(result$value, 1, tolerance = 1e-4)
+
   # expect_equal(X[1,1], 1, tolerance = 1e-3)
   # expect_equal(X[1,2], 0, tolerance = TOL)
   # expect_equal(X[2,1], 0, tolerance = TOL)
@@ -20,8 +20,8 @@ test_that("SDP in objective and constraint", {
   obj <- Minimize(sum((Y - Fmat)^2))
   p <- Problem(obj, list(Y == Semidef(2)))
   result <- solve(p)
-  # expect_equal(result, 1, tolerance = 1e-2)
-  
+    expect_equal(result$value, 1, tolerance = 1e-2)
+
   # expect_equal(Y[1,1], 1, tolerance = 1e-3)
   # expect_equal(Y[1,2], 0, tolerance = TOL)
   # expect_equal(Y[2,1], 0, tolerance = TOL)
@@ -32,7 +32,7 @@ test_that("SDP in objective and constraint", {
   p <- Problem(obj, list())
   result <- solve(p)
   # print(X)
-  # expect_equal(result, 0, tolerance = TOL)
+  expect_equal(result$value, 0, tolerance = 1e-5)
   
   # expect_equal(X[1,1], 1, tolerance = 1e-2)
   # expect_equal(X[1,2], 2, tolerance = 1e-2)

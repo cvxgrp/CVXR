@@ -2,7 +2,8 @@ library(cvxr)
 library(testthat)
 setwd("~/Documents/software/cvxr/tests/testthat")
 
-# TEST
+# TEST: Problem isn't DCP, but still goes through.
+# Warning: m less than n, problem likely degenerate
 # A <- Variable(2, 2, name = "A")
 # obj <- Minimize(0)
 # dom <- domain(LogDet(A))
@@ -27,21 +28,52 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # prob <- Problem(obj)
 # result <- solve(prob)
 
-# TEST: test_grad.R
-a <- Variable(name = "a")
+# TEST: test_examples.R
+# Problem in Index.block_eq
+# x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
+#                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
+# n <- nrow(x)
+# m <- ncol(x)
+# 
+# # Create and solve the model
+# A <- Variable(n, n)
+# b <- Variable(n)
+# obj <- Maximize(LogDet(A))
+# constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
+# p <- Problem(obj, constraints)
+# 
+# result <- solve(p)
 
-x <- Variable(2, name = "x")
-y <- Variable(2, name = "y")
+# TEST: test_ls.R
+# Problem in Index.block_eq
+# m <- 100
+# n <- 80
+# r <- 70
+# 
+# set.seed(1)
+# A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+# b <- matrix(rnorm(m), nrow = m, ncol = 1)
+# G <- matrix(rnorm(r*n), nrow = r, ncol = n)
+# h <- matrix(rnorm(r), nrow = r, ncol = 1)
+# 
+# # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
+# P <- t(A) %*% A
+# q <- -2 * t(A) %*% b
+# r <- t(b) %*% b
+# Pinv <- base::solve(P)
+# 
+# x <- Variable(n)
+# obj <- MatrixFrac(x, Pinv) + t(q) %*% x + r
+# cons <- list(G %*% x == h)
+# 
+# solve(Problem(Minimize(obj), cons))
 
-A <- Variable(2, 2, name = "A")
-B <- Variable(2, 2, name = "B")
-C <- Variable(3, 2, name = "C")
-
-value(A) <- rbind(c(1,2), c(3,4))
-expr <- Log(A)
-
-# base::trace("grad", tracer = browser, exit = browser, signature = c("Atom"))
-# base::trace(cvxr:::.grad, tracer = browser, exit = browser, signature = c("MatrixFrac"))
-# base::trace(cvxr:::.axis_grad, tracer = browser, exit = browser, signature = c("AxisAtom"))
-# base::trace(cvxr:::.column_grad, tracer = browser, exit = browser, signature = c("LogSumExp"))
-grad(expr)
+# TEST: test_quad_form.R
+# Should throw DCP error since P is symmetric but not definite
+# P <- rbind(c(1, 0), c(0, -1))
+# x <- Variable(2)
+# 
+# # Forming quadratic form is okay
+# expect_warning(cost <- QuadForm(x, P))
+# prob <- Problem(Minimize(cost), list(x == c(1, 2)))
+# expect_error(solve(prob))

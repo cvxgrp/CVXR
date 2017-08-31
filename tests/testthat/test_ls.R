@@ -20,8 +20,9 @@ test_that("Test regression", {
   line <- offset + x_data * slope
   residuals <- line - y_data
   fit_error <- SumSquares(residuals)
+  result <- solve(Problem(Minimize(fit_error), list()))
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
-  # optval <- result$optimal_value
+  # optval <- result$value
   # expect_equal(optval, 1171.60037715, tolerance = TOL)
   
   quadratic_coeff <- Variable()
@@ -31,9 +32,11 @@ test_that("Test regression", {
   residuals <- quadratic - y_data
   fit_error <- SumSquares(residuals)
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
-  # optval <- result$optimal_value
-  # optval2 <- result2$optimal_value
+  result2 <- solve(Problem(Minimize(fit_error), list()), solver = "ECOS")
+  # optval <- result$value
+  # optval2 <- result2$value
   # expect_equal(optval, 139.225650756, tolerance = TOL)
+  # expect_equal(optval2, 139,225650756, tolerance = TOL)
 })
 
 test_that("Test control", {
@@ -42,23 +45,23 @@ test_that("Test control", {
   initial_velocity <- matrix(c(-20, 100), nrow = 2, ncol = 1)
   final_position <- matrix(c(100, 100), nrow = 2, ncol = 1)
   
-  T <- 100   # The number of timesteps
+  Tnum <- 10   # The number of timesteps
   h <- 0.1   # The time between time intervals
   mass <- 1  # Mass of object
   drag <- 0.1  # Drag on object
   g <- matrix(c(0, -9.8), nrow = 2, ncol = 1)   # Gravity on object
   
   # Declare the variables we need
-  position <- Variable(2, T)
-  velocity <- Variable(2, T)
-  force <- Variable(2, T-1)
+  position <- Variable(2, Tnum)
+  velocity <- Variable(2, Tnum)
+  force <- Variable(2, Tnum-1)
   
   # Create a problem instance
   mu <- 1
   constraints <- list()
   
   # Add constraints on our variables
-  for(i in 1:(T-1)) {
+  for(i in 1:(Tnum-1)) {
     constraints <- c(constraints, position[,i+1] == position[,i] + h * velocity[,i])
     acceleration <- force[,i]/mass + g - drag * velocity[,i]
     constraints <- c(constraints, velocity[,i+1] == velocity[,i] + h * acceleration)
@@ -66,15 +69,16 @@ test_that("Test control", {
   
   # Add position constraints
   constraints <- c(constraints, position[,1] == 0)
-  constraints <- c(constraints, position[,T] == final_position)
+  constraints <- c(constraints, position[,Tnum] == final_position)
   
   # Add velocity constraints
   constraints <- c(constraints, velocity[,1] == initial_velocity)
-  constraints <- c(constraints, velocity[,T] == 0)
+  constraints <- c(constraints, velocity[,Tnum] == 0)
   
   # Solve the problem
+  result <- solve(Problem(Minimize(SumSquares(force)), constraints))
   # result <- solve(Problem(Minimize(SumSquares(force)), constraints), solver = "LS")
-  # optval <- result$optimal_value
+  # optval <- result$value
   # expect_equal(optval, 17859.0, tolerance = 1)
 })
 
@@ -91,8 +95,9 @@ test_that("Test sparse system", {
   h <- matrix(rnorm(r), nrow = r, ncol = 1)
   
   x <- Variable(n)
+  result <- solve(Problem(Minimize(SumSquares(A %*% x - b)), list(G %*% x == h)))
   # result <- solve(Problem(Minimize(SumSquares(A*x - b)), list(G*x == h)), solver = "LS")
-  # optval <- result$optimal_value
+  # optval <- result$value
   # expect_equal(optval, 6071.830658, tolerance = TOL)
 })
 
@@ -112,17 +117,21 @@ test_that("Test equivalent forms", {
   q <- -2 * t(A) %*% b
   r <- t(b) %*% b
   
-  Pinv <- solve(P)
+  Pinv <- base::solve(P)
   
   x <- Variable(n)
   
   obj1 <- SumSquares(A %*% x - b)
   obj2 <- SumEntries(Square(A %*% x - b))
   obj3 <- QuadForm(x, P) + t(q) %*% x + r
-  obj4 <- MatrixFrac(x, Pinv) + t(x) %*% x + r
+  obj4 <- MatrixFrac(x, Pinv) + t(q) %*% x + r
   
   cons <- list(G %*% x == h)
   
+  v1 <- solve(Problem(Minimize(obj1), cons))$value
+  v2 <- solve(Problem(Minimize(obj2), cons))$value
+  v3 <- solve(Problem(Minimize(obj3), cons))$value
+  v4 <- solve(Problem(Minimize(obj4), cons))$value
   # v1 <- solve(Problem(Minimize(obj1), cons), solver = "LS")$optimal_value
   # v2 <- solve(Problem(Minimize(obj2), cons), solver = "LS")$optimal_value
   # v3 <- solve(Problem(Minimize(obj3), cons), solver = "LS")$optimal_value
@@ -145,6 +154,7 @@ test_that("Test smooth ridge", {
   b <- matrix(runif(k), nrow = k, ncol = 1)
   x <- Variable(n)
   obj <- SumSquares(A %*% x - b) + delta*SumSquares(x[1:(n-1)]-x[2:n]) + eta*SumSquares(x)
-  # optval <- solve(Problem(Minimize(obj), list()), solver = "LS")$optimal_value
+  optval <- solve(Problem(Minimize(obj)))$value
+  # optval <- solve(Problem(Minimize(obj), list()), solver = "LS")$value
   # expect_equal(optval, 0.24989717371, tolerance = TOL)
 })

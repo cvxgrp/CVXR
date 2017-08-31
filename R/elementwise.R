@@ -238,7 +238,7 @@ setMethod(".grad", "Huber", function(object, values) {
   cols <- prod(size(object))
 
   val_abs <- abs(values[[1]])
-  M_val <- value(object@M)
+  M_val <- as.numeric(value(object@M))
   min_val <- ifelse(val_abs >= M_val, M_val, val_abs)
   
   grad_vals <- 2*(sign(values[[1]]) * min_val)
@@ -523,9 +523,12 @@ setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
-  max_vals <- to_numeric(values)
+  max_vals <- to_numeric(object, values)
   dims <- dim(max_vals)
-  unused <- matrix(TRUE, nrow = dims[1], ncol = dims[2])
+  if(is.null(dims))
+    unused <- matrix(TRUE, nrow = length(max_vals), ncol = 1)
+  else
+    unused <- matrix(TRUE, nrow = dims[1], ncol = dims[2])
   grad_list <- list()
   idx <- 1
   for(value in values) {

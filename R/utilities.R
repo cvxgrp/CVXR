@@ -227,9 +227,9 @@ constant_grad <- function(expr) {
     cols <- prod(size(expr))
     # Scalars -> 0
     if(rows == 1 && cols == 1)
-      grad[var@id] = 0.0
+      grad[[as.character(var@id)]] <- 0.0
     else
-      grad[var@id] = sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
+      grad[[as.character(var@id)]] <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
   }
   grad
 }

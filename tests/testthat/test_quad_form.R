@@ -38,7 +38,7 @@ test_that("Test quadratic form with a singular matrix", {
         result <- solve(p)
         
         # Check that CVXR found the right answer
-        # xopt <- sum(result$x * as.vector(A))
+        # xopt <- sum(result$x * as.numeric(A))
         # yopt <- xopt %*% (Q %*% t(xopt))
         # sapply(yopt, function(y) { expect_equal(y, 0, tolerance = 1e-3) })
         # sapply(xopt, function(x) { expect_equal(x, v, tolerance = 1e-3) })

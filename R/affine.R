@@ -19,7 +19,8 @@ setMethod(".grad", "AffAtom", function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this
   # Make a fake LinOp tree for the function
   fake_args <- list()
-  var_offsets <- list()
+  var_offsets <- c()
+  var_names <- c()
   offset <- 0
   idx <- 1
   for(arg in object@args) {
@@ -27,19 +28,21 @@ setMethod(".grad", "AffAtom", function(object, values) {
       fake_args <- c(fake_args, list(create_const(value(arg), size(arg))))
     else {
       fake_args <- c(fake_args, list(create_var(size(arg), idx)))
-      var_offsets[idx] <- offset
+      var_offsets <- c(var_offsets, offset)
+      var_names <- c(var_names, idx)
       offset <- offset + prod(size(arg))
     }
     idx <- idx + 1
   }
+  names(var_offsets) <- var_names
   graph <- graph_implementation(object, fake_args, size(object), get_data(object))
   fake_expr <- graph[[1]]
   
   # Get the matrix representation of the function
   prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets)
   V <- prob_mat[[1]]
-  I <- prob_mat[[2]]
-  J <- prob_mat[[3]]
+  I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
+  J <- prob_mat[[3]] + 1 
   shape <- c(offset, prod(size(object)))
   stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = shape)
   
@@ -52,10 +55,13 @@ setMethod(".grad", "AffAtom", function(object, values) {
       if(all(grad_shape == c(1,1)))
         grad_list <- c(grad_list, list(0))
       else
-        grad_list <- c(grad_list, list(Matrix(i = c(), j = c(), dims = grad_shape)))
+        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = grad_shape)))
     } else {
       stop <- start + prod(size(arg))
-      grad_list <- c(grad_list, list(stacked_grad[start:stop,]))
+      if(stop == start)
+        grad_list <- c(grad_list, list( sparseMatrix(i = c(), j = c(), dims = c(0, shape[2])) ))
+      else
+        grad_list <- c(grad_list, list(stacked_grad[start:(stop-1),]))
       start <- stop
     }
   }
@@ -302,7 +308,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 })
 
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
-CumSum <- function(expr, axis = 1) { .CumSum(expr = expr, axis = axis) }
+CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 cumsum.Expression <- function(x) { CumSum(expr = Vec(x)) }   # Flatten matrix in column-major order to match R's behavior
 
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
@@ -335,18 +341,21 @@ get_diff_mat <- function(dim, axis) {
 
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
-  dim <- dim(values[[1]])[object@axis]
+  if(object@axis == 1)
+    dim <- dim(values[[1]])[2]
+  else if(object@axis == 2)
+    dim <- dim(values[[1]])[1]
+  else
+    stop("Invalid axis ", object@axis)
   mat <- matrix(0, nrow = dim, ncol = dim)
-  for(i in 1:dim) {
-    for(j in 1:(i+1))
-      mat[i,j] <- 1
-  }
+  mat[lower.tri(mat, diag = TRUE)] <- 1
+  
   size <- size(object@args[[1]])
   var <- Variable(size[1], size[2])
   if(object@axis == 2)
-    grad <- .grad(MulExpression(mat, var), values)[2]
+    grad <- .grad(new("MulExpression", lh_exp = mat, rh_exp = var), values)[[2]]
   else
-    grad <- .grad(RMulExpression(var, t(mat)), values)[1]
+    grad <- .grad(new("RMulExpression", lh_exp = var, rh_exp = t(mat)), values)[[1]]
   list(grad)
 })
 

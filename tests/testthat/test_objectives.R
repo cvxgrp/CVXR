@@ -3,8 +3,8 @@ y <- Variable(3, name = "y")
 z <- Variable(name = "z")
 
 test_that("test the Minimize class", {
-  exp <- x + z
-  obj <- Minimize(exp)
+  expr <- x + z
+  obj <- Minimize(expr)
   
   canon <- canonicalize(obj)
   new_obj <- canon[[1]]
@@ -15,8 +15,8 @@ test_that("test the Minimize class", {
 })
 
 test_that("test the Maximize class", {
-  exp <- x + z
-  obj <- Maximize(exp)
+  expr <- x + z
+  obj <- Maximize(expr)
   
   canon <- canonicalize(obj)
   new_obj <- canon[[1]]

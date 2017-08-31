@@ -683,8 +683,11 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   P_inv <- tryCatch({ 
     base::solve(P)
   }, error = function(e) {
-      return(list(NA_real_, NA_real_))
+    return(NA_real_)
   })
+  
+  if(is.null(dim(P_inv)) && is.na(P_inv))
+    return(list(NA_real_, NA_real_))
   
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
@@ -1315,7 +1318,7 @@ setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
 setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
-  value <- as.numeric(values[[1]])
+  value <- as.numeric(t(values[[1]]))
   k <- min(object@k, length(value))
   indices <- order(value, decreasing = TRUE)
   D <- matrix(0, nrow = prod(size(object@args[[1]])), ncol = 1)

@@ -97,32 +97,34 @@ set_matrix_data <- function(linC, linR) {
 }
 
 set_slice_data <- function(linC, linR) {  ## What does this do?
-    for (i in seq_int(length(linR$data))) {
+    for (i in seq.int(length(linR$data) - 1L)) {  ## the last element is "class"
         sl <- linR$data[[i]]
         ## In R this is just a vector of ints
 
-        start_idx <- 0
-        if (!is.na(sl$start_idx))
-            start_idx <- sl$start_idx
+        ## ## Using zero based indexing throughout
+        ## start_idx <- 0L
+        ## if (!is.na(sl$start_idx))
+        ##     start_idx <- sl$start_idx - 1L  ## Using zero-based indexing
 
-        stop_idx <- linR$args[[1]]$size[i]
-        if (!is.na(sl$stop_idx))
-            stop_idx <- sl$stop_idx
+        ## stop_idx <- linR$args[[1]]$size[i] - 1L
+        ## if (!is.na(sl$stop_idx))
+        ##     stop_idx <- sl$stop_idx - 1L
 
-        step <- 1
-        if(!is.na(sl$step))
-            step <- sl$step
+        ## step <- 1L
+        ## if(!is.na(sl$step))
+        ##     step <- sl$step
 
-        ## handle [::-1] case
-        if(step < 0 && is.na(sl$start_idx) && is.na(sl$stop_idx)) {
-            tmp <- start
-            start_idx <- stop_idx - 1
-            stop_idx <- tmp
-        }
+        ## ## handle [::-1] case
+        ## if(step < 0 && is.na(sl$start_idx) && is.na(sl$stop_idx)) {
+        ##     tmp <- start
+        ##     start_idx <- stop_idx - 1
+        ##     stop_idx <- tmp
+        ## }
 
         ##for(var in c(start_idx, stop_idx, step))
         ##    vec$push_back(var)
-        vec <- c(start_idx, stop_idx, step)
+        ## vec <- c(start_idx, stop_idx, step)
+        vec <- c(sl - 1L, 1L)  # Using zero-based indexing, and step assumed to be 1.
         linC$slice_push_back(vec)
     }
 }
@@ -156,10 +158,11 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
 
         ## Loading the problem data into the approriate array format
         if(!is.null(linR$data)) {
-            if(length(linR$data) == 2 && is(linR$data[1], 'slice'))
+            ## if(length(linR$data) == 2 && is(linR$data[1], 'slice'))
+            if (length(linR$data) == 3L && linR$data[[3L]] == 'key') {
                 ## ASK Anqi about this
                 set_slice_data(linC, linR)  ## TODO
-            else if(is.numeric(linR$data) || is.integer(linR$data))
+            } else if(is.numeric(linR$data) || is.integer(linR$data))
                 linC$dense_data <- format_matrix(linR$data, 'scalar')
             else if(linR$data$class == 'LinOp' && linR$data$type == 'scalar_const')
                 linC$dense_data <- format_matrix(linR$data$data, 'scalar')

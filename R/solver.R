@@ -158,14 +158,21 @@ setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 
 # Map of ECOS status to CVXPY status.
 setMethod("status_map", "ECOS", function(solver, status) {
-  if(status == 0) OPTIMAL
-  else if(status == 1) INFEASIBLE
-  else if(status == 2) UNBOUNDED
-  else if(status == 10) OPTIMAL_INACCURATE
-  else if(status == 11) INFEASIBLE_INACCURATE
-  else if(status == 12) UNBOUNDED_INACCURATE
-  else if(status %in% c(-1, -2, -3, -4, -7)) SOLVER_ERROR
-  else stop("ECOS status unrecognized: ", status)
+    if(status == 0) {
+        OPTIMAL
+    } else if(status == 1) {
+        INFEASIBLE
+    } else if(status == 2) {
+        UNBOUNDED
+    } else if(status == 10) {
+        OPTIMAL_INACCURATE
+    } else if(status == 11) {
+        INFEASIBLE_INACCURATE
+    } else if(status == 12) {
+        UNBOUNDED_INACCURATE
+    } else if(status %in% c(-1, -2, -3, -4, -7)) {
+        SOLVER_ERROR
+    } else stop("ECOS status unrecognized: ", status)
 })
 
 setMethod("name", "ECOS", function(object) { ECOS_NAME })

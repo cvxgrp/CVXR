@@ -124,7 +124,7 @@ SizeMetrics <- function(problem) {
   # num_scalar_leq_constr
   num_scalar_leq_constr <- 0
   for(constraint in problem@constraints) {
-    if(is(constraint, "LeqConstraint"))
+    if(is(constraint, "LeqConstraint") && class(constraint) == "LeqConstraint")
       num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@.expr))
   }
   

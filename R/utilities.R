@@ -670,10 +670,10 @@ is_dyad_weight <- function(w) {
 is_weight <- function(w) {
   # if(is.matrix(w) || is.vector(w))
   #  w <- as.list(w)
-  valid_elems <- all(sapply(w, function(v) {
-    v >= 0 && (is.whole(v) || is.bigq(v))
-  }))
-  valid_elems && sum(as.double(w)) == 1
+  valid_elems <- rep(FALSE, length(w))
+  for(i in 1:length(w))
+    valid_elems[i] <- (w[i] >= 0) && (is.whole(w[i]) || is.bigq(w[i]))
+  all(valid_elems) && all.equal(sum(as.double(w)), 1)
 }
 
 # Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"

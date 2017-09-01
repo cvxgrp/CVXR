@@ -576,7 +576,10 @@ Index.get_special_slice <- function(expr, row, col) {
   select_vec <- as.vector(select_mat)
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
   idmat <- matrix(identity[select_vec,], ncol = expr_prod)
-  Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
+  if(is_scalar(Vec(expr)) || is_scalar(as.Constant(idmat)))
+    Reshape(idmat * Vec(expr), final_size[1], final_size[2])
+  else
+    Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
 }
 
 Index.get_index <- function(matrix, constraints, row, col) {
@@ -656,7 +659,7 @@ setMethod("to_numeric", "MulElemwise", function(object, values) {
   values[[1]] * values[[2]]
 })
 
-setMethod("size_from_args", "MulElemwise", function(object) { 
+setMethod("size_from_args", "MulElemwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
@@ -690,7 +693,7 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' @slot cols The new number of columns.
 #' @aliases Reshape
 #' @export
-.Reshape <- setClass("Reshape", representation(expr = "Expression", rows = "numeric", cols = "numeric"), contains = "AffAtom")
+.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
 Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
 setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {

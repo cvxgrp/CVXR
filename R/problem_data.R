@@ -149,9 +149,14 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   # Map variable IDs to offsets and size
   var_sizes <- lapply(var_names, function(var) { var[[2]] })
   size_prods <- sapply(var_sizes, function(var_size) { prod(var_size) })
-  var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
-  names(var_offsets) <- names(var_names)
-  vert_offset <- sum(size_prods)
+  if(length(size_prods) == 0) {
+    var_offsets <- integer(0)
+    vert_offset <- 0
+  } else {
+    var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+    names(var_offsets) <- names(var_names)
+    vert_offset <- sum(size_prods)
+  }
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
 

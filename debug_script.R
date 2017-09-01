@@ -1,6 +1,33 @@
 library(cvxr)
 library(testthat)
 setwd("~/Documents/software/cvxr/tests/testthat")
+# test_file("test_problem.R")
+
+# TEST: test_problem.R
+a <- Variable(name = "a")
+b <- Variable(name = "b")
+c <- Variable(name = "c")
+
+x <- Variable(2, name = "x")
+y <- Variable(3, name = "y")
+z <- Variable(2, name = "z")
+
+A <- Variable(2, 2, name = "A")
+B <- Variable(2, 2, name = "B")
+C <- Variable(3, 2, name = "C")
+
+# c <- matrix(c(1,-1), nrow = 2, ncol = 1)
+# p <- Problem(Minimize(MaxElemwise(t(c), 2, 2 + t(c))[2]))
+# result <- solve(p)
+
+# Problem in .cache_to_matrix because V, I, J are too short for dimensions
+# c <- cbind(c(1,-1), c(2,-2))
+# expr <- sum(MulElemwise(c, a))
+# p <- Problem(Minimize(expr))
+# 
+# # base::trace(cvxr:::Solver.get_problem_data, tracer = browser, exit = browser, signature = c("Solver"))
+# # base::trace(cvxr::get_objective, tracer = browser, exit = browser, signature = c("MatrixData"))
+# result <- solve(p)
 
 # TEST: Problem isn't DCP, but still goes through.
 # Warning: m less than n, problem likely degenerate
@@ -29,20 +56,20 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # result <- solve(prob)
 
 # TEST: test_examples.R
-# Problem in one of the MatrixData init functions
-x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
-                  c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
-n <- nrow(x)
-m <- ncol(x)
-
-# Create and solve the model
-A <- Variable(n, n)
-b <- Variable(n)
-obj <- Maximize(LogDet(A))
-constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
-p <- Problem(obj, constraints)
-
-result <- solve(p)
+# Problem in one of the linops passed to get_problem_matrix
+# x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
+#                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
+# n <- nrow(x)
+# m <- ncol(x)
+# 
+# # Create and solve the model
+# A <- Variable(n, n)
+# obj <- Maximize(LogDet(A))
+# p <- Problem(obj)
+# 
+# # debug(cvxr:::.lin_matrix)
+# # debug(get_problem_matrix)
+# result <- solve(p)
 
 # TEST: test_ls.R
 # Problem in one of the MatrixData init functions

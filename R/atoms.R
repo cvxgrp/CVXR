@@ -976,13 +976,13 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t_ <- promote(t, x$size)
   constraints <- c(constraints, create_eq(sum_entries(r), t))
   
-  # TODO: Make p a fraction so input weight to gm_constrs is nice tuple of fractions
+  p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
   if(p < 0)
     constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
   else if(p > 0 && p < 1)
     constraints <- c(constraints, gm_constrs(r, list(x, t_), c(p, 1-p)))
   else if(p > 1)
-    constraints <- c(constraints, gm_constrs(x, list(r, t_)), c(1/p, 1-1/p))
+    constraints <- c(constraints, gm_constrs(x, list(r, t_), c(1/p, 1-1/p)))
   
   list(t, constraints)
 }

@@ -195,8 +195,8 @@ setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Promote the right-hand side to a diagonal matrix if necessary
   if(size[2] != 1 && all(arg_objs[[2]]$size == c(1,1))) {
-    arg <- promote(arg_objs[[2]], list(size[2], 1))
-    arg_objs[2] <- diag_vec(arg)
+    arg <- promote(arg_objs[[2]], c(size[2], 1))
+    arg_objs[[2]] <- diag_vec(arg)
   }
   list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
@@ -221,7 +221,7 @@ RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_)
   # Promote the left-hand side to a diagonal matrix if necessary
   if(size[1] != 1 && all(arg_objs[[1]]$size == c(1,1))) {
     arg <- promote(arg_objs[[1]], c(size[1], 1))
-    arg_objs[1] <- diag_vec(arg)
+    arg_objs[[1]] <- diag_vec(arg)
   }
   list(rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
@@ -674,7 +674,7 @@ setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # One of the arguments is a scalar, so we can use normal multiplication
   if(any(arg_objs[[1]]$size != arg_objs[[2]]$size))
-    list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
+    MulExpression.graph_implementation(arg_objs, size, data)
   else
     list(mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
 }

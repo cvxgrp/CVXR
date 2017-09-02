@@ -693,7 +693,7 @@ test_that("Test the VStack atom", {
   result <- solve(p)
   # expect_equal(result$optimal_value, 15, tolerance = TOL)
   
-  c <- matrix(1, nrow = 1, ncol = 4)   # TODO: Is this correct? Dimensional mismatch
+  c <- matrix(1, nrow = 1, ncol = 4)
   p <- Problem(Minimize(c %*% VStack(x, x)), list(x == c(1,2)))
   result <- solve(p)
   # expect_equal(result$optimal_value, 6, tolerance = TOL)
@@ -898,7 +898,6 @@ test_that("Tests problems with MulElemwise", {
   # expect_equal(value(expr, result), c(5,10))
   
   # Test promotion
-  # TODO: This is a bug in CVXPY's handling of variable promotion.
   c <- cbind(c(1,-1), c(2,-2))
   expr <- MulElemwise(c, a)
   obj <- Minimize(NormInf(expr))
@@ -952,7 +951,6 @@ test_that("Tests problems with Reshape", {
   # expect_equal(value(expr, result), C_mat, tolerance = TOL)
   
   # Test promoted expressions
-  # TODO: This is a bug in CVXPY's handling of variable promotion.
   c <- cbind(c(1,-1), c(2,-2))
   expr <- Reshape(c * a,1,4)
   obj <- Minimize(expr %*% (1:4))
@@ -1120,6 +1118,7 @@ test_that("Test the duals of PSD constraints", {
 })
 
 test_that("Test GeoMean", {
+  require(gmp)
   x <- Variable(2)
   cost <- GeoMean(x)
   prob <- Problem(Maximize(cost), list(x <= 1))
@@ -1135,11 +1134,11 @@ test_that("Test GeoMean", {
   
   x <- Variable(3,1)
   g <- GeoMean(x)
-  # expect_equal(g@w, 1, tolerance = TOL)   # TODO: Use Fraction(1,3)*3 when implemented
+  # expect_equal(g@w, as.bigq(1,3)*3, tolerance = TOL)
   
   x <- Variable(1,5)
   g <- GeoMean(x)
-  # expect_equal(g@w, 1, tolerance = TOL)   # TODO: Use Fraction(1,5)*5 when implemented
+  # expect_equal(g@w, as.bigq(1,5)*5, tolerance = TOL)
   
   # Check that we get the right answer for max GeoMean(x) s.t. sum(x) <= 1
   p <- c(0.07, 0.12, 0.23, 0.19, 0.39)

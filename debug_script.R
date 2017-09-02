@@ -23,6 +23,13 @@ C <- Variable(3, 2, name = "C")
 # base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("ECOS"))
 # result <- solve(p)
 
+# TEST: test_problem.R
+# cvxCanon's build_matrix throws a std::bad_alloc error after hanging for a minute
+# require(gmp)
+# x <- Variable(2)
+# cost <- GeoMean(x)
+# prob <- Problem(Maximize(cost), list(x <= 1))
+# result <- solve(prob)
 
 # TEST: test_ls.R
 # SCS A matrix is incorrect. The get_problem_data returns incorrect indices (V, I, J). Correct ones should be:
@@ -37,16 +44,6 @@ C <- Variable(3, 2, name = "C")
 # # base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("Solver"))
 # # debug(cvxr:::.lin_matrix)
 # result <- solve(prob)
-
-# TEST: test_problem.R
-# Problem in .cache_to_matrix because (V, I, J) are too short for dimensions. Variable size not promoted.
-# c <- cbind(c(1,-1), c(2,-2))
-# expr <- NormInf(MulElemwise(c, a))
-# p <- Problem(Minimize(expr))
- 
-# base::trace(cvxr:::Solver.get_problem_data, tracer = browser, exit = browser, signature = c("Solver"))
-# base::trace(cvxr::get_objective, tracer = browser, exit = browser, signature = c("MatrixData"))
-# result <- solve(p, solver = "ECOS")
 
 # TEST: test_nonlinear_atoms.R
 # LinOp data field contains Parameter object rather than its value
@@ -77,4 +74,3 @@ C <- Variable(3, 2, name = "C")
 # # debug(cvxr:::.lin_matrix)
 # # debug(get_problem_matrix)
 # result <- solve(p)
-

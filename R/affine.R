@@ -672,6 +672,7 @@ setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@a
 setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@args[[2]]) })
 
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+  # One of the arguments is a scalar, so we can use normal multiplication
   if(any(arg_objs[[1]]$size != arg_objs[[2]]$size))
     list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
   else

@@ -16,33 +16,37 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
+# TEST: test_problem.R
+# Problem data is correct. ECOSolveR should handle trivial constant problems.
 # c <- matrix(c(1,-1), nrow = 2, ncol = 1)
 # p <- Problem(Minimize(MaxElemwise(t(c), 2, 2 + t(c))[2]))
+# base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("ECOS"))
 # result <- solve(p)
 
-# Problem in .cache_to_matrix because V, I, J are too short for dimensions
-# c <- cbind(c(1,-1), c(2,-2))
-# expr <- sum(MulElemwise(c, a))
-# p <- Problem(Minimize(expr))
+
+# TEST: test_ls.R
+# SCS A matrix is incorrect. The get_problem_data returns incorrect indices (V, I, J). Correct ones should be:
+# V = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.4142135623730951, -1.4142135623730951, -1.0, -1.4142135623730951, -1.0]
+# I = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 4.0, 5.0, 6.0, 6.0, 7.0, 8.0, 7.0, 9.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0]
+# J = [2.0, 3.0, 5.0, 6.0, 0.0, 1.0, 8.0, 9.0, 10.0, 11.0, 3.0, 4.0, 5.0, 7.0, 8.0, 9.0, 2.0, 3.0, 4.0, 6.0, 7.0, 10.0]
+# x <- Variable(2)
+# P <- diag(2)
+# obj <- MatrixFrac(x, P)
+# prob <- Problem(Minimize(obj))
 # 
-# # base::trace(cvxr:::Solver.get_problem_data, tracer = browser, exit = browser, signature = c("Solver"))
-# # base::trace(cvxr::get_objective, tracer = browser, exit = browser, signature = c("MatrixData"))
-# result <- solve(p)
+# # base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("Solver"))
+# # debug(cvxr:::.lin_matrix)
+# result <- solve(prob)
 
-# TEST: Problem isn't DCP, but still goes through.
-# Warning: m less than n, problem likely degenerate
-# A <- Variable(2, 2, name = "A")
-# obj <- Minimize(0)
-# dom <- domain(LogDet(A))
-# prob <- Problem(obj, dom)
+# TEST: test_problem.R
+# Problem in .cache_to_matrix because (V, I, J) are too short for dimensions. Variable size not promoted.
+# c <- cbind(c(1,-1), c(2,-2))
+# expr <- NormInf(MulElemwise(c, a))
+# p <- Problem(Minimize(expr))
  
-# base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("SCS"))
-# base::trace("Solver.get_problem_data", tracer = browser, exit = browser, signature = c("SCS"))
-# base::trace("format_constr", tracer = browser, exit = browser, signature = c("SDP"))
-# base::trace("get_objective", tracer = browser, exit = browser, signature = c("MatrixData"))
-# debug(get_problem_matrix)
-# debug("SymData.get_var_offsets")
-# result <- solve(prob, solver = "SCS")
+# base::trace(cvxr:::Solver.get_problem_data, tracer = browser, exit = browser, signature = c("Solver"))
+# base::trace(cvxr::get_objective, tracer = browser, exit = browser, signature = c("MatrixData"))
+# result <- solve(p, solver = "ECOS")
 
 # TEST: test_nonlinear_atoms.R
 # LinOp data field contains Parameter object rather than its value
@@ -56,7 +60,7 @@ C <- Variable(3, 2, name = "C")
 # result <- solve(prob)
 
 # TEST: test_examples.R
-# Problem in one of the linops passed to get_problem_matrix
+# Problem in one of the lin_ops passed to get_problem_matrix
 # x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
 #                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
 # n <- nrow(x)
@@ -64,43 +68,13 @@ C <- Variable(3, 2, name = "C")
 # 
 # # Create and solve the model
 # A <- Variable(n, n)
+# # b <- Variable(n)
+# # constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
 # obj <- Maximize(LogDet(A))
 # p <- Problem(obj)
+# # p <- Problem(obj, constraints)
 # 
 # # debug(cvxr:::.lin_matrix)
 # # debug(get_problem_matrix)
 # result <- solve(p)
 
-# TEST: test_ls.R
-# Problem in one of the MatrixData init functions
-# m <- 100
-# n <- 80
-# r <- 70
-# 
-# set.seed(1)
-# A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-# b <- matrix(rnorm(m), nrow = m, ncol = 1)
-# G <- matrix(rnorm(r*n), nrow = r, ncol = n)
-# h <- matrix(rnorm(r), nrow = r, ncol = 1)
-# 
-# # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
-# P <- t(A) %*% A
-# q <- -2 * t(A) %*% b
-# r <- t(b) %*% b
-# Pinv <- base::solve(P)
-# 
-# x <- Variable(n)
-# obj <- MatrixFrac(x, Pinv) + t(q) %*% x + r
-# cons <- list(G %*% x == h)
-# 
-# solve(Problem(Minimize(obj), cons))
-
-# TEST: test_quad_form.R
-# Should throw DCP error since P is symmetric but not definite
-# P <- rbind(c(1, 0), c(0, -1))
-# x <- Variable(2)
-# 
-# # Forming quadratic form is okay
-# expect_warning(cost <- QuadForm(x, P))
-# prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-# expect_error(solve(prob))

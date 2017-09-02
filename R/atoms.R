@@ -398,9 +398,13 @@ GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(c(1,1))
   
   if(size(arg_objs[[1]])[2] == 1)
-    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1) })
+    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1)$idx })
   else if(size(arg_objs[[1]])[1] == 1)
-    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), 1, i) })
+    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), 1, i)$idx })
+  
+  # TODO: Catch cases where we have (0,0,1)?
+  # TODO: What about curvature (should be affine) in trivial case of (0,0,1),
+  # should this behavior match what we do in power?
   list(t, gm_constrs(t, x_list, w))
 }
 
@@ -1137,6 +1141,8 @@ QuadForm <- function(x, P) {
   n <- size(P)[1]
   if(size(P)[2] != n || any(size(x) != c(n,1)))
     stop("Invalid dimensions for arguments")
+  if(length(parameters(P)) > 0)
+    stop("P cannot be a parameter")
   if(is_constant(x))
     return(t(x) %*% P %*% x)
   else if(is_constant(P)) {
@@ -1150,9 +1156,9 @@ QuadForm <- function(x, P) {
     M2 <- decomp[[3]]
     
     ret <- 0
-    if(length(M1) > 0)
+    if(prod(dim(M1)) > 0)
       ret <- ret + scale * SumSquares(Constant(t(M1)) %*% x)
-    else if(length(M2) > 0)
+    if(prod(dim(M2)) > 0)
       ret <- ret - scale * SumSquares(Constant(t(M2)) %*% x)
     return(ret)
   } else

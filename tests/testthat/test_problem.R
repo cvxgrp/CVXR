@@ -127,20 +127,20 @@ test_that("Test registering other solve methods", {
 
 test_that("Test that variables and constraints keep a consistent order", {
   num_solves <- 4
-  vars_list <- list()
+  vars_lists <- list()
   ineqs_lists <- list()
   var_ids_order_created <- list()
   for(k in 1:num_solves) {
     sum <- 0
     constraints <- list()
-    var_ids <- list()
+    var_ids <- c()
     for(i in 1:100) {
       var <- Variable(name = as.character(i))
       var_ids <- c(var_ids, var@id)
       sum <- sum + var
-      constraints <- c(constraints, var >= i)
+      constraints <- c(constraints, list(var >= i))
     }
-    var_ids_order_created <- c(var_ids_order_created, var_ids)
+    var_ids_order_created <- c(var_ids_order_created, list(var_ids))
     obj <- Minimize(sum)
     p <- Problem(obj, constraints)
     canon <- canonicalize(p)
@@ -150,22 +150,21 @@ test_that("Test that variables and constraints keep a consistent order", {
     
     # Sort by offset
     offsets <- sym_data@.var_offsets
-    keys <- sapply(offsets, function(key_val) { key_val[[2]] })
-    vars_ <- offsets[order(keys, decreasing = FALSE)]
-    vars_lists <- c(vars_lists, vars_)
-    ineqs_lists <- c(ineqs_lists, sym_data@constr_map[[LEQ_MAP]])
+    vars_ <- as.numeric(names(sort(offsets, decreasing = FALSE)))
+    vars_lists <- c(vars_lists, list(vars_))
+    ineqs_lists <- c(ineqs_lists, list(sym_data@.constr_map[[LEQ_MAP]]))
   }
   
   # Verify order of variables is consistent
   for(i in 1:num_solves)
-    expect_equal(var_ids_order_created[i], vars_lists[i])
+    expect_equal(var_ids_order_created[[i]], vars_lists[[i]])
   
   for(i in 1:num_solves) {
     idx <- 1
-    for(constr in ineqs_lists[i]) {
-      var_tmp <- get_expr_vars(constr@expr)[1]
-      var_id <- var_tmp[[1]]
-      expect_equal(var_ids_order_created[i][idx], var_id)
+    for(constr in ineqs_lists[[i]]) {
+      var_tmp <- get_expr_vars(constr$expr)[[1]]
+      var_id <- as.numeric(var_tmp[[1]])
+      expect_equal(var_ids_order_created[[i]][idx], var_id)
       idx <- idx + 1
     }
   }
@@ -753,7 +752,7 @@ test_that("Test variable transpose", {
   
   p <- Problem(Minimize(SumEntries(C)), list(matrix(c(1,1), nrow = 1, ncol = 2) %*% t(C) >= matrix(0:2, nrow = 1, ncol = 3)))
   result <- solve(p)
-  value <- result$C
+  # value <- result$C
   
   constraints <- lapply(1:3, function(i) { 1*C[i,1] + 1*C[i,2] >= i })
   p <- Problem(Minimize(SumEntries(C)), constraints)
@@ -899,6 +898,7 @@ test_that("Tests problems with MulElemwise", {
   # expect_equal(value(expr, result), c(5,10))
   
   # Test promotion
+  # TODO: This is a bug in CVXPY's handling of variable promotion.
   c <- cbind(c(1,-1), c(2,-2))
   expr <- MulElemwise(c, a)
   obj <- Minimize(NormInf(expr))
@@ -952,6 +952,7 @@ test_that("Tests problems with Reshape", {
   # expect_equal(value(expr, result), C_mat, tolerance = TOL)
   
   # Test promoted expressions
+  # TODO: This is a bug in CVXPY's handling of variable promotion.
   c <- cbind(c(1,-1), c(2,-2))
   expr <- Reshape(c * a,1,4)
   obj <- Minimize(expr %*% (1:4))
@@ -960,8 +961,8 @@ test_that("Tests problems with Reshape", {
   # expect_equal(result$optimal_value, -6, tolerance = TOL)
   # expect_equal(value(expr, result), 2*c, tolerance = TOL)
   
-  expr <- Reshape(c %*% a,4,1)
-  obj <- Minimize(t(expr)*(1:4))
+  expr <- Reshape(c * a,4,1)
+  obj <- Minimize(t(expr) %*% (1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
   # expect_equal(result$optimal_value, -6, tolerance = TOL)
@@ -1055,7 +1056,7 @@ test_that("Test interaction of caching with changing constraints", {
   result <- solve(prob)
   # expect_equal(result$optimal_value, 2, tolerance = TOL)
   
-  prob@constraints[1] = (a == 1)
+  prob@constraints[[1]] = (a == 1)
   result <- solve(prob)
   # expect_equal(result$optimal_value, 1, tolerance = TOL)
 })
@@ -1143,17 +1144,17 @@ test_that("Test GeoMean", {
   # Check that we get the right answer for max GeoMean(x) s.t. sum(x) <= 1
   p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
   
-  short_geo_mean <- function(x,p) {
-    p <- as.vector(p)/sum(p)
-    x <- as.vector(x)
+  short_geo_mean <- function(x, p) {
+    p <- as.numeric(p)/sum(p)
+    x <- as.numeric(x)
     prod(x^p)
   }
   
   x <- Variable(5)
-  prob <- Problem(Maximize(GeoMean(x,p)), list(sum(x) <= 1))
+  prob <- Problem(Maximize(GeoMean(x, p)), list(sum(x) <= 1))
   result <- solve(prob)
-  x <- as.numeric(result$x)
-  x_true <- p/sum(p)
+  # x <- as.numeric(result$x)
+  # x_true <- p/sum(p)
   
   # expect_equal(result$optimal_value, value(GeoMean(list(x), p)), tolerance = TOL)
   # expect_equal(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
@@ -1163,12 +1164,12 @@ test_that("Test GeoMean", {
   x <- Variable(5)
   prob <- Problem(Maximize(GeoMean(x, p)), list(norm(x) <= 1))
   result <- solve(prob)
-  x <- as.vector(result$x)
-  x_true <- sqrt(p/sum(p))
+  # x <- as.numeric(result$x)
+  # x_true <- sqrt(p/sum(p))
   
-  expect_true(result$optimal_value, value(GeoMean(list(x), p)), tolerance = TOL)
-  expect_true(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
-  expect_true(x, x_true, tolerance = 1e-3)
+  # expect_true(result$optimal_value, value(GeoMean(list(x), p)), tolerance = TOL)
+  # expect_true(result$optimal_value, short_geo_mean(x, p), tolerance = TOL)
+  # expect_true(x, x_true, tolerance = 1e-3)
   
   # The following 3 tests check VStack and HStack input to GeoMean
   # The following 3 formulations should be equivalent
@@ -1177,7 +1178,7 @@ test_that("Test GeoMean", {
   x <- Variable(n)
   
   result <- solve(Problem(Maximize(GeoMean(x))), list(x <= 1))
-  xval <- as.vector(result$x)
+  # xval <- as.numeric(result$x)
   # expect_equal(xval, x_true, tolerance = 1e-3)
   
   arg <- list()
@@ -1197,22 +1198,22 @@ test_that("Test GeoMean", {
 
 test_that("Test Pnorm", {
   x <- Variable(3, name = "x")
-  a <- c(1.0, 2, 3)
+  avec <- c(1.0, 2, 3)
   
   # TODO: Add -1, 0.5, 0.3, -2.3 and testing positivity constraints
   
   for(p in c(1, 1.6, 1.3, 2, 1.99, 3, 3.7, Inf)) {
-    prob <- Problem(Minimize(Pnorm(x, p = p)), list(t(x) %*% a >= 1))
+    prob <- Problem(Minimize(Pnorm(x, p = p)), list(t(x) %*% avec >= 1))
     result <- solve(prob)
     
     # Formula is true for any a >= 0 with p > 1
     if(p == Inf)
-      x_true <- rep(1,3)/sum(a)
+      x_true <- rep(1, length(avec))/sum(avec)
     else if(p == 1) {
       # Only works for the particular a = c(1,2,3)
       x_true <- c(0,0,1.0/3)
     } else
-      x_true <- a^(1.0/(p-1)) / (a %*% (a^(1.0/(p-1))))
+      x_true <- avec^(1.0/(p-1)) / as.numeric(avec %*% (avec^(1.0/(p-1))))
     
     x_alg <- as.vector(result$x)
     # expect_equal(x_alg, x_true, tolerance = 1e-3)

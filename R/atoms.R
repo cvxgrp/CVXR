@@ -1257,7 +1257,7 @@ setMethod(".grad", "SigmaMax", function(object, values) {
 
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]   # n by m matrix
-  size <- dim(A)
+  size <- A$size
   n <- size[1]
   m <- size[2]
   
@@ -1344,7 +1344,7 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
   prom_q <- promote(q, x$size)
   
-  constr <- c(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
+  constr <- list(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
   list(obj, constr)
 }
 

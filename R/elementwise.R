@@ -333,7 +333,7 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- list(ExpCone(t, x, y), create_geq(y))   # y >= 0
   
   # -t - x + y
-  obj <- sub_expr(y, sum_expr(list(x, y)))
+  obj <- sub_expr(y, sum_expr(list(x, t)))
   list(obj, constraints)
 }
 

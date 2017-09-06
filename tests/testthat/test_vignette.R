@@ -66,7 +66,7 @@ test_that("Test catenary problem", {
   objective <- Minimize(sum(y))
   
   # Form constraints
-  constraints <- list(x[1] == 0, y[1] == 1, x[n] == 1, y[n] == 1, 
+  constraints <- list(x[1] == 0, y[1] == 1, x[m] == 1, y[m] == 1, 
                       diff(x)^2 + diff(y)^2 <= h^2)
   
   # Solve the catenary problem

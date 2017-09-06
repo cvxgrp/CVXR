@@ -114,11 +114,11 @@ test_that("test indefinite quadratic", {
   y <- Variable()
   z <- Variable()
   
-  expect_warning(s <- y %*% z)
+  expect_warning(s <- y * z)
   expect_true(is_quadratic(s))
   expect_false(is_dcp(s))
   
-  expect_warning(t <- (x+y)^2 - s - z %*% z)
+  expect_warning(t <- (x+y)^2 - s - z * z)
   expect_true(is_quadratic(t))
   expect_false(is_dcp(t))
 })
@@ -128,7 +128,7 @@ test_that("test non-quadratic", {
   y <- Variable()
   z <- Variable()
   
-  expect_error(expect_warning(is_quadratic(x %*% y %*% z)))
+  expect_error(expect_warning(is_quadratic(x * y * z)))
   
   s <- MaxEntries(VStack(x^2, Power(y, 2), z))
   expect_false(is_quadratic(s))

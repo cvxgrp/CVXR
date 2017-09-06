@@ -226,20 +226,20 @@ test_that("Test all constant atoms", {
             # Atoms with Constant arguments
             # const_args <- lapply(args, function(arg) { Constant(arg) })
             # run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
-            #        value(obj_val[row, col]), solver)
+            #      value(obj_val[row, col]), solver)
             
             # Atoms with Variable arguments
-            variables <- list()
-            constraints <- list()
-            for(expr in args) {
-              expr_size <- intf_size(expr)
-              variables <- c(variables, Variable(expr_size[1], expr_size[2]))
-              constraints <- c(constraints, variables[[length(variables)]] == expr)
-            }
-            objective <- objective_type(do.call(atom, variables)[row, col])
-            print(atom)
-            print(value(obj_val[row, col]))
-            run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
+            # variables <- list()
+            # constraints <- list()
+            # for(expr in args) {
+            #   expr_size <- intf_size(expr)
+            #   variables <- c(variables, Variable(expr_size[1], expr_size[2]))
+            #   constraints <- c(constraints, variables[[length(variables)]] == expr)
+            # }
+            # objective <- objective_type(do.call(atom, variables)[row, col])
+            # print(atom)
+            # print(value(obj_val[row, col]))
+            # run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments
             # parameters <- list()

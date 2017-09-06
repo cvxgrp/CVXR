@@ -17,12 +17,12 @@ test_that("test sign subtraction", {
 })
 
 test_that("test sign multiplication", {
-  expect_equal(sign(zero %*% pos), sign(zero))
-  expect_equal(sign(unknown %*% pos), sign(unknown))
-  expect_equal(sign(pos %*% neg), sign(neg))
-  expect_equal(sign(pos %*% pos), sign(pos))
-  expect_equal(sign(neg %*% neg), sign(pos))
-  expect_equal(sign(zero %*% unknown), sign(zero))
+  expect_equal(sign(zero * pos), sign(zero))
+  expect_equal(sign(unknown * pos), sign(unknown))
+  expect_equal(sign(pos * neg), sign(neg))
+  expect_equal(sign(pos * pos), sign(pos))
+  expect_equal(sign(neg * neg), sign(pos))
+  expect_equal(sign(zero * unknown), sign(zero))
 })
 
 test_that("test sign negation", {

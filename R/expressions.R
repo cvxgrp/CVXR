@@ -131,8 +131,13 @@ setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e1))
     MulElemwise(lh_const = e1, rh_exp = e2)
-  else
+  else if(is_constant(e2))
     MulElemwise(lh_const = e2, rh_exp = e1)
+  else if(all(size(e1) == c(1,1)) && all(size(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
+    warning("Forming a non-convex expression (affine) * (affine)")
+    AffineProd(x = e1, y = e2)
+  } else
+    stop("Cannot multiply elementwise ", curvature(e1), " and ", curvature(e2))
 })
 setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { as.Constant(e2) * e1 })
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
@@ -157,8 +162,8 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
-  if(is_scalar(x) || is_scalar(y))
-    stop("Scalar operands are not allowed, use '*' instead")
+  # if(is_scalar(x) || is_scalar(y))
+  #  stop("Scalar operands are not allowed, use '*' instead")
   
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left

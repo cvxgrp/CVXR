@@ -273,7 +273,7 @@ setMethod("validate_args", "AffineProd", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
-setMethod("to_numeric", "AffineProd", function(object) { values[[1]] %*% values[[2]] })
+setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
 setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
@@ -876,7 +876,7 @@ p_norm <- function(x, p) {
     max(abs(x))
   else if(p == 0)
     sum(x != 0)
-  else if(p %% 2 == 0)
+  else if(p %% 2 == 0 || p < 1)
     sum(x^p)^(1/p)
   else if(p >= 1)
     sum(abs(x)^p)^(1/p)

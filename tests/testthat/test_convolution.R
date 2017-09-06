@@ -17,7 +17,7 @@ test_that("test 1D convolution", {
   t <- Variable()
   prob <- Problem(Minimize(Norm(expr, 1)), list(x == g))
   result <- solve(prob)
-  # expect_equal(result$optimal_value, sum(f_conv_g), tolerance = TOL)
+  # expect_equal(result$value, sum(f_conv_g), tolerance = TOL)
   # expect_equal(value(expr), f_conv_g, tolerance = TOL)
 })
 

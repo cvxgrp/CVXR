@@ -21,13 +21,13 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # test_file("test_domain.R")            # No partial_optimize, need result retrieval function
 # test_file("test_grad.R")              # No partial_optimize or linearize
 # test_file("test_ls.R")                # No LS solver, need result retrieval function
-# test_file("test_nonlinear_atoms.R")   # Need result retrieval function
+# test_file("test_nonlinear_atoms.R")   # Need result retrieval function. Parameters unimplemented.
 # test_file("test_quad_form.R")         # Need result retrieval function
 # test_file("test_scs.R")               # Need result retrieval function
 # test_file("test_semidefinite_vars.R") # Need result retrieval function
 
 # Failing
-test_file("test_constant_atoms.R")
+# test_file("test_constant_atoms.R")
 # test_file("test_examples.R")
 # test_file("test_mip_vars.R")          # No ECOS BB solver
 # test_file("test_problem.R")
@@ -68,17 +68,6 @@ test_file("test_constant_atoms.R")
 # # debug(cvxr:::.lin_matrix)
 # result <- solve(prob)
 
-# TEST: test_nonlinear_atoms.R
-# LinOp data field contains Parameter object rather than its value
-# v <- Variable(1)
-# p <- Parameter(1, sign = "positive")
-# value(p) <- 1
-# # p <- 1
-#  
-# obj <- Minimize(KLDiv(v, p))
-# prob <- Problem(obj)
-# result <- solve(prob)
-
 # TEST: test_examples.R
 # Problem in one of the lin_ops passed to get_problem_matrix
 # x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
@@ -113,11 +102,13 @@ test_file("test_constant_atoms.R")
 # solve(prob, solver = "SCS")
 
 # TEST: test_constant_atoms.R
+# Should not be infeasible.
 # A <- Variable(2,2)
-# obj <- Minimize(Norm(A,2))
+# obj <- Minimize(SigmaMax(A))
 # constraints <- list(A == cbind(c(2,0), c(0,1)))
 # prob <- Problem(obj, constraints)
-# solve(prob, solver = "SCS")
+# result <- solve(prob, solver = "SCS")
+# print(result)
 
 # TEST: test_constant_atoms.R
 # x <- Variable(3)
@@ -125,25 +116,3 @@ test_file("test_constant_atoms.R")
 # constraints <- list(x == matrix(1:3))
 # prob <- Problem(obj, constraints)
 # solve(prob)
-
-# TEST: test_constant_atoms.R
-# Result should not be unbounded.
-# x <- Variable(3)
-# pvec <- c(0.5, -0.4, -1, -2.3)
-# for(p in pvec) {
-#   obj <- Maximize(Pnorm(x, p))
-#   constraints <- list(x == matrix(c(1.1,2,0.1)))
-#   prob <- Problem(obj, constraints)
-#   result <- solve(prob)
-#   print(result)
-# }
-
-# TEST: test_constant_atoms.R
-# x <- Variable(1)
-# obj <- Maximize(x^0.32)
-# constraints <- list(x == 7.45)
-# prob <- Problem(obj, constraints)
-# 
-# base::trace("Solver.solve", tracer = browser, exit = browser, signature = c("ECOS"))
-# result <- solve(prob)
-# print(result)

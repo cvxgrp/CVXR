@@ -82,8 +82,8 @@ atoms <- list(
       list(function(x) { Scalene(x,2,3) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(15,4), c(9,2)))),
       list(Square, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
       list(SumEntries, c(1,1), list(cbind(c(-5,2), c(-3,1))), Constant(-5)),
-      list(function(x) { SumEntries(x,axis=1) }, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(-3,-2))),
-      list(function(x) { SumEntries(x,axis=2) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), Constant(matrix(c(-8,3), nrow = 1, ncol = 2))),
+      list(function(x) { SumEntries(x,axis=2) }, c(1,2), list(cbind(c(-5,2), c(-3,1))), Constant(matrix(c(-3,-2), nrow = 1, ncol = 2))),
+      list(function(x) { SumEntries(x,axis=1) }, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-8,3))),
       list(function(x) { (x + Constant(0))^2 }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
       list(function(x) { SumLargest(x,3) }, c(1,1), list(matrix(1:5)), Constant(5+4+3)),
       list(function(x) { SumLargest(x,3) }, c(1,1), list(cbind(3:5, 6:8, 9:11)), Constant(9+10+11)),
@@ -224,22 +224,22 @@ test_that("Test all constant atoms", {
           # TODO: Add more solvers as we connect them to CVXcanon
           for(solver in SOLVERS_TO_TRY) {
             # Atoms with Constant arguments
-            # const_args <- lapply(args, function(arg) { Constant(arg) })
-            # run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
-            #      value(obj_val[row, col]), solver)
+            const_args <- lapply(args, function(arg) { Constant(arg) })
+            run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
+                    value(obj_val[row, col]), solver)
             
             # Atoms with Variable arguments
-            # variables <- list()
-            # constraints <- list()
-            # for(expr in args) {
-            #   expr_size <- intf_size(expr)
-            #   variables <- c(variables, Variable(expr_size[1], expr_size[2]))
-            #   constraints <- c(constraints, variables[[length(variables)]] == expr)
-            # }
+            variables <- list()
+            constraints <- list()
+            for(expr in args) {
+              expr_size <- intf_size(expr)
+              variables <- c(variables, Variable(expr_size[1], expr_size[2]))
+              constraints <- c(constraints, variables[[length(variables)]] == expr)
+            }
             # objective <- objective_type(do.call(atom, variables)[row, col])
             # print(atom)
             # print(value(obj_val[row, col]))
-            # run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
+            run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments
             # parameters <- list()

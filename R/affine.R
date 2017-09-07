@@ -750,11 +750,11 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis))
     obj <- sum_entries(arg_objs[[1]])
-  else if(axis == 2) {
+  else if(axis == 1) {
     const_size <- c(arg_objs[[1]]$size[2], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
     obj <- rmul_expr(arg_objs[[1]], ones, size)
-  } else {   # axis == 1
+  } else {   # axis == 2
     const_size <- c(1, arg_objs[[1]]$size[1])
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
     obj <- mul_expr(ones, arg_objs[[1]], size)

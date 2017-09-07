@@ -187,7 +187,7 @@ format_axis <- function(t, X, axis) {
   prod_size <- c(cone_size, size(X)[2])
   val_arr <- rep(1.0, cone_size - 1)
   row_arr <- 2:cone_size
-  col_arr <- 1:(cone_size - 1)   # TODO: Check row_arr and col_arr indices are correct
+  col_arr <- 1:(cone_size - 1)
   X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_size)
   X_mat <- create_const(X_mat, mat_size, sparse = TRUE)
   terms <- c(terms, list(mul_expr(X_mat, X, prod_size)))
@@ -515,12 +515,14 @@ Rdictdefault <- function(keys = list(), values = list(), default) {
 }
 
 setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE) {
-  for(k in 1:length(x@keys)) {
-    if(length(x@keys[[k]]) == length(i) && all(x@keys[[k]] == i))
-      return(x@values[[k]])
+  if(length(x@keys) > 0) {
+    for(k in 1:length(x@keys)) {
+      if(length(x@keys[[k]]) == length(i) && all(x@keys[[k]] == i))
+        return(x@values[[k]])
+    }
   }
   
-  # If key doesn't exist, create it with default function value
+  # TODO: Can't update in place. If key doesn't exist, want to create it with default function value.
   x@keys <- c(x@keys, list(i))
   x@values <- c(x@values, list(x@default(i)))
   return(x@values[[length(x@values)]])
@@ -530,7 +532,8 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
 #' Power utilities
 #'
 gm <- function(t, x, y) {
-  two <- create_const(2, c(1, 1))
+  two <- create_const(2, c(1,1))
+  
   length <- prod(size(t))
   SOCAxis(reshape(sum_expr(list(x, y)), c(length, 1)),
           vstack(list(
@@ -545,8 +548,8 @@ gm_constrs <- function(t, x_list, p) {
   w <- dyad_completion(p)
 
   tree <- decompose(w)
-  t_var <- create_var(size(t))
-  d <- Rdictdefault(default = function(key) { t_var })
+  t_size <- size(t)
+  d <- Rdictdefault(default = function(key) { create_var(t_size) })
   d[w] <- t
   
   if(length(x_list) < length(w))
@@ -572,6 +575,10 @@ gm_constrs <- function(t, x_list, p) {
     children <- item$value
     
     if(!any(elem == 1)) {
+      for(key in list(elem, children[[1]], children[[2]])) {
+        if(!is.element(key, d))
+          d[key] <- d@default(key)   # Generate new value using default function
+      }
       constraints <- c(constraints, list(gm(d[elem], d[children[[1]]], d[children[[2]]])))
     }
   }

@@ -978,7 +978,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # To create rational powers, need new variable r and constraint sum(r) == t
   r <- create_var(x$size)
   t_ <- promote(t, x$size)
-  constraints <- c(constraints, create_eq(sum_entries(r), t))
+  constraints <- c(constraints, list(create_eq(sum_entries(r), t)))
   
   p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
   if(p < 0)

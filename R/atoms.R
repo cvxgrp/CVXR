@@ -639,7 +639,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 
   ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-  constraints <- c(constraints, create_leq(obj, ones))
+  constraints <- c(constraints, list(create_leq(obj, ones)))
   list(t, constraints)
 }
 

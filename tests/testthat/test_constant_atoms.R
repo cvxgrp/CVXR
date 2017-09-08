@@ -25,9 +25,9 @@ atoms <- list(
       list(LambdaMax, c(1,1), list(cbind(c(2,0,0), c(0,3,0), c(0,0,1))), Constant(3)),
       list(LambdaMax, c(1,1), list(cbind(c(5,7), c(7,-3))), Constant(9.06225775)),
       list(function(x) { LambdaSumLargest(x,2) }, c(1,1), list(cbind(c(1,2,3), c(2,4,5), c(3,5,6))), Constant(11.51572947)),
-      # list(LogSumExp, c(1,1), list(cbind(c(5,7), c(0,-3))), Constant(7.1277708268)),
-      # list(LogSumExpAxis1, c(2,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(7.12910890, 6.00259878))),
-      # list(LogSumExpAxis2, c(1,3), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(5.00671535, 7.0000454, 6.0067153)))),
+      list(LogSumExp, c(1,1), list(cbind(c(5,7), c(0,-3))), Constant(7.1277708268)),
+      list(LogSumExpAxis1, c(2,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(7.12910890, 6.00259878))),
+      list(LogSumExpAxis2, c(1,3), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(5.00671535, 7.0000454, 6.0067153)))),
       list(Logistic, c(2,2), list(cbind(c(log(5), log(7)), c(0, log(0.3)))), Constant(cbind(c(log(6),log(8)), c(log(2),log(1.3))))),
       # list(MatrixFrac, c(1,1), list(matrix(1:3), diag(3)), Constant(14)),
       # list(MatrixFrac, c(1,1), list(matrix(1:3), cbind(c(67,78,90), c(78,94,108), c(90,108,127))), Constant(0.46557377049180271)),
@@ -109,10 +109,10 @@ atoms <- list(
   list(
     list(
       list(Entr, c(2,2), list(cbind(c(1,exp(1)), c(exp(2), exp(-1)))), Constant(cbind(c(0,-exp(1)), c(-2*exp(2),exp(-1))))),
-      # list(LogDet, c(1,1), list(cbind(c(20, 8, 5, 2),
-      #                                 c(8, 16, 2, 4),
-      #                                 c(5, 2, 5, 2),
-      #                                 c(2, 4, 2, 4))), Constant(7.7424020218157814)),
+      list(LogDet, c(1,1), list(cbind(c(20, 8, 5, 2),
+                                      c(8, 16, 2, 4),
+                                      c(5, 2, 5, 2),
+                                      c(2, 4, 2, 4))), Constant(7.7424020218157814)),
       # list(GeoMean, c(1,1), list(matrix(c(4,1))), Constant(2)),
       # list(GeoMean, c(1,1), list(matrix(c(0.01,7))), Constant(0.2645751311064591)),
       # list(GeoMean, c(1,1), list(matrix(c(63,7))), Constant(21)),
@@ -120,9 +120,9 @@ atoms <- list(
       # list(function(x) { GeoMean(x, c(1,1)) }, c(1,1), list(matrix(c(1,10))), Constant(sqrt(10))),
       # list(function(x) { GeoMean(x, c(0.4,0.8,4.9)) }, c(1,1), list(matrix(c(0.5,1.8,17))), Constant(10.04921378316062)),
 
-      # list(HarmonicMean, c(1,1), list(matrix(c(1,2,3))), Constant(1.6363636363636365)),
-      # list(HarmonicMean, c(1,1), list(matrix(c(2.5,2.5,2.5,2.5))), Constant(2.5)),
-      # list(HarmonicMean, c(1,1), list(matrix(c(0,1,2))), Constant(0)),
+      list(HarmonicMean, c(1,1), list(matrix(c(1,2,3))), Constant(1.6363636363636365)),
+      list(HarmonicMean, c(1,1), list(matrix(c(2.5,2.5,2.5,2.5))), Constant(2.5)),
+      list(HarmonicMean, c(1,1), list(matrix(c(0,1,2))), Constant(0)),
 
       list(Diff, c(2,1), list(matrix(c(1,2,3))), Constant(c(1,1))),
       list(Diff, c(1,1), list(matrix(c(1.1,2.3))), Constant(1.2)),
@@ -224,9 +224,9 @@ test_that("Test all constant atoms", {
           # TODO: Add more solvers as we connect them to CVXcanon
           for(solver in SOLVERS_TO_TRY) {
             # Atoms with Constant arguments
-            const_args <- lapply(args, function(arg) { Constant(arg) })
-            run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
-                    value(obj_val[row, col]), solver)
+            # const_args <- lapply(args, function(arg) { Constant(arg) })
+            # run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
+            #         value(obj_val[row, col]), solver)
             
             # Atoms with Variable arguments
             variables <- list()
@@ -236,9 +236,9 @@ test_that("Test all constant atoms", {
               variables <- c(variables, Variable(expr_size[1], expr_size[2]))
               constraints <- c(constraints, variables[[length(variables)]] == expr)
             }
-            # objective <- objective_type(do.call(atom, variables)[row, col])
-            # print(atom)
-            # print(value(obj_val[row, col]))
+            objective <- objective_type(do.call(atom, variables)[row, col])
+            print(atom)
+            print(value(obj_val[row, col]))
             run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
             
             # Atoms with Parameter arguments

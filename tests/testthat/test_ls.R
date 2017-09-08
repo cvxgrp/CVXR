@@ -96,7 +96,7 @@ test_that("Test sparse system", {
   
   x <- Variable(n)
   result <- solve(Problem(Minimize(SumSquares(A %*% x - b)), list(G %*% x == h)))
-  # result <- solve(Problem(Minimize(SumSquares(A*x - b)), list(G*x == h)), solver = "LS")
+  # result <- solve(Problem(Minimize(SumSquares(A %*% x - b)), list(G*x == h)), solver = "LS")
   # optval <- result$value
   # expect_equal(optval, 6071.830658, tolerance = TOL)
 })

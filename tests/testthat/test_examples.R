@@ -149,7 +149,7 @@ test_that("Test examples from the README", {
   
   # Construct problem
   gamma <- Parameter(sign = "positive")
-  gamma@value <- 0.1
+  value(gamma) <- 0.1
   a <- Variable(n)
   b <- Variable()
   

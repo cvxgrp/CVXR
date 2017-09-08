@@ -429,7 +429,7 @@ setMethod(".save_dual_values", "Problem", function(object, result_vec, constrain
   constr_offsets <- list()
   offset <- 0
   for(constr in constraints) {
-    constr_offsets[constr@constr_id] <- offset
+    constr_offsets[[as.character(constr@constr_id)]] <- offset
     offset <- offset + prod(size(constr))
   }
   
@@ -457,7 +457,7 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objects
       
       # Handle scalars
       if(all(c(rows, cols) == c(1,1)))
-        value <- index(result_vec, c(offset, 0))
+        value <- intf_index(result_vec, c(offset, 0))
       else {
         value <- matrix(0, nrow = rows, ncol = cols)
         value <- block_add(value, result_vec[offset:(offset + rows*cols)], 1, 1, rows, cols)

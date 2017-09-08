@@ -30,6 +30,7 @@ setMethod("as.character", "Variable", function(x) {
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+setMethod("id", "Variable", function(object) { object@id })
 setMethod("is_positive", "Variable", function(object) { FALSE })
 setMethod("is_negative", "Variable", function(object) { FALSE })
 setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })

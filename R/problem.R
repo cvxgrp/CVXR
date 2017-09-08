@@ -309,22 +309,15 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
     results_dict <- list(sym_data@.presolve_status)
     names(results_dict) <- STATUS
   }
+  
+  # Correct optimal value if the objective is Maximize
+  if(results_dict[[STATUS]] %in% SOLUTION_PRESENT)
+    results_dict[[VALUE]] <- primal_to_result(object@objective, results_dict[[VALUE]])
   return(results_dict)
-  # TODO: For now, don't update and save problem state since this is based on Python language
+  
+  # TODO: For now, don't update and save problem state since R can't modify in place variable slots.
   # object <- .update_problem_state(object, results_dict, sym_data, solver)
   # return(object)
-  
-  # print("Calling CVXcanon")
-  # if(is(object@objective, "Maximize")) {
-  #   sense <- "Maximize"
-  #   canon_objective <- neg_expr(objective)  # preserve sense
-  # } else {
-  #   sense <- "Minimize"
-  #   canon_objective <- objective
-  # }
-  # 
-  # # TODO: Flip the sign of the optimal_value for maximization problems
-  # solve_int(sense, canon_objective, constraints, verbose, ...)
 }
 
 .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
@@ -379,9 +372,9 @@ setMethod(".update_problem_state", "Problem", function(object, results_dict, sym
     
     # Not all solvers provide dual variables
     if(EQ_DUAL %in% names(results_dict))
-      object <- .save_dual_values(object, results_dict[[EQ_DUAL]], sym_data@constr_map[[EQ_MAP]], c("EqConstraint"))
+      object <- .save_dual_values(object, results_dict[[EQ_DUAL]], sym_data@.constr_map[[EQ_MAP]], c("EqConstraint"))
     if(INEQ_DUAL %in% names(results_dict))
-      object <- .save_dual_values(object, results_dict[INEQ_DUAL], sym_data@constr_map[[LEQ_MAP]], c("LeqConstraint", "PSDConstraint"))
+      object <- .save_dual_values(object, results_dict[INEQ_DUAL], sym_data@.constr_map[[LEQ_MAP]], c("LeqConstraint", "PSDConstraint"))
     
     # Correct optimal value if the objective was Maximize
     value <- results_dict[[VALUE]]
@@ -415,21 +408,23 @@ setMethod(".handle_no_solution", "Problem", function(object, status) {
     object <- save_value(var_, NA)
   
   for(i in 1:length(object@constraints))
-    object@constraints[i] <- save_value(object@constraints[i], NA)
+    object@constraints[[i]] <- save_value(object@constraints[[i]], NA)
   
   # Set the problem value
-  if(status %in% c("INFEASIBLE", "INFEASIBLE_INACCURATE"))
+  if(tolower(status) %in% c("infeasible", "infeasible_inaccurate"))
     object@value <- primal_to_result(object@objective, Inf)
-  else if(status %in% c("UNBOUNDED", "UNBOUNDED_INACCURATE"))
+  else if(tolower(status) %in% c("unbounded", "unbounded_inaccurate"))
     object@value <- primal_to_result(object@objective, -Inf)
   object
 })
 
 setMethod(".save_dual_values", "Problem", function(object, result_vec, constraints, constr_types) {
-  constr_offsets <- list()
+  constr_offsets <- integer(0)
+  storage.mode(constr_offsets) <- "integer"
+  
   offset <- 0
   for(constr in constraints) {
-    constr_offsets[[as.character(constr@constr_id)]] <- offset
+    constr_offsets[as.character(constr_id(constr))] <- offset
     offset <- offset + prod(size(constr))
   }
   
@@ -442,25 +437,29 @@ setMethod(".save_dual_values", "Problem", function(object, result_vec, constrain
   Problem.save_values(object, result_vec, active_constraints, constr_offsets)
 })
 
-setMethod("Problem.save_values", "Problem", function(object, result_vec, objects, offset_map) {
+setMethod("Problem.save_values", "Problem", function(object, result_vec, objstore, offset_map) {
   if(length(result_vec) > 0)   # Cast to desired matrix type
     result_vec <- as.matrix(result_vec)
   
   objects_new <- list()
-  for(obj in objects) {
+  for(obj in objstore) {
     size <- size(obj)
     rows <- size[1]
     cols <- size[2]
-    id_char <- as.character(obj@id)
+    
+    id_char <- as.character(id(obj))
     if(id_char %in% names(offset_map)) {
-      offset <- offset_map[id_char]
+      offset <- offset_map[[id_char]]
       
       # Handle scalars
       if(all(c(rows, cols) == c(1,1)))
-        value <- intf_index(result_vec, c(offset, 0))
+        # value <- intf_index(result_vec, c(offset, 0))
+        value <- result_vec[offset + 1]
       else {
-        value <- matrix(0, nrow = rows, ncol = cols)
-        value <- block_add(value, result_vec[offset:(offset + rows*cols)], 1, 1, rows, cols)
+        # value <- matrix(0, nrow = rows, ncol = cols)
+        # value <- intf_block_add(value, result_vec[(offset + 1):(offset + rows*cols)], 0, 0, rows, cols)
+        value <- result_vec[(offset + 1):(offset + rows*cols)]
+        value <- matrix(value, nrow = rows, ncol = cols)
         offset <- offset + rows * cols
       }
     } else  # The variable was multiplied by zero
@@ -469,6 +468,7 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objects
     objects_new <- c(objects_new, obj)
   }
   objects_new
+  # TODO: Update variable values in original problem object
 })
 
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })

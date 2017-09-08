@@ -65,6 +65,7 @@ setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
+setGeneric("constr_id", function(object) { standardGeneric("constr_id") })
 
 setGeneric("block_add", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step, horiz_step) { standardGeneric("block_add") })
 setGeneric("place_x0", function(object, big_x, var_offsets) { standardGeneric("place_x0") })
@@ -80,7 +81,7 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })
 setGeneric(".handle_no_solution", function(object, status) { standardGeneric(".handle_no_solution") })
-setGeneric("Problem.save_values", function(object, result_vec, objects, offset_map) { standardGeneric("Problem.save_values") })
+setGeneric("Problem.save_values", function(object, result_vec, objstore, offset_map) { standardGeneric("Problem.save_values") })
 setGeneric(".save_dual_values", function(object, result_vec, constraints, constr_types) { standardGeneric(".save_dual_values") })
 setGeneric(".update_problem_state", function(object, results_dict, sym_data, solver) { standardGeneric(".update_problem_state") })
 

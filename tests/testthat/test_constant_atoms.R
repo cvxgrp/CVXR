@@ -109,10 +109,10 @@ atoms <- list(
   list(
     list(
       list(Entr, c(2,2), list(cbind(c(1,exp(1)), c(exp(2), exp(-1)))), Constant(cbind(c(0,-exp(1)), c(-2*exp(2),exp(-1))))),
-      list(LogDet, c(1,1), list(cbind(c(20, 8, 5, 2),
-                                      c(8, 16, 2, 4),
-                                      c(5, 2, 5, 2),
-                                      c(2, 4, 2, 4))), Constant(7.7424020218157814)),
+      # list(LogDet, c(1,1), list(cbind(c(20, 8, 5, 2),
+      #                                c(8, 16, 2, 4),
+      #                                c(5, 2, 5, 2),
+      #                                c(2, 4, 2, 4))), Constant(7.7424020218157814)),
       # list(GeoMean, c(1,1), list(matrix(c(4,1))), Constant(2)),
       # list(GeoMean, c(1,1), list(matrix(c(0.01,7))), Constant(0.2645751311064591)),
       # list(GeoMean, c(1,1), list(matrix(c(63,7))), Constant(21)),
@@ -189,11 +189,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
         print(obj_val)
       }
       
-      # TODO: Remove when Maximize inverted objective bug is fixed
-      if(is(problem@objective, "Maximize"))
-        diff <- (-result$value - obj_val)/(1+abs(obj_val))
-      else
-        diff <- (result$value - obj_val)/(1+abs(obj_val))
+      diff <- (result$value - obj_val)/(1+abs(obj_val))
       expect_true(abs(diff) <= tolerance)
       
       if(abs(diff) > tolerance) {

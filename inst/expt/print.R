@@ -1,8 +1,21 @@
 
-linop2str = function(linop) {
-    class <- linop$class
+toString = function(obj) {
+    class <- obj$class
+    if (is.null(class)) stop("Expecting more than a plain list")
+    if (class == "LinOp") {
+        return(linop2str(obj))
+    }
+    size <- obj$size
+    sizeStr <- sprintf("[%d, %d]", size[1], size[2])
+
+    sprintf("%s(names <- setdiff(names(obj), "expr")
+    expr <- obj$expr
+
+}
+
+linop2str <- function(linop) {
     type <- linop$type
-    size <- paste(linop$size, collapse=", ")
+    size <- paste(linop$expr$size, collapse=", ")
     ## args <- if (is.null(linop$args)) "NULL" else linop2str(linop$args)
     data <- linop$data
     ## list(class, type, size, args, data)
@@ -21,6 +34,27 @@ linopList2str = function(linopList) {
     result <- paste(result, collapse = ", ")
     sprintf("[ %s ]", result)
 }
+
+
+
+[LinEqConstr(expr=LinOp(type='sum', size=(1, 1), args=[LinOp(type='index', size=(1, 1), args=[LinOp(type='variable', size=(3, 3), args=[], data=1)], data=(slice(0, 1, None), slice(0, 1, None))), LinOp(type='neg', size=(1, 1), args=[LinOp(type='scalar_const', size=(1, 1), args=[], data=2.0)], data=None)], data=None), constr_id=3, size=(1, 1)),
+
+LinEqConstr(expr=LinOp(type='sum', size=(1, 2), args=[LinOp(type='index', size=(1, 2), args=[LinOp(type='variable', size=(3, 3), args=[], data=1)], data=(slice(0, 1, None), slice(1, 3, None))), LinOp(type='neg', size=(1, 2), args=[LinOp(type='transpose', size=(1, 2), args=[LinOp(type='variable', size=(2, 1), args=[], data=0)], data=None)], data=None)], data=None), constr_id=4, size=(1, 2)),
+
+LinEqConstr(expr=LinOp(type='sum', size=(2, 2),
+                       args=[LinOp(type='index', size=(2, 2),
+                                   args=[LinOp(type='variable', size=(3, 3), args=[], data=1)],
+                                   data=(slice(1, 3, None), slice(1, 3, None))),
+                             LinOp(type='neg', size=(2, 2),
+                                   args=[LinOp(type='variable', size=(2, 2), args=[], data=2)],
+                                   data=None)], data=None), constr_id=5, size=(2, 2)),
+
+LinEqConstr(expr=LinOp(type='sum', size=(3, 1), args=[LinOp(type='upper_tri', size=(3, 1), args=[LinOp(type='variable', size=(3, 3), args=[], data=1)], data=None), LinOp(type='neg', size=(3, 1), args=[LinOp(type='upper_tri', size=(3, 1), args=[LinOp(type='transpose', size=(3, 3), args=[LinOp(type='variable', size=(3, 3), args=[], data=1)], data=None)], data=None)], data=None)], data=None), constr_id=7, size=(3, 1)),
+
+LinLeqConstr(expr=LinOp(type='neg', size=(6, 1), args=[LinOp(type='mul', size=(6, 1), args=[LinOp(type='reshape', size=(9, 1), args=[LinOp(type='variable', size=(3, 3), args=[], data=1)], data=None)], data=LinOp(type='sparse_const', size=(6, 9), args=[], data=<6x9 sparse matrix of type '<type 'numpy.float64'>'
+	with 6 stored elements in Compressed Sparse Column format>))], data=None), constr_id=6, size=(6, 1))]
+
+
 
 structure(
     list(

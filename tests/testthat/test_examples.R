@@ -158,28 +158,28 @@ test_that("Test examples from the README", {
     sample <- x[[2]]
     Pos(1 - label*(t(sample) %*% a - b))
   })
-  objective <- Minimize(norm2(a) * gamma * Reduce("+", slack))
+  objective <- Minimize(norm2(a) + gamma * Reduce("+", slack))
   p <- Problem(objective)
   # result <- solve(p)
   
   # Count misclassifications
-  errors <- 0
-  for(v in data) {
-    label <- v[[1]]
-    sample <- v[[2]]
-    if(label * (t(sample) %*% a - b)@value < 0)
-      errors <- errors + 1
-  }
+  # errors <- 0
+  # for(v in data) {
+  #  label <- v[[1]]
+  #  sample <- v[[2]]
+  #  if(label * value(t(sample) %*% a - b) < 0)
+  #    errors <- errors + 1
+  # }
   
   # print(errors)
-  # print(a@value)
-  # print(b@value)
+  # print(value(a))
+  # print(value(b))
 })
 
 test_that("Test advanced tutorial", {
   # Solving a problem with different solvers
   x <- Variable(2)
-  obj <- Minimize(x[1] + norm(x, 1))
+  obj <- Minimize(x[1] + norm1(x))
   constraints <- list(x >= 2)
   prob <- Problem(obj, constraints)
   
@@ -449,7 +449,7 @@ test_that("Test the LogSumExp function", {
   X <- matrix(1, nrow = m, ncol = n)
   w <- Variable(n)
   
-  expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] * w)) })
+  expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] %*% w)) })
   expr3 <- Reduce("+", expr2)
   obj <- Minimize(expr3)
   p <- Problem(obj)

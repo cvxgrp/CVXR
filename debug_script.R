@@ -19,6 +19,7 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # test_file("test_atoms.R")             # No partial_optimize
 # test_file("test_convolution.R")       # Need result retrieval function
 # test_file("test_domain.R")            # No partial_optimize, need result retrieval function
+# test_file("test_examples.R")          # WARN: A->p (column pointers) not strictly increasing, column 9999 empty
 # test_file("test_grad.R")              # No partial_optimize or linearize
 # test_file("test_ls.R")                # No LS solver, need result retrieval function
 # test_file("test_nonlinear_atoms.R")   # Need result retrieval function. Parameters unimplemented.
@@ -29,7 +30,6 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 
 # Failing
 # test_file("test_constant_atoms.R")
-# test_file("test_examples.R")          # Failing at CONVEX times CONVEX expression.
 # test_file("test_mip_vars.R")          # No ECOS BB solver
 # test_file("test_vignette.R")          # Need result retrieval function
 

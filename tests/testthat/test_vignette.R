@@ -38,20 +38,20 @@ test_that("Test non-negative least squares", {
   
   # Solve the NNLS problem for beta
   system.time(result2 <- solve(prob2))
-  result2$optimal_value
-  result2$primal_values[[as.character(beta@id)]]
-  beta_nnls <- result2$primal_values[[as.character(beta@id)]]
-  all(beta_nnls >= 0)   # All resulting beta should be non-negative
-  
+  # result2$optimal_value
+  # result2$primal_values[[as.character(beta@id)]]
+  # beta_nnls <- result2$primal_values[[as.character(beta@id)]]
+  # all(beta_nnls >= 0)   # All resulting beta should be non-negative
+  #
   # Calculate the fitted y values
-  fit_ols <- X %*% beta_ols
-  fit_nnls <- X %*% beta_nnls
-  
+  # fit_ols <- X %*% beta_ols
+  # fit_nnls <- X %*% beta_nnls
+  #
   # Plot coefficients for OLS and NNLS
-  coeff <- cbind(b, beta_ols, beta_nnls)
-  colnames(coeff) <- c("Actual", "OLS", "NNLS")
-  rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
-  barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
+  # coeff <- cbind(b, beta_ols, beta_nnls)
+  # colnames(coeff) <- c("Actual", "OLS", "NNLS")
+  # rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
+  # barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
 })
 
 test_that("Test catenary problem", {
@@ -74,16 +74,16 @@ test_that("Test catenary problem", {
   system.time(result <- solve(prob))
   
   # Plot and compare with ideal catenary
-  x <- result$primal_values[[as.character(x@id)]]
-  y <- result$primal_values[[as.character(y@id)]]
-  xs <- x[1:m, 1, drop = TRUE]
-  ys <- y[1:m, 1, drop = TRUE]
-  plot(c(0, 1), c(0, 1), type = 'n')
-  lines(xs, ys, col = "blue", lwd = 2)
-  
-  points(c(0, 1), c(1, 1))
-  curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
-  grid()
+  # x <- result$primal_values[[as.character(x@id)]]
+  # y <- result$primal_values[[as.character(y@id)]]
+  # xs <- x[1:m, 1, drop = TRUE]
+  # ys <- y[1:m, 1, drop = TRUE]
+  # plot(c(0, 1), c(0, 1), type = 'n')
+  # lines(xs, ys, col = "blue", lwd = 2)
+  #
+  # points(c(0, 1), c(1, 1))
+  # curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
+  # grid()
 })
 
 test_that("Test direct standardization problem", {
@@ -128,16 +128,16 @@ test_that("Test direct standardization problem", {
   
   # Solve for the distribution weights
   result <- solve(prob)
-  result$optimal_value
-  result$primal_values[[as.character(w@id)]]
-  weights <- result$primal_values[[as.character(w@id)]]
-  
-  cl <- rainbow(3)
-  plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
-  plot_cdf(y, color = cl[1])
-  plot_cdf(y[sub], color = cl[2])
-  plot_cdf(y[sub], weights, color = cl[3])
-  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+  # result$optimal_value
+  # result$primal_values[[as.character(w@id)]]
+  # weights <- result$primal_values[[as.character(w@id)]]
+  # 
+  # cl <- rainbow(3)
+  # plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
+  # plot_cdf(y, color = cl[1])
+  # plot_cdf(y[sub], color = cl[2])
+  # plot_cdf(y[sub], weights, color = cl[3])
+  # legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
 })
 
 test_that("Test risk-return trade-off in portfolio optimization", {
@@ -171,8 +171,8 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   }
    
   # Plot trade-off curve
-  plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
-  points(diag(Sigma), mu, col = "red")
+  # plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
+  # points(diag(Sigma), mu, col = "red")
 })
 
 test_that("Test worst-case risk analysis", {

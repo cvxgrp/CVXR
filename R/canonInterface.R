@@ -126,9 +126,13 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
         ## vec <- c(start_idx, stop_idx, step)
         if (length(sl) == 1L) {
             vec <- c(sl - 1L, sl, 1L)
+        } else if (length(sl) == 2L) {
+            vec <- c(sl[1L] - 1L, sl[2L], 1L)  # Using zero-based indexing, and step assumed to be 1.
         } else {
-            vec <- c(sl[1] - 1L, sl[2], 1L)  # Using zero-based indexing, and step assumed to be 1.
+            r <- range(sl)
+            vec <- c(r[1L] - 1L, r[2L], 1L)
         }
+
         ##vec <- c(sl, 1L)  # Using 1-based indexing, and step assumed to be 1.
         linC$slice_push_back(vec)
     }

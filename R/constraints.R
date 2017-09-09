@@ -5,6 +5,16 @@ setMethod("initialize", "Constraint", function(.Object, constr_id = get_id()) {
   .Object
 })
 
+setClassUnion("ListORConstr", c("list", "Constraint"))
+
+# Helper function since syntax is different for LinOp (list) vs. Constraint object
+setMethod("constr_id", "ListORConstr", function(object) {
+  if(is.list(object))
+    object$constr_id
+  else
+    object@id
+})
+
 .BoolConstr <- setClass("BoolConstr", representation(lin_op = "list", .noncvx_var = "list"),
                                       prototype(.noncvx_var = NULL),
                                       validity = function(object) {

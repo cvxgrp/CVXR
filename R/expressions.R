@@ -14,7 +14,6 @@ setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric", "dMatrix"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
-setClassUnion("ListORConstr", c("list", "Constraint"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 
@@ -24,13 +23,6 @@ setMethod("size", "ListORExpr", function(object) {
     object$size
   else
     size(object)
-})
-
-setMethod("constr_id", "ListORConstr", function(object) {
-  if(is.list(object))
-    object$constr_id
-  else
-    object@id
 })
 
 # Casts the second argument of a binary operator as an Expression

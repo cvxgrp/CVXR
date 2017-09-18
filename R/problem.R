@@ -421,14 +421,18 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
 
-    c(list(STATUS = results_dict[[STATUS]],
-           VALUE = results_dict[[VALUE]]),
-      outList,
-      list(SOLVER = name(solver),
-           SOLVE_TIME = solve_time,
-           SETUP_TIME = setup_time,
-           NUM_ITERS = num_iters))
+    result <- c(list(STATUS = results_dict[[STATUS]],
+                     VALUE = results_dict[[VALUE]]),
+                outList,
+                list(SOLVER = name(solver),
+                     SOLVE_TIME = solve_time,
+                     SETUP_TIME = setup_time,
+                     NUM_ITERS = num_iters))
+    value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
+    result$value <- value
+    result
 }
+
 
 setMethod("unpack_results", "Problem", function(object, solver, results_dict) {
   canon <- canonicalize(object)

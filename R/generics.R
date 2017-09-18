@@ -75,8 +75,10 @@ setGeneric("extract_variables", function(object, x, var_offsets) { standardGener
 
 # Problem generic methods
 setGeneric("status", function(object) { standardGeneric("status") })
+setGeneric("status<-", function(object, value) { standardGeneric("status<-") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
+setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_stats<-") })
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })

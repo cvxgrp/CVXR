@@ -14,7 +14,11 @@ x <- Variable(n)
 f <- Pnorm(x, 1)
 
 # Solve with CVXPY.
-p <- Problem(Minimize(f), list(A %*% x == b))
+constraint <- list(A %*% x == b)
+p <- Problem(Minimize(f), constraint)
+##debug(cvxr:::solve.Problem)
+##debug(cvxr:::.update_problem_state)
+##debug(cvxr:::valuesById)
 soln <- solve(p, verbose = TRUE)
 
 sprintf("Optimal value from CVXPY %f", soln$value)

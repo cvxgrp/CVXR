@@ -13,7 +13,9 @@ x = Variable(n)
 f = norm(x, 1)
 
 # Solve with CVXPY.
-p = Problem(Minimize(f), [A*x == b])
+constraint = [ A*x == b ]
+objective = Minimize(f)
+p = Problem(objective, constraint)
 p.solve()
 print "Optimal value from CVXPY", f.value
 

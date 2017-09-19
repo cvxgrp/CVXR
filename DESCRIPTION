@@ -41,8 +41,7 @@ Imports:
         bitops,
         MASS,
         gmp,
-        R.utils,
-        signal
+        R.utils
 Suggests:
         knitr,
         rmarkdown,
@@ -54,7 +53,7 @@ License: GPL-2 | GPL-3
 LazyData: true
 Suggests: testthat
 Collate: 'globals.R'
-	       'generics.R'
+	 'generics.R'
          'utilities.R'
          'interface.R'
          'expressions.R'

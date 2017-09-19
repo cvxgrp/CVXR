@@ -37,15 +37,15 @@ setMethod(".grad", "AffAtom", function(object, values) {
   names(var_offsets) <- var_names
   graph <- graph_implementation(object, fake_args, size(object), get_data(object))
   fake_expr <- graph[[1]]
-  
+
   # Get the matrix representation of the function
   prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
-  J <- prob_mat[[3]] + 1 
+  J <- prob_mat[[3]] + 1
   shape <- c(offset, prod(size(object)))
   stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = shape)
-  
+
   # Break up into per argument matrices
   grad_list <- list()
   start <- 1
@@ -285,8 +285,7 @@ setMethod("validate_args", "Conv", function(object) {
 })
 
 setMethod("to_numeric", "Conv", function(object, values) {
-  require(signal)
-  signal::conv(as.vector(values[[1]]), as.vector(values[[2]]))
+    .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
 setMethod("size_from_args", "Conv", function(object) {
@@ -319,7 +318,7 @@ get_diff_mat <- function(dim, axis) {
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
-  
+
   for(i in 1:dim) {
     val_arr <- c(val_arr, 1)
     row_arr <- c(row_arr, i)
@@ -330,9 +329,9 @@ get_diff_mat <- function(dim, axis) {
       col_arr <- c(col_arr, i-1)
     }
   }
-  
+
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(dim, dim))
-  
+
   if(axis == 2)
     mat
   else
@@ -349,7 +348,7 @@ setMethod(".grad", "CumSum", function(object, values) {
     stop("Invalid axis ", object@axis)
   mat <- matrix(0, nrow = dim, ncol = dim)
   mat[lower.tri(mat, diag = TRUE)] <- 1
-  
+
   size <- size(object@args[[1]])
   var <- Variable(size[1], size[2])
   if(object@axis == 2)
@@ -367,7 +366,7 @@ CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   dim <- size[axis]
   diff_mat <- get_diff_mat(dim, axis)
   diff_matt <- create_const(diff_mat, c(dim, dim))
-  
+
   if(axis == 2)
     diff <- mul_expr(diff_mat, Y, size)
   else
@@ -443,9 +442,9 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
 
 #'
 #' Matrix Diagonals
-#' 
+#'
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
-#' 
+#'
 #' @param expr An \S4class{Expression} or numeric constant representing a vector or diagonal matrix.
 #' @aliases Diag
 #' @export
@@ -468,7 +467,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
   if(axis == 2)
     x <- t(x)
-  
+
   size <- size(x)
   m <- size[1]
   n <- size[2]
@@ -478,14 +477,14 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     stop("Must have 0 < k < number of elements in x")
   if(lag <= 0 || lag >= m)
     stop("Must have 0 < lag < number of elements in x")
-  
+
   d <- x
   len <- m
   for(i in 1:k) {
     d <- d[(1+lag):m,] - d[1:(m-lag),]
     m <- m-1
   }
-  
+
   if(axis == 2)
     t(d)
   else
@@ -551,11 +550,11 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
 
 Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
-  
+
   # Order the entries of expr and select them using key.
   expr_size <- size(expr)
   expr_prod <- prod(expr_size)
-  
+
   idx_mat <- seq(expr_prod)
   idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
   if(is.matrix(row) && is.null(col))
@@ -566,12 +565,12 @@ Index.get_special_slice <- function(expr, row, col) {
     select_mat <- idx_mat[row,]
   else
     select_mat <- idx_mat[row, col]
-  
+
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)
   else   # Always cast 1-D arrays as column vectors
     final_size <- c(length(select_mat), 1)
-  
+
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
@@ -769,7 +768,7 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 sum.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
@@ -839,7 +838,7 @@ setMethod("size_from_args", "Transpose", function(object) {
 })
 
 Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(transpose(arg_objs[[1]]), list())  
+  list(transpose(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {
@@ -905,7 +904,7 @@ setMethod("size_from_args", "VStack", function(object) {
 })
 
 VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(vstack(arg_objs, size), list())  
+  list(vstack(arg_objs, size), list())
 }
 
 setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {

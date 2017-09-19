@@ -7,6 +7,18 @@
 
 using namespace Rcpp;
 
+// cpp_convolve
+Rcpp::NumericVector cpp_convolve(Rcpp::NumericVector xa, Rcpp::NumericVector xb);
+RcppExport SEXP _cvxr_cpp_convolve(SEXP xaSEXP, SEXP xbSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type xa(xaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type xb(xbSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_convolve(xa, xb));
+    return rcpp_result_gen;
+END_RCPP
+}
 // build_matrix_0
 SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v);
 RcppExport SEXP _cvxr_build_matrix_0(SEXP xpSEXP, SEXP vSEXP) {
@@ -395,6 +407,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_cvxr_cpp_convolve", (DL_FUNC) &_cvxr_cpp_convolve, 2},
     {"_cvxr_build_matrix_0", (DL_FUNC) &_cvxr_build_matrix_0, 2},
     {"_cvxr_build_matrix_1", (DL_FUNC) &_cvxr_build_matrix_1, 3},
     {"_cvxr_LinOp__new", (DL_FUNC) &_cvxr_LinOp__new, 0},

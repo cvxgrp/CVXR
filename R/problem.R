@@ -421,13 +421,13 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
 
-    result <- c(list(STATUS = results_dict[[STATUS]],
-                     VALUE = results_dict[[VALUE]]),
+    result <- c(list(status = results_dict[[STATUS]],
+                     value = results_dict[[VALUE]]),
                 outList,
-                list(SOLVER = name(solver),
-                     SOLVE_TIME = solve_time,
-                     SETUP_TIME = setup_time,
-                     NUM_ITERS = num_iters))
+                list(solver = name(solver),
+                     solve_time = solve_time,
+                     setup_time = setup_time,
+                     num_iters = num_iters))
     ##value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
     getValue <- function(objet) {
         ## We go French!

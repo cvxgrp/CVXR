@@ -1,4 +1,5 @@
 library(cvxr)
+
 X <- Semidef(2)
 Y <- Variable(2, 2)
 F <- matrix(c(1, 0, 0, -1), byrow=TRUE, nrow=2)

@@ -176,7 +176,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 })
 
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
-setMethod("import_solver", "ECOS", function(solver) { requireNamespace(ECOSolveR) })
+setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
@@ -246,7 +246,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 })
 
 setMethod("name", "SCS", function(object) { SCS_NAME })
-setMethod("import_solver", "SCS", function(solver) { requireNamespace(scs) })
+setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
 setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })

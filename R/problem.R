@@ -431,11 +431,12 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     ##value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
     getValue <- function(objet) {
         ## We go French!
+        if (is(objet, "Variable") || is(objet, "Constraint")) {
+            return(result[[ as.character(id(objet)) ]])
+        }
         if(is_zero(objet)) {
             size <- size(objet)
             valResult <- matrix(0, nrow = size[1], ncol = size[2])
-        } else if (class(objet) == "Variable") {
-            return(result[[ as.character(id(objet)) ]])
         } else {
 
             arg_values <- list()
@@ -446,7 +447,8 @@ valuesById <- function(object, results_dict, sym_data, solver) {
                 arg_val <- if(is_constant(arg)) {
                                value(arg)
                            } else {
-                               result[[ as.character(id(arg)) ]]
+                               ##result[[ as.character(id(arg)) ]]
+                               getValue(arg)
                            }
                 if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
                     return(NA)

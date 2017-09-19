@@ -126,14 +126,14 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 })
 
 # TODO: Do I need the NonlinearConstraint class?
-.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"), 
+.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"),
                                  prototype(.x_size = NA_integer_), contains = "Constraint")
 NonlinearConstraint <- function(f, vars_) { .NonlinearConstraint(f = f, vars_ = vars_) }
 
 setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) {
   .Object@f <- f
   .Object@vars_ <- vars_
-  
+
   # The shape of vars_ in f(vars_)
   cols <- size(.Object@vars_[[1]])[2]
   rows <- sum(sapply(.Object@vars_, function(var) { size(var)[1] }))
@@ -228,15 +228,15 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
     }
     list(constraints, list(), object)
   }
-  
+
   .ecos_format <- function(object) {
     list(list(), format_elemwise(list(object@x, object@z, object@y)))
   }
-  
+
   .scs_format <- function(object) {
     list(list(), format_elemwise(list(object@x, object@y, object@z)))
   }
-  
+
   if(is(solver, "CVXOPT"))
     stop("CVXOPT formatting has not been implemented")
     # tmp <- .cvxopt_format(object)
@@ -289,8 +289,8 @@ setMethod("initialize", "SOC", function(.Object, ..., t, x_elems) {
   callNextMethod(.Object, ...)
 })
 
-setMethod("as.character", "SOC", function(x) { 
-  paste("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "") 
+setMethod("as.character", "SOC", function(x) {
+  paste("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "")
 })
 
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
@@ -333,7 +333,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
   rows <- size(object)[1]
   cols <- rows
   entries <- rows*(cols + 1)/2
-  
+
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
@@ -343,7 +343,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
       if(j <= i) {
         # Index in the original matrix
         col_arr <- c(col_arr, (j-1)*rows + i)
-        
+
         # Index in the extracted vector
         row_arr <- c(row_arr, count)
         if(j == i)
@@ -354,7 +354,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
       }
     }
   }
-  
+
   size <- c(entries, rows*cols)
   coeff <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
   coeff <- create_const(coeff, size, sparse = TRUE)
@@ -379,7 +379,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
       leq_constr <- create_geq(term, constr_id = object@constr_id)
     list(list(eq_constr), list(leq_constr))
   }
-  
+
   if(is(solver, "CVXOPT") || is(solver, "MOSEK"))
     stop("Formatting unimplemented for CVXOPT and MOSEK")
   else if(is(solver, "SCS")) {
@@ -388,25 +388,25 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
     new_leq_constr <- scs_form[[2]]
   } else
     stop("Solver does not support positive semidefinite cone")
-  
+
   if(object@enforce_sym) {
     # upper_tri(A) == upper_tri(t(A))
     eq_constr <- c(eq_constr, new_eq_constr)
-    
+
     # Update dims
     size <- size(object)
     dims[[EQ_DIM]] <- dims[[EQ_DIM]] + floor(size[1]*(size[2] - 1)/2)
   }
   # 0 <= A
   leq_constr <- c(leq_constr, new_leq_constr)
-  
+
   # Update dims
   dims[[SDP_DIM]] <- c(dims[[SDP_DIM]], size(object)[1])
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
 # Assumes t is a vector the same length as X's rows (columns) for axis == 1 (2)
-.SOCAxis <- setClass("SOCAxis", representation(axis = "numeric"), 
+.SOCAxis <- setClass("SOCAxis", representation(axis = "numeric"),
                     validity = function(object) {
                       if(size(object@t)[2] != 1)
                         stop("[SOCAxis: t] t must have second dimension equal to 1")
@@ -421,7 +421,7 @@ setMethod("initialize", "SOCAxis", function(.Object, ..., axis) {
   callNextMethod(.Object, ...)
 })
 
-setMethod("as.character", "SOCAxis", function(x) { 
+setMethod("as.character", "SOCAxis", function(x) {
   paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
 })
 
@@ -431,7 +431,7 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
  }
 
  leq_constr <- c(leq_constr, .format(object)[[2]])
- 
+
  # Update dims
  for(cone_size in size(object))
    dims[[SOC_DIM]] <- c(dims[[SOC_DIM]], cone_size[1])

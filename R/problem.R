@@ -496,9 +496,9 @@ handleNoSolution <- function(object, status) {
 
     ## Set the problem value
     if(tolower(status) %in% c("infeasible", "infeasible_inaccurate"))
-        setValue(object) <- primal_to_result(object@objective, Inf)
+        result[[VALUE]] <- primal_to_result(object@objective, Inf)
     else if(tolower(status) %in% c("unbounded", "unbounded_inaccurate"))
-        setValue(object) <- primal_to_result(object@objective, -Inf)
+        result[[VALUE]] <- primal_to_result(object@objective, -Inf)
     result
 }
 

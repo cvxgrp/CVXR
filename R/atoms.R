@@ -5,7 +5,7 @@
 #'
 #' @aliases Atom
 #' @export
-Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_), 
+Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_),
                  validity = function(object) {
                    if(length(object@args) == 0)
                      stop("[Atom: args] no arguments given to ", class(object))
@@ -27,7 +27,7 @@ setMethod("validate_args", "Atom", function(object) { })
 setMethod("size", "Atom", function(object) { object@.size })
 setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
 setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
-setMethod("is_convex", "Atom", function(object) { 
+setMethod("is_convex", "Atom", function(object) {
   # Applies DCP composition rule
   if(is_constant(object))
     return(TRUE)
@@ -121,7 +121,7 @@ setMethod("value", "Atom", function(object) {
     }
     result <- to_numeric(object, arg_values)
   }
-  
+
   # Reduce to scalar if possible
   if(all(intf_size(result) == c(1,1)))
     intf_scalar_value(result)
@@ -134,7 +134,7 @@ setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
   if(is_constant(object))
     return(constant_grad(object))
-  
+
   # Returns NA if variable values are not supplied
   arg_values <- list()
   for(arg in object@args) {
@@ -144,10 +144,10 @@ setMethod("grad", "Atom", function(object) {
     else
       arg_values <- c(arg_values, list(arg_val))
   }
-  
+
   # A list of gradients wrt arguments
   grad_self <- .grad(object, arg_values)
-  
+
   # The chain rule
   result <- list()
   idx <- 1
@@ -164,7 +164,7 @@ setMethod("grad", "Atom", function(object) {
         # Convert 1x1 matrices to scalars
         if((is.matrix(D) || is(D, "Matrix")) && dim(D) == c(1,1))
           D <- D[1,1]
-        
+
         if(key %in% names(result))
           result[[key]] <- result[[key]] + D
         else
@@ -287,10 +287,10 @@ setMethod(".grad", "AffineProd", function(object, values) {
   Y <- values[[2]]
   size11 <- size(object@args[[1]])[1]
   size22 <- size(object@args[[2]])[2]
-  
+
   DX_rows <- prod(size(object@args[[1]]))
   cols <- size11 * size22
-  
+
   # DX = [diag(Y11), diag(Y12), ...]
   #      [diag(Y21), diag(Y22), ...]
   #      [  ...        ...      ...]
@@ -304,7 +304,7 @@ setMethod(".grad", "AffineProd", function(object, values) {
 })
 
 .GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
-                                               w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict", 
+                                               w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict",
                                                cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
@@ -314,7 +314,7 @@ geo_mean <- GeoMean
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x
   .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
-  
+
   x <- .Object@args[[1]]
   if(size(x)[1] == 1)
     n <- size(x)[2]
@@ -322,29 +322,29 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
     n <- size(x)[1]
   else
     stop("x must be a row or column vector")
-  
+
   if(any(is.na(p)))
     p <- rep(1, n)
-  
+
   if(length(p) != n)
     stop("x and p must have the same number of elements")
-  
+
   if(any(p < 0) || sum(p) <= 0)
     stop("powers must be nonnegative and not all zero")
-  
+
   frac <- fracify(p, max_denom)
   .Object@w <- frac[[1]]
   .Object@w_dyad <- frac[[2]]
   .Object@approx_error <- approx_error(p, .Object@w)
-  
+
   .Object@tree <- decompose(.Object@w_dyad)
-  
+
   # known lower bound on number of cones needed to represent w_dyad
   .Object@cone_lb <- lower_bound(.Object@w_dyad)
-  
+
   # number of cones used past known lower bound
   .Object@cone_num_over <- over_bound(.Object@w_dyad, .Object@tree)
-  
+
   # number of cones used
   .Object@cone_num <- .Object@cone_lb + .Object@cone_num_over
   .Object
@@ -353,7 +353,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 setMethod("validate_args", "GeoMean", function(object) { })
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
-  
+
   if("Rmpfr" %in% installed.packages()) {
     require(Rmpfr)
     val <- 1.0
@@ -364,7 +364,7 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
     }
     return(asNumeric(val))   # TODO: Handle mpfr objects in the backend later
   }
-  
+
   val <- mapply(function(x, p) { x^p }, values, asNumeric(object@w))
   Reduce("*", val)
 })
@@ -396,12 +396,12 @@ GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   w_dyad <- data[[2]]
   tree <- data[[3]]
   t <- create_var(c(1,1))
-  
+
   if(size(arg_objs[[1]])[2] == 1)
     x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1)$idx })
   else if(size(arg_objs[[1]])[1] == 1)
     x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), 1, i)$idx })
-  
+
   # TODO: Catch cases where we have (0,0,1)?
   # TODO: What about curvature (should be affine) in trivial case of (0,0,1),
   # should this behavior match what we do in power?
@@ -448,7 +448,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   r <- eigen(values[[1]], only.values = FALSE)
   v <- r$vectors  # eigenvectors
   w <- r$values   # eigenvalues
-  
+
   d <- rep(0, length(w))
   d[1] <- 1
   d <- diag(d)
@@ -482,7 +482,7 @@ LambdaSumLargest <- function(X, k) {
     stop("First argument must be a square matrix")
   else if(as.integer(k) != k || k <= 0)
     stop("Second argument must be a positive integer")
-  
+
   Z <- Semidef(size(X)[1])
   k*LambdaMax(X - Z) + Trace(Z)
 }
@@ -543,27 +543,27 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- canon[[2]]
   Z <- create_var(c(n,n))
   D <- create_var(c(n,1))
-  
+
   # Require that X and A are PSD
   constraints <- c(constraints, list(SDP(A)))
-  
+
   # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
   Z_lower_tri <- upper_tri(transpose(Z))
   constraints <- c(constraints, list(create_eq(Z_lower_tri)))
-  
+
   # D[i,i] = Z[i,i]
   constraints <- c(constraints, list(create_eq(D, diag_mat(Z))))
-  
+
   # Fix X using the fact that A must be affine by the DCP rules
   # X[1:n, 1:n] == D
   constraints <- Index.block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
-  
+
   # X[1:n, (n+1):(2*n)] == Z
   constraints <- Index.block_eq(X, Z, constraints, 1, n, n+1, 2*n)
-  
+
   # X[(n+1):(2*n), (n+1):(2*n)] == A
   constraints <- Index.block_eq(X, A, constraints, n+1, 2*n, n+1, 2*n)
-  
+
   # Add the objective sum(log(D[i,i]))
   graph <- Log.graph_implementation(list(D), c(n, 1))
   obj <- graph[[1]]
@@ -603,7 +603,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   axis <- data[[1]]
   t <- create_var(size)
-  
+
   # sum(exp(x - t)) <= 1
   if(is.na(axis)) {
     prom_t <- promote(t, size(x))
@@ -620,7 +620,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
-    
+
     const_size <- c(1, size(x)[1])
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
     obj <- mul_expr(ones, obj, size)
@@ -632,7 +632,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
-    
+
     const_size <- c(size(x)[2], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
     obj <- rmul_expr(obj, ones, size)
@@ -684,21 +684,21 @@ setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>%
 setMethod(".grad", "MatrixFrac", function(object, values) {
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
-  P_inv <- tryCatch({ 
+  P_inv <- tryCatch({
     base::solve(P)
   }, error = function(e) {
     return(NA_real_)
   })
-  
+
   if(is.null(dim(P_inv)) && is.na(P_inv))
     return(list(NA_real_, NA_real_))
-  
+
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
   DX <- (P_inv + t(P_inv)) %*% X
   DX <- as.numeric(t(DX))
   DX <- Matrix(DX, sparse = TRUE)
-  
+
   DP <- P_inv %*% X
   DP <- DP %*% t(X)
   DP <- DP %*% P_inv
@@ -713,22 +713,22 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   size <- size(X)
   n <- size[1]
   m <- size[2]
-  
+
   # Create a matrix with Schur complement Tmat - t(X) * P^-1 * X
   M <- create_var(c(n+m, n+m))
   Tmat <- create_var(c(m, m))
   constraints <- list()
-  
+
   # Fix M using the fact that P must be affine by the DCP rules.
   # M[1:n, 1:n] == P
   constraints <- Index.block_eq(M, P, constraints, 1, n, 1, n)
-  
+
   # M[1:n, (n+1):(n+m)] == X
   constraints <- Index.block_eq(M, X, constraints, 1, n, n+1, n+m)
-  
+
   # M[(n+1):(n+m), (n+1):(n+m)] == Tmat
   constraints <- Index.block_eq(M, Tmat, constraints, n+1, n+m, n+1, n+m)
-  
+
   # Add SDP constraints.
   list(cvxr::trace(Tmat), c(constraints, list(SDP(M))))
 }
@@ -797,7 +797,7 @@ MinEntries <- function(x, axis = NA_real_) {
 max.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
@@ -811,7 +811,7 @@ max.Expression <- function(..., na.rm = FALSE) {
 min.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
@@ -837,7 +837,7 @@ Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x
 
 setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@max_denom <- max_denom
-  
+
   # TODO: Deal with fractional powers correctly
   p_old <- p
   # if(p == Inf)
@@ -853,7 +853,7 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   # else
   #  stop("[Pnorm: validation] Invalid value for p ", p)
 
-  .Object@p <- p  
+  .Object@p <- p
   if(.Object@p == Inf)
     .Object@.approx_error <- 0
   else
@@ -867,8 +867,8 @@ setMethod("validate_args", "Pnorm", function(object) {
     stop("The axis parameter is only supported for p = 2")
 })
 
-setMethod("name", "Pnorm", function(object) { 
-  sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p) 
+setMethod("name", "Pnorm", function(object) {
+  sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p)
 })
 
 p_norm <- function(x, p) {
@@ -889,13 +889,13 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     values <- as.numeric(values[[1]])
   else
     values <- as.matrix(values[[1]])
-  
+
   if(object@p < 1 && any(values < 0))
     return(-Inf)
-  
+
   if(object@p < 0 && any(values == 0))
     return(0)
-  
+
   if(is.na(object@axis))
     retval <- p_norm(values, object@p)
   else
@@ -915,7 +915,7 @@ setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values
 setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- prod(size(object@args[[1]]))
   value <- as.matrix(value)
-  
+
   # Outside domain
   if(object@p < 1 && any(value <= 0))
     return(NA_real_)
@@ -927,7 +927,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
   denominator <- p_norm(value, object@p)
   denominator <- denominator^(object@p - 1)
-  
+
   # Subgrad is 0 when denom is 0 (or undefined)
   if(denominator == 0) {
     if(object@p >= 1)
@@ -947,7 +947,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(c(1,1))
   constraints <- list()
-  
+
   # First, take care of special cases p = 2, Inf, and 1
   if(p == 2) {
     if(is.na(axis))
@@ -957,12 +957,12 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       return(list(t, list(SOCAxis(reshape(t, c(prod(t$size), 1)), x, axis))))
     }
   }
-  
+
   if(p == Inf) {
     t_ <- promote(t, x$size)
     return(list(t, list(create_leq(x, t_), create_geq(sum_expr(list(x, t_))))))
   }
-  
+
   # We need absolute value constraint for symmetric convex branches (p >= 1)
   # We alias |x| as x from this point forward to make code pretty
   if(p >= 1) {
@@ -970,16 +970,16 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     constraints <- c(constraints, list(create_leq(x, absx), create_geq(sum_expr(list(x, absx))) ))
     x <- absx
   }
-  
+
   if(p == 1)
     return(list(sum_entries(x), constraints))
-  
+
   # Now take care of remaining convex/concave branches
   # To create rational powers, need new variable r and constraint sum(r) == t
   r <- create_var(x$size)
   t_ <- promote(t, x$size)
   constraints <- c(constraints, list(create_eq(sum_entries(r), t)))
-  
+
   p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
   if(p < 0)
     constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
@@ -987,7 +987,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     constraints <- c(constraints, gm_constrs(r, list(x, t_), c(p, 1-p)))
   else if(p > 1)
     constraints <- c(constraints, gm_constrs(x, list(r, t_), c(1/p, 1-1/p)))
-  
+
   list(t, constraints)
 }
 
@@ -997,7 +997,7 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
 
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
-  
+
   # Norms for scalars same as absolute value
   if(p == 1 || is_scalar(x))
     Pnorm(x = x, p = 1, axis = axis)
@@ -1021,10 +1021,10 @@ Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
 NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
-  
+
   # Inner norms
   vecnorms <- lapply(1:size(X)[1], function(i) { Norm(X[i,], p) })
-  
+
   # Outer norms
   Norm(new("HStack", args = vecnorms), q)
 }
@@ -1034,7 +1034,7 @@ norm2 <- Norm2
 norminf <- NormInf
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
   x <- as.Constant(x)
-  
+
   # Norms for scalars same as absolute value
   if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
     MaxEntries(Pnorm(x = x, p = 1, axis = 2))
@@ -1086,19 +1086,19 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   size <- size(A)
   rows <- size[1]
   cols <- size[2]
-  
+
   # Create the equivalent problem:
   # minimize (trace(U) + trace(V))/2
   # subject to: [U A; t(A) V] is positive semidefinite
   X <- create_var(c(rows+cols, rows+cols))
   constraints <- list()
-  
+
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:rows, (rows+1):(rows+cols)] == A
   constraints <- Index.block_eq(X, A, constraints, 1, rows, rows+1, rows+cols)
   half <- create_const(0.5, c(1,1))
   trace_expr <- mul_expr(half, cvxr::trace(X), c(1, 1))
-  
+
   # Add SDP constraint.
   list(trace_expr, c(list(SDP(X)), constraints))
 }
@@ -1111,17 +1111,17 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   eig <- eigen(P, only.values = FALSE)
   w <- eig$values
   V <- eig$vectors
-  
+
   if(!is.na(rcond))
     cond <- rcond
   if(cond %in% c(NA, -1))
     cond <- 1e6 * .Machine$double.eps   # TODO: Check this is doing the correct thing
-  
+
   scale <- max(base::abs(w))
   w_scaled <- w / scale
   maskp <- w_scaled > cond
   maskn <- w_scaled < -cond
-  
+
   # TODO: Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
     warning("Forming a non-convex expression QuadForm(x, indefinite)")
@@ -1136,7 +1136,7 @@ QuadForm <- function(x, P) {
   # x^T P x
   x <- as.Constant(x)
   P <- as.Constant(P)
-  
+
   # Check dimensions
   n <- size(P)[1]
   if(size(P)[2] != n || any(size(x) != c(n,1)))
@@ -1147,14 +1147,14 @@ QuadForm <- function(x, P) {
     return(t(x) %*% P %*% x)
   else if(is_constant(P)) {
     P <- as.matrix(value(P))
-    
+
     # Force symmetry
     P <- (P + t(P)) / 2.0
     decomp <- .decomp_quad(P)
     scale <- decomp[[1]]
     M1 <- decomp[[2]]
     M2 <- decomp[[3]]
-    
+
     ret <- 0
     if(prod(dim(M1)) > 0)
       ret <- ret + scale * SumSquares(Constant(t(M1)) %*% x)
@@ -1260,24 +1260,24 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   size <- A$size
   n <- size[1]
   m <- size[2]
-  
+
   # Create a matrix with Schur complement I*t - (1/t)*t(A)*A
   X <- create_var(c(n+m, n+m))
   t <- create_var(c(1,1))
   constraints <- list()
-  
+
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:n, 1:n] == I_n*t
   prom_t <- promote(t, c(n,1))
   constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, 1, n, 1, n)
-  
+
   # X[1:n, (n+1):(n+m)] == A
   constraints <- Index.block_eq(X, A, constraints, 1, n, n+1, n+m)
-  
+
   # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
   prom_t <- promote(t, c(m,1))
   constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n+1, n+m, n+1, n+m)
-  
+
   # Add SDP constraint.
   list(t, c(constraints, list(SDP(X))))
 }
@@ -1286,7 +1286,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
   SigmaMax.graph_implementation(arg_objs, size, data)
 })
 
-.SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"), 
+.SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"),
                        validity = function(object) {
                          if(as.integer(object@k) != object@k || object@k <= 0)
                            stop("[SumLargest: validation] k must be a positive integer")
@@ -1339,11 +1339,11 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   k <- create_const(data[[1]], c(1,1))
   q <- create_var(c(1,1))
   t <- create_var(x$size)
-  
+
   sum_t <- sum_entries(t)
   obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
   prom_q <- promote(q, x$size)
-  
+
   constr <- list(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
   list(obj, constr)
 }
@@ -1364,7 +1364,7 @@ TotalVariation <- function(value, ...) {
   val_size <- size(value)
   rows <- val_size[1]
   cols <- val_size[2]
-  
+
   if(is_scalar(value))
     stop("TotalVariation cannot take a scalar argument")
   else if(is_vector(value))   # L1 norm for vectors

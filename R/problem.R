@@ -428,8 +428,43 @@ valuesById <- function(object, results_dict, sym_data, solver) {
                      SOLVE_TIME = solve_time,
                      SETUP_TIME = setup_time,
                      NUM_ITERS = num_iters))
-    value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
-    result$value <- value
+    ##value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
+    getValue <- function(objet) {
+        ## We go French!
+        if(is_zero(objet)) {
+            size <- size(objet)
+            valResult <- matrix(0, nrow = size[1], ncol = size[2])
+        } else if (class(objet) == "Variable") {
+            return(result[[ as.character(id(objet)) ]])
+        } else {
+
+            arg_values <- list()
+            idx <- 1
+            for(arg in objet@args) {
+                ## An argument without a value makes all higher level values NA.
+                ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
+                arg_val <- if(is_constant(arg)) {
+                               value(arg)
+                           } else {
+                               result[[ as.character(id(arg)) ]]
+                           }
+                if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
+                    return(NA)
+                else {
+                    arg_values[[idx]] <- arg_val
+                    idx <- idx + 1
+                }
+            }
+            valResult <- to_numeric(objet, arg_values)
+        }
+
+        ## Reduce to scalar if possible
+        if(all(intf_size(valResult) == c(1, 1)))
+            intf_scalar_value(valResult)
+        else
+            valResult
+    }
+    result$getValue <- getValue
     result
 }
 
@@ -508,9 +543,9 @@ saveValuesById <- function(variables, offset_map, result_vec) {
     result
  }
 
-getValue <- function(cvxObj, solution) {
-    solution[[ as.character(id(cvxObj)) ]]
-}
+## getValue <- function(cvxObj, solution) {
+##     solution[[ as.character(id(cvxObj)) ]]
+## }
 
 setMethod("Problem.save_values", "Problem", function(object, result_vec, objstore, offset_map) {
 ##  if(length(result_vec) > 0)   # Cast to desired matrix type

@@ -489,10 +489,10 @@ handleNoSolution <- function(object, status) {
 
     result <- list()
     for(var_ in variables(object))
-        result[[as.character(id(var_))]]<- NA
+        result[[as.character(id(var_))]] <- NA
 
     for(constraint in object@constraints)
-        result[[as.character(id(constraint))]]<- NA
+        result[[as.character(id(constraint))]] <- NA
 
     ## Set the problem value
     if(tolower(status) %in% c("infeasible", "infeasible_inaccurate"))

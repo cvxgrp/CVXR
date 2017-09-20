@@ -132,15 +132,15 @@ test_that("Test equivalent forms", {
   v2 <- solve(Problem(Minimize(obj2), cons))$value
   v3 <- solve(Problem(Minimize(obj3), cons))$value
   v4 <- solve(Problem(Minimize(obj4), cons))$value
-  # v1 <- solve(Problem(Minimize(obj1), cons), solver = "LS")$optimal_value
-  # v2 <- solve(Problem(Minimize(obj2), cons), solver = "LS")$optimal_value
-  # v3 <- solve(Problem(Minimize(obj3), cons), solver = "LS")$optimal_value
-  # v4 <- solve(Problem(Minimize(obj4), cons), solver = "LS")$optimal_value
+  # v1 <- solve(Problem(Minimize(obj1), cons), solver = "LS")$value
+  # v2 <- solve(Problem(Minimize(obj2), cons), solver = "LS")$value
+  # v3 <- solve(Problem(Minimize(obj3), cons), solver = "LS")$value
+  # v4 <- solve(Problem(Minimize(obj4), cons), solver = "LS")$value
   
-  # expect_equal(v1, 681.119420108, tolerance = TOL)
-  # expect_equal(v2, 681.119420108, tolerance = TOL)
-  # expect_equal(v3, 681.119420108, tolerance = TOL)
-  # expect_equal(v4, 681.119420108, tolerance = TOL)
+  expect_equal(v1, 681.119420108, tolerance = TOL)
+  expect_equal(v2, 681.119420108, tolerance = TOL)
+  expect_equal(v3, 681.119420108, tolerance = TOL)
+  expect_equal(v4, 681.119420108, tolerance = TOL)
 })
 
 test_that("Test smooth ridge", {

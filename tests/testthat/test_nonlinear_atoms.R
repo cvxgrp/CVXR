@@ -13,30 +13,30 @@ test_that("Test log problem", {
   constr <- list(x <= as.matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
   result <- solve(p)
-  # expect_equal(result, 1, tolerance = TOL)
-  # expect_equal(value(p, x), c(1, exp(1)), tolerance = TOL)
+  expect_equal(result$value, 1, tolerance = TOL)
+  expect_equal(result$getValue(x), matrix(c(1, exp(1))), tolerance = TOL)
   
   # Log in constraint
   obj <- Minimize(sum(x))
   constr <- list(log(x) >= 0, x <= as.matrix(c(1,1)))
   p <- Problem(obj, constr)
   result <- solve(p)
-  # expect_equal(result, 2, tolerance = TOL)
-  # expect_equal(value(p, x), c(1, 1), tolerance = TOL)
+  expect_equal(result$value, 2, tolerance = TOL)
+  expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
 
   # Index into log
   obj <- Maximize(log(x)[2])
   constr <- list(x <= as.matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
   result <- solve(p)
-  # expect_equal(result, 1, tolerance = TOL)
+  expect_equal(result$value, 1, tolerance = TOL)
   
   # Scalar log
   obj <- Maximize(log(x[2]))
   constr <- list(x <= as.matrix(c(1, exp(1))))
   p <- Problem(obj, constr)
   result <- solve(p)
-  # expect_equal(result, 1, tolerance = TOL)
+  expect_equal(result$value, 1, tolerance = TOL)
 })
 
 test_that("Test the Entr atom", {
@@ -49,18 +49,20 @@ test_that("Test a problem with KL-divergence", {
   kSeed <- 10
   
   # Generate a random reference distribution
-  # TODO: Generate random state based on kSeed
+  # set.seed(kSeed)
   npSPriors <- matrix(runif(kK), nrow = kK, ncol = 1)
   npSPriors <- npSPriors/sum(npSPriors)
   
   # Reference distribution
   p_refProb <- Parameter(kK, 1, sign = "positive")
+  
   # Distribution to be estimated
   v_prob <- Variable(kK, 1)
   objkl <- 0.0
   con <- 0.0
   for(k in 1:kK) {
-    objkl <- objkl + KLDiv(v_prob[k,1], p_refProb[k,1])
+    # objkl <- objkl + KLDiv(v_prob[k,1], p_refProb[k,1])   # TODO: Parameters are unimplemented
+    objkl <- objkl + KLDiv(v_prob[k,1], npSPriors[k,1])
     con <- con + v_prob[k,1]
   }
   
@@ -68,10 +70,10 @@ test_that("Test a problem with KL-divergence", {
   klprob <- Problem(Minimize(objkl), constrs)
   value(p_refProb) <- npSPriors
   
-  # result <- solve(klprob, solver = "SCS", verbose = TRUE)
-  # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
-  # result <- solve(klprob, solver = "ECOS", verbose = TRUE)
-  # expect_equal(value(v_prob, result), npSPriors, tolerance = 1e-3)
+  result <- solve(klprob, solver = "SCS", verbose = TRUE)
+  expect_equal(result$getValue(v_prob), npSPriors, tolerance = 1e-3)
+  result <- solve(klprob, solver = "ECOS", verbose = TRUE)
+  expect_equal(result$getValue(v_prob), npSPriors, tolerance = 1e-3)
 })
 
 test_that("Test a problem with Entr", {
@@ -81,9 +83,9 @@ test_that("Test a problem with Entr", {
     obj <- Maximize(sum(Entr(x)))
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
     result <- solve(p, solver = "SCS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = 1e-3)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = 1e-3)
   }
 })
 
@@ -94,9 +96,9 @@ test_that("Test a problem with Exp", {
     obj <- Minimize(sum(exp(x)))
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
     result <- solve(p, solver = "SCS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = 1e-3)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = 1e-3)
   }
 })
 
@@ -107,9 +109,8 @@ test_that("Test a problem with Log", {
     obj <- Maximize(sum(log(x)))
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
     result <- solve(p, solver = "SCS", verbose = TRUE)
-    # expect_equal(value(x, p), rep(1.0/n, n), tolerance = 1e-2)
+    expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = 1e-2)
   }
 })
-

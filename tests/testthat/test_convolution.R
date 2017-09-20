@@ -1,3 +1,5 @@
+TOL <- 1e-6
+
 test_that("test 1D convolution", {
   n <- 3
   x <- Variable(n)
@@ -17,8 +19,8 @@ test_that("test 1D convolution", {
   t <- Variable()
   prob <- Problem(Minimize(Norm(expr, 1)), list(x == g))
   result <- solve(prob)
-  # expect_equal(result$value, sum(f_conv_g), tolerance = TOL)
-  # expect_equal(value(expr), f_conv_g, tolerance = TOL)
+  expect_equal(result$value, sum(f_conv_g), tolerance = TOL)
+  expect_equal(result$getValue(expr), f_conv_g, tolerance = TOL)
 })
 
 test_that("test a problem with convolution", {
@@ -27,6 +29,6 @@ test_that("test a problem with convolution", {
   h <- matrix(rnorm(2), nrow = 2, ncol = 1)
   x <- Variable(N)
   v <- Conv(h, x)
-  obj <- Minimize(SumEntries(MulElemwise(y, v[1:N])))
+  obj <- Minimize(sum(y * v[1:N]))
   solve(Problem(obj, list()))
 })

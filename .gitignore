@@ -4,3 +4,4 @@ cvxr.Rproj
 .RData
 .Rhistory
 man/
+src/*.o

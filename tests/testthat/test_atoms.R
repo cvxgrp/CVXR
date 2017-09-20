@@ -285,14 +285,14 @@ test_that("test the VStack class", {
   atom <- VStack(A, C, B)
   expect_equal(size(atom), c(7, 2))
   
-  # entries <- list()
-  # for(i in 1:size(x)[1]) {
-  #  for(j in 1:size(x)[2]) {
-  #    entries <- c(entries, x[i, j])
-  #  }
-  # }
-  # atom <- VStack(unlist(entries))
-  atom <- VStack(x[1,1], x[2,1])
+  entries <- list()
+  for(i in 1:size(x)[1]) {
+   for(j in 1:size(x)[2]) {
+     entries <- c(entries, x[i, j])
+   }
+  }
+  atom <- do.call(VStack, entries)
+  # atom <- VStack(x[1,1], x[2,1])
   
   expect_error(VStack(C, 1))
 })
@@ -466,7 +466,7 @@ test_that("test the partial_optimize eval 1-norm", {
   # g <- partial_optimize(p2, list(t), list(x))
   # p3 <- Problem(Minimize(g), list(x == xval))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, -result3$optimal_value)
+  # expect_equal(result1$value, -result3$value)
   
   # Try leaving out args
   
@@ -475,13 +475,13 @@ test_that("test the partial_optimize eval 1-norm", {
   # g <- partial_optimize(p2, opt_vars = list(t))
   # p3 <- Problem(Minimize(g), list(x == xval))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
   
   # Minimize the 1-norm via partial_optimize
   # g <- partial_optimize(p2, dont_opt_vars = list(x))
   # p3 <- Problem(Minimize(g), list(x == xval))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
   
   # expect_error(partial_optimize(p2))
   # expect_error(partial_optimize(p2, list(), list(x)))
@@ -500,7 +500,7 @@ test_that("test partial_optimize min 1-norm", {
   # result2 <- solve(p2)
   
   result1 <- solve(p1)
-  # expect_equal(result1$optimal_value, result2$optimal_value)
+  # expect_equal(result1$value, result2$value)
 })
 
 test_that("test partial_optimize simple problem", {
@@ -516,7 +516,7 @@ test_that("test partial_optimize simple problem", {
   # g <- partial_optimize(p2, list(y), list(x))
   # p3 <- Problem(Minimize(x+g), list(x >= 5))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
 })
 
 test_that("test partial_optimize special var", {
@@ -532,7 +532,7 @@ test_that("test partial_optimize special var", {
   # g <- partial_optimize(p2, list(y), list(x))
   # p3 <- Problem(Minimize(x+g), list(x >= 5))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
 })
 
 test_that("test partial_optimize special constr", {
@@ -548,7 +548,7 @@ test_that("test partial_optimize special constr", {
   # g <- partial_optimize(p2, list(y), list(x))
   # p3 <- Problem(Minimize(x+g), list(x >= 5))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
 })
 
 test_that("test partial_optimize with parameters", {
@@ -566,7 +566,7 @@ test_that("test partial_optimize with parameters", {
   # g <- partial_optimize(p2, list(y), list(x))
   # p3 <- Problem(Minimize(x+g), list(x >= 5))
   # result3 <- solve(p3)
-  # expect_equal(result1$optimal_value, result3$optimal_value)
+  # expect_equal(result1$value, result3$value)
 })
 
 test_that("test partial_optimize numeric function", {
@@ -586,7 +586,7 @@ test_that("test partial_optimize numeric function", {
   # y@value <- 42
   # const[1]@dual_variable@value <- 42
   # result <- g@value
-  # expect_equal(result, result1$optimal_value)
+  # expect_equal(result, result1$value)
   # expect_equal(y@value, 42)
   # expect_equal(constr[1]@dual_value, 42)
   
@@ -616,15 +616,15 @@ test_that("test partial_optimize stacked", {
   # result2 <- solve(p2)
   
   result1 <- solve(p1)
-  # expect_equal(result1$optimal_value, result2$optimal_value)
+  # expect_equal(result1$value, result2$value)
 })
 
 test_that("test the NonNegative Variable class", {
   x <- NonNegative()
   p <- Problem(Minimize(5+x), list(x >= 3))
   result <- solve(p)
-  # expect_equal(result$optimal_value, 8, tolerance = TOL)
-  # expect_equal(result$x, 3, tolerance = TOL)
+  # expect_equal(result$value, 8, tolerance = TOL)
+  # expect_equal(result$getValue(x), 3, tolerance = TOL)
 })
 
 test_that("test whether changing an array constant breaks DCP", {

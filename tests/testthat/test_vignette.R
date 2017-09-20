@@ -28,9 +28,7 @@ test_that("Test non-negative least squares", {
   
   # Solve the OLS problem for beta
   system.time(result <- solve(prob))
-  result$optimal_value
-  result$primal_values[[as.character(beta@id)]]
-  beta_ols <- result$primal_values[[as.character(beta@id)]]
+  beta_ols <- result$getValue(beta)
   
   # Add non-negativity constraint on beta
   constraints <- list(beta >= 0)
@@ -38,20 +36,18 @@ test_that("Test non-negative least squares", {
   
   # Solve the NNLS problem for beta
   system.time(result2 <- solve(prob2))
-  # result2$optimal_value
-  # result2$primal_values[[as.character(beta@id)]]
-  # beta_nnls <- result2$primal_values[[as.character(beta@id)]]
-  # all(beta_nnls >= 0)   # All resulting beta should be non-negative
-  #
+  beta_nnls <- result$getValue(beta)
+  expect_true(all(beta_nnls >= 0))   # All resulting beta should be non-negative
+  
   # Calculate the fitted y values
-  # fit_ols <- X %*% beta_ols
-  # fit_nnls <- X %*% beta_nnls
-  #
+  fit_ols <- X %*% beta_ols
+  fit_nnls <- X %*% beta_nnls
+  
   # Plot coefficients for OLS and NNLS
-  # coeff <- cbind(b, beta_ols, beta_nnls)
-  # colnames(coeff) <- c("Actual", "OLS", "NNLS")
-  # rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
-  # barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
+  coeff <- cbind(b, beta_ols, beta_nnls)
+  colnames(coeff) <- c("Actual", "OLS", "NNLS")
+  rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
+  barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
 })
 
 test_that("Test catenary problem", {
@@ -74,16 +70,14 @@ test_that("Test catenary problem", {
   system.time(result <- solve(prob))
   
   # Plot and compare with ideal catenary
-  # x <- result$primal_values[[as.character(x@id)]]
-  # y <- result$primal_values[[as.character(y@id)]]
-  # xs <- x[1:m, 1, drop = TRUE]
-  # ys <- y[1:m, 1, drop = TRUE]
-  # plot(c(0, 1), c(0, 1), type = 'n')
-  # lines(xs, ys, col = "blue", lwd = 2)
-  #
-  # points(c(0, 1), c(1, 1))
-  # curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
-  # grid()
+  xs <- result$getValue(x)
+  ys <- result$getValue(y)
+  plot(c(0, 1), c(0, 1), type = 'n')
+  lines(xs, ys, col = "blue", lwd = 2)
+  
+  points(c(0, 1), c(1, 1))
+  curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
+  grid()
 })
 
 test_that("Test direct standardization problem", {
@@ -128,16 +122,14 @@ test_that("Test direct standardization problem", {
   
   # Solve for the distribution weights
   result <- solve(prob)
-  # result$optimal_value
-  # result$primal_values[[as.character(w@id)]]
-  # weights <- result$primal_values[[as.character(w@id)]]
-  # 
-  # cl <- rainbow(3)
-  # plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
-  # plot_cdf(y, color = cl[1])
-  # plot_cdf(y[sub], color = cl[2])
-  # plot_cdf(y[sub], weights, color = cl[3])
-  # legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+  weights <- result$getValue(w)
+
+  cl <- rainbow(3)
+  plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
+  plot_cdf(y, color = cl[1])
+  plot_cdf(y[sub], color = cl[2])
+  plot_cdf(y[sub], weights, color = cl[3])
+  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
 })
 
 test_that("Test risk-return trade-off in portfolio optimization", {
@@ -163,19 +155,19 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   for(gamma in gammas) {
     objective <- ret - gamma * risk
     prob <- Problem(Maximize(objective), constraints)
-    # result <- solve(prob)
+    result <- solve(prob)
     
     # Evaluate risk/return for current solution
-    # ret_data[i] <- result$value(ret)
-    # risk_data[i] <- result$value(risk)
+    ret_data[i] <- result$getValue(ret)
+    risk_data[i] <- result$getValue(risk)
   }
    
   # Plot trade-off curve
-  # plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
-  # points(diag(Sigma), mu, col = "red")
+  plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
+  points(diag(Sigma), mu, col = "red")
 })
 
-test_that("Test worst-case risk analysis", {
+test_that("Test worst-case covariance", {
   n <- 5
   w <- rexp(n)
   w <- w / sum(w)
@@ -194,4 +186,65 @@ test_that("Test worst-case risk analysis", {
   constr <- list(L <= Sigma, Sigma <= U, Sigma == Symmetric(n))
   prob <- Problem(Maximize(obj), constr)
   result <- solve(prob)
+  print(result$getValue(Sigma))
+})
+
+test_that("Test fastest mixing Markov chain (FMMC)", {
+  # Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
+  
+  # Form the complementary graph
+  antiadjacency <- function(g) {
+    n <- max(as.numeric(names(g)))   # Assumes names are integers starting from 1
+    a <- lapply(1:n, function(i) c())
+    names(a) <- 1:n
+    for(x in g) {
+      for(y in 1:n) {
+        if(!(y %in% g[[x]]))
+          a[[x]] <- c(a[[x]], y)
+      }
+    }
+    a
+  }
+  
+  # Fastest mixing Markov chain on graph g
+  FMMC <- function(g, verbose = FALSE) {
+    a <- antiadjacency(g)
+    n <- length(names(a))
+    P <- Variable(n, n)
+    o <- rep(1, n)
+    objective <- Minimize(Norm(P - 1.0/n))
+    constraints <- list(P %*% o == o, t(P) == P, P >= 0)
+    for(i in a) {
+      for(j in a[[i]]) {  # (i-j) is a not-edge of g!
+        if(i != j)
+          constraints <- c(constraints, P[i,j] == 0)
+      }
+    }
+    prob <- Problem(objective, constraints)
+    result <- solve(prob)
+    if(verbose)
+      cat("Status: ", result$status, ", Optimal Value = ", result$value)
+    list(status = result$status, value = result$value, P = result$getValue(P))
+  }
+  
+  # SIAM Rev. 46 examples pg. 674: Figure 1 and Table 1
+  # a) line graph L(4)
+  g <- list("1" = 2, "2" = c(1,3), "3" = c(2,4), "4" = 3)
+  result <- FMMC(g, verbose = TRUE)
+  print(result$P)
+  
+  # b) triangle + one edge
+  g <- list("1" = 2, "2" = c(1,3,4), "3" = c(2,4), "4" = c(2,3))
+  result <- FMMC(g, verbose = TRUE)
+  print(result$P)
+  
+  # c) bipartite 2 + 3
+  g <- list("1" = c(2,4,5), "2" = c(1,3), "3" = c(2,4,5), "4" = c(1,3), "5" = c(1,3))
+  result <- FMMC(g, verbose = TRUE)
+  print(result$P)
+  
+  # d) square + central point
+  g <- list("1" = c(2,3,5), "1" = c(1,4,5), "2" = c(1,4,5), "3" = c(2,3,5), "4" = c(1,2,3,4,5))
+  result <- FMMC(g, verbose = TRUE)
+  print(result$P)
 })

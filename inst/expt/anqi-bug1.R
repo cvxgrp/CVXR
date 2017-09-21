@@ -7,7 +7,7 @@ objective <- Minimize(sum(A %*% x))
 constraint <- list(x >=0, x <= 1)
 prob <- Problem(objective, constraint)
 
-debug(get_problem_matrix)
+#debug(get_problem_matrix)
 solve(prob, solver = "SCS", verbose = TRUE)
 
 x <- Variable(1)

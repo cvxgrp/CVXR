@@ -1114,10 +1114,12 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
 
   if(!is.na(rcond))
     cond <- rcond
-  if(cond %in% c(NA, -1))
-    cond <- 1e6 * .Machine$double.eps   # TODO: Check this is doing the correct thing
+  if(cond == -1 || is.na(cond))
+    cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
 
   scale <- max(base::abs(w))
+  if(scale < cond)
+    return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
   w_scaled <- w / scale
   maskp <- w_scaled > cond
   maskn <- w_scaled < -cond
@@ -1125,10 +1127,16 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   # TODO: Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
     warning("Forming a non-convex expression QuadForm(x, indefinite)")
-  # M1 <- sweep(as.matrix(V[,maskp]), 2, sqrt(w_scaled[maskp]), "*")
-  # M2 <- sweep(as.matrix(V[,maskn]), 2, sqrt(-w_scaled[maskn]), "*")
-  M1 <- as.matrix(V[,maskp]) %*% diag(sqrt(w_scaled[maskp]))
-  M2 <- as.matrix(V[,maskn]) %*% diag(sqrt(-w_scaled[maskn]))
+
+  if(sum(maskp) <= 1)
+    M1 <- as.matrix(V[,maskp] * sqrt(w_scaled[maskp]))
+  else
+    M1 <- V[,maskp] %*% diag(sqrt(w_scaled[maskp]))
+  
+  if(sum(maskn) <= 1)
+    M2 <- as.matrix(V[,maskn]) * sqrt(-w_scaled[maskn])
+  else
+    M2 <- V[,maskn] %*% diag(sqrt(-w_scaled[maskn]))
   list(scale = scale, M1 = M1, M2 = M2)
 }
 

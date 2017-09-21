@@ -21,9 +21,9 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
   
   p <- Problem(obj, constraints)
   result <- solve(p)
-  # expect_equal(result$value, 0.447214, tolerance = TOL)
-  # expect_equal(result$r, result$value, tolerance = TOL)
-  # expect_equal(result$x_c, c(0,0), tolerance = TOL)
+  expect_equal(result$value, 0.447214, tolerance = TOL)
+  expect_equal(result$getValue(r), result$value, tolerance = TOL)
+  expect_equal(result$getValue(x_c), matrix(c(0,0)), tolerance = TOL)
 })
 
 test_that("Test examples from the README", {
@@ -41,10 +41,10 @@ test_that("Test examples from the README", {
   
   # The optimal objective is returned by solve(p)
   result <- solve(p)
-  # The optimal value for x is stored in result$x
-  # print(result$x)
-  # The optimal Lagrange multiplier for a constraint is stored in constraint$dual_value
-  # print(constraints[1].dual_value)
+  # The optimal value for x is stored in result$getValue(x)
+  print(result$getValue(x))
+  # The optimal Lagrange multiplier for a constraint is stored in constraints$dual_value
+  # print(constraints[[1]].dual_value)
 
   ###########################################
   # Scalar variable
@@ -67,9 +67,9 @@ test_that("Test examples from the README", {
   G <- Parameter(4, 7, sign = "negative")
   
   # Assigns a constant value to G
-  G@value <- -matrix(1, nrow = 4, ncol = 7)
+  value(G) <- -matrix(1, nrow = 4, ncol = 7)
   
-  # expect_error(G@value <- matrix(1, nrow = 4, ncol = 7))
+  expect_error(value(G) <- matrix(1, nrow = 4, ncol = 7))
   
   ###########################################
   a <- Variable()
@@ -78,7 +78,7 @@ test_that("Test examples from the README", {
   # expr is an Expression object after each assignment
   expr <- 2*x
   expr <- expr - a
-  expr <- sum(expr) + norm(x, 2)
+  expr <- sum(expr) + norm2(x)
   
   ###########################################
   # Problem data
@@ -92,21 +92,18 @@ test_that("Test examples from the README", {
   x <- Variable(m)
   loss <- sum((A %*% x - b)^2)
   
-  # TODO: Assign a value to gamma and find the optimal x
-  # Parameters currently unimplemented
-  get_x <- function(gamma_value) {
-    value(gamma) <- gamma_value
+  get_x <- function(gamma) {
     objective <- Minimize(loss + gamma*norm1(x))
     p <- Problem(objective)
     
-    # result <- solve(p)
-    # result$x
+    result <- solve(p)
+    result$getValue(x)
   }
   
-  # gammas <- 10^seq(-1, 2, length.out = 2)
+  gammas <- 10^seq(-1, 2, length.out = 2)
   
   # Serial computation
-  # x_values <- sapply(gammas, function(value) { get_x(value) })
+  x_values <- sapply(gammas, get_x)
   
   ###########################################
   n <- 10
@@ -129,15 +126,16 @@ test_that("Test examples from the README", {
   expected_return <- mu %*% x
   risk <- QuadForm(x, sigma)
   
+  gamma <- 1
   objective <- Maximize(expected_return - gamma*risk)
   p <- Problem(objective, list(sum(x) == 1))
-  # result <- solve(p)
+  result <- solve(p)
   
   # The optimal expected return
-  # print(result$expected_return)
+  print(result$getValue(expected_return))
   
   # The optimal risk
-  # print(result$risk)
+  print(result$getValue(risk))
   
   ###########################################
   N <- 50
@@ -158,22 +156,23 @@ test_that("Test examples from the README", {
     sample <- x[[2]]
     Pos(1 - label*(t(sample) %*% a - b))
   })
-  objective <- Minimize(norm2(a) + gamma * Reduce("+", slack))
+  gamma <- 0.1
+  objective <- Minimize(norm2(a) + gamma*Reduce("+", slack))
   p <- Problem(objective)
-  # result <- solve(p)
+  result <- solve(p)
   
   # Count misclassifications
-  # errors <- 0
-  # for(v in data) {
-  #  label <- v[[1]]
-  #  sample <- v[[2]]
-  #  if(label * value(t(sample) %*% a - b) < 0)
-  #    errors <- errors + 1
-  # }
+  errors <- 0
+  for(v in data) {
+    label <- v[[1]]
+    sample <- v[[2]]
+    if(label * result$getValue(t(sample) %*% a - b) < 0)
+      errors <- errors + 1
+  }
   
-  # print(errors)
-  # print(value(a))
-  # print(value(b))
+  print(errors)
+  print(result$getValue(a))
+  print(result$getValue(b))
 })
 
 test_that("Test advanced tutorial", {
@@ -185,13 +184,13 @@ test_that("Test advanced tutorial", {
   
   # Solve with ECOS
   result <- solve(prob, solver = "ECOS")
-  print(paste("optimal value with ECOS:", result$optimal_value))
-  # expect_equal(result$optimal_value, 6, tolerance = TOL)
+  print(paste("optimal value with ECOS:", result$value))
+  expect_equal(result$value, 6, tolerance = TOL)
   
   # Solve with SCS
   result <- solve(prob, solver = "SCS")
-  print(paste("optimal value with SCS:", result$optimal_value))
-  # expect_equal(result$optimal_value, 6, tolerance = TOL)
+  print(paste("optimal value with SCS:", result$value))
+  expect_equal(result$value, 6, tolerance = 1e-3)
   
   x <- Variable()
   prob <- Problem(Minimize(x^2), list(x == 2))
@@ -216,7 +215,7 @@ test_that("Test log determinant", {
   constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
   p <- Problem(obj, constraints)
   result <- solve(p)
-  # expect_equal(result$value, 1.9746, tolerance = 1e-2)
+  expect_equal(result$value, 1.9746, tolerance = 1e-2)
 })
 
 test_that("Test portfolio problem", {
@@ -259,9 +258,9 @@ test_that("Test examples from CVXR introduction", {
   # The optimal objective is returned by solve(prob)
   result <- solve(prob)
   # The optimal value for x
-  # print(result$x)
+  print(result$getValue(x))
   # The optimal Lagrange multiplier for a constraint is extracted from constraint
-  # print(dual_value(constraints[[1]]))
+  # print(constraints[[1]].dual_value)
   
   ###########################################
   # Create two scalar variables
@@ -277,29 +276,29 @@ test_that("Test examples from CVXR introduction", {
   # Form and solve problem
   prob <- Problem(obj, constraints)
   result <- solve(prob)
-  # cat("status:", result$status)
-  # cat("\noptimal value:", result$opt_val) 
-  # cat("\noptimal var:", result$x, result$y)
+  cat("status:", result$status)
+  cat("\noptimal value:", result$value) 
+  cat("\noptimal var:", result$getValue(x), ", ", result$getValue(y))
   
-  # expect_equal(result$status, OPTIMAL)
-  # expect_equal(result$optimal_value, 1.0, tolerance = TOL)
-  # expect_equal(result$x, 1.0, tolerance = TOL)
-  # expect_equal(result$y, 0, tolerance = TOL)
+  expect_equal(tolower(result$status), "optimal")
+  expect_equal(result$value, 1.0, tolerance = TOL)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 0, tolerance = TOL)
   
   ###########################################
   # Replace the objective
   prob@objective <- Maximize(x + y)
   result <- solve(prob)
-  # cat("optimal value:", result$optimal_value)
+  cat("optimal value:", result$value)
   
-  # expect_equal(result$optimal_value, 1.0, tolerance = TOL)
+  expect_equal(result$value, 1.0, tolerance = TOL)
   
   # Replace the constraints (x + y == 1)
   prob@constraints[[1]] <- (x + y <= 3)
   result <- solve(prob)
-  # cat("optimal value:", result$optimal_value)
+  cat("optimal value:", result$value)
   
-  # expect_equal(result$optimal_value, 3.0, tolerance = TOL)
+  expect_equal(result$value, 3.0, tolerance = TOL)
   
   ###########################################
   x <- Variable()
@@ -307,20 +306,20 @@ test_that("Test examples from CVXR introduction", {
   # An infeasible problem
   prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
   result <- solve(prob)
-  # cat("status:", result$status)
-  # cat("optimal value:", result$optimal_value)
+  cat("status:", result$status)
+  cat("optimal value:", result$value)
   
-  # expect_equal(result$status, "INFEASIBLE")
-  # expect_equal(result$optimal_value, Inf)
+  expect_equal(tolower(result$status), "infeasible")
+  expect_equal(result$value, Inf)
   
   # An unbounded problem
   prob <- Problem(Minimize(x))
   result <- solve(prob)
-  # cat("status:", result$status)
-  # cat("optimal value:", result$optimal_value)
+  cat("status:", result$status)
+  cat("optimal value:", result$value)
   
-  # expect_equal(result$status, "UNBOUNDED")
-  # expect_equal(result$optimal_value, -Inf)
+  expect_equal(tolower(result$status), "unbounded")
+  expect_equal(result$value, -Inf)
   
   ###########################################
   # A scalar variable
@@ -346,10 +345,10 @@ test_that("Test examples from CVXR introduction", {
   prob <- Problem(objective, constraints)
   
   result <- solve(prob)
-  # cat("Optimal value:", result$optimal_value)
-  # cat("Optimal var:", result$x)
+  cat("Optimal value:", result$value)
+  cat("Optimal var:", result$getValue(x))
   
-  # expect_equal(result$optimal_value, 4.14133859146, tolerance = TOL)
+  expect_equal(result$value, 7.244277, tolerance = TOL)
   
   ###########################################
   # Positive scalar parameter
@@ -362,12 +361,12 @@ test_that("Test examples from CVXR introduction", {
   G <- Parameter(4, 7, sign = "negative")
   
   # Assigns a constant value to G
-  G@value <- -matrix(1, nrow = 4, ncol = 7)
+  value(G) <- -matrix(1, nrow = 4, ncol = 7)
   
   ###########################################
   # Create parameter, then assign value
   rho <- Parameter(sign = "positive")
-  rho@value <- 2
+  value(rho) <- 2
   
   # Initialize parameter with a value
   rho <- Parameter(sign = "positive", value = 2)
@@ -385,20 +384,20 @@ test_that("Test examples from CVXR introduction", {
   # Construct the problem
   x <- Variable(m)
   error <- SumSquares(A %*% x - b)
-  obj <- Minimize(error + gamma * Norm(x, 1))
-  prob <- Problem(obj)
-  
+
   # Construct a trade-off curve of ||Ax-b||^2 vs. ||x||_1
-  sq_penalty <- list()
-  l1_penalty <- list()
+  sq_penalty <- c()
+  l1_penalty <- c()
   x_values <- list()
-  gamma_vals <- 10^seq(-4, 6, length.out = 50)
-  for(val in gamma_vals) {
-    value(gamma) <- val
-    # result <- solve(prob)
-    # sq_penalty <- c(sq_penalty, value(error, result))
-    # l1_penalty <- c(l1_penalty, value(norm(x, 1), result))
-    x_values <- c(x_values, result$x)
+  gammas <- 10^seq(-4, 6, length.out = 50)
+  for(gamma in gammas) {
+    obj <- Minimize(error + gamma*norm1(x))
+    prob <- Problem(obj)
+
+    result <- solve(prob)
+    sq_penalty <- c(sq_penalty, result$getValue(error))
+    l1_penalty <- c(l1_penalty, result$getValue(norm1(x)))
+    x_values <- c(x_values, result$getValue(x))
   }
   
   ###########################################
@@ -406,9 +405,9 @@ test_that("Test examples from CVXR introduction", {
   A <- matrix(1, nrow = 3, ncol = 5)
   
   # Use size(expr) to get the dimensions
-  # cat("dimensions of X:", size(X))
-  # cat("\ndimensions of SumEntries(X):", size(SumEntries(X)))
-  # cat("\ndimensions of A * X:", size(A * X))
+  cat("dimensions of X:", size(X))
+  cat("\ndimensions of SumEntries(X):", size(SumEntries(X)))
+  cat("\ndimensions of A %*% X:", size(A %*% X))
   
   # ValueError raised for invalid dimensions
   expect_error(A + X)

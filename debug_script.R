@@ -23,7 +23,7 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # Passing with some comments
 # test_file("test_atoms.R")             # No partial_optimize
 # test_file("test_domain.R")            # No partial_optimize
-# test_file("test_examples.R")          # WARN: A->p (column pointers) not strictly increasing, column 9999 empty
+# test_file("test_examples.R")          # Parameters and dual value retrieval are unimplemented
 # test_file("test_grad.R")              # No partial_optimize or linearize
 # test_file("test_problem.R")           # Need result retrieval function
 
@@ -42,8 +42,23 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # result <- solve(prob)
 
 # TEST: test_problem.R
-# result list has NULL and Inf assigned to value slot
-# a <- Variable()
-# p <- Problem(Maximize(a), list(a >= 2))
-# result <- solve(p, solver = "ECOS")
-# result$value
+# Subscript out of bounds in saveValuesById
+# a <- Variable(1)
+# obj <- Minimize(0*a)
+# p <- Problem(obj)
+# result <- solve(p)
+
+# TEST: test_problem.R
+# A <- Variable(2, 2, name = "A")
+# B <- Variable(2, 2, name = "B")
+# C <- Variable(3, 2, name = "C")
+# p <- Problem(Minimize(norm2(C[1:2,] + A)[,1]), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
+# result <- solve(p)
+# result$value    # Should be exactly equal to 3
+
+# TEST: test_examples.R
+# WARN: A->p (column pointers) not strictly increasing, column 9999 empty.
+# x <- Variable(5,5)
+# obj <- Minimize(TotalVariation(x))
+# prob <- Problem(obj)
+# result <- solve(prob, solver = "SCS")

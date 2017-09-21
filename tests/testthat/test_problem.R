@@ -280,7 +280,7 @@ test_that("test problem linear combinations", {
   
   # Division and subtraction
   combo2 <- prob1 - prob3/2
-  combo2_ref <- Problem(Minimize(a + (b + a)^2), list(b >= 3, a >= b))
+  combo2_ref <- Problem(Minimize(a + (b + a)^2/2), list(b >= 3, a >= b))
   expect_equal(solve(combo2)$value, solve(combo2_ref)$value)
   
   # Multiplication with 0 (prob2's constraints should still hold)
@@ -393,7 +393,7 @@ test_that("Test vector LP problems", {
   result <- solve(p)
   expect_equal(result$value, 26, tolerance = 1e-3)
   obj <- result$getValue(t(c) %*% x + a)
-  expect_equal(obj[1,1], result$value, tolerance = TOL)
+  expect_equal(obj, result$value, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(8,8)), tolerance = 1e-3)
   expect_equal(result$getValue(z), matrix(c(2,2)), tolerance = 1e-3)
 })
@@ -419,7 +419,7 @@ test_that("Test matrix LP problems", {
   result <- solve(p)
   expect_equal(result$value, 1, tolerance = TOL)
   expect_equal(result$getValue(A), result$getValue(B), tolerance = TOL)
-  expect_equal(result$getValue(C), Tmat, tolerance = TOL)
+  expect_equal(result$getValue(C), t(Tmat), tolerance = TOL)
   expect_true(all(result$getValue(A) >= Tmat %*% result$getValue(C)))
   
   # Test variables are dense
@@ -540,7 +540,7 @@ test_that("Test problems with Norm2", {
   expect_equal(result$getValue(a), -2, tolerance = TOL)
   
   # Vector arguments
-  p <- Problem(Minimize(Norm2(x - z) + 5), list(x <= c(2,3), z <= c(-1,-4)))
+  p <- Problem(Minimize(Norm2(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
   result <- solve(p)
   expect_equal(result$value, 12.61577, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
@@ -562,9 +562,10 @@ test_that("Test problems with abs", {
 })
 
 test_that("Test problems with QuadForm", {
-  expect_error(solve(Problem(Minimize(QuadForm(x, A)))))
-  expect_error(solve(Problem(Minimize(QuadForm(1, A)))))
-  expect_error(solve(Problem(Minimize(QuadForm(x, rbind(c(-1,0), c(0.9)))))))
+  expect_error(solve(Problem(Minimize(QuadForm(x, A)))))   # Error: At least one argument to QuadForm must be constant
+  expect_error(solve(Problem(Minimize(QuadForm(1, A)))))   # Error: Invalid dimensions for arguments
+  expect_warning(obj <- QuadForm(x, rbind(c(-1,0), c(0,9))))
+  expect_error(solve(Problem(Minimize(obj))))              # Error: Problem does not follow DCP rules
   
   P <- rbind(c(4,0), c(0,9))
   p <- Problem(Minimize(QuadForm(x, P)), list(x >= 1))
@@ -604,7 +605,7 @@ test_that("Test recovery of dual variables", {
       acc <- 1e-1
     else
       acc <- 1e-5
-    p <- Problem(Minimize(norm(x + z, 1)), list(x >= c(2,3), rbind(c(1,2), c(3,4)) %*% z == c(-1,4), norm(x + z, 2) <= 100))
+    p <- Problem(Minimize(norm(x + z, 1)), list(x >= c(2,3), cbind(c(1,2), c(3,4)) %*% z == c(-1,-4), norm(x + z, 2) <= 100))
     result <- solve(p, solver = solver)
     expect_equal(result$value, 4, tolerance = acc)
     expect_equal(result$getValue(x), matrix(c(4,3)), tolerance = acc)
@@ -647,10 +648,10 @@ test_that("Test problems with indexing", {
   p <- Problem(Maximize(obj), list(A <= rbind(c(1,-2), c(-3,4))))
   result <- solve(p)
   expect_equal(result$value, 0, tolerance = TOL)
-  expect_equal(result$getValue(A), rbind(c(1,-2),c(-3,4)))
+  expect_equal(result$getValue(A), rbind(c(1,-2), c(-3,4)))
   
   # Indexing arithmetic expressions
-  exp <- rbind(c(1,2), c(3,4)) %*% z + x
+  exp <- cbind(c(1,2), c(3,4)) %*% z + x
   p <- Problem(Minimize(exp[2,1]), list(x == z, z == c(1,2)))
   result <- solve(p)
   expect_equal(result$value, 12, tolerance = TOL)
@@ -661,39 +662,39 @@ test_that("Test problems with slicing", {
   p <- Problem(Maximize(SumEntries(C)), list(C[2:3,] <= 2, C[1,] == 1))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), 2*matrix(c(1,2,2)))
+  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
   
   p <- Problem(Maximize(SumEntries(C[seq(1,3,2),2])), list(C[2:3,] <= 2, C[1,] == 1))
   result <- solve(p)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(C[seq(1,3,2),2]), c(1,2))
+  expect_equal(result$getValue(C[seq(1,3,2),2]), matrix(c(1,2)))
   
   p <- Problem(Maximize(SumEntries((C[1:2,] + A)[,1:2])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
                                                              (A + B)[,2] == 2, B == 1))
   result <- solve(p)
   expect_equal(result$value, 12, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,]), c(1,2,1,2), tolerance = TOL)
-  expect_equal(result$getValue(A), matrix(c(2,2,1,1)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,]), cbind(c(1,2), c(1,2)), tolerance = TOL)
+  expect_equal(result$getValue(A), cbind(c(2,2),c(1,1)), tolerance = TOL)
   
   p <- Problem(Maximize(matrix(c(3,4), nrow = 1, ncol = 2) %*% (C[1:2,] + A)[,1]),
                list(C[2:3,] <= 2, C[1,] == 1, matrix(c(1,2), nrow = 1, ncol = 2) %*% (A + B)[,1] == 3,
                     (A + B)[,2] == 2, B == 1, 3*A[,1] <= 3))
   result <- solve(p)
   expect_equal(result$value, 12, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,1]), c(1,2), tolerance = TOL)
-  expect_equal(result$getValue(A), matrix(c(1,-0.5,1,1)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,2)), tolerance = TOL)
+  expect_equal(result$getValue(A), cbind(c(1,-0.5), c(1,1)), tolerance = TOL)
   
-  p <- Problem(Minimize(Norm2(C[1:2,] + A)[,1]), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
+  p <- Problem(Minimize(norm2(C[1:2,] + A)[,1]), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
   result <- solve(p)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,1]), c(1,-2), tolerance = TOL)
-  expect_equal(result$getValue(A), matrix(c(2,2,1,1)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = TOL)
+  expect_equal(result$getValue(A), cbind(c(2,2), c(1,1)), tolerance = TOL)
   
   # Transpose of slice
   p <- Problem(Maximize(SumEntries(C)), list(t(C[2:3,]) <= 2, t(C[1,]) == 1))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), 2*matrix(c(1,2,2)))
+  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
 })
 
 test_that("Test the VStack atom", {
@@ -763,7 +764,7 @@ test_that("Test variable transpose", {
   result <- solve(p)
   value <- result$getValue(C)
   
-  constraints <- lapply(1:3, function(i) { 1*C[i,1] + 1*C[i,2] >= i })
+  constraints <- lapply(1:3, function(i) { 1*C[i,1] + 1*C[i,2] >= (i-1) })
   p <- Problem(Minimize(SumEntries(C)), constraints)
   result2 <- solve(p)
   expect_equal(result$value, result2$value)
@@ -797,7 +798,7 @@ test_that("Test variable transpose", {
   p <- Problem(Maximize(SumEntries(C)), list(t(C)[,2:3] <= 2, t(C)[,1] == 1))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), 2*matrix(c(1,2,2)))
+  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
 })
 
 test_that("Test multiplication on the left by a non-constant", {
@@ -860,8 +861,8 @@ test_that("Test getting values for expressions", {
   p <- Problem(Minimize(obj), list(x >= c(2,3), z <= c(-1,-4), constr_exp <= 2))
   result <- solve(p)
   expect_equal(result$value, 22, tolerance = TOL)
-  expect_equal(result$getValue(x), c(2,3))
-  expect_equal(result$getValue(z), c(-1,-4))
+  expect_equal(result$getValue(x), matrix(c(2,3)))
+  expect_equal(result$getValue(z), matrix(c(-1,-4)))
   
   # Expression values
   xs <- result$getValue(x)
@@ -869,7 +870,7 @@ test_that("Test getting values for expressions", {
   expect_equal(result$getValue(diff_exp), xs - zs, tolerance = TOL)
   expect_equal(result$getValue(inf_exp), norm(xs - zs, "I"))
   expect_equal(result$getValue(sum_entries_exp), 5 + norm(zs, "1") + norm(xs, "1") + norm(xs - zs, "I"))
-  expect_equal(result$getValue(constr_exp), norm(xs + zs, "2"))
+  expect_equal(result$getValue(constr_exp), base::norm(xs + zs, "2"))
   expect_equal(result$getValue(obj), result$value)
 })
 
@@ -897,7 +898,7 @@ test_that("Tests problems with MulElemwise", {
   p <- Problem(obj, list(A == 5))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(expr), c(5,-5) + c(10,-10), tolerance = TOL)
+  expect_equal(result$getValue(expr), cbind(c(5,-5), c(10,-10)), tolerance = TOL)
   
   # Test with a sparse matrix
   c <- sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
@@ -906,7 +907,7 @@ test_that("Tests problems with MulElemwise", {
   p <- Problem(obj, list(x == 5))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(expr), c(5,10))
+  expect_equivalent(as.matrix(result$getValue(expr)), matrix(c(5,10)))
   
   # Test promotion
   c <- cbind(c(1,-1), c(2,-2))
@@ -915,7 +916,7 @@ test_that("Tests problems with MulElemwise", {
   p <- Problem(obj, list(a == 5))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(expr), c(5,-5) + c(10,-10))
+  expect_equivalent(as.matrix(result$getValue(expr)), cbind(c(5,-5), c(10,-10)))
 })
 
 test_that("Tests that errors occur when you use an invalid solver", {
@@ -943,12 +944,12 @@ test_that("Tests problems with Reshape", {
   c <- 1:4
   expr <- Reshape(A,4,1)
   obj <- Minimize(t(expr) %*% c)
-  constraints <- list(A == rbind(c(-1,-2), c(3,4)))
+  constraints <- list(A == cbind(c(-1,-2), c(3,4)))
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$value, 20, tolerance = TOL)
-  expect_equal(result$getValue(expr), c(-1,-2,3,4))
-  expect_equal(result$getValue(Reshape(expr,2,2)), matrix(c(-1,-2),c(3,4)))
+  expect_equal(result$getValue(expr), matrix(c(-1,-2,3,4)))
+  expect_equal(result$getValue(Reshape(expr,2,2)), cbind(c(-1,-2), c(3,4)))
   
   # Test matrix to matrix
   expr <- Reshape(C,2,3)
@@ -959,7 +960,7 @@ test_that("Tests problems with Reshape", {
   result <- solve(prob)
   reshaped = matrix(C_mat, nrow = 2, ncol = 3, byrow = FALSE)
   expect_equal(result$value, sum(mat %*% reshaped), tolerance = TOL)
-  expect_equal(result$getValue(expr), C_mat, tolerance = TOL)
+  expect_equal(result$getValue(expr), reshaped, tolerance = TOL)
   
   # Test promoted expressions
   c <- cbind(c(1,-1), c(2,-2))
@@ -968,14 +969,14 @@ test_that("Tests problems with Reshape", {
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
   expect_equal(result$value, -6, tolerance = TOL)
-  expect_equal(result$getValue(expr), 2*c, tolerance = TOL)
+  expect_equal(result$getValue(expr), 2*matrix(c, nrow = 1), tolerance = TOL)
   
   expr <- Reshape(c * a,4,1)
   obj <- Minimize(t(expr) %*% (1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
   expect_equal(result$value, -6, tolerance = TOL)
-  expect_equal(result$getValue(expr), 2*c, tolerance = TOL)
+  expect_equal(result$getValue(expr), 2*matrix(c, ncol = 1), tolerance = TOL)
 })
 
 test_that("Tests problems with Vec", {
@@ -986,7 +987,7 @@ test_that("Tests problems with Vec", {
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$value, 20, tolerance = TOL)
-  expect_equal(result$getValue(expr), c(-1,-2,3,4))
+  expect_equal(result$getValue(expr), matrix(c(-1,-2,3,4)))
 })
 
 test_that("Test a problem with Diag", {
@@ -1138,7 +1139,7 @@ test_that("Test GeoMean", {
   
   prob <- Problem(Maximize(cost), list(sum(x) <= 1))
   result <- solve(prob)
-  expect_equal(result$getValue(x), c(0.5,0.5))
+  expect_equal(result$getValue(x), matrix(c(0.5,0.5)))
   
   x <- Variable(3,3)
   expect_error(GeoMean(x))
@@ -1166,7 +1167,7 @@ test_that("Test GeoMean", {
   x <- as.numeric(result$getValue(x))
   x_true <- p/sum(p)
   
-  expect_equal(result$value, value(GeoMean(list(x), p)), tolerance = TOL)
+  expect_equal(result$value, result$getValue(GeoMean(x, p)), tolerance = TOL)
   expect_equal(result$value, short_geo_mean(x, p), tolerance = TOL)
   expect_equal(x, x_true, tolerance = 1e-3)
   
@@ -1177,9 +1178,9 @@ test_that("Test GeoMean", {
   x <- as.numeric(result$getValue(x))
   x_true <- sqrt(p/sum(p))
   
-  expect_true(result$value, value(GeoMean(list(x), p)), tolerance = TOL)
-  expect_true(result$value, short_geo_mean(x, p), tolerance = TOL)
-  expect_true(x, x_true, tolerance = 1e-3)
+  expect_equal(result$value, result$getValue(GeoMean(x, p)), tolerance = 1e-3)
+  expect_equal(result$value, short_geo_mean(x, p), tolerance = 1e-3)
+  expect_equal(x, x_true, tolerance = 1e-3)
   
   # The following 3 tests check VStack and HStack input to GeoMean
   # The following 3 formulations should be equivalent
@@ -1240,14 +1241,14 @@ test_that("Test Pnorm concave", {
   for(p in c(-1, 0.5, 0.3, -2.3)) {
     prob <- Problem(Minimize(SumEntries(abs(x-a))), list(Pnorm(x,p) >= 0))
     result <- solve(prob)
-    expect_equal(result$value, 1)
+    expect_equal(result$value, 1, tolerance = TOL)
   }
   
   a <- c(1.0, 2, 3)
   for(p in c(-1, 0.5, 0.3, -2.3)) {
     prob <- Problem(Minimize(SumEntries(abs(x-a))), list(Pnorm(x,p) >= 0))
     result <- solve(prob)
-    expect_equal(result$value, 0)
+    expect_equal(result$value, 0, tolerance = TOL)
   }
 })
 

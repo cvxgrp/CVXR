@@ -17,7 +17,6 @@ b <- matrix(c(1,2,3), nrow=3)
 
 ## Construct the problem
 x <- Variable(n)
-
 ##objective <- Minimize(sum((A %*% x - b)^2))
 objective <- Minimize(SumSquares(A %*% x - b))
 constraints <- list(x >= 1, x <= 2)

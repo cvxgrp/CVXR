@@ -28,3 +28,11 @@ ax[0].axis('off')
 ax[1].imshow(corr_img);
 ax[1].set_title("Corrupted Image")
 ax[1].axis('off');
+
+from cvxpy import *
+U = Variable(rows, cols)
+obj = Minimize(tv(U))
+constraints = [mul_elemwise(Known, U) == mul_elemwise(Known, Ucorr)]
+prob = Problem(obj, constraints)
+# Use SCS to solve the problem.
+prob.solve(verbose=True, solver=SCS)

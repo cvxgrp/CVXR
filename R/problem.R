@@ -391,8 +391,8 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
 }
 
 valuesById <- function(object, results_dict, sym_data, solver) {
-    outList <- list()
     if(results_dict[[STATUS]] %in% SOLUTION_PRESENT) {
+        outlist <- list(value = results_dict[[VALUE]])
         ## Save values for variables in object
         tmp <- saveValuesById(variables(object), sym_data@.var_offsets, results_dict[[PRIMAL]])
         outList <- c(outList, tmp)
@@ -421,8 +421,7 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
 
-    result <- c(list(status = results_dict[[STATUS]],
-                     value = results_dict[[VALUE]]),
+    result <- c(list(status = results_dict[[STATUS]]),
                 outList,
                 list(solver = name(solver),
                      solve_time = solve_time,

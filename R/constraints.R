@@ -52,7 +52,8 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 
   # Record the .noncvx_var id
   bool_id <- get_expr_vars(object@.noncvx_var)[[1]][[1]]
-  dims[[BOOL_IDS]] <- c(dims[[BOOL_IDS]], bool_id)
+  constr_type <- constr_type(object)
+  dims[[constr_type]] <- c(dims[[constr_type]], bool_id)
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 

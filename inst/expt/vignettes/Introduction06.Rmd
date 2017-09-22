@@ -103,9 +103,9 @@ prob2.1 <- Problem(objective, constraints)
 # Problem solution
 solution2.1 <- solve(prob2.1)
 solution2.1$status
-solution2.1$optimal_value
-solution2.1$primal_values[[as.character(x@id)]]
-solution2.1$primal_values[[as.character(y@id)]]
+solution2.1$value
+solution2.1$getValue(x)
+solution2.1$getValue(y)
 
 # The world says 'hi' back.
 ```
@@ -153,9 +153,9 @@ Behind the scenes, this call translates the problem into a format that a convex 
 
 ```{r}
 solution2.1$status
-solution2.1$optimal_value
-solution2.1$primal_values[[as.character(x@id)]]
-solution2.1$primal_values[[as.character(y@id)]]
+solution2.1$value
+solution2.1$getValue(x)
+solution2.1$getValue(y)
 ```
 
 In general when you apply the `Solve()` method to a Problem, several things can happen:
@@ -178,23 +178,23 @@ prob2.2@constraints <- c(prob2.2@constraints, y <= 1)
 
 # Analyze the modified problem
 print(prob2.2)
-is_convex(prob2.2)
+##is_convex(prob2.2)
 
 # Solve the modified problem
 solution2.2 <- solve(prob2.2)
 
 # Examine the solution
 solution2.2$status
-solution2.2$optimal_value
-solution2.2$primal_values[[as.character(x@id)]]   # TODO: Make a R6 function for retrieving primal values cleanly
-solution2.2$primal_values[[as.character(y@id)]]
+solution2.2$value
+solution2.2$getValue(x)
+solution2.2$getValue(y)
 ```
 
 ## 2.3 An Invalid Problem
 
 Unfortunately, you can't just type any arbitrary problem you like into `CVXR`. There are severe restrictions on what kinds of problems can be handled. For example, if we tried to `Maximize()' the objective from example 2.1, we get an error:
 
-```{r}
+```{r, error = TRUE}
 prob2.3 <- prob2.1
 prob2.3@objective <- Maximize(x^2 + y^2)
 solve(prob2.3)
@@ -244,7 +244,7 @@ lm_solution3.1 <- lm(y ~ 0 + X)
 
 ```{r, echo=FALSE, fig.height = 5, fig.width = 7}
 lmBeta <- coef(lm_solution3.1)
-cvxrBeta <- CVXR_solution3.1$primal_values[[as.character(beta@id)]]
+cvxrBeta <- CVXR_solution3.1$getValue(beta)
 coefs <- data.frame( estimate = c(lmBeta, cvxrBeta),
                      method = c(rep("lm", 10), rep("CVXR", 10)),
                      beta = rep(paste("beta", 0:9, sep = ""), 2))
@@ -266,7 +266,7 @@ solution3.2 <- solve(prob3.2)
 ```
 
 ```{r, echo=FALSE, out.width=700}
-cvxrBetaNNLS <- solution3.2$primal_values[[as.character(beta@id)]]
+cvxrBetaNNLS <- solution3.2$getValue(beta)
 coefsNNLS <- data.frame ( estimate = c(trueBeta, lmBeta, cvxrBetaNNLS),
                           method = c(rep("Actual", 10), rep("OLS", 10), rep("NNLS", 10)),
                           beta = rep(paste("beta", 0:9, sep = ""), 3))
@@ -321,8 +321,8 @@ solution3.3 <- solve(prob3.3)
 ```
 
 ```{r, echo=FALSE, fig.width = 7}
-b0 <- solution3.3$primal_values[[as.character(beta0@id)]]
-b <- solution3.3$primal_values[[as.character(beta@id)]]
+b0 <- solution3.3$getValue(beta0)
+b <- solution3.3$getValue(beta)
 
 # Plot support vector and classified points
 plotdata <- data.frame(cbind(y, X))
@@ -342,11 +342,14 @@ Direct standardization works by assigning a weight to each observation in your s
 We begin by generating our population data consisting of a feature matrix $X$ and vector $y$ correlated with the columns of $X$. Then, we draw an extremely biased sample $(\tilde y, \tilde X)$ from it. From the plot below, we observe that smaller values in $y$ are overrepresented in the sample.
 
 ```{r, echo=FALSE, warning=FALSE, fig.width = 7}
-data(dspop)    # Population
-data(dssamp)   # Biased sample
-
+#data(dspop)    # Population
+#data(dssamp)   # Biased sample
+load("../../../data/dspop.rda")
+load("../../../data/dssamp.rda")
+     
 plotdata <- rbind(dspop, dssamp)
-plotdata$sample <- as.factor(c(rep("population", nrow(population)), rep("sample", nrow(sample))))
+#plotdata$sample <- as.factor(c(rep("population", nrow(population)), rep("sample", nrow(sample))))
+plotdata$sample <- as.factor(c(rep("population", nrow(dspop)), rep("sample", nrow(dssamp))))
 
 ggplot(data = plotdata, aes(x = y, color = sample)) +
   geom_density(size = 1.5) + 
@@ -385,7 +388,7 @@ solution3.4 <- solve(prob3.4)
 As you can see in the figure below, the resulting standardized sample is quite close to the population distribution.
 
 ```{r, echo=FALSE, warning=FALSE, fig.width = 7}
-weights <- solution3.4$primal_values[[as.character(w@id)]]
+weights <- solution3.4$getValue(w)
 plotdata2 <- rbind(dspop, dssamp, dssamp)
 plotdata2$sample <- as.factor(c(rep("population", nrow(dspop)),
                                 rep("sample", nrow(dssamp)),
@@ -417,8 +420,10 @@ which measures the degree of fluctuation in a matrix. This function is employed 
 For our example, we are given a corrupted image of Lena in which certain pixels have been overwritten.
 
 ```{r, echo=FALSE, fig.width = 7}
-data(lena)         # True
-data(lena_corr)    # Corrupted
+requireNamespace(png)
+lena64 <- (lena64)         # True
+data(lena64_corr)    # Corrupted
+
 rows <- nrow(lena)
 cols <- ncol(lena)
 
@@ -448,7 +453,7 @@ solution3.5 <- solve(prob3.5)
 As you can see, the reconstructed image is visually very similar to the original:
 
 ```{r, echo=FALSE, fig.width = 7}
-lena_recon <- solution3.5$primal_values[[as.character(U@id)]]
+lena_recon <- solution3.5$getValue(U)
 image(lena, main = "Original Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
 image(lena_recon, main = "Reconstructed Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
 ```

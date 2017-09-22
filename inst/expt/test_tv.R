@@ -4,12 +4,14 @@ if(!("EBImage" %in% installed.packages())) {
   biocLite("EBImage")
 }
 library(EBImage)
+library(imager)
+
 
 # Load images
-orig_img <- readImage("data/lena512.png")
-corr_img <- readImage("data/lena512_corrupted.png")
-orig_img <- flip(resize(orig_img, 128))
-corr_img <- flip(resize(corr_img, 128))
+orig_img <- load.image("../data/lena512.png")
+corr_img <- load.image("..data/lena512_corrupted.png")
+orig_img <- flip(resize(orig_img, 64))
+corr_img <- flip(resize(corr_img, 64))
 colorMode(orig_img) <- "Grayscale"
 colorMode(corr_img) <- "Grayscale"
 image(orig_img, 1)

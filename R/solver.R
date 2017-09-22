@@ -248,19 +248,23 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
 setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
-  
+
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
   if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
   if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
   data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
-  data[[BOOL_IDX]] <- sapply(data[[BOOL_IDX]], function(i) { as.integer(i) })
-  data[[INT_IDX]] <- sapply(data[[INT_IDX]], function(i) { as.integer(i) })
+
+  ##  data[[BOOL_IDX]] <- sapply(data[[BOOL_IDX]], function(i) { as.integer(i) })
+  ##  data[[INT_IDX]] <- sapply(data[[INT_IDX]], function(i) { as.integer(i) })
+  storage.mode(data[[BOOL_IDX]]) <- "integer"
+  storage.mode(data[[INT_IDX]]) <- "integer"
+
   solver_opts <- ECOSolveR::ecos.control()
   solver_opts$VERBOSE <- as.integer(verbose)
   other_opts <- list(...)
   solver_opts[names(other_opts)] <- other_opts
-  
-  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = data[[DIMS]], A = data[[A_KEY]], b = data[[B_KEY]], 
+
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = data[[DIMS]], A = data[[A_KEY]], b = data[[B_KEY]],
                                          bool_vars = data[[BOOL_IDX]], int_vars = data[[INT_IDX]], control = solver_opts)
   format_results(solver, results_dict, data, cached_data)
 })

@@ -13,14 +13,16 @@ A <- matrix(c(1, 1,
               -1, 2,
               -2, -3), byrow = TRUE, ncol = 2)
 
-b <- matrix(c(1,2,3), nrow=3)
+n <- 100
+p <- 10
 
-## Construct the problem
-x <- Variable(n)
-##objective <- Minimize(sum((A %*% x - b)^2))
-objective <- Minimize(SumSquares(A %*% x - b))
-constraints <- list(x >= 1, x <= 2)
-p <- Problem(objective, constraints)
+X <- matrix(rnorm(p * n), nrow=n)
+beta <- 1:p + rnorm(p)
+y <- X %*% beta + rnorm(n)
+
+beta_computed <- Variable(p)
+objective <- Minimize(SumSquares(X %*% beta_computed - y))
+p <- Problem(objective)
 
 ## The optimal objective is returned by solve(p)
 result <- solve(p, verbose = TRUE)
@@ -28,3 +30,6 @@ result <- solve(p, verbose = TRUE)
 ## print(result$x)
 ## The optimal Lagrange multiplier for a constraint is stored in constraint$dual_value
 ## print(constraints[1].dual_value)
+
+m <- lm(y ~ 0 + X)
+p <- Problem(objective, list(beta_computed > 5))

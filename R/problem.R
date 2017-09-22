@@ -465,7 +465,14 @@ valuesById <- function(object, results_dict, sym_data, solver) {
         else
             valResult
     }
+    getDualValue <- function(objet) {
+        if (!is(objet, "Constraint")) {
+            stop("getDualValue: argument should be a Constraint!")
+        }
+        getValue(objet)
+    }
     result$getValue <- getValue
+    result$getDualValue <- getDualValue
     result
 }
 

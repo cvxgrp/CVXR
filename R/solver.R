@@ -105,29 +105,33 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
 setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
 Solver.is_mip <- function(data) {
-  length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+  length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 }
 
 Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   if(BOOL_IDS %in% names(dims)) {
     bool_idx <- lapply(dims[[BOOL_IDS]], function(var_id) {
-      offset <- var_offsets[var_id]
-      size <- var_sizes[var_id]
+      var_id <- as.character(var_id)
+      offset <- var_offsets[[var_id]]
+      size <- var_sizes[[var_id]]
       offset + seq(1, size[1]*size[2], by = 1)
     })
+    bool_idx <- unlist(bool_idx)   # Should I call unique on this? Seeing dupes in dims[[BOOL_IDS]]
     dims[[BOOL_IDS]] <- NULL
   } else
-    bool_idx <- list()
+    bool_idx <- integer(0)
 
   if(INT_IDS %in% names(dims)) {
     int_idx <- lapply(dims[[INT_IDS]], function(var_id) {
-      offset <- var_offsets[var_id]
-      size <- var_sizes[var_id]
+      var_id <- as.character(var_id)
+      offset <- var_offsets[[var_id]]
+      size <- var_sizes[[var_id]]
       offset + seq(1, size[1]*size[2], by = 1)
     })
+    int_idx <- unlist(int_idx)   # Should I call unique on this? Seeing dupes in dims[[INT_IDS]]
     dims[[INT_IDS]] <- NULL
   } else
-    int_idx <- list()
+    int_idx <- integer(0)
 
   list(dims = dims, bool_idx = bool_idx, int_idx = int_idx)
 }
@@ -218,6 +222,47 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
     new_results[[INEQ_DUAL]] <- results_dict$z
   }
   new_results
+})
+
+setClass("ECOS_BB", contains = "ECOS")
+ECOS_BB <- function() {
+  new("ECOS_BB")
+  ##ECOS_BB$new()
+}
+
+# ECOS_BB capabilities
+setMethod("lp_capable", "ECOS_BB", function(solver) { TRUE })
+setMethod("socp_capable", "ECOS_BB", function(solver) { TRUE })
+setMethod("sdp_capable", "ECOS_BB", function(solver) { FALSE })
+setMethod("exp_capable", "ECOS_BB", function(solver) { FALSE })
+setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
+
+# EXITCODES from ECOS_BB
+# MI_OPTIMAL_SOLN (ECOS_OPTIMAL)                               ECOS_BB found optimal solution
+# MI_INFEASIBLE (ECOS_PINF)                                    ECOS_BB proved problem is infeasible
+# MI_UNBOUNDED (ECOS_DINF)                                     ECOS_BB proved problem is unbounded
+# MI_MAXITER_FEASIBLE_SOLN (ECOS_OPTIMAL + ECOS_INACC_OFFSET)  ECOS_BB hit maximum iterations, but a feasible solution was found and the best seen feasible solution was returned
+# MI_MAXITER_NO_SOLN (ECOS_PINF + ECOS_INACC_OFFSET)           ECOS_BB hit maximum iterations without finding a feasible solution
+# MI_MAXITER_UNBOUNDED (ECOS_DINF + ECOS_INACC_OFFSET)         ECOS_BB hit maximum interations without finding a feasible solution that was unbounded
+
+setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
+setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
+  
+  # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
+  if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
+  if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
+  data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
+  data[[BOOL_IDX]] <- sapply(data[[BOOL_IDX]], function(i) { as.integer(i) })
+  data[[INT_IDX]] <- sapply(data[[INT_IDX]], function(i) { as.integer(i) })
+  solver_opts <- ECOSolveR::ecos.control()
+  solver_opts$VERBOSE <- as.integer(verbose)
+  other_opts <- list(...)
+  solver_opts[names(other_opts)] <- other_opts
+  
+  results_dict <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = data[[DIMS]], A = data[[A_KEY]], b = data[[B_KEY]], 
+                                         bool_vars = data[[BOOL_IDX]], int_vars = data[[INT_IDX]], control = solver_opts)
+  format_results(solver, results_dict, data, cached_data)
 })
 
 setClass("SCS", contains = "ECOS")
@@ -349,13 +394,6 @@ SCS.tri_to_full <- function(lower_tri, n) {
   return(matrix(full, nrow = n^2))
 }
 
-setClass("ECOS_BB", contains = "ECOS")
-ECOS_BB <- function() {
-  stop("Unimplemented solver")
-  new("ECOS_BB")
-  ##ECOS_BB$new()
-}
-
 setClass("CVXOPT", contains = "Solver")
 CVXOPT <- function() {
   stop("Unimplemented solver")
@@ -367,7 +405,7 @@ CVXOPT <- function() {
 #' Solver utilities
 #'
 # solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
-solver_intf <- list(ECOS(), SCS())
+solver_intf <- list(ECOS(), ECOS_BB(), SCS())
 SOLVERS <- solver_intf
 names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
 

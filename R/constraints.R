@@ -37,7 +37,8 @@ setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var
 setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
     eq_constr <- list()
-    if(object@.noncvx_var != object@lin_op)
+    # If a noncvx var was created, add an equality constraint
+    if(!identical(object@.noncvx_var, object@lin_op))
       eq_constr <- c(eq_constr, create_eq(object@lin_op, object@.noncvx_var))
     list(eq_constr, list())
   }

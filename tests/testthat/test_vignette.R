@@ -78,6 +78,17 @@ test_that("Test catenary problem", {
   points(c(0, 1), c(1, 1))
   curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
   grid()
+  
+  # Modify constraints
+  constraints[[4]] <- (y[m] == 0.4)
+  prob <- Problem(objective, constraints)
+  result <- solve(prob)
+  
+  # Plot and compare with ideal catenary
+  xs <- result$getValue(x)
+  ys <- result$getValue(y)
+  points(c(0, 1), c(1, 0.4))
+  lines(xs, ys, col = "blue", lwd = 2)
 })
 
 test_that("Test direct standardization problem", {
@@ -152,7 +163,8 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   risk_data <- rep(0, SAMPLES)
   
   # Compute trade-off curve
-  for(gamma in gammas) {
+  for(i in 1:length(gammas)) {
+    gamma <- gammas[i]
     objective <- ret - gamma * risk
     prob <- Problem(Maximize(objective), constraints)
     result <- solve(prob)
@@ -163,8 +175,8 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   }
    
   # Plot trade-off curve
-  plot(risk, return, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return")
-  points(diag(Sigma), mu, col = "red")
+  plot(risk_data, ret_data, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return", type = "o")
+  # points(diag(Sigma), mu, col = "red")
 })
 
 test_that("Test worst-case covariance", {
@@ -189,15 +201,45 @@ test_that("Test worst-case covariance", {
   print(result$getValue(Sigma))
 })
 
+test_that("Test sparse inverse covariance estimation", {
+  require(Matrix)
+  require(expm)
+  
+  set.seed(1)
+  n <- 10
+  N <- 1000
+  alpha <- 5
+  
+  # Create sparse symmetric PSD matrix S
+  A <- rsparsematrix(n, n, 0.85, rand.x = rnorm)
+  Strue <- A %*% t(A) + 0.05 * diag(rep(1, n))    # Force matrix to be strictly positive definite
+  R <- base::solve(Strue)
+  y_sample <- matrix(rnorm(n*N), nrow = N, ncol = n) %*% t(expm::sqrtm(R))
+  Y <- cov(y_sample)
+  
+  S <- Semidef(n)    # Variable constrained to positive semidefinite cone
+  obj <- Maximize(LogDet(S) - Trace(S %*% Y))
+  constraints <- list(sum(abs(S)) <= alpha)
+  
+  # Form and solve optimization problem
+  prob <- Problem(obj, constraints)
+  result <- solve(prob)
+  
+  # Create covariance matrix
+  R_hat <- base::solve(result$getValue(S))
+  S <- result$getValue(S)
+  S[abs(S) <= 1e-4] <- 0
+  image(S > 0)
+})
+
 test_that("Test fastest mixing Markov chain (FMMC)", {
   # Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
-  
   # Form the complementary graph
   antiadjacency <- function(g) {
     n <- max(as.numeric(names(g)))   # Assumes names are integers starting from 1
     a <- lapply(1:n, function(i) c())
     names(a) <- 1:n
-    for(x in g) {
+    for(x in names(g)) {
       for(y in 1:n) {
         if(!(y %in% g[[x]]))
           a[[x]] <- c(a[[x]], y)
@@ -214,10 +256,11 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
     o <- rep(1, n)
     objective <- Minimize(Norm(P - 1.0/n))
     constraints <- list(P %*% o == o, t(P) == P, P >= 0)
-    for(i in a) {
+    for(i in names(a)) {
       for(j in a[[i]]) {  # (i-j) is a not-edge of g!
-        if(i != j)
-          constraints <- c(constraints, P[i,j] == 0)
+        idx <- as.numeric(i)
+        if(idx != j)
+          constraints <- c(constraints, P[idx,j] == 0)
       }
     }
     prob <- Problem(objective, constraints)
@@ -244,7 +287,7 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
   print(result$P)
   
   # d) square + central point
-  g <- list("1" = c(2,3,5), "1" = c(1,4,5), "2" = c(1,4,5), "3" = c(2,3,5), "4" = c(1,2,3,4,5))
+  g <- list("1" = c(2,3,5), "2" = c(1,4,5), "3" = c(1,4,5), "4" = c(2,3,5), "5" = c(1,2,3,4,5))
   result <- FMMC(g, verbose = TRUE)
   print(result$P)
 })

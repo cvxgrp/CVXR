@@ -684,7 +684,7 @@ test_that("Test problems with slicing", {
   expect_equal(result$getValue(C[1:2,1]), matrix(c(1,2)), tolerance = TOL)
   expect_equal(result$getValue(A), cbind(c(1,-0.5), c(1,1)), tolerance = TOL)
   
-  p <- Problem(Minimize(norm2(C[1:2,] + A)[,1]), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
+  p <- Problem(Minimize(norm2((C[1:2,] + A)[,1])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
   result <- solve(p)
   expect_equal(result$value, 3, tolerance = TOL)
   expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = TOL)

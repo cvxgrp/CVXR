@@ -420,19 +420,35 @@ which measures the degree of fluctuation in a matrix. This function is employed 
 For our example, we are given a corrupted image of Lena in which certain pixels have been overwritten.
 
 ```{r, echo=FALSE, fig.width = 7}
-requireNamespace(png)
-lena64 <- (lena64)         # True
-data(lena64_corr)    # Corrupted
+if (!requireNamespace("imager")) stop("Need imager R package")
 
-rows <- nrow(lena)
-cols <- ncol(lena)
+orig_img <- imager::load.image(system.file("extdata", "lena512.png", package = "cvxr"))
+corr_img <- imager::load.image(system.file("extdata", "lena512_corrupted.png", package = "cvxr"))
+orig_img <- imager::grayscale(orig_img)
+corr_img <- imager::grayscale(corr_img)
 
-# Display image
-image(lena_corr, main = "Corrupted Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
+orig_img <- imager::resize(orig_img, 64, 64)
+corr_img <- imager::resize(corr_img, 64, 64)
+opar <- par(mfrow = c(1, 2))
+plot(orig_img, axes=FALSE)
+plot(corr_img, axes=FALSE)
+par(opar)
+```
 
-# Indicator of known pixels
+For processing, convert to two-d arrays
+
+```{r}
+# Convert to 2-D arrays
+Uorig <- orig_img[, , 1, 1]
+Ucorr <- corr_img[, , 1, 1]
+rows <- nrow(Uorig)
+cols <- ncol(Uorig)
+```
+
+```{r}
+# Known = 1 if pixel known, 0 if pixel corrupted
 Known <- matrix(0, nrow = rows, ncol = cols)
-Known[lena == lena_corr] <- 1
+Known[Uorig == Ucorr] <- 1
 ```
 
 The indices of these pixels are represented as an indicator matrix $K$, where $K_{ij} = 0$ if the pixel is lost and 1 otherwise. The problem formulation in `CVXR` looks like
@@ -440,22 +456,29 @@ The indices of these pixels are represented as an indicator matrix $K$, where $K
 ```{r}
 # Problem definition
 U <- Variable(rows, cols)
-objective <- Minimize(TotalVariation(U))
-
+obj <- Minimize(TotalVariation(U))
 # Restrict known pixels with equality
-constraints <- list(Known * U == Known * lena_corr)
-prob3.5 <- Problem(objective, constraints)
-
-# Reconstruct image
-solution3.5 <- solve(prob3.5)
+constraints <- list(MulElemwise(Known, U) == MulElemwise(Known, Ucorr))
+prob3.5 <- Problem(obj, constraints)
 ```
 
-As you can see, the reconstructed image is visually very similar to the original:
+We reconstruct the image by solving the problem and plotting it.
+
+```{r}
+# Reconstruct image
+solution3.5 <- solve(prob3.5)
+Urec <- solution3.5$getValue(U)
+```
+
+As you can see, the reconstructed image on the right is visually very
+similar to the original on the left:
 
 ```{r, echo=FALSE, fig.width = 7}
-lena_recon <- solution3.5$getValue(U)
-image(lena, main = "Original Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
-image(lena_recon, main = "Reconstructed Image", axes = FALSE, col = grey(seq(0, 1, length = 256)))
+rec_img <- imager::as.cimg(Urec)
+opar <- par(mfrow = c(1, 2))
+plot(orig_img, axes=FALSE)
+plot(rec_img, axes=FALSE)
+par(opar)
 ```
 
 # 4 Disciplined Convex Programming (DCP)
@@ -594,7 +617,7 @@ SHORT LIST OF COMMON EXAMPLES? sum, max, min,
 
 DCP analysis breaks expressions down into subexpressions. The tree visualization below shows how this works for the expression `2*square(x) + 3`. Each subexpression is shown in a blue box. We mark its curvature on the left and its sign on the right.
 
-![](images\DCPex1.png)
+![](images/DCPex1.png)
 
 The variable `x` has affine curvature and unknown sign. The `square` function is convex and non-monotone for arguments of unknown sign. It can take the affine expression `x` as an argument; the result `square(x)` is convex.
 
@@ -604,7 +627,7 @@ The variable `x` has affine curvature and unknown sign. The `square` function is
 
 We'll walk through the application of the DCP rules to the expression `sqrt(1 + x^2)`.
 
-![](images\DCPex2.png)
+![](images/DCPex2.png)
 
 As in Example 1, `x^2` is convex and positive.
 

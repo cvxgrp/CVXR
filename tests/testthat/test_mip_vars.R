@@ -45,7 +45,7 @@ test_that("Test Boolean problems", {
   expect_equal(result$getValue(x_bool), 0, tolerance = 1e-4)
   
   # Matrix Bool in objective
-  C <- rbind(c(0,1,0), c(1,1,1))
+  C <- cbind(c(0,1,0), c(1,1,1))
   obj <- Minimize(SumSquares(A_bool - C))
   p <- Problem(obj, list())
   result <- solve(p)

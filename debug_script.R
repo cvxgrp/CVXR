@@ -10,11 +10,12 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # test_file("test_expressions.R")       # Add more code for testing negative indices in the future
 # test_file("test_lin_ops.R")
 # test_file("test_matrices.R")
+# test_file("test_mip_vars.R")
 # test_file("test_monotonicity.R")
 # test_file("test_non_optimal.R")
 # test_file("test_nonlinear_atoms.R")   # Parameters are unimplemented
 # test_file("test_objectives.R")
-# test_file("test_problem.R")           # Parameters and dual variable retrieval unimplemented
+# test_file("test_problem.R")           # Parameters and dual variable retrieval are unimplemented
 # test_file("test_quad_form.R")
 # test_file("test_quadratic.R")
 # test_file("test_semidefinite_vars.R")
@@ -30,7 +31,6 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # Failing
 # test_file("test_constant_atoms.R")    # Failing on GeoMean (see below)
 # test_file("test_ls.R")                # No LS solver
-# test_file("test_mip_vars.R")          # No ECOS BB solver
 # test_file("test_vignette.R")          # Need to finish adding examples from paper
 
 # TEST: test_problem.R

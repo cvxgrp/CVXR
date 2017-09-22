@@ -145,6 +145,7 @@ test_that("Test direct standardization problem", {
 
 test_that("Test risk-return trade-off in portfolio optimization", {
   # Problem data
+  set.seed(10)
   n <- 10
   mu <- matrix(abs(rnorm(n)), nrow = n)
   Sigma <- matrix(rnorm(n^2), nrow = n, ncol = n)
@@ -170,13 +171,19 @@ test_that("Test risk-return trade-off in portfolio optimization", {
     result <- solve(prob)
     
     # Evaluate risk/return for current solution
+    risk_data[i] <- result$getValue(sqrt(risk))
     ret_data[i] <- result$getValue(ret)
-    risk_data[i] <- result$getValue(risk)
   }
    
   # Plot trade-off curve
-  plot(risk_data, ret_data, main = "Risk-Return Curve", xlab = "Variance", ylab = "Return", type = "o")
-  # points(diag(Sigma), mu, col = "red")
+  plot(risk_data, ret_data, xlab = "Risk (Standard Deviation)", ylab = "Return", xlim = c(0, 4), ylim = c(0, 2), type = "l", lwd = 2, col = "blue")
+  points(sqrt(diag(Sigma)), mu, col = "red", cex = 1.5, pch = 16)
+  markers_on <- c(30, 41)
+  for(marker in markers_on) {
+    points(risk_data[marker], ret_data[marker], col = "black", cex = 1.5, pch = 15)
+    nstr <- sprintf("%.2f", gammas[marker])
+    text(risk_data[marker] + 0.18, ret_data[marker] - 0.03, bquote(paste(gamma, " = ", .(nstr))))
+  }
 })
 
 test_that("Test worst-case covariance", {

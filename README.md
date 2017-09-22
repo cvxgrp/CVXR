@@ -26,24 +26,22 @@ A simple (but otherwise useless) example for testing:
 
 ```
 library(cvxr)
+
 ## Problem data.
 m <- 1; n <- 2
 A <- matrix(c(17, 19), nrow = m, byrow = TRUE)
+
 ## Construct the problem.
 x <- Variable(n)
 objective <- Minimize(A %*% x)
 constraint <- list(1 <= x)
 prob <- Problem(objective, constraint)
 result <- solve(prob)
+
 cat("Solver Status: ", result$status, "\n")
+cat("Optimal Objective: ", result$value, "\n")
 cat("Primal Solution:\n")
-print(result$primal_values)
+print(result$getValue(x))
 cat("Dual Solution:\n")
 print(result$dual_values)
 ```
-
-
-
-
-
-

@@ -1,5 +1,6 @@
 library(cvxr)
 
+
 n <- 2
 A <- diag(c(1, 1))
 x <- Variable(n)
@@ -8,10 +9,10 @@ constraint <- list(x >=0, x <= 1)
 prob <- Problem(objective, constraint)
 
 #debug(get_problem_matrix)
-solve(prob, solver = "SCS", verbose = TRUE)
+result <- solve(prob, solver = "SCS", verbose = TRUE)
 
 x <- Variable(1)
 obj <- Maximize(Log(x))
-solve(Problem(obj))
+result <- solve(Problem(obj))
 
 

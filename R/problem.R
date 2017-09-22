@@ -525,11 +525,8 @@ saveValuesById <- function(variables, offset_map, result_vec) {
         size <- size(var)
         rows <- size[1L]
         cols <- size[2L]
-        offset <- offset_map[[id]]
-        if (is.na(offset)) {
-            ## The variable was multiplied by zero
-            value <- matrix(0, nrow = rows, ncol = cols)
-        } else {
+        if (id %in% offset_names) {
+            offset <- offset_map[[id]]
             ## Handle scalars
             if (all(c(rows, cols) == c(1L , 1L))) {
                 value <- result_vec[offset + 1L]
@@ -537,6 +534,9 @@ saveValuesById <- function(variables, offset_map, result_vec) {
                 value <- matrix(result_vec[(offset + 1L):(offset + rows * cols)],
                                 nrow = rows, ncol = cols)
             }
+        } else {
+            ## The variable was multiplied by zero
+            value <- matrix(0, nrow = rows, ncol = cols)
         }
         value
     })

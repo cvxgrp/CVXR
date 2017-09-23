@@ -50,7 +50,7 @@ SCS_NAME = "SCS"
 GUROBI_NAME = "GUROBI"
 MOSEK_NAME = "MOSEK"
 LS_NAME = "LS"
-SOLVERS_NAME <- c(ECOS_NAME, SCS_NAME)   # TODO: Add more when we implement other solvers
+SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME)   # TODO: Add more when we implement other solvers
 
 # Parallel (meta) solver
 PARALLEL = "parallel"

@@ -405,6 +405,34 @@ CVXOPT <- function() {
   ##CVXOPT$new()
 }
 
+setClass("LS", contains = "Solver")
+LS <- function() {
+  stop("Unimplemented solver")
+  new("LS")
+}
+
+# LS is incapable of solving any general cone program and must be invoked through a special path
+setMethod("lp_capable", "LS", function(solver) { FALSE })
+setMethod("socp_capable", "LS", function(solver) { FALSE })
+setMethod("sdp_capable", "LS", function(solver) { FALSE })
+setMethod("exp_capable", "LS", function(solver) { FALSE })
+setMethod("mip_capable", "LS", function(solver) { FALSE })
+
+setMethod("name", "LS", function(object) { LS_NAME })
+setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
+setMethod("split_constr", "LS", function(solver, constr_map) {
+  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+})
+
+setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
+  new_results <- results_dict
+  if(is.na(results_dict[[PRIMAL]]))
+    new_results[[STATUS]] <- INFEASIBLE
+  else
+    new_results[[STATUS]] <- OPTIMAL
+  new_results
+})
+
 #'
 #' Solver utilities
 #'

@@ -162,6 +162,7 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   gammas <- 10^seq(-2, 3, length.out = SAMPLES)
   ret_data <- rep(0, SAMPLES)
   risk_data <- rep(0, SAMPLES)
+  w_data <- matrix(0, nrow = SAMPLES, ncol = n)
   
   # Compute trade-off curve
   for(i in 1:length(gammas)) {
@@ -173,20 +174,55 @@ test_that("Test risk-return trade-off in portfolio optimization", {
     # Evaluate risk/return for current solution
     risk_data[i] <- result$getValue(sqrt(risk))
     ret_data[i] <- result$getValue(ret)
+    w_data[i,] <- result$getValue(w)
   }
    
   # Plot trade-off curve
   plot(risk_data, ret_data, xlab = "Risk (Standard Deviation)", ylab = "Return", xlim = c(0, 4), ylim = c(0, 2), type = "l", lwd = 2, col = "blue")
   points(sqrt(diag(Sigma)), mu, col = "red", cex = 1.5, pch = 16)
-  markers_on <- c(30, 41)
+  markers_on <- c(10, 20, 30, 40)
   for(marker in markers_on) {
     points(risk_data[marker], ret_data[marker], col = "black", cex = 1.5, pch = 15)
     nstr <- sprintf("%.2f", gammas[marker])
     text(risk_data[marker] + 0.18, ret_data[marker] - 0.03, bquote(paste(gamma, " = ", .(nstr))))
   }
+  
+  # Plot weights for a few gamma
+  w_plot <- t(w_data[markers_on,])
+  colnames(w_plot) <- sprintf("%.2f", gammas[markers_on])
+  if("colorspace" %in% rownames(installed.packages())) {
+    require(colorspace)
+    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget", col = sequential_hcl(n))
+  } else
+    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
 })
 
 test_that("Test worst-case covariance", {
+  # Problem data
+  x <- matrix(c(0.1, 0.2, -0.05, 0.1))
+  # Constraint matrix:
+  # [[0.2, + ,  +,   +-],
+  #  [+,   0.1, -,   - ],
+  #  [+,   -,   0.3, + ],
+  #  [+-,  -,   +,  0.1]]
+
+  # Form problem
+  Sigma <- Semidef(4)
+  obj <- Maximize(t(x) %*% Sigma %*% x)
+  constraints <- list(Sigma[1,1] == 0.2, Sigma[2,2] == 0.1, Sigma[3,3] == 0.3, Sigma[4,4] == 0.1,
+                      Sigma[1,2] >= 0, Sigma[1,3] >= 0, Sigma[2,3] <= 0, Sigma[2,4] <= 0, Sigma[3,4] >= 0)
+  prob <- Problem(obj, constraints)
+  result <- solve(prob, solver = "SCS")
+  
+  Sigma_true <- rbind(c(0.2,    0.0978, 0,     0.0741),
+                      c(0.0978, 0.1,   -0.101, 0),
+                      c(0,     -0.101,  0.3,   0),
+                      c(0.0741, 0,      0,     0.1))
+  dimnames(Sigma_true) <- list(NULL, NULL)
+  expect_equal(sqrt(result$value), 0.1232, tolerance = 1e-3)
+  expect_equal(as.matrix(result$getValue(Sigma)), Sigma_true, tolerance = 1e-3)
+  
+  # Problem data
   n <- 5
   w <- rexp(n)
   w <- w / sum(w)
@@ -277,24 +313,37 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
     list(status = result$status, value = result$value, P = result$getValue(P))
   }
   
+  disp_result <- function(states, P) {
+    if(!("markovchain" %in% rownames(installed.packages()))) {
+      rownames(P) <- states
+      colnames(P) <- states
+      print(P)
+    } else {
+      require(markovchain)
+      P <- P/apply(P, 1, sum)   # Normalize so rows sum to exactly 1
+      mc <- new("markovchain", states = states, transitionMatrix = P)
+      plot(mc)
+    }
+  }
+  
   # SIAM Rev. 46 examples pg. 674: Figure 1 and Table 1
   # a) line graph L(4)
   g <- list("1" = 2, "2" = c(1,3), "3" = c(2,4), "4" = 3)
   result <- FMMC(g, verbose = TRUE)
-  print(result$P)
+  disp_result(names(g), result$P)
   
   # b) triangle + one edge
   g <- list("1" = 2, "2" = c(1,3,4), "3" = c(2,4), "4" = c(2,3))
   result <- FMMC(g, verbose = TRUE)
-  print(result$P)
+  disp_result(names(g), result$P)
   
   # c) bipartite 2 + 3
   g <- list("1" = c(2,4,5), "2" = c(1,3), "3" = c(2,4,5), "4" = c(1,3), "5" = c(1,3))
   result <- FMMC(g, verbose = TRUE)
-  print(result$P)
+  disp_result(names(g), result$P)
   
   # d) square + central point
   g <- list("1" = c(2,3,5), "2" = c(1,4,5), "3" = c(1,4,5), "4" = c(2,3,5), "5" = c(1,2,3,4,5))
   result <- FMMC(g, verbose = TRUE)
-  print(result$P)
+  disp_result(names(g), result$P)
 })

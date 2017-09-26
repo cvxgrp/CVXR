@@ -199,7 +199,7 @@ test_that("Test risk-return trade-off in portfolio optimization", {
 
 test_that("Test worst-case covariance", {
   # Problem data
-  x <- matrix(c(0.1, 0.2, -0.05, 0.1))
+  w <- matrix(c(0.1, 0.2, -0.05, 0.1))
   # Constraint matrix:
   # [[0.2, + ,  +,   +-],
   #  [+,   0.1, -,   - ],
@@ -208,7 +208,7 @@ test_that("Test worst-case covariance", {
 
   # Form problem
   Sigma <- Semidef(4)
-  obj <- Maximize(t(x) %*% Sigma %*% x)
+  obj <- Maximize(t(w) %*% Sigma %*% w)
   constraints <- list(Sigma[1,1] == 0.2, Sigma[2,2] == 0.1, Sigma[3,3] == 0.3, Sigma[4,4] == 0.1,
                       Sigma[1,2] >= 0, Sigma[1,3] >= 0, Sigma[2,3] <= 0, Sigma[2,4] <= 0, Sigma[3,4] >= 0)
   prob <- Problem(obj, constraints)
@@ -238,7 +238,7 @@ test_that("Test worst-case covariance", {
   
   Sigma <- Semidef(n)
   obj <- QuadForm(w, Sigma)
-  constr <- list(L <= Sigma, Sigma <= U, Sigma == Symmetric(n))
+  constr <- list(L <= Sigma, Sigma <= U, Sigma == t(Sigma))
   prob <- Problem(Maximize(obj), constr)
   result <- solve(prob)
   print(result$getValue(Sigma))
@@ -249,30 +249,39 @@ test_that("Test sparse inverse covariance estimation", {
   require(expm)
   
   set.seed(1)
-  n <- 10
-  N <- 1000
-  alpha <- 5
+  n <- 10      # Dimension of matrix
+  m <- 1000    # Number of samples
+  alphas <- c(10, 4, 1)
   
-  # Create sparse symmetric PSD matrix S
-  A <- rsparsematrix(n, n, 0.85, rand.x = rnorm)
+  # Create sparse, symmetric PSD matrix S
+  A <- rsparsematrix(n, n, 0.15, rand.x = rnorm)
   Strue <- A %*% t(A) + 0.05 * diag(rep(1, n))    # Force matrix to be strictly positive definite
+  image(Strue != 0, main = "Inverse of true covariance matrix")
+  
+  # Create covariance matrix associated with S
   R <- base::solve(Strue)
-  y_sample <- matrix(rnorm(n*N), nrow = N, ncol = n) %*% t(expm::sqrtm(R))
-  Y <- cov(y_sample)
+  
+  # Sample from distribution with covariance R
+  # If Y ~ N(0, I), then R^{1/2} * Y ~ N(0, R) since R is symmetric
+  x_sample <- matrix(rnorm(n*m), nrow = m, ncol = n) %*% t(expm::sqrtm(R))
+  Q <- cov(x_sample)    # Sample covariance matrix
   
   S <- Semidef(n)    # Variable constrained to positive semidefinite cone
-  obj <- Maximize(LogDet(S) - Trace(S %*% Y))
-  constraints <- list(sum(abs(S)) <= alpha)
+  obj <- Maximize(LogDet(S) - Trace(S %*% Q))
+  for(alpha in alphas) {
+    constraints <- list(sum(abs(S)) <= alpha)
   
-  # Form and solve optimization problem
-  prob <- Problem(obj, constraints)
-  result <- solve(prob)
+    # Form and solve optimization problem
+    prob <- Problem(obj, constraints)
+    result <- solve(prob)
   
-  # Create covariance matrix
-  R_hat <- base::solve(result$getValue(S))
-  S <- result$getValue(S)
-  S[abs(S) <= 1e-4] <- 0
-  image(S > 0)
+    # Create covariance matrix
+    R_hat <- base::solve(result$getValue(S))
+    Sres <- result$getValue(S)
+    Sres[abs(Sres) <= 1e-4] <- 0
+    title <- bquote(bold(paste("Estimated inv. cov matrix (", alpha, " = ", .(alpha), ")")))
+    image(Sres != 0, main = title)
+  }
 })
 
 test_that("Test fastest mixing Markov chain (FMMC)", {

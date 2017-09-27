@@ -227,43 +227,49 @@ test_that("Test Abs", {
 })
 
 test_that("Test linearize method", {
-  # # Affine
-  # value(x) <- c(1,2)
-  # expr <- (2*x - 5)[1]
-  # lin_expr <- linearize(expr)
-  # value(x) <- c(55,22)
-  # expr <- (2*x - 5)[1]
-  # expect_equal(value(lin_expr), value(expr))
-  # value(x) <- c(-1,-5)
-  # expr <- (2*x - 5)[1]
-  # expect_equal(value(lin_expr), value(expr))
-  # 
-  # # Convex
-  # expr <- A^2 + 5
-  # expect_error(linearize(expr))
-  # 
-  # value(A) <- cbind(c(1,2), c(3,4))
-  # expr <- A^2 + 5
-  # lin_expr <- linearize(expr)
-  # manual <- value(expr) + 2*Reshape(value(Diag(Vec(A))) * Vec(A - value(A)), 2, 2)
-  # expect_equal(value(lin_expr), value(expr))
-  # 
-  # value(A) <- rbind(c(-5,-5), c(8.2,4.4))
-  # expr <- A^2 + 5
-  # expect_true(all(value(lin_expr) <= value(expr)))
-  # expect_equal(value(lin_expr), value(manual))
-  # 
-  # # Concave
-  # value(x) <- c(1,2)
-  # expr <- Log(x)/2
-  # lin_expr <- linearize(expr)
-  # manual <- value(expr) + value(Diag(0.5*x^-1))*(x - value(x))
-  # expect_equal(value(lin_expr), value(expr))
-  # 
-  # value(x) <- c(3,4.4)
-  # expr <- Log(x)/2
-  # expect_true(all(value(lin_expr) >= value(expr)))
-  # expect_equal(value(lin_expr), value(manual))
+  # Affine
+  value(x) <- c(1,2)
+  expr <- (2*x - 5)[1]
+  lin_expr <- linearize(expr)
+  value(x) <- c(55,22)
+  expr <- (2*x - 5)[1]
+  lin_expr <- linearize(expr)
+  expect_equal(value(lin_expr), value(expr))
+  value(x) <- c(-1,-5)
+  expr <- (2*x - 5)[1]
+  lin_expr <- linearize(expr)
+  expect_equal(value(lin_expr), value(expr))
+
+  # Convex
+  expr <- A^2 + 5
+  expect_error(linearize(expr))
+   
+  value(A) <- cbind(c(1,2), c(3,4))
+  expr <- A^2 + 5
+  lin_expr <- linearize(expr)
+  manual <- value(expr) + 2*Reshape(value(Diag(Vec(A))) %*% Vec(A - value(A)), 2, 2)
+  expect_equivalent(as.matrix(value(lin_expr)), value(expr))
+  
+  value(A) <- rbind(c(-5,-5), c(8.2,4.4))
+  expr <- A^2 + 5
+  lin_expr <- linearize(expr)
+  manual <- value(expr) + 2*Reshape(value(Diag(Vec(A))) %*% Vec(A - value(A)), 2, 2)
+  expect_true(all(value(lin_expr) <= value(expr)))
+  expect_equivalent(as.matrix(value(lin_expr)), value(manual))
+   
+  # Concave
+  value(x) <- c(1,2)
+  expr <- Log(x)/2
+  lin_expr <- linearize(expr)
+  manual <- value(expr) + value(Diag(0.5*x^-1)) %*% (x - value(x))
+  expect_equivalent(as.matrix(value(lin_expr)), value(expr))
+   
+  value(x) <- c(3,4.4)
+  expr <- Log(x)/2
+  lin_expr <- linearize(expr)
+  manual <- value(expr) + value(Diag(0.5*x^-1)) %*% (x - value(x))
+  expect_true(all(value(lin_expr) >= value(expr)))
+  expect_equivalent(as.matrix(value(lin_expr)), value(manual))
 })
 
 test_that("Test gradient for Log", {

@@ -253,9 +253,6 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
   if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
   if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
   data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
-
-  ##  data[[BOOL_IDX]] <- sapply(data[[BOOL_IDX]], function(i) { as.integer(i) })
-  ##  data[[INT_IDX]] <- sapply(data[[INT_IDX]], function(i) { as.integer(i) })
   storage.mode(data[[BOOL_IDX]]) <- "integer"
   storage.mode(data[[INT_IDX]]) <- "integer"
 
@@ -343,7 +340,10 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
     primal_val <- results_dict$info$pobj
     new_results[[VALUE]] <- primal_val + data[[OFFSET]]
     new_results[[PRIMAL]] <- results_dict$x
-    new_results[[EQ_DUAL]] <- results_dict$y[1:dims[[EQ_DIM]]]
+    if(dims[[EQ_DIM]] > 0)
+      new_results[[EQ_DUAL]] <- results_dict$y[1:dims[[EQ_DIM]]]
+    else
+      new_results[[EQ_DUAL]] <- numeric(0)
 
     y <- results_dict$y[(dims[[EQ_DIM]]+1):length(results_dict$y)]
     if(is.null(dims[[SDP_DIM]])) {
@@ -387,7 +387,7 @@ SCS.tri_to_full <- function(lower_tri, n) {
   full <- matrix(0, nrow = n, ncol = n)
   for(col in 1:n) {
     for(row in col:n) {
-      idx <- row - col + floor(n*(n+1)/2) - floor((n-col)*(n-col+1)/2)
+      idx <- row - col + floor(n*(n+1)/2) - floor((n-col+1)*(n-col+2)/2) + 1
       if(row != col) {
         full[row, col] <- lower_tri[idx]/sqrt(2)
         full[col, row] <- lower_tri[idx]/sqrt(2)

@@ -5,3 +5,4 @@ cvxr.Rproj
 .Rhistory
 man/
 src/*.o
+src/cvxr.so

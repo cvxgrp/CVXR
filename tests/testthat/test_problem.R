@@ -349,7 +349,7 @@ test_that("Test scalar LP problems", {
   # expect_equal(result$value, value(p))
   expect_equal(tolower(result$status), "optimal")
   expect_false(is.na(result$getValue(a)))
-  # expect_false(is.na(p@constraints[[1]]@dual_value))
+  expect_false(is.na(result$getDualValue(p@constraints[[1]])))
   
   # Unbounded problems
   p <- Problem(Maximize(a), list(a >= 2))
@@ -357,7 +357,7 @@ test_that("Test scalar LP problems", {
   expect_equal(result$value, Inf)
   expect_true(result$value > 0)
   expect_true(is.na(result$getValue(a)))
-  # expect_true(is.na(p@constraints[1]@dual_value))
+  expect_true(is.na(result$getDualValue(p@constraints[[1]])))
   
   # Infeasible problems
   p <- Problem(Maximize(a), list(a >= 2, a <= 1))
@@ -370,7 +370,7 @@ test_that("Test scalar LP problems", {
   # expect_equal(result$value, Inf)
   # expect_true(result$value < 0)
   # expect_true(is.na(result$getValue(a)))
-  # expect_true(is.na(p@constraints[[1]]@dual_value))
+  # expect_true(is.na(result$getDualValue(p@constraints[[1]])))
   
   p <- Problem(Minimize(-a), list(a >= 2, a <= 1))
   # result <- solve(p, solver = "ECOS")
@@ -612,9 +612,9 @@ test_that("Test recovery of dual variables", {
     expect_equal(result$getValue(z), matrix(c(-4,1)), tolerance = acc)
     
     # Dual values
-    # expect_equal(result$constraints[[1]]$dual_value, matrix(c(0,1)), tolerance = acc)
-    # expect_equal(result$constraints[[2]]$dual_value, matrix(c(-1,0.5)), tolerance = acc)
-    # expect_equal(result$constraints[[3]]$dual_value, 0, tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[1]]), matrix(c(0,1)), tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[2]]), matrix(c(-1,0.5)), tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[3]]), 0, tolerance = acc)
     
     Tmat <- matrix(1, nrow = 2, ncol = 3) * 2
     c <- matrix(c(3,4), nrow = 1, ncol = 2)
@@ -622,9 +622,9 @@ test_that("Test recovery of dual variables", {
     result <- solve(p, solver = solver)
     
     # Dual values
-    # expect_equal(result$constraints[[1]]$dual_value, matrix(rep(0,4)), tolerance = acc)
-    # expect_equal(result$constraints[[2]]$dual_value, matrix(rep(0,4)), tolerance = acc)
-    # expect_equal(result$constraints[[3]]$dual_value, matrix(rep(0,6)), tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[1]]), matrix(0, nrow = 2, ncol = 2), tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[2]]), matrix(0, nrow = 2, ncol = 2), tolerance = acc)
+    expect_equal(result$getDualValue(p@constraints[[3]]), matrix(0, nrow = 3, ncol = 2), tolerance = acc)
   }
 })
 
@@ -1102,14 +1102,14 @@ test_that("Test the duals of PSD constraints", {
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 2, tolerance = 1e-4)
   
-  psd_constr_dual <- dual_value(constraints[[1]])
+  psd_constr_dual <- result$getDualValue(constraints[[1]])
   C <- Symmetric(2,"2")
   X <- Semidef(2)
   obj <- Maximize(C[1,1])
   constraints <- list(X == cbind(c(2,0), c(0,2)) - C)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
-  # expect_equal(constraints[[1]]@dual_value, psd_constr_dual)
+  expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
   
   # Test dual values with SCS that have off-diagonal entries
   C <- Symmetric(2,"2")
@@ -1119,14 +1119,14 @@ test_that("Test the duals of PSD constraints", {
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 4, tolerance = 1e-3)
   
-  psd_constr_dual <- dual_value(constraints[[1]])
+  psd_constr_dual <- result$getDualValue(constraints[[1]])
   C <- Symmetric(2,"2")
   X <- Semidef(2)
   obj <- Maximize(C[1,2] + C[2,1])
   constraints <- list(X == cbind(c(2,0), c(0,2)) - C, C >= 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
-  # expect_equal(dual_value(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
+  expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
 })
 
 test_that("Test GeoMean", {

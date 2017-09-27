@@ -4,12 +4,12 @@ linearize <- function(expr) {
     return(expr)
   else {
     tangent <- value(expr)
-    if(is.na(tangent))
+    if(any(is.na(tangent)))
       stop("Cannot linearize non-affine expression with missing variable values.")
     grad_map <- grad(expr)
     for(var in variables(expr)) {
       grad_var <- grad_map[[as.character(var@id)]]
-      if(is.na(grad_var))
+      if(any(is.na(grad_var)))
         return(NA_real_)
       else if(is_matrix(var)) {
         flattened <- t(Constant(grad_var)) %*% Vec(var - value(var))

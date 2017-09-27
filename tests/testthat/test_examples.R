@@ -43,8 +43,8 @@ test_that("Test examples from the README", {
   result <- solve(p)
   # The optimal value for x is stored in result$getValue(x)
   print(result$getValue(x))
-  # The optimal Lagrange multiplier for a constraint is stored in constraints$dual_value
-  # print(constraints[[1]].dual_value)
+  # The optimal Lagrange multiplier for a constraint is stored in result$getDualValue(constraints[[1]])
+  print(result$getDualValue(constraints[[1]]))
 
   ###########################################
   # Scalar variable
@@ -259,8 +259,8 @@ test_that("Test examples from CVXR introduction", {
   result <- solve(prob)
   # The optimal value for x
   print(result$getValue(x))
-  # The optimal Lagrange multiplier for a constraint is extracted from constraint
-  # print(constraints[[1]].dual_value)
+  # The optimal Lagrange multiplier for a constraint is stored in result$getDualValue(constraints[[1]])
+  print(result$getDualValue(constraints[[1]]))
   
   ###########################################
   # Create two scalar variables

@@ -6,7 +6,7 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # test_file("test_constraints.R")
 # test_file("test_convolution.R")
 # test_file("test_curvature.R")
-# test_file("test_examples.R")          # Parameters and dual value retrieval are unimplemented
+# test_file("test_examples.R")          # Parameters are unimplemented
 # test_file("test_expressions.R")       # Add more code for testing negative indices in the future
 # test_file("test_lin_ops.R")
 # test_file("test_matrices.R")
@@ -15,7 +15,7 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # test_file("test_non_optimal.R")
 # test_file("test_nonlinear_atoms.R")   # Parameters are unimplemented
 # test_file("test_objectives.R")
-# test_file("test_problem.R")           # Parameters and dual variable retrieval are unimplemented
+# test_file("test_problem.R")           # Parameters are unimplemented
 # test_file("test_quad_form.R")
 # test_file("test_quadratic.R")
 # test_file("test_semidefinite_vars.R")
@@ -26,7 +26,7 @@ setwd("~/Documents/software/cvxr/tests/testthat")
 # Passing with some comments
 # test_file("test_atoms.R")             # No partial_optimize
 # test_file("test_domain.R")            # No partial_optimize
-# test_file("test_grad.R")              # No partial_optimize or linearize
+# test_file("test_grad.R")              # No partial_optimize
 
 # Failing
 # test_file("test_constant_atoms.R")    # Failing on GeoMean (see below)

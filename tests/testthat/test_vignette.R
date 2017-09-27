@@ -52,7 +52,7 @@ test_that("Test non-negative least squares", {
 
 test_that("Test catenary problem", {
   # Problem data
-  m <- 51
+  m <- 101
   L <- 2
   h <- L/(m-1)
   
@@ -72,23 +72,38 @@ test_that("Test catenary problem", {
   # Plot and compare with ideal catenary
   xs <- result$getValue(x)
   ys <- result$getValue(y)
-  plot(c(0, 1), c(0, 1), type = 'n')
+  plot(c(0, 1), c(0, 1), type = 'n', xlab = "x", ylab = "y")
   lines(xs, ys, col = "blue", lwd = 2)
-  
-  points(c(0, 1), c(1, 1))
-  curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
   grid()
   
-  # Modify constraints
-  constraints[[4]] <- (y[m] == 0.4)
+  ideal <- function(x) { 0.22964*cosh((x-0.5)/0.22964)-0.02603 }
+  expect_equal(ys, ideal(xs), tolerance = 1e-3)
+  # points(c(0, 1), c(1, 1))
+  # curve(0.22964*cosh((x-0.5)/0.22964)-0.02603, 0, 1, col = "red", add = TRUE)
+  # grid()
+  
+  # Lower right endpoint and add staircase structure
+  ground <- sapply(seq(0, 1, length.out = m), function(x) {
+    if(x < 0.2)
+      return(0.6)
+    else if(x >= 0.2 && x < 0.4)
+      return(0.4)
+    else if(x >= 0.4 && x < 0.6)
+      return(0.2)
+    else
+      return(0)
+  })
+  constraints <- c(constraints, y >= ground)
+  constraints[[4]] <- (y[m] == 0.5)
   prob <- Problem(objective, constraints)
   result <- solve(prob)
-  
-  # Plot and compare with ideal catenary
-  xs <- result$getValue(x)
-  ys <- result$getValue(y)
-  points(c(0, 1), c(1, 0.4))
-  lines(xs, ys, col = "blue", lwd = 2)
+
+  # Plot catenary against ground
+  plot(c(0, 1), c(1, 0.5), type = "n", xlab = "x", ylab = "y", ylim = c(0, 1))
+  points(c(0, 1), c(1, 0.5))
+  lines(result$getValue(x), result$getValue(y), col = "blue", lwd = 2)
+  lines(result$getValue(x), ground, col = "red")
+  grid()
 })
 
 test_that("Test direct standardization problem", {

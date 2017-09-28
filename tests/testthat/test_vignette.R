@@ -1,3 +1,52 @@
+test_that("Test Huber regression", {
+  n <- 1
+  m <- 450
+  M <- 1      # Huber threshold
+  p <- 0.1    # Fraction of responses with sign flipped
+  
+  # Generate problem data
+  beta_true <- 5*matrix(rnorm(n), nrow = n)
+  X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+  y_true <- X %*% beta_true
+  eps <- matrix(rnorm(m), nrow = m)
+  
+  # Randomly flip sign of some responses
+  factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
+  y <- factor * y_true + eps
+  
+  # Solve ordinary least squares problem
+  beta <- Variable(n)
+  rel_err <- norm(beta - beta_true, "F")/norm(beta_true, "F")
+  
+  obj <- sum((y - X %*% beta)^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_ols <- result$getValue(beta)
+  err_ols <- result$getValue(rel_err)
+  
+  # Plot fit against measured responses
+  plot(X[factor == 1], y[factor == 1], col = "black", xlab = "X", ylab = "y")
+  points(X[factor == -1], y[factor == -1], col = "red")
+  lines(X, X %*% beta_ols, col = "blue")
+  
+  # Solve Huber regression problem
+  obj <- sum(Huber(y - X %*% beta, M))
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_hub <- result$getValue(beta)
+  err_hub <- result$getValue(rel_err)
+  lines(X, X %*% beta_hub, col = "seagreen", lty = "dashed")
+  
+  # Solve ordinary least squares assuming sign flips known
+  obj <- sum((y - factor*(X %*% beta))^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_prs <- result$getValue(beta)
+  err_prs <- result$getValue(rel_err)
+  lines(X, X %*% beta_prs, col = "black")
+  legend("topright", c("OLS", "Huber", "Prescient"), col = c("blue", "seagreen", "black"), lty = 1)
+})
+
 test_that("Test non-negative least squares", {
   require(MASS)
   
@@ -50,6 +99,14 @@ test_that("Test non-negative least squares", {
   barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
 })
 
+test_that("Test saturating hinges problem", {
+  if(!("ElemStatLearn" %in% rownames(installed.packages())))
+    install.packages("ElemStatLearn")
+  library(ElemStatLearn)
+  data(bone)
+  
+})
+
 test_that("Test catenary problem", {
   # Problem data
   m <- 101
@@ -99,10 +156,12 @@ test_that("Test catenary problem", {
   result <- solve(prob)
 
   # Plot catenary against ground
+  xs <- result$getValue(x)
+  ys <- result$getValue(y)
   plot(c(0, 1), c(1, 0.5), type = "n", xlab = "x", ylab = "y", ylim = c(0, 1))
   points(c(0, 1), c(1, 0.5))
-  lines(result$getValue(x), result$getValue(y), col = "blue", lwd = 2)
-  lines(result$getValue(x), ground, col = "red")
+  lines(xs, ys, col = "blue", lwd = 2)
+  lines(xs, ground, col = "red")
   grid()
 })
 
@@ -210,6 +269,46 @@ test_that("Test risk-return trade-off in portfolio optimization", {
     barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget", col = sequential_hcl(n))
   } else
     barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
+})
+
+test_that("Test Kelly gambling optimal bets", {
+  set.seed(1)
+  n <- 20      # Total bets
+  K <- 100     # Number of possible returns
+  PERIODS <- 100
+  TRIALS <- 5
+  
+  # Generate return probabilities
+  ps <- runif(K)
+  ps <- ps/sum(ps)
+  
+  # Generate matrix of possible returns
+  rets <- runif(K*(n-1), 0.7, 1.3)
+  shuff <- sample(1:length(rets), size = length(rets), replace = FALSE)
+  rets[shuff[1:30]] <- 0.2    # Set 30 returns to be relatively low
+  rets[shuff[31:60]] <- 2     # Set 30 returns to be relatively high
+  rets <- matrix(rets, nrow = K, ncol = n-1)
+  rets <- cbind(rets, rep(1, K))   # Last column represents not betting
+    
+  # Solve for Kelly optimal bets
+  b <- Variable(n)
+  obj <- Maximize(t(ps) %*% log(rets %*% b))
+  constraints <- list(sum(b) == 1, b >= 0)
+  prob <- Problem(obj, constraints)
+  result <- solve(prob)
+  bets <- result$getValue(b)
+
+  # Calculate wealth over time
+  wealth <- matrix(0, nrow = PERIODS, ncol = TRIALS)
+  for(i in 1:TRIALS) {
+    sidx <- sample(1:K, size = PERIODS, replace = TRUE, prob = ps)
+    winnings <- rets[sidx,] %*% bets
+    wealth[,i] <- cumprod(winnings)
+  }
+  
+  # Plot Kelly optimal growth trajectories
+  matplot(1:PERIODS, wealth, xlab = "Period", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1)
+  # TODO: Plot growth curve for a fixed bet vector, e.g. equally weighted on top 5 average returns
 })
 
 test_that("Test worst-case covariance", {

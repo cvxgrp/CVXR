@@ -19,10 +19,9 @@ prob <- Problem(Maximize(objective), constraints)
 
 # Solve for the distribution weights
 result <- solve(prob)
-result$optimal_value
-# TODO: More user-friendly functions to retrieve results
-result$primal_values[[as.character(w@id)]]
-weights <- result$primal_values[[as.character(w@id)]]
+result$value
+result$getValue(w)
+weights <- result$getValue(w)
 
 # Plot cumulative distribution function
 plot_cdf <- function(data, probs, color = 'k') {

@@ -33,8 +33,8 @@ for(i in 1:TRIALS) {
   lambd <- lambda_vals[i]
   prob <- Problem(Minimize(loss/m + lambd*reg))
   result <- solve(prob)
-  beta_res <- result$primal_values[[as.character(beta@id)]]
-  v_res <- result$primal_values[[as.character(v@id)]]
+  beta_res <- result$getValue(beta)
+  v_res <- result$getValue(v)
   
   train_error[i] <- sum(sign(X %*% beta_true + offset) != sign(X %*% beta_res - rep(v_res, m)))/m
   test_error[i] <- sum(sign(X_test %*% beta_true + offset) != sign(X_test %*% beta_res - rep(v_res, m)))/TEST

@@ -19,10 +19,9 @@ prob <- Problem(Minimize(loss), constr)
 
 # Solve and plot result
 result <- solve(prob)
-result$optimal_value
-# TODO: More user-friendly functions to retrieve results
-b0 <- result$primal_values[[as.character(beta0@id)]]
-bres <- result$primal_values[[as.character(beta@id)]]
+result$value
+b0 <- result$getValue(beta)
+bres <- result$getValue(beta)
 
 plot(X, col = (3-y), main = "Support Vector Classifier")
 legend("topleft", paste("y =", unique(y)), col = 3-unique(y), lty = 1)

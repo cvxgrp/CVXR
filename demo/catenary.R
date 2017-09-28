@@ -17,10 +17,8 @@ prob <- Problem(objective, constraints)
 system.time(result <- solve(prob))
 
 # Plot and compare with ideal catenary
-x <- result$primal_values[[as.character(x@id)]]
-y <- result$primal_values[[as.character(y@id)]]
-xs <- x[1:m, 1, drop = TRUE]
-ys <- y[1:m, 1, drop = TRUE]
+xs <- result$getValue(x)
+ys <- result$getValue(y)
 plot(c(0,1), c(0,1), type = "n", xlab = "x", ylab = "y")
 lines(xs, ys, col = "blue", lwd = 2)
 

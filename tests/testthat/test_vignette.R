@@ -221,6 +221,7 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   # Problem data
   set.seed(10)
   n <- 10
+  SAMPLES <- 100
   mu <- matrix(abs(rnorm(n)), nrow = n)
   Sigma <- matrix(rnorm(n^2), nrow = n, ncol = n)
   Sigma <- t(Sigma) %*% Sigma
@@ -232,7 +233,6 @@ test_that("Test risk-return trade-off in portfolio optimization", {
   constraints <- list(w >= 0, sum(w) == 1)
   
   # Risk aversion parameters
-  SAMPLES <- 100
   gammas <- 10^seq(-2, 3, length.out = SAMPLES)
   ret_data <- rep(0, SAMPLES)
   risk_data <- rep(0, SAMPLES)

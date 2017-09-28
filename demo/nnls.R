@@ -1,6 +1,5 @@
 # Generate problem data
 library(MASS)
-
 s <- 1
 m <- 10
 n <- 300
@@ -27,10 +26,9 @@ prob <- Problem(objective)
 
 # Solve the OLS problem for beta
 result <- solve(prob)
-# TODO: More user-friendly functions to retrieve results
-result$optimal_value
-result$primal_values[[as.character(beta@id)]]
-beta_ols <- result$primal_values[[as.character(beta@id)]]
+result$value
+result$getValue(beta)
+beta_ols <- result$getValue(beta)
 
 # Add non-negativity constraint on beta
 constraints <- list(beta >= 0)
@@ -38,10 +36,9 @@ prob2 <- Problem(objective, constraints)
 
 # Solve the NNLS problem for beta
 result2 <- solve(prob2)
-result2$optimal_value
-# TODO: More user-friendly functions to retrieve results
-result2$primal_values[[as.character(beta@id)]]
-beta_nnls <- result2$primal_values[[as.character(beta@id)]]
+result2$value
+result2$getValue(beta)
+beta_nnls <- result2$getValue(beta)
 all(beta_nnls >= 0)   # All resulting beta should be non-negative
 
 # Calculate the fitted y values

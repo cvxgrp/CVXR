@@ -18,9 +18,6 @@ constraints <- list(Known * U == Known * lena_corr)
 
 prob <- Problem(obj, constraints)
 result <- solve(prob)
-# TODO: SOC_AXIS LinOp is not implemented?
-
-# TODO: More user-friendly functions to retrieve results
-result$optimal_value
-lena_recon <- result$primal_values[[as.character(U@id)]]
+result$value
+lena_recon <- result$getValue(U)
 image(lena_recon, axes = FALSE, col = grey(seq(0, 1, length = 256)))

@@ -599,7 +599,11 @@ setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached
     # Get objective value
     new_results[[VALUE]] <- sol$solist$pobjval + data[[OFFSET]]
     
-    # TODO: Get dual variable values. BUG: Signs seem to be inverted in MOSEK?
+    # TODO: Check if signs are inverted in MOSEK
+    y <- sol$solist$slc - sol$solist$suc
+    new_results[[EQ_DUAL]] <- y[1:length(data[[B_KEY]])]
+    if(length(data[[B_KEY]]) < length(y))
+      new_results[[INEQ_DUAL]] <- y[(length(data[[B_KEY]]) + 1):(length(data[[B_KEY]]) + data[[DIMS]][[LEQ_DIM]])]
   }
   new_results
 })

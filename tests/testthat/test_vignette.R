@@ -1,3 +1,27 @@
+test_that("Test logistic regression", {
+  n <- 20
+  m <- 1000
+  offset <- 0
+  sigma <- 45
+  DENSITY <- 0.2
+  
+  beta_true <- rnorm(n)
+  idxs <- sample(n, size = floor((1-DENSITY)*n), replace = FALSE)
+  beta_true[idxs] <- 0
+  X <- matrix(rnorm(m*n, 0, 5), nrow = m, ncol = n)
+  y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
+  
+  beta <- Variable(n)
+  obj <- sum(Logistic(-X[y <= 0,] %*% beta)) + sum(Logistic(X[y == 1,] %*% beta))
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  
+  log_odds <- result$getValue(X %*% beta)
+  beta_res <- result$getValue(beta)
+  y_probs <- 1/(1 + exp(-X %*% beta_res))
+  log(y_probs/(1 - y_probs))
+})
+
 test_that("Test Huber regression", {
   n <- 1
   m <- 450
@@ -104,7 +128,28 @@ test_that("Test saturating hinges problem", {
     install.packages("ElemStatLearn")
   library(ElemStatLearn)
   data(bone)
+  # TODO: Bone density example from saturating hinges paper
+})
+
+test_that("Test maximum likelihood estimation", {
+  set.seed(1)
+  m <- 1000
+  lambda <- 4
+  x <- rpois(m, lambda)
   
+  K <- max(x)
+  xhist <- hist(x, breaks = -1:K, right = TRUE, include.lowest = FALSE)
+  counts <- xhist$counts
+  
+  u <- Variable(K+1)
+  obj <- t(counts) %*% u
+  # constraints <- list(sum(exp(u)) <= 1, 2*u[2:(K-1)] >= u[1:(K-2)] + u[3:K])
+  constraints <- list(sum(exp(u)) <= 1, diff(u[1:(K-1)]) >= diff(u[2:K]))
+  prob <- Problem(Maximize(obj), constraints)
+  result <- solve(prob)
+  
+  pmf <- result$getValue(exp(u))
+  plot(0:K, pmf, type = "b", xlab = "x", ylab = "Probability Mass Function")
 })
 
 test_that("Test catenary problem", {
@@ -283,10 +328,10 @@ test_that("Test Kelly gambling optimal bets", {
   ps <- ps/sum(ps)
   
   # Generate matrix of possible returns
-  rets <- runif(K*(n-1), 0.7, 1.3)
+  rets <- runif(K*(n-1), 0.5, 1.5)
   shuff <- sample(1:length(rets), size = length(rets), replace = FALSE)
-  rets[shuff[1:30]] <- 0.2    # Set 30 returns to be relatively low
-  rets[shuff[31:60]] <- 2     # Set 30 returns to be relatively high
+  rets[shuff[1:30]] <- 0    # Set 30 returns to be relatively low
+  rets[shuff[31:60]] <- 5     # Set 30 returns to be relatively high
   rets <- matrix(rets, nrow = K, ncol = n-1)
   rets <- cbind(rets, rep(1, K))   # Last column represents not betting
     
@@ -298,17 +343,30 @@ test_that("Test Kelly gambling optimal bets", {
   result <- solve(prob)
   bets <- result$getValue(b)
 
+  # Naive betting scheme: equal split on bets with highest expected returns
+  bets_cmp <- matrix(0, nrow = n)
+  bets_cmp[n] <- 0.15                  # Hold 15% of wealth
+  rets_avg <- ps %*% rets
+  tidx <- order(rets_avg[-n], decreasing = TRUE)[1:9]
+  fracs <- rets_avg[tidx]/sum(rets_avg[tidx])
+  bets_cmp[tidx] <- fracs*(1-bets_cmp[n])
+  
   # Calculate wealth over time
   wealth <- matrix(0, nrow = PERIODS, ncol = TRIALS)
+  wealth_cmp <- matrix(0, nrow = PERIODS, ncol = TRIALS)
   for(i in 1:TRIALS) {
     sidx <- sample(1:K, size = PERIODS, replace = TRUE, prob = ps)
     winnings <- rets[sidx,] %*% bets
     wealth[,i] <- cumprod(winnings)
+    
+    winnings_cmp <- rets[sidx,] %*% bets_cmp
+    wealth_cmp[,i] <- cumprod(winnings_cmp)
   }
   
   # Plot Kelly optimal growth trajectories
-  matplot(1:PERIODS, wealth, xlab = "Period", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1)
-  # TODO: Plot growth curve for a fixed bet vector, e.g. equally weighted on top 5 average returns
+  matplot(1:PERIODS, wealth, xlab = "Time", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1)
+  matlines(1:PERIODS, wealth_cmp, col = "red", lty = 2)
+  legend("topleft", c("Kelly Optimal Bets", "Naive Bets"), col = c("blue", "red"), lty = c(1, 2))
 })
 
 test_that("Test worst-case covariance", {

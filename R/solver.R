@@ -433,6 +433,177 @@ setMethod("format_results", "LS", function(solver, results_dict, data, cached_da
   new_results
 })
 
+setClass("MOSEK", contains = "Solver")
+MOSEK <- function() {
+  stop("Unimplemented")
+  new("MOSEK") 
+}
+
+setMethod("lp_capable", "MOSEK", function(solver) { TRUE })
+setMethod("socp_capable", "MOSEK", function(solver) { TRUE })
+setMethod("sdp_capable", "MOSEK", function(solver) { TRUE })
+setMethod("exp_capable", "MOSEK", function(solver) { FALSE })
+setMethod("mip_capable", "MOSEK", function(solver) { FALSE })
+
+# Map of MOSEK status to CVXR status.
+setMethod("status_map", "MOSEK", function(solver, status) {
+  if(status == "OPTIMAL")
+    OPTIMAL
+  else if(status == "PRIMAL_INFEASIBLE_CER")
+    INFEASIBLE
+  else if(status == "DUAL_INFEASIBLE_CER")
+    UNBOUNDED
+  else if(status == "NEAR_OPTIMAL")
+    OPTIMAL_INACCURATE
+  else if(status == "NEAR_PRIMAL_INFEASIBLE_CER")
+    INFEASIBLE_INACCURATE
+  else if(status == "NEAR_DUAL_INFEASIBLE_CER")
+    UNBOUNDED_INACCURATE
+  else
+    SOLVER_ERROR
+})
+
+setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
+setMethod("import_solver", "MOSEK", function(solver) { requireNamespace("Rmosek") })
+setMethod("split_constr", "MOSEK", function(solver, constr_map) {
+  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+})
+
+setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
+  
+  A <- data[[A_KEY]]
+  b <- data[[B_KEY]]
+  G <- data[[G_KEY]]
+  h <- data[[H_KEY]]
+  c <- data[[C_KEY]]
+  dims <- data[[DIMS]]
+  problem <- list(sense = "minimize")
+  
+  # Size of problem
+  numvar <- length(c) + sum(dims[[SOC_DIM]])
+  numcon <- length(b) + dims[[LEQ_DIM]] + sum(dims[[SOC_DIM]]) + sum(dims[[SDP_DIM]]^2)
+  
+  # TODO: Fix crash on empty problem
+  
+  # Objective
+  problem$c <- c      # Objective coefficients
+  problem$c0 <- 0     # Objective constant
+  problem$bx <- rbind(blx = rep(-Inf, numvar), bux = rep(Inf, numvar))   # Lower and upper variable bounds
+  
+  # SDP variables
+  if(sum(dims[[SDP_DIM]]) > 0)
+    problem$bardim <- dims[[SDP_DIM]]   # Semidefinite variable dimensions
+  
+  # Linear equality and linear inequality constraints
+  if(nrow(A) > 0 && nrow(G) > 0)
+    constraints_matrix <- rbind(A, G)
+  else if(nrow(A) > 0)
+    constraints_matrix <- A
+  else
+    constraints_matrix <- G
+  if(dims[[LEQ_DIM]] == length(h))
+    problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]])), buc = c(b, h))
+  else
+    problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]]), h[(1 + dims[[LEQ_DIM]]):length(h)]), buc = c(b, h))
+  # h_leq <- h[1:dims[[LEQ_DIM]]]
+  # sdp_total_dims <- sum(dims[[SDP_DIM]]^2)
+  # soc_sdp_dims <- sum(dims[[SOC_DIM]]) + sdp_total_dims
+  # h_soc_sdp <- h[(1 + dims[[LEQ_DIM]]):(1 + dims[[LEQ_DIM]] + soc_sdp_dims)]
+  # problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]]), h_soc_sdp), buc = c(b, h_leq, h_soc_sdp))
+  
+  # Cone constraints
+  num_cones <- length(dims[[SOC_DIM]])
+  if(num_cones > 0) {
+    cur_var_idx <- length(c)
+    cur_con_idx <- length(b) + dims[[LEQ_DIM]]
+    cones <- matrix(list(), nrow = 2, ncol = num_cones)
+    
+    for(k in 1:num_cones) {
+      size_cone <- dims[[SOC_DIM]][k]
+      
+      # Add an identity for each cone
+      id_mat <- sparseMatrix(i = cur_con_idx + 1:size_cone, j = cur_var_idx + 1:size_cone, x = 1)
+      constraints_matrix <- rbind(constraints_matrix, id_mat)
+      
+      # Add a cone constraint
+      cones[,k] <- list("QUAD", seq(cur_var_idx + 1, cur_var_idx + size_cone))
+      cur_var_idx <- cur_var_idx + size_cone
+      cur_con_idx <- cur_con_idx + size_cone
+    }
+    rownames(cones) <- c("type", "sub")
+    problem$cones <- cones
+  }
+  problem$A <- constraints_matrix
+
+  # SDP constraints
+  num_sdp <- length(dims[[SDP_DIM]])
+  if(num_sdp > 0) {
+    for(k in 1:num_sdp) {
+      size_matrix <- dims[[SDP_DIM]][k]
+      for(i in 1:length(size_matrix)) {
+        for(j in 1:length(size_matrix)) {
+          if(i == j)
+            coeff <- 1
+          else
+            coeff <- 0.5
+          # TODO: Finish this
+          cur_con_idx <- cur_con_idx + 1
+        }
+      }
+    }
+  }
+      
+  requireNamespace("Rmosek")  
+  results_dict <- rmosek(problem, opts = list(getinfo = TRUE, soldetail = TRUE, verbose = verbose, ...))
+  format_results(solver, results_dict, data, cached_data)
+})
+
+setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
+  requireNamespace("Rmosek")
+  rank <- function(status) {
+    # Rank solutions: optimal > near_optimal > anything else > None
+    if(status == "OPTIMAL")
+      return(3)
+    else if(status == "NEAR_OPTIMAL")
+      return(2)
+    else if(!is.null(status))
+      return(1)
+    else
+      return(0)
+  }
+  
+  # As long as interior solution is not worse, take it (for backward compatibility)
+  solsta_bas <- results_dict$bas$solsta
+  solsta_itr <- results_dict$itr$solsta
+  if(rank(solsta_itr) >= rank(solsta_bas))
+    list(solist = results_dict$sol$itr, solsta = solsta_itr)
+  else
+    list(solist = results_dict$sol$bas, solsta = solsta_bas)
+})
+
+setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached_data) {
+  requireNamespace("Rmosek")
+  sol <- choose_solution(solver, results_dict)
+  
+  new_results <- list()
+  new_results[[STATUS]] <- status_map(sol$solsta)
+  new_results[[SOLVE_TIME]] <- results_dict$dinfo$OPTIMIZER_TIME
+  new_results[[SETUP_TIME]] <- results_dict$dinfo$PRESOLVE_TIME
+  new_results[[NUM_ITERS]] <- results_dict$iinfo$INTPNT_ITER
+  
+  if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+    # Get primal variable values
+    new_results[[PRIMAL]] <- sol$solist$xx
+
+    # Get objective value
+    new_results[[VALUE]] <- sol$solist$pobjval + data[[OFFSET]]
+    
+    # TODO: Get dual variable values. BUG: Signs seem to be inverted in MOSEK?
+  }
+  new_results
+})
+
 #'
 #' Solver utilities
 #'

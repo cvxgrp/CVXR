@@ -85,11 +85,15 @@ setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_
 })
 
 setMethod("show", "LeqConstraint", function(object) {
-  cat(class(object), "(", as.character(object@args[[1]]), ", ", as.character(object@args[[2]]), ")", sep = "")
+  arg1 <- paste(as.character(object@args[[1]]), collapse = ", ")
+  arg2 <- paste(as.character(object@args[[2]]), collapse = ", ")
+  cat(class(object), "(", arg1, ", ", arg2, ")", sep = "")
 })
 
 setMethod("as.character", "LeqConstraint", function(x) {
-  paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))   # TODO: Add OP_NAME parameter to LeqConstraint
+  arg1 <- paste(as.character(object@args[[1]]), collapse = ", ")
+  arg2 <- paste(as.character(object@args[[2]]), collapse = ", ")
+  paste(arg1, "<=", arg2)   # TODO: Add OP_NAME parameter to LeqConstraint
 })
 
 setMethod("id", "LeqConstraint", function(object) { object@constr_id })

@@ -424,6 +424,64 @@ setMethod("split_constr", "LS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
+setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+  sym_data <- get_sym_data(solver, objective, constraints)
+  id_map <- sym_data@var_offsets
+  N <- sym_data@x_length
+  extractor <- QuadCoeffExtractor(id_map, N)   # TODO: QuadCoeffExtractor is unimplemented. See cvxpy/utilities/quadratic.py
+  
+  # Extract the coefficients
+  coeffs <- get_coeffs(extractor, objective@args[[1]])
+  P <- coeffs$Ps[[1]]
+  q <- as.numeric(coeffs$Q)
+  r <- coeffs$R[[1]]
+  
+  # Forming the KKT system
+  if(length(constraints) > 0) {
+    Cs <- lapply(constraints, function(c) { 
+      coeffs <- get_coeffs(extractor, c@.expr)
+      if(length(coeffs) > 1)
+        coeffs[2:length(coeffs)]
+      else
+        c()
+    })
+    As <- do.call("rbind", lapply(Cs, function(C) { C[[1]] }))
+    bs <- as.numeric(sapply(Cs, function(C) { C[[2]] }))
+    lhs <- rbind(cbind(2*P, t(As), cbind(As, NA))    # TODO: Fix this
+    rhs <- c(-q, -bs)
+  } else {   # Avoid calling rbind with empty list
+    lhs <- 2*P
+    rhs <- -q
+  }
+  
+  # Actually solve the KKT system
+  tryCatch({
+      sol <- solve(lhs, rhs)
+      if(N > 0)
+        x <- sol[1:N]
+      else
+        x <- c()
+      
+      if(length(sol) > N)
+        nu <- sol[(N+1):length(sol)]
+      else
+        nu <- c()
+      
+      p_star <- t(x) %*% (P %*% x + q) + r
+    }, warning = function(w) {
+      x <- NA
+      nu <- NA
+      p_star <- NA
+    })
+  
+  results_dict <- list()
+  results_dict[[PRIMAL]] <- x
+  results_dict[[EQ_DUAL]] <- nu
+  results_dict[[VALUE]] <- primal_to_result(objective, p_star)
+  
+  format_results(solver, results_dict, NA, cached_data)
+})
+
 setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
   new_results <- results_dict
   if(is.na(results_dict[[PRIMAL]]))
@@ -606,6 +664,64 @@ setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached
       new_results[[INEQ_DUAL]] <- y[(length(data[[B_KEY]]) + 1):(length(data[[B_KEY]]) + data[[DIMS]][[LEQ_DIM]])]
   }
   new_results
+})
+
+setClass("GUROBI", contains = "Solver")
+GUROBI <- function() {
+  stop("Unimplemented")
+  new("GUROBI")
+}
+
+setMethod("lp_capable", "GUROBI", function(solver) { TRUE })
+setMethod("socp_capable", "GUROBI", function(solver) { TRUE })
+setMethod("sdp_capable", "GUROBI", function(solver) { FALSE })
+setMethod("exp_capable", "GUROBI", function(solver) { FALSE })
+setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
+
+# Map of GUROBI status to CVXR status.
+setMethod("status_map", "GUROBI", function(solver, status) {
+  if(status == 2)
+    OPTIMAL
+  else if(status == 3)
+    INFEASIBLE
+  else if(status == 5)
+    UNBOUNDED
+  else if(status == 9)
+    OPTIMAL_INACCURATE
+  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+    SOLVER_ERROR
+  else
+    stop("GUROBI status unrecognized: ", status)
+})
+
+setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
+setMethod("import_solver", "GUROBI", function(solver) { requireNamespace("gurobi") })
+setMethod("split_constr", "GUROBI", function(solver, constr_map) {
+  list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
+})
+
+setMethod("format_results", "GUROBI", function(solver, results_dict, data, cached_data) {
+  dims <- data[[DIMS]]
+  if(results_dict$status != SOLVER_ERROR) {
+    solver_cache <- cached_data[[name(solver)]]
+    solver_cache@prev_result <- list(vbasis = results_dict$vbasis, cbasis = results_dict$cbasis, c = data[[C_KEY]], A = data[[A_KEY]], b = data[[B_KEY]])
+  }
+  
+  new_results <- list()
+  new_results[[STATUS]] <- results_dict$status
+  new_results[[SOLVE_TIME]] <- results_dict$runtime
+  if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+    primal_val <- results_dict$objval
+    new_results[[VALUE]] <- primal_val + data[[OFFSET]]
+    new_results[[PRIMAL]] <- results_dict$x
+    if(!Solver.is_mip(data)) {
+      duals <- results_dict$pi
+      if(dims[[EQ_DIM]] > 0)
+        new_results[[EQ_DUAL]] <- duals[1:dims[[EQ_DIM]]]
+      if(length(duals) > dims[[EQ_DIM]])
+        new_results[[INEQ_DUAL]] <- duals[(dims[[EQ_DIM]] + 1):length(duals)]
+    }
+  }
 })
 
 #'

@@ -1,76 +1,3 @@
-test_that("Test logistic regression", {
-  n <- 20
-  m <- 1000
-  offset <- 0
-  sigma <- 45
-  DENSITY <- 0.2
-  
-  beta_true <- rnorm(n)
-  idxs <- sample(n, size = floor((1-DENSITY)*n), replace = FALSE)
-  beta_true[idxs] <- 0
-  X <- matrix(rnorm(m*n, 0, 5), nrow = m, ncol = n)
-  y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
-  
-  beta <- Variable(n)
-  obj <- sum(Logistic(-X[y <= 0,] %*% beta)) + sum(Logistic(X[y == 1,] %*% beta))
-  prob <- Problem(Minimize(obj))
-  result <- solve(prob)
-  
-  log_odds <- result$getValue(X %*% beta)
-  beta_res <- result$getValue(beta)
-  y_probs <- 1/(1 + exp(-X %*% beta_res))
-  log(y_probs/(1 - y_probs))
-})
-
-test_that("Test Huber regression", {
-  n <- 1
-  m <- 450
-  M <- 1      # Huber threshold
-  p <- 0.1    # Fraction of responses with sign flipped
-  
-  # Generate problem data
-  beta_true <- 5*matrix(rnorm(n), nrow = n)
-  X <- matrix(rnorm(m*n), nrow = m, ncol = n)
-  y_true <- X %*% beta_true
-  eps <- matrix(rnorm(m), nrow = m)
-  
-  # Randomly flip sign of some responses
-  factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
-  y <- factor * y_true + eps
-  
-  # Solve ordinary least squares problem
-  beta <- Variable(n)
-  rel_err <- norm(beta - beta_true, "F")/norm(beta_true, "F")
-  
-  obj <- sum((y - X %*% beta)^2)
-  prob <- Problem(Minimize(obj))
-  result <- solve(prob)
-  beta_ols <- result$getValue(beta)
-  err_ols <- result$getValue(rel_err)
-  
-  # Plot fit against measured responses
-  plot(X[factor == 1], y[factor == 1], col = "black", xlab = "X", ylab = "y")
-  points(X[factor == -1], y[factor == -1], col = "red")
-  lines(X, X %*% beta_ols, col = "blue")
-  
-  # Solve Huber regression problem
-  obj <- sum(Huber(y - X %*% beta, M))
-  prob <- Problem(Minimize(obj))
-  result <- solve(prob)
-  beta_hub <- result$getValue(beta)
-  err_hub <- result$getValue(rel_err)
-  lines(X, X %*% beta_hub, col = "seagreen", lty = "dashed")
-  
-  # Solve ordinary least squares assuming sign flips known
-  obj <- sum((y - factor*(X %*% beta))^2)
-  prob <- Problem(Minimize(obj))
-  result <- solve(prob)
-  beta_prs <- result$getValue(beta)
-  err_prs <- result$getValue(rel_err)
-  lines(X, X %*% beta_prs, col = "black")
-  legend("topright", c("OLS", "Huber", "Prescient"), col = c("blue", "seagreen", "black"), lty = 1)
-})
-
 test_that("Test non-negative least squares", {
   require(MASS)
   
@@ -122,6 +49,80 @@ test_that("Test non-negative least squares", {
   rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
   barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
 })
+
+test_that("Test Huber regression", {
+  n <- 1
+  m <- 450
+  M <- 1      # Huber threshold
+  p <- 0.1    # Fraction of responses with sign flipped
+  
+  # Generate problem data
+  beta_true <- 5*matrix(rnorm(n), nrow = n)
+  X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+  y_true <- X %*% beta_true
+  eps <- matrix(rnorm(m), nrow = m)
+  
+  # Randomly flip sign of some responses
+  factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
+  y <- factor * y_true + eps
+  
+  # Solve ordinary least squares problem
+  beta <- Variable(n)
+  rel_err <- norm(beta - beta_true, "F")/norm(beta_true, "F")
+  
+  obj <- sum((y - X %*% beta)^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_ols <- result$getValue(beta)
+  err_ols <- result$getValue(rel_err)
+  
+  # Plot fit against measured responses
+  plot(X[factor == 1], y[factor == 1], col = "black", xlab = "X", ylab = "y")
+  points(X[factor == -1], y[factor == -1], col = "red")
+  lines(X, X %*% beta_ols, col = "blue")
+  
+  # Solve Huber regression problem
+  obj <- sum(Huber(y - X %*% beta, M))
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_hub <- result$getValue(beta)
+  err_hub <- result$getValue(rel_err)
+  lines(X, X %*% beta_hub, col = "seagreen", lty = "dashed")
+  
+  # Solve ordinary least squares assuming sign flips known
+  obj <- sum((y - factor*(X %*% beta))^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_prs <- result$getValue(beta)
+  err_prs <- result$getValue(rel_err)
+  lines(X, X %*% beta_prs, col = "black")
+  legend("topright", c("OLS", "Huber", "Prescient"), col = c("blue", "seagreen", "black"), lty = 1)
+})
+
+test_that("Test logistic regression", {
+  n <- 20
+  m <- 1000
+  offset <- 0
+  sigma <- 45
+  DENSITY <- 0.2
+  
+  beta_true <- rnorm(n)
+  idxs <- sample(n, size = floor((1-DENSITY)*n), replace = FALSE)
+  beta_true[idxs] <- 0
+  X <- matrix(rnorm(m*n, 0, 5), nrow = m, ncol = n)
+  y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
+  
+  beta <- Variable(n)
+  obj <- sum(Logistic(-X[y <= 0,] %*% beta)) + sum(Logistic(X[y == 1,] %*% beta))
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  
+  log_odds <- result$getValue(X %*% beta)
+  beta_res <- result$getValue(beta)
+  y_probs <- 1/(1 + exp(-X %*% beta_res))
+  log(y_probs/(1 - y_probs))
+})
+
 
 test_that("Test saturating hinges problem", {
   if(!("ElemStatLearn" %in% rownames(installed.packages())))
@@ -262,7 +263,7 @@ test_that("Test direct standardization problem", {
   legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
 })
 
-test_that("Test risk-return trade-off in portfolio optimization", {
+test_that("Test risk-return tradeoff in portfolio optimization", {
   # Problem data
   set.seed(10)
   n <- 10
@@ -494,13 +495,14 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
     list(status = result$status, value = result$value, P = result$getValue(P))
   }
   
-  disp_result <- function(states, P) {
+  disp_result <- function(states, P, tol = 1e-3) {
     if(!("markovchain" %in% rownames(installed.packages()))) {
       rownames(P) <- states
       colnames(P) <- states
       print(P)
     } else {
       require(markovchain)
+      P[P < tol] <- 0
       P <- P/apply(P, 1, sum)   # Normalize so rows sum to exactly 1
       mc <- new("markovchain", states = states, transitionMatrix = P)
       plot(mc)

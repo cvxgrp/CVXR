@@ -234,7 +234,7 @@ void LinOp__set_type(SEXP xp, int typeValue) {
     Rcpp::XPtr<LinOp> ptr(xp);
     ptr->type = oType;
 
-#ifdef _R_DEBUG
+#ifdef _R_DEBUG_
     Rcpp::Rcout << "LinOp Id " << ptr->id << " type now " << ptr->type << std::endl;
 #endif
 

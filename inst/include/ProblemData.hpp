@@ -91,7 +91,9 @@ public:
 	}
 #ifdef _R_INTERFACE_
   ~ProblemData() {
+#ifdef _R_DEBUG_
     Rcpp::Rcout << "ProblemData was destroyed!" <<std::endl;
+#endif
   }
 #endif
 };

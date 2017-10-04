@@ -31,14 +31,18 @@ SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v) {
       id_to_col[atoi(s[i])] = v[i];
     }
   }
+#ifdef _R_DEBUG_
   Rcpp::Rcout << "Before Build Matrix 0" <<std::endl;
+#endif
   //  ProblemData res = build_matrix(ptrX->linvec, id_to_col);
   //  Rcpp::Rcout << "After Build Matrix" <<std::endl;  
   //  Rcpp::XPtr<ProblemData> resPtr(&res, true);
 
   Rcpp::XPtr<ProblemData> resPtr(new ProblemData(), true);
   build_matrix_2(ptrX->linvec, id_to_col, resPtr);
-  Rcpp::Rcout << "After constructing external ptr" <<std::endl;    
+#ifdef _R_DEBUG_
+  Rcpp::Rcout << "After constructing external ptr" <<std::endl;
+#endif  
   return resPtr;
 }
 
@@ -63,15 +67,18 @@ SEXP build_matrix_1(SEXP xp, Rcpp::IntegerVector v1, Rcpp::IntegerVector v2) {
   for (int i = 0; i < v2.size(); i++) {
     constr_offsets.push_back(v2[i]);
   }
-  
+
+#ifdef _R_DEBUG_  
   Rcpp::Rcout << "Before Build Matrix 1" <<std::endl;
+#endif
   // ProblemData res = build_matrix(ptrX->linvec, id_to_col, constr_offsets);
   // Rcpp::Rcout << "After Build Matrix" <<std::endl;    
   // Rcpp::XPtr<ProblemData> resPtr(&res, true);
   Rcpp::XPtr<ProblemData> resPtr(new ProblemData(), true);
   build_matrix_3(ptrX->linvec, id_to_col, constr_offsets, resPtr);
-  
-  Rcpp::Rcout << "After constructing external ptr" <<std::endl;    
+#ifdef _R_DEBUG_  
+  Rcpp::Rcout << "After constructing external ptr" <<std::endl;
+#endif
   return resPtr;
 }
 

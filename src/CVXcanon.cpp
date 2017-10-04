@@ -266,7 +266,9 @@ void build_matrix_3(std::vector<LinOp*> constraints,
   /* Build matrix one constraint at a time */
   for (unsigned i = 0; i < constraints.size(); i++){
     LinOp *constr = constraints[i];
+#ifdef _R_DEBUG_
     Rcpp::Rcout << "Processing constraint " << i << std::endl;
+#endif
     int vert_offset = constr_offsets[i];
     process_constraint(*constr, prob_data->V, prob_data->I, prob_data->J,
 		       prob_data->const_vec, vert_offset,

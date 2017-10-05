@@ -128,12 +128,89 @@ test_that("Test saturating hinges problem", {
   if(!("ElemStatLearn" %in% rownames(installed.packages())))
     install.packages("ElemStatLearn")
   library(ElemStatLearn)
+  
+  # Import and sort data
   data(bone)
-  # TODO: Bone density example from saturating hinges paper
+  X <- bone[bone$gender == "female",]$age
+  y <- bone[bone$gender == "female",]$spnbmd
+  ord <- order(X, decreasing = FALSE)
+  X <- X[ord]
+  y <- y[ord]
+  
+  # Choose knots evenly distributed along domain
+  k <- 10
+  lambdas <- c(1, 0.5, 0.01)
+  idx <- floor(seq(1, length(X), length.out = k))
+  knots <- X[idx]
+  
+  # Saturating hinge
+  f_est <- function(x, knots, w0, w) {
+    hinges <- sapply(knots, function(t) { pmax(x - t, 0) })
+    w0 + hinges %*% w
+  }
+  
+  # Loss function
+  loss_obs <- function(y, f) { (y - f)^2 }
+  
+  # Form problem
+  w0 <- Variable(1)
+  w <- Variable(k)
+  loss <- sum(loss_obs(y, f_est(X, knots, w0, w)))
+  constr <- list(sum(w) == 0)
+  
+  xrange <- seq(min(X), max(X), length.out = 100)
+  splines <- matrix(0, nrow = length(xrange), ncol = length(lambdas))
+  
+  for(i in 1:length(lambdas)) {
+    lambda <- lambdas[i]
+    reg <- lambda * Norm(w, 1)
+    obj <- loss + reg
+    prob <- Problem(Minimize(obj), constr)
+    
+    # Solve problem and save spline weights
+    result <- solve(prob)
+    w0s <- result$getValue(w0)
+    ws <- result$getValue(w)
+    splines[,i] <- f_est(xrange, knots, w0s, ws)
+  }
+  
+  # Plot saturating hinges
+  plot(X, y, xlab = "Age", ylab = "Change in Bone Density", col = "black", type = "p")
+  matlines(xrange, splines, col = "blue", lty = 1:length(lambdas), lwd = 1.5)
+  legend("topright", as.expression(lapply(lambdas, function(x) bquote(lambda==.(x)))), col = "blue", lty = 1:length(lambdas), bty = "n")
+  
+  # Add outliers to data
+  nout <- 50
+  X_out <- runif(nout, min(X), max(X))
+  y_out <- runif(nout, min(y), 3*max(y)) + 0.3
+  X_all <- c(X, X_out)
+  y_all <- c(y, y_out)
+  
+  # Solve with squared error loss
+  loss_obs <- function(y, f) { (y - f)^2 }
+  loss <- sum(loss_obs(y_all, f_est(X_all, knots, w0, w)))
+  prob <- Problem(Minimize(loss + reg), constr)
+  result <- solve(prob)
+  spline_sq <- f_est(xrange, knots, result$getValue(w0), result$getValue(w))
+  
+  # Solve with Huber loss
+  loss_obs <- function(y, f, M) { Huber(y - f, M) }
+  loss <- sum(loss_obs(y, f_est(X, knots, w0, w), 0.01))
+  prob <- Problem(Minimize(loss + reg), constr)
+  result <- solve(prob)
+  spline_hub <- f_est(xrange, knots, result$getValue(w0), result$getValue(w))
+  
+  # Compare fitted functions with squared error and Huber loss
+  plot(X, y, xlab = "Age", ylab = "Change in Bone Density", col = "black", type = "p", ylim = c(min(y), 1))
+  points(X_out, y_out, col = "red", pch = 16)
+  matlines(xrange, cbind(spline_hub, spline_sq), col = "blue", lty = 1:2, lwd = 1.5)
+  legend("topright", c("Huber Loss", "Squared Loss"), col = "blue", lty = 1:2, bty = "n")
 })
 
 test_that("Test maximum likelihood estimation", {
   set.seed(1)
+  
+  # Problem data
   m <- 1000
   lambda <- 4
   x <- rpois(m, lambda)
@@ -142,13 +219,14 @@ test_that("Test maximum likelihood estimation", {
   xhist <- hist(x, breaks = -1:K, right = TRUE, include.lowest = FALSE)
   counts <- xhist$counts
   
+  # Form problem with log-concave constraint
   u <- Variable(K+1)
   obj <- t(counts) %*% u
-  # constraints <- list(sum(exp(u)) <= 1, 2*u[2:(K-1)] >= u[1:(K-2)] + u[3:K])
   constraints <- list(sum(exp(u)) <= 1, diff(u[1:(K-1)]) >= diff(u[2:K]))
   prob <- Problem(Maximize(obj), constraints)
   result <- solve(prob)
   
+  # Plot probability mass function
   pmf <- result$getValue(exp(u))
   plot(0:K, pmf, type = "b", xlab = "x", ylab = "Probability Mass Function")
 })

@@ -180,6 +180,7 @@ test_that("Test saturating hinges problem", {
   legend("topright", as.expression(lapply(lambdas, function(x) bquote(lambda==.(x)))), col = "blue", lty = 1:length(lambdas), bty = "n")
   
   # Add outliers to data
+  set.seed(1)
   nout <- 50
   X_out <- runif(nout, min(X), max(X))
   y_out <- runif(nout, min(y), 3*max(y)) + 0.3
@@ -333,7 +334,14 @@ test_that("Test direct standardization problem", {
   result <- solve(prob)
   weights <- result$getValue(w)
 
+  # Plot probability density function
   cl <- rainbow(3)
+  plot(density(ypop), col = cl[1], xlab = "y", ylab = NA, ylim = c(0, 0.2), zero.line = FALSE)
+  lines(density(y), col = cl[2])
+  lines(density(y, weights = weights), col = cl[3])
+  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+  
+  # Plot cumulative distribution function
   plot(NA, xlab = "y", ylab = NA, xlim = c(-2, 3), ylim = c(0, 1))
   plot_cdf(y, color = cl[1])
   plot_cdf(y[sub], color = cl[2])
@@ -382,7 +390,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
   for(marker in markers_on) {
     points(risk_data[marker], ret_data[marker], col = "black", cex = 1.5, pch = 15)
     nstr <- sprintf("%.2f", gammas[marker])
-    text(risk_data[marker] + 0.18, ret_data[marker] - 0.03, bquote(paste(gamma, " = ", .(nstr))))
+    text(risk_data[marker] + 0.2, ret_data[marker] - 0.05, bquote(paste(gamma, " = ", .(nstr))), cex = 1.5)
   }
   
   # Plot weights for a few gamma
@@ -443,9 +451,9 @@ test_that("Test Kelly gambling optimal bets", {
   }
   
   # Plot Kelly optimal growth trajectories
-  matplot(1:PERIODS, wealth, xlab = "Time", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1)
-  matlines(1:PERIODS, wealth_cmp, col = "red", lty = 2)
-  legend("topleft", c("Kelly Optimal Bets", "Naive Bets"), col = c("blue", "red"), lty = c(1, 2))
+  matplot(1:PERIODS, wealth, xlab = "Time", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1, lwd = 2)
+  matlines(1:PERIODS, wealth_cmp, col = "red", lty = 2, lwd = 2)
+  legend("topleft", c("Kelly Optimal Bets", "Naive Bets"), col = c("blue", "red"), lty = c(1, 2), lwd = 2, bty = "n")
 })
 
 test_that("Test worst-case covariance", {
@@ -583,7 +591,7 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
       P[P < tol] <- 0
       P <- P/apply(P, 1, sum)   # Normalize so rows sum to exactly 1
       mc <- new("markovchain", states = states, transitionMatrix = P)
-      plot(mc)
+      plot(mc, label.cex = 1.5)
     }
   }
   

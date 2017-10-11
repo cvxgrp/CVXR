@@ -93,8 +93,8 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) promote(arg, size) else arg })
-  list(sum_expr(arg_objs), list())
+  arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) lo.promote(arg, size) else arg })
+  list(lo.sum_expr(arg_objs), list())
 }
 
 setMethod("graph_implementation", "AddExpression", function(object, arg_objs, size, data = NA_real_) {
@@ -138,7 +138,7 @@ setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
 setMethod("is_decr", "NegExpression", function(object, idx) { TRUE })
 
 NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(neg_expr(arg_objs[[1]]), list())
+  list(lo.neg_expr(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "NegExpression", function(object, arg_objs, size, data = NA_real_) {
@@ -195,10 +195,10 @@ setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Promote the right-hand side to a diagonal matrix if necessary
   if(size[2] != 1 && all(arg_objs[[2]]$size == c(1,1))) {
-    arg <- promote(arg_objs[[2]], c(size[2], 1))
-    arg_objs[[2]] <- diag_vec(arg)
+    arg <- lo.promote(arg_objs[[2]], c(size[2], 1))
+    arg_objs[[2]] <- lo.diag_vec(arg)
   }
-  list(mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
+  list(lo.mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
 setMethod("graph_implementation", "MulExpression", function(object, arg_objs, size, data = NA_real_) {
@@ -220,10 +220,10 @@ setMethod("is_decr", "RMulExpression", function(object, idx) { is_negative(objec
 RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Promote the left-hand side to a diagonal matrix if necessary
   if(size[1] != 1 && all(arg_objs[[1]]$size == c(1,1))) {
-    arg <- promote(arg_objs[[1]], c(size[1], 1))
-    arg_objs[[1]] <- diag_vec(arg)
+    arg <- lo.promote(arg_objs[[1]], c(size[1], 1))
+    arg_objs[[1]] <- lo.diag_vec(arg)
   }
-  list(rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
+  list(lo.rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
 setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, size, data = NA_real_) {
@@ -252,7 +252,7 @@ setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object
 setMethod("is_decr", "DivExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
 DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(div_expr(arg_objs[[1]], arg_objs[[2]]), list())
+  list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
 setMethod("graph_implementation", "DivExpression", function(object, arg_objs, size, data = NA_real_) {
@@ -367,9 +367,9 @@ CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   diff_matt <- create_const(diff_mat, c(dim, dim))
 
   if(axis == 2)
-    diff <- mul_expr(diff_mat, Y, size)
+    diff <- lo.mul_expr(diff_mat, Y, size)
   else
-    diff <- rmul_expr(Y, diff_mat, size)
+    diff <- lo.rmul_expr(Y, diff_mat, size)
   list(Y, list(create_eq(arg_objs[[1]], diff)))
 }
 
@@ -401,7 +401,7 @@ setMethod("size_from_args", "DiagVec", function(object) {
 })
 
 DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(diag_vec(arg_objs[[1]]), list())
+  list(lo.diag_vec(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, data = NA_real_) {
@@ -432,7 +432,7 @@ setMethod("size_from_args", "DiagMat", function(object) {
 })
 
 DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(diag_mat(arg_objs[[1]]), list())
+  list(lo.diag_mat(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, data = NA_real_) {
@@ -714,7 +714,7 @@ setMethod("size_from_args", "Reshape", function(object) { c(object@rows, object@
 setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
 
 Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(reshape(arg_objs[[1]], size), list())
+  list(lo.reshape(arg_objs[[1]], size), list())
 }
 
 setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, data = NA_real_) {
@@ -747,11 +747,11 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   else if(axis == 1) {
     const_size <- c(arg_objs[[1]]$size[2], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- rmul_expr(arg_objs[[1]], ones, size)
+    obj <- lo.rmul_expr(arg_objs[[1]], ones, size)
   } else {   # axis == 2
     const_size <- c(1, arg_objs[[1]]$size[1])
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- mul_expr(ones, arg_objs[[1]], size)
+    obj <- lo.mul_expr(ones, arg_objs[[1]], size)
   }
   list(obj, list())
 }
@@ -810,7 +810,7 @@ setMethod("size_from_args", "Transpose", function(object) {
 })
 
 Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(transpose(arg_objs[[1]]), list())
+  list(lo.transpose(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {

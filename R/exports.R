@@ -15,7 +15,7 @@ norm1 <- Norm1
 norm2 <- Norm2
 norm_inf <- NormInf
 norm_nuc <- NormNuc
-pnorm <- Pnorm
+p_norm <- Pnorm
 quad_form <- QuadForm
 quad_over_lin <- QuadOverLin
 sum_entries <- SumEntries
@@ -120,17 +120,20 @@ setMethod("log1p", "Expression", function(x) { Log1p(x = x) })
 setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 
 # Matrix/vector operations
+affine_prod <- AffineProd
 bmat <- Bmat
 conv <- Conv
+cum_sum <- CumSum
 hstack <- HStack
 kron <- Kron
 reshape_expr <- Reshape
 sigma_max <- SigmaMax
+upper_tri <- UpperTri
 vec <- Vec
 vstack <- VStack
 
 setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
-setMethod("diag", "Expression", function(x, nrow, ncol) {
+setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
   if(nargs() == 1L)
     Diag(x)
   else if(is_matrix(x))

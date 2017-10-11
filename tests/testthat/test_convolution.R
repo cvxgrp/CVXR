@@ -6,18 +6,18 @@ test_that("test 1D convolution", {
   f <- c(1, 2, 3)
   g <- c(0, 1, 0.5)
   f_conv_g <- c(0, 1, 2.5, 4, 1.5)
-  expr <- Conv(f, g)
+  expr <- conv(f, g)
   expect_true(is_constant(expr))
   expect_equal(size(expr), c(5, 1))
   expect_equal(value(expr), f_conv_g)
   
-  expr <- Conv(f, x)
+  expr <- conv(f, x)
   expect_true(is_affine(expr))
   expect_equal(size(expr), c(5, 1))
   
   # Matrix stuffing
   t <- Variable()
-  prob <- Problem(Minimize(Norm(expr, 1)), list(x == g))
+  prob <- Problem(Minimize(p_norm(expr, 1)), list(x == g))
   result <- solve(prob)
   expect_equal(result$value, sum(f_conv_g), tolerance = TOL)
   expect_equal(result$getValue(expr), f_conv_g, tolerance = TOL)

@@ -22,7 +22,7 @@ Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
 
 Elementwise.promote <- function(arg, size) {
   if(any(size(arg) != size))
-    promote(arg, size)
+    lo.promote(arg, size)
   else
     arg
 }
@@ -66,7 +66,7 @@ setMethod(".grad", "Abs", function(object, values) {
 Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size(x))
-  constraints <- list(create_geq(sum_expr(list(x, t))), create_leq(x, t))
+  constraints <- list(create_geq(lo.sum_expr(list(x, t))), create_leq(x, t))
   list(t, constraints)
 }
 
@@ -262,12 +262,12 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   abs_graph <- Abs.graph_implementation(list(s), size)
   abs_s <- abs_graph[[1]]
   constr_abs <- abs_graph[[2]]
-  M_abs_s <- mul_expr(M, abs_s, size)
-  obj <- sum_expr(list(n2, mul_expr(two, M_abs_s, size)))
+  M_abs_s <- lo.mul_expr(M, abs_s, size)
+  obj <- lo.sum_expr(list(n2, lo.mul_expr(two, M_abs_s, size)))
   
   # x == s + n
   constraints <- c(constr_sq, constr_abs)
-  constraints <- c(constraints, list(create_eq(x, sum_expr(list(n, s)))))
+  constraints <- c(constraints, list(create_eq(x, lo.sum_expr(list(n, s)))))
   list(obj, constraints)
 }
 
@@ -330,7 +330,7 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- list(ExpCone(t, x, y), create_geq(y))   # y >= 0
   
   # -t - x + y
-  obj <- sub_expr(y, sum_expr(list(x, t)))
+  obj <- lo.sub_expr(y, lo.sum_expr(list(x, t)))
   list(obj, constraints)
 }
 
@@ -419,7 +419,7 @@ setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   ones <- create_const(matrix(1, nrow = x$size[1], ncol = x$size[2]), x$size)
-  xp1 <- sum_expr(list(x, ones))
+  xp1 <- lo.sum_expr(list(x, ones))
   Log.graph_implementation(list(xp1), size, data)
 }
 
@@ -465,15 +465,15 @@ Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   
   # log(1 + exp(x)) <= t <=> exp(-t) + exp(x - t) <= 1
-  graph0 <- Exp.graph_implementation(list(neg_expr(t)), size)
+  graph0 <- Exp.graph_implementation(list(lo.neg_expr(t)), size)
   obj0 <- graph0[[1]]
   constr0 <- graph0[[2]]
   
-  graph1 <- Exp.graph_implementation(list(sub_expr(x, t)), size)
+  graph1 <- Exp.graph_implementation(list(lo.sub_expr(x, t)), size)
   obj1 <- graph1[[1]]
   constr1 <- graph1[[2]]
   
-  lhs <- sum_expr(list(obj0, obj1))
+  lhs <- lo.sum_expr(list(obj0, obj1))
   ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   constr <- c(constr0, constr1, list(create_leq(lhs, ones)))
   list(t, constr)
@@ -765,10 +765,10 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   two <- create_const(2, c(1, 1))
   length <- prod(size(x))
-  constraints <- list(SOCAxis(reshape(sum_expr(list(x, one)), c(length, 1)),
+  constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(x, one)), c(length, 1)),
                               lo.vstack(list(
-                              reshape(sub_expr(x, one), c(1, length)),
-                              reshape(mul_expr(two, t, size(t)), c(1, length))
+                              lo.reshape(lo.sub_expr(x, one), c(1, length)),
+                              lo.reshape(lo.mul_expr(two, t, size(t)), c(1, length))
                               ), c(2, length)),
                             2))
   list(t, constraints)
@@ -808,10 +808,10 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   two <- create_const(2, c(1, 1))
   length <- prod(size(x))
-  constraints <- list(SOCAxis(reshape(sum_expr(list(t, one)), c(length, 1)),
+  constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(t, one)), c(length, 1)),
                               lo.vstack(list(
-                                reshape(sub_expr(t, one), c(1, length)),
-                                reshape(mul_expr(two, x, size(x)), c(1, length))
+                                lo.reshape(lo.sub_expr(t, one), c(1, length)),
+                                lo.reshape(lo.mul_expr(two, x, size(x)), c(1, length))
                                 ), c(2, length)),
                               2))
   list(t, constraints)

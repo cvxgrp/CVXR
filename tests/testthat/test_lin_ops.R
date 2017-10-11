@@ -48,7 +48,7 @@ test_that("Test adding lin expr", {
   y <- create_var(size)
   
   # Expanding dict.
-  add_expr <- sum_expr(list(x, y))
+  add_expr <- lo.sum_expr(list(x, y))
   expect_equal(add_expr$size, size)
   expect_equal(length(add_expr$args), 2)
 })
@@ -60,7 +60,7 @@ test_that("Test getting vars from an expression", {
   A <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   
   # Expanding dict.
-  add_expr <- sum_expr(list(x, y, A))
+  add_expr <- lo.sum_expr(list(x, y, A))
   vars_ <- get_expr_vars(add_expr)
   expect_equal(vars_[[1]], list(x$data, size))
   expect_equal(vars_[[2]], list(y$data, size))
@@ -69,7 +69,7 @@ test_that("Test getting vars from an expression", {
 test_that("Test negating an expression", {
   size <- c(5, 4)
   var <- create_var(size)
-  expr <- neg_expr(var)
+  expr <- lo.neg_expr(var)
   expect_equal(length(expr$args), 1)
   expect_equal(expr$size, size)
   expect_equal(expr$type, NEG)
@@ -79,7 +79,7 @@ test_that("Test creating an equality constraint", {
   size <- c(5, 5)
   x <- create_var(size)
   y <- create_var(size)
-  lh_expr <- sum_expr(list(x, y))
+  lh_expr <- lo.sum_expr(list(x, y))
   value <- matrix(1, nrow = size[1], ncol = size[2])
   rh_expr <- create_const(value, size)
   constr <- create_eq(lh_expr, rh_expr)
@@ -93,7 +93,7 @@ test_that("Test creating a less than or equal constraint", {
   size <- c(5, 5)
   x <- create_var(size)
   y <- create_var(size)
-  lh_expr <- sum_expr(list(x, y))
+  lh_expr <- lo.sum_expr(list(x, y))
   value <- matrix(1, nrow = size[1], ncol = size[2])
   rh_expr <- create_const(value, size)
   constr <- create_leq(lh_expr, rh_expr)

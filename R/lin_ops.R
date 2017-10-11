@@ -93,23 +93,23 @@ create_const <- function(value, size, sparse = FALSE) {
   LinOp(op_type, size, list(), value)
 }
 
-sum_expr <- function(operators) {
+lo.sum_expr <- function(operators) {
   LinOp(SUM, operators[[1]]$size, operators)
 }
 
-neg_expr <- function(operator) {
+lo.neg_expr <- function(operator) {
   LinOp(NEG, operator$size, list(operator))
 }
 
-sub_expr <- function(lh_op, rh_op) {
-  sum_expr(list(lh_op, neg_expr(rh_op)))
+lo.sub_expr <- function(lh_op, rh_op) {
+  lo.sum_expr(list(lh_op, lo.neg_expr(rh_op)))
 }
 
-mul_expr <- function(lh_op, rh_op, size) {
+lo.mul_expr <- function(lh_op, rh_op, size) {
   LinOp(MUL, size, list(rh_op), lh_op)
 }
 
-rmul_expr <- function(lh_op, rh_op, size) {
+lo.rmul_expr <- function(lh_op, rh_op, size) {
   LinOp(RMUL, size, list(lh_op), rh_op)
 }
 
@@ -121,11 +121,11 @@ lo.kron <- function(lh_op, rh_op, size) {
   LinOp(KRON, size, list(rh_op), lh_op)
 }
 
-div_expr <- function(lh_op, rh_op) {
+lo.div_expr <- function(lh_op, rh_op) {
   LinOp(DIV, lh_op$size, list(lh_op), rh_op)
 }
 
-promote <- function(operator, size) {
+lo.promote <- function(operator, size) {
   LinOp(PROMOTE, size, list(operator))
 }
 
@@ -145,21 +145,21 @@ lo.conv <- function(lh_op, rh_op, size) {
   LinOp(CONV, size, list(rh_op), lh_op)
 }
 
-transpose <- function(operator) {
+lo.transpose <- function(operator) {
   size = c(operator$size[2], operator$size[1])
   LinOp(TRANSPOSE, size, list(operator))
 }
 
-reshape <- function(operator, size) {
+lo.reshape <- function(operator, size) {
   LinOp(RESHAPE, size, list(operator))
 }
 
-diag_vec <- function(operator) {
+lo.diag_vec <- function(operator) {
   size <- c(operator$size[1], operator$size[1])
   LinOp(DIAG_VEC, size, list(operator))
 }
 
-diag_mat <- function(operator) {
+lo.diag_mat <- function(operator) {
   size = c(operator$size[1], 1)
   LinOp(DIAG_MAT, size, list(operator))
 }
@@ -182,7 +182,7 @@ get_constr_expr <- function(lh_op, rh_op) {
   if(missing(rh_op))
     lh_op
   else
-    sum_expr(list(lh_op, neg_expr(rh_op)))
+    lo.sum_expr(list(lh_op, lo.neg_expr(rh_op)))
 }
 
 create_eq <- function(lh_op, rh_op, constr_id = get_id()) {
@@ -197,8 +197,8 @@ create_leq <- function(lh_op, rh_op, constr_id = get_id()) {
 
 create_geq <- function(lh_op, rh_op, constr_id = get_id()) {
   if(!missing(rh_op))
-    rh_op <- neg_expr(rh_op)
-  create_leq(neg_expr(lh_op), rh_op, constr_id)
+    rh_op <- lo.neg_expr(rh_op)
+  create_leq(lo.neg_expr(lh_op), rh_op, constr_id)
 }
 
 get_expr_vars <- function(operator) {

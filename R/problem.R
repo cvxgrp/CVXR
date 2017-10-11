@@ -61,7 +61,7 @@ setMethod("canonicalize", "Maximize", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
   constraints <- canon[[2]]
-  list(neg_expr(obj), constraints)
+  list(lo.neg_expr(obj), constraints)
 })
 
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })

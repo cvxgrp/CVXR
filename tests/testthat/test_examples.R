@@ -124,7 +124,7 @@ test_that("Test examples from the README", {
   # x i s a vector of stock holdings as fractions of total assets.
   
   expected_return <- mu %*% x
-  risk <- QuadForm(x, sigma)
+  risk <- quad_form(x, sigma)
   
   gamma <- 1
   objective <- Maximize(expected_return - gamma*risk)
@@ -211,8 +211,8 @@ test_that("Test log determinant", {
   # Create and solve the model
   A <- Variable(n, n)
   b <- Variable(n)
-  obj <- Maximize(LogDet(A))
-  constraints <- lapply(1:m, function(i) { norm2(A %*% as.matrix(x[,i]) + b) <= 1 })
+  obj <- Maximize(log_det(A))
+  constraints <- lapply(1:m, function(i) { p_norm(A %*% as.matrix(x[,i]) + b) <= 1 })
   p <- Problem(obj, constraints)
   result <- solve(p)
   expect_equal(result$value, 1.9746, tolerance = 1e-2)
@@ -239,7 +239,7 @@ test_that("Test portfolio problem", {
   ret <- t(pbar) %*% x
   # DCP attr causes error because not all the curvature
   # matrices are reduced to constants when an atom is scalar.
-  risk <- norm2(D %*% x)^2 + (Z %*% y)^2
+  risk <- p_norm(D %*% x)^2 + (Z %*% y)^2
 })
 
 test_that("Test examples from CVXR introduction", {
@@ -251,7 +251,7 @@ test_that("Test examples from CVXR introduction", {
   
   # Construct the problem
   x <- Variable(n)
-  objective <- Minimize(SumSquares(A %*% x - b))
+  objective <- Minimize(sum_squares(A %*% x - b))
   constraints <- list(0 <= x, x <= 1)
   prob <- Problem(objective, constraints)
   
@@ -383,7 +383,7 @@ test_that("Test examples from CVXR introduction", {
   
   # Construct the problem
   x <- Variable(m)
-  error <- SumSquares(A %*% x - b)
+  error <- sum_squares(A %*% x - b)
 
   # Construct a trade-off curve of ||Ax-b||^2 vs. ||x||_1
   sq_penalty <- c()
@@ -391,7 +391,7 @@ test_that("Test examples from CVXR introduction", {
   x_values <- list()
   gammas <- 10^seq(-4, 6, length.out = 50)
   for(gamma in gammas) {
-    obj <- Minimize(error + gamma*norm1(x))
+    obj <- Minimize(error + gamma*p_norm(x,1))
     prob <- Problem(obj)
 
     result <- solve(prob)
@@ -406,7 +406,7 @@ test_that("Test examples from CVXR introduction", {
   
   # Use size(expr) to get the dimensions
   cat("dimensions of X:", size(X))
-  cat("\ndimensions of SumEntries(X):", size(SumEntries(X)))
+  cat("\ndimensions of sum_entries(X):", size(sum_entries(X)))
   cat("\ndimensions of A %*% X:", size(A %*% X))
   
   # ValueError raised for invalid dimensions
@@ -435,20 +435,20 @@ test_that("Test image in-painting", {
   
   # Recover the original image using total variation in-painting
   U <- Variable(rows, cols)
-  obj <- Minimize(TotalVariation(U))
-  constraints <- list(MulElemwise(Known, U) == MulElemwise(Known, Ucorr))
+  obj <- Minimize(tv(U))
+  constraints <- list(Known * U == Known * Ucorr)
   prob <- Problem(obj, constraints)
   solve(prob, solver = "SCS")
 })
 
-test_that("Test the LogSumExp function", {
+test_that("Test the log_sum_exp function", {
   set.seed(1)
   m <- 5
   n <- 2
   X <- matrix(1, nrow = m, ncol = n)
   w <- Variable(n)
   
-  expr2 <- lapply(1:m, function(i) { LogSumExp(VStack(0, X[i,] %*% w)) })
+  expr2 <- lapply(1:m, function(i) { log_sum_exp(vstack(0, X[i,] %*% w)) })
   expr3 <- Reduce("+", expr2)
   obj <- Minimize(expr3)
   p <- Problem(obj)

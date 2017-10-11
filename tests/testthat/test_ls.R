@@ -121,10 +121,10 @@ test_that("Test equivalent forms", {
   
   x <- Variable(n)
   
-  obj1 <- SumSquares(A %*% x - b)
-  obj2 <- SumEntries(Square(A %*% x - b))
-  obj3 <- QuadForm(x, P) + t(q) %*% x + r
-  obj4 <- MatrixFrac(x, Pinv) + t(q) %*% x + r
+  obj1 <- sum_squares(A %*% x - b)
+  obj2 <- sum_entries(square(A %*% x - b))
+  obj3 <- quad_form(x, P) + t(q) %*% x + r
+  obj4 <- matrix_frac(x, Pinv) + t(q) %*% x + r
   
   cons <- list(G %*% x == h)
   

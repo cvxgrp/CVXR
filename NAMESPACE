@@ -1,6 +1,8 @@
 useDynLib(cvxr)
 export("%>>%")
 export("%<<%")
+export("diag")
+export("log1p")
 export("norm")
 exportPattern("^[[:alpha:]]+")
 import(methods)

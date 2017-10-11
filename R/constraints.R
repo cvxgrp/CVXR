@@ -280,7 +280,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   obj <- canon[[1]]
   constraints <- canon[[2]]
   half <- create_const(0.5, c(1,1))
-  symm <- mul_expr(half, sum_expr(list(obj, transpose(obj))), obj$size)
+  symm <- lo.mul_expr(half, lo.sum_expr(list(obj, lo.transpose(obj))), obj$size)
   dual_holder <- SDP(symm, enforce_sym = FALSE, constr_id = object@constr_id)
   list(NA, c(constraints, list(dual_holder)))
 })
@@ -364,13 +364,13 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
   size <- c(entries, rows*cols)
   coeff <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
   coeff <- create_const(coeff, size, sparse = TRUE)
-  vect <- reshape(object@A, c(rows*cols, 1))
-  mul_expr(coeff, vect, c(entries, 1))
+  vect <- lo.reshape(object@A, c(rows*cols, 1))
+  lo.mul_expr(coeff, vect, c(entries, 1))
 }
 
 .get_eq_constr <- function(object) {
   upper_tri <- lo.upper_tri(object@A)
-  lower_tri <- lo.upper_tri(transpose(object@A))
+  lower_tri <- lo.upper_tri(lo.transpose(object@A))
   create_eq(upper_tri, lower_tri)
 }
 

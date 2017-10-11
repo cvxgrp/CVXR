@@ -459,9 +459,9 @@ LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   n <- size(A)[1]
   # SDP constraint.
   t <- create_var(c(1,1))
-  prom_t <- promote(t, c(n,1))
+  prom_t <- lo.promote(t, c(n,1))
   # I*t - A
-  expr <- sub_expr(diag_vec(prom_t), A)
+  expr <- lo.sub_expr(lo.diag_vec(prom_t), A)
   list(t, list(SDP(expr)))
 }
 
@@ -546,15 +546,15 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- c(constraints, list(SDP(A)))
 
   # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
-  Z_lower_tri <- lo.upper_tri(transpose(Z))
+  Z_lower_tri <- lo.upper_tri(lo.transpose(Z))
   constraints <- c(constraints, list(create_eq(Z_lower_tri)))
 
   # D[i,i] = Z[i,i]
-  constraints <- c(constraints, list(create_eq(D, diag_mat(Z))))
+  constraints <- c(constraints, list(create_eq(D, lo.diag_mat(Z))))
 
   # Fix X using the fact that A must be affine by the DCP rules
   # X[1:n, 1:n] == D
-  constraints <- Index.block_eq(X, diag_vec(D), constraints, 1, n, 1, n)
+  constraints <- Index.block_eq(X, lo.diag_vec(D), constraints, 1, n, 1, n)
 
   # X[1:n, (n+1):(2*n)] == Z
   constraints <- Index.block_eq(X, Z, constraints, 1, n, n+1, 2*n)
@@ -604,8 +604,8 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 
   # sum(exp(x - t)) <= 1
   if(is.na(axis)) {
-    prom_t <- promote(t, size(x))
-    expr <- sub_expr(x, prom_t)
+    prom_t <- lo.promote(t, size(x))
+    expr <- lo.sub_expr(x, prom_t)
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
@@ -613,27 +613,27 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   } else if(axis == 2) {
     prom_size <- c(size(x)[1], 1)
     ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
-    prom_t <- mul_expr(ones, t, size(x))
-    expr <- sub_expr(x, prom_t)
+    prom_t <- lo.mul_expr(ones, t, size(x))
+    expr <- lo.sub_expr(x, prom_t)
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
 
     const_size <- c(1, size(x)[1])
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- mul_expr(ones, obj, size)
+    obj <- lo.mul_expr(ones, obj, size)
   } else {    # axis == 1
     prom_size <- c(1, size(x)[2])
     ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
-    prom_t <- rmul_expr(t, ones, size(x))
-    expr <- sub_expr(x, prom_t)
+    prom_t <- lo.rmul_expr(t, ones, size(x))
+    expr <- lo.sub_expr(x, prom_t)
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
 
     const_size <- c(size(x)[2], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- rmul_expr(obj, ones, size)
+    obj <- lo.rmul_expr(obj, ones, size)
   }
 
   ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
@@ -728,7 +728,7 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- Index.block_eq(M, Tmat, constraints, n+1, n+m, n+1, n+m)
 
   # Add SDP constraints.
-  list(cvxr::trace(Tmat), c(constraints, list(SDP(M))))
+  list(cvxr::lo.trace(Tmat), c(constraints, list(SDP(M))))
 }
 
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
@@ -766,17 +766,17 @@ MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis)) {
     t <- create_var(c(1,1))
-    promoted_t <- promote(t, size(arg_objs[[1]]))
+    promoted_t <- lo.promote(t, size(arg_objs[[1]]))
   } else if(axis == 2) {
     t <- create_var(c(1, size(arg_objs[[1]])[2]))
     const_size <- c(size(arg_objs[[1]])[1], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    promoted_t <- mul_expr(ones, t, size(arg_objs[[1]]))
+    promoted_t <- lo.mul_expr(ones, t, size(arg_objs[[1]]))
   } else {   # axis == 1
     t <- create_var(c(size(arg_objs[[1]])[1], 1))
     const_size <- c(1, size(arg_objs[[1]])[2])
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    promoted_t <- rmul_expr(t, ones, size(arg_objs[[1]]))
+    promoted_t <- lo.rmul_expr(t, ones, size(arg_objs[[1]]))
   }
 
   constraints <- list(create_leq(arg_objs[[1]], promoted_t))
@@ -880,6 +880,12 @@ setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negati
 setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
+setMethod(".domain", "Pnorm", function(object) {
+  if(object@p < 1 && object@p != 0)
+    list(object@args[[1]] >= 0)
+  else
+    list()
+})
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
 setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- prod(size(object@args[[1]]))
@@ -923,20 +929,20 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       return(list(t, list(SOC(t, list(x)))))
     else {
       t <- create_var(size)
-      return(list(t, list(SOCAxis(reshape(t, c(prod(t$size), 1)), x, axis))))
+      return(list(t, list(SOCAxis(lo.reshape(t, c(prod(t$size), 1)), x, axis))))
     }
   }
 
   if(p == Inf) {
-    t_ <- promote(t, x$size)
-    return(list(t, list(create_leq(x, t_), create_geq(sum_expr(list(x, t_))))))
+    t_ <- lo.promote(t, x$size)
+    return(list(t, list(create_leq(x, t_), create_geq(lo.sum_expr(list(x, t_))))))
   }
 
   # We need absolute value constraint for symmetric convex branches (p >= 1)
   # We alias |x| as x from this point forward to make code pretty
   if(p >= 1) {
     absx <- create_var(x$size)
-    constraints <- c(constraints, list(create_leq(x, absx), create_geq(sum_expr(list(x, absx))) ))
+    constraints <- c(constraints, list(create_leq(x, absx), create_geq(lo.sum_expr(list(x, absx))) ))
     x <- absx
   }
 
@@ -946,7 +952,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Now take care of remaining convex/concave branches
   # To create rational powers, need new variable r and constraint sum(r) == t
   r <- create_var(x$size)
-  t_ <- promote(t, x$size)
+  t_ <- lo.promote(t, x$size)
   constraints <- c(constraints, list(create_eq(lo.sum_entries(r), t)))
 
   p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
@@ -1041,7 +1047,7 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # X[1:rows, (rows+1):(rows+cols)] == A
   constraints <- Index.block_eq(X, A, constraints, 1, rows, rows+1, rows+cols)
   half <- create_const(0.5, c(1,1))
-  trace_expr <- mul_expr(half, cvxr::trace(X), c(1, 1))
+  trace_expr <- lo.mul_expr(half, cvxr::lo.trace(X), c(1, 1))
 
   # Add SDP constraint.
   list(trace_expr, c(list(SDP(X)), constraints))
@@ -1169,9 +1175,9 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   y <- arg_objs[[2]]   # Known to be a scalar.
   v <- create_var(c(1,1))
   two <- create_const(2, c(1,1))
-  constraints <- list(SOC(sum_expr(list(y, v)),
-                          list(sub_expr(y, v),
-                               mul_expr(two, x, x$size))),
+  constraints <- list(SOC(lo.sum_expr(list(y, v)),
+                          list(lo.sub_expr(y, v),
+                               lo.mul_expr(two, x, x$size))),
                       create_geq(y))
   list(v, constraints)
 }
@@ -1218,15 +1224,15 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:n, 1:n] == I_n*t
-  prom_t <- promote(t, c(n,1))
-  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, 1, n, 1, n)
+  prom_t <- lo.promote(t, c(n,1))
+  constraints <- Index.block_eq(X, lo.diag_vec(prom_t), constraints, 1, n, 1, n)
 
   # X[1:n, (n+1):(n+m)] == A
   constraints <- Index.block_eq(X, A, constraints, 1, n, n+1, n+m)
 
   # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
-  prom_t <- promote(t, c(m,1))
-  constraints <- Index.block_eq(X, diag_vec(prom_t), constraints, n+1, n+m, n+1, n+m)
+  prom_t <- lo.promote(t, c(m,1))
+  constraints <- Index.block_eq(X, lo.diag_vec(prom_t), constraints, n+1, n+m, n+1, n+m)
 
   # Add SDP constraint.
   list(t, c(constraints, list(SDP(X))))
@@ -1291,10 +1297,10 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(x$size)
 
   sum_t <- lo.sum_entries(t)
-  obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
-  prom_q <- promote(q, x$size)
+  obj <- lo.sum_expr(list(sum_t, lo.mul_expr(k, q, c(1,1))))
+  prom_q <- lo.promote(q, x$size)
 
-  constr <- list(create_leq(x, sum_expr(list(t, prom_q))), create_geq(t))
+  constr <- list(create_leq(x, lo.sum_expr(list(t, prom_q))), create_geq(t))
   list(obj, constr)
 }
 

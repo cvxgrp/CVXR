@@ -184,8 +184,8 @@ setMethod("canonicalize", "SemidefUpperTri", function(object) {
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
   fill_coef <- upper_tri_to_full(object@n)
   fill_coef <- create_const(fill_coef, c(object@n^2, size(object)[1]), sparse = TRUE)
-  full_mat = mul_expr(fill_coef, upper_tri, c(object@n^2, 1))
-  full_mat <- reshape(full_mat, c(object@n, object@n))
+  full_mat = lo.mul_expr(fill_coef, upper_tri, c(object@n^2, 1))
+  full_mat <- lo.reshape(full_mat, c(object@n, object@n))
   list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
 })
 

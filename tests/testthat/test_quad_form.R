@@ -27,10 +27,10 @@ test_that("Test quadratic form with a singular matrix", {
         # Look for the extremum of the quadratic form under the simplex constraint
         x <- Variable(n)
         if(action == "minimize") {
-          q <- QuadForm(x, Q)
+          q <- quad_form(x, Q)
           objective <- Minimize(q)
         } else if(action == "maximize") {
-          q <- QuadForm(x, -Q)
+          q <- quad_form(x, -Q)
           objective <- Maximize(q)
         }
         constraints <- list(x >= 0, sum(x) == 1)
@@ -51,7 +51,7 @@ test_that("Test quadratic form with a sparse matrix", {
   require(Matrix)
   Q <- sparseMatrix(i = 1:2, j = 1:2, x = rep(1, 2))
   x <- Variable(2)
-  cost <- QuadForm(x, Q)
+  cost <- quad_form(x, Q)
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
   result <- solve(prob)
   expect_equal(result$value, 5, tolerance = TOL)
@@ -60,7 +60,7 @@ test_that("Test quadratic form with a sparse matrix", {
 test_that("Test when P is constant and not symmetric", {
   P <- rbind(c(2, 2), c(3, 4))
   x <- Variable(2)
-  cost <- QuadForm(x, P)
+  cost <- quad_form(x, P)
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
   result <- solve(prob)
   expect_equal(result$value, 28, tolerance = TOL)
@@ -71,7 +71,7 @@ test_that("Test error when P is symmetric but not definite", {
   x <- Variable(2)
   
   # Forming quadratic form is okay
-  expect_warning(cost <- QuadForm(x, P))
+  expect_warning(cost <- quad_form(x, P))
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
   expect_error(solve(prob))
 })

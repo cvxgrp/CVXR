@@ -299,7 +299,7 @@ setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]
 setMethod("is_decr", "Conv", function(object, idx) { is_negative(object@args[[1]]) })
 
 Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(conv(arg_objs[[1]], arg_objs[[2]], size), list())
+  list(lo.conv(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
 setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data = NA_real_) {
@@ -308,7 +308,6 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
-cumsum.Expression <- function(x) { CumSum(expr = Vec(x)) }   # Flatten matrix in column-major order to match R's behavior
 
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
@@ -491,10 +490,6 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     d
 }
 
-diff.Expression <- function(x, lag = 1, differences = 1, ...) {
-  Diff(x, lag = lag, k = differences, ...)
-}
-
 .HStack <- setClass("HStack", contains = "AffAtom")
 HStack <- function(...) { .HStack(args = list(...)) }
 
@@ -513,7 +508,7 @@ setMethod("size_from_args", "HStack", function(object) {
 })
 
 HStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(hstack(arg_objs, size), list())
+  list(lo.hstack(arg_objs, size), list())
 }
 
 setMethod("graph_implementation", "HStack", function(object, arg_objs, size, data = NA_real_) {
@@ -540,7 +535,7 @@ setMethod("size_from_args", "Index", function(object) {
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
 Index.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  obj <- index(arg_objs[[1]], size, data[[1]])
+  obj <- lo.index(arg_objs[[1]], size, data[[1]])
   list(obj, list())
 }
 
@@ -632,7 +627,7 @@ setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]
 setMethod("is_decr", "Kron", function(object, idx) { is_negative(object@args[[2]]) })
 
 Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(kron(arg_objs[[1]], arg_objs[[2]], size), list())
+  list(lo.kron(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
 setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data = NA_real_) {
@@ -675,7 +670,7 @@ MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   if(any(arg_objs[[1]]$size != arg_objs[[2]]$size))
     MulExpression.graph_implementation(arg_objs, size, data)
   else
-    list(mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
+    list(lo.mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
 setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size, data = NA_real_) {
@@ -748,7 +743,7 @@ setMethod("to_numeric", "SumEntries", function(object, values) {
 SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis))
-    obj <- sum_entries(arg_objs[[1]])
+    obj <- lo.sum_entries(arg_objs[[1]])
   else if(axis == 1) {
     const_size <- c(arg_objs[[1]]$size[2], 1)
     ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
@@ -764,29 +759,6 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size, data = NA_real_) {
   SumEntries.graph_implementation(arg_objs, size, data)
 })
-
-sum.Expression <- function(..., na.rm = FALSE) {
-  if(na.rm)
-    warning("na.rm is unimplemented for Expression objects")
-
-  vals <- list(...)
-  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
-  if(all(is_expr))
-    Reduce("+", sum_expr)
-  else {
-    sum_num <- sum(sapply(vals[!is_expr], function(v) { sum(v, na.rm = na.rm) }))
-    Reduce("+", sum_expr) + sum_num
-  }
-}
-
-mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
-  if(na.rm)
-    stop("na.rm is unimplemented for Expression objects")
-  if(trim != 0)
-    stop("trim is unimplemented for Expression objects")
-  SumEntries(expr = x) / prod(size(x))
-}
 
 #'
 #' The Trace class.
@@ -814,7 +786,7 @@ setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]]
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
 
 Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(trace(arg_objs[[1]]), list())
+  list(lo.trace(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data = NA_real_) {
@@ -873,7 +845,7 @@ setMethod("size_from_args", "UpperTri", function(object) {
 })
 
 UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(upper_tri(arg_objs[[1]]), list())
+  list(lo.upper_tri(arg_objs[[1]]), list())
 }
 
 setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, data = NA_real_) {
@@ -904,7 +876,7 @@ setMethod("size_from_args", "VStack", function(object) {
 })
 
 VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(vstack(arg_objs, size), list())
+  list(lo.vstack(arg_objs, size), list())
 }
 
 setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {

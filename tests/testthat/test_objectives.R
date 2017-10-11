@@ -27,11 +27,11 @@ test_that("test the Maximize class", {
 })
 
 test_that("test is_dcp for Minimize and Maximize", {
-  expect_true(is_dcp(Minimize(NormInf(x))))
-  expect_false(is_dcp(Minimize(-NormInf(x))))
+  expect_true(is_dcp(Minimize(norm_inf(x))))
+  expect_false(is_dcp(Minimize(-norm_inf(x))))
   
-  expect_false(is_dcp(Maximize(NormInf(x))))
-  expect_true(is_dcp(Maximize(-NormInf(x))))
+  expect_false(is_dcp(Maximize(norm_inf(x))))
+  expect_true(is_dcp(Maximize(-norm_inf(x))))
 })
 
 test_that("test adding objectives", {

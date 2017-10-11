@@ -369,8 +369,8 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
 }
 
 .get_eq_constr <- function(object) {
-  upper_tri <- upper_tri(object@A)
-  lower_tri <- upper_tri(transpose(object@A))
+  upper_tri <- lo.upper_tri(object@A)
+  lower_tri <- lo.upper_tri(transpose(object@A))
   create_eq(upper_tri, lower_tri)
 }
 

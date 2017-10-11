@@ -308,9 +308,7 @@ setMethod(".grad", "AffineProd", function(object, values) {
                                                cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
-geo_mean <- GeoMean
 
-# TODO: Finish implementing GeoMean. Need to handle fractions properly and add slots for tree, cone_lb, etc
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x
   .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
@@ -548,7 +546,7 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- c(constraints, list(SDP(A)))
 
   # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
-  Z_lower_tri <- upper_tri(transpose(Z))
+  Z_lower_tri <- lo.upper_tri(transpose(Z))
   constraints <- c(constraints, list(create_eq(Z_lower_tri)))
 
   # D[i,i] = Z[i,i]
@@ -568,7 +566,7 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   graph <- Log.graph_implementation(list(D), c(n, 1))
   obj <- graph[[1]]
   constr <- graph[[2]]
-  list(sum_entries(obj), c(constraints, constr))
+  list(lo.sum_entries(obj), c(constraints, constr))
 }
 
 setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
@@ -611,7 +609,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     graph <- Exp.graph_implementation(list(expr), size(x))
     obj <- graph[[1]]
     constraints <- graph[[2]]
-    obj <- sum_entries(obj)
+    obj <- lo.sum_entries(obj)
   } else if(axis == 2) {
     prom_size <- c(size(x)[1], 1)
     ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
@@ -794,35 +792,6 @@ MinEntries <- function(x, axis = NA_real_) {
   -MaxEntries(-x, axis = axis)
 }
 
-max.Expression <- function(..., na.rm = FALSE) {
-  if(na.rm)
-    warning("na.rm is unimplemented for Expression objects")
-
-  vals <- list(...)
-  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
-  if(!all(is_expr)) {
-    max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
-    max_args <- c(max_args, max_num)
-  }
-  .MaxElemwise(args = max_args)
-}
-
-min.Expression <- function(..., na.rm = FALSE) {
-  if(na.rm)
-    warning("na.rm is unimplemented for Expression objects")
-
-  vals <- list(...)
-  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
-  min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
-  if(!all(is_expr)) {
-    min_num <- min(sapply(vals[!is_expr], function(v) { min(v, na.rm = na.rm) }))
-    min_args <- c(min_args, min_num)
-  }
-  min_args <- lapply(min_args, function(arg) { -as.Constant(arg) })
-  -.MaxElemwise(args = min_args)
-}
-
 #'
 #' The Pnorm class.
 #'
@@ -871,7 +840,7 @@ setMethod("name", "Pnorm", function(object) {
   sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p)
 })
 
-p_norm <- function(x, p) {
+.p_norm <- function(x, p) {
   if(p == Inf)
     max(abs(x))
   else if(p == 0)
@@ -897,9 +866,9 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     return(0)
 
   if(is.na(object@axis))
-    retval <- p_norm(values, object@p)
+    retval <- .p_norm(values, object@p)
   else
-    retval <- apply(values, object@axis, function(x) { p_norm(x, object@p) })
+    retval <- apply(values, object@axis, function(x) { .p_norm(x, object@p) })
   retval
 })
 
@@ -925,7 +894,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
     D_null <- D_null - (value < 0)
     return(Matrix(as.numeric(D_null), sparse = TRUE))   # TODO: Is this redundant? Check against CVXPY
   }
-  denominator <- p_norm(value, object@p)
+  denominator <- .p_norm(value, object@p)
   denominator <- denominator^(object@p - 1)
 
   # Subgrad is 0 when denom is 0 (or undefined)
@@ -972,13 +941,13 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 
   if(p == 1)
-    return(list(sum_entries(x), constraints))
+    return(list(lo.sum_entries(x), constraints))
 
   # Now take care of remaining convex/concave branches
   # To create rational powers, need new variable r and constraint sum(r) == t
   r <- create_var(x$size)
   t_ <- promote(t, x$size)
-  constraints <- c(constraints, list(create_eq(sum_entries(r), t)))
+  constraints <- c(constraints, list(create_eq(lo.sum_entries(r), t)))
 
   p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
   if(p < 0)
@@ -1028,31 +997,6 @@ MixedNorm <- function(X, p = 2, q = 1) {
   # Outer norms
   Norm(new("HStack", args = vecnorms), q)
 }
-
-norm1 <- Norm1
-norm2 <- Norm2
-norminf <- NormInf
-setMethod("norm", signature(x = "Expression", type = "character"), function(x, type, ...) {
-  x <- as.Constant(x)
-
-  # Norms for scalars same as absolute value
-  if(type == "O" || type == "o" || type == "1")   # Maximum absolute column sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 2))
-  else if(type == "I" || type == "i")             # Maximum absolute row sum
-    MaxEntries(Pnorm(x = x, p = 1, axis = 1))
-  else if(type == "F" || type == "f")             # Frobenius norm (Euclidean norm if x is treated as a vector)
-    Pnorm(x = x, p = 2, axis = NA_real_)
-  else if(type == "M" || type == "m")             # Maximum modulus (absolute value) of all elements in x
-    MaxEntries(Abs(x = x))
-  else if(type == "2")                            # Spectral norm (largest singular value of x)
-    # Sqrt(LambdaMax(A = t(x) %*% x))
-    stop("Spectral norm is currently unimplemented")
-  else
-    stop("Unrecognized type ", type)
-})
-
-setMethod("norm", signature(x = "Expression", type = "numeric"), function(x, type, ...) { Norm(x, p = type, axis = NA_real_) })
-setMethod("norm", signature(x = "Expression", type = "missing"), function(x, type, ...) { Norm(x, p = 2, axis = NA_real_) })
 
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 NormNuc <- function(A) { .NormNuc(A = A) }
@@ -1172,7 +1116,6 @@ QuadForm <- function(x, P) {
   } else
     stop("At least one argument to QuadForm must be constant")
 }
-quad_form <- QuadForm
 
 #'
 #' The QuadOverLin class.
@@ -1184,7 +1127,6 @@ quad_form <- QuadForm
 #' @export
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
-quad_over_lin <- QuadOverLin
 
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
@@ -1238,7 +1180,7 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
   QuadOverLin.graph_implementation(arg_objs, size, data)
 })
 
-.SigmaMax <- setClass("SigmaMax", representation(A = "Expression"), contains = "Atom")
+.SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
 setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
@@ -1348,7 +1290,7 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   q <- create_var(c(1,1))
   t <- create_var(x$size)
 
-  sum_t <- sum_entries(t)
+  sum_t <- lo.sum_entries(t)
   obj <- sum_expr(list(sum_t, mul_expr(k, q, c(1,1))))
   prom_q <- promote(q, x$size)
 

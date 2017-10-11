@@ -113,11 +113,11 @@ rmul_expr <- function(lh_op, rh_op, size) {
   LinOp(RMUL, size, list(lh_op), rh_op)
 }
 
-mul_elemwise <- function(lh_op, rh_op) {
+lo.mul_elemwise <- function(lh_op, rh_op) {
   LinOp(MUL_ELEM, lh_op$size, list(rh_op), lh_op)
 }
 
-kron <- function(lh_op, rh_op, size) {
+lo.kron <- function(lh_op, rh_op, size) {
   LinOp(KRON, size, list(rh_op), lh_op)
 }
 
@@ -129,19 +129,19 @@ promote <- function(operator, size) {
   LinOp(PROMOTE, size, list(operator))
 }
 
-sum_entries <- function(operator) {
+lo.sum_entries <- function(operator) {
   LinOp(SUM_ENTRIES, c(1,1), list(operator))
 }
 
-trace <- function(operator) {
+lo.trace <- function(operator) {
   LinOp(TRACE, c(1,1), list(operator))
 }
 
-index <- function(operator, size, keys) {
+lo.index <- function(operator, size, keys) {
   LinOp(INDEX, size, list(operator), keys)
 }
 
-conv <- function(lh_op, rh_op, size) {
+lo.conv <- function(lh_op, rh_op, size) {
   LinOp(CONV, size, list(rh_op), lh_op)
 }
 
@@ -164,17 +164,17 @@ diag_mat <- function(operator) {
   LinOp(DIAG_MAT, size, list(operator))
 }
 
-upper_tri <- function(operator) {
+lo.upper_tri <- function(operator) {
   entries <- operator$size[1] * operator$size[2]
   size <- c(floor((entries - operator$size[1])/2), 1)
   LinOp(UPPER_TRI, size, list(operator))
 }
 
-hstack <- function(operators, size) {
+lo.hstack <- function(operators, size) {
   LinOp(HSTACK, size, operators)
 }
 
-vstack <- function(operators, size) {
+lo.vstack <- function(operators, size) {
   LinOp(VSTACK, size, operators)
 }
 

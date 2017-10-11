@@ -536,7 +536,7 @@ gm <- function(t, x, y) {
   
   length <- prod(size(t))
   SOCAxis(reshape(sum_expr(list(x, y)), c(length, 1)),
-          vstack(list(
+          lo.vstack(list(
               reshape(sub_expr(x, y), c(1, length)),
               reshape(mul_expr(two, t, size(t)), c(1, length))
             ), c(2, length)), 2)

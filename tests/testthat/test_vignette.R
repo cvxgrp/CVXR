@@ -82,7 +82,7 @@ test_that("Test Huber regression", {
   lines(X, X %*% beta_ols, col = "blue")
   
   # Solve Huber regression problem
-  obj <- sum(Huber(y - X %*% beta, M))
+  obj <- sum(huber(y - X %*% beta, M))
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   beta_hub <- result$getValue(beta)
@@ -113,7 +113,7 @@ test_that("Test logistic regression", {
   y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
   
   beta <- Variable(n)
-  obj <- sum(Logistic(-X[y <= 0,] %*% beta)) + sum(Logistic(X[y == 1,] %*% beta))
+  obj <- sum(logistic(-X[y <= 0,] %*% beta)) + sum(logistic(X[y == 1,] %*% beta))
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   
@@ -163,7 +163,7 @@ test_that("Test saturating hinges problem", {
   
   for(i in 1:length(lambdas)) {
     lambda <- lambdas[i]
-    reg <- lambda * Norm(w, 1)
+    reg <- lambda * pnorm(w, 1)
     obj <- loss + reg
     prob <- Problem(Minimize(obj), constr)
     
@@ -326,7 +326,7 @@ test_that("Test direct standardization problem", {
   
   # Construct the direct standardization problem
   w <- Variable(msub)
-  objective <- sum(Entr(w))
+  objective <- sum(entr(w))
   constraints <- list(w >= 0, sum(w) == 1, t(X[sub,]) %*% w == b)
   prob <- Problem(Maximize(objective), constraints)
   
@@ -361,7 +361,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
   # Form problem
   w <- Variable(n)
   ret <- t(mu) %*% w
-  risk <- QuadForm(w, Sigma)
+  risk <- quad_form(w, Sigma)
   constraints <- list(w >= 0, sum(w) == 1)
   
   # Risk aversion parameters
@@ -496,7 +496,7 @@ test_that("Test worst-case covariance", {
   L <- Sigma_nom - Delta
   
   Sigma <- Semidef(n)
-  obj <- QuadForm(w, Sigma)
+  obj <- quad_form(w, Sigma)
   constr <- list(L <= Sigma, Sigma <= U, Sigma == t(Sigma))
   prob <- Problem(Maximize(obj), constr)
   result <- solve(prob)
@@ -526,7 +526,7 @@ test_that("Test sparse inverse covariance estimation", {
   Q <- cov(x_sample)    # Sample covariance matrix
   
   S <- Semidef(n)    # Variable constrained to positive semidefinite cone
-  obj <- Maximize(LogDet(S) - Trace(S %*% Q))
+  obj <- Maximize(log_det(S) - matrix_trace(S %*% Q))
   for(alpha in alphas) {
     constraints <- list(sum(abs(S)) <= alpha)
   
@@ -565,7 +565,7 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
     n <- length(names(a))
     P <- Variable(n, n)
     o <- rep(1, n)
-    objective <- Minimize(Norm(P - 1.0/n))
+    objective <- Minimize(norm(P - 1.0/n, "2"))
     constraints <- list(P %*% o == o, t(P) == P, P >= 0)
     for(i in names(a)) {
       for(j in a[[i]]) {  # (i-j) is a not-edge of g!
@@ -591,7 +591,7 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
       P[P < tol] <- 0
       P <- P/apply(P, 1, sum)   # Normalize so rows sum to exactly 1
       mc <- new("markovchain", states = states, transitionMatrix = P)
-      plot(mc, label.cex = 1.5)
+      plot(mc)
     }
   }
   

@@ -447,7 +447,7 @@ setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_
     })
     As <- do.call("rbind", lapply(Cs, function(C) { C[[1]] }))
     bs <- as.numeric(sapply(Cs, function(C) { C[[2]] }))
-    lhs <- rbind(cbind(2*P, t(As), cbind(As, NA))    # TODO: Fix this
+    lhs <- rbind(cbind(2*P, t(As), cbind(As, NA)))    # TODO: Fix this
     rhs <- c(-q, -bs)
   } else {   # Avoid calling rbind with empty list
     lhs <- 2*P

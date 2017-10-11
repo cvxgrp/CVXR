@@ -106,7 +106,7 @@ test_that("Test creating a less than or equal constraint", {
 test_that("Test sum entries op", {
   size <- c(5, 5)
   x <- create_var(size)
-  expr <- sum_entries(x)
+  expr <- lo.sum_entries(x)
   expect_equal(expr$size, c(1, 1))
   expect_equal(length(expr$args), 1)
   expect_equal(expr$type, SUM_ENTRIES)

@@ -24,7 +24,7 @@ test_that("Test application of DCP composition rules to determine curvature", {
   expr <- log(exp(Variable()))
   expect_false(is_dcp(expr))
   
-  expr <- Entr(NonNegative())
+  expr <- entr(NonNegative())
   expect_equal(curvature(expr), CONCAVE)
   
   expr <- ((Variable()^2)^0.5)^0
@@ -36,7 +36,7 @@ test_that("Test DCP composition rules with signed monotonicity", {
   expr <- abs(1 + exp(Variable()))
   expect_equal(curvature(expr), CONVEX)
   
-  expr <- abs(-Entr(Variable()))
+  expr <- abs(-entr(Variable()))
   expect_equal(curvature(expr), UNKNOWN)
   
   expr <- abs(-log(Variable()))
@@ -46,10 +46,10 @@ test_that("Test DCP composition rules with signed monotonicity", {
   expr <- abs(log(Variable()))
   expect_equal(curvature(expr), UNKNOWN)
   
-  expr <- abs(Square(Variable()))
+  expr <- abs(square(Variable()))
   expect_equal(curvature(expr), CONVEX)
   
-  expr <- abs(Entr(Variable()))
+  expr <- abs(entr(Variable()))
   expect_equal(curvature(expr), UNKNOWN)
   
   # Affine argument

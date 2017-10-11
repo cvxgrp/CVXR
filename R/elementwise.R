@@ -37,7 +37,6 @@ Elementwise.promote <- function(arg, size) {
 #' @export
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 Abs <- function(x) { .Abs(x = x) }
-setMethod("abs", "Expression", function(x) { .Abs(x = x) })
 
 setMethod("initialize", "Abs", function(.Object, ..., x) {
   .Object@x <- x
@@ -148,7 +147,6 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #' @export
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 Exp <- function(x) { .Exp(x = x) }
-setMethod("exp", "Expression", function(x) { .Exp(x = x) })
 
 setMethod("initialize", "Exp", function(.Object, ..., x) {
   .Object@x <- x
@@ -278,7 +276,6 @@ setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data
 })
 
 InvPos <- function(x) { Power(x, -1) }
-inv_pos <- InvPos
 
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
@@ -351,7 +348,6 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #' @export
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 Log <- function(x) { .Log(x = x) }
-setMethod("log", "Expression", function(x) { .Log(x = x) })
 
 setMethod("initialize", "Log", function(.Object, ..., x) {
   .Object@x <- x
@@ -401,7 +397,6 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @export
 .Log1p <- setClass("Log1p", contains = "Log")
 Log1p <- function(x) { .Log1p(x = x) }
-setMethod("log1p", "Expression", function(x) { .Log1p(x = x) })
 
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
@@ -562,10 +557,8 @@ MinElemwise <- function(arg1, arg2, ...) {
 }
 
 Neg <- function(x) { -MinElemwise(x, 0) }
-neg <- Neg
 
 Pos <- function(x) { MaxElemwise(x, 0) }
-pos <- Pos
 
 #'
 #' The Power class.
@@ -741,8 +734,6 @@ setMethod("graph_implementation", "Power", function(object, arg_objs, size, data
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 # Sqrt <- function(x) { Power(x, 1/2) }
-setMethod("sqrt", "Expression", function(x) { Sqrt(x) })
-
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
 Sqrt <- function(x) { .Sqrt(args = list(x)) }
@@ -775,7 +766,7 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   two <- create_const(2, c(1, 1))
   length <- prod(size(x))
   constraints <- list(SOCAxis(reshape(sum_expr(list(x, one)), c(length, 1)),
-                              vstack(list(
+                              lo.vstack(list(
                               reshape(sub_expr(x, one), c(1, length)),
                               reshape(mul_expr(two, t, size(t)), c(1, length))
                               ), c(2, length)),
@@ -818,7 +809,7 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   two <- create_const(2, c(1, 1))
   length <- prod(size(x))
   constraints <- list(SOCAxis(reshape(sum_expr(list(t, one)), c(length, 1)),
-                              vstack(list(
+                              lo.vstack(list(
                                 reshape(sub_expr(t, one), c(1, length)),
                                 reshape(mul_expr(two, x, size(x)), c(1, length))
                                 ), c(2, length)),

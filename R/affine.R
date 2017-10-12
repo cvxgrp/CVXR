@@ -306,6 +306,15 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
   Conv.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The CumSum class.
+#'
+#' This class represents the cumulative sum.
+#'
+#' @slot expr An \S4class{Expression} to be summed.
+#' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @aliases CumSum
+#' @export
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
@@ -444,7 +453,8 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
 #'
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
 #'
-#' @param expr An \S4class{Expression} or numeric constant representing a vector or diagonal matrix.
+#' @param expr An \S4class{Expression} or numeric constant representing a vector or square matrix.
+#' @return An \S4class{Expression} representing the diagonal vector or matrix.
 #' @aliases Diag
 #' @export
 Diag <- function(expr) {
@@ -462,6 +472,20 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix")
 }
 
+#'
+#' The Diff function.
+#'
+#' Takes in a vector of length n and returns a vector of length n-k of the kth order difference.
+#' \code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
+#' \code{diff(x,2)} is the second-order differences vector, equivalently diff(diff(x)). \code{diff(x,0)} returns the vector x unchanged.
+#' 
+#' @param x An \S4class{Expression} or numeric constant representing a vector or matrix.
+#' @param lag An integer indicating which lag to use. Defaults to 1.
+#' @param k An integer indicating the order of the difference. Defaults to 1.
+#' @param axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @return An \S4class{Expression} representing the kth order difference.
+#' @aliases Diff
+#' @export
 Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
   if(axis == 2)
@@ -490,6 +514,14 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     d
 }
 
+#'
+#' The HStack class.
+#'
+#' Horizontal concatenation of values.
+#' 
+#' @slot ... \S4class{Expression} objects or matrices. All arguments must have the same number of rows.
+#' @aliases HStack
+#' @export
 .HStack <- setClass("HStack", contains = "AffAtom")
 HStack <- function(...) { .HStack(args = list(...)) }
 
@@ -515,6 +547,15 @@ setMethod("graph_implementation", "HStack", function(object, arg_objs, size, dat
   HStack.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The Index class.
+#'
+#' This class represents indexing or slicing into a matrix.
+#' 
+#' @expr An \S4class{Expression} representing a vector or matrix.
+#' @key A list containing the start index, end index, and step size of the slice.
+#' @aliases Index
+#' @export
 .Index <- setClass("Index", representation(expr = "Expression", key = "list"), contains = "AffAtom")
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
@@ -598,6 +639,15 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
   constraints
 }
 
+#'
+#' The Kron class.
+#' 
+#' This class represents the kronecker product.
+#'
+#' @slot lh_exp An \S4class{Expression} or numeric constant representing the left-hand matrix.
+#' @slot rh_exp An \S4class{Expression} or numeric constant representing the right-hand matrix.
+#' @aliases Kron
+#' @export
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
@@ -634,6 +684,15 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
   Kron.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The MulElemwise class.
+#'
+#' This class represents the elementwise multiplication of two expressions. The first expression must be constant.
+#'
+#' @slot lh_const A constant \S4class{Expression} or numeric value.
+#' @slot rh_exp An \S4class{Expression}.
+#' @aliases MulElemwise
+#' @export
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
@@ -683,7 +742,7 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' This class represents the reshaping of an expression. The operator vectorizes the expression,
 #' then unvectorizes it into the new shape. Entries are stored in column-major order.
 #'
-#' @slot expr The \S4class{Expression} to reshape.
+#' @slot expr An \S4class{Expression} to reshape.
 #' @slot rows The new number of rows.
 #' @slot cols The new number of columns.
 #' @aliases Reshape
@@ -724,10 +783,10 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #'
 #' The SumEntries class.
 #'
-#' This class represents sum of all the entries in an expression.
+#' This class represents the sum of all entries in a vector or matrix.
 #'
-#' @slot expr The \S4class{Expression} to sum the entries of.
-#' @slot axis The axis to sum the entries along.
+#' @slot expr An \S4class{Expression} representing a vector or matrix.
+#' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
 #' @aliases SumEntries
 #' @export
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
@@ -765,7 +824,7 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #'
 #' This class represents the sum of the diagonal entries in a matrix.
 #'
-#' @slot expr The \S4class{Expression} to sum the diagonal of.
+#' @slot expr An \S4class{Expression} representing a matrix.
 #' @aliases Trace
 #' @export
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
@@ -817,6 +876,14 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
   Transpose.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The UpperTri class.
+#'
+#' The vectorized strictly upper triagonal entries of a matrix.
+#'
+#' @slot expr An \S4class{Expression} representing a matrix.
+#' @aliases UpperTri
+#' @export
 .UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
@@ -852,12 +919,28 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
   UpperTri.graph_implementation(arg_objs, size, data)
 })
 
-# Flattens the matrix X into a vector in column-major order
+#'
+#' The Vec function.
+#'
+#' Flattens a matrix into a vector in column-major order.
+#' 
+#' @param X An \S4class{Expression} or numeric constant representing a matrix.
+#' @return An \S4class{Expression} representing the vectorized matrix.
+#' @aliases Vec
+#' @export
 Vec <- function(X) {
   X <- as.Constant(X)
   Reshape(expr = X, rows = prod(size(X)), cols = 1)
 }
 
+#'
+#' The VStack class.
+#'
+#' Vertical concatenation of values.
+#' 
+#' @slot ... \S4class{Expression} objects or matrices. All arguments must have the same number of columns.
+#' @aliases VStack
+#' @export
 .VStack <- setClass("VStack", contains = "AffAtom")
 VStack <- function(...) { .VStack(args = list(...)) }
 
@@ -883,6 +966,15 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
   VStack.graph_implementation(arg_objs, size, data)
 })
 
+#'
+#' The Bmat function.
+#'
+#' Constructs a block matrix from a list of lists. Each internal list is stacked horizontally, and the internal lists are stacked vertically.
+#' 
+#' @param block_lists A list of lists containing \S4class{Expression} objects, which represent the blocks of the block matrix.
+#' @return An \S4class{Expression} representing the block matrix.
+#' @aliases Bmat
+#' @export
 Bmat <- function(block_lists) {
   row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
   .VStack(args = row_blocks)

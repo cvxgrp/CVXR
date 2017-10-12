@@ -81,7 +81,6 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #'
 #' @slot x An \S4class{Expression}.
 #' @aliases Entr
-#' @export
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 Entr <- function(x) { .Entr(x = x) }
 
@@ -285,7 +284,6 @@ setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data
 #' @param x An \S4class{Expression}.
 #' @return An \S4class{Expression} representing the reciprocal.
 #' @aliases InvPos
-#' @export 
 InvPos <- function(x) { Power(x, -1) }
 
 #'
@@ -296,7 +294,6 @@ InvPos <- function(x) { Power(x, -1) }
 #' @slot x An \S4class{Expression} or numeric constant.
 #' @slot y An \S4class{Expression} or numeric constant.
 #' @aliases KLDiv
-#' @export
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 
@@ -456,7 +453,6 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #'
 #' @slot x An \S4class{Expression} or numeric constant.
 #' @aliases Logistic
-#' @export
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 Logistic <- function(x) { .Logistic(x = x) }
 
@@ -512,7 +508,6 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @slot arg2 The second \S4class{Expression} in the maximum operation.
 #' @slot ... Additional \S4class{Expression}s in the maximum operation.
 #' @aliases MaxElemwise
-#' @export
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
                            if(is.null(object@args) || length(object@args) < 2)
                              stop("[MaxElemwise: validation] args must have at least 2 arguments")
@@ -595,7 +590,6 @@ MinElemwise <- function(arg1, arg2, ...) {
 #' @param x An \S4class{Expression} or numeric constant.
 #' @return An \S4class{Expression}.
 #' @aliases Neg
-#' @export
 Neg <- function(x) { -MinElemwise(x, 0) }
 
 #'
@@ -606,7 +600,6 @@ Neg <- function(x) { -MinElemwise(x, 0) }
 #' @param x An \S4class{Expression} or numeric constant.
 #' @return An \S4class{Expression}.
 #' @aliases Pos
-#' @export
 Pos <- function(x) { MaxElemwise(x, 0) }
 
 #'
@@ -799,7 +792,6 @@ setMethod("graph_implementation", "Power", function(object, arg_objs, size, data
 #' @param alpha An \S4class{Expression} or numeric constant.
 #' @param beta An \S4class{Expression} or numeric constant.
 #' @aliases Scalene
-#' @export
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 #'
@@ -862,7 +854,6 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' 
 #' @slot x An \S4class{Expression}.
 #' @aliases Square
-#' @export
 .Square <- setClass("Square", contains = "Elementwise")
 Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }

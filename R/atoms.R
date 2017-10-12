@@ -266,7 +266,6 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' @slot x An \S4class{Expression} or R numeric data representing the left-hand value.
 #' @slot y An \S4class{Expression} or R numeric data representing the right-hand value.
 #' @aliases AffineProd
-#' @export
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
 
@@ -441,7 +440,6 @@ setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, da
 #'
 #' @slot x An \S4class{Expression} object.
 #' @aliases HarmonicMean
-#' @export
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   prod(size(x)) * Pnorm(x = x, p = -1)
@@ -532,7 +530,6 @@ LambdaMin <- function(X) {
 #' @param k The number of largest eigenvalues to sum over.
 #' @return An \S4class{Expression} representing the sum of the largest k eigenvalues.
 #' @aliases LambdaSumLargest
-#' @export
 LambdaSumLargest <- function(X, k) {
   X <- as.Constant(X)
   if(size(X)[1] != size(X)[2])
@@ -553,7 +550,6 @@ LambdaSumLargest <- function(X, k) {
 #' @param k The number of smallest eigenvalues to sum over.
 #' @return An \S4class{Expression} representing the sum of the smallest k eigenvalues.
 #' @aliases LambdaSumSmallest
-#' @export
 LambdaSumSmallest <- function(X, k) {
   X <- as.Constant(X)
   -LambdaSumLargest(-X, k)
@@ -566,7 +562,6 @@ LambdaSumSmallest <- function(X, k) {
 #' 
 #' @slot A An \S4class{Expression} representing a matrix.
 #' @aliases LogDet
-#' @export
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
 LogDet <- function(A) { .LogDet(A = A) }
 
@@ -658,7 +653,6 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' @slot x An \S4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @aliases LogSumExp
-#' @export
 .LogSumExp <- setClass("LogSumExp", contains = "AxisAtom")
 LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
@@ -739,7 +733,6 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' @slot X An \S4class{Expression} representing a matrix.
 #' @slot P An \S4class{Expression} representing a matrix.
 #' @aliases MatrixFrac
-#' @export
 .MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
 
@@ -838,7 +831,6 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' @slot x An \S4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @aliases MaxEntries
-#' @export
 .MaxEntries <- setClass("MaxEntries", contains = "AxisAtom")
 MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
@@ -900,7 +892,6 @@ setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size,
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \S4class{Expression} representing the minimum of the entries.
 #' @aliases MinEntries
-#' @export
 MinEntries <- function(x, axis = NA_real_) {
   x <- as.Constant(x)
   -MaxEntries(-x, axis = axis)

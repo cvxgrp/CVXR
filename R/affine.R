@@ -267,7 +267,6 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, si
 #' @slot lh_exp An \S4class{Expression} or R numeric data representing the left-hand vector.
 #' @slot rh_exp An \S4class{Expression} or R numeric data representing the right-hand vector.
 #' @aliases Conv
-#' @export
 .Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
@@ -521,7 +520,6 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' 
 #' @slot ... \S4class{Expression} objects or matrices. All arguments must have the same number of rows.
 #' @aliases HStack
-#' @export
 .HStack <- setClass("HStack", contains = "AffAtom")
 HStack <- function(...) { .HStack(args = list(...)) }
 
@@ -692,7 +690,6 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
 #' @slot lh_const A constant \S4class{Expression} or numeric value.
 #' @slot rh_exp An \S4class{Expression}.
 #' @aliases MulElemwise
-#' @export
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
@@ -925,7 +922,6 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
 #' @param X An \S4class{Expression} or numeric constant representing a matrix.
 #' @return An \S4class{Expression} representing the vectorized matrix.
 #' @aliases Vec
-#' @export
 Vec <- function(X) {
   X <- as.Constant(X)
   Reshape(expr = X, rows = prod(size(X)), cols = 1)
@@ -938,7 +934,6 @@ Vec <- function(X) {
 #' 
 #' @slot ... \S4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @aliases VStack
-#' @export
 .VStack <- setClass("VStack", contains = "AffAtom")
 VStack <- function(...) { .VStack(args = list(...)) }
 

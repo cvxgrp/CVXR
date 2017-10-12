@@ -440,7 +440,7 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
 })
 
 #'
-#' Matrix Diagonals
+#' The Diag function.
 #'
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
 #'

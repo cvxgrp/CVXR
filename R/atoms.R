@@ -1132,43 +1132,40 @@ Norm <- function(x, p = 2, axis = NA_real_) {
 #'
 #' The Norm1 function.
 #' 
-#' The 1-norm, i.e. \eqn{\|x\|_1 = \sum_{i=1}^n |x_i|}.
+#' The 1-norm \eqn{\|x\|_1 = \sum_{i=1}^n |x_i|}.
 #' 
 #' @param x An \S4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \S4class{Expression} representing the 1-norm.
 #' @aliases Norm1
-#' @export
 Norm1   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 1, axis = axis) }
 
 #'
 #' The Norm2 function.
 #' 
-#' The 2-norm, i.e. \eqn{\|x\|_2 = \left(\sum_{i=1}^n x_i^2\right)^{1/2}}.
+#' The 2-norm \eqn{\|x\|_2 = \left(\sum_{i=1}^n x_i^2\right)^{1/2}}.
 #' 
 #' @param x An \S4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \S4class{Expression} representing the 2-norm.
 #' @aliases Norm2
-#' @export
 Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
 
 #'
 #' The NormInf function.
 #' 
-#' The infinity-norm, i.e. \eqn{\|x\|_{\infty} = \max_{i=1,\ldots,n} |x_i|}.
+#' The infinity-norm \eqn{\|x\|_{\infty} = \max_{i=1,\ldots,n} |x_i|}.
 #' 
 #' @param x An \S4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \S4class{Expression} representing the infinity-norm.
 #' @aliases NormInf
-#' @export
 NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 
 #'
 #' The MixedNorm function.
 #' 
-#' The \eqn{l_{p,q}} norm, i.e. \eqn{l_{p,q}(x) = \left(\sum_{i=1}^n (\sum_{j=1}^m |x_{i,j}|)^{q/p}\right)^{1/q}}.
+#' The \eqn{l_{p,q}} norm \eqn{l_{p,q}(x) = \left(\sum_{i=1}^n (\sum_{j=1}^m |x_{i,j}|)^{q/p}\right)^{1/q}}.
 #' 
 #' @param X An \S4class{Expression} or numeric constant representing a vector or matrix.
 #' @param p The type of inner norm.
@@ -1176,7 +1173,6 @@ NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \S4class{Expression} representing the \eqn{l_{p,q}} norm.
 #' @aliases MixedNorm
-#' @export
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
 
@@ -1194,7 +1190,6 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' 
 #' @slot A An \S4class{Expression} representing a matrix.
 #' @aliases NormNuc
-#' @export
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 NormNuc <- function(A) { .NormNuc(A = A) }
 
@@ -1289,7 +1284,6 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
 #' @param x An \S4class{Expression} or numeric constant representing a vector.
 #' @param P An \S4class{Expression} or numeric constant representing a matrix.
 #' @aliases QuadForm
-#' @export
 QuadForm <- function(x, P) {
   # x^T P x
   x <- as.Constant(x)
@@ -1331,7 +1325,6 @@ QuadForm <- function(x, P) {
 #' @slot x An \S4class{Expression} representing a matrix.
 #' @slot y A scalar \S4class{Expression}.
 #' @aliases QuadOverLin
-#' @export
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
@@ -1459,7 +1452,6 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #' @slot x An \S4class{Expression} representing a matrix.
 #' @slot k The number of largest values to sum over.
 #' @aliases SumLargest
-#' @export
 .SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"),
                        validity = function(object) {
                          if(as.integer(object@k) != object@k || object@k <= 0)
@@ -1535,7 +1527,6 @@ setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size,
 #' @param k The number of smallest values to sum over.
 #' @return An \S4class{Expression} representing the sum of the smallest k values.
 #' @aliases SumSmallest
-#' @export
 SumSmallest <- function(x, k) {
   x <- as.Constant(x)
   -SumLargest(x = -x, k = k)
@@ -1549,7 +1540,6 @@ SumSmallest <- function(x, k) {
 #' @param expr An \S4class{Expression} to calculate the sum of squares over.
 #' @return An \S4class{Expression} representing the sum of squares.
 #' @aliases SumSquares
-#' @export
 SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
 #'
@@ -1557,11 +1547,10 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 #' 
 #' The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
 #' 
-#' @param value An \S4class{Expression} representing a vector or matrix.
-#' @param ... Matrix constants or \S4class{Expression} objects, which extend the third dimension of value.
+#' @param value An \S4class{Expression} or numeric constant.
+#' @param ... \S4class{Expression} objects or numeric constants that extend the third dimension of value.
 #' @return An \S4class{Expression} representing the total variation.
 #' @aliases TotalVariation
-#' @export
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
   val_size <- size(value)

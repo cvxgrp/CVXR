@@ -788,7 +788,6 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @slot expr An \S4class{Expression} representing a vector or matrix.
 #' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
 #' @aliases SumEntries
-#' @export
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
@@ -826,7 +825,6 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #'
 #' @slot expr An \S4class{Expression} representing a matrix.
 #' @aliases Trace
-#' @export
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
 Trace <- function(expr) { .Trace(expr = expr) }
 

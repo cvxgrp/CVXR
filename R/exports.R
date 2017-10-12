@@ -10,19 +10,160 @@ log_sum_exp <- LogSumExp
 matrix_frac <- MatrixFrac
 max_entries <- MaxEntries
 min_entries <- MinEntries
+
+#'
+#' Mixed Norm
+#' 
+#' The \eqn{l_{p,q}} norm \eqn{l_{p,q}(x) = \left(\sum_{i=1}^n (\sum_{j=1}^m |x_{i,j}|)^{q/p}\right)^{1/q}}.
+#' 
+#' @param X An \S4class{Expression}, vector, or matrix.
+#' @param p The type of inner norm.
+#' @param q The type of outer norm.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \S4class{Expression} representing the \eqn{l_{p,q}} norm.
+#' @aliases mixed_norm
+#' @export
 mixed_norm <- MixedNorm
+
+
+#'
+#' 1-Norm
+#' 
+#' The 1-norm \eqn{\|x\|_1 = \sum_{i=1}^n |x_i|}.
+#' 
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \S4class{Expression} representing the 1-norm.
+#' @aliases norm1
+#' @export
 norm1 <- Norm1
+
+#'
+#' Euclidean Norm
+#' 
+#' The Euclidean norm \eqn{\|x\|_2 = \left(\sum_{i=1}^n x_i^2\right)^{1/2}}.
+#' 
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \S4class{Expression} representing the Euclidean norm.
+#' @aliases norm2
 norm2 <- Norm2
+
+#'
+#' Infinity-Norm
+#' 
+#' The \eqn{\infty}}-norm \eqn{\|x\|_{\infty} = \max_{i=1,\ldots,n} |x_i|}.
+#' 
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \S4class{Expression} representing the infinity-norm.
+#' @aliases norm_inf
+#' @export
 norm_inf <- NormInf
+
+#'
+#' Nuclear Norm
+#' 
+#' The nuclear norm, i.e. sum of the singular values of a matrix.
+#' 
+#' @param A An \S4class{Expression} or matrix.
+#' @return An \S4class{Expression} representing the nuclear norm.
+#' @aliases norm_nuc
+#' @export
 norm_nuc <- NormNuc
 p_norm <- Pnorm
+
+#'
+#' Quadratic Form
+#'
+#' The quadratic form \eqn{x^TPx}.
+#'
+#' @param x An \S4class{Expression} or vector.
+#' @param P An \S4class{Expression} or matrix.
+#' @return An \S4class{Expression} representing the quadratic form.
+#' @aliases quad_form
+#' @export
 quad_form <- QuadForm
+
+#'
+#' Quadratic over Linear
+#'
+#' The sum of squared entries in X divided by a scalar y \eqn{\sum_{i,j} X_{i,j}^2/y}.
+#'
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param y A scalar \S4class{Expression} or numeric constant.
+#' @return An \S4class{Expression} representing the quadratic over linear function value.
+#' @aliases quad_over_lin
+#' @export
 quad_over_lin <- QuadOverLin
+
+#'
+#' Sum of Entries
+#'
+#' The sum of entries in a vector or matrix.
+#'
+#' @slot expr An \S4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
+#' @return An \S4class{Expression} representing the sum of entries.
+#' @aliases sum_entries
+#' @export
 sum_entries <- SumEntries
+
+#'
+#' Sum of Largest Values
+#' 
+#' The sum of the largest k values of a vector or matrix.
+#' 
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param k The number of largest values to sum over.
+#' @return An \S4class{Expression} representing the sum of the largest k values.
+#' @aliases sum_largest
+#' @export
 sum_largest <- SumLargest
+
+#'
+#' Sum of Smallest Values
+#' 
+#' The sum of the smallest k values of a vector or matrix.
+#' 
+#' @param x An \S4class{Expression}, vector, or matrix.
+#' @param k The number of smallest values to sum over.
+#' @return An \S4class{Expression} representing the sum of the smallest k values.
+#' @aliases sum_smallest
+#' @export
 sum_smallest <- SumSmallest
+
+#'
+#' Sum of Squares
+#' 
+#' The sum of the squared entries in a vector or matrix.
+#' 
+#' @param expr An \S4class{Expression}, vector, or matrix.
+#' @return An \S4class{Expression} representing the sum of squares.
+#' @aliases sum_squares
+#' @export
 sum_squares <- SumSquares
+
+#'
+#' Matrix Trace
+#'
+#' The sum of the diagonal entries in a matrix.
+#'
+#' @param expr An \S4class{Expression} or matrix.
+#' @return An \S4class{Expression} representing the trace.
+#' @aliases matrix_trace
 matrix_trace <- Trace
+
+#'
+#' Total Variation
+#' 
+#' The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
+#' 
+#' @param value An \S4class{Expression}, vector, or matrix.
+#' @param ... \S4class{Expression} objects or numeric constants that extend the third dimension of value.
+#' @return An \S4class{Expression} representing the total variation.
+#' @aliases tv
+#' @export
 tv <- TotalVariation
 
 max.Expression <- function(..., na.rm = FALSE) {
@@ -127,7 +268,18 @@ cum_sum <- CumSum
 hstack <- HStack
 kron <- Kron
 reshape_expr <- Reshape
+
+#'
+#' Maximum Singular Value
+#' 
+#' The maximum singular value of a matrix.
+#' 
+#' @param A An \S4class{Expression} or matrix.
+#' @return An \S4class{Expression} representing the maximum singular value.
+#' @aliases sigma_max
+#' @export
 sigma_max <- SigmaMax
+
 upper_tri <- UpperTri
 vec <- Vec
 vstack <- VStack

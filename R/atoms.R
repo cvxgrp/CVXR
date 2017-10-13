@@ -449,7 +449,7 @@ HarmonicMean <- function(x) {
 #' The LambdaMax class.
 #'
 #' The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
-#'
+#' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @aliases LambdaMax
 #' @export
@@ -511,7 +511,7 @@ setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, 
 #' The LambdaMin function.
 #'
 #' The minimum eigenvalue of a matrix, \eqn{\lambda_{\min}(A)}.
-#'
+#' 
 #' @param A An \linkS4class{Expression} representing a matrix.
 #' @return An \linkS4class{Expression} representing the minimum eigenvalue.
 #' @aliases LambdaMin
@@ -525,7 +525,7 @@ LambdaMin <- function(X) {
 #' The LambdaSumLargest function.
 #'
 #' The sum of the largest k eigenvalues of a matrix.
-#'
+#' 
 #' @param A An \linkS4class{Expression} representing a matrix.
 #' @param k The number of largest eigenvalues to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the largest k eigenvalues.
@@ -545,7 +545,7 @@ LambdaSumLargest <- function(X, k) {
 #' The LambdaSumSmallest function.
 #'
 #' The sum of the smallest k eigenvalues of a matrix.
-#'
+#' 
 #' @param A An \linkS4class{Expression} representing a matrix.
 #' @param k The number of smallest eigenvalues to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the smallest k eigenvalues.
@@ -559,7 +559,7 @@ LambdaSumSmallest <- function(X, k) {
 #' The LogDet class.
 #'
 #' The natural logarithm of the determinant of a matrix, \eqn{\log\det(A)}.
-#'
+#' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @aliases LogDet
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
@@ -649,7 +649,7 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' The LogSumExp class.
 #'
 #' The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{i=1}^n e^{x_i}}.
-#'
+#' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @aliases LogSumExp
@@ -729,7 +729,7 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' The MatrixFrac class.
 #'
 #' The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
-#'
+#' 
 #' @slot X An \linkS4class{Expression} representing a matrix.
 #' @slot P An \linkS4class{Expression} representing a matrix.
 #' @aliases MatrixFrac
@@ -827,7 +827,7 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' The MaxEntries class.
 #'
 #' The maximum of an expression.
-#'
+#' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @aliases MaxEntries
@@ -887,7 +887,7 @@ setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size,
 #' The MinEntries function.
 #'
 #' The minimum of an expression.
-#'
+#' 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \linkS4class{Expression} representing the minimum of the entries.
@@ -912,7 +912,7 @@ MinEntries <- function(x, axis = NA_real_) {
 #'    \item The expression is undefined when \eqn{p = 0}.
 #'    \item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
 #' }
-#'
+#' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot p A number greater than or equal to 1, or equal to positive infinity.
 #' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
@@ -1092,7 +1092,7 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
 #' The Norm function.
 #'
 #' A wrapper on the different norm atoms.
-#'
+#' 
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param p The type of norm. May be a number (p-norm), "inf" (infinity-norm), "nuc" (nuclear norm), or "fro" (Frobenius norm). The default is \code{p = 2}.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
@@ -1124,7 +1124,7 @@ Norm <- function(x, p = 2, axis = NA_real_) {
 #' The Norm1 function.
 #'
 #' The 1-norm \eqn{\|x\|_1 = \sum_{i=1}^n |x_i|}.
-#'
+#' 
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \linkS4class{Expression} representing the 1-norm.
@@ -1135,7 +1135,7 @@ Norm1   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 1, axis = axis) }
 #' The Norm2 function.
 #'
 #' The 2-norm \eqn{\|x\|_2 = \left(\sum_{i=1}^n x_i^2\right)^{1/2}}.
-#'
+#' 
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \linkS4class{Expression} representing the 2-norm.
@@ -1146,7 +1146,7 @@ Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
 #' The NormInf function.
 #'
 #' The infinity-norm \eqn{\|x\|_{\infty} = \max_{i=1,\ldots,n} |x_i|}.
-#'
+#' 
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @return An \linkS4class{Expression} representing the infinity-norm.
@@ -1157,7 +1157,7 @@ NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
 #' The MixedNorm function.
 #'
 #' The \eqn{l_{p,q}} norm \eqn{l_{p,q}(x) = \left(\sum_{i=1}^n (\sum_{j=1}^m |x_{i,j}|)^{q/p}\right)^{1/q}}.
-#'
+#' 
 #' @param X An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param p The type of inner norm.
 #' @param q The type of outer norm.
@@ -1178,7 +1178,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' The NormNuc class.
 #'
 #' The nuclear norm, i.e. sum of the singular values of a matrix.
-#'
+#' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @aliases NormNuc
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
@@ -1375,7 +1375,7 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
 #' The SigmaMax class.
 #'
 #' The maximum singular value of a matrix.
-#'
+#' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @aliases SigmaMax
 #' @export
@@ -1439,7 +1439,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #' The SumLargest class.
 #'
 #' The sum of the largest k values of a matrix.
-#'
+#' 
 #' @slot x An \linkS4class{Expression} representing a matrix.
 #' @slot k The number of largest values to sum over.
 #' @aliases SumLargest
@@ -1513,7 +1513,7 @@ setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size,
 #' The SumSmallest function.
 #'
 #' The sum of the smallest k values of a matrix.
-#'
+#' 
 #' @param x An \linkS4class{Expression} representing a matrix.
 #' @param k The number of smallest values to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the smallest k values.
@@ -1527,7 +1527,7 @@ SumSmallest <- function(x, k) {
 #' The SumSquares function.
 #'
 #' The sum of the squares of the entries in an expression.
-#'
+#' 
 #' @param expr An \linkS4class{Expression} to calculate the sum of squares over.
 #' @return An \linkS4class{Expression} representing the sum of squares.
 #' @aliases SumSquares
@@ -1537,7 +1537,7 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 #' The TotalVariation function.
 #'
 #' The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
-#'
+#' 
 #' @param value An \linkS4class{Expression} or numeric constant.
 #' @param ... \linkS4class{Expression} objects or numeric constants that extend the third dimension of value.
 #' @return An \linkS4class{Expression} representing the total variation.

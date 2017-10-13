@@ -798,7 +798,7 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' The Sqrt class.
 #'
 #' This class represents the elementwise square root \eqn{\sqrt{x}}.
-#'
+#' 
 #' @slot x An \linkS4class{Expression}.
 #' @aliases Sqrt
 #' @export
@@ -851,7 +851,7 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' The Square class.
 #'
 #' This class represents the elementwise square \eqn{x^2}.
-#'
+#' 
 #' @slot x An \linkS4class{Expression}.
 #' @aliases Square
 .Square <- setClass("Square", contains = "Elementwise")

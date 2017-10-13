@@ -477,7 +477,7 @@ Diag <- function(expr) {
 #' Takes in a vector of length n and returns a vector of length n-k of the kth order difference.
 #' \code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
 #' \code{diff(x,2)} is the second-order differences vector, equivalently diff(diff(x)). \code{diff(x,0)} returns the vector x unchanged.
-#'
+#' 
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param lag An integer indicating which lag to use. Defaults to 1.
 #' @param k An integer indicating the order of the difference. Defaults to 1.
@@ -517,7 +517,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' The HStack class.
 #'
 #' Horizontal concatenation of values.
-#'
+#' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
 #' @aliases HStack
 .HStack <- setClass("HStack", contains = "AffAtom")
@@ -918,7 +918,7 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
 #' The Vec function.
 #'
 #' Flattens a matrix into a vector in column-major order.
-#'
+#' 
 #' @param X An \linkS4class{Expression} or numeric constant representing a matrix.
 #' @return An \linkS4class{Expression} representing the vectorized matrix.
 #' @aliases Vec
@@ -931,7 +931,7 @@ Vec <- function(X) {
 #' The VStack class.
 #'
 #' Vertical concatenation of values.
-#'
+#' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @aliases VStack
 .VStack <- setClass("VStack", contains = "AffAtom")
@@ -963,11 +963,10 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
 #' The Bmat function.
 #'
 #' Constructs a block matrix from a list of lists. Each internal list is stacked horizontally, and the internal lists are stacked vertically.
-#'
+#' 
 #' @param block_lists A list of lists containing \linkS4class{Expression} objects, which represent the blocks of the block matrix.
 #' @return An \linkS4class{Expression} representing the block matrix.
 #' @aliases Bmat
-#' @export
 Bmat <- function(block_lists) {
   row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
   .VStack(args = row_blocks)

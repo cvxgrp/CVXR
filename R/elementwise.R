@@ -32,7 +32,7 @@ Elementwise.promote <- function(arg, size) {
 #'
 #' This class represents the elementwise absolute value.
 #'
-#' @slot x An \S4class{Expression}.
+#' @slot x An \linkS4class{Expression}.
 #' @aliases Abs
 #' @export
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
@@ -55,7 +55,7 @@ setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
-  
+
   arg_size <- size(object@args[[1]])
   D <- matrix(0, nrow = arg_size[1], ncol = arg_size[2])
   D <- D + (values[[1]] > 0)
@@ -79,7 +79,7 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #'
 #' This class represents the elementwise operation \eqn{-xlog(x)}.
 #'
-#' @slot x An \S4class{Expression}.
+#' @slot x An \linkS4class{Expression}.
 #' @aliases Entr
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 Entr <- function(x) { .Entr(x = x) }
@@ -95,10 +95,10 @@ setMethod("to_numeric", "Entr", function(object, values) {
     tmp[x == 0] <- 0
     tmp
   }
-  
+
   x <- values[[1]]
   results <- -xlogy(x, x)
-  
+
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
   results
@@ -113,7 +113,7 @@ setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 setMethod(".grad", "Entr", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
-  
+
   # Outside domain or on boundary
   if(min(values[[1]]) <= 0)
     return(list(NA_real_))   # Non-differentiable
@@ -141,7 +141,7 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #'
 #' This class represents the elementwise natural exponential \eqn{e^x}.
 #'
-#' @slot x An \S4class{Expression}.
+#' @slot x An \linkS4class{Expression}.
 #' @aliases Exp
 #' @export
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
@@ -186,11 +186,11 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #'       |x|^2 & \mbox{for } |x| \leq M
 #' \end{cases}}
 #'
-#' @slot x An \S4class{Expression} or numeric constant.
+#' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot M A positive scalar value representing the threshold. Defaults to 1.
 #' @aliases Huber
 #' @export
-.Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"), 
+.Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
                            prototype(M = 1), contains = "Elementwise")
 Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 
@@ -214,7 +214,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
     else
       return(delta * (abs(r) - delta/2))
   }
-  
+
   M_val <- value(object@M)
   val <- values[[1]]
   if(is.null(dim(val)))
@@ -239,7 +239,7 @@ setMethod(".grad", "Huber", function(object, values) {
   val_abs <- abs(values[[1]])
   M_val <- as.numeric(value(object@M))
   min_val <- ifelse(val_abs >= M_val, M_val, val_abs)
-  
+
   grad_vals <- 2*(sign(values[[1]]) * min_val)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
@@ -250,12 +250,12 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   n <- create_var(size)
   s <- create_var(size)
   two <- create_const(2, c(1,1))
-  
+
   if(is(M, "Parameter"))
     M <- create_param(M, c(1,1))
   else   # M is constant
     M <- create_const(value(M), c(1,1))
-  
+
   # n^2 + 2*M*|s|
   power_graph <- Power.graph_implementation(list(n), size, list(2, c(as.bigq(1,2), as.bigq(1,2)) ))  # TODO: Check last argument is correct nested list
   n2 <- power_graph[[1]]
@@ -265,7 +265,7 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constr_abs <- abs_graph[[2]]
   M_abs_s <- lo.mul_expr(M, abs_s, size)
   obj <- lo.sum_expr(list(n2, lo.mul_expr(two, M_abs_s, size)))
-  
+
   # x == s + n
   constraints <- c(constr_sq, constr_abs)
   constraints <- c(constraints, list(create_eq(x, lo.sum_expr(list(n, s)))))
@@ -281,8 +281,8 @@ setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data
 #'
 #' The elementwise reciprocal, \eqn{\frac{1}{x}}
 #'
-#' @param x An \S4class{Expression}.
-#' @return An \S4class{Expression} representing the reciprocal.
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the reciprocal.
 #' @aliases InvPos
 InvPos <- function(x) { Power(x, -1) }
 
@@ -291,8 +291,8 @@ InvPos <- function(x) { Power(x, -1) }
 #'
 #' The elementwise KL-divergence \eqn{x\log(x/y) - x + y}.
 #'
-#' @slot x An \S4class{Expression} or numeric constant.
-#' @slot y An \S4class{Expression} or numeric constant.
+#' @slot x An \linkS4class{Expression} or numeric constant.
+#' @slot y An \linkS4class{Expression} or numeric constant.
 #' @aliases KLDiv
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
@@ -306,7 +306,7 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
   y <- intf_convert_if_scalar(values[[2]])
-  
+
   # TODO: Return Inf outside domain
   xlogy <- function(x, y) {
     tmp <- x*log(y)
@@ -345,7 +345,7 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   y <- Elementwise.promote(arg_objs[[2]], size)
   t <- create_var(size)
   constraints <- list(ExpCone(t, x, y), create_geq(y))   # y >= 0
-  
+
   # -t - x + y
   obj <- lo.sub_expr(y, lo.sum_expr(list(x, t)))
   list(obj, constraints)
@@ -360,7 +360,7 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #'
 #' This class represents the elementwise natural logarithm \eqn{\log(x)}.
 #'
-#' @slot x An \S4class{Expression} or numeric constant.
+#' @slot x An \linkS4class{Expression} or numeric constant.
 #' @aliases Log
 #' @export
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
@@ -381,7 +381,7 @@ setMethod("is_decr", "Log", function(object, idx) { FALSE })
 setMethod(".grad", "Log", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
-  
+
   # Outside domain or on boundary
   if(min(values[[1]]) <= 0)
     return(list(NA_real_))   # Non-differentiable
@@ -409,7 +409,7 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #'
 #' This class represents the elementwise operation \eqn{\log(1 + x)}.
 #'
-#' @slot x An \S4class{Expression} or numeric constant.
+#' @slot x An \linkS4class{Expression} or numeric constant.
 #' @aliases Log1p
 #' @export
 .Log1p <- setClass("Log1p", contains = "Log")
@@ -421,7 +421,7 @@ setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@arg
 setMethod(".grad", "Log1p", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
-  
+
   # Outside domain or on boundary
   if(min(values[[1]]) <= -1)
     return(list(NA_real_))   # Non-differentiable
@@ -451,7 +451,7 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #' This is a special case of log(sum(exp)) that evaluates to a vector rather than to a scalar,
 #' which is useful for logistic regression.
 #'
-#' @slot x An \S4class{Expression} or numeric constant.
+#' @slot x An \linkS4class{Expression} or numeric constant.
 #' @aliases Logistic
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 Logistic <- function(x) { .Logistic(x = x) }
@@ -479,16 +479,16 @@ setMethod(".grad", "Logistic", function(object, values) {
 Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
-  
+
   # log(1 + exp(x)) <= t <=> exp(-t) + exp(x - t) <= 1
   graph0 <- Exp.graph_implementation(list(lo.neg_expr(t)), size)
   obj0 <- graph0[[1]]
   constr0 <- graph0[[2]]
-  
+
   graph1 <- Exp.graph_implementation(list(lo.sub_expr(x, t)), size)
   obj1 <- graph1[[1]]
   constr1 <- graph1[[2]]
-  
+
   lhs <- lo.sum_expr(list(obj0, obj1))
   ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
   constr <- c(constr0, constr1, list(create_leq(lhs, ones)))
@@ -504,9 +504,9 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #'
 #' This class represents the elementwise maximum.
 #'
-#' @slot arg1 The first \S4class{Expression} in the maximum operation.
-#' @slot arg2 The second \S4class{Expression} in the maximum operation.
-#' @slot ... Additional \S4class{Expression}s in the maximum operation.
+#' @slot arg1 The first \linkS4class{Expression} in the maximum operation.
+#' @slot arg2 The second \linkS4class{Expression} in the maximum operation.
+#' @slot ... Additional \linkS4class{Expression}s in the maximum operation.
 #' @aliases MaxElemwise
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
                            if(is.null(object@args) || length(object@args) < 2)
@@ -545,7 +545,7 @@ setMethod(".grad", "MaxElemwise", function(object, values) {
     rows <- prod(size(object@args[[idx]]))
     cols <- prod(size(object))
     grad_vals <- (value == max_vals) & unused
-    
+
     # Remove all the max_vals that were used
     unused[value == max_vals] <- FALSE
     grad_list <- c(grad_list, list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -557,7 +557,7 @@ MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   constraints <- lapply(arg_objs, function(obj) {
     obj <- Elementwise.promote(obj, size)
-    create_leq(obj, t) 
+    create_leq(obj, t)
   })
   list(t, constraints)
 }
@@ -571,10 +571,10 @@ setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size
 #'
 #' This function calculates the elementwise minimum.
 #'
-#' @param arg1 The first \S4class{Expression} in the minimum operation.
-#' @param arg2 The second \S4class{Expression} in the minimum operation.
-#' @param ... Additional \S4class{Expression}s in the minimum operation.
-#' @return An \S4class{Expression} representing the minimum.
+#' @param arg1 The first \linkS4class{Expression} in the minimum operation.
+#' @param arg2 The second \linkS4class{Expression} in the minimum operation.
+#' @param ... Additional \linkS4class{Expression}s in the minimum operation.
+#' @return An \linkS4class{Expression} representing the minimum.
 #' @aliases MinElemwise
 #' @export
 MinElemwise <- function(arg1, arg2, ...) {
@@ -587,8 +587,8 @@ MinElemwise <- function(arg1, arg2, ...) {
 #'
 #' Alias for -MinElemwise(x, 0).
 #'
-#' @param x An \S4class{Expression} or numeric constant.
-#' @return An \S4class{Expression}.
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @return An \linkS4class{Expression}.
 #' @aliases Neg
 Neg <- function(x) { -MinElemwise(x, 0) }
 
@@ -597,8 +597,8 @@ Neg <- function(x) { -MinElemwise(x, 0) }
 #'
 #' Alias for MaxElemwise(x, 0).
 #'
-#' @param x An \S4class{Expression} or numeric constant.
-#' @return An \S4class{Expression}.
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @return An \linkS4class{Expression}.
 #' @aliases Pos
 Pos <- function(x) { MaxElemwise(x, 0) }
 
@@ -607,7 +607,7 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #'
 #' This class represents the elementwise power function \eqn{f(x) = x^p}.
 #' If \code{expr} is a CVXR expression, then \code{expr^p} is equivalent to \code{Power(expr, p)}.
-#' 
+#'
 #' \deqn{\begin{array}{ccl}
 #' p = 0 & f(x) = 1 & \text{constant, positive} \\
 #' p = 1 & f(x) = x & \text{affine, increasing, same sign as $x$} \\
@@ -617,19 +617,19 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' p > 1,\ p \neq 2,4,8,\ldots & f(x) = \begin{cases} x^p & x \geq 0 \\ +\infty & x < 0 \end{cases} & \text{convex, increasing, positive}.
 #' \end{array}}
 #'
-#' @slot x The \S4class{Expression} to be raised to a power.
+#' @slot x The \linkS4class{Expression} to be raised to a power.
 #' @slot p A numeric value indicating the scalar power.
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @aliases Power
 #' @export
-.Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"), 
+.Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"),
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, w = NA_real_, approx_error = NA_real_) {
   p_old <- p
-  
+
   # How we convert p to a rational depends on the branch of the function
   if(p > 1) {
     pw <- pow_high(p)
@@ -644,7 +644,7 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
     p <- pw[[1]]
     w <- pw[[2]]
   }
-  
+
   if(p == 1) {
     # In case p is a fraction equivalent to 1
     p <- 1
@@ -653,11 +653,11 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
     p <- 0
     w <- NA_real_
   }
-  
+
   .Object@p <- p
   .Object@w <- w
   .Object@approx_error <- as.double(abs(.Object@p - p_old))
-  
+
   .Object@x <- x
   .Object@max_denom <- max_denom
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -724,10 +724,10 @@ setMethod("is_quadratic", "Power", function(object) {
 setMethod(".grad", "Power", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
-  
+
   if(object@p == 0) # All zeros
     return(list(sparseMatrix(i = c(), j = c(), dims = c(rows, cols))))
-  
+
   # Outside domain or on boundary
   if(!is_power2(object@p) && min(values[[1]]) <= 0) {
     if(object@p < 1)
@@ -735,7 +735,7 @@ setMethod(".grad", "Power", function(object, values) {
     else   # Round up to zero
       values[[1]] <- ifelse(values[[1]] >= 0, values[[1]], 0)
   }
-  
+
   grad_vals <- as.double(object@p) * (values[[1]]^(as.double(object@p) - 1))
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
@@ -751,7 +751,7 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   p <- data[[1]]
   w <- data[[2]]
-  
+
   if(p == 1)
     return(list(x, list()))
   else {
@@ -760,13 +760,13 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
       return(one, list())
     else {
       t <- create_var(size)
-      
+
       # TODO: Temporary hack for powers of 1/2 and 2 until gm_constrs works
       # if(p == 1/2)
       #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
       # else if(p == 2)
       #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
-      
+
       if(p > 0 && p < 1)
         return(list(t, gm_constrs(t, list(x, one), w)))
       else if(p > 1)
@@ -787,10 +787,10 @@ setMethod("graph_implementation", "Power", function(object, arg_objs, size, data
 #' The Scalene function.
 #'
 #' Alias for alpha*Pos(x) + beta*Neg(x).
-#' 
-#' @param x An \S4class{Expression} or numeric constant.
-#' @param alpha An \S4class{Expression} or numeric constant.
-#' @param beta An \S4class{Expression} or numeric constant.
+#'
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @param alpha An \linkS4class{Expression} or numeric constant.
+#' @param beta An \linkS4class{Expression} or numeric constant.
 #' @aliases Scalene
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
@@ -798,8 +798,8 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' The Sqrt class.
 #'
 #' This class represents the elementwise square root \eqn{\sqrt{x}}.
-#' 
-#' @slot x An \S4class{Expression}.
+#'
+#' @slot x An \linkS4class{Expression}.
 #' @aliases Sqrt
 #' @export
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
@@ -851,8 +851,8 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' The Square class.
 #'
 #' This class represents the elementwise square \eqn{x^2}.
-#' 
-#' @slot x An \S4class{Expression}.
+#'
+#' @slot x An \linkS4class{Expression}.
 #' @aliases Square
 .Square <- setClass("Square", contains = "Elementwise")
 Square <- function(x) { .Square(args = list(x)) }

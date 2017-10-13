@@ -52,9 +52,9 @@ SymData.presolve <- function(objective, constr_map) {
   # Remove redundant constraints
   constr_map <- lapply(constr_map, function(constraints) {
       constr_ids <- sapply(constraints, function(c) {
-        if(is(c, "Constraint")) 
-          c@constr_id 
-        else if(is.list(c) && !is.null(c$constr_id)) 
+        if(is(c, "Constraint"))
+          c@constr_id
+        else if(is.list(c) && !is.null(c$constr_id))
           c$constr_id
         else
           stop("Invalid constraint class ", class(c))
@@ -81,7 +81,7 @@ SymData.presolve <- function(objective, constr_map) {
         V <- prob[[1]]
         I <- prob[[2]]
         J <- prob[[3]]
-        
+
         coeff <- prob[[4]]
         sign <- intf_sign(coeff)
         is_pos <- sign[1]
@@ -379,8 +379,8 @@ setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
 #'
 #' This class represents the symbolic and numeric data for a problem.
 #'
-#' @slot sym_data A \S4class{SymData} object representing the symbolic data for the problem.
-#' @slot matrix_data A \S4class{MatrixData} object representing the numeric data for the problem.
+#' @slot sym_data A \linkS4class{SymData} object representing the symbolic data for the problem.
+#' @slot matrix_data A \linkS4class{MatrixData} object representing the numeric data for the problem.
 #' @slot prev_result A \code{list} representing the result of the last solve
 #' @aliases ProblemData
 #' @export

@@ -41,17 +41,16 @@ Imports:
         bitops,
         MASS,
         gmp,
-        R.utils
+        R.utils,
+    ECOSolveR,
+    scs
 Suggests:
         knitr,
         rmarkdown,
-        testthat,
-        scs,
-        ECOSolveR
+        testthat
 LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true
-Suggests: testthat
 Collate: 'globals.R'
 	 'generics.R'
          'utilities.R'
@@ -78,3 +77,4 @@ Collate: 'globals.R'
       	 'CVXcanon-R6.R'
       	 'Deque.R'
       	 'canonInterface.R'
+RoxygenNote: 6.0.1

@@ -16,9 +16,9 @@ harmonic_mean <- HarmonicMean
 
 #'
 #' Maximum Eigenvalue
-#' 
+#'
 #' The maximum eigenvalue of a matrix \eqn{\lambda_{\max}(A)}.
-#' 
+#'
 #' @param A An \S4class{Expression} or matrix.
 #' @return An \S4class{Expression} representing the maximum eigenvalue of the input.
 #' @aliases lambda_max
@@ -27,9 +27,9 @@ lambda_max <- LambdaMax
 
 #'
 #' Minimum Eigenvalue
-#' 
+#'
 #' The minimum eigenvalue of a matrix \eqn{\lambda_{\min}(A)}.
-#' 
+#'
 #' @param A An \S4class{Expression} or matrix.
 #' @return An \S4class{Expression} representing the minimum eigenvalue of the input.
 #' @aliases lambda_min
@@ -38,9 +38,9 @@ lambda_min <- LambdaMin
 
 #'
 #' Sum of Largest Eigenvalues
-#' 
+#'
 #' The sum of the largest \eqn{k} eigenvalues of a matrix.
-#' 
+#'
 #' @param A An \S4class{Expression} or matrix.
 #' @param k The number of eigenvalues to sum over.
 #' @return An \S4class{Expression} representing the sum of the largest \code{k} eigenvalues of the input.
@@ -50,9 +50,9 @@ lambda_sum_largest <- LambdaSumLargest
 
 #'
 #' Sum of Smallest Eigenvalues
-#' 
+#'
 #' The sum of the smallest \eqn{k} eigenvalues of a matrix.
-#' 
+#'
 #' @param A An \S4class{Expression} or matrix.
 #' @param k The number of eigenvalues to sum over.
 #' @return An \S4class{Expression} representing the sum of the smallest \code{k} eigenvalues of the input.
@@ -62,9 +62,9 @@ lambda_sum_smallest <- LambdaSumSmallest
 
 #'
 #' Log-Determinant
-#' 
+#'
 #' The natural logarithm of the determinant of a matrix \eqn{\log\det(A)}.
-#' 
+#'
 #' @param A An \S4class{Expression} or matrix.
 #' @return An \S4class{Expression} representing the log-determinant of the input.
 #' @aliases log_det
@@ -73,9 +73,9 @@ log_det <- LogDet
 
 #'
 #' Log-Sum-Exponential
-#' 
+#'
 #' The natural logarithm of the sum of the elementwise exponential \eqn{\log\sum_{i=1}^n e^{x_i}}.
-#' 
+#'
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \S4class{Expression} representing the log-sum-exponential of the input.
@@ -85,9 +85,9 @@ log_sum_exp <- LogSumExp
 
 #'
 #' Matrix Fraction
-#' 
+#'
 #' The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
-#' 
+#'
 #' @param X An \S4class{Expression} or matrix. Must have the same number of rows as \code{P}.
 #' @param P An \S4class{Expression} or matrix. Must be an invertible square matrix.
 #' @return An \S4class{Expression} representing the matrix fraction evaluated at the input.
@@ -97,9 +97,9 @@ matrix_frac <- MatrixFrac
 
 #'
 #' Maximum
-#' 
+#'
 #' The maximum of an expression.
-#' 
+#'
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \S4class{Expression} representing the maximum of the input.
@@ -109,72 +109,73 @@ max_entries <- MaxEntries
 
 #'
 #' Minimum
-#' 
+#'
 #' The minimum of an expression.
-#' 
+#'
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \S4class{Expression} representing the minimum of the input.
 #' @aliases min_entries
 #' @export
 min_entries <- MinEntries
+## Added by Naras
+log1p <- Log1p
 
 #'
 #' Mixed Norm
-#' 
+#'
 #' The \eqn{l_{p,q}} norm \eqn{l_{p,q}(x) = \left(\sum_{i=1}^n (\sum_{j=1}^m |x_{i,j}|)^{q/p}\right)^{1/q}}.
-#' 
-#' @param X An \S4class{Expression}, vector, or matrix.
+#'
+#' @param X An \linkS4class{Expression}, vector, or matrix.
 #' @param p The type of inner norm.
 #' @param q The type of outer norm.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
-#' @return An \S4class{Expression} representing the \eqn{l_{p,q}} norm of the input.
+#' @return An \linkS4class{Expression} representing the \eqn{l_{p,q}} norm.
 #' @aliases mixed_norm
 #' @export
 mixed_norm <- MixedNorm
 
 #'
 #' 1-Norm
-#' 
+#'
 #' The 1-norm \eqn{\|x\|_1 = \sum_{i=1}^n |x_i|}.
-#' 
-#' @param x An \S4class{Expression}, vector, or matrix.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
-#' @return An \S4class{Expression} representing the 1-norm of the input.
+#' @return An \linkS4class{Expression} representing the 1-norm.
 #' @aliases norm1
 #' @export
 norm1 <- Norm1
 
 #'
 #' Euclidean Norm
-#' 
+#'
 #' The Euclidean norm \eqn{\|x\|_2 = \left(\sum_{i=1}^n x_i^2\right)^{1/2}}.
-#' 
-#' @param x An \S4class{Expression}, vector, or matrix.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
-#' @return An \S4class{Expression} representing the Euclidean norm of the input.
+#' @return An \linkS4class{Expression} representing the Euclidean norm.
 #' @aliases norm2
 norm2 <- Norm2
 
 #'
 #' Infinity-Norm
-#' 
+#'
 #' The \eqn{\infty}}-norm \eqn{\|x\|_{\infty} = \max_{i=1,\ldots,n} |x_i|}.
-#' 
-#' @param x An \S4class{Expression}, vector, or matrix.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
-#' @return An \S4class{Expression} representing the infinity-norm of the input.
+#' @return An \linkS4class{Expression} representing the infinity-norm.
 #' @aliases norm_inf
 #' @export
 norm_inf <- NormInf
 
 #'
 #' Nuclear Norm
-#' 
+#'
 #' The nuclear norm, i.e. sum of the singular values of a matrix.
-#' 
-#' @param A An \S4class{Expression} or matrix.
-#' @return An \S4class{Expression} representing the nuclear norm of the input.
+#' @param A An \linkS4class{Expression} or matrix.
+#' @return An \linkS4class{Expression} representing the nuclear norm.
 #' @aliases norm_nuc
 #' @export
 norm_nuc <- NormNuc
@@ -185,9 +186,10 @@ p_norm <- Pnorm
 #'
 #' The quadratic form \eqn{x^TPx}.
 #'
-#' @param x An \S4class{Expression} or vector.
-#' @param P An \S4class{Expression} or matrix.
-#' @return An \S4class{Expression} representing the quadratic form evaluated at the input.
+#' @param x An \linkS4class{Expression} or vector.
+#' @param P An \linkS4class{Expression} or matrix.
+#' @return An \linkS4class{Expression} representing the quadratic form.
+
 #' @aliases quad_form
 #' @export
 quad_form <- QuadForm
@@ -197,9 +199,9 @@ quad_form <- QuadForm
 #'
 #' The sum of squared entries in X divided by a scalar y \eqn{\sum_{i,j} X_{i,j}^2/y}.
 #'
-#' @param x An \S4class{Expression}, vector, or matrix.
-#' @param y A scalar \S4class{Expression} or numeric constant.
-#' @return An \S4class{Expression} representing the quadratic over linear function value evaluated at the input.
+#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @param y A scalar \linkS4class{Expression} or numeric constant.
+#' @return An \linkS4class{Expression} representing the quadratic over linear function value.
 #' @aliases quad_over_lin
 #' @export
 quad_over_lin <- QuadOverLin
@@ -209,44 +211,44 @@ quad_over_lin <- QuadOverLin
 #'
 #' The sum of entries in a vector or matrix.
 #'
-#' @slot expr An \S4class{Expression}, vector, or matrix.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
-#' @return An \S4class{Expression} representing the sum of the entries of the input.
+#' @slot expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the sum of entries.
 #' @aliases sum_entries
 #' @export
 sum_entries <- SumEntries
 
 #'
 #' Sum of Largest Values
-#' 
+#'
 #' The sum of the largest k values of a vector or matrix.
-#' 
-#' @param x An \S4class{Expression}, vector, or matrix.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param k The number of largest values to sum over.
-#' @return An \S4class{Expression} representing the sum of the largest k values of the input.
+#' @return An \linkS4class{Expression} representing the sum of the largest k values.
 #' @aliases sum_largest
 #' @export
 sum_largest <- SumLargest
 
 #'
 #' Sum of Smallest Values
-#' 
+#'
 #' The sum of the smallest k values of a vector or matrix.
-#' 
-#' @param x An \S4class{Expression}, vector, or matrix.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param k The number of smallest values to sum over.
-#' @return An \S4class{Expression} representing the sum of the smallest k values of the input.
+#' @return An \linkS4class{Expression} representing the sum of the smallest k values.
 #' @aliases sum_smallest
 #' @export
 sum_smallest <- SumSmallest
 
 #'
 #' Sum of Squares
-#' 
+#'
 #' The sum of the squared entries in a vector or matrix.
-#' 
-#' @param expr An \S4class{Expression}, vector, or matrix.
-#' @return An \S4class{Expression} representing the sum of squares of the input.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @return An \linkS4class{Expression} representing the sum of squares.
 #' @aliases sum_squares
 #' @export
 sum_squares <- SumSquares
@@ -256,19 +258,19 @@ sum_squares <- SumSquares
 #'
 #' The sum of the diagonal entries in a matrix.
 #'
-#' @param expr An \S4class{Expression} or matrix.
-#' @return An \S4class{Expression} representing the trace of the input.
+#' @param expr An \linkS4class{Expression} or matrix.
+#' @return An \linkS4class{Expression} representing the trace.
 #' @aliases matrix_trace
 matrix_trace <- Trace
 
 #'
 #' Total Variation
-#' 
+#'
 #' The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
-#' 
-#' @param value An \S4class{Expression}, vector, or matrix.
-#' @param ... \S4class{Expression} objects or numeric constants that extend the third dimension of value.
-#' @return An \S4class{Expression} representing the total variation of the input.
+#'
+#' @param value An \linkS4class{Expression}, vector, or matrix.
+#' @param ... \linkS4class{Expression} objects or numeric constants that extend the third dimension of value.
+#' @return An \linkS4class{Expression} representing the total variation.
 #' @aliases tv
 #' @export
 tv <- TotalVariation
@@ -276,7 +278,7 @@ tv <- TotalVariation
 max.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
@@ -290,7 +292,7 @@ max.Expression <- function(..., na.rm = FALSE) {
 min.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
@@ -305,7 +307,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type) {
   x <- as.Constant(x)
   type <- substr(type, 1, 1)
-  
+
   # Norms for scalars same as absolute value
   if(type %in% c("O", "o", "1"))                  # Maximum absolute column sum
     MaxEntries(Pnorm(x = x, p = 1, axis = 2))
@@ -324,7 +326,7 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
 sum.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   sum_expr <- lapply(vals[is_expr], function(expr) { SumEntries(expr = expr) })
@@ -368,7 +370,7 @@ huber <- Huber
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @return An \S4class{Expression} representing the reciprocal of the input.
 #' @aliases inv_pos
-#' @export 
+#' @export
 inv_pos <- InvPos
 
 #'
@@ -403,7 +405,7 @@ logistic <- Logistic
 #' @param arg1 An \S4class{Expression}, vector, or matrix.
 #' @param arg2 An \S4class{Expression}, vector, or matrix.
 #' @param ... Additional \S4class{Expression} objects, vectors, or matrices.
-#' @return An \S4class{Expression} 
+#' @return An \S4class{Expression}
 #' @aliases max_elemwise
 #' @export
 max_elemwise <- MaxElemwise
@@ -459,7 +461,7 @@ power <- Power
 #'
 #' The elementwise weighted sum of the positive and negative portions of an expression \eqn{\alpha\max(x_i,0) - \beta\min(x_i,0)}.
 #' This is equivalent to \code{alpha*pos(x) + beta*neg(x)}.
-#' 
+#'
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @param alpha The weight on the positive portion of \code{x}.
 #' @param beta The weight on othe negative portion of \code{x}.
@@ -472,7 +474,7 @@ scalene <- Scalene
 #' Square Function
 #'
 #' The elementwise square function \eqn{x^2}. This is equivalent to \code{power(x,2)}.
-#' 
+#'
 #' @param x An \S4class{Expression}, vector, or matrix.
 #' @return An \S4class{Expression} representing the square of the input.
 #' @aliases square
@@ -509,22 +511,23 @@ cum_sum <- CumSum
 #' Horizontal Concatenation
 #'
 #' The horizontal concatenation of expressions. This is equivalent to \code{cbind} when applied to objects with the same number of rows.
-#' 
+#'
 #' @param ... \S4class{Expression} objects, vectors, or matrices. All arguments must have the same number of rows.
 #' @return An \S4class{Expression} representing the concatenated inputs.
 #' @aliases hstack
 #' @export
 hstack <- HStack
-kron <- Kron
+## Commented out (Naras & Anqi)
+##kron <- Kron
 reshape_expr <- Reshape
 
 #'
 #' Maximum Singular Value
-#' 
+#'
 #' The maximum singular value of a matrix.
-#' 
-#' @param A An \S4class{Expression} or matrix.
-#' @return An \S4class{Expression} representing the maximum singular value.
+#'
+#' @param A An \linkS4class{Expression} or matrix.
+#' @return An \linkS4class{Expression} representing the maximum singular value.
 #' @aliases sigma_max
 #' @export
 sigma_max <- SigmaMax
@@ -534,7 +537,7 @@ upper_tri <- UpperTri
 #' Vectorization
 #'
 #' Flattens a matrix into a vector in column-major order.
-#' 
+#'
 #' @param X An \S4class{Expression} or matrix.
 #' @return An \S4class{Expression} representing the vectorized matrix.
 #' @aliases vec
@@ -545,7 +548,7 @@ vec <- Vec
 #' Vertical Concatenation
 #'
 #' The vertical concatenation of expressions. This is equivalent to \code{rbind} when applied to objects with the same number of columns.
-#' 
+#'
 #' @param ... \S4class{Expression} objects, vectors, or matrices. All arguments must have the same number of columns.
 #' @return An \S4class{Expression} representing the concatenated inputs.
 #' @aliases vstack
@@ -575,11 +578,26 @@ setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FU
     stop("Unimplemented")
   Kron(X, Y)
 })
+
+
+#'
+#' Kronecker product method
+#' @param X Expresssion or matrix
+#' @param Y Expression object
+#' @return an expression that represents the Kronecker product of X and Y
+#' @docType methods
+#' @rdname kronecker
+#'
 setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
   if(FUN != "*" || make.dimnames)
     stop("Unimplemented")
   Kron(X, Y)
 })
+
+#'
+#' @docType methods
+#' @rdname kronecker
+#'
 setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 

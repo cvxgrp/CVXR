@@ -116,3 +116,4 @@ setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
 setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
+

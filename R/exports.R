@@ -15,6 +15,18 @@
 #' @param x An \linkS4class{Expression} or vector.
 #' @param p (Optional) A vector of weights for the weighted geometric mean. Defaults to a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
 #' @return An \linkS4class{Expression} representing the geometric mean of the input.
+#' @examples 
+#' x <- Variable(2)
+#' cost <- geo_mean(x)
+#' prob <- Problem(Maximize(cost), list(sum(x) <= 1))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
+#' 
+#' prob <- Problem(Maximize(geo_mean(x, p)), list(p_norm(x) <= 1))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @rdname geo_mean
 #' @export
@@ -27,6 +39,12 @@ geo_mean <- GeoMean
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the harmonic mean of the input.
+#' @examples 
+#' x <- Variable(3)
+#' val <- c(1,2,3)
+#' prob <- Problem(Minimize(harmonic_mean(x)), list(x == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname harmonic_mean
 #' @export
@@ -38,6 +56,18 @@ harmonic_mean <- HarmonicMean
 #' The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
 #' @param A An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the maximum eigenvalue of the input.
+#' @examples 
+#' A <- Variable(2, 2, name = "A")
+#' p <- Problem(Minimize(lambda_max(A)), list(A >= 2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
+#' 
+#' obj <- Maximize(A[2,1] - A[1,2])
+#' p <- Problem(obj, list(lambda_max(A) <= 100, A[1,1] == 2, A[2,2] == 2, A[2,1] == 2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @rdname lambda_max
 #' @export
@@ -50,6 +80,13 @@ lambda_max <- LambdaMax
 #' 
 #' @param A An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the minimum eigenvalue of the input.
+#' @examples 
+#' A <- Variable(2, 2, name = "A")
+#' val <- cbind(c(5,7), c(7,-3))
+#' p <- Problem(Minimize(lambda_min(A)), list(A == val))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @rdname lambda_min
 #' @export
@@ -168,6 +205,24 @@ mixed_norm <- MixedNorm
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the 1-norm of the input.
+#' @examples
+#' a <- Variable(name = "a")
+#' p <- Problem(Minimize(norm1(a)), list(a <= -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#' 
+#' p <- Problem(Maximize(-norm1(a)), list(a <= -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#' 
+#' x <- Variable(2, name = "x")
+#' z <- Variable(2, name = "z")
+#' p <- Problem(Minimize(norm1(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x[1] - z[1])
 #' @docType methods
 #' @rdname norm1
 #' @export
@@ -181,6 +236,31 @@ norm1 <- Norm1
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the Euclidean norm of the input.
+#' @examples
+#' a <- Variable(name = "a")
+#' p <- Problem(Minimize(norm2(a)), list(a <= -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#'
+#' p <- Problem(Maximize(-norm2(a)), list(a <= -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#'
+#' x <- Variable(2, name = "x")
+#' z <- Variable(2, name = "z")
+#' p <- Problem(Minimize(norm2(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#' result$getValue(z)
+#'
+#' p <- Problem(Minimize(norm2(t(x - z)) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#' result$getValue(z)
 #' @docType methods
 #' @rdname norm2
 norm2 <- Norm2
@@ -193,6 +273,33 @@ norm2 <- Norm2
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the infinity-norm of the input.
+#' @examples
+#' a <- Variable(name = "a")
+#' b <- Variable(name = "b")
+#' c <- Variable(name = "c")
+#' 
+#' p <- Problem(Minimize(norm_inf(a)), list(a >= 2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#' 
+#' p <- Problem(Minimize(3*norm_inf(a + 2*b) + c), list(a >= 2, b <= -1, c == 3))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a + 2*b)
+#' result$getValue(c)
+#' 
+#' p <- Problem(Maximize(-norm_inf(a)), list(a <= -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(a)
+#'
+#' x <- Variable(2, name = "x")
+#' z <- Variable(2, name = "z")
+#' p <- Problem(Minimize(norm_inf(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x[1] - z[1])
 #' @docType methods
 #' @rdname norm_inf
 #' @export
@@ -228,6 +335,28 @@ norm_nuc <- NormNuc
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
 #' @return An \linkS4class{Expression} representing the p-norm of the input.
+#' @examples 
+#' x <- Variable(3, name = "x")
+#' prob <- Problem(Minimize(p_norm(x, 2)))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
+#' 
+#' prob <- Problem(Minimize(p_norm(x, Inf)))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
+#'
+#' a <- c(1.0, 2, 3)
+#' prob <- Problem(Minimize(p_norm(x, 1.6)), list(t(x) %*% a >= 1))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
+#' 
+#' prob <- Problem(Minimize(sum(abs(x - a))), list(p_norm(x,-1) >= 0))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @rdname p_norm
 #' @export
@@ -241,6 +370,20 @@ p_norm <- Pnorm
 #' @param x An \linkS4class{Expression} or vector.
 #' @param P An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the quadratic form evaluated at the input.
+#' @examples 
+#' x <- Variable(2, name = "x")
+#' P <- rbind(c(4,0), c(0,9))
+#' p <- Problem(Minimize(quad_form(x, P)), list(x >= 1))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#'
+#' A <- Variable(2, 2, name = "A")
+#' c <- c(1,2)
+#' p <- Problem(Minimize(quad_form(c, A)), list(A >= 1))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @rdname quad_form
 #' @export
@@ -549,6 +692,15 @@ min_elemwise <- MinElemwise
 #' @param lh_const A constant \linkS4class{Expression}, vector, or matrix representing the left-hand value.
 #' @param rh_exp An \linkS4class{Expression}, vector, or matrix representing the right-hand value.
 #' @return An \linkS4class{Expression} representing the elementwise product of the inputs.
+#' @examples 
+#' A <- Variable(2, 2, name = "A")
+#' c <- cbind(c(1,-1), c(2,-2))
+#' expr <- mul_elemwise(c, A)
+#' obj <- Minimize(norm_inf(expr))
+#' p <- Problem(obj, list(A == 5))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(expr)
 #' @docType methods
 #' @rdname mul_elemwise
 #' @export
@@ -594,6 +746,12 @@ pos <- Pos
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param p A scalar value indicating the exponential power.
 #' @param max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
+#' @examples 
+#' x <- Variable()
+#' prob <- Problem(Minimize(power(x, 1.7) + power(x, -2.3) - power(x, 0.45)))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @rdname power
 #' @export
@@ -633,6 +791,12 @@ square <- Square
 #'
 #' @param x An \linkS4class{Expression}.
 #' @return An \linkS4class{Expression} representing the absolute value of the input.
+#' @examples
+#' A <- Variable(2, 2, name = "A")
+#' p <- Problem(Minimize(sum(abs(A))), list(-2 >= A))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @rdname abs
 #' @export
@@ -715,6 +879,13 @@ bmat <- Bmat
 #' @param lh_exp An \linkS4class{Expression} or vector representing the left-hand value.
 #' @param rh_exp An \linkS4class{Expression} or vector representing the right-hand value.
 #' @return An \linkS4class{Expression} representing the convolution of the input.
+#' @examples 
+#' x <- Variable(5)
+#' h <- matrix(rnorm(2), nrow = 2, ncol = 1)
+#' prob <- Problem(Minimize(sum(conv(h, x))))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @rdname conv
 #' @export
@@ -728,6 +899,34 @@ conv <- Conv
 #' 
 #' @param ... \linkS4class{Expression} objects, vectors, or matrices. All arguments must have the same number of rows.
 #' @return An \linkS4class{Expression} representing the concatenated inputs.
+#' @examples 
+#' x <- Variable(2, name = "x")
+#' y <- Variable(3, name = "y")
+#' c <- matrix(1, nrow = 1, ncol = 5)
+#' p <- Problem(Minimize(c %*% t(hstack(t(x), t(y)))), list(x == c(1,2), y == c(3,4,5)))
+#' result <- solve(p)
+#' result$value
+#'
+#' c <- matrix(1, nrow = 1, ncol = 4)
+#' p <- Problem(Minimize(c %*% t(hstack(t(x), t(x)))), list(x == c(1,2)))
+#' result <- solve(p)
+#' result$value
+#'
+#' A <- Variable(2, 2, name = "A")
+#' C <- Variable(3, 2, name = "C")
+#' c <- matrix(1, nrow = 2, ncol = 2)
+#' p <- Problem(Minimize(sum_entries(hstack(t(A), t(C)))), list(A >= 2*c, C == -2))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(A)
+#'
+#' D <- Variable(3,3)
+#' expr <- hstack(C, D)
+#' p <- Problem(Minimize(expr[1,2] + sum(hstack(expr, expr))), list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(C)
+#' result$getValue(D)
 #' @docType methods
 #' @rdname hstack
 #' @export
@@ -742,6 +941,52 @@ hstack <- HStack
 #' @param rows The new number of rows.
 #' @param cols The new number of columns.
 #' @return An \linkS4class{Expression} representing the reshaped input.
+#' @examples 
+#' x <- Variable(4)
+#' mat <- cbind(c(1,-1), c(2,-2))
+#' vec <- matrix(1:4)
+#' expr <- reshape_expr(x,2,2)
+#' obj <- Minimize(sum(mat %*% expr))
+#' prob <- Problem(obj, list(x == vec))
+#' result <- solve(prob)
+#' result$value
+#' 
+#' A <- Variable(2, 2, name = "A")
+#' c <- 1:4
+#' expr <- reshape_expr(A,4,1)
+#' obj <- Minimize(t(expr) %*% c)
+#' constraints <- list(A == cbind(c(-1,-2), c(3,4)))
+#' prob <- Problem(obj, constraints)
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(expr)
+#' result$getValue(reshape_expr(expr,2,2))
+#'
+#' C <- Variable(3, 2, name = "C")
+#' expr <- reshape_expr(C,2,3)
+#' mat <- rbind(c(1,-1), c(2,-2))
+#' C_mat <- rbind(c(1,4), c(2,5), c(3,6))
+#' obj <- Minimize(sum(mat %*% expr))
+#' prob <- Problem(obj, list(C == C_mat))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(expr)
+#' 
+#' a <- Variable(name = "a")
+#' c <- cbind(c(1,-1), c(2,-2))
+#' expr <- reshape_expr(c * a,1,4)
+#' obj <- Minimize(expr %*% (1:4))
+#' prob <- Problem(obj, list(a == 2))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(expr)
+#' 
+#' expr <- reshape_expr(c * a,4,1)
+#' obj <- Minimize(t(expr) %*% (1:4))
+#' prob <- Problem(obj, list(a == 2))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(expr)
 #' @docType methods
 #' @rdname reshape_expr
 #' @export
@@ -778,6 +1023,16 @@ upper_tri <- UpperTri
 #' 
 #' @param X An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the vectorized matrix.
+#' @examples
+#' A <- Variable(2, 2, name = "A")
+#' c <- 1:4
+#' expr <- vec(A)
+#' obj <- Minimize(t(expr) %*% c)
+#' constraints <- list(A == cbind(c(-1,-2), c(3,4)))
+#' prob <- Problem(obj, constraints)
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(expr)
 #' @docType methods
 #' @rdname vec
 #' @export
@@ -790,6 +1045,31 @@ vec <- Vec
 #' 
 #' @param ... \linkS4class{Expression} objects, vectors, or matrices. All arguments must have the same number of columns.
 #' @return An \linkS4class{Expression} representing the concatenated inputs.
+#' @examples 
+#' x <- Variable(2, name = "x")
+#' y <- Variable(3, name = "y")
+#' c <- matrix(1, nrow = 1, ncol = 5)
+#' p <- Problem(Minimize(c %*% vstack(x, y)), list(x == c(1,2), y == c(3,4,5)))
+#' result <- solve(p)
+#' result$value
+#'
+#' c <- matrix(1, nrow = 1, ncol = 4)
+#' p <- Problem(Minimize(c %*% vstack(x, x)), list(x == c(1,2)))
+#' result <- solve(p)
+#' result$value
+#'
+#' A <- Variable(2, 2, name = "A")
+#' C <- Variable(3, 2, name = "C")
+#' c <- matrix(1, nrow = 2, ncol = 2)
+#' p <- Problem(Minimize(sum(vstack(A, C))), list(A >= 2*c, C == -2))
+#' result <- solve(p)
+#' result$value
+#'
+#' B <- Variable(2, 2, name = "B")
+#' c <- matrix(1, nrow = 1, ncol = 2)
+#' p <- Problem(Minimize(sum(vstack(c %*% A, c %*% B))), list(A >= 2, B == -2))
+#' result <- solve(p)
+#' result$value
 #' @docType methods
 #' @rdname vstack
 #' @export
@@ -815,6 +1095,14 @@ cumsum <- CumSum
 #'
 #' @param expr An \linkS4class{Expression}, vector, or square matrix.
 #' @return An \linkS4class{Expression} representing the diagonal vector or matrix.
+#' @examples 
+#' C <- Variable(3,3)
+#' obj <- Maximize(C[1,3])
+#' constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Semidef(3))
+#' prob <- Problem(obj, constraints)
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(C)
 #' @docType methods
 #' @rdbane diag
 #' @export

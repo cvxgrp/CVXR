@@ -28,7 +28,7 @@ test_that("test a problem with convolution", {
   y <- matrix(rnorm(N), nrow = N, ncol = 1)
   h <- matrix(rnorm(2), nrow = 2, ncol = 1)
   x <- Variable(N)
-  v <- Conv(h, x)
+  v <- conv(h, x)
   obj <- Minimize(sum(y * v[1:N]))
   solve(Problem(obj, list()))
 })

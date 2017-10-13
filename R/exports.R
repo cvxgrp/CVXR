@@ -517,7 +517,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #'
 #' The matrix norm, which can be the 1-norm ("1"), infinity-norm ("I"), Frobenius norm ("F"), maximum modulus of all the entries ("M"), or the spectral norm ("2"), as determined by the value of type.
 #' 
-#' @param x An \S4class{Expression}.
+#' @param x An \linkS4class{Expression}.
 #' @type A character indicating the type of norm desired.
 #' \itemize{
 #'    \item "O", "o" or "1" specifies the 1-norm (maximum absolute column sum).
@@ -526,7 +526,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #'    \item "M" or "m" specifies the maximum modulus of all the elements in \code{x}.
 #'    \item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
 #' }
-#' @return An \S4class{Expression} representing the norm of the input.
+#' @return An \linkS4class{Expression} representing the norm of the input.
 #' @seealso The \code{\link{p_norm}} function calculates the vector p-norm.
 #' @docType methods
 #' @rdname norm

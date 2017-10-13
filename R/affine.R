@@ -545,6 +545,9 @@ setMethod("graph_implementation", "HStack", function(object, arg_objs, size, dat
   HStack.graph_implementation(arg_objs, size, data)
 })
 
+setMethod("cbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { HStack(x, y) })
+setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { HStack(x, y) })
+
 #'
 #' The Index class.
 #'
@@ -958,6 +961,9 @@ VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
 setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {
   VStack.graph_implementation(arg_objs, size, data)
 })
+
+setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
+setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
 #'
 #' The Bmat function.

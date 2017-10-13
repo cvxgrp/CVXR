@@ -1,6 +1,23 @@
 # =========================
 #     Scalar functions
 # =========================
+#'
+#' Geometric Mean
+#'
+#' The (weighted) geometric mean of vector \eqn{x} with optional powers given by \eqn{p}.
+#'
+#' \deqn{\left(x_1^{p_1} \cdots x_n^{p_n} \right)^{\frac{1}{\mathbf{1}^Tp}}}
+#'
+#' The geometric mean includes an implicit constraint that \eqn{x_i \geq 0} whenever \eqn{p_i > 0}. If \eqn{p_i = 0, x_i} will be unconstrained.
+#' The only exception to this rule occurs when \eqn{p} has exactly one nonzero element, say \eqn{p_i}, in which case \code{geo_mean(x,p)} is equivalent to \eqn{x_i} (without the nonnegativity constraint).
+#' A specific case of this is when \eqn{x \in \mathbf{R}^1}.
+#'
+#' @param x An \linkS4class{Expression} or vector.
+#' @param p (Optional) A vector of weights for the weighted geometric mean. Defaults to a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
+#' @return An \linkS4class{Expression} representing the geometric mean of the input.
+#' @docType methods
+#' @rdname geo_mean
+#' @export
 geo_mean <- GeoMean
 
 #'
@@ -10,7 +27,8 @@ geo_mean <- GeoMean
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the harmonic mean of the input.
-#' @aliases harmonic_mean
+#' @docType methods
+#' @rdname harmonic_mean
 #' @export
 harmonic_mean <- HarmonicMean
 
@@ -126,8 +144,6 @@ max_entries <- MaxEntries
 #' @rdname min_entries
 #' @export
 min_entries <- MinEntries
-## Added by Naras
-log1p <- Log1p
 
 #'
 #' Mixed Norm
@@ -193,6 +209,28 @@ norm_inf <- NormInf
 #' @rdname norm_nuc
 #' @export
 norm_nuc <- NormNuc
+
+#'
+#' P-Norm
+#'
+#' The vector p-norm. If given a matrix variable, \code{p_norm} will treat it as a vector and compute the p-norm of the concatenated columns.
+#'
+#' For \eqn{p \geq 1}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n |x_i|^p\right)^{1/p}} with domain \eqn{x \in \mathbf{R}^n}.
+#' For \eqn{p < 1, p \neq 0}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n x_i^p\right)^{1/p}} with domain \eqn{x \in \mathbf{R}^n_+}.
+#'
+#' \itemize{
+#'    \item Note that the "p-norm" is actually a \strong{norm} only when \eqn{p \geq 1} or \eqn{p = +\infty}. For these cases, it is convex.
+#'    \item The expression is undefined when \eqn{p = 0}.
+#'    \item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
+#' }
+#' 
+#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @param p A number greater than or equal to 1, or equal to positive infinity.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
+#' @return An \linkS4class{Expression} representing the p-norm of the input.
+#' @docType methods
+#' @rdname p_norm
+#' @export
 p_norm <- Pnorm
 
 #'
@@ -289,7 +327,7 @@ matrix_trace <- Trace
 #' The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
 #' 
 #' @param value An \linkS4class{Expression}, vector, or matrix.
-#' @param ... \linkS4class{Expression} objects or numeric constants that extend the third dimension of value.
+#' @param ... (Optional) \linkS4class{Expression} objects or numeric constants that extend the third dimension of value.
 #' @return An \linkS4class{Expression} representing the total variation of the input.
 #' @docType methods
 #' @rdname tv
@@ -331,6 +369,25 @@ min.Expression <- function(..., na.rm = FALSE) {
   -.MaxElemwise(args = min_args)
 }
 
+#'
+#' Matrix Norm
+#'
+#' The matrix norm, which can be the 1-norm ("1"), infinity-norm ("I"), Frobenius norm ("F"), maximum modulus of all the entries ("M"), or the spectral norm ("2"), as determined by the value of type.
+#' 
+#' @param x An \S4class{Expression}.
+#' @type A character indicating the type of norm desired.
+#' \itemize{
+#'    \item "O", "o" or "1" specifies the 1-norm (maximum absolute column sum).
+#'    \item "I" or "i" specifies the infinity-norm (maximum absolute row sum).
+#'    \item "F" or "f" specifies the Frobenius norm (Euclidean norm of the vectorized \code{x}).
+#'    \item "M" or "m" specifies the maximum modulus of all the elements in \code{x}.
+#'    \item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
+#' }
+#' @return An \S4class{Expression} representing the norm of the input.
+#' @seealso The \code{\link{p_norm}} function calculates the vector p-norm.
+#' @docType methods
+#' @rdname norm
+#' @export
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type) {
   x <- as.Constant(x)
   type <- substr(type, 1, 1)
@@ -368,6 +425,16 @@ sum.Expression <- function(..., na.rm = FALSE) {
   }
 }
 
+#'
+#' Arithmetic Mean
+#'
+#' The arithmetic mean of an expression.
+#' 
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the mean of the input.
+#' @docType methods
+#' @rdname mean
+#' @export
 mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
   if(na.rm)
     stop("na.rm is unimplemented for Expression objects")
@@ -390,6 +457,22 @@ mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
 #' @rdname entr
 #' @export
 entr <- Entr
+
+#'
+#' Huber Function
+#'
+#' The elementwise Huber function,
+#' \deqn{\mbox{Huber}(x, M) = \begin{cases}
+#'       2M|x|-M^2 & \mbox{for } |x| \geq |M| \\
+#'       |x|^2 & \mbox{for } |x| \leq M
+#' \end{cases}}
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @param M (Optional) A positive scalar value representing the threshold. Defaults to 1.
+#' @return An \linkS4class{Expression} representing the Huber function evaluated at the input.
+#' @docType methods
+#' @rdname huber
+#' @export
 huber <- Huber
 
 #'
@@ -494,6 +577,26 @@ neg <- Neg
 #' @rdname pos
 #' @export
 pos <- Pos
+
+#'
+#' Elementwise Power
+#'
+#' Raises each element of the input to the power \eqn{p}. 
+#' If \code{expr} is a CVXR expression, then \code{expr^p} is equivalent to \code{power(expr,p)}.
+#'
+#' For \eqn{p = 0} and \eqn{f(x) = 1}, this function is constant and positive.
+#' For \eqn{p = 1} and \eqn{f(x) = x}, this function is affine, increasing, and the same sign as \eqn{x}.
+#' For \eqn{p = 2,4,8,\ldots} and \eqn{f(x) = |x|^p}, this function is convex, positive, with signed monotonicity.
+#' For \eqn{p < 0} and \deqn{f(x) = \begin{cases} x^p & x > 0 \\ +\infty & x \leq 0 \end{cases}}, this function is convex, decreasing, and positive.
+#' For \eqn{0 < p < 1} and \deqn{f(x) = \begin{cases} x^p & x \geq 0 \\ -\infty & x < 0 \end{cases}}, this function is concave, increasing, and positive.
+#' For \eqn{p > 1, p \neq 2,4,8,\ldots} and \deqn{f(x) = \begin{cases} x^p & x \geq 0 \\ +\infty & x < 0 \end{cases}}, this function is convex, increasing, and positive.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @param p A scalar value indicating the exponential power.
+#' @param max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
+#' @docType methods
+#' @rdname power
+#' @export
 power <- Power
 
 #'
@@ -523,18 +626,75 @@ scalene <- Scalene
 #' @export
 square <- Square
 
+#'
+#' Absolute Value
+#'
+#' The elementwise absolute value.
+#'
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the absolute value of the input.
+#' @docType methods
+#' @rdname abs
+#' @export
 setMethod("abs", "Expression", function(x) { Abs(x = x) })
+
+#'
+#' Natural Exponential
+#'
+#' The elementwise natural exponential.
+#'
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the natural exponential of the input.
+#' @docType methods
+#' @rdname exp
+#' @export
 setMethod("exp", "Expression", function(x) { Exp(x = x) })
+
+#'
+#' Logarithms
+#'
+#' The elementwise logarithm.
+#' \code{log} computes the logarithm, by default the natural logarithm, \code{log10} computes the common (i.e., base 10) logarithm, and \code{log2} computes the binary (i.e., base 2) logarithms. The general form \code{log(x, base)} computes logarithms with base \code{base}.
+#' \code{log1p} computes elementwise the function \eqn{\log(1+x)}.
+#'
+#' @param x An \linkS4class{Expression}.
+#' @param base (Optional) A positive number that is the base with respect to which the logarithm is computed. Defaults to \eqn{e}.
+#' @return An \linkS4class{Expression} representing the exponentiated input.
+#' @docType methods
+#' @rdname log
+#' @export
 setMethod("log", "Expression", function(x, base = exp(1)) { Log(x = x)/log(base) })
+
+#' @docType methods
+#' @rdname log
+#' @export
 setMethod("log10", "Expression", function(x) { log(x, base = 10) })
+
+#' @docType methods
+#' @rdname log
+#' @export
 setMethod("log2", "Expression", function(x) { log(x, base = 2) })
+
+#' @docType methods
+#' @rdname log
+#' @export
 setMethod("log1p", "Expression", function(x) { Log1p(x = x) })
+log1p <- Log1p
+
+#'
+#' Square Root
+#'
+#' The elementwise square root.
+#' 
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the square root of the input.
+#' @rdname sqrt
+#' @export
 setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 
 # =========================
 # Matrix/vector operations
 # =========================
-
 #'
 #' Block Matrix
 #'
@@ -559,12 +719,12 @@ bmat <- Bmat
 #' @rdname conv
 #' @export
 conv <- Conv
-cumsum <- CumSum
 
 #'
 #' Horizontal Concatenation
 #'
-#' The horizontal concatenation of expressions. This is equivalent to \code{cbind} when applied to objects with the same number of rows.
+#' The horizontal concatenation of expressions.
+#' This is equivalent to \code{cbind} when applied to objects with the same number of rows.
 #' 
 #' @param ... \linkS4class{Expression} objects, vectors, or matrices. All arguments must have the same number of rows.
 #' @return An \linkS4class{Expression} representing the concatenated inputs.
@@ -574,7 +734,7 @@ cumsum <- CumSum
 hstack <- HStack
 
 #'
-#' Reshape
+#' Reshape an Expression
 #'
 #' This function vectorizes an expression, then unvectorizes it into a new shape. Entries are stored in column-major order.
 #'
@@ -598,10 +758,21 @@ reshape_expr <- Reshape
 #' @rdname sigma_max
 #' @export
 sigma_max <- SigmaMax
+
+#'
+#' Upper Triangle of a Matrix
+#'
+#' The vectorized strictly upper triangular entries of a matrix.
+#'
+#' @param expr An \linkS4class{Expression} or matrix.
+#' @return An \linkS4class{Expression} representing the upper triangle of the input.
+#' @docType methods
+#' @rdname upper_tri
+#' @export
 upper_tri <- UpperTri
 
 #'
-#' Vectorization
+#' Vectorization of a Matrix
 #'
 #' Flattens a matrix into a vector in column-major order.
 #' 
@@ -624,7 +795,29 @@ vec <- Vec
 #' @export
 vstack <- VStack
 
+#'
+#' Cumulative Sum
+#'
+#' The cumulative sum, \eqn{\sum_{i=1}^k x_i}. Matrices are flattened into column-major order before the sum is taken.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @docType methods
+#' @rdname cumsum
+#' @export
 setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
+cumsum <- CumSum
+
+#'
+#' Matrix Diagonal
+#'
+#' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or square matrix.
+#' @return An \linkS4class{Expression} representing the diagonal vector or matrix.
+#' @docType methods
+#' @rdbane diag
+#' @export
 setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
   if(nargs() == 1L)
     Diag(x)
@@ -640,6 +833,24 @@ setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
     expr*(base::diag(n)[1:n, 1:ncol])
   }
 })
+
+#'
+#' Lagged and Iterated Differences
+#'
+#' The lagged and iterated differences of a vector.
+#' If \code{x} is length \code{n}, this function returns a length \eqn{n-k} vector of the \eqn{k}th order difference between the lagged terms.
+#' \code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
+#' \code{diff(x,1,2)} is the second-order differences vector, equivalently diff(diff(x)). \code{diff(x,1,0)} returns the vector x unchanged.
+#' \code{diff(x,2)} returns the vector of differences [x[3] - x[1], x[4] - x[2], ...], equivalent to \code{x[(1+lag):n] - x[1:(n-lag)]}.
+#' 
+#' @param x An \linkS4class{Expression}.
+#' @param lag An integer indicating which lag to use.
+#' @param differences An integer indicating the order of the difference.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the \code{k}th order difference.
+#' @docType methods
+#' @rdname diff
+#' @export
 setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Diff(x = x, lag = lag, k = differences, ...) })
 
 #'
@@ -677,8 +888,3 @@ setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(l
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
-
-setMethod("cbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { HStack(x, y) })
-setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { HStack(x, y) })
-setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
-setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })

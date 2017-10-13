@@ -34,7 +34,6 @@ Elementwise.promote <- function(arg, size) {
 #'
 #' @slot x An \linkS4class{Expression}.
 #' @aliases Abs
-#' @export
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 Abs <- function(x) { .Abs(x = x) }
 

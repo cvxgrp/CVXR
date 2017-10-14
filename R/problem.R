@@ -1,10 +1,10 @@
 #'
 #' The Minimize class.
 #'
-#' This class represents a minimization problem.
+#' This class represents an optimization objective for minimization.
 #'
-#' @slot expr The expression to minimize.
-#' @aliases Minimize
+#' @slot expr A scalar \linkS4class{Expression} to minimize.
+#' @rdname Minimize
 #' @export
 Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
 
@@ -28,10 +28,10 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #'
 #' The Maximize class.
 #'
-#' This class represents a maximization problem.
+#' This class represents an optimization objective for maximization.
 #'
-#' @slot expr The expression to maximize.
-#' @aliases Maximize
+#' @slot expr A scalar \linkS4class{Expression} to minimize.
+#' @rdname Maximize
 #' @export
 Maximize <- setClass("Maximize", contains = "Minimize")
 
@@ -68,8 +68,37 @@ setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
 setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
+#'
+#' The SolverStats class.
+#' 
+#' This class contains the miscellaneous information that is returned by a solver after solving, but that is not captured directly by the \linkS4class{Problem} object.
+#' 
+#' @slot solver_name The name of the solver.
+#' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
+#' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
+#' @slot num_iters The number of iterations the solver had to go through to find a solution.
+#' @rdname SolverStats-class
+#' @export
 .SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
                          prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
+
+#'
+#' Solver Statistics
+#'
+#' Reports some of the miscellaneous information that is returned by a solver after solving, but that is not captured directly by the \linkS4class{Problem} object.
+#' 
+#' @param results_dict A list containing the results returned by the solver.
+#' @param solver_name The name of the solver.
+#' @return A list containing
+#' \itemize{
+#'   \item{solver_name}{The name of the solver.}
+#'   \item{solve_time}{The time (in seconds) it took for the solver to solve the problem.}
+#'   \item{setup_time}{The time (in seconds) it took for the solver to set up the problem.}
+#'   \item{num_iters}{The number of iterations the solver had to go through to find a solution.}
+#' }
+#' @docType methods
+#' @rdname SolverStats
+#' @export
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     solve_time <- NA_real_
     setup_time <- NA_real_
@@ -88,11 +117,33 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     ##  .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
 }
 
+#'
+#' The SizeMetrics class.
+#'
+#' This class contains various metrics regarding the problem size.
+#' 
+#' @slot num_scalar_variables The number of scalar variables in the problem.
+#' @slot num_scalar_data The number of constants used across all matrices and vectors in the problem. Some constants are not apparent when the problem is constructed. For example, the \code{sum_squares} expression is a wrapper for a \code{quad_over_lin} expression with a constant \code{1} in the denominator.
+#' @slot num_scalar_eq_constr The number of scalar equality constraints in the problem.
+#' @slot num_scalar_leq_constr The number of scalar inequality constraints in the problem.
+#' @slot max_data_dimension The longest dimension of any data block constraint or parameter.
+#' @slot max_big_small_squares The maximum value of (big)(small)^2 over all data blocks of the problem, where (big) is the larger dimension and (small) is the smaller dimension for each data block.
+#' @rdname SizeMetrics-class
+#' @export
 .SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
                                                        max_data_dimension = "numeric", max_big_small_squared = "numeric"),
                          prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
                                    max_data_dimension = NA_real_, max_big_small_squared = NA_real_))
 
+#'
+#' Problem Size Metrics
+#'
+#' Reports various metrics regarding the problem size.
+#' 
+#' @param problem A \linkS4class{Problem} object.
+#' @return A \linkS4class{SizeMetrics} object containing size metrics of the input problem.
+#' @rdname SizeMetrics
+#' @export
 SizeMetrics <- function(problem) {
   # num_scalar_variables
   num_scalar_variables <- 0
@@ -141,11 +192,11 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #'
 #' The Problem class.
 #'
-#' This class represents the convex optimization problem.
+#' This class represents a convex optimization problem.
 #'
-#' @slot objective The expression to minimize or maximize.
-#' @slot constraints (Optional) A list of constraints on the problem variables.
-#' @aliases Problem
+#' @slot objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
+#' @slot constraints (Optional) A list of constraints on the optimization variables.
+#' @rdname Problem-class
 #' @export
 .Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
                     prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL),
@@ -165,11 +216,24 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
                       return(TRUE)
                     }, contains = "Canonical")
 
+#'
+#' Problem Constructor
+#'
+#' Construct a \linkS4class{Problem} object.
+#' 
+#' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
+#' @param constraints (Optional) A list of constraints on the optimization variables.
+#' @return A \linkS4class{Problem} object.
+#' @rdname Problem
+#' @export
 Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
+# Used in problem@.cached_data to check if the problem's objective or constraints have changed.
 CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints, class = "CachedProblem") }
+
+# Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {

@@ -206,11 +206,34 @@ setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
 
 # Positive definite inequalities
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%>>%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e1, e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%>>%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %>>% as.Constant(e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%>>%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %>>% e2 })
+
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%<<%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e2, e1) })
+
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%<<%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %<<% as.Constant(e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint
+#' @export
 setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %<<% e2 })
 
 #'

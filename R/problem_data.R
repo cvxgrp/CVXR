@@ -5,17 +5,27 @@
 #'
 #' @slot objective A \code{list} representing the objective.
 #' @slot constraints A \code{list} of canonicalized constraints.
-#' @slot .constr_map A \code{list} mapping constraint type to a list of constraints.
-#' @slot .dims A \code{list} of the dimensions of the cones.
-#' @slot .var_offsets A \code{numeric} vector mapping variable ID to horizontal offset.
-#' @slot .var_sizes A \code{list} mapping variable ID to variable dimensions.
-#' @slot .x_length The length of the x vector.
-#' @slot .presolve_status A \code{character} string indicating the status of the pre-solver. May be NA if pre-solve has failed.
-#' @aliases SymData
-#' @export
+#' @slot .constr_map (Internal) A \code{list} mapping constraint type to a list of constraints.
+#' @slot .dims (Internal) A \code{list} of the dimensions of the cones.
+#' @slot .var_offsets (Internal) A \code{numeric} vector mapping variable ID to horizontal offset.
+#' @slot .var_sizes (Internal) A \code{list} mapping variable ID to variable dimensions.
+#' @slot .x_length (Internal) The length of the x vector.
+#' @slot .presolve_status (Internal) A \code{character} string indicating the status of the pre-solver. May be \code{NA} if pre-solve has failed.
+#' @rdname SymData-class
 .SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "numeric", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
                      prototype(.constr_map = list(), .dims = list(), .var_offsets = NA_integer_, .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
 
+#'
+#' Symbolic Data Constructor
+#' 
+#' Construct a \linkS4class{SymData} object.
+#' 
+#' @param objective A \code{list} representing the objective.
+#' @param constraints A \code{list} of canonicalized constraints.
+#' @param solver A \linkS4class{Solver} for which to format the data.
+#' @return A \linkS4class{SymData} object.
+#' @docType methods
+#' @rdname SymData
 SymData <- function(objective, constraints, solver) {
   constr_map <- SymData.filter_constraints(constraints)
   tmp <- SymData.presolve(objective, constr_map)
@@ -160,9 +170,31 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
 }
 
+#'
+#' The MatrixCache class.
+#'
+#' This class represents a cached version of the matrix and vector pair in an affine constraint.
+#' 
+#' @slot coo_tup A \code{(V, I, J)} triplet for the COO (coordinate format) matrix. \code{I} are the row indices, \code{J} are the column indices, and \code{V} are the corresponding values.
+#' @slot .param_coo_tup (Internal) A \code{(V, I, J)} triplet for the parameterized COO matrix.
+#' @slot const_vec The vector offset.
+#' @slot constraints A list of constraints in the matrix.
+#' @slot .size (Internal) The \code{c(rows, cols)} dimensions of the matrix.
+#' @rdname MatrixCache-class
 .MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", .param_coo_tup = "list", const_vec = "numeric", constraints = "list", .size = "numeric"),
                          prototype(.size = NA_real_, .param_coo_tup = list(c(), c(), c())))
 
+#'
+#' Matrix Cache Constructor
+#'
+#' Construct a \linkS4class{MatrixCache} object.
+#' 
+#' @param coo_tup A \code{(V, I, J)} triplet for the COO (coordinate format) matrix. \code{I} are the row indices, \code{J} are the column indices, and \code{V} are the corresponding values.
+#' @param const_vec The vector offset.
+#' @param constraints A list of constraints in the matrix.
+#' @param x_length The number of columns in the matrix.
+#' @return A \linkS4class{MatrixCache} object.
+#' @rdname MatrixCache
 MatrixCache <- function(coo_tup, const_vec, constraints, x_length) {
   if(length(constraints) == 0)
     rows <- 0
@@ -177,6 +209,18 @@ reset_param_data <- function(object) {
   object
 }
 
+#'
+#' The MatrixData class.
+#' 
+#' This class represents the matrices for the conic form convex optimization problem.
+#'
+#' @slot sym_data The \linkS4class{SymData} for the conic form problem.
+#' @slot solver A \linkS4class{Solver} for which to format the data.
+#' @slot nonlin A logical value indicating whether nonlinear constraints are needed.
+#' @slot .obj_cache (Internal) The \linkS4class{MatrixCache} for the objective to be used internally.
+#' @slot .eq_cache (Internal) The \linkS4class{MatrixCache} for the equality constraints to be used internally.
+#' @slot .ineq_cache (Internal) The \linkS4class{MatrixCache} for the inequality constraints to be used internally.
+#' @rdname MatrixData-class
 .MatrixData <- setClass("MatrixData", representation(sym_data = "SymData", solver = "Solver", nonlin = "logical", .obj_cache = "MatrixCache", .eq_cache = "MatrixCache", .ineq_cache = "MatrixCache"),
                         prototype(.obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL), validity = function(object) {
                           if(!is.null(object@.obj_cache))
@@ -188,6 +232,17 @@ reset_param_data <- function(object) {
                           return(TRUE)
                         })
 
+#'
+#' Matrix Data Constructor
+#'
+#' Construct a \linkS4class{MatrixData} object.
+#' 
+#' @param sym_data The \linkS4class{SymData} for the conic form problem.
+#' @param solver A \linkS4class{Solver} for which to format the data.
+#' @param nonlin A logical value indicating whether nonlinear constraints are needed.
+#' @return A \linkS4class{MatrixData} object. 
+#' @docType methods
+#' @rdname MatrixData
 MatrixData <- function(sym_data, solver, nonlin = FALSE) { .MatrixData(sym_data = sym_data, solver = solver, nonlin = nonlin) }
 
 setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, nonlin, .obj_cache = NULL, .eq_cache = NULL, .ineq_cache = NULL) {
@@ -377,15 +432,26 @@ setClassUnion("MatrixDataORNull", c("MatrixData", "NULL"))
 #'
 #' The ProblemData class.
 #'
-#' This class represents the symbolic and numeric data for a problem.
+#' This class is a wrapper for the symbolic and numeric data of a problem.
 #'
 #' @slot sym_data A \linkS4class{SymData} object representing the symbolic data for the problem.
 #' @slot matrix_data A \linkS4class{MatrixData} object representing the numeric data for the problem.
-#' @slot prev_result A \code{list} representing the result of the last solve
-#' @aliases ProblemData
-#' @export
+#' @slot prev_result A \code{list} containing the result of the last solve.
+#' @rdname ProblemData-class
 .ProblemData <- setClass("ProblemData", representation(sym_data = "SymDataORNull", matrix_data = "MatrixDataORNull", prev_result = "list"),
                                         prototype(sym_data = NULL, matrix_data = NULL, prev_result = list()))
+
+#'
+#' Problem Data Constructor
+#'
+#' Construct a \linkS4class{ProblemData} object.
+#'
+#' @param sym_data A \linkS4class{SymData} object representing the symbolic data for the problem.
+#' @param matrix_data A \linkS4class{MatrixData} object representing the numeric data for the problem.
+#' @param prev_result A \code{list} containing the result of the last solve.
+#' @return A \linkS4class{ProblemData} object.
+#' @docType methods
+#' @rdname ProblemData
 ProblemData <- function(sym_data = NULL, matrix_data = NULL, prev_result = list()) {
   .ProblemData(sym_data = sym_data, matrix_data = matrix_data, prev_result = prev_result)
 }

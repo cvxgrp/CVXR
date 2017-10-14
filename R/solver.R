@@ -1,3 +1,9 @@
+#'
+#' The Solver class.
+#'
+#' This virtual class represents the generic interface for a solver.
+#' 
+#' @rdname Solver-class
 Solver <- setClass("Solver", contains = "VIRTUAL")
 
 Solver.choose_solver <- function(constraints) {
@@ -136,7 +142,20 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   list(dims = dims, bool_idx = bool_idx, int_idx = int_idx)
 }
 
-setClass("ECOS", contains = "Solver")
+#'
+#' The ECOS class.
+#' 
+#' This class is an interface for the ECOS solver.
+#' 
+#' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
+#' @seealso \link[ECOSolveR] and \url{https://www.embotech.com/ECOS}.
+#' @rdname ECOS-class
+#' @export
+ECOS <- setClass("ECOS", contains = "Solver")
+
+#' @docType methods
+#' @rdname ECOS-class
+#' @export
 ECOS <- function() {
     new("ECOS")
     ##ECOS$new()
@@ -224,7 +243,19 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
   new_results
 })
 
+#'
+#' The ECOS_BB class.
+#' 
+#' This class is an interface for the ECOS BB (branch-and-bound) solver.
+#' 
+#' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
+#' @seealso \link[ECOSolveR] and \url{https://www.embotech.com/ECOS}.
+#' @rdname ECOS_BB-class
+#' @export
 setClass("ECOS_BB", contains = "ECOS")
+
+#' @docType methods
+#' @export
 ECOS_BB <- function() {
   new("ECOS_BB")
   ##ECOS_BB$new()
@@ -266,7 +297,20 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
   format_results(solver, results_dict, data, cached_data)
 })
 
+#'
+#' The SCS class.
+#' 
+#' This class is an interface for the SCS solver.
+#' 
+#' @references B. O'Donoghue, E. Chu, N. Parikh, and S. Boyd. "Conic Optimization via Operator Splitting and Homogeneous Self-Dual Embedding." \emph{Journal of Optimization Theory and Applications}, pp. 1-27, 2016. \url{https://web.stanford.edu/~boyd/papers/scs.html}.
+#' @seealso \link[scs] and \url{https://github.com/cvxgrp/scs}.
+#' @rdname SCS-class
+#' @export
 setClass("SCS", contains = "ECOS")
+
+#' @docType methods
+#' @rdname SCS-class
+#' @export
 SCS <- function() {
     new("SCS")
     ##SCS$new()
@@ -398,6 +442,7 @@ SCS.tri_to_full <- function(lower_tri, n) {
   return(matrix(full, nrow = n^2))
 }
 
+# TODO: This is a Python solver, which is partially ported to R via the cccp library.
 setClass("CVXOPT", contains = "Solver")
 CVXOPT <- function() {
   stop("Unimplemented solver")
@@ -405,7 +450,19 @@ CVXOPT <- function() {
   ##CVXOPT$new()
 }
 
+#'
+#' The LS class.
+#' 
+#' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
+#' LS is capable of solving any general cone program and must be invoked through a special path.
+#'
+#' @rdname LS-solver
+#' @export
 setClass("LS", contains = "Solver")
+
+#' @docType methods
+#' @rdname LS-solver
+#' @export
 LS <- function() {
   stop("Unimplemented solver")
   new("LS")
@@ -491,7 +548,20 @@ setMethod("format_results", "LS", function(solver, results_dict, data, cached_da
   new_results
 })
 
+#'
+#' The MOSEK class.
+#' 
+#' This class is an interface for the commercial MOSEK solver.
+#'
+#' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
+#' @seealso \link{Rmosek} and \url{https://www.mosek.com/products/mosek/}.
+#' @rdname MOSEK-class
+#' @export
 setClass("MOSEK", contains = "Solver")
+
+#' @docType methods
+#' @rdname MOSEK-class
+#' @export
 MOSEK <- function() {
   stop("Unimplemented")
   new("MOSEK") 
@@ -666,7 +736,20 @@ setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached
   new_results
 })
 
+#'
+#' The GUROBI class.
+#'
+#' This class is an interface for the commercial GUROBI solver.
+#' 
+#' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
+#' @seealso \url{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}.
+#' @rdname GUROBI-class
+#' @export
 setClass("GUROBI", contains = "Solver")
+
+#' @docType methods
+#' @rdname GUROBI-class
+#' @export
 GUROBI <- function() {
   stop("Unimplemented")
   new("GUROBI")

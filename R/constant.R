@@ -3,8 +3,14 @@
 #'
 #' This class represents a constant.
 #'
-#' @slot value A numeric element, data.frame, matrix, or vector.
-#' @aliases Constant
+#' @slot value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
+#' @slot is_1D_array (Internal) A logical value indicating whether the value is a vector or 1-D matrix.
+#' @slot sparse (Internal) A logical value indicating whether the value is a sparse matrix.
+#' @slot size (Internal) A vector of containing the number of rows and columns.
+#' @slot is_pos (Internal) A logical value indicating whether all elements are non-negative.
+#' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
+#' @name Constant-class
+#' @rdname Constant-class
 #' @export
 .Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
                                  prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA), 
@@ -14,6 +20,17 @@
                           stop("[Constant: validation] value must be a data.frame, matrix (CsparseMatrix, TsparseMatrix, or R default), vector, or atomic element containing only numeric entries")
                         return(TRUE)
                       }, contains = "Leaf")
+
+#'
+#' Constant Constructor
+#' 
+#' Construct a Constant class object from numeric data.
+#' 
+#' @param value A numeric element, vector, matrix, or data.frame.
+#' @return A \linkS4class{Constant} representing the numeric data.
+#' @docType methods
+#' @rdname Constant
+#' @export
 Constant <- function(value) { .Constant(value = value) }
 
 setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_1D_array = FALSE, .sparse = NA, .size = NA_real_, .is_pos = NA, .is_neg = NA) {
@@ -56,6 +73,16 @@ setMethod("canonicalize", "Constant", function(object) {
   list(obj, list())
 })
 
+#'
+#' Cast into a Constant
+#' 
+#' Coerce an R object or expression into the \linkS4class{Constant} class.
+#' 
+#' @param expr An \linkS4class{Expression}, numeric element, vector, matrix, or data.frame.
+#' @return A \linkS4class{Constant} representing the input as a constant.
+#' @docType methods
+#' @rdname as.Constant
+#' @export
 as.Constant <- function(expr) {
   if(is(expr, "Expression"))
     expr
@@ -79,13 +106,13 @@ get_sign <- function(constant) {
 #'
 #' This class represents a parameter.
 #'
+#' @slot id (Internal) A unique integer identification number used internally.
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.
-#' @slot name (Optional) A character string indicating the name of the parameter
-#' @slot sign A character string indicating the sign of the parameter. Must be "POSITIVE" or "NEGATIVE"
-#' @slot value Holds the solved numeric value of the parameter.
-#' @aliases Parameter
-#' @export
+#' @slot name (Optional) A character string representing the name of the parameter.
+#' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+#' @slot value A numeric element, vector, matrix, or data.frame.
+#' @rdname Parameter-class
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
                                     prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
                       validity = function(object) {
@@ -94,6 +121,19 @@ get_sign <- function(constant) {
                         else
                           return(TRUE)
                         }, contains = "Leaf")
+
+#'
+#' Parameter Constructor
+#'
+#' Construct a Parameter class object.
+#' 
+#' @slot rows The number of rows in the parameter.
+#' @slot cols The number of columns in the parameter.
+#' @slot name (Optional) A character string representing the name of the parameter.
+#' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
+#' @return A \linkS4class{Parameter} object.
+#' @docType methods
+#' @rdname Parameter
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }

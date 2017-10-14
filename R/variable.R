@@ -1,3 +1,15 @@
+#'
+#' The Variable class.
+#'
+#' This class represents an optimization variable.
+#' 
+#' @slot id (Internal) A unique integer identification number used internally.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @rdname Variable-class
+#' @export
 .Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "ConstVal"),
                                  prototype(rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
@@ -6,6 +18,17 @@
                                    return(TRUE)
                                  }, contains = "Leaf")
 
+#'
+#' Variable Constructor
+#'
+#' Construct a \linkS4class{Variable} class object.
+#' 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{Variable} object.
+#' @rdname Variable
+#' @export
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
 setMethod("initialize", "Variable", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
@@ -59,8 +82,27 @@ setMethod("canonicalize", "Variable", function(object) {
   list(obj, list())
 })
 
-# Boolean variable
+#'
+#' The Bool class.
+#' 
+#' This class represents a boolean variable.
+#'
+#' @rdname Bool-class
+#' @export
 .Bool <- setClass("Bool", contains = "Variable")
+
+#'
+#' Boolean Variable Constructor
+#'
+#' Construct a \linkS4class{Bool} class object.
+#' 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{Bool} object.
+#' @docType methods
+#' @rdname Bool
+#' @export
 Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "Bool", function(object) {
@@ -83,8 +125,27 @@ setMethod("canonicalize", "Bool", function(object) {
 setMethod("is_positive", "Bool", function(object) { TRUE })
 setMethod("is_negative", "Bool", function(object) { FALSE })
 
-# Integer variable
+#'
+#' The Int class.
+#' 
+#' This class represents an integer variable.
+#'
+#' @rdname Int-class
+#' @export
 .Int <- setClass("Int", contains = "Variable")
+
+#'
+#' Integer Variable Constructor
+#'
+#' Construct a \linkS4class{Int} class object.
+#' 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{Int} object.
+#' @docType methods
+#' @rdname Int
+#' @export
 Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "Int", function(object) {
@@ -104,8 +165,26 @@ setMethod("canonicalize", "Int", function(object) {
   list(obj, c(constr, list(IntConstr(obj))))
 })
 
-# Non-negative variable
+#'
+#' The NonNegative class.
+#'
+#' This class represents a variable constrained to be non-negative.
+#' 
+#' @rdname NonNegative-class
 .NonNegative <- setClass("NonNegative", contains = "Variable")
+
+#'
+#' Non-Negative Variable Constructor
+#'
+#' Construct a \linkS4class{NonNegative} class object.
+#' 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{NonNegative} object.
+#' @docType methods
+#' @rdname NonNegative
+#' @export
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "NonNegative", function(object) {
@@ -128,8 +207,27 @@ setMethod("canonicalize", "NonNegative", function(object) {
 setMethod("is_positive", "NonNegative", function(object) { TRUE })
 setMethod("is_negative", "NonNegative", function(object) { FALSE })
 
-# Positive semidefinite matrix
+#'
+#' The SemidefUpperTri class.
+#'
+#' This class represents the upper triangular part of a positive semidefinite variable.
+#'
+#' @slot n The number of rows/columns in the matrix.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @rdname SemidefUpperTri-class
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
+
+#'
+#' Upper Triangle of Positive Semidefinite Variable
+#' 
+#' Construct a \linkS4class{SemidefUpperTri} class object.
+#' 
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{SemidefUpperTri} object.
+#' @docType methods
+#' @rdname SemidefUpperTri
+#' @export
 SemidefUpperTri <- function(n, name = NA_character_) { .SemidefUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -189,14 +287,44 @@ setMethod("canonicalize", "SemidefUpperTri", function(object) {
   list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
 })
 
+#'
+#' Positive Semidefinite Variable
+#'
+#' An expression representing a positive semidefinite matrix.
+#'
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return An \linkS4class{Expression} representing the positive semidefinite matrix.
+#' @docType methods
+#' @rdname Semidef
+#' @export
 Semidef <- function(n, name = NA_character_) {
   var <- SemidefUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))
   Reshape(fill_mat %*% var, n, n)
 }
 
-# Symmetric matrix
+#'
+#' The SymmetricUpperTri class.
+#'
+#' This class represents the upper triangular part of a symmetric variable.
+#'
+#' @slot n The number of rows/columns in the matrix.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @rdname SymmetricUpperTri-class
 .SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
+
+#'
+#' Upper Triangle of Symmetric Variable
+#' 
+#' Construct a \linkS4class{SymmetricUpperTri} class object.
+#' 
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return A \linkS4class{SymmetricUpperTri} object.
+#' @docType methods
+#' @rdname SymmetricUpperTri
+#' @export
 SymmetricUpperTri <- function(n, name = NA_character_) { .SymmetricUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SymmetricUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -219,6 +347,17 @@ setMethod("canonicalize", "SymmetricUpperTri", function(object) {
   list(upper_tri, list())
 })
 
+#'
+#' Symmetric Variable
+#'
+#' An expression representing a symmetric matrix.
+#'
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return An \linkS4class{Expression} representing the symmetric matrix.
+#' @docType methods
+#' @rdname Symmetric
+#' @export
 Symmetric <- function(n, name = NA_character_) {
   var <- SymmetricUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))

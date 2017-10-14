@@ -1,3 +1,13 @@
+#'
+#' Tangent Approximation to an Expression
+#'
+#' Gives an elementwise lower (upper) bound for convex (concave) expressions. No guarantees for non-DCP expressions.
+#'
+#' @param expr An \linkS4class{Expression} to linearize.
+#' @return An affine expression or \code{NA} if cannot be linearized.
+#' @docType methods
+#' @rdname linearize
+#' @export 
 linearize <- function(expr) {
   expr <- as.Constant(expr)
   if(is_affine(expr))

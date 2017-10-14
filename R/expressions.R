@@ -1,9 +1,9 @@
 #'
 #' The Expression class.
 #'
-#' This class represents an expression in CVXR.
+#' This class represents a mathematical expression.
 #'
-#' @aliases Expression
+#' @rdname Expression-class
 #' @export
 Expression <- setClass("Expression", contains = "Canonical")
 
@@ -218,6 +218,8 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #'
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
+#' @slot args A list containing the arguments.
+#' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
 setMethod("variables", "Leaf", function(object) { list() })

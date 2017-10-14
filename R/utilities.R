@@ -1,6 +1,9 @@
 #'
-#' Canonical class
+#' The Canonical class.
 #'
+#' This virtual class represents a canonical expression.
+#'
+#' @rdname Canonical-class
 setClass("Canonical", contains = "VIRTUAL")
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })

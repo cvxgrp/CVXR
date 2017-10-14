@@ -24,7 +24,7 @@
 #'
 #' Constant Constructor
 #' 
-#' Construct a Constant class object from numeric data.
+#' Construct a \linkS4class{Constant} class object.
 #' 
 #' @param value A numeric element, vector, matrix, or data.frame.
 #' @return A \linkS4class{Constant} representing the numeric data.
@@ -125,7 +125,7 @@ get_sign <- function(constant) {
 #'
 #' Parameter Constructor
 #'
-#' Construct a Parameter class object.
+#' Construct a \linkS4class{Parameter} class object.
 #' 
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.

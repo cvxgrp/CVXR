@@ -63,6 +63,20 @@ setGeneric("violation", function(object) { standardGeneric("violation") })
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
+
+#' 
+#' Format Constraints
+#' 
+#' Formats constraints for the solver.
+#' 
+#' @param object A \linkS4class{Constraint} object.
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
+#' @return A list containing equality constraints, inequality constraints, and dimensions.
+#' @docType methods
+#' @rdname format_constr
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("constr_id", function(object) { standardGeneric("constr_id") })

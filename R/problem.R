@@ -280,23 +280,30 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object
 })
 
+#' @describeIn Problem-class The value from the last time the problem was solved.
 setMethod("value", "Problem", function(object) { object@value })
+
+#' @describeIn Problem-class Set the value of optimal objective.
 setMethod("value<-", "Problem", function(object, value ) {
     object@value <- value
     object
 })
 
+#' @describeIn Problem-class The status from the last time the problem was solved.
 setMethod("status", "Problem", function(object) { object@status })
+
+#' @describeIn Problem-class Set the status of the problem.
 setMethod("status<-", "Problem", function(object, value ) {
     object@status <- value
     object
 })
 
-
+#' @describeIn Problem-class A logical value indicating whether the problem statisfies DCP rules.
 setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
+#' @describeIn Problem-class A logical value indicating whether the problem is a quadratic program.
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
     if(!(is(c, "EqConstraint") || is_pwl(c@expr)))
@@ -305,6 +312,8 @@ setMethod("is_qp", "Problem", function(object) {
   return(is_dcp(object) && is_quadratic(object@objective@expr))
 })
 
+#' @describeIn Problem-class The graph implementation of the problem.
+#' @return A list of \code{list(affine objective, constraints list)}.
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
   canon_constr <- obj_canon[[2]]
@@ -314,26 +323,34 @@ setMethod("canonicalize", "Problem", function(object) {
   list(obj_canon[[1]], canon_constr)
 })
 
+#' @describeIn Problem-class List of \linkS4class{Variable} objects in the problem.
 setMethod("variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
 })
 
+#' @describeIn Problem-class List of \linkS4class{Parameter} objects in the problem.
 setMethod("parameters", "Problem", function(object) {
   params <- parameters(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { parameters(constr) })
   unique(flatten_list(c(params, constrs_)))   # Remove duplicates
 })
 
+#' @describeIn Problem-class List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
   constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
   constants_ <- c(constants(object@objective), constants_)
   unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
 })
 
+#' @describeIn Problem-class Information about the size of the problem.
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
+
+#' @describeIn Problem-class Additional information returned by the solver.
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
+
+#' @describeIn Problem-class Set the additional information returned by the solver in the problem.
 setMethod("solver_stats<-", "Problem", function(object, value ) {
     object@.solver_stats <- value
     object
@@ -352,6 +369,16 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
+#'
+#' Get Problem Data
+#'
+#' Get the problem data used in the call to the solver.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @param solver A string indicating the solver that the problem data is for.
+#' @return A list of arguments for the solver.
+#' @rdname get_problem_data
+#' @export
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
@@ -362,6 +389,21 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   Solver.get_problem_data(SOLVERS[[solver]], objective, constraints, object@.cached_data)
 })
 
+#'
+#' Solve a DCP Problem
+#' 
+#' Solve a DCP compliant optimization problem.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @param solver (Optional) A string indicating the solver to use. Defaults to "ECOS".
+#' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
+#' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose (Optional) A logical value indicating whether to print additional solver output.
+#' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
+#' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
+#' @return A list containing the optimal value, primal, and dual variables for the problem.
+#' @rdname solve
+#' @export
 solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
@@ -670,6 +712,15 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objstor
   # TODO: Update variable values in original problem object
 })
 
+#'
+#' Arithmetic Operations on Problems
+#' 
+#' Add, subtract, multiply, or divide DCP optimization problems.
+#' 
+#' @param e1 The left-hand \linkS4class{Problem} object.
+#' @param e2 The right-hand \linkS4class{Problem} object.
+#' @return A \linkS4class{Problem} object.
+#' @rdname Problem-arith
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
 setMethod("-", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = -e1@objective, constraints = e1@constraints) })
 setMethod("+", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })

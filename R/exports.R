@@ -1104,7 +1104,7 @@ cumsum <- CumSum
 #' result$value
 #' result$getValue(C)
 #' @docType methods
-#' @rdbane diag
+#' @rdname diag
 #' @export
 setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
   if(nargs() == 1L)

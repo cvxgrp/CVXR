@@ -46,6 +46,7 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 #' @export
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
+#' @export
 setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
@@ -170,49 +171,89 @@ setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 }
 #' @export
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
+#' @describeIn size Number of rows in the expression.
+#' @export
 setMethod("nrow", "Expression", function(x) { size(x)[1] })
+
+#' @describeIn size Number of columns in the expression.
+#' @export
 setMethod("ncol", "Expression", function(x) { size(x)[2] })
 
 # Slice operators
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   if(is_vector(x) && size(x)[1] < size(x)[2])
     Index.get_special_slice(x, NULL, i)   # If only first index given, apply it along longer dimension of vector
   else
     Index.get_special_slice(x, i, NULL)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, NULL, j)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices
   Index.get_special_slice(x, i, NULL)
 })
+
+#' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   stop("Invalid or unimplemented Expression slice operation")
 })
 
 # Arithmetic operators
+#' @rdname AddExpression-class
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
+
+#' @rdname NegExpression-class
 setMethod("-", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { NegExpression(expr = e1) })
+
+#' @rdname AddExpression-class
 setMethod("+", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { AddExpression(arg_groups = list(e1, e2)) })
+
+#' @rdname AddExpression-class
 setMethod("+", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { AddExpression(arg_groups = list(e1, e2)) })
+
+#' @rdname AddExpression-class
 setMethod("+", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e2 + e1 })
+
+#' @rdname NegExpression-class
 setMethod("-", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
+
+#' @rdname NegExpression-class
 setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname NegExpression-class
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
+
+#' @docType methods
+#' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e1))
     MulElemwise(lh_const = e1, rh_exp = e2)
@@ -224,16 +265,31 @@ setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
   } else
     stop("Cannot multiply elementwise ", curvature(e1), " and ", curvature(e2))
 })
+
+#' @docType methods
+#' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { as.Constant(e2) * e1 })
+
+#' @docType methods
+#' @rdname mul_elemwise
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
+
+#' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e2) && is_scalar(e2))
     DivExpression(lh_exp = e1, rh_exp = e2)
   else
     stop("Can only divide by a scalar constant")
 })
+
+#' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 / as.Constant(e2) })
+
+#' @rdname DivExpression-class
 setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) / e2 })
+
+#' @docType methods
+#' @rdname power
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
   if(e2 == 2)
     Square(x = e1)
@@ -244,8 +300,25 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 })
 
 # Matrix operators
+#'
+#' Matrix Transpose
+#'
+#' The transpose of a matrix.
+#'
+#' @param x An \linkS4class{Expression} representing a matrix.
+#' @return An \linkS4class{Expression} representing the transposed matrix.
+#' @docType methods
+#' @rdname transpose
+#' @aliases t
+#' @export
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
+
+#' @docType methods
+#' @rdname transpose
+#' @export
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
+
+#' @rdname MulExpression-class
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # if(is_scalar(x) || is_scalar(y))
   #  stop("Scalar operands are not allowed, use '*' instead")
@@ -270,24 +343,57 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   } else
     stop("Cannot multiply ", curvature(x), " and ", curvature(y))
 })
+
+#' @rdname MulExpression-class
 setMethod("%*%", signature(x = "Expression", y = "ConstVal"), function(x, y) { x %*% as.Constant(y) })
+
+#' @rdname MulExpression-class
 setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { as.Constant(x) %*% y })
 
 # Comparison operators
+#' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { EqConstraint(lh_exp = e1, rh_exp = e2) })
+
+#' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 == as.Constant(e2) })
+
+#' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) == e2 })
+
+#' @rdname LeqConstraint-class
 setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { LeqConstraint(lh_exp = e1, rh_exp = e2) })
+
+#' @rdname LeqConstraint-class
 setMethod("<=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 <= as.Constant(e2) })
+
+#' @rdname LeqConstraint-class
 setMethod("<=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) <= e2 })
+
+#' @rdname LeqConstraint-class
 setMethod("<",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 <= e2 })
+
+#' @rdname LeqConstraint-class
 setMethod("<",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 < as.Constant(e2) })
+
+#' @rdname LeqConstraint-class
 setMethod("<",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) < e2 })
+
+#' @rdname LeqConstraint-class
 setMethod(">=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e2 <= e1 })
+
+#' @rdname LeqConstraint-class
 setMethod(">=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 >= as.Constant(e2) })
+
+#' @rdname LeqConstraint-class
 setMethod(">=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) >= e2 })
+
+#' @rdname LeqConstraint-class
 setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 >= e2 })
+
+#' @rdname LeqConstraint-class
 setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 > as.Constant(e2) })
+
+#' @rdname LeqConstraint-class
 setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
 
 # Positive definite inequalities

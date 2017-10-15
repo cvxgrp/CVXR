@@ -3,7 +3,7 @@
 #'
 #' This virtual class represents an affine atomic expression.
 #'
-#' @aliases AffAtom
+#' @rdname AffAtom-class
 #' @export
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
@@ -74,7 +74,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
 #' This class represents the sum of any number of expressions.
 #'
 #' @slot arg_groups A \code{list} of \linkS4class{Expression}s and numeric data.frame, matrix, or vector objects.
-#' @aliases AddExpression
+#' @rdname AddExpression-class
 #' @export
 AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
 
@@ -108,7 +108,7 @@ setMethod("graph_implementation", "AddExpression", function(object, arg_objs, si
 #'
 #' @slot expr The \linkS4class{Expression} that is being operated upon.
 #' @slot op_name A \code{character} string indicating the unary operation.
-#' @aliases UnaryOperator
+#' @rdname UnaryOperator-class
 #' @export
 UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character"), contains = "AffAtom")
 
@@ -123,7 +123,7 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
 #'
 #' This class represents the negation of an affine expression.
 #'
-#' @aliases NegExpression
+#' @rdname NegExpression-class
 #' @export
 NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 
@@ -153,7 +153,7 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, si
 #' @slot lh_exp The \linkS4class{Expression} on the left-hand side of the operator.
 #' @slot rh_exp The \linkS4class{Expression} on the right-hand side of the operator.
 #' @slot op_name A \code{character} string indicating the binary operation.
-#' @aliases BinaryOperator
+#' @rdname BinaryOperator-class
 #' @export
 BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), contains = "AffAtom")
 
@@ -174,9 +174,9 @@ setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object
 #' The MulExpression class.
 #'
 #' This class represents the matrix product of two linear expressions.
-#' See MulElemwise for the elementwise product.
+#' See \linkS4class{MulElemwise} for the elementwise product.
 #'
-#' @aliases MulExpression
+#' @rdname MulExpression-class
 #' @export
 MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 
@@ -210,7 +210,7 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #'
 #' This class represents the matrix product of an expression with a constant on the right.
 #'
-#' @aliases RMulExpression
+#' @rdname RMulExpression-class
 #' @export
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
@@ -235,7 +235,7 @@ setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, s
 #'
 #' This class represents one expression divided by another expression.
 #'
-#' @aliases DivExpression
+#' @rdname DivExpression-class
 #' @export
 DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
 
@@ -266,8 +266,12 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, si
 #'
 #' @slot lh_exp An \linkS4class{Expression} or R numeric data representing the left-hand vector.
 #' @slot rh_exp An \linkS4class{Expression} or R numeric data representing the right-hand vector.
-#' @aliases Conv
+#' @rdname Conv-class
+#' @export
 .Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname conv
 Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
@@ -312,9 +316,12 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #'
 #' @slot expr An \linkS4class{Expression} to be summed.
 #' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
-#' @aliases CumSum
+#' @rdname CumSum-class
 #' @export
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
+
+#' @docType methods
+#' @rdname cumsum
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
@@ -391,9 +398,18 @@ setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, dat
 #' This class represents the conversion of a vector into a diagonal matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing the vector to convert.
-#' @aliases DiagVec
-#' @export
+#' @rdname DiagVec-class
 .DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
+
+#'
+#' Diagonal Vector Constructor
+#' 
+#' Construct a \linkS4class{DiagVec} object.
+#'
+#' @param expr An \linkS4class{Expression} representing the vector to convert.
+#' @return A \linkS4class{DiagVec} object.
+#' @rdname DiagVec
+#' @export
 DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
 setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
@@ -422,9 +438,18 @@ setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, da
 #' This class represents the extraction of the diagonal from a square matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
-#' @aliases DiagMat
+#' @rdname DiagMat-class
 #' @export
 .DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
+
+#'
+#' Diagonal Matrix Constructor
+#' 
+#' Construct a \linkS4class{DiagMat} object.
+#'
+#' @param expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
+#' @return A \linkS4class{DiagMat} object.
+#' @rdname DiagMat
 DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
 setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
@@ -447,15 +472,8 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
   DiagMat.graph_implementation(arg_objs, size, data)
 })
 
-#'
-#' The Diag function.
-#'
-#' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
-#'
-#' @param expr An \linkS4class{Expression} or numeric constant representing a vector or square matrix.
-#' @return An \linkS4class{Expression} representing the diagonal vector or matrix.
-#' @aliases Diag
-#' @export
+#' @docType methods
+#' @rdname diag
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr)) {
@@ -471,20 +489,8 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix")
 }
 
-#'
-#' The Diff function.
-#'
-#' Takes in a vector of length n and returns a vector of length n-k of the kth order difference.
-#' \code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
-#' \code{diff(x,2)} is the second-order differences vector, equivalently diff(diff(x)). \code{diff(x,0)} returns the vector x unchanged.
-#' 
-#' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
-#' @param lag An integer indicating which lag to use. Defaults to 1.
-#' @param k An integer indicating the order of the difference. Defaults to 1.
-#' @param axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
-#' @return An \linkS4class{Expression} representing the kth order difference.
-#' @aliases Diff
-#' @export
+#' @docType methods
+#' @rdname diff
 Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
   if(axis == 2)
@@ -519,8 +525,12 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' Horizontal concatenation of values.
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
-#' @aliases HStack
+#' @rdname HStack-class
+#' @export
 .HStack <- setClass("HStack", contains = "AffAtom")
+
+#' @docType methods
+#' @rdname hstack
 HStack <- function(...) { .HStack(args = list(...)) }
 
 setMethod("validate_args", "HStack", function(object) {
@@ -553,11 +563,21 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 #'
 #' This class represents indexing or slicing into a matrix.
 #'
-#' @param expr An \linkS4class{Expression} representing a vector or matrix.
-#' @param key A list containing the start index, end index, and step size of the slice.
-#' @aliases Index
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @slot key A list containing the start index, end index, and step size of the slice.
+#' @rdname Index-class
 #' @export
 .Index <- setClass("Index", representation(expr = "Expression", key = "list"), contains = "AffAtom")
+
+#'
+#' Index Constructor
+#' 
+#' Construct an \linkS4class{Index} object.
+#' 
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @param key A list containing the start index, end index, and step size of the slice.
+#' @return An \linkS4class{Index} object.
+#' @rdname Index
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
@@ -647,9 +667,12 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
 #'
 #' @slot lh_exp An \linkS4class{Expression} or numeric constant representing the left-hand matrix.
 #' @slot rh_exp An \linkS4class{Expression} or numeric constant representing the right-hand matrix.
-#' @aliases Kron
+#' @rdname Kron-class
 #' @export
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname kronecker
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
@@ -692,8 +715,12 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
 #'
 #' @slot lh_const A constant \linkS4class{Expression} or numeric value.
 #' @slot rh_exp An \linkS4class{Expression}.
-#' @aliases MulElemwise
+#' @rdname MulElemwise-class
+#' @export
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname mul_elemwise
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
 setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) {
@@ -745,9 +772,12 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' @slot expr An \linkS4class{Expression} to reshape.
 #' @slot rows The new number of rows.
 #' @slot cols The new number of columns.
-#' @aliases Reshape
+#' @rdname Reshape-class
 #' @export
 .Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname reshape_expr
 Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
 setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
@@ -787,8 +817,12 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #'
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
-#' @aliases SumEntries
+#' @rdname SumEntries-class
+#' @export
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
+
+#' @docType methods
+#' @rdname sum_entries
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
 setMethod("to_numeric", "SumEntries", function(object, values) {
@@ -824,8 +858,12 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #' This class represents the sum of the diagonal entries in a matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
-#' @aliases Trace
+#' @rdname Trace-class
+#' @export
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname matrix_trace
 Trace <- function(expr) { .Trace(expr = expr) }
 
 setMethod("initialize", "Trace", function(.Object, ..., expr) {
@@ -855,7 +893,7 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #'
 #' This class represents the matrix transpose.
 #'
-#' @aliases Transpose
+#' @rdname Transpose-class
 #' @export
 Transpose <- setClass("Transpose", contains = "AffAtom")
 
@@ -880,9 +918,12 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
 #' The vectorized strictly upper triagonal entries of a matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
-#' @aliases UpperTri
+#' @rdname UpperTri-class
 #' @export
 .UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
+
+#' @docType methods
+#' @rdname upper_tri
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
@@ -917,14 +958,8 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
   UpperTri.graph_implementation(arg_objs, size, data)
 })
 
-#'
-#' The Vec function.
-#'
-#' Flattens a matrix into a vector in column-major order.
-#' 
-#' @param X An \linkS4class{Expression} or numeric constant representing a matrix.
-#' @return An \linkS4class{Expression} representing the vectorized matrix.
-#' @aliases Vec
+#' @docType methods
+#' @rdname vec
 Vec <- function(X) {
   X <- as.Constant(X)
   Reshape(expr = X, rows = prod(size(X)), cols = 1)
@@ -936,8 +971,12 @@ Vec <- function(X) {
 #' Vertical concatenation of values.
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
-#' @aliases VStack
+#' @rdname VStack-class
+#' @export
 .VStack <- setClass("VStack", contains = "AffAtom")
+
+#' @docType methods
+#' @rdname vstack
 VStack <- function(...) { .VStack(args = list(...)) }
 
 setMethod("validate_args", "VStack", function(object) {
@@ -965,14 +1004,8 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
-#'
-#' The Bmat function.
-#'
-#' Constructs a block matrix from a list of lists. Each internal list is stacked horizontally, and the internal lists are stacked vertically.
-#' 
-#' @param block_lists A list of lists containing \linkS4class{Expression} objects, which represent the blocks of the block matrix.
-#' @return An \linkS4class{Expression} representing the block matrix.
-#' @aliases Bmat
+#' @docType methods
+#' @rdname bmat
 Bmat <- function(block_lists) {
   row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
   .VStack(args = row_blocks)

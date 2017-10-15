@@ -148,7 +148,7 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 #' This class is an interface for the ECOS solver.
 #' 
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
-#' @seealso \link[ECOSolveR] and \url{https://www.embotech.com/ECOS}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
 #' @rdname ECOS-class
 #' @export
 ECOS <- setClass("ECOS", contains = "Solver")
@@ -249,7 +249,7 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 #' This class is an interface for the ECOS BB (branch-and-bound) solver.
 #' 
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
-#' @seealso \link[ECOSolveR] and \url{https://www.embotech.com/ECOS}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
 #' @rdname ECOS_BB-class
 #' @export
 setClass("ECOS_BB", contains = "ECOS")
@@ -303,7 +303,7 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
 #' This class is an interface for the SCS solver.
 #' 
 #' @references B. O'Donoghue, E. Chu, N. Parikh, and S. Boyd. "Conic Optimization via Operator Splitting and Homogeneous Self-Dual Embedding." \emph{Journal of Optimization Theory and Applications}, pp. 1-27, 2016. \url{https://web.stanford.edu/~boyd/papers/scs.html}.
-#' @seealso \link[scs] and \url{https://github.com/cvxgrp/scs}.
+#' @seealso \code{\link[scs]{scs}} and the \href{https://github.com/cvxgrp/scs}{SCS Github}.
 #' @rdname SCS-class
 #' @export
 setClass("SCS", contains = "ECOS")
@@ -554,7 +554,7 @@ setMethod("format_results", "LS", function(solver, results_dict, data, cached_da
 #' This class is an interface for the commercial MOSEK solver.
 #'
 #' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
-#' @seealso \link{Rmosek} and \url{https://www.mosek.com/products/mosek/}.
+#' @seealso \code{\link{Rmosek}{mosek}} and the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
 #' @rdname MOSEK-class
 #' @export
 setClass("MOSEK", contains = "Solver")
@@ -742,7 +742,7 @@ setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached
 #' This class is an interface for the commercial GUROBI solver.
 #' 
 #' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
-#' @seealso \url{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}.
+#' @seealso \href{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}{GUROBI Official Site}.
 #' @rdname GUROBI-class
 #' @export
 setClass("GUROBI", contains = "Solver")

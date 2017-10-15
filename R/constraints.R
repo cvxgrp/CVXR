@@ -59,6 +59,19 @@ setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var
   callNextMethod(.Object, ...)
 })
 
+#' 
+#' Format Constraints
+#' 
+#' Formats SDP constraints as inequalities for the solver.
+#' 
+#' @param object A \linkS4class{Constraint} object.
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
+#' @return A list containing equality constraints, inequality constraints, and dimensions.
+#' @docType methods
+#' @rdname format_constr
 setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
     eq_constr <- list()
@@ -83,6 +96,8 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 })
 
 setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
+
+#' @describeIn BoolConstr-class The dimensions of the semidefinite cone.
 setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 
 #'

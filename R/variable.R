@@ -3,7 +3,7 @@
 #'
 #' This class represents an optimization variable.
 #' 
-#' @slot id (Internal) A unique integer identification number used internally.
+#' @slot id (Internal) A unique identification number used internally.
 #' @slot rows The number of rows in the variable.
 #' @slot cols The number of columns in the variable.
 #' @slot name (Optional) A character string representing the name of the variable.
@@ -48,35 +48,62 @@ setMethod("show", "Variable", function(object) {
   cat("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "Variable", function(x) {
   size <- size(x)
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Variable-class The unique ID of the variable.
+#' @export
 setMethod("id", "Variable", function(object) { object@id })
+
+#' @docType methods
+#' @rdname sign
 setMethod("is_positive", "Variable", function(object) { FALSE })
+
+#' @docType methods
+#' @rdname sign
 setMethod("is_negative", "Variable", function(object) { FALSE })
+
+#' @docType methods
+#' @rdname size
 setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })
+
+#' @rdname Canonical-class
 setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })
+
+#' @rdname Expression-class
 setMethod("name", "Variable", function(object) { object@name })
 
+#' @describeIn Variable-class Set the value of the primal variable.
 setMethod("save_value", "Variable", function(object, value) {
+  value <- validate_val(object, value)
   object@primal_value <- value
   object
 })
+
+#' @describeIn Variable-class The value of the variable.
 setMethod("value", "Variable", function(object) { object@primal_value })
+
+#' @describeIn Variable-class Set the value of the primal variable.
 setReplaceMethod("value", "Variable", function(object, value) {
-  value <- validate_val(object, value)
   object <- save_value(object, value)
   object
 })
+
+#' @rdname Expression-class
 setMethod("grad", "Variable", function(object) {
   len <- prod(size(object))
   result <- list(sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
   names(result) <- as.character(object@id)
   result
 })
+
+#' @describeIn Variable-class Returns itself as a variable.
 setMethod("variables", "Variable", function(object) { list(object) })
+
+#' @rdname Canonical-class
 setMethod("canonicalize", "Variable", function(object) {
   obj <- create_var(size(object), object@id)
   list(obj, list())
@@ -110,11 +137,13 @@ setMethod("show", "Bool", function(object) {
   cat("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "Bool", function(x) {
   size <- size(x)
   paste("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Bool-class Enforce that the variable be boolean.
 setMethod("canonicalize", "Bool", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -122,7 +151,12 @@ setMethod("canonicalize", "Bool", function(object) {
   list(obj, c(constr, list(BoolConstr(obj))))
 })
 
+#' @docType methods
+#' @rdname sign
 setMethod("is_positive", "Bool", function(object) { TRUE })
+
+#' @docType methods
+#' @rdname sign
 setMethod("is_negative", "Bool", function(object) { FALSE })
 
 #'
@@ -153,11 +187,13 @@ setMethod("show", "Int", function(object) {
   cat("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "Int", function(x) {
   size <- size(x)
   paste("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Int-class Enforce that the variable be an integer.
 setMethod("canonicalize", "Int", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -192,11 +228,13 @@ setMethod("show", "NonNegative", function(object) {
   cat("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "NonNegative", function(x) {
   size <- size(x)
   paste("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn NonNegative-class Enforce that the variable be non-negative.
 setMethod("canonicalize", "NonNegative", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -204,7 +242,12 @@ setMethod("canonicalize", "NonNegative", function(object) {
   list(obj, c(constr, list(create_geq(obj))))
 })
 
+#' @docType methods
+#' @rdname sign
 setMethod("is_positive", "NonNegative", function(object) { TRUE })
+
+#' @docType methods
+#' @rdname sign
 setMethod("is_negative", "NonNegative", function(object) { FALSE })
 
 #'
@@ -239,12 +282,21 @@ setMethod("show", "SemidefUpperTri", function(object) {
   cat("SemidefUpperTri(", object@n, ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "SemidefUpperTri", function(x) {
   paste("SemidefUpperTri(", x@n, ")", sep = "")
 })
 
+#' @rdname Canonical-class
 setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, object@name) })
 
+#'
+#' Upper Triangle to Full Matrix
+#'
+#' Returns a coefficient matrix to create a symmetric matrix.
+#'
+#' @param n The width/height of the matrix
+#' @return The coefficient matrix.
 upper_tri_to_full <- function(n) {
   if(n == 0)
     return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
@@ -277,6 +329,7 @@ upper_tri_to_full <- function(n) {
   sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
 }
 
+#' @describeIn SemidefUpperTri-class Enforce that the variable be semidefinite and symmetric.
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
   # Variable must be semidefinite and symmetric
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
@@ -336,12 +389,15 @@ setMethod("show", "SymmetricUpperTri", function(object) {
   cat("SymmetricUpperTri(", object@n, ")", sep = "")
 })
 
+#' @rdname Expression-class
 setMethod("as.character", "SymmetricUpperTri", function(x) {
   paste("SymmetricUpperTri(", x@n, ")", sep = "")
 })
 
+#' @rdname Canonical-class
 setMethod("get_data", "SymmetricUpperTri", function(object) { list(object@n, object@name) })
 
+#' @rdname Canonical-class
 setMethod("canonicalize", "SymmetricUpperTri", function(object) {
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
   list(upper_tri, list())

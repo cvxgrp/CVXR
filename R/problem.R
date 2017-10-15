@@ -15,14 +15,25 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
     return(.Object)
 })
 
-setMethod("get_data", "Minimize", function(object) { list() })
-setMethod("canonical_form", "Minimize", function(object) { canonicalize(object) })
+#' @describeIn Minimize-class Pass on the target expression's objective and constraints.
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
+
+#' @describeIn Minimize-class Returns the \linkS4class{Variable} objects in the objective.
 setMethod("variables", "Minimize", function(object) { variables(object@expr) })
+
+#' @describeIn Minimize-class Returns the \linkS4class{Parameter} objects in the objective.
 setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
+
+#' @describeIn Minimize-class Returns the \linkS4class{Constant} objects in the objective.
 setMethod("constants", "Minimize", function(object) { constants(object@expr) })
+
+#' @describeIn Minimize-class A logical value indicating whether the objective is convex.
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
+
+#' @describeIn Minimize-class The value of the objective expression.
 setMethod("value", "Minimize", function(object) { value(object@expr) })
+
+#' @describeIn Minimize-class The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Minimize", function(object, result) { result })
 
 #'
@@ -57,6 +68,7 @@ setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Mi
 setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@expr + e2@expr) })
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
+#' @describeIn Maximize-class Negates the target expression's objective.
 setMethod("canonicalize", "Maximize", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -64,8 +76,13 @@ setMethod("canonicalize", "Maximize", function(object) {
   list(lo.neg_expr(obj), constraints)
 })
 
+#' @describeIn Maximize-class A logical value indicating whether the objective is concave.
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
+
+#' @describeIn Maximize-class A logical value indicating whether the objective is quadratic.
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
+
+#' @describeIn Maximize-class The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
 #'

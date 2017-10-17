@@ -123,11 +123,31 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { standardGeneric("Solver.solve") })
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
-# Solver capabilities
+#'
+#' Solver Capabilities
+#' 
+#' The types of convex problems that a solver is capable of solving.
+#' 
+#' @param solver A \linkS4class{Solver} object.
+#' @return A logical value indicating the solver capability.
+#' @doctype methods
+#' @rdname Solver-capable
+NULL
+
+#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving linear programs.
 setGeneric("lp_capable", function(solver) { standardGeneric("lp_capable") })
+
+#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving second-order cone programs.
 setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
+
+#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving semidefinite programs.
 setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
+
+#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving exponential cone programs.
 setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
+
+#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving mixed-integer programs.
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
+
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
 

@@ -386,7 +386,7 @@ setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@ar
 #' @rdname Atom-class
 setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
 
-#' @rdname Expression-class
+#' @rdname curvature
 setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 
 #' @rdname Atom-class

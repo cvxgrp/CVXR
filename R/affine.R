@@ -7,14 +7,28 @@
 #' @export
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
+
+#' @rdname curvature
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
+
+#' @rdname curvature
 setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
+#' @rdname Atom-class
 setMethod(".grad", "AffAtom", function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this
   # Make a fake LinOp tree for the function
@@ -90,6 +104,8 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
 })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -132,9 +148,17 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
 })
 
 setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "NegExpression", function(object) { size(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "NegExpression", function(object) { c(is_negative(object@args[[1]]), is_positive(object@args[[1]])) })
+
+#' @rdname Atom-class
 setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "NegExpression", function(object, idx) { TRUE })
 
 NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -168,6 +192,8 @@ setMethod("to_numeric", "BinaryOperator", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce(object@op_name, values)
 })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #'
@@ -188,8 +214,13 @@ setMethod("validate_args", "MulExpression", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "MulExpression", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
+
+#' @rdname Atom-class
 setMethod("is_incr", "MulExpression", function(object, idx) { is_positive(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object@args[[1]]) })
 
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -243,12 +274,18 @@ setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
 })
 
+#' @rdname curvature
 setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "DivExpression", function(object) { size(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object@args[[2]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "DivExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
 DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -291,14 +328,20 @@ setMethod("to_numeric", "Conv", function(object, values) {
     .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "Conv", function(object) {
   lh_length <- size(object@args[[1]])[1]
   rh_length <- size(object@args[[2]])[1]
   c(lh_length + rh_length - 1, 1)
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Conv", function(object, idx) { is_negative(object@args[[1]]) })
 
 Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -325,6 +368,8 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
 get_diff_mat <- function(dim, axis) {
@@ -352,6 +397,7 @@ get_diff_mat <- function(dim, axis) {
     t(mat)
 }
 
+#' @rdname Atom-class
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
   if(object@axis == 1)
@@ -419,6 +465,7 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
 
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "DiagVec", function(object) {
   rows <- size(object@args[[1]])[1]
   c(rows, rows)
@@ -459,6 +506,7 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
 
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "DiagMat", function(object) {
   rows <- size(object@args[[1]])[1]
   c(rows, 1)
@@ -540,6 +588,8 @@ setMethod("validate_args", "HStack", function(object) {
 })
 
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "HStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   cols <- sum(arg_cols)
@@ -590,6 +640,7 @@ setMethod("to_numeric", "Index", function(object) {
   ku_slice_mat(values[[1]], object@key$row, object@key$col)
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "Index", function(object) {
   ku_size(object@key, size(object@args[[1]]))
 })
@@ -690,14 +741,20 @@ setMethod("to_numeric", "Kron", function(object, values) {
   kronecker(values[[1]], values[[2]])
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "Kron", function(object) {
   rows <- size(object@args[[1]])[1] * size(object@args[[2]])[1]
   cols <- size(object@args[[1]])[2] * size(object@args[[2]])[2]
   c(rows, cols)
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Kron", function(object, idx) { is_negative(object@args[[2]]) })
 
 Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -739,16 +796,23 @@ setMethod("to_numeric", "MulElemwise", function(object, values) {
   values[[1]] * values[[2]]
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "MulElemwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "MulElemwise", function(object) {
   mul_sign(object@args[[1]], object@args[[2]])
 })
 
+#' @rdname Atom-class
 setMethod("is_incr", "MulElemwise", function(object, idx) { is_positive(object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@args[[1]]) })
+
+#' @rdname curvature
 setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@args[[2]]) })
 
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -799,6 +863,7 @@ setMethod("to_numeric", "Reshape", function(object, values) {
   values[[1]]
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "Reshape", function(object) { c(object@rows, object@cols) })
 setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
 
@@ -878,6 +943,8 @@ setMethod("validate_args", "Trace", function(object) {
 })
 
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
 
 Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -899,6 +966,7 @@ Transpose <- setClass("Transpose", contains = "AffAtom")
 
 setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "Transpose", function(object) {
   size <- size(object@args[[1]])
   c(size[2], size[1])
@@ -943,6 +1011,7 @@ setMethod("to_numeric", "UpperTri", function(object, values) {
   values[[1]][tridx]
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "UpperTri", function(object) {
   size <- size(object@args[[1]])
   rows <- size[1]
@@ -986,6 +1055,8 @@ setMethod("validate_args", "VStack", function(object) {
 })
 
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "VStack", function(object) {
   cols <- size(object@args[[1]])[2]
   arg_rows <- sapply(object@args, function(arg) { size(arg)[1] })

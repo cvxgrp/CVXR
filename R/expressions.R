@@ -38,11 +38,28 @@ setMethod("size", "ListORExpr", function(object) {
 #' @export
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression-class The (sub/super)-gradient of the expression with respect to each variable. Matrix expressions are vectorized, so the gradient is a matrix.
+#'
+#' Sub/Super-Gradient
+#'
+#' The (sub/super)-gradient of the expression with respect to each variable.
+#' Matrix expressions are vectorized, so the gradient is a matrix. \code{NA} indicates variable values are unknown or outside the domain.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A list mapping each variable to a sparse matrix.
+#' @docType methods
+#' @rdname grad
 #' @export
 setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression-class A list of constraints describing the closure of the region where the expression is finite.
+#'
+#' Domain
+#'
+#' A list of constraints describing the closure of the region where the expression is finite.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A list of \linkS4class{Constraint} objects.
+#' @docType methods
+#' @rdname domain
 #' @export
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 

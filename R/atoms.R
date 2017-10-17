@@ -23,14 +23,38 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
+#' @describeIn Atom-class Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { })
+
+#' @describeIn Atom-class The \code{c(row, col)} size of the atom.
+setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
+
+#' @rdname size
 setMethod("size", "Atom", function(object) { object@.size })
+
+#' @describeIn Atom-class The sign \code{c(is positive, is negative)} of the atom.
+setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname sign
 setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
 
 #' @rdname sign
 setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
+
+#' @describeIn Atom-class A logical value indicating whether the atom is convex.
+setMethod("is_atom_convex", "Atom", function(object) { stop("Unimplemented") })
+
+#' @describeIn Atom-class A logical value indicating whether the atom is concave.
+setMethod("is_atom_concave", "Atom", function(object) { stop("Unimplemented") })
+
+#' @describeIn Atom-class A logical value indicating whether the atom is affine.
+setMethod("is_atom_affine", "Atom", function(object) { is_atom_concave(object) && is_atom_convex(object) })
+
+#' @describeIn Atom-class A logical value indicating whether the composition is non-decreasing in \code{idx}.
+setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
+
+#' @describeIn Atom-class A logical value indicating whether the composition is non-increasing in argument \code{idx}.
+setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @rdname curvature
 setMethod("is_convex", "Atom", function(object) {
@@ -66,6 +90,7 @@ setMethod("is_concave", "Atom", function(object) {
     return(FALSE)
 })
 
+#' @describeIn Atom-class Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
   # Constant atoms are treated as a leaf
   if(is_constant(object)) {
@@ -92,21 +117,42 @@ setMethod("canonicalize", "Atom", function(object) {
   }
 })
 
+#'
+#' Graph Implementation
+#' 
+#' Reduces the atom to an affine expression and list of constraints.
+#' 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
+#' @docType methods
+#' @rdname graph_implementation
+setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
+
+#' @describeIn Atom-class List of \linkS4class{Variable} objects in the atom.
+#' @export
 setMethod("variables", "Atom", function(object) {
   var_list <- lapply(object@args, function(arg) { variables(arg) })
   unique(flatten_list(var_list))
 })
 
+#' @describeIn Atom-class List of \linkS4class{Parameter} objects in the atom.
+#' @export
 setMethod("parameters", "Atom", function(object) {
   param_list <- lapply(object@args, function(arg) { parameters(arg) })
   unique(flatten_list(param_list))
 })
 
+#' @describeIn Atom-class List of \linkS4class{Constant} objects in the atom.
+#' @export
 setMethod("constants", "Atom", function(object) {
   const_list <- lapply(object@args, function(arg) { constants(arg) })
   unique(flatten_list(const_list))   # TODO: Is this the correct way to remove duplicates?
 })
 
+#' @describeIn Atom-class The value of the atom.
+#' @export
 setMethod("value", "Atom", function(object) {
   # Catch the case when the expression is known to be zero through DCP analysis
   if(is_zero(object)) {
@@ -136,7 +182,13 @@ setMethod("value", "Atom", function(object) {
     result
 })
 
-setMethod(".grad", "Atom", function(object) { stop("Unimplemented") })
+#' @describeIn Atom-class The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
+#' @param values A list of numeric values for the arguments.
+#' @return A list of sparse matrices or \code{NA}.
+setMethod(".grad", "Atom", function(object, values) { stop("Unimplemented") })
+
+#' @docType methods
+#' @rdname grad
 setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
   if(is_constant(object))
@@ -183,7 +235,11 @@ setMethod("grad", "Atom", function(object) {
   return(result)
 })
 
+#' @describeIn Atom-class The constraints describing the domain of the atom.
 setMethod(".domain", "Atom", function(object) { list() })
+
+#' @docType methods
+#' @rdname domain
 setMethod("domain", "Atom", function(object) {
   cons <- list()
   for(arg in object@args) {
@@ -210,6 +266,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
@@ -219,13 +276,18 @@ setMethod("size_from_args", "AxisAtom", function(object) {
     c(1, size(object@args[[1]])[2])
 })
 
+#' @describeIn AxisAtom-class A list containing the dimension across which to apply the atom: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 
+#' @describeIn AxisAtom-class Checks that the new shape has the same number of entries as the old.
 setMethod("validate_args", "AxisAtom", function(object) {
   if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1, 2)))
      stop("Invalid argument for axis")
 })
 
+#' @describeIn AxisAtom-class The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix. Takes the axis into account.
+#' @param values A list of numeric values for the arguments.
+#' @return A list of sparse matrices or \code{NA}.
 setMethod(".axis_grad", "AxisAtom", function(object, values) {
   m <- size(object@args[[1]])[1]
   n <- size(object@args[[1]])[2]
@@ -263,6 +325,9 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   list(D)
 })
 
+#' @describeIn AxisAtom-class The (sub/super) gradient of the atom with respect to a column argument. Matrix expressions are vectorized, so the gradient is a matrix.
+#' @param value A numeric value for a column.
+#' @return A sparse matrix or \code{NA}.
 setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 #'
@@ -293,21 +358,38 @@ setMethod("initialize", "AffineProd", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(x, y))
 })
 
+#' @describeIn AffineProd-class Check dimensions of arguments and linearity.
 setMethod("validate_args", "AffineProd", function(object) {
   if(!is_affine(object@args[[1]]) || !is_affine(object@args[[2]]))
     stop("The arguments to AffineProd must be affine")
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
+#' @describeIn AffineProd-class Returns the product of two affine expressions.
 setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
+
+#' @describeIn AffineProd-class Returns the \code{c(row, col)} size of the atom.
 setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
+
+#' @describeIn AffineProd-class Default to rules for times.
 setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+
+#' @describeIn AffineProd-class Affine times affine is not convex.
 setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
+
+#' @describeIn AffineProd-class Affine times affine is not concave.
 setMethod("is_atom_concave", "AffineProd", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@args[[2-idx]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
+
+#' @rdname Expression-class
 setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 
+#' @rdname Atom-class
 setMethod(".grad", "AffineProd", function(object, values) {
   X <- values[[1]]
   Y <- values[[2]]
@@ -392,7 +474,10 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object
 })
 
+#' @describeIn GeoMean-class Empty function since validation of arguments is done during atom initialization.
 setMethod("validate_args", "GeoMean", function(object) { })
+
+#' @describeIn GeoMean-class Returns the (weighted) geometric mean of the elements of \code{x}.
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
 
@@ -411,7 +496,10 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
   Reduce("*", val)
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
+
+#' @rdname Atom-class
 setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
@@ -425,14 +513,28 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "GeoMean", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "GeoMean", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "GeoMean", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
+
+#' @describeIn GeoMean-class A list of \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
+#' @rdname graph_implementation
 GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   w <- data[[1]]
   w_dyad <- data[[2]]
@@ -450,6 +552,7 @@ GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, gm_constrs(t, x_list, w))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, data = NA_real_) {
   GeoMean.graph_implementation(arg_objs, size, data)
 })
@@ -480,25 +583,41 @@ setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @describeIn LambdaMax-class Verify that \code{A} is square.
 setMethod("validate_args", "LambdaMax", function(object) {
   if(size(object@args[[1]])[1] != size(object@args[[1]])[2])
     stop("The argument to LambdaMax must resolve to a square matrix")
 })
 
+#' @describeIn LambdaMax-class Returns the largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
     stop("LambdaMax called on a non-symmetric matrix")
   max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "LambdaMax", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".domain", "LambdaMax", function(object) { list(t(object@args[[1]]) == object@args[[1]]) })
+
+#' @rdname Atom-class
 setMethod(".grad", "LambdaMax", function(object, values) {
   r <- eigen(values[[1]], only.values = FALSE)
   v <- r$vectors  # eigenvectors
@@ -511,6 +630,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
+#' @rdname graph_implementation
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
   n <- size(A)[1]
@@ -522,6 +642,7 @@ LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(SDP(expr)))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
   LambdaMax.graph_implementation(arg_objs, size, data)
 })
@@ -572,12 +693,14 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @describeIn LogDet-class Verify that \code{A} is square.
 setMethod("validate_args", "LogDet", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("The argument to LogDet must be a square matrix")
 })
 
+#' @describeIn LogDet-class Returns the log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
   logdet <- determinant(values[[1]], logarithm = TRUE)
   if(logdet$sign == 1)
@@ -586,13 +709,25 @@ setMethod("to_numeric", "LogDet", function(object, values) {
     return(-Inf)
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "LogDet", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "LogDet", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "LogDet", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "LogDet", function(object, values) {
   X <- as.matrix(values[[1]])
   eigen_val <- eigen(X, only.values = TRUE)$values
@@ -604,8 +739,10 @@ setMethod(".grad", "LogDet", function(object, values) {
     return(list(NA_real_))
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
 
+#' @rdname graph_implementation
 LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]  # n by n matrix
   n <- size(A)[1]
@@ -643,6 +780,7 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.sum_entries(obj), c(constraints, constr))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
   LogDet.graph_implementation(arg_objs, size, data)
 })
@@ -662,6 +800,7 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' @rdname log_sum_exp
 LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
+#' @describeIn LogSumExp-class Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
     log(sum(exp(values[[1]])))
@@ -669,7 +808,10 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
     log(apply(exp(values[[1]]), object@axis, sum))
 })
 
+#' @rdname Atom-class
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
+
+#' @rdname AxisAtom-class
 setMethod(".column_grad", "LogSumExp", function(object, value) {
   denom <- sum(exp(value))
   nom <- exp(value)
@@ -677,12 +819,22 @@ setMethod(".column_grad", "LogSumExp", function(object, value) {
   D
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
+#' @rdname graph_implementation
 LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   axis <- data[[1]]
@@ -727,6 +879,7 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, data = NA_real_) {
   LogSumExp.graph_implementation(arg_objs, size, data)
 })
@@ -752,6 +905,7 @@ setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
 })
 
+#' @describeIn MatrixFrac-class Checks that the dimensions of \code{x} and \code{P} match.
 setMethod("validate_args", "MatrixFrac", function(object) {
   X <- object@args[[1]]
   P <- object@args[[2]]
@@ -761,6 +915,7 @@ setMethod("validate_args", "MatrixFrac", function(object) {
     stop("The arguments to MatrixFrac have incompatible dimensions")
 })
 
+#' @describeIn Returns the trace of \eqn{X^TP^{-1}X}.
 setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
@@ -768,15 +923,31 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   sum(diag(t(X) %*% base::solve(P) %*% X))
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "MatrixFrac", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "MatrixFrac", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
+
+#' @describeIn MatrixFrac-class A logical value indicating whether \code{x} is affine and \code{P} is constant.
 setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
+#' @rdname Atom-class
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
+
+#' @rdname Atom-class
 setMethod(".grad", "MatrixFrac", function(object, values) {
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
@@ -803,6 +974,7 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   list(DX, DP)
 })
 
+#' @rdname graph_implementation
 MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   X <- arg_objs[[1]]   # n by m matrix
   P <- arg_objs[[2]]   # n by n matrix
@@ -829,6 +1001,7 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(cvxr::lo.trace(Tmat), c(constraints, list(SDP(M))))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
   MatrixFrac.graph_implementation(arg_objs, size, data)
 })
@@ -848,6 +1021,7 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' @rdname max_entries
 MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
+#' @describeIn MaxEntries-class Returns the largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
     max(values[[1]])
@@ -855,14 +1029,28 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
     apply(values[[1]], object@axis, max)
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
+
+#' @describeIn MaxEntries-class A logical value indicating whether the atom is piecewise linear.
 setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
+#' @rdname Atom-class
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
+
+#' @rdname AxisAtom-class
 setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
   value <- as.numeric(value)
@@ -872,6 +1060,7 @@ setMethod(".column_grad", "MaxEntries", function(object, value) {
   D
 })
 
+#' @rdname graph_implementation
 MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis)) {
@@ -893,6 +1082,7 @@ MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size, data = NA_real_) {
   MaxEntries.graph_implementation(arg_objs, size, data)
 })
@@ -958,6 +1148,7 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   callNextMethod(.Object, ...)
 })
 
+#' @describeIn Pnorm-class Check if the arguments are valid.
 setMethod("validate_args", "Pnorm", function(object) {
   callNextMethod()
   if(!is.na(object@axis) && object@p != 2)
@@ -981,6 +1172,7 @@ setMethod("name", "Pnorm", function(object) {
     stop("Invalid p = ", p)
 }
 
+#' @describeIn Pnorm-class Returns the p-norm of \code{x}.
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
     values <- as.numeric(values[[1]])
@@ -1000,21 +1192,39 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
   retval
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
+
+#' @describeIn Pnorm-class A logical value indicating whether the atom is piecewise linear.
 setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
+
+#' @describeIn Pnorm-class A list of \code{list(p, axis)}.
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
+#' @rdname Atom-class
 setMethod(".domain", "Pnorm", function(object) {
   if(object@p < 1 && object@p != 0)
     list(object@args[[1]] >= 0)
   else
     list()
 })
+
+#' @rdname Atom-class
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
+
+#' @rdname AxisAtom-class
 setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- prod(size(object@args[[1]]))
   value <- as.matrix(value)
@@ -1044,6 +1254,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
 })
 
+#' @rdname graph_implementation
 Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[[1]]
   axis <- data[[2]]
@@ -1094,6 +1305,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
   Pnorm.graph_implementation(arg_objs, size, data)
 })
@@ -1172,18 +1384,31 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @describeIn NormNuc-class Returns the nuclear norm (i.e., the sum of the singular values) of \code{A}.
 setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
   sum(svd(values[[1]])$d)
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "NormNuc", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "NormNuc", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
   s <- svd(values[[1]])
@@ -1191,6 +1416,7 @@ setMethod(".grad", "NormNuc", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))   # TODO: Make sure D is vectorized correctly
 })
 
+#' @rdname graph_implementation
 NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
   size <- size(A)
@@ -1213,6 +1439,7 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(trace_expr, c(list(SDP(X)), constraints))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
   NormNuc.graph_implementation(arg_objs, size, data)
 })
@@ -1306,21 +1533,40 @@ setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y =
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
+#' @describeIn QuadOverLin-class Check the dimensions of the arguments.
 setMethod("validate_args",   "QuadOverLin", function(object) {
   if(!is_scalar(object@args[[2]]))
     stop("[QuadOverLin: validation] y must be a scalar")
 })
 
+#' @describeIn QuadOverLin-class Returns the sum of the entries of \code{x} squared over \code{y}.
 setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "QuadOverLin", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_positive(object@args[[idx]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 2) })
+
+#' @describeIn QuadOverLin-class A logical value indicating whether \code{x} is affine and \code{y} is constant.
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
+#' @rdname Atom-class
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
+
+#' @rdname Atom-class
 setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
   y <- values[[2]]
@@ -1336,6 +1582,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
   }
 })
 
+#' @rdname graph_implementation
 QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   y <- arg_objs[[2]]   # Known to be a scalar.
@@ -1348,6 +1595,7 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(v, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
   QuadOverLin.graph_implementation(arg_objs, size, data)
 })
@@ -1371,14 +1619,28 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @describeIn SigmaMax-class Returns the largest singular value of \code{A}.
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
+
+#' @rdname Atom-class
 setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "SigmaMax", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "SigmaMax", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "SigmaMax", function(object, values) {
   # Grad: U diag(e_1) t(V)
   s <- svd(values[[1]])
@@ -1388,6 +1650,7 @@ setMethod(".grad", "SigmaMax", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
+#' @rdname graph_implementation
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]   # n by m matrix
   size <- A$size
@@ -1415,6 +1678,7 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, c(constraints, list(SDP(X))))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
   SigmaMax.graph_implementation(arg_objs, size, data)
 })
@@ -1445,11 +1709,13 @@ setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @describeIn SumLargest-class Verify that \code{k} is a positive integer.
 setMethod("validate_args",   "SumLargest", function(object) {
   if(as.integer(object@k) != object@k || object@k <= 0)
     stop("[SumLargest: validation] k must be a positive integer")
 })
 
+#' @describeIn SumLargest-class Returns the sum of the \code{k} largest entries of the vector or matrix.
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.numeric(values[[1]])
@@ -1458,14 +1724,28 @@ setMethod("to_numeric", "SumLargest", function(object, values) {
   sum(val_sort[1:k])
 })
 
+#' @rdname Atom-class
 setMethod("size_from_args", "SumLargest", function(object) { c(1, 1) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "SumLargest", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "SumLargest", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "SumLargest", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
+
+#' @describeIn SumLargest-class Returns a list containing \code{k}.
 setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
+#' @rdname Atom-class
 setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
   value <- as.numeric(t(values[[1]]))
@@ -1476,6 +1756,7 @@ setMethod(".grad", "SumLargest", function(object, values) {
   list(Matrix(D, sparse = TRUE))
 })
 
+#' @rdname graph_implementation
 SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # min SumEntries(t) + k*q
   # s.t. x <= t + q, t >= 0
@@ -1492,6 +1773,7 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constr)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size, data = NA_real_) {
   SumLargest.graph_implementation(arg_objs, size, data)
 })

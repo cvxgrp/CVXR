@@ -208,28 +208,99 @@ test_that("Test saturating hinges problem", {
   legend("topright", c("Huber Loss", "Squared Loss"), col = "blue", lty = 1:2, bty = "n")
 })
 
-test_that("Test maximum likelihood estimation", {
+test_that("Test log-concave distribution estimation", {
   set.seed(1)
+  
+  # Calculate a piecewise linear function
+  pwl_fun <- function(x, knots) {
+    n <- nrow(knots)
+    x0 <- sort(knots$x, decreasing = FALSE)
+    y0 <- knots$y[order(knots$x, decreasing = FALSE)]
+    slope <- diff(y0)/diff(x0)
+    
+    sapply(x, function(xs) {
+      if(xs <= x0[1])
+        y0[1] + slope[1]*(xs -x0[1])
+      else if(xs >= x0[n])
+        y0[n] + slope[n-1]*(xs - x0[n])
+      else {
+        idx <- which(xs <= x0)[1]
+        y0[idx-1] + slope[idx-1]*(xs - x0[idx-1])
+      }
+    })
+  }
   
   # Problem data
   m <- 1000
-  lambda <- 4
-  x <- rpois(m, lambda)
-  
-  K <- max(x)
+  xrange <- 0:100
+  knots <- data.frame(x = c(0, 25, 65, 100), y = c(10, 30, 40, 15))
+  xprobs <- pwl_fun(xrange, knots)/15
+  xprobs <- exp(xprobs)/sum(exp(xprobs))
+  x <- sample(xrange, size = m, replace = TRUE, prob = xprobs)
+
+  K <- max(xrange)
   xhist <- hist(x, breaks = -1:K, right = TRUE, include.lowest = FALSE)
   counts <- xhist$counts
   
-  # Form problem with log-concave constraint
+  # Solve problem with log-concave constraint
   u <- Variable(K+1)
   obj <- t(counts) %*% u
   constraints <- list(sum(exp(u)) <= 1, diff(u[1:(K-1)]) >= diff(u[2:K]))
   prob <- Problem(Maximize(obj), constraints)
   result <- solve(prob)
+  pmf <- result$getValue(exp(u))
   
   # Plot probability mass function
-  pmf <- result$getValue(exp(u))
-  plot(0:K, pmf, type = "b", xlab = "x", ylab = "Probability Mass Function")
+  cl <- rainbow(3)
+  plot(NA, xlim = c(0, 100), ylim = c(0, 0.02), xlab = "x", ylab = "Probability Mass Function")
+  lines(xrange, xprobs, lwd = 2, col = cl[1])
+  lines(density(x), lwd = 2, col = cl[2])
+  lines(xrange, pmf, lwd = 2, col = cl[3])
+  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+})
+
+test_that("Test channel capacity problem", {
+  # Problem data
+  n <- 2
+  m <- 2
+  P <- rbind(c(0.75, 0.25),    # Channel transition matrix
+             c(0.25, 0.75))
+  
+  # Form problem
+  x <- Variable(n)   # Probability distribution of input signal X(t)
+  y <- P %*% x       # Probability distribution of output signal Y(y)
+  c <- apply(P * log2(P), 2, sum)
+  I <- c %*% x + sum(entr(y))   # Mutual information between x and y
+  obj <- Minimize(-I)
+  constraints <- list(sum(x) == 1, x >= 0)
+  prob <- Problem(obj, constraints)
+  
+  result <- solve(prob)
+  result$value
+  result$getValue(x)
+})
+
+test_that("Test optimal allocation in a Gaussian broadcast channel", {
+  # Problem data
+  n <- 5
+  alpha <- seq(10, n-1+10)/n
+  beta <- seq(10, n-1+10)/n
+  P_tot <- 0.5
+  W_tot <- 1.0
+  
+  # Form problem
+  P <- Variable(n)   # Power
+  W <- Variable(n)   # Bandwidth
+  R <- kl_div(alpha*W, alpha*(W + beta*P)) - alpha*beta*P   # Bitrate
+  objective <- Minimize(sum(R))
+  constraints <- list(P >= 0, W >= 0, sum(P) == P_tot, sum(W) == W_tot)
+  prob <- Problem(objective, constraints)
+  result <- solve(prob)
+  
+  # Optimal utility, power, and bandwidth
+  -result$value
+  result$getValue(P)
+  result$getValue(W)
 })
 
 test_that("Test catenary problem", {
@@ -430,11 +501,12 @@ test_that("Test Kelly gambling optimal bets", {
   result <- solve(prob)
   bets <- result$getValue(b)
 
-  # Naive betting scheme: equal split on bets with highest expected returns
+  # Naive betting scheme: bet in proportion to expected return
   bets_cmp <- matrix(0, nrow = n)
   bets_cmp[n] <- 0.15                  # Hold 15% of wealth
   rets_avg <- ps %*% rets
-  tidx <- order(rets_avg[-n], decreasing = TRUE)[1:9]
+  # tidx <- order(rets_avg[-n], decreasing = TRUE)[1:9]
+  tidx <- 1:(n-1)
   fracs <- rets_avg[tidx]/sum(rets_avg[tidx])
   bets_cmp[tidx] <- fracs*(1-bets_cmp[n])
   

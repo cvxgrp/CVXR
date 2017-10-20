@@ -113,8 +113,11 @@ test_that("Test logistic regression", {
   y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
   
   beta <- Variable(n)
-  obj <- sum(logistic(-X[y <= 0,] %*% beta)) + sum(logistic(X[y == 1,] %*% beta))
-  prob <- Problem(Minimize(obj))
+  # obj <- sum(logistic(-X[y <= 0,] %*% beta)) + sum(logistic(X[y == 1,] %*% beta))
+  # prob <- Problem(Minimize(obj))
+  X_sign <- apply(X, 2, function(x) { ifelse(y <= 0, -1, 1) * x })
+  obj <- -sum(logistic(-X[y <= 0,] %*% beta)) - sum(logistic(X[y == 1,] %*% beta))
+  prob <- Problem(Maximize(obj))
   result <- solve(prob)
   
   log_odds <- result$getValue(X %*% beta)

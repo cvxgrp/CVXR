@@ -100,6 +100,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
+#' @describeIn AddExpression-class Returns the sum of all the values.
 setMethod("to_numeric", "AddExpression", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
@@ -108,11 +109,13 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
 #' @rdname Atom-class
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
+#' @rdname graph_implementation
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) lo.promote(arg, size) else arg })
   list(lo.sum_expr(arg_objs), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "AddExpression", function(object, arg_objs, size, data = NA_real_) {
   AddExpression.graph_implementation(arg_objs, size, data)
 })
@@ -147,6 +150,7 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
 
+#' @describeIn NeegExpression-class Returns the negation of the value.
 setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
 
 #' @rdname Atom-class
@@ -161,10 +165,12 @@ setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
 #' @rdname Atom-class
 setMethod("is_decr", "NegExpression", function(object, idx) { TRUE })
 
+#' @rdname graph_implementation
 NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.neg_expr(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "NegExpression", function(object, arg_objs, size, data = NA_real_) {
   NegExpression.graph_implementation(arg_objs, size, data)
 })
@@ -188,6 +194,7 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+#' @describeIn BinaryOperator-class Applies the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce(object@op_name, values)
@@ -210,6 +217,7 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
 })
 
+#' @describeIn MulExpression-class Validates the dimensions.
 setMethod("validate_args", "MulExpression", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
@@ -223,6 +231,7 @@ setMethod("is_incr", "MulExpression", function(object, idx) { is_positive(object
 #' @rdname Atom-class
 setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object@args[[1]]) })
 
+#' @rdname graph_implementation
 MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Promote the right-hand side to a diagonal matrix if necessary
   if(size[2] != 1 && all(arg_objs[[2]]$size == c(1,1))) {
@@ -232,6 +241,7 @@ MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(lo.mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "MulExpression", function(object, arg_objs, size, data = NA_real_) {
   MulExpression.graph_implementation(arg_objs, size, data)
 })
@@ -245,9 +255,13 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #' @export
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
+#' @rdname Atom-class
 setMethod("is_incr", "RMulExpression", function(object, idx) { is_positive(object@args[[2]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "RMulExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
+#' @rdname graph_implementation
 RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Promote the left-hand side to a diagonal matrix if necessary
   if(size[1] != 1 && all(arg_objs[[1]]$size == c(1,1))) {
@@ -257,6 +271,7 @@ RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_)
   list(lo.rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, size, data = NA_real_) {
   RMulExpression.graph_implementation(arg_objs, size, data)
 })
@@ -288,10 +303,12 @@ setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object
 #' @rdname Atom-class
 setMethod("is_decr", "DivExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
+#' @rdname graph_implementation
 DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "DivExpression", function(object, arg_objs, size, data = NA_real_) {
   DivExpression.graph_implementation(arg_objs, size, data)
 })
@@ -317,6 +334,7 @@ setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+#' @describeIn Conv-class Checks both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Conv", function(object) {
   if(!is_vector(object@args[[1]]) || !is_vector(object@args[[2]]))
     stop("The arguments to Conv must resolve to vectors.")
@@ -324,6 +342,7 @@ setMethod("validate_args", "Conv", function(object) {
     stop("The first argument to Conv must be constant.")
 })
 
+#' @describeIn Conv-class Returns the convolution of the two values.
 setMethod("to_numeric", "Conv", function(object, values) {
     .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
 })
@@ -344,10 +363,12 @@ setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]
 #' @rdname Atom-class
 setMethod("is_decr", "Conv", function(object, idx) { is_negative(object@args[[1]]) })
 
+#' @rdname graph_implementation
 Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.conv(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data = NA_real_) {
   Conv.graph_implementation(arg_objs, size, data)
 })
@@ -367,11 +388,20 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' @rdname cumsum
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
+#' @describeIn Returns the cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 
 #' @rdname Atom-class
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
+#'
+#' Difference Matrix
+#'
+#' Returns a sparse matrix representation of the first order difference operator.
+#' 
+#' @param dim The length of the matrix dimensions.
+#' @param axis The axis to take the difference along.
+#' @return A square matrix representing the first order difference.
 get_diff_mat <- function(dim, axis) {
   # Construct a sparse matrix representation
   val_arr <- c()
@@ -418,6 +448,7 @@ setMethod(".grad", "CumSum", function(object, values) {
   list(grad)
 })
 
+#' @rdname graph_implementation
 CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # Implicit 0(n) definition:
   # X = Y[:1,:] - Y[1:,:]
@@ -434,6 +465,7 @@ CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(Y, list(create_eq(arg_objs[[1]], diff)))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, data = NA_real_) {
   CumSum.graph_implementation(arg_objs, size, data)
 })
@@ -463,6 +495,7 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @describeIn DiagVec-class Converts the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
 #' @rdname Atom-class
@@ -471,10 +504,12 @@ setMethod("size_from_args", "DiagVec", function(object) {
   c(rows, rows)
 })
 
+#' @rdname graph_implementation
 DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.diag_vec(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, data = NA_real_) {
   DiagVec.graph_implementation(arg_objs, size, data)
 })
@@ -504,6 +539,7 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @describeIn DiagMat-class Extracts the diagonal from a square matrix constant.
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
 #' @rdname Atom-class
@@ -512,10 +548,12 @@ setMethod("size_from_args", "DiagMat", function(object) {
   c(rows, 1)
 })
 
+#' @rdname graph_implementation
 DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, data = NA_real_) {
   DiagMat.graph_implementation(arg_objs, size, data)
 })
@@ -581,12 +619,14 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' @rdname hstack
 HStack <- function(...) { .HStack(args = list(...)) }
 
+#' @describeIn HStack-class All arguments must have the same height.
 setMethod("validate_args", "HStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[1] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to HStack must have the same number of rows")
 })
 
+#' @describeIn HStack-class Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
 #' @rdname Atom-class
@@ -597,10 +637,12 @@ setMethod("size_from_args", "HStack", function(object) {
   c(rows, cols)
 })
 
+#' @rdname graph_implementation
 HStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.hstack(arg_objs, size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "HStack", function(object, arg_objs, size, data = NA_real_) {
   HStack.graph_implementation(arg_objs, size, data)
 })
@@ -636,7 +678,8 @@ setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-setMethod("to_numeric", "Index", function(object) {
+#' @describeIn Index-class Returns the index/slice into the given value.
+setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key$row, object@key$col)
 })
 
@@ -645,17 +688,25 @@ setMethod("size_from_args", "Index", function(object) {
   ku_size(object@key, size(object@args[[1]]))
 })
 
+#' @describeIn Index-class Returns the \code{list(row slice, column slice)}.
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
+#' @rdname graph_implementation
 Index.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   obj <- lo.index(arg_objs[[1]], size, data[[1]])
   list(obj, list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Index", function(object, arg_objs, size, data = NA_real_) {
   Index.graph_implementation(arg_objs, size, data)
 })
 
+#' @describeIn Index-class Indexing using logical indexing or a list of indices.
+#' @param expr An \linkS4class{Expression} object.
+#' @param row The row index.
+#' @param col The column index.
+#' @return An \linkS4class{Expression} representing the index/slice.
 Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
 
@@ -689,6 +740,12 @@ Index.get_special_slice <- function(expr, row, col) {
     Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
 }
 
+#' @describeIn Index-class Returns a canonicalized index into a matrix.
+#' @param matrix A LinOp representing the matrix to be indexed.
+#' @param constraints A list of \linkS4class{Constraint} objects to append to.
+#' @param row The row index.
+#' @param col The column index.
+#' @return A list with the canonicalized index and updated constraints.
 Index.get_index <- function(matrix, constraints, row, col) {
   key <- Key(row, col)
   graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
@@ -698,6 +755,15 @@ Index.get_index <- function(matrix, constraints, row, col) {
   list(idx = idx, constraints = constraints)
 }
 
+#' @describeIn Index-class Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
+#' @param matrix A LinOp representing the matrix to be indexed.
+#' @param block A LinOp representing the block in the block equality.
+#' @param constraints A list of \linkS4class{Constraint} objects to append to.
+#' @param row_start  The first row of the matrix section.
+#' @param row_end The last row of the matrix section.
+#' @param col_start The first column of the matrix section.
+#' @param col_end The last column of the matrix section.
+#' @return A list of \linkS4class{Constraint} objects.
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
   key <- Key(row_start:row_end, col_start:col_end)
   rows <- row_end - row_start + 1
@@ -732,11 +798,13 @@ setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+#' @describeIn Kron-class Checks both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Kron", function(object) {
   if(!is_constant(object@args[[1]]))
     stop("The first argument to Kron must be constant")
 })
 
+#' @describeIn Kron-class Returns the kronecker product of the two values.
 setMethod("to_numeric", "Kron", function(object, values) {
   kronecker(values[[1]], values[[2]])
 })
@@ -757,10 +825,12 @@ setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]
 #' @rdname Atom-class
 setMethod("is_decr", "Kron", function(object, idx) { is_negative(object@args[[2]]) })
 
+#' @rdname graph_implementation
 Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.kron(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data = NA_real_) {
   Kron.graph_implementation(arg_objs, size, data)
 })
@@ -786,11 +856,13 @@ setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) 
   callNextMethod(.Object, ..., args = list(.Object@lh_const, .Object@rh_exp))
 })
 
+#' @describeIn MulElemwise-class Checks the first argument is a constant.
 setMethod("validate_args", "MulElemwise", function(object) {
   if(!is_constant(object@args[[1]]))
     stop("The first argument to MulElemwise must be constant.")
 })
 
+#' @describeIn MulElemwise-class Multiplies the values elementwise.
 setMethod("to_numeric", "MulElemwise", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   values[[1]] * values[[2]]
@@ -815,6 +887,7 @@ setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@a
 #' @rdname curvature
 setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@args[[2]]) })
 
+#' @rdname graph_implementation
 MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # One of the arguments is a scalar, so we can use normal multiplication
   if(any(arg_objs[[1]]$size != arg_objs[[2]]$size))
@@ -823,6 +896,7 @@ MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     list(lo.mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size, data = NA_real_) {
   MulElemwise.graph_implementation(arg_objs, size, data)
 })
@@ -851,6 +925,7 @@ setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @describeIn Reshape-class Checks the new shape has the same number of entries as the old.
 setMethod("validate_args", "Reshape", function(object) {
   old_len <- prod(size(object@args[[1]]))
   new_len <- object@rows * object@cols
@@ -858,6 +933,7 @@ setMethod("validate_args", "Reshape", function(object) {
     stop(sprintf("Invalid reshape dimensions (%i, %i)", object@rows, object@cols))
 })
 
+#' @describeIn Reshape-class Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
   dim(values[[1]]) <- c(object@rows, object@cols)
   values[[1]]
@@ -867,10 +943,12 @@ setMethod("to_numeric", "Reshape", function(object, values) {
 setMethod("size_from_args", "Reshape", function(object) { c(object@rows, object@cols) })
 setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
 
+#' @rdname graph_implementation
 Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.reshape(arg_objs[[1]], size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, data = NA_real_) {
   Reshape.graph_implementation(arg_objs, size, data)
 })
@@ -890,6 +968,7 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @rdname sum_entries
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
+#' @describeIn SumEntries-class Sums the entries of value.
 setMethod("to_numeric", "SumEntries", function(object, values) {
   if(is.na(object@axis))
     sum(values[[1]])
@@ -897,6 +976,7 @@ setMethod("to_numeric", "SumEntries", function(object, values) {
     apply(values[[1]], object@axis, sum)
 })
 
+#' @rdname graph_implementation
 SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis))
@@ -913,6 +993,7 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size, data = NA_real_) {
   SumEntries.graph_implementation(arg_objs, size, data)
 })
@@ -936,21 +1017,25 @@ setMethod("initialize", "Trace", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @describeIn Trace-class Checks the argument is a square matrix.
 setMethod("validate_args", "Trace", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("Argument to trace must be a square matrix")
 })
 
+#' @describeIn Trace-class Sums the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
 #' @rdname Atom-class
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
 
+#' @rdname graph_implementation
 Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.trace(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data = NA_real_) {
   Trace.graph_implementation(arg_objs, size, data)
 })
@@ -964,6 +1049,7 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #' @export
 Transpose <- setClass("Transpose", contains = "AffAtom")
 
+#' @describeIn Transpose-class Returns the transpose of the given value.
 setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
 #' @rdname Atom-class
@@ -972,10 +1058,12 @@ setMethod("size_from_args", "Transpose", function(object) {
   c(size[2], size[1])
 })
 
+#' @rdname graph_implementation
 Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.transpose(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {
   Transpose.graph_implementation(arg_objs, size, data)
 })
@@ -999,12 +1087,14 @@ setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @describeIn UpperTri-class Checks the argument is a square matrix.
 setMethod("validate_args", "UpperTri", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("Argument to UpperTri must be a square matrix.")
 })
 
+#' @describeIn UpperTri-class Vectorize the upper triagonal entries.
 setMethod("to_numeric", "UpperTri", function(object, values) {
   # Vectorize the upper triagonal entries
   tridx <- upper.tri(values[[1]], diag = FALSE)
@@ -1019,10 +1109,12 @@ setMethod("size_from_args", "UpperTri", function(object) {
   c(rows*(cols-1)/2, 1)
 })
 
+#' @rdname graph_implementation
 UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, data = NA_real_) {
   UpperTri.graph_implementation(arg_objs, size, data)
 })
@@ -1048,12 +1140,14 @@ Vec <- function(X) {
 #' @rdname vstack
 VStack <- function(...) { .VStack(args = list(...)) }
 
+#' @describeIn VStack-class All arguments must have the same width.
 setMethod("validate_args", "VStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to VStack must have the same number of columns")
 })
 
+#' @describeIn VStack-class Vertically concatenate the values using \code{rbind}.
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
 
 #' @rdname Atom-class
@@ -1064,10 +1158,12 @@ setMethod("size_from_args", "VStack", function(object) {
   c(rows, cols)
 })
 
+#' @rdname graph_implementation
 VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.vstack(arg_objs, size), list())
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {
   VStack.graph_implementation(arg_objs, size, data)
 })

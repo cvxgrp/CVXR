@@ -7,19 +7,28 @@
 #' @export
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
+#' @rdname Elementwise-class Verify all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
+#' @rdname Elementwise-class Size is the same as the sum of the arguments' sizes.
 setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
+#' @rdname Elementwise-class Converts elementwise gradient into a diagonal matrix.
+#' @param value A scalar value or matrix.
+#' @return A sparse matrix.
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
   value <- as.numeric(value)
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
+#' @rdname Elementwise-class Promotes the LinOp if necessary.
+#' @param arg The LinOp to promote.
+#' @param size The desired size.
+#' @return The promoted LinOp.
 Elementwise.promote <- function(arg, size) {
   if(any(size(arg) != size))
     lo.promote(arg, size)
@@ -46,14 +55,28 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Abs-class Returns the elementwise absolute value of the input value.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Abs", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
+
+#' @rdname Abs-class A logical value indicating whether the atom is piecewise linear.
 setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
+#' @rdname Atom-class
 setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- prod(size(object@args[[1]]))
@@ -66,6 +89,7 @@ setMethod(".grad", "Abs", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
 })
 
+#' @rdname graph_implementation
 Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size(x))
@@ -73,6 +97,7 @@ Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data = NA_real_) {
   Abs.graph_implementation(arg_objs, size, data)
 })
@@ -96,6 +121,7 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Entr-class Returns the elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
     tmp <- x*log(y)
@@ -111,12 +137,22 @@ setMethod("to_numeric", "Entr", function(object, values) {
   results
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "Entr", function(object) { c(FALSE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Entr", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Entr", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Entr", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "Entr", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -130,8 +166,10 @@ setMethod(".grad", "Entr", function(object, values) {
   }
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
 
+#' @rdname graph_implementation
 Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -139,6 +177,7 @@ Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, x, ones)))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data = NA_real_) {
   Entr.graph_implementation(arg_objs, size, data)
 })
@@ -162,13 +201,25 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Exp-class Returns the matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Exp", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Exp", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Exp", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "Exp", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -176,6 +227,7 @@ setMethod(".grad", "Exp", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname graph_implementation
 Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -183,6 +235,7 @@ Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(x, ones, t)))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data = NA_real_) {
   Exp.graph_implementation(arg_objs, size, data)
 })
@@ -213,11 +266,13 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Huber-class Checks that \code{M} is a non-negative constant.
 setMethod("validate_args", "Huber", function(object) {
   if(!(is_positive(object@M) && is_constant(object@M) && is_scalar(object@M)))
     stop("M must be a non-negative scalar constant")
 })
 
+#' @rdname Huber-class Returns the Huber function evaluted elementwise on the input value.
 setMethod("to_numeric", "Huber", function(object, values) {
   huber_loss <- function(delta, r) {
     if(delta < 0)
@@ -238,13 +293,25 @@ setMethod("to_numeric", "Huber", function(object, values) {
     2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "Huber", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Huber", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Huber", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[idx]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Huber", function(object, idx) { is_negative(object@args[[idx]]) })
+
+#' @rdname Huber-class A list containing the parameter \code{M}.
 setMethod("get_data", "Huber", function(object) { list(object@M) })
 
+#' @rdname Atom-class
 setMethod(".grad", "Huber", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -257,6 +324,7 @@ setMethod(".grad", "Huber", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname graph_implementation
 Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   M <- data[[1]]
   x <- arg_objs[[1]]
@@ -285,6 +353,7 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data = NA_real_) {
   Huber.graph_implementation(arg_objs, size, data)
 })
@@ -314,6 +383,7 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
+#' @rdname KLDiv-class Returns the KL-divergence evaluted elementwise on the input value.
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
   y <- intf_convert_if_scalar(values[[2]])
@@ -327,12 +397,22 @@ setMethod("to_numeric", "KLDiv", function(object, values) {
   xlogy(x, x/y) - x + y
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "KLDiv", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "KLDiv", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "KLDiv", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
     return(list(NA_real_, NA_real_))   # Non-differentiable
@@ -349,8 +429,10 @@ setMethod(".grad", "KLDiv", function(object, values) {
   }
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "KLDiv", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
 
+#' @rdname graph_implementation
 KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- Elementwise.promote(arg_objs[[1]], size)
   y <- Elementwise.promote(arg_objs[[2]], size)
@@ -362,6 +444,7 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
   KLDiv.graph_implementation(arg_objs, size, data)
 })
@@ -385,13 +468,25 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Log-class Returns the elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Log", function(object) { c(FALSE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Log", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Log", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Log", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Log", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "Log", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -405,8 +500,10 @@ setMethod(".grad", "Log", function(object, values) {
   }
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Log", function(object) { list(object@args[[1]] >= 0) })
 
+#' @rdname graph_implementation
 Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -414,6 +511,7 @@ Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, ones, x)))
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Log", function(object, arg_objs, size, data = NA_real_) {
   Log.graph_implementation(arg_objs, size, data)
 })
@@ -432,9 +530,13 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @rdname log1p
 Log1p <- function(x) { .Log1p(x = x) }
 
+#' @rdname Log1p-class Returns the elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
+#' @rdname Atom-class
 setMethod(".grad", "Log1p", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -448,8 +550,10 @@ setMethod(".grad", "Log1p", function(object, values) {
   }
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
+#' @rdname graph_implementation
 Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   ones <- create_const(matrix(1, nrow = x$size[1], ncol = x$size[2]), x$size)
@@ -457,6 +561,7 @@ Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   Log.graph_implementation(list(xp1), size, data)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data = NA_real_) {
   Log1p.graph_implementation(arg_objs, size, data)
 })
@@ -482,13 +587,25 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Logistic-class Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
 
+#' @rdname Atom-class
 setMethod(".grad", "Logistic", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -497,6 +614,7 @@ setMethod(".grad", "Logistic", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname graph_implementation
 Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -516,6 +634,7 @@ Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constr)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, data = NA_real_) {
   Logistic.graph_implementation(arg_objs, size, data)
 })
@@ -540,23 +659,35 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @rdname max_elemwise
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
+#' @rdname MaxElemwise-class Returns the elementwise maximum.
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
   # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
   Reduce("pmax", values)
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "MaxElemwise", function(object) {
   is_pos <- any(sapply(object@args, function(arg) { is_positive(arg) }))
   is_neg <- all(sapply(object@args, function(arg) { is_negative(arg) }))
   c(is_pos, is_neg)
 })
 
+#' @rdname Atom-class
 setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
+
+#' @rdname MaxElemwise-class A logical value indicating whether the atom is piecewise linear.
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
+#' @rdname Atom-class
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(object, values)
   dims <- dim(max_vals)
@@ -578,6 +709,7 @@ setMethod(".grad", "MaxElemwise", function(object, values) {
   grad_list
 })
 
+#' @rdname graph_implementation
 MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   constraints <- lapply(arg_objs, function(obj) {
@@ -587,6 +719,7 @@ MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size, data = NA_real_) {
   MaxElemwise.graph_implementation(arg_objs, size, data)
 })
@@ -669,8 +802,13 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @rdname Power-class Verification of arguments happens during initialization.
 setMethod("validate_args", "Power", function(object) { })
+
+#' @rdname Power-class A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
+
+#' @rdname Power-class Throw an error if the power is negative and cannot be handled.
 setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
   if(object@p < 0 && min(values[[1]]) <= 0)
@@ -681,6 +819,7 @@ setMethod("to_numeric", "Power", function(object, values) {
     return(values[[1]]^(as.double(object@p)))
 })
 
+#' @rdname Atom-class
 setMethod("sign_from_args", "Power", function(object) {
   if(object@p == 1)   # Same as input
     c(is_positive(object@args[[1]]), is_negative(object@args[[1]]))
@@ -688,10 +827,16 @@ setMethod("sign_from_args", "Power", function(object) {
     c(TRUE, FALSE)
 })
 
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@p >= 1 })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
+
+#' @rdname Power-class A logical value indicating whether the atom is constant.
 setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
+#' @rdname Atom-class
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
     return(TRUE)
@@ -704,6 +849,7 @@ setMethod("is_incr", "Power", function(object, idx) {
     return(FALSE)
 })
 
+#' @rdname Atom-class
 setMethod("is_decr", "Power", function(object, idx) {
   if(object@p <= 0)
     return(TRUE)
@@ -716,6 +862,7 @@ setMethod("is_decr", "Power", function(object, idx) {
     return(FALSE)
 })
 
+#' @rdname curvature
 setMethod("is_quadratic", "Power", function(object) {
   if(object@p == 0)
     return(TRUE)
@@ -727,6 +874,7 @@ setMethod("is_quadratic", "Power", function(object) {
     return(is_constant(object@args[[1]]))
 })
 
+#' @rdname Atom-class
 setMethod(".grad", "Power", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -746,6 +894,7 @@ setMethod(".grad", "Power", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Power", function(object) {
   if((object@p < 1 && object@p != 0) || (object@p > 1 && !is_power2(object@p)))
     list(object@args[[1]] >= 0)
@@ -753,6 +902,7 @@ setMethod(".domain", "Power", function(object) {
     list()
 })
 
+#' @rdname graph_implementation
 Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   p <- data[[1]]
@@ -785,6 +935,7 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
   Power.graph_implementation(arg_objs, size, data)
 })
@@ -809,16 +960,34 @@ Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 
+#' @rdname Sqrt-class Verification of arguments happens during initialization.
 setMethod("validate_args", "Sqrt", function(object) {})
+
+#' @rdname Sqrt-class Returns the elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
+
+#' @rdname Sqrt-class A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
+
+#' @rdname curvature
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
+#' @rdname Atom-class
 setMethod(".grad", "Sqrt", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -828,8 +997,10 @@ setMethod(".grad", "Sqrt", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
+#' @rdname graph_implementation
 Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -845,6 +1016,7 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
   Sqrt.graph_implementation(arg_objs, size, data)
 })
@@ -865,16 +1037,34 @@ Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
 
+#' @rdname Square-class Verification of arguments happens during initialization.
 setMethod("validate_args", "Square", function(object) {})
+
+#' @rdname Square-class Returns the elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
+
+#' @rdname Square-class A list containing the output of \code{pow_high}.
 setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
+
+#' @rdname Atom-class
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Atom-class
 setMethod("is_atom_convex", "Square", function(object) { TRUE })
+
+#' @rdname Atom-class
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
+
+#' @rdname Atom-class
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
+
+#' @rdname Atom-class
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
+
+#' @rdname curvature
 setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
+#' @rdname Atom-class
 setMethod(".grad", "Square", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -882,8 +1072,10 @@ setMethod(".grad", "Square", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @rdname Atom-class
 setMethod(".domain", "Square", function(object) { list() })
 
+#' @rdname graph_implementation
 Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -899,6 +1091,7 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @rdname graph_implementation
 setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
   Square.graph_implementation(arg_objs, size, data)
 })

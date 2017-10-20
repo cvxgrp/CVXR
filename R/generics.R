@@ -52,6 +52,7 @@ setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric"
 
 setGeneric("is_atom_convex", function(object) { standardGeneric("is_atom_convex") })
 setGeneric("is_atom_concave", function(object) { standardGeneric("is_atom_concave") })
+setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine") })
 setGeneric("is_incr", function(object, idx) { standardGeneric("is_incr") })
 setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })

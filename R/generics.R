@@ -131,7 +131,7 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 #' 
 #' @param solver A \linkS4class{Solver} object.
 #' @return A logical value indicating the solver capability.
-#' @doctype methods
+#' @docType methods
 #' @rdname Solver-capable
 NULL
 

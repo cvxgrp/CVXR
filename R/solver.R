@@ -267,7 +267,7 @@ setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 #'    \item{ECOS_FATAL (-7)}{Unknown problem in solver.}
 #' }
 #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
-#' @doctype methods
+#' @docType methods
 #' @rdname ECOS-status_map
 setMethod("status_map", "ECOS", function(solver, status) {
     if(status == 0) {
@@ -459,7 +459,7 @@ setMethod("mip_capable", "SCS", function(solver) { FALSE })
 #' @param solver A \linkS4class{SCS} solver object.
 #' @param status An exit code returned by SCS.
 #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
-#' @doctype methods
+#' @docType methods
 #' @rdname SCS-status_map
 setMethod("status_map", "SCS", function(solver, status) {
   if(status == "Solved") OPTIMAL
@@ -761,7 +761,7 @@ setMethod("mip_capable", "MOSEK", function(solver) { FALSE })
 #' @param solver A \linkS4class{MOSEK} solver object.
 #' @param status An exit code returned by MOSEK. See the \href{http://docs.mosek.com/8.0/dotnetfusion/solution_status.html}{MOSEK documentation} for details.
 #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
-#' @doctype methods
+#' @docType methods
 #' @rdname MOSEK-status_map
 setMethod("status_map", "MOSEK", function(solver, status) {
   if(status == "OPTIMAL")
@@ -983,7 +983,7 @@ setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
 #' @param solver A \linkS4class{GUROBI} solver object.
 #' @param status An exit code returned by GUROBI. See the \href{http://www.gurobi.com/documentation/7.5/refman/optimization_status_codes.html}{GUROBI documentation} for details.
 #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
-#' @doctype methods
+#' @docType methods
 #' @rdname GUROBI-status_map
 setMethod("status_map", "GUROBI", function(solver, status) {
   if(status == 2)

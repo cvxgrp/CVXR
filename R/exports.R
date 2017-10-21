@@ -1086,7 +1086,6 @@ vstack <- VStack
 #' @rdname cumsum
 #' @export
 setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
-cumsum <- CumSum
 
 #'
 #' Matrix Diagonal

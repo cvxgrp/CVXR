@@ -50,6 +50,55 @@ test_that("Test non-negative least squares", {
   barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
 })
 
+test_that("Test censored regression", {
+  # Problem data
+  n <- 30
+  M <- 50
+  K <- 200
+  
+  set.seed(n*M*K)
+  X <- matrix(rnorm(K*n), nrow = K, ncol = n)
+  beta_true <- matrix(rnorm(n), nrow = n, ncol = 1)
+  y <- X %*% beta_true + 0.3*sqrt(n)*rnorm(K)
+  
+  # Order variables based on y
+  idx <- order(y, decreasing = FALSE)
+  y_ordered <- y[idx]
+  X_ordered <- X[idx,]
+  
+  # Find cutoff and censor
+  D <- (y_ordered[M] + y_ordered[M+1])/2
+  y_censored <- pmin(y_ordered, D)
+  
+  # Regular OLS
+  beta <- Variable(n)
+  obj <- sum((y_censored - X_ordered %*% beta)^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_ols <- result$getValue(beta)
+  
+  # OLS using uncensored data
+  obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
+  prob <- Problem(Minimize(obj))
+  result <- solve(prob)
+  beta_unc <- result$getValue(beta)
+  
+  # Censored regression
+  obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
+  constr <- list(X_ordered[(M+1):K,] %*% beta >= D)
+  prob <- Problem(Minimize(obj), constr)
+  result <- solve(prob)
+  beta_cens <- result$getValue(beta)
+  
+  # Plot and compare results
+  plot(1:M, y_censored[1:M], col = "black", xlab = "x", ylab = "y", ylim = c(min(y), max(y)), xlim = c(1,K))
+  points((M+1):K, y_ordered[(M+1):K], col = "red")
+  points(1:K, X_ordered %*% beta_ols, col = "blue")
+  # points(1:K, X_ordered %*% beta_unc, col = "violet")
+  points(1:K, X_ordered %*% beta_cens, col = "seagreen", pch = 24)
+  legend("topleft", c("OLS", "Censored"), col = c("blue", "seagreen"), pch = c(1, 24))
+})
+
 test_that("Test Huber regression", {
   n <- 1
   m <- 450
@@ -257,7 +306,8 @@ test_that("Test log-concave distribution estimation", {
   cl <- rainbow(3)
   plot(NA, xlim = c(0, 100), ylim = c(0, 0.025), xlab = "x", ylab = "Probability Mass Function")
   lines(xrange, xprobs, lwd = 2, col = cl[1])
-  lines(density(x), lwd = 2, col = cl[2])
+  lines(density(x, bw = "sj"), lwd = 2, col = cl[2])
+  # lines(counts/sum(counts), lwd = 2, col = cl[2])
   lines(xrange, pmf, lwd = 2, col = cl[3])
   legend("topleft", c("True", "Empirical", "Optimal Estimate"), lty = c(1,1,1), col = cl)
   
@@ -281,7 +331,7 @@ test_that("Test channel capacity problem", {
   y <- P %*% x       # Probability distribution of output signal Y(y)
   c <- apply(P * log2(P), 2, sum)
   I <- c %*% x + sum(entr(y))   # Mutual information between x and y
-  obj <- Minimize(-I)
+  obj <- Maximize(I)
   constraints <- list(sum(x) == 1, x >= 0)
   prob <- Problem(obj, constraints)
   
@@ -384,7 +434,7 @@ test_that("Test direct standardization problem", {
       probs <- rep(1.0/length(data), length(data))
     distro <- cbind(data, probs)
     dsort <- distro[order(distro[,1]),]
-    ecdf <- cumsum(dsort[,2])
+    ecdf <- base::cumsum(dsort[,2])
     lines(dsort[,1], ecdf, col = color)
   }
   
@@ -417,9 +467,9 @@ test_that("Test direct standardization problem", {
 
   # Plot probability density function
   cl <- rainbow(3)
-  plot(density(ypop), col = cl[1], xlab = "y", ylab = NA, ylim = c(0, 0.2), zero.line = FALSE)
-  lines(density(y), col = cl[2])
-  lines(density(y, weights = weights), col = cl[3])
+  plot(density(y), col = cl[1], xlab = "y", ylab = NA, ylim = c(0, 0.5), zero.line = FALSE)
+  lines(density(y[sub]), col = cl[2])
+  lines(density(y[sub], weights = weights), col = cl[3])
   legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
   
   # Plot cumulative distribution function

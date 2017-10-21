@@ -32,6 +32,10 @@ setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
 #' @rdname size
 setMethod("size", "Atom", function(object) { object@.size })
 
+setMethod("dim", "Atom", function(x) { size(x) })
+setMethod("nrow", "Atom", function(x) { size(x)[1] })
+setMethod("ncol", "Atom", function(x) { size(x)[2] })
+
 #' @describeIn Atom-class The sign \code{c(is positive, is negative)} of the atom.
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 

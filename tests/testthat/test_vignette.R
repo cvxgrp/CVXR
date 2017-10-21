@@ -234,7 +234,7 @@ test_that("Test log-concave distribution estimation", {
   }
   
   # Problem data
-  m <- 1000
+  m <- 25
   xrange <- 0:100
   knots <- data.frame(x = c(0, 25, 65, 100), y = c(10, 30, 40, 15))
   xprobs <- pwl_fun(xrange, knots)/15
@@ -248,18 +248,25 @@ test_that("Test log-concave distribution estimation", {
   # Solve problem with log-concave constraint
   u <- Variable(K+1)
   obj <- t(counts) %*% u
-  constraints <- list(sum(exp(u)) <= 1, diff(u[1:(K-1)]) >= diff(u[2:K]))
+  constraints <- list(sum(exp(u)) <= 1, diff(u[1:K]) >= diff(u[2:(K+1)]))
   prob <- Problem(Maximize(obj), constraints)
   result <- solve(prob)
   pmf <- result$getValue(exp(u))
   
   # Plot probability mass function
   cl <- rainbow(3)
-  plot(NA, xlim = c(0, 100), ylim = c(0, 0.02), xlab = "x", ylab = "Probability Mass Function")
+  plot(NA, xlim = c(0, 100), ylim = c(0, 0.025), xlab = "x", ylab = "Probability Mass Function")
   lines(xrange, xprobs, lwd = 2, col = cl[1])
   lines(density(x), lwd = 2, col = cl[2])
   lines(xrange, pmf, lwd = 2, col = cl[3])
-  legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)
+  legend("topleft", c("True", "Empirical", "Optimal Estimate"), lty = c(1,1,1), col = cl)
+  
+  # Plot cumulative distribution function
+  plot(NA, xlim = c(0, 100), ylim = c(0, 1), xlab = "x", ylab = "Cumulative Distribution Function")
+  lines(xrange, cumsum(xprobs), lwd = 2, col = cl[1])
+  lines(xrange, cumsum(counts)/sum(counts), lwd = 2, col = cl[2])
+  lines(xrange, cumsum(pmf), lwd = 2, col = cl[3])
+  legend("topleft", c("True", "Empirical", "Optimal Estimate"), lty = c(1,1,1), col = cl)
 })
 
 test_that("Test channel capacity problem", {

@@ -70,18 +70,28 @@ test_that("Test censored regression", {
   D <- (y_ordered[M] + y_ordered[M+1])/2
   y_censored <- pmin(y_ordered, D)
   
+  plot_results <- function(beta_res, bcol = "blue", bpch = 17) {
+    plot(1:M, y_censored[1:M], col = "black", xlab = "Observations", ylab = "y", ylim = c(min(y), max(y)), xlim = c(1,K))
+    points((M+1):K, y_ordered[(M+1):K], col = "red")
+    points(1:K, X_ordered %*% beta_res, col = bcol, pch = bpch)
+    abline(a = D, b = 0, col = "black", lty = "dashed")
+    legend("topleft", c("Uncensored", "Censored", "Estimate"), col = c("black", "red", bcol), pch = c(1,1,bpch))
+  }
+  
   # Regular OLS
   beta <- Variable(n)
   obj <- sum((y_censored - X_ordered %*% beta)^2)
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   beta_ols <- result$getValue(beta)
+  plot_results(beta_ols)
   
   # OLS using uncensored data
   obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   beta_unc <- result$getValue(beta)
+  plot_results(beta_unc)
   
   # Censored regression
   obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
@@ -89,14 +99,7 @@ test_that("Test censored regression", {
   prob <- Problem(Minimize(obj), constr)
   result <- solve(prob)
   beta_cens <- result$getValue(beta)
-  
-  # Plot and compare results
-  plot(1:M, y_censored[1:M], col = "black", xlab = "x", ylab = "y", ylim = c(min(y), max(y)), xlim = c(1,K))
-  points((M+1):K, y_ordered[(M+1):K], col = "red")
-  points(1:K, X_ordered %*% beta_ols, col = "blue")
-  # points(1:K, X_ordered %*% beta_unc, col = "violet")
-  points(1:K, X_ordered %*% beta_cens, col = "seagreen", pch = 24)
-  legend("topleft", c("OLS", "Censored"), col = c("blue", "seagreen"), pch = c(1, 24))
+  plot_results(beta_cens)
 })
 
 test_that("Test Huber regression", {

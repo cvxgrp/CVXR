@@ -1,4 +1,3 @@
-# DCP attribute generic methods
 #'
 #' Sign Properties
 #' 
@@ -10,12 +9,15 @@
 NULL
 
 #' @rdname sign-methods
+#' @export
 setGeneric("is_zero", function(object) { standardGeneric("is_zero") })
 
 #' @rdname sign-methods
+#' @export
 setGeneric("is_positive", function(object) { standardGeneric("is_positive") })
 
 #' @rdname sign-methods
+#' @export
 setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 
 #'
@@ -27,7 +29,7 @@ setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
 #' @docType methods
 #' @rdname curvature
-#' @exportMethod curvature
+#' @export
 setGeneric("curvature", function(object) { standardGeneric("curvature") })
 
 #'
@@ -41,33 +43,39 @@ setGeneric("curvature", function(object) { standardGeneric("curvature") })
 NULL
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_constant", function(object) { standardGeneric("is_constant") })
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_affine", function(object) { standardGeneric("is_affine") })
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 
 #' @rdname curvature-methods
+#' @export
 setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 
 #'
-#' Is Expression DCP?
+#' Is an Expression DCP?
 #' 
-#' Determine if an expression complies with disciplined convex programming rules.
+#' Determine if an expression complies with the disciplined convex programming rules.
 #' 
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value indicating whether the expression is DCP compliant, i.e. no unknown curvatures.
 #' @docType methods
 #' @rdname is_dcp
-#' @exportMethod is_dcp
+#' @export
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 
 #'
@@ -78,9 +86,8 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' @param object An \linkS4class{Expression} object.
 #' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
 #' @docType methods
-#' @name size
 #' @rdname size
-#' @exportMethod size
+#' @export
 setGeneric("size", function(object) { standardGeneric("size") })
 
 #'
@@ -94,14 +101,18 @@ setGeneric("size", function(object) { standardGeneric("size") })
 NULL
 
 #' @rdname size-methods
+#' @export
 setGeneric("is_scalar", function(object) { standardGeneric("is_scalar") })
 
 #' @rdname size-methods
+#' @export
 setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
 
 #' @rdname size-methods
+#' @export
 setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
+# The value of the objective given the solver primal value
 setGeneric("primal_to_result", function(object, result) { standardGeneric("primal_to_result") })
 
 # Expression generic methods
@@ -111,8 +122,24 @@ setGeneric("save_value", function(object, value) { standardGeneric("save_value")
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 
 setGeneric("name", function(object) { standardGeneric("name") })
+
+#'
+#' Parts of an Expression
+#'
+#' List the variables, parameters, or constants in a canonical expression.
+#'
+#' @param object A \linkS4class{Canonical} expression.
+#' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Constant} objects.
+#' @name expression-parts
+NULL
+
+#' @rdname expression-parts
 setGeneric("variables", function(object) { standardGeneric("variables") })
+
+#' @rdname expression-parts
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
+
+#' @rdname expression-parts
 setGeneric("constants", function(object) { standardGeneric("constants") })
 
 #'
@@ -139,17 +166,64 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #' @rdname domain
 #' @export
 setGeneric("domain", function(object) { standardGeneric("domain") })
+
+#
+# Validate Value
+#
+# Check that the value satisfies a \linkS4class{Leaf}'s symbolic attributes.
+# 
+# @param object A \linkS4class{Leaf} object.
+# @param val The assigned value.
+# @return The value converted to proper matrix type.
 setGeneric("validate_val", function(object, val) { standardGeneric("validate_val") })
+
+#' @rdname Canonical-class
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
+
+#' @rdname Canonical-class
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
+#
+# Gradient of an Atom
+#
+# The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
+# 
+# @param object An \linkS4class{Atom} object.
+# @param values A list of numeric values for the arguments.
+# @return A list of sparse matrices or \code{NA}.
 setGeneric(".grad", function(object, values) { standardGeneric(".grad") })
+
+#
+# Domain of an Atom
+#
+# The constraints describing the domain of the atom.
+# 
+# @param object An \linkS4class{Atom} object.
+# @return A list of \linkS4class{Constraint} objects.
 setGeneric(".domain", function(object) { standardGeneric(".domain") })
+
+#
+# Gradient of an AxisAtom
+#
+# The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix. Takes the axis into account.
+# 
+# @param values A list of numeric values for the arguments.
+# @return A list of sparse matrices or \code{NA}.
 setGeneric(".axis_grad", function(object, values) { standardGeneric(".axis_grad") })
+
+#
+# Column Gradient of an Atom
+#
+# The (sub/super) gradient of the atom with respect to a column argument. Matrix expressions are vectorized, so the gradient is a matrix.
+# @param value A numeric value for a column.
+# @return A sparse matrix or \code{NA}.
 setGeneric(".column_grad", function(object, value) { standardGeneric(".column_grad") })
 
 # Positive definite inequalities
+#' @rdname PSDConstraint
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
+
+#' @rdname PSDConstraint
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
 # Atom generic methods
@@ -159,10 +233,45 @@ setGeneric("sign_from_args", function(object) { standardGeneric("sign_from_args"
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric") })
 
+#'
+#' Curvature of an Atom
+#'
+#' Determine if an atom is convex, concave, or affine.
+#' 
+#' @param object A \linkS4class{Atom} object.
+#' @return A logical value.
+#' @name curvature-atom
+NULL
+
+#' @rdname curvature-atom
+#' @export
 setGeneric("is_atom_convex", function(object) { standardGeneric("is_atom_convex") })
+
+#' @rdname curvature-atom
+#' @export
 setGeneric("is_atom_concave", function(object) { standardGeneric("is_atom_concave") })
+
+#' @rdname curvature-atom
+#' @export
 setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine") })
+
+#'
+#' Curvature of Composition
+#'
+#' Determine whether a composition is increasing or decreasing in \code{idx}.
+#' 
+#' @param object A \linkS4class{Atom} object.
+#' @param idx An index into the atom.
+#' @return A logical value.
+#' @name curvature-comp
+NULL
+
+#' @rdname curvature-comp
+#' @export
 setGeneric("is_incr", function(object, idx) { standardGeneric("is_incr") })
+
+#' @rdname curvature-comp
+#' @export
 setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 
 #'
@@ -175,8 +284,8 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #' @param data A list of additional data required by the atom.
 #' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
 #' @docType methods
-#' @name graph_implementation
 #' @rdname graph_implementation
+#' @keywords internal
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
 
 # Constraint generic methods
@@ -187,19 +296,18 @@ setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
-#' 
-#' Format Constraints
-#' 
-#' Formats constraints for the solver.
-#' 
-#' @param object A \linkS4class{Constraint} object.
-#' @param eq_constr A list of the equality constraints in the canonical problem.
-#' @param leq_constr A list of the inequality constraints in the canonical problem.
-#' @param dims A list with the dimensions of the conic constraints.
-#' @param solver A string representing the solver to be called.
-#' @return A list containing equality constraints, inequality constraints, and dimensions.
-#' @docType methods
-#' @rdname format_constr
+# 
+# Format Constraints
+# 
+# Formats constraints for the solver.
+# 
+# @param object A \linkS4class{Constraint} object.
+# @param eq_constr A list of the equality constraints in the canonical problem.
+# @param leq_constr A list of the inequality constraints in the canonical problem.
+# @param dims A list with the dimensions of the conic constraints.
+# @param solver A string representing the solver to be called.
+# @return A list containing equality constraints, inequality constraints, and dimensions.
+# @rdname format_constr
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("constr_id", function(object) { standardGeneric("constr_id") })
@@ -218,7 +326,19 @@ setGeneric("status<-", function(object, value) { standardGeneric("status<-") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_stats<-") })
+
+#'
+#' Get Problem Data
+#'
+#' Get the problem data used in the call to the solver.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @param solver A string indicating the solver that the problem data is for.
+#' @return A list of arguments for the solver.
+#' @rdname get_problem_data
+#' @export
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
+
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })
 setGeneric(".handle_no_solution", function(object, status) { standardGeneric(".handle_no_solution") })
@@ -259,18 +379,23 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 NULL
 
 #' @rdname Solver-capable
+#' @export
 setGeneric("lp_capable", function(solver) { standardGeneric("lp_capable") })
 
 #' @rdname Solver-capable
+#' @export
 setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
 
 #' @rdname Solver-capable
+#' @export
 setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
 
 #' @rdname Solver-capable
+#' @export
 setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
 
 #' @rdname Solver-capable
+#' @export
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })

@@ -10,16 +10,16 @@ AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 #' @rdname Atom-class
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 
 #' @rdname curvature-methods
@@ -28,7 +28,6 @@ setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, 
 #' @rdname curvature-methods
 setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
-#' @rdname Atom-class
 setMethod(".grad", "AffAtom", function(object, values) {
   # TODO: Should be a simple function in CVXcanon for this
   # Make a fake LinOp tree for the function
@@ -92,6 +91,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
 #' @export
 AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
 
+#' @rdname AddExpression-class
 setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = list()) {
   .Object@arg_groups <- arg_groups
   .Object <- callNextMethod(.Object, ..., args = arg_groups)   # Casts R values to Constant objects
@@ -131,6 +131,7 @@ setMethod("graph_implementation", "AddExpression", function(object, arg_objs, si
 #' @export
 UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character"), contains = "AffAtom")
 
+#' @rdname UnaryOperator-class
 setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
   .Object@expr <- expr
   .Object@op_name <- op_name
@@ -146,6 +147,7 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
 #' @export
 NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 
+#' @rdname NegExpression-class
 setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
@@ -159,10 +161,10 @@ setMethod("size_from_args", "NegExpression", function(object) { size(object@args
 #' @rdname Atom-class
 setMethod("sign_from_args", "NegExpression", function(object) { c(is_negative(object@args[[1]]), is_positive(object@args[[1]])) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "NegExpression", function(object, idx) { TRUE })
 
 #' @rdname graph_implementation
@@ -187,6 +189,7 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, si
 #' @export
 BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), contains = "AffAtom")
 
+#' @rdname BinaryOperator-class
 setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp, op_name) {
   .Object@lh_exp = lh_exp
   .Object@rh_exp = rh_exp
@@ -213,6 +216,7 @@ setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object
 #' @export
 MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 
+#' @rdname MulExpression-class
 setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
 })
@@ -225,10 +229,10 @@ setMethod("validate_args", "MulExpression", function(object) {
 #' @rdname Atom-class
 setMethod("size_from_args", "MulExpression", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "MulExpression", function(object, idx) { is_positive(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object@args[[1]]) })
 
 #' @rdname graph_implementation
@@ -255,10 +259,10 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #' @export
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "RMulExpression", function(object, idx) { is_positive(object@args[[2]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "RMulExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
 #' @rdname graph_implementation
@@ -297,10 +301,10 @@ setMethod("is_quadratic", "DivExpression", function(object) {
 #' @rdname Atom-class
 setMethod("size_from_args", "DivExpression", function(object) { size(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object@args[[2]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "DivExpression", function(object, idx) { is_negative(object@args[[2]]) })
 
 #' @rdname graph_implementation
@@ -320,14 +324,17 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, si
 #'
 #' @slot lh_exp An \linkS4class{Expression} or R numeric data representing the left-hand vector.
 #' @slot rh_exp An \linkS4class{Expression} or R numeric data representing the right-hand vector.
+#' @name Conv-class
 #' @rdname Conv-class
 #' @export
 .Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname conv
+#' @name Conv
+#' @rdname Conv-class
 Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @name Conv
+#' @rdname Conv-class
 setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
@@ -357,10 +364,10 @@ setMethod("size_from_args", "Conv", function(object) {
 #' @rdname Atom-class
 setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Conv", function(object, idx) { is_negative(object@args[[1]]) })
 
 #' @rdname graph_implementation
@@ -380,12 +387,13 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #'
 #' @slot expr An \linkS4class{Expression} to be summed.
 #' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @name CumSum-class
 #' @rdname CumSum-class
 #' @export
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 
-#' @docType methods
-#' @rdname cumsum
+#' @name CumSum
+#' @rdname CumSum-class
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
 #' @describeIn CumSum Returns the cumulative sum of the values along the specified axis.
@@ -394,14 +402,14 @@ setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], 
 #' @rdname Atom-class
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
-#'
-#' Difference Matrix
-#'
-#' Returns a sparse matrix representation of the first order difference operator.
-#' 
-#' @param dim The length of the matrix dimensions.
-#' @param axis The axis to take the difference along.
-#' @return A square matrix representing the first order difference.
+#
+# Difference Matrix
+#
+# Returns a sparse matrix representation of the first order difference operator.
+# 
+# @param dim The length of the matrix dimensions.
+# @param axis The axis to take the difference along.
+# @return A square matrix representing the first order difference.
 get_diff_mat <- function(dim, axis) {
   # Construct a sparse matrix representation
   val_arr <- c()
@@ -427,7 +435,6 @@ get_diff_mat <- function(dim, axis) {
     t(mat)
 }
 
-#' @rdname Atom-class
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
   if(object@axis == 1)
@@ -476,7 +483,9 @@ setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, dat
 #' This class represents the conversion of a vector into a diagonal matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing the vector to convert.
+#' @name DiagVec-class
 #' @rdname DiagVec-class
+#' @export
 .DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
 
 #'
@@ -486,10 +495,12 @@ setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, dat
 #'
 #' @param expr An \linkS4class{Expression} representing the vector to convert.
 #' @return A \linkS4class{DiagVec} object.
-#' @rdname DiagVec
-#' @export
+#' @name DiagVec
+#' @rdname DiagVec-class
 DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
+#' @name DiagVec
+#' @rdname DiagVec-class
 setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -520,6 +531,7 @@ setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, da
 #' This class represents the extraction of the diagonal from a square matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
+#' @name DiagMat-class
 #' @rdname DiagMat-class
 #' @export
 .DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
@@ -531,9 +543,12 @@ setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, da
 #'
 #' @param expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
 #' @return A \linkS4class{DiagMat} object.
-#' @rdname DiagMat
+#' @name DiagMat
+#' @rdname DiagMat-class
 DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
+#' @name DiagMat
+#' @rdname DiagMat-class
 setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -558,8 +573,6 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, da
   DiagMat.graph_implementation(arg_objs, size, data)
 })
 
-#' @docType methods
-#' @rdname diag
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr)) {
@@ -575,8 +588,6 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix")
 }
 
-#' @docType methods
-#' @rdname diff
 Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
   if(axis == 2)
@@ -611,12 +622,13 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' Horizontal concatenation of values.
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
+#' @name HStack-class
 #' @rdname HStack-class
 #' @export
 .HStack <- setClass("HStack", contains = "AffAtom")
 
-#' @docType methods
-#' @rdname hstack
+#' @name HStack
+#' @rdname HStack-class
 HStack <- function(...) { .HStack(args = list(...)) }
 
 #' @describeIn HStack All arguments must have the same height.
@@ -657,6 +669,7 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 #'
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot key A list containing the start index, end index, and step size of the slice.
+#' @name Index-class
 #' @rdname Index-class
 #' @export
 .Index <- setClass("Index", representation(expr = "Expression", key = "list"), contains = "AffAtom")
@@ -669,9 +682,12 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param key A list containing the start index, end index, and step size of the slice.
 #' @return An \linkS4class{Index} object.
-#' @rdname Index
+#' @name Index
+#' @rdname Index-class
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
+#' @name Index
+#' @rdname Index-class
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   .Object@key <- ku_validate_key(key, size(expr))   # TODO: Double check key validation
   .Object@expr <- expr
@@ -702,11 +718,16 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
   Index.graph_implementation(arg_objs, size, data)
 })
 
-#' @describeIn Index Indexing using logical indexing or a list of indices.
-#' @param expr An \linkS4class{Expression} object.
-#' @param row The row index.
-#' @param col The column index.
-#' @return An \linkS4class{Expression} representing the index/slice.
+#
+# Get Special Slice Index
+#
+# Indexing using logical indexing or a list of indices.
+# 
+# @param expr An \linkS4class{Expression} object.
+# @param row The row index.
+# @param col The column index.
+# @return An \linkS4class{Expression} representing the index/slice.
+# @rdname Index-get_special_slice
 Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
 
@@ -740,12 +761,17 @@ Index.get_special_slice <- function(expr, row, col) {
     Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
 }
 
-#' @describeIn Index Returns a canonicalized index into a matrix.
-#' @param matrix A LinOp representing the matrix to be indexed.
-#' @param constraints A list of \linkS4class{Constraint} objects to append to.
-#' @param row The row index.
-#' @param col The column index.
-#' @return A list with the canonicalized index and updated constraints.
+#
+# Get Index
+# 
+# Returns a canonicalized index into a matrix.
+# 
+# @param matrix A LinOp representing the matrix to be indexed.
+# @param constraints A list of \linkS4class{Constraint} objects to append to.
+# @param row The row index.
+# @param col The column index.
+# @return A list with the canonicalized index and updated constraints.
+# @rdname Index-get_index
 Index.get_index <- function(matrix, constraints, row, col) {
   key <- Key(row, col)
   graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
@@ -755,15 +781,20 @@ Index.get_index <- function(matrix, constraints, row, col) {
   list(idx = idx, constraints = constraints)
 }
 
-#' @describeIn Index Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
-#' @param matrix A LinOp representing the matrix to be indexed.
-#' @param block A LinOp representing the block in the block equality.
-#' @param constraints A list of \linkS4class{Constraint} objects to append to.
-#' @param row_start  The first row of the matrix section.
-#' @param row_end The last row of the matrix section.
-#' @param col_start The first column of the matrix section.
-#' @param col_end The last column of the matrix section.
-#' @return A list of \linkS4class{Constraint} objects.
+#
+# Index Block Equation
+#
+# Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
+# 
+# @param matrix A LinOp representing the matrix to be indexed.
+# @param block A LinOp representing the block in the block equality.
+# @param constraints A list of \linkS4class{Constraint} objects to append to.
+# @param row_start  The first row of the matrix section.
+# @param row_end The last row of the matrix section.
+# @param col_start The first column of the matrix section.
+# @param col_end The last column of the matrix section.
+# @return A list of \linkS4class{Constraint} objects.
+# @rdname Index-block_eq
 Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
   key <- Key(row_start:row_end, col_start:col_end)
   rows <- row_end - row_start + 1
@@ -784,14 +815,17 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
 #'
 #' @slot lh_exp An \linkS4class{Expression} or numeric constant representing the left-hand matrix.
 #' @slot rh_exp An \linkS4class{Expression} or numeric constant representing the right-hand matrix.
+#' @name Kron-class
 #' @rdname Kron-class
 #' @export
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname kronecker
+#' @name Kron
+#' @rdname Kron-class
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @name Kron
+#' @rdname Kron-class
 setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
@@ -819,10 +853,10 @@ setMethod("size_from_args", "Kron", function(object) {
 #' @rdname Atom-class
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Kron", function(object, idx) { is_negative(object@args[[2]]) })
 
 #' @rdname graph_implementation
@@ -842,14 +876,17 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
 #'
 #' @slot lh_const A constant \linkS4class{Expression} or numeric value.
 #' @slot rh_exp An \linkS4class{Expression}.
+#' @name MulElemwise-class
 #' @rdname MulElemwise-class
 #' @export
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname mul_elemwise
+#' @name MulElemwise
+#' @rdname MulElemwise-class
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
+#' @name MulElemwise
+#' @rdname MulElemwise-class
 setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) {
   .Object@lh_const <- lh_const
   .Object@rh_exp <- rh_exp
@@ -878,10 +915,10 @@ setMethod("sign_from_args", "MulElemwise", function(object) {
   mul_sign(object@args[[1]], object@args[[2]])
 })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "MulElemwise", function(object, idx) { is_positive(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@args[[1]]) })
 
 #' @rdname curvature-methods
@@ -910,14 +947,17 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' @slot expr An \linkS4class{Expression} to reshape.
 #' @slot rows The new number of rows.
 #' @slot cols The new number of columns.
+#' @name Reshape-class
 #' @rdname Reshape-class
 #' @export
 .Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname reshape_expr
+#' @name Reshape
+#' @rdname Reshape-class
 Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
+#' @name Reshape
+#' @rdname Reshape-class
 setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
   .Object@rows <- rows
   .Object@cols <- cols
@@ -925,7 +965,7 @@ setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn Reshape-class Checks the new shape has the same number of entries as the old.
+#' @describeIn Reshape Checks the new shape has the same number of entries as the old.
 setMethod("validate_args", "Reshape", function(object) {
   old_len <- prod(size(object@args[[1]]))
   new_len <- object@rows * object@cols
@@ -933,7 +973,7 @@ setMethod("validate_args", "Reshape", function(object) {
     stop(sprintf("Invalid reshape dimensions (%i, %i)", object@rows, object@cols))
 })
 
-#' @describeIn Reshape-class Reshape the value into the specified dimensions.
+#' @describeIn Reshape Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
   dim(values[[1]]) <- c(object@rows, object@cols)
   values[[1]]
@@ -960,12 +1000,13 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #'
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
+#' @name SumEntries-class
 #' @rdname SumEntries-class
 #' @export
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
 
-#' @docType methods
-#' @rdname sum_entries
+#' @name SumEntries
+#' @rdname SumEntries-class
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
 #' @describeIn SumEntries Sums the entries of value.
@@ -1004,14 +1045,17 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #' This class represents the sum of the diagonal entries in a matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
+#' @name Trace-class
 #' @rdname Trace-class
 #' @export
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname matrix_trace
+#' @name Trace
+#' @rdname Trace-class
 Trace <- function(expr) { .Trace(expr = expr) }
 
+#' @name Trace
+#' @rdname Trace-class
 setMethod("initialize", "Trace", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -1045,6 +1089,8 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #'
 #' This class represents the matrix transpose.
 #'
+#' @name Transpose-class
+#' @aliases Transpose
 #' @rdname Transpose-class
 #' @export
 Transpose <- setClass("Transpose", contains = "AffAtom")
@@ -1074,14 +1120,17 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
 #' The vectorized strictly upper triagonal entries of a matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
+#' @name UpperTri-class
 #' @rdname UpperTri-class
 #' @export
 .UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 
-#' @docType methods
-#' @rdname upper_tri
+#' @name UpperTri
+#' @rdname UpperTri-class
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
+#' @name UpperTri
+#' @rdname UpperTri-class
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -1119,8 +1168,6 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
   UpperTri.graph_implementation(arg_objs, size, data)
 })
 
-#' @docType methods
-#' @rdname vec
 Vec <- function(X) {
   X <- as.Constant(X)
   Reshape(expr = X, rows = prod(size(X)), cols = 1)
@@ -1132,12 +1179,13 @@ Vec <- function(X) {
 #' Vertical concatenation of values.
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
+#' @name VStack-class
 #' @rdname VStack-class
 #' @export
 .VStack <- setClass("VStack", contains = "AffAtom")
 
-#' @docType methods
-#' @rdname vstack
+#' @name VStack
+#' @rdname VStack-class
 VStack <- function(...) { .VStack(args = list(...)) }
 
 #' @describeIn VStack All arguments must have the same width.
@@ -1171,8 +1219,6 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, size, dat
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
-#' @docType methods
-#' @rdname bmat
 Bmat <- function(block_lists) {
   row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
   .VStack(args = row_blocks)

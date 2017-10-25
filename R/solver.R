@@ -3,12 +3,19 @@
 #'
 #' This virtual class represents the generic interface for a solver.
 #' 
+#' @name Solver-class
+#' @aliases Solver
 #' @rdname Solver-class
 Solver <- setClass("Solver", contains = "VIRTUAL")
 
-#' @describeIn Solver Determines the appropriate solver
-#' @param constraints A list of canonicalized constraints.
-#' @return A \linkS4class{Solver} object.
+#
+# Choose a Solver
+#
+# Determines the appropriate solver.
+# 
+# @param constraints A list of canonicalized constraints.
+# @return A \linkS4class{Solver} object.
+# @rdname Solver-choose_solver
 Solver.choose_solver <- function(constraints) {
   constr_map <- SymData.filter_constraints(constraints)
   # If no constraints, use ECOS.
@@ -53,9 +60,14 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
     Solver._reject_problem(solver, "it cannot solve unconstrained problems")
 })
 
-#' @describeIn Solver Raise an error indicating that the solver cannot solver a problem.
-#' @param solver A \linkS4class{Solver} object.
-#' @param reason A short description of the reason the problem cannot be solved by this solver.
+#
+# Reject Problem
+#
+# Raise an error indicating that the solver cannot solve a problem.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param reason A short description of the reason the problem cannot be solved by this solver.
+# @rdname Solver-reject_problem
 Solver._reject_problem <- function(solver, reason) {
   message <- paste("The solver", name(solver), "cannot solve the problem because", reason)
   stop(message)
@@ -175,16 +187,21 @@ setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cac
 #' @rdname format_results
 setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { stop("Unimplemented") })
 
-#' @describeIn Solver A logical value indicating whether the problem is a mixed-integer program.
+# Is the problem a mixed-integer program?
 Solver.is_mip <- function(data) {
   length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 }
 
-#' @describeIn Solver Converts the non-convex constraint variable IDs in dims into indices.
-#' @param dims The dimensions of the cones.
-#' @param var_offsets A list mapping variabld ID to horizontal offset.
-#' @param var_sizes A list mapping variable ID to  variable dimensions.
-#' @return A list of indices for the boolean and integer variables.
+#
+# Non-Convex ID to Index
+#
+# Converts the non-convex constraint variable IDs in dims into indices.
+# 
+# @param dims The dimensions of the cones.
+# @param var_offsets A list mapping variabld ID to horizontal offset.
+# @param var_sizes A list mapping variable ID to  variable dimensions.
+# @return A list of indices for the boolean and integer variables.
+# @rdname Solver-noncvx_id_to_idx
 Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   if(BOOL_IDS %in% names(dims)) {
     bool_idx <- lapply(dims[[BOOL_IDS]], function(var_id) {
@@ -220,11 +237,12 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 #' 
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
 #' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @name ECOS-class
 #' @rdname ECOS-class
 #' @export
 ECOS <- setClass("ECOS", contains = "Solver")
 
-#' @docType methods
+#' @name ECOS
 #' @rdname ECOS-class
 #' @export
 ECOS <- function() {
@@ -290,7 +308,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 #' @describeIn ECOS The name of the solver.
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 
-#' @describeIn ECOS Imports the \link[ECOSolveR] library.
+#' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 
 #' @describeIn ECOS The interface for matrices passed to the solver.
@@ -307,7 +325,6 @@ setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
@@ -326,7 +343,6 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   format_results(solver, results_dict, data, cached_data)
 })
 
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
@@ -355,11 +371,12 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 #' 
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
 #' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @name ECOS_BB-class
 #' @rdname ECOS_BB-class
 #' @export
 setClass("ECOS_BB", contains = "ECOS")
 
-#' @docType methods
+#' @name ECOS_BB
 #' @rdname ECOS_BB-class
 #' @export
 ECOS_BB <- function() {
@@ -394,7 +411,6 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 #' @describeIn ECOS_BB The name of the solver.
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
 
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
@@ -423,11 +439,12 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
 #' 
 #' @references B. O'Donoghue, E. Chu, N. Parikh, and S. Boyd. "Conic Optimization via Operator Splitting and Homogeneous Self-Dual Embedding." \emph{Journal of Optimization Theory and Applications}, pp. 1-27, 2016. \url{https://web.stanford.edu/~boyd/papers/scs.html}.
 #' @seealso \code{\link[scs]{scs}} and the \href{https://github.com/cvxgrp/scs}{SCS Github}.
+#' @name SCS-class
 #' @rdname SCS-class
 #' @export
 setClass("SCS", contains = "ECOS")
 
-#' @docType methods
+#' @name SCS
 #' @rdname SCS-class
 #' @export
 SCS <- function() {
@@ -475,7 +492,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 #' @describeIn SCS The name of the solver.
 setMethod("name", "SCS", function(object) { SCS_NAME })
 
-#' @describeIn SCS Imports the \link[scs] library.
+#' @describeIn SCS Imports the scs library.
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
 
 #' @describeIn SCS Extracts the equality, inequality, and nonlinear constraints.
@@ -486,7 +503,6 @@ setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
@@ -513,7 +529,6 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
   format_results(solver, results_dict, data, cached_data)
 })
 
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "SCS", function(solver, results_dict, data, cached_data) {
   solver_cache <- cached_data[name(solver)]
@@ -575,7 +590,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
   return(new_results)
 })
 
-#' @describeIn SCS Expands \code{floor(n*(n+1)/2)} lower triangular entries to a full matrix with off-diagonal entries scaled by \eqn{1/\sqrt{2}}.
+# Expands floor(n*(n+1)/2) lower triangular entries to a full matrix with off-diagonal entries scaled by 1/sqrt(2).
 SCS.tri_to_full <- function(lower_tri, n) {
   # Expands floor(n*(n+1)/2) lower triangular to full matrix, with off-diagonal entries scaled by 1/sqrt(2)
   full <- matrix(0, nrow = n, ncol = n)
@@ -606,12 +621,13 @@ CVXOPT <- function() {
 #' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
 #' LS is capable of solving any general cone program and must be invoked through a special path.
 #'
-#' @rdname LS-solver
+#' @name LS-class
+#' @rdname LS-class
 #' @export
 setClass("LS", contains = "Solver")
 
-#' @docType methods
-#' @rdname LS-solver
+#' @name LS
+#' @rdname LS-class
 #' @export
 LS <- function() {
   stop("Unimplemented solver")
@@ -637,7 +653,7 @@ setMethod("mip_capable", "LS", function(solver) { FALSE })
 #' @describeIn LS The name of the solver.
 setMethod("name", "LS", function(object) { LS_NAME })
 
-#' @describeIn LS Imports the \link[Matrix] library.
+#' @describeIn LS Imports the Matrix library.
 setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
 
 #' @describeIn LS Extracts the equality, inequality, and nonlinear constraints.
@@ -648,7 +664,6 @@ setMethod("split_constr", "LS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   sym_data <- get_sym_data(solver, objective, constraints)
@@ -708,7 +723,6 @@ setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_
   format_results(solver, results_dict, NA, cached_data)
 })
 
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
   new_results <- results_dict
@@ -726,11 +740,12 @@ setMethod("format_results", "LS", function(solver, results_dict, data, cached_da
 #'
 #' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
 #' @seealso \code{\link{Rmosek}{mosek}} and the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
+#' @name MOSEK-class
 #' @rdname MOSEK-class
 #' @export
 setClass("MOSEK", contains = "Solver")
 
-#' @docType methods
+#' @name MOSEK
 #' @rdname MOSEK-class
 #' @export
 MOSEK <- function() {
@@ -783,7 +798,7 @@ setMethod("status_map", "MOSEK", function(solver, status) {
 #' @describeIn MOSEK The name of the solver.
 setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
 
-#' @describeIn MOSEK Imports the \link[Rmosek] library.
+#' @describeIn MOSEK Imports the Rmosek library.
 setMethod("import_solver", "MOSEK", function(solver) { requireNamespace("Rmosek") })
 
 #' @describeIn MOSEK Extracts the equality, inequality, and nonlinear constraints.
@@ -794,7 +809,6 @@ setMethod("split_constr", "MOSEK", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
@@ -913,7 +927,6 @@ setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
     list(solist = results_dict$sol$bas, solsta = solsta_bas)
 })
 
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached_data) {
   requireNamespace("Rmosek")
@@ -948,11 +961,12 @@ setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached
 #' 
 #' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
 #' @seealso \href{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}{GUROBI Official Site}.
+#' @name GUROBI-class
 #' @rdname GUROBI-class
 #' @export
 setClass("GUROBI", contains = "Solver")
 
-#' @docType methods
+#' @name GUROBI
 #' @rdname GUROBI-class
 #' @export
 GUROBI <- function() {
@@ -1003,7 +1017,7 @@ setMethod("status_map", "GUROBI", function(solver, status) {
 #' @describeIn GUROBI The name of the solver.
 setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
 
-#' @describeIn GUROBI Imports the \link[gurobi] library.
+#' @describeIn GUROBI Imports the gurobi library.
 setMethod("import_solver", "GUROBI", function(solver) { requireNamespace("gurobi") })
 
 #' @describeIn GUROBI Extracts the equality, inequality, and nonlinear constraints.
@@ -1014,7 +1028,6 @@ setMethod("split_constr", "GUROBI", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "GUROBI", function(solver, results_dict, data, cached_data) {
   dims <- data[[DIMS]]
@@ -1040,9 +1053,11 @@ setMethod("format_results", "GUROBI", function(solver, results_dict, data, cache
   }
 })
 
-#'
-#' Solver utilities
-#'
+####################
+#                  #
+# Solver utilities #
+#                  #
+####################
 # solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
 solver_intf <- list(ECOS(), ECOS_BB(), SCS())
 SOLVERS <- solver_intf

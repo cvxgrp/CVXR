@@ -138,11 +138,11 @@ setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 }
 #' @rdname size-methods
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
-#' @describeIn size Number of rows in the expression.
+#' @describeIn Expression Number of rows in the expression.
 #' @export
 setMethod("nrow", "Expression", function(x) { size(x)[1] })
 
-#' @describeIn size Number of columns in the expression.
+#' @describeIn Expression Number of columns in the expression.
 #' @export
 setMethod("ncol", "Expression", function(x) { size(x)[2] })
 
@@ -403,37 +403,30 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("variables", "Leaf", function(object) { list() })
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("parameters", "Leaf", function(object) { list() })
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("constants", "Leaf", function(object) { list() })
 
-#' @docType methods
-#' @rdname curvature-methods
+#' @rdname Leaf-class
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature-methods
+#' @rdname Leaf-class
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature-methods
+#' @rdname Leaf-class
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature-methods
+#' @rdname Leaf-class
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
 
-#' @rdname Expression-class
+#' @rdname Leaf-class
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
-#' @describeIn Leaf-class Check that the value satisfies the leaf's symbolic attributes.
-#' @param val The assigned value.
-#' @return The value converted to proper matrix type.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
     # Convert val to the proper matrix type

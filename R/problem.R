@@ -33,7 +33,6 @@ setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 #' @describeIn Minimize The value of the objective expression.
 setMethod("value", "Minimize", function(object) { value(object@expr) })
 
-#' @describeIn Minimize The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Minimize", function(object, result) { result })
 
 #'
@@ -135,6 +134,7 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
 #' @slot num_iters The number of iterations the solver had to go through to find a solution.
+#' @name SolverStats
 #' @rdname SolverStats-class
 #' @export
 .SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
@@ -154,8 +154,8 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #'   \item{setup_time}{The time (in seconds) it took for the solver to set up the problem.}
 #'   \item{num_iters}{The number of iterations the solver had to go through to find a solution.}
 #' }
-#' @docType methods
-#' @rdname SolverStats
+#' @name SolverStats
+#' @rdname SolverStats-class
 #' @export
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     solve_time <- NA_real_
@@ -188,7 +188,7 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' @slot max_big_small_squared The maximum value of (big)(small)^2 over all data blocks of the problem, where (big) is the larger dimension and (small) is the smaller dimension for each data block.
 #' @name SizeMetrics-class
 #' @rdname SizeMetrics-class
-#' @exportClass SizeMetrics
+#' @export
 .SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
                                                        max_data_dimension = "numeric", max_big_small_squared = "numeric"),
                          prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
@@ -202,7 +202,7 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' @param problem A \linkS4class{Problem} object.
 #' @return A \linkS4class{SizeMetrics} object containing size metrics of the input problem.
 #' @name SizeMetrics
-#' @rdname SizeMetrics
+#' @rdname SizeMetrics-class
 #' @export
 SizeMetrics <- function(problem) {
   # num_scalar_variables
@@ -428,16 +428,7 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
-#'
-#' Get Problem Data
-#'
-#' Get the problem data used in the call to the solver.
-#' 
-#' @param object A \linkS4class{Problem} object.
-#' @param solver A string indicating the solver that the problem data is for.
-#' @return A list of arguments for the solver.
 #' @rdname get_problem_data
-#' @export
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
@@ -461,6 +452,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @return A list containing the optimal value, primal, and dual variables for the problem.
+#' @name solve
 #' @rdname solve
 #' @export
 solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {

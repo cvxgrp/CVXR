@@ -17,18 +17,27 @@ setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @describeIn Elementwise Converts elementwise gradient into a diagonal matrix.
-#' @param value A scalar value or matrix.
-#' @return A sparse matrix.
+#
+# Gradient to Diagonal
+#
+# Converts elementwise gradient into a diagonal matrix.
+# 
+# @param value A scalar value or matrix.
+# @return A sparse matrix.
+# @rdname Elementwise-elemwise_grad_to_diag
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
   value <- as.numeric(value)
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
-#' @describeIn Elementwise Promotes the LinOp if necessary.
-#' @param arg The LinOp to promote.
-#' @param size The desired size.
-#' @return The promoted LinOp.
+#
+# Promotes LinOp
+#
+# Promotes the LinOp if necessary.
+# @param arg The LinOp to promote.
+# @param size The desired size.
+# @return The promoted LinOp.
+# @rdname Elementwise-promote
 Elementwise.promote <- function(arg, size) {
   if(any(size(arg) != size))
     lo.promote(arg, size)
@@ -42,14 +51,17 @@ Elementwise.promote <- function(arg, size) {
 #' This class represents the elementwise absolute value.
 #'
 #' @slot x An \linkS4class{Expression} object.
+#' @name Abs-class
 #' @rdname Abs-class
 #' @export
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname abs
+#' @name Abs
+#' @rdname Abs-class
 Abs <- function(x) { .Abs(x = x) }
 
+#' @name Abs
+#' @rdname Abs-class
 setMethod("initialize", "Abs", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -61,22 +73,21 @@ setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 #' @rdname Atom-class
 setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Abs", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @rdname Abs-class A logical value indicating whether the atom is piecewise linear.
+#' @rdname curvature-methods
 setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
-#' @rdname Atom-class
 setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- prod(size(object@args[[1]]))
@@ -108,14 +119,17 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #' This class represents the elementwise operation \eqn{-xlog(x)}.
 #'
 #' @slot x An \linkS4class{Expression} object.
+#' @name Entr-class
 #' @rdname Entr-class
 #' @export
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname entr
+#' @name Entr
+#' @rdname Entr-class
 Entr <- function(x) { .Entr(x = x) }
 
+#' @name Entr
+#' @rdname Entr-class
 setMethod("initialize", "Entr", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -140,19 +154,18 @@ setMethod("to_numeric", "Entr", function(object, values) {
 #' @rdname Atom-class
 setMethod("sign_from_args", "Entr", function(object) { c(FALSE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Entr", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Entr", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Entr", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
 setMethod(".grad", "Entr", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -166,7 +179,6 @@ setMethod(".grad", "Entr", function(object, values) {
   }
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
 
 #' @rdname graph_implementation
@@ -188,14 +200,17 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #' This class represents the elementwise natural exponential \eqn{e^x}.
 #'
 #' @slot x An \linkS4class{Expression} object.
+#' @name Exp-class
 #' @rdname Exp-class
 #' @export
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname exp
+#' @name Exp
+#' @rdname Exp-class
 Exp <- function(x) { .Exp(x = x) }
 
+#' @name Exp
+#' @rdname Exp-class
 setMethod("initialize", "Exp", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -207,19 +222,18 @@ setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 #' @rdname Atom-class
 setMethod("sign_from_args", "Exp", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Exp", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Exp", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
 setMethod(".grad", "Exp", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -251,15 +265,18 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot M A positive scalar value representing the threshold. Defaults to 1.
+#' @name Huber-class
 #' @rdname Huber-class
 #' @export
 .Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
                            prototype(M = 1), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname huber
+#' @name Huber
+#' @rdname Huber-class
 Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 
+#' @name Huber
+#' @rdname Huber-class
 setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   .Object@M <- as.Constant(M)
   .Object@x <- x
@@ -296,22 +313,21 @@ setMethod("to_numeric", "Huber", function(object, values) {
 #' @rdname Atom-class
 setMethod("sign_from_args", "Huber", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Huber", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Huber", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Huber", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @describeIn Huber-class A list containing the parameter \code{M}.
+#' @describeIn Huber A list containing the parameter \code{M}.
 setMethod("get_data", "Huber", function(object) { list(object@M) })
 
-#' @rdname Atom-class
 setMethod(".grad", "Huber", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -369,14 +385,17 @@ InvPos <- function(x) { Power(x, -1) }
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot y An \linkS4class{Expression} or numeric constant.
+#' @name KLDiv-class
 #' @rdname KLDiv-class
 #' @export
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname kl_div
+#' @name KLDiv
+#' @rdname KLDiv-class
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 
+#' @name KLDiv
+#' @rdname KLDiv-class
 setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
@@ -400,19 +419,18 @@ setMethod("to_numeric", "KLDiv", function(object, values) {
 #' @rdname Atom-class
 setMethod("sign_from_args", "KLDiv", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "KLDiv", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
 setMethod(".grad", "KLDiv", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
     return(list(NA_real_, NA_real_))   # Non-differentiable
@@ -429,7 +447,6 @@ setMethod(".grad", "KLDiv", function(object, values) {
   }
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "KLDiv", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
 
 #' @rdname graph_implementation
@@ -455,14 +472,17 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #' This class represents the elementwise natural logarithm \eqn{\log(x)}.
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
+#' @name Log-class
 #' @rdname Log-class
 #' @export
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname log
+#' @name Log
+#' @rdname Log-class
 Log <- function(x) { .Log(x = x) }
 
+#' @name Log
+#' @rdname Log-class
 setMethod("initialize", "Log", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -474,19 +494,18 @@ setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 #' @rdname Atom-class
 setMethod("sign_from_args", "Log", function(object) { c(FALSE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Log", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Log", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Log", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Log", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
 setMethod(".grad", "Log", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -500,7 +519,6 @@ setMethod(".grad", "Log", function(object, values) {
   }
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Log", function(object) { list(object@args[[1]] >= 0) })
 
 #' @rdname graph_implementation
@@ -522,12 +540,13 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' This class represents the elementwise operation \eqn{\log(1 + x)}.
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
+#' @name Log1p-class
 #' @rdname Log1p-class
 #' @export
 .Log1p <- setClass("Log1p", contains = "Log")
 
-#' @docType methods
-#' @rdname log1p
+#' @name Log1p
+#' @rdname Log1p-class
 Log1p <- function(x) { .Log1p(x = x) }
 
 #' @describeIn Log1p Returns the elementwise natural logarithm of one plus the input value.
@@ -536,7 +555,6 @@ setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) }
 #' @rdname Atom-class
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
-#' @rdname Atom-class
 setMethod(".grad", "Log1p", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -550,7 +568,6 @@ setMethod(".grad", "Log1p", function(object, values) {
   }
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
 #' @rdname graph_implementation
@@ -574,14 +591,17 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #' which is useful for logistic regression.
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
+#' @name Logistic-class
 #' @rdname Logistic-class
 #' @export
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname logistic
+#' @name Logistic
+#' @rdname Logistic-class
 Logistic <- function(x) { .Logistic(x = x) }
 
+#' @name Logistic
+#' @rdname Logistic-class
 setMethod("initialize", "Logistic", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -593,19 +613,18 @@ setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(value
 #' @rdname Atom-class
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
 
-#' @rdname Atom-class
 setMethod(".grad", "Logistic", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -647,6 +666,7 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @slot arg1 The first \linkS4class{Expression} in the maximum operation.
 #' @slot arg2 The second \linkS4class{Expression} in the maximum operation.
 #' @slot ... Additional \linkS4class{Expression}s in the maximum operation.
+#' @name MaxElemwise-class
 #' @rdname MaxElemwise-class
 #' @export
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
@@ -655,8 +675,8 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
                            return(TRUE)
                          }, contains = "Elementwise")
 
-#' @docType methods
-#' @rdname max_elemwise
+#' @name MaxElemwise
+#' @rdname MaxElemwise-class
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
 #' @describeIn MaxElemwise Returns the elementwise maximum.
@@ -672,22 +692,21 @@ setMethod("sign_from_args", "MaxElemwise", function(object) {
   c(is_pos, is_neg)
 })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 
-#' @describeIn MaxElemwise A logical value indicating whether the atom is piecewise linear.
+#' @rdname curvature-methods
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
-#' @rdname Atom-class
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(object, values)
   dims <- dim(max_vals)
@@ -724,19 +743,12 @@ setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size
   MaxElemwise.graph_implementation(arg_objs, size, data)
 })
 
-#' @docType methods
-#' @rdname min_elemwise
 MinElemwise <- function(arg1, arg2, ...) {
   min_args <- lapply(c(list(arg1), list(arg2), list(...)), function(arg) { -as.Constant(arg) })
   -.MaxElemwise(args = min_args)
 }
 
-#' @docType methods
-#' @rdname neg
 Neg <- function(x) { -MinElemwise(x, 0) }
-
-#' @docType methods
-#' @rdname pos
 Pos <- function(x) { MaxElemwise(x, 0) }
 
 #'
@@ -757,15 +769,18 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' @slot x The \linkS4class{Expression} to be raised to a power.
 #' @slot p A numeric value indicating the scalar power.
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
+#' @name Power-class
 #' @rdname Power-class
 #' @export
 .Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"),
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
-#' @docType methods
-#' @rdname power
+#' @name Power
+#' @rdname Power-class
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 
+#' @name Power
+#' @rdname Power-class
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, w = NA_real_, approx_error = NA_real_) {
   p_old <- p
 
@@ -827,16 +842,16 @@ setMethod("sign_from_args", "Power", function(object) {
     c(TRUE, FALSE)
 })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@p >= 1 })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
 
-#' @describeIn Power-class A logical value indicating whether the atom is constant.
+#' @rdname curvature-methods
 setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
     return(TRUE)
@@ -849,7 +864,7 @@ setMethod("is_incr", "Power", function(object, idx) {
     return(FALSE)
 })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Power", function(object, idx) {
   if(object@p <= 0)
     return(TRUE)
@@ -874,7 +889,6 @@ setMethod("is_quadratic", "Power", function(object) {
     return(is_constant(object@args[[1]]))
 })
 
-#' @rdname Atom-class
 setMethod(".grad", "Power", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -894,7 +908,6 @@ setMethod(".grad", "Power", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Power", function(object) {
   if((object@p < 1 && object@p != 0) || (object@p > 1 && !is_power2(object@p)))
     list(object@args[[1]] >= 0)
@@ -940,8 +953,6 @@ setMethod("graph_implementation", "Power", function(object, arg_objs, size, data
   Power.graph_implementation(arg_objs, size, data)
 })
 
-#' @docType methods
-#' @rdname scalene
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 #'
@@ -950,12 +961,13 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' This class represents the elementwise square root \eqn{\sqrt{x}}.
 #' 
 #' @slot x An \linkS4class{Expression} object.
+#' @name Sqrt-class
 #' @rdname Sqrt-class
 #' @export
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
 
-#' @docType methods
-#' @rdname sqrt
+#' @name Sqrt
+#' @rdname Sqrt-class
 Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
@@ -966,28 +978,27 @@ setMethod("validate_args", "Sqrt", function(object) { return() })
 #' @describeIn Sqrt Returns the elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 
-#' @describeIn Sqrt-class A list containing the output of \code{pow_mid}.
+#' @describeIn Sqrt A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
 #' @rdname Atom-class
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
 
 #' @rdname curvature-methods
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
-#' @rdname Atom-class
 setMethod(".grad", "Sqrt", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -997,7 +1008,6 @@ setMethod(".grad", "Sqrt", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
 #' @rdname graph_implementation
@@ -1027,12 +1037,13 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' This class represents the elementwise square \eqn{x^2}.
 #' 
 #' @slot x An \linkS4class{Expression}.
+#' @name Square-class
 #' @rdname Square-class
 #' @export
 .Square <- setClass("Square", contains = "Elementwise")
 
-#' @docType methods
-#' @rdname square
+#' @name Square
+#' @rdname Square-class
 Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
@@ -1049,22 +1060,21 @@ setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 #' @rdname Atom-class
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_convex", "Square", function(object) { TRUE })
 
-#' @rdname Atom-class
+#' @rdname curvature-atom
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname Atom-class
+#' @rdname curvature-comp
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
 
 #' @rdname curvature-methods
 setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
-#' @rdname Atom-class
 setMethod(".grad", "Square", function(object, values) {
   rows <- prod(size(object@args[[1]]))
   cols <- prod(size(object))
@@ -1072,7 +1082,6 @@ setMethod(".grad", "Square", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname Atom-class
 setMethod(".domain", "Square", function(object) { list() })
 
 #' @rdname graph_implementation

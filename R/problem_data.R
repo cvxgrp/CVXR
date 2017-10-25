@@ -179,7 +179,7 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
     var_offsets <- integer(0)
     vert_offset <- 0
   } else {
-    var_offsets <- cumsum(c(0, head(size_prods, n = -1)))
+    var_offsets <- base::cumsum(c(0, head(size_prods, n = -1)))
     names(var_offsets) <- names(var_names)
     vert_offset <- sum(size_prods)
   }

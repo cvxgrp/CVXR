@@ -326,7 +326,16 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object
 })
 
+#' @describeIn Problem-class The objective of the problem.
+#' @export
+setMethod("objective", "Problem", function(object) { object@objective })
+
+#' @describeIn Problem-class A list of the constraints of the problem.
+#' @export
+setMethod("constraints", "Problem", function(object) { object@constraints })
+
 #' @describeIn Problem-class The value from the last time the problem was solved.
+#' @export
 setMethod("value", "Problem", function(object) { object@value })
 
 #' @describeIn Problem-class Set the value of optimal objective.
@@ -336,6 +345,7 @@ setMethod("value<-", "Problem", function(object, value ) {
 })
 
 #' @describeIn Problem-class The status from the last time the problem was solved.
+#' @export
 setMethod("status", "Problem", function(object) { object@status })
 
 #' @describeIn Problem-class Set the status of the problem.

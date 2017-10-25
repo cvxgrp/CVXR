@@ -89,8 +89,8 @@ partial_optimize <- function(prob, opt_vars = list(), dont_opt_vars = list()) {
   PartialProblem(prob, opt_vars, dont_opt_vars)
 }
 
-.PartialProblem <- setClass("PartialProblem", prototype(.prob = "Problem", opt_vars = "list", dont_opt_vars = "list", args = "list"), 
-                                              representation(args = list(), opt_vars = list(), dont_opt_vars = list()), 
+.PartialProblem <- setClass("PartialProblem", representation(.prob = "Problem", opt_vars = "list", dont_opt_vars = "list", args = "list"), 
+                                              prototype(opt_vars = list(), dont_opt_vars = list(), args = list()), 
                             contains = "Expression")
 PartialProblem <- function(prob, opt_vars, dont_opt_vars) {
   .PartialProblem(.prob = prob, opt_vars = opt_vars, dont_opt_vars = dont_opt_vars)
@@ -116,7 +116,7 @@ setMethod("is_convex", "PartialProblem", function(object) {
 })
 setMethod("is_concave", "PartialProblem", function(object) {
   is_dcp(object@args[[1]]) && class(object@args[[1]]@objective) == "Maximize"
-}
+})
 setMethod("is_positive", "PartialProblem", function(object) { is_positive(object@args[[1]]@objective@args[[1]]) })
 setMethod("is_negative", "PartialProblem", function(object) { is_negative(object@args[[1]]@objective@args[[1]]) })
 setMethod("size", "PartialProblem", function(object) { c(1,1) })
@@ -183,7 +183,7 @@ setMethod("value", "PartialProblem", function(object) {
   result
 })
 
-PartialProblem.replace_new_vars(obj, id_to_new_var) {
+PartialProblem.replace_new_vars <- function(obj, id_to_new_var) {
   if(is(obj, "Variable") && id(obj) %in% names(id_to_new_var))
     return(id_to_new_var[[id(obj)]])
   # Leaves outside of optimized variables are preserved.

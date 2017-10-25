@@ -333,7 +333,7 @@ norm_nuc <- NormNuc
 #' 
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the p-norm of the input.
 #' @examples 
 #' x <- Variable(3, name = "x")
@@ -408,7 +408,7 @@ quad_over_lin <- QuadOverLin
 #' The sum of entries in a vector or matrix.
 #'
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the sum of the entries of the input.
 #' @docType methods
 #' @rdname sum_entries
@@ -518,7 +518,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #' The matrix norm, which can be the 1-norm ("1"), infinity-norm ("I"), Frobenius norm ("F"), maximum modulus of all the entries ("M"), or the spectral norm ("2"), as determined by the value of type.
 #' 
 #' @param x An \linkS4class{Expression}.
-#' @type A character indicating the type of norm desired.
+#' @param type A character indicating the type of norm desired.
 #' \itemize{
 #'    \item "O", "o" or "1" specifies the 1-norm (maximum absolute column sum).
 #'    \item "I" or "i" specifies the infinity-norm (maximum absolute row sum).

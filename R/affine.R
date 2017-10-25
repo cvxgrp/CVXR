@@ -22,10 +22,10 @@ setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 #' @rdname Atom-class
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 #' @rdname Atom-class
@@ -100,7 +100,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
-#' @describeIn AddExpression-class Returns the sum of all the values.
+#' @describeIn AddExpression Returns the sum of all the values.
 setMethod("to_numeric", "AddExpression", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
@@ -150,7 +150,7 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
 
-#' @describeIn NeegExpression-class Returns the negation of the value.
+#' @describeIn NegExpression Returns the negation of the value.
 setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
 
 #' @rdname Atom-class
@@ -194,7 +194,7 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-#' @describeIn BinaryOperator-class Applies the binary operator to the values.
+#' @describeIn BinaryOperator Applies the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   Reduce(object@op_name, values)
@@ -217,7 +217,7 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
 })
 
-#' @describeIn MulExpression-class Validates the dimensions.
+#' @describeIn MulExpression Validates the dimensions.
 setMethod("validate_args", "MulExpression", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
@@ -289,7 +289,7 @@ setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
 })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
@@ -334,7 +334,7 @@ setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-#' @describeIn Conv-class Checks both arguments are vectors and the first is a constant.
+#' @describeIn Conv Checks both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Conv", function(object) {
   if(!is_vector(object@args[[1]]) || !is_vector(object@args[[2]]))
     stop("The arguments to Conv must resolve to vectors.")
@@ -342,7 +342,7 @@ setMethod("validate_args", "Conv", function(object) {
     stop("The first argument to Conv must be constant.")
 })
 
-#' @describeIn Conv-class Returns the convolution of the two values.
+#' @describeIn Conv Returns the convolution of the two values.
 setMethod("to_numeric", "Conv", function(object, values) {
     .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
 })
@@ -388,7 +388,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' @rdname cumsum
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
-#' @describeIn Returns the cumulative sum of the values along the specified axis.
+#' @describeIn CumSum Returns the cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 
 #' @rdname Atom-class
@@ -495,7 +495,7 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn DiagVec-class Converts the vector constant into a diagonal matrix.
+#' @describeIn DiagVec Converts the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
 #' @rdname Atom-class
@@ -539,7 +539,7 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn DiagMat-class Extracts the diagonal from a square matrix constant.
+#' @describeIn DiagMat Extracts the diagonal from a square matrix constant.
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
 #' @rdname Atom-class
@@ -619,14 +619,14 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' @rdname hstack
 HStack <- function(...) { .HStack(args = list(...)) }
 
-#' @describeIn HStack-class All arguments must have the same height.
+#' @describeIn HStack All arguments must have the same height.
 setMethod("validate_args", "HStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[1] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to HStack must have the same number of rows")
 })
 
-#' @describeIn HStack-class Horizontally concatenate the values using \code{cbind}.
+#' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
 #' @rdname Atom-class
@@ -678,7 +678,7 @@ setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn Index-class Returns the index/slice into the given value.
+#' @describeIn Index Returns the index/slice into the given value.
 setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key$row, object@key$col)
 })
@@ -688,7 +688,7 @@ setMethod("size_from_args", "Index", function(object) {
   ku_size(object@key, size(object@args[[1]]))
 })
 
-#' @describeIn Index-class Returns the \code{list(row slice, column slice)}.
+#' @describeIn Index Returns the \code{list(row slice, column slice)}.
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
 #' @rdname graph_implementation
@@ -702,7 +702,7 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
   Index.graph_implementation(arg_objs, size, data)
 })
 
-#' @describeIn Index-class Indexing using logical indexing or a list of indices.
+#' @describeIn Index Indexing using logical indexing or a list of indices.
 #' @param expr An \linkS4class{Expression} object.
 #' @param row The row index.
 #' @param col The column index.
@@ -740,7 +740,7 @@ Index.get_special_slice <- function(expr, row, col) {
     Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
 }
 
-#' @describeIn Index-class Returns a canonicalized index into a matrix.
+#' @describeIn Index Returns a canonicalized index into a matrix.
 #' @param matrix A LinOp representing the matrix to be indexed.
 #' @param constraints A list of \linkS4class{Constraint} objects to append to.
 #' @param row The row index.
@@ -755,7 +755,7 @@ Index.get_index <- function(matrix, constraints, row, col) {
   list(idx = idx, constraints = constraints)
 }
 
-#' @describeIn Index-class Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
+#' @describeIn Index Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
 #' @param matrix A LinOp representing the matrix to be indexed.
 #' @param block A LinOp representing the block in the block equality.
 #' @param constraints A list of \linkS4class{Constraint} objects to append to.
@@ -798,13 +798,13 @@ setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-#' @describeIn Kron-class Checks both arguments are vectors and the first is a constant.
+#' @describeIn Kron Checks both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Kron", function(object) {
   if(!is_constant(object@args[[1]]))
     stop("The first argument to Kron must be constant")
 })
 
-#' @describeIn Kron-class Returns the kronecker product of the two values.
+#' @describeIn Kron Returns the kronecker product of the two values.
 setMethod("to_numeric", "Kron", function(object, values) {
   kronecker(values[[1]], values[[2]])
 })
@@ -856,13 +856,13 @@ setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) 
   callNextMethod(.Object, ..., args = list(.Object@lh_const, .Object@rh_exp))
 })
 
-#' @describeIn MulElemwise-class Checks the first argument is a constant.
+#' @describeIn MulElemwise Checks the first argument is a constant.
 setMethod("validate_args", "MulElemwise", function(object) {
   if(!is_constant(object@args[[1]]))
     stop("The first argument to MulElemwise must be constant.")
 })
 
-#' @describeIn MulElemwise-class Multiplies the values elementwise.
+#' @describeIn MulElemwise Multiplies the values elementwise.
 setMethod("to_numeric", "MulElemwise", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
   values[[1]] * values[[2]]
@@ -884,7 +884,7 @@ setMethod("is_incr", "MulElemwise", function(object, idx) { is_positive(object@a
 #' @rdname Atom-class
 setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@args[[1]]) })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@args[[2]]) })
 
 #' @rdname graph_implementation
@@ -968,7 +968,7 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @rdname sum_entries
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
-#' @describeIn SumEntries-class Sums the entries of value.
+#' @describeIn SumEntries Sums the entries of value.
 setMethod("to_numeric", "SumEntries", function(object, values) {
   if(is.na(object@axis))
     sum(values[[1]])
@@ -1017,14 +1017,14 @@ setMethod("initialize", "Trace", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn Trace-class Checks the argument is a square matrix.
+#' @describeIn Trace Checks the argument is a square matrix.
 setMethod("validate_args", "Trace", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("Argument to trace must be a square matrix")
 })
 
-#' @describeIn Trace-class Sums the diagonal entries.
+#' @describeIn Trace Sums the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
 #' @rdname Atom-class
@@ -1049,7 +1049,7 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #' @export
 Transpose <- setClass("Transpose", contains = "AffAtom")
 
-#' @describeIn Transpose-class Returns the transpose of the given value.
+#' @describeIn Transpose Returns the transpose of the given value.
 setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
 #' @rdname Atom-class
@@ -1087,14 +1087,14 @@ setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn UpperTri-class Checks the argument is a square matrix.
+#' @describeIn UpperTri Checks the argument is a square matrix.
 setMethod("validate_args", "UpperTri", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("Argument to UpperTri must be a square matrix.")
 })
 
-#' @describeIn UpperTri-class Vectorize the upper triagonal entries.
+#' @describeIn UpperTri Vectorize the upper triagonal entries.
 setMethod("to_numeric", "UpperTri", function(object, values) {
   # Vectorize the upper triagonal entries
   tridx <- upper.tri(values[[1]], diag = FALSE)
@@ -1140,14 +1140,14 @@ Vec <- function(X) {
 #' @rdname vstack
 VStack <- function(...) { .VStack(args = list(...)) }
 
-#' @describeIn VStack-class All arguments must have the same width.
+#' @describeIn VStack All arguments must have the same width.
 setMethod("validate_args", "VStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   if(max(arg_cols) != min(arg_cols))
     stop("All arguments to VStack must have the same number of columns")
 })
 
-#' @describeIn VStack-class Vertically concatenate the values using \code{rbind}.
+#' @describeIn VStack Vertically concatenate the values using \code{rbind}.
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
 
 #' @rdname Atom-class

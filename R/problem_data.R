@@ -46,7 +46,7 @@ SymData <- function(objective, constraints, solver) {
   .SymData(objective = objective, constraints = constraints, .constr_map = constr_map, .dims = dims, .var_offsets = var_data[[1]], .var_sizes = var_data[[2]], .x_length = var_data[[3]], .presolve_status = presolve_status)
 }
 
-#' @describeIn SymData-class Separate the constraints by type.
+#' @describeIn SymData Separate the constraints by type.
 #' @param constraints A list of \linkS4class{Constraint} objects.
 #' @return A list of type to an ordered set of constraints. The types are linear equality (1), linear \eqn{leq} (2), SOC (3), SDP (4), exponential cone (5), boolean (6), and integer (7).
 SymData.filter_constraints <- function(constraints) {
@@ -61,7 +61,7 @@ SymData.filter_constraints <- function(constraints) {
   constr_map
 }
 
-#' @describeIn SymData-class Eliminates unnecessary constraints and short circuits the solver if possible.
+#' @describeIn SymData Eliminates unnecessary constraints and short circuits the solver if possible.
 #' @param objective A list representing the canonicalized objective.
 #' @param constr_map a list mapping constraint type to a list of constraints.
 #' @return A list containing the constraint map and feasibility status of the problem.
@@ -293,10 +293,10 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, nonlin
   .Object
 })
 
-#' @describeIn MatrixData-class Returns a dummy constraint for the objective.
+#' @describeIn MatrixData Returns a dummy constraint for the objective.
 .dummy_constr <- function(object) { list(create_eq(object@sym_data@objective)) }
 
-#' @describeIn MatrixData-class Returns the linear objective and scalar offset.
+#' @describeIn MatrixData Returns the linear objective and scalar offset.
 setMethod("get_objective", "MatrixData", function(object) {
   mat <- .cache_to_matrix(object, object@.obj_cache)
   c <- mat[[1]]
@@ -307,16 +307,16 @@ setMethod("get_objective", "MatrixData", function(object) {
   list(c, -offset)
 })
 
-#' @describeIn MatrixData-class Returns the matrix and vector for the equality constraint.
+#' @describeIn MatrixData Returns the matrix and vector for the equality constraint.
 setMethod("get_eq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.eq_cache) })
 
-#' @describeIn MatrixData-class Returns the matrix and vector for the inequality constraint.
+#' @describeIn MatrixData Returns the matrix and vector for the inequality constraint.
 setMethod("get_ineq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.ineq_cache) })
 
-#' @describeIn MatrixData-class Returns the oracle function for the nonlinear constraints.
+#' @describeIn MatrixData Returns the oracle function for the nonlinear constraints.
 setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 
-#' @describeIn MatrixData-class Initializes the data structures for the cached matrix.
+#' @describeIn MatrixData Initializes the data structures for the cached matrix.
 #' @param constraints A list of constraints in the matrix.
 #' @param x_length The number of columns in the matrix.
 #' @return A \linkS4class{MatrixCache} object.
@@ -330,7 +330,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   MatrixCache(COO, const_vec, constraints, x_length)
 }
 
-#' @describeIn MatrixData-class Computes a matrix and vector representing a list of constraints. In the matrix, each constraint is given a block of rows. Each variable coefficient is inserted as a block with upper left corner at matrix[variable offset, constraint offset]. The constant term in the constraint is added to the vector.
+#' @describeIn MatrixData Computes a matrix and vector representing a list of constraints. In the matrix, each constraint is given a block of rows. Each variable coefficient is inserted as a block with upper left corner at matrix[variable offset, constraint offset]. The constant term in the constraint is added to the vector.
 #' @param mat_cache A \linkS4class{MatrixCache} object representing the cached version of the matrix-vector pair.
 #' @param caching A logical value indicating whether the data should be cached.
 .lin_matrix <- function(object, mat_cache, caching = FALSE) {
@@ -371,7 +371,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   mat_cache
 }
 
-#' @describeIn MatrixData-class Converts the cached representation of the constraints matrix.
+#' @describeIn MatrixData Converts the cached representation of the constraints matrix.
 #' @param mat_cache A \linkS4class{MatrixCache} object representing the cached version of the matrix-vector pair.
 #' @return A list of \code{c(matrix, vector)}.
 .cache_to_matrix <- function(object, mat_cache) {
@@ -408,7 +408,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 }
 
 # TODO: Double-check scoping of the returned oracle function
-#' @describeIn MatrixData-class Returns an oracle for the nonlinear constraints. The oracle computes the combined function value, gradient, and Hessian.
+#' @describeIn MatrixData Returns an oracle for the nonlinear constraints. The oracle computes the combined function value, gradient, and Hessian.
 #' @param nonlin_constr A list of nonlinear constraints represented as oracle functions.
 #' @return An oracle function.
 .nonlin_matrix <- function(object, nonlin_constr) {

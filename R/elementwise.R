@@ -7,17 +7,17 @@
 #' @export
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
-#' @rdname Elementwise-class Verify all the shapes are the same or can be promoted.
+#' @describeIn Elementwise Verify all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @rdname Elementwise-class Size is the same as the sum of the arguments' sizes.
+#' @describeIn Elementwise Size is the same as the sum of the arguments' sizes.
 setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @rdname Elementwise-class Converts elementwise gradient into a diagonal matrix.
+#' @describeIn Elementwise Converts elementwise gradient into a diagonal matrix.
 #' @param value A scalar value or matrix.
 #' @return A sparse matrix.
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
@@ -25,7 +25,7 @@ Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
-#' @rdname Elementwise-class Promotes the LinOp if necessary.
+#' @describeIn Elementwise Promotes the LinOp if necessary.
 #' @param arg The LinOp to promote.
 #' @param size The desired size.
 #' @return The promoted LinOp.
@@ -55,7 +55,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Abs-class Returns the elementwise absolute value of the input value.
+#' @describeIn Abs Returns the elementwise absolute value of the input value.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
 #' @rdname Atom-class
@@ -121,7 +121,7 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Entr-class Returns the elementwise entropy function evaluated at the value.
+#' @describeIn Entr Returns the elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
     tmp <- x*log(y)
@@ -201,7 +201,7 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Exp-class Returns the matrix with each element exponentiated.
+#' @describeIn Exp Returns the matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
 #' @rdname Atom-class
@@ -266,13 +266,13 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Huber-class Checks that \code{M} is a non-negative constant.
+#' @describeIn Huber Checks that \code{M} is a non-negative constant.
 setMethod("validate_args", "Huber", function(object) {
   if(!(is_positive(object@M) && is_constant(object@M) && is_scalar(object@M)))
     stop("M must be a non-negative scalar constant")
 })
 
-#' @rdname Huber-class Returns the Huber function evaluted elementwise on the input value.
+#' @describeIn Huber Returns the Huber function evaluted elementwise on the input value.
 setMethod("to_numeric", "Huber", function(object, values) {
   huber_loss <- function(delta, r) {
     if(delta < 0)
@@ -308,7 +308,7 @@ setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[i
 #' @rdname Atom-class
 setMethod("is_decr", "Huber", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @rdname Huber-class A list containing the parameter \code{M}.
+#' @describeIn Huber-class A list containing the parameter \code{M}.
 setMethod("get_data", "Huber", function(object) { list(object@M) })
 
 #' @rdname Atom-class
@@ -383,7 +383,7 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
-#' @rdname KLDiv-class Returns the KL-divergence evaluted elementwise on the input value.
+#' @describeIn KLDiv Returns the KL-divergence evaluted elementwise on the input value.
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
   y <- intf_convert_if_scalar(values[[2]])
@@ -468,7 +468,7 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Log-class Returns the elementwise natural logarithm of the input value.
+#' @describeIn Log Returns the elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
 #' @rdname Atom-class
@@ -530,7 +530,7 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @rdname log1p
 Log1p <- function(x) { .Log1p(x = x) }
 
-#' @rdname Log1p-class Returns the elementwise natural logarithm of one plus the input value.
+#' @describeIn Log1p Returns the elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 
 #' @rdname Atom-class
@@ -587,7 +587,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Logistic-class Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
+#' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
 #' @rdname Atom-class
@@ -659,7 +659,7 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @rdname max_elemwise
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
-#' @rdname MaxElemwise-class Returns the elementwise maximum.
+#' @describeIn MaxElemwise Returns the elementwise maximum.
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
   # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
   Reduce("pmax", values)
@@ -684,7 +684,7 @@ setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 #' @rdname Atom-class
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 
-#' @rdname MaxElemwise-class A logical value indicating whether the atom is piecewise linear.
+#' @describeIn MaxElemwise A logical value indicating whether the atom is piecewise linear.
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 #' @rdname Atom-class
@@ -802,13 +802,13 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @rdname Power-class Verification of arguments happens during initialization.
-setMethod("validate_args", "Power", function(object) { })
+#' @describeIn Power Verification of arguments happens during initialization.
+setMethod("validate_args", "Power", function(object) { return() })
 
-#' @rdname Power-class A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
+#' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
-#' @rdname Power-class Throw an error if the power is negative and cannot be handled.
+#' @describeIn Power Throw an error if the power is negative and cannot be handled.
 setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
   if(object@p < 0 && min(values[[1]]) <= 0)
@@ -833,7 +833,7 @@ setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@
 #' @rdname Atom-class
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
 
-#' @rdname Power-class A logical value indicating whether the atom is constant.
+#' @describeIn Power-class A logical value indicating whether the atom is constant.
 setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
 #' @rdname Atom-class
@@ -862,7 +862,7 @@ setMethod("is_decr", "Power", function(object, idx) {
     return(FALSE)
 })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "Power", function(object) {
   if(object@p == 0)
     return(TRUE)
@@ -960,13 +960,13 @@ Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 
-#' @rdname Sqrt-class Verification of arguments happens during initialization.
-setMethod("validate_args", "Sqrt", function(object) {})
+#' @describeIn Sqrt Verification of arguments happens during initialization.
+setMethod("validate_args", "Sqrt", function(object) { return() })
 
-#' @rdname Sqrt-class Returns the elementwise square root of the input value.
+#' @describeIn Sqrt Returns the elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 
-#' @rdname Sqrt-class A list containing the output of \code{pow_mid}.
+#' @describeIn Sqrt-class A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
 #' @rdname Atom-class
@@ -984,7 +984,7 @@ setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
 #' @rdname Atom-class
 setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
 #' @rdname Atom-class
@@ -1037,13 +1037,13 @@ Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
 
-#' @rdname Square-class Verification of arguments happens during initialization.
-setMethod("validate_args", "Square", function(object) {})
+#' @describeIn Square Verification of arguments happens during initialization.
+setMethod("validate_args", "Square", function(object) { return() })
 
-#' @rdname Square-class Returns the elementwise square of the input value.
+#' @describeIn Square Returns the elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 
-#' @rdname Square-class A list containing the output of \code{pow_high}.
+#' @describeIn Square A list containing the output of \code{pow_high}.
 setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 
 #' @rdname Atom-class
@@ -1061,7 +1061,7 @@ setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[
 #' @rdname Atom-class
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @rdname curvature
+#' @rdname curvature-methods
 setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
 #' @rdname Atom-class

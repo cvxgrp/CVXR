@@ -1,17 +1,107 @@
 # DCP attribute generic methods
-setGeneric("is_zero", function(object) { standardGeneric("is_zero") })
-setGeneric("is_positive", function(object) { standardGeneric("is_positive") })
-setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
-setGeneric("is_unknown", function(object) { standardGeneric("is_unknown") })
+#'
+#' Sign Properties
+#' 
+#' Determine if an expression is positive, negative, or zero.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name sign-methods
+NULL
 
+#' @rdname sign-methods
+setGeneric("is_zero", function(object) { standardGeneric("is_zero") })
+
+#' @rdname sign-methods
+setGeneric("is_positive", function(object) { standardGeneric("is_positive") })
+
+#' @rdname sign-methods
+setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
+
+#'
+#' Curvature of Expression
+#' 
+#' The curvature of an expression.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname curvature
+#' @exportMethod curvature
+setGeneric("curvature", function(object) { standardGeneric("curvature") })
+
+#'
+#' Curvature Properties
+#' 
+#' Determine if an expression is constant, affine, convex, concave, quadratic, or piecewise linear (pwl).
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name curvature-methods
+NULL
+
+#' @rdname curvature-methods
 setGeneric("is_constant", function(object) { standardGeneric("is_constant") })
+
+#' @rdname curvature-methods
 setGeneric("is_affine", function(object) { standardGeneric("is_affine") })
+
+#' @rdname curvature-methods
 setGeneric("is_convex", function(object) { standardGeneric("is_convex") })
+
+#' @rdname curvature-methods
 setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
+
+#' @rdname curvature-methods
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
+
+#' @rdname curvature-methods
 setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
+
+#'
+#' Is Expression DCP?
+#' 
+#' Determine if an expression complies with disciplined convex programming rules.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression is DCP compliant, i.e. no unknown curvatures.
+#' @docType methods
+#' @rdname is_dcp
+#' @exportMethod is_dcp
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
+
+#'
+#' Size of Expression
+#'
+#' The size of an expression.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
+#' @docType methods
+#' @name size
+#' @rdname size
+#' @exportMethod size
 setGeneric("size", function(object) { standardGeneric("size") })
+
+#'
+#' Size Properties
+#'
+#' Determine if an expression is a scalar, vector, or matrix.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name size-methods
+NULL
+
+#' @rdname size-methods
+setGeneric("is_scalar", function(object) { standardGeneric("is_scalar") })
+
+#' @rdname size-methods
+setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
+
+#' @rdname size-methods
+setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
+
 setGeneric("primal_to_result", function(object, result) { standardGeneric("primal_to_result") })
 
 # Expression generic methods
@@ -19,16 +109,35 @@ setGeneric("value", function(object) { standardGeneric("value") })
 setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
 setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
-setGeneric("curvature", function(object) { standardGeneric("curvature") })
-setGeneric("is_scalar", function(object) { standardGeneric("is_scalar") })
-setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
-setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
 setGeneric("name", function(object) { standardGeneric("name") })
 setGeneric("variables", function(object) { standardGeneric("variables") })
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 setGeneric("constants", function(object) { standardGeneric("constants") })
+
+#'
+#' Sub/Super-Gradient
+#'
+#' The (sub/super)-gradient of the expression with respect to each variable.
+#' Matrix expressions are vectorized, so the gradient is a matrix. \code{NA} indicates variable values are unknown or outside the domain.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A list mapping each variable to a sparse matrix.
+#' @docType methods
+#' @rdname grad
+#' @export
 setGeneric("grad", function(object) { standardGeneric("grad") })
+
+#'
+#' Domain
+#'
+#' A list of constraints describing the closure of the region where the expression is finite.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A list of \linkS4class{Constraint} objects.
+#' @docType methods
+#' @rdname domain
+#' @export
 setGeneric("domain", function(object) { standardGeneric("domain") })
 setGeneric("validate_val", function(object, val) { standardGeneric("validate_val") })
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
@@ -55,6 +164,19 @@ setGeneric("is_atom_concave", function(object) { standardGeneric("is_atom_concav
 setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine") })
 setGeneric("is_incr", function(object, idx) { standardGeneric("is_incr") })
 setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
+
+#'
+#' Graph Implementation
+#' 
+#' Reduces the atom to an affine expression and list of constraints.
+#' 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
+#' @docType methods
+#' @name graph_implementation
+#' @rdname graph_implementation
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
 
 # Constraint generic methods
@@ -89,6 +211,8 @@ setGeneric("place_H", function(object, big_H, H, var_offsets) { standardGeneric(
 setGeneric("extract_variables", function(object, x, var_offsets) { standardGeneric("extract_variables") })
 
 # Problem generic methods
+setGeneric("objective", function(object) { standardGeneric("objective") })
+setGeneric("constraints", function(object) { standardGeneric("constraints") })
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("status<-", function(object, value) { standardGeneric("status<-") })
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
@@ -127,28 +251,26 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 #'
 #' Solver Capabilities
 #' 
-#' The types of convex problems that a solver is capable of solving.
+#' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), semidefinite program (SDP), exponential cone program (EXP), or mixed-integer program (MIP).
 #' 
 #' @param solver A \linkS4class{Solver} object.
-#' @return A logical value indicating the solver capability.
-#' @docType methods
-#' @rdname Solver-capable
+#' @return A logical value.
+#' @name Solver-capable
 NULL
 
-#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving linear programs.
+#' @rdname Solver-capable
 setGeneric("lp_capable", function(solver) { standardGeneric("lp_capable") })
 
-#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving second-order cone programs.
+#' @rdname Solver-capable
 setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
 
-#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving semidefinite programs.
+#' @rdname Solver-capable
 setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
 
-#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving exponential cone programs.
+#' @rdname Solver-capable
 setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
 
-#' @describeIn Solver-capable A logical value indicating whether the solver is capable of solving mixed-integer programs.
+#' @rdname Solver-capable
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
-

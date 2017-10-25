@@ -6,23 +6,23 @@
 #' @rdname Canonical-class
 setClass("Canonical", contains = "VIRTUAL")
 
-#' @describeIn Canonical-class The graph implementation of the input.
+#' @describeIn Canonical The graph implementation of the input.
 #' @return A list of \code{list(affine expression, list(constraints))}.
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class The canonical form of the input.
+#' @describeIn Canonical The canonical form of the input.
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
-#' @describeIn Canonical-class List of \linkS4class{Variable} objects in the expression.
+#' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.
 setMethod("variables", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class List of \linkS4class{Parameter} objects in the expression.
+#' @describeIn Canonical List of \linkS4class{Parameter} objects in the expression.
 setMethod("parameters", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class List of \linkS4class{Constant} objects in the expression.
+#' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
 setMethod("constants", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class Information needed to reconstruct the expression aside from its arguments.
+#' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
 setMethod("get_data", "Canonical", function(object) { list() })
 
 #'

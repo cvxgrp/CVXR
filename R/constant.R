@@ -76,10 +76,10 @@ setMethod("grad", "Constant", function(object) { list() })
 #' @rdname size
 setMethod("size", "Constant", function(object) { object@size })
 
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Constant", function(object) { object@is_pos })
 
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Constant", function(object) { object@is_neg })
 
 #' @rdname Canonical-class
@@ -187,22 +187,19 @@ setMethod("get_data", "Parameter", function(object) {
 #' @rdname Expression-class
 setMethod("name", "Parameter", function(object) { object@name })
 
-#' @docType methods
 #' @rdname size
 setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
 
-#' @describeIn Parameter-class The value of the parameter.
+#' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) { object@value })
 
-#' @describeIn Parameter-class Set the value of the parameter.
+#' @describeIn Parameter Set the value of the parameter.
 setReplaceMethod("value", "Parameter", function(object, value) {
   object@value <- validate_val(object, value)
   object

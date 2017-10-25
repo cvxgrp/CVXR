@@ -6,7 +6,7 @@
 #' @rdname Solver-class
 Solver <- setClass("Solver", contains = "VIRTUAL")
 
-#' @describeIn Solver-class Determines the appropriate solver
+#' @describeIn Solver Determines the appropriate solver
 #' @param constraints A list of canonicalized constraints.
 #' @return A \linkS4class{Solver} object.
 Solver.choose_solver <- function(constraints) {
@@ -30,7 +30,7 @@ Solver.choose_solver <- function(constraints) {
     return(ECOS())
 }
 
-#' @describeIn Solver-class Raises an exception if the solver cannot solver the problem.
+#' @describeIn Solver Raises an exception if the solver cannot solver the problem.
 #' @param solver A \linkS4class{Solver} object.
 #' @param constraints A list of canonicalized constraints
 setMethod("validate_solver", "Solver", function(solver, constraints) {
@@ -53,7 +53,7 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
     Solver._reject_problem(solver, "it cannot solve unconstrained problems")
 })
 
-#' @describeIn Solver-class Raise an error indicating that the solver cannot solver a problem.
+#' @describeIn Solver Raise an error indicating that the solver cannot solver a problem.
 #' @param solver A \linkS4class{Solver} object.
 #' @param reason A short description of the reason the problem cannot be solved by this solver.
 Solver._reject_problem <- function(solver, reason) {
@@ -61,7 +61,7 @@ Solver._reject_problem <- function(solver, reason) {
   stop(message)
 }
 
-#' @describeIn Solver-class Clears the cache if the objective or constraints changed.
+#' @describeIn Solver Clears the cache if the objective or constraints changed.
 #' @param solver A \linkS4class{Solver} object.
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -78,7 +78,7 @@ setMethod("validate_cache", "Solver", function(solver, objective, constraints, c
   cached_data
 })
 
-#' @describeIn Solver-class Returns the symbolic data for the problem.
+#' @describeIn Solver Returns the symbolic data for the problem.
 #' @param solver A \linkS4class{Solver} object.
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -93,7 +93,7 @@ setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cac
   cached_data
 })
 
-#' @describeIn Solver-class Returns the numeric data for the problem.
+#' @describeIn Solver Returns the numeric data for the problem.
 #' @param solver A \linkS4class{Solver} object.
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -109,7 +109,7 @@ setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, 
   cached_data
 })
 
-#' @describeIn Solver-class Returns the argument for the call to the solver.
+#' @describeIn Solver Returns the argument for the call to the solver.
 #' @param solver A \linkS4class{Solver} object.
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -141,7 +141,7 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data
 })
 
-#' @describeIn Solver-class A logical value indicating whether nonlinear constraints are needed.
+#' @describeIn Solver A logical value indicating whether nonlinear constraints are needed.
 setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
 #'
@@ -159,7 +159,7 @@ setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 #' @return A list containing the status, optimal value, primal variable, and dual variables for the equality and inequality constraints.
 #' @docType methods
 #' @rdname Solver-solve
-setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { })
+setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { stop("Unimplemented") })
 
 #' 
 #' Format Solver Results
@@ -173,14 +173,14 @@ setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cac
 #' @return A list containing the solver output in standard form.
 #' @docType methods
 #' @rdname format_results
-setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { })
+setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { stop("Unimplemented") })
 
-#' @describeIn Solver-class A logical value indicating whether the problem is a mixed-integer program.
+#' @describeIn Solver A logical value indicating whether the problem is a mixed-integer program.
 Solver.is_mip <- function(data) {
   length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 }
 
-#' @describeIn Solver-class Converts the non-convex constraint variable IDs in dims into indices.
+#' @describeIn Solver Converts the non-convex constraint variable IDs in dims into indices.
 #' @param dims The dimensions of the cones.
 #' @param var_offsets A list mapping variabld ID to horizontal offset.
 #' @param var_sizes A list mapping variable ID to  variable dimensions.
@@ -287,19 +287,19 @@ setMethod("status_map", "ECOS", function(solver, status) {
     } else stop("ECOS status unrecognized: ", status)
 })
 
-#' @describeIn ECOS-class The name of the solver.
+#' @describeIn ECOS The name of the solver.
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 
-#' @describeIn ECOS-class Imports the \link[ECOSolveR] library.
+#' @describeIn ECOS Imports the \link[ECOSolveR] library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 
-#' @describeIn ECOS-class The interface for matrices passed to the solver.
+#' @describeIn ECOS The interface for matrices passed to the solver.
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
 
-#' @describeIn ECOS-class The interface for vectors passed to the solver.
+#' @describeIn ECOS The interface for vectors passed to the solver.
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 
-#' @describeIn ECOS-class Extracts the equality, inequality, and nonlinear constraints.
+#' @describeIn ECOS Extracts the equality, inequality, and nonlinear constraints.
 #' @param solver A \linkS4class{ECOS} object.
 #' @param constr_map A list of canonicalized constraints.
 #' @return A list of equality, inequality, and nonlinear constraints.
@@ -391,7 +391,7 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 # MI_MAXITER_NO_SOLN (ECOS_PINF + ECOS_INACC_OFFSET)           ECOS_BB hit maximum iterations without finding a feasible solution
 # MI_MAXITER_UNBOUNDED (ECOS_DINF + ECOS_INACC_OFFSET)         ECOS_BB hit maximum interations without finding a feasible solution that was unbounded
 
-#' @describeIn ECOS_BB-class The name of the solver.
+#' @describeIn ECOS_BB The name of the solver.
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
 
 #' @docType methods
@@ -472,13 +472,13 @@ setMethod("status_map", "SCS", function(solver, status) {
   else stop("SCS status unrecognized: ", status)
 })
 
-#' @describeIn SCS-class The name of the solver.
+#' @describeIn SCS The name of the solver.
 setMethod("name", "SCS", function(object) { SCS_NAME })
 
-#' @describeIn SCS-class Imports the \link[scs] library.
+#' @describeIn SCS Imports the \link[scs] library.
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
 
-#' @describeIn SCS-class Extracts the equality, inequality, and nonlinear constraints.
+#' @describeIn SCS Extracts the equality, inequality, and nonlinear constraints.
 #' @param solver A \linkS4class{SCS} object.
 #' @param constr_map A list of canonicalized constraints.
 #' @return A list of equality, inequality, and nonlinear constraints.
@@ -575,7 +575,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
   return(new_results)
 })
 
-#' @describeIn SCS-class Expands \code{floor(n*(n+1)/2)} lower triangular entries to a full matrix with off-diagonal entries scaled by \eqn{1/\sqrt{2}}.
+#' @describeIn SCS Expands \code{floor(n*(n+1)/2)} lower triangular entries to a full matrix with off-diagonal entries scaled by \eqn{1/\sqrt{2}}.
 SCS.tri_to_full <- function(lower_tri, n) {
   # Expands floor(n*(n+1)/2) lower triangular to full matrix, with off-diagonal entries scaled by 1/sqrt(2)
   full <- matrix(0, nrow = n, ncol = n)
@@ -634,13 +634,13 @@ setMethod("exp_capable", "LS", function(solver) { FALSE })
 #' @rdname Solver-capable
 setMethod("mip_capable", "LS", function(solver) { FALSE })
 
-#' @describeIn LS-class The name of the solver.
+#' @describeIn LS The name of the solver.
 setMethod("name", "LS", function(object) { LS_NAME })
 
-#' @describeIn LS-class Imports the \link[Matrix] library.
+#' @describeIn LS Imports the \link[Matrix] library.
 setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
 
-#' @describeIn LS-class Extracts the equality, inequality, and nonlinear constraints.
+#' @describeIn LS Extracts the equality, inequality, and nonlinear constraints.
 #' @param solver A \linkS4class{LS} object.
 #' @param constr_map A list of canonicalized constraints.
 #' @return A list of equality, inequality, and nonlinear constraints.
@@ -780,13 +780,13 @@ setMethod("status_map", "MOSEK", function(solver, status) {
     SOLVER_ERROR
 })
 
-#' @describeIn MOSEK-class The name of the solver.
+#' @describeIn MOSEK The name of the solver.
 setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
 
-#' @describeIn MOSEK-class Imports the \link[Rmosek] library.
+#' @describeIn MOSEK Imports the \link[Rmosek] library.
 setMethod("import_solver", "MOSEK", function(solver) { requireNamespace("Rmosek") })
 
-#' @describeIn MOSEK-class Extracts the equality, inequality, and nonlinear constraints.
+#' @describeIn MOSEK Extracts the equality, inequality, and nonlinear constraints.
 #' @param solver A \linkS4class{MOSEK} object.
 #' @param constr_map A list of canonicalized constraints.
 #' @return A list of equality, inequality, and nonlinear constraints.
@@ -886,7 +886,7 @@ setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cach
   format_results(solver, results_dict, data, cached_data)
 })
 
-#' @describeIn MOSEK-class Chooses between the basic and interior point solution.
+#' @describeIn MOSEK Chooses between the basic and interior point solution.
 #' @param solver A \linkS4class{MOSEK} object.
 #' @param results_dict A list of the results returned by the solver.
 #' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
@@ -1000,13 +1000,13 @@ setMethod("status_map", "GUROBI", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
-#' @describeIn GUROBI-class The name of the solver.
+#' @describeIn GUROBI The name of the solver.
 setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
 
-#' @describeIn GUROBI-class Imports the \link[gurobi] library.
+#' @describeIn GUROBI Imports the \link[gurobi] library.
 setMethod("import_solver", "GUROBI", function(solver) { requireNamespace("gurobi") })
 
-#' @describeIn GUROBI-class Extracts the equality, inequality, and nonlinear constraints.
+#' @describeIn GUROBI Extracts the equality, inequality, and nonlinear constraints.
 #' @param solver A \linkS4class{GUROBI} object.
 #' @param constr_map A list of canonicalized constraints.
 #' @return A list of equality, inequality, and nonlinear constraints.

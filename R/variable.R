@@ -54,16 +54,14 @@ setMethod("as.character", "Variable", function(x) {
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
-#' @describeIn Variable-class The unique ID of the variable.
+#' @describeIn Variable The unique ID of the variable.
 #' @export
 setMethod("id", "Variable", function(object) { object@id })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Variable", function(object) { FALSE })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Variable", function(object) { FALSE })
 
 #' @docType methods
@@ -76,17 +74,17 @@ setMethod("get_data", "Variable", function(object) { list(object@rows, object@co
 #' @rdname Expression-class
 setMethod("name", "Variable", function(object) { object@name })
 
-#' @describeIn Variable-class Set the value of the primal variable.
+#' @describeIn Variable Set the value of the primal variable.
 setMethod("save_value", "Variable", function(object, value) {
   value <- validate_val(object, value)
   object@primal_value <- value
   object
 })
 
-#' @describeIn Variable-class The value of the variable.
+#' @describeIn Variable The value of the variable.
 setMethod("value", "Variable", function(object) { object@primal_value })
 
-#' @describeIn Variable-class Set the value of the primal variable.
+#' @describeIn Variable Set the value of the primal variable.
 setReplaceMethod("value", "Variable", function(object, value) {
   object <- save_value(object, value)
   object
@@ -100,7 +98,7 @@ setMethod("grad", "Variable", function(object) {
   result
 })
 
-#' @describeIn Variable-class Returns itself as a variable.
+#' @describeIn Variable Returns itself as a variable.
 setMethod("variables", "Variable", function(object) { list(object) })
 
 #' @rdname Canonical-class
@@ -143,7 +141,7 @@ setMethod("as.character", "Bool", function(x) {
   paste("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
-#' @describeIn Bool-class Enforce that the variable be boolean.
+#' @describeIn Bool Enforce that the variable be boolean.
 setMethod("canonicalize", "Bool", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -151,12 +149,10 @@ setMethod("canonicalize", "Bool", function(object) {
   list(obj, c(constr, list(BoolConstr(obj))))
 })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Bool", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Bool", function(object) { FALSE })
 
 #'
@@ -193,7 +189,7 @@ setMethod("as.character", "Int", function(x) {
   paste("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
-#' @describeIn Int-class Enforce that the variable be an integer.
+#' @describeIn Int Enforce that the variable be an integer.
 setMethod("canonicalize", "Int", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -234,7 +230,7 @@ setMethod("as.character", "NonNegative", function(x) {
   paste("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
-#' @describeIn NonNegative-class Enforce that the variable be non-negative.
+#' @describeIn NonNegative Enforce that the variable be non-negative.
 setMethod("canonicalize", "NonNegative", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -242,12 +238,10 @@ setMethod("canonicalize", "NonNegative", function(object) {
   list(obj, c(constr, list(create_geq(obj))))
 })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "NonNegative", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "NonNegative", function(object) { FALSE })
 
 #'
@@ -329,7 +323,7 @@ upper_tri_to_full <- function(n) {
   sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
 }
 
-#' @describeIn SemidefUpperTri-class Enforce that the variable be semidefinite and symmetric.
+#' @describeIn SemidefUpperTri Enforce that the variable be semidefinite and symmetric.
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
   # Variable must be semidefinite and symmetric
   upper_tri <- create_var(c(size(object)[1], 1), object@id)

@@ -29,17 +29,22 @@ setMethod("show", "Atom", function(object) {
 #' @describeIn Atom Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { return() })
 
-#' @describeIn Atom The \code{c(row, col)} size of the atom.
+#' @rdname size_from_args
 setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname size
 setMethod("size", "Atom", function(object) { object@.size })
 
+#' @rdname Atom-class
 setMethod("dim", "Atom", function(x) { size(x) })
+
+#' @rdname Atom-class
 setMethod("nrow", "Atom", function(x) { size(x)[1] })
+
+#' @rdname Atom-class
 setMethod("ncol", "Atom", function(x) { size(x)[2] })
 
-#' @describeIn Atom The sign \code{c(is positive, is negative)} of the atom.
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname sign-methods
@@ -257,7 +262,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
@@ -357,10 +362,11 @@ setMethod("validate_args", "AffineProd", function(object) {
 #' @describeIn AffineProd Returns the product of two affine expressions.
 setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
 
-#' @describeIn AffineProd Returns the \code{c(row, col)} size of the atom.
+#' @rdname size_from_args
 setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 
-#' @describeIn AffineProd Default to rules for times.
+# Default to rules for times.
+#' @rdname sign_from_args
 setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 # Affine times affine is not convex.
@@ -504,10 +510,10 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -588,10 +594,10 @@ setMethod("to_numeric", "LambdaMax", function(object, values) {
   max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
 
 #' @rdname curvature-atom
@@ -696,10 +702,10 @@ setMethod("to_numeric", "LogDet", function(object, values) {
     return(-Inf)
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "LogDet", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -803,7 +809,7 @@ setMethod(".column_grad", "LogSumExp", function(object, value) {
   D
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -910,10 +916,10 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   sum(diag(t(X) %*% base::solve(P) %*% X))
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1016,7 +1022,7 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
     apply(values[[1]], object@axis, max)
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
 #' @rdname curvature-atom
@@ -1179,7 +1185,7 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
   retval
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1366,10 +1372,10 @@ setMethod("to_numeric", "NormNuc", function(object, values) {
   sum(svd(values[[1]])$d)
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "NormNuc", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1518,10 +1524,10 @@ setMethod("validate_args",   "QuadOverLin", function(object) {
 #' @describeIn QuadOverLin Returns the sum of the entries of \code{x} squared over \code{y}.
 setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "QuadOverLin", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1600,10 +1606,10 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
 #' @describeIn SigmaMax Returns the largest singular value of \code{A}.
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1704,10 +1710,10 @@ setMethod("to_numeric", "SumLargest", function(object, values) {
   sum(val_sort[1:k])
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "SumLargest", function(object) { c(1, 1) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "SumLargest", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
 #' @rdname curvature-atom

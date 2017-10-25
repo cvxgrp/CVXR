@@ -7,7 +7,7 @@
 #' @export
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
 
 #' @rdname curvature-atom
@@ -106,7 +106,7 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
   Reduce("+", values)
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
 
 #' @rdname graph_implementation
@@ -155,10 +155,10 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
 #' @describeIn NegExpression Returns the negation of the value.
 setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "NegExpression", function(object) { size(object@args[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "NegExpression", function(object) { c(is_negative(object@args[[1]]), is_positive(object@args[[1]])) })
 
 #' @rdname curvature-comp
@@ -203,7 +203,7 @@ setMethod("to_numeric", "BinaryOperator", function(object, values) {
   Reduce(object@op_name, values)
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #'
@@ -226,7 +226,7 @@ setMethod("validate_args", "MulExpression", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "MulExpression", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 
 #' @rdname curvature-comp
@@ -298,7 +298,7 @@ setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "DivExpression", function(object) { size(object@args[[1]]) })
 
 #' @rdname curvature-comp
@@ -354,14 +354,14 @@ setMethod("to_numeric", "Conv", function(object, values) {
     .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Conv", function(object) {
   lh_length <- size(object@args[[1]])[1]
   rh_length <- size(object@args[[2]])[1]
   c(lh_length + rh_length - 1, 1)
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #' @rdname curvature-comp
@@ -399,7 +399,7 @@ CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 #' @describeIn CumSum Returns the cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
 #
@@ -509,7 +509,7 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
 #' @describeIn DiagVec Converts the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "DiagVec", function(object) {
   rows <- size(object@args[[1]])[1]
   c(rows, rows)
@@ -557,7 +557,7 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
 #' @describeIn DiagMat Extracts the diagonal from a square matrix constant.
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "DiagMat", function(object) {
   rows <- size(object@args[[1]])[1]
   c(rows, 1)
@@ -641,7 +641,7 @@ setMethod("validate_args", "HStack", function(object) {
 #' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "HStack", function(object) {
   arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
   cols <- sum(arg_cols)
@@ -699,7 +699,7 @@ setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key$row, object@key$col)
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Index", function(object) {
   ku_size(object@key, size(object@args[[1]]))
 })
@@ -843,14 +843,14 @@ setMethod("to_numeric", "Kron", function(object, values) {
   kronecker(values[[1]], values[[2]])
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Kron", function(object) {
   rows <- size(object@args[[1]])[1] * size(object@args[[2]])[1]
   cols <- size(object@args[[1]])[2] * size(object@args[[2]])[2]
   c(rows, cols)
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #' @rdname curvature-comp
@@ -905,12 +905,12 @@ setMethod("to_numeric", "MulElemwise", function(object, values) {
   values[[1]] * values[[2]]
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "MulElemwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "MulElemwise", function(object) {
   mul_sign(object@args[[1]], object@args[[2]])
 })
@@ -979,7 +979,7 @@ setMethod("to_numeric", "Reshape", function(object, values) {
   values[[1]]
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Reshape", function(object) { c(object@rows, object@cols) })
 setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
 
@@ -1071,7 +1071,7 @@ setMethod("validate_args", "Trace", function(object) {
 #' @describeIn Trace Sums the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
 
 #' @rdname graph_implementation
@@ -1098,7 +1098,7 @@ Transpose <- setClass("Transpose", contains = "AffAtom")
 #' @describeIn Transpose Returns the transpose of the given value.
 setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "Transpose", function(object) {
   size <- size(object@args[[1]])
   c(size[2], size[1])
@@ -1150,7 +1150,7 @@ setMethod("to_numeric", "UpperTri", function(object, values) {
   values[[1]][tridx]
 })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "UpperTri", function(object) {
   size <- size(object@args[[1]])
   rows <- size[1]
@@ -1198,7 +1198,7 @@ setMethod("validate_args", "VStack", function(object) {
 #' @describeIn VStack Vertically concatenate the values using \code{rbind}.
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
 
-#' @rdname Atom-class
+#' @rdname size_from_args
 setMethod("size_from_args", "VStack", function(object) {
   cols <- size(object@args[[1]])[2]
   arg_rows <- sapply(object@args, function(arg) { size(arg)[1] })

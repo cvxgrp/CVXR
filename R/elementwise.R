@@ -12,7 +12,8 @@ setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @describeIn Elementwise Size is the same as the sum of the arguments' sizes.
+# Size is the same as the sum of the arguments' sizes.
+#' @rdname size_from_args
 setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
@@ -70,7 +71,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
 #' @describeIn Abs Returns the elementwise absolute value of the input value.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -151,7 +152,7 @@ setMethod("to_numeric", "Entr", function(object, values) {
   results
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Entr", function(object) { c(FALSE, FALSE) })
 
 #' @rdname curvature-atom
@@ -219,7 +220,7 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
 #' @describeIn Exp Returns the matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Exp", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -310,7 +311,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
     2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Huber", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -416,7 +417,7 @@ setMethod("to_numeric", "KLDiv", function(object, values) {
   xlogy(x, x/y) - x + y
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "KLDiv", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -491,7 +492,7 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
 #' @describeIn Log Returns the elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Log", function(object) { c(FALSE, FALSE) })
 
 #' @rdname curvature-atom
@@ -552,7 +553,7 @@ Log1p <- function(x) { .Log1p(x = x) }
 #' @describeIn Log1p Returns the elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
 setMethod(".grad", "Log1p", function(object, values) {
@@ -610,7 +611,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
 #' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -685,7 +686,7 @@ setMethod("to_numeric", "MaxElemwise", function(object, values) {
   Reduce("pmax", values)
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "MaxElemwise", function(object) {
   is_pos <- any(sapply(object@args, function(arg) { is_positive(arg) }))
   is_neg <- all(sapply(object@args, function(arg) { is_negative(arg) }))
@@ -834,7 +835,7 @@ setMethod("to_numeric", "Power", function(object, values) {
     return(values[[1]]^(as.double(object@p)))
 })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Power", function(object) {
   if(object@p == 1)   # Same as input
     c(is_positive(object@args[[1]]), is_negative(object@args[[1]]))
@@ -981,7 +982,7 @@ setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 #' @describeIn Sqrt A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom
@@ -1057,7 +1058,7 @@ setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 #' @describeIn Square A list containing the output of \code{pow_high}.
 setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 
-#' @rdname Atom-class
+#' @rdname sign_from_args
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
 
 #' @rdname curvature-atom

@@ -227,9 +227,26 @@ setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
 # Atom generic methods
-setGeneric("validate_args", function(object) { standardGeneric("validate_args") })
+#'
+#' Atom Size
+#'
+#' Determine the size of an atom based on its arguments.
+#' 
+#' @param object A \linkS4class{Atom} object.
+#' @return A numeric vector \code{c(row, col)} indicating the size of the atom.
+#' @rdname size_from_args
 setGeneric("size_from_args", function(object) { standardGeneric("size_from_args") })
+
+#'
+#' Atom Sign
+#'
+#' Determine the sign of an atom based on its arguments.
+#' 
+#' @param object A \linkS4class{Atom} object.
+#' @return A logical vector \code{c(is positive, is negative)} indicating the sign of the atom.
+#' @rdname sign_from_args
 setGeneric("sign_from_args", function(object) { standardGeneric("sign_from_args") })
+setGeneric("validate_args", function(object) { standardGeneric("validate_args") })
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric") })
 

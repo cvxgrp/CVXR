@@ -36,7 +36,7 @@ plot_cdf <- function(data, probs, color = 'k', lwd = 1) {
     probs <- rep(1.0/length(data), length(data))
   distro <- cbind(data, probs)
   dsort <- distro[order(distro[,1]),]
-  ecdf <- cumsum(dsort[,2])
+  ecdf <- base::cumsum(dsort[,2])
   lines(dsort[,1], ecdf, col = color, lwd = lwd)
 }
 

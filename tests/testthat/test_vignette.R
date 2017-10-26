@@ -586,9 +586,9 @@ test_that("Test Kelly gambling optimal bets", {
   }
   
   # Plot Kelly optimal growth trajectories
-  matplot(1:PERIODS, wealth, xlab = "Time", ylab = "Wealth", log = "y", type = "l", col = "blue", lty = 1, lwd = 2)
-  matlines(1:PERIODS, wealth_cmp, col = "red", lty = 2, lwd = 2)
-  legend("topleft", c("Kelly Optimal Bets", "Naive Bets"), col = c("blue", "red"), lty = c(1, 2), lwd = 2, bty = "n")
+  matplot(1:PERIODS, wealth, xlab = "Time", ylab = "Wealth", log = "y", type = "l", col = "red", lty = 1, lwd = 2)
+  matlines(1:PERIODS, wealth_cmp, col = "blue", lty = 2, lwd = 2)
+  legend("topleft", c("Kelly Optimal Bets", "Naive Bets"), col = c("red", "blue"), lty = c(1, 2), lwd = 2, bty = "n")
 })
 
 test_that("Test worst-case covariance", {

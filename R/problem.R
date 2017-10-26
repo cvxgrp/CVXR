@@ -41,6 +41,15 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' This class represents an optimization objective for maximization.
 #'
 #' @slot expr A scalar \linkS4class{Expression} to maximize.
+#' @examples
+#' x <- Variable(3)
+#' alpha <- c(0.8,1.0,1.2)
+#' obj <- sum(log(alpha + x))
+#' constr <- list(x >= 0, sum(x) == 1)
+#' prob <- Problem(Maximize(obj), constr)
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @rdname Maximize
 #' @export
 Maximize <- setClass("Maximize", contains = "Minimize")

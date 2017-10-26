@@ -220,6 +220,18 @@ matrix_frac <- MatrixFrac
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the maximum of the input.
+#' @examples 
+#' x <- Variable(2)
+#' val <- matrix(c(-5,-10))
+#' prob <- Problem(Minimize(max_entries(x)), list(x == val))
+#' result <- solve(prob)
+#' result$value
+#' 
+#' A <- Variable(2,2)
+#' val <- rbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Minimize(max_entries(A, axis = 1)[2,1]), list(A == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname max_entries
 #' @export
@@ -233,6 +245,12 @@ max_entries <- MaxEntries
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the minimum of the input.
+#' @examples 
+#' A <- Variable(2,2)
+#' val <- cbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Minimize(min_entries(A)), list(A == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname min_entries
 #' @export
@@ -248,6 +266,19 @@ min_entries <- MinEntries
 #' @param q The type of outer norm.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the \eqn{l_{p,q}} norm of the input.
+#' @examples 
+#' A <- Variable(2,2)
+#' val <- cbind(c(3,3), c(4,4))
+#' prob <- Problem(Minimize(mixed_norm(A,2,1)), list(A == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(A)
+#' 
+#' val <- cbind(c(1,4), c(5,6))
+#' prob <- Problem(Minimize(mixed_norm(A,1,Inf)), list(A == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @rdname mixed_norm
 #' @export
@@ -368,6 +399,12 @@ norm_inf <- NormInf
 #' 
 #' @param A An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the nuclear norm of the input.
+#' @examples 
+#' C <- Variable(3,3)
+#' val <- cbind(3:5, 6:8, 9:11)
+#' prob <- Problem(Minimize(norm_nuc(C)), list(C == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname norm_nuc
 #' @export
@@ -393,18 +430,18 @@ norm_nuc <- NormNuc
 #' @return An \linkS4class{Expression} representing the p-norm of the input.
 #' @examples 
 #' x <- Variable(3)
-#' prob <- Problem(Minimize(p_norm(x, 2)))
+#' prob <- Problem(Minimize(p_norm(x,2)))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
 #' 
-#' prob <- Problem(Minimize(p_norm(x, Inf)))
+#' prob <- Problem(Minimize(p_norm(x,Inf)))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
 #'
 #' a <- c(1.0, 2, 3)
-#' prob <- Problem(Minimize(p_norm(x, 1.6)), list(t(x) %*% a >= 1))
+#' prob <- Problem(Minimize(p_norm(x,1.6)), list(t(x) %*% a >= 1))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
@@ -429,14 +466,14 @@ p_norm <- Pnorm
 #' @examples 
 #' x <- Variable(2)
 #' P <- rbind(c(4,0), c(0,9))
-#' prob <- Problem(Minimize(quad_form(x, P)), list(x >= 1))
+#' prob <- Problem(Minimize(quad_form(x,P)), list(x >= 1))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
 #'
 #' A <- Variable(2,2)
 #' c <- c(1,2)
-#' prob <- Problem(Minimize(quad_form(c, A)), list(A >= 1))
+#' prob <- Problem(Minimize(quad_form(c,A)), list(A >= 1))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(A)
@@ -711,8 +748,7 @@ mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the entropy of the input.
 #' @examples 
-#' n <- 5
-#' x <- Variable(n)
+#' x <- Variable(5)
 #' obj <- Maximize(sum(entr(x)))
 #' prob <- Problem(obj, list(sum(x) == 1))
 #' result <- solve(prob)
@@ -935,7 +971,7 @@ pos <- Pos
 #' @param max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @examples 
 #' x <- Variable()
-#' prob <- Problem(Minimize(power(x, 1.7) + power(x, -2.3) - power(x, 0.45)))
+#' prob <- Problem(Minimize(power(x,1.7) + power(x,-2.3) - power(x,0.45)))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
@@ -954,6 +990,13 @@ power <- Power
 #' @param alpha The weight on the positive portion of \code{x}.
 #' @param beta The weight on othe negative portion of \code{x}.
 #' @return An \linkS4class{Expression} representing the scalene function evaluated at the input.
+#' @examples 
+#' A <- Variable(2,2)
+#' val <- cbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Minimize(scalene(A,2,3)[1,1]), list(A == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(scalene(A))
 #' @docType methods
 #' @rdname scalene
 #' @export
@@ -1368,6 +1411,28 @@ setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
 #' @param differences An integer indicating the order of the difference.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the \code{k}th order difference.
+#' @examples 
+#' ## Problem data
+#' m <- 101
+#' L <- 2
+#' h <- L/(m-1)
+#'
+#' ## Form objective and constraints
+#' x <- Variable(m)
+#' y <- Variable(m)
+#' obj <- sum(y)
+#' constr <- list(x[1] == 0, y[1] == 1, x[m] == 1, y[m] == 1, diff(x)^2 + diff(y)^2 <= h^2)
+#'
+#' ## Solve the catenary problem
+#' prob <- Problem(Minimize(obj), constr)
+#' result <- solve(prob)
+#'
+#' ## Plot and compare with ideal catenary
+#' xs <- result$getValue(x)
+#' ys <- result$getValue(y)
+#' plot(c(0, 1), c(0, 1), type = 'n', xlab = "x", ylab = "y")
+#' lines(xs, ys, col = "blue", lwd = 2)
+#' grid()
 #' @docType methods
 #' @rdname diff
 #' @export

@@ -420,9 +420,7 @@ test_that("Test image in-painting", {
   
   # Load the images and convert to arrays
   Uorig <- matrix(sample(0:255, size = rows * cols, replace = TRUE), nrow = rows, ncol = cols)
-  rows <- nrow(Uorig)
-  cols <- ncol(Uorig)
-  
+
   # Known is 1 if the pixel is known, 0 if the pixel was corrupted
   Known <- matrix(0, nrow = rows, ncol = cols)
   for(i in 1:rows) {

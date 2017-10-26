@@ -125,6 +125,19 @@ lambda_sum_smallest <- LambdaSumSmallest
 #' 
 #' @param A An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the log-determinant of the input.
+#' @examples 
+#' x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4), 
+#'                   c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
+#' n <- nrow(x)
+#' m <- ncol(x)
+#' 
+#' A <- Variable(n, n)
+#' b <- Variable(n)
+#' obj <- Maximize(log_det(A))
+#' constraints <- lapply(1:m, function(i) { p_norm(A %*% as.matrix(x[,i]) + b) <= 1 })
+#' p <- Problem(obj, constraints)
+#' result <- solve(p)
+#' result$value
 #' @docType methods
 #' @rdname log_det
 #' @export
@@ -410,6 +423,18 @@ quad_over_lin <- QuadOverLin
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code[NA}.
 #' @return An \linkS4class{Expression} representing the sum of the entries of the input.
+#' @examples 
+#' x <- Variable(2, name = "x")
+#' p <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#' 
+#' C <- Variable(3, 2, name = "C")
+#' p <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
+#' result <- solve(p)
+#' result$value
+#' result$getValue(C)
 #' @docType methods
 #' @rdname sum_entries
 #' @export
@@ -448,6 +473,21 @@ sum_smallest <- SumSmallest
 #' 
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the sum of squares of the input.
+#' @examples 
+#' m <- 30
+#' n <- 20
+#' A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' b <- matrix(rnorm(m), nrow = m, ncol = 1)
+#'
+#' x <- Variable(n)
+#' objective <- Minimize(sum_squares(A %*% x - b))
+#' constraints <- list(0 <= x, x <= 1)
+#' prob <- Problem(objective, constraints)
+#' result <- solve(prob)
+#' 
+#' result$value
+#' result$getValue(x)
+#' result$getDualValue(constraints[[1]]))
 #' @docType methods
 #' @rdname sum_squares
 #' @export
@@ -596,6 +636,13 @@ mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the entropy of the input.
+#' @examples 
+#' n <- 5
+#' x <- Variable(n)
+#' obj <- Maximize(sum(entr(x)))
+#' p <- Problem(obj, list(sum(x) == 1))
+#' result <- solve(p)
+#' result$getValue(x)
 #' @docType methods
 #' @rdname entr
 #' @export
@@ -809,6 +856,13 @@ setMethod("abs", "Expression", function(x) { Abs(x = x) })
 #'
 #' @param x An \linkS4class{Expression}.
 #' @return An \linkS4class{Expression} representing the natural exponential of the input.
+#' @examples 
+#' n <- 5
+#' x <- Variable(n)
+#' obj <- Minimize(sum(exp(x)))
+#' p <- Problem(obj, list(sum(x) == 1))
+#' result <- solve(p)
+#' result$getValue(x)
 #' @docType methods
 #' @rdname exp
 #' @export
@@ -824,6 +878,37 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' @param x An \linkS4class{Expression}.
 #' @param base (Optional) A positive number that is the base with respect to which the logarithm is computed. Defaults to \eqn{e}.
 #' @return An \linkS4class{Expression} representing the exponentiated input.
+#' @examples 
+#' # Log in objective
+#' x <- Variable(2, name = "x")
+#' obj <- Maximize(sum(log(x)))
+#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' p <- Problem(obj, constr)
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#' 
+#' # Log in constraint
+#' obj <- Minimize(sum(x))
+#' constr <- list(log2(x) >= 0, x <= as.matrix(c(1,1)))
+#' p <- Problem(obj, constr)
+#' result <- solve(p)
+#' result$value
+#' result$getValue(x)
+#' 
+#' # Index into log
+#' obj <- Maximize(log10(x)[2])
+#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' p <- Problem(obj, constr)
+#' result <- solve(p)
+#' result$value
+#' 
+#' # Scalar log
+#' obj <- Maximize(log1p(x[2]))
+#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' p <- Problem(obj, constr)
+#' result <- solve(p)
+#' result$value
 #' @docType methods
 #' @rdname log
 #' @export

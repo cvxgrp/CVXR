@@ -377,6 +377,19 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A string indicating the solver that the problem data is for.
 #' @return A list of arguments for the solver.
+#' @examples 
+#' a <- Variable(name = "a")
+#' data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
+#' data[["dims"]]
+#' data[["c"]]
+#' data[["A"]]
+#'
+#' x <- Variable(2, name = "x")
+#' data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")
+#' data[["dims"]]
+#' data[["c"]]
+#' data[["A"]]
+#' data[["G"]]
 #' @rdname get_problem_data
 #' @export
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {

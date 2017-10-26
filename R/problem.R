@@ -15,25 +15,24 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
     return(.Object)
 })
 
-#' @describeIn Minimize-class Pass on the target expression's objective and constraints.
+#' @describeIn Minimize Pass on the target expression's objective and constraints.
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
 
-#' @describeIn Minimize-class Returns the \linkS4class{Variable} objects in the objective.
+#' @describeIn Minimize Returns the \linkS4class{Variable} objects in the objective.
 setMethod("variables", "Minimize", function(object) { variables(object@expr) })
 
-#' @describeIn Minimize-class Returns the \linkS4class{Parameter} objects in the objective.
+#' @describeIn Minimize Returns the \linkS4class{Parameter} objects in the objective.
 setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
 
-#' @describeIn Minimize-class Returns the \linkS4class{Constant} objects in the objective.
+#' @describeIn Minimize Returns the \linkS4class{Constant} objects in the objective.
 setMethod("constants", "Minimize", function(object) { constants(object@expr) })
 
-#' @describeIn Minimize-class A logical value indicating whether the objective is convex.
+#' @describeIn Minimize A logical value indicating whether the objective is convex.
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 
-#' @describeIn Minimize-class The value of the objective expression.
+#' @describeIn Minimize The value of the objective expression.
 setMethod("value", "Minimize", function(object) { value(object@expr) })
 
-#' @describeIn Minimize-class The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Minimize", function(object, result) { result })
 
 #'
@@ -41,34 +40,75 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #'
 #' This class represents an optimization objective for maximization.
 #'
-#' @slot expr A scalar \linkS4class{Expression} to minimize.
+#' @slot expr A scalar \linkS4class{Expression} to maximize.
 #' @rdname Maximize
 #' @export
 Maximize <- setClass("Maximize", contains = "Minimize")
 
+#'
+#' Arithmetic Operations on Objectives
+#' 
+#' Add, subtract, multiply, or divide optimization objectives.
+#' 
+#' @param e1 The left-hand \linkS4class{Minimize}, \linkS4class{Maximize}, or numeric value.
+#' @param e2 The right-hand \linkS4class{Minimize}, \linkS4class{Maximize}, or numeric value.
+#' @return A \linkS4class{Minimize} or \linkS4class{Maximize} object.
+#' @name Objective-arith
+NULL
+
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@expr) })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@expr + e2@expr) })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 + e1 })
+
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) -e1 else stop("Unimplemented") })
+
+#' @rdname Objective-arith
 setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
   if(e2 >= 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
+
+#' @rdname Objective-arith
 setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
   if(e2 < 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
 })
+
+#' @rdname Objective-arith
 setMethod("*", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 * e1 })
+
+#' @rdname Objective-arith
 setMethod("/", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
+#' @rdname Objective-arith
 setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@expr) })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@expr + e2@expr) })
+
+#' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
-#' @describeIn Maximize-class Negates the target expression's objective.
+#' @describeIn Maximize Negates the target expression's objective.
 setMethod("canonicalize", "Maximize", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -76,13 +116,13 @@ setMethod("canonicalize", "Maximize", function(object) {
   list(lo.neg_expr(obj), constraints)
 })
 
-#' @describeIn Maximize-class A logical value indicating whether the objective is concave.
+#' @describeIn Maximize A logical value indicating whether the objective is concave.
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 
-#' @describeIn Maximize-class A logical value indicating whether the objective is quadratic.
+#' @describeIn Maximize A logical value indicating whether the objective is quadratic.
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
 
-#' @describeIn Maximize-class The value of the objective given the solver primal value.
+#' @describeIn Maximize The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
 #'
@@ -94,6 +134,7 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
 #' @slot num_iters The number of iterations the solver had to go through to find a solution.
+#' @name SolverStats
 #' @rdname SolverStats-class
 #' @export
 .SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
@@ -113,8 +154,8 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #'   \item{setup_time}{The time (in seconds) it took for the solver to set up the problem.}
 #'   \item{num_iters}{The number of iterations the solver had to go through to find a solution.}
 #' }
-#' @docType methods
-#' @rdname SolverStats
+#' @name SolverStats
+#' @rdname SolverStats-class
 #' @export
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     solve_time <- NA_real_
@@ -144,7 +185,8 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' @slot num_scalar_eq_constr The number of scalar equality constraints in the problem.
 #' @slot num_scalar_leq_constr The number of scalar inequality constraints in the problem.
 #' @slot max_data_dimension The longest dimension of any data block constraint or parameter.
-#' @slot max_big_small_squares The maximum value of (big)(small)^2 over all data blocks of the problem, where (big) is the larger dimension and (small) is the smaller dimension for each data block.
+#' @slot max_big_small_squared The maximum value of (big)(small)^2 over all data blocks of the problem, where (big) is the larger dimension and (small) is the smaller dimension for each data block.
+#' @name SizeMetrics-class
 #' @rdname SizeMetrics-class
 #' @export
 .SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
@@ -159,7 +201,8 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' 
 #' @param problem A \linkS4class{Problem} object.
 #' @return A \linkS4class{SizeMetrics} object containing size metrics of the input problem.
-#' @rdname SizeMetrics
+#' @name SizeMetrics
+#' @rdname SizeMetrics-class
 #' @export
 SizeMetrics <- function(problem) {
   # num_scalar_variables
@@ -213,6 +256,12 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #'
 #' @slot objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @slot constraints (Optional) A list of constraints on the optimization variables.
+#' @slot value (Internal) Used internally to hold the value of the optimization objective at the solution.
+#' @slot status (Internal) Used internally to hold the status of the problem solution.
+#' @slot .cached_data (Internal) Used internally to hold cached matrix data.
+#' @slot .separable_problems (Internal) Used internally to hold separable problem data.
+#' @slot .size_metrics (Internal) Used internally to hold size metrics.
+#' @slot .solver_stats (Internal) Used internally to hold solver statistics.
 #' @rdname Problem-class
 #' @export
 .Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
@@ -280,30 +329,40 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object
 })
 
-#' @describeIn Problem-class The value from the last time the problem was solved.
+#' @describeIn Problem The objective of the problem.
+#' @export
+setMethod("objective", "Problem", function(object) { object@objective })
+
+#' @describeIn Problem A list of the constraints of the problem.
+#' @export
+setMethod("constraints", "Problem", function(object) { object@constraints })
+
+#' @describeIn Problem The value from the last time the problem was solved.
+#' @export
 setMethod("value", "Problem", function(object) { object@value })
 
-#' @describeIn Problem-class Set the value of optimal objective.
+#' @describeIn Problem Set the value of optimal objective.
 setMethod("value<-", "Problem", function(object, value ) {
     object@value <- value
     object
 })
 
-#' @describeIn Problem-class The status from the last time the problem was solved.
+#' @describeIn Problem The status from the last time the problem was solved.
+#' @export
 setMethod("status", "Problem", function(object) { object@status })
 
-#' @describeIn Problem-class Set the status of the problem.
+#' @describeIn Problem Set the status of the problem.
 setMethod("status<-", "Problem", function(object, value ) {
     object@status <- value
     object
 })
 
-#' @describeIn Problem-class A logical value indicating whether the problem statisfies DCP rules.
+#' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
 setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
-#' @describeIn Problem-class A logical value indicating whether the problem is a quadratic program.
+#' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
     if(!(is(c, "EqConstraint") || is_pwl(c@expr)))
@@ -312,7 +371,7 @@ setMethod("is_qp", "Problem", function(object) {
   return(is_dcp(object) && is_quadratic(object@objective@expr))
 })
 
-#' @describeIn Problem-class The graph implementation of the problem.
+#' @describeIn Problem The graph implementation of the problem.
 #' @return A list of \code{list(affine objective, constraints list)}.
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
@@ -323,34 +382,34 @@ setMethod("canonicalize", "Problem", function(object) {
   list(obj_canon[[1]], canon_constr)
 })
 
-#' @describeIn Problem-class List of \linkS4class{Variable} objects in the problem.
+#' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
 setMethod("variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
 })
 
-#' @describeIn Problem-class List of \linkS4class{Parameter} objects in the problem.
+#' @describeIn Problem List of \linkS4class{Parameter} objects in the problem.
 setMethod("parameters", "Problem", function(object) {
   params <- parameters(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { parameters(constr) })
   unique(flatten_list(c(params, constrs_)))   # Remove duplicates
 })
 
-#' @describeIn Problem-class List of \linkS4class{Constant} objects in the problem.
+#' @describeIn Problem List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
   constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
   constants_ <- c(constants(object@objective), constants_)
   unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
 })
 
-#' @describeIn Problem-class Information about the size of the problem.
+#' @describeIn Problem Information about the size of the problem.
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 
-#' @describeIn Problem-class Additional information returned by the solver.
+#' @describeIn Problem Additional information returned by the solver.
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 
-#' @describeIn Problem-class Set the additional information returned by the solver in the problem.
+#' @describeIn Problem Set the additional information returned by the solver in the problem.
 setMethod("solver_stats<-", "Problem", function(object, value ) {
     object@.solver_stats <- value
     object
@@ -415,6 +474,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @return A list containing the optimal value, primal, and dual variables for the problem.
+#' @name solve
 #' @rdname solve
 #' @export
 solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
@@ -480,6 +540,7 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
   return(valuesById(object, results_dict, sym_data, solver))
 }
 
+# TODO: Finish implementation of parallel solve.
 .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
   .solve_problem <- function(problem) {
     result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
@@ -612,7 +673,10 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     result
 }
 
-
+#' @describeIn Problem Parses the output from a solver and updates the problem state, including the status, objective value, and value of the primal and dual variables. Assumes the results are from the given solver.
+#' @param object A \linkS4class{Problem} object.
+#' @param solver A string indicating the name of the solver being used.
+#' @param results_dict A list containing the solver output.
 setMethod("unpack_results", "Problem", function(object, solver, results_dict) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
@@ -691,6 +755,11 @@ saveValuesById <- function(variables, offset_map, result_vec) {
 ##     solution[[ as.character(id(cvxObj)) ]]
 ## }
 
+#' @describeIn Problem Saves the values of the optimal primal and dual variables.
+#' @param object A \linkS4class{Problem} object.
+#' @param result_vec A vector containing the variable values.
+#' @param objstore The variables or constraints where the values will be stored.
+#' @param offset_map A list mapping object ID to offset in \code{result_vec}.
 setMethod("Problem.save_values", "Problem", function(object, result_vec, objstore, offset_map) {
 ##  if(length(result_vec) > 0)   # Cast to desired matrix type
 ##    result_vec <- as.matrix(result_vec)
@@ -733,23 +802,46 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objstor
 #' @param e1 The left-hand \linkS4class{Problem} object.
 #' @param e2 The right-hand \linkS4class{Problem} object.
 #' @return A \linkS4class{Problem} object.
+#' @name Problem-arith
+NULL
+
 #' @rdname Problem-arith
 setMethod("+", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = e1@objective, constraints = e1@constraints) })
+
+#' @rdname Problem-arith
 setMethod("-", signature(e1 = "Problem", e2 = "missing"), function(e1, e2) { Problem(objective = -e1@objective, constraints = e1@constraints) })
+
+#' @rdname Problem-arith
 setMethod("+", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
+
+#' @rdname Problem-arith
 setMethod("+", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 + e1 })
+
+#' @rdname Problem-arith
 setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
   Problem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
 })
+
+#' @rdname Problem-arith
 setMethod("-", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname Problem-arith
 setMethod("-", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { if(length(e1) == 1 && e2 == 0) -e2 else stop("Unimplemented") })
+
+#' @rdname Problem-arith
 setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
   Problem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
 })
+
+#' @rdname Problem-arith
 setMethod("*", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * e2, constraints = e1@constraints)
 })
+
+#' @rdname Problem-arith
 setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 * e1 })
+
+#' @rdname Problem-arith
 setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
 })

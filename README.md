@@ -34,7 +34,7 @@ A <- matrix(c(17, 19), nrow = m, byrow = TRUE)
 ## Construct the problem.
 x <- Variable(n)
 objective <- Minimize(A %*% x)
-constraint <- list(1 <= x)
+constraint <- list(x >= 1)
 prob <- Problem(objective, constraint)
 result <- solve(prob)
 
@@ -43,5 +43,5 @@ cat("Optimal Objective: ", result$value, "\n")
 cat("Primal Solution:\n")
 print(result$getValue(x))
 cat("Dual Solution:\n")
-print(result$dual_values)
+print(result$getDualValues(constraint[[1]]))
 ```

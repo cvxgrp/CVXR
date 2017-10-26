@@ -34,16 +34,14 @@ setMethod("size", "ListORExpr", function(object) {
   cast_op
 }
 
-#' @describeIn Expression-class The value of the expression.
+#' @describeIn Expression The value of the expression.
 #' @export
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression-class The (sub/super)-gradient of the expression with respect to each variable. Matrix expressions are vectorized, so the gradient is a matrix.
-#' @export
+#' @rdname grad
 setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression-class A list of constraints describing the closure of the region where the expression is finite.
-#' @export
+#' @rdname domain
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
 #' @export
@@ -51,26 +49,17 @@ setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
 
-#' @describeIn Expression-class A string with information about the expression such as curvature, sign, and size.
+#' @describeIn Expression A string with information about the expression such as curvature, sign, and size.
 #' @export
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
 
-#' @describeIn Expression-class The string representation of the expression.
+#' @describeIn Expression The string representation of the expression.
 #' @export
 setMethod("name", "Expression", function(object) { stop("Unimplemented") })
 
-#'
-#' Curvature Properties
-#' 
-#' The curvature of an expression.
-#' 
-#' @param object An \linkS4class{Expression} object.
-#' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
-#' @docType methods
 #' @rdname curvature
-#' @export
 setMethod("curvature", "Expression", function(object) {
   if(is_constant(object))
     curvature_str <- CONSTANT
@@ -85,36 +74,29 @@ setMethod("curvature", "Expression", function(object) {
   curvature_str
 })
 
-#' @describeIn curvature A logical value indicating whether the expression is constant.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) })
 
-#' @describeIn curvature A logical value indicating whether the expression is affine.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
 
-#' @describeIn curvature A logical value indicating whether the expression is convex.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn curvature A logical value indicating whether the expression is concave.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn curvature A logical value indicating whether the expression is DCP compliant, i.e. no unknown curvatures.
-#' @export
+#' @rdname is_dcp
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
 
-#' @describeIn curvature A logical value indicating whether the expression is quadratic.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
 
-#' @describeIn curvature A logical value indicating whether the expression is piecewise linear.
-#' @export
+#' @rdname curvature-methods
 setMethod("is_pwl", "Expression", function(object) { FALSE })
 
 #'
-#' Sign Properties
+#' Sign of Expression
 #' 
 #' The sign of an expression.
 #' 
@@ -135,47 +117,32 @@ setMethod("sign", "Expression", function(x) {
   sign_str
 })
 
-#' @describeIn sign A logical value indicating whether the expression is uniformly zero.
-#' @export
+#' @rdname sign-methods
 setMethod("is_zero", "Expression", function(object) { is_positive(object) && is_negative(object) })
 
-#' @describeIn sign A logical value indicating whether the expression is positive.
-#' @export
+#' @rdname sign-methods
 setMethod("is_positive", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn sign A logical value indicating whether the expression is negative.
-#' @export
+#' @rdname sign-methods
 setMethod("is_negative", "Expression", function(object) { stop("Unimplemented") })
 
-#'
-#' Size Properties
-#'
-#' The size of an expression.
-#' 
-#' @param object An \linkS4class{Expression} object.
-#' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
-#' @docType methods
 #' @rdname size
-#' @export
 setMethod("size", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn size A logical value indicating whether the expression is a scalar.
-#' @export
+#' @rdname size-methods
 setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,1)) })
 
-#' @describeIn size A logical value indicating whether the expression is a row or column vector.
-#' @export
+#' @rdname size-methods
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 
-#' @describeIn size A logical value indicating whether the expression is a matrix.
-#' @export
+#' @rdname size-methods
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
-#' @describeIn size Number of rows in the expression.
+#' @describeIn Expression Number of rows in the expression.
 #' @export
 setMethod("nrow", "Expression", function(x) { size(x)[1] })
 
-#' @describeIn size Number of columns in the expression.
+#' @describeIn Expression Number of columns in the expression.
 #' @export
 setMethod("ncol", "Expression", function(x) { size(x)[2] })
 
@@ -436,37 +403,30 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("variables", "Leaf", function(object) { list() })
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("parameters", "Leaf", function(object) { list() })
 
-#' @rdname Canonical-class
+#' @rdname Leaf-class
 setMethod("constants", "Leaf", function(object) { list() })
 
-#' @docType methods
-#' @rdname curvature
+#' @rdname Leaf-class
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature
+#' @rdname Leaf-class
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature
+#' @rdname Leaf-class
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 
-#' @docType methods
-#' @rdname curvature
+#' @rdname Leaf-class
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
 
-#' @rdname Expression-class
+#' @rdname Leaf-class
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
-#' @describeIn Leaf-class Check that the value satisfies the leaf's symbolic attributes.
-#' @param val The assigned value.
-#' @return The value converted to proper matrix type.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
     # Convert val to the proper matrix type

@@ -9,7 +9,6 @@
 #' @slot size (Internal) A vector of containing the number of rows and columns.
 #' @slot is_pos (Internal) A logical value indicating whether all elements are non-negative.
 #' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
-#' @name Constant-class
 #' @rdname Constant-class
 #' @export
 .Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
@@ -33,6 +32,7 @@
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
+#' @rdname Constant-class
 setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_1D_array = FALSE, .sparse = NA, .size = NA_real_, .is_pos = NA, .is_neg = NA) {
   .Object@is_1D_array <- is_1D_array
   .Object@value <- value
@@ -52,34 +52,35 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_
   callNextMethod(.Object, ...)
 })
 
+#' @rdname Constant-class
 setMethod("show", "Constant", function(object) {
   cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
 })
 
-#' @rdname Expression-class
+#' @rdname Constant-class
 setMethod("as.character", "Constant", function(x) {
   paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
 setMethod("constants", "Constant", function(object) { list(object) })
 
-#' @rdname Canonical-class
+#' @rdname Constant-class
 setMethod("get_data", "Constant", function(object) { list(value(object)) })
 
-#' @rdname Expression-class
+#' @rdname Constant-class
 setMethod("value", "Constant", function(object) { object@value })
 
-#' @rdname Expression-class
+#' @rdname grad
 setMethod("grad", "Constant", function(object) { list() })
 
 #' @rdname size
 setMethod("size", "Constant", function(object) { object@size })
 
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Constant", function(object) { object@is_pos })
 
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Constant", function(object) { object@is_neg })
 
 #' @rdname Canonical-class
@@ -147,12 +148,13 @@ get_sign <- function(constant) {
 #' @param name (Optional) A character string representing the name of the parameter.
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @return A \linkS4class{Parameter} object.
-#' @docType methods
 #' @rdname Parameter
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }
 
+#' @name Parameter
+#' @rdname Parameter-class
 setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_) {
   .Object@id <- id
   .Object@rows <- rows
@@ -170,6 +172,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows 
   callNextMethod(.Object, ...)
 })
 
+#' @rdname Parameter-class
 setMethod("show", "Parameter", function(object) {
   cat("Parameter(", object@rows, ", ", object@cols, ", sign = ", sign(object), ")", sep = "")
 })
@@ -187,32 +190,29 @@ setMethod("get_data", "Parameter", function(object) {
 #' @rdname Expression-class
 setMethod("name", "Parameter", function(object) { object@name })
 
-#' @docType methods
 #' @rdname size
 setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
 
-#' @docType methods
-#' @rdname sign
+#' @rdname sign-methods
 setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
 
-#' @describeIn Parameter-class The value of the parameter.
-setMethod("value", "Parameter", function(object) { object@value })
-
-#' @describeIn Parameter-class Set the value of the parameter.
-setReplaceMethod("value", "Parameter", function(object, value) {
-  object@value <- validate_val(object, value)
-  object
-})
-
-#' @rdname Expression-class
+#' @rdname grad
 setMethod("grad", "Parameter", function(object) { list() })
 
 #' @rdname Canonical-class
 setMethod("parameters", "Parameter", function(object) { list(object) })
+
+#' @describeIn Parameter The value of the parameter.
+setMethod("value", "Parameter", function(object) { object@value })
+
+#' @describeIn Parameter Set the value of the parameter.
+setReplaceMethod("value", "Parameter", function(object, value) {
+  object@value <- validate_val(object, value)
+  object
+})
 
 #' @rdname Canonical-class
 setMethod("canonicalize", "Parameter", function(object) {
@@ -220,33 +220,33 @@ setMethod("canonicalize", "Parameter", function(object) {
   list(obj, list())
 })
 
-#'
-#' The CallbackParam class.
-#'
-#' This class represents a parameter whose value is obtained by evaluating a function.
-#' 
-#' @slot callback A numeric element, vector, matrix, or data.frame.
-#' @rdname CallbackParam-class
+#
+# The CallbackParam class.
+#
+# This class represents a parameter whose value is obtained by evaluating a function.
+# 
+# @slot callback A numeric element, vector, matrix, or data.frame.
+# @rdname CallbackParam-class
 .CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal"), contains = "Parameter")
 
-#'
-#' Callback Parameter Constructor
-#' 
-#' @param callback A numeric element, vector, matrix, or data.frame
-#' @param rows The number of rows in the parameter.
-#' @param cols The number of columns in the parameter.
-#' @param name (Optional) A character string representing the name of the parameter.
-#' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
-#' @return A \linkS4class{CallbackParam} object.
-#' @rdname CallbackParam
+#
+# Callback Parameter Constructor
+# 
+# @param callback A numeric element, vector, matrix, or data.frame
+# @param rows The number of rows in the parameter.
+# @param cols The number of columns in the parameter.
+# @param name (Optional) A character string representing the name of the parameter.
+# @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+# @return A \linkS4class{CallbackParam} object.
+# @rdname CallbackParam
 CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN) {
   .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
 }
 
-#' @rdname Parameter-class
+# @rdname Parameter-class
 setMethod("value", "CallbackParam", function(object) { validate_val(object, value(object@callback)) })
 
-#' @rdname Canonical-class
+# @rdname Canonical-class
 setMethod("get_data", "CallbackParam", function(object) {
   list(callback = object@callback, rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str)
 })

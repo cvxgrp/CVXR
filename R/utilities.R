@@ -6,28 +6,30 @@
 #' @rdname Canonical-class
 setClass("Canonical", contains = "VIRTUAL")
 
-#' @describeIn Canonical-class The graph implementation of the input.
+#' @describeIn Canonical The graph implementation of the input.
 #' @return A list of \code{list(affine expression, list(constraints))}.
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class The canonical form of the input.
+#' @describeIn Canonical The canonical form of the input.
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
-#' @describeIn Canonical-class List of \linkS4class{Variable} objects in the expression.
+#' @rdname expression-parts
 setMethod("variables", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class List of \linkS4class{Parameter} objects in the expression.
+#' @rdname expression-parts
 setMethod("parameters", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class List of \linkS4class{Constant} objects in the expression.
+#' @rdname expression-parts
 setMethod("constants", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @describeIn Canonical-class Information needed to reconstruct the expression aside from its arguments.
+#' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
 setMethod("get_data", "Canonical", function(object) { list() })
 
-#'
-#' CVXR Package Constants
-#'
+##########################
+#                        #
+# CVXR Package Constants #
+#                        #
+##########################
 # Constants for operators.
 PLUS = "+"
 MINUS = "-"
@@ -132,9 +134,11 @@ UNKNOWN = "UNKNOWN"
 
 SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 
-#'
-#' Utility functions for shape
-#' 
+################################
+#                              #
+# Utility functions for shapes #
+#                              #
+################################
 sum_shapes <- function(shapes) {
   rows <- max(sapply(shapes, function(shape) { shape[1] }))
   cols <- max(sapply(shapes, function(shape) { shape[2] }))
@@ -159,9 +163,11 @@ mul_shapes <- function(lh_shape, rh_shape) {
   }
 }
 
-#' 
-#' Utility functions for sign
-#' 
+###############################
+#                             #
+# Utility functions for signs #
+#                             #
+###############################
 sum_signs <- function(exprs) {
   is_pos <- all(sapply(exprs, function(expr) { is_positive(expr) }))
   is_neg <- all(sapply(exprs, function(expr) { is_negative(expr) }))
@@ -178,9 +184,11 @@ mul_sign <- function(lh_expr, rh_expr) {
   c(is_pos, is_neg)
 }
 
-#'
-#' Utility functions for constraints
-#' 
+#####################################
+#                                   #
+# Utility functions for constraints #
+#                                   #
+#####################################
 format_axis <- function(t, X, axis) {
   # Reduce to norms of columns
   if(axis == 1)
@@ -233,9 +241,11 @@ get_spacing_matrix <- function(size, spacing, offset) {
   create_const(mat, size, sparse = TRUE)
 }
 
-#'
-#' Utility functions for gradients
-#'
+###################################
+#                                 #
+# Utility functions for gradients #
+#                                 #
+###################################
 constant_grad <- function(expr) {
   grad <- list()
   for(var in variables(expr)) {
@@ -263,14 +273,14 @@ flatten_list <- function(x) {
   y
 }
 
-#'
-#' The QuadCoeffExtractor class
-#' 
-#' Given a quadratic expression of size m*n, this class extracts the coefficients 
-#' (Ps, Q, R) such that the (i,j) entry of the expression is given by 
-#' t(X) %*% Ps[[k]] %*% x + Q[k,] %*% x + R[k]
-#' where k = i + j*m. x is the vectorized variables indexed by id_map
-#' 
+#
+# The QuadCoeffExtractor class
+# 
+# Given a quadratic expression of size m*n, this class extracts the coefficients 
+# (Ps, Q, R) such that the (i,j) entry of the expression is given by 
+# t(X) %*% Ps[[k]] %*% x + Q[k,] %*% x + R[k]
+# where k = i + j*m. x is the vectorized variables indexed by id_map
+# 
 setClass("QuadCoeffExtractor", representation(id_map = "list", N = "numeric"))
 
 get_coeffs.QuadCoeffExtractor <- function(object, expr) {
@@ -468,10 +478,10 @@ get_coeffs.QuadCoeffExtractor <- function(object, expr) {
   list(Ps, Matrix(Q, sparse = TRUE), R)
 }
 
-#'
-#' R dictionary (inefficient, hacked together implementation)
-#' Note: This allows arbitrary types as both keys and values
-#'
+#
+# R dictionary (inefficient, hacked together implementation).
+# Note: This allows arbitrary types as both keys and values.
+#
 setClass("Rdict", representation(keys = "list", values = "list"), prototype(keys = list(), values = list()),
          validity = function(object) {
            if(length(object@keys) != length(object@values))
@@ -544,9 +554,11 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
   return(x@values[[length(x@values)]])
 })
 
-#'
-#' Power utilities
-#'
+###################
+#                 #
+# Power utilities #
+#                 #
+###################
 gm <- function(t, x, y) {
   two <- create_const(2, c(1,1))
   
@@ -934,9 +946,11 @@ over_bound <- function(w_dyad, tree) {
   return(length(tree) - lower_bound(w_dyad) - nonzeros)
 }
 
-#'
-#' Key utilities
-#'
+#################
+#               #
+# Key utilities #
+#               #
+#################
 Key <- function(row, col) {
   if(missing(row)) row <- "all"   # TODO: Missing row/col index implies that we select all rows/cols
   if(missing(col)) col <- "all"

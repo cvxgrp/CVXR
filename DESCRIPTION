@@ -26,55 +26,56 @@ Authors@R: c(
 URL: https://github.com/anqif/cvxr
 SystemRequirements: GNU make
 BugReports: https://github.com/anqif/cvxr/issues
-Description: CVXR is a modeling language for disciplined convex optimization problems.
-             It allows the user to express problems in a natural way that follows
-             mathematical convention, rather than the restrictive standard form required
-             by other solvers.
+Description: CVXR is a modeling language for disciplined convex optimization
+    problems. It allows the user to express problems in a natural way that follows
+    mathematical convention, rather than the restrictive standard form required by
+    other solvers.
 Imports:
-        methods,
-        R6,
-        Matrix,
-        Rcpp (>= 0.12.12),
-        RcppEigen,
-	      BH,
-	      bit64,
-        bitops,
-        MASS,
-        gmp,
-        R.utils,
+    methods,
+    R6,
+    Matrix,
+    Rcpp (>= 0.12.12),
+    RcppEigen,
+    BH,
+    bit64,
+    bitops,
+    MASS,
+    gmp,
+    R.utils,
     ECOSolveR,
     scs
 Suggests:
-        knitr,
-        rmarkdown,
-        testthat
+    knitr,
+    rmarkdown,
+    testthat
 LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true
-Collate: 'globals.R'
-	 'generics.R'
-         'utilities.R'
-         'interface.R'
-         'expressions.R'
-         'constant.R'
-         'variable.R'
-         'lin_ops.R'
-         'atoms.R'
-         'affine.R'
-         'problem.R'
-         'constraints.R'
-         'elementwise.R'
-         'solver.R'
-         'problem_data.R'
-         'transforms.R'
-         'exports.R'
-      	 'rcppUtils.R'
-      	 'R6List.R'
-      	 'ProblemData-R6.R'
-      	 'LinOp-R6.R'
-      	 'LinOpVector-R6.R'
-      	 'RcppExports.R'
-      	 'CVXcanon-R6.R'
-      	 'Deque.R'
-      	 'canonInterface.R'
-RoxygenNote: 6.0.1
+Collate:
+    'globals.R'
+    'generics.R'
+    'utilities.R'
+    'interface.R'
+    'expressions.R'
+    'constant.R'
+    'variable.R'
+    'lin_ops.R'
+    'atoms.R'
+    'affine.R'
+    'problem.R'
+    'constraints.R'
+    'elementwise.R'
+    'solver.R'
+    'problem_data.R'
+    'transforms.R'
+    'exports.R'
+    'rcppUtils.R'
+    'R6List.R'
+    'ProblemData-R6.R'
+    'LinOp-R6.R'
+    'LinOpVector-R6.R'
+    'RcppExports.R'
+    'CVXcanon-R6.R'
+    'Deque.R'
+    'canonInterface.R'
+RoxygenNote: 5.0.1

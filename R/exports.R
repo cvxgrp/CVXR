@@ -537,6 +537,19 @@ sum_entries <- SumEntries
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param k The number of largest values to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the largest \code{k} values of the input.
+#' @examples 
+#' m <- 300
+#' n <- 9
+#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' X <- cbind(rep(1,m), X)
+#' b <- c(0, 0.8, 0, 1, 0.2, 0, 0.4, 1, 0, 0.7)
+#' y <- X %*% b + rnorm(m)
+#'
+#' beta <- Variable(n+1)
+#' obj <- sum_largest((y - X %*% beta)^2, 100)
+#' prob <- Problem(Minimize(obj))
+#' result <- solve(prob)
+#' result$getValue(beta)
 #' @docType methods
 #' @rdname sum_largest
 #' @export
@@ -550,6 +563,20 @@ sum_largest <- SumLargest
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param k The number of smallest values to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the smallest k values of the input.
+#' @examples 
+#' m <- 300
+#' n <- 9
+#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' X <- cbind(rep(1,m), X)
+#' b <- c(0, 0.8, 0, 1, 0.2, 0, 0.4, 1, 0, 0.7)
+#' factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
+#' y <- factor * (X %*% b) + rnorm(m)
+#' 
+#' beta <- Variable(n+1)
+#' obj <- sum_smallest((y - X %*% beta)^2, 200)
+#' prob <- Problem(Minimize(obj))
+#' result <- solve(prob)
+#' result$getValue(beta)
 #' @docType methods
 #' @rdname sum_smallest
 #' @export
@@ -679,6 +706,12 @@ min.Expression <- function(..., na.rm = FALSE) {
 #' }
 #' @return An \linkS4class{Expression} representing the norm of the input.
 #' @seealso The \code{\link{p_norm}} function calculates the vector p-norm.
+#' @examples 
+#' C <- Variable(3,2)
+#' val <- Constant(rbind(c(1,2), c(3,4), c(5,6)))
+#' prob <- Problem(Minimize(norm(C, "F")), list(C == val))
+#' result <- solve(prob, solver = "SCS")
+#' result$value
 #' @docType methods
 #' @rdname norm
 #' @export
@@ -888,6 +921,11 @@ logistic <- Logistic
 #' @param arg2 An \linkS4class{Expression}, vector, or matrix.
 #' @param ... Additional \linkS4class{Expression} objects, vectors, or matrices.
 #' @return An \linkS4class{Expression} representing the elementwise maximum of the inputs.
+#' @examples 
+#' c <- matrix(c(1,-1))
+#' prob <- Problem(Minimize(max_elemwise(t(c), 2, 2 + t(c))[2]))
+#' result <- solve(p)
+#' result$value
 #' @docType methods
 #' @rdname max_elemwise
 #' @export
@@ -1064,7 +1102,7 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' # Log in objective
 #' x <- Variable(2)
 #' obj <- Maximize(sum(log(x)))
-#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' constr <- list(x <= matrix(c(1, exp(1))))
 #' prob <- Problem(obj, constr)
 #' result <- solve(prob)
 #' result$value
@@ -1072,7 +1110,7 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' 
 #' # Log in constraint
 #' obj <- Minimize(sum(x))
-#' constr <- list(log2(x) >= 0, x <= as.matrix(c(1,1)))
+#' constr <- list(log2(x) >= 0, x <= matrix(c(1,1)))
 #' prob <- Problem(obj, constr)
 #' result <- solve(prob)
 #' result$value
@@ -1080,14 +1118,14 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' 
 #' # Index into log
 #' obj <- Maximize(log10(x)[2])
-#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' constr <- list(x <= matrix(c(1, exp(1))))
 #' prob <- Problem(obj, constr)
 #' result <- solve(prob)
 #' result$value
 #' 
 #' # Scalar log
 #' obj <- Maximize(log1p(x[2]))
-#' constr <- list(x <= as.matrix(c(1, exp(1))))
+#' constr <- list(x <= matrix(c(1, exp(1))))
 #' prob <- Problem(obj, constr)
 #' result <- solve(prob)
 #' result$value
@@ -1287,6 +1325,13 @@ sigma_max <- SigmaMax
 #'
 #' @param expr An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the upper triangle of the input.
+#' @examples 
+#' C <- Variable(3,3)
+#' val <- cbind(3:5, 6:8, 9:11)
+#' prob <- Problem(Maximize(upper_tri(C)[3,1]), list(C == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(upper_tri(C))
 #' @docType methods
 #' @rdname upper_tri
 #' @export
@@ -1446,6 +1491,16 @@ setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Dif
 #' @param X An \linkS4class{Expression} or matrix.
 #' @param Y An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} that represents the kronecker product.
+#' @examples 
+#' X <- cbind(c(1,2), c(3,4))
+#' Y <- Variable(2,2)
+#' val <- cbind(c(5,6), c(7,8))
+#' 
+#' obj <- X %x% Y
+#' prob <- Problem(Minimize(kronecker(X,Y)[1,1]), list(Y == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(kronecker(X,Y))
 #' @docType methods
 #' @rdname kronecker
 #' @export

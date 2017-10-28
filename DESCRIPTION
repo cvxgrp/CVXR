@@ -52,6 +52,7 @@ LinkingTo: Rcpp, RcppEigen, BH
 License: GPL-2 | GPL-3
 LazyData: true
 Collate:
+    'data.R'
     'globals.R'
     'generics.R'
     'utilities.R'

@@ -708,13 +708,13 @@ test_that("Test grad for affine atoms", {
   
   # Cumulative sum
   value(x) <- c(1,2)
-  expr <- cum_sum(x)
+  expr <- cumsum(x)
   val <- matrix(1, nrow = 2, ncol = 2)
   val[2,1] <- 0
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
   
   value(x) <- c(1,2)
-  expr <- cum_sum(x, axis = 1)
+  expr <- cumsum(x, axis = 1)
   val <- diag(2)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
 })

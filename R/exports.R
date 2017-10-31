@@ -616,6 +616,12 @@ sum_squares <- SumSquares
 #'
 #' @param expr An \linkS4class{Expression} or matrix.
 #' @return An \linkS4class{Expression} representing the trace of the input.
+#' @examples
+#' C <- Variable(3,3)
+#' val <- cbind(3:5, 6:8, 9:11)
+#' prob <- Problem(Maximize(matrix_trace(C)), list(C == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname matrix_trace
 matrix_trace <- Trace
@@ -759,6 +765,12 @@ sum.Expression <- function(..., na.rm = FALSE) {
 #' 
 #' @param x An \linkS4class{Expression}.
 #' @return An \linkS4class{Expression} representing the mean of the input.
+#' @examples
+#' A <- Variable(2,2)
+#' val <- cbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Minimize(mean(A)), list(A == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname mean
 #' @export
@@ -924,7 +936,7 @@ logistic <- Logistic
 #' @examples 
 #' c <- matrix(c(1,-1))
 #' prob <- Problem(Minimize(max_elemwise(t(c), 2, 2 + t(c))[2]))
-#' result <- solve(p)
+#' result <- solve(prob)
 #' result$value
 #' @docType methods
 #' @rdname max_elemwise
@@ -940,6 +952,12 @@ max_elemwise <- MaxElemwise
 #' @param arg2 An \linkS4class{Expression}, vector, or matrix.
 #' @param ... Additional \linkS4class{Expression} objects, vectors, or matrices.
 #' @return An \linkS4class{Expression} representing the elementwise minimum of the inputs.
+#' @examples 
+#' a <- cbind(c(-5,2), c(-3,-1))
+#' b <- cbind(c(5,4), c(-1,2))
+#' prob <- Problem(Minimize(min_elemwise(a, 0, b)[1,2]))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname min_elemwise
 #' @export
@@ -974,6 +992,12 @@ mul_elemwise <- MulElemwise
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the negative portion of the input.
+#' @examples
+#' x <- Variable(2)
+#' val <- matrix(c(-3,3))
+#' prob <- Problem(Minimize(neg(x)[1]), list(x == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname neg
 #' @export
@@ -986,6 +1010,12 @@ neg <- Neg
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the positive portion of the input.
+#' @examples 
+#' x <- Variable(2)
+#' val <- matrix(c(-3,2))
+#' prob <- Problem(Minimize(pos(x)[1]), list(x == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname pos
 #' @export
@@ -1047,6 +1077,19 @@ scalene <- Scalene
 #' 
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the square of the input.
+#' @examples 
+#' m <- 30
+#' n <- 20
+#' A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' b <- matrix(rnorm(m), nrow = m, ncol = 1)
+#'
+#' x <- Variable(n)
+#' obj <- Minimize(sum(square(A %*% x - b)))
+#' constr <- list(0 <= x, x <= 1)
+#' prob <- Problem(obj, constr)
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @rdname square
 #' @export
@@ -1157,6 +1200,12 @@ log1p <- Log1p
 #' 
 #' @param x An \linkS4class{Expression}.
 #' @return An \linkS4class{Expression} representing the square root of the input.
+#' A <- Variable(2,2)
+#' val <- cbind(c(2,4), c(16,1))
+#' prob <- Problem(Maximize(sqrt(A)[1,2]), list(A == val))
+#' result <- solve(prob)
+#' result$value
+#' @docType methods
 #' @rdname sqrt
 #' @export
 setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
@@ -1173,6 +1222,13 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 #' @return An \linkS4class{Expression} representing the block matrix.
 #' @docType methods
 #' @rdname bmat
+#' x <- Variable()
+#' expr <- bmat(list(list(matrix(1, nrow = 3, ncol = 1), matrix(2, nrow = 3, ncol = 2)), 
+#'                 list(matrix(3, nrow = 1, ncol = 2), x)
+#'              ))
+#' prob <- Problem(Minimize(sum_entries(expr)), list(x >= 0))
+#' result <- solve(prob)
+#' result$value
 #' @export
 bmat <- Bmat
 
@@ -1399,10 +1455,17 @@ vstack <- VStack
 #'
 #' Cumulative Sum
 #'
-#' The cumulative sum, \eqn{\sum_{i=1}^k x_i}. Matrices are flattened into column-major order before the sum is taken.
+#' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}. Matrices are flattened into column-major order before the sum is taken.
 #'
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @examples 
+#' x <- Variable(2,2)
+#' val <- cbind(c(1,2), c(3,4))
+#' prob <- Problem(Minimize(cumsum(x)[4]), list(x == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(cumsum(x))
 #' @docType methods
 #' @rdname cumsum
 #' @export

@@ -112,15 +112,44 @@ setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
 #' @export
 setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
-# The value of the objective given the solver primal value
+# The value of the objective given the solver primal value.
 setGeneric("primal_to_result", function(object, result) { standardGeneric("primal_to_result") })
 
-# Expression generic methods
+#'
+#' Get or Set Value
+#'
+#' Get or set the value of a variable, parameter, expression, or problem.
+#' 
+#' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Expression}, or \linkS4class{Problem} object.
+#' @param value A numeric scalar, vector, or matrix to assign to the object.
+#' @return The numeric value of the variable, parameter, or expression. If any part of the mathematical object is unknown, return \code{NA}.
+#' @name value-methods
+NULL
+
+#' @rdname value-methods
+#' @export
 setGeneric("value", function(object) { standardGeneric("value") })
+
+#' @rdname value-methods
+#' @export
 setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
+
+# Internal method for saving a value.
 setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
+
+# Information needed to reconstruct the expression aside from its arguments.
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 
+#'
+#' Variable, Parameter, or Expression Name
+#'
+#' The string representation of a variable, parameter, or expression.
+#' 
+#' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.
+#' @return For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.
+#' @docType methods
+#' @rdname name
+#' @export
 setGeneric("name", function(object) { standardGeneric("name") })
 
 #'
@@ -134,12 +163,15 @@ setGeneric("name", function(object) { standardGeneric("name") })
 NULL
 
 #' @rdname expression-parts
+#' @export
 setGeneric("variables", function(object) { standardGeneric("variables") })
 
 #' @rdname expression-parts
+#' @export
 setGeneric("parameters", function(object) { standardGeneric("parameters") })
 
 #' @rdname expression-parts
+#' @export
 setGeneric("constants", function(object) { standardGeneric("constants") })
 
 #'
@@ -177,11 +209,21 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 # @return The value converted to proper matrix type.
 setGeneric("validate_val", function(object, val) { standardGeneric("validate_val") })
 
-#' @rdname Canonical-class
-setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
-
-#' @rdname Canonical-class
+#'
+#' Canonicalize
+#'
+#' Computes the graph implementation of a canonical expression.
+#' 
+#' @param object A \linkS4class{Canonical} object.
+#' @return A list of \code{list(affine expression, list(constraints))}.
+#' @docType methods
+#' @rdname canonicalize
+#' @aliases canonical_form
+#' @export
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
+
+# The canonical form of the input.
+setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 
 #
 # Gradient of an Atom
@@ -221,12 +263,13 @@ setGeneric(".column_grad", function(object, value) { standardGeneric(".column_gr
 
 # Positive definite inequalities
 #' @rdname PSDConstraint
+#' @export
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 
 #' @rdname PSDConstraint
+#' @export
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
-# Atom generic methods
 #'
 #' Atom Size
 #'
@@ -302,7 +345,6 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
 #' @docType methods
 #' @rdname graph_implementation
-#' @keywords internal
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
 
 # Constraint generic methods
@@ -336,11 +378,35 @@ setGeneric("place_H", function(object, big_H, H, var_offsets) { standardGeneric(
 setGeneric("extract_variables", function(object, x, var_offsets) { standardGeneric("extract_variables") })
 
 # Problem generic methods
+#'
+#' Parts of a Problem
+#'
+#' Get the objective, constraints, status (from the last call to \code{solve}), size metrics, or solver statistics of a problem.
+#'
+#' @param object A \linkS4class{Problem} object.
+#' @return The requested slot of the object.
+#' @name problem-parts
+NULL
+
+#' @rdname problem-parts
+#' @export
 setGeneric("objective", function(object) { standardGeneric("objective") })
+
+#' @rdname problem-parts
+#' @export
 setGeneric("constraints", function(object) { standardGeneric("constraints") })
+
+#' @rdname problem-parts
+#' @export
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("status<-", function(object, value) { standardGeneric("status<-") })
+
+#' @rdname problem-parts
+#' @export
 setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
+
+#' @rdname problem-parts
+#' @export
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_stats<-") })
 
@@ -415,4 +481,5 @@ setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
 #' @export
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 
+# Map of solver status code to CVXR status.
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })

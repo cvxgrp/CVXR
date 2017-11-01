@@ -15,24 +15,31 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
     return(.Object)
 })
 
+#' @rdname canonicalize
 #' @describeIn Minimize Pass on the target expression's objective and constraints.
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
 
+#' @rdname expression-parts
 #' @describeIn Minimize Returns the \linkS4class{Variable} objects in the objective.
 setMethod("variables", "Minimize", function(object) { variables(object@expr) })
 
+#' @rdname expression-parts
 #' @describeIn Minimize Returns the \linkS4class{Parameter} objects in the objective.
 setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
 
+#' @rdname expression-parts
 #' @describeIn Minimize Returns the \linkS4class{Constant} objects in the objective.
 setMethod("constants", "Minimize", function(object) { constants(object@expr) })
 
+#' @rdname is_dcp
 #' @describeIn Minimize A logical value indicating whether the objective is convex.
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 
+#' @rdname value-methods
 #' @describeIn Minimize The value of the objective expression.
 setMethod("value", "Minimize", function(object) { value(object@expr) })
 
+# The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Minimize", function(object, result) { result })
 
 #'
@@ -117,6 +124,7 @@ setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { M
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
+#' @rdname canonicalize
 #' @describeIn Maximize Negates the target expression's objective.
 setMethod("canonicalize", "Maximize", function(object) {
   canon <- callNextMethod(object)
@@ -125,13 +133,15 @@ setMethod("canonicalize", "Maximize", function(object) {
   list(lo.neg_expr(obj), constraints)
 })
 
+#' @rdname is_dcp
 #' @describeIn Maximize A logical value indicating whether the objective is concave.
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
 
+#' @rdname curvature-methods
 #' @describeIn Maximize A logical value indicating whether the objective is quadratic.
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
 
-#' @describeIn Maximize The value of the objective given the solver primal value.
+# The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
 #'
@@ -311,6 +321,11 @@ CachedProblem <- function(objective, constraints) { list(objective = objective, 
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
+#'
+#' Problem Initialization
+#'
+#' @name Problem
+#' @rdname Problem-class
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
@@ -338,39 +353,42 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object
 })
 
+#' @rdname problem-parts
 #' @describeIn Problem The objective of the problem.
-#' @export
 setMethod("objective", "Problem", function(object) { object@objective })
 
+#' @rdname problem-parts
 #' @describeIn Problem A list of the constraints of the problem.
-#' @export
 setMethod("constraints", "Problem", function(object) { object@constraints })
 
+#' @rdname value-methods
 #' @describeIn Problem The value from the last time the problem was solved.
-#' @export
 setMethod("value", "Problem", function(object) { object@value })
 
+#' @rdname value-methods
 #' @describeIn Problem Set the value of optimal objective.
 setMethod("value<-", "Problem", function(object, value ) {
     object@value <- value
     object
 })
 
+#' @rdname problem-parts
 #' @describeIn Problem The status from the last time the problem was solved.
-#' @export
 setMethod("status", "Problem", function(object) { object@status })
 
-#' @describeIn Problem Set the status of the problem.
+# Set the status of the problem.
 setMethod("status<-", "Problem", function(object, value ) {
     object@status <- value
     object
 })
 
+#' @rdname is_dcp
 #' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
 setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
+#' @rdname is_qp
 #' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
@@ -380,8 +398,8 @@ setMethod("is_qp", "Problem", function(object) {
   return(is_dcp(object) && is_quadratic(object@objective@expr))
 })
 
+#' @rdname canonicalize
 #' @describeIn Problem The graph implementation of the problem.
-#' @return A list of \code{list(affine objective, constraints list)}.
 setMethod("canonicalize", "Problem", function(object) {
   obj_canon <- canonical_form(object@objective)
   canon_constr <- obj_canon[[2]]
@@ -391,6 +409,7 @@ setMethod("canonicalize", "Problem", function(object) {
   list(obj_canon[[1]], canon_constr)
 })
 
+#' @rdname expression-parts
 #' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
 setMethod("variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
@@ -398,6 +417,7 @@ setMethod("variables", "Problem", function(object) {
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
 })
 
+#' @rdname expression-parts
 #' @describeIn Problem List of \linkS4class{Parameter} objects in the problem.
 setMethod("parameters", "Problem", function(object) {
   params <- parameters(object@objective)
@@ -405,6 +425,7 @@ setMethod("parameters", "Problem", function(object) {
   unique(flatten_list(c(params, constrs_)))   # Remove duplicates
 })
 
+#' @rdname expression-parts
 #' @describeIn Problem List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
   constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
@@ -412,13 +433,15 @@ setMethod("constants", "Problem", function(object) {
   unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
 })
 
+#' @rdname problem-parts
 #' @describeIn Problem Information about the size of the problem.
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 
+#' @rdname problem-parts
 #' @describeIn Problem Additional information returned by the solver.
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 
-#' @describeIn Problem Set the additional information returned by the solver in the problem.
+# Set the additional information returned by the solver in the problem.
 setMethod("solver_stats<-", "Problem", function(object, value ) {
     object@.solver_stats <- value
     object

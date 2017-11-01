@@ -102,6 +102,7 @@ setMethod("is_concave", "Atom", function(object) {
     return(FALSE)
 })
 
+#' @rdname canonicalize
 #' @describeIn Atom Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
   # Constant atoms are treated as a leaf
@@ -132,29 +133,29 @@ setMethod("canonicalize", "Atom", function(object) {
 #' @rdname graph_implementation
 setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
 
+#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Variable} objects in the atom.
-#' @export
 setMethod("variables", "Atom", function(object) {
   var_list <- lapply(object@args, function(arg) { variables(arg) })
   unique(flatten_list(var_list))
 })
 
+#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Parameter} objects in the atom.
-#' @export
 setMethod("parameters", "Atom", function(object) {
   param_list <- lapply(object@args, function(arg) { parameters(arg) })
   unique(flatten_list(param_list))
 })
 
+#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Constant} objects in the atom.
-#' @export
 setMethod("constants", "Atom", function(object) {
   const_list <- lapply(object@args, function(arg) { constants(arg) })
   unique(flatten_list(const_list))   # TODO: Is this the correct way to remove duplicates?
 })
 
+#' @rdname value-methods
 #' @describeIn Atom The value of the atom.
-#' @export
 setMethod("value", "Atom", function(object) {
   # Catch the case when the expression is known to be zero through DCP analysis
   if(is_zero(object)) {
@@ -272,7 +273,7 @@ setMethod("size_from_args", "AxisAtom", function(object) {
     c(1, size(object@args[[1]])[2])
 })
 
-#' @describeIn AxisAtom A list containing the dimension across which to apply the atom: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+# A list containing the dimension across which to apply the atom: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 
 #' @describeIn AxisAtom Checks that the new shape has the same number of entries as the old.
@@ -531,7 +532,6 @@ setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 #' @describeIn GeoMean A list of \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
-#' @rdname graph_implementation
 GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   w <- data[[1]]
   w_dyad <- data[[2]]
@@ -549,7 +549,6 @@ GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, gm_constrs(t, x_list, w))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, data = NA_real_) {
   GeoMean.graph_implementation(arg_objs, size, data)
 })
@@ -626,7 +625,6 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
-#' @rdname graph_implementation
 LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
   n <- size(A)[1]
@@ -638,7 +636,6 @@ LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(SDP(expr)))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
   LambdaMax.graph_implementation(arg_objs, size, data)
 })
@@ -733,7 +730,6 @@ setMethod(".grad", "LogDet", function(object, values) {
 
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
 
-#' @rdname graph_implementation
 LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]  # n by n matrix
   n <- size(A)[1]
@@ -771,7 +767,6 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.sum_entries(obj), c(constraints, constr))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
   LogDet.graph_implementation(arg_objs, size, data)
 })
@@ -824,7 +819,6 @@ setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
 #' @rdname curvature-comp
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
-#' @rdname graph_implementation
 LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   axis <- data[[1]]
@@ -869,7 +863,6 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, data = NA_real_) {
   LogSumExp.graph_implementation(arg_objs, size, data)
 })
@@ -934,8 +927,8 @@ setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
 #' @rdname curvature-comp
 setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
 
-#' True if x is affine and P is constant.
 #' @rdname curvature-methods
+#' @describeIn MatrixFrac True if x is affine and P is constant.
 setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
@@ -966,7 +959,6 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   list(DX, DP)
 })
 
-#' @rdname graph_implementation
 MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   X <- arg_objs[[1]]   # n by m matrix
   P <- arg_objs[[2]]   # n by n matrix
@@ -993,7 +985,6 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(cvxr::lo.trace(Tmat), c(constraints, list(SDP(M))))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
   MatrixFrac.graph_implementation(arg_objs, size, data)
 })
@@ -1051,7 +1042,6 @@ setMethod(".column_grad", "MaxEntries", function(object, value) {
   D
 })
 
-#' @rdname graph_implementation
 MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   axis <- data[[1]]
   if(is.na(axis)) {
@@ -1073,7 +1063,6 @@ MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size, data = NA_real_) {
   MaxEntries.graph_implementation(arg_objs, size, data)
 })
@@ -1203,7 +1192,7 @@ setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negati
 #' @rdname curvature-methods
 setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 
-#' @describeIn Pnorm A list of \code{list(p, axis)}.
+# A list of \code{list(p, axis)}.
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
 setMethod(".domain", "Pnorm", function(object) {
@@ -1244,7 +1233,6 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
 })
 
-#' @rdname graph_implementation
 Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[[1]]
   axis <- data[[2]]
@@ -1295,7 +1283,6 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
   Pnorm.graph_implementation(arg_objs, size, data)
 })
@@ -1397,7 +1384,6 @@ setMethod(".grad", "NormNuc", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))   # TODO: Make sure D is vectorized correctly
 })
 
-#' @rdname graph_implementation
 NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]
   size <- size(A)
@@ -1420,7 +1406,6 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(trace_expr, c(list(SDP(X)), constraints))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
   NormNuc.graph_implementation(arg_objs, size, data)
 })
@@ -1542,8 +1527,8 @@ setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_pos
 #' @rdname curvature-comp
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 2) })
 
-# True if x is affine and y is constant.
 #' @rdname curvature-methods
+#' @describeIn QuadOverLin True if x is affine and y is constant.
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
@@ -1563,7 +1548,6 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
   }
 })
 
-#' @rdname graph_implementation
 QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   y <- arg_objs[[2]]   # Known to be a scalar.
@@ -1576,7 +1560,6 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(v, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
   QuadOverLin.graph_implementation(arg_objs, size, data)
 })
@@ -1633,7 +1616,6 @@ setMethod(".grad", "SigmaMax", function(object, values) {
   list(Matrix(as.numeric(D), sparse = TRUE))
 })
 
-#' @rdname graph_implementation
 SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   A <- arg_objs[[1]]   # n by m matrix
   size <- A$size
@@ -1661,7 +1643,6 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, c(constraints, list(SDP(X))))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
   SigmaMax.graph_implementation(arg_objs, size, data)
 })
@@ -1728,7 +1709,7 @@ setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
 #' @rdname curvature-comp
 setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
 
-#' @describeIn SumLargest Returns a list containing \code{k}.
+# Returns a list containing \code{k}.
 setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
 setMethod(".grad", "SumLargest", function(object, values) {
@@ -1741,7 +1722,6 @@ setMethod(".grad", "SumLargest", function(object, values) {
   list(Matrix(D, sparse = TRUE))
 })
 
-#' @rdname graph_implementation
 SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # min SumEntries(t) + k*q
   # s.t. x <= t + q, t >= 0
@@ -1758,7 +1738,6 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constr)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size, data = NA_real_) {
   SumLargest.graph_implementation(arg_objs, size, data)
 })

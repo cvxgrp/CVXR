@@ -153,7 +153,7 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
 #' @slot num_iters The number of iterations the solver had to go through to find a solution.
-#' @name SolverStats
+#' @name SolverStats-class
 #' @rdname SolverStats-class
 #' @export
 .SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
@@ -281,6 +281,7 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @slot .separable_problems (Internal) Used internally to hold separable problem data.
 #' @slot .size_metrics (Internal) Used internally to hold size metrics.
 #' @slot .solver_stats (Internal) Used internally to hold solver statistics.
+#' @name Problem-class
 #' @rdname Problem-class
 #' @export
 .Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
@@ -309,7 +310,8 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @param constraints (Optional) A list of constraints on the optimization variables.
 #' @return A \linkS4class{Problem} object.
-#' @rdname Problem
+#' @name Problem
+#' @rdname Problem-class
 #' @export
 Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
@@ -460,29 +462,7 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
-#'
-#' Get Problem Data
-#'
-#' Get the problem data used in the call to the solver.
-#' 
-#' @param object A \linkS4class{Problem} object.
-#' @param solver A string indicating the solver that the problem data is for.
-#' @return A list of arguments for the solver.
-#' @examples 
-#' a <- Variable(name = "a")
-#' data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
-#' data[["dims"]]
-#' data[["c"]]
-#' data[["A"]]
-#'
-#' x <- Variable(2, name = "x")
-#' data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")
-#' data[["dims"]]
-#' data[["c"]]
-#' data[["A"]]
-#' data[["G"]]
 #' @rdname get_problem_data
-#' @export
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
@@ -705,10 +685,10 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     result
 }
 
-#' @describeIn Problem Parses the output from a solver and updates the problem state, including the status, objective value, and value of the primal and dual variables. Assumes the results are from the given solver.
-#' @param object A \linkS4class{Problem} object.
-#' @param solver A string indicating the name of the solver being used.
-#' @param results_dict A list containing the solver output.
+# @describeIn Problem Parses the output from a solver and updates the problem state, including the status, objective value, and value of the primal and dual variables. Assumes the results are from the given solver.
+# @param object A \linkS4class{Problem} object.
+# @param solver A string indicating the name of the solver being used.
+# @param results_dict A list containing the solver output.
 setMethod("unpack_results", "Problem", function(object, solver, results_dict) {
   canon <- canonicalize(object)
   objective <- canon[[1]]
@@ -787,11 +767,11 @@ saveValuesById <- function(variables, offset_map, result_vec) {
 ##     solution[[ as.character(id(cvxObj)) ]]
 ## }
 
-#' @describeIn Problem Saves the values of the optimal primal and dual variables.
-#' @param object A \linkS4class{Problem} object.
-#' @param result_vec A vector containing the variable values.
-#' @param objstore The variables or constraints where the values will be stored.
-#' @param offset_map A list mapping object ID to offset in \code{result_vec}.
+# @describeIn Problem Saves the values of the optimal primal and dual variables.
+# @param object A \linkS4class{Problem} object.
+# @param result_vec A vector containing the variable values.
+# @param objstore The variables or constraints where the values will be stored.
+# @param offset_map A list mapping object ID to offset in \code{result_vec}.
 setMethod("Problem.save_values", "Problem", function(object, result_vec, objstore, offset_map) {
 ##  if(length(result_vec) > 0)   # Cast to desired matrix type
 ##    result_vec <- as.matrix(result_vec)

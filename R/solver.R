@@ -156,34 +156,9 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
 #' @describeIn Solver A logical value indicating whether nonlinear constraints are needed.
 setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
-#'
-#' Call to Solver
-#' 
-#' Returns the result of the call to the solver.
-#' 
-#' @param solver A \linkS4class{Solver} object.
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
-#' @param verbose A logical value indicating whether to print solver output.
-#' @param ... Additional arguments to the solver.
-#' @return A list containing the status, optimal value, primal variable, and dual variables for the equality and inequality constraints.
-#' @docType methods
 #' @rdname Solver-solve
 setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { stop("Unimplemented") })
 
-#' 
-#' Format Solver Results
-#' 
-#' Converts the solver output into standard form.
-#' 
-#' @param solver A \linkS4class{Solver} object.
-#' @param results_dict A list containing the solver output.
-#' @param data A list containing information about the problem.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @return A list containing the solver output in standard form.
-#' @docType methods
 #' @rdname format_results
 setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { stop("Unimplemented") })
 
@@ -311,16 +286,8 @@ setMethod("name", "ECOS", function(object) { ECOS_NAME })
 #' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 
-#' @describeIn ECOS The interface for matrices passed to the solver.
 setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
-
-#' @describeIn ECOS The interface for vectors passed to the solver.
 setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
-
-#' @describeIn ECOS Extracts the equality, inequality, and nonlinear constraints.
-#' @param solver A \linkS4class{ECOS} object.
-#' @param constr_map A list of canonicalized constraints.
-#' @return A list of equality, inequality, and nonlinear constraints.
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
@@ -495,10 +462,6 @@ setMethod("name", "SCS", function(object) { SCS_NAME })
 #' @describeIn SCS Imports the scs library.
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
 
-#' @describeIn SCS Extracts the equality, inequality, and nonlinear constraints.
-#' @param solver A \linkS4class{SCS} object.
-#' @param constr_map A list of canonicalized constraints.
-#' @return A list of equality, inequality, and nonlinear constraints.
 setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })

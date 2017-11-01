@@ -9,6 +9,7 @@
 #' @slot size (Internal) A vector of containing the number of rows and columns.
 #' @slot is_pos (Internal) A logical value indicating whether all elements are non-negative.
 #' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
+#' @name Constant-class
 #' @rdname Constant-class
 #' @export
 .Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
@@ -28,10 +29,12 @@
 #' @param value A numeric element, vector, matrix, or data.frame.
 #' @return A \linkS4class{Constant} representing the numeric data.
 #' @docType methods
-#' @rdname Constant
+#' @name Constant
+#' @rdname Constant-class
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
+#' @name Constant
 #' @rdname Constant-class
 setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_1D_array = FALSE, .sparse = NA, .size = NA_real_, .is_pos = NA, .is_neg = NA) {
   .Object@is_1D_array <- is_1D_array
@@ -52,12 +55,10 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_
   callNextMethod(.Object, ...)
 })
 
-#' @rdname Constant-class
 setMethod("show", "Constant", function(object) {
   cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
 })
 
-#' @rdname Constant-class
 setMethod("as.character", "Constant", function(x) {
   paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
@@ -65,10 +66,9 @@ setMethod("as.character", "Constant", function(x) {
 #' @rdname expression-parts
 setMethod("constants", "Constant", function(object) { list(object) })
 
-#' @rdname Constant-class
 setMethod("get_data", "Constant", function(object) { list(value(object)) })
 
-#' @rdname Constant-class
+#' @rdname value-methods
 setMethod("value", "Constant", function(object) { object@value })
 
 #' @rdname grad
@@ -83,7 +83,7 @@ setMethod("is_positive", "Constant", function(object) { object@is_pos })
 #' @rdname sign-methods
 setMethod("is_negative", "Constant", function(object) { object@is_neg })
 
-#' @rdname Canonical-class
+#' @rdname canonicalize
 setMethod("canonicalize", "Constant", function(object) {
   obj <- create_const(value(object), size(object), object@sparse)
   list(obj, list())
@@ -128,6 +128,7 @@ get_sign <- function(constant) {
 #' @slot name (Optional) A character string representing the name of the parameter.
 #' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
 #' @slot value A numeric element, vector, matrix, or data.frame.
+#' @name Parameter-class
 #' @rdname Parameter-class
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
                                     prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
@@ -148,7 +149,8 @@ get_sign <- function(constant) {
 #' @param name (Optional) A character string representing the name of the parameter.
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @return A \linkS4class{Parameter} object.
-#' @rdname Parameter
+#' @name Parameter
+#' @rdname Parameter-class
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }
@@ -172,22 +174,19 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows 
   callNextMethod(.Object, ...)
 })
 
-#' @rdname Parameter-class
 setMethod("show", "Parameter", function(object) {
   cat("Parameter(", object@rows, ", ", object@cols, ", sign = ", sign(object), ")", sep = "")
 })
 
-#' @rdname Expression-class
 setMethod("as.character", "Parameter", function(x) {
-  paste("Expression(", x@rows, ", ", x@cols, ", sign = ", sign(x), ")", sep = "")
+  paste("Parameter(", x@rows, ", ", x@cols, ", sign = ", sign(x), ")", sep = "")
 })
 
-#' @rdname Canonical-class
 setMethod("get_data", "Parameter", function(object) {
   list(rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str, value = object@value)
 })
 
-#' @rdname Expression-class
+#' @rdname name
 setMethod("name", "Parameter", function(object) { object@name })
 
 #' @rdname size
@@ -202,19 +201,21 @@ setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO
 #' @rdname grad
 setMethod("grad", "Parameter", function(object) { list() })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
 setMethod("parameters", "Parameter", function(object) { list(object) })
 
+#' @rdname value-methods
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) { object@value })
 
+#' @rdname value-methods
 #' @describeIn Parameter Set the value of the parameter.
 setReplaceMethod("value", "Parameter", function(object, value) {
   object@value <- validate_val(object, value)
   object
 })
 
-#' @rdname Canonical-class
+#' @rdname canonicalize
 setMethod("canonicalize", "Parameter", function(object) {
   obj <- create_param(object, size(object))
   list(obj, list())

@@ -67,12 +67,12 @@ setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 
 #'
-#' Is an Expression DCP?
+#' DCP Compliance
 #' 
-#' Determine if an expression complies with the disciplined convex programming rules.
+#' Determine if a problem or expression complies with the disciplined convex programming rules.
 #' 
-#' @param object An \linkS4class{Expression} object.
-#' @return A logical value indicating whether the expression is DCP compliant, i.e. no unknown curvatures.
+#' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
 #' @docType methods
 #' @rdname is_dcp
 #' @export
@@ -418,10 +418,33 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A string indicating the solver that the problem data is for.
 #' @return A list of arguments for the solver.
+#' @examples 
+#' a <- Variable(name = "a")
+#' data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
+#' data[["dims"]]
+#' data[["c"]]
+#' data[["A"]]
+#'
+#' x <- Variable(2, name = "x")
+#' data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")
+#' data[["dims"]]
+#' data[["c"]]
+#' data[["A"]]
+#' data[["G"]]
 #' @rdname get_problem_data
 #' @export
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
 
+#'
+#' Is Problem a QP?
+#' 
+#' Determine if a problem is a quadratic program.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @return A logical value indicating whether the problem is a quadratic program.
+#' @docType methods
+#' @rdname is_qp
+#' @export
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })
 setGeneric(".handle_no_solution", function(object, status) { standardGeneric(".handle_no_solution") })
@@ -445,10 +468,51 @@ setGeneric("get_sym_data", function(solver, objective, constraints, cached_data)
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
 setGeneric("Solver.get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("Solver.get_problem_data") })
 
+# The interface for matrices passed to the solver.
 setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
+
+# The interface for vectors passed to the solver.
 setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
+
+#
+# Extract Constraints
+#  
+# Extracts the equality, inequality, and nonlinear constraints.
+# 
+# @param solver A \linkS4class{SCS} object.
+# @param constr_map A list of canonicalized constraints.
+# @return A list of equality, inequality, and nonlinear constraints.
 setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })
+
+#'
+#' Call to Solver
+#' 
+#' Returns the result of the call to the solver.
+#' 
+#' @param solver A \linkS4class{Solver} object.
+#' @param objective A list representing the canonicalized objective.
+#' @param constraints A list of canonicalized constraints.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose A logical value indicating whether to print solver output.
+#' @param ... Additional arguments to the solver.
+#' @return A list containing the status, optimal value, primal variable, and dual variables for the equality and inequality constraints.
+#' @docType methods
+#' @rdname Solver-solve
 setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { standardGeneric("Solver.solve") })
+
+#' 
+#' Format Solver Results
+#' 
+#' Converts the solver output into standard form.
+#' 
+#' @param solver A \linkS4class{Solver} object.
+#' @param results_dict A list containing the solver output.
+#' @param data A list containing information about the problem.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @return A list containing the solver output in standard form.
+#' @docType methods
+#' @rdname format_results
 setGeneric("format_results", function(solver, results_dict, data, cached_data) { standardGeneric("format_results") })
 
 #'

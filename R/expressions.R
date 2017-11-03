@@ -34,8 +34,8 @@ setMethod("size", "ListORExpr", function(object) {
   cast_op
 }
 
+#' @rdname value-methods
 #' @describeIn Expression The value of the expression.
-#' @export
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname grad
@@ -44,19 +44,17 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 #' @rdname domain
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
-#' @export
 setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
 
 #' @describeIn Expression A string with information about the expression such as curvature, sign, and size.
-#' @export
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
 
+#' @rdname name
 #' @describeIn Expression The string representation of the expression.
-#' @export
 setMethod("name", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature

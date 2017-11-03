@@ -10,7 +10,7 @@ setClass("Canonical", contains = "VIRTUAL")
 #' @describeIn Canonical The graph implementation of the input.
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 
-# The canonical form of the input.
+#' @rdname canonicalize
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
 #' @rdname expression-parts

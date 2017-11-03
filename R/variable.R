@@ -60,6 +60,7 @@ setMethod("as.character", "Variable", function(x) {
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname identification
 #' @describeIn Variable The unique ID of the variable.
 setMethod("id", "Variable", function(object) { object@id })
 

@@ -316,7 +316,7 @@ setMethod("initialize", "MatrixData", function(.Object, sym_data, solver, nonlin
 # Returns a dummy constraint for the objective.
 .dummy_constr <- function(object) { list(create_eq(object@sym_data@objective)) }
 
-# @describeIn MatrixData Returns the linear objective and scalar offset.
+# Returns the linear objective and scalar offset.
 setMethod("get_objective", "MatrixData", function(object) {
   mat <- .cache_to_matrix(object, object@.obj_cache)
   c <- mat[[1]]
@@ -327,13 +327,13 @@ setMethod("get_objective", "MatrixData", function(object) {
   list(c, -offset)
 })
 
-# @describeIn MatrixData Returns the matrix and vector for the equality constraint.
+# Returns the matrix and vector for the equality constraint.
 setMethod("get_eq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.eq_cache) })
 
-# @describeIn MatrixData Returns the matrix and vector for the inequality constraint.
+# Returns the matrix and vector for the inequality constraint.
 setMethod("get_ineq_constr", "MatrixData", function(object) { .cache_to_matrix(object, object@.ineq_cache) })
 
-# @describeIn MatrixData Returns the oracle function for the nonlinear constraints.
+# Returns the oracle function for the nonlinear constraints.
 setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 
 #

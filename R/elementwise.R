@@ -3,17 +3,19 @@
 #'
 #' This virtual class represents an elementwise atom.
 #'
+#' @name Elementwise-class
+#' @aliases Elementwise
 #' @rdname Elementwise-class
 #' @export
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
-#' @describeIn Elementwise Verify all the shapes are the same or can be promoted.
+# Verify all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-# Size is the same as the sum of the arguments' sizes.
 #' @rdname size_from_args
+#' @describeIn Elementwise Size is the same as the sum of the arguments' sizes.
 setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
@@ -68,7 +70,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Abs Returns the elementwise absolute value of the input value.
+# Abs Returns the elementwise absolute value of the input value.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
 #' @rdname sign_from_args
@@ -101,7 +103,6 @@ setMethod(".grad", "Abs", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
 })
 
-#' @rdname graph_implementation
 Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size(x))
@@ -109,7 +110,6 @@ Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data = NA_real_) {
   Abs.graph_implementation(arg_objs, size, data)
 })
@@ -136,7 +136,7 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Entr Returns the elementwise entropy function evaluated at the value.
+# Returns the elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
     tmp <- x*log(y)
@@ -182,7 +182,6 @@ setMethod(".grad", "Entr", function(object, values) {
 
 setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
 
-#' @rdname graph_implementation
 Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -190,7 +189,6 @@ Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, x, ones)))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data = NA_real_) {
   Entr.graph_implementation(arg_objs, size, data)
 })
@@ -217,7 +215,7 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Exp Returns the matrix with each element exponentiated.
+# Returns the matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
 #' @rdname sign_from_args
@@ -242,7 +240,6 @@ setMethod(".grad", "Exp", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname graph_implementation
 Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -250,7 +247,6 @@ Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(x, ones, t)))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data = NA_real_) {
   Exp.graph_implementation(arg_objs, size, data)
 })
@@ -284,13 +280,13 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Huber Checks that \code{M} is a non-negative constant.
+# Checks that \code{M} is a non-negative constant.
 setMethod("validate_args", "Huber", function(object) {
   if(!(is_positive(object@M) && is_constant(object@M) && is_scalar(object@M)))
     stop("M must be a non-negative scalar constant")
 })
 
-#' @describeIn Huber Returns the Huber function evaluted elementwise on the input value.
+# Returns the Huber function evaluted elementwise on the input value.
 setMethod("to_numeric", "Huber", function(object, values) {
   huber_loss <- function(delta, r) {
     if(delta < 0)
@@ -341,7 +337,6 @@ setMethod(".grad", "Huber", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname graph_implementation
 Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   M <- data[[1]]
   x <- arg_objs[[1]]
@@ -370,13 +365,10 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data = NA_real_) {
   Huber.graph_implementation(arg_objs, size, data)
 })
 
-#' @docType methods
-#' @rdname inv_pos
 InvPos <- function(x) { Power(x, -1) }
 
 #'
@@ -403,7 +395,7 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
-#' @describeIn KLDiv Returns the KL-divergence evaluted elementwise on the input value.
+# Returns the KL-divergence evaluted elementwise on the input value.
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
   y <- intf_convert_if_scalar(values[[2]])
@@ -450,7 +442,6 @@ setMethod(".grad", "KLDiv", function(object, values) {
 
 setMethod(".domain", "KLDiv", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
 
-#' @rdname graph_implementation
 KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- Elementwise.promote(arg_objs[[1]], size)
   y <- Elementwise.promote(arg_objs[[2]], size)
@@ -462,7 +453,6 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
   KLDiv.graph_implementation(arg_objs, size, data)
 })
@@ -489,7 +479,7 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Log Returns the elementwise natural logarithm of the input value.
+# Returns the elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
 #' @rdname sign_from_args
@@ -522,7 +512,6 @@ setMethod(".grad", "Log", function(object, values) {
 
 setMethod(".domain", "Log", function(object) { list(object@args[[1]] >= 0) })
 
-#' @rdname graph_implementation
 Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   x <- arg_objs[[1]]
@@ -530,7 +519,6 @@ Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, ones, x)))
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Log", function(object, arg_objs, size, data = NA_real_) {
   Log.graph_implementation(arg_objs, size, data)
 })
@@ -550,7 +538,7 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @rdname Log1p-class
 Log1p <- function(x) { .Log1p(x = x) }
 
-#' @describeIn Log1p Returns the elementwise natural logarithm of one plus the input value.
+# Returns the elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 
 #' @rdname sign_from_args
@@ -571,7 +559,6 @@ setMethod(".grad", "Log1p", function(object, values) {
 
 setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
-#' @rdname graph_implementation
 Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   ones <- create_const(matrix(1, nrow = x$size[1], ncol = x$size[2]), x$size)
@@ -579,7 +566,6 @@ Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   Log.graph_implementation(list(xp1), size, data)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data = NA_real_) {
   Log1p.graph_implementation(arg_objs, size, data)
 })
@@ -608,7 +594,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
+# Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
 #' @rdname sign_from_args
@@ -634,7 +620,6 @@ setMethod(".grad", "Logistic", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @rdname graph_implementation
 Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -654,7 +639,6 @@ Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constr)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, data = NA_real_) {
   Logistic.graph_implementation(arg_objs, size, data)
 })
@@ -680,7 +664,7 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @rdname MaxElemwise-class
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
-#' @describeIn MaxElemwise Returns the elementwise maximum.
+# Returns the elementwise maximum.
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
   # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
   Reduce("pmax", values)
@@ -729,7 +713,6 @@ setMethod(".grad", "MaxElemwise", function(object, values) {
   grad_list
 })
 
-#' @rdname graph_implementation
 MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t <- create_var(size)
   constraints <- lapply(arg_objs, function(obj) {
@@ -739,7 +722,6 @@ MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size, data = NA_real_) {
   MaxElemwise.graph_implementation(arg_objs, size, data)
 })
@@ -818,13 +800,13 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn Power Verification of arguments happens during initialization.
+# Verification of arguments happens during initialization.
 setMethod("validate_args", "Power", function(object) { return() })
 
-#' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
+# A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
-#' @describeIn Power Throw an error if the power is negative and cannot be handled.
+# Throw an error if the power is negative and cannot be handled.
 setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
   if(object@p < 0 && min(values[[1]]) <= 0)
@@ -916,7 +898,6 @@ setMethod(".domain", "Power", function(object) {
     list()
 })
 
-#' @rdname graph_implementation
 Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   p <- data[[1]]
@@ -949,7 +930,6 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
   Power.graph_implementation(arg_objs, size, data)
 })
@@ -973,13 +953,13 @@ Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 
-#' @describeIn Sqrt Verification of arguments happens during initialization.
+# Verification of arguments happens during initialization.
 setMethod("validate_args", "Sqrt", function(object) { return() })
 
-#' @describeIn Sqrt Returns the elementwise square root of the input value.
+# Returns the elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 
-#' @describeIn Sqrt A list containing the output of \code{pow_mid}.
+# A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
 #' @rdname sign_from_args
@@ -1011,7 +991,6 @@ setMethod(".grad", "Sqrt", function(object, values) {
 
 setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
-#' @rdname graph_implementation
 Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -1027,7 +1006,6 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
   Sqrt.graph_implementation(arg_objs, size, data)
 })
@@ -1049,13 +1027,13 @@ Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
 
-#' @describeIn Square Verification of arguments happens during initialization.
+# Square Verification of arguments happens during initialization.
 setMethod("validate_args", "Square", function(object) { return() })
 
-#' @describeIn Square Returns the elementwise square of the input value.
+# Returns the elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 
-#' @describeIn Square A list containing the output of \code{pow_high}.
+# A list containing the output of \code{pow_high}.
 setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 
 #' @rdname sign_from_args
@@ -1085,7 +1063,6 @@ setMethod(".grad", "Square", function(object, values) {
 
 setMethod(".domain", "Square", function(object) { list() })
 
-#' @rdname graph_implementation
 Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(size)
@@ -1101,8 +1078,6 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
-#' @rdname graph_implementation
 setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
   Square.graph_implementation(arg_objs, size, data)
 })
-

@@ -134,7 +134,7 @@ setGeneric("value", function(object) { standardGeneric("value") })
 #' @export
 setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
 
-# Internal method for saving a value.
+# Internal method for saving the value of an expression
 setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
 
 # Information needed to reconstruct the expression aside from its arguments.
@@ -217,12 +217,13 @@ setGeneric("validate_val", function(object, val) { standardGeneric("validate_val
 #' @param object A \linkS4class{Canonical} object.
 #' @return A list of \code{list(affine expression, list(constraints))}.
 #' @docType methods
+#' @name canonicalize
+NULL
+
 #' @rdname canonicalize
-#' @aliases canonical_form
-#' @export
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
-# The canonical form of the input.
+#' @rdname canonicalize
 setGeneric("canonical_form", function(object) { standardGeneric("canonical_form") })
 
 #
@@ -347,12 +348,65 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #' @rdname graph_implementation
 setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
 
-# Constraint generic methods
+#'
+#' Identification Number
+#' 
+#' A unique identification number used internally to keep track of variables and constraints. Should not be modified by the user.
+#'
+#' @param object A \linkS4class{Variable} or \linkS4class{Constraint} object.
+#' @return A non-negative integer identifier.
+#' @seealso get_id setIdCounter
+#' @docType methods
+#' @rdname identification
+#' @export
 setGeneric("id", function(object) { standardGeneric("id") })
+
+#'
+#' Constraint Residual
+#'
+#' The residual expression of a constraint, i.e. the amount by which it is violated, and the value of that violation.
+#' For instance, if our constraint is \eqn{g(x) \leq 0}, the residual is \eqn{max(g(x), 0)} applied elementwise.
+#'
+#' @param object A \linkS4class{Constraint} object.
+#' @return A \linkS4class{Expression} representing the residual, or the value of this expression.
+#' @docType methods
+#' @name residual-methods
+NULL
+
+#' @rdname residual-methods
 setGeneric("residual", function(object) { standardGeneric("residual") })
+
+#' @rdname residual-methods
 setGeneric("violation", function(object) { standardGeneric("violation") })
+
+#'
+#' Second-Order Cone Methods
+#'
+#' The number of elementwise cones or the size of a single cone in a second-order cone constraint.
+#' 
+#' @param object An \linkS4class{SOCAxis} object.
+#' @return The number of cones, or the size of a cone.
+#' @docType methods
+#' @name cone-methods
+NULL
+
+#' @rdname cone-methods
+#' @export
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
+
+#' @rdname cone_size
+#' @export
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
+
+#'
+#' Dual Value
+#'
+#' The value of the dual variable in a constraint.
+#' 
+#' @param object A \linkS4class{Constraint} object.
+#' @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
+#' @rdname dual_value
+#' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
 # 
@@ -368,9 +422,12 @@ setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 # @return A list containing equality constraints, inequality constraints, and dimensions.
 # @rdname format_constr
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
+
+# Constraint generic methods
 setGeneric("constr_type", function(object) { standardGeneric("constr_type") })
 setGeneric("constr_id", function(object) { standardGeneric("constr_id") })
 
+# Nonlinear constraint generic methods
 setGeneric("block_add", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step, horiz_step) { standardGeneric("block_add") })
 setGeneric("place_x0", function(object, big_x, var_offsets) { standardGeneric("place_x0") })
 setGeneric("place_Df", function(object, big_Df, Df, var_offsets, vert_offset) { standardGeneric("place_Df") })

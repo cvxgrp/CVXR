@@ -4,9 +4,11 @@
 #' This virtual class represents a mathematical constraint.
 #'
 #' @slot constr_id (Internal) A unique integer identification number used internally.
+#' @name Constraint-class
 #' @rdname Constraint-class
 setClass("Constraint", representation(constr_id = "integer"), contains = "VIRTUAL")
 
+#' @name Constraint
 #' @rdname Constraint-class
 setMethod("initialize", "Constraint", function(.Object, constr_id = get_id()) {
   .Object@constr_id <- constr_id
@@ -51,6 +53,8 @@ setMethod("constr_id", "ListORConstr", function(object) {
 #' @rdname BoolConstr-class
 BoolConstr <- function(lin_op) { .BoolConstr(lin_op = lin_op) }
 
+#' @name BoolConstr
+#' @rdname BoolConstr-class
 setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var) {
   .Object@lin_op <- lin_op
   # Create a new non-convex variable unless the lin_op is a variable
@@ -87,6 +91,7 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 
 setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
 
+#' @rdname size
 #' @describeIn BoolConstr The dimensions of the semidefinite cone.
 setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 
@@ -159,7 +164,6 @@ setMethod("initialize", "LeqConstraint", definition = function(.Object, ..., lh_
   callNextMethod(.Object, ...)
 })
 
-#' @rdname LeqConstraint-class
 setMethod("show", "LeqConstraint", function(object) {
   arg1 <- paste(as.character(object@args[[1]]), collapse = ", ")
   arg2 <- paste(as.character(object@args[[2]]), collapse = ", ")
@@ -173,36 +177,43 @@ setMethod("as.character", "LeqConstraint", function(x) {
   paste(arg1, "<=", arg2)   # TODO: Add OP_NAME parameter to LeqConstraint
 })
 
-#' @rdname LeqConstraint-class
+#' @rdname identification
+#' @describeIn LeqConstraint The unique identification number of the constraint.
 setMethod("id", "LeqConstraint", function(object) { object@constr_id })
 
 #' @rdname size
+#' @describeIn LeqConstraint The size of the left-hand expression minus the right-hand expression.
 setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
 
+#' @rdname is_dcp
 #' @describeIn LeqConstraint A logical value indicating whether the left-hand expression is convex and the right-hand expression is concave.
 setMethod("is_dcp", "LeqConstraint", function(object) { is_convex(object@.expr) })
 
+#' @rdname canonicalize
 #' @describeIn LeqConstraint The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{LeqConstraint}.
-#' @return A list containing \code{list(affine expression, list(constraints))}.
 setMethod("canonicalize", "LeqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual_holder <- create_leq(canon[[1]], constr_id = object@constr_id)
   list(NA, c(canon[[2]], list(dual_holder)))
 })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
+#' @describeIn LeqConstraint The variables in the constraint.
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
+#' @describeIn LeqConstraint The parameters in the constraint.
 setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.expr) })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
+#' @describeIn LeqConstraint The constants in the constraint.
 setMethod("constants", "LeqConstraint", function(object) { constants(object@.expr) })
 
+#' @rdname residual-methods
 #' @describeIn LeqConstraint An \linkS4class{Expression} representing the residual of the constraint.
-#' @export
 setMethod("residual", "LeqConstraint", function(object) { MaxElemwise(object@.expr, 0) })
 
+#' @rdname value-methods
 #' @describeIn LeqConstraint A logical value indicating whether the constraint holds.
 setMethod("value", "LeqConstraint", function(object) {
   resid <- value(residual(object))
@@ -212,15 +223,15 @@ setMethod("value", "LeqConstraint", function(object) {
     return(all(resid <= 1e-4))   # TODO: Add TOLERANCE parameter to LeqConstraint
 })
 
+#' @rdname residual-methods
 #' @describeIn LeqConstraint A matrix representing the amount by which the constraint is off.
-#' @export
 setMethod("violation", "LeqConstraint", function(object) { value(residual(object)) })
 
+#' @rdname dual_value
 #' @describeIn LeqConstraint The value of the dual variable.
-#' @export
 setMethod("dual_value", "LeqConstraint", function(object) { value(object@dual_variable) })
 
-#' @describeIn LeqConstraint Set the value of the dual variable for the constraint's parent.
+# Set the value of the dual variable for the constraint's parent.
 setMethod("save_value", "LeqConstraint", function(object, value) { save_value(object@dual_variable, value) })
 
 #'
@@ -246,14 +257,16 @@ setMethod("save_value", "LeqConstraint", function(object, value) { save_value(ob
 #' @rdname EqConstraint-class
 EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @rdname is_dcp
 #' @describeIn EqConstraint A logical value indicating whether the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
 
+#' @rdname residual-methods
 #' @describeIn EqConstraint An \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "EqConstraint", function(object) { abs(object@.expr) })
 
+#' @rdname canonicalize
 #' @describeIn EqConstraint The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{EqConstraint}.
-#' @return A list containing \code{list(affine expression, list(constraints))}.
 setMethod("canonicalize", "EqConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   dual_holder <- create_eq(canon[[1]], constr_id = object@constr_id)
@@ -299,8 +312,10 @@ setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) 
   callNextMethod(.Object, ...)
 })
 
+#' @rdname expression-parts
 #' @describeIn NonlinearConstraint The variables involved in the function in order, i.e. \code{f(vars_) = f(vstack(variables))}.
 setMethod("variables", "NonlinearConstraint", function(object) { object@vars_ })
+
 setMethod("block_add", "NonlinearConstraint", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
   row_seq <- seq(vert_offset, rows + vert_offset, vert_step)
   col_seq <- seq(horiz_offset, cols + horiz_offset, horiz_step)
@@ -308,7 +323,7 @@ setMethod("block_add", "NonlinearConstraint", function(object, mat, block, vert_
   mat
 })
 
-#' @describeIn NonlinearConstraint Place \code{x_0 = f()} in the vector of all variables.
+# Place \code{x_0 = f()} in the vector of all variables.
 setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets) {
   tmp <- object@f()
   m <- tmp[[1]]
@@ -323,7 +338,7 @@ setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets
   big_x
 })
 
-#' @describeIn NonlinearConstraint Place \code{Df} in the gradient of all functions.
+# Place \code{Df} in the gradient of all functions.
 setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_offsets, vert_offset) {
   horiz_offset <- 0
   for(var in variables(object)) {
@@ -335,7 +350,7 @@ setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_of
   big_Df
 })
 
-#' @describeIn NonlinearConstraint Place \code{H} in the Hessian of all functions.
+# Place \code{H} in the Hessian of all functions.
 setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offsets) {
   offset <- 0
   for(var in variables(object)) {
@@ -347,7 +362,7 @@ setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offse
   big_H
 })
 
-#' @describeIn NonlinearConstraint Extract the function variables from the vector \code{x} of all variables.
+# Extract the function variables from the vector \code{x} of all variables.
 setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_offsets) {
   local_x <- matrix(0, nrow = object@.x_size[1], ncol = object@.x_size[2])
   offset <- 0
@@ -404,6 +419,8 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 })
 
 # TODO: Is this the correct size method for the exponential cone class?
+#' @rdname size
+#' @describeIn ExpCone The size of the \code{x} argument.
 setMethod("size", "ExpCone", function(object) { size(object@x) })
 
 #' @describeIn ExpCone A string with information about the constraint.
@@ -411,7 +428,8 @@ setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })
 
-#' @rdname Canonical-class
+#' @rdname expression-parts
+#' @describeIn ExpCone The variables in the exponential cone.
 setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
 
 # Formats exponential cone constraints for the solver.
@@ -460,8 +478,8 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
 #' 
 #' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
+#' @name PSDConstraint-class
 #' @rdname PSDConstraint-class
-#' @export
 .PSDConstraint <- setClass("PSDConstraint",
                            validity = function(object) {
                              lh_exp <- object@lh_exp
@@ -479,20 +497,23 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
 #' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @return A \linkS4class{PSDConstraint} object.
-#' @rdname PSDConstraint
+#' @name PSDConstraint
+#' @rdname PSDConstraint-class
 PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @rdname is_dcp
 #' @describeIn PSDConstraint A logical value indicating whether both sides are affine.
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 
+#' @rdname residual-methods
 #' @describeIn PSDConstraint A \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "PSDConstraint", function(object) {
   min_eig <- LambdaMin(object@.expr + t(object@.expr))/2
   -MinElemwise(min_eig, 0)
 })
 
+#' @rdname canonicalize
 #' @describeIn PSDConstraint The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{PSDConstraint}.
-#' @return A list containing \code{list(affine expression, list(constraints))}.
 setMethod("canonicalize", "PSDConstraint", function(object) {
   canon <- canonical_form(object@.expr)
   obj <- canon[[1]]
@@ -553,6 +574,7 @@ setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, 
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
+#' @rdname size
 #' @describeIn SOC The dimensions of the second-order cone.
 setMethod("size", "SOC", function(object) {
   sizes <- sapply(object@x_elems, function(elem) { prod(size(elem)) })
@@ -661,6 +683,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
   create_eq(upper_tri, lower_tri)
 }
 
+#' @rdname size
 #' @describeIn SDP The dimensions of the semidefinite cone.
 setMethod("size", "SDP", function(object) { size(object@A) })
 
@@ -759,9 +782,11 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
+#' @rdname cone-methods
 #' @describeIn SOCAxis The number of elementwise cones.
 setMethod("num_cones", "SOCAxis", function(object) { size(object@t)[1] })
 
+#' @rdname cone-methods
 #' @describeIn SOCAxis The dimensions of a single cone.
 setMethod("cone_size", "SOCAxis", function(object) {
   if(object@axis == 1)   # Return ncols if applying along each row
@@ -772,8 +797,8 @@ setMethod("cone_size", "SOCAxis", function(object) {
     stop("Invalid axis ", object@axis)
 })
 
-#' @describeIn SOCAxis The dimensions of the second-order cones.
-#' @return A list of the dimensions of the elementwise cones.
+#' @rdname size
+#' @describeIn SOCAxis The dimensions of the (elementwise) second-order cones.
 setMethod("size", "SOCAxis", function(object) {
   cone_size <- cone_size(object)
   lapply(1:num_cones(object), function(i) { cone_size })

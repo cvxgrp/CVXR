@@ -37,9 +37,6 @@ Solver.choose_solver <- function(constraints) {
     return(ECOS())
 }
 
-#' @describeIn Solver Raises an exception if the solver cannot solver the problem.
-#' @param solver A \linkS4class{Solver} object.
-#' @param constraints A list of canonicalized constraints
 setMethod("validate_solver", "Solver", function(solver, constraints) {
   # Check the solver is installed.
   if(!import_solver(solver))
@@ -73,12 +70,6 @@ Solver._reject_problem <- function(solver, reason) {
   stop(message)
 }
 
-#' @describeIn Solver Clears the cache if the objective or constraints changed.
-#' @param solver A \linkS4class{Solver} object.
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @return The updated \code{cached_data}.
 setMethod("validate_cache", "Solver", function(solver, objective, constraints, cached_data) {
   prob_data <- cached_data[[name(solver)]]
   if(!is.null(prob_data@sym_data) && (!isTRUE(all.equal(objective, prob_data@sym_data@objective)) ||
@@ -90,12 +81,6 @@ setMethod("validate_cache", "Solver", function(solver, objective, constraints, c
   cached_data
 })
 
-#' @describeIn Solver Returns the symbolic data for the problem.
-#' @param solver A \linkS4class{Solver} object.
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @return A \linkS4class{SymData} object holding the symbolic data for the problem.
 setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cached_data) {
   cached_data <- validate_cache(solver, objective, constraints, cached_data)
   prob_data <- cached_data[[name(solver)]]
@@ -105,12 +90,6 @@ setMethod("get_sym_data", "Solver", function(solver, objective, constraints, cac
   cached_data
 })
 
-#' @describeIn Solver Returns the numeric data for the problem.
-#' @param solver A \linkS4class{Solver} object.
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @return A \linkS4class{SymData} object holding the symbolic data for the problem.
 setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, cached_data) {
   cached_data <- get_sym_data(solver, objective, constraints, cached_data)
   sym_data <- cached_data[[name(solver)]]@sym_data
@@ -121,12 +100,6 @@ setMethod("get_matrix_data", "Solver", function(solver, objective, constraints, 
   cached_data
 })
 
-#' @describeIn Solver Returns the argument for the call to the solver.
-#' @param solver A \linkS4class{Solver} object.
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @return A list of the arguments needed for the solver.
 setMethod("Solver.get_problem_data", "Solver", function(solver, objective, constraints, cached_data) {
   cached_data <- get_sym_data(solver, objective, constraints, cached_data)
   sym_data <- cached_data[[name(solver)]]@sym_data

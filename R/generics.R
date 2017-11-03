@@ -519,10 +519,62 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
 setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
+
+#
+# Validate Solver
+# 
+# Raises an exception if the solver cannot solver the problem.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param constraints A list of canonicalized constraints
 setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
+
+# 
+# Validate Cache
+# 
+# Clears the cache if the objective or constraints changed.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param objective A list representing the canonicalized objective.
+# @param constraints A list of canonicalized constraints.
+# @param cached_data A list mapping solver name to cached problem data.
+# @return The updated \code{cached_data}.
 setGeneric("validate_cache", function(solver, objective, constraints, cached_data) { standardGeneric("validate_cache") })
+
+#
+# Get Symbolic Data
+#
+# Returns the symbolic data for the problem.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param objective A list representing the canonicalized objective.
+# @param constraints A list of canonicalized constraints.
+# @param cached_data A list mapping solver name to cached problem data.
+# @return A \linkS4class{SymData} object holding the symbolic data for the problem.
 setGeneric("get_sym_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_sym_data") })
+
+#
+# Get Matrix Data
+#
+# Returns the numeric data for the problem.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param objective A list representing the canonicalized objective.
+# @param constraints A list of canonicalized constraints.
+# @param cached_data A list mapping solver name to cached problem data.
+# @return A \linkS4class{SymData} object holding the symbolic data for the problem.
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
+
+# 
+# Solver: Get Problem Data
+# 
+# Returns the argument for the call to the solver.
+#
+# @param solver A \linkS4class{Solver} object.
+# @param objective A list representing the canonicalized objective.
+# @param constraints A list of canonicalized constraints.
+# @param cached_data A list mapping solver name to cached problem data.
+# @return A list of the arguments needed for the solver.
 setGeneric("Solver.get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("Solver.get_problem_data") })
 
 # The interface for matrices passed to the solver.

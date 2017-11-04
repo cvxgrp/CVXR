@@ -30,6 +30,7 @@ setMethod("constr_id", "ListORConstr", function(object) {
 #'
 #' This class represents a boolean constraint, \eqn{X_{ij} \in \{0,1\}} for all \eqn{i,j}.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot lin_op A list representing the linear operator equal to the \code{.noncvx_var}.
 #' @slot .noncvx_var (Internal) A list representing the variable constrained to be elementwise boolean.
 #' @name BoolConstr-class
@@ -42,13 +43,6 @@ setMethod("constr_id", "ListORConstr", function(object) {
                                         return(TRUE)
                                       }, contains = "Constraint")
 
-#'
-#' Boolean Constraint Constructor
-#'
-#' Construct a \linkS4class{BoolConstr} object.
-#' 
-#' @param lin_op The linear operator equal to the variable constrained to be elementwise boolean.
-#' @return A \linkS4class{BoolConstr} object.
 #' @name BoolConstr
 #' @rdname BoolConstr-class
 BoolConstr <- function(lin_op) { .BoolConstr(lin_op = lin_op) }
@@ -65,7 +59,7 @@ setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var
   callNextMethod(.Object, ...)
 })
 
-# Formats SDP constraints as inequalities for the solver.
+#' @describeIn BoolConstr Format SDP constraints as inequalities for the solver.
 setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
     eq_constr <- list()
@@ -100,19 +94,13 @@ setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 #'
 #' This class represents an integer constraint, \eqn{X_{ij} \in \mathbf{Z}} for all \eqn{i,j}.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot lin_op A list representing the linear operator equal to the \code{.noncvx_var}.
 #' @slot .noncvx_var (Internal) A list representing the variable constrained to be elementwise integer.
 #' @name IntConstr-class
 #' @rdname IntConstr-class
 .IntConstr <- setClass("IntConstr", contains = "BoolConstr")
 
-#'
-#' Integer Constraint Constructor
-#'
-#' Construct a \linkS4class{IntConstr} object.
-#' 
-#' @param lin_op The linear operator equal to the variable constrained to be elementwise integer.
-#' @return A \linkS4class{IntConstr} object.
 #' @name IntConstr
 #' @rdname IntConstr-class
 IntConstr <- function(lin_op) { .IntConstr(lin_op = lin_op) }
@@ -124,6 +112,7 @@ setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
 #'
 #' This class represents a \eqn{\leq} inequality constraint.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
@@ -140,14 +129,6 @@ setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
                            },
                             contains = c("Canonical", "Constraint"))
 
-#'
-#' Inequality Constraint Constructor
-#'
-#' Construct a \linkS4class{LeqConstraint} object.
-#'
-#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
-#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
-#' @return A \linkS4class{LeqConstraint} object.
 #' @name LeqConstraint
 #' @rdname LeqConstraint-class
 LeqConstraint <- function(lh_exp, rh_exp) { .LeqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
@@ -239,20 +220,16 @@ setMethod("save_value", "LeqConstraint", function(object, value) { save_value(ob
 #'
 #' This class represents a equality constraint.
 #' 
-#' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the equality.
-#' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the equality.
+#' @slot constr_id (Internal) A unique integer identification number used internally.
+#' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
+#' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
+#' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
+#' @slot .expr (Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.
+#' @slot dual_variable (Internal) A \linkS4class{Variable} representing the dual variable associated with the constraint.
 #' @name EqConstraint-class
 #' @rdname EqConstraint-class
 .EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
 
-#'
-#' Equality Constraint Constructor
-#'
-#' Construct a \linkS4class{EqConstraint} object.
-#'
-#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
-#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
-#' @return A \linkS4class{EqConstraint} object.
 #' @name EqConstraint
 #' @rdname EqConstraint-class
 EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
@@ -279,6 +256,7 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 #'
 #' This class represents a nonlinear inequality constraint, \eqn{f(x) \leq 0} where \eqn{f} is twice-differentiable.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot f A nonlinear function.
 #' @slot vars_ A list of variables involved in the function.
 #' @slot .x_size (Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.
@@ -287,14 +265,6 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 .NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"),
                                  prototype(.x_size = NA_integer_), contains = "Constraint")
 
-#'
-#' Nonlinear Constraint Constructor
-#'
-#' Construct a \linkS4class{NonlinearConstraint} class object.
-#'
-#' @param f A nonlinear function.
-#' @param vars_ A list of variables involved in the function.
-#' @return A \linkS4class{NonlinearConstraint} object.
 #' @name NonlinearConstraint
 #' @rdname NonlinearConstraint-class
 NonlinearConstraint <- function(f, vars_) { .NonlinearConstraint(f = f, vars_ = vars_) }
@@ -390,6 +360,7 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 #' }
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot x The variable \eqn{x} in the exponential cone.
 #' @slot y The variable \eqn{y} in the exponential cone.
 #' @slot z The variable \eqn{z} in the exponential cone.
@@ -397,14 +368,6 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @rdname ExpCone-class
 .ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "Constraint")
 
-#'
-#' Exponential Cone Constructor
-#' 
-#' Construct a \linkS4class{ExpCone} class object.
-#'
-#' @param x The variable \eqn{x} in the exponential cone.
-#' @param y The variable \eqn{y} in the exponential cone.
-#' @param z The variable \eqn{z} in the exponential cone.
 #' @name ExpCone
 #' @rdname ExpCone-class
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
@@ -432,7 +395,7 @@ setMethod("as.character", "ExpCone", function(x) {
 #' @describeIn ExpCone List of \linkS4class{Variable} objects in the exponential cone.
 setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
 
-# Formats exponential cone constraints for the solver.
+#' @describeIn ExpCone Format exponential cone constraints for the solver.
 setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, dims, solver) {
   .cvxopt_format <- function(object) {
     constraints <- list()
@@ -476,8 +439,12 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
 #'
 #' This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i.e. \eqn{z^T(X - Y)z \geq 0} for all \eqn{z}.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
+#' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
+#' @slot .expr (Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.
+#' @slot dual_variable (Internal) A \linkS4class{Variable} representing the dual variable associated with the constraint.
 #' @name PSDConstraint-class
 #' @rdname PSDConstraint-class
 .PSDConstraint <- setClass("PSDConstraint",
@@ -489,14 +456,6 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
                              return(TRUE)
                            }, contains = "LeqConstraint")
 
-#'
-#' Positive Semidefinite Constraint Constructor
-#'
-#' Construct a \linkS4class{PSDConstraint} class object.
-#'
-#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
-#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
-#' @return A \linkS4class{PSDConstraint} object.
 #' @name PSDConstraint
 #' @rdname PSDConstraint-class
 PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
@@ -529,6 +488,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
 #' 
 #' This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot t The scalar part of the second-order constraint.
 #' @slot x_elems A list containing the elements of the vector part of the constraint.
 #' @name SOC-class
@@ -536,14 +496,6 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
 .SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"),
                         prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 
-#'
-#' Second-Order Cone Constraint Constructor
-#'
-#' Construct a \linkS4class{SOC} class object.
-#'
-#' @param t The scalar part of the second-order constraint.
-#' @param x_elems A list containing the elements of the vector part of the constraint.
-#' @return A \linkS4class{SOC} object.
 #' @name SOC
 #' @rdname SOC-class
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
@@ -561,7 +513,7 @@ setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "")
 })
 
-# Formats SOC constraints as inequalities for the solver.
+#' @describeIn SOC Format SOC constraints as inequalities for the solver.
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
     leq_constr <- lapply(object@x_elems, function(elem) { create_geq(elem) })
@@ -590,6 +542,7 @@ setMethod("size", "SOC", function(object) {
 #' \{\mbox{symmetric } A | x^TAx \geq 0 \mbox{ for all } x\}
 #' }
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot A The matrix variable constrained to be semidefinite.
 #' @slot enforce_sym A logical value indicating whether symmetry constraints should be added.
 #' @name SDP-class
@@ -597,15 +550,6 @@ setMethod("size", "SOC", function(object) {
 .SDP <- setClass("SDP", representation(A = "ListORExpr", enforce_sym = "logical"),
                        prototype(enforce_sym = TRUE), contains = "Constraint")
 
-#'
-#' Semidefinite Cone Constraint Constructor
-#'
-#' Construct a \linkS4class{SDP} class object.
-#'
-#' @param A The matrix variable constrained to be semidefinite.
-#' @param enforce_sym (Optional) A logical value indicating whether symmetry constraints should be added.
-#' @param constr_id (Internal) A unique integer identification number used internally.
-#' @return A \linkS4class{SDP} object.
 #' @name SDP
 #' @rdname SDP-class
 SDP <- function(A, enforce_sym = TRUE, constr_id) {
@@ -687,7 +631,7 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
 #' @describeIn SDP The dimensions of the semidefinite cone.
 setMethod("size", "SDP", function(object) { size(object@A) })
 
-# Formats SDP constraints as inequalities for the solver.
+#' @describeIn SDP Format SDP constraints as inequalities for the solver.
 setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, solver) {
   .scs_format <- function(object) {
     eq_constr <- .get_eq_constr(object)
@@ -730,8 +674,9 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
 #' This class represents a second-order cone constraint for each row/column.
 #' It Assumes \eqn{t} is a vector the same length as \eqn{X}'s rows (columns) for axis == 1 (2).
 #' 
+#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot t The scalar part of the second-order constraint.
-#' @slot X A matrix whose rows/columns are each a cone.
+#' @slot x_elems A list containing \code{X}, a matrix whose rows/columns are each a cone.
 #' @slot axis Slice by row (1) or column (2).
 #' @name SOCAxis-class
 #' @rdname SOCAxis-class
@@ -744,14 +689,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
                       return(TRUE)
                     }, contains = "SOC")
 
-#'
-#' Second-Order Cone Constraint by Row/Column Constraint
-#'
-#' Construct a \linkS4class{SOCAxis} class object.
-#'
-#' @param t The scalar part of the second-order constraint.
-#' @param X A matrix whose rows/columns are each a cone.
-#' @param axis Slice by row (1) or column (2).
+
 #' @name SOCAxis
 #' @rdname SOCAxis-class
 SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
@@ -768,7 +706,7 @@ setMethod("as.character", "SOCAxis", function(x) {
   paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
 })
 
-# Formats SOC constraints as inequalities for the solver.
+#' @describeIn SOCAxis Format SOC constraints as inequalities for the solver.
 setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, dims, solver) {
  .format <- function(object) {
    list(list(), format_axis(object@t, object@x_elems[[1]], object@axis))

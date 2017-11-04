@@ -438,18 +438,18 @@ setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 #' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
-# 
-# Format Constraints
-# 
-# Formats constraints for the solver.
-# 
-# @param object A \linkS4class{Constraint} object.
-# @param eq_constr A list of the equality constraints in the canonical problem.
-# @param leq_constr A list of the inequality constraints in the canonical problem.
-# @param dims A list with the dimensions of the conic constraints.
-# @param solver A string representing the solver to be called.
-# @return A list containing equality constraints, inequality constraints, and dimensions.
-# @rdname format_constr
+#' 
+#' Format Constraints
+#' 
+#' Format constraints for the solver.
+#' 
+#' @param object A \linkS4class{Constraint} object.
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
+#' @return A list containing equality constraints, inequality constraints, and dimensions.
+#' @rdname format_constr
 setGeneric("format_constr", function(object, eq_constr, leq_constr, dims, solver) { standardGeneric("format_constr") })
 
 # Constraint generic methods

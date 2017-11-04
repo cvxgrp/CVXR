@@ -137,7 +137,15 @@ setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
 # Internal method for saving the value of an expression
 setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
 
-# Information needed to reconstruct the expression aside from its arguments.
+#'
+#' Get Expression Data
+#'
+#' Get information needed to reconstruct the expression aside from its arguments.
+#' 
+#' @param object A \linkS4class{Expression} object.
+#' @return A list containing data
+#' @docType methods
+#' @rdname get_data
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 
 #'
@@ -199,14 +207,16 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #' @export
 setGeneric("domain", function(object) { standardGeneric("domain") })
 
-#
-# Validate Value
-#
-# Check that the value satisfies a \linkS4class{Leaf}'s symbolic attributes.
-# 
-# @param object A \linkS4class{Leaf} object.
-# @param val The assigned value.
-# @return The value converted to proper matrix type.
+#'
+#' Validate Value
+#'
+#' Check that the value satisfies a \linkS4class{Leaf}'s symbolic attributes.
+#' 
+#' @param object A \linkS4class{Leaf} object.
+#' @param val The assigned value.
+#' @return The value converted to proper matrix type.
+#' @docType methods
+#' @rdname validate_val
 setGeneric("validate_val", function(object, val) { standardGeneric("validate_val") })
 
 #'
@@ -286,12 +296,31 @@ setGeneric("size_from_args", function(object) { standardGeneric("size_from_args"
 #'
 #' Determine the sign of an atom based on its arguments.
 #' 
-#' @param object A \linkS4class{Atom} object.
+#' @param object An \linkS4class{Atom} object.
 #' @return A logical vector \code{c(is positive, is negative)} indicating the sign of the atom.
 #' @rdname sign_from_args
 setGeneric("sign_from_args", function(object) { standardGeneric("sign_from_args") })
+
+#'
+#' Validate Arguments
+#' 
+#' Validate an atom's arguments, returning an error if any are invalid.
+#'
+#' @param object An \linkS4class{Atom} object.
+#' @docType methods
+#' @rdname validate_args
 setGeneric("validate_args", function(object) { standardGeneric("validate_args") })
-setGeneric("get_data", function(object) { standardGeneric("get_data") })
+
+#'
+#' Numeric Value of Atom
+#' 
+#' Returns the numeric value of the atom evaluated on the specified arguments.
+#'
+#' @param object An \linkS4class{Atom} object.
+#' @param values A list of arguments to the atom.
+#' @return A numeric scalar, vector, or matrix.
+#' @docType methods
+#' @rdname to_numeric
 setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric") })
 
 #'

@@ -449,9 +449,11 @@ setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
 
 #' @rdname domain
-#' @describeIn A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
+#' @describeIn Leaf A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
+#' @rdname validate_val
+#' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
     # Convert val to the proper matrix type

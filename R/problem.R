@@ -4,11 +4,19 @@
 #' This class represents an optimization objective for minimization.
 #'
 #' @slot expr A scalar \linkS4class{Expression} to minimize.
-#' @rdname Minimize
-#' @export
-Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
+#' @name Minimize-class
+#' @rdname Minimize-class
+.Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
 
-#' @rdname Minimize
+#' @name Minimize
+#' @rdname Minimize-class
+#' @export
+Minimize <- function(expr) {
+  .Minimize(expr = expr)
+}
+
+#' @name Minimize
+#' @rdname Minimize-class
 setMethod("initialize", "Minimize", function(.Object, expr) {
     .Object@expr <- as.Constant(expr)
     if(!all(size(.Object@expr) == c(1,1)))
@@ -52,9 +60,16 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
-#' @rdname Maximize
+#' @name Maximize-class
+#' @rdname Maximize-class
+.Maximize <- setClass("Maximize", contains = "Minimize")
+
+#' @name Maximize
+#' @rdname Maximize-class
 #' @export
-Maximize <- setClass("Maximize", contains = "Minimize")
+Maximize <- function(expr) {
+  .Maximize(expr = expr)
+}
 
 #'
 #' Arithmetic Operations on Objectives

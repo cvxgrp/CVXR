@@ -5,9 +5,11 @@
 #'
 #' @name Expression
 #' @rdname Expression-class
-#' @export
 Expression <- setClass("Expression", contains = "Canonical")
 
+#' @import Matrix gmp
+#' @importClassesFrom Matrix CsparseMatrix TsparseMatrix dMatrix
+#' @importClassesFrom gmp bigq bigz
 setOldClass("data.frame")
 setOldClass("matrix")
 setOldClass("vector")
@@ -362,32 +364,32 @@ setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 
 # Positive definite inequalities
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%>>%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e1, e2) })
 
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%>>%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %>>% as.Constant(e2) })
 
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%>>%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %>>% e2 })
 
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%<<%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e2, e1) })
 
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%<<%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %<<% as.Constant(e2) })
 
 #' @docType methods
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %<<% e2 })
 

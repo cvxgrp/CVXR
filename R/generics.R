@@ -273,11 +273,11 @@ setGeneric(".axis_grad", function(object, values) { standardGeneric(".axis_grad"
 setGeneric(".column_grad", function(object, value) { standardGeneric(".column_grad") })
 
 # Positive definite inequalities
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 
-#' @rdname PSDConstraint
+#' @rdname PSDConstraint-class
 #' @export
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
@@ -423,7 +423,7 @@ NULL
 #' @export
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 
-#' @rdname cone_size
+#' @rdname cone-methods
 #' @export
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 

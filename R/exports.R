@@ -29,6 +29,7 @@
 #' result$value
 #' result$getValue(x)
 #' @docType methods
+#' @name geo_mean
 #' @rdname geo_mean
 #' @export
 geo_mean <- GeoMean
@@ -40,13 +41,8 @@ geo_mean <- GeoMean
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the harmonic mean of the input.
-#' @examples 
-#' x <- Variable(3)
-#' val <- c(1,2,3)
-#' prob <- Problem(Minimize(harmonic_mean(x)), list(x == val))
-#' result <- solve(prob)
-#' result$value
 #' @docType methods
+#' @name harmonic_mean
 #' @rdname harmonic_mean
 #' @export
 harmonic_mean <- HarmonicMean
@@ -70,6 +66,7 @@ harmonic_mean <- HarmonicMean
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name lambda_max
 #' @rdname lambda_max
 #' @export
 lambda_max <- LambdaMax
@@ -89,6 +86,7 @@ lambda_max <- LambdaMax
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name lambda_min
 #' @rdname lambda_min
 #' @export
 lambda_min <- LambdaMin
@@ -109,6 +107,7 @@ lambda_min <- LambdaMin
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name lambda_sum_largest
 #' @rdname lambda_sum_largest
 #' @export
 lambda_sum_largest <- LambdaSumLargest
@@ -129,6 +128,7 @@ lambda_sum_largest <- LambdaSumLargest
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name lambda_sum_smallest
 #' @rdname lambda_sum_smallest
 #' @export
 lambda_sum_smallest <- LambdaSumSmallest
@@ -154,6 +154,7 @@ lambda_sum_smallest <- LambdaSumSmallest
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name log_det
 #' @rdname log_det
 #' @export
 log_det <- LogDet
@@ -173,6 +174,7 @@ log_det <- LogDet
 #' result <- solve(prob)
 #' result$getValue(A)
 #' @docType methods
+#' @name log_sum_exp
 #' @rdname log_sum_exp
 #' @export
 log_sum_exp <- LogSumExp
@@ -208,6 +210,7 @@ log_sum_exp <- LogSumExp
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name matrix_frac
 #' @rdname matrix_frac
 #' @export
 matrix_frac <- MatrixFrac
@@ -233,6 +236,7 @@ matrix_frac <- MatrixFrac
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name max_entries
 #' @rdname max_entries
 #' @export
 max_entries <- MaxEntries
@@ -252,6 +256,7 @@ max_entries <- MaxEntries
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name min_entries
 #' @rdname min_entries
 #' @export
 min_entries <- MinEntries
@@ -280,6 +285,7 @@ min_entries <- MinEntries
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name mixed_norm
 #' @rdname mixed_norm
 #' @export
 mixed_norm <- MixedNorm
@@ -311,6 +317,7 @@ mixed_norm <- MixedNorm
 #' result$value
 #' result$getValue(x[1] - z[1])
 #' @docType methods
+#' @name norm1
 #' @rdname norm1
 #' @export
 norm1 <- Norm1
@@ -349,7 +356,9 @@ norm1 <- Norm1
 #' result$getValue(x)
 #' result$getValue(z)
 #' @docType methods
+#' @name norm2
 #' @rdname norm2
+#' @export
 norm2 <- Norm2
 
 #'
@@ -388,6 +397,7 @@ norm2 <- Norm2
 #' result$value
 #' result$getValue(x[1] - z[1])
 #' @docType methods
+#' @name norm_inf
 #' @rdname norm_inf
 #' @export
 norm_inf <- NormInf
@@ -406,6 +416,7 @@ norm_inf <- NormInf
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name norm_nuc
 #' @rdname norm_nuc
 #' @export
 norm_nuc <- NormNuc
@@ -451,6 +462,7 @@ norm_nuc <- NormNuc
 #' result$value
 #' result$getValue(x)
 #' @docType methods
+#' @name p_norm
 #' @rdname p_norm
 #' @export
 p_norm <- Pnorm
@@ -478,6 +490,7 @@ p_norm <- Pnorm
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name quad_form
 #' @rdname quad_form
 #' @export
 quad_form <- QuadForm
@@ -500,6 +513,7 @@ quad_form <- QuadForm
 #' result$getValue(x)
 #' result$getValue(y)
 #' @docType methods
+#' @name quad_over_lin
 #' @rdname quad_over_lin
 #' @export
 quad_over_lin <- QuadOverLin
@@ -525,6 +539,7 @@ quad_over_lin <- QuadOverLin
 #' result$value
 #' result$getValue(C)
 #' @docType methods
+#' @name sum_entries
 #' @rdname sum_entries
 #' @export
 sum_entries <- SumEntries
@@ -551,6 +566,7 @@ sum_entries <- SumEntries
 #' result <- solve(prob)
 #' result$getValue(beta)
 #' @docType methods
+#' @name sum_largest
 #' @rdname sum_largest
 #' @export
 sum_largest <- SumLargest
@@ -578,6 +594,7 @@ sum_largest <- SumLargest
 #' result <- solve(prob)
 #' result$getValue(beta)
 #' @docType methods
+#' @name sum_smallest
 #' @rdname sum_smallest
 #' @export
 sum_smallest <- SumSmallest
@@ -605,6 +622,7 @@ sum_smallest <- SumSmallest
 #' result$getValue(x)
 #' result$getDualValue(constr[[1]]))
 #' @docType methods
+#' @name sum_squares
 #' @rdname sum_squares
 #' @export
 sum_squares <- SumSquares
@@ -623,7 +641,10 @@ sum_squares <- SumSquares
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name matrix_trace
+#' @aliases trace tr
 #' @rdname matrix_trace
+#' @export
 matrix_trace <- Trace
 
 #'
@@ -657,11 +678,14 @@ matrix_trace <- Trace
 #' result <- solve(prob, solver = "SCS")
 #' result$getValue(U)
 #' @docType methods
+#' @name tv
+#' @aliases total_variation
 #' @rdname tv
 #' @export
 tv <- TotalVariation
 
 #' @docType methods
+#' @name max
 #' @rdname max_entries
 #' @export
 max.Expression <- function(..., na.rm = FALSE) {
@@ -679,6 +703,7 @@ max.Expression <- function(..., na.rm = FALSE) {
 }
 
 #' @docType methods
+#' @name min
 #' @rdname min_entries
 #' @export
 min.Expression <- function(..., na.rm = FALSE) {
@@ -719,6 +744,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #' result <- solve(prob, solver = "SCS")
 #' result$value
 #' @docType methods
+#' @name norm
 #' @rdname norm
 #' @export
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type) {
@@ -741,6 +767,7 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
 })
 
 #' @docType methods
+#' @name sum
 #' @rdname sum_entries
 #' @export
 sum.Expression <- function(..., na.rm = FALSE) {
@@ -772,6 +799,7 @@ sum.Expression <- function(..., na.rm = FALSE) {
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name mean
 #' @rdname mean
 #' @export
 mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
@@ -799,6 +827,8 @@ mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
 #' result <- solve(prob)
 #' result$getValue(x)
 #' @docType methods
+#' @name entr
+#' @aliases entropy
 #' @rdname entr
 #' @export
 entr <- Entr
@@ -837,6 +867,7 @@ entr <- Entr
 #' result <- solve(prob)
 #' result$getValue(beta)
 #' @docType methods
+#' @name huber
 #' @rdname huber
 #' @export
 huber <- Huber
@@ -855,6 +886,7 @@ huber <- Huber
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name inv_pos
 #' @rdname inv_pos
 #' @export
 inv_pos <- InvPos
@@ -886,6 +918,7 @@ inv_pos <- InvPos
 #' result$getValue(P)
 #' result$getValue(W)
 #' @docType methods
+#' @name kl_div
 #' @rdname kl_div
 #' @export
 kl_div <- KLDiv
@@ -920,6 +953,7 @@ kl_div <- KLDiv
 #' y_probs <- 1/(1 + exp(-X %*% beta_res))
 #' log(y_probs/(1 - y_probs))
 #' @docType methods
+#' @name logistic
 #' @rdname logistic
 #' @export
 logistic <- Logistic
@@ -939,6 +973,7 @@ logistic <- Logistic
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name max_elemwise
 #' @rdname max_elemwise
 #' @export
 max_elemwise <- MaxElemwise
@@ -959,6 +994,7 @@ max_elemwise <- MaxElemwise
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name min_elemwise
 #' @rdname min_elemwise
 #' @export
 min_elemwise <- MinElemwise
@@ -981,6 +1017,7 @@ min_elemwise <- MinElemwise
 #' result$value
 #' result$getValue(expr)
 #' @docType methods
+#' @name mul_elemwise
 #' @rdname mul_elemwise
 #' @export
 mul_elemwise <- MulElemwise
@@ -999,6 +1036,7 @@ mul_elemwise <- MulElemwise
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name neg
 #' @rdname neg
 #' @export
 neg <- Neg
@@ -1017,6 +1055,7 @@ neg <- Neg
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name pos
 #' @rdname pos
 #' @export
 pos <- Pos
@@ -1044,6 +1083,7 @@ pos <- Pos
 #' result$value
 #' result$getValue(x)
 #' @docType methods
+#' @name power
 #' @rdname power
 #' @export
 power <- Power
@@ -1066,6 +1106,7 @@ power <- Power
 #' result$value
 #' result$getValue(scalene(A))
 #' @docType methods
+#' @name scalene
 #' @rdname scalene
 #' @export
 scalene <- Scalene
@@ -1091,6 +1132,7 @@ scalene <- Scalene
 #' result$value
 #' result$getValue(x)
 #' @docType methods
+#' @name square
 #' @rdname square
 #' @export
 square <- Square
@@ -1109,6 +1151,7 @@ square <- Square
 #' result$value
 #' result$getValue(A)
 #' @docType methods
+#' @name abs
 #' @rdname abs
 #' @export
 setMethod("abs", "Expression", function(x) { Abs(x = x) })
@@ -1127,6 +1170,7 @@ setMethod("abs", "Expression", function(x) { Abs(x = x) })
 #' result <- solve(prob)
 #' result$getValue(x)
 #' @docType methods
+#' @name exp
 #' @rdname exp
 #' @export
 setMethod("exp", "Expression", function(x) { Exp(x = x) })
@@ -1173,21 +1217,25 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name log
 #' @rdname log
 #' @export
 setMethod("log", "Expression", function(x, base = exp(1)) { Log(x = x)/log(base) })
 
 #' @docType methods
+#' @name log10
 #' @rdname log
 #' @export
 setMethod("log10", "Expression", function(x) { log(x, base = 10) })
 
 #' @docType methods
+#' @name log2
 #' @rdname log
 #' @export
 setMethod("log2", "Expression", function(x) { log(x, base = 2) })
 
 #' @docType methods
+#' @name log1p
 #' @rdname log
 #' @export
 setMethod("log1p", "Expression", function(x) { Log1p(x = x) })
@@ -1206,6 +1254,7 @@ log1p <- Log1p
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name sqrt
 #' @rdname sqrt
 #' @export
 setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
@@ -1229,6 +1278,7 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name bmat
 #' @rdname bmat
 #' @export
 bmat <- Bmat
@@ -1249,6 +1299,7 @@ bmat <- Bmat
 #' result$value
 #' result$getValue(x)
 #' @docType methods
+#' @name conv
 #' @rdname conv
 #' @export
 conv <- Conv
@@ -1290,6 +1341,7 @@ conv <- Conv
 #' result$getValue(C)
 #' result$getValue(D)
 #' @docType methods
+#' @name hstack
 #' @rdname hstack
 #' @export
 hstack <- HStack
@@ -1350,6 +1402,8 @@ hstack <- HStack
 #' result$value
 #' result$getValue(expr)
 #' @docType methods
+#' @name reshape_expr
+#' @aliases reshape
 #' @rdname reshape_expr
 #' @export
 reshape_expr <- Reshape
@@ -1371,6 +1425,7 @@ reshape_expr <- Reshape
 #' result$value
 #' result$getValue(C)
 #' @docType methods
+#' @name sigma_max
 #' @rdname sigma_max
 #' @export
 sigma_max <- SigmaMax
@@ -1390,6 +1445,7 @@ sigma_max <- SigmaMax
 #' result$value
 #' result$getValue(upper_tri(C))
 #' @docType methods
+#' @name upper_tri
 #' @rdname upper_tri
 #' @export
 upper_tri <- UpperTri
@@ -1412,6 +1468,7 @@ upper_tri <- UpperTri
 #' result$value
 #' result$getValue(expr)
 #' @docType methods
+#' @name vec
 #' @rdname vec
 #' @export
 vec <- Vec
@@ -1449,6 +1506,7 @@ vec <- Vec
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
+#' @name vstack
 #' @rdname vstack
 #' @export
 vstack <- VStack
@@ -1468,6 +1526,7 @@ vstack <- VStack
 #' result$value
 #' result$getValue(cumsum(x))
 #' @docType methods
+#' @name cumsum
 #' @rdname cumsum
 #' @export
 setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
@@ -1488,6 +1547,7 @@ setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Fla
 #' result$value
 #' result$getValue(C)
 #' @docType methods
+#' @name diag
 #' @rdname diag
 #' @export
 setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
@@ -1543,6 +1603,7 @@ setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
 #' lines(xs, ys, col = "blue", lwd = 2)
 #' grid()
 #' @docType methods
+#' @name diff
 #' @rdname diff
 #' @export
 setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Diff(x = x, lag = lag, k = differences, ...) })
@@ -1566,6 +1627,7 @@ setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Dif
 #' result$value
 #' result$getValue(kronecker(X,Y))
 #' @docType methods
+#' @name kronecker
 #' @rdname kronecker
 #' @export
 setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
@@ -1575,6 +1637,7 @@ setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FU
 })
 
 #' @docType methods
+#' @name kronecker
 #' @rdname kronecker
 #' @export
 setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
@@ -1584,11 +1647,13 @@ setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FU
 })
 
 #' @docType methods
+#' @name %x%
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 
 #' @docType methods
+#' @name %x%
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })

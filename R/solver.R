@@ -188,7 +188,7 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 #' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
 #' @name ECOS-class
 #' @rdname ECOS-class
-ECOS <- setClass("ECOS", contains = "Solver")
+setClass("ECOS", contains = "Solver")
 
 #' @name ECOS
 #' @rdname ECOS-class

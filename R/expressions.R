@@ -3,6 +3,7 @@
 #'
 #' This class represents a mathematical expression.
 #'
+#' @name Expression
 #' @rdname Expression-class
 #' @export
 Expression <- setClass("Expression", contains = "Canonical")
@@ -39,16 +40,18 @@ setMethod("size", "ListORExpr", function(object) {
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname grad
+#' @describeIn Expression The (sub/super)-gradient of the expression with respect to each variable.
 setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname domain
+#' @describeIn Expression A list of constraints describing the closure of the region where the expression is finite.
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
 setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
 
-#' @describeIn Expression A string with information about the expression such as curvature, sign, and size.
+# A string with information about the expression such as curvature, sign, and size.
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
@@ -58,6 +61,7 @@ setMethod("as.character", "Expression", function(x) {
 setMethod("name", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature
+#' @describeIn Expression The curvature of the expression.
 setMethod("curvature", "Expression", function(object) {
   if(is_constant(object))
     curvature_str <- CONSTANT
@@ -73,24 +77,31 @@ setMethod("curvature", "Expression", function(object) {
 })
 
 #' @rdname curvature-methods
+#' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
 setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) })
 
 #' @rdname curvature-methods
+#' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
 
 #' @rdname curvature-methods
+#' @describeIn Expression A logical value indicating whether the expression is convex.
 setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature-methods
+#' @describeIn Expression A logical value indicating whether the expression is concave.
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname is_dcp
+#' @describeIn Expression The expression is DCP if it is convex or concave.
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
 
 #' @rdname curvature-methods
+#' @describeIn Expression A logical value indicating whether the expression is quadratic.
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
 
 #' @rdname curvature-methods
+#' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
 setMethod("is_pwl", "Expression", function(object) { FALSE })
 
 #'
@@ -116,24 +127,31 @@ setMethod("sign", "Expression", function(x) {
 })
 
 #' @rdname sign-methods
+#' @describeIn Expression The expression is zero if it is both positive and negative.
 setMethod("is_zero", "Expression", function(object) { is_positive(object) && is_negative(object) })
 
 #' @rdname sign-methods
+#' @describeIn Expression A logical value indicating whether the expression is positive.
 setMethod("is_positive", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname sign-methods
+#' @describeIn Expression A logical value indicating whether the expression is negative.
 setMethod("is_negative", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname size
+#' @describeIn Expression The \code{c(row, col)} dimensions of the expression.
 setMethod("size", "Expression", function(object) { stop("Unimplemented") })
 
 #' @rdname size-methods
+#' @describeIn Expression The expression is scalar if rows = cols = 1.
 setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,1)) })
 
 #' @rdname size-methods
+#' @describeIn Expression The expression is a vector if min(rows, cols) = 1.
 setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
 
 #' @rdname size-methods
+#' @describeIn Expression The expression is a matrix if rows > 1 and cols > 1.
 setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
 
 #' @describeIn Expression Number of rows in the expression.
@@ -398,31 +416,40 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
 #' @slot args A list containing the arguments.
+#' @name Leaf
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
-#' @rdname Leaf-class
+#' @rdname expression-parts
+#' @describeIn Leaf List of \linkS4class{Variable} objects in the leaf node.
 setMethod("variables", "Leaf", function(object) { list() })
 
-#' @rdname Leaf-class
+#' @rdname expression-parts
+#' @describeIn Leaf List of \linkS4class{Parameter} objects in the leaf node.
 setMethod("parameters", "Leaf", function(object) { list() })
 
-#' @rdname Leaf-class
+#' @rdname expression-parts
+#' @describeIn Leaf List of \linkS4class{Constant} objects in the leaf node.
 setMethod("constants", "Leaf", function(object) { list() })
 
-#' @rdname Leaf-class
+#' @rdname curvature-methods
+#' @describeIn Leaf A logical value indicating whether the leaf node is convex.
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 
-#' @rdname Leaf-class
+#' @rdname curvature-methods
+#' @describeIn Leaf A logical value indicating whether the leaf node is concave.
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 
-#' @rdname Leaf-class
+#' @rdname curvature-methods
+#' @describeIn Leaf A logical value indicating whether the leaf node is quadratic.
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 
-#' @rdname Leaf-class
+#' @rdname curvature-methods
+#' @describeIn Leaf A logical value indicating whether the leaf node is piecewise linear.
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
 
-#' @rdname Leaf-class
+#' @rdname domain
+#' @describeIn A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
 setMethod("validate_val", "Leaf", function(object, val) {

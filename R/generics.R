@@ -319,7 +319,7 @@ setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine"
 #'
 #' Curvature of Composition
 #'
-#' Determine whether a composition is increasing or decreasing in \code{idx}.
+#' Determine whether a composition is non-decreasing or non-increasing in an index.
 #' 
 #' @param object A \linkS4class{Atom} object.
 #' @param idx An index into the atom.
@@ -516,8 +516,17 @@ setGeneric("get_ineq_constr", function(object) { standardGeneric("get_ineq_const
 setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_constr") })
 
 # Solver generic methods
-setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
+#'
+#' Import Solver
+#'
+#' Import the R library that interfaces with the specified solver.
+#' 
+#' @param solver A \linkS4class{Solver} object.
+#' @rdname import_solver
+#' @docType methods
+#' @export
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
+setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
 setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
 
 #
@@ -588,7 +597,7 @@ setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
 #  
 # Extracts the equality, inequality, and nonlinear constraints.
 # 
-# @param solver A \linkS4class{SCS} object.
+# @param solver A \linkS4class{Solver} object.
 # @param constr_map A list of canonicalized constraints.
 # @return A list of equality, inequality, and nonlinear constraints.
 setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split_constr") })

@@ -126,13 +126,15 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data
 })
 
-#' @describeIn Solver A logical value indicating whether nonlinear constraints are needed.
+# A logical value indicating whether nonlinear constraints are needed.
 setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
 #' @rdname Solver-solve
+#' @describeIn Solver Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { stop("Unimplemented") })
 
 #' @rdname format_results
+#' @describeIn Solver Convert raw solver output into standard list of results.
 setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { stop("Unimplemented") })
 
 # Is the problem a mixed-integer program?
@@ -200,18 +202,23 @@ ECOS <- function() {
 
 # ECOS capabilities
 #' @rdname Solver-capable
+#' @describeIn ECOS ECOS can handle linear programs.
 setMethod("lp_capable", "ECOS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS ECOS can handle second-order cone programs.
 setMethod("socp_capable", "ECOS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS ECOS cannot handle semidefinite programs.
 setMethod("sdp_capable", "ECOS", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS ECOS can handle exponential cone programs.
 setMethod("exp_capable", "ECOS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS ECOS cannot handle mixed-integer programs.
 setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 
 #' 
@@ -256,6 +263,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 #' @describeIn ECOS The name of the solver.
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 
+#' @rdname import_solver
 #' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 
@@ -266,6 +274,7 @@ setMethod("split_constr", "ECOS", function(solver, constr_map) {
 })
 
 #' @rdname Solver-solve
+#' @describeIn ECOS Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
@@ -284,6 +293,7 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
 })
 
 #' @rdname format_results
+#' @describeIn ECOS Convert raw solver output into standard list of results.
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
   status <- status_map(solver, results_dict$retcodes[["exitFlag"]])
@@ -326,18 +336,23 @@ ECOS_BB <- function() {
 
 # ECOS_BB capabilities
 #' @rdname Solver-capable
+#' @describeIn ECOS_BB ECOS_BB can handle linear programs.
 setMethod("lp_capable", "ECOS_BB", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS_BB ECOS_BB can handle second-order cone programs.
 setMethod("socp_capable", "ECOS_BB", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS_BB ECOS_BB cannot handle semidefinite programs.
 setMethod("sdp_capable", "ECOS_BB", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS_BB ECOS_BB cannot handle exponential cone programs.
 setMethod("exp_capable", "ECOS_BB", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn ECOS_BB ECOS_BB can handle mixed-integer programs.
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 
 # EXITCODES from ECOS_BB
@@ -352,6 +367,7 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
 
 #' @rdname Solver-solve
+#' @describeIn ECOS_BB Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
@@ -394,18 +410,23 @@ SCS <- function() {
 
 # SCS capabilities
 #' @rdname Solver-capable
+#' @describeIn SCS SCS can handle linear programs.
 setMethod("lp_capable", "SCS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn SCS SCS can handle second-order cone programs.
 setMethod("socp_capable", "SCS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn SCS SCS can handle semidefinite programs.
 setMethod("sdp_capable", "SCS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn SCS SCS can handle exponential cone programs.
 setMethod("exp_capable", "SCS", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn SCS SCS cannot handle mixed-integer programs.
 setMethod("mip_capable", "SCS", function(solver) { FALSE })
 
 #' 
@@ -432,6 +453,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 #' @describeIn SCS The name of the solver.
 setMethod("name", "SCS", function(object) { SCS_NAME })
 
+#' @rdname import_solver
 #' @describeIn SCS Imports the scs library.
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
 
@@ -440,6 +462,7 @@ setMethod("split_constr", "SCS", function(solver, constr_map) {
 })
 
 #' @rdname Solver-solve
+#' @describeIn SCS Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
@@ -466,6 +489,7 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
 })
 
 #' @rdname format_results
+#' @describeIn SCS Convert raw solver output into standard list of results.
 setMethod("format_results", "SCS", function(solver, results_dict, data, cached_data) {
   solver_cache <- cached_data[name(solver)]
   dims <- data[[DIMS]]
@@ -555,7 +579,7 @@ CVXOPT <- function() {
 #' The LS class.
 #' 
 #' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
-#' LS is capable of solving any general cone program and must be invoked through a special path.
+#' LS is incapable of solving any general cone program and must be invoked through a special path.
 #'
 #' @name LS-class
 #' @rdname LS-class
@@ -572,18 +596,23 @@ LS <- function() {
 
 # LS is incapable of solving any general cone program and must be invoked through a special path
 #' @rdname Solver-capable
+#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 setMethod("lp_capable", "LS", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 setMethod("socp_capable", "LS", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 setMethod("sdp_capable", "LS", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 setMethod("exp_capable", "LS", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 setMethod("mip_capable", "LS", function(solver) { FALSE })
 
 #' @describeIn LS The name of the solver.
@@ -592,15 +621,12 @@ setMethod("name", "LS", function(object) { LS_NAME })
 #' @describeIn LS Imports the Matrix library.
 setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
 
-#' @describeIn LS Extracts the equality, inequality, and nonlinear constraints.
-#' @param solver A \linkS4class{LS} object.
-#' @param constr_map A list of canonicalized constraints.
-#' @return A list of equality, inequality, and nonlinear constraints.
 setMethod("split_constr", "LS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
 #' @rdname Solver-solve
+#' @describeIn LS Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   sym_data <- get_sym_data(solver, objective, constraints)
   id_map <- sym_data@var_offsets
@@ -660,6 +686,7 @@ setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_
 })
 
 #' @rdname format_results
+#' @describeIn LS Convert raw solver output into standard list of results.
 setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
   new_results <- results_dict
   if(is.na(results_dict[[PRIMAL]]))
@@ -690,18 +717,23 @@ MOSEK <- function() {
 }
 
 #' @rdname Solver-capable
+#' @describeIn MOSEK MOSEK can handle linear programs.
 setMethod("lp_capable", "MOSEK", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn MOSEK MOSEK can handle second-order cone programs.
 setMethod("socp_capable", "MOSEK", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn MOSEK MOSEK can handle semidefinite programs.
 setMethod("sdp_capable", "MOSEK", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn MOSEK MOSEK cannot handle exponential cone programs.
 setMethod("exp_capable", "MOSEK", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn MOSEK MOSEK cannot handle mixed-integer programs.
 setMethod("mip_capable", "MOSEK", function(solver) { FALSE })
 
 #' 
@@ -734,18 +766,16 @@ setMethod("status_map", "MOSEK", function(solver, status) {
 #' @describeIn MOSEK The name of the solver.
 setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
 
+#' @rdname import_solver
 #' @describeIn MOSEK Imports the Rmosek library.
 setMethod("import_solver", "MOSEK", function(solver) { requireNamespace("Rmosek") })
 
-#' @describeIn MOSEK Extracts the equality, inequality, and nonlinear constraints.
-#' @param solver A \linkS4class{MOSEK} object.
-#' @param constr_map A list of canonicalized constraints.
-#' @return A list of equality, inequality, and nonlinear constraints.
 setMethod("split_constr", "MOSEK", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
 #' @rdname Solver-solve
+#' @describeIn MOSEK Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   
@@ -836,10 +866,10 @@ setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cach
   format_results(solver, results_dict, data, cached_data)
 })
 
-#' @describeIn MOSEK Chooses between the basic and interior point solution.
-#' @param solver A \linkS4class{MOSEK} object.
-#' @param results_dict A list of the results returned by the solver.
-#' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
+# @describeIn MOSEK Chooses between the basic and interior point solution.
+# @param solver A \linkS4class{MOSEK} object.
+# @param results_dict A list of the results returned by the solver.
+# @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
 setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
   requireNamespace("Rmosek")
   rank <- function(status) {
@@ -864,6 +894,7 @@ setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
 })
 
 #' @rdname format_results
+#' @describeIn MOSEK Convert raw solver output into standard list of results.
 setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached_data) {
   requireNamespace("Rmosek")
   sol <- choose_solution(solver, results_dict)
@@ -911,18 +942,23 @@ GUROBI <- function() {
 }
 
 #' @rdname Solver-capable
+#' @describeIn GUROBI GUROBI can handle linear programs.
 setMethod("lp_capable", "GUROBI", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn GUROBI GUROBI can handle second-order cone programs.
 setMethod("socp_capable", "GUROBI", function(solver) { TRUE })
 
 #' @rdname Solver-capable
+#' @describeIn GUROBI GUROBI cannot handle semidefinite programs.
 setMethod("sdp_capable", "GUROBI", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn GUROBI GUROBI cannot handle exponential cone programs.
 setMethod("exp_capable", "GUROBI", function(solver) { FALSE })
 
 #' @rdname Solver-capable
+#' @describeIn GUROBI GUROBI can handle mixed-integer programs.
 setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
 
 #' 
@@ -953,18 +989,16 @@ setMethod("status_map", "GUROBI", function(solver, status) {
 #' @describeIn GUROBI The name of the solver.
 setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
 
+#' @rdname import_solver
 #' @describeIn GUROBI Imports the gurobi library.
 setMethod("import_solver", "GUROBI", function(solver) { requireNamespace("gurobi") })
 
-#' @describeIn GUROBI Extracts the equality, inequality, and nonlinear constraints.
-#' @param solver A \linkS4class{GUROBI} object.
-#' @param constr_map A list of canonicalized constraints.
-#' @return A list of equality, inequality, and nonlinear constraints.
 setMethod("split_constr", "GUROBI", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
 #' @rdname format_results
+#' @describeIn GUROBI Convert raw solver output into standard list of results.
 setMethod("format_results", "GUROBI", function(solver, results_dict, data, cached_data) {
   dims <- data[[DIMS]]
   if(results_dict$status != SOLVER_ERROR) {

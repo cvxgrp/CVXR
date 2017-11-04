@@ -3,9 +3,8 @@
 #'
 #' This virtual class represents atomic expressions in CVXR.
 #'
-#' @name Atom-class
+#' @name Atom
 #' @rdname Atom-class
-#' @exportClass Atom
 Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_),
                  validity = function(object) {
                    if(length(object@args) == 0)
@@ -26,31 +25,34 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
-#' @describeIn Atom Raises an error if the arguments are invalid.
+# Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { return() })
 
 #' @rdname size_from_args
 setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname size
+#' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
 setMethod("size", "Atom", function(object) { object@.size })
 
-#' @rdname Atom-class
+#' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
 setMethod("dim", "Atom", function(x) { size(x) })
 
-#' @rdname Atom-class
+#' @describeIn Atom The number of rows in the atom.
 setMethod("nrow", "Atom", function(x) { size(x)[1] })
 
-#' @rdname Atom-class
+#' @describeIn Atom The number of columns in the atom.
 setMethod("ncol", "Atom", function(x) { size(x)[2] })
 
 #' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname sign-methods
+#' @describeIn Atom A logical value indicating whether the atom is positive.
 setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
 
 #' @rdname sign-methods
+#' @describeIn Atom A logical value indicating whether the atom is negative.
 setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
 
 #' @rdname curvature-atom
@@ -69,6 +71,7 @@ setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @rdname curvature-methods
+#' @describeIn Atom A logical value indicating whether the atom is convex.
 setMethod("is_convex", "Atom", function(object) {
   # Applies DCP composition rule
   if(is_constant(object))
@@ -86,6 +89,7 @@ setMethod("is_convex", "Atom", function(object) {
 })
 
 #' @rdname curvature-methods
+#' @describeIn Atom A logical value indicating whether the atom is concave.
 setMethod("is_concave", "Atom", function(object) {
   # Applies DCP composition rule
   if(is_constant(object))
@@ -131,6 +135,7 @@ setMethod("canonicalize", "Atom", function(object) {
 })
 
 #' @rdname graph_implementation
+#' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
 
 #' @rdname expression-parts
@@ -188,6 +193,7 @@ setMethod("value", "Atom", function(object) {
 setMethod(".grad", "Atom", function(object, values) { stop("Unimplemented") })
 
 #' @rdname grad
+#' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
   if(is_constant(object))
@@ -237,6 +243,7 @@ setMethod("grad", "Atom", function(object) {
 setMethod(".domain", "Atom", function(object) { list() })
 
 #' @rdname domain
+#' @describeIn Atom A list of constraints describing the closure of the region where the expression is finite.
 setMethod("domain", "Atom", function(object) {
   cons <- list()
   for(arg in object@args) {
@@ -253,10 +260,12 @@ setMethod("domain", "Atom", function(object) {
 #'
 #' @slot expr A numeric element, data.frame, matrix, vector, or Expression.
 #' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
+#' @name AxisAtom
 #' @rdname AxisAtom-class
-#' @export
 AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
 
+#' @name AxisAtom
+#' @rdname AxisAtom-class
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
   .Object@axis <- axis
@@ -276,7 +285,7 @@ setMethod("size_from_args", "AxisAtom", function(object) {
 # A list containing the dimension across which to apply the atom: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 
-#' @describeIn AxisAtom Checks that the new shape has the same number of entries as the old.
+# Checks that the new shape has the same number of entries as the old.
 setMethod("validate_args", "AxisAtom", function(object) {
   if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1, 2)))
      stop("Invalid argument for axis")
@@ -330,7 +339,6 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' @slot y An \linkS4class{Expression} or R numeric data representing the right-hand value.
 #' @name AffineProd-class
 #' @rdname AffineProd-class
-#' @export
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
 #'
@@ -353,38 +361,35 @@ setMethod("initialize", "AffineProd", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(x, y))
 })
 
-#' @describeIn AffineProd Check dimensions of arguments and linearity.
+# Check dimensions of arguments and linearity.
 setMethod("validate_args", "AffineProd", function(object) {
   if(!is_affine(object@args[[1]]) || !is_affine(object@args[[2]]))
     stop("The arguments to AffineProd must be affine")
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
-#' @describeIn AffineProd Returns the product of two affine expressions.
+# Returns the product of two affine expressions.
 setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
 
-#' @rdname size_from_args
+#' @describeIn AffineProd The size of the atom.
 setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 
-# Default to rules for times.
-#' @rdname sign_from_args
+#' @describeIn AffineProd Default to rules for times.
 setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
-# Affine times affine is not convex.
-#' @rdname curvature-atom
+#' @describeIn AffineProd Affine times affine is not convex.
 setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
 
-# Affine times affine is not concave.
-#' @rdname curvature-atom
+#' @describeIn AffineProd Affine times affine is not concave.
 setMethod("is_atom_concave", "AffineProd", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn AffineProd A logical value indicating whether the atom is non-decreasing in \code{idx}.
 setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@args[[2-idx]]) })
 
-#' @rdname curvature-comp
+#' @describeIn AffineProd A logical value indicating whether the atom is non-increasing in \code{idx}.
 setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
 
-#' @rdname curvature-methods
+#' @describeIn AffineProd The affine product is always quadratic.
 setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
 
 setMethod(".grad", "AffineProd", function(object, values) {
@@ -423,7 +428,6 @@ setMethod(".grad", "AffineProd", function(object, values) {
 #' @slot p (Optional) A vector of weights for the weighted geometric mean. The default is a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
 #' @name GeoMean-class
 #' @rdname GeoMean-class
-#' @export
 .GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
                                                w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict",
                                                cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
@@ -474,10 +478,10 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object
 })
 
-#' @describeIn GeoMean Empty function since validation of arguments is done during atom initialization.
+# Empty function since validation of arguments is done during atom initialization.
 setMethod("validate_args", "GeoMean", function(object) { return() })
 
-#' @describeIn GeoMean Returns the (weighted) geometric mean of the elements of \code{x}.
+# Returns the (weighted) geometric mean of the elements of \code{x}.
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
 
@@ -511,25 +515,25 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
-#' @rdname size_from_args
+#' @describeIn GeoMean The atom is a scalar.
 setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
 
-#' @rdname sign_from_args
+#' @describeIn GeoMean The atom is non-negative.
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn GeoMean The atom is not convex.
 setMethod("is_atom_convex", "GeoMean", function(object) { FALSE })
 
-#' @rdname curvature-atom
+#' @describeIn GeoMean The atom is concave.
 setMethod("is_atom_concave", "GeoMean", function(object) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn GeoMean The atom is non-decreasing in every argument.
 setMethod("is_incr", "GeoMean", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn GeoMean The atom is not non-increasing in any argument.
 setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 
-#' @describeIn GeoMean A list of \code{list(w, dyadic completion, tree of dyads)}.
+# A list of \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
 GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -566,7 +570,6 @@ HarmonicMean <- function(x) {
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name Lambda-class
 #' @rdname LambdaMax-class
-#' @export
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
 #' @name LambdaMax
@@ -580,35 +583,35 @@ setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn LambdaMax Verify that \code{A} is square.
+# Verify that \code{A} is square.
 setMethod("validate_args", "LambdaMax", function(object) {
   if(size(object@args[[1]])[1] != size(object@args[[1]])[2])
     stop("The argument to LambdaMax must resolve to a square matrix")
 })
 
-#' @describeIn LambdaMax Returns the largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
+# Returns the largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
     stop("LambdaMax called on a non-symmetric matrix")
   max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
-#' @rdname size_from_args
+#' @describeIn LambdaMax The atom is a scalar.
 setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn LambdaMax The sign of the atom is unknown.
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn LambdaMax The atom is convex.
 setMethod("is_atom_convex", "LambdaMax", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn LambdaMax The atom is not concave.
 setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
 setMethod(".domain", "LambdaMax", function(object) { list(t(object@args[[1]]) == object@args[[1]]) })
@@ -669,7 +672,6 @@ LambdaSumSmallest <- function(X, k) {
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name LogDet-class
 #' @rdname LogDet-class
-#' @export
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
 
 #' @name LogDet
@@ -683,14 +685,14 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn LogDet Verify that \code{A} is square.
+# Verify that \code{A} is square.
 setMethod("validate_args", "LogDet", function(object) {
   size <- size(object@args[[1]])
   if(size[1] != size[2])
     stop("The argument to LogDet must be a square matrix")
 })
 
-#' @describeIn LogDet Returns the log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
+# Returns the log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
   logdet <- determinant(values[[1]], logarithm = TRUE)
   if(logdet$sign == 1)
@@ -699,22 +701,22 @@ setMethod("to_numeric", "LogDet", function(object, values) {
     return(-Inf)
 })
 
-#' @rdname size_from_args
+#' @describeIn LogDet The atom is a scalar.
 setMethod("size_from_args", "LogDet", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn LogDet The atom is non-negative.
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn LogDet The atom is not convex.
 setMethod("is_atom_convex", "LogDet", function(object) { FALSE })
 
-#' @rdname curvature-atom
+#' @describeIn LogDet The atom is concave.
 setMethod("is_atom_concave", "LogDet", function(object) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn LogDet The atom is not monotonic in any argument.
 setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn LogDet The atom is not monotonic in any argument.
 setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
 
 setMethod(".grad", "LogDet", function(object, values) {
@@ -780,14 +782,13 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @name LogSumExp-class
 #' @rdname LogSumExp-class
-#' @export
 .LogSumExp <- setClass("LogSumExp", contains = "AxisAtom")
 
 #' @name LogSumExp
 #' @rdname LogSumExp-class
 LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
-#' @describeIn LogSumExp Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
+# Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
     log(sum(exp(values[[1]])))
@@ -804,19 +805,19 @@ setMethod(".column_grad", "LogSumExp", function(object, value) {
   D
 })
 
-#' @rdname sign_from_args
+#' @describeIn LogSumExp The atom is positive.
 setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn LogSumExp The atom is convex.
 setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn LogSumExp The atom is not concave.
 setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn LogSumExp The atom is not monotonic in any argument.
 setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn LogSumExp The atom is not monotonic in any argument.
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
 LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
@@ -876,7 +877,6 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' @slot P An \linkS4class{Expression} representing a matrix.
 #' @name MatrixFrac-class
 #' @rdname MatrixFrac-class
-#' @export
 .MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 
 #' @name MatrixFrac
@@ -891,7 +891,7 @@ setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
 })
 
-#' @describeIn MatrixFrac Checks that the dimensions of \code{x} and \code{P} match.
+# Checks that the dimensions of \code{x} and \code{P} match.
 setMethod("validate_args", "MatrixFrac", function(object) {
   X <- object@args[[1]]
   P <- object@args[[2]]
@@ -901,7 +901,7 @@ setMethod("validate_args", "MatrixFrac", function(object) {
     stop("The arguments to MatrixFrac have incompatible dimensions")
 })
 
-#' @describeIn MatrixFrac Returns the trace of \eqn{X^TP^{-1}X}.
+# Returns the trace of \eqn{X^TP^{-1}X}.
 setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
@@ -909,25 +909,24 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   sum(diag(t(X) %*% base::solve(P) %*% X))
 })
 
-#' @rdname size_from_args
+#' @describeIn MatrixFrac The atom is a scalar.
 setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn MatrixFrac The atom is positive.
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn MatrixFrac The atom is convex.
 setMethod("is_atom_convex", "MatrixFrac", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn MatrixFrac The atom is not concave.
 setMethod("is_atom_concave", "MatrixFrac", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn MatrixFrac The atom is not monotonic in any argument.
 setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn MatrixFrac The atom is not monotonic in any argument.
 setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
 
-#' @rdname curvature-methods
 #' @describeIn MatrixFrac True if x is affine and P is constant.
 setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
@@ -998,14 +997,13 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @name MaxEntries-class
 #' @rdname MaxEntries-class
-#' @export
 .MaxEntries <- setClass("MaxEntries", contains = "AxisAtom")
 
 #' @name MaxEntries
 #' @rdname MaxEntries-class
 MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
-#' @describeIn MaxEntries Returns the largest entry in \code{x}.
+# Returns the largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
     max(values[[1]])
@@ -1013,22 +1011,22 @@ setMethod("to_numeric", "MaxEntries", function(object, values) {
     apply(values[[1]], object@axis, max)
 })
 
-#' @rdname sign_from_args
+#' @describeIn MaxEntries The sign of the atom.
 setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
-#' @rdname curvature-atom
+#' @describeIn MaxEntries The atom is convex.
 setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn MaxEntries The atom is not concave.
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn MaxEntries The atom is non-decreasing in every argument.
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn MaxEntries The atom is non-increasing in every argument.
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
 
-#' @rdname curvature-methods
+#' @describeIn MaxEntries Is \code{x} piecewise linear?
 setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
@@ -1093,7 +1091,6 @@ MinEntries <- function(x, axis = NA_real_) {
 #' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
 #' @name Pnorm-class
 #' @rdname Pnorm-class
-#' @export
 .Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
                   prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "AxisAtom")
 
@@ -1129,18 +1126,19 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   callNextMethod(.Object, ...)
 })
 
-#' @describeIn Pnorm Check if the arguments are valid.
+# Check if the arguments are valid.
 setMethod("validate_args", "Pnorm", function(object) {
   callNextMethod()
   if(!is.na(object@axis) && object@p != 2)
     stop("The axis parameter is only supported for p = 2")
 })
 
-#' @rdname Pnorm-class
+#' @describeIn Pnorm The name and arguments of the atom.
 setMethod("name", "Pnorm", function(object) {
   sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p)
 })
 
+# Internal method for calculating the p-norm
 .p_norm <- function(x, p) {
   if(p == Inf)
     max(abs(x))
@@ -1154,7 +1152,7 @@ setMethod("name", "Pnorm", function(object) {
     stop("Invalid p = ", p)
 }
 
-#' @describeIn Pnorm Returns the p-norm of \code{x}.
+# Returns the p-norm of \code{x}.
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
     values <- as.numeric(values[[1]])
@@ -1174,22 +1172,22 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
   retval
 })
 
-#' @rdname sign_from_args
+#' @describeIn Pnorm The atom is positive.
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Pnorm The atom is convex if \eqn{p \geq 1}.
 setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
 
-#' @rdname curvature-atom
+#' @describeIn Pnorm The atom is concave if \eqn{p < 1}.
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
 
-#' @rdname curvature-comp
+#' @describeIn Pnorm The atom is non-decreasing if \eqn{p < 1} or \eqn{p \geq 1} and \code{x} is positive.
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
 
-#' @rdname curvature-comp
+#' @describeIn Pnorm The atom is non-increasing if \eqn{p \geq 1} and \code{x} is negative.
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
 
-#' @rdname curvature-methods
+#' @describeIn Pnorm The atom is piecewise linear only if \code{x} is piecewise linear, and either \eqn{p = 1} or \eqn{p = \infty}.
 setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
 
 # A list of \code{list(p, axis)}.
@@ -1339,7 +1337,6 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name NormNuc-class
 #' @rdname NormNuc-class
-#' @export
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 
 #' @name NormNuc
@@ -1353,28 +1350,28 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn NormNuc Returns the nuclear norm (i.e., the sum of the singular values) of \code{A}.
+# Returns the nuclear norm (i.e., the sum of the singular values) of \code{A}.
 setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
   sum(svd(values[[1]])$d)
 })
 
-#' @rdname size_from_args
+#' @describeIn NormNuc The atom is a scalar.
 setMethod("size_from_args", "NormNuc", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn NormNuc The atom is positive.
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn NormNuc The atom is convex.
 setMethod("is_atom_convex", "NormNuc", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn NormNuc The atom is not concave.
 setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn NormNuc The atom is not monotonic in any argument.
 setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn NormNuc The atom is not monotonic in any argument.
 setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
 
 setMethod(".grad", "NormNuc", function(object, values) {
@@ -1485,7 +1482,6 @@ QuadForm <- function(x, P) {
 #' @slot y A scalar \linkS4class{Expression}.
 #' @name QuadOverLin-class
 #' @rdname QuadOverLin-class
-#' @export
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
 #' @name QuadOverLin
@@ -1500,35 +1496,34 @@ setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y =
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
-#' @describeIn QuadOverLin Check the dimensions of the arguments.
+# Check the dimensions of the arguments.
 setMethod("validate_args",   "QuadOverLin", function(object) {
   if(!is_scalar(object@args[[2]]))
     stop("[QuadOverLin: validation] y must be a scalar")
 })
 
-#' @describeIn QuadOverLin Returns the sum of the entries of \code{x} squared over \code{y}.
+# Returns the sum of the entries of \code{x} squared over \code{y}.
 setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
 
-#' @rdname size_from_args
+#' @describeIn QuadOverLin The atom is a scalar.
 setMethod("size_from_args", "QuadOverLin", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn QuadOverLin The atom is positive.
 setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn QuadOverLin The atom is convex.
 setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn QuadOverLin The atom is not concave.
 setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn QuadOverLin A logical value indicating whether the atom is non-decreasing.
 setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_positive(object@args[[idx]]) })
 
-#' @rdname curvature-comp
+#' @describeIn QuadOverLin A logical value indicating whether the atom is non-increasing.
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_negative(object@args[[idx]])) || (idx == 2) })
 
-#' @rdname curvature-methods
-#' @describeIn QuadOverLin True if x is affine and y is constant.
+#' @describeIn QuadOverLin True if \code{x} is affine and \code{y} is constant.
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
@@ -1572,7 +1567,6 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name SigmaMax-class
 #' @rdname SigmaMax-class
-#' @export
 .SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
 #' @name SigmaMax
@@ -1586,25 +1580,25 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn SigmaMax Returns the largest singular value of \code{A}.
+# Returns the largest singular value of \code{A}.
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 
-#' @rdname size_from_args
+#' @describeIn SigmaMax The atom is a scalar.
 setMethod("size_from_args", "SigmaMax", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn SigmaMax The atom is positive.
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn SigmaMax The atom is convex.
 setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn SigmaMax The atom is concave.
 setMethod("is_atom_concave", "SigmaMax", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn SigmaMax The atom is not monotonic in any argument.
 setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn SigmaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "SigmaMax", function(object, idx) { FALSE })
 
 setMethod(".grad", "SigmaMax", function(object, values) {
@@ -1656,7 +1650,6 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #' @slot k The number of largest values to sum over.
 #' @name SumLargest-class
 #' @rdname SumLargest-class
-#' @export
 .SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"),
                        validity = function(object) {
                          if(as.integer(object@k) != object@k || object@k <= 0)
@@ -1676,13 +1669,13 @@ setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-#' @describeIn SumLargest Verify that \code{k} is a positive integer.
+# Verify that \code{k} is a positive integer.
 setMethod("validate_args",   "SumLargest", function(object) {
   if(as.integer(object@k) != object@k || object@k <= 0)
     stop("[SumLargest: validation] k must be a positive integer")
 })
 
-#' @describeIn SumLargest Returns the sum of the \code{k} largest entries of the vector or matrix.
+# Returns the sum of the \code{k} largest entries of the vector or matrix.
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.numeric(values[[1]])
@@ -1691,22 +1684,22 @@ setMethod("to_numeric", "SumLargest", function(object, values) {
   sum(val_sort[1:k])
 })
 
-#' @rdname size_from_args
+#' @describeIn SumLargest The atom is a scalar.
 setMethod("size_from_args", "SumLargest", function(object) { c(1, 1) })
 
-#' @rdname sign_from_args
+#' @describeIn SumLargest The sign of the atom.
 setMethod("sign_from_args", "SumLargest", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
-#' @rdname curvature-atom
+#' @describeIn SumLargest The atom is convex.
 setMethod("is_atom_convex", "SumLargest", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn SumLargest The atom is not concave.
 setMethod("is_atom_concave", "SumLargest", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn SumLargest The atom is non-decreasing in every argument.
 setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn SumLargest The atom is not non-increasing in any argument.
 setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
 
 # Returns a list containing \code{k}.

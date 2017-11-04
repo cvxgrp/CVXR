@@ -170,7 +170,7 @@ setMethod("show", "LeqConstraint", function(object) {
   cat(class(object), "(", arg1, ", ", arg2, ")", sep = "")
 })
 
-#' @describeIn LeqConstraint A string with information about the constraint.
+# A string with information about the constraint.
 setMethod("as.character", "LeqConstraint", function(x) {
   arg1 <- paste(as.character(object@args[[1]]), collapse = ", ")
   arg2 <- paste(as.character(object@args[[2]]), collapse = ", ")
@@ -178,7 +178,7 @@ setMethod("as.character", "LeqConstraint", function(x) {
 })
 
 #' @rdname identification
-#' @describeIn LeqConstraint The unique identification number of the constraint.
+#' @describeIn LeqConstraint The \code{constr_id} of the constraint.
 setMethod("id", "LeqConstraint", function(object) { object@constr_id })
 
 #' @rdname size
@@ -186,7 +186,7 @@ setMethod("id", "LeqConstraint", function(object) { object@constr_id })
 setMethod("size", "LeqConstraint", function(object) { size(object@.expr) })
 
 #' @rdname is_dcp
-#' @describeIn LeqConstraint A logical value indicating whether the left-hand expression is convex and the right-hand expression is concave.
+#' @describeIn LeqConstraint The constraint is DCP if the left-hand expression is convex and the right-hand expression is concave.
 setMethod("is_dcp", "LeqConstraint", function(object) { is_convex(object@.expr) })
 
 #' @rdname canonicalize
@@ -198,23 +198,23 @@ setMethod("canonicalize", "LeqConstraint", function(object) {
 })
 
 #' @rdname expression-parts
-#' @describeIn LeqConstraint The variables in the constraint.
+#' @describeIn LeqConstraint List of \linkS4class{Variable} objects in the constraint.
 setMethod("variables", "LeqConstraint", function(object) { variables(object@.expr) })
 
 #' @rdname expression-parts
-#' @describeIn LeqConstraint The parameters in the constraint.
+#' @describeIn LeqConstraint List of \linkS4class{Parameter} objects in the constraint.
 setMethod("parameters", "LeqConstraint", function(object) { parameters(object@.expr) })
 
 #' @rdname expression-parts
-#' @describeIn LeqConstraint The constants in the constraint.
+#' @describeIn LeqConstraint List of \linkS4class{Constant} objects in the constraint.
 setMethod("constants", "LeqConstraint", function(object) { constants(object@.expr) })
 
 #' @rdname residual-methods
-#' @describeIn LeqConstraint An \linkS4class{Expression} representing the residual of the constraint.
+#' @describeIn LeqConstraint The elementwise maximum of the left-hand expression minus the right-hand expression, i.e. \code{max_elemwise(lh_exp - rh_exp, 0)}.
 setMethod("residual", "LeqConstraint", function(object) { MaxElemwise(object@.expr, 0) })
 
 #' @rdname value-methods
-#' @describeIn LeqConstraint A logical value indicating whether the constraint holds.
+#' @describeIn LeqConstraint A logical value indicating whether the constraint holds. Tolerance is currently set at \code{1e-4}.
 setMethod("value", "LeqConstraint", function(object) {
   resid <- value(residual(object))
   if(length(resid) == 1 && is.na(resid))
@@ -224,7 +224,7 @@ setMethod("value", "LeqConstraint", function(object) {
 })
 
 #' @rdname residual-methods
-#' @describeIn LeqConstraint A matrix representing the amount by which the constraint is off.
+#' @describeIn LeqConstraint A matrix representing the amount by which the constraint is off, i.e. the numeric value of the residual expression.
 setMethod("violation", "LeqConstraint", function(object) { value(residual(object)) })
 
 #' @rdname dual_value
@@ -258,11 +258,11 @@ setMethod("save_value", "LeqConstraint", function(object, value) { save_value(ob
 EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 #' @rdname is_dcp
-#' @describeIn EqConstraint A logical value indicating whether the left-hand and right-hand expressions are affine.
+#' @describeIn EqConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
 
 #' @rdname residual-methods
-#' @describeIn EqConstraint An \linkS4class{Expression} representing the residual of the constraint.
+#' @describeIn EqConstraint The absolute value of the left-hand minus the right-hand expression, i.e. \code{abs(lh_exp - rh_exp)}.
 setMethod("residual", "EqConstraint", function(object) { abs(object@.expr) })
 
 #' @rdname canonicalize
@@ -423,13 +423,13 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 #' @describeIn ExpCone The size of the \code{x} argument.
 setMethod("size", "ExpCone", function(object) { size(object@x) })
 
-#' @describeIn ExpCone A string with information about the constraint.
+# A string with information about the constraint.
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })
 
 #' @rdname expression-parts
-#' @describeIn ExpCone The variables in the exponential cone.
+#' @describeIn ExpCone List of \linkS4class{Variable} objects in the exponential cone.
 setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
 
 # Formats exponential cone constraints for the solver.
@@ -502,7 +502,7 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
 PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 #' @rdname is_dcp
-#' @describeIn PSDConstraint A logical value indicating whether both sides are affine.
+#' @describeIn PSDConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 
 #' @rdname residual-methods
@@ -556,7 +556,7 @@ setMethod("initialize", "SOC", function(.Object, ..., t, x_elems) {
   callNextMethod(.Object, ...)
 })
 
-#' @describeIn SOC A string with information about the constraint.
+# A string with information about the constraint.
 setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(object@t), ", <", paste(lapply(object@x_elems, function(x) { as.character(x) }), collapse = ", "), ">)", sep = "")
 })
@@ -623,7 +623,7 @@ setMethod("initialize", "SDP", function(.Object, ..., A, enforce_sym = TRUE) {
   callNextMethod(.Object, ...)
 })
 
-#' @describeIn SDP A string with information about the constraint.
+# A string with information about the constraint.
 setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "") })
 
 #
@@ -763,7 +763,7 @@ setMethod("initialize", "SOCAxis", function(.Object, ..., axis) {
   callNextMethod(.Object, ...)
 })
 
-#' @describeIn SOCAxis A string with information about the constraint.
+# A string with information about the constraint.
 setMethod("as.character", "SOCAxis", function(x) {
   paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
 })

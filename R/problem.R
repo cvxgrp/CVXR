@@ -8,6 +8,7 @@
 #' @export
 Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
 
+#' @rdname Minimize
 setMethod("initialize", "Minimize", function(.Object, expr) {
     .Object@expr <- as.Constant(expr)
     if(!all(size(.Object@expr) == c(1,1)))
@@ -323,9 +324,6 @@ CachedProblem <- function(objective, constraints) { list(objective = objective, 
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
-#'
-#' Problem Initialization
-#'
 #' @name Problem
 #' @rdname Problem-class
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
@@ -463,6 +461,7 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 # }
 
 #' @rdname get_problem_data
+#' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)
   objective <- canon[[1]]

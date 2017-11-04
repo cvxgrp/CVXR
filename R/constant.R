@@ -64,26 +64,33 @@ setMethod("as.character", "Constant", function(x) {
 })
 
 #' @rdname expression-parts
+#' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })
 
 setMethod("get_data", "Constant", function(object) { list(value(object)) })
 
 #' @rdname value-methods
+#' @describeIn Constant The value of the constant.
 setMethod("value", "Constant", function(object) { object@value })
 
 #' @rdname grad
+#' @describeIn Constant An empty list since the gradient of a constant is zero.
 setMethod("grad", "Constant", function(object) { list() })
 
 #' @rdname size
+#' @describeIn Constant The \code{c(row, col)} dimensions of the constant.
 setMethod("size", "Constant", function(object) { object@size })
 
 #' @rdname sign-methods
+#' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-negative.
 setMethod("is_positive", "Constant", function(object) { object@is_pos })
 
 #' @rdname sign-methods
+#' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-positive.
 setMethod("is_negative", "Constant", function(object) { object@is_neg })
 
 #' @rdname canonicalize
+#' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
   obj <- create_const(value(object), size(object), object@sparse)
   list(obj, list())
@@ -187,21 +194,27 @@ setMethod("get_data", "Parameter", function(object) {
 })
 
 #' @rdname name
+#' @describeIn Parameter The name of the parameter.
 setMethod("name", "Parameter", function(object) { object@name })
 
 #' @rdname size
+#' @describeIn Parameter The \code{c(row, col)} dimensions of the parameter.
 setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
 
 #' @rdname sign-methods
+#' @describeIn Parameter A logical value indicating whether the parameter is non-negative.
 setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
 
 #' @rdname sign-methods
+#' @describeIn Parameter A logical value indicating whether the parameter is non-positive.
 setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
 
 #' @rdname grad
+#' @describeIn Parameter An empty list since the gradient of a parameter is zero.
 setMethod("grad", "Parameter", function(object) { list() })
 
 #' @rdname expression-parts
+#' @describeIn Parameter Returns itself as a parameter.
 setMethod("parameters", "Parameter", function(object) { list(object) })
 
 #' @rdname value-methods
@@ -216,6 +229,7 @@ setReplaceMethod("value", "Parameter", function(object, value) {
 })
 
 #' @rdname canonicalize
+#' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
   obj <- create_param(object, size(object))
   list(obj, list())
@@ -244,10 +258,8 @@ CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, si
   .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
 }
 
-# @rdname Parameter-class
 setMethod("value", "CallbackParam", function(object) { validate_val(object, value(object@callback)) })
 
-# @rdname Canonical-class
 setMethod("get_data", "CallbackParam", function(object) {
   list(callback = object@callback, rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str)
 })

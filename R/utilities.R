@@ -6,26 +6,20 @@
 #' @rdname Canonical-class
 setClass("Canonical", contains = "VIRTUAL")
 
-#' @rdname canonicalize
 #' @describeIn Canonical The graph implementation of the input.
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
-
-#' @rdname canonicalize
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
-#' @rdname expression-parts
 #' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.
 setMethod("variables", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @rdname expression-parts
 #' @describeIn Canonical List of \linkS4class{Parameter} objects in the expression.
 setMethod("parameters", "Canonical", function(object) { stop("Unimplemented") })
 
-#' @rdname expression-parts
 #' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
 setMethod("constants", "Canonical", function(object) { stop("Unimplemented") })
 
-# Information needed to reconstruct the expression aside from its arguments.
+#' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
 setMethod("get_data", "Canonical", function(object) { list() })
 
 ##########################

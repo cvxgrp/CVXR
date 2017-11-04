@@ -8,13 +8,11 @@
 #' @rdname Elementwise-class
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
-#' @rdname validate_args
 #' @describeIn Elementwise Check all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
 
-#' @rdname size_from_args
 #' @describeIn Elementwise Size is the same as the sum of the arguments' sizes.
 setMethod("size_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
@@ -229,7 +227,7 @@ setMethod("is_atom_concave", "Exp", function(object) { FALSE })
 #' @describeIn Exp The atom is weakly increasing.
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 
-#' @describeIn The atom is not weakly decreasing.
+#' @describeIn Exp The atom is not weakly decreasing.
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
 setMethod(".grad", "Exp", function(object, values) {

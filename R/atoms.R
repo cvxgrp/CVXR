@@ -25,14 +25,12 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
-#' @rdname validate_args
 #' @describeIn Atom Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { return() })
 
 #' @rdname size_from_args
 setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
 
-#' @rdname size
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
 setMethod("size", "Atom", function(object) { object@.size })
 
@@ -48,11 +46,9 @@ setMethod("ncol", "Atom", function(x) { size(x)[2] })
 #' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
-#' @rdname sign-methods
 #' @describeIn Atom A logical value indicating whether the atom is positive.
 setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
 
-#' @rdname sign-methods
 #' @describeIn Atom A logical value indicating whether the atom is negative.
 setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
 
@@ -71,7 +67,6 @@ setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 #' @rdname curvature-comp
 setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 
-#' @rdname curvature-methods
 #' @describeIn Atom A logical value indicating whether the atom is convex.
 setMethod("is_convex", "Atom", function(object) {
   # Applies DCP composition rule
@@ -89,7 +84,6 @@ setMethod("is_convex", "Atom", function(object) {
     return(FALSE)
 })
 
-#' @rdname curvature-methods
 #' @describeIn Atom A logical value indicating whether the atom is concave.
 setMethod("is_concave", "Atom", function(object) {
   # Applies DCP composition rule
@@ -107,7 +101,6 @@ setMethod("is_concave", "Atom", function(object) {
     return(FALSE)
 })
 
-#' @rdname canonicalize
 #' @describeIn Atom Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
   # Constant atoms are treated as a leaf
@@ -135,32 +128,27 @@ setMethod("canonicalize", "Atom", function(object) {
   }
 })
 
-#' @rdname graph_implementation
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
 
-#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Variable} objects in the atom.
 setMethod("variables", "Atom", function(object) {
   var_list <- lapply(object@args, function(arg) { variables(arg) })
   unique(flatten_list(var_list))
 })
 
-#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Parameter} objects in the atom.
 setMethod("parameters", "Atom", function(object) {
   param_list <- lapply(object@args, function(arg) { parameters(arg) })
   unique(flatten_list(param_list))
 })
 
-#' @rdname expression-parts
 #' @describeIn Atom List of \linkS4class{Constant} objects in the atom.
 setMethod("constants", "Atom", function(object) {
   const_list <- lapply(object@args, function(arg) { constants(arg) })
   unique(flatten_list(const_list))   # TODO: Is this the correct way to remove duplicates?
 })
 
-#' @rdname value-methods
 #' @describeIn Atom The value of the atom.
 setMethod("value", "Atom", function(object) {
   # Catch the case when the expression is known to be zero through DCP analysis
@@ -193,7 +181,6 @@ setMethod("value", "Atom", function(object) {
 
 setMethod(".grad", "Atom", function(object, values) { stop("Unimplemented") })
 
-#' @rdname grad
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
@@ -243,7 +230,6 @@ setMethod("grad", "Atom", function(object) {
 
 setMethod(".domain", "Atom", function(object) { list() })
 
-#' @rdname domain
 #' @describeIn Atom A list of constraints describing the closure of the region where the expression is finite.
 setMethod("domain", "Atom", function(object) {
   cons <- list()
@@ -273,7 +259,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @rdname size_from_args
+#' @describeIn AxisAtom The size of the atom deteremined from its arguments.
 setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
     c(1, 1)
@@ -283,7 +269,6 @@ setMethod("size_from_args", "AxisAtom", function(object) {
     c(1, size(object@args[[1]])[2])
 })
 
-#' @rdname get_data
 #' @describeIn AxisAtom A list containing \code{axis}.
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 

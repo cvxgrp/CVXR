@@ -1047,7 +1047,7 @@ setMethod("validate_args", "Trace", function(object) {
 #' @describeIn Trace Sum the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
-#' @describeIn The atom is a scalar.
+#' @describeIn Trace The atom is a scalar.
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
 
 Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {

@@ -386,7 +386,7 @@ setGeneric("graph_implementation", function(object, arg_objs, size, data) { stan
 #' @return A non-negative integer identifier.
 #' @seealso get_id setIdCounter
 #' @docType methods
-#' @rdname identification
+#' @rdname id
 #' @export
 setGeneric("id", function(object) { standardGeneric("id") })
 
@@ -555,16 +555,29 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #' @docType methods
 #' @export
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
+
+#'
+#' Choose MOSEK Solution
+#' 
+#' Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
+#' As long as interior solution is not worse, take it (for backward compatibility).
+#' 
+#' @param solver A \linkS4class{MOSEK} object.
+#' @param results_dict A list of the results returned by the solver.
+#' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
+#' @rdname choose_solution
 setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
 setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
 
-#
-# Validate Solver
-# 
-# Raises an exception if the solver cannot solver the problem.
-# 
-# @param solver A \linkS4class{Solver} object.
-# @param constraints A list of canonicalized constraints
+#'
+#' Validate Solver
+#' 
+#' Raises an exception if the solver cannot solve the problem.
+#' 
+#' @param solver A \linkS4class{Solver} object.
+#' @param constraints A list of canonicalized constraints
+#' @docType methods
+#' @rdname validate_solver
 setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
 
 # 
@@ -645,6 +658,7 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 #' @param ... Additional arguments to the solver.
 #' @return A list containing the status, optimal value, primal variable, and dual variables for the equality and inequality constraints.
 #' @docType methods
+#' @aliases Solver.solve
 #' @rdname Solver-solve
 setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { standardGeneric("Solver.solve") })
 

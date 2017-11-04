@@ -11,7 +11,6 @@
 #' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
 #' @name Constant-class
 #' @rdname Constant-class
-#' @export
 .Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
                                  prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA), 
                       validity = function(object) {
@@ -21,14 +20,6 @@
                         return(TRUE)
                       }, contains = "Leaf")
 
-#'
-#' Constant Constructor
-#' 
-#' Construct a \linkS4class{Constant} class object.
-#' 
-#' @param value A numeric element, vector, matrix, or data.frame.
-#' @return A \linkS4class{Constant} representing the numeric data.
-#' @docType methods
 #' @name Constant
 #' @rdname Constant-class
 #' @export
@@ -63,33 +54,27 @@ setMethod("as.character", "Constant", function(x) {
   paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
 
-#' @rdname expression-parts
 #' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })
 
+#' @describeIn Constant A list with the value of the constant.
 setMethod("get_data", "Constant", function(object) { list(value(object)) })
 
-#' @rdname value-methods
 #' @describeIn Constant The value of the constant.
 setMethod("value", "Constant", function(object) { object@value })
 
-#' @rdname grad
 #' @describeIn Constant An empty list since the gradient of a constant is zero.
 setMethod("grad", "Constant", function(object) { list() })
 
-#' @rdname size
 #' @describeIn Constant The \code{c(row, col)} dimensions of the constant.
 setMethod("size", "Constant", function(object) { object@size })
 
-#' @rdname sign-methods
 #' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-negative.
 setMethod("is_positive", "Constant", function(object) { object@is_pos })
 
-#' @rdname sign-methods
 #' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-positive.
 setMethod("is_negative", "Constant", function(object) { object@is_neg })
 
-#' @rdname canonicalize
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
   obj <- create_const(value(object), size(object), object@sparse)
@@ -134,7 +119,7 @@ get_sign <- function(constant) {
 #' @slot cols The number of columns in the parameter.
 #' @slot name (Optional) A character string representing the name of the parameter.
 #' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
-#' @slot value A numeric element, vector, matrix, or data.frame.
+#' @slot value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @name Parameter-class
 #' @rdname Parameter-class
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
@@ -146,16 +131,6 @@ get_sign <- function(constant) {
                           return(TRUE)
                         }, contains = "Leaf")
 
-#'
-#' Parameter Constructor
-#'
-#' Construct a \linkS4class{Parameter} class object.
-#' 
-#' @param rows The number of rows in the parameter.
-#' @param cols The number of columns in the parameter.
-#' @param name (Optional) A character string representing the name of the parameter.
-#' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
-#' @return A \linkS4class{Parameter} object.
 #' @name Parameter
 #' @rdname Parameter-class
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
@@ -189,46 +164,38 @@ setMethod("as.character", "Parameter", function(x) {
   paste("Parameter(", x@rows, ", ", x@cols, ", sign = ", sign(x), ")", sep = "")
 })
 
+#' @describeIn Parameter Returns \code{list(rows, cols, name, sign string, value)}.
 setMethod("get_data", "Parameter", function(object) {
   list(rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str, value = object@value)
 })
 
-#' @rdname name
 #' @describeIn Parameter The name of the parameter.
 setMethod("name", "Parameter", function(object) { object@name })
 
-#' @rdname size
-#' @describeIn Parameter The \code{c(row, col)} dimensions of the parameter.
+#' @describeIn Parameter The \code{c(rows, cols)} dimensions of the parameter.
 setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
 
-#' @rdname sign-methods
-#' @describeIn Parameter A logical value indicating whether the parameter is non-negative.
+#' @describeIn Parameter Is the parameter non-negative?
 setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
 
-#' @rdname sign-methods
-#' @describeIn Parameter A logical value indicating whether the parameter is non-positive.
+#' @describeIn Parameter Is the parameter non-positive?
 setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
 
-#' @rdname grad
 #' @describeIn Parameter An empty list since the gradient of a parameter is zero.
 setMethod("grad", "Parameter", function(object) { list() })
 
-#' @rdname expression-parts
 #' @describeIn Parameter Returns itself as a parameter.
 setMethod("parameters", "Parameter", function(object) { list(object) })
 
-#' @rdname value-methods
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) { object@value })
 
-#' @rdname value-methods
 #' @describeIn Parameter Set the value of the parameter.
 setReplaceMethod("value", "Parameter", function(object, value) {
   object@value <- validate_val(object, value)
   object
 })
 
-#' @rdname canonicalize
 #' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
   obj <- create_param(object, size(object))

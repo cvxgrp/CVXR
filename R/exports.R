@@ -1220,8 +1220,7 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 #' 
 #' @param block_lists A list of lists containing \linkS4class{Expression} objects, matrices, or vectors, which represent the blocks of the block matrix.
 #' @return An \linkS4class{Expression} representing the block matrix.
-#' @docType methods
-#' @rdname bmat
+#' @examples 
 #' x <- Variable()
 #' expr <- bmat(list(list(matrix(1, nrow = 3, ncol = 1), matrix(2, nrow = 3, ncol = 2)), 
 #'                 list(matrix(3, nrow = 1, ncol = 2), x)
@@ -1229,6 +1228,8 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 #' prob <- Problem(Minimize(sum_entries(expr)), list(x >= 0))
 #' result <- solve(prob)
 #' result$value
+#' @docType methods
+#' @rdname bmat
 #' @export
 bmat <- Bmat
 

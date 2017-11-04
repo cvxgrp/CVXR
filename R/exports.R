@@ -41,6 +41,12 @@ geo_mean <- GeoMean
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the harmonic mean of the input.
+#' @examples 
+#' x <- Variable()
+#' prob <- Problem(Maximize(harmonic_mean(x)), list(x >= 0, x <= 5))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
 #' @docType methods
 #' @name harmonic_mean
 #' @rdname harmonic_mean

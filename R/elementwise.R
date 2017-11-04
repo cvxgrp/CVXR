@@ -6,10 +6,10 @@
 #' @name Elementwise-class
 #' @aliases Elementwise
 #' @rdname Elementwise-class
-#' @export
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
-# Verify all the shapes are the same or can be promoted.
+#' @rdname validate_args
+#' @describeIn Elementwise Check all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
 })
@@ -56,7 +56,6 @@ Elementwise.promote <- function(arg, size) {
 #' @slot x An \linkS4class{Expression} object.
 #' @name Abs-class
 #' @rdname Abs-class
-#' @export
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 
 #' @name Abs
@@ -70,25 +69,25 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Abs Returns the elementwise absolute value of the input value.
+#' @describeIn Abs The elementwise absolute value of the input.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
-#' @rdname sign_from_args
+#' @describeIn Abs The atom is positive.
 setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Abs The atom is convex.
 setMethod("is_atom_convex", "Abs", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn Abs The atom is not concave.
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Abs A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname curvature-comp
+#' @describeIn Abs A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Abs", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @rdname curvature-methods
+#' @describeIn Abs Is \code{x} piecewise linear?
 setMethod("is_pwl", "Abs", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "Abs", function(object, values) {
@@ -110,6 +109,7 @@ Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @describeIn Abs The graph implementation of the atom.
 setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data = NA_real_) {
   Abs.graph_implementation(arg_objs, size, data)
 })
@@ -122,7 +122,6 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #' @slot x An \linkS4class{Expression} object.
 #' @name Entr-class
 #' @rdname Entr-class
-#' @export
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
 #' @name Entr
@@ -136,7 +135,7 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Returns the elementwise entropy function evaluated at the value.
+#' @describeIn Entr The elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
     tmp <- x*log(y)
@@ -152,19 +151,19 @@ setMethod("to_numeric", "Entr", function(object, values) {
   results
 })
 
-#' @rdname sign_from_args
+#' @describeIn Entr The sign of the atom is unknown.
 setMethod("sign_from_args", "Entr", function(object) { c(FALSE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Entr The atom is not convex.
 setMethod("is_atom_convex", "Entr", function(object) { FALSE })
 
-#' @rdname curvature-atom
+#' @describeIn Entr The atom is concave.
 setMethod("is_atom_concave", "Entr", function(object) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Entr The atom is weakly increasing.
 setMethod("is_incr", "Entr", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Entr The atom is weakly decreasing.
 setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 
 setMethod(".grad", "Entr", function(object, values) {
@@ -189,6 +188,7 @@ Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, x, ones)))
 }
 
+#' @describeIn Entr The graph implementation of the atom.
 setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data = NA_real_) {
   Entr.graph_implementation(arg_objs, size, data)
 })
@@ -201,7 +201,6 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #' @slot x An \linkS4class{Expression} object.
 #' @name Exp-class
 #' @rdname Exp-class
-#' @export
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 
 #' @name Exp
@@ -215,22 +214,22 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Returns the matrix with each element exponentiated.
+#' @describeIn Exp The matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
-#' @rdname sign_from_args
+#' @describeIn Exp The atom is positive.
 setMethod("sign_from_args", "Exp", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Exp The atom is convex.
 setMethod("is_atom_convex", "Exp", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn Exp The atom is not concave.
 setMethod("is_atom_concave", "Exp", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Exp The atom is weakly increasing.
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn The atom is not weakly decreasing.
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
 setMethod(".grad", "Exp", function(object, values) {
@@ -247,6 +246,7 @@ Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(x, ones, t)))
 }
 
+#' @describeIn Exp The graph implementation of the atom.
 setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data = NA_real_) {
   Exp.graph_implementation(arg_objs, size, data)
 })
@@ -264,7 +264,6 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #' @slot M A positive scalar value representing the threshold. Defaults to 1.
 #' @name Huber-class
 #' @rdname Huber-class
-#' @export
 .Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
                            prototype(M = 1), contains = "Elementwise")
 
@@ -280,13 +279,13 @@ setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Checks that \code{M} is a non-negative constant.
+#' @describeIn Huber Check that \code{M} is a non-negative constant.
 setMethod("validate_args", "Huber", function(object) {
   if(!(is_positive(object@M) && is_constant(object@M) && is_scalar(object@M)))
     stop("M must be a non-negative scalar constant")
 })
 
-# Returns the Huber function evaluted elementwise on the input value.
+#' @describeIn Huber The Huber function evaluted elementwise on the input value.
 setMethod("to_numeric", "Huber", function(object, values) {
   huber_loss <- function(delta, r) {
     if(delta < 0)
@@ -307,19 +306,19 @@ setMethod("to_numeric", "Huber", function(object, values) {
     2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
 })
 
-#' @rdname sign_from_args
+#' @describeIn Huber The atom is positive.
 setMethod("sign_from_args", "Huber", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Huber The atom is convex.
 setMethod("is_atom_convex", "Huber", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn Huber The atom is not concave.
 setMethod("is_atom_concave", "Huber", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Huber A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname curvature-comp
+#' @describeIn Huber A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Huber", function(object, idx) { is_negative(object@args[[idx]]) })
 
 #' @describeIn Huber A list containing the parameter \code{M}.
@@ -365,6 +364,7 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @describeIn Huber The graph implementation of the atom.
 setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data = NA_real_) {
   Huber.graph_implementation(arg_objs, size, data)
 })
@@ -380,7 +380,6 @@ InvPos <- function(x) { Power(x, -1) }
 #' @slot y An \linkS4class{Expression} or numeric constant.
 #' @name KLDiv-class
 #' @rdname KLDiv-class
-#' @export
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 
 #' @name KLDiv
@@ -395,7 +394,7 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
-# Returns the KL-divergence evaluted elementwise on the input value.
+#' @describeIn KLDiv The KL-divergence evaluted elementwise on the input value.
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
   y <- intf_convert_if_scalar(values[[2]])
@@ -409,19 +408,19 @@ setMethod("to_numeric", "KLDiv", function(object, values) {
   xlogy(x, x/y) - x + y
 })
 
-#' @rdname sign_from_args
+#' @describeIn KLDiv The atom is positive.
 setMethod("sign_from_args", "KLDiv", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn KLDiv The atom is convex.
 setMethod("is_atom_convex", "KLDiv", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn KLDiv The atom is not concave.
 setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn KLDiv The atom is not monotonic in any argument.
 setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn KLDiv The atom is not monotonic in any argument.
 setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
 setMethod(".grad", "KLDiv", function(object, values) {
@@ -453,6 +452,7 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @describeIn KLDiv The graph implementation of the atom.
 setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
   KLDiv.graph_implementation(arg_objs, size, data)
 })
@@ -465,7 +465,6 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Log-class
 #' @rdname Log-class
-#' @export
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
 #' @name Log
@@ -479,22 +478,22 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Returns the elementwise natural logarithm of the input value.
+#' @describeIn Log The elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
-#' @rdname sign_from_args
+#' @describeIn Log The sign of the atom is unknown.
 setMethod("sign_from_args", "Log", function(object) { c(FALSE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Log The atom is not convex.
 setMethod("is_atom_convex", "Log", function(object) { FALSE })
 
-#' @rdname curvature-atom
+#' @describeIn Log The atom is concave.
 setMethod("is_atom_concave", "Log", function(object) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Log The atom is weakly increasing.
 setMethod("is_incr", "Log", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Log The atom is not weakly decreasing.
 setMethod("is_decr", "Log", function(object, idx) { FALSE })
 
 setMethod(".grad", "Log", function(object, values) {
@@ -519,6 +518,7 @@ Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, ones, x)))
 }
 
+#' @describeIn Log The graph implementation of the atom.
 setMethod("graph_implementation", "Log", function(object, arg_objs, size, data = NA_real_) {
   Log.graph_implementation(arg_objs, size, data)
 })
@@ -531,17 +531,16 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Log1p-class
 #' @rdname Log1p-class
-#' @export
 .Log1p <- setClass("Log1p", contains = "Log")
 
 #' @name Log1p
 #' @rdname Log1p-class
 Log1p <- function(x) { .Log1p(x = x) }
 
-# Returns the elementwise natural logarithm of one plus the input value.
+#' @describeIn Log1p The elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 
-#' @rdname sign_from_args
+#' @describeIn Log1p The sign of the atom.
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
 
 setMethod(".grad", "Log1p", function(object, values) {
@@ -566,6 +565,7 @@ Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   Log.graph_implementation(list(xp1), size, data)
 }
 
+#' @describeIn Log1p The graph implementation of the atom.
 setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data = NA_real_) {
   Log1p.graph_implementation(arg_objs, size, data)
 })
@@ -580,7 +580,6 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Logistic-class
 #' @rdname Logistic-class
-#' @export
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 
 #' @name Logistic
@@ -594,22 +593,22 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
+#' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
-#' @rdname sign_from_args
+#' @describeIn Logistic The atom is positive.
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Logistic The atom is convex.
 setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn Logistic The atom is not concave.
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Logistic The atom is weakly increasing.
 setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Logistic The atom is not weakly decreasing.
 setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
 
 setMethod(".grad", "Logistic", function(object, values) {
@@ -639,6 +638,7 @@ Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constr)
 }
 
+#' @describeIn Logistic The graph implementation of the atom.
 setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, data = NA_real_) {
   Logistic.graph_implementation(arg_objs, size, data)
 })
@@ -653,7 +653,6 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @slot ... Additional \linkS4class{Expression}s in the maximum operation.
 #' @name MaxElemwise-class
 #' @rdname MaxElemwise-class
-#' @export
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
                            if(is.null(object@args) || length(object@args) < 2)
                              stop("[MaxElemwise: validation] args must have at least 2 arguments")
@@ -664,32 +663,32 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @rdname MaxElemwise-class
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
-# Returns the elementwise maximum.
+#' @describeIn MaxElemwise The elementwise maximum.
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
   # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
   Reduce("pmax", values)
 })
 
-#' @rdname sign_from_args
+#' @describeIn MaxElemwise The sign of the atom.
 setMethod("sign_from_args", "MaxElemwise", function(object) {
   is_pos <- any(sapply(object@args, function(arg) { is_positive(arg) }))
   is_neg <- all(sapply(object@args, function(arg) { is_negative(arg) }))
   c(is_pos, is_neg)
 })
 
-#' @rdname curvature-atom
+#' @describeIn MaxElemwise The atom is convex.
 setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn MaxElemwise The atom is not concave.
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn MaxElemwise The atom is weakly increasing.
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn MaxElemwise The atom is not weakly decreasing.
 setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 
-#' @rdname curvature-methods
+#' @describeIn MaxElemwise Are all the arguments piecewise linear?
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
@@ -722,6 +721,7 @@ MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @describeIn MaxElemwise The graph implementation of the atom.
 setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size, data = NA_real_) {
   MaxElemwise.graph_implementation(arg_objs, size, data)
 })
@@ -754,7 +754,6 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @name Power-class
 #' @rdname Power-class
-#' @export
 .Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"),
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
@@ -800,13 +799,13 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
-# Verification of arguments happens during initialization.
+#' @describeIn Power Verification of arguments happens during initialization.
 setMethod("validate_args", "Power", function(object) { return() })
 
-# A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
+#' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
-# Throw an error if the power is negative and cannot be handled.
+#' @describeIn Power Throw an error if the power is negative and cannot be handled.
 setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
   if(object@p < 0 && min(values[[1]]) <= 0)
@@ -817,7 +816,7 @@ setMethod("to_numeric", "Power", function(object, values) {
     return(values[[1]]^(as.double(object@p)))
 })
 
-#' @rdname sign_from_args
+#' @describeIn Power The sign of the atom.
 setMethod("sign_from_args", "Power", function(object) {
   if(object@p == 1)   # Same as input
     c(is_positive(object@args[[1]]), is_negative(object@args[[1]]))
@@ -825,16 +824,16 @@ setMethod("sign_from_args", "Power", function(object) {
     c(TRUE, FALSE)
 })
 
-#' @rdname curvature-atom
+#' @describeIn Power Is \eqn{p \leq 0} or \eqn{p \geq 1}?
 setMethod("is_atom_convex", "Power", function(object) { object@p <= 0 || object@p >= 1 })
 
-#' @rdname curvature-atom
+#' @describeIn Power Is \eqn{p \geq 0} or \eqn{p \leq 1}?
 setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object@p <= 1 })
 
-#' @rdname curvature-methods
+#' @describeIn Power A logical value indicating whether the atom is constant.
 setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
-#' @rdname curvature-comp
+#' @describeIn Power A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
     return(TRUE)
@@ -847,7 +846,7 @@ setMethod("is_incr", "Power", function(object, idx) {
     return(FALSE)
 })
 
-#' @rdname curvature-comp
+#' @describeIn Power A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Power", function(object, idx) {
   if(object@p <= 0)
     return(TRUE)
@@ -860,7 +859,7 @@ setMethod("is_decr", "Power", function(object, idx) {
     return(FALSE)
 })
 
-#' @rdname curvature-methods
+#' @describeIn Power A logical value indicating whether the atom is quadratic.
 setMethod("is_quadratic", "Power", function(object) {
   if(object@p == 0)
     return(TRUE)
@@ -930,6 +929,7 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 }
 
+#' @describeIn Power The graph implementation of the atom.
 setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
   Power.graph_implementation(arg_objs, size, data)
 })
@@ -944,7 +944,6 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' @slot x An \linkS4class{Expression} object.
 #' @name Sqrt-class
 #' @rdname Sqrt-class
-#' @export
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
 
 #' @name Sqrt
@@ -953,31 +952,31 @@ Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 
-# Verification of arguments happens during initialization.
+#' @describeIn Sqrt Verification of arguments happens during initialization.
 setMethod("validate_args", "Sqrt", function(object) { return() })
 
-# Returns the elementwise square root of the input value.
+#' @describeIn Sqrt The elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 
-# A list containing the output of \code{pow_mid}.
+#' @describeIn Sqrt A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
-#' @rdname sign_from_args
+#' @describeIn Sqrt The atom is positive.
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Sqrt The atom is not convex.
 setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 
-#' @rdname curvature-atom
+#' @describeIn Sqrt The atom is concave.
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Sqrt The atom is weakly increasing.
 setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
 
-#' @rdname curvature-comp
+#' @describeIn Sqrt The atom is not weakly decreasing.
 setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
 
-#' @rdname curvature-methods
+#' @describeIn Sqrt Is \code{x} constant?
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
 setMethod(".grad", "Sqrt", function(object, values) {
@@ -1006,6 +1005,7 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @describeIn Sqrt The graph implementation of the atom.
 setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
   Sqrt.graph_implementation(arg_objs, size, data)
 })
@@ -1018,7 +1018,6 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' @slot x An \linkS4class{Expression}.
 #' @name Square-class
 #' @rdname Square-class
-#' @export
 .Square <- setClass("Square", contains = "Elementwise")
 
 #' @name Square
@@ -1027,31 +1026,31 @@ Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
 
-# Square Verification of arguments happens during initialization.
+#' @describeIn Square Verification of arguments happens during initialization.
 setMethod("validate_args", "Square", function(object) { return() })
 
-# Returns the elementwise square of the input value.
+#' @describeIn Square The elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 
-# A list containing the output of \code{pow_high}.
+#' @describeIn Square A list containing the output of \code{pow_high}.
 setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 
-#' @rdname sign_from_args
+#' @describeIn Square The atom is positive.
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
 
-#' @rdname curvature-atom
+#' @describeIn Square The atom is convex.
 setMethod("is_atom_convex", "Square", function(object) { TRUE })
 
-#' @rdname curvature-atom
+#' @describeIn Square The atom is not concave.
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 
-#' @rdname curvature-comp
+#' @describeIn Square A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
 
-#' @rdname curvature-comp
+#' @describeIn Square A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Square", function(object, idx) { is_negative(object@args[[idx]]) })
 
-#' @rdname curvature-methods
+#' @describeIn Square Is \code{x} affine?
 setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
 
 setMethod(".grad", "Square", function(object, values) {
@@ -1078,6 +1077,7 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @describeIn Square The graph implementation of the atom.
 setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
   Square.graph_implementation(arg_objs, size, data)
 })

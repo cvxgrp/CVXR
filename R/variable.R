@@ -9,6 +9,7 @@
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name Variable-class
+#' @aliases Variable
 #' @rdname Variable-class
 .Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "ConstVal"),
                                  prototype(rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
@@ -18,13 +19,10 @@
                                    return(TRUE)
                                  }, contains = "Leaf")
 
-#' @name Variable
 #' @rdname Variable-class
 #' @export
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
-#' @name Variable
-#' @rdname Variable-class
 setMethod("initialize", "Variable", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
   .Object@id <- id
   .Object@rows <- rows
@@ -42,6 +40,8 @@ setMethod("show", "Variable", function(object) {
   cat("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{Variable} object.
+#' @rdname Variable-class
 setMethod("as.character", "Variable", function(x) {
   size <- size(x)
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
@@ -109,10 +109,10 @@ setMethod("canonicalize", "Variable", function(object) {
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name Bool-class
+#' @aliases Bool
 #' @rdname Bool-class
 .Bool <- setClass("Bool", contains = "Variable")
 
-#' @name Bool
 #' @rdname Bool-class
 #' @export
 Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
@@ -122,6 +122,7 @@ setMethod("show", "Bool", function(object) {
   cat("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Bool-class
 setMethod("as.character", "Bool", function(x) {
   size <- size(x)
   paste("Bool(", size[1], ", ", size[2], ")", sep = "")
@@ -152,10 +153,10 @@ setMethod("is_negative", "Bool", function(object) { FALSE })
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name Int-class
+#' @aliases Int
 #' @rdname Int-class
 .Int <- setClass("Int", contains = "Variable")
 
-#' @name Int
 #' @rdname Int-class
 #' @export
 Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
@@ -165,6 +166,7 @@ setMethod("show", "Int", function(object) {
   cat("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname Int-class
 setMethod("as.character", "Int", function(x) {
   size <- size(x)
   paste("Int(", size[1], ", ", size[2], ")", sep = "")
@@ -189,10 +191,10 @@ setMethod("canonicalize", "Int", function(object) {
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name NonNegative-class
+#' @aliases NonNegative
 #' @rdname NonNegative-class
 .NonNegative <- setClass("NonNegative", contains = "Variable")
 
-#' @name NonNegative
 #' @rdname NonNegative-class
 #' @export
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
@@ -202,6 +204,7 @@ setMethod("show", "NonNegative", function(object) {
   cat("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @rdname NonNegative-class
 setMethod("as.character", "NonNegative", function(x) {
   size <- size(x)
   paste("NonNegative(", size[1], ", ", size[2], ")", sep = "")
@@ -233,15 +236,13 @@ setMethod("is_negative", "NonNegative", function(object) { FALSE })
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name SemidefUpperTri-class
+#' @aliases SemidefUpperTri
 #' @rdname SemidefUpperTri-class
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
 
-#' @name SemidefUpperTri
 #' @rdname SemidefUpperTri-class
 SemidefUpperTri <- function(n, name = NA_character_) { .SemidefUpperTri(n = n, name = name) }
 
-#' @name SemidefUpperTri
-#' @rdname SemidefUpperTri-class
 setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
   .Object@n = n
   callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1, name = name)
@@ -251,6 +252,8 @@ setMethod("show", "SemidefUpperTri", function(object) {
   cat("SemidefUpperTri(", object@n, ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{SemidefUpperTri} object.
+#' @rdname SemidefUpperTri-class
 setMethod("as.character", "SemidefUpperTri", function(x) {
   paste("SemidefUpperTri(", x@n, ")", sep = "")
 })
@@ -336,15 +339,13 @@ Semidef <- function(n, name = NA_character_) {
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot primal_value (Internal) The primal value of the variable stored internally.
 #' @name SymmetricUpperTri-class
+#' @aliases SymmetricUpperTri
 #' @rdname SymmetricUpperTri-class
 .SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
 
-#' @name SymmetricUpperTri
 #' @rdname SymmetricUpperTri-class
 SymmetricUpperTri <- function(n, name = NA_character_) { .SymmetricUpperTri(n = n, name = name) }
 
-#' @name SymmetricUpperTri
-#' @rdname SymmetricUpperTri-class
 setMethod("initialize", "SymmetricUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
   .Object@n = n
   callNextMethod(.Object, ..., rows = n*(n+1)/2, cols = 1, name = name)
@@ -354,6 +355,8 @@ setMethod("show", "SymmetricUpperTri", function(object) {
   cat("SymmetricUpperTri(", object@n, ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{SymmetricUpperTri} object.
+#' @rdname SymmetricUpperTri-class
 setMethod("as.character", "SymmetricUpperTri", function(x) {
   paste("SymmetricUpperTri(", x@n, ")", sep = "")
 })

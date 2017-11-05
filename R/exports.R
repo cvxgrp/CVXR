@@ -243,6 +243,7 @@ matrix_frac <- MatrixFrac
 #' result$value
 #' @docType methods
 #' @name max_entries
+#' @aliases max
 #' @rdname max_entries
 #' @export
 max_entries <- MaxEntries
@@ -263,6 +264,7 @@ max_entries <- MaxEntries
 #' result$value
 #' @docType methods
 #' @name min_entries
+#' @aliases min
 #' @rdname min_entries
 #' @export
 min_entries <- MinEntries
@@ -275,7 +277,6 @@ min_entries <- MinEntries
 #' @param X An \linkS4class{Expression}, vector, or matrix.
 #' @param p The type of inner norm.
 #' @param q The type of outer norm.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the \eqn{l_{p,q}} norm of the input.
 #' @examples 
 #' A <- Variable(2,2)
@@ -546,6 +547,7 @@ quad_over_lin <- QuadOverLin
 #' result$getValue(C)
 #' @docType methods
 #' @name sum_entries
+#' @aliases sum
 #' @rdname sum_entries
 #' @export
 sum_entries <- SumEntries
@@ -626,7 +628,7 @@ sum_smallest <- SumSmallest
 #' 
 #' result$value
 #' result$getValue(x)
-#' result$getDualValue(constr[[1]]))
+#' result$getDualValue(constr[[1]])
 #' @docType methods
 #' @name sum_squares
 #' @rdname sum_squares
@@ -691,8 +693,8 @@ matrix_trace <- Trace
 tv <- TotalVariation
 
 #' @docType methods
-#' @name max
 #' @rdname max_entries
+#' @method max Expression
 #' @export
 max.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
@@ -709,8 +711,8 @@ max.Expression <- function(..., na.rm = FALSE) {
 }
 
 #' @docType methods
-#' @name min
 #' @rdname min_entries
+#' @method min Expression
 #' @export
 min.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
@@ -750,7 +752,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #' result <- solve(prob, solver = "SCS")
 #' result$value
 #' @docType methods
-#' @name norm
+#' @aliases norm
 #' @rdname norm
 #' @export
 setMethod("norm", signature(x = "Expression", type = "character"), function(x, type) {
@@ -772,9 +774,26 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
     stop("argument type[1]='", type, "' must be one of 'M','1','O','I','F' or 'E'")
 })
 
+#'
+#' Matrix Norm (Alternative)
+#'
+#' A wrapper on the different norm atoms. This is different from the standard "norm" method in the R base package.
+#' If \code{p = 2}, \code{axis = NA}, and \code{x} is a matrix, this returns the maximium singular value.
+#' 
+#' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
+#' @param p The type of norm. May be a number (p-norm), "inf" (infinity-norm), "nuc" (nuclear norm), or "fro" (Frobenius norm). The default is \code{p = 2}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the norm.
+#' @seealso \link[cvxr]{norm}
 #' @docType methods
-#' @name sum
+#' @name cvxr_norm
+#' @rdname cvxr_norm
+#' @export
+cvxr_norm <- Norm
+
+#' @docType methods
 #' @rdname sum_entries
+#' @method sum Expression
 #' @export
 sum.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
@@ -805,8 +824,9 @@ sum.Expression <- function(..., na.rm = FALSE) {
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
-#' @name mean
+#' @aliases mean
 #' @rdname mean
+#' @method mean Expression
 #' @export
 mean.Expression <- function(x, trim = 0, na.rm = FALSE, ...) {
   if(na.rm)
@@ -1024,6 +1044,7 @@ min_elemwise <- MinElemwise
 #' result$getValue(expr)
 #' @docType methods
 #' @name mul_elemwise
+#' @aliases *
 #' @rdname mul_elemwise
 #' @export
 mul_elemwise <- MulElemwise
@@ -1090,6 +1111,7 @@ pos <- Pos
 #' result$getValue(x)
 #' @docType methods
 #' @name power
+#' @aliases ^
 #' @rdname power
 #' @export
 power <- Power
@@ -1157,7 +1179,7 @@ square <- Square
 #' result$value
 #' result$getValue(A)
 #' @docType methods
-#' @name abs
+#' @aliases abs
 #' @rdname abs
 #' @export
 setMethod("abs", "Expression", function(x) { Abs(x = x) })
@@ -1176,7 +1198,7 @@ setMethod("abs", "Expression", function(x) { Abs(x = x) })
 #' result <- solve(prob)
 #' result$getValue(x)
 #' @docType methods
-#' @name exp
+#' @aliases exp
 #' @rdname exp
 #' @export
 setMethod("exp", "Expression", function(x) { Exp(x = x) })
@@ -1223,25 +1245,22 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
-#' @name log
+#' @aliases log log10 log2 log1p
 #' @rdname log
 #' @export
 setMethod("log", "Expression", function(x, base = exp(1)) { Log(x = x)/log(base) })
 
 #' @docType methods
-#' @name log10
 #' @rdname log
 #' @export
 setMethod("log10", "Expression", function(x) { log(x, base = 10) })
 
 #' @docType methods
-#' @name log2
 #' @rdname log
 #' @export
 setMethod("log2", "Expression", function(x) { log(x, base = 2) })
 
 #' @docType methods
-#' @name log1p
 #' @rdname log
 #' @export
 setMethod("log1p", "Expression", function(x) { Log1p(x = x) })
@@ -1260,7 +1279,7 @@ log1p <- Log1p
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
-#' @name sqrt
+#' @aliases sqrt
 #' @rdname sqrt
 #' @export
 setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
@@ -1341,7 +1360,9 @@ conv <- Conv
 #'
 #' D <- Variable(3,3)
 #' expr <- hstack(C, D)
-#' prob <- Problem(Minimize(expr[1,2] + sum(hstack(expr, expr))), list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3))
+#' obj <- expr[1,2] + sum(hstack(expr, expr))
+#' constr <- list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3)
+#' prob <- Problem(Minimize(obj), constr)
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(C)
@@ -1522,8 +1543,7 @@ vstack <- VStack
 #'
 #' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}. Matrices are flattened into column-major order before the sum is taken.
 #'
-#' @param expr An \linkS4class{Expression}, vector, or matrix.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @examples 
 #' x <- Variable(2,2)
 #' val <- cbind(c(1,2), c(3,4))
@@ -1532,17 +1552,18 @@ vstack <- VStack
 #' result$value
 #' result$getValue(cumsum(x))
 #' @docType methods
-#' @name cumsum
+#' @aliases cumsum
 #' @rdname cumsum
 #' @export
-setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
+setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
 
 #'
 #' Matrix Diagonal
 #'
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
 #'
-#' @param expr An \linkS4class{Expression}, vector, or square matrix.
+#' @param x An \linkS4class{Expression}, vector, or square matrix.
+#' @param nrow,ncol (Optional) Dimensions for the result when \code{x} is not a matrix.
 #' @return An \linkS4class{Expression} representing the diagonal vector or matrix.
 #' @examples 
 #' C <- Variable(3,3)
@@ -1553,7 +1574,7 @@ setMethod("cumsum", "Expression", function(x) { CumSum(expr = Vec(x)) })   # Fla
 #' result$value
 #' result$getValue(C)
 #' @docType methods
-#' @name diag
+#' @aliases diag
 #' @rdname diag
 #' @export
 setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
@@ -1584,7 +1605,7 @@ setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
 #' @param x An \linkS4class{Expression}.
 #' @param lag An integer indicating which lag to use.
 #' @param differences An integer indicating the order of the difference.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param ... (Optional) Addition \code{axis} argument, specifying the dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{axis = 1}.
 #' @return An \linkS4class{Expression} representing the \code{k}th order difference.
 #' @examples 
 #' ## Problem data
@@ -1609,7 +1630,7 @@ setMethod("diag", signature(x = "Expression"), function(x, nrow, ncol) {
 #' lines(xs, ys, col = "blue", lwd = 2)
 #' grid()
 #' @docType methods
-#' @name diff
+#' @aliases diff
 #' @rdname diff
 #' @export
 setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Diff(x = x, lag = lag, k = differences, ...) })
@@ -1633,7 +1654,7 @@ setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Dif
 #' result$value
 #' result$getValue(kronecker(X,Y))
 #' @docType methods
-#' @name kronecker
+#' @aliases kronecker %x%
 #' @rdname kronecker
 #' @export
 setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
@@ -1643,7 +1664,6 @@ setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FU
 })
 
 #' @docType methods
-#' @name kronecker
 #' @rdname kronecker
 #' @export
 setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
@@ -1653,13 +1673,11 @@ setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FU
 })
 
 #' @docType methods
-#' @name %x%
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 
 #' @docType methods
-#' @name %x%
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })

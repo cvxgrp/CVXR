@@ -43,7 +43,8 @@ Imports:
     gmp,
     R.utils,
     ECOSolveR,
-    scs
+    scs,
+    Rmpfr
 Suggests:
     knitr,
     rmarkdown,

@@ -369,6 +369,7 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #' 
 #' Reduces the atom to an affine expression and list of constraints.
 #' 
+#' @param object An \linkS4class{Expression} object.
 #' @param arg_objs A list of linear expressions for each argument.
 #' @param size A vector with two elements representing the size of the resulting expression.
 #' @param data A list of additional data required by the atom.
@@ -627,12 +628,6 @@ setGeneric("get_matrix_data", function(solver, objective, constraints, cached_da
 # @param cached_data A list mapping solver name to cached problem data.
 # @return A list of the arguments needed for the solver.
 setGeneric("Solver.get_problem_data", function(solver, objective, constraints, cached_data) { standardGeneric("Solver.get_problem_data") })
-
-# The interface for matrices passed to the solver.
-setGeneric("matrix_intf", function(solver) { standardGeneric("matrix_intf") })
-
-# The interface for vectors passed to the solver.
-setGeneric("vec_intf", function(solver) { standardGeneric("vec_intf") })
 
 #
 # Extract Constraints

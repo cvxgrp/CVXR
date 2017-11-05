@@ -12,4 +12,4 @@
 #'   \item{jan, feb, ..., dec}{Anomaly for each month in the respective year}
 #'   \item{annual}{Annual anomaly for the year}
 #' }
-#'
+NULL

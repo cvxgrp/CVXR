@@ -3,9 +3,12 @@
 #'
 #' This virtual class represents an affine atomic expression.
 #'
+#' @name AffAtom-class
+#' @aliases AffAtom
 #' @rdname AffAtom-class
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
+#' @param object An \linkS4class{AffAtom} object.
 #' @describeIn AffAtom The sign of the atom.
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
 
@@ -86,11 +89,11 @@ setMethod(".grad", "AffAtom", function(object, values) {
 #' This class represents the sum of any number of expressions.
 #'
 #' @slot arg_groups A \code{list} of \linkS4class{Expression}s and numeric data.frame, matrix, or vector objects.
+#' @name AddExpression-lcass
+#' @aliases AddExpression
 #' @rdname AddExpression-class
 AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
 
-#' @name AddExpression
-#' @rdname AddExpression-class
 setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = list()) {
   .Object@arg_groups <- arg_groups
   .Object <- callNextMethod(.Object, ..., args = arg_groups)   # Casts R values to Constant objects
@@ -125,11 +128,11 @@ setMethod("graph_implementation", "AddExpression", function(object, arg_objs, si
 #'
 #' @slot expr The \linkS4class{Expression} that is being operated upon.
 #' @slot op_name A \code{character} string indicating the unary operation.
+#' @name UnaryOperator-class
+#' @aliases UnaryOperator
 #' @rdname UnaryOperator-class
 UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character"), contains = "AffAtom")
 
-#' @name UnaryOperator
-#' @rdname UnaryOperator-class
 setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
   .Object@expr <- expr
   .Object@op_name <- op_name
@@ -141,11 +144,11 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
 #'
 #' This class represents the negation of an affine expression.
 #'
+#' @name NegExpression-class
+#' @aliases NegExpression
 #' @rdname NegExpression-class
 NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 
-#' @name NegExpression
-#' @rdname NegExpression-class
 setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
@@ -182,11 +185,11 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, si
 #' @slot lh_exp The \linkS4class{Expression} on the left-hand side of the operator.
 #' @slot rh_exp The \linkS4class{Expression} on the right-hand side of the operator.
 #' @slot op_name A \code{character} string indicating the binary operation.
+#' @name BinaryOperator-class
+#' @aliases BinaryOperator
 #' @rdname BinaryOperator-class
 BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), contains = "AffAtom")
 
-#' @name BinaryOperator
-#' @rdname BinaryOperator-class
 setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp, op_name) {
   .Object@lh_exp = lh_exp
   .Object@rh_exp = rh_exp
@@ -210,11 +213,11 @@ setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object
 #' See \linkS4class{MulElemwise} for the elementwise product.
 #'
 #' @seealso MulElemwise
+#' @name MulExpression-class
+#' @aliases MulExpression
 #' @rdname MulExpression-class
 MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 
-#' @name MulExpression
-#' @rdname MulExpression-class
 setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
 })
@@ -252,6 +255,9 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #'
 #' This class represents the matrix product of an expression with a constant on the right.
 #'
+#' @seealso MulExpression
+#' @name RMulExpression-class
+#' @aliases RMulExpression
 #' @rdname RMulExpression-class
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
@@ -280,11 +286,11 @@ setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, s
 #'
 #' This class represents one expression divided by another expression.
 #'
+#' @name DivExpression-class
+#' @aliases DivExpression
 #' @rdname DivExpression-class
 DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
 
-#' @name DivExpression
-#' @rdname DivExpression-class
 setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
 })
@@ -320,15 +326,13 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, si
 #' @slot lh_exp An \linkS4class{Expression} or R numeric data representing the left-hand vector.
 #' @slot rh_exp An \linkS4class{Expression} or R numeric data representing the right-hand vector.
 #' @name Conv-class
+#' @aliases Conv
 #' @rdname Conv-class
 .Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @name Conv
 #' @rdname Conv-class
 Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
-#' @name Conv
-#' @rdname Conv-class
 setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
@@ -379,17 +383,17 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' This class represents the cumulative sum.
 #'
 #' @slot expr An \linkS4class{Expression} to be summed.
-#' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
 #' @name CumSum-class
+#' @aliases CumSum
 #' @rdname CumSum-class
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 
-#' @name CumSum
 #' @rdname CumSum-class
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
 #' @describeIn CumSum The cumulative sum of the values along the specified axis.
-setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], axis, cumsum) })
+setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], object@axis, cumsum) })
 
 #' @describeIn CumSum The size of the atom.
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
@@ -475,22 +479,14 @@ setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, dat
 #'
 #' @slot expr An \linkS4class{Expression} representing the vector to convert.
 #' @name DiagVec-class
+#' @aliases DiagVec
 #' @rdname DiagVec-class
 .DiagVec <- setClass("DiagVec", representation(expr = "Expression"), contains = "AffAtom")
 
-#'
-#' Diagonal Vector Constructor
-#' 
-#' Construct a \linkS4class{DiagVec} object.
-#'
 #' @param expr An \linkS4class{Expression} representing the vector to convert.
-#' @return A \linkS4class{DiagVec} object.
-#' @name DiagVec
 #' @rdname DiagVec-class
 DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
-#' @name DiagVec
-#' @rdname DiagVec-class
 setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -521,22 +517,14 @@ setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, da
 #'
 #' @slot expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
 #' @name DiagMat-class
+#' @aliases DiagMat
 #' @rdname DiagMat-class
 .DiagMat <- setClass("DiagMat", representation(expr = "Expression"), contains = "AffAtom")
 
-#'
-#' Diagonal Matrix Constructor
-#' 
-#' Construct a \linkS4class{DiagMat} object.
-#'
 #' @param expr An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.
-#' @return A \linkS4class{DiagMat} object.
-#' @name DiagMat
 #' @rdname DiagMat-class
 DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
-#' @name DiagMat
-#' @rdname DiagMat-class
 setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -610,10 +598,10 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
 #' @name HStack-class
+#' @aliases HStack
 #' @rdname HStack-class
 .HStack <- setClass("HStack", contains = "AffAtom")
 
-#' @name HStack
 #' @rdname HStack-class
 HStack <- function(...) { .HStack(args = list(...)) }
 
@@ -655,23 +643,15 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot key A list containing the start index, end index, and step size of the slice.
 #' @name Index-class
+#' @aliases Index
 #' @rdname Index-class
 .Index <- setClass("Index", representation(expr = "Expression", key = "list"), contains = "AffAtom")
 
-#'
-#' Index Constructor
-#' 
-#' Construct an \linkS4class{Index} object.
-#' 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param key A list containing the start index, end index, and step size of the slice.
-#' @return An \linkS4class{Index} object.
-#' @name Index
 #' @rdname Index-class
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
-#' @name Index
-#' @rdname Index-class
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   .Object@key <- ku_validate_key(key, size(expr))   # TODO: Double check key validation
   .Object@expr <- expr
@@ -680,7 +660,7 @@ setMethod("initialize", "Index", function(.Object, ..., expr, key) {
 
 #' @describeIn Index The index/slice into the given value.
 setMethod("to_numeric", "Index", function(object, values) {
-  ku_slice_mat(values[[1]], object@key$row, object@key$col)
+  ku_slice_mat(values[[1]], object@key)
 })
 
 #' @describeIn Index The size of the atom.
@@ -799,15 +779,13 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
 #' @slot lh_exp An \linkS4class{Expression} or numeric constant representing the left-hand matrix.
 #' @slot rh_exp An \linkS4class{Expression} or numeric constant representing the right-hand matrix.
 #' @name Kron-class
+#' @aliases Kron
 #' @rdname Kron-class
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @name Kron
 #' @rdname Kron-class
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
-#' @name Kron
-#' @rdname Kron-class
 setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
@@ -858,15 +836,13 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
 #' @slot lh_const A constant \linkS4class{Expression} or numeric value.
 #' @slot rh_exp An \linkS4class{Expression}.
 #' @name MulElemwise-class
+#' @aliases MulElemwise
 #' @rdname MulElemwise-class
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-#' @name MulElemwise
 #' @rdname MulElemwise-class
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
-#' @name MulElemwise
-#' @rdname MulElemwise-class
 setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) {
   .Object@lh_const <- lh_const
   .Object@rh_exp <- rh_exp
@@ -927,15 +903,13 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' @slot rows The new number of rows.
 #' @slot cols The new number of columns.
 #' @name Reshape-class
+#' @aliases Reshape
 #' @rdname Reshape-class
 .Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
 
-#' @name Reshape
 #' @rdname Reshape-class
 Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
-#' @name Reshape
-#' @rdname Reshape-class
 setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
   .Object@rows <- rows
   .Object@cols <- cols
@@ -978,12 +952,12 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' This class represents the sum of all entries in a vector or matrix.
 #'
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
-#' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements).
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name SumEntries-class
+#' @aliases SumEntries
 #' @rdname SumEntries-class
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
 
-#' @name SumEntries
 #' @rdname SumEntries-class
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
@@ -1023,15 +997,13 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
 #' @name Trace-class
+#' @aliases Trace
 #' @rdname Trace-class
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
 
-#' @name Trace
 #' @rdname Trace-class
 Trace <- function(expr) { .Trace(expr = expr) }
 
-#' @name Trace
-#' @rdname Trace-class
 setMethod("initialize", "Trace", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -1094,15 +1066,13 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
 #'
 #' @slot expr An \linkS4class{Expression} representing a matrix.
 #' @name UpperTri-class
+#' @aliases UpperTri
 #' @rdname UpperTri-class
 .UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 
-#' @name UpperTri
 #' @rdname UpperTri-class
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
-#' @name UpperTri
-#' @rdname UpperTri-class
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
@@ -1151,10 +1121,10 @@ Vec <- function(X) {
 #' 
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @name VStack-class
+#' @aliases VStack
 #' @rdname VStack-class
 .VStack <- setClass("VStack", contains = "AffAtom")
 
-#' @name VStack
 #' @rdname VStack-class
 VStack <- function(...) { .VStack(args = list(...)) }
 

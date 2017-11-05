@@ -8,6 +8,7 @@
 #' @rdname Elementwise-class
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
+#' @param object An \linkS4class{Elementwise} object.
 #' @describeIn Elementwise Check all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, function(arg) { size(arg) }))
@@ -53,20 +54,20 @@ Elementwise.promote <- function(arg, size) {
 #'
 #' @slot x An \linkS4class{Expression} object.
 #' @name Abs-class
+#' @aliases Abs
 #' @rdname Abs-class
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 
-#' @name Abs
+#' @param x,object An \linkS4class{Expression} object.
 #' @rdname Abs-class
 Abs <- function(x) { .Abs(x = x) }
 
-#' @name Abs
-#' @rdname Abs-class
 setMethod("initialize", "Abs", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param values A list of arguments to the atom.
 #' @describeIn Abs The elementwise absolute value of the input.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
@@ -79,6 +80,7 @@ setMethod("is_atom_convex", "Abs", function(object) { TRUE })
 #' @describeIn Abs The atom is not concave.
 setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn Abs A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Abs", function(object, idx) { is_positive(object@args[[idx]]) })
 
@@ -119,15 +121,13 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #'
 #' @slot x An \linkS4class{Expression} object.
 #' @name Entr-class
+#' @aliases Entr
 #' @rdname Entr-class
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
-#' @name Entr
 #' @rdname Entr-class
 Entr <- function(x) { .Entr(x = x) }
 
-#' @name Entr
-#' @rdname Entr-class
 setMethod("initialize", "Entr", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -198,15 +198,13 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #'
 #' @slot x An \linkS4class{Expression} object.
 #' @name Exp-class
+#' @aliases Exp
 #' @rdname Exp-class
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 
-#' @name Exp
 #' @rdname Exp-class
 Exp <- function(x) { .Exp(x = x) }
 
-#' @name Exp
-#' @rdname Exp-class
 setMethod("initialize", "Exp", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -261,16 +259,14 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot M A positive scalar value representing the threshold. Defaults to 1.
 #' @name Huber-class
+#' @aliases Huber
 #' @rdname Huber-class
 .Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
                            prototype(M = 1), contains = "Elementwise")
 
-#' @name Huber
 #' @rdname Huber-class
 Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 
-#' @name Huber
-#' @rdname Huber-class
 setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   .Object@M <- as.Constant(M)
   .Object@x <- x
@@ -299,7 +295,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
   if(is.null(dim(val)))
     2*huber_loss(M_val, val)
   else if(is.vector(val))
-    2*sapply(val, huber_loss(M_val, v))
+    2*sapply(val, function(v) { huber_loss(M_val, v) })
   else
     2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
 })
@@ -377,15 +373,13 @@ InvPos <- function(x) { Power(x, -1) }
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot y An \linkS4class{Expression} or numeric constant.
 #' @name KLDiv-class
+#' @aliases KLDiv
 #' @rdname KLDiv-class
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 
-#' @name KLDiv
 #' @rdname KLDiv-class
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 
-#' @name KLDiv
-#' @rdname KLDiv-class
 setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
@@ -462,15 +456,13 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Log-class
+#' @aliases Log
 #' @rdname Log-class
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
-#' @name Log
 #' @rdname Log-class
 Log <- function(x) { .Log(x = x) }
 
-#' @name Log
-#' @rdname Log-class
 setMethod("initialize", "Log", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -528,10 +520,10 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Log1p-class
+#' @aliases Log1p
 #' @rdname Log1p-class
 .Log1p <- setClass("Log1p", contains = "Log")
 
-#' @name Log1p
 #' @rdname Log1p-class
 Log1p <- function(x) { .Log1p(x = x) }
 
@@ -577,15 +569,13 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #'
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Logistic-class
+#' @aliases Logistic
 #' @rdname Logistic-class
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 
-#' @name Logistic
 #' @rdname Logistic-class
 Logistic <- function(x) { .Logistic(x = x) }
 
-#' @name Logistic
-#' @rdname Logistic-class
 setMethod("initialize", "Logistic", function(.Object, ..., x) {
   .Object@x <- x
   callNextMethod(.Object, ..., args = list(.Object@x))
@@ -650,6 +640,7 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #' @slot arg2 The second \linkS4class{Expression} in the maximum operation.
 #' @slot ... Additional \linkS4class{Expression}s in the maximum operation.
 #' @name MaxElemwise-class
+#' @aliases MaxElemwise
 #' @rdname MaxElemwise-class
 .MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
                            if(is.null(object@args) || length(object@args) < 2)
@@ -657,7 +648,6 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
                            return(TRUE)
                          }, contains = "Elementwise")
 
-#' @name MaxElemwise
 #' @rdname MaxElemwise-class
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
@@ -751,16 +741,14 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' @slot p A numeric value indicating the scalar power.
 #' @slot max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @name Power-class
+#' @aliases Power
 #' @rdname Power-class
 .Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"),
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
-#' @name Power
 #' @rdname Power-class
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 
-#' @name Power
-#' @rdname Power-class
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, w = NA_real_, approx_error = NA_real_) {
   p_old <- p
 
@@ -941,10 +929,10 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' 
 #' @slot x An \linkS4class{Expression} object.
 #' @name Sqrt-class
+#' @aliases Sqrt
 #' @rdname Sqrt-class
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
 
-#' @name Sqrt
 #' @rdname Sqrt-class
 Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
@@ -1015,10 +1003,10 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' 
 #' @slot x An \linkS4class{Expression}.
 #' @name Square-class
+#' @aliases Square
 #' @rdname Square-class
 .Square <- setClass("Square", contains = "Elementwise")
 
-#' @name Square
 #' @rdname Square-class
 Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }

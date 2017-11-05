@@ -3,7 +3,8 @@
 #'
 #' This virtual class represents atomic expressions in CVXR.
 #'
-#' @name Atom
+#' @name Atom-class
+#' @aliases Atom
 #' @rdname Atom-class
 Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_),
                  validity = function(object) {
@@ -12,8 +13,6 @@ Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), proto
                    return(TRUE)
                  }, contains = c("VIRTUAL", "Expression"))
 
-#' @name Atom
-#' @rdname Atom-class
 setMethod("initialize", "Atom", function(.Object, ..., args = list(), .size = NA_real_) {
   .Object@args <- lapply(args, function(arg) { as.Constant(arg) })
   validate_args(.Object)
@@ -25,6 +24,7 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
+#' @param object An \linkS4class{Atom} object.
 #' @describeIn Atom Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { return() })
 
@@ -246,19 +246,19 @@ setMethod("domain", "Atom", function(object) {
 #' This virtual class represents atomic expressions that can be applied along an axis in CVXR.
 #'
 #' @slot expr A numeric element, data.frame, matrix, vector, or Expression.
-#' @slot axis An integer specifying the axis across which to apply the atom. For a matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns (all elements).
-#' @name AxisAtom
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @name AxisAtom-class
+#' @aliases AxisAtom
 #' @rdname AxisAtom-class
 AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
 
-#' @name AxisAtom
-#' @rdname AxisAtom-class
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
   .Object@axis <- axis
   .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @param object An \linkS4class{Atom} object.
 #' @describeIn AxisAtom The size of the atom deteremined from its arguments.
 setMethod("size_from_args", "AxisAtom", function(object) {
   if(is.na(object@axis))
@@ -325,23 +325,13 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' @slot x An \linkS4class{Expression} or R numeric data representing the left-hand value.
 #' @slot y An \linkS4class{Expression} or R numeric data representing the right-hand value.
 #' @name AffineProd-class
+#' @aliases AffineProd
 #' @rdname AffineProd-class
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
-#'
-#' Affine Product Constructor
-#'
-#' Construct an \linkS4class{AffineProd} object.
-#' 
-#' @param x An \linkS4class{Expression} or R numeric data representing the left-hand value.
-#' @param y An \linkS4class{Expression} or R numeric data representing the right-hand value.
-#' @return An \linkS4class{AffineProd} object.
-#' @name AffineProd
 #' @rdname AffineProd-class
 AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
 
-#' @name AffineProd
-#' @rdname AffineProd-class
 setMethod("initialize", "AffineProd", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
@@ -414,18 +404,16 @@ setMethod(".grad", "AffineProd", function(object, values) {
 #' @slot x An \linkS4class{Expression} or R numeric vector.
 #' @slot p (Optional) A vector of weights for the weighted geometric mean. The default is a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
 #' @name GeoMean-class
+#' @aliases GeoMean
 #' @rdname GeoMean-class
 .GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
                                                w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict",
                                                cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 
-#' @name GeoMean
 #' @rdname GeoMean-class
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 
-#' @name GeoMean
-#' @rdname GeoMean-class
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x
   .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
@@ -472,18 +460,17 @@ setMethod("validate_args", "GeoMean", function(object) { return() })
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
 
-  if("Rmpfr" %in% installed.packages()) {
-    require(Rmpfr)
+  if(requireNamespace("Rmpfr") && requireNamespace("gmp")) {
     val <- 1.0
     for(idx in 1:length(values)) {
       x <- values[[idx]]
       p <- object@w[idx]
-      val <- val * mpfr(x, getPrec(x))^p
+      val <- val * Rmpfr::mpfr(x, Rmpfr::getPrec(x))^p
     }
-    return(asNumeric(val))   # TODO: Handle mpfr objects in the backend later
+    return(gmp::asNumeric(val))   # TODO: Handle mpfr objects in the backend later
   }
 
-  val <- mapply(function(x, p) { x^p }, values, asNumeric(object@w))
+  val <- mapply(function(x, p) { x^p }, values, gmp::asNumeric(object@w))
   Reduce("*", val)
 })
 
@@ -557,15 +544,13 @@ HarmonicMean <- function(x) {
 #' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name Lambda-class
+#' @aliases LambdaMax
 #' @rdname LambdaMax-class
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
-#' @name LambdaMax
 #' @rdname LambdaMax-class
 LambdaMax <- function(A) { .LambdaMax(A = A) }
 
-#' @name LambdaMax
-#' @rdname LambdaMax-class
 setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
   .Object@A <- A
   callNextMethod(.Object, ..., args = list(.Object@A))
@@ -632,25 +617,25 @@ setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, 
   LambdaMax.graph_implementation(arg_objs, size, data)
 })
 
-LambdaMin <- function(X) {
-  X <- as.Constant(X)
-  -LambdaMax(-X)
+LambdaMin <- function(A) {
+  A <- as.Constant(A)
+  -LambdaMax(-A)
 }
 
-LambdaSumLargest <- function(X, k) {
-  X <- as.Constant(X)
-  if(size(X)[1] != size(X)[2])
+LambdaSumLargest <- function(A, k) {
+  A <- as.Constant(A)
+  if(size(A)[1] != size(A)[2])
     stop("First argument must be a square matrix")
   else if(as.integer(k) != k || k <= 0)
     stop("Second argument must be a positive integer")
 
-  Z <- Semidef(size(X)[1])
-  k*LambdaMax(X - Z) + Trace(Z)
+  Z <- Semidef(size(A)[1])
+  k*LambdaMax(A - Z) + Trace(Z)
 }
 
-LambdaSumSmallest <- function(X, k) {
-  X <- as.Constant(X)
-  -LambdaSumLargest(-X, k)
+LambdaSumSmallest <- function(A, k) {
+  A <- as.Constant(A)
+  -LambdaSumLargest(-A, k)
 }
 
 #'
@@ -660,15 +645,13 @@ LambdaSumSmallest <- function(X, k) {
 #' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name LogDet-class
+#' @aliases LogDet
 #' @rdname LogDet-class
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
 
-#' @name LogDet
 #' @rdname LogDet-class
 LogDet <- function(A) { .LogDet(A = A) }
 
-#' @name LogDet
-#' @rdname LogDet-class
 setMethod("initialize", "LogDet", function(.Object, ..., A) {
   .Object@A <- A
   callNextMethod(.Object, ..., args = list(.Object@A))
@@ -769,12 +752,12 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{i=1}^n e^{x_i}}.
 #' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
-#' @slot axis (Optional) An integer specifying the axis across which to apply the function. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name LogSumExp-class
+#' @aliases LogSumExp
 #' @rdname LogSumExp-class
 .LogSumExp <- setClass("LogSumExp", contains = "AxisAtom")
 
-#' @name LogSumExp
 #' @rdname LogSumExp-class
 LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
@@ -867,15 +850,13 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' @slot X An \linkS4class{Expression} representing a matrix.
 #' @slot P An \linkS4class{Expression} representing a matrix.
 #' @name MatrixFrac-class
+#' @aliases MatrixFrac
 #' @rdname MatrixFrac-class
 .MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 
-#' @name MatrixFrac
 #' @rdname MatrixFrac-class
 MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
 
-#' @name MatrixFrac
-#' @rdname MatrixFrac-class
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
   .Object@P <- P
@@ -972,7 +953,7 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   constraints <- Index.block_eq(M, Tmat, constraints, n+1, n+m, n+1, n+m)
 
   # Add SDP constraints.
-  list(cvxr::lo.trace(Tmat), c(constraints, list(SDP(M))))
+  list(lo.trace(Tmat), c(constraints, list(SDP(M))))
 }
 
 #' @describeIn MatrixFrac The graph implementation of the atom.
@@ -986,12 +967,12 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' The maximum of an expression.
 #' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
-#' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name MaxEntries-class
+#' @aliases MaxEntries
 #' @rdname MaxEntries-class
 .MaxEntries <- setClass("MaxEntries", contains = "AxisAtom")
 
-#' @name MaxEntries
 #' @rdname MaxEntries-class
 MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
@@ -1081,18 +1062,16 @@ MinEntries <- function(x, axis = NA_real_) {
 #' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot p A number greater than or equal to 1, or equal to positive infinity.
-#' @slot axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name Pnorm-class
+#' @aliases Pnorm
 #' @rdname Pnorm-class
 .Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
                   prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "AxisAtom")
 
-#' @name Pnorm
 #' @rdname Pnorm-class
 Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom) }
 
-#' @name Pnorm
-#' @rdname Pnorm-class
 setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
   .Object@max_denom <- max_denom
 
@@ -1279,16 +1258,6 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
-#' The Norm function.
-#'
-#' A wrapper on the different norm atoms.
-#' 
-#' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
-#' @param p The type of norm. May be a number (p-norm), "inf" (infinity-norm), "nuc" (nuclear norm), or "fro" (Frobenius norm). The default is \code{p = 2}.
-#' @param axis (Optional) An integer specifying the axis across which to calculate the maximum. For a matrix, 1 indicates rows, 2 indicates columns, and NA indicates rows and columns (all elements). The default is all elements.
-#' @return An \linkS4class{Expression} representing the norm.
-#' @rdname Norm
-#' @export
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
 
@@ -1330,15 +1299,13 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name NormNuc-class
+#' @aliases NormNuc
 #' @rdname NormNuc-class
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 
-#' @name NormNuc
 #' @rdname NormNuc-class
 NormNuc <- function(A) { .NormNuc(A = A) }
 
-#' @name NormNuc
-#' @rdname NormNuc-class
 setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   .Object@A <- A
   callNextMethod(.Object, ..., args = list(.Object@A))
@@ -1391,7 +1358,7 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # X[1:rows, (rows+1):(rows+cols)] == A
   constraints <- Index.block_eq(X, A, constraints, 1, rows, rows+1, rows+cols)
   half <- create_const(0.5, c(1,1))
-  trace_expr <- lo.mul_expr(half, cvxr::lo.trace(X), c(1, 1))
+  trace_expr <- lo.mul_expr(half, lo.trace(X), c(1, 1))
 
   # Add SDP constraint.
   list(trace_expr, c(list(SDP(X)), constraints))
@@ -1476,15 +1443,13 @@ QuadForm <- function(x, P) {
 #' @slot x An \linkS4class{Expression} representing a matrix.
 #' @slot y A scalar \linkS4class{Expression}.
 #' @name QuadOverLin-class
+#' @aliases QuadOverLin
 #' @rdname QuadOverLin-class
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
-#' @name QuadOverLin
 #' @rdname QuadOverLin-class
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
-#' @name QuadOverLin
-#' @rdname QuadOverLin-class
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
   .Object@y <- y
@@ -1562,15 +1527,13 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
 #' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name SigmaMax-class
+#' @aliases SigmaMax
 #' @rdname SigmaMax-class
 .SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
-#' @name SigmaMax
 #' @rdname SigmaMax-class
 SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
-#' @name SigmaMax
-#' @rdname SigmaMax-class
 setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   .Object@A <- A
   callNextMethod(.Object, ..., args = list(.Object@A))
@@ -1646,6 +1609,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #' @slot x An \linkS4class{Expression} representing a matrix.
 #' @slot k The number of largest values to sum over.
 #' @name SumLargest-class
+#' @aliases SumLargest
 #' @rdname SumLargest-class
 .SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"),
                        validity = function(object) {
@@ -1654,12 +1618,9 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
                          return(TRUE)
                          }, contains = "Atom")
 
-#' @name SumLargest
 #' @rdname SumLargest-class
 SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
 
-#' @name SumLargest
-#' @rdname SumLargest-class
 setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
   .Object@x <- x
   .Object@k <- k

@@ -10,6 +10,7 @@
 #' @slot is_pos (Internal) A logical value indicating whether all elements are non-negative.
 #' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
 #' @name Constant-class
+#' @aliases Constant
 #' @rdname Constant-class
 .Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
                                  prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA), 
@@ -20,13 +21,11 @@
                         return(TRUE)
                       }, contains = "Leaf")
 
-#' @name Constant
+#' @param value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
 #' @rdname Constant-class
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
-#' @name Constant
-#' @rdname Constant-class
 setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_1D_array = FALSE, .sparse = NA, .size = NA_real_, .is_pos = NA, .is_neg = NA) {
   .Object@is_1D_array <- is_1D_array
   .Object@value <- value
@@ -50,10 +49,12 @@ setMethod("show", "Constant", function(object) {
   cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
 })
 
+#' @rdname Constant-class
 setMethod("as.character", "Constant", function(x) {
   paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
 
+#' @param x,object A \linkS4class{Constant} object.
 #' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })
 
@@ -98,17 +99,6 @@ as.Constant <- function(expr) {
     Constant(value = expr)
 }
 
-get_sign <- function(constant) {
-  if(!is(constant, "ConstVal"))
-    stop("constant must be a data.frame, matrix, vector, or atomic value")
-  if((!is(constant, "ConstSparseVal") && !is.data.frame(constant) && !is.numeric(constant)) ||
-     ((is(constant, "ConstSparseVal") || is.data.frame(constant)) && !all(sapply(constant, is.numeric))))
-    stop("constant must contain only numeric values")
-  max_sign <- val_to_sign(max(constant))
-  min_sign <- val_to_sign(min(constant))
-  max_sign + min_sign
-}
-
 #'
 #' The Parameter class.
 #'
@@ -121,6 +111,7 @@ get_sign <- function(constant) {
 #' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
 #' @slot value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @name Parameter-class
+#' @aliases Parameter
 #' @rdname Parameter-class
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
                                     prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
@@ -131,14 +122,11 @@ get_sign <- function(constant) {
                           return(TRUE)
                         }, contains = "Leaf")
 
-#' @name Parameter
 #' @rdname Parameter-class
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }
 
-#' @name Parameter
-#' @rdname Parameter-class
 setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_) {
   .Object@id <- id
   .Object@rows <- rows
@@ -160,6 +148,8 @@ setMethod("show", "Parameter", function(object) {
   cat("Parameter(", object@rows, ", ", object@cols, ", sign = ", sign(object), ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{Parameter} object.
+#' @rdname Parameter-class
 setMethod("as.character", "Parameter", function(x) {
   paste("Parameter(", x@rows, ", ", x@cols, ", sign = ", sign(x), ")", sep = "")
 })

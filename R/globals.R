@@ -1,3 +1,13 @@
+#' @import Matrix ECOSolveR scs
+#' @importFrom methods callNextMethod getPackageName is new slot
+#' @importFrom utils assignInMyNamespace
+#' @importFrom R.utils intToBin
+#' @importFrom Rmpfr mpfr getPrec
+#' @importFrom gmp as.bigq as.bigz is.bigq is.bigz is.whole numerator denominator asNumeric
+#' @importFrom bit64 as.integer64 as.bitstring
+#' @importClassesFrom Matrix CsparseMatrix TsparseMatrix dMatrix
+#' @importClassesFrom gmp bigq bigz
+
 ##
 ## Global variable for package cvxr
 ##

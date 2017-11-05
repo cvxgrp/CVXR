@@ -5,18 +5,17 @@
 #'
 #' @slot expr A scalar \linkS4class{Expression} to minimize.
 #' @name Minimize-class
+#' @aliases Minimize
 #' @rdname Minimize-class
 .Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
 
-#' @name Minimize
+#' @param expr A scalar \linkS4class{Expression} to minimize.
 #' @rdname Minimize-class
 #' @export
 Minimize <- function(expr) {
   .Minimize(expr = expr)
 }
 
-#' @name Minimize
-#' @rdname Minimize-class
 setMethod("initialize", "Minimize", function(.Object, expr) {
     .Object@expr <- as.Constant(expr)
     if(!all(size(.Object@expr) == c(1,1)))
@@ -24,6 +23,7 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
     return(.Object)
 })
 
+#' @param object A \linkS4class{Minimize} object.
 #' @describeIn Minimize Pass on the target expression's objective and constraints.
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
 
@@ -61,10 +61,11 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' result$value
 #' result$getValue(x)
 #' @name Maximize-class
+#' @aliases Maximize
 #' @rdname Maximize-class
 .Maximize <- setClass("Maximize", contains = "Minimize")
 
-#' @name Maximize
+#' @param expr A scalar \linkS4class{Expression} to maximize.
 #' @rdname Maximize-class
 #' @export
 Maximize <- function(expr) {
@@ -161,15 +162,11 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
 #' @slot num_iters The number of iterations the solver had to go through to find a solution.
 #' @name SolverStats-class
+#' @aliases SolverStats
 #' @rdname SolverStats-class
 .SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
                          prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
 
-#'
-#' Solver Statistics
-#'
-#' Reports some of the miscellaneous information that is returned by a solver after solving, but that is not captured directly by the \linkS4class{Problem} object.
-#' 
 #' @param results_dict A list containing the results returned by the solver.
 #' @param solver_name The name of the solver.
 #' @return A list containing
@@ -179,7 +176,6 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #'   \item{setup_time}{The time (in seconds) it took for the solver to set up the problem.}
 #'   \item{num_iters}{The number of iterations the solver had to go through to find a solution.}
 #' }
-#' @name SolverStats
 #' @rdname SolverStats-class
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     solve_time <- NA_real_
@@ -211,20 +207,14 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' @slot max_data_dimension The longest dimension of any data block constraint or parameter.
 #' @slot max_big_small_squared The maximum value of (big)(small)^2 over all data blocks of the problem, where (big) is the larger dimension and (small) is the smaller dimension for each data block.
 #' @name SizeMetrics-class
+#' @aliases SizeMetrics
 #' @rdname SizeMetrics-class
 .SizeMetrics <- setClass("SizeMetrics", representation(num_scalar_variables = "numeric", num_scalar_data = "numeric", num_scalar_eq_constr = "numeric", num_scalar_leq_constr = "numeric",
                                                        max_data_dimension = "numeric", max_big_small_squared = "numeric"),
                          prototype(num_scalar_variables = NA_real_, num_scalar_data = NA_real_, num_scalar_eq_constr = NA_real_, num_scalar_leq_constr = NA_real_,
                                    max_data_dimension = NA_real_, max_big_small_squared = NA_real_))
 
-#'
-#' Problem Size Metrics
-#'
-#' Reports various metrics regarding the problem size.
-#' 
 #' @param problem A \linkS4class{Problem} object.
-#' @return A \linkS4class{SizeMetrics} object containing size metrics of the input problem.
-#' @name SizeMetrics
 #' @rdname SizeMetrics-class
 SizeMetrics <- function(problem) {
   # num_scalar_variables
@@ -285,6 +275,7 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @slot .size_metrics (Internal) Used internally to hold size metrics.
 #' @slot .solver_stats (Internal) Used internally to hold solver statistics.
 #' @name Problem-class
+#' @aliases Problem
 #' @rdname Problem-class
 .Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
                     prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL),
@@ -304,15 +295,8 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
                       return(TRUE)
                     }, contains = "Canonical")
 
-#'
-#' Problem Constructor
-#'
-#' Construct a \linkS4class{Problem} object.
-#' 
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
-#' @param constraints (Optional) A list of constraints on the optimization variables.
-#' @return A \linkS4class{Problem} object.
-#' @name Problem
+#' @param constraints (Optional) A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
 #' @rdname Problem-class
 #' @export
 Problem <- function(objective, constraints = list()) {
@@ -325,8 +309,6 @@ CachedProblem <- function(objective, constraints) { list(objective = objective, 
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
-#' @name Problem
-#' @rdname Problem-class
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
@@ -472,7 +454,8 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @return A list containing the optimal value, primal, and dual variables for the problem.
-#' @name solve
+#' @docType methods
+#' @aliases solve
 #' @rdname solve
 #' @export
 solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
@@ -490,15 +473,16 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
 
   # Solve in parallel
   if(parallel) {
-    # Check if the objective or constraint has changed
-    if(objective != object@.cached_data[[PARALLEL]]@objective ||
-       constraints != object@.cached_data[[PARALLEL]]@constraints) {
-      object@.separable_problems <- get_separable_problems(object)
-      object@.cached_data[[PARALLEL]] <- CachedProblem(objective, constraints)
-    }
-
-    if(length(object@.separable_problems) > 1)
-      .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
+    stop("Unimplemented")     # TODO: Uncomment once parallel solve and separable problems are implemented.
+    # # Check if the objective or constraint has changed
+    # if(objective != object@.cached_data[[PARALLEL]]@objective ||
+    #    constraints != object@.cached_data[[PARALLEL]]@constraints) {
+    #   object@.separable_problems <- get_separable_problems(object)
+    #   object@.cached_data[[PARALLEL]] <- CachedProblem(objective, constraints)
+    # }
+    # 
+    # if(length(object@.separable_problems) > 1)
+    #   .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
   }
 
   # Choose a solver/check the chosen solver
@@ -538,52 +522,52 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
   return(valuesById(object, results_dict, sym_data, solver))
 }
 
-# TODO: Finish implementation of parallel solve.
-.parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
-  .solve_problem <- function(problem) {
-    result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
-    opt_value <- result$optimal_value
-    status <- result$status
-    primal_values <- result$primal_values
-    dual_values <- result$dual_values
-    return(SolveResults(opt_value, status, primal_values, dual_values))
-  }
-
-  # TODO: Finish implementation of parallel solve
-  statuses <- sapply(solve_results, function(solve_result) { solve_result$status })
-
-  # Check if at least one subproblem is infeasible or inaccurate
-  for(status in INF_OR_UNB) {
-    if(status %in% statuses) {
-      .handle_no_solution(object, status)
-      break
-    } else {
-      for(i in 1:length(solve_results)) {
-        subproblem <- object@separable_problems[i]
-        solve_result <- solve_results[i]
-
-        for(j in 1:length(solve_result$primal_values)) {
-          var <- variables(subproblem)[j]
-          primal_value <- solve_result$primal_values[j]
-          subproblem <- save_value(var, primal_value)   # TODO: Fix this since R makes copies
-        }
-
-        for(j in 1:length(solve_result$dual_values)) {
-          constr <- subproblem@constraints[j]
-          dual_value <- solve_result$dual_values[j]
-          subproblem <- save_value(constr, dual_value)   # TODO: Fix this since R makes copies
-        }
-      }
-
-      object@value <- sum(sapply(solve_results, function(solve_result) { solve_result$optimal_value }))
-      if(OPTIMAL_INACCURATE %in% statuses)
-        object@status <- OPTIMAL_INACCURATE
-      else
-        object@status <- OPTIMAL
-    }
-  }
-  object
-}
+# # TODO: Finish implementation of parallel solve.
+# .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
+#   .solve_problem <- function(problem) {
+#     result <- solve(problem, solver = solver, ignore_dcp = ignore_dcp, warm_start = warm_start, verbose = verbose, parallel = FALSE, ...)
+#     opt_value <- result$optimal_value
+#     status <- result$status
+#     primal_values <- result$primal_values
+#     dual_values <- result$dual_values
+#     return(SolveResults(opt_value, status, primal_values, dual_values))
+#   }
+# 
+#   # TODO: Finish implementation of parallel solve
+#   statuses <- sapply(solve_results, function(solve_result) { solve_result$status })
+# 
+#   # Check if at least one subproblem is infeasible or inaccurate
+#   for(status in INF_OR_UNB) {
+#     if(status %in% statuses) {
+#       .handle_no_solution(object, status)
+#       break
+#     } else {
+#       for(i in 1:length(solve_results)) {
+#         subproblem <- object@separable_problems[i]
+#         solve_result <- solve_results[i]
+# 
+#         for(j in 1:length(solve_result$primal_values)) {
+#           var <- variables(subproblem)[j]
+#           primal_value <- solve_result$primal_values[j]
+#           subproblem <- save_value(var, primal_value)   # TODO: Fix this since R makes copies
+#         }
+# 
+#         for(j in 1:length(solve_result$dual_values)) {
+#           constr <- subproblem@constraints[j]
+#           dual_value <- solve_result$dual_values[j]
+#           subproblem <- save_value(constr, dual_value)   # TODO: Fix this since R makes copies
+#         }
+#       }
+# 
+#       object@value <- sum(sapply(solve_results, function(solve_result) { solve_result$optimal_value }))
+#       if(OPTIMAL_INACCURATE %in% statuses)
+#         object@status <- OPTIMAL_INACCURATE
+#       else
+#         object@status <- OPTIMAL
+#     }
+#   }
+#   object
+# }
 
 valuesById <- function(object, results_dict, sym_data, solver) {
     if(results_dict[[STATUS]] %in% SOLUTION_PRESENT) {
@@ -774,7 +758,6 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objstor
 
       # Handle scalars
       if(all(c(rows, cols) == c(1,1)))
-        # value <- intf_index(result_vec, c(offset, 0))
         value <- result_vec[offset + 1]
       else {
         # value <- matrix(0, nrow = rows, ncol = cols)

@@ -3,13 +3,11 @@
 #'
 #' This class represents a mathematical expression.
 #'
-#' @name Expression
+#' @name Expression-class
+#' @aliases Expression
 #' @rdname Expression-class
 Expression <- setClass("Expression", contains = "Canonical")
 
-#' @import Matrix gmp
-#' @importClassesFrom Matrix CsparseMatrix TsparseMatrix dMatrix
-#' @importClassesFrom gmp bigq bigz
 setOldClass("data.frame")
 setOldClass("matrix")
 setOldClass("vector")
@@ -37,6 +35,7 @@ setMethod("size", "ListORExpr", function(object) {
   cast_op
 }
 
+#' @param x,object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
@@ -50,7 +49,7 @@ setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
 })
 
-# A string with information about the expression such as curvature, sign, and size.
+#' @rdname Expression-class
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
 })
@@ -194,9 +193,11 @@ setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), 
 })
 
 # Arithmetic operators
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to add.
 #' @rdname AddExpression-class
 setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
 
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to subtract.
 #' @rdname NegExpression-class
 setMethod("-", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { NegExpression(expr = e1) })
 
@@ -218,6 +219,7 @@ setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) {
 #' @rdname NegExpression-class
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
 
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to multiply elementwise.
 #' @docType methods
 #' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
@@ -240,6 +242,7 @@ setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) {
 #' @rdname mul_elemwise
 setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
 
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e2) && is_scalar(e2))
@@ -274,8 +277,9 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 #' @param x An \linkS4class{Expression} representing a matrix.
 #' @return An \linkS4class{Expression} representing the transposed matrix.
 #' @docType methods
-#' @rdname transpose
 #' @aliases t
+#' @rdname transpose
+#' @method t Expression
 #' @export
 t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
 
@@ -284,6 +288,7 @@ t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) 
 #' @export
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
 
+#' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
 #' @rdname MulExpression-class
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # if(is_scalar(x) || is_scalar(y))
@@ -317,6 +322,7 @@ setMethod("%*%", signature(x = "Expression", y = "ConstVal"), function(x, y) { x
 setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { as.Constant(x) %*% y })
 
 # Comparison operators
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
 #' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { EqConstraint(lh_exp = e1, rh_exp = e2) })
 
@@ -326,6 +332,7 @@ setMethod("==", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 #' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) == e2 })
 
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
 #' @rdname LeqConstraint-class
 setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { LeqConstraint(lh_exp = e1, rh_exp = e2) })
 
@@ -363,6 +370,7 @@ setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
 
 # Positive definite inequalities
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
 #' @docType methods
 #' @rdname PSDConstraint-class
 #' @export
@@ -399,7 +407,8 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
 #' @slot args A list containing the arguments.
-#' @name Leaf
+#' @name Leaf-class
+#' @aliases Leaf
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 

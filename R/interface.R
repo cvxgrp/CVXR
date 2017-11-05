@@ -28,19 +28,8 @@ intf_convert_if_scalar <- function(constant) {
     constant
 }
 
-intf_index <- function(constant, key) {
-  if(is_scalar(constant))
-    return(constant)
-  else if(is_matrix(constant))
-    return(constant[key])
-  else if(is_sparse(constant)) {
-    constant <- as.matrix(constant)
-    intf_index(constant, key)
-  }
-}
-
 intf_block_add <- function(mat, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
-  block <- matrix(block, nrow = rows, ncols = cols)
+  block <- matrix(block, nrow = rows, ncol = cols)
   vert_idx <- seq(vert_offset + 1, vert_offset + rows, vert_step)
   horiz_idx <- seq(horiz_offset + 1, horiz_offset + cols, horiz_step)
   mat[vert_idx, horiz_idx] <- mat[vert_idx, horiz_idx] + block

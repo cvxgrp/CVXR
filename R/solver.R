@@ -26,10 +26,9 @@ Solver.choose_solver <- function(constraints) {
     return(ECOS_BB())
   # If SDP, defaults to CVXOPT.
   else if(length(constr_map[[SDP_MAP]]) > 0) {
-    if("cvxopt" %in% installed.packages()) {
-      require(cvxopt)
-      return(CVXOPT())
-    } else
+    # if(requireNamespace("cccp")) {
+    #  return(CVXOPT())
+    # } else
       return(SCS())
   }
   # Otherwise use ECOS
@@ -259,8 +258,6 @@ setMethod("name", "ECOS", function(object) { ECOS_NAME })
 #' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
 
-setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
-setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
@@ -541,126 +538,126 @@ SCS.tri_to_full <- function(lower_tri, n) {
   return(matrix(full, nrow = n^2))
 }
 
-# TODO: This is a Python solver, which is partially ported to R via the cccp library.
-setClass("CVXOPT", contains = "Solver")
-CVXOPT <- function() {
-  stop("Unimplemented solver")
-  new("CVXOPT")
-  ##CVXOPT$new()
-}
+# # TODO: This is a Python solver, which is partially ported to R via the cccp library.
+# setClass("CVXOPT", contains = "Solver")
+# CVXOPT <- function() {
+#   stop("Unimplemented solver")
+#   new("CVXOPT")
+#   ##CVXOPT$new()
+# }
 
-#'
-#' The LS class.
+#' #'
+#' #' The LS class.
+#' #' 
+#' #' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
+#' #' LS is incapable of solving any general cone program and must be invoked through a special path.
+#' #'
+#' #' @name LS-class
+#' #' @rdname LS-class
+#' setClass("LS", contains = "Solver")
 #' 
-#' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
-#' LS is incapable of solving any general cone program and must be invoked through a special path.
-#'
-#' @name LS-class
-#' @rdname LS-class
-setClass("LS", contains = "Solver")
-
-#' @name LS
-#' @rdname LS-class
-#' @export
-LS <- function() {
-  stop("Unimplemented solver")
-  new("LS")
-}
-
-# LS is incapable of solving any general cone program and must be invoked through a special path
-#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-setMethod("lp_capable", "LS", function(solver) { FALSE })
-
-#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-setMethod("socp_capable", "LS", function(solver) { FALSE })
-
-#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-setMethod("sdp_capable", "LS", function(solver) { FALSE })
-
-#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-setMethod("exp_capable", "LS", function(solver) { FALSE })
-
-#' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-setMethod("mip_capable", "LS", function(solver) { FALSE })
-
-#' @describeIn LS The name of the solver.
-setMethod("name", "LS", function(object) { LS_NAME })
-
-#' @describeIn LS Imports the Matrix library.
-setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
-
-setMethod("split_constr", "LS", function(solver, constr_map) {
-  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
-})
-
-#' @describeIn LS Call the solver on the canonicalized problem.
-setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
-  sym_data <- get_sym_data(solver, objective, constraints)
-  id_map <- sym_data@var_offsets
-  N <- sym_data@x_length
-  extractor <- QuadCoeffExtractor(id_map, N)   # TODO: QuadCoeffExtractor is unimplemented. See cvxpy/utilities/quadratic.py
-  
-  # Extract the coefficients
-  coeffs <- get_coeffs(extractor, objective@args[[1]])
-  P <- coeffs$Ps[[1]]
-  q <- as.numeric(coeffs$Q)
-  r <- coeffs$R[[1]]
-  
-  # Forming the KKT system
-  if(length(constraints) > 0) {
-    Cs <- lapply(constraints, function(c) { 
-      coeffs <- get_coeffs(extractor, c@.expr)
-      if(length(coeffs) > 1)
-        coeffs[2:length(coeffs)]
-      else
-        c()
-    })
-    As <- do.call("rbind", lapply(Cs, function(C) { C[[1]] }))
-    bs <- as.numeric(sapply(Cs, function(C) { C[[2]] }))
-    lhs <- rbind(cbind(2*P, t(As), cbind(As, NA)))    # TODO: Fix this
-    rhs <- c(-q, -bs)
-  } else {   # Avoid calling rbind with empty list
-    lhs <- 2*P
-    rhs <- -q
-  }
-  
-  # Actually solve the KKT system
-  tryCatch({
-      sol <- solve(lhs, rhs)
-      if(N > 0)
-        x <- sol[1:N]
-      else
-        x <- c()
-      
-      if(length(sol) > N)
-        nu <- sol[(N+1):length(sol)]
-      else
-        nu <- c()
-      
-      p_star <- t(x) %*% (P %*% x + q) + r
-    }, warning = function(w) {
-      x <- NA
-      nu <- NA
-      p_star <- NA
-    })
-  
-  results_dict <- list()
-  results_dict[[PRIMAL]] <- x
-  results_dict[[EQ_DUAL]] <- nu
-  results_dict[[VALUE]] <- primal_to_result(objective, p_star)
-  
-  format_results(solver, results_dict, NA, cached_data)
-})
-
-#' @describeIn LS Convert raw solver output into standard list of results.
-setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
-  new_results <- results_dict
-  if(is.na(results_dict[[PRIMAL]]))
-    new_results[[STATUS]] <- INFEASIBLE
-  else
-    new_results[[STATUS]] <- OPTIMAL
-  new_results
-})
+#' #' @name LS
+#' #' @rdname LS-class
+#' #' @export
+#' LS <- function() {
+#'   stop("Unimplemented solver")
+#'   new("LS")
+#' }
+#' 
+#' # LS is incapable of solving any general cone program and must be invoked through a special path
+#' #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+#' setMethod("lp_capable", "LS", function(solver) { FALSE })
+#' 
+#' #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+#' setMethod("socp_capable", "LS", function(solver) { FALSE })
+#' 
+#' #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+#' setMethod("sdp_capable", "LS", function(solver) { FALSE })
+#' 
+#' #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+#' setMethod("exp_capable", "LS", function(solver) { FALSE })
+#' 
+#' #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+#' setMethod("mip_capable", "LS", function(solver) { FALSE })
+#' 
+#' #' @describeIn LS The name of the solver.
+#' setMethod("name", "LS", function(object) { LS_NAME })
+#' 
+#' #' @describeIn LS Imports the Matrix library.
+#' setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
+#' 
+#' setMethod("split_constr", "LS", function(solver, constr_map) {
+#'   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+#' })
+#' 
+#' #' @describeIn LS Call the solver on the canonicalized problem.
+#' setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+#'   sym_data <- get_sym_data(solver, objective, constraints)
+#'   id_map <- sym_data@var_offsets
+#'   N <- sym_data@x_length
+#'   extractor <- QuadCoeffExtractor(id_map, N)   # TODO: QuadCoeffExtractor is unimplemented. See cvxpy/utilities/quadratic.py
+#'   
+#'   # Extract the coefficients
+#'   coeffs <- get_coeffs(extractor, objective@args[[1]])
+#'   P <- coeffs$Ps[[1]]
+#'   q <- as.numeric(coeffs$Q)
+#'   r <- coeffs$R[[1]]
+#'   
+#'   # Forming the KKT system
+#'   if(length(constraints) > 0) {
+#'     Cs <- lapply(constraints, function(c) { 
+#'       coeffs <- get_coeffs(extractor, c@.expr)
+#'       if(length(coeffs) > 1)
+#'         coeffs[2:length(coeffs)]
+#'       else
+#'         c()
+#'     })
+#'     As <- do.call("rbind", lapply(Cs, function(C) { C[[1]] }))
+#'     bs <- as.numeric(sapply(Cs, function(C) { C[[2]] }))
+#'     lhs <- rbind(cbind(2*P, t(As), cbind(As, NA)))    # TODO: Fix this
+#'     rhs <- c(-q, -bs)
+#'   } else {   # Avoid calling rbind with empty list
+#'     lhs <- 2*P
+#'     rhs <- -q
+#'   }
+#'   
+#'   # Actually solve the KKT system
+#'   tryCatch({
+#'       sol <- solve(lhs, rhs)
+#'       if(N > 0)
+#'         x <- sol[1:N]
+#'       else
+#'         x <- c()
+#'       
+#'       if(length(sol) > N)
+#'         nu <- sol[(N+1):length(sol)]
+#'       else
+#'         nu <- c()
+#'       
+#'       p_star <- t(x) %*% (P %*% x + q) + r
+#'     }, warning = function(w) {
+#'       x <- NA
+#'       nu <- NA
+#'       p_star <- NA
+#'     })
+#'   
+#'   results_dict <- list()
+#'   results_dict[[PRIMAL]] <- x
+#'   results_dict[[EQ_DUAL]] <- nu
+#'   results_dict[[VALUE]] <- primal_to_result(objective, p_star)
+#'   
+#'   format_results(solver, results_dict, NA, cached_data)
+#' })
+#' 
+#' #' @describeIn LS Convert raw solver output into standard list of results.
+#' setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
+#'   new_results <- results_dict
+#'   if(is.na(results_dict[[PRIMAL]]))
+#'     new_results[[STATUS]] <- INFEASIBLE
+#'   else
+#'     new_results[[STATUS]] <- OPTIMAL
+#'   new_results
+#' })
 
 #'
 #' The MOSEK class.
@@ -668,7 +665,7 @@ setMethod("format_results", "LS", function(solver, results_dict, data, cached_da
 #' This class is an interface for the commercial MOSEK solver.
 #'
 #' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
-#' @seealso \code{\link{Rmosek}{mosek}} and the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
+#' @seealso \code{\link[Rmosek]{mosek}} and the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
 #' @name MOSEK-class
 #' @rdname MOSEK-class
 setClass("MOSEK", contains = "Solver")
@@ -818,15 +815,13 @@ setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cach
       }
     }
   }
-      
-  requireNamespace("Rmosek")  
-  results_dict <- rmosek(problem, opts = list(getinfo = TRUE, soldetail = TRUE, verbose = verbose, ...))
+  
+  results_dict <- Rmosek::mosek(problem, opts = list(getinfo = TRUE, soldetail = TRUE, verbose = verbose, ...))
   format_results(solver, results_dict, data, cached_data)
 })
 
 #' @describeIn MOSEK Chooses between the basic and interior point solution.
 setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
-  requireNamespace("Rmosek")
   rank <- function(status) {
     # Rank solutions: optimal > near_optimal > anything else > None
     if(status == "OPTIMAL")
@@ -850,7 +845,6 @@ setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
 
 #' @describeIn MOSEK Convert raw solver output into standard list of results.
 setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached_data) {
-  requireNamespace("Rmosek")
   sol <- choose_solution(solver, results_dict)
   
   new_results <- list()
@@ -979,11 +973,11 @@ solver_intf <- list(ECOS(), ECOS_BB(), SCS())
 SOLVERS <- solver_intf
 names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
 
-installed_solvers <- function() {
-  installed <- list()
-  for(i in 1:length(SOLVERS)) {
-    if(is_installed(SOLVERS[i]))
-      installed <- c(installed, names(SOLVERS)[i])
-  }
-  installed
-}
+# installed_solvers <- function() {
+#   installed <- list()
+#   for(i in 1:length(SOLVERS)) {
+#     if(is_installed(SOLVERS[i]))
+#       installed <- c(installed, names(SOLVERS)[i])
+#   }
+#   installed
+# }

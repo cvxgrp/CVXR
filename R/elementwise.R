@@ -58,7 +58,7 @@ Elementwise.promote <- function(arg, size) {
 #' @rdname Abs-class
 .Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
 
-#' @param x,object An \linkS4class{Expression} object.
+#' @param x An \linkS4class{Expression} object.
 #' @rdname Abs-class
 Abs <- function(x) { .Abs(x = x) }
 
@@ -67,6 +67,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param object An \linkS4class{Abs} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Abs The elementwise absolute value of the input.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
@@ -109,6 +110,9 @@ Abs.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Abs The graph implementation of the atom.
 setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data = NA_real_) {
   Abs.graph_implementation(arg_objs, size, data)
@@ -119,12 +123,13 @@ setMethod("graph_implementation", "Abs", function(object, arg_objs, size, data =
 #'
 #' This class represents the elementwise operation \eqn{-xlog(x)}.
 #'
-#' @slot x An \linkS4class{Expression} object.
+#' @slot x An \linkS4class{Expression} or numeric constant.
 #' @name Entr-class
 #' @aliases Entr
 #' @rdname Entr-class
 .Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} or numeric constant.
 #' @rdname Entr-class
 Entr <- function(x) { .Entr(x = x) }
 
@@ -133,6 +138,8 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param object An \linkS4class{Entr} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Entr The elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
@@ -187,6 +194,9 @@ Entr.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, x, ones)))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Entr The graph implementation of the atom.
 setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data = NA_real_) {
   Entr.graph_implementation(arg_objs, size, data)
@@ -203,6 +213,7 @@ setMethod("graph_implementation", "Entr", function(object, arg_objs, size, data 
 #' @rdname Exp-class
 .Exp <- setClass("Exp", representation(x = "Expression"), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} object.
 #' @rdname Exp-class
 Exp <- function(x) { .Exp(x = x) }
 
@@ -211,6 +222,8 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param object An \linkS4class{Exp} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Exp The matrix with each element exponentiated.
 setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
@@ -244,6 +257,9 @@ Exp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(x, ones, t)))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Exp The graph implementation of the atom.
 setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data = NA_real_) {
   Exp.graph_implementation(arg_objs, size, data)
@@ -266,6 +282,8 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 .Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
                            prototype(M = 1), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} object.
+#' @param M A positive scalar value representing the threshold. Defaults to 1.
 #' @rdname Huber-class
 Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 
@@ -281,6 +299,8 @@ setMethod("validate_args", "Huber", function(object) {
     stop("M must be a non-negative scalar constant")
 })
 
+#' @param object A \linkS4class{Huber} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Huber The Huber function evaluted elementwise on the input value.
 setMethod("to_numeric", "Huber", function(object, values) {
   huber_loss <- function(delta, r) {
@@ -311,6 +331,7 @@ setMethod("is_atom_convex", "Huber", function(object) { TRUE })
 #' @describeIn Huber The atom is not concave.
 setMethod("is_atom_concave", "Huber", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn Huber A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Huber", function(object, idx) { is_positive(object@args[[idx]]) })
 
@@ -360,6 +381,9 @@ Huber.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Huber The graph implementation of the atom.
 setMethod("graph_implementation", "Huber", function(object, arg_objs, size, data = NA_real_) {
   Huber.graph_implementation(arg_objs, size, data)
@@ -379,6 +403,8 @@ InvPos <- function(x) { Power(x, -1) }
 #' @rdname KLDiv-class
 .KLDiv <- setClass("KLDiv", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @param y An \linkS4class{Expression} or numeric constant.
 #' @rdname KLDiv-class
 KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 
@@ -388,6 +414,8 @@ setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
 })
 
+#' @param object A \linkS4class{KLDiv} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn KLDiv The KL-divergence evaluted elementwise on the input value.
 setMethod("to_numeric", "KLDiv", function(object, values) {
   x <- intf_convert_if_scalar(values[[1]])
@@ -447,6 +475,9 @@ KLDiv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn KLDiv The graph implementation of the atom.
 setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data = NA_real_) {
   KLDiv.graph_implementation(arg_objs, size, data)
@@ -463,6 +494,7 @@ setMethod("graph_implementation", "KLDiv", function(object, arg_objs, size, data
 #' @rdname Log-class
 .Log <- setClass("Log", representation(x = "ConstValORExpr"), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} or numeric constant.
 #' @rdname Log-class
 Log <- function(x) { .Log(x = x) }
 
@@ -471,6 +503,8 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param object A \linkS4class{Log} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Log The elementwise natural logarithm of the input value.
 setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
@@ -512,6 +546,9 @@ Log.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(ExpCone(t, ones, x)))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Log The graph implementation of the atom.
 setMethod("graph_implementation", "Log", function(object, arg_objs, size, data = NA_real_) {
   Log.graph_implementation(arg_objs, size, data)
@@ -528,9 +565,12 @@ setMethod("graph_implementation", "Log", function(object, arg_objs, size, data =
 #' @rdname Log1p-class
 .Log1p <- setClass("Log1p", contains = "Log")
 
+#' @param x An \linkS4class{Expression} or numeric constant.
 #' @rdname Log1p-class
 Log1p <- function(x) { .Log1p(x = x) }
 
+#' @param object A \linkS4class{Log1p} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Log1p The elementwise natural logarithm of one plus the input value.
 setMethod("to_numeric", "Log1p", function(object, values) { log(1+values[[1]]) })
 
@@ -559,6 +599,9 @@ Log1p.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   Log.graph_implementation(list(xp1), size, data)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Log1p The graph implementation of the atom.
 setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data = NA_real_) {
   Log1p.graph_implementation(arg_objs, size, data)
@@ -577,6 +620,7 @@ setMethod("graph_implementation", "Log1p", function(object, arg_objs, size, data
 #' @rdname Logistic-class
 .Logistic <- setClass("Logistic", representation(x = "Expression"), contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} or numeric constant.
 #' @rdname Logistic-class
 Logistic <- function(x) { .Logistic(x = x) }
 
@@ -585,6 +629,8 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
+#' @param object A \linkS4class{Logistic} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
@@ -631,6 +677,9 @@ Logistic.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constr)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Logistic The graph implementation of the atom.
 setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, data = NA_real_) {
   Logistic.graph_implementation(arg_objs, size, data)
@@ -643,7 +692,7 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
 #'
 #' @slot arg1 The first \linkS4class{Expression} in the maximum operation.
 #' @slot arg2 The second \linkS4class{Expression} in the maximum operation.
-#' @slot ... Additional \linkS4class{Expression}s in the maximum operation.
+#' @slot ... Additional \linkS4class{Expression} objects in the maximum operation.
 #' @name MaxElemwise-class
 #' @aliases MaxElemwise
 #' @rdname MaxElemwise-class
@@ -653,9 +702,14 @@ setMethod("graph_implementation", "Logistic", function(object, arg_objs, size, d
                            return(TRUE)
                          }, contains = "Elementwise")
 
+#' @param arg1 The first \linkS4class{Expression} in the maximum operation.
+#' @param arg2 The second \linkS4class{Expression} in the maximum operation.
+#' @param ... Additional \linkS4class{Expression} objects in the maximum operation.
 #' @rdname MaxElemwise-class
 MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
 
+#' @param object A \linkS4class{MaxElemwise} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn MaxElemwise The elementwise maximum.
 setMethod("to_numeric", "MaxElemwise", function(object, values) {
   # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
@@ -715,6 +769,9 @@ MaxElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn MaxElemwise The graph implementation of the atom.
 setMethod("graph_implementation", "MaxElemwise", function(object, arg_objs, size, data = NA_real_) {
   MaxElemwise.graph_implementation(arg_objs, size, data)
@@ -752,6 +809,9 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 .Power <- setClass("Power", representation(x = "ConstValORExpr", p = "NumORgmp", max_denom = "numeric", w = "NumORgmp", approx_error = "numeric"),
                           prototype(max_denom = 1024, w = NA_real_, approx_error = NA_real_), contains = "Elementwise")
 
+#' @param x The \linkS4class{Expression} to be raised to a power.
+#' @param p A numeric value indicating the scalar power.
+#' @param max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @rdname Power-class
 Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max_denom) }
 
@@ -797,6 +857,8 @@ setMethod("validate_args", "Power", function(object) { return() })
 #' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
+#' @param object A \linkS4class{Power} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Power Throw an error if the power is negative and cannot be handled.
 setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
@@ -922,6 +984,9 @@ Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   }
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Power The graph implementation of the atom.
 setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
   Power.graph_implementation(arg_objs, size, data)
@@ -940,6 +1005,7 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' @rdname Sqrt-class
 .Sqrt <- setClass("Sqrt", contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} object.
 #' @rdname Sqrt-class
 Sqrt <- function(x) { .Sqrt(args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
@@ -948,6 +1014,8 @@ Sqrt <- function(x) { .Sqrt(args = list(x)) }
 #' @describeIn Sqrt Verification of arguments happens during initialization.
 setMethod("validate_args", "Sqrt", function(object) { return() })
 
+#' @param object A \linkS4class{Sqrt} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Sqrt The elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { values[[1]]^0.5 })
 
@@ -999,6 +1067,9 @@ Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Sqrt The graph implementation of the atom.
 setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
   Sqrt.graph_implementation(arg_objs, size, data)
@@ -1009,12 +1080,13 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #'
 #' This class represents the elementwise square \eqn{x^2}.
 #' 
-#' @slot x An \linkS4class{Expression}.
+#' @slot x An \linkS4class{Expression} object.
 #' @name Square-class
 #' @aliases Square
 #' @rdname Square-class
 .Square <- setClass("Square", contains = "Elementwise")
 
+#' @param x An \linkS4class{Expression} object.
 #' @rdname Square-class
 Square <- function(x) { .Square(args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
@@ -1023,6 +1095,8 @@ Square <- function(x) { .Square(args = list(x)) }
 #' @describeIn Square Verification of arguments happens during initialization.
 setMethod("validate_args", "Square", function(object) { return() })
 
+#' @param object A \linkS4class{Square} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Square The elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 
@@ -1072,6 +1146,9 @@ Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Square The graph implementation of the atom.
 setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
   Square.graph_implementation(arg_objs, size, data)

@@ -90,7 +90,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
 #' This class represents the sum of any number of expressions.
 #'
 #' @slot arg_groups A \code{list} of \linkS4class{Expression}s and numeric data.frame, matrix, or vector objects.
-#' @name AddExpression-lcass
+#' @name AddExpression-class
 #' @aliases AddExpression
 #' @rdname AddExpression-class
 AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
@@ -103,6 +103,8 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   return(.Object)
 })
 
+#' @param object An \linkS4class{AddExpression} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn AddExpression Sum all the values.
 setMethod("to_numeric", "AddExpression", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
@@ -117,6 +119,9 @@ AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(lo.sum_expr(arg_objs), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn AddExpression The graph implementation of the expression.
 setMethod("graph_implementation", "AddExpression", function(object, arg_objs, size, data = NA_real_) {
   AddExpression.graph_implementation(arg_objs, size, data)
@@ -154,6 +159,8 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-")
 })
 
+#' @param object A \linkS4class{NegExpression} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn NegExpression Negate the value.
 setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
 
@@ -163,6 +170,7 @@ setMethod("size_from_args", "NegExpression", function(object) { size(object@args
 #' @describeIn NegExpression The sign of the expression.
 setMethod("sign_from_args", "NegExpression", function(object) { c(is_negative(object@args[[1]]), is_positive(object@args[[1]])) })
 
+#' @param idx An index into the atom.
 #' @describeIn NegExpression The expression is not weakly increasing in any argument.
 setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
 
@@ -173,6 +181,9 @@ NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(lo.neg_expr(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn NegExpression The graph implementation of the expression.
 setMethod("graph_implementation", "NegExpression", function(object, arg_objs, size, data = NA_real_) {
   NegExpression.graph_implementation(arg_objs, size, data)
@@ -225,6 +236,7 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
 })
 
+#' @param object A \linkS4class{MulExpression} object.
 #' @describeIn MulExpression Check the dimensions.
 setMethod("validate_args", "MulExpression", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
@@ -233,6 +245,7 @@ setMethod("validate_args", "MulExpression", function(object) {
 #' @describeIn MulExpression The size of the expression.
 setMethod("size_from_args", "MulExpression", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
 
+#' @param idx An index into the atom.
 #' @describeIn MulExpression Is the left-hand expression positive?
 setMethod("is_incr", "MulExpression", function(object, idx) { is_positive(object@args[[1]]) })
 
@@ -248,6 +261,9 @@ MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(lo.mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn MulExpression The graph implementation of the expression.
 setMethod("graph_implementation", "MulExpression", function(object, arg_objs, size, data = NA_real_) {
   MulExpression.graph_implementation(arg_objs, size, data)
@@ -281,6 +297,9 @@ RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_)
   list(lo.rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn RMulExpression The graph implementation of the expression.
 setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, size, data = NA_real_) {
   RMulExpression.graph_implementation(arg_objs, size, data)
@@ -300,6 +319,7 @@ setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
 })
 
+#' @param object A \linkS4class{DivExpression} object.
 #' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
 setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
@@ -319,6 +339,9 @@ DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
   list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn DivExpression The graph implementation of the expression.
 setMethod("graph_implementation", "DivExpression", function(object, arg_objs, size, data = NA_real_) {
   DivExpression.graph_implementation(arg_objs, size, data)
@@ -336,6 +359,8 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, si
 #' @rdname Conv-class
 .Conv <- setClass("Conv", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
+#' @param lh_exp An \linkS4class{Expression} or R numeric data representing the left-hand vector.
+#' @param rh_exp An \linkS4class{Expression} or R numeric data representing the right-hand vector.
 #' @rdname Conv-class
 Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 
@@ -353,6 +378,8 @@ setMethod("validate_args", "Conv", function(object) {
     stop("The first argument to Conv must be constant.")
 })
 
+#' @param object A \linkS4class{Conv} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Conv The convolution of the two values.
 setMethod("to_numeric", "Conv", function(object, values) {
     .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
@@ -379,6 +406,9 @@ Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.conv(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Conv The graph implementation of the atom.
 setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data = NA_real_) {
   Conv.graph_implementation(arg_objs, size, data)
@@ -396,9 +426,13 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' @rdname CumSum-class
 .CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
 
+#' @param expr An \linkS4class{Expression} to be summed.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
 #' @rdname CumSum-class
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
+#' @param object A \linkS4class{CumSum} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn CumSum The cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) { apply(values[[1]], object@axis, cumsum) })
 
@@ -474,6 +508,9 @@ CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(Y, list(create_eq(arg_objs[[1]], diff)))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn CumSum The graph implementation of the atom.
 setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, data = NA_real_) {
   CumSum.graph_implementation(arg_objs, size, data)
@@ -499,6 +536,8 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @param object A \linkS4class{DiagVec} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn DiagVec Convert the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
@@ -512,6 +551,9 @@ DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.diag_vec(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn DiagVec The graph implementation of the atom.
 setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, data = NA_real_) {
   DiagVec.graph_implementation(arg_objs, size, data)
@@ -537,6 +579,8 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @param object A \linkS4class{DiagMat} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn DiagMat Extract the diagonal from a square matrix constant.
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
@@ -550,6 +594,9 @@ DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn DiagMat The graph implementation of the atom.
 setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, data = NA_real_) {
   DiagMat.graph_implementation(arg_objs, size, data)
@@ -609,6 +656,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' @rdname HStack-class
 .HStack <- setClass("HStack", contains = "AffAtom")
 
+#' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
 #' @rdname HStack-class
 HStack <- function(...) { .HStack(args = list(...)) }
 
@@ -619,6 +667,8 @@ setMethod("validate_args", "HStack", function(object) {
     stop("All arguments to HStack must have the same number of rows")
 })
 
+#' @param object A \linkS4class{HStack} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
@@ -634,6 +684,9 @@ HStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.hstack(arg_objs, size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn HStack The graph implementation of the atom.
 setMethod("graph_implementation", "HStack", function(object, arg_objs, size, data = NA_real_) {
   HStack.graph_implementation(arg_objs, size, data)
@@ -665,6 +718,8 @@ setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
+#' @param x,object An \linkS4class{Index} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Index The index/slice into the given value.
 setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key)
@@ -683,6 +738,9 @@ Index.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Index The graph implementation of the atom.
 setMethod("graph_implementation", "Index", function(object, arg_objs, size, data = NA_real_) {
   Index.graph_implementation(arg_objs, size, data)
@@ -790,6 +848,8 @@ Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_s
 #' @rdname Kron-class
 .Kron <- setClass("Kron", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
+#' @param lh_exp An \linkS4class{Expression} or numeric constant representing the left-hand matrix.
+#' @param rh_exp An \linkS4class{Expression} or numeric constant representing the right-hand matrix.
 #' @rdname Kron-class
 Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 
@@ -805,6 +865,8 @@ setMethod("validate_args", "Kron", function(object) {
     stop("The first argument to Kron must be constant")
 })
 
+#' @param object A \linkS4class{Kron} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Kron The kronecker product of the two values.
 setMethod("to_numeric", "Kron", function(object, values) {
   kronecker(values[[1]], values[[2]])
@@ -831,6 +893,9 @@ Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.kron(arg_objs[[1]], arg_objs[[2]], size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Kron The graph implementation of the atom.
 setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data = NA_real_) {
   Kron.graph_implementation(arg_objs, size, data)
@@ -848,6 +913,8 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data 
 #' @rdname MulElemwise-class
 .MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
+#' @param lh_const A constant \linkS4class{Expression} or numeric value.
+#' @param rh_exp An \linkS4class{Expression}.
 #' @rdname MulElemwise-class
 MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
 
@@ -863,6 +930,8 @@ setMethod("validate_args", "MulElemwise", function(object) {
     stop("The first argument to MulElemwise must be constant.")
 })
 
+#' @param object A \linkS4class{MulElemwise} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn MulElemwise Multiply the values elementwise.
 setMethod("to_numeric", "MulElemwise", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
@@ -897,6 +966,9 @@ MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
     list(lo.mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn MulElemwise The graph implementation of the atom.
 setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size, data = NA_real_) {
   MulElemwise.graph_implementation(arg_objs, size, data)
@@ -908,7 +980,7 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' This class represents the reshaping of an expression. The operator vectorizes the expression,
 #' then unvectorizes it into the new shape. Entries are stored in column-major order.
 #'
-#' @slot expr An \linkS4class{Expression} to reshape.
+#' @slot expr An \linkS4class{Expression} or numeric matrix.
 #' @slot rows The new number of rows.
 #' @slot cols The new number of columns.
 #' @name Reshape-class
@@ -916,6 +988,9 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 #' @rdname Reshape-class
 .Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
 
+#' @param expr An \linkS4class{Expression} or numeric matrix.
+#' @param rows The new number of rows.
+#' @param cols The new number of columns.
 #' @rdname Reshape-class
 Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
 
@@ -934,6 +1009,8 @@ setMethod("validate_args", "Reshape", function(object) {
     stop(sprintf("Invalid reshape dimensions (%i, %i)", object@rows, object@cols))
 })
 
+#' @param object A \linkS4class{Reshape} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Reshape Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
   dim(values[[1]]) <- c(object@rows, object@cols)
@@ -950,6 +1027,9 @@ Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.reshape(arg_objs[[1]], size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Reshape The graph implementation of the atom.
 setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, data = NA_real_) {
   Reshape.graph_implementation(arg_objs, size, data)
@@ -967,9 +1047,13 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @rdname SumEntries-class
 .SumEntries <- setClass("SumEntries", contains = c("AxisAtom", "AffAtom"))
 
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname SumEntries-class
 SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
 
+#' @param object A \linkS4class{SumEntries} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn SumEntries Sum the entries along the specified axis.
 setMethod("to_numeric", "SumEntries", function(object, values) {
   if(is.na(object@axis))
@@ -994,6 +1078,9 @@ SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn SumEntries The graph implementation of the atom.
 setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size, data = NA_real_) {
   SumEntries.graph_implementation(arg_objs, size, data)
@@ -1010,6 +1097,7 @@ setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size,
 #' @rdname Trace-class
 .Trace <- setClass("Trace", representation(expr = "Expression"), contains = "AffAtom")
 
+#' @param expr An \linkS4class{Expression} representing a matrix.
 #' @rdname Trace-class
 Trace <- function(expr) { .Trace(expr = expr) }
 
@@ -1025,6 +1113,8 @@ setMethod("validate_args", "Trace", function(object) {
     stop("Argument to trace must be a square matrix")
 })
 
+#' @param object A \linkS4class{Trace} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Trace Sum the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
@@ -1035,6 +1125,9 @@ Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.trace(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Trace The graph implementation of the atom.
 setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data = NA_real_) {
   Trace.graph_implementation(arg_objs, size, data)
@@ -1050,6 +1143,8 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #' @rdname Transpose-class
 Transpose <- setClass("Transpose", contains = "AffAtom")
 
+#' @param object A \linkS4class{Transpose} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Transpose The transpose of the given value.
 setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
@@ -1063,6 +1158,9 @@ Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.transpose(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Transpose The graph implementation of the atom.
 setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {
   Transpose.graph_implementation(arg_objs, size, data)
@@ -1073,12 +1171,13 @@ setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, 
 #'
 #' The vectorized strictly upper triagonal entries of a matrix.
 #'
-#' @slot expr An \linkS4class{Expression} representing a matrix.
+#' @slot expr An \linkS4class{Expression} or numeric matrix.
 #' @name UpperTri-class
 #' @aliases UpperTri
 #' @rdname UpperTri-class
 .UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
 
+#' @param expr An \linkS4class{Expression} or numeric matrix.
 #' @rdname UpperTri-class
 UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
@@ -1094,6 +1193,8 @@ setMethod("validate_args", "UpperTri", function(object) {
     stop("Argument to UpperTri must be a square matrix.")
 })
 
+#' @param object An \linkS4class{UpperTri} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn UpperTri Vectorize the upper triagonal entries.
 setMethod("to_numeric", "UpperTri", function(object, values) {
   # Vectorize the upper triagonal entries
@@ -1113,6 +1214,9 @@ UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn UpperTri The graph implementation of the atom.
 setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, data = NA_real_) {
   UpperTri.graph_implementation(arg_objs, size, data)
@@ -1134,6 +1238,7 @@ Vec <- function(X) {
 #' @rdname VStack-class
 .VStack <- setClass("VStack", contains = "AffAtom")
 
+#' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @rdname VStack-class
 VStack <- function(...) { .VStack(args = list(...)) }
 
@@ -1144,6 +1249,8 @@ setMethod("validate_args", "VStack", function(object) {
     stop("All arguments to VStack must have the same number of columns")
 })
 
+#' @param object A \linkS4class{VStack} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn VStack Vertically concatenate the values using \code{rbind}.
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
 
@@ -1159,6 +1266,9 @@ VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.vstack(arg_objs, size), list())
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn VStack The graph implementation of the atom.
 setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {
   VStack.graph_implementation(arg_objs, size, data)

@@ -8,8 +8,8 @@
 #' @keywords data
 #' @format A data frame with 166 rows and 14 variables
 #' \describe{
-#'   \item{year}{year}
-#'   \item{jan, feb, ..., dec}{Anomaly for each month in the respective year}
+#'   \item{year}{Year}
+#'   \item{jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov dec}{Anomaly for each month in the respective year}
 #'   \item{annual}{Annual anomaly for the year}
 #' }
 NULL

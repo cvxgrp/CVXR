@@ -558,17 +558,18 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
 setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 
-#'
-#' Choose MOSEK Solution
-#' 
-#' Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
-#' As long as interior solution is not worse, take it (for backward compatibility).
-#' 
-#' @param solver A \linkS4class{MOSEK} object.
-#' @param results_dict A list of the results returned by the solver.
-#' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
-#' @rdname choose_solution
-setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
+# #'
+# #' Choose MOSEK Solution
+# #' 
+# #' Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
+# #' As long as interior solution is not worse, take it (for backward compatibility).
+# #' 
+# #' @param solver A \linkS4class{MOSEK} object.
+# #' @param results_dict A list of the results returned by the solver.
+# #' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
+# #' @rdname choose_solution
+# setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
+
 setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
 
 #'

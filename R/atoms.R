@@ -24,7 +24,7 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
 })
 
-#' @param object An \linkS4class{Atom} object.
+#' @param x,object An \linkS4class{Atom} object.
 #' @describeIn Atom Raises an error if the arguments are invalid.
 setMethod("validate_args", "Atom", function(object) { return() })
 
@@ -128,6 +128,9 @@ setMethod("canonicalize", "Atom", function(object) {
   }
 })
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
 
@@ -329,6 +332,8 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' @rdname AffineProd-class
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
+#' @param x An \linkS4class{Expression} or R numeric data representing the left-hand value.
+#' @param y An \linkS4class{Expression} or R numeric data representing the right-hand value.
 #' @rdname AffineProd-class
 AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
 
@@ -345,6 +350,8 @@ setMethod("validate_args", "AffineProd", function(object) {
   mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
 })
 
+#' @param object An \linkS4class{AffineProd} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn AffineProd The product of two affine expressions.
 setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
 
@@ -402,8 +409,11 @@ setMethod(".grad", "AffineProd", function(object, values) {
 #' The only exception to this rule occurs when \eqn{p} has exactly one nonzero element, say \eqn{p_i}, in which case \code{GeoMean(x,p)} is equivalent to \eqn{x_i} (without the nonnegativity constraint).
 #' A specific case of this is when \eqn{x \in \mathbf{R}^1}.
 #'
-#' @slot x An \linkS4class{Expression} or R numeric vector.
+#' @slot x An \linkS4class{Expression} or numeric vector.
 #' @slot p (Optional) A vector of weights for the weighted geometric mean. The default is a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
+#' @slot max_denom (Optional) The maximum denominator to use in approximating \code{p/sum(p)} with \code{w}. If \code{w} is not an exact representation, increasing \code{max_denom} may offer a more accurate representation, at the cost of requiring more convex inequalities to represent the geometric mean. Defaults to 1024.
+#' @slot w (Internal) A list of \code{bigq} objects that represent a rational approximation of \code{p/sum(p)}.
+#' @slot approx_error (Internal) The error in approximating \code{p/sum(p)} with \code{w}, given by \eqn{\|p/\mathbf{1}^Tp - w\|_{\infty}}.
 #' @name GeoMean-class
 #' @aliases GeoMean
 #' @rdname GeoMean-class
@@ -412,6 +422,9 @@ setMethod(".grad", "AffineProd", function(object, values) {
                                                cone_lb = "numeric", cone_num = "numeric", cone_num_over = "numeric"),
                                 prototype(p = NA_real_, max_denom = 1024), contains = "Atom")
 
+#' @param x An \linkS4class{Expression} or numeric vector.
+#' @param p (Optional) A vector of weights for the weighted geometric mean. The default is a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
+#' @param max_denom (Optional) The maximum denominator to use in approximating \code{p/sum(p)} with \code{w}. If \code{w} is not an exact representation, increasing \code{max_denom} may offer a more accurate representation, at the cost of requiring more convex inequalities to represent the geometric mean. Defaults to 1024.
 #' @rdname GeoMean-class
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 
@@ -457,6 +470,8 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 #' @describeIn GeoMean Empty function since validation of arguments is done during atom initialization.
 setMethod("validate_args", "GeoMean", function(object) { return() })
 
+#' @param object A \linkS4class{GeoMean} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn GeoMean The (weighted) geometric mean of the elements of \code{x}.
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
@@ -529,6 +544,9 @@ GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, gm_constrs(t, x_list, w))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn GeoMean The graph implementation of the atom.
 setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, data = NA_real_) {
   GeoMean.graph_implementation(arg_objs, size, data)
@@ -544,12 +562,13 @@ HarmonicMean <- function(x) {
 #'
 #' The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
 #' 
-#' @slot A An \linkS4class{Expression} representing a matrix.
+#' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name LambdaMax-class
 #' @aliases LambdaMax
 #' @rdname LambdaMax-class
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
+#' @param A An \linkS4class{Expression} or numeric matrix.
 #' @rdname LambdaMax-class
 LambdaMax <- function(A) { .LambdaMax(A = A) }
 
@@ -564,6 +583,8 @@ setMethod("validate_args", "LambdaMax", function(object) {
     stop("The argument to LambdaMax must resolve to a square matrix")
 })
 
+#' @param object A \linkS4class{LambdaMax} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn LambdaMax The largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
@@ -615,6 +636,9 @@ LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, list(SDP(expr)))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn LambdaMax The graph implementation of the atom.
 setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
   LambdaMax.graph_implementation(arg_objs, size, data)
@@ -646,12 +670,13 @@ LambdaSumSmallest <- function(A, k) {
 #'
 #' The natural logarithm of the determinant of a matrix, \eqn{\log\det(A)}.
 #' 
-#' @slot A An \linkS4class{Expression} representing a matrix.
+#' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name LogDet-class
 #' @aliases LogDet
 #' @rdname LogDet-class
 .LogDet <- setClass("LogDet", representation(A = "ConstValORExpr"), contains = "Atom")
 
+#' @param A An \linkS4class{Expression} or numeric matrix.
 #' @rdname LogDet-class
 LogDet <- function(A) { .LogDet(A = A) }
 
@@ -667,6 +692,8 @@ setMethod("validate_args", "LogDet", function(object) {
     stop("The argument to LogDet must be a square matrix")
 })
 
+#' @param object A \linkS4class{LogDet} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn LogDet The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
   logdet <- determinant(values[[1]], logarithm = TRUE)
@@ -745,6 +772,9 @@ LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.sum_entries(obj), c(constraints, constr))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn LogDet The graph implementation of the atom.
 setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
   LogDet.graph_implementation(arg_objs, size, data)
@@ -762,9 +792,13 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' @rdname LogSumExp-class
 .LogSumExp <- setClass("LogSumExp", contains = "AxisAtom")
 
+#' @param x An \linkS4class{Expression} representing a vector or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname LogSumExp-class
 LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 
+#' @param object A \linkS4class{LogSumExp} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn LogSumExp Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
@@ -842,6 +876,9 @@ LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn LogSumExp The graph implementation of the atom.
 setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, data = NA_real_) {
   LogSumExp.graph_implementation(arg_objs, size, data)
@@ -852,13 +889,15 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #'
 #' The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
 #' 
-#' @slot X An \linkS4class{Expression} representing a matrix.
-#' @slot P An \linkS4class{Expression} representing a matrix.
+#' @slot X An \linkS4class{Expression} or numeric matrix.
+#' @slot P An \linkS4class{Expression} or numeric matrix.
 #' @name MatrixFrac-class
 #' @aliases MatrixFrac
 #' @rdname MatrixFrac-class
 .MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @param P An \linkS4class{Expression} or numeric matrix.
 #' @rdname MatrixFrac-class
 MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
 
@@ -878,6 +917,8 @@ setMethod("validate_args", "MatrixFrac", function(object) {
     stop("The arguments to MatrixFrac have incompatible dimensions")
 })
 
+#' @param object A \linkS4class{MatrixFrac} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn MatrixFrac The trace of \eqn{X^TP^{-1}X}.
 setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
@@ -962,6 +1003,9 @@ MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(lo.trace(Tmat), c(constraints, list(SDP(M))))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn MatrixFrac The graph implementation of the atom.
 setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
   MatrixFrac.graph_implementation(arg_objs, size, data)
@@ -979,9 +1023,13 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' @rdname MaxEntries-class
 .MaxEntries <- setClass("MaxEntries", contains = "AxisAtom")
 
+#' @param x An \linkS4class{Expression} representing a vector or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname MaxEntries-class
 MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
 
+#' @param object A \linkS4class{MaxEntries} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn MaxEntries The largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
@@ -1041,6 +1089,9 @@ MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn MaxEntries The graph implementation of the atom.
 setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size, data = NA_real_) {
   MaxEntries.graph_implementation(arg_objs, size, data)
@@ -1069,13 +1120,19 @@ MinEntries <- function(x, axis = NA_real_) {
 #' 
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot p A number greater than or equal to 1, or equal to positive infinity.
+#' @slot max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot .approx_error (Internal) The absolute difference between \eqn{p} and its rational approximation.
 #' @name Pnorm-class
 #' @aliases Pnorm
 #' @rdname Pnorm-class
 .Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
                   prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "AxisAtom")
 
+#' @param x An \linkS4class{Expression} representing a vector or matrix.
+#' @param p A number greater than or equal to 1, or equal to positive infinity.
+#' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname Pnorm-class
 Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom) }
 
@@ -1131,6 +1188,8 @@ setMethod("name", "Pnorm", function(object) {
     stop("Invalid p = ", p)
 }
 
+#' @param object A \linkS4class{Pnorm} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Pnorm The p-norm of \code{x}.
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
@@ -1261,6 +1320,9 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn Pnorm The graph implementation of the atom.
 setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
   Pnorm.graph_implementation(arg_objs, size, data)
@@ -1320,6 +1382,8 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @param object A \linkS4class{NormNuc} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn NormNuc The nuclear norm (i.e., the sum of the singular values) of \code{A}.
 setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
@@ -1338,6 +1402,7 @@ setMethod("is_atom_convex", "NormNuc", function(object) { TRUE })
 #' @describeIn NormNuc The atom is not concave.
 setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn NormNuc The atom is not monotonic in any argument.
 setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
 
@@ -1373,6 +1438,9 @@ NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(trace_expr, c(list(SDP(X)), constraints))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn NormNuc The graph implementation of the atom.
 setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
   NormNuc.graph_implementation(arg_objs, size, data)
@@ -1449,13 +1517,15 @@ QuadForm <- function(x, P) {
 #'
 #' This class represents the sum of squared entries in X divided by a scalar y, \eqn{\sum_{i,j} X_{i,j}^2/y}.
 #'
-#' @slot x An \linkS4class{Expression} representing a matrix.
-#' @slot y A scalar \linkS4class{Expression}.
+#' @slot x An \linkS4class{Expression} or numeric matrix.
+#' @slot y A scalar \linkS4class{Expression} or numeric constant.
 #' @name QuadOverLin-class
 #' @aliases QuadOverLin
 #' @rdname QuadOverLin-class
 .QuadOverLin <- setClass("QuadOverLin", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param y A scalar \linkS4class{Expression} or numeric constant.
 #' @rdname QuadOverLin-class
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
@@ -1471,6 +1541,8 @@ setMethod("validate_args",   "QuadOverLin", function(object) {
     stop("[QuadOverLin: validation] y must be a scalar")
 })
 
+#' @param object A \linkS4class{QuadOverLin} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn QuadOverLin The sum of the entries of \code{x} squared over \code{y}.
 setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
 
@@ -1525,6 +1597,9 @@ QuadOverLin.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(v, constraints)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn QuadOverLin The graph implementation of the atom.
 setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size, data = NA_real_) {
   QuadOverLin.graph_implementation(arg_objs, size, data)
@@ -1535,12 +1610,13 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
 #'
 #' The maximum singular value of a matrix.
 #' 
-#' @slot A An \linkS4class{Expression} representing a matrix.
+#' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name SigmaMax-class
 #' @aliases SigmaMax
 #' @rdname SigmaMax-class
 .SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
+#' @param A An \linkS4class{Expression} or matrix.
 #' @rdname SigmaMax-class
 SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
@@ -1549,6 +1625,8 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
+#' @param object A \linkS4class{SigmaMax} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn SigmaMax The largest singular value of \code{A}.
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 
@@ -1564,6 +1642,7 @@ setMethod("is_atom_convex", "SigmaMax", function(object) { TRUE })
 #' @describeIn SigmaMax The atom is concave.
 setMethod("is_atom_concave", "SigmaMax", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn SigmaMax The atom is not monotonic in any argument.
 setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
 
@@ -1606,6 +1685,9 @@ SigmaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(t, c(constraints, list(SDP(X))))
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn SigmaMax The graph implementation of the atom.
 setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, data = NA_real_) {
   SigmaMax.graph_implementation(arg_objs, size, data)
@@ -1616,7 +1698,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #'
 #' The sum of the largest k values of a matrix.
 #' 
-#' @slot x An \linkS4class{Expression} representing a matrix.
+#' @slot x An \linkS4class{Expression} or numeric matrix.
 #' @slot k The number of largest values to sum over.
 #' @name SumLargest-class
 #' @aliases SumLargest
@@ -1628,6 +1710,8 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
                          return(TRUE)
                          }, contains = "Atom")
 
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param k The number of largest values to sum over.
 #' @rdname SumLargest-class
 SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
 
@@ -1643,6 +1727,8 @@ setMethod("validate_args",   "SumLargest", function(object) {
     stop("[SumLargest: validation] k must be a positive integer")
 })
 
+#' @param object A \linkS4class{SumLargest} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn SumLargest The sum of the \code{k} largest entries of the vector or matrix.
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
@@ -1664,6 +1750,7 @@ setMethod("is_atom_convex", "SumLargest", function(object) { TRUE })
 #' @describeIn SumLargest The atom is not concave.
 setMethod("is_atom_concave", "SumLargest", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn SumLargest The atom is weakly increasing in every argument.
 setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
 
@@ -1699,6 +1786,9 @@ SumLargest.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   list(obj, constr)
 }
 
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param data A list of additional data required by the atom.
 #' @describeIn SumLargest The graph implementation of the atom.
 setMethod("graph_implementation", "SumLargest", function(object, arg_objs, size, data = NA_real_) {
   SumLargest.graph_implementation(arg_objs, size, data)

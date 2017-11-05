@@ -50,7 +50,7 @@ Suggests:
     rmarkdown,
     testthat
 LinkingTo: Rcpp, RcppEigen, BH
-License: GPL-2 | GPL-3
+License: file LICENSE
 LazyData: true
 Collate:
     'data.R'

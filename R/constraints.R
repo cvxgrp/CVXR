@@ -342,51 +342,51 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #'
 #' The ExpCone class.
 #'
-#' This class represents a reformulated exponential cone constraint operating elementwise on \eqn{x, y, z}.
+#' This class represents a reformulated exponential cone constraint operating elementwise on \eqn{a, b, c}.
 #' 
 #' Original cone:
 #' \deqn{
-#' K = \{(x,y,z) | y > 0, ye^{x/y} \leq z\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
+#' K = \{(a,b,c) | b > 0, be^{a/b} \leq c\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
 #' }
 #' Reformulated cone:
 #' \deqn{
-#' K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
+#' K = \{(a,b,c) | b, c > 0, b\log(b) + a \leq b\log(c)\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
 #' }
 #' 
 #' @slot constr_id (Internal) A unique integer identification number used internally.
-#' @slot x The variable \eqn{x} in the exponential cone.
-#' @slot y The variable \eqn{y} in the exponential cone.
-#' @slot z The variable \eqn{z} in the exponential cone.
+#' @slot a The variable \eqn{a} in the exponential cone.
+#' @slot b The variable \eqn{b} in the exponential cone.
+#' @slot c The variable \eqn{c} in the exponential cone.
 #' @name ExpCone-class
 #' @aliases ExpCone
 #' @rdname ExpCone-class
-.ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "Constraint")
+.ExpCone <- setClass("ExpCone", representation(a = "list", b = "list", c = "list"), contains = "Constraint")
 
-#' @param x The variable \eqn{x} in the exponential cone.
-#' @param y The variable \eqn{y} in the exponential cone.
-#' @param z The variable \eqn{z} in the exponential cone.
+#' @param a The variable \eqn{a} in the exponential cone.
+#' @param b The variable \eqn{b} in the exponential cone.
+#' @param c The variable \eqn{c} in the exponential cone.
 #' @rdname ExpCone-class
-ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
+ExpCone <- function(a, b, c) { .ExpCone(a = a, b = b, c = c) }
 
-setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
-  .Object@x <- x
-  .Object@y <- y
-  .Object@z <- z
+setMethod("initialize", "ExpCone", function(.Object, ..., a, b, c) {
+  .Object@a <- a
+  .Object@b <- b
+  .Object@c <- c
   callNextMethod(.Object, ...)
 })
 
 # TODO: Is this the correct size method for the exponential cone class?
 #' @param x,object A \linkS4class{ExpCone} object.
 #' @describeIn ExpCone The size of the \code{x} argument.
-setMethod("size", "ExpCone", function(object) { size(object@x) })
+setMethod("size", "ExpCone", function(object) { size(object@a) })
 
 #' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
-  paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
+  paste("ExpCone(", as.character(x@a), ", ", as.character(x@b), ", ", as.character(x@c), ")", sep = "")
 })
 
 #' @describeIn ExpCone List of \linkS4class{Variable} objects in the exponential cone.
-setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
+setMethod("variables", "ExpCone", function(object) { list(object@a, object@b, object@c) })
 
 #' @param eq_constr A list of the equality constraints in the canonical problem.
 #' @param leq_constr A list of the inequality constraints in the canonical problem.
@@ -408,11 +408,11 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
   }
 
   .ecos_format <- function(object) {
-    list(list(), format_elemwise(list(object@x, object@z, object@y)))
+    list(list(), format_elemwise(list(object@a, object@c, object@b)))
   }
 
   .scs_format <- function(object) {
-    list(list(), format_elemwise(list(object@x, object@y, object@z)))
+    list(list(), format_elemwise(list(object@a, object@b, object@c)))
   }
 
   if(is(solver, "CVXOPT"))

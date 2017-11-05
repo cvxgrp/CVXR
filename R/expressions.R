@@ -145,6 +145,9 @@ setMethod("nrow", "Expression", function(x) { size(x)[1] })
 setMethod("ncol", "Expression", function(x) { size(x)[2] })
 
 # Slice operators
+#' @param i,j The row and column indices of the slice.
+#' @param ... (Unimplemented) Optional arguments.
+#' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.
 #' @rdname Index-class
 setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
 

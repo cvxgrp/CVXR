@@ -14,6 +14,7 @@
 #'
 #' @param x An \linkS4class{Expression} or vector.
 #' @param p (Optional) A vector of weights for the weighted geometric mean. Defaults to a vector of ones, giving the \strong{unweighted} geometric mean \eqn{x_1^{1/n} \cdots x_n^{1/n}}.
+#' @param max_denom (Optional) The maximum denominator to use in approximating \code{p/sum(p)} with \code{w}. If \code{w} is not an exact representation, increasing \code{max_denom} may offer a more accurate representation, at the cost of requiring more convex inequalities to represent the geometric mean. Defaults to 1024.
 #' @return An \linkS4class{Expression} representing the geometric mean of the input.
 #' @examples 
 #' x <- Variable(2)
@@ -444,6 +445,7 @@ norm_nuc <- NormNuc
 #' 
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
+#' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the p-norm of the input.
 #' @examples 
@@ -821,7 +823,10 @@ sum.Expression <- function(..., na.rm = FALSE) {
 #'
 #' The arithmetic mean of an expression.
 #' 
-#' @param x An \linkS4class{Expression}.
+#' @param x An \linkS4class{Expression} object.
+#' @param trim (Unimplemented) The fraction (0 to 0.5) of observations to be trimmed from each end of \eqn{x} before the mean is computed.
+#' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @param ... (Unimplemented) Optional arguments.
 #' @return An \linkS4class{Expression} representing the mean of the input.
 #' @examples
 #' A <- Variable(2,2)

@@ -42,7 +42,7 @@ LinOp__get_sparse <- function(xp) {
 #' Set the flag \code{sparse} of the LinOp object
 #'
 #' @param xp the LinOp Object XPtr
-#' @param sparse an R boolean
+#' @param sparseSEXP an R boolean
 LinOp__set_sparse <- function(xp, sparseSEXP) {
     invisible(.Call('_cvxr_LinOp__set_sparse', PACKAGE = 'cvxr', xp, sparseSEXP))
 }
@@ -90,7 +90,7 @@ LinOp__get_size <- function(xp) {
 #' Set the field \code{size} of the LinOp object
 #'
 #' @param xp the LinOp Object XPtr
-#' @param an integer vector object in R
+#' @param value an integer vector object in R
 LinOp__set_size <- function(xp, value) {
     invisible(.Call('_cvxr_LinOp__set_size', PACKAGE = 'cvxr', xp, value))
 }
@@ -98,7 +98,7 @@ LinOp__set_size <- function(xp, value) {
 #' Perform a push back operation on the \code{args} field of LinOp
 #'
 #' @param xp the LinOp Object XPtr
-#' @param tree the LinOp Object XPtr to push
+#' @param yp the LinOp Object XPtr to push
 LinOp__args_push_back <- function(xp, yp) {
     invisible(.Call('_cvxr_LinOp__args_push_back', PACKAGE = 'cvxr', xp, yp))
 }
@@ -114,7 +114,7 @@ LinOp__size_push_back <- function(xp, intVal) {
 #' Set the field named \code{type} for the LinOp object
 #'
 #' @param xp the LinOp Object XPtr
-#' @param type an integer value
+#' @param typeValue an integer value
 LinOp__set_type <- function(xp, typeValue) {
     invisible(.Call('_cvxr_LinOp__set_type', PACKAGE = 'cvxr', xp, typeValue))
 }
@@ -170,7 +170,7 @@ LinOpVector__new <- function() {
 #' Perform a push back operation on the \code{args} field of LinOp
 #'
 #' @param xp the LinOpVector Object XPtr
-#' @param tree the LinOp Object XPtr to push
+#' @param yp the LinOp Object XPtr to push
 LinOpVector__push_back <- function(xp, yp) {
     invisible(.Call('_cvxr_LinOpVector__push_back', PACKAGE = 'cvxr', xp, yp))
 }

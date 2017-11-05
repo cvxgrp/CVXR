@@ -503,7 +503,7 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' Get the problem data used in the call to the solver.
 #' 
 #' @param object A \linkS4class{Problem} object.
-#' @param solver A string indicating the solver that the problem data is for.
+#' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @return A list of arguments for the solver.
 #' @examples 
 #' a <- Variable(name = "a")
@@ -556,6 +556,7 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #' @docType methods
 #' @export
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
+setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 
 #'
 #' Choose MOSEK Solution

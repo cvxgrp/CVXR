@@ -692,6 +692,8 @@ matrix_trace <- Trace
 #' @export
 tv <- TotalVariation
 
+#' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
+#' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
 #' @docType methods
 #' @rdname max_entries
 #' @method max Expression
@@ -710,6 +712,8 @@ max.Expression <- function(..., na.rm = FALSE) {
   .MaxElemwise(args = max_args)
 }
 
+#' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
+#' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
 #' @docType methods
 #' @rdname min_entries
 #' @method min Expression
@@ -791,6 +795,8 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
 #' @export
 cvxr_norm <- Norm
 
+#' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
+#' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
 #' @docType methods
 #' @rdname sum_entries
 #' @method sum Expression
@@ -1642,6 +1648,9 @@ setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Dif
 #' 
 #' @param X An \linkS4class{Expression} or matrix.
 #' @param Y An \linkS4class{Expression} or matrix.
+#' @param FUN Hardwired to "*" for the kronecker product.
+#' @param make.dimnames (Unimplemented) Dimension names are not supported in \linkS4class{Expression} objects.
+#' @param ... (Unimplemented) Optional arguments.
 #' @return An \linkS4class{Expression} that represents the kronecker product.
 #' @examples 
 #' X <- cbind(c(1,2), c(3,4))

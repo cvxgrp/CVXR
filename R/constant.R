@@ -49,12 +49,12 @@ setMethod("show", "Constant", function(object) {
   cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
 })
 
+#' @param x,object A \linkS4class{Constant} object.
 #' @rdname Constant-class
 setMethod("as.character", "Constant", function(x) {
   paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
 })
 
-#' @param x,object A \linkS4class{Constant} object.
 #' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })
 
@@ -122,6 +122,11 @@ as.Constant <- function(expr) {
                           return(TRUE)
                         }, contains = "Leaf")
 
+#' @param rows The number of rows in the parameter.
+#' @param cols The number of columns in the parameter.
+#' @param name (Optional) A character string representing the name of the parameter.
+#' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN". Defaults to "UNKNOWN".
+#' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @rdname Parameter-class
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
@@ -192,31 +197,32 @@ setMethod("canonicalize", "Parameter", function(object) {
   list(obj, list())
 })
 
-#
-# The CallbackParam class.
-#
-# This class represents a parameter whose value is obtained by evaluating a function.
-# 
-# @slot callback A numeric element, vector, matrix, or data.frame.
-# @rdname CallbackParam-class
+#'
+#' The CallbackParam class.
+#'
+#' This class represents a parameter whose value is obtained by evaluating a function.
+#' 
+#' @slot callback A numeric element, vector, matrix, or data.frame.
+#' @name CallbackParam-class
+#' @aliases CallbackParam
+#' @rdname CallbackParam-class
 .CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal"), contains = "Parameter")
 
-#
-# Callback Parameter Constructor
-# 
-# @param callback A numeric element, vector, matrix, or data.frame
-# @param rows The number of rows in the parameter.
-# @param cols The number of columns in the parameter.
-# @param name (Optional) A character string representing the name of the parameter.
-# @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
-# @return A \linkS4class{CallbackParam} object.
-# @rdname CallbackParam
+#' @param callback A numeric element, vector, matrix, or data.frame
+#' @param rows The number of rows in the parameter.
+#' @param cols The number of columns in the parameter.
+#' @param name (Optional) A character string representing the name of the parameter.
+#' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+#' @rdname CallbackParam-class
 CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN) {
   .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
 }
 
+#' @param object A \linkS4class{CallbackParam} object.
+#' @rdname CallbackParam-class
 setMethod("value", "CallbackParam", function(object) { validate_val(object, value(object@callback)) })
 
+#' @describeIn CallbackParam Returns \code{list(callback, rows, cols, name, sign string)}.
 setMethod("get_data", "CallbackParam", function(object) {
   list(callback = object@callback, rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str)
 })

@@ -158,6 +158,7 @@ setMethod("is_atom_convex", "Entr", function(object) { FALSE })
 #' @describeIn Entr The atom is concave.
 setMethod("is_atom_concave", "Entr", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn Entr The atom is weakly increasing.
 setMethod("is_incr", "Entr", function(object, idx) { FALSE })
 
@@ -222,6 +223,7 @@ setMethod("is_atom_convex", "Exp", function(object) { TRUE })
 #' @describeIn Exp The atom is not concave.
 setMethod("is_atom_concave", "Exp", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn Exp The atom is weakly increasing.
 setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 
@@ -409,6 +411,7 @@ setMethod("is_atom_convex", "KLDiv", function(object) { TRUE })
 #' @describeIn KLDiv The atom is not concave.
 setMethod("is_atom_concave", "KLDiv", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn KLDiv The atom is not monotonic in any argument.
 setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
 
@@ -480,6 +483,7 @@ setMethod("is_atom_convex", "Log", function(object) { FALSE })
 #' @describeIn Log The atom is concave.
 setMethod("is_atom_concave", "Log", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn Log The atom is weakly increasing.
 setMethod("is_incr", "Log", function(object, idx) { TRUE })
 
@@ -593,6 +597,7 @@ setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
 #' @describeIn Logistic The atom is not concave.
 setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn Logistic The atom is weakly increasing.
 setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
 
@@ -670,6 +675,7 @@ setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
 #' @describeIn MaxElemwise The atom is not concave.
 setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn MaxElemwise The atom is weakly increasing.
 setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
 
@@ -819,6 +825,7 @@ setMethod("is_atom_concave", "Power", function(object) { object@p >= 0 && object
 #' @describeIn Power A logical value indicating whether the atom is constant.
 setMethod("is_constant", "Power", function(object) { object@p == 0 || callNextMethod() })
 
+#' @param idx An index into the atom.
 #' @describeIn Power A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Power", function(object, idx) {
   if(object@p >= 0 && object@p <= 1)
@@ -956,6 +963,7 @@ setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 #' @describeIn Sqrt The atom is concave.
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn Sqrt The atom is weakly increasing.
 setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
 
@@ -1030,6 +1038,7 @@ setMethod("is_atom_convex", "Square", function(object) { TRUE })
 #' @describeIn Square The atom is not concave.
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn Square A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Square", function(object, idx) { is_positive(object@args[[idx]]) })
 

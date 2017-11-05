@@ -43,6 +43,7 @@ setMethod("constr_id", "ListORConstr", function(object) {
                                         return(TRUE)
                                       }, contains = "Constraint")
 
+#' @param lin_op A list representing the linear operator equal to the \code{.noncvx_var}.
 #' @rdname BoolConstr-class
 BoolConstr <- function(lin_op) { .BoolConstr(lin_op = lin_op) }
 
@@ -56,6 +57,10 @@ setMethod("initialize", "BoolConstr", function(.Object, ..., lin_op, .noncvx_var
   callNextMethod(.Object, ...)
 })
 
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
 #' @describeIn BoolConstr Format SDP constraints as inequalities for the solver.
 setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
@@ -82,6 +87,7 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
 
 setMethod("constr_type", "BoolConstr", function(object) { BOOL_IDS })
 
+#' @param object A \linkS4class{BoolConstr} object.
 #' @describeIn BoolConstr The dimensions of the semidefinite cone.
 setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 
@@ -98,6 +104,7 @@ setMethod("size", "BoolConstr", function(object) { object@lin_op$size })
 #' @rdname IntConstr-class
 .IntConstr <- setClass("IntConstr", contains = "BoolConstr")
 
+#' @param lin_op A list representing the linear operator equal to the \code{.noncvx_var}.
 #' @rdname IntConstr-class
 IntConstr <- function(lin_op) { .IntConstr(lin_op = lin_op) }
 
@@ -126,6 +133,8 @@ setMethod("constr_type", "IntConstr", function(object) { INT_IDS })
                            },
                             contains = c("Canonical", "Constraint"))
 
+#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
+#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @rdname LeqConstraint-class
 LeqConstraint <- function(lh_exp, rh_exp) { .LeqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
@@ -215,9 +224,12 @@ setMethod("save_value", "LeqConstraint", function(object, value) { save_value(ob
 #' @rdname EqConstraint-class
 .EqConstraint <- setClass("EqConstraint", contains = "LeqConstraint")
 
+#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
+#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @rdname EqConstraint-class
 EqConstraint <- function(lh_exp, rh_exp) { .EqConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @param object An \linkS4class{EqConstraint} object.
 #' @describeIn EqConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@.expr) })
 
@@ -247,6 +259,8 @@ setMethod("canonicalize", "EqConstraint", function(object) {
 .NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"),
                                  prototype(.x_size = NA_integer_), contains = "Constraint")
 
+#' @param f A nonlinear function.
+#' @param vars_ A list of variables involved in the function.
 #' @rdname NonlinearConstraint-class
 NonlinearConstraint <- function(f, vars_) { .NonlinearConstraint(f = f, vars_ = vars_) }
 
@@ -261,6 +275,7 @@ setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) 
   callNextMethod(.Object, ...)
 })
 
+#' @param object A \linkS4class{NonlinearConstraint} object.
 #' @describeIn NonlinearConstraint The variables involved in the function in order, i.e. \code{f(vars_) = f(vstack(variables))}.
 setMethod("variables", "NonlinearConstraint", function(object) { object@vars_ })
 
@@ -347,6 +362,9 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @rdname ExpCone-class
 .ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "Constraint")
 
+#' @param x The variable \eqn{x} in the exponential cone.
+#' @param y The variable \eqn{y} in the exponential cone.
+#' @param z The variable \eqn{z} in the exponential cone.
 #' @rdname ExpCone-class
 ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
@@ -358,10 +376,10 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 })
 
 # TODO: Is this the correct size method for the exponential cone class?
+#' @param x,object A \linkS4class{ExpCone} object.
 #' @describeIn ExpCone The size of the \code{x} argument.
 setMethod("size", "ExpCone", function(object) { size(object@x) })
 
-#' @param x,object A \linkS4class{ExpCone} object.
 #' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
@@ -370,6 +388,10 @@ setMethod("as.character", "ExpCone", function(x) {
 #' @describeIn ExpCone List of \linkS4class{Variable} objects in the exponential cone.
 setMethod("variables", "ExpCone", function(object) { list(object@x, object@y, object@z) })
 
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
 #' @describeIn ExpCone Format exponential cone constraints for the solver.
 setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, dims, solver) {
   .cvxopt_format <- function(object) {
@@ -432,9 +454,12 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
                              return(TRUE)
                            }, contains = "LeqConstraint")
 
+#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
+#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @rdname PSDConstraint-class
 PSDConstraint <- function(lh_exp, rh_exp) { .PSDConstraint(lh_exp = lh_exp, rh_exp = rh_exp) }
 
+#' @param object A \linkS4class{PSDConstraint} object.
 #' @describeIn PSDConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@.expr) })
 
@@ -469,6 +494,8 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
 .SOC <- setClass("SOC", representation(t = "ConstValORExpr", x_elems = "list"),
                         prototype(t = NA_real_, x_elems = list()), contains = "Constraint")
 
+#' @param t The scalar part of the second-order constraint.
+#' @param x_elems A list containing the elements of the vector part of the constraint.
 #' @rdname SOC-class
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
@@ -484,6 +511,10 @@ setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(x@t), ", <", paste(lapply(x@x_elems, function(elem) { as.character(elem) }), collapse = ", "), ">)", sep = "")
 })
 
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
 #' @describeIn SOC Format SOC constraints as inequalities for the solver.
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
@@ -521,6 +552,9 @@ setMethod("size", "SOC", function(object) {
 .SDP <- setClass("SDP", representation(A = "ListORExpr", enforce_sym = "logical"),
                        prototype(enforce_sym = TRUE), contains = "Constraint")
 
+#' @param constr_id (Internal) A unique integer identification number used internally.
+#' @param A The matrix variable constrained to be semidefinite.
+#' @param enforce_sym A logical value indicating whether symmetry constraints should be added.
 #' @rdname SDP-class
 SDP <- function(A, enforce_sym = TRUE, constr_id) {
   if(missing(constr_id))
@@ -535,7 +569,7 @@ setMethod("initialize", "SDP", function(.Object, ..., A, enforce_sym = TRUE) {
   callNextMethod(.Object, ...)
 })
 
-#' @param x A \linkS4class{SDP} object.
+#' @param x,object A \linkS4class{SDP} object.
 #' @rdname SDP-class
 setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "") })
 
@@ -598,6 +632,10 @@ setMethod("as.character", "SDP", function(x) { paste("SDP(", x@A, ")", sep = "")
 #' @describeIn SDP The dimensions of the semidefinite cone.
 setMethod("size", "SDP", function(object) { size(object@A) })
 
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
 #' @describeIn SDP Format SDP constraints as inequalities for the solver.
 setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, solver) {
   .scs_format <- function(object) {
@@ -658,6 +696,9 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
                     }, contains = "SOC")
 
 
+#' @param t The scalar part of the second-order constraint.
+#' @param X A matrix whose rows/columns are each a cone.
+#' @param axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
 #' @rdname SOCAxis-class
 SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
 
@@ -666,11 +707,16 @@ setMethod("initialize", "SOCAxis", function(.Object, ..., axis) {
   callNextMethod(.Object, ...)
 })
 
+#' @param x,object A \linkS4class{SOCAxis} object.
 #' @rdname SOCAxis-class
 setMethod("as.character", "SOCAxis", function(x) {
   paste("SOCAxis(", as.character(x@t), ", ", as.character(x@x_elems[[1]]), ", <", paste(x@axis, collapse = ", "), ">)", sep = "")
 })
 
+#' @param eq_constr A list of the equality constraints in the canonical problem.
+#' @param leq_constr A list of the inequality constraints in the canonical problem.
+#' @param dims A list with the dimensions of the conic constraints.
+#' @param solver A string representing the solver to be called.
 #' @describeIn SOCAxis Format SOC constraints as inequalities for the solver.
 setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, dims, solver) {
  .format <- function(object) {

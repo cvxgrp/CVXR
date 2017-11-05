@@ -19,6 +19,9 @@
                                    return(TRUE)
                                  }, contains = "Leaf")
 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Variable-class
 #' @export
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
@@ -75,6 +78,7 @@ setMethod("save_value", "Variable", function(object, value) {
 #' @describeIn Variable The value of the variable.
 setMethod("value", "Variable", function(object) { object@primal_value })
 
+#' @param value The value to assign to the primal variable.
 #' @describeIn Variable Set the value of the primal variable.
 setReplaceMethod("value", "Variable", function(object, value) {
   object <- save_value(object, value)
@@ -113,6 +117,9 @@ setMethod("canonicalize", "Variable", function(object) {
 #' @rdname Bool-class
 .Bool <- setClass("Bool", contains = "Variable")
 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Bool-class
 #' @export
 Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
@@ -122,6 +129,7 @@ setMethod("show", "Bool", function(object) {
   cat("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{Bool} object.
 #' @rdname Bool-class
 setMethod("as.character", "Bool", function(x) {
   size <- size(x)
@@ -157,6 +165,9 @@ setMethod("is_negative", "Bool", function(object) { FALSE })
 #' @rdname Int-class
 .Int <- setClass("Int", contains = "Variable")
 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Int-class
 #' @export
 Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
@@ -166,6 +177,7 @@ setMethod("show", "Int", function(object) {
   cat("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object An \linkS4class{Int} object.
 #' @rdname Int-class
 setMethod("as.character", "Int", function(x) {
   size <- size(x)
@@ -195,6 +207,9 @@ setMethod("canonicalize", "Int", function(object) {
 #' @rdname NonNegative-class
 .NonNegative <- setClass("NonNegative", contains = "Variable")
 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname NonNegative-class
 #' @export
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
@@ -204,6 +219,7 @@ setMethod("show", "NonNegative", function(object) {
   cat("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{NonNegative} object.
 #' @rdname NonNegative-class
 setMethod("as.character", "NonNegative", function(x) {
   size <- size(x)
@@ -240,6 +256,8 @@ setMethod("is_negative", "NonNegative", function(object) { FALSE })
 #' @rdname SemidefUpperTri-class
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
 
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname SemidefUpperTri-class
 SemidefUpperTri <- function(n, name = NA_character_) { .SemidefUpperTri(n = n, name = name) }
 
@@ -343,6 +361,8 @@ Semidef <- function(n, name = NA_character_) {
 #' @rdname SymmetricUpperTri-class
 .SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
 
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
 #' @rdname SymmetricUpperTri-class
 SymmetricUpperTri <- function(n, name = NA_character_) { .SymmetricUpperTri(n = n, name = name) }
 

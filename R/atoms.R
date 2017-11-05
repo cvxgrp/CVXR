@@ -360,6 +360,7 @@ setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
 #' @describeIn AffineProd Affine times affine is not concave.
 setMethod("is_atom_concave", "AffineProd", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn AffineProd A logical value indicating whether the atom is weakly increasing in \code{idx}.
 setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@args[[2-idx]]) })
 
@@ -501,6 +502,7 @@ setMethod("is_atom_convex", "GeoMean", function(object) { FALSE })
 #' @describeIn GeoMean The atom is concave.
 setMethod("is_atom_concave", "GeoMean", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn GeoMean The atom is weakly increasing in every argument.
 setMethod("is_incr", "GeoMean", function(object, idx) { TRUE })
 
@@ -543,7 +545,7 @@ HarmonicMean <- function(x) {
 #' The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
 #' 
 #' @slot A An \linkS4class{Expression} representing a matrix.
-#' @name Lambda-class
+#' @name LambdaMax-class
 #' @aliases LambdaMax
 #' @rdname LambdaMax-class
 .LambdaMax <- setClass("LambdaMax", representation(A = "ConstValORExpr"), contains = "Atom")
@@ -581,6 +583,7 @@ setMethod("is_atom_convex", "LambdaMax", function(object) { TRUE })
 #' @describeIn LambdaMax The atom is not concave.
 setMethod("is_atom_concave", "LambdaMax", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 
@@ -685,6 +688,7 @@ setMethod("is_atom_convex", "LogDet", function(object) { FALSE })
 #' @describeIn LogDet The atom is concave.
 setMethod("is_atom_concave", "LogDet", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn LogDet The atom is not monotonic in any argument.
 setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
 
@@ -787,6 +791,7 @@ setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
 #' @describeIn LogSumExp The atom is not concave.
 setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn LogSumExp The atom is not monotonic in any argument.
 setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
 
@@ -893,6 +898,7 @@ setMethod("is_atom_convex", "MatrixFrac", function(object) { TRUE })
 #' @describeIn MatrixFrac The atom is not concave.
 setMethod("is_atom_concave", "MatrixFrac", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn MatrixFrac The atom is not monotonic in any argument.
 setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
 
@@ -993,6 +999,7 @@ setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
 #' @describeIn MaxEntries The atom is not concave.
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn MaxEntries The atom is weakly increasing in every argument.
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 
@@ -1153,6 +1160,7 @@ setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
 #' @describeIn Pnorm The atom is concave if \eqn{p < 1}.
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
 
+#' @param idx An index into the atom.
 #' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p \geq 1} and \code{x} is positive.
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
 
@@ -1303,6 +1311,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' @rdname NormNuc-class
 .NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 
+#' @param A An \linkS4class{Expression} representing a matrix.
 #' @rdname NormNuc-class
 NormNuc <- function(A) { .NormNuc(A = A) }
 
@@ -1477,6 +1486,7 @@ setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
 #' @describeIn QuadOverLin The atom is not concave.
 setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn QuadOverLin A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_positive(object@args[[idx]]) })
 

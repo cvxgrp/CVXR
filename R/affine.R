@@ -18,6 +18,7 @@ setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
 #' @describeIn AffAtom The atom is concave.
 setMethod("is_atom_concave", "AffAtom", function(object) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn AffAtom The atom is weakly increasing in every argument.
 setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 
@@ -197,6 +198,8 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+#' @param object A \linkS4class{BinaryOperator} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn BinaryOperator Apply the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
   values <- lapply(values, intf_convert_if_scalar)
@@ -261,6 +264,8 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #' @rdname RMulExpression-class
 RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
 
+#' @param object A \linkS4class{RMulExpression} object.
+#' @param idx An index into the atom.
 #' @describeIn RMulExpression Is the right-hand expression positive?
 setMethod("is_incr", "RMulExpression", function(object, idx) { is_positive(object@args[[2]]) })
 
@@ -303,6 +308,7 @@ setMethod("is_quadratic", "DivExpression", function(object) {
 #' @describeIn DivExpression The size of the left-hand expression.
 setMethod("size_from_args", "DivExpression", function(object) { size(object@args[[1]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn DivExpression Is the right-hand expression positive?
 setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object@args[[2]]) })
 
@@ -362,6 +368,7 @@ setMethod("size_from_args", "Conv", function(object) {
 #' @describeIn Conv The sign of the atom.
 setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn Conv Is the left-hand expression positive?
 setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]]) })
 
@@ -813,6 +820,7 @@ setMethod("size_from_args", "Kron", function(object) {
 #' @describeIn Kron The sign of the atom.
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn Kron Is the left-hand expression positive?
 setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]]) })
 
@@ -871,6 +879,7 @@ setMethod("sign_from_args", "MulElemwise", function(object) {
   mul_sign(object@args[[1]], object@args[[2]])
 })
 
+#' @param idx An index into the atom.
 #' @describeIn MulElemwise Is the left-hand constant positive?
 setMethod("is_incr", "MulElemwise", function(object, idx) { is_positive(object@args[[1]]) })
 

@@ -257,6 +257,8 @@ setMethod("/", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) {
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) / e2 })
 
+#' @param e1 An \linkS4class{Expression} object to exponentiate.
+#' @param e2 The power of the exponential. Must be a numeric scalar.
 #' @docType methods
 #' @rdname power
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
@@ -412,6 +414,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
+#' @param object A \linkS4class{Leaf} object.
 #' @describeIn Leaf List of \linkS4class{Variable} objects in the leaf node.
 setMethod("variables", "Leaf", function(object) { list() })
 
@@ -436,6 +439,7 @@ setMethod("is_pwl", "Leaf", function(object) { TRUE })
 #' @describeIn Leaf A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
 
+#' @param val The assigned value.
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {

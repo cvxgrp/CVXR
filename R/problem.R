@@ -65,6 +65,7 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' @rdname Maximize-class
 .Maximize <- setClass("Maximize", contains = "Minimize")
 
+#' @param object A \linkS4class{Maximize} object.
 #' @param expr A scalar \linkS4class{Expression} to maximize.
 #' @rdname Maximize-class
 #' @export
@@ -336,6 +337,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object
 })
 
+#' @param object A \linkS4class{Problem} object.
 #' @describeIn Problem The objective of the problem.
 setMethod("objective", "Problem", function(object) { object@objective })
 
@@ -346,7 +348,7 @@ setMethod("constraints", "Problem", function(object) { object@constraints })
 setMethod("value", "Problem", function(object) { object@value })
 
 # Set the value of optimal objective.
-setMethod("value<-", "Problem", function(object, value ) {
+setMethod("value<-", "Problem", function(object, value) {
     object@value <- value
     object
 })
@@ -355,7 +357,7 @@ setMethod("value<-", "Problem", function(object, value ) {
 setMethod("status", "Problem", function(object) { object@status })
 
 # Set the status of the problem.
-setMethod("status<-", "Problem", function(object, value ) {
+setMethod("status<-", "Problem", function(object, value) {
     object@status <- value
     object
 })
@@ -430,6 +432,7 @@ setMethod("solver_stats<-", "Problem", function(object, value ) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
+#' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
   canon <- canonicalize(object)

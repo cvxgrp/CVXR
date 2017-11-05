@@ -8,10 +8,13 @@
 #' @rdname Expression-class
 Expression <- setClass("Expression", contains = "Canonical")
 
+#' @import Matrix
+#' @importClassesFrom gmp bigq bigz
 setOldClass("data.frame")
 setOldClass("matrix")
 setOldClass("vector")
 setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
+
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric", "dMatrix"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
@@ -95,9 +98,9 @@ setMethod("is_pwl", "Expression", function(object) { FALSE })
 
 #'
 #' Sign of Expression
-#' 
+#'
 #' The sign of an expression.
-#' 
+#'
 #' @param x An \linkS4class{Expression} object.
 #' @return A string indicating the sign of the expression, either "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
 #' @docType methods
@@ -298,7 +301,7 @@ setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x els
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # if(is_scalar(x) || is_scalar(y))
   #  stop("Scalar operands are not allowed, use '*' instead")
-  
+
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {
@@ -452,7 +455,7 @@ setMethod("validate_val", "Leaf", function(object, val) {
     size <- intf_size(val)
     if(any(size != size(object)))
       stop("Invalid dimensions (", size[1], ", ", size[2], ") for ", class(object), " value")
-    
+
     # All signs are valid if sign is unknown
     # Otherwise value sign must match declared sign
     sign <- intf_sign(val)

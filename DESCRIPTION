@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.0.0.9300
+Version: 0.91
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -53,6 +53,7 @@ LinkingTo: Rcpp, RcppEigen, BH
 License: file LICENSE
 LazyData: true
 Collate:
+    'cvxr.R'
     'data.R'
     'globals.R'
     'generics.R'
@@ -80,4 +81,4 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

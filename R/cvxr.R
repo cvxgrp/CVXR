@@ -15,6 +15,7 @@
 #'
 #' @name cvxr-package
 #' @useDynLib cvxr
+#' @importFrom Rcpp evalCpp
 #' @aliases cvxr-package cvxr
 #' @docType package
 #' @author Anqi Fu, Balasubramanian Narasimhan, John Miller, Steven Diamond, Stephen Boyd

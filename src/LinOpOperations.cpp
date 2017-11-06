@@ -116,8 +116,12 @@ std::vector<Matrix> get_func_coeffs(LinOp& lin) {
 		coeffs = get_kron_mat(lin);
 		break;
 	default:
-		std::cerr << "Error: linOp type invalid." << std::endl;
+#ifdef _R_INTERFACE_
+	        Rcpp::stop("Error: linOp type invalid");
+#else
+	        std::cerr << "Error: linOp type invalid." << std::endl;
 		exit(-1);
+#endif
 	}
 	return coeffs;
 }

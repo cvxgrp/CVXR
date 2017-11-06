@@ -171,9 +171,13 @@ int get_total_constraint_length(std::vector<LinOp*> &constraints,
 									 							std::vector<int> &constr_offsets){
 	/* Must specify an offset for each constraint */
 	if(constraints.size() != constr_offsets.size()){
-		std::cerr << "Error: Invalid constraint offsets: ";
+#ifdef _R_INTERFACE_
+	        Rcpp::stop("Invalid constraint offsets: CONSTR_OFFSET must be the same length as CONSTRAINTS");
+#else
+  	        std::cerr << "Error: Invalid constraint offsets: ";
 		std::cerr	<< "CONSTR_OFFSET must be the same length as CONSTRAINTS" << std::endl;
 		exit(-1);
+#endif
 	}
 
 	int offset_end = 0;
@@ -185,9 +189,13 @@ int get_total_constraint_length(std::vector<LinOp*> &constraints,
 		offset_end = offset_start + constr->size[0] * constr->size[1];
 
 		if(i + 1 < constr_offsets.size() && constr_offsets[i + 1] < offset_end){
+#ifdef _R_INTERFACE_
+	                Rcpp::stop("Invalid constraint offsets: offsets are not monotonically increasing");
+#else
 			std::cerr << "Error: Invalid constraint offsets: ";
 			std::cerr << "Offsets are not monotonically increasing" << std::endl;
 			exit(-1);
+#endif
 		}
 	}
 #else
@@ -197,9 +205,13 @@ int get_total_constraint_length(std::vector<LinOp*> &constraints,
 		offset_end = offset_start + constr.size[0] * constr.size[1];
 
 		if(i + 1 < constr_offsets.size() && constr_offsets[i + 1] < offset_end){
+#ifdef _R_INTERFACE_
+	                Rcpp::stop("Invalid constraint offsets: offsets are not monotonically increasing");
+#else
 			std::cerr << "Error: Invalid constraint offsets: ";
 			std::cerr << "Offsets are not monotonically increasing" << std::endl;
 			exit(-1);
+#endif
 		}
 	}
 #endif

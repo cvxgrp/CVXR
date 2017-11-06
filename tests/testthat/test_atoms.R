@@ -420,16 +420,16 @@ test_that("test the conv function", {
   expect_error(conv(cbind(c(0, 1), c(0, 1)), x))
 })
 
-test_that("test the kron function", {
+test_that("test the kronecker function", {
   a <- matrix(1, nrow = 3, ncol = 2)
   b <- Parameter(2, sign = "positive")
-  expr <- kron(a, b)
+  expr <- kronecker(a, b)
   expect_true(is_positive(expr))
   expect_equal(size(expr), c(6, 2))
   b <- Parameter(2, sign = "negative")
-  expr <- kron(a, b)
+  expr <- kronecker(a, b)
   expect_true(is_negative(expr))
-  expect_error(kron(x, -1))
+  expect_error(kronecker(x, -1))
 })
 
 test_that("test DCP properties of partial optimize", {

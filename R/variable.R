@@ -66,6 +66,7 @@ setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })
 setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })
 
 #' @describeIn Variable The name of the variable.
+#' @export
 setMethod("name", "Variable", function(object) { object@name })
 
 # Set the value of the primal variable.

@@ -154,7 +154,7 @@ test_that("Test examples from the README", {
   slack <- lapply(data, function(x) { 
     label <- x[[1]]
     sample <- x[[2]]
-    Pos(1 - label*(t(sample) %*% a - b))
+    pos(1 - label*(t(sample) %*% a - b))
   })
   gamma <- 0.1
   objective <- Minimize(norm2(a) + gamma*Reduce("+", slack))

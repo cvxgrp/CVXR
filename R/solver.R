@@ -271,6 +271,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 })
 
 #' @describeIn ECOS The name of the solver.
+#' @export
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
 
 #' @describeIn ECOS Imports the ECOSolveR library.
@@ -372,6 +373,7 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 # MI_MAXITER_UNBOUNDED (ECOS_DINF + ECOS_INACC_OFFSET)         ECOS_BB hit maximum interations without finding a feasible solution that was unbounded
 
 #' @describeIn ECOS_BB The name of the solver.
+#' @export
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
 
 #' @param objective A list representing the canonicalized objective.
@@ -459,6 +461,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 })
 
 #' @describeIn SCS The name of the solver.
+#' @export
 setMethod("name", "SCS", function(object) { SCS_NAME })
 
 #' @describeIn SCS Imports the scs library.
@@ -624,6 +627,7 @@ LS <- function() {
 # setMethod("mip_capable", "LS", function(solver) { FALSE })
 #
 # #' @describeIn LS The name of the solver.
+# #' @export
 # setMethod("name", "LS", function(object) { LS_NAME })
 #
 # #' @describeIn LS Imports the Matrix library.
@@ -672,7 +676,7 @@ LS <- function() {
 # 
 #   # Actually solve the KKT system
 #   tryCatch({
-#       sol <- solve(lhs, rhs)
+#       sol <- base::solve(lhs, rhs)
 #       if(N > 0)
 #         x <- sol[1:N]
 #       else
@@ -773,6 +777,7 @@ MOSEK <- function() {
 # })
 #
 # #' @describeIn MOSEK The name of the solver.
+# #' @export
 # setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
 #
 # #' @describeIn MOSEK Imports the Rmosek library.
@@ -990,6 +995,7 @@ GUROBI <- function() {
 # })
 # 
 # #' @describeIn GUROBI The name of the solver.
+# #' @export
 # setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
 # 
 # #' @describeIn GUROBI Imports the gurobi library.

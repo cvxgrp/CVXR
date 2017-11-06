@@ -325,15 +325,15 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #'
 #' This class represents the product of two affine expressions.
 #'
-#' @slot x An \linkS4class{Expression} or R numeric data representing the left-hand value.
-#' @slot y An \linkS4class{Expression} or R numeric data representing the right-hand value.
+#' @slot x An \linkS4class{Expression} or numeric constant representing the left-hand value.
+#' @slot y An \linkS4class{Expression} or numeric constant representing the right-hand value.
 #' @name AffineProd-class
 #' @aliases AffineProd
 #' @rdname AffineProd-class
 .AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
 
-#' @param x An \linkS4class{Expression} or R numeric data representing the left-hand value.
-#' @param y An \linkS4class{Expression} or R numeric data representing the right-hand value.
+#' @param x An \linkS4class{Expression} or numeric constant representing the left-hand value.
+#' @param y An \linkS4class{Expression} or numeric constant representing the right-hand value.
 #' @rdname AffineProd-class
 AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
 
@@ -589,7 +589,7 @@ setMethod("validate_args", "LambdaMax", function(object) {
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
     stop("LambdaMax called on a non-symmetric matrix")
-  max(eigen(values[[1]], only.values = TRUE)$values)
+  base::max(base::eigen(values[[1]], only.values = TRUE)$values)
 })
 
 #' @describeIn LambdaMax The atom is a scalar.
@@ -696,7 +696,7 @@ setMethod("validate_args", "LogDet", function(object) {
 #' @param values A list of arguments to the atom.
 #' @describeIn LogDet The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
-  logdet <- determinant(values[[1]], logarithm = TRUE)
+  logdet <- base::determinant(values[[1]], logarithm = TRUE)
   if(logdet$sign == 1)
     return(as.numeric(logdet$modulus))
   else
@@ -802,9 +802,9 @@ LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 #' @describeIn LogSumExp Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
-    log(sum(exp(values[[1]])))
+    base::log(sum(base::exp(values[[1]])))
   else
-    log(apply(exp(values[[1]]), object@axis, sum))
+    base::log(apply(base::exp(values[[1]]), object@axis, sum))
 })
 
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
@@ -924,7 +924,7 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
   P <- values[[2]]
-  sum(diag(t(X) %*% base::solve(P) %*% X))
+  sum(base::diag(t(X) %*% base::solve(P) %*% X))
 })
 
 #' @describeIn MatrixFrac The atom is a scalar.
@@ -1033,9 +1033,9 @@ MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) 
 #' @describeIn MaxEntries The largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
-    max(values[[1]])
+    base::max(values[[1]])
   else
-    apply(values[[1]], object@axis, max)
+    apply(values[[1]], object@axis, base::max)
 })
 
 #' @describeIn MaxEntries The sign of the atom.
@@ -1170,6 +1170,7 @@ setMethod("validate_args", "Pnorm", function(object) {
 })
 
 #' @describeIn Pnorm The name and arguments of the atom.
+#' @export
 setMethod("name", "Pnorm", function(object) {
   sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p)
 })
@@ -1387,7 +1388,7 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
 #' @describeIn NormNuc The nuclear norm (i.e., the sum of the singular values) of \code{A}.
 setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
-  sum(svd(values[[1]])$d)
+  sum(base::svd(values[[1]])$d)
 })
 
 #' @describeIn NormNuc The atom is a scalar.
@@ -1733,7 +1734,7 @@ setMethod("validate_args",   "SumLargest", function(object) {
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.numeric(values[[1]])
-  k <- min(object@k, length(value))
+  k <- base::min(object@k, length(value))
   val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
 })

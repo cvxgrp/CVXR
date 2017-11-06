@@ -404,7 +404,7 @@ flatten_list <- function(x) {
 #   arg_size <- size(expr@args[[1]])
 #   m <- arg_size[1]
 #   n <- arg_size[2]
-#   Pinv <- solve(value(expr@args[[2]]))
+#   Pinv <- base::solve(value(expr@args[[2]]))
 #   
 #   M <- sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N))
 #   Q <- sparseMatrix(i = c(), j = c(), dims = c(1, object@N))

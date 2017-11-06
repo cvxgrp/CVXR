@@ -128,6 +128,7 @@ as.Constant <- function(expr) {
 #' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN". Defaults to "UNKNOWN".
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @rdname Parameter-class
+#' @export
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
 }
@@ -165,6 +166,7 @@ setMethod("get_data", "Parameter", function(object) {
 })
 
 #' @describeIn Parameter The name of the parameter.
+#' @export
 setMethod("name", "Parameter", function(object) { object@name })
 
 #' @describeIn Parameter The \code{c(rows, cols)} dimensions of the parameter.

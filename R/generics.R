@@ -231,6 +231,7 @@ setGeneric("validate_val", function(object, val) { standardGeneric("validate_val
 NULL
 
 #' @rdname canonicalize
+#' @export
 setGeneric("canonicalize", function(object) { standardGeneric("canonicalize") })
 
 #' @rdname canonicalize
@@ -527,8 +528,8 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 #' 
 #' Solve a DCP compliant optimization problem.
 #' 
-#' @param object A \linkS4class{Problem} object.
-#' @param solver (Optional) A string indicating the solver to use. Defaults to "ECOS".
+#' @param object,a A \linkS4class{Problem} object.
+#' @param solver,b (Optional) A string indicating the solver to use. Defaults to "ECOS".
 #' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
 #' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
 #' @param verbose (Optional) A logical value indicating whether to print additional solver output.
@@ -546,10 +547,10 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 #'    \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
 #' }
 #' @docType methods
-#' @aliases solve
-#' @rdname solve
+#' @aliases psolve solve
+#' @rdname psolve
 #' @export
-setGeneric("solve", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) { standardGeneric("solve") })
+setGeneric("psolve", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?

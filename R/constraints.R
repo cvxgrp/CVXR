@@ -366,6 +366,7 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @param b The variable \eqn{b} in the exponential cone.
 #' @param c The variable \eqn{c} in the exponential cone.
 #' @rdname ExpCone-class
+#' @export
 ExpCone <- function(a, b, c) { .ExpCone(a = a, b = b, c = c) }
 
 setMethod("initialize", "ExpCone", function(.Object, ..., a, b, c) {
@@ -497,6 +498,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
 #' @param t The scalar part of the second-order constraint.
 #' @param x_elems A list containing the elements of the vector part of the constraint.
 #' @rdname SOC-class
+#' @export
 SOC <- function(t, x_elems) { .SOC(t = t, x_elems = x_elems) }
 
 setMethod("initialize", "SOC", function(.Object, ..., t, x_elems) {
@@ -556,6 +558,7 @@ setMethod("size", "SOC", function(object) {
 #' @param A The matrix variable constrained to be semidefinite.
 #' @param enforce_sym A logical value indicating whether symmetry constraints should be added.
 #' @rdname SDP-class
+#' @export
 SDP <- function(A, enforce_sym = TRUE, constr_id) {
   if(missing(constr_id))
     .SDP(A = A, enforce_sym = enforce_sym)
@@ -700,6 +703,7 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
 #' @param X A matrix whose rows/columns are each a cone.
 #' @param axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
 #' @rdname SOCAxis-class
+#' @export
 SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, x_elems = list(X), axis = axis) }
 
 setMethod("initialize", "SOCAxis", function(.Object, ..., axis) {

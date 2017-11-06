@@ -19,7 +19,7 @@ atoms <- list(
       list(kl_div, c(1,1), list(exp(1), 1), Constant(1)),
       list(kl_div, c(1,1), list(exp(1), exp(1)), Constant(0)),
       list(kl_div, c(2,1), list(matrix(c(exp(1), 1)), 1), Constant(c(1,0))),
-      list(function(x) { kron(cbind(c(1,2), c(3,4)), x) }, c(4,4), list(cbind(c(5,6), c(7,8))),
+      list(function(x) { kronecker(cbind(c(1,2), c(3,4)), x) }, c(4,4), list(cbind(c(5,6), c(7,8))),
            Constant(kronecker(cbind(c(1,2), c(3,4)), cbind(c(5,6), c(7,8))))),
       list(lambda_max, c(1,1), list(cbind(c(2,0), c(0,1))), Constant(2)),
       list(lambda_max, c(1,1), list(cbind(c(2,0,0), c(0,3,0), c(0,0,1))), Constant(3)),

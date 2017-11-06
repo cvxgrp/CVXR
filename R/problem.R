@@ -347,7 +347,8 @@ setMethod("constraints", "Problem", function(object) { object@constraints })
 #' @describeIn Problem The value from the last time the problem was solved.
 setMethod("value", "Problem", function(object) { object@value })
 
-# Set the value of optimal objective.
+#' @param value A numeric scalar.
+#' @describeIn Problem Set the value of the optimal objective.
 setMethod("value<-", "Problem", function(object, value) {
     object@value <- value
     object
@@ -445,9 +446,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 })
 
 #' @docType methods
-#' @rdname solve
+#' @rdname psolve
 #' @export
-setMethod("solve", "Problem", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
+setMethod("psolve", "Problem", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
       print("Problem does not follow DCP rules. Solving a convex relaxation.")
@@ -510,6 +511,12 @@ setMethod("solve", "Problem", function(object, solver, ignore_dcp = FALSE, warm_
   ##return(object)
   return(valuesById(object, results_dict, sym_data, solver))
 })
+
+#' @docType methods
+#' @rdname psolve
+#' @method solve Problem
+#' @export
+solve.Problem <- function(a, b, ...) { cvxr::psolve(a, b, ...) }
 
 # # TODO: Finish implementation of parallel solve.
 # .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {

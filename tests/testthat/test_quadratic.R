@@ -130,7 +130,7 @@ test_that("test non-quadratic", {
   
   expect_error(expect_warning(is_quadratic(x * y * z)))
   
-  s <- max_entries(vstack(x^2, Power(y, 2), z))
+  s <- max_entries(vstack(x^2, power(y, 2), z))
   expect_false(is_quadratic(s))
 })
 

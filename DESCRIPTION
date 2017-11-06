@@ -38,13 +38,13 @@ Imports:
     RcppEigen,
     BH,
     bit64,
-    bitops,
-    MASS,
     gmp,
+    Rmpfr,
     R.utils,
     ECOSolveR,
     scs,
-    Rmpfr
+    MASS,
+    bitops
 Suggests:
     knitr,
     rmarkdown,

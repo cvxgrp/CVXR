@@ -336,7 +336,7 @@ test_that("Test domain for entr", {
   expect_equal(grad(expr)[[as.character(a@id)]], -log(2)-1)
   
   value(a) <- 3
-  expr <- Entr(a)
+  expr <- entr(a)
   expect_equal(grad(expr)[[as.character(a@id)]], -(log(3)+1))
   
   value(a) <- -1
@@ -418,29 +418,29 @@ test_that("Test domain for logistic", {
 
 test_that("Test domain for huber", {
   value(a) <- 2
-  expr <- huber(a)
+  expr <- cvxr::huber(a)
   expect_equal(grad(expr)[[as.character(a@id)]], 2)
   
   value(a) <- 3
-  expr <- huber(a, M = 2)
+  expr <- cvxr::huber(a, M = 2)
   expect_equal(grad(expr)[[as.character(a@id)]], 4)
   
   value(a) <- -1
-  expr <- huber(a, M = 2)
+  expr <- cvxr::huber(a, M = 2)
   expect_equal(grad(expr)[[as.character(a@id)]], -2)
   
   value(x) <- c(3,4)
-  expr <- huber(x)
+  expr <- cvxr::huber(x)
   val <- diag(c(2,2))
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
   
   value(x) <- c(-1e-9,4)
-  expr <- huber(x)
+  expr <- cvxr::huber(x)
   val <- diag(c(0,2))
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
   
   value(A) <- cbind(c(1,2), c(3,4))
-  expr <- huber(A, M = 3)
+  expr <- cvxr::huber(A, M = 3)
   val <- diag(c(2,4,6,6))
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), val)
 })
@@ -708,13 +708,13 @@ test_that("Test grad for affine atoms", {
   
   # Cumulative sum
   value(x) <- c(1,2)
-  expr <- cumsum(x)
+  expr <- cumsum_axis(x)
   val <- matrix(1, nrow = 2, ncol = 2)
   val[2,1] <- 0
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
   
   value(x) <- c(1,2)
-  expr <- cumsum(x, axis = 1)
+  expr <- cumsum_axis(x, axis = 1)
   val <- diag(2)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), val)
 })

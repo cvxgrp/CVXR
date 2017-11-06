@@ -1299,6 +1299,20 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 # Matrix/vector operations
 # =========================
 #'
+#' Affine Product
+#'
+#' The product of two affine expressions.
+#'
+#' @param x An \linkS4class{Expression} or numeric constant representing the left-hand value.
+#' @param y An \linkS4class{Expression} or numeric constant representing the right-hand value.
+#' @return An \linkS4class{Expression} representing the product of \code{x} and \code{y}.
+#' @docType methods
+#' @name affine_prod
+#' @rdname affine_prod
+#' @export
+affine_prod <- AffineProd
+
+#'
 #' Block Matrix
 #'
 #' Constructs a block matrix from a list of lists. Each internal list is stacked horizontally, and the internal lists are stacked vertically.
@@ -1552,21 +1566,32 @@ vstack <- VStack
 #'
 #' Cumulative Sum
 #'
-#' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}. Matrices are flattened into column-major order before the sum is taken.
+#' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}.
+#' When calling \code{cumsum}, matrices are automatically flattened into column-major order before the sum is taken. This is equivalent to setting \code{axis = NA}.
 #'
-#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @param x,expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
 #' @examples 
-#' x <- Variable(2,2)
 #' val <- cbind(c(1,2), c(3,4))
+#' value(cumsum(Constant(val)))
+#' value(cumsum_axis(Constant(val)))
+#' 
+#' x <- Variable(2,2)
 #' prob <- Problem(Minimize(cumsum(x)[4]), list(x == val))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(cumsum(x))
 #' @docType methods
-#' @aliases cumsum
-#' @rdname cumsum
+#' @name cumsum_axis
+#' @aliases cumsum_axis cumsum
+#' @rdname cumsum_axis
 #' @export
-setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = Vec(x)) })   # Flatten matrix in column-major order to match R's behavior
+cumsum_axis <- CumSum
+
+#' @docType methods
+#' @rdname cumsum_axis
+#' @export
+setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = x, axis = NA_real_) })
 
 #'
 #' Matrix Diagonal

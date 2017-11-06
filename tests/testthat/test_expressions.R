@@ -250,7 +250,7 @@ test_that("test matrix multiplication operator %*%", {
   expect_equal(canonical_form(exp)[[2]], list())
   expect_equal(size(exp), c(1,1))
   
-  expect_error(x %*% 2)
+  # expect_error(x %*% 2)    Note: Allow scalars to be multiplied with %*% to distinguish MulExpression from MulElemwise.
   expect_error(x %*% matrix(c(2,2,3), nrow = 3, ncol = 1))
   
   # Matrices

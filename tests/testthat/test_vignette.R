@@ -36,8 +36,8 @@ test_that("Test non-negative least squares", {
   
   # Solve the NNLS problem for beta
   system.time(result2 <- solve(prob2))
-  beta_nnls <- result$getValue(beta)
-  expect_true(all(beta_nnls >= 0))   # All resulting beta should be non-negative
+  beta_nnls <- result2$getValue(beta)
+  expect_true(all(beta_nnls >= -1e-6))   # All resulting beta should be non-negative
   
   # Calculate the fitted y values
   fit_ols <- X %*% beta_ols
@@ -134,7 +134,7 @@ test_that("Test Huber regression", {
   lines(X, X %*% beta_ols, col = "blue")
   
   # Solve Huber regression problem
-  obj <- sum(huber(y - X %*% beta, M))
+  obj <- sum(cvxr::huber(y - X %*% beta, M))
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   beta_hub <- result$getValue(beta)
@@ -218,7 +218,7 @@ test_that("Test saturating hinges problem", {
   
   for(i in 1:length(lambdas)) {
     lambda <- lambdas[i]
-    reg <- lambda * pnorm(w, 1)
+    reg <- lambda * p_norm(w, 1)
     obj <- loss + reg
     prob <- Problem(Minimize(obj), constr)
     
@@ -250,7 +250,7 @@ test_that("Test saturating hinges problem", {
   spline_sq <- f_est(xrange, knots, result$getValue(w0), result$getValue(w))
   
   # Solve with Huber loss
-  loss_obs <- function(y, f, M) { Huber(y - f, M) }
+  loss_obs <- function(y, f, M) { cvxr::huber(y - f, M) }
   loss <- sum(loss_obs(y, f_est(X, knots, w0, w), 0.01))
   prob <- Problem(Minimize(loss + reg), constr)
   result <- solve(prob)
@@ -316,9 +316,9 @@ test_that("Test log-concave distribution estimation", {
   
   # Plot cumulative distribution function
   plot(NA, xlim = c(0, 100), ylim = c(0, 1), xlab = "x", ylab = "Cumulative Distribution Function")
-  lines(xrange, cumsum(xprobs), lwd = 2, col = cl[1])
-  lines(xrange, cumsum(counts)/sum(counts), lwd = 2, col = cl[2])
-  lines(xrange, cumsum(pmf), lwd = 2, col = cl[3])
+  lines(xrange, base::cumsum(xprobs), lwd = 2, col = cl[1])
+  lines(xrange, base::cumsum(counts)/sum(counts), lwd = 2, col = cl[2])
+  lines(xrange, base::cumsum(pmf), lwd = 2, col = cl[3])
   legend("topleft", c("True", "Empirical", "Optimal Estimate"), lty = c(1,1,1), col = cl)
 })
 

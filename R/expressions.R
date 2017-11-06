@@ -8,8 +8,6 @@
 #' @rdname Expression-class
 Expression <- setClass("Expression", contains = "Canonical")
 
-#' @import Matrix
-#' @importClassesFrom gmp bigq bigz
 setOldClass("data.frame")
 setOldClass("matrix")
 setOldClass("vector")
@@ -22,6 +20,7 @@ setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
+#' @rdname size
 setMethod("size", "ListORExpr", function(object) {
   if(is.list(object))
     object$size
@@ -58,6 +57,7 @@ setMethod("as.character", "Expression", function(x) {
 })
 
 #' @describeIn Expression The string representation of the expression.
+#' @export
 setMethod("name", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The curvature of the expression.
@@ -152,9 +152,11 @@ setMethod("ncol", "Expression", function(x) { size(x)[2] })
 #' @param ... (Unimplemented) Optional arguments.
 #' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   if(is_vector(x) && size(x)[1] < size(x)[2])
     Index.get_special_slice(x, NULL, i)   # If only first index given, apply it along longer dimension of vector
@@ -163,40 +165,46 @@ setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "A
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, NULL, j)
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   Index.get_special_slice(x, i, j)
 })
 
 #' @rdname Index-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices
   Index.get_special_slice(x, i, NULL)
 })
 
-#' @rdname Index-class
-setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  stop("Invalid or unimplemented Expression slice operation")
-})
+# #' @rdname Index-class
+# setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+#  stop("Invalid or unimplemented Expression slice operation")
+# })
 
 # Arithmetic operators
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to add.

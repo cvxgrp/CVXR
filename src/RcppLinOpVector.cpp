@@ -17,7 +17,7 @@ SEXP LinOpVector__new() {
 //' Perform a push back operation on the \code{args} field of LinOp
 //'
 //' @param xp the LinOpVector Object XPtr
-//' @param tree the LinOp Object XPtr to push
+//' @param yp the LinOp Object XPtr to push
 // [[Rcpp::export]]
 void LinOpVector__push_back(SEXP xp, SEXP yp) {
   // grab the object as a XPtr (smart pointer)

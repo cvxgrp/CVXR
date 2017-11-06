@@ -19,7 +19,7 @@ test_that("Test regression", {
   offset <- Variable()
   line <- offset + x_data * slope
   residuals <- line - y_data
-  fit_error <- SumSquares(residuals)
+  fit_error <- sum_squares(residuals)
   result <- solve(Problem(Minimize(fit_error), list()))
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
   # optval <- result$value
@@ -30,7 +30,7 @@ test_that("Test regression", {
   offset <- Variable()
   quadratic <- offset + x_data * slope + quadratic_coeff * x_data^2
   residuals <- quadratic - y_data
-  fit_error <- SumSquares(residuals)
+  fit_error <- sum_squares(residuals)
   # result <- solve(Problem(Minimize(fit_error), list()), solver = "LS")
   result2 <- solve(Problem(Minimize(fit_error), list()), solver = "ECOS")
   # optval <- result$value
@@ -76,8 +76,8 @@ test_that("Test control", {
   constraints <- c(constraints, velocity[,Tnum] == 0)
   
   # Solve the problem
-  result <- solve(Problem(Minimize(SumSquares(force)), constraints))
-  # result <- solve(Problem(Minimize(SumSquares(force)), constraints), solver = "LS")
+  result <- solve(Problem(Minimize(sum_squares(force)), constraints))
+  # result <- solve(Problem(Minimize(sum_squares(force)), constraints), solver = "LS")
   # optval <- result$value
   # expect_equal(optval, 17859.0, tolerance = 1)
 })
@@ -95,8 +95,8 @@ test_that("Test sparse system", {
   h <- matrix(rnorm(r), nrow = r, ncol = 1)
   
   x <- Variable(n)
-  result <- solve(Problem(Minimize(SumSquares(A %*% x - b)), list(G %*% x == h)))
-  # result <- solve(Problem(Minimize(SumSquares(A %*% x - b)), list(G*x == h)), solver = "LS")
+  result <- solve(Problem(Minimize(sum_squares(A %*% x - b)), list(G %*% x == h)))
+  # result <- solve(Problem(Minimize(sum_squares(A %*% x - b)), list(G %*% x == h)), solver = "LS")
   # optval <- result$value
   # expect_equal(optval, 6071.830658, tolerance = TOL)
 })
@@ -121,10 +121,10 @@ test_that("Test equivalent forms", {
   
   x <- Variable(n)
   
-  obj1 <- SumSquares(A %*% x - b)
-  obj2 <- SumEntries(Square(A %*% x - b))
-  obj3 <- QuadForm(x, P) + t(q) %*% x + r
-  obj4 <- MatrixFrac(x, Pinv) + t(q) %*% x + r
+  obj1 <- sum_squares(A %*% x - b)
+  obj2 <- sum_entries(square(A %*% x - b))
+  obj3 <- quad_form(x, P) + t(q) %*% x + r
+  obj4 <- matrix_frac(x, Pinv) + t(q) %*% x + r
   
   cons <- list(G %*% x == h)
   
@@ -153,7 +153,7 @@ test_that("Test smooth ridge", {
   A <- matrix(runif(k*n), nrow = k, ncol = n)
   b <- matrix(runif(k), nrow = k, ncol = 1)
   x <- Variable(n)
-  obj <- SumSquares(A %*% x - b) + delta*SumSquares(x[1:(n-1)]-x[2:n]) + eta*SumSquares(x)
+  obj <- sum_squares(A %*% x - b) + delta*sum_squares(x[1:(n-1)]-x[2:n]) + eta*sum_squares(x)
   optval <- solve(Problem(Minimize(obj)))$value
   # optval <- solve(Problem(Minimize(obj), list()), solver = "LS")$value
   # expect_equal(optval, 0.24989717371, tolerance = TOL)

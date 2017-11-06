@@ -39,9 +39,9 @@ test_that("Test log problem", {
   expect_equal(result$value, 1, tolerance = TOL)
 })
 
-test_that("Test the Entr atom", {
-  expect_equal(value(Entr(0)), 0)
-  expect_warning(expect_equal(value(Entr(-1)), -Inf))
+test_that("Test the entr function", {
+  expect_equal(value(entr(0)), 0)
+  expect_warning(expect_equal(value(entr(-1)), -Inf))
 })
 
 test_that("Test a problem with KL-divergence", {
@@ -61,8 +61,8 @@ test_that("Test a problem with KL-divergence", {
   objkl <- 0.0
   con <- 0.0
   for(k in 1:kK) {
-    # objkl <- objkl + KLDiv(v_prob[k,1], p_refProb[k,1])   # TODO: Parameters are unimplemented
-    objkl <- objkl + KLDiv(v_prob[k,1], npSPriors[k,1])
+    # objkl <- objkl + kl_div(v_prob[k,1], p_refProb[k,1])   # TODO: Parameters are unimplemented
+    objkl <- objkl + kl_div(v_prob[k,1], npSPriors[k,1])
     con <- con + v_prob[k,1]
   }
   
@@ -76,11 +76,11 @@ test_that("Test a problem with KL-divergence", {
   expect_equal(result$getValue(v_prob), npSPriors, tolerance = 1e-3)
 })
 
-test_that("Test a problem with Entr", {
+test_that("Test a problem with entr", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
-    obj <- Maximize(sum(Entr(x)))
+    obj <- Maximize(sum(entr(x)))
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
     expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
@@ -89,7 +89,7 @@ test_that("Test a problem with Entr", {
   }
 })
 
-test_that("Test a problem with Exp", {
+test_that("Test a problem with exp", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
@@ -102,7 +102,7 @@ test_that("Test a problem with Exp", {
   }
 })
 
-test_that("Test a problem with Log", {
+test_that("Test a problem with log", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)

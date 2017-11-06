@@ -1,5 +1,21 @@
+#'
+#' The Solver class.
+#'
+#' This virtual class represents the generic interface for a solver.
+#' 
+#' @name Solver-class
+#' @aliases Solver
+#' @rdname Solver-class
 Solver <- setClass("Solver", contains = "VIRTUAL")
 
+#
+# Choose a Solver
+#
+# Determines the appropriate solver.
+# 
+# @param constraints A list of canonicalized constraints.
+# @return A \linkS4class{Solver} object.
+# @rdname Solver-choose_solver
 Solver.choose_solver <- function(constraints) {
   constr_map <- SymData.filter_constraints(constraints)
   # If no constraints, use ECOS.
@@ -10,10 +26,9 @@ Solver.choose_solver <- function(constraints) {
     return(ECOS_BB())
   # If SDP, defaults to CVXOPT.
   else if(length(constr_map[[SDP_MAP]]) > 0) {
-    if("cvxopt" %in% installed.packages()) {
-      require(cvxopt)
-      return(CVXOPT())
-    } else
+    # if(requireNamespace("cccp")) {
+    #  return(CVXOPT())
+    # } else
       return(SCS())
   }
   # Otherwise use ECOS
@@ -21,6 +36,16 @@ Solver.choose_solver <- function(constraints) {
     return(ECOS())
 }
 
+setMethod("is_installed", "Solver", function(solver) {
+  tryCatch({
+    import_solver(solver)
+  }, error = function(e) {
+    FALSE
+  })
+})
+
+#' @param solver A \linkS4class{Solver} object.
+#' @describeIn Solver Verify the solver can solve the problem.
 setMethod("validate_solver", "Solver", function(solver, constraints) {
   # Check the solver is installed.
   if(!import_solver(solver))
@@ -41,6 +66,14 @@ setMethod("validate_solver", "Solver", function(solver, constraints) {
     Solver._reject_problem(solver, "it cannot solve unconstrained problems")
 })
 
+#
+# Reject Problem
+#
+# Raise an error indicating that the solver cannot solve a problem.
+# 
+# @param solver A \linkS4class{Solver} object.
+# @param reason A short description of the reason the problem cannot be solved by this solver.
+# @rdname Solver-reject_problem
 Solver._reject_problem <- function(solver, reason) {
   message <- paste("The solver", name(solver), "cannot solve the problem because", reason)
   stop(message)
@@ -102,12 +135,38 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
   data
 })
 
+#' @describeIn Solver A logical value indicating whether nonlinear constraints are needed.
 setMethod("nonlin_constr", "Solver", function(solver) { FALSE })
 
+#' @param objective A list representing the canonicalized objective.
+#' @param constraints A list of canonicalized constraints.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose A logical value indicating whether to print solver output.
+#' @param ... Additional arguments to the solver.
+#' @describeIn Solver Call the solver on the canonicalized problem.
+setMethod("Solver.solve", "Solver", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { stop("Unimplemented") })
+
+#' @param results_dict A list containing the solver output.
+#' @param data A list containing information about the problem.
+#' @describeIn Solver Convert raw solver output into standard list of results.
+setMethod("format_results", "Solver", function(solver, results_dict, data, cached_data) { stop("Unimplemented") })
+
+# Is the problem a mixed-integer program?
 Solver.is_mip <- function(data) {
   length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 }
 
+#
+# Non-Convex ID to Index
+#
+# Converts the non-convex constraint variable IDs in dims into indices.
+# 
+# @param dims The dimensions of the cones.
+# @param var_offsets A list mapping variabld ID to horizontal offset.
+# @param var_sizes A list mapping variable ID to  variable dimensions.
+# @return A list of indices for the boolean and integer variables.
+# @rdname Solver-noncvx_id_to_idx
 Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   if(BOOL_IDS %in% names(dims)) {
     bool_idx <- lapply(dims[[BOOL_IDS]], function(var_id) {
@@ -136,31 +195,63 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
   list(dims = dims, bool_idx = bool_idx, int_idx = int_idx)
 }
 
+#'
+#' The ECOS class.
+#' 
+#' This class is an interface for the ECOS solver.
+#' 
+#' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @name ECOS-class
+#' @aliases ECOS
+#' @rdname ECOS-class
 setClass("ECOS", contains = "Solver")
+
+#' @rdname ECOS-class
+#' @export
 ECOS <- function() {
     new("ECOS")
     ##ECOS$new()
 }
 
 # ECOS capabilities
+#' @param object,solver An \linkS4class{ECOS} object.
+#' @describeIn ECOS ECOS can handle linear programs.
 setMethod("lp_capable", "ECOS", function(solver) { TRUE })
+
+#' @describeIn ECOS ECOS can handle second-order cone programs.
 setMethod("socp_capable", "ECOS", function(solver) { TRUE })
+
+#' @describeIn ECOS ECOS cannot handle semidefinite programs.
 setMethod("sdp_capable", "ECOS", function(solver) { FALSE })
+
+#' @describeIn ECOS ECOS can handle exponential cone programs.
 setMethod("exp_capable", "ECOS", function(solver) { TRUE })
+
+#' @describeIn ECOS ECOS cannot handle mixed-integer programs.
 setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 
-# EXITCODES from ECOS
-# ECOS_OPTIMAL  (0)   Problem solved to optimality
-# ECOS_PINF     (1)   Found certificate of primal infeasibility
-# ECOS_DINF     (2)   Found certificate of dual infeasibility
-# ECOS_INACC_OFFSET (10)  Offset exitflag at inaccurate results
-# ECOS_MAXIT    (-1)  Maximum number of iterations reached
-# ECOS_NUMERICS (-2)  Search direction unreliable
-# ECOS_OUTCONE  (-3)  s or z got outside the cone, numerics?
-# ECOS_SIGINT   (-4)  solver interrupted by a signal/ctrl-c
-# ECOS_FATAL    (-7)  Unknown problem in solver
-
-# Map of ECOS status to CVXPY status.
+#' 
+#' ECOS Status Map
+#' 
+#' Map of ECOS status to CVXR status.
+#'
+#' @param solver A \linkS4class{ECOS} object.
+#' @param status An exit code returned by ECOS:
+#' \itemize{
+#'    \item{ECOS_OPTIMAL (0)}{Problem solved to optimality.}
+#'    \item{ECOS_PINF (1)}{Found certificate of primal infeasibility.}
+#'    \item{ECOS_DINF (2)}{Found certificate of dual infeasibility.}
+#'    \item{ECOS_INACC_OFFSET (10)}{Offset exitflag at inaccurate results.}
+#'    \item{ECOS_MAXIT (-1)}{Maximum number of iterations reached.}
+#'    \item{ECOS_NUMERICS (-2)}{Search direction unreliable.}
+#'    \item{ECOS_OUTCONE (-3)}{\eqn{s} or \eqn{z} got outside the cone, numerics?}
+#'    \item{ECOS_SIGINT (-4)}{Solver interrupted by a signal/ctrl-c.}
+#'    \item{ECOS_FATAL (-7)}{Unknown problem in solver.}
+#' }
+#' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
+#' @docType methods
+#' @rdname ECOS-status_map
 setMethod("status_map", "ECOS", function(solver, status) {
     if(status == 0) {
         OPTIMAL
@@ -179,14 +270,23 @@ setMethod("status_map", "ECOS", function(solver, status) {
     } else stop("ECOS status unrecognized: ", status)
 })
 
+#' @describeIn ECOS The name of the solver.
 setMethod("name", "ECOS", function(object) { ECOS_NAME })
+
+#' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR") })
-setMethod("matrix_intf", "ECOS", function(solver) { DEFAULT_SPARSE_INTF })
-setMethod("vec_intf", "ECOS", function(solver) { DEFAULT_INTF })
+
 setMethod("split_constr", "ECOS", function(solver, constr_map) {
   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
 })
 
+#' @param objective A list representing the canonicalized objective.
+#' @param constraints A list of canonicalized constraints.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose A logical value indicating whether to print solver output.
+#' @param ... Additional arguments to the solver.
+#' @describeIn ECOS Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
@@ -204,6 +304,9 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   format_results(solver, results_dict, data, cached_data)
 })
 
+#' @param results_dict A list containing the solver output.
+#' @param data A list containing information about the problem.
+#' @describeIn ECOS Convert raw solver output into standard list of results.
 setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_data) {
   new_results <- list()
   status <- status_map(solver, results_dict$retcodes[["exitFlag"]])
@@ -224,17 +327,40 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
   new_results
 })
 
+#'
+#' The ECOS_BB class.
+#' 
+#' This class is an interface for the ECOS BB (branch-and-bound) solver.
+#' 
+#' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013. \url{http://web.stanford.edu/~boyd/papers/ecos.html}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @name ECOS_BB-class
+#' @aliases ECOS_BB
+#' @rdname ECOS_BB-class
 setClass("ECOS_BB", contains = "ECOS")
+
+#' @rdname ECOS_BB-class
+#' @export
 ECOS_BB <- function() {
   new("ECOS_BB")
   ##ECOS_BB$new()
 }
 
 # ECOS_BB capabilities
+#' @param object,solver A \linkS4class{ECOS_BB} object.
+#' @describeIn ECOS_BB ECOS_BB can handle linear programs.
 setMethod("lp_capable", "ECOS_BB", function(solver) { TRUE })
+
+#' @describeIn ECOS_BB ECOS_BB can handle second-order cone programs.
 setMethod("socp_capable", "ECOS_BB", function(solver) { TRUE })
+
+#' @describeIn ECOS_BB ECOS_BB cannot handle semidefinite programs.
 setMethod("sdp_capable", "ECOS_BB", function(solver) { FALSE })
+
+#' @describeIn ECOS_BB ECOS_BB cannot handle exponential cone programs.
 setMethod("exp_capable", "ECOS_BB", function(solver) { FALSE })
+
+#' @describeIn ECOS_BB ECOS_BB can handle mixed-integer programs.
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 
 # EXITCODES from ECOS_BB
@@ -245,7 +371,16 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 # MI_MAXITER_NO_SOLN (ECOS_PINF + ECOS_INACC_OFFSET)           ECOS_BB hit maximum iterations without finding a feasible solution
 # MI_MAXITER_UNBOUNDED (ECOS_DINF + ECOS_INACC_OFFSET)         ECOS_BB hit maximum interations without finding a feasible solution that was unbounded
 
+#' @describeIn ECOS_BB The name of the solver.
 setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
+
+#' @param objective A list representing the canonicalized objective.
+#' @param constraints A list of canonicalized constraints.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose A logical value indicating whether to print solver output.
+#' @param ... Additional arguments to the solver.
+#' @describeIn ECOS_BB Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
@@ -266,20 +401,52 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
   format_results(solver, results_dict, data, cached_data)
 })
 
+#'
+#' The SCS class.
+#' 
+#' This class is an interface for the SCS solver.
+#' 
+#' @references B. O'Donoghue, E. Chu, N. Parikh, and S. Boyd. "Conic Optimization via Operator Splitting and Homogeneous Self-Dual Embedding." \emph{Journal of Optimization Theory and Applications}, pp. 1-27, 2016. \url{https://web.stanford.edu/~boyd/papers/scs.html}.
+#' @seealso \code{\link[scs]{scs}} and the \href{https://github.com/cvxgrp/scs}{SCS Github}.
+#' @name SCS-class
+#' @aliases SCS
+#' @rdname SCS-class
 setClass("SCS", contains = "ECOS")
+
+#' @rdname SCS-class
+#' @export
 SCS <- function() {
     new("SCS")
     ##SCS$new()
 }
 
 # SCS capabilities
+#' @param object,solver A \linkS4class{SCS} object.
+#' @describeIn SCS SCS can handle linear programs.
 setMethod("lp_capable", "SCS", function(solver) { TRUE })
+
+#' @describeIn SCS SCS can handle second-order cone programs.
 setMethod("socp_capable", "SCS", function(solver) { TRUE })
+
+#' @describeIn SCS SCS can handle semidefinite programs.
 setMethod("sdp_capable", "SCS", function(solver) { TRUE })
+
+#' @describeIn SCS SCS can handle exponential cone programs.
 setMethod("exp_capable", "SCS", function(solver) { TRUE })
+
+#' @describeIn SCS SCS cannot handle mixed-integer programs.
 setMethod("mip_capable", "SCS", function(solver) { FALSE })
 
-# Map of SCS status to CVXPY status.
+#' 
+#' SCS Status Map
+#' 
+#' Map of SCS status to CVXR status.
+#'
+#' @param solver A \linkS4class{SCS} object.
+#' @param status An exit code returned by SCS.
+#' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
+#' @docType methods
+#' @rdname SCS-status_map
 setMethod("status_map", "SCS", function(solver, status) {
   if(status == "Solved") OPTIMAL
   else if(status == "Solved/Inaccurate") OPTIMAL_INACCURATE
@@ -291,12 +458,23 @@ setMethod("status_map", "SCS", function(solver, status) {
   else stop("SCS status unrecognized: ", status)
 })
 
+#' @describeIn SCS The name of the solver.
 setMethod("name", "SCS", function(object) { SCS_NAME })
+
+#' @describeIn SCS Imports the scs library.
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs") })
+
 setMethod("split_constr", "SCS", function(solver, constr_map) {
   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
 })
 
+#' @param objective A list representing the canonicalized objective.
+#' @param constraints A list of canonicalized constraints.
+#' @param cached_data A list mapping solver name to cached problem data.
+#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose A logical value indicating whether to print solver output.
+#' @param ... Additional arguments to the solver.
+#' @describeIn SCS Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
@@ -322,6 +500,9 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
   format_results(solver, results_dict, data, cached_data)
 })
 
+#' @param results_dict A list containing the solver output.
+#' @param data A list containing information about the problem.
+#' @describeIn SCS Convert raw solver output into standard list of results.
 setMethod("format_results", "SCS", function(solver, results_dict, data, cached_data) {
   solver_cache <- cached_data[name(solver)]
   dims <- data[[DIMS]]
@@ -382,6 +563,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
   return(new_results)
 })
 
+# Expands floor(n*(n+1)/2) lower triangular entries to a full matrix with off-diagonal entries scaled by 1/sqrt(2).
 SCS.tri_to_full <- function(lower_tri, n) {
   # Expands floor(n*(n+1)/2) lower triangular to full matrix, with off-diagonal entries scaled by 1/sqrt(2)
   full <- matrix(0, nrow = n, ncol = n)
@@ -398,53 +580,474 @@ SCS.tri_to_full <- function(lower_tri, n) {
   return(matrix(full, nrow = n^2))
 }
 
-setClass("CVXOPT", contains = "Solver")
-CVXOPT <- function() {
-  stop("Unimplemented solver")
-  new("CVXOPT")
-  ##CVXOPT$new()
-}
+# # TODO: This is a Python solver, which is partially ported to R via the cccp library.
+# setClass("CVXOPT", contains = "Solver")
+# CVXOPT <- function() {
+#   stop("Unimplemented solver")
+#   new("CVXOPT")
+#   ##CVXOPT$new()
+# }
 
+#'
+#' The LS class.
+#'
+#' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
+#' LS is incapable of solving any general cone program and must be invoked through a special path.
+#'
+#' @name LS-class
+#' @aliases LS
+#' @rdname LS-class
 setClass("LS", contains = "Solver")
+
+#' @rdname LS-class
+#' @export
 LS <- function() {
   stop("Unimplemented solver")
   new("LS")
 }
 
-# LS is incapable of solving any general cone program and must be invoked through a special path
-setMethod("lp_capable", "LS", function(solver) { FALSE })
-setMethod("socp_capable", "LS", function(solver) { FALSE })
-setMethod("sdp_capable", "LS", function(solver) { FALSE })
-setMethod("exp_capable", "LS", function(solver) { FALSE })
-setMethod("mip_capable", "LS", function(solver) { FALSE })
-
-setMethod("name", "LS", function(object) { LS_NAME })
-setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
-setMethod("split_constr", "LS", function(solver, constr_map) {
-  list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
-})
-
-setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
-  new_results <- results_dict
-  if(is.na(results_dict[[PRIMAL]]))
-    new_results[[STATUS]] <- INFEASIBLE
-  else
-    new_results[[STATUS]] <- OPTIMAL
-  new_results
-})
+# # LS is incapable of solving any general cone program and must be invoked through a special path
+# #' @param object,solver A \linkS4class{LS} object.
+# #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+# setMethod("lp_capable", "LS", function(solver) { FALSE })
+#
+# #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+# setMethod("socp_capable", "LS", function(solver) { FALSE })
+#
+# #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+# setMethod("sdp_capable", "LS", function(solver) { FALSE })
+#
+# #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+# setMethod("exp_capable", "LS", function(solver) { FALSE })
+#
+# #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
+# setMethod("mip_capable", "LS", function(solver) { FALSE })
+#
+# #' @describeIn LS The name of the solver.
+# setMethod("name", "LS", function(object) { LS_NAME })
+#
+# #' @describeIn LS Imports the Matrix library.
+# setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })
+#
+# setMethod("split_constr", "LS", function(solver, constr_map) {
+#   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+# })
+#
+# #' @param objective A list representing the canonicalized objective.
+# #' @param constraints A list of canonicalized constraints.
+# #' @param cached_data A list mapping solver name to cached problem data.
+# #' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+# #' @param verbose A logical value indicating whether to print solver output.
+# #' @param ... Additional arguments to the solver.
+# #' @describeIn LS Call the solver on the canonicalized problem.
+# setMethod("Solver.solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+#   sym_data <- get_sym_data(solver, objective, constraints)
+#   id_map <- sym_data@var_offsets
+#   N <- sym_data@x_length
+#   extractor <- QuadCoeffExtractor(id_map, N)   # TODO: QuadCoeffExtractor is unimplemented. See cvxpy/utilities/quadratic.py
+# 
+#   # Extract the coefficients
+#   coeffs <- get_coeffs(extractor, objective@args[[1]])
+#   P <- coeffs$Ps[[1]]
+#   q <- as.numeric(coeffs$Q)
+#   r <- coeffs$R[[1]]
+# 
+#   # Forming the KKT system
+#   if(length(constraints) > 0) {
+#     Cs <- lapply(constraints, function(c) {
+#       coeffs <- get_coeffs(extractor, c@.expr)
+#       if(length(coeffs) > 1)
+#         coeffs[2:length(coeffs)]
+#       else
+#         c()
+#     })
+#     As <- do.call("rbind", lapply(Cs, function(C) { C[[1]] }))
+#     bs <- as.numeric(sapply(Cs, function(C) { C[[2]] }))
+#     lhs <- rbind(cbind(2*P, t(As), cbind(As, NA)))    # TODO: Fix this
+#     rhs <- c(-q, -bs)
+#   } else {   # Avoid calling rbind with empty list
+#     lhs <- 2*P
+#     rhs <- -q
+#   }
+# 
+#   # Actually solve the KKT system
+#   tryCatch({
+#       sol <- solve(lhs, rhs)
+#       if(N > 0)
+#         x <- sol[1:N]
+#       else
+#         x <- c()
+# 
+#       if(length(sol) > N)
+#         nu <- sol[(N+1):length(sol)]
+#       else
+#         nu <- c()
+# 
+#       p_star <- t(x) %*% (P %*% x + q) + r
+#     }, warning = function(w) {
+#       x <- NA
+#       nu <- NA
+#       p_star <- NA
+#     })
+# 
+#   results_dict <- list()
+#   results_dict[[PRIMAL]] <- x
+#   results_dict[[EQ_DUAL]] <- nu
+#   results_dict[[VALUE]] <- primal_to_result(objective, p_star)
+# 
+#   format_results(solver, results_dict, NA, cached_data)
+# })
+#
+# #' @param results_dict A list containing the solver output.
+# #' @param data A list containing information about the problem.
+# #' @describeIn LS Convert raw solver output into standard list of results.
+# setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
+#   new_results <- results_dict
+#   if(is.na(results_dict[[PRIMAL]]))
+#     new_results[[STATUS]] <- INFEASIBLE
+#   else
+#     new_results[[STATUS]] <- OPTIMAL
+#   new_results
+# })
 
 #'
-#' Solver utilities
+#' The MOSEK class.
 #'
+#' This class is an interface for the commercial MOSEK solver.
+#'
+#' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
+#' @seealso \code{\link[Rmosek]{mosek}} and the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
+#' @name MOSEK-class
+#' @aliases MOSEK
+#' @rdname MOSEK-class
+setClass("MOSEK", contains = "Solver")
+
+#' @rdname MOSEK-class
+#' @export
+MOSEK <- function() {
+  stop("Unimplemented")
+  new("MOSEK")
+}
+
+# #' @param object,solver A \linkS4class{MOSEK} object.
+# #' @describeIn MOSEK MOSEK can handle linear programs.
+# setMethod("lp_capable", "MOSEK", function(solver) { TRUE })
+#
+# #' @describeIn MOSEK MOSEK can handle second-order cone programs.
+# setMethod("socp_capable", "MOSEK", function(solver) { TRUE })
+#
+# #' @describeIn MOSEK MOSEK can handle semidefinite programs.
+# setMethod("sdp_capable", "MOSEK", function(solver) { TRUE })
+#
+# #' @describeIn MOSEK MOSEK cannot handle exponential cone programs.
+# setMethod("exp_capable", "MOSEK", function(solver) { FALSE })
+#
+# #' @describeIn MOSEK MOSEK cannot handle mixed-integer programs.
+# setMethod("mip_capable", "MOSEK", function(solver) { FALSE })
+#
+# #'
+# #' MOSEK Status Map
+# #'
+# #' Map of MOSEK status to CVXR status.
+# #'
+# #' @param solver A \linkS4class{MOSEK} object.
+# #' @param status An exit code returned by MOSEK. See the \href{http://docs.mosek.com/8.0/dotnetfusion/solution_status.html}{MOSEK documentation} for details.
+# #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
+# #' @docType methods
+# #' @rdname MOSEK-status_map
+# setMethod("status_map", "MOSEK", function(solver, status) {
+#   if(status == "OPTIMAL")
+#     OPTIMAL
+#   else if(status == "PRIMAL_INFEASIBLE_CER")
+#     INFEASIBLE
+#   else if(status == "DUAL_INFEASIBLE_CER")
+#     UNBOUNDED
+#   else if(status == "NEAR_OPTIMAL")
+#     OPTIMAL_INACCURATE
+#   else if(status == "NEAR_PRIMAL_INFEASIBLE_CER")
+#     INFEASIBLE_INACCURATE
+#   else if(status == "NEAR_DUAL_INFEASIBLE_CER")
+#     UNBOUNDED_INACCURATE
+#   else
+#     SOLVER_ERROR
+# })
+#
+# #' @describeIn MOSEK The name of the solver.
+# setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
+#
+# #' @describeIn MOSEK Imports the Rmosek library.
+# setMethod("import_solver", "MOSEK", function(solver) { requireNamespace("Rmosek") })
+#
+# setMethod("split_constr", "MOSEK", function(solver, constr_map) {
+#   list(eq_constr = constr_map[[EQ_MAP]], ineq_constr = constr_map[[LEQ_MAP]], nonlin_constr = list())
+# })
+#
+# #' @param objective A list representing the canonicalized objective.
+# #' @param constraints A list of canonicalized constraints.
+# #' @param cached_data A list mapping solver name to cached problem data.
+# #' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
+# #' @param verbose A logical value indicating whether to print solver output.
+# #' @param ... Additional arguments to the solver.
+# #' @describeIn MOSEK Call the solver on the canonicalized problem.
+# setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
+#   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
+# 
+#   A <- data[[A_KEY]]
+#   b <- data[[B_KEY]]
+#   G <- data[[G_KEY]]
+#   h <- data[[H_KEY]]
+#   c <- data[[C_KEY]]
+#   dims <- data[[DIMS]]
+#   problem <- list(sense = "minimize")
+# 
+#   # Size of problem
+#   numvar <- length(c) + sum(dims[[SOC_DIM]])
+#   numcon <- length(b) + dims[[LEQ_DIM]] + sum(dims[[SOC_DIM]]) + sum(dims[[SDP_DIM]]^2)
+# 
+#   # TODO: Fix crash on empty problem
+# 
+#   # Objective
+#   problem$c <- c      # Objective coefficients
+#   problem$c0 <- 0     # Objective constant
+#   problem$bx <- rbind(blx = rep(-Inf, numvar), bux = rep(Inf, numvar))   # Lower and upper variable bounds
+# 
+#   # SDP variables
+#   if(sum(dims[[SDP_DIM]]) > 0)
+#     problem$bardim <- dims[[SDP_DIM]]   # Semidefinite variable dimensions
+# 
+#   # Linear equality and linear inequality constraints
+#   if(nrow(A) > 0 && nrow(G) > 0)
+#     constraints_matrix <- rbind(A, G)
+#   else if(nrow(A) > 0)
+#     constraints_matrix <- A
+#   else
+#     constraints_matrix <- G
+#   if(dims[[LEQ_DIM]] == length(h))
+#     problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]])), buc = c(b, h))
+#   else
+#     problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]]), h[(1 + dims[[LEQ_DIM]]):length(h)]), buc = c(b, h))
+#   # h_leq <- h[1:dims[[LEQ_DIM]]]
+#   # sdp_total_dims <- sum(dims[[SDP_DIM]]^2)
+#   # soc_sdp_dims <- sum(dims[[SOC_DIM]]) + sdp_total_dims
+#   # h_soc_sdp <- h[(1 + dims[[LEQ_DIM]]):(1 + dims[[LEQ_DIM]] + soc_sdp_dims)]
+#   # problem$bc <- rbind(blc = c(b, rep(-Inf, dims[[LEQ_DIM]]), h_soc_sdp), buc = c(b, h_leq, h_soc_sdp))
+# 
+#   # Cone constraints
+#   num_cones <- length(dims[[SOC_DIM]])
+#   if(num_cones > 0) {
+#     cur_var_idx <- length(c)
+#     cur_con_idx <- length(b) + dims[[LEQ_DIM]]
+#     cones <- matrix(list(), nrow = 2, ncol = num_cones)
+# 
+#     for(k in 1:num_cones) {
+#       size_cone <- dims[[SOC_DIM]][k]
+# 
+#       # Add an identity for each cone
+#       id_mat <- sparseMatrix(i = cur_con_idx + 1:size_cone, j = cur_var_idx + 1:size_cone, x = 1)
+#       constraints_matrix <- rbind(constraints_matrix, id_mat)
+# 
+#       # Add a cone constraint
+#       cones[,k] <- list("QUAD", seq(cur_var_idx + 1, cur_var_idx + size_cone))
+#       cur_var_idx <- cur_var_idx + size_cone
+#       cur_con_idx <- cur_con_idx + size_cone
+#     }
+#     rownames(cones) <- c("type", "sub")
+#     problem$cones <- cones
+#   }
+#   problem$A <- constraints_matrix
+# 
+#   # SDP constraints
+#   num_sdp <- length(dims[[SDP_DIM]])
+#   if(num_sdp > 0) {
+#     for(k in 1:num_sdp) {
+#       size_matrix <- dims[[SDP_DIM]][k]
+#       for(i in 1:length(size_matrix)) {
+#         for(j in 1:length(size_matrix)) {
+#           if(i == j)
+#             coeff <- 1
+#           else
+#             coeff <- 0.5
+#           # TODO: Finish this
+#           cur_con_idx <- cur_con_idx + 1
+#         }
+#       }
+#     }
+#   }
+# 
+#   results_dict <- Rmosek::mosek(problem, opts = list(getinfo = TRUE, soldetail = TRUE, verbose = verbose, ...))
+#   format_results(solver, results_dict, data, cached_data)
+# })
+#
+# #' @param results_dict A list containing the solver output.
+# #' @describeIn MOSEK Chooses between the basic and interior point solution.
+# setMethod("choose_solution", "MOSEK", function(solver, results_dict) {
+#   rank <- function(status) {
+#     # Rank solutions: optimal > near_optimal > anything else > None
+#     if(status == "OPTIMAL")
+#       return(3)
+#     else if(status == "NEAR_OPTIMAL")
+#       return(2)
+#     else if(!is.null(status))
+#       return(1)
+#     else
+#       return(0)
+#   }
+# 
+#   # As long as interior solution is not worse, take it (for backward compatibility)
+#   solsta_bas <- results_dict$bas$solsta
+#   solsta_itr <- results_dict$itr$solsta
+#   if(rank(solsta_itr) >= rank(solsta_bas))
+#     list(solist = results_dict$sol$itr, solsta = solsta_itr)
+#   else
+#     list(solist = results_dict$sol$bas, solsta = solsta_bas)
+# })
+#
+# #' @param data A list containing information about the problem.
+# #' @describeIn MOSEK Convert raw solver output into standard list of results.
+# setMethod("format_results", "MOSEK", function(solver, results_dict, data, cached_data) {
+#   sol <- choose_solution(solver, results_dict)
+# 
+#   new_results <- list()
+#   new_results[[STATUS]] <- status_map(sol$solsta)
+#   new_results[[SOLVE_TIME]] <- results_dict$dinfo$OPTIMIZER_TIME
+#   new_results[[SETUP_TIME]] <- results_dict$dinfo$PRESOLVE_TIME
+#   new_results[[NUM_ITERS]] <- results_dict$iinfo$INTPNT_ITER
+# 
+#   if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+#     # Get primal variable values
+#     new_results[[PRIMAL]] <- sol$solist$xx
+# 
+#     # Get objective value
+#     new_results[[VALUE]] <- sol$solist$pobjval + data[[OFFSET]]
+# 
+#     # TODO: Check if signs are inverted in MOSEK
+#     y <- sol$solist$slc - sol$solist$suc
+#     new_results[[EQ_DUAL]] <- y[1:length(data[[B_KEY]])]
+#     if(length(data[[B_KEY]]) < length(y))
+#       new_results[[INEQ_DUAL]] <- y[(length(data[[B_KEY]]) + 1):(length(data[[B_KEY]]) + data[[DIMS]][[LEQ_DIM]])]
+#   }
+#   new_results
+# })
+
+#'
+#' The GUROBI class.
+#'
+#' This class is an interface for the commercial GUROBI solver.
+#'
+#' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
+#' @seealso \href{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}{GUROBI Official Site}.
+#' @name GUROBI-class
+#' @aliases GUROBI
+#' @rdname GUROBI-class
+setClass("GUROBI", contains = "Solver")
+
+#' @rdname GUROBI-class
+#' @export
+GUROBI <- function() {
+  stop("Unimplemented")
+  new("GUROBI")
+}
+
+# #' @param object,solver A \linkS4class{GUROBI} object.
+# #' @describeIn GUROBI GUROBI can handle linear programs.
+# setMethod("lp_capable", "GUROBI", function(solver) { TRUE })
+# 
+# #' @describeIn GUROBI GUROBI can handle second-order cone programs.
+# setMethod("socp_capable", "GUROBI", function(solver) { TRUE })
+# 
+# #' @describeIn GUROBI GUROBI cannot handle semidefinite programs.
+# setMethod("sdp_capable", "GUROBI", function(solver) { FALSE })
+# 
+# #' @describeIn GUROBI GUROBI cannot handle exponential cone programs.
+# setMethod("exp_capable", "GUROBI", function(solver) { FALSE })
+# 
+# #' @describeIn GUROBI GUROBI can handle mixed-integer programs.
+# setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
+# 
+# #' 
+# #' GUROBI Status Map
+# #' 
+# #' Map of GUROBI status to CVXR status.
+# #'
+# #' @param solver A \linkS4class{GUROBI} object.
+# #' @param status An exit code returned by GUROBI. See the \href{http://www.gurobi.com/documentation/7.5/refman/optimization_status_codes.html}{GUROBI documentation} for details.
+# #' @return A string indicating the status, either "optimal", "infeasible", "unbounded", "optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate", or "solver_error".
+# #' @docType methods
+# #' @rdname GUROBI-status_map
+# setMethod("status_map", "GUROBI", function(solver, status) {
+#   if(status == 2)
+#     OPTIMAL
+#   else if(status == 3)
+#     INFEASIBLE
+#   else if(status == 5)
+#     UNBOUNDED
+#   else if(status == 9)
+#     OPTIMAL_INACCURATE
+#   else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+#     SOLVER_ERROR
+#   else
+#     stop("GUROBI status unrecognized: ", status)
+# })
+# 
+# #' @describeIn GUROBI The name of the solver.
+# setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
+# 
+# #' @describeIn GUROBI Imports the gurobi library.
+# setMethod("import_solver", "GUROBI", function(solver) { requireNamespace("gurobi") })
+# 
+# setMethod("split_constr", "GUROBI", function(solver, constr_map) {
+#   list(eq_constr = c(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]]), ineq_constr = list(), nonlin_constr = list())
+# })
+# 
+# #' @param results_dict A list containing the solver output.
+# #' @param data A list containing information about the problem.
+# #' @param cached_data A list mapping solver name to cached problem data.
+# #' @describeIn GUROBI Convert raw solver output into standard list of results.
+# setMethod("format_results", "GUROBI", function(solver, results_dict, data, cached_data) {
+#   dims <- data[[DIMS]]
+#   if(results_dict$status != SOLVER_ERROR) {
+#     solver_cache <- cached_data[[name(solver)]]
+#     solver_cache@prev_result <- list(vbasis = results_dict$vbasis, cbasis = results_dict$cbasis, c = data[[C_KEY]], A = data[[A_KEY]], b = data[[B_KEY]])
+#   }
+#   
+#   new_results <- list()
+#   new_results[[STATUS]] <- results_dict$status
+#   new_results[[SOLVE_TIME]] <- results_dict$runtime
+#   if(new_results[[STATUS]] %in% SOLUTION_PRESENT) {
+#     primal_val <- results_dict$objval
+#     new_results[[VALUE]] <- primal_val + data[[OFFSET]]
+#     new_results[[PRIMAL]] <- results_dict$x
+#     if(!Solver.is_mip(data)) {
+#       duals <- results_dict$pi
+#       if(dims[[EQ_DIM]] > 0)
+#         new_results[[EQ_DUAL]] <- duals[1:dims[[EQ_DIM]]]
+#       if(length(duals) > dims[[EQ_DIM]])
+#         new_results[[INEQ_DUAL]] <- duals[(dims[[EQ_DIM]] + 1):length(duals)]
+#     }
+#   }
+# })
+
+####################
+#                  #
+# Solver utilities #
+#                  #
+####################
 # solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
 solver_intf <- list(ECOS(), ECOS_BB(), SCS())
 SOLVERS <- solver_intf
 names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
 
+#'
+#' Installed Solvers
+#'
+#' @return The names of all the installed solvers.
+#' @docType methods
+#' @rdname installed_solvers
+#' @export
 installed_solvers <- function() {
-  installed <- list()
+  installed <- c()
   for(i in 1:length(SOLVERS)) {
-    if(is_installed(SOLVERS[i]))
+    if(is_installed(SOLVERS[[i]]))
       installed <- c(installed, names(SOLVERS)[i])
   }
   installed

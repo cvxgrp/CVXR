@@ -10,7 +10,7 @@ B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
 test_that("Test domain for partial minimization/maximization problems", {
-  for(obj in list(Minimize(a^-1), Maximize(Log(a)))) {
+  for(obj in list(Minimize(a^-1), Maximize(log(a)))) {
     prob <- Problem(obj, list(x + a >= c(5,8)))
     
     # Optimize over nothing
@@ -44,78 +44,78 @@ test_that("Test domain for partial minimization/maximization problems", {
   }
 })
 
-test_that("Test domain for GeoMean", {
-  dom <- domain(GeoMean(x))
+test_that("Test domain for geo_mean", {
+  dom <- domain(geo_mean(x))
   prob <- Problem(Minimize(sum(x)), dom)
   result <- solve(prob)
   expect_equal(result$value, 0, tolerance = TOL)
   
   # No special case for only one weight
-  dom <- domain(GeoMean(x, c(0,2)))
+  dom <- domain(geo_mean(x, c(0,2)))
   dom <- c(dom, x >= -1)
   prob <- Problem(Minimize(sum(x)), dom)
   result <- solve(prob)
   expect_equal(result$getValue(x), matrix(c(-1,0)), tolerance = TOL)
   
-  dom <- domain(GeoMean(z, c(0,1,1)))
+  dom <- domain(geo_mean(z, c(0,1,1)))
   dom <- c(dom, z >= -1)
   prob <- Problem(Minimize(sum(z)), dom)
   result <- solve(prob)
   expect_equal(result$getValue(z), matrix(c(-1,0,0)))
 })
 
-test_that("Test domain for QuadOverLin", {
-  dom <- domain(QuadOverLin(x, a))
+test_that("Test domain for quad_over_lin", {
+  dom <- domain(quad_over_lin(x, a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
 })
 
-test_that("Test domain for LambdaMax", {
-  dom <- domain(LambdaMax(A))
+test_that("Test domain for lambda_max", {
+  dom <- domain(lambda_max(A))
   A0 <- rbind(c(1,2), c(3,4))
-  result <- solve(Problem(Minimize(Norm2(A-A0)), dom))
+  result <- solve(Problem(Minimize(norm2(A-A0)), dom))
   expect_equal(result$getValue(A), rbind(c(1,2.5), c(2.5,4)), tolerance = TOL)
 })
 
-test_that("Test domain for Pnorm", {
-  dom <- domain(Pnorm(a, -0.5))
+test_that("Test domain for p_norm", {
+  dom <- domain(p_norm(a, -0.5))
   prob <- Problem(Minimize(a), dom)
   result <- solve(prob)
   expect_equal(result$value, 0, tolerance = TOL)
 })
 
 test_that("Test domain for Log", {
-  dom  <- domain(Log(a))
+  dom  <- domain(log(a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
 })
 
-test_that("Test domain for Log1p", {
-  dom <- domain(Log1p(a))
+test_that("Test domain for log1p", {
+  dom <- domain(log1p(a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), -1, tolerance = TOL)
 })
 
-test_that("Test domain for Entr", {
-  dom <- domain(Entr(a))
+test_that("Test domain for entr", {
+  dom <- domain(entr(a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
 })
 
-test_that("Test domain for KLDiv", {
+test_that("Test domain for kl_div", {
   b <- Variable()
-  dom <- domain(KLDiv(a, b))
+  dom <- domain(kl_div(a, b))
   result <- solve(Problem(Minimize(a + b), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
   expect_equal(result$getValue(b), 0, tolerance = TOL)
 })
 
-test_that("Test domain for Power", {
-  dom <- domain(Sqrt(a))
+test_that("Test domain for power", {
+  dom <- domain(sqrt(a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
   
-  dom <- domain(Square(a))
+  dom <- domain(square(a))
   result <- solve(Problem(Minimize(a), c(dom, a >= -100)))
   expect_equal(result$getValue(a), -100, tolerance = TOL)
   
@@ -128,16 +128,16 @@ test_that("Test domain for Power", {
   expect_equal(result$getValue(a), 0, tolerance = TOL)
 })
 
-test_that("Test domain for LogDet", {
-  dom <- domain(LogDet(A + diag(rep(1,2))))
-  prob <- Problem(Minimize(sum(Diag(A))), dom)
+test_that("Test domain for log_det", {
+  dom <- domain(log_det(A + diag(rep(1,2))))
+  prob <- Problem(Minimize(sum(diag(A))), dom)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, -2, tolerance = 1e-3)
 })
 
-test_that("Test domain for MatrixFrac", {
-  dom <- domain(MatrixFrac(x, A + diag(rep(1,2))))
-  prob <- Problem(Minimize(sum(Diag(A))), dom)
+test_that("Test domain for matrix_frac", {
+  dom <- domain(matrix_frac(x, A + diag(rep(1,2))))
+  prob <- Problem(Minimize(sum(diag(A))), dom)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, -2, tolerance = 1e-3)
 })

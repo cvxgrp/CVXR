@@ -560,15 +560,15 @@ test_that("test piecewise linear", {
   expr <- A %*% y - b
   expect_true(is_pwl(expr))
   
-  expr <- MaxElemwise(1, 3*y)
+  expr <- max_elemwise(1, 3*y)
   expect_true(is_pwl(expr))
   
   expr <- abs(y)
   expect_true(is_pwl(expr))
   
-  expr <- Pnorm(3*y, 1)
+  expr <- p_norm(3*y, 1)
   expect_true(is_pwl(expr))
   
-  expr <- Pnorm(3*y^2, 1)
+  expr <- p_norm(3*y^2, 1)
   expect_false(is_pwl(expr))
 })

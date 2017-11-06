@@ -27,7 +27,7 @@ bool LinOp__get_sparse(SEXP xp) {
 //' Set the flag \code{sparse} of the LinOp object
 //'
 //' @param xp the LinOp Object XPtr
-//' @param sparse an R boolean
+//' @param sparseSEXP an R boolean
 // [[Rcpp::export]]
 void LinOp__set_sparse(SEXP xp, SEXP sparseSEXP) {
   // grab the object as a XPtr (smart pointer)
@@ -105,7 +105,7 @@ std::vector<int>  LinOp__get_size(SEXP xp) {
 //' Set the field \code{size} of the LinOp object
 //'
 //' @param xp the LinOp Object XPtr
-//' @param an integer vector object in R
+//' @param value an integer vector object in R
 // [[Rcpp::export]]
 void LinOp__set_size(SEXP xp, Rcpp::IntegerVector value) {
   // grab the object as a XPtr (smart pointer)
@@ -122,7 +122,7 @@ void LinOp__set_size(SEXP xp, Rcpp::IntegerVector value) {
 //' Perform a push back operation on the \code{args} field of LinOp
 //'
 //' @param xp the LinOp Object XPtr
-//' @param tree the LinOp Object XPtr to push
+//' @param yp the LinOp Object XPtr to push
 // [[Rcpp::export]]
 void LinOp__args_push_back(SEXP xp, SEXP yp) {
   // grab the object as a XPtr (smart pointer)
@@ -146,7 +146,7 @@ void LinOp__size_push_back(SEXP xp, int intVal) {
 //' Set the field named \code{type} for the LinOp object
 //'
 //' @param xp the LinOp Object XPtr
-//' @param type an integer value
+//' @param typeValue an integer value
 // [[Rcpp::export]]
 void LinOp__set_type(SEXP xp, int typeValue) {
   OperatorType oType;

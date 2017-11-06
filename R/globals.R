@@ -1,3 +1,4 @@
+#' @useDynLib cvxr
 #' @import Matrix ECOSolveR scs
 #' @importFrom methods callNextMethod getPackageName is new slot
 #' @importFrom utils assignInMyNamespace

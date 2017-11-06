@@ -9,7 +9,7 @@ image(lena_corr, axes = FALSE, col = grey(seq(0, 1, length = 256)))
 
 # Construct the total variation inpainting problem
 U <- Variable(rows, cols)
-obj <- Minimize(TotalVariation(U))
+obj <- Minimize(tv(U))
 
 # Known = 1 if pixel known, 0 if pixel corrupted
 Known <- matrix(0, nrow = rows, ncol = cols)

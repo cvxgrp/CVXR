@@ -19,8 +19,8 @@ y_test <- sign(X_test %*% beta_true + offset + matrix(rnorm(TEST, 0, sigma), nro
 # Form problem
 beta <- Variable(n)
 v <- Variable()
-loss <- sum(Pos(1 - y * (X %*% beta - v)))
-reg <- Norm1(beta)
+loss <- sum(pos(1 - y * (X %*% beta - v)))
+reg <- norm1(beta)
 
 # Compute a trade-off curve and record train/test error
 TRIALS <- 5
@@ -47,3 +47,4 @@ legend("topleft", c("Training Error", "Test Error"), col = 1:2, lty = c(1,1))
 
 # Plot the regularization path for beta
 matplot(lambda_vals, beta_vals, log = "x", main = "Regularization Path of Beta", xlab = "Lambda", ylab = "Beta", type = "l")
+

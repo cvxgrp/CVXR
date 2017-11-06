@@ -1,5 +1,6 @@
 test_that("Test non-negative least squares", {
-  require(MASS)
+  if(!require(MASS))
+    install.packages("MASS")
   
   # Generate problem data
   s <- 1
@@ -165,9 +166,6 @@ test_that("Test logistic regression", {
   y <- sign(X %*% beta_true + offset + rnorm(m, 0, sigma))
   
   beta <- Variable(n)
-  # obj <- sum(logistic(-X[y <= 0,] %*% beta)) + sum(logistic(X[y == 1,] %*% beta))
-  # prob <- Problem(Minimize(obj))
-  X_sign <- apply(X, 2, function(x) { ifelse(y <= 0, -1, 1) * x })
   obj <- -sum(logistic(-X[y <= 0,] %*% beta)) - sum(logistic(X[y == 1,] %*% beta))
   prob <- Problem(Maximize(obj))
   result <- solve(prob)
@@ -180,9 +178,8 @@ test_that("Test logistic regression", {
 
 
 test_that("Test saturating hinges problem", {
-  if(!("ElemStatLearn" %in% rownames(installed.packages())))
+  if(!require("ElemStatLearn"))
     install.packages("ElemStatLearn")
-  library(ElemStatLearn)
   
   # Import and sort data
   data(bone)
@@ -330,8 +327,8 @@ test_that("Test channel capacity problem", {
              c(0.25, 0.75))
   
   # Form problem
-  x <- Variable(n)   # Probability distribution of input signal X(t)
-  y <- P %*% x       # Probability distribution of output signal Y(y)
+  x <- Variable(n)   # Probability distribution of input signal x(t)
+  y <- P %*% x       # Probability distribution of output signal y(t)
   c <- apply(P * log2(P), 2, sum)
   I <- c %*% x + sum(entr(y))   # Mutual information between x and y
   obj <- Maximize(I)
@@ -409,6 +406,8 @@ test_that("Test catenary problem", {
     else
       return(0)
   })
+  
+  # Solve catenary problem with ground constraint
   constraints <- c(constraints, y >= ground)
   constraints[[4]] <- (y[m] == 0.5)
   prob <- Problem(objective, constraints)
@@ -530,8 +529,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
   # Plot weights for a few gamma
   w_plot <- t(w_data[markers_on,])
   colnames(w_plot) <- sprintf("%.2f", gammas[markers_on])
-  if("colorspace" %in% rownames(installed.packages())) {
-    require(colorspace)
+  if(require("colorspace")) {
     barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget", col = sequential_hcl(n))
   } else
     barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
@@ -551,7 +549,7 @@ test_that("Test Kelly gambling optimal bets", {
   # Generate matrix of possible returns
   rets <- runif(K*(n-1), 0.5, 1.5)
   shuff <- sample(1:length(rets), size = length(rets), replace = FALSE)
-  rets[shuff[1:30]] <- 0    # Set 30 returns to be relatively low
+  rets[shuff[1:30]] <- 0      # Set 30 returns to be relatively low
   rets[shuff[31:60]] <- 5     # Set 30 returns to be relatively high
   rets <- matrix(rets, nrow = K, ncol = n-1)
   rets <- cbind(rets, rep(1, K))   # Last column represents not betting
@@ -607,6 +605,7 @@ test_that("Test worst-case covariance", {
                       Sigma[1,2] >= 0, Sigma[1,3] >= 0, Sigma[2,3] <= 0, Sigma[2,4] <= 0, Sigma[3,4] >= 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
+  print(result$getValue(Sigma))
   
   Sigma_true <- rbind(c(0.2,    0.0978, 0,     0.0741),
                       c(0.0978, 0.1,   -0.101, 0),
@@ -717,16 +716,15 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
   }
   
   disp_result <- function(states, P, tol = 1e-3) {
-    if(!("markovchain" %in% rownames(installed.packages()))) {
-      rownames(P) <- states
-      colnames(P) <- states
-      print(P)
-    } else {
-      require(markovchain)
+    if(require("markovchain")) {
       P[P < tol] <- 0
       P <- P/apply(P, 1, sum)   # Normalize so rows sum to exactly 1
       mc <- new("markovchain", states = states, transitionMatrix = P)
       plot(mc)
+    } else {
+      rownames(P) <- states
+      colnames(P) <- states
+      print(P)
     }
   }
   

@@ -1,0 +1,13 @@
+nnls                Non-negative least squares
+censored            Right-censored regression
+svm_reg             Support vector machines with l1 regularization
+sparse_invcov       Sparse inverse covariance matrix estimation
+dirstd              Direct standardization of a skewed sample
+worstcov            Worst-case covariance matrix
+catenary            Catenary problem with ground constraints
+portfolio           Markowitz portfolio optimization with risk-return tradeoff
+kelly               Optimal betting strategy in Kelly gambling
+channel             Communication channel capacity
+fmmc                Fastest mixing Markov chain
+inpainting          Total variation inpainting
+

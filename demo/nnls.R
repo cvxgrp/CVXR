@@ -1,5 +1,7 @@
 # Generate problem data
-library(MASS)
+if(!require(MASS))
+  stop("Please install the MASS library")
+
 s <- 1
 m <- 10
 n <- 300
@@ -29,6 +31,7 @@ result <- solve(prob)
 result$value
 result$getValue(beta)
 beta_ols <- result$getValue(beta)
+beta_ols
 
 # Add non-negativity constraint on beta
 constraints <- list(beta >= 0)
@@ -39,7 +42,7 @@ result2 <- solve(prob2)
 result2$value
 result2$getValue(beta)
 beta_nnls <- result2$getValue(beta)
-all(beta_nnls >= 0)   # All resulting beta should be non-negative
+beta_nnls
 
 # Calculate the fitted y values
 fit_ols <- X %*% beta_ols

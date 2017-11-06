@@ -13,7 +13,7 @@ b <- as.matrix(apply(Xpop, 2, mean))
 
 # Construct the direct standardization problem
 w <- Variable(m)
-objective <- sum(Entr(w))
+objective <- sum(entr(w))
 constraints <- list(w >= 0, sum(w) == 1, t(X) %*% w == b)
 prob <- Problem(Maximize(objective), constraints)
 

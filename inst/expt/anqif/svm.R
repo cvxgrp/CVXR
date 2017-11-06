@@ -13,7 +13,7 @@ cost <- 10
 beta0 <- Variable()
 beta <- Variable(n)
 slack <- Variable(m)
-loss <- (1/2)*SumSquares(VStack(beta, beta0)) + cost*sum(slack)
+loss <- (1/2)*sum_squares(vstack(beta, beta0)) + cost*sum(slack)
 constr <- list(y * (X %*% beta + beta0) >= 1 - slack, slack >= 0)
 prob <- Problem(Minimize(loss), constr)
 

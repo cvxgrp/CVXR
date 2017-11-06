@@ -171,11 +171,11 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @param results_dict A list containing the results returned by the solver.
 #' @param solver_name The name of the solver.
 #' @return A list containing
-#' \itemize{
-#'   \item{solver_name}{The name of the solver.}
-#'   \item{solve_time}{The time (in seconds) it took for the solver to solve the problem.}
-#'   \item{setup_time}{The time (in seconds) it took for the solver to set up the problem.}
-#'   \item{num_iters}{The number of iterations the solver had to go through to find a solution.}
+#' \describe{
+#'   \item{\code{solver_name}}{The name of the solver.}
+#'   \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
+#'   \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
+#'   \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
 #' }
 #' @rdname SolverStats-class
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
@@ -444,24 +444,10 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   Solver.get_problem_data(SOLVERS[[solver]], objective, constraints, object@.cached_data)
 })
 
-#'
-#' Solve a DCP Problem
-#' 
-#' Solve a DCP compliant optimization problem.
-#' 
-#' @param object A \linkS4class{Problem} object.
-#' @param solver (Optional) A string indicating the solver to use. Defaults to "ECOS".
-#' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
-#' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
-#' @param verbose (Optional) A logical value indicating whether to print additional solver output.
-#' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
-#' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
-#' @return A list containing the optimal value, primal, and dual variables for the problem.
 #' @docType methods
-#' @aliases solve
 #' @rdname solve
 #' @export
-solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
+setMethod("solve", "Problem", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
   if(!is_dcp(object)) {
     if(ignore_dcp)
       print("Problem does not follow DCP rules. Solving a convex relaxation.")
@@ -523,7 +509,7 @@ solve.Problem <- function(object, solver, ignore_dcp = FALSE, warm_start = FALSE
   ##object <- .update_problem_state(object, results_dict, sym_data, solver)
   ##return(object)
   return(valuesById(object, results_dict, sym_data, solver))
-}
+})
 
 # # TODO: Finish implementation of parallel solve.
 # .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {

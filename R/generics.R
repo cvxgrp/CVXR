@@ -143,7 +143,7 @@ setGeneric("save_value", function(object, value) { standardGeneric("save_value")
 #' Get information needed to reconstruct the expression aside from its arguments.
 #' 
 #' @param object A \linkS4class{Expression} object.
-#' @return A list containing data
+#' @return A list containing data.
 #' @docType methods
 #' @rdname get_data
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
@@ -521,6 +521,35 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' @rdname get_problem_data
 #' @export
 setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
+
+#'
+#' Solve a DCP Problem
+#' 
+#' Solve a DCP compliant optimization problem.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @param solver (Optional) A string indicating the solver to use. Defaults to "ECOS".
+#' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
+#' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
+#' @param verbose (Optional) A logical value indicating whether to print additional solver output.
+#' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
+#' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
+#' @return A list containing the solution to the problem:
+#' \describe{
+#'    \item{\code{status}}{The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".}
+#'    \item{\code{value}}{The optimal value of the objective function.}
+#'    \item{\code{solver}}{The name of the solver.}
+#'    \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
+#'    \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
+#'    \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+#'    \item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
+#'    \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
+#' }
+#' @docType methods
+#' @aliases solve
+#' @rdname solve
+#' @export
+setGeneric("solve", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) { standardGeneric("solve") })
 
 #'
 #' Is Problem a QP?

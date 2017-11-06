@@ -238,7 +238,7 @@ setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 #'
 #' @param solver A \linkS4class{ECOS} object.
 #' @param status An exit code returned by ECOS:
-#' \itemize{
+#' \describe{
 #'    \item{ECOS_OPTIMAL (0)}{Problem solved to optimality.}
 #'    \item{ECOS_PINF (1)}{Found certificate of primal infeasibility.}
 #'    \item{ECOS_DINF (2)}{Found certificate of dual infeasibility.}

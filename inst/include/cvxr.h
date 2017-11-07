@@ -14,7 +14,9 @@ public:
   boost::uuids::uuid id;
 
   LinOpVector() {
-    id = boost::uuids::random_generator()();
+    boost::uuids::basic_random_generator<boost::mt19937> gen;
+    // id = boost::uuids::random_generator()();
+    id = gen();
 #ifdef _R_DEBUG
     Rcpp::Rcout << "LinOpVector id " << id << " Created!" << std::endl;
 #endif

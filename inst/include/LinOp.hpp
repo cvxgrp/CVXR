@@ -78,9 +78,11 @@ public:
 #ifdef _R_INTERFACE_  
         /* uuid */
         boost::uuids::uuid id;
+        boost::uuids::basic_random_generator<boost::mt19937> gen;
 	/* Constructor */
 	LinOp(){
-          id = boost::uuids::random_generator()();
+          // id = boost::uuids::random_generator()();
+          id = gen();
 #ifdef _R_DEBUG
           Rcpp::Rcout << "LinOp id " << id << " Created!" << std::endl;
 #endif

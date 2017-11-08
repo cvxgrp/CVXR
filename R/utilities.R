@@ -475,10 +475,17 @@ flatten_list <- function(x) {
 #   list(Ps, Matrix(Q, sparse = TRUE), R)
 # }
 
-#
-# R dictionary (inefficient, hacked together implementation).
-# Note: This allows arbitrary types as both keys and values.
-#
+#'
+#' The Rdict class.
+#' 
+#' A simple, internal dictionary composed of a list of keys and a list of values. These keys/values can be any type, including nested lists, S4 objects, etc.
+#' Incredibly inefficient hack, but necessary for the geometric mean atom, since it requires mixed numeric/gmp objects.
+#' 
+#' @slot keys A list of keys.
+#' @slot values A list of values corresponding to the keys.
+#' @name Rdict-class
+#' @aliases Rdict
+#' @rdname Rdict-class
 setClass("Rdict", representation(keys = "list", values = "list"), prototype(keys = list(), values = list()),
          validity = function(object) {
            if(length(object@keys) != length(object@values))
@@ -488,10 +495,16 @@ setClass("Rdict", representation(keys = "list", values = "list"), prototype(keys
            return(TRUE)
          })
 
+#' @param keys A list of keys.
+#' @param values A list of values corresponding to the keys.
+#' @rdname Rdict-class
 Rdict <- function(keys = list(), values = list()) {
   new("Rdict", keys = keys, values = values)
 }
 
+#' @param x,set A \linkS4class{Rdict} object.
+#' @param name Either "keys" for a list of keys, "values" for a list of values, or "items" for a list of lists where each nested list is a (key, value) pair.
+#' @rdname Rdict-class
 setMethod("$", signature(x = "Rdict"), function(x, name) {
   if(name == "items") {
     items <- rep(list(list()), length(x))
@@ -504,7 +517,11 @@ setMethod("$", signature(x = "Rdict"), function(x, name) {
     slot(x, name)
 })
 
+#' @rdname Rdict-class
 setMethod("length", signature(x = "Rdict"), function(x) { length(x@keys) })
+
+#' @param el The element to search the dictionary of values for.
+#' @rdname Rdict-class
 setMethod("is.element", signature(el = "ANY", set = "Rdict"), function(el, set) {
   for(k in set@keys) {
     if(identical(k, el))
@@ -513,6 +530,9 @@ setMethod("is.element", signature(el = "ANY", set = "Rdict"), function(el, set) 
   return(FALSE)
 })
 
+#' @param i A key into the dictionary.
+#' @param j,drop,... Unused arguments.
+#' @rdname Rdict-class
 setMethod("[", signature(x = "Rdict"), function(x, i, j, ..., drop = TRUE) {
   for(k in 1:length(x@keys)) {
     if(length(x@keys[[k]]) == length(i) && all(x@keys[[k]] == i))
@@ -521,6 +541,8 @@ setMethod("[", signature(x = "Rdict"), function(x, i, j, ..., drop = TRUE) {
   stop("key ", i, " was not found")
 })
 
+#' @param value The value to assign to key \code{i}.
+#' @rdname Rdict-class
 setMethod("[<-", signature(x = "Rdict"), function(x, i, j, ..., value) {
   if(is.element(i, x))
     x@values[[i]] <- value
@@ -531,12 +553,33 @@ setMethod("[<-", signature(x = "Rdict"), function(x, i, j, ..., value) {
   return(x)
 })
 
+#'
+#' The Rdictdefault class.
+#'
+#' This is a subclass of \linkS4class{Rdict} that contains an additional slot for a default function, which assigns a value to an input key.
+#' Only partially implemented, but working well enough for the geometric mean. Will be combined with \linkS4class{Rdict} later.
+#' 
+#' @slot keys A list of keys.
+#' @slot values A list of values corresponding to the keys.
+#' @slot default A function that takes as input a key and outputs a value to assign to that key.
+#' @seealso \linkS4class{Rdict}
+#' @name Rdictdefault-class
+#' @aliases Rdictdefault
+#' @rdname Rdictdefault-class
 setClass("Rdictdefault", representation(default = "function"), contains = "Rdict")
 
+#' @param keys A list of keys.
+#' @param values A list of values corresponding to the keys.
+#' @param default A function that takes as input a key and outputs a value to assign to that key.
+#' @rdname Rdictdefault-class
 Rdictdefault <- function(keys = list(), values = list(), default) {
   new("Rdictdefault", keys = keys, values = values, default = default)
 }
 
+#' @param x A \linkS4class{Rdictdefault} object.
+#' @param i A key into the dictionary.
+#' @param j,drop,... Unused arguments.
+#' @rdname Rdictdefault-class
 setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE) {
   if(length(x@keys) > 0) {
     for(k in 1:length(x@keys)) {
@@ -546,6 +589,7 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
   }
   
   # TODO: Can't update in place. If key doesn't exist, want to create it with default function value.
+  stop("Unimplemented: For now, user must manually create key and set its value to default(key)")
   x@keys <- c(x@keys, list(i))
   x@values <- c(x@values, list(x@default(i)))
   return(x@values[[length(x@values)]])

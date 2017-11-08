@@ -226,7 +226,7 @@ setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object
 #' This class represents the matrix product of two linear expressions.
 #' See \linkS4class{MulElemwise} for the elementwise product.
 #'
-#' @seealso MulElemwise
+#' @seealso \linkS4class{MulElemwise}
 #' @name MulExpression-class
 #' @aliases MulExpression
 #' @rdname MulExpression-class
@@ -274,7 +274,7 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, si
 #'
 #' This class represents the matrix product of an expression with a constant on the right.
 #'
-#' @seealso MulExpression
+#' @seealso \linkS4class{MulExpression}
 #' @name RMulExpression-class
 #' @aliases RMulExpression
 #' @rdname RMulExpression-class

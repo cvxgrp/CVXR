@@ -750,7 +750,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #'    \item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
 #' }
 #' @return An \linkS4class{Expression} representing the norm of the input.
-#' @seealso The \code{\link{p_norm}} function calculates the vector p-norm.
+#' @seealso \code{\link[cvxr]{p_norm}}
 #' @examples 
 #' C <- Variable(3,2)
 #' val <- Constant(rbind(c(1,2), c(3,4), c(5,6)))

@@ -1,5 +1,6 @@
 #' @useDynLib cvxr
 #' @import Matrix ECOSolveR scs
+#' @importFrom Matrix Matrix sparseMatrix
 #' @importFrom methods callNextMethod getPackageName is new slot
 #' @importFrom utils assignInMyNamespace
 #' @importFrom R.utils intToBin

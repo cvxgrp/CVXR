@@ -386,7 +386,7 @@ setGeneric("graph_implementation", function(object, arg_objs, size, data) { stan
 #'
 #' @param object A \linkS4class{Variable} or \linkS4class{Constraint} object.
 #' @return A non-negative integer identifier.
-#' @seealso get_id setIdCounter
+#' @seealso \code{\link[cvxr]{get_id}} \code{\link[cvxr]{setIdCounter}}
 #' @docType methods
 #' @rdname id
 #' @export

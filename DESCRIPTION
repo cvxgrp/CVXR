@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.91-1
+Version: 0.91-2
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -30,6 +30,7 @@ Description: CVXR is a modeling language for disciplined convex optimization
     problems. It allows the user to express problems in a natural way that follows
     mathematical convention, rather than the restrictive standard form required by
     other solvers.
+Depends: R (>= 3.4.0)
 Imports:
     methods,
     R6,
@@ -81,4 +82,4 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

@@ -23,7 +23,7 @@ setMethod("size_from_args", "Elementwise", function(object) {
 # Gradient to Diagonal
 #
 # Converts elementwise gradient into a diagonal matrix.
-# 
+#
 # @param value A scalar value or matrix.
 # @return A sparse matrix.
 # @rdname Elementwise-elemwise_grad_to_diag
@@ -268,12 +268,11 @@ setMethod("graph_implementation", "Exp", function(object, arg_objs, size, data =
 #'
 #' The Huber class.
 #'
-#' This class represents the elementwise Huber function.
-#' \deqn{Huber(x, M) = \begin{cases}
-#'       2M|x|-M^2 & \mbox{for } |x| \geq |M| \\
-#'       |x|^2 & \mbox{for } |x| \leq M
-#' \end{cases}}
-#'
+#' This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
+#' \itemize{
+#'   \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
+#'    \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
+#'  }
 #' @slot x An \linkS4class{Expression} or numeric constant.
 #' @slot M A positive scalar value representing the threshold. Defaults to 1.
 #' @name Huber-class
@@ -791,14 +790,24 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' This class represents the elementwise power function \eqn{f(x) = x^p}.
 #' If \code{expr} is a CVXR expression, then \code{expr^p} is equivalent to \code{Power(expr, p)}.
 #'
-#' \deqn{\begin{array}{ccl}
-#' p = 0 & f(x) = 1 & \text{constant, positive} \\
-#' p = 1 & f(x) = x & \text{affine, increasing, same sign as $x$} \\
-#' p = 2,4,8,\ldots & f(x) = |x|^p  & \text{convex, signed monotonicity, positive} \\
-#' p < 0 & f(x) = \begin{cases} x^p & x > 0 \\ +\infty & x \leq 0 \end{cases} & \text{convex, decreasing, positive} \\
-#' 0 < p < 1 & f(x) = \begin{cases} x^p & x \geq 0 \\ -\infty & x < 0 \end{cases} & \text{concave, increasing, positive} \\
-#' p > 1,\ p \neq 2,4,8,\ldots & f(x) = \begin{cases} x^p & x \geq 0 \\ +\infty & x < 0 \end{cases} & \text{convex, increasing, positive}.
-#' \end{array}}
+#' #' For \eqn{p = 0}, \eqn{f(x) = 1}, constant, positive.
+#' For \eqn{p = 1}, \eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}.
+#' For \eqn{p = 2,4,8,...}, \eqn{f(x) = |x|^p}, convex, signed monotonicity, positive.
+#' For \eqn{p < 0} and \eqn{f(x) = }
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x > 0}}
+#'   \item{\eqn{+\infty}}{\eqn{x \leq 0}}
+#' }, this function is convex, decreasing, and positive.
+#' For \eqn{0 < p < 1} and \eqn{f(x) =}
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
+#'   \item{\eqn{-\infty}}{\eqn{x < 0}}
+#' }, this function is concave, increasing, and positive.
+#' For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
+#'   \item{\eqn{+\infty}}{\eqn{x < 0}}
+#' }, this function is convex, increasing, and positive.
 #'
 #' @slot x The \linkS4class{Expression} to be raised to a power.
 #' @slot p A numeric value indicating the scalar power.
@@ -998,7 +1007,7 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' The Sqrt class.
 #'
 #' This class represents the elementwise square root \eqn{\sqrt{x}}.
-#' 
+#'
 #' @slot x An \linkS4class{Expression} object.
 #' @name Sqrt-class
 #' @aliases Sqrt
@@ -1079,7 +1088,7 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data 
 #' The Square class.
 #'
 #' This class represents the elementwise square \eqn{x^2}.
-#' 
+#'
 #' @slot x An \linkS4class{Expression} object.
 #' @name Square-class
 #' @aliases Square

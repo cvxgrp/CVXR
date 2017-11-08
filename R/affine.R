@@ -449,6 +449,12 @@ setMethod("to_numeric", "CumSum", function(object, values) {
 #' @describeIn CumSum The size of the atom.
 setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
 
+#' @describeIn CumSum Check that axis is either 1 or 2.
+setMethod("validate_args", "CumSum", function(object) {
+  if(length(object@axis) != 1 || !(object@axis %in% c(1,2)))
+    stop("Invalid argument for axis: must equal 1 (row) or 2 (column)")
+})
+
 #
 # Difference Matrix
 #
@@ -552,7 +558,7 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
 #' @param object A \linkS4class{DiagVec} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn DiagVec Convert the vector constant into a diagonal matrix.
-setMethod("to_numeric", "DiagVec", function(object, values) { base::diag(as.vector(values[[1]])) })
+setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
 #' @describeIn DiagVec The size of the atom.
 setMethod("size_from_args", "DiagVec", function(object) {
@@ -595,7 +601,7 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
 #' @param object A \linkS4class{DiagMat} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn DiagMat Extract the diagonal from a square matrix constant.
-setMethod("to_numeric", "DiagMat", function(object, values) { base::diag(values[[1]]) })
+setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
 #' @describeIn DiagMat The size of the atom.
 setMethod("size_from_args", "DiagMat", function(object) {
@@ -1129,7 +1135,7 @@ setMethod("validate_args", "Trace", function(object) {
 #' @param object A \linkS4class{Trace} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Trace Sum the diagonal entries.
-setMethod("to_numeric", "Trace", function(object, values) { base::sum(base::diag(values[[1]])) })
+setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
 #' @describeIn Trace The atom is a scalar.
 setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
@@ -1159,7 +1165,7 @@ Transpose <- setClass("Transpose", contains = "AffAtom")
 #' @param object A \linkS4class{Transpose} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Transpose The transpose of the given value.
-setMethod("to_numeric", "Transpose", function(object, values) { base::t(values[[1]]) })
+setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
 
 #' @describeIn Transpose The size of the atom.
 setMethod("size_from_args", "Transpose", function(object) {
@@ -1211,7 +1217,7 @@ setMethod("validate_args", "UpperTri", function(object) {
 #' @describeIn UpperTri Vectorize the upper triagonal entries.
 setMethod("to_numeric", "UpperTri", function(object, values) {
   # Vectorize the upper triagonal entries
-  tridx <- base::upper.tri(values[[1]], diag = FALSE)
+  tridx <- upper.tri(values[[1]], diag = FALSE)
   values[[1]][tridx]
 })
 

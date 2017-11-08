@@ -24,6 +24,7 @@
 #' result$value
 #' result$getValue(x)
 #' 
+#' x <- Variable(5)
 #' p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
 #' prob <- Problem(Maximize(geo_mean(x,p)), list(p_norm(x) <= 1))
 #' result <- solve(prob)
@@ -88,7 +89,7 @@ lambda_max <- LambdaMax
 #' @examples 
 #' A <- Variable(2,2)
 #' val <- cbind(c(5,7), c(7,-3))
-#' prob <- Problem(Minimize(lambda_min(A)), list(A == val))
+#' prob <- Problem(Maximize(lambda_min(A)), list(A == val))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(A)
@@ -112,7 +113,7 @@ lambda_min <- LambdaMin
 #' prob <- Problem(Minimize(lambda_sum_largest(C,2)), list(C == val))
 #' result <- solve(prob)
 #' result$value
-#' result$getValue(A)
+#' result$getValue(C)
 #' @docType methods
 #' @name lambda_sum_largest
 #' @rdname lambda_sum_largest
@@ -128,12 +129,12 @@ lambda_sum_largest <- LambdaSumLargest
 #' @param k The number of eigenvalues to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the smallest \code{k} eigenvalues of the input.
 #' @examples 
-#' A <- Variable(3,3)
+#' C <- Variable(3,3)
 #' val <- cbind(c(1,2,3), c(2,4,5), c(3,5,6))
-#' prob <- Problem(Minimize(lambda_sum_smallest(A,2)), list(A == val))
+#' prob <- Problem(Maximize(lambda_sum_smallest(C,2)), list(C == val))
 #' result <- solve(prob)
 #' result$value
-#' result$getValue(A)
+#' result$getValue(C)
 #' @docType methods
 #' @name lambda_sum_smallest
 #' @rdname lambda_sum_smallest
@@ -260,7 +261,7 @@ max_entries <- MaxEntries
 #' @examples 
 #' A <- Variable(2,2)
 #' val <- cbind(c(-5,2), c(-3,1))
-#' prob <- Problem(Minimize(min_entries(A)), list(A == val))
+#' prob <- Problem(Maximize(min_entries(A)), list(A == val))
 #' result <- solve(prob)
 #' result$value
 #' @docType methods
@@ -595,12 +596,12 @@ sum_largest <- SumLargest
 #' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
 #' X <- cbind(rep(1,m), X)
 #' b <- c(0, 0.8, 0, 1, 0.2, 0, 0.4, 1, 0, 0.7)
-#' factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
+#' factor <- 2*rbinom(m, size = 1, prob = 0.8) - 1
 #' y <- factor * (X %*% b) + rnorm(m)
 #' 
 #' beta <- Variable(n+1)
-#' obj <- sum_smallest((y - X %*% beta)^2, 200)
-#' prob <- Problem(Minimize(obj))
+#' obj <- sum_smallest(y - X %*% beta, 200)
+#' prob <- Problem(Maximize(obj), list(0 <= beta, beta <= 1))
 #' result <- solve(prob)
 #' result$getValue(beta)
 #' @docType methods
@@ -750,7 +751,7 @@ min.Expression <- function(..., na.rm = FALSE) {
 #'    \item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
 #' }
 #' @return An \linkS4class{Expression} representing the norm of the input.
-#' @seealso \code{\link[cvxr]{p_norm}}
+#' @seealso The \code{\link{p_norm}} function calculates the vector p-norm.
 #' @examples 
 #' C <- Variable(3,2)
 #' val <- Constant(rbind(c(1,2), c(3,4), c(5,6)))
@@ -1143,7 +1144,7 @@ power <- Power
 #' prob <- Problem(Minimize(scalene(A,2,3)[1,1]), list(A == val))
 #' result <- solve(prob)
 #' result$value
-#' result$getValue(scalene(A))
+#' result$getValue(scalene(A, 0.7, 0.3))
 #' @docType methods
 #' @name scalene
 #' @rdname scalene
@@ -1471,7 +1472,7 @@ reshape_expr <- Reshape
 #' C <- Variable(3,2)
 #' val <- rbind(c(1,2), c(3,4), c(5,6))
 #' obj <- sigma_max(C)
-#' constr <- list(C == const)
+#' constr <- list(C == val)
 #' prob <- Problem(Minimize(obj), constr)
 #' result <- solve(prob, solver = "SCS")
 #' result$value
@@ -1567,15 +1568,14 @@ vstack <- VStack
 #' Cumulative Sum
 #'
 #' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}.
-#' When calling \code{cumsum}, matrices are automatically flattened into column-major order before the sum is taken.
+#' When calling \code{cumsum}, matrices are automatically flattened into column-major order before the sum is taken. This is equivalent to setting \code{axis = NA}.
 #'
 #' @param x,expr An \linkS4class{Expression}, vector, or matrix.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
 #' @examples 
 #' val <- cbind(c(1,2), c(3,4))
 #' value(cumsum(Constant(val)))
-#' value(cumsum_axis(Constant(val), axis = 1))
-#' value(cumsum_axis(Constant(val), axis = 2))
+#' value(cumsum_axis(Constant(val)))
 #' 
 #' x <- Variable(2,2)
 #' prob <- Problem(Minimize(cumsum(x)[4]), list(x == val))

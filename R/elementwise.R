@@ -70,7 +70,7 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
 #' @param object An \linkS4class{Abs} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Abs The elementwise absolute value of the input.
-setMethod("to_numeric", "Abs", function(object, values) { base::abs(values[[1]]) })
+setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
 
 #' @describeIn Abs The atom is positive.
 setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
@@ -143,7 +143,7 @@ setMethod("initialize", "Entr", function(.Object, ..., x) {
 #' @describeIn Entr The elementwise entropy function evaluated at the value.
 setMethod("to_numeric", "Entr", function(object, values) {
   xlogy <- function(x, y) {
-    tmp <- x*base::log(y)
+    tmp <- x*log(y)
     tmp[x == 0] <- 0
     tmp
   }
@@ -225,7 +225,7 @@ setMethod("initialize", "Exp", function(.Object, ..., x) {
 #' @param object An \linkS4class{Exp} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Exp The matrix with each element exponentiated.
-setMethod("to_numeric", "Exp", function(object, values) { base::exp(values[[1]]) })
+setMethod("to_numeric", "Exp", function(object, values) { exp(values[[1]]) })
 
 #' @describeIn Exp The atom is positive.
 setMethod("sign_from_args", "Exp", function(object) { c(TRUE, FALSE) })
@@ -423,7 +423,7 @@ setMethod("to_numeric", "KLDiv", function(object, values) {
 
   # TODO: Return Inf outside domain
   xlogy <- function(x, y) {
-    tmp <- x*base::log(y)
+    tmp <- x*log(y)
     tmp[x == 0] <- 0
     tmp
   }
@@ -506,7 +506,7 @@ setMethod("initialize", "Log", function(.Object, ..., x) {
 #' @param object A \linkS4class{Log} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Log The elementwise natural logarithm of the input value.
-setMethod("to_numeric", "Log", function(object, values) { base::log(values[[1]]) })
+setMethod("to_numeric", "Log", function(object, values) { log(values[[1]]) })
 
 #' @describeIn Log The sign of the atom is unknown.
 setMethod("sign_from_args", "Log", function(object) { c(FALSE, FALSE) })
@@ -572,7 +572,7 @@ Log1p <- function(x) { .Log1p(x = x) }
 #' @param object A \linkS4class{Log1p} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Log1p The elementwise natural logarithm of one plus the input value.
-setMethod("to_numeric", "Log1p", function(object, values) { base::log(1 + values[[1]]) })
+setMethod("to_numeric", "Log1p", function(object, values) { log(1 + values[[1]]) })
 
 #' @describeIn Log1p The sign of the atom.
 setMethod("sign_from_args", "Log1p", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
@@ -632,7 +632,7 @@ setMethod("initialize", "Logistic", function(.Object, ..., x) {
 #' @param object A \linkS4class{Logistic} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
-setMethod("to_numeric", "Logistic", function(object, values) { base::log(1 + exp(values[[1]])) })
+setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
 
 #' @describeIn Logistic The atom is positive.
 setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
@@ -1017,7 +1017,7 @@ setMethod("validate_args", "Sqrt", function(object) { return() })
 #' @param object A \linkS4class{Sqrt} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Sqrt The elementwise square root of the input value.
-setMethod("to_numeric", "Sqrt", function(object, values) { base::sqrt(values[[1]]) })
+setMethod("to_numeric", "Sqrt", function(object, values) { sqrt(values[[1]]) })
 
 #' @describeIn Sqrt A list containing the output of \code{pow_mid}.
 setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })

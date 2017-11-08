@@ -594,7 +594,7 @@ setMethod("validate_args", "LambdaMax", function(object) {
 setMethod("to_numeric", "LambdaMax", function(object, values) {
   if(!all(t(values[[1]]) == values[[1]]))
     stop("LambdaMax called on a non-symmetric matrix")
-  base::max(base::eigen(values[[1]], only.values = TRUE)$values)
+  max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
 #' @describeIn LambdaMax The atom is a scalar.
@@ -701,7 +701,7 @@ setMethod("validate_args", "LogDet", function(object) {
 #' @param values A list of arguments to the atom.
 #' @describeIn LogDet The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
-  logdet <- base::determinant(values[[1]], logarithm = TRUE)
+  logdet <- determinant(values[[1]], logarithm = TRUE)
   if(logdet$sign == 1)
     return(as.numeric(logdet$modulus))
   else
@@ -807,9 +807,9 @@ LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
 #' @describeIn LogSumExp Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
-    base::log(sum(base::exp(values[[1]])))
+    log(sum(exp(values[[1]])))
   else
-    base::log(apply(base::exp(values[[1]]), object@axis, sum))
+    log(apply(exp(values[[1]]), object@axis, sum))
 })
 
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
@@ -929,7 +929,7 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
   P <- values[[2]]
-  sum(base::diag(t(X) %*% base::solve(P) %*% X))
+  sum(diag(t(X) %*% base::solve(P) %*% X))
 })
 
 #' @describeIn MatrixFrac The atom is a scalar.
@@ -1038,9 +1038,9 @@ MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) 
 #' @describeIn MaxEntries The largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
   if(is.na(object@axis))
-    base::max(values[[1]])
+    max(values[[1]])
   else
-    apply(values[[1]], object@axis, base::max)
+    apply(values[[1]], object@axis, max)
 })
 
 #' @describeIn MaxEntries The sign of the atom.
@@ -1393,7 +1393,7 @@ setMethod("initialize", "NormNuc", function(.Object, ..., A) {
 #' @describeIn NormNuc The nuclear norm (i.e., the sum of the singular values) of \code{A}.
 setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
-  sum(base::svd(values[[1]])$d)
+  sum(svd(values[[1]])$d)
 })
 
 #' @describeIn NormNuc The atom is a scalar.
@@ -1462,7 +1462,7 @@ setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, da
   if(cond == -1 || is.na(cond))
     cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
 
-  scale <- max(base::abs(w))
+  scale <- max(abs(w))
   if(scale < cond)
     return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
   w_scaled <- w / scale
@@ -1739,7 +1739,7 @@ setMethod("validate_args",   "SumLargest", function(object) {
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
   value <- as.numeric(values[[1]])
-  k <- base::min(object@k, length(value))
+  k <- min(object@k, length(value))
   val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
 })

@@ -1567,14 +1567,15 @@ vstack <- VStack
 #' Cumulative Sum
 #'
 #' The cumulative sum, \eqn{\sum_{i=1}^k x_i} for \eqn{k=1,\ldots,n}.
-#' When calling \code{cumsum}, matrices are automatically flattened into column-major order before the sum is taken. This is equivalent to setting \code{axis = NA}.
+#' When calling \code{cumsum}, matrices are automatically flattened into column-major order before the sum is taken.
 #'
 #' @param x,expr An \linkS4class{Expression}, vector, or matrix.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
 #' @examples 
 #' val <- cbind(c(1,2), c(3,4))
 #' value(cumsum(Constant(val)))
-#' value(cumsum_axis(Constant(val)))
+#' value(cumsum_axis(Constant(val), axis = 1))
+#' value(cumsum_axis(Constant(val), axis = 2))
 #' 
 #' x <- Variable(2,2)
 #' prob <- Problem(Minimize(cumsum(x)[4]), list(x == val))
@@ -1591,7 +1592,7 @@ cumsum_axis <- CumSum
 #' @docType methods
 #' @rdname cumsum_axis
 #' @export
-setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = x, axis = NA_real_) })
+setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = Vec(x)) })
 
 #'
 #' Matrix Diagonal

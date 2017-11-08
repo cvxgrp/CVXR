@@ -253,7 +253,12 @@ setMethod("domain", "Atom", function(object) {
 #' @name AxisAtom-class
 #' @aliases AxisAtom
 #' @rdname AxisAtom-class
-AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "numeric"), prototype(axis = NA_real_), contains = c("VIRTUAL", "Atom"))
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY"), prototype(axis = NA_real_), 
+                     validity = function(object) {
+                       if(length(object@axis) != 1 || !(is.numeric(axis) || is.logical(axis)))
+                         stop("[AxisAtom: axis] axis must equal 1 (row), 2 (column), or NA (row and column)")
+                       return(TRUE)
+                     }, contains = c("VIRTUAL", "Atom"))
 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
@@ -277,8 +282,8 @@ setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
 
 #' @describeIn AxisAtom Check that the new shape has the same number of entries as the old.
 setMethod("validate_args", "AxisAtom", function(object) {
-  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1, 2)))
-     stop("Invalid argument for axis")
+  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1,2)))
+     stop("Invalid argument for axis: must equal 1 (row), 2 (column), or NA (row and column)")
 })
 
 setMethod(".axis_grad", "AxisAtom", function(object, values) {

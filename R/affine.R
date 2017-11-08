@@ -420,14 +420,19 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' This class represents the cumulative sum.
 #'
 #' @slot expr An \linkS4class{Expression} to be summed.
-#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns. The default is \code{2}.
 #' @name CumSum-class
 #' @aliases CumSum
 #' @rdname CumSum-class
-.CumSum <- setClass("CumSum", contains = c("AxisAtom", "AffAtom"))
+.CumSum <- setClass("CumSum", representation(axis = "numeric"), prototype(axis = 2), 
+                    validity = function(object) {
+                      if(!(length(object@axis) == 1 && object@axis %in% c(1,2)))
+                        stop("[CumSum: axis] axis must equal 1 (row) or 2 (column)")
+                      return(TRUE)
+                    }, contains = c("AxisAtom", "AffAtom"))
 
 #' @param expr An \linkS4class{Expression} to be summed.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{2}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns. The default is \code{2}.
 #' @rdname CumSum-class
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 
@@ -435,10 +440,10 @@ CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 #' @param values A list of arguments to the atom.
 #' @describeIn CumSum The cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) {
-  if(is.na(object@axis))
-    base::cumsum(values[[1]])
-  else
-    apply(values[[1]], object@axis, base::cumsum)
+  if(object@axis == 1)
+    t(apply(values[[1]], 1, base::cumsum))
+  else    # axis = 2
+    apply(values[[1]], 2, base::cumsum)
 })
 
 #' @describeIn CumSum The size of the atom.

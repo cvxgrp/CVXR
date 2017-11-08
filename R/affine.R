@@ -507,9 +507,12 @@ CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   # X = Y[:1,:] - Y[1:,:]
   Y <- create_var(size)
   axis <- data[[1]]
-  dim <- size[axis]
+  if(axis == 2)
+    dim <- size[1]
+  else
+    dim <- size[2]
   diff_mat <- get_diff_mat(dim, axis)
-  diff_matt <- create_const(diff_mat, c(dim, dim))
+  diff_mat <- create_const(diff_mat, c(dim, dim), sparse = TRUE)
 
   if(axis == 2)
     diff <- lo.mul_expr(diff_mat, Y, size)

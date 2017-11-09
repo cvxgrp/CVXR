@@ -25,7 +25,7 @@ weights <- result$getValue(w)
 
 # Plot probability density function
 cl <- rainbow(3)
-plot(density(ypop), col = cl[1], xlab = "y", ylab = NA, ylim = c(0, 0.2), zero.line = FALSE)
+plot(density(ypop), col = cl[1], main = "Probability Density Function", xlab = "y", ylab = NA, ylim = c(0, 0.2), zero.line = FALSE)
 lines(density(y), col = cl[2])
 lines(density(y, weights = weights), col = cl[3])
 legend("topleft", c("True", "Sample", "Estimate"), lty = c(1,1,1), col = cl)

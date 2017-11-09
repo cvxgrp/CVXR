@@ -420,7 +420,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' This class represents the cumulative sum.
 #'
 #' @slot expr An \linkS4class{Expression} to be summed.
-#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns. The default is \code{2}.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
 #' @name CumSum-class
 #' @aliases CumSum
 #' @rdname CumSum-class
@@ -432,7 +432,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
                     }, contains = c("AxisAtom", "AffAtom"))
 
 #' @param expr An \linkS4class{Expression} to be summed.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns. The default is \code{2}.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
 #' @rdname CumSum-class
 CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 

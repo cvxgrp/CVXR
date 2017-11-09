@@ -1,6 +1,0 @@
-library(cvxr)
-require(gmp)
-x <- Variable(2)
-cost <- GeoMean(x)
-prob <- Problem(Maximize(cost), list(x <= 1))
-result <- solve(prob, verbose=TRUE)

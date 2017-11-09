@@ -26,7 +26,7 @@ makeR6Class <- function(className, publicFields=NULL, publicMethods=NULL, filena
     writeLines(text = result, con = paste0(className, "-R6.R"))
 }
 
-k
+
 makeR6Class(className = "CVXCanon.ProblemData",
             publicFields = c("V", "I", "J", "id_to_col", "const_to_row",
                              "num_constraints", "vals", "row_idxs", "col_ptrs"),

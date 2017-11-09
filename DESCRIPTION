@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
 Title: Disciplined Convex Programming
-Version: 0.91-2
+Version: 0.91-3
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -37,7 +37,6 @@ Imports:
     Matrix,
     Rcpp (>= 0.12.12),
     RcppEigen,
-    BH,
     bit64,
     gmp,
     Rmpfr,
@@ -50,7 +49,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-LinkingTo: Rcpp, RcppEigen, BH
+LinkingTo: Rcpp, RcppEigen
 License: file LICENSE
 LazyData: true
 Collate:

@@ -4,6 +4,25 @@
 #include "cvxr.h"
 #include "CVXcanon.hpp"
 
+static const char hexArray[] = { '0', '1', '2', '3', '4',
+				 '5', '6', '7', '8', '9',
+				 'a', 'b', 'c', 'd', 'e', 'f' };
+// Generate a random 16-hex digit id. grouped by four
+std::string genRandomId() {
+  char result[20];
+  Rcpp::NumericVector unif = Rcpp::runif(16, 0.0, 16.0);
+  for (int i = 0, j = 0; i < 19; ++i) {
+    if (i == 4 || i == 9 || i == 14) {
+      result[i] = '-';
+    } else {
+      result[i] = hexArray[static_cast<int>(unif[j])];
+      j++;
+    }
+  }
+  result[19] = '\0';
+  return(std::string(result));
+} 
+
 // Make a map out of an Rcpp List. Caller's responsibility
 // to ensure proper names etc.
 std::map<std::string, double>  makeMap(Rcpp::List L) {

@@ -17,7 +17,6 @@
 #' @useDynLib cvxr
 #' @importFrom Rcpp evalCpp
 #' @import RcppEigen
-#' @import BH
 #' @import bitops
 #' @import MASS
 #' @aliases cvxr-package cvxr

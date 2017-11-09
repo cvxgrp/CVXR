@@ -380,7 +380,7 @@ std::string LinOp__get_id(SEXP xp) {
   Rcpp::XPtr<LinOp> ptr(xp);
 
   // Get the result
-  return boost::lexical_cast<std::string>(ptr->id);
+  return ptr->id;
 }
 
 

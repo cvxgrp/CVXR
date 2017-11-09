@@ -10,13 +10,11 @@ public:
   /* The vector */
   std::vector<LinOp *> linvec;
 
-  /* uuid */
-  boost::uuids::uuid id;
+  /* almost uuid */
+  std::string id;
 
   LinOpVector() {
-    boost::uuids::basic_random_generator<boost::mt19937> gen;
-    // id = boost::uuids::random_generator()();
-    id = gen();
+    id = genRandomId();
 #ifdef _R_DEBUG
     Rcpp::Rcout << "LinOpVector id " << id << " Created!" << std::endl;
 #endif

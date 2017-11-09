@@ -23,6 +23,6 @@ result$value
 b0 <- result$getValue(beta)
 bres <- result$getValue(beta)
 
-plot(X, col = (3-y), main = "Support Vector Classifier")
-legend("topleft", paste("y =", unique(y)), col = 3-unique(y), lty = 1)
+plot(X, col = (3-y), main = "Support Vector Classifier", pch = 19)
+legend("topright", paste("y =", unique(y)), col = 3-unique(y), pch = 19)
 abline(a = (1-b0)/bres[2], b = -bres[1]/bres[2])

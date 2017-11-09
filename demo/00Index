@@ -1,9 +1,7 @@
-nnls                Non-negative least squares
 censored            Right-censored regression
 svc                 Support vector classifier
-sparse_invcov       Sparse inverse covariance matrix estimation
 dirstd              Direct standardization of a skewed sample
 worstcov            Worst-case covariance matrix
 catenary            Catenary problem with ground constraints
-portfolio           Markowitz portfolio optimization with risk-return tradeoff
 channel             Communication channel capacity
+broadcast           Resource allocation in a Gaussian broadcast channel

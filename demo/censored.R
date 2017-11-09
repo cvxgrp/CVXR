@@ -17,8 +17,8 @@ X_ordered <- X[idx,]
 D <- (y_ordered[M] + y_ordered[M+1])/2
 y_censored <- pmin(y_ordered, D)
 
-plot_results <- function(beta_res, bcol = "blue", bpch = 17) {
-  plot(1:M, y_censored[1:M], col = "black", xlab = "Observations", ylab = "y", ylim = c(min(y), max(y)), xlim = c(1,K))
+plot_results <- function(beta_res, title = "", bcol = "blue", bpch = 17) {
+  plot(1:M, y_censored[1:M], col = "black", main = title, xlab = "Observations", ylab = "y", ylim = c(min(y), max(y)), xlim = c(1,K))
   points((M+1):K, y_ordered[(M+1):K], col = "red")
   points(1:K, X_ordered %*% beta_res, col = bcol, pch = bpch)
   abline(a = D, b = 0, col = "black", lty = "dashed")
@@ -31,14 +31,14 @@ obj <- sum((y_censored - X_ordered %*% beta)^2)
 prob <- Problem(Minimize(obj))
 result <- solve(prob)
 beta_ols <- result$getValue(beta)
-plot_results(beta_ols)
+plot_results(beta_ols, "OLS on Censored")
 
 # OLS using uncensored data
 obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
 prob <- Problem(Minimize(obj))
 result <- solve(prob)
 beta_unc <- result$getValue(beta)
-plot_results(beta_unc)
+plot_results(beta_unc, "OLS on Uncensored")
 
 # Censored regression
 obj <- sum((y_censored[1:M] - X_ordered[1:M,] %*% beta)^2)
@@ -46,4 +46,4 @@ constr <- list(X_ordered[(M+1):K,] %*% beta >= D)
 prob <- Problem(Minimize(obj), constr)
 result <- solve(prob)
 beta_cens <- result$getValue(beta)
-plot_results(beta_cens)
+plot_results(beta_cens, "Censored Regression")

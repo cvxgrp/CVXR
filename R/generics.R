@@ -469,10 +469,11 @@ setGeneric("extract_variables", function(object, x, var_offsets) { standardGener
 #'
 #' Parts of a Problem
 #'
-#' Get the objective, constraints, status (from the last call to \code{solve}), size metrics, or solver statistics of a problem.
+#' Get and set the objective, constraints, status (from the last call to \code{solve}), size metrics, or solver statistics of a problem.
 #'
 #' @param object A \linkS4class{Problem} object.
-#' @return The requested slot of the object.
+#' @param value The value to assign to the slot.
+#' @return For getter functions, the requested slot of the object.
 #' @name problem-parts
 NULL
 
@@ -482,7 +483,15 @@ setGeneric("objective", function(object) { standardGeneric("objective") })
 
 #' @rdname problem-parts
 #' @export
+setGeneric("objective<-", function(object, value) { standardGeneric("objective<-") })
+
+#' @rdname problem-parts
+#' @export
 setGeneric("constraints", function(object) { standardGeneric("constraints") })
+
+#' @rdname problem-parts
+#' @export
+setGeneric("constraints<-", function(object, value) { standardGeneric("constraints<-") })
 
 #' @rdname problem-parts
 #' @export

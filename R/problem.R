@@ -341,15 +341,27 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
 #' @describeIn Problem The objective of the problem.
 setMethod("objective", "Problem", function(object) { object@objective })
 
+#' @describeIn Problem Set the value of the problem objective.
+setReplaceMethod("objective", "Problem", function(object, value) {
+  object@objective <- value
+  object
+})
+
 #' @describeIn Problem A list of the constraints of the problem.
 setMethod("constraints", "Problem", function(object) { object@constraints })
+
+#' @describeIn Problem Set the value of the problem constraints.
+setReplaceMethod("constraints", "Problem", function(object, value) {
+  object@constraints <- value
+  object
+})
 
 #' @describeIn Problem The value from the last time the problem was solved.
 setMethod("value", "Problem", function(object) { object@value })
 
-#' @param value A numeric scalar.
+#' @param value A \linkS4class{Minimize} or \linkS4class{Maximize} object (objective), list of \linkS4class{Constraint} objects (constraints), or numeric scalar (value).
 #' @describeIn Problem Set the value of the optimal objective.
-setMethod("value<-", "Problem", function(object, value) {
+setReplaceMethod("value", "Problem", function(object, value) {
     object@value <- value
     object
 })
@@ -358,7 +370,7 @@ setMethod("value<-", "Problem", function(object, value) {
 setMethod("status", "Problem", function(object) { object@status })
 
 # Set the status of the problem.
-setMethod("status<-", "Problem", function(object, value) {
+setReplaceMethod("status", "Problem", function(object, value) {
     object@status <- value
     object
 })

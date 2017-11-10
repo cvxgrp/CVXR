@@ -26,8 +26,8 @@ Authors@R: c(
 URL: https://github.com/anqif/cvxr
 SystemRequirements: GNU make
 BugReports: https://github.com/anqif/cvxr/issues
-Description: CVXR is a modeling language for disciplined convex optimization
-    problems. It allows the user to express problems in a natural way that follows
+Description: A Domain Specific Language (DSL) for disciplined convex optimization.
+    Allows one to model and express convex optimization problems in a natural way following
     mathematical convention, rather than the restrictive standard form required by
     other solvers.
 Depends: R (>= 3.4.0)
@@ -36,7 +36,6 @@ Imports:
     R6,
     Matrix,
     Rcpp (>= 0.12.12),
-    RcppEigen,
     bit64,
     gmp,
     Rmpfr,

@@ -3,8 +3,8 @@
 #'
 #' @name cdiac
 #' @docType data
-#' @source \url{https://cdiac.ess-dive.lbl.gov/trends/temp/jonescru/data.html}
-#' @references \url{https://cdiac.ess-dive.lbl.gov/trends/temp/jonescru/data.html}
+#' @source \url{https://ess-dive.lbl.gov/}
+#' @references \url{https://ess-dive.lbl.gov/}
 #' @keywords data
 #' @format A data frame with 166 rows and 14 variables:
 #' \describe{
@@ -26,7 +26,7 @@
 "cdiac"
 
 #' Direct Standardization: Population
-#' 
+#'
 #' Randomly generated data for direct standardization example.
 #' Sex was drawn from a Bernoulli distribution, and age was drawn from a uniform distribution on {10,...,60}.
 #' The response was drawn from a normal distribution with a mean that depends on sex and age, and a variance of 1.
@@ -44,7 +44,7 @@
 "dspop"
 
 #' Direct Standardization: Sample
-#' 
+#'
 #' A sample of \code{\link{dspop}} for direct standardization example.
 #' The sample is skewed such that young males are overrepresented in comparison to the population.
 #'

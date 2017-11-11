@@ -16,7 +16,7 @@
 #' @name cvxr-package
 #' @useDynLib cvxr
 #' @importFrom Rcpp evalCpp
-#' @import RcppEigen
+#' @import methods
 #' @import bitops
 #' @import MASS
 #' @aliases cvxr-package cvxr

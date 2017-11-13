@@ -12,12 +12,12 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-#include "CVXcanon.hpp"
+#include "CVXcanon.h"
 #include <iostream>
 #include <map>
-#include "LinOp.hpp"
-#include "LinOpOperations.hpp"
-#include "ProblemData.hpp"
+#include "LinOp.h"
+#include "LinOpOperations.h"
+#include "ProblemData.h"
 
 void mul_by_const(Matrix &coeff_mat,
         std::map<int, Matrix > &rh_coeffs,

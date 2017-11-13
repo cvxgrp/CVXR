@@ -1,8 +1,8 @@
-#include <cvxr.h>
+#include "cvxr.h"
 
 // Source:  Rcpp Introduction
 
-// [[Rcpp::export]]
+// [[Rcpp::export(.cpp_convolve)]]
 Rcpp::NumericVector cpp_convolve(Rcpp::NumericVector xa, Rcpp::NumericVector xb) {
   int n_xa = xa.size(), n_xb = xb.size();
   Rcpp::NumericVector xab(n_xa + n_xb - 1);

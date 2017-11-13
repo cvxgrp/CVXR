@@ -12,9 +12,9 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-#include "LinOp.hpp"
-#include "LinOpOperations.hpp"
-#include "Utils.hpp"
+#include "LinOp.h"
+#include "LinOpOperations.h"
+#include "Utils.h"
 #include <cassert>
 #include <map>
 #include <iostream>

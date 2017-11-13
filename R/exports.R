@@ -196,14 +196,15 @@ log_sum_exp <- LogSumExp
 #' @param P An \linkS4class{Expression} or matrix. Must be an invertible square matrix.
 #' @return An \linkS4class{Expression} representing the matrix fraction evaluated at the input.
 #' @examples
+#' \dontrun{
 #' m <- 100
 #' n <- 80
 #' r <- 70
 #'
-#' A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-#' b <- matrix(rnorm(m), nrow = m, ncol = 1)
-#' G <- matrix(rnorm(r*n), nrow = r, ncol = n)
-#' h <- matrix(rnorm(r), nrow = r, ncol = 1)
+#' A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
+#' b <- matrix(stats::rnorm(m), nrow = m, ncol = 1)
+#' G <- matrix(stats::rnorm(r*n), nrow = r, ncol = n)
+#' h <- matrix(stats::rnorm(r), nrow = r, ncol = 1)
 #'
 #' # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
 #' P <- t(A) %*% A
@@ -217,6 +218,7 @@ log_sum_exp <- LogSumExp
 #' prob <- Problem(Minimize(obj), constr)
 #' result <- solve(prob)
 #' result$value
+#' }
 #' @docType methods
 #' @name matrix_frac
 #' @rdname matrix_frac
@@ -566,10 +568,10 @@ sum_entries <- SumEntries
 #' @examples
 #' m <- 300
 #' n <- 9
-#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
 #' X <- cbind(rep(1,m), X)
 #' b <- c(0, 0.8, 0, 1, 0.2, 0, 0.4, 1, 0, 0.7)
-#' y <- X %*% b + rnorm(m)
+#' y <- X %*% b + stats::rnorm(m)
 #'
 #' beta <- Variable(n+1)
 #' obj <- sum_largest((y - X %*% beta)^2, 100)
@@ -593,11 +595,11 @@ sum_largest <- SumLargest
 #' @examples
 #' m <- 300
 #' n <- 9
-#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
 #' X <- cbind(rep(1,m), X)
 #' b <- c(0, 0.8, 0, 1, 0.2, 0, 0.4, 1, 0, 0.7)
 #' factor <- 2*rbinom(m, size = 1, prob = 0.8) - 1
-#' y <- factor * (X %*% b) + rnorm(m)
+#' y <- factor * (X %*% b) + stats::rnorm(m)
 #'
 #' beta <- Variable(n+1)
 #' obj <- sum_smallest(y - X %*% beta, 200)
@@ -620,8 +622,8 @@ sum_smallest <- SumSmallest
 #' @examples
 #' m <- 30
 #' n <- 20
-#' A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-#' b <- matrix(rnorm(m), nrow = m, ncol = 1)
+#' A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
+#' b <- matrix(stats::rnorm(m), nrow = m, ncol = 1)
 #'
 #' x <- Variable(n)
 #' obj <- Minimize(sum_squares(A %*% x - b))
@@ -675,7 +677,7 @@ matrix_trace <- Trace
 #' Known <- matrix(0, nrow = rows, ncol = cols)
 #' for(i in 1:rows) {
 #'    for(j in 1:cols) {
-#'       if(runif(1) > 0.7)
+#'       if(stats::runif(1) > 0.7)
 #'          Known[i,j] <- 1
 #'    }
 #' }
@@ -888,10 +890,10 @@ entr <- Entr
 #' p <- 0.1    # Fraction of responses with sign flipped
 #'
 #' # Generate problem data
-#' beta_true <- 5*matrix(rnorm(n), nrow = n)
-#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' beta_true <- 5*matrix(stats::rnorm(n), nrow = n)
+#' X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
 #' y_true <- X %*% beta_true
-#' eps <- matrix(rnorm(m), nrow = m)
+#' eps <- matrix(stats::rnorm(m), nrow = m)
 #'
 #' # Randomly flip sign of some responses
 #' factor <- 2*rbinom(m, size = 1, prob = 1-p) - 1
@@ -973,11 +975,11 @@ kl_div <- KLDiv
 #' m <- 1000
 #' sigma <- 45
 #'
-#' beta_true <- rnorm(n)
+#' beta_true <- stats::rnorm(n)
 #' idxs <- sample(n, size = 0.8*n, replace = FALSE)
 #' beta_true[idxs] <- 0
-#' X <- matrix(rnorm(m*n, 0, 5), nrow = m, ncol = n)
-#' y <- sign(X %*% beta_true + rnorm(m, 0, sigma))
+#' X <- matrix(stats::rnorm(m*n, 0, 5), nrow = m, ncol = n)
+#' y <- sign(X %*% beta_true + stats::rnorm(m, 0, sigma))
 #'
 #' beta <- Variable(n)
 #' X_sign <- apply(X, 2, function(x) { ifelse(y <= 0, -1, 1) * x })
@@ -1127,11 +1129,13 @@ pos <- Pos
 #' @param p A scalar value indicating the exponential power.
 #' @param max_denom The maximum denominator considered in forming a rational approximation of \code{p}.
 #' @examples
+#' \dontrun{
 #' x <- Variable()
 #' prob <- Problem(Minimize(power(x,1.7) + power(x,-2.3) - power(x,0.45)))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
+#' }
 #' @docType methods
 #' @name power
 #' @aliases ^
@@ -1150,12 +1154,14 @@ power <- Power
 #' @param beta The weight on othe negative portion of \code{x}.
 #' @return An \linkS4class{Expression} representing the scalene function evaluated at the input.
 #' @examples
+#' \dontrun{
 #' A <- Variable(2,2)
 #' val <- cbind(c(-5,2), c(-3,1))
 #' prob <- Problem(Minimize(scalene(A,2,3)[1,1]), list(A == val))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(scalene(A, 0.7, 0.3))
+#' }
 #' @docType methods
 #' @name scalene
 #' @rdname scalene
@@ -1172,8 +1178,8 @@ scalene <- Scalene
 #' @examples
 #' m <- 30
 #' n <- 20
-#' A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-#' b <- matrix(rnorm(m), nrow = m, ncol = 1)
+#' A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
+#' b <- matrix(stats::rnorm(m), nrow = m, ncol = 1)
 #'
 #' x <- Variable(n)
 #' obj <- Minimize(sum(square(A %*% x - b)))
@@ -1355,7 +1361,7 @@ bmat <- Bmat
 #' @return An \linkS4class{Expression} representing the convolution of the input.
 #' @examples
 #' x <- Variable(5)
-#' h <- matrix(rnorm(2), nrow = 2, ncol = 1)
+#' h <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
 #' prob <- Problem(Minimize(sum(conv(h, x))))
 #' result <- solve(prob)
 #' result$value

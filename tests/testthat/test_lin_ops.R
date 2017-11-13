@@ -1,4 +1,4 @@
-require(Matrix)
+##require(Matrix)
 
 test_that("Test creating a variable", {
   var <- create_var(c(5, 4), var_id = 1)
@@ -24,7 +24,7 @@ test_that("Test creating a constant", {
   expect_equal(length(mat$args), 0)
   expect_equal(mat$type, SCALAR_CONST)
   expect_equal(mat$data, 1.0)
-  
+
   # Dense matrix constant
   size <- c(5, 4)
   mat <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
@@ -32,10 +32,10 @@ test_that("Test creating a constant", {
   expect_equal(length(mat$args), 0)
   expect_equal(mat$type, DENSE_CONST)
   expect_equal(mat$data, matrix(1, nrow = size[1], ncol = size[2]))
-  
+
   # Sparse matrix constant
   size <- c(5, 5)
-  mat <- create_const(sparseMatrix(i = 1:5, j = 1:5, x = 1), size, sparse = TRUE)
+  mat <- create_const(Matrix::sparseMatrix(i = 1:5, j = 1:5, x = 1), size, sparse = TRUE)
   expect_equal(mat$size, size)
   expect_equal(length(mat$args), 0)
   expect_equal(mat$type, SPARSE_CONST)
@@ -46,7 +46,7 @@ test_that("Test adding lin expr", {
   size <- c(5, 4)
   x <- create_var(size)
   y <- create_var(size)
-  
+
   # Expanding dict.
   add_expr <- lo.sum_expr(list(x, y))
   expect_equal(add_expr$size, size)
@@ -58,7 +58,7 @@ test_that("Test getting vars from an expression", {
   x <- create_var(size)
   y <- create_var(size)
   A <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-  
+
   # Expanding dict.
   add_expr <- lo.sum_expr(list(x, y, A))
   vars_ <- get_expr_vars(add_expr)

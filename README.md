@@ -19,8 +19,8 @@ install_github("anqif/cvxr")
 
 ## Documentation
 
-A number of examples are available on
-the [CVXR](https://cvxr.stanford.edu) page.
+A number of tutorial examples are available on
+the [CVXR page](https://cvxr.rbind.io) page.
 
 
 ## Support

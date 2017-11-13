@@ -253,7 +253,7 @@ setMethod("domain", "Atom", function(object) {
 #' @name AxisAtom-class
 #' @aliases AxisAtom
 #' @rdname AxisAtom-class
-AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY"), prototype(axis = NA_real_), 
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY"), prototype(axis = NA_real_),
                      validity = function(object) {
                        if(length(object@axis) != 1 || !(is.numeric(axis) || is.logical(axis)))
                          stop("[AxisAtom: axis] axis must equal 1 (row), 2 (column), or NA (row and column)")
@@ -421,6 +421,7 @@ setMethod(".grad", "AffineProd", function(object, values) {
 #' @slot approx_error (Internal) The error in approximating \code{p/sum(p)} with \code{w}, given by \eqn{\|p/\mathbf{1}^Tp - w\|_{\infty}}.
 #' @name GeoMean-class
 #' @aliases GeoMean
+#' @importClassesFrom gmp bigq bigz
 #' @rdname GeoMean-class
 .GeoMean <- setClass("GeoMean", representation(x = "ConstValORExpr", p = "numeric", max_denom = "numeric",
                                                w = "bigq", w_dyad = "bigq", approx_error = "numeric", tree = "Rdict",
@@ -481,7 +482,8 @@ setMethod("validate_args", "GeoMean", function(object) { return() })
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
 
-  if(requireNamespace("Rmpfr") && requireNamespace("gmp")) {
+## The requireNamespace is not needed since these are now imported!
+##  if(requireNamespace("Rmpfr") && requireNamespace("gmp")) {
     val <- 1.0
     for(idx in 1:length(values)) {
       x <- values[[idx]]
@@ -489,10 +491,10 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
       val <- val * Rmpfr::mpfr(x, Rmpfr::getPrec(x))^p
     }
     return(gmp::asNumeric(val))   # TODO: Handle mpfr objects in the backend later
-  }
+##  }
 
-  val <- mapply(function(x, p) { x^p }, values, gmp::asNumeric(object@w))
-  Reduce("*", val)
+##  val <- mapply(function(x, p) { x^p }, values, gmp::asNumeric(object@w))
+##  Reduce("*", val)
 })
 
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
@@ -566,7 +568,7 @@ HarmonicMean <- function(x) {
 #' The LambdaMax class.
 #'
 #' The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
-#' 
+#'
 #' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name LambdaMax-class
 #' @aliases LambdaMax
@@ -674,7 +676,7 @@ LambdaSumSmallest <- function(A, k) {
 #' The LogDet class.
 #'
 #' The natural logarithm of the determinant of a matrix, \eqn{\log\det(A)}.
-#' 
+#'
 #' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name LogDet-class
 #' @aliases LogDet
@@ -789,7 +791,7 @@ setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, dat
 #' The LogSumExp class.
 #'
 #' The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{i=1}^n e^{x_i}}.
-#' 
+#'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name LogSumExp-class
@@ -893,7 +895,7 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' The MatrixFrac class.
 #'
 #' The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
-#' 
+#'
 #' @slot X An \linkS4class{Expression} or numeric matrix.
 #' @slot P An \linkS4class{Expression} or numeric matrix.
 #' @name MatrixFrac-class
@@ -1020,7 +1022,7 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' The MaxEntries class.
 #'
 #' The maximum of an expression.
-#' 
+#'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name MaxEntries-class
@@ -1122,7 +1124,7 @@ MinEntries <- function(x, axis = NA_real_) {
 #'    \item The expression is undefined when \eqn{p = 0}.
 #'    \item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
 #' }
-#' 
+#'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot p A number greater than or equal to 1, or equal to positive infinity.
 #' @slot max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
@@ -1276,6 +1278,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
 })
 
+#' @importFrom gmp as.bigq
 Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   p <- data[[1]]
   axis <- data[[2]]
@@ -1315,7 +1318,7 @@ Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
   t_ <- lo.promote(t, x$size)
   constraints <- c(constraints, list(create_eq(lo.sum_entries(r), t)))
 
-  p <- as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
+  p <- gmp::as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
   if(p < 0)
     constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
   else if(p > 0 && p < 1)
@@ -1372,7 +1375,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' The NormNuc class.
 #'
 #' The nuclear norm, i.e. sum of the singular values of a matrix.
-#' 
+#'
 #' @slot A An \linkS4class{Expression} representing a matrix.
 #' @name NormNuc-class
 #' @aliases NormNuc
@@ -1615,7 +1618,7 @@ setMethod("graph_implementation", "QuadOverLin", function(object, arg_objs, size
 #' The SigmaMax class.
 #'
 #' The maximum singular value of a matrix.
-#' 
+#'
 #' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name SigmaMax-class
 #' @aliases SigmaMax
@@ -1703,7 +1706,7 @@ setMethod("graph_implementation", "SigmaMax", function(object, arg_objs, size, d
 #' The SumLargest class.
 #'
 #' The sum of the largest k values of a matrix.
-#' 
+#'
 #' @slot x An \linkS4class{Expression} or numeric matrix.
 #' @slot k The number of largest values to sum over.
 #' @name SumLargest-class

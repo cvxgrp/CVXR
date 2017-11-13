@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
-Title: Disciplined Convex Programming
-Version: 0.91-3
+Title: Disciplined Convex Optimization
+Version: 0.93-2
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -23,13 +23,13 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://github.com/anqif/cvxr
-SystemRequirements: GNU make
+URL: https://cvxr.rbind.io, https://github.com/anqif/cvxr
 BugReports: https://github.com/anqif/cvxr/issues
-Description: A Domain Specific Language (DSL) for disciplined convex optimization.
-    Allows one to model and express convex optimization problems in a natural way following
-    mathematical convention, rather than the restrictive standard form required by
-    other solvers.
+Description: A Domain Specific Language (DSL) for Disciplined Convex Programming (DCP).
+    You formulate and express convex optimization problems in a natural way following
+    mathematical convention and DCP rules. The system analyzes the problem, verifies
+    its convexity, converts it to a canonical form, and hands it off to an appropriate
+    solver to obtain the solution.
 Depends: R (>= 3.4.0)
 Imports:
     methods,
@@ -42,14 +42,14 @@ Imports:
     R.utils,
     ECOSolveR,
     scs,
-    MASS,
-    bitops
+    stats
 Suggests:
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    nnls
 LinkingTo: Rcpp, RcppEigen
-License: file LICENSE
+License: Apache License 2.0 | file LICENSE
 LazyData: true
 Collate:
     'cvxr.R'

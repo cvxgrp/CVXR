@@ -2,7 +2,7 @@
 
 #ifdef _R_INTERFACE_
 #include "cvxr.h"
-#include "CVXcanon.hpp"
+#include "CVXcanon.h"
 
 static const char hexArray[] = { '0', '1', '2', '3', '4',
 				 '5', '6', '7', '8', '9',
@@ -39,7 +39,7 @@ std::map<std::string, double>  makeMap(Rcpp::List L) {
 //' @param xp the LinOpVector Object XPtr
 //' @param v the \code{id_to_col} named int vector in R with integer names
 //' @return a XPtr to ProblemData Object
-// [[Rcpp::export]]
+// [[Rcpp::export(.build_matrix_0)]]
 SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOpVector> ptrX(xp);
@@ -71,7 +71,7 @@ SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v) {
 //' @param v1 the \code{id_to_col} named int vector in R with integer names
 //' @param v2 the \code{constr_offsets} vector of offsets (an int vector in R)
 //' @return a XPtr to ProblemData Object
-// [[Rcpp::export]]
+// [[Rcpp::export(.build_matrix_1)]]
 SEXP build_matrix_1(SEXP xp, Rcpp::IntegerVector v1, Rcpp::IntegerVector v2) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOpVector> ptrX(xp);

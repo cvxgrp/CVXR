@@ -1,14 +1,8 @@
-#' @useDynLib cvxr
-#' @import Matrix
-#' @importFrom ECOSolveR ECOS_csolve
-#' @importFrom scs scs
-#' @importFrom Matrix Matrix sparseMatrix
 #' @importFrom utils assignInMyNamespace
 #' @importFrom R.utils intToBin
 #' @importFrom Rmpfr mpfr getPrec
 #' @importFrom gmp as.bigq as.bigz is.bigq is.bigz is.whole numerator denominator asNumeric
 #' @importFrom bit64 as.integer64 as.bitstring
-#' @importClassesFrom Matrix CsparseMatrix TsparseMatrix dMatrix
 #' @importClassesFrom gmp bigq bigz
 
 ##

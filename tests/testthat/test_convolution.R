@@ -10,11 +10,11 @@ test_that("test 1D convolution", {
   expect_true(is_constant(expr))
   expect_equal(size(expr), c(5, 1))
   expect_equal(value(expr), f_conv_g)
-  
+
   expr <- conv(f, x)
   expect_true(is_affine(expr))
   expect_equal(size(expr), c(5, 1))
-  
+
   # Matrix stuffing
   t <- Variable()
   prob <- Problem(Minimize(p_norm(expr, 1)), list(x == g))
@@ -25,8 +25,8 @@ test_that("test 1D convolution", {
 
 test_that("test a problem with convolution", {
   N <- 5
-  y <- matrix(rnorm(N), nrow = N, ncol = 1)
-  h <- matrix(rnorm(2), nrow = 2, ncol = 1)
+  y <- matrix(stats::rnorm(N), nrow = N, ncol = 1)
+  h <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
   x <- Variable(N)
   v <- conv(h, x)
   obj <- Minimize(sum(y * v[1:N]))

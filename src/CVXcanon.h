@@ -16,9 +16,9 @@
 #define CVXCANON_H
 
 #include <vector>
-#include "LinOp.hpp"
-#include "Utils.hpp"
-#include "ProblemData.hpp"
+#include "LinOp.h"
+#include "Utils.h"
+#include "ProblemData.h"
 
 #ifdef _R_INTERFACE_
 

@@ -1,9 +1,9 @@
 #ifndef _CVXR_H_
 #define _CVXR_H_
 
-#include "Utils.hpp"
-#include "LinOp.hpp"
-#include "ProblemData.hpp"
+#include "Utils.h"
+#include "LinOp.h"
+#include "ProblemData.h"
 
 class LinOpVector {
 public:

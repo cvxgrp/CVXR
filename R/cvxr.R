@@ -17,8 +17,8 @@
 #' @useDynLib cvxr
 #' @importFrom Rcpp evalCpp
 #' @import methods
-#' @import bitops
-#' @import MASS
+#' @import Matrix
+#' @importFrom stats rnorm runif
 #' @aliases cvxr-package cvxr
 #' @docType package
 #' @author Anqi Fu, Balasubramanian Narasimhan, John Miller, Steven Diamond, Stephen Boyd

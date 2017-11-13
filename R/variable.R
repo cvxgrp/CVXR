@@ -1,3 +1,16 @@
+#'
+#' The Variable class.
+#'
+#' This class represents an optimization variable.
+#' 
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name Variable-class
+#' @aliases Variable
+#' @rdname Variable-class
 .Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "ConstVal"),
                                  prototype(rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
                                  validity = function(object) {
@@ -6,6 +19,11 @@
                                    return(TRUE)
                                  }, contains = "Leaf")
 
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname Variable-class
+#' @export
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
 setMethod("initialize", "Variable", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
@@ -25,42 +43,86 @@ setMethod("show", "Variable", function(object) {
   cat("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{Variable} object.
+#' @rdname Variable-class
 setMethod("as.character", "Variable", function(x) {
   size <- size(x)
   paste("Variable(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Variable The unique ID of the variable.
 setMethod("id", "Variable", function(object) { object@id })
+
+#' @describeIn Variable A logical value indicating whether the variable is positive.
 setMethod("is_positive", "Variable", function(object) { FALSE })
+
+#' @describeIn Variable A logical value indicating whether the variable is negative.
 setMethod("is_negative", "Variable", function(object) { FALSE })
+
+#' @describeIn Variable The \code{c(row, col)} dimensions of the variable.
 setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })
+
+#' @describeIn Variable Returns \code{list(rows, cols, name)}.
 setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })
+
+#' @describeIn Variable The name of the variable.
+#' @export
 setMethod("name", "Variable", function(object) { object@name })
 
+# Set the value of the primal variable.
 setMethod("save_value", "Variable", function(object, value) {
+  value <- validate_val(object, value)
   object@primal_value <- value
   object
 })
+
+#' @describeIn Variable The value of the variable.
 setMethod("value", "Variable", function(object) { object@primal_value })
+
+#' @param value The value to assign to the primal variable.
+#' @describeIn Variable Set the value of the primal variable.
 setReplaceMethod("value", "Variable", function(object, value) {
-  value <- validate_val(object, value)
   object <- save_value(object, value)
   object
 })
+
+#' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix.
 setMethod("grad", "Variable", function(object) {
   len <- prod(size(object))
   result <- list(sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
   names(result) <- as.character(object@id)
   result
 })
+
+#' @describeIn Variable Returns itself as a variable.
 setMethod("variables", "Variable", function(object) { list(object) })
+
+#' @describeIn Variable The canonical form of the variable.
 setMethod("canonicalize", "Variable", function(object) {
   obj <- create_var(size(object), object@id)
   list(obj, list())
 })
 
-# Boolean variable
+#'
+#' The Bool class.
+#' 
+#' This class represents a boolean variable.
+#'
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name Bool-class
+#' @aliases Bool
+#' @rdname Bool-class
 .Bool <- setClass("Bool", contains = "Variable")
+
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname Bool-class
+#' @export
 Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "Bool", function(object) {
@@ -68,11 +130,14 @@ setMethod("show", "Bool", function(object) {
   cat("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{Bool} object.
+#' @rdname Bool-class
 setMethod("as.character", "Bool", function(x) {
   size <- size(x)
   paste("Bool(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Bool Enforce that the variable be boolean.
 setMethod("canonicalize", "Bool", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -80,11 +145,32 @@ setMethod("canonicalize", "Bool", function(object) {
   list(obj, c(constr, list(BoolConstr(obj))))
 })
 
+#' @describeIn Bool A boolean variable is always positive or zero.
 setMethod("is_positive", "Bool", function(object) { TRUE })
+
+#' @describeIn Bool A boolean variable is never negative.
 setMethod("is_negative", "Bool", function(object) { FALSE })
 
-# Integer variable
+#'
+#' The Int class.
+#' 
+#' This class represents an integer variable.
+#'
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name Int-class
+#' @aliases Int
+#' @rdname Int-class
 .Int <- setClass("Int", contains = "Variable")
+
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname Int-class
+#' @export
 Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "Int", function(object) {
@@ -92,11 +178,14 @@ setMethod("show", "Int", function(object) {
   cat("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object An \linkS4class{Int} object.
+#' @rdname Int-class
 setMethod("as.character", "Int", function(x) {
   size <- size(x)
   paste("Int(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn Int Enforce that the variable be an integer.
 setMethod("canonicalize", "Int", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -104,8 +193,26 @@ setMethod("canonicalize", "Int", function(object) {
   list(obj, c(constr, list(IntConstr(obj))))
 })
 
-# Non-negative variable
+#'
+#' The NonNegative class.
+#'
+#' This class represents a variable constrained to be non-negative.
+#' 
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name NonNegative-class
+#' @aliases NonNegative
+#' @rdname NonNegative-class
 .NonNegative <- setClass("NonNegative", contains = "Variable")
+
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname NonNegative-class
+#' @export
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
 
 setMethod("show", "NonNegative", function(object) {
@@ -113,11 +220,14 @@ setMethod("show", "NonNegative", function(object) {
   cat("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{NonNegative} object.
+#' @rdname NonNegative-class
 setMethod("as.character", "NonNegative", function(x) {
   size <- size(x)
   paste("NonNegative(", size[1], ", ", size[2], ")", sep = "")
 })
 
+#' @describeIn NonNegative Enforce that the variable be non-negative.
 setMethod("canonicalize", "NonNegative", function(object) {
   canon <- callNextMethod(object)
   obj <- canon[[1]]
@@ -125,11 +235,31 @@ setMethod("canonicalize", "NonNegative", function(object) {
   list(obj, c(constr, list(create_geq(obj))))
 })
 
+#' @describeIn NonNegative Always true since the variable is non-negative.
 setMethod("is_positive", "NonNegative", function(object) { TRUE })
+
+#' @describeIn NonNegative Always false since the variable is non-negative.
 setMethod("is_negative", "NonNegative", function(object) { FALSE })
 
-# Positive semidefinite matrix
+#'
+#' The SemidefUpperTri class.
+#'
+#' This class represents the upper triangular part of a positive semidefinite variable.
+#'
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot n The number of rows/columns in the matrix.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name SemidefUpperTri-class
+#' @aliases SemidefUpperTri
+#' @rdname SemidefUpperTri-class
 .SemidefUpperTri <- setClass("SemidefUpperTri", representation(n = "numeric"), contains = "Variable")
+
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname SemidefUpperTri-class
 SemidefUpperTri <- function(n, name = NA_character_) { .SemidefUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -141,12 +271,22 @@ setMethod("show", "SemidefUpperTri", function(object) {
   cat("SemidefUpperTri(", object@n, ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{SemidefUpperTri} object.
+#' @rdname SemidefUpperTri-class
 setMethod("as.character", "SemidefUpperTri", function(x) {
   paste("SemidefUpperTri(", x@n, ")", sep = "")
 })
 
+#' @describeIn SemidefUpperTri Returns \code{list(n, name)}.
 setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, object@name) })
 
+#
+# Upper Triangle to Full Matrix
+#
+# Returns a coefficient matrix to create a symmetric matrix.
+#
+# @param n The width/height of the matrix
+# @return The coefficient matrix.
 upper_tri_to_full <- function(n) {
   if(n == 0)
     return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
@@ -179,24 +319,52 @@ upper_tri_to_full <- function(n) {
   sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
 }
 
+#' @describeIn SemidefUpperTri Enforce that the variable be positive semidefinite.
 setMethod("canonicalize", "SemidefUpperTri", function(object) {
   # Variable must be semidefinite and symmetric
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
   fill_coef <- upper_tri_to_full(object@n)
   fill_coef <- create_const(fill_coef, c(object@n^2, size(object)[1]), sparse = TRUE)
-  full_mat = mul_expr(fill_coef, upper_tri, c(object@n^2, 1))
-  full_mat <- reshape(full_mat, c(object@n, object@n))
+  full_mat = lo.mul_expr(fill_coef, upper_tri, c(object@n^2, 1))
+  full_mat <- lo.reshape(full_mat, c(object@n, object@n))
   list(upper_tri, list(SDP(full_mat, enforce_sym = FALSE)))
 })
 
+#'
+#' Positive Semidefinite Variable
+#'
+#' An expression representing a positive semidefinite matrix.
+#'
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return An \linkS4class{Expression} representing the positive semidefinite matrix.
+#' @rdname Semidef
+#' @export
 Semidef <- function(n, name = NA_character_) {
   var <- SemidefUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))
   Reshape(fill_mat %*% var, n, n)
 }
 
-# Symmetric matrix
+#'
+#' The SymmetricUpperTri class.
+#'
+#' This class represents the upper triangular part of a symmetric variable.
+#'
+#' @slot id (Internal) A unique identification number used internally.
+#' @slot n The number of rows/columns in the matrix.
+#' @slot rows The number of rows in the variable.
+#' @slot cols The number of columns in the variable.
+#' @slot name (Optional) A character string representing the name of the variable.
+#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @name SymmetricUpperTri-class
+#' @aliases SymmetricUpperTri
+#' @rdname SymmetricUpperTri-class
 .SymmetricUpperTri <- setClass("SymmetricUpperTri", representation(n = "numeric"), contains = "Variable")
+
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @rdname SymmetricUpperTri-class
 SymmetricUpperTri <- function(n, name = NA_character_) { .SymmetricUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SymmetricUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -208,17 +376,31 @@ setMethod("show", "SymmetricUpperTri", function(object) {
   cat("SymmetricUpperTri(", object@n, ")", sep = "")
 })
 
+#' @param x,object A \linkS4class{SymmetricUpperTri} object.
+#' @rdname SymmetricUpperTri-class
 setMethod("as.character", "SymmetricUpperTri", function(x) {
   paste("SymmetricUpperTri(", x@n, ")", sep = "")
 })
 
+#' @describeIn SymmetricUpperTri Returns \code{list(n, name)}.
 setMethod("get_data", "SymmetricUpperTri", function(object) { list(object@n, object@name) })
 
+#' @describeIn SemidefUpperTri Enforce that the variable be symmetric.
 setMethod("canonicalize", "SymmetricUpperTri", function(object) {
   upper_tri <- create_var(c(size(object)[1], 1), object@id)
   list(upper_tri, list())
 })
 
+#'
+#' Symmetric Variable
+#'
+#' An expression representing a symmetric matrix.
+#'
+#' @param n The number of rows/columns in the matrix.
+#' @param name (Optional) A character string representing the name of the variable.
+#' @return An \linkS4class{Expression} representing the symmetric matrix.
+#' @rdname Symmetric
+#' @export
 Symmetric <- function(n, name = NA_character_) {
   var <- SymmetricUpperTri(n, name)
   fill_mat <- Constant(upper_tri_to_full(n))

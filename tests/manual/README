@@ -1,0 +1,3 @@
+Long running tests that are to be run manually and not on CRAN.
+They should be run routinely to ensure sanity of CVXR, even if
+not on CRAN.

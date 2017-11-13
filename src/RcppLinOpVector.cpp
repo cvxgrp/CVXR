@@ -3,7 +3,7 @@
 //' Create a new LinOpVector object.
 //'
 //' @return an external ptr (Rcpp::XPtr) to a LinOp object instance.
-// [[Rcpp::export]]
+// [[Rcpp::export(.LinOpVector__new)]]
 SEXP LinOpVector__new() {
   // create a pointer to an Uniform object and wrap it
   // as an external pointer
@@ -17,8 +17,8 @@ SEXP LinOpVector__new() {
 //' Perform a push back operation on the \code{args} field of LinOp
 //'
 //' @param xp the LinOpVector Object XPtr
-//' @param tree the LinOp Object XPtr to push
-// [[Rcpp::export]]
+//' @param yp the LinOp Object XPtr to push
+// [[Rcpp::export(.LinOpVector__push_back)]]
 void LinOpVector__push_back(SEXP xp, SEXP yp) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOpVector> ptrX(xp);
@@ -32,7 +32,7 @@ void LinOpVector__push_back(SEXP xp, SEXP yp) {
 //'
 //' @param lvec the LinOpVector Object XPtr
 //' @param i the index
-// [[Rcpp::export]]
+// [[Rcpp::export(.LinOp_at_index)]]
 SEXP LinOp_at_index(SEXP lvec, int i) {
   Rcpp::XPtr<LinOpVector> vPtr(lvec);
   return Rcpp::XPtr<LinOp>((vPtr->linvec)[i]);

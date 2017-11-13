@@ -19,11 +19,11 @@ test_that("test the EqConstraint class", {
   expect_true(is.na(dual_value(constr)))
   expect_true(is.na(value(constr)))
   
-  x <- save_value(x, 2)
-  z <- save_value(z, 2)
+  x <- save_value(x, c(2,2))
+  z <- save_value(z, c(2,2))
   constr <- x == z
   expect_true(value(constr))
-  x <- save_value(x, 3)
+  x <- save_value(x, c(3,3))
   constr <- x == z
   expect_false(!is.na(value(constr)) && value(constr))
   
@@ -50,11 +50,11 @@ test_that("test the LeqConstraint class", {
   # Test value and dual_value
   expect_true(is.na(dual_value(constr)))
   expect_true(is.na(value(constr)))
-  x <- save_value(x, 1)
-  z <- save_value(z, 2)
+  x <- save_value(x, c(1,1))
+  z <- save_value(z, c(2,2))
   constr <- x <= z
   expect_true(value(constr))
-  x <- save_value(x, 3)
+  x <- save_value(x, c(3,3))
   constr <- x <= z
   expect_false(!is.na(value(constr)) && value(constr))
   

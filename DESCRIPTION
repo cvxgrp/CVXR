@@ -1,7 +1,7 @@
 Package: cvxr
 Type: Package
-Title: Disciplined Convex Programming
-Version: 0.0.0.9400
+Title: Disciplined Convex Optimization
+Version: 0.93-2
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -15,65 +15,69 @@ Authors@R: c(
                    email = "stevend2@stanford.edu"),
            person("John", "Miller",
                   role=c("aut"),
-                   email = "millerjp@stanford.edu"),
+                   email = "miller_john@berkeley.edu"),
            person("Steven", "Boyd",
                   role=c("ctb"),
                   email = "boyd@stanford.edu"),
            person("Paul Kunsberg", "Rosenfield",
                   role=c("ctb"),
-                  email = "paulkr@stanford.edu")
+                  email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://github.com/anqif/cvxr
-SystemRequirements: GNU make
+URL: https://cvxr.rbind.io, https://github.com/anqif/cvxr
 BugReports: https://github.com/anqif/cvxr/issues
-Description: CVXR is a modeling language for disciplined convex optimization problems.
-             It allows the user to express problems in a natural way that follows
-             mathematical convention, rather than the restrictive standard form required
-             by other solvers.
+Description: A Domain Specific Language (DSL) for Disciplined Convex Programming (DCP).
+    You formulate and express convex optimization problems in a natural way following
+    mathematical convention and DCP rules. The system analyzes the problem, verifies
+    its convexity, converts it to a canonical form, and hands it off to an appropriate
+    solver to obtain the solution.
+Depends: R (>= 3.4.0)
 Imports:
-        methods,
-        R6,
-        Matrix,
-        Rcpp (>= 0.12.12),
-        RcppEigen,
-	      BH,
-	      bit64,
-        bitops,
-        MASS,
-        gmp,
-        R.utils
+    methods,
+    R6,
+    Matrix,
+    Rcpp (>= 0.12.12),
+    bit64,
+    gmp,
+    Rmpfr,
+    R.utils,
+    ECOSolveR,
+    scs,
+    stats
 Suggests:
-        knitr,
-        rmarkdown,
-        testthat,
-        scs,
-        ECOSolveR
-LinkingTo: Rcpp, RcppEigen, BH
-License: GPL-2 | GPL-3
+    knitr,
+    rmarkdown,
+    testthat,
+    nnls
+LinkingTo: Rcpp, RcppEigen
+License: Apache License 2.0 | file LICENSE
 LazyData: true
-Suggests: testthat
-Collate: 'globals.R'
-	 'generics.R'
-         'utilities.R'
-         'interface.R'
-         'expressions.R'
-         'constant.R'
-         'variable.R'
-         'lin_ops.R'
-         'atoms.R'
-         'affine.R'
-         'problem.R'
-         'constraints.R'
-         'elementwise.R'
-         'solver.R'
-         'problem_data.R'
-         'transforms.R'
-      	 'rcppUtils.R'
-      	 'R6List.R'
-      	 'ProblemData-R6.R'
-      	 'LinOp-R6.R'
-      	 'LinOpVector-R6.R'
-      	 'RcppExports.R'
-      	 'CVXcanon-R6.R'
-      	 'Deque.R'
-      	 'canonInterface.R'
+Collate:
+    'cvxr.R'
+    'data.R'
+    'globals.R'
+    'generics.R'
+    'utilities.R'
+    'interface.R'
+    'expressions.R'
+    'constant.R'
+    'variable.R'
+    'lin_ops.R'
+    'atoms.R'
+    'affine.R'
+    'problem.R'
+    'constraints.R'
+    'elementwise.R'
+    'solver.R'
+    'problem_data.R'
+    'transforms.R'
+    'exports.R'
+    'rcppUtils.R'
+    'R6List.R'
+    'ProblemData-R6.R'
+    'LinOp-R6.R'
+    'LinOpVector-R6.R'
+    'RcppExports.R'
+    'CVXcanon-R6.R'
+    'Deque.R'
+    'canonInterface.R'
+RoxygenNote: 6.0.1

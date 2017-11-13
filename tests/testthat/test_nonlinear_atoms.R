@@ -15,7 +15,7 @@ test_that("Test log problem", {
   result <- solve(p)
   expect_equal(result$value, 1, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(1, exp(1))), tolerance = TOL)
-  
+
   # Log in constraint
   obj <- Minimize(sum(x))
   constr <- list(log(x) >= 0, x <= as.matrix(c(1,1)))
@@ -30,7 +30,7 @@ test_that("Test log problem", {
   p <- Problem(obj, constr)
   result <- solve(p)
   expect_equal(result$value, 1, tolerance = TOL)
-  
+
   # Scalar log
   obj <- Maximize(log(x[2]))
   constr <- list(x <= as.matrix(c(1, exp(1))))
@@ -39,48 +39,48 @@ test_that("Test log problem", {
   expect_equal(result$value, 1, tolerance = TOL)
 })
 
-test_that("Test the Entr atom", {
-  expect_equal(value(Entr(0)), 0)
-  expect_warning(expect_equal(value(Entr(-1)), -Inf))
+test_that("Test the entr function", {
+  expect_equal(value(entr(0)), 0)
+  expect_warning(expect_equal(value(entr(-1)), -Inf))
 })
 
 test_that("Test a problem with KL-divergence", {
   kK <- 50
   kSeed <- 10
-  
+
   # Generate a random reference distribution
   # set.seed(kSeed)
-  npSPriors <- matrix(runif(kK), nrow = kK, ncol = 1)
+  npSPriors <- matrix(stats::runif(kK), nrow = kK, ncol = 1)
   npSPriors <- npSPriors/sum(npSPriors)
-  
+
   # Reference distribution
   p_refProb <- Parameter(kK, 1, sign = "positive")
-  
+
   # Distribution to be estimated
   v_prob <- Variable(kK, 1)
   objkl <- 0.0
   con <- 0.0
   for(k in 1:kK) {
-    # objkl <- objkl + KLDiv(v_prob[k,1], p_refProb[k,1])   # TODO: Parameters are unimplemented
-    objkl <- objkl + KLDiv(v_prob[k,1], npSPriors[k,1])
+    # objkl <- objkl + kl_div(v_prob[k,1], p_refProb[k,1])   # TODO: Parameters are unimplemented
+    objkl <- objkl + kl_div(v_prob[k,1], npSPriors[k,1])
     con <- con + v_prob[k,1]
   }
-  
+
   constrs <- list(con == 1)
   klprob <- Problem(Minimize(objkl), constrs)
   value(p_refProb) <- npSPriors
-  
+
   result <- solve(klprob, solver = "SCS", verbose = TRUE)
   expect_equal(result$getValue(v_prob), npSPriors, tolerance = 1e-3)
   result <- solve(klprob, solver = "ECOS", verbose = TRUE)
   expect_equal(result$getValue(v_prob), npSPriors, tolerance = 1e-3)
 })
 
-test_that("Test a problem with Entr", {
+test_that("Test a problem with entr", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
-    obj <- Maximize(sum(Entr(x)))
+    obj <- Maximize(sum(entr(x)))
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
     expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
@@ -89,7 +89,7 @@ test_that("Test a problem with Entr", {
   }
 })
 
-test_that("Test a problem with Exp", {
+test_that("Test a problem with exp", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
@@ -102,7 +102,7 @@ test_that("Test a problem with Exp", {
   }
 })
 
-test_that("Test a problem with Log", {
+test_that("Test a problem with log", {
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)

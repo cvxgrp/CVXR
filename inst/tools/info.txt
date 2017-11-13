@@ -1,3 +1,0 @@
-## shows differences per
-## https://stackoverflow.com/questions/4857310/how-to-get-diff-working-like-git-diff
-git diff --no-index -- src/BuildMatrix.cpp src_canon/CVXcanon.cpp 

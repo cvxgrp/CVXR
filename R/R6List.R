@@ -1,4 +1,5 @@
 ## An R6 List class with reference semantics mainly for keeping objects in scope
+#' @importFrom R6 R6Class
 R6List <- R6::R6Class("R6List",
                       private = list(
                           r6list = NA

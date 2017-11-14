@@ -16,19 +16,19 @@ Authors@R: c(
            person("John", "Miller",
                   role=c("aut"),
                    email = "miller_john@berkeley.edu"),
-           person("Steven", "Boyd",
+           person("Stephen", "Boyd",
                   role=c("ctb"),
                   email = "boyd@stanford.edu"),
            person("Paul Kunsberg", "Rosenfield",
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://cvxr.rbind.io, https://github.com/anqif/CVXR
+URL: https://cvxr.rbind.io, https://stanford.edu/~boyd/papers/cvxr_paper.html, https://github.com/anqif/CVXR
 BugReports: https://github.com/anqif/CVXR/issues
-Description: A Domain Specific Language (DSL) for Disciplined Convex Programming (DCP).
-    You formulate and express convex optimization problems in a natural way following
+Description: CVXR is an object-oriented modeling language for disciplined convex programming (DCP).
+    It allows the user to formulate convex optimization problems in a natural way following
     mathematical convention and DCP rules. The system analyzes the problem, verifies
-    its convexity, converts it to a canonical form, and hands it off to an appropriate
+    its convexity, converts it into a canonical form, and hands it off to an appropriate
     solver to obtain the solution.
 Depends: R (>= 3.4.0)
 Imports:

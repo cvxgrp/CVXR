@@ -20,7 +20,7 @@ install_github("anqif/CVXR")
 ## Documentation
 
 A number of tutorial examples are available on
-the [CVXR page](https://cvxr.rbind.io) page.
+the [CVXR page](https://cvxr.rbind.io).
 
 
 ## Support

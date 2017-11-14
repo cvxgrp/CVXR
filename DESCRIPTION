@@ -1,7 +1,7 @@
-Package: cvxr
+Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 0.93-2
+Version: 0.94
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -23,8 +23,8 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://cvxr.rbind.io, https://github.com/anqif/cvxr
-BugReports: https://github.com/anqif/cvxr/issues
+URL: https://cvxr.rbind.io, https://github.com/anqif/CVXR
+BugReports: https://github.com/anqif/CVXR/issues
 Description: A Domain Specific Language (DSL) for Disciplined Convex Programming (DCP).
     You formulate and express convex optimization problems in a natural way following
     mathematical convention and DCP rules. The system analyzes the problem, verifies
@@ -52,7 +52,7 @@ LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true
 Collate:
-    'cvxr.R'
+    'CVXR.R'
     'data.R'
     'globals.R'
     'generics.R'

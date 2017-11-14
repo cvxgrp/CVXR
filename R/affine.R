@@ -382,7 +382,7 @@ setMethod("validate_args", "Conv", function(object) {
 #' @param values A list of arguments to the atom.
 #' @describeIn Conv The convolution of the two values.
 setMethod("to_numeric", "Conv", function(object, values) {
-    .Call('_cvxr_cpp_convolve', PACKAGE = 'cvxr', as.vector(values[[1]]), as.vector(values[[2]]))
+    .Call('_CVXR_cpp_convolve', PACKAGE = 'CVXR', as.vector(values[[1]]), as.vector(values[[2]]))
 })
 
 #' @describeIn Conv The size of the atom.
@@ -424,7 +424,7 @@ setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data 
 #' @name CumSum-class
 #' @aliases CumSum
 #' @rdname CumSum-class
-.CumSum <- setClass("CumSum", representation(axis = "numeric"), prototype(axis = 2), 
+.CumSum <- setClass("CumSum", representation(axis = "numeric"), prototype(axis = 2),
                     validity = function(object) {
                       if(!(length(object@axis) == 1 && object@axis %in% c(1,2)))
                         stop("[CumSum: axis] axis must equal 1 (row) or 2 (column)")
@@ -459,7 +459,7 @@ setMethod("validate_args", "CumSum", function(object) {
 # Difference Matrix
 #
 # Returns a sparse matrix representation of the first order difference operator.
-# 
+#
 # @param dim The length of the matrix dimensions.
 # @param axis The axis to take the difference along.
 # @return A square matrix representing the first order difference.
@@ -668,7 +668,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' The HStack class.
 #'
 #' Horizontal concatenation of values.
-#' 
+#'
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
 #' @name HStack-class
 #' @aliases HStack
@@ -769,7 +769,7 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, size, data
 # Get Special Slice Index
 #
 # Indexing using logical indexing or a list of indices.
-# 
+#
 # @param expr An \linkS4class{Expression} object.
 # @param row The row index.
 # @param col The column index.
@@ -810,9 +810,9 @@ Index.get_special_slice <- function(expr, row, col) {
 
 #
 # Get Index
-# 
+#
 # Returns a canonicalized index into a matrix.
-# 
+#
 # @param matrix A LinOp representing the matrix to be indexed.
 # @param constraints A list of \linkS4class{Constraint} objects to append to.
 # @param row The row index.
@@ -832,7 +832,7 @@ Index.get_index <- function(matrix, constraints, row, col) {
 # Index Block Equation
 #
 # Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
-# 
+#
 # @param matrix A LinOp representing the matrix to be indexed.
 # @param block A LinOp representing the block in the block equality.
 # @param constraints A list of \linkS4class{Constraint} objects to append to.
@@ -1250,7 +1250,7 @@ Vec <- function(X) {
 #' The VStack class.
 #'
 #' Vertical concatenation of values.
-#' 
+#'
 #' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @name VStack-class
 #' @aliases VStack

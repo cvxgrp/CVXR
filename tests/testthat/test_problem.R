@@ -1227,8 +1227,8 @@ test_that("Test p_norm function", {
 
     x_alg <- as.vector(result$getValue(x))
     expect_equal(x_alg, x_true, tolerance = 1e-3)
-    expect_equal(result$value, cvxr:::.p_norm(x_alg, p))
-    expect_equal(cvxr:::.p_norm(x_alg, p), result$getValue(p_norm(x_alg, p)))
+    expect_equal(result$value, .p_norm(x_alg, p))
+    expect_equal(.p_norm(x_alg, p), result$getValue(p_norm(x_alg, p)))
   }
 })
 

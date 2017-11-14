@@ -6,9 +6,9 @@
 #' @importClassesFrom gmp bigq bigz
 
 ##
-## Global variable for package cvxr
+## Global variable for package CVXR
 ##
-.cvxr.options <- list(idCounter = 0L)
+.CVXR.options <- list(idCounter = 0L)
 
 #'
 #' Set ID Counter
@@ -16,32 +16,32 @@
 #' Set the CVXR variable/constraint identification number counter.
 #'
 #' @param value The value to assign as ID.
-#' @return the changed value of the package global \code{.cvxr.options}.
+#' @return the changed value of the package global \code{.CVXR.options}.
 #' @export
 #' @examples
 #' \dontrun{
 #'   setIdCounter(value = 0L)
 #' }
 setIdCounter <- function(value = 0L) {
-    .cvxr.options$idCounter <- value
-    assignInMyNamespace(".cvxr.options", .cvxr.options)
-    .cvxr.options
+    .CVXR.options$idCounter <- value
+    assignInMyNamespace(".CVXR.options", .CVXR.options)
+    .CVXR.options
 }
 
 #'
 #' Reset Options
 #'
-#' Reset the global package variable \code{.cvxr.options}.
+#' Reset the global package variable \code{.CVXR.options}.
 #'
-#' @return The default value of CVXR package global \code{.cvxr.options}.
+#' @return The default value of CVXR package global \code{.CVXR.options}.
 #' @export
 #' @examples
 #' \dontrun{
 #'   resetOptions()
 #' }
 resetOptions <- function() {
-    assignInMyNamespace(".cvxr.options", list(idCounter = 0L))
-    .cvxr.options
+    assignInMyNamespace(".CVXR.options", list(idCounter = 0L))
+    .CVXR.options
 }
 
 #'
@@ -56,7 +56,7 @@ resetOptions <- function() {
 #'    get_id()
 #' }
 get_id <- function() {
-    id <- .cvxr.options$idCounter <- .cvxr.options$idCounter + 1L
-    assignInMyNamespace(".cvxr.options", .cvxr.options)
+    id <- .CVXR.options$idCounter <- .CVXR.options$idCounter + 1L
+    assignInMyNamespace(".CVXR.options", .CVXR.options)
     id
 }

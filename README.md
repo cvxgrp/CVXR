@@ -14,7 +14,7 @@ for R available, including the C compilers etc. Execute:
 
 ```
 library(devtools)
-install_github("anqif/cvxr")
+install_github("anqif/CVXR")
 ```
 
 ## Documentation
@@ -25,7 +25,7 @@ the [CVXR page](https://cvxr.rbind.io) page.
 
 ## Support
 
-Open an issue on the [`cvxr` Github](https://github.com/anqif/cvxr)
+Open an issue on the [`CVXR` Github](https://github.com/anqif/CVXR)
 page.
 
 

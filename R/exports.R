@@ -793,7 +793,7 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
 #' @param p The type of norm. May be a number (p-norm), "inf" (infinity-norm), "nuc" (nuclear norm), or "fro" (Frobenius norm). The default is \code{p = 2}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the norm.
-#' @seealso \link[cvxr]{norm}
+#' @seealso \link[CVXR]{norm}
 #' @docType methods
 #' @name cvxr_norm
 #' @rdname cvxr_norm

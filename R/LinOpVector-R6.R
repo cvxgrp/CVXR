@@ -9,7 +9,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                     public = list(
                                         initialize = function() {
                                             private$linOps <- list()
-                                            private$ptr <- .Call("_cvxr_LinOpVector__new", PACKAGE = "cvxr")
+                                            private$ptr <- .Call("_CVXR_LinOpVector__new", PACKAGE = "CVXR")
                                         }
                                        ,
                                         getXPtr = function() {
@@ -24,7 +24,7 @@ CVXcanon.LinOpVector <- R6::R6Class("CVXcanon.LinOpVector",
                                             n <- length(private$linOps)
                                             private$linOps[[n+1]] <- R6LinOp
                                             ## Needs modification by hand for arguments
-                                            .Call("_cvxr_LinOpVector__push_back", private$ptr , R6LinOp$getXPtr(), PACKAGE = "cvxr")
+                                            .Call("_CVXR_LinOpVector__push_back", private$ptr , R6LinOp$getXPtr(), PACKAGE = "CVXR")
                                         }
                                        ,
                                         toString = function() {

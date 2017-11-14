@@ -34,7 +34,7 @@
 #' @name dspop
 #' @docType data
 #' @keywords data
-#' @seealso \link[cvxr]{dssamp}
+#' @seealso \link[CVXR]{dssamp}
 #' @format A data frame with 1000 rows and 3 variables:
 #' \describe{
 #'  \item{y}{Response variable}
@@ -51,7 +51,7 @@
 #' @name dssamp
 #' @docType data
 #' @keywords data
-#' @seealso \link[cvxr]{dspop}
+#' @seealso \link[CVXR]{dspop}
 #' @format A data frame with 100 rows and 3 variables:
 #' \describe{
 #'  \item{y}{Response variable}

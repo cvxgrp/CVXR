@@ -75,9 +75,9 @@ Maximize <- function(expr) {
 
 #'
 #' Arithmetic Operations on Objectives
-#' 
+#'
 #' Add, subtract, multiply, or divide optimization objectives.
-#' 
+#'
 #' @param e1 The left-hand \linkS4class{Minimize}, \linkS4class{Maximize}, or numeric value.
 #' @param e2 The right-hand \linkS4class{Minimize}, \linkS4class{Maximize}, or numeric value.
 #' @return A \linkS4class{Minimize} or \linkS4class{Maximize} object.
@@ -155,9 +155,9 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
 #'
 #' The SolverStats class.
-#' 
+#'
 #' This class contains the miscellaneous information that is returned by a solver after solving, but that is not captured directly by the \linkS4class{Problem} object.
-#' 
+#'
 #' @slot solver_name The name of the solver.
 #' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
@@ -200,7 +200,7 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
 #' The SizeMetrics class.
 #'
 #' This class contains various metrics regarding the problem size.
-#' 
+#'
 #' @slot num_scalar_variables The number of scalar variables in the problem.
 #' @slot num_scalar_data The number of constants used across all matrices and vectors in the problem. Some constants are not apparent when the problem is constructed. For example, the \code{sum_squares} expression is a wrapper for a \code{quad_over_lin} expression with a constant \code{1} in the denominator.
 #' @slot num_scalar_eq_constr The number of scalar equality constraints in the problem.
@@ -482,7 +482,7 @@ setMethod("psolve", "Problem", function(object, solver, ignore_dcp = FALSE, warm
     #   object@.separable_problems <- get_separable_problems(object)
     #   object@.cached_data[[PARALLEL]] <- CachedProblem(objective, constraints)
     # }
-    # 
+    #
     # if(length(object@.separable_problems) > 1)
     #   .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
   }
@@ -528,7 +528,7 @@ setMethod("psolve", "Problem", function(object, solver, ignore_dcp = FALSE, warm
 #' @rdname psolve
 #' @method solve Problem
 #' @export
-solve.Problem <- function(a, b, ...) { cvxr::psolve(a, b, ...) }
+solve.Problem <- function(a, b, ...) { CVXR::psolve(a, b, ...) }
 
 # # TODO: Finish implementation of parallel solve.
 # .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {
@@ -540,10 +540,10 @@ solve.Problem <- function(a, b, ...) { cvxr::psolve(a, b, ...) }
 #     dual_values <- result$dual_values
 #     return(SolveResults(opt_value, status, primal_values, dual_values))
 #   }
-# 
+#
 #   # TODO: Finish implementation of parallel solve
 #   statuses <- sapply(solve_results, function(solve_result) { solve_result$status })
-# 
+#
 #   # Check if at least one subproblem is infeasible or inaccurate
 #   for(status in INF_OR_UNB) {
 #     if(status %in% statuses) {
@@ -553,20 +553,20 @@ solve.Problem <- function(a, b, ...) { cvxr::psolve(a, b, ...) }
 #       for(i in 1:length(solve_results)) {
 #         subproblem <- object@separable_problems[i]
 #         solve_result <- solve_results[i]
-# 
+#
 #         for(j in 1:length(solve_result$primal_values)) {
 #           var <- variables(subproblem)[j]
 #           primal_value <- solve_result$primal_values[j]
 #           subproblem <- save_value(var, primal_value)   # TODO: Fix this since R makes copies
 #         }
-# 
+#
 #         for(j in 1:length(solve_result$dual_values)) {
 #           constr <- subproblem@constraints[j]
 #           dual_value <- solve_result$dual_values[j]
 #           subproblem <- save_value(constr, dual_value)   # TODO: Fix this since R makes copies
 #         }
 #       }
-# 
+#
 #       object@value <- sum(sapply(solve_results, function(solve_result) { solve_result$optimal_value }))
 #       if(OPTIMAL_INACCURATE %in% statuses)
 #         object@status <- OPTIMAL_INACCURATE
@@ -785,9 +785,9 @@ setMethod("Problem.save_values", "Problem", function(object, result_vec, objstor
 
 #'
 #' Arithmetic Operations on Problems
-#' 
+#'
 #' Add, subtract, multiply, or divide DCP optimization problems.
-#' 
+#'
 #' @param e1 The left-hand \linkS4class{Problem} object.
 #' @param e2 The right-hand \linkS4class{Problem} object.
 #' @return A \linkS4class{Problem} object.

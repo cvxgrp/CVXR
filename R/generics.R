@@ -1,8 +1,8 @@
 #'
 #' Sign Properties
-#' 
+#'
 #' Determine if an expression is positive, negative, or zero.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
 #' @name sign-methods
@@ -22,9 +22,9 @@ setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 
 #'
 #' Curvature of Expression
-#' 
+#'
 #' The curvature of an expression.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
 #' @docType methods
@@ -34,9 +34,9 @@ setGeneric("curvature", function(object) { standardGeneric("curvature") })
 
 #'
 #' Curvature Properties
-#' 
+#'
 #' Determine if an expression is constant, affine, convex, concave, quadratic, or piecewise linear (pwl).
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
 #' @name curvature-methods
@@ -68,9 +68,9 @@ setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 
 #'
 #' DCP Compliance
-#' 
+#'
 #' Determine if a problem or expression complies with the disciplined convex programming rules.
-#' 
+#'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
 #' @docType methods
@@ -82,7 +82,7 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' Size of Expression
 #'
 #' The size of an expression.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
 #' @docType methods
@@ -94,7 +94,7 @@ setGeneric("size", function(object) { standardGeneric("size") })
 #' Size Properties
 #'
 #' Determine if an expression is a scalar, vector, or matrix.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
 #' @name size-methods
@@ -119,7 +119,7 @@ setGeneric("primal_to_result", function(object, result) { standardGeneric("prima
 #' Get or Set Value
 #'
 #' Get or set the value of a variable, parameter, expression, or problem.
-#' 
+#'
 #' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Expression}, or \linkS4class{Problem} object.
 #' @param value A numeric scalar, vector, or matrix to assign to the object.
 #' @return The numeric value of the variable, parameter, or expression. If any part of the mathematical object is unknown, return \code{NA}.
@@ -141,7 +141,7 @@ setGeneric("save_value", function(object, value) { standardGeneric("save_value")
 #' Get Expression Data
 #'
 #' Get information needed to reconstruct the expression aside from its arguments.
-#' 
+#'
 #' @param object A \linkS4class{Expression} object.
 #' @return A list containing data.
 #' @docType methods
@@ -152,7 +152,7 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 #' Variable, Parameter, or Expression Name
 #'
 #' The string representation of a variable, parameter, or expression.
-#' 
+#'
 #' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.
 #' @return For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.
 #' @docType methods
@@ -187,7 +187,7 @@ setGeneric("constants", function(object) { standardGeneric("constants") })
 #'
 #' The (sub/super)-gradient of the expression with respect to each variable.
 #' Matrix expressions are vectorized, so the gradient is a matrix. \code{NA} indicates variable values are unknown or outside the domain.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list mapping each variable to a sparse matrix.
 #' @docType methods
@@ -199,7 +199,7 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #' Domain
 #'
 #' A list of constraints describing the closure of the region where the expression is finite.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list of \linkS4class{Constraint} objects.
 #' @docType methods
@@ -211,7 +211,7 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 #' Validate Value
 #'
 #' Check that the value satisfies a \linkS4class{Leaf}'s symbolic attributes.
-#' 
+#'
 #' @param object A \linkS4class{Leaf} object.
 #' @param val The assigned value.
 #' @return The value converted to proper matrix type.
@@ -223,7 +223,7 @@ setGeneric("validate_val", function(object, val) { standardGeneric("validate_val
 #' Canonicalize
 #'
 #' Computes the graph implementation of a canonical expression.
-#' 
+#'
 #' @param object A \linkS4class{Canonical} object.
 #' @return A list of \code{list(affine expression, list(constraints))}.
 #' @docType methods
@@ -241,7 +241,7 @@ setGeneric("canonical_form", function(object) { standardGeneric("canonical_form"
 # Gradient of an Atom
 #
 # The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
-# 
+#
 # @param object An \linkS4class{Atom} object.
 # @param values A list of numeric values for the arguments.
 # @return A list of sparse matrices or \code{NA}.
@@ -251,7 +251,7 @@ setGeneric(".grad", function(object, values) { standardGeneric(".grad") })
 # Domain of an Atom
 #
 # The constraints describing the domain of the atom.
-# 
+#
 # @param object An \linkS4class{Atom} object.
 # @return A list of \linkS4class{Constraint} objects.
 setGeneric(".domain", function(object) { standardGeneric(".domain") })
@@ -260,7 +260,7 @@ setGeneric(".domain", function(object) { standardGeneric(".domain") })
 # Gradient of an AxisAtom
 #
 # The (sub/super) gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix. Takes the axis into account.
-# 
+#
 # @param values A list of numeric values for the arguments.
 # @return A list of sparse matrices or \code{NA}.
 setGeneric(".axis_grad", function(object, values) { standardGeneric(".axis_grad") })
@@ -286,7 +286,7 @@ setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 #' Atom Size
 #'
 #' Determine the size of an atom based on its arguments.
-#' 
+#'
 #' @param object A \linkS4class{Atom} object.
 #' @return A numeric vector \code{c(row, col)} indicating the size of the atom.
 #' @rdname size_from_args
@@ -296,7 +296,7 @@ setGeneric("size_from_args", function(object) { standardGeneric("size_from_args"
 #' Atom Sign
 #'
 #' Determine the sign of an atom based on its arguments.
-#' 
+#'
 #' @param object An \linkS4class{Atom} object.
 #' @return A logical vector \code{c(is positive, is negative)} indicating the sign of the atom.
 #' @rdname sign_from_args
@@ -304,7 +304,7 @@ setGeneric("sign_from_args", function(object) { standardGeneric("sign_from_args"
 
 #'
 #' Validate Arguments
-#' 
+#'
 #' Validate an atom's arguments, returning an error if any are invalid.
 #'
 #' @param object An \linkS4class{Atom} object.
@@ -314,7 +314,7 @@ setGeneric("validate_args", function(object) { standardGeneric("validate_args") 
 
 #'
 #' Numeric Value of Atom
-#' 
+#'
 #' Returns the numeric value of the atom evaluated on the specified arguments.
 #'
 #' @param object An \linkS4class{Atom} object.
@@ -328,7 +328,7 @@ setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric"
 #' Curvature of an Atom
 #'
 #' Determine if an atom is convex, concave, or affine.
-#' 
+#'
 #' @param object A \linkS4class{Atom} object.
 #' @return A logical value.
 #' @name curvature-atom
@@ -350,7 +350,7 @@ setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine"
 #' Curvature of Composition
 #'
 #' Determine whether a composition is non-decreasing or non-increasing in an index.
-#' 
+#'
 #' @param object A \linkS4class{Atom} object.
 #' @param idx An index into the atom.
 #' @return A logical value.
@@ -367,9 +367,9 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 
 #'
 #' Graph Implementation
-#' 
+#'
 #' Reduces the atom to an affine expression and list of constraints.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @param arg_objs A list of linear expressions for each argument.
 #' @param size A vector with two elements representing the size of the resulting expression.
@@ -381,12 +381,12 @@ setGeneric("graph_implementation", function(object, arg_objs, size, data) { stan
 
 #'
 #' Identification Number
-#' 
+#'
 #' A unique identification number used internally to keep track of variables and constraints. Should not be modified by the user.
 #'
 #' @param object A \linkS4class{Variable} or \linkS4class{Constraint} object.
 #' @return A non-negative integer identifier.
-#' @seealso \code{\link[cvxr]{get_id}} \code{\link[cvxr]{setIdCounter}}
+#' @seealso \code{\link[CVXR]{get_id}} \code{\link[CVXR]{setIdCounter}}
 #' @docType methods
 #' @rdname id
 #' @export
@@ -414,7 +414,7 @@ setGeneric("violation", function(object) { standardGeneric("violation") })
 #' Second-Order Cone Methods
 #'
 #' The number of elementwise cones or the size of a single cone in a second-order cone constraint.
-#' 
+#'
 #' @param object An \linkS4class{SOCAxis} object.
 #' @return The number of cones, or the size of a cone.
 #' @docType methods
@@ -433,18 +433,18 @@ setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 #' Dual Value
 #'
 #' The value of the dual variable in a constraint.
-#' 
+#'
 #' @param object A \linkS4class{Constraint} object.
 #' @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
 #' @rdname dual_value
 #' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
-#' 
+#'
 #' Format Constraints
-#' 
+#'
 #' Format constraints for the solver.
-#' 
+#'
 #' @param object A \linkS4class{Constraint} object.
 #' @param eq_constr A list of the equality constraints in the canonical problem.
 #' @param leq_constr A list of the inequality constraints in the canonical problem.
@@ -511,11 +511,11 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' Get Problem Data
 #'
 #' Get the problem data used in the call to the solver.
-#' 
+#'
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @return A list of arguments for the solver.
-#' @examples 
+#' @examples
 #' a <- Variable(name = "a")
 #' data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
 #' data[["dims"]]
@@ -534,9 +534,9 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 
 #'
 #' Solve a DCP Problem
-#' 
+#'
 #' Solve a DCP compliant optimization problem.
-#' 
+#'
 #' @param object,a A \linkS4class{Problem} object.
 #' @param solver,b (Optional) A string indicating the solver to use. Defaults to "ECOS".
 #' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
@@ -563,9 +563,9 @@ setGeneric("psolve", function(object, solver, ignore_dcp = FALSE, warm_start = F
 
 #'
 #' Is Problem a QP?
-#' 
+#'
 #' Determine if a problem is a quadratic program.
-#' 
+#'
 #' @param object A \linkS4class{Problem} object.
 #' @return A logical value indicating whether the problem is a quadratic program.
 #' @docType methods
@@ -589,7 +589,7 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #' Import Solver
 #'
 #' Import the R library that interfaces with the specified solver.
-#' 
+#'
 #' @param solver A \linkS4class{Solver} object.
 #' @rdname import_solver
 #' @docType methods
@@ -599,10 +599,10 @@ setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 
 # #'
 # #' Choose MOSEK Solution
-# #' 
+# #'
 # #' Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
 # #' As long as interior solution is not worse, take it (for backward compatibility).
-# #' 
+# #'
 # #' @param solver A \linkS4class{MOSEK} object.
 # #' @param results_dict A list of the results returned by the solver.
 # #' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
@@ -613,20 +613,20 @@ setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") 
 
 #'
 #' Validate Solver
-#' 
+#'
 #' Raises an exception if the solver cannot solve the problem.
-#' 
+#'
 #' @param solver A \linkS4class{Solver} object.
 #' @param constraints A list of canonicalized constraints
 #' @docType methods
 #' @rdname validate_solver
 setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
 
-# 
+#
 # Validate Cache
-# 
+#
 # Clears the cache if the objective or constraints changed.
-# 
+#
 # @param solver A \linkS4class{Solver} object.
 # @param objective A list representing the canonicalized objective.
 # @param constraints A list of canonicalized constraints.
@@ -638,7 +638,7 @@ setGeneric("validate_cache", function(solver, objective, constraints, cached_dat
 # Get Symbolic Data
 #
 # Returns the symbolic data for the problem.
-# 
+#
 # @param solver A \linkS4class{Solver} object.
 # @param objective A list representing the canonicalized objective.
 # @param constraints A list of canonicalized constraints.
@@ -650,7 +650,7 @@ setGeneric("get_sym_data", function(solver, objective, constraints, cached_data)
 # Get Matrix Data
 #
 # Returns the numeric data for the problem.
-# 
+#
 # @param solver A \linkS4class{Solver} object.
 # @param objective A list representing the canonicalized objective.
 # @param constraints A list of canonicalized constraints.
@@ -658,9 +658,9 @@ setGeneric("get_sym_data", function(solver, objective, constraints, cached_data)
 # @return A \linkS4class{SymData} object holding the symbolic data for the problem.
 setGeneric("get_matrix_data", function(solver, objective, constraints, cached_data) { standardGeneric("get_matrix_data") })
 
-# 
+#
 # Solver: Get Problem Data
-# 
+#
 # Returns the argument for the call to the solver.
 #
 # @param solver A \linkS4class{Solver} object.
@@ -672,9 +672,9 @@ setGeneric("Solver.get_problem_data", function(solver, objective, constraints, c
 
 #
 # Extract Constraints
-#  
+#
 # Extracts the equality, inequality, and nonlinear constraints.
-# 
+#
 # @param solver A \linkS4class{Solver} object.
 # @param constr_map A list of canonicalized constraints.
 # @return A list of equality, inequality, and nonlinear constraints.
@@ -682,9 +682,9 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 
 #'
 #' Call to Solver
-#' 
+#'
 #' Returns the result of the call to the solver.
-#' 
+#'
 #' @param solver A \linkS4class{Solver} object.
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -698,11 +698,11 @@ setGeneric("split_constr", function(solver, constr_map) { standardGeneric("split
 #' @rdname Solver-solve
 setGeneric("Solver.solve", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) { standardGeneric("Solver.solve") })
 
-#' 
+#'
 #' Format Solver Results
-#' 
+#'
 #' Converts the solver output into standard form.
-#' 
+#'
 #' @param solver A \linkS4class{Solver} object.
 #' @param results_dict A list containing the solver output.
 #' @param data A list containing information about the problem.
@@ -714,9 +714,9 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 
 #'
 #' Solver Capabilities
-#' 
+#'
 #' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), semidefinite program (SDP), exponential cone program (EXP), or mixed-integer program (MIP).
-#' 
+#'
 #' @param solver A \linkS4class{Solver} object.
 #' @return A logical value.
 #' @name Solver-capable

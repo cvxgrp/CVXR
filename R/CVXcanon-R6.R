@@ -22,16 +22,16 @@ CVXcanon <- R6::R6Class("CVXcanon",
                                 ## integers converted to chacracters
                                 ## constr_offsets is a standard integer vector in R
                                 if (missing(constr_offsets)) {
-                                    objPtr <- .Call('_cvxr_build_matrix_0',
+                                    objPtr <- .Call('_CVXR_build_matrix_0',
                                                     constraints$getXPtr(),
                                                     id_to_col,
-                                                    PACKAGE = 'cvxr')
+                                                    PACKAGE = 'CVXR')
                                 } else {
-                                    objPtr <- .Call('_cvxr_build_matrix_1',
+                                    objPtr <- .Call('_CVXR_build_matrix_1',
                                                     constraints$getXPtr(),
                                                     id_to_col,
                                                     constr_offsets,
-                                                    PACKAGE = 'cvxr')
+                                                    PACKAGE = 'CVXR')
                                 }
                                 ##cat("Instantiating ProblemData-R6", "\n")
                                 ##browser()

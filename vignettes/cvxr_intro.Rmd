@@ -15,16 +15,16 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-## What is `cvxr`?
+## What is `CVXR`?
 
-`cvxr` is an R package that provides an object-oriented modeling
+`CVXR` is an R package that provides an object-oriented modeling
 language for convex optimization, similar to `CVX`, `CVXPY`, `YALMIP`,
 and `Convex.jl`. It allows the user to formulate convex optimization
 problems in a natural mathematical syntax rather than the restrictive
 standard form required by most solvers. The user specifies an
 objective and set of constraints by combining constants, variables,
 and parameters using a library of functions with known mathematical
-properties. `cvxr` then applies
+properties. `CVXR` then applies
 signed [disciplined convex programming (DCP)](https://cvxr.rbind.io)
 to verify the problem’s convexity. Once verified, the problem is
 converted into standard conic form using graph implementations and
@@ -34,9 +34,9 @@ or [SCS](https://github.com/cvxgrp/scs).
 
 ## Where can I learn more? 
 
-The paper by @fu:naras:boyd:2017 is the main reference. A number of
-tutorial examples are also available on
-the [CVXR website](https://cvxr.rbind.io).
+The paper by @fu:naras:boyd:2017 is the main reference. Further
+documentation, along with a number of tutorial examples, is also
+available on the [CVXR website](https://cvxr.rbind.io).
 
 Below we provide a simple example to get you started. 
 
@@ -80,22 +80,22 @@ knitr::kable(m)
 These are the least-squares estimates and can be seen to be reasonably
 close to the original $\beta$ values -4 through 5.
 
-## The `cvxr` formulation
+## The `CVXR` formulation
 
-The `cvxr` formulation states the above as an optimization problem:
+The `CVXR` formulation states the above as an optimization problem:
 
 $$
   \begin{array}{ll}
     \underset{\beta}{\mbox{minimize}} & \|y - X\beta\|_2^2,
   \end{array}
 $$
-which directly translates into a problem that `cvxr` can solve as shown
+which directly translates into a problem that `CVXR` can solve as shown
 in the steps below.
 
-- Step 0. Load the `cvxr` library
+- Step 0. Load the `CVXR` library
 
 ```{r}
-suppressWarnings(library(cvxr, warn.conflicts=FALSE))
+suppressWarnings(library(CVXR, warn.conflicts=FALSE))
 ```
 
 - Step 1. Define the variable to be estimated
@@ -111,7 +111,7 @@ objective <- Minimize(sum((Y - X %*% betaHat)^2))
 ```
 Notice how the objective is specified using functions such as `sum`,
 `*%*` and `^`, that are familiar to R users despite that fact that
-`betaHat` is no ordinary R expression but a `cvxr` expression.
+`betaHat` is no ordinary R expression but a `CVXR` expression.
 
 - Step 3. Create a problem to solve
 
@@ -137,7 +137,7 @@ from `lm`.
 
 ```{r}
 m <- cbind(coef(ls.model), result$getValue(betaHat))
-colnames(m) <- c("lm est.", "cvxr est.")
+colnames(m) <- c("lm est.", "CVXR est.")
 rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
 knitr::kable(m)
 ```
@@ -154,13 +154,13 @@ is
 [nonnegative least squares regression](https://en.wikipedia.org/wiki/Non-negative_least_squares) and
 `lm` would no longer do the job. 
 
-In `cvxr`, the modified problem merely requires the addition of a constraint to the
+In `CVXR`, the modified problem merely requires the addition of a constraint to the
 problem definition.
 
 ```{r}
 problem <- Problem(objective, constraints = list(betaHat >= 0))
 result <- solve(problem)
-m <- data.frame(cvxr.est = result$getValue(betaHat))
+m <- data.frame(CVXR.est = result$getValue(betaHat))
 rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
 knitr::kable(m)
 ```
@@ -179,7 +179,7 @@ if (requireNamespace("nnls", quietly = TRUE)) {
 
 ```{r}
 m <- cbind(result$getValue(betaHat), nnls.fit)
-colnames(m) <- c("cvxr est.", "nnls est.")
+colnames(m) <- c("CVXR est.", "nnls est.")
 rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
 knitr::kable(m)
 ```
@@ -195,7 +195,7 @@ $\beta_2$ and $\beta_3$ is negative and but all other $\beta$s are
 positive.
 
 It is clear that this problem would not fit into any standard
-package. But in `cvxr`, this is easily done by adding a few
+package. But in `CVXR`, this is easily done by adding a few
 constraints. 
 
 To express the fact that $\beta_2 + \beta_3$ is negative, we construct
@@ -224,7 +224,7 @@ _NOTE_: The above constraint can also be expressed simply as
 ```{r, eval = FALSE}
 constraint1 <- betaHat[2] + betaHat[3] < 0
 ```
-but it is easier working with matrices in general with `cvxr`. 
+but it is easier working with matrices in general with `CVXR`. 
 
 
 For the positivity for rest of the variables, we construct a $10\times
@@ -257,15 +257,15 @@ result <- solve(problem)
 And we can get the estimates of $\beta$.
 
 ```{r}
-m <- data.frame(cvxr.soln = result$getValue(betaHat))
+m <- data.frame(CVXR.soln = result$getValue(betaHat))
 rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
 knitr::kable(m)
 ```
 
-This demonstrates the chief advantage of `cvxr`: flexibility. Users
+This demonstrates the chief advantage of `CVXR`: flexibility. Users
 can quickly modify and re-solve a problem, making our package ideal
 for prototyping new statistical methods. Its syntax is simple and
-mathematically intuitive. Furthermore, `cvxr` combines seamlessly with
+mathematically intuitive. Furthermore, `CVXR` combines seamlessly with
 native R code as well as several popular packages, allowing it to be
 incorporated easily into a larger analytical framework. The user is
 free to construct statistical estimators that are solutions to a

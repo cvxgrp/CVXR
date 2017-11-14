@@ -1,4 +1,4 @@
 library(testthat)
-library(cvxr)
+library(CVXR)
 
-test_check("cvxr")
+test_check("CVXR")

@@ -32,59 +32,59 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                               active = list(
                                   sparse = function(value) {
                                       if (missing(value)) {
-                                          .Call("_cvxr_LinOp__get_sparse", private$ptr, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__get_sparse", private$ptr, PACKAGE = "CVXR")
                                       } else {
                                           ## value should be a boolean
-                                          .Call("_cvxr_LinOp__set_sparse",  private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_sparse",  private$ptr, value, PACKAGE = "CVXR")
                                       }
                                   }
                                  ,
                                   sparse_data = function(value) {
                                       if (missing(value)) {
-                                          .Call("_cvxr_LinOp__get_sparse_data", private$ptr, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__get_sparse_data", private$ptr, PACKAGE = "CVXR")
                                       } else {
                                           ## value should be a dgCMatrix-class
-                                          .Call("_cvxr_LinOp__set_sparse_data", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_sparse_data", private$ptr, value, PACKAGE = "CVXR")
                                       }
                                   }
                                  ,
                                   dense_data = function(value) {
                                       if (missing(value)) {
-                                          .Call("_cvxr_LinOp__get_dense_data", private$ptr, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__get_dense_data", private$ptr, PACKAGE = "CVXR")
                                       } else {
                                           ## value should be a matrix
-                                          .Call("_cvxr_LinOp__set_dense_data", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_dense_data", private$ptr, value, PACKAGE = "CVXR")
                                       }
                                   }
                                  ,
                                   type = function(value) {
                                       if (missing(value)) {
-                                          index <- .Call("_cvxr_LinOp__get_type", private$ptr, PACKAGE = "cvxr")
+                                          index <- .Call("_CVXR_LinOp__get_type", private$ptr, PACKAGE = "CVXR")
                                           ## make 1-based index
                                           private$operatorType[index + 1]
                                       } else {
                                           ##value <- match.arg(value, private$operatorType)
                                           ## Make zero based index!
                                           index <- match(value, private$operatorType) - 1
-                                          .Call("_cvxr_LinOp__set_type", private$ptr, index, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_type", private$ptr, index, PACKAGE = "CVXR")
                                       }
                                   }
                                  ,
                                   size = function(value) {
                                       if (missing(value)) {
-                                          .Call("_cvxr_LinOp__get_size", private$ptr, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__get_size", private$ptr, PACKAGE = "CVXR")
                                       } else {
                                           ## value is an integer vector
-                                          .Call("_cvxr_LinOp__set_size", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_size", private$ptr, value, PACKAGE = "CVXR")
                                       }
                                   }
                                  ,
                                   slice = function(value) {
                                       if (missing(value)) {
-                                          .Call("_cvxr_LinOp__get_slice", private$ptr, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__get_slice", private$ptr, PACKAGE = "CVXR")
                                       } else {
                                           ## value is a list of integer vectors
-                                          .Call("_cvxr_LinOp__set_slice", private$ptr, value, PACKAGE = "cvxr")
+                                          .Call("_CVXR_LinOp__set_slice", private$ptr, value, PACKAGE = "CVXR")
                                       }
                                   }
                               ),
@@ -92,7 +92,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   initialize = function(type = NULL, size = NULL, args = NULL, data = NULL) {
                                       private$args = R6List$new()
                                       ## Create a new LinOp on the C side
-                                      private$ptr <- .Call("_cvxr_LinOp__new", PACKAGE = "cvxr")
+                                      private$ptr <- .Call("_CVXR_LinOp__new", PACKAGE = "CVXR")
                                       ## Associate args on R side with the args on the C side.
                                       ##browser()
                                       if (!is.null(type)) {
@@ -111,12 +111,12 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                  ,
                                   args_push_back = function(R6LinOp) {
                                       private$args$append(R6LinOp)
-                                      .Call("_cvxr_LinOp__args_push_back", private$ptr, R6LinOp$getXPtr(), PACKAGE = "cvxr")
+                                      .Call("_CVXR_LinOp__args_push_back", private$ptr, R6LinOp$getXPtr(), PACKAGE = "CVXR")
                                   }
                                  ,
                                   slice_push_back = function(anIntVector) {
-                                      .Call("_cvxr_LinOp__slice_push_back", private$ptr,
-                                            anIntVector, PACKAGE = "cvxr")
+                                      .Call("_CVXR_LinOp__slice_push_back", private$ptr,
+                                            anIntVector, PACKAGE = "CVXR")
                                   }
                                  ,
                                   getXPtr = function() {
@@ -128,11 +128,11 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                   }
                                  ,
                                   get_id = function() {
-                                      .Call("_cvxr_LinOp__get_id", private$ptr, PACKAGE = "cvxr")
+                                      .Call("_CVXR_LinOp__get_id", private$ptr, PACKAGE = "CVXR")
                                   }
                                   ,
                                   size_push_back = function(value) {
-                                      .Call("_cvxr_LinOp__size_push_back", private$ptr, value, PACKAGE = "cvxr")
+                                      .Call("_CVXR_LinOp__size_push_back", private$ptr, value, PACKAGE = "CVXR")
                                   }
                                  ,
                                   toString = function() {

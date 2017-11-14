@@ -134,7 +134,7 @@ test_that("Test Huber regression", {
   lines(X, X %*% beta_ols, col = "blue")
 
   ## Solve Huber regression problem
-  obj <- sum(cvxr::huber(y - X %*% beta, M))
+  obj <- sum(CVXR::huber(y - X %*% beta, M))
   prob <- Problem(Minimize(obj))
   result <- solve(prob)
   beta_hub <- result$getValue(beta)
@@ -244,7 +244,7 @@ test_that("Test saturating hinges problem", {
   spline_sq <- f_est(xrange, knots, result$getValue(w0), result$getValue(w))
 
   ## Solve with Huber loss
-  loss_obs <- function(y, f, M) { cvxr::huber(y - f, M) }
+  loss_obs <- function(y, f, M) { CVXR::huber(y - f, M) }
   loss <- sum(loss_obs(y, f_est(X, knots, w0, w), 0.01))
   prob <- Problem(Minimize(loss + reg), constr)
   result <- solve(prob)

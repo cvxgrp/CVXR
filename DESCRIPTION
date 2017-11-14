@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 0.94
+Version: 0.94-1
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -23,7 +23,7 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://cvxr.rbind.io, https://stanford.edu/~boyd/papers/cvxr_paper.html, https://github.com/anqif/CVXR
+URL: https://cvxr.rbind.io, https://github.com/anqif/CVXR
 BugReports: https://github.com/anqif/CVXR/issues
 Description: CVXR is an object-oriented modeling language for disciplined convex programming (DCP).
     It allows the user to formulate convex optimization problems in a natural way following

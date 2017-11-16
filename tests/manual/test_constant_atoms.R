@@ -97,7 +97,7 @@ atoms <- list(
            Constant(base::norm(c(7,-1,-8,2,-10,7), "2"))),
       list(tv, c(1,1), list(cbind(3:5, 6:8, 9:11)), Constant(4*sqrt(10))),
       list(upper_tri, c(3,1), list(cbind(3:5, 6:8, 9:11)), Constant(c(6,9,10))),
-      
+
       # Advanced indexing
       list(function(x) { x[cbind(c(2,3), c(1,3))] }, c(2,1), list(cbind(3:5, 6:8, 9:11)), Constant(c(4,11))),
       list(function(x) { x[c(2,3),] }, c(2,1), list(cbind(3:5, 6:8)), Constant(cbind(c(4,5), c(7,8)))),
@@ -160,8 +160,8 @@ check_solver <- function(prob, solver_name) {
   canon <- canonicalize(prob)
   objective <- canon[[1]]
   constraints <- canon[[2]]
-  solver <- SOLVERS[[solver_name]]
-  
+  solver <- CVXR:::SOLVERS[[solver_name]]
+
   tryCatch({
       validate_solver(solver, constraints)
       return(TRUE)
@@ -176,9 +176,9 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     print(problem@objective)
     print(problem@constraints)
     print(paste("solver", solver))
-    
+
   }
-  
+
   if(check_solver(problem, solver)) {
     tolerance <- SOLVERS_TO_TOL[[solver]]
     result <- solve(problem, solver = solver, verbose = verbose)
@@ -188,10 +188,10 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
         print(result$value)
         print(obj_val)
       }
-      
+
       diff <- (result$value - obj_val)/(1+abs(obj_val))
       expect_true(abs(diff) <= tolerance)
-      
+
       # if(abs(diff) > tolerance) {
       #  sink("test_constant_atoms_out.txt", append = TRUE)
       #  print(atom)
@@ -206,7 +206,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 test_that("Test all constant atoms", {
   # if(file.exists("test_constant_atoms_out.txt"))
   #  file.remove("test_constant_atoms_out.txt")
-  
+
   for(a in atoms) {
     atom_list <- a[[1]]
     objective_type <- a[[2]]
@@ -222,7 +222,7 @@ test_that("Test all constant atoms", {
             const_args <- lapply(args, function(arg) { Constant(arg) })
             run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
                      value(obj_val[row, col]), solver)
-            
+
             # Atoms with Variable arguments
             variables <- list()
             constraints <- list()
@@ -235,7 +235,7 @@ test_that("Test all constant atoms", {
             # print(atom)
             # print(value(obj_val[row, col]))
             run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
-            
+
             # Atoms with Parameter arguments
             # parameters <- list()
             # for(expr in args) {

@@ -1631,19 +1631,22 @@ setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = Vec
 #' @aliases diag
 #' @rdname diag
 #' @export
-  if(nargs() == 1L)
-    Diag(x)
-  else if(is_matrix(x))
-    stop("'nrow' or 'ncol' cannot be specified when 'x' is a matrix")
-  else {
-    expr <- as.Constant(x)
-    n <- length(expr)
-    if(!missing(nrow))
-      n <- nrow
-    if(missing(ncol))
-      ncol <- n
-    expr*(base::diag(n)[1:n, 1:ncol])
-  }
+setMethod("diag", signature(x = "Expression"), function(x = 1, nrow, ncol) {
+    missing_nrow <- missing(nrow)
+    missing_ncol <- missing(ncol)
+    if (missing_nrow && missing_ncol) {
+        Diag(x)
+    } else if (is_matrix(x) & ((!missing_nrow) || (!missing_ncol))) {
+        stop("'nrow' or 'ncol' cannot be specified when 'x' is a matrix")
+    } else {
+        expr <- as.Constant(x)
+        n <- length(expr)
+        if(!missing_nrow)
+            n <- nrow
+        if(missing_ncol)
+            ncol <- n
+        expr*(base::diag(n)[1:n, 1:ncol])
+    }
 })
 
 #'

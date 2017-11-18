@@ -25,12 +25,13 @@ Authors@R: c(
            )
 URL: https://cvxr.rbind.io, https://github.com/anqif/CVXR
 BugReports: https://github.com/anqif/CVXR/issues
-Description: An object-oriented modeling language for disciplined convex programming (DCP).
-    It allows the user to formulate convex optimization problems in a natural way following
-    mathematical convention and DCP rules. The system analyzes the problem, verifies
-    its convexity, converts it into a canonical form, and hands it off to an appropriate
-    solver to obtain the solution.
-Depends: R (>= 3.4.0)
+Description: An object-oriented modeling language for disciplined convex
+    programming (DCP). It allows the user to formulate convex optimization problems
+    in a natural way following mathematical convention and DCP rules. The system
+    analyzes the problem, verifies its convexity, converts it into a canonical form,
+    and hands it off to an appropriate solver to obtain the solution.
+Depends:
+    R (>= 3.4.0)
 Imports:
     methods,
     R6,
@@ -80,4 +81,4 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 6.0.1
+RoxygenNote: 5.0.1

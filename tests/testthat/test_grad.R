@@ -18,7 +18,7 @@ test_that("Test gradient for affine_prod", {
                                                    c(0,0,0,-2,4,-3)))
 })
 
-test_that("Test gradient for Pnorm", {
+test_that("Test gradient for p_norm", {
   value(x) <- c(-1,0)
   expr <- p_norm(x, 1)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(-1,0)))

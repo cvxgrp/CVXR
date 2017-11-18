@@ -49,7 +49,9 @@ setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
 #' @examples 
 #' x <- Variable()
-#' curvature(5)
+#' c <- Constant(5)
+#' 
+#' curvature(c)
 #' curvature(x)
 #' curvature(x^2)
 #' curvature(sqrt(x))
@@ -66,6 +68,33 @@ setGeneric("curvature", function(object) { standardGeneric("curvature") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
+#' @examples
+#' x <- Variable()
+#' c <- Constant(5)
+#' 
+#' is_constant(c)
+#' is_constant(x)
+#' 
+#' is_affine(c)
+#' is_affine(x)
+#' is_affine(x^2)
+#' 
+#' is_convex(c)
+#' is_convex(x)
+#' is_convex(x^2)
+#' is_convex(sqrt(x))
+#' 
+#' is_concave(c)
+#' is_concave(x)
+#' is_concave(x^2)
+#' is_concave(sqrt(x))
+#' 
+#' is_quadratic(x^2)
+#' is_quadratic(sqrt(x))
+#' 
+#' is_pwl(c)
+#' is_pwl(x)
+#' is_pwl(x^2)
 #' @name curvature-methods
 NULL
 
@@ -126,7 +155,6 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' size(y)
 #' size(z)
 #' size(x + y)
-#' size(x * z)
 #' size(z - x)
 #' @docType methods
 #' @rdname size
@@ -151,8 +179,7 @@ setGeneric("size", function(object) { standardGeneric("size") })
 #' 
 #' is_vector(x)
 #' is_vector(y)
-#' is_vector(z)
-#' is_vector(x * z)
+#' is_vector(2*z)
 #' 
 #' is_matrix(x)
 #' is_matrix(y)
@@ -276,6 +303,21 @@ setGeneric("constants", function(object) { standardGeneric("constants") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list mapping each variable to a sparse matrix.
+#' @examples 
+#' x <- Variable(2, name = "x")
+#' A <- Variable(2, 2, name = "A")
+#' 
+#' value(x) <- c(-3,4)
+#' expr <- p_norm(x, 2)
+#' grad(expr)
+#' 
+#' value(A) <- rbind(c(3,-4), c(4,3))
+#' expr <- p_norm(A, 0.5)
+#' grad(expr)
+#' 
+#' value(A) <- cbind(c(1,2), c(-1,0))
+#' expr <- abs(A)
+#' grad(expr)
 #' @docType methods
 #' @rdname grad
 #' @export
@@ -440,6 +482,19 @@ setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric"
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return A logical value.
+#' @examples 
+#' x <- Variable()
+#' 
+#' is_atom_convex(x^2)
+#' is_atom_convex(sqrt(x))
+#' is_atom_convex(log(x))
+#' 
+#' is_atom_concave(-abs(x))
+#' is_atom_concave(x^2)
+#' is_atom_concave(sqrt(x))
+#' 
+#' is_atom_affine(2*x)
+#' is_atom_affine(x^2)
 #' @name curvature-atom
 NULL
 
@@ -463,6 +518,12 @@ setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine"
 #' @param object A \linkS4class{Atom} object.
 #' @param idx An index into the atom.
 #' @return A logical value.
+#' @examples 
+#' x <- Variable()
+#' is_incr(log(x), 1)
+#' is_incr(x^2, 1)
+#' is_decr(min(x), 1)
+#' is_decr(abs(x), 1)
 #' @name curvature-comp
 NULL
 
@@ -672,6 +733,14 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 #'    \item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
 #'    \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
 #' }
+#' @examples 
+#' a <- Variable(name = "a")
+#' prob <- Problem(Minimize(norm_inf(a)), list(a >= 2))
+#' result <- psolve(prob, solver = "ECOS", verbose = TRUE)
+#' result$status
+#' result$value
+#' result$getValue(a)
+#' result$getDualValue(constraints(prob)[[1]])
 #' @docType methods
 #' @aliases psolve solve
 #' @rdname psolve

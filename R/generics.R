@@ -5,6 +5,26 @@
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
+#' @examples 
+#' pos <- Constant(1)
+#' neg <- Constant(-1)
+#' zero <- Constant(0)
+#' unknown <- Variable()
+#' 
+#' is_zero(pos)
+#' is_zero(-zero)
+#' is_zero(unknown)
+#' is_zero(pos + neg)
+#' 
+#' is_positive(pos + zero)
+#' is_positive(pos * neg)
+#' is_positive(pos - neg)
+#' is_positive(unknown)
+#' 
+#' is_negative(-pos)
+#' is_negative(pos + neg)
+#' is_negative(neg * zero)
+#' is_negative(neg - pos)
 #' @name sign-methods
 NULL
 
@@ -27,6 +47,13 @@ setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
+#' @examples 
+#' x <- Variable()
+#' curvature(5)
+#' curvature(x)
+#' curvature(x^2)
+#' curvature(sqrt(x))
+#' curvature(log(x^3) + sqrt(x))
 #' @docType methods
 #' @rdname curvature
 #' @export
@@ -73,6 +100,11 @@ setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 #'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
+#' @examples 
+#' x <- Variable()
+#' prob <- Problem(Minimize(x^2), list(x >= 5))
+#' is_dcp(prob)
+#' solve(prob)
 #' @docType methods
 #' @rdname is_dcp
 #' @export
@@ -85,6 +117,17 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
+#' @examples 
+#' x <- Variable()
+#' y <- Variable(3)
+#' z <- Variable(3,2)
+#' 
+#' size(x)
+#' size(y)
+#' size(z)
+#' size(x + y)
+#' size(x * z)
+#' size(z - x)
 #' @docType methods
 #' @rdname size
 #' @export
@@ -97,6 +140,24 @@ setGeneric("size", function(object) { standardGeneric("size") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
+#' @examples 
+#' x <- Variable()
+#' y <- Variable(3)
+#' z <- Variable(3,2)
+#' 
+#' is_scalar(x)
+#' is_scalar(y)
+#' is_scalar(x + y)
+#' 
+#' is_vector(x)
+#' is_vector(y)
+#' is_vector(z)
+#' is_vector(x * z)
+#' 
+#' is_matrix(x)
+#' is_matrix(y)
+#' is_matrix(z)
+#' is_matrix(z - x)
 #' @name size-methods
 NULL
 
@@ -123,6 +184,12 @@ setGeneric("primal_to_result", function(object, result) { standardGeneric("prima
 #' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Expression}, or \linkS4class{Problem} object.
 #' @param value A numeric scalar, vector, or matrix to assign to the object.
 #' @return The numeric value of the variable, parameter, or expression. If any part of the mathematical object is unknown, return \code{NA}.
+#' @examples 
+#' lambda <- Parameter()
+#' value(lambda)
+#' 
+#' value(lambda) <- 5
+#' value(lambda)
 #' @name value-methods
 NULL
 
@@ -157,6 +224,12 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 #' @return For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.
 #' @docType methods
 #' @rdname name
+#' @examples 
+#' x <- Variable()
+#' y <- Variable(3, name = "yVar")
+#' 
+#' name(x)
+#' name(y)
 #' @export
 setGeneric("name", function(object) { standardGeneric("name") })
 
@@ -167,6 +240,19 @@ setGeneric("name", function(object) { standardGeneric("name") })
 #'
 #' @param object A \linkS4class{Canonical} expression.
 #' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Constant} objects.
+#' @examples 
+#' m <- 50
+#' n <- 10
+#' beta <- Variable(n)
+#' y <- matrix(rnorm(m), nrow = m)
+#' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
+#' lambda <- Parameter()
+#' 
+#' expr <- sum_squares(y - X %*% beta) + lambda*p_norm(beta, 1)
+#' variables(expr)
+#' parameters(expr)
+#' constants(expr)
+#' lapply(constants(expr), function(c) { value(c) })
 #' @name expression-parts
 NULL
 
@@ -202,6 +288,29 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list of \linkS4class{Constraint} objects.
+#' @examples 
+#' a <- Variable(name = "a")
+#' dom <- domain(p_norm(a, -0.5))
+#' prob <- Problem(Minimize(a), dom)
+#' result <- solve(prob)
+#' result$value
+#' 
+#' b <- Variable()
+#' dom <- domain(kl_div(a, b))
+#' result <- solve(Problem(Minimize(a + b), dom))
+#' result$getValue(a)
+#' result$getValue(b)
+#' 
+#' A <- Variable(2, 2, name = "A")
+#' dom <- domain(lambda_max(A))
+#' A0 <- rbind(c(1,2), c(3,4))
+#' result <- solve(Problem(Minimize(norm2(A - A0)), dom))
+#' result$getValue(A)
+#' 
+#' dom <- domain(log_det(A + diag(rep(1,2))))
+#' prob <- Problem(Minimize(sum(diag(A))), dom)
+#' result <- solve(prob, solver = "SCS")
+#' result$value
 #' @docType methods
 #' @rdname domain
 #' @export
@@ -387,6 +496,11 @@ setGeneric("graph_implementation", function(object, arg_objs, size, data) { stan
 #' @param object A \linkS4class{Variable} or \linkS4class{Constraint} object.
 #' @return A non-negative integer identifier.
 #' @seealso \code{\link[CVXR]{get_id}} \code{\link[CVXR]{setIdCounter}}
+#' @examples 
+#' x <- Variable()
+#' constr <- (x >= 5)
+#' id(x)
+#' id(constr)
 #' @docType methods
 #' @rdname id
 #' @export
@@ -422,22 +536,19 @@ setGeneric("violation", function(object) { standardGeneric("violation") })
 NULL
 
 #' @rdname cone-methods
-#' @export
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 
 #' @rdname cone-methods
-#' @export
 setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
 
-#'
-#' Dual Value
-#'
-#' The value of the dual variable in a constraint.
-#'
-#' @param object A \linkS4class{Constraint} object.
-#' @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
-#' @rdname dual_value
-#' @export
+#
+# Dual Value
+#
+# The value of the dual variable in a constraint.
+#
+# @param object A \linkS4class{Constraint} object.
+# @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
+# @rdname dual_value
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
 #'
@@ -469,11 +580,21 @@ setGeneric("extract_variables", function(object, x, var_offsets) { standardGener
 #'
 #' Parts of a Problem
 #'
-#' Get and set the objective, constraints, status (from the last call to \code{solve}), size metrics, or solver statistics of a problem.
+#' Get and set the objective, constraints, or size metrics (get only) of a problem.
 #'
 #' @param object A \linkS4class{Problem} object.
 #' @param value The value to assign to the slot.
 #' @return For getter functions, the requested slot of the object.
+#' x <- Variable()
+#' prob <- Problem(Minimize(x^2), list(x >= 5))
+#' objective(prob)
+#' constraints(prob)
+#' size_metrics(prob)
+#' 
+#' objective(prob) <- Maximize(sqrt(x))
+#' constraints(prob) <- list(x <= 10)
+#' objective(prob)
+#' constraints(prob)
 #' @name problem-parts
 NULL
 
@@ -495,15 +616,11 @@ setGeneric("constraints<-", function(object, value) { standardGeneric("constrain
 
 #' @rdname problem-parts
 #' @export
+setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
+
 setGeneric("status", function(object) { standardGeneric("status") })
 setGeneric("status<-", function(object, value) { standardGeneric("status<-") })
 
-#' @rdname problem-parts
-#' @export
-setGeneric("size_metrics", function(object) { standardGeneric("size_metrics") })
-
-#' @rdname problem-parts
-#' @export
 setGeneric("solver_stats", function(object) { standardGeneric("solver_stats") })
 setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_stats<-") })
 
@@ -591,22 +708,25 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #' Import the R library that interfaces with the specified solver.
 #'
 #' @param solver A \linkS4class{Solver} object.
+#' @examples 
+#' import_solver(ECOS())
+#' import_solver(SCS())
 #' @rdname import_solver
 #' @docType methods
 #' @export
 setGeneric("import_solver", function(solver) { standardGeneric("import_solver") })
 setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 
-# #'
-# #' Choose MOSEK Solution
-# #'
-# #' Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
-# #' As long as interior solution is not worse, take it (for backward compatibility).
-# #'
-# #' @param solver A \linkS4class{MOSEK} object.
-# #' @param results_dict A list of the results returned by the solver.
-# #' @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
-# #' @rdname choose_solution
+#
+# Choose MOSEK Solution
+#
+# Chooses between the basic and interior point solution from MOSEK. Solutions are ranked optimal > near_optimal > anything else > None.
+# As long as interior solution is not worse, take it (for backward compatibility).
+#
+# @param solver A \linkS4class{MOSEK} object.
+# @param results_dict A list of the results returned by the solver.
+# @return A list containing the preferred solution (\code{solist}) and status of the preferred solution (\code{solsta}).
+# @rdname choose_solution
 # setGeneric("choose_solution", function(solver, results_dict) { standardGeneric("choose_solution") })
 
 setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") })
@@ -719,6 +839,12 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 #'
 #' @param solver A \linkS4class{Solver} object.
 #' @return A logical value.
+#' @examples 
+#' lp_capable(ECOS())
+#' socp_capable(ECOS())
+#' sdp_capable(ECOS())
+#' exp_capable(ECOS())
+#' mip_capable(ECOS())
 #' @name Solver-capable
 NULL
 

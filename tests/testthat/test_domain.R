@@ -84,7 +84,7 @@ test_that("Test domain for p_norm", {
   expect_equal(result$value, 0, tolerance = TOL)
 })
 
-test_that("Test domain for Log", {
+test_that("Test domain for log", {
   dom  <- domain(log(a))
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)

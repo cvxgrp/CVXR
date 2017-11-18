@@ -202,7 +202,7 @@ setMethod("value", "LeqConstraint", function(object) {
 #' @describeIn LeqConstraint A matrix representing the amount by which the constraint is off, i.e. the numeric value of the residual expression.
 setMethod("violation", "LeqConstraint", function(object) { value(residual(object)) })
 
-#' @describeIn LeqConstraint The value of the dual variable.
+# The value of the dual variable.
 setMethod("dual_value", "LeqConstraint", function(object) { value(object@dual_variable) })
 
 # Set the value of the dual variable for the constraint's parent.

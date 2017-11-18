@@ -366,7 +366,7 @@ setReplaceMethod("value", "Problem", function(object, value) {
     object
 })
 
-#' @describeIn Problem The status from the last time the problem was solved.
+# The status from the last time the problem was solved.
 setMethod("status", "Problem", function(object) { object@status })
 
 # Set the status of the problem.
@@ -383,7 +383,7 @@ setMethod("is_dcp", "Problem", function(object) {
 #' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
-    if(!(is(c, "EqConstraint") || is_pwl(c@expr)))
+    if(!(is(c, "EqConstraint") || is_pwl(c@.expr)))
       return(FALSE)
   }
   return(is_dcp(object) && is_quadratic(object@objective@expr))
@@ -423,11 +423,11 @@ setMethod("constants", "Problem", function(object) {
 #' @describeIn Problem Information about the size of the problem.
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 
-#' @describeIn Problem Additional information returned by the solver.
+# Additional information returned by the solver.
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 
 # Set the additional information returned by the solver in the problem.
-setMethod("solver_stats<-", "Problem", function(object, value ) {
+setMethod("solver_stats<-", "Problem", function(object, value) {
     object@.solver_stats <- value
     object
 })

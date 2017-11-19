@@ -2,7 +2,7 @@
 #' The Variable class.
 #'
 #' This class represents an optimization variable.
-#' 
+#'
 #' @slot id (Internal) A unique identification number used internally.
 #' @slot rows The number of rows in the variable.
 #' @slot cols The number of columns in the variable.
@@ -23,6 +23,20 @@
 #' @param cols The number of columns in the variable.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Variable-class
+#' @examples
+#' x <- Variable(3, name = "x0") ## 3-int variable
+#' y <- Variable(3, 3, name = "y0") # Matrix variable
+#' as.character(y)
+#' id(y)
+#' is_positive(x)
+#' is_negative(x)
+#' size(y)
+#' name(y)
+#' value(y) <- matrix(1:9, nrow = 3)
+#' value(y)
+#' grad(y)
+#' variables(y)
+#' canonicalize(y)
 #' @export
 Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
 
@@ -105,7 +119,7 @@ setMethod("canonicalize", "Variable", function(object) {
 
 #'
 #' The Bool class.
-#' 
+#'
 #' This class represents a boolean variable.
 #'
 #' @slot id (Internal) A unique identification number used internally.
@@ -122,6 +136,14 @@ setMethod("canonicalize", "Variable", function(object) {
 #' @param cols The number of columns in the variable.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Bool-class
+#' @examples
+#' x <- Bool(3, name = "indicator") ## Boolean 3-vector
+#' y <- Bool(3, 3) ## Matrix boolean
+#' name(x)
+#' as.character(x)
+#' canonicalize(y)
+#' is_positive(x)
+#' is_negative(y)
 #' @export
 Bool <- function(rows = 1, cols = 1, name = NA_character_) { .Bool(rows = rows, cols = cols, name = name) }
 
@@ -153,7 +175,7 @@ setMethod("is_negative", "Bool", function(object) { FALSE })
 
 #'
 #' The Int class.
-#' 
+#'
 #' This class represents an integer variable.
 #'
 #' @slot id (Internal) A unique identification number used internally.
@@ -169,6 +191,20 @@ setMethod("is_negative", "Bool", function(object) { FALSE })
 #' @param rows The number of rows in the variable.
 #' @param cols The number of columns in the variable.
 #' @param name (Optional) A character string representing the name of the variable.
+#' @examples
+#' x <- Int(3, name = "i") ## 3-int variable
+#' y <- Int(3, 3, name = "j") # Matrix variable
+#' as.character(y)
+#' id(y)
+#' is_positive(x)
+#' is_negative(x)
+#' size(y)
+#' name(y)
+#' value(y) <- matrix(1:9, nrow = 3)
+#' value(y)
+#' grad(y)
+#' variables(y)
+#' canonicalize(y)
 #' @rdname Int-class
 #' @export
 Int <- function(rows = 1, cols = 1, name = NA_character_) { .Int(rows = rows, cols = cols, name = name) }
@@ -197,7 +233,7 @@ setMethod("canonicalize", "Int", function(object) {
 #' The NonNegative class.
 #'
 #' This class represents a variable constrained to be non-negative.
-#' 
+#'
 #' @slot id (Internal) A unique identification number used internally.
 #' @slot rows The number of rows in the variable.
 #' @slot cols The number of columns in the variable.
@@ -212,6 +248,12 @@ setMethod("canonicalize", "Int", function(object) {
 #' @param cols The number of columns in the variable.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname NonNegative-class
+#' @examples
+#' x <- NonNegative(3, 3)
+#' as.character(x)
+#' canonicalize(x)
+#' is_positive(x)
+#' is_negative(x)
 #' @export
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { .NonNegative(rows = rows, cols = cols, name = name) }
 
@@ -260,6 +302,12 @@ setMethod("is_negative", "NonNegative", function(object) { FALSE })
 #' @param n The number of rows/columns in the matrix.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname SemidefUpperTri-class
+#' @examples
+#' x <- SemidefUpperTri(3)
+#' as.character(x)
+#' get_data(x)
+#' canonicalize(x)
+#' @export
 SemidefUpperTri <- function(n, name = NA_character_) { .SemidefUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SemidefUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -290,9 +338,9 @@ setMethod("get_data", "SemidefUpperTri", function(object) { list(object@n, objec
 upper_tri_to_full <- function(n) {
   if(n == 0)
     return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
-  
+
   entries <- floor(n*(n+1)/2)
-  
+
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
@@ -301,14 +349,14 @@ upper_tri_to_full <- function(n) {
     for(j in i:n) {
       # Index in the original matrix
       col_arr <- c(col_arr, count)
-      
+
       # Index in the filled matrix
       row_arr <- c(row_arr, (j-1)*n + i)
       val_arr <- c(val_arr, 1.0)
       if(i != j) {
         # Index in the original matrix
         col_arr <- c(col_arr, count)
-        
+
         # Index in the filled matrix
         row_arr <- c(row_arr, (i-1)*n + j)
         val_arr <- c(val_arr, 1.0)
@@ -339,6 +387,8 @@ setMethod("canonicalize", "SemidefUpperTri", function(object) {
 #' @param name (Optional) A character string representing the name of the variable.
 #' @return An \linkS4class{Expression} representing the positive semidefinite matrix.
 #' @rdname Semidef
+#' @examples
+#' x <- Semidef(5) ## 5 by 5 semidefinite matrix expression
 #' @export
 Semidef <- function(n, name = NA_character_) {
   var <- SemidefUpperTri(n, name)
@@ -365,6 +415,11 @@ Semidef <- function(n, name = NA_character_) {
 #' @param n The number of rows/columns in the matrix.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname SymmetricUpperTri-class
+#' @examples
+#' x <- SymmetricUpperTri(3, name="s3")
+#' name(x)
+#' get_data(x)
+#' @export
 SymmetricUpperTri <- function(n, name = NA_character_) { .SymmetricUpperTri(n = n, name = name) }
 
 setMethod("initialize", "SymmetricUpperTri", function(.Object, ..., rows, cols, name = NA_character_, n) {
@@ -400,6 +455,8 @@ setMethod("canonicalize", "SymmetricUpperTri", function(object) {
 #' @param name (Optional) A character string representing the name of the variable.
 #' @return An \linkS4class{Expression} representing the symmetric matrix.
 #' @rdname Symmetric
+#' @examples
+#' x <- Symmetric(3, name="s3")
 #' @export
 Symmetric <- function(n, name = NA_character_) {
   var <- SymmetricUpperTri(n, name)

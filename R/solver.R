@@ -208,6 +208,13 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 setClass("ECOS", contains = "Solver")
 
 #' @rdname ECOS-class
+#' @examples
+#' ecos <- ECOS()
+#' lp_capable(ecos)
+#' sdp_capable(ecos)
+#' socp_capable(ecos)
+#' exp_capable(ecos)
+#' mip_capable(ecos)
 #' @export
 ECOS <- function() {
     new("ECOS")
@@ -342,6 +349,13 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 setClass("ECOS_BB", contains = "ECOS")
 
 #' @rdname ECOS_BB-class
+#' @examples
+#' ecos_bb <- ECOS_BB()
+#' lp_capable(ecos_bb)
+#' sdp_capable(ecos_bb)
+#' socp_capable(ecos_bb)
+#' exp_capable(ecos_bb)
+#' mip_capable(ecos_bb)
 #' @export
 ECOS_BB <- function() {
   new("ECOS_BB")
@@ -418,6 +432,15 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
 setClass("SCS", contains = "ECOS")
 
 #' @rdname SCS-class
+#' @examples
+#' scs <- SCS()
+#' lp_capable(scs)
+#' sdp_capable(scs)
+#' socp_capable(scs)
+#' exp_capable(scs)
+#' mip_capable(scs)
+#' @export
+
 #' @export
 SCS <- function() {
     new("SCS")
@@ -594,23 +617,23 @@ SCS.tri_to_full <- function(lower_tri, n) {
 #   ##CVXOPT$new()
 # }
 
-#'
-#' The LS class.
-#'
-#' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
-#' LS is incapable of solving any general cone program and must be invoked through a special path.
-#'
-#' @name LS-class
-#' @aliases LS
-#' @rdname LS-class
-setClass("LS", contains = "Solver")
+## #'
+## #' The LS class.
+## #'
+## #' This class represents a linearly constrained least squares solver using R's \code{base::solve} function.
+## #' LS is incapable of solving any general cone program and must be invoked through a special path.
+## #'
+## #' @name LS-class
+## #' @aliases LS
+## #' @rdname LS-class
+## setClass("LS", contains = "Solver")
 
-#' @rdname LS-class
-#' @export
-LS <- function() {
-  stop("Unimplemented solver")
-  new("LS")
-}
+## #' @rdname LS-class
+## #' @export
+## LS <- function() {
+##   stop("Unimplemented solver")
+##   new("LS")
+## }
 
 # # LS is incapable of solving any general cone program and must be invoked through a special path
 # #' @param object,solver A \linkS4class{LS} object.
@@ -717,24 +740,24 @@ LS <- function() {
 #   new_results
 # })
 
-#'
-#' The MOSEK class.
-#'
-#' This class is an interface for the commercial MOSEK solver.
-#'
-#' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
-#' @seealso the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
-#' @name MOSEK-class
-#' @aliases MOSEK
-#' @rdname MOSEK-class
-setClass("MOSEK", contains = "Solver")
+## #'
+## #' The MOSEK class.
+## #'
+## #' This class is an interface for the commercial MOSEK solver.
+## #'
+## #' @references E. Andersen and K. Andersen. "The MOSEK Interior Point Optimizer for Linear Programming: an Implementation of the Homogeneous Algorithm." \emph{High Performance Optimization}, vol. 33, pp. 197-232, 2000.
+## #' @seealso the \href{https://www.mosek.com/products/mosek/}{MOSEK Official Site}.
+## #' @name MOSEK-class
+## #' @aliases MOSEK
+## #' @rdname MOSEK-class
+## setClass("MOSEK", contains = "Solver")
 
-#' @rdname MOSEK-class
-#' @export
-MOSEK <- function() {
-  stop("Unimplemented")
-  new("MOSEK")
-}
+## #' @rdname MOSEK-class
+## #' @export
+## MOSEK <- function() {
+##   stop("Unimplemented")
+##   new("MOSEK")
+## }
 
 # #' @param object,solver A \linkS4class{MOSEK} object.
 # #' @describeIn MOSEK MOSEK can handle linear programs.
@@ -937,24 +960,24 @@ MOSEK <- function() {
 #   new_results
 # })
 
-#'
-#' The GUROBI class.
-#'
-#' This class is an interface for the commercial GUROBI solver.
-#'
-#' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
-#' @seealso the \href{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}{GUROBI Official Site}.
-#' @name GUROBI-class
-#' @aliases GUROBI
-#' @rdname GUROBI-class
-setClass("GUROBI", contains = "Solver")
+## #'
+## #' The GUROBI class.
+## #'
+## #' This class is an interface for the commercial GUROBI solver.
+## #'
+## #' @references \emph{Gurobi optimizer reference manual version 5.0,} Gurobi Optimization, Inc., Houston, Texas, July 2012.
+## #' @seealso the \href{http://www.gurobi.com/documentation/7.5/refman/r_api_overview.html}{GUROBI Official Site}.
+## #' @name GUROBI-class
+## #' @aliases GUROBI
+## #' @rdname GUROBI-class
+## setClass("GUROBI", contains = "Solver")
 
-#' @rdname GUROBI-class
-#' @export
-GUROBI <- function() {
-  stop("Unimplemented")
-  new("GUROBI")
-}
+## #' @rdname GUROBI-class
+## #' @export
+## GUROBI <- function() {
+##   stop("Unimplemented")
+##   new("GUROBI")
+## }
 
 # #' @param object,solver A \linkS4class{GUROBI} object.
 # #' @describeIn GUROBI GUROBI can handle linear programs.
@@ -1054,10 +1077,7 @@ names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
 #' @rdname installed_solvers
 #' @export
 installed_solvers <- function() {
-  installed <- c()
-  for(i in 1:length(SOLVERS)) {
-    if(is_installed(SOLVERS[[i]]))
-      installed <- c(installed, names(SOLVERS)[i])
-  }
-  installed
+  installed <- sapply(SOLVERS, is_installed)
+  names(SOLVERS)[which(installed)]
+
 }

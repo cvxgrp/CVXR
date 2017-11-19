@@ -12,8 +12,8 @@
 #' @name Constant-class
 #' @aliases Constant
 #' @rdname Constant-class
-.Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"), 
-                                 prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA), 
+.Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"),
+                                 prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA),
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -23,6 +23,14 @@
 
 #' @param value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
 #' @rdname Constant-class
+#' @examples
+#' x <- Constant(5)
+#' y <- Constant(diag(3))
+#' get_data(y)
+#' value(y)
+#' is_positive(y)
+#' size(y)
+#' as.Constant(y)
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
@@ -84,13 +92,13 @@ setMethod("canonicalize", "Constant", function(object) {
 
 #'
 #' Cast to a Constant
-#' 
+#'
 #' Coerce an R object or expression into the \linkS4class{Constant} class.
-#' 
+#'
 #' @param expr An \linkS4class{Expression}, numeric element, vector, matrix, or data.frame.
 #' @return A \linkS4class{Constant} representing the input as a constant.
 #' @docType methods
-#' @rdname as.Constant
+#' @rdname Constant-class
 #' @export
 as.Constant <- function(expr) {
   if(is(expr, "Expression"))
@@ -114,7 +122,7 @@ as.Constant <- function(expr) {
 #' @aliases Parameter
 #' @rdname Parameter-class
 .Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
-                                    prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_), 
+                                    prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_),
                       validity = function(object) {
                         if(!(object@sign_str %in% SIGN_STRINGS))
                           stop("[Sign: validation] sign_str must be in ", paste(SIGN_STRINGS, collapse = ", "))
@@ -128,6 +136,11 @@ as.Constant <- function(expr) {
 #' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN". Defaults to "UNKNOWN".
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @rdname Parameter-class
+#' @examples
+#' x <- Parameter(3, name = "x0", sign="NEGATIVE") ## 3-vec negative
+#' is_positive(x)
+#' is_negative(x)
+#' size(x)
 #' @export
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
   .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
@@ -142,7 +155,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows 
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
     .Object@name <- name
-  
+
   # Initialize with value if provided
   .Object@value <- NA_real_
   if(!(length(value) == 1 && is.na(value)))
@@ -203,7 +216,7 @@ setMethod("canonicalize", "Parameter", function(object) {
 #' The CallbackParam class.
 #'
 #' This class represents a parameter whose value is obtained by evaluating a function.
-#' 
+#'
 #' @slot callback A numeric element, vector, matrix, or data.frame.
 #' @name CallbackParam-class
 #' @aliases CallbackParam
@@ -216,6 +229,12 @@ setMethod("canonicalize", "Parameter", function(object) {
 #' @param name (Optional) A character string representing the name of the parameter.
 #' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
 #' @rdname CallbackParam-class
+#' @examples
+#' x <- Variable(2)
+#' dim <- size(x)
+#' y <- CallbackParam(value(x), dim[1], dim[2], sign = "POSITIVE")
+#' get_data(y)
+#' @export
 CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN) {
   .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
 }

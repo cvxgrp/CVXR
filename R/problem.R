@@ -376,11 +376,20 @@ setReplaceMethod("status", "Problem", function(object, value) {
 })
 
 #' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
+#' @examples
+#' x <- Variable(2)
+#' p <- Problem(Minimize(p_norm(x, 2)), list(x >= 0))
+#' is_dcp(p)
 setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
 #' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
+#' @examples
+#' x <- Variable(2)
+#' A <- matrix(c(1,-1,-1, 1), nrow = 2)
+#' p <- Problem(Minimize(quad_form(x, A)), list(x >= 0))
+#' is_qp(p)
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
     if(!(is(c, "EqConstraint") || is_pwl(c@.expr)))

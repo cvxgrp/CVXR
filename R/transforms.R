@@ -7,13 +7,13 @@
 #                                     prototype(args = list(), err_tol = 1e-3), contains = "Expression")
 # Indicator <- function(constraints, err_tol = 1e-3) { .Indicator(args = constraints, err_tol = err_tol) }
 # indicator <- Indicator
-# 
+#
 # setMethod("initialize", "Indicator", function(.Object, ..., args = list(), err_tol = 1e-3) {
 #   .Object@args <- args
 #   .Object@err_tol <- err_tol
 #   callNextMethod(.Object, ...)
 # })
-# 
+#
 # setMethod("is_convex", "Indicator", function(object) { TRUE })
 # setMethod("is_concave", "Indicator", function(object) { FALSE })
 # setMethod("is_positive", "Indicator", function(object) { TRUE })
@@ -37,16 +37,16 @@
 #   list(create_const(0, c(1,1)), constraints)
 # })
 
-#'
-#' Tangent Approximation to an Expression
-#'
-#' Gives an elementwise lower (upper) bound for convex (concave) expressions. No guarantees for non-DCP expressions.
-#'
-#' @param expr An \linkS4class{Expression} to linearize.
-#' @return An affine expression or \code{NA} if cannot be linearized.
-#' @docType methods
-#' @rdname linearize
-#' @export
+## #'
+## #' Tangent Approximation to an Expression
+## #'
+## #' Gives an elementwise lower (upper) bound for convex (concave) expressions. No guarantees for non-DCP expressions.
+## #'
+## #' @param expr An \linkS4class{Expression} to linearize.
+## #' @return An affine expression or \code{NA} if cannot be linearized.
+## #' @docType methods
+## #' @rdname linearize
+## #' @export
 linearize <- function(expr) {
   expr <- as.Constant(expr)
   if(is_affine(expr))
@@ -92,19 +92,19 @@ linearize <- function(expr) {
 #   }
 #   PartialProblem(prob, opt_vars, dont_opt_vars)
 # }
-# 
+#
 # .PartialProblem <- setClass("PartialProblem", representation(.prob = "Problem", opt_vars = "list", dont_opt_vars = "list", args = "list"),
 #                                               prototype(opt_vars = list(), dont_opt_vars = list(), args = list()),
 #                             contains = "Expression")
 # PartialProblem <- function(prob, opt_vars, dont_opt_vars) {
 #   .PartialProblem(.prob = prob, opt_vars = opt_vars, dont_opt_vars = dont_opt_vars)
 # }
-# 
+#
 # setMethod("initialize", "PartialProblem", function(.Object, ..., .prob, opt_vars = list(), dont_opt_vars = list(), args = list()) {
 #   .Object@opt_vars <- opt_vars
 #   .Object@dont_opt_vars <- dont_opt_vars
 #   .Object@args <- list(prob)
-# 
+#
 #   # Replace the opt_vars in prob with new variables.
 #   id_to_new_var <- .Object@opt_vars   # TODO: Do I need to make copies like in CVXPY?
 #   names(id_to_new_var) <- sapply(.Object@opt_vars, function(var) { id(var) })
@@ -113,7 +113,7 @@ linearize <- function(expr) {
 #   .Object@.prob <- Problem(new_obj, new_constrs)
 #   callNextMethod(.Object, ...)
 # })
-# 
+#
 # setMethod("get_data", "PartialProblem", function(object) { c(object@opt_vars, object@dont_opt_vars) })
 # setMethod("is_convex", "PartialProblem", function(object) {
 #   is_dcp(object@args[[1]]) && class(object@args[[1]]@objective) == "Minimize"
@@ -129,7 +129,7 @@ linearize <- function(expr) {
 #   # Short circuit for constant
 #   if(is_constant(object))
 #     return(constant_grad(object))
-# 
+#
 #   old_vals <- sapply(variables(object), function(var) { value(var) })
 #   names(old_vals) <- sapply(variables(object), function(var) { id(var) })
 #   fix_vars <- list()
@@ -141,7 +141,7 @@ linearize <- function(expr) {
 #   }
 #   prob <- Problem(object@.prob@objective, c(fix_vars, object@.prob@constraints))
 #   sol <- solve(prob)
-# 
+#
 #   # Compute gradient.
 #   if(sol$status %in% SOLUTION_PRESENT) {
 #     sign <- is_convex(object) - is_concave(object)
@@ -162,13 +162,13 @@ linearize <- function(expr) {
 #     value(var) <- old_vals[[as.character(id(var))]]
 #   result
 # })
-# 
+#
 # setMethod("domain", "PartialProblem", function(object) {
 #   # Variables optimizd over are replaced in object@.prob
 #   obj_expr <- object@.prob@objective@args[[1]]
 #   c(object@.prob@constraints, domain(obj_expr))
 # })
-# 
+#
 # setMethod("value", "PartialProblem", function(object) {
 #   old_vals <- sapply(variables(object), function(var) { value(var) })
 #   names(old_vals) <- sapply(variables(object), function(var) { id(var) })
@@ -180,13 +180,13 @@ linearize <- function(expr) {
 #   }
 #   prob <- Problem(object@args[[1]]@objective, fix_vars)
 #   result <- solve(prob)
-# 
+#
 #   # Restore the original values to the variables.
 #   for(var in variables(object))
 #     value(var) <- old_vals[[as.character(id(var))]]
 #   result
 # })
-# 
+#
 # PartialProblem.replace_new_vars <- function(obj, id_to_new_var) {
 #   if(is(obj, "Variable") && id(obj) %in% names(id_to_new_var))
 #     return(id_to_new_var[[id(obj)]])
@@ -209,7 +209,7 @@ linearize <- function(expr) {
 #     return(copy(obj, new_args))
 #   }
 # }
-# 
+#
 # setMethod("canonicalize", "PartialProblem", function(object) {
 #   # Canonical form for objective and problem switches from minimize to maximize
 #   canon <- canonical_form(object@.prob@objective@args[[1]])
@@ -219,17 +219,17 @@ linearize <- function(expr) {
 #     constrs <- c(constrs, list(canonical_form(cons)[[2]]))
 #   list(obj, constrs)
 # })
-# 
+#
 # weighted_sum <- function(objective, weights) {
 #   num_objs <- length(objective)
 #   weighted_objs <- lapply(1:num_objs, function(i) { objectives[[i]] * weights[i] })
 #   Reduce("+", weighted_objs)
 # }
-# 
+#
 # targets_and_priorities <- function(objectives, priorities, targets, limits = list(), off_target = 1e-5) {
 #   num_objs <- length(objectives)
 #   new_objs <- list()
-# 
+#
 #   for(i in 1:num_objs) {
 #     obj <- objectives[[i]]
 #     sign <- ifelse(is_positive(Constant(priorities[[i]])), 1, -1)
@@ -248,27 +248,27 @@ linearize <- function(expr) {
 #       new_objs <- c(new_objs, expr)
 #     }
 #   }
-# 
+#
 #   obj_expr <- Reduce("+", new_objs)
 #   if(is_convex(obj_expr))
 #     return(Minimize(obj_expr))
 #   else
 #     return(Maximize(obj_expr))
 # }
-# 
+#
 # Scalarize.max <- function(objectives, weights) {
 #   num_objs <- length(objectives)
 #   expr <- MaxElemwise(lapply(1:num_objs, function(i) { objectives[[i]]*weights[[i]] }))
 #   Minimize(expr)
 # }
-# 
+#
 # Scalarize.log_sum_exp <- function(objectives, weights, gamma) {
 #   num_objs <- length(objectives)
 #   terms <- lapply(1:num_objs, function(i) { (objectives[[i]]*weights[[i]])@args[[1]] })
 #   expr <- LogSumExp(VStack(terms))
 #   Minimize(expr)
 # }
-# 
+#
 # get_separable_problems <- function(problem) {
 #   # obj_terms contains the terms in the objective functions. We have to
 #   # deal with the special case where the objective function is not a sum.
@@ -276,19 +276,19 @@ linearize <- function(expr) {
 #     obj_terms <- problem@objective@args[[1]]@args
 #   else
 #     obj_terms <- list(problem@objective@args[[1]])
-# 
+#
 #   # Remove constant terms, which will be appended to the first separable problem.
 #   constant_terms <- lapply(obj_terms, function(term) { if(is_constant(term)) term })
 #   obj_terms <- lapply(obj_terms, function(term) { if(!is_constant(term)) term })
-# 
+#
 #   constraints <- problem@constraints
 #   num_obj_terms <- length(obj_terms)
 #   num_terms <- length(obj_terms) + length(constraints)
-# 
+#
 #   # Objective terms and constraints are indexed from 0 to num_terms - 1.
 #   # TODO: Finish this section
 #   stop("Unimplemented: need set and connected graph operations.")
-# 
+#
 #   # After splitting, construct subproblems from appropriate objective terms and constraints.
 #   term_ids_per_subproblem <- rep(list(), num_components)
 #   for(i in 1:length(labels)) {
@@ -309,7 +309,7 @@ linearize <- function(expr) {
 #     # TODO: What should we do in place of copy?
 #     problem_list <- c(problem_list, list(Problem(problem@objective.copy(list(obj)), constrs)))
 #   }
-# 
+#
 #   # Append constant terms to the first separable problem.
 #   if(!is.null(constant_terms)) {
 #     # Avoid adding an extra 0 in the objective.

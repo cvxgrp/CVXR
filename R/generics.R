@@ -5,22 +5,22 @@
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
-#' @examples 
+#' @examples
 #' pos <- Constant(1)
 #' neg <- Constant(-1)
 #' zero <- Constant(0)
 #' unknown <- Variable()
-#' 
+#'
 #' is_zero(pos)
 #' is_zero(-zero)
 #' is_zero(unknown)
 #' is_zero(pos + neg)
-#' 
+#'
 #' is_positive(pos + zero)
 #' is_positive(pos * neg)
 #' is_positive(pos - neg)
 #' is_positive(unknown)
-#' 
+#'
 #' is_negative(-pos)
 #' is_negative(pos + neg)
 #' is_negative(neg * zero)
@@ -47,10 +47,10 @@ setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' c <- Constant(5)
-#' 
+#'
 #' curvature(c)
 #' curvature(x)
 #' curvature(x^2)
@@ -71,27 +71,27 @@ setGeneric("curvature", function(object) { standardGeneric("curvature") })
 #' @examples
 #' x <- Variable()
 #' c <- Constant(5)
-#' 
+#'
 #' is_constant(c)
 #' is_constant(x)
-#' 
+#'
 #' is_affine(c)
 #' is_affine(x)
 #' is_affine(x^2)
-#' 
+#'
 #' is_convex(c)
 #' is_convex(x)
 #' is_convex(x^2)
 #' is_convex(sqrt(x))
-#' 
+#'
 #' is_concave(c)
 #' is_concave(x)
 #' is_concave(x^2)
 #' is_concave(sqrt(x))
-#' 
+#'
 #' is_quadratic(x^2)
 #' is_quadratic(sqrt(x))
-#' 
+#'
 #' is_pwl(c)
 #' is_pwl(x)
 #' is_pwl(x^2)
@@ -129,7 +129,7 @@ setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 #'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' prob <- Problem(Minimize(x^2), list(x >= 5))
 #' is_dcp(prob)
@@ -146,11 +146,11 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A vector with two elements \code{c(row, col)} representing the dimensions of the expression.
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' y <- Variable(3)
 #' z <- Variable(3,2)
-#' 
+#'
 #' size(x)
 #' size(y)
 #' size(z)
@@ -168,19 +168,19 @@ setGeneric("size", function(object) { standardGeneric("size") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' y <- Variable(3)
 #' z <- Variable(3,2)
-#' 
+#'
 #' is_scalar(x)
 #' is_scalar(y)
 #' is_scalar(x + y)
-#' 
+#'
 #' is_vector(x)
 #' is_vector(y)
 #' is_vector(2*z)
-#' 
+#'
 #' is_matrix(x)
 #' is_matrix(y)
 #' is_matrix(z)
@@ -211,10 +211,10 @@ setGeneric("primal_to_result", function(object, result) { standardGeneric("prima
 #' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Expression}, or \linkS4class{Problem} object.
 #' @param value A numeric scalar, vector, or matrix to assign to the object.
 #' @return The numeric value of the variable, parameter, or expression. If any part of the mathematical object is unknown, return \code{NA}.
-#' @examples 
+#' @examples
 #' lambda <- Parameter()
 #' value(lambda)
-#' 
+#'
 #' value(lambda) <- 5
 #' value(lambda)
 #' @name value-methods
@@ -240,6 +240,7 @@ setGeneric("save_value", function(object, value) { standardGeneric("save_value")
 #' @return A list containing data.
 #' @docType methods
 #' @rdname get_data
+#' @export
 setGeneric("get_data", function(object) { standardGeneric("get_data") })
 
 #'
@@ -251,10 +252,10 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 #' @return For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.
 #' @docType methods
 #' @rdname name
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' y <- Variable(3, name = "yVar")
-#' 
+#'
 #' name(x)
 #' name(y)
 #' @export
@@ -267,14 +268,14 @@ setGeneric("name", function(object) { standardGeneric("name") })
 #'
 #' @param object A \linkS4class{Canonical} expression.
 #' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Constant} objects.
-#' @examples 
+#' @examples
 #' m <- 50
 #' n <- 10
 #' beta <- Variable(n)
 #' y <- matrix(rnorm(m), nrow = m)
 #' X <- matrix(rnorm(m*n), nrow = m, ncol = n)
 #' lambda <- Parameter()
-#' 
+#'
 #' expr <- sum_squares(y - X %*% beta) + lambda*p_norm(beta, 1)
 #' variables(expr)
 #' parameters(expr)
@@ -303,18 +304,18 @@ setGeneric("constants", function(object) { standardGeneric("constants") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list mapping each variable to a sparse matrix.
-#' @examples 
+#' @examples
 #' x <- Variable(2, name = "x")
 #' A <- Variable(2, 2, name = "A")
-#' 
+#'
 #' value(x) <- c(-3,4)
 #' expr <- p_norm(x, 2)
 #' grad(expr)
-#' 
+#'
 #' value(A) <- rbind(c(3,-4), c(4,3))
 #' expr <- p_norm(A, 0.5)
 #' grad(expr)
-#' 
+#'
 #' value(A) <- cbind(c(1,2), c(-1,0))
 #' expr <- abs(A)
 #' grad(expr)
@@ -330,25 +331,25 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A list of \linkS4class{Constraint} objects.
-#' @examples 
+#' @examples
 #' a <- Variable(name = "a")
 #' dom <- domain(p_norm(a, -0.5))
 #' prob <- Problem(Minimize(a), dom)
 #' result <- solve(prob)
 #' result$value
-#' 
+#'
 #' b <- Variable()
 #' dom <- domain(kl_div(a, b))
 #' result <- solve(Problem(Minimize(a + b), dom))
 #' result$getValue(a)
 #' result$getValue(b)
-#' 
+#'
 #' A <- Variable(2, 2, name = "A")
 #' dom <- domain(lambda_max(A))
 #' A0 <- rbind(c(1,2), c(3,4))
 #' result <- solve(Problem(Minimize(norm2(A - A0)), dom))
 #' result$getValue(A)
-#' 
+#'
 #' dom <- domain(log_det(A + diag(rep(1,2))))
 #' prob <- Problem(Minimize(sum(diag(A))), dom)
 #' result <- solve(prob, solver = "SCS")
@@ -482,17 +483,17 @@ setGeneric("to_numeric", function(object, values) { standardGeneric("to_numeric"
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return A logical value.
-#' @examples 
+#' @examples
 #' x <- Variable()
-#' 
+#'
 #' is_atom_convex(x^2)
 #' is_atom_convex(sqrt(x))
 #' is_atom_convex(log(x))
-#' 
+#'
 #' is_atom_concave(-abs(x))
 #' is_atom_concave(x^2)
 #' is_atom_concave(sqrt(x))
-#' 
+#'
 #' is_atom_affine(2*x)
 #' is_atom_affine(x^2)
 #' @name curvature-atom
@@ -518,7 +519,7 @@ setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine"
 #' @param object A \linkS4class{Atom} object.
 #' @param idx An index into the atom.
 #' @return A logical value.
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' is_incr(log(x), 1)
 #' is_incr(x^2, 1)
@@ -557,7 +558,7 @@ setGeneric("graph_implementation", function(object, arg_objs, size, data) { stan
 #' @param object A \linkS4class{Variable} or \linkS4class{Constraint} object.
 #' @return A non-negative integer identifier.
 #' @seealso \code{\link[CVXR]{get_id}} \code{\link[CVXR]{setIdCounter}}
-#' @examples 
+#' @examples
 #' x <- Variable()
 #' constr <- (x >= 5)
 #' id(x)
@@ -651,7 +652,7 @@ setGeneric("extract_variables", function(object, x, var_offsets) { standardGener
 #' objective(prob)
 #' constraints(prob)
 #' size_metrics(prob)
-#' 
+#'
 #' objective(prob) <- Maximize(sqrt(x))
 #' constraints(prob) <- list(x <= 10)
 #' objective(prob)
@@ -733,7 +734,7 @@ setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_p
 #'    \item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
 #'    \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
 #' }
-#' @examples 
+#' @examples
 #' a <- Variable(name = "a")
 #' prob <- Problem(Minimize(norm_inf(a)), list(a >= 2))
 #' result <- psolve(prob, solver = "ECOS", verbose = TRUE)
@@ -777,7 +778,7 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #' Import the R library that interfaces with the specified solver.
 #'
 #' @param solver A \linkS4class{Solver} object.
-#' @examples 
+#' @examples
 #' import_solver(ECOS())
 #' import_solver(SCS())
 #' @rdname import_solver
@@ -908,7 +909,7 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 #'
 #' @param solver A \linkS4class{Solver} object.
 #' @return A logical value.
-#' @examples 
+#' @examples
 #' lp_capable(ECOS())
 #' socp_capable(ECOS())
 #' sdp_capable(ECOS())

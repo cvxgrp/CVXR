@@ -301,6 +301,9 @@ t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) 
 
 #' @docType methods
 #' @rdname transpose
+#' @examples
+#' x <- Variable(3, 4)
+#' t(x)
 #' @export
 setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
 

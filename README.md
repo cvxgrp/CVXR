@@ -4,8 +4,8 @@ An R modeling language for convex optimization problems.
 
 ## Note
 
-This package is soon to be released on CRAN. When it appears on CRAN,
-you install it like any other package. 
+This package is now released on CRAN, so you can now release it like
+any other package.
 
 ## Installation
 

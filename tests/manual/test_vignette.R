@@ -132,7 +132,7 @@ test_that("Test Elastic-net regression", {
   loss <- sum((y - X %*% beta)^2)/(2*m)
   
   # Elastic-net regression
-  alpha <- 1
+  alpha <- 0.75
   for(i in 1:TRIALS) {
     lambda <- lambda_vals[i]
     obj <- loss + elastic_reg(beta, lambda, alpha)

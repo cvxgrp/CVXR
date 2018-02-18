@@ -41,7 +41,7 @@ Imports:
     gmp,
     Rmpfr,
     R.utils,
-    ECOSolveR,
+    ECOSolveR (>= 0.4),
     scs,
     stats
 Suggests:

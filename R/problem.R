@@ -672,20 +672,31 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     result
 }
 
-# @describeIn Problem Parses the output from a solver and updates the problem state, including the status, objective value, and value of the primal and dual variables. Assumes the results are from the given solver.
-# @param object A \linkS4class{Problem} object.
-# @param solver A string indicating the name of the solver being used.
-# @param results_dict A list containing the solver output.
+#' @describeIn Problem
+#' Parses the output from a solver and updates the problem state, including the status,
+#' objective value, and value of the primal and dual variables.
+#' Assumes the results are from the given solver.
+#' @param results_dict A list containing the solver output.
+#' @docType methods
 setMethod("unpack_results", "Problem", function(object, solver, results_dict) {
-  canon <- canonicalize(object)
-  objective <- canon[[1]]
-  constraints <- canon[[2]]
-  object@.cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-  sym_data <- object@.cached_data[[name(solver)]]@sym_data
-  data <- list(sym_data@dims, 0)
-  names(data) <- c(DIMS, OFFSET)
-  results_dict <- format_results(solver, results_dict, data, object@.cached_data)
-  .update_problem_state(object, results_dict, sym_data, solver)
+
+    if(solver %in% names(SOLVERS)) {
+        solver <- SOLVERS[[solver]]
+        ##validate_solver(solver, constraints)
+    } else
+        stop("Unknown solver")
+
+    canon <- canonicalize(object)
+    objective <- canon[[1]]
+    constraints <- canon[[2]]
+
+    object@.cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
+    sym_data <- object@.cached_data[[name(solver)]]@sym_data
+    data <- list(sym_data@.dims, 0)
+    names(data) <- c(DIMS, OFFSET)
+    results_dict <- format_results(solver, results_dict, data, object@.cached_data)
+    ##    .update_problem_state(object, results_dict, sym_data, solver)
+    return(valuesById(object, results_dict, sym_data, solver))
 })
 
 handleNoSolution <- function(object, status) {

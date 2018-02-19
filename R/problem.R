@@ -674,7 +674,7 @@ valuesById <- function(object, results_dict, sym_data, solver) {
 
 #' @describeIn Problem
 #' Parses the output from a solver and updates the problem state, including the status,
-#' objective value, and value of the primal and dual variables.
+#' objective value, and values of the primal and dual variables.
 #' Assumes the results are from the given solver.
 #' @param results_dict A list containing the solver output.
 #' @docType methods

@@ -763,7 +763,7 @@ setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 #'
 #' Parse output from a solver and updates problem state
 #'
-#' Updates problem status, alue and values of primal and dual variables
+#' Updates problem status, problem value, and primal and dual variable values
 #'
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A character string specifying the solver such as "ECOS", "SCS" etc.

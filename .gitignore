@@ -3,6 +3,5 @@ cvxr.Rproj
 .Rproj.user
 .RData
 .Rhistory
-man/
 src/*.o
 src/cvxr.so

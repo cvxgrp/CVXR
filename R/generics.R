@@ -759,6 +759,65 @@ setGeneric("psolve", function(object, solver, ignore_dcp = FALSE, warm_start = F
 #' @rdname is_qp
 #' @export
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
+
+#'
+#' Parse output from a solver and updates problem state
+#'
+#' Updates problem status, alue and values of primal and dual variables
+#'
+#' @param object A \linkS4class{Problem} object.
+#' @param solver A character string specifying the solver such as "ECOS", "SCS" etc.
+#' @param results_dict the solver output
+#' @return A list containing the solution to the problem:
+#' \describe{
+#'    \item{\code{status}}{The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".}
+#'    \item{\code{value}}{The optimal value of the objective function.}
+#'    \item{\code{solver}}{The name of the solver.}
+#'    \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
+#'    \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
+#'    \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+#'    \item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
+#'    \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
+#' }
+#' @examples
+#' \dontrun{
+#' x <- Variable(2)
+#' obj <- Minimize(x[1] + cvxr_norm(x, 1))
+#' constraints <- list(x >= 2)
+#' prob1 <- Problem(obj, constraints)
+#' # Solve with ECOS.
+#' ecos_data <- get_problem_data(prob1, "ECOS")
+#' # Call ECOS solver interface directly
+#' ecos_output <- ECOSolveR::ECOS_csolve(
+#'                            c = ecos_data[["c"]],
+#'                            G = ecos_data[["G"]],
+#'                            h = ecos_data[["h"]],
+#'                            dims = ecos_data[["dims"]],
+#'                            A = ecos_data[["A"]],
+#'                            b = ecos_data[["b"]]
+#'                          )
+#' # Unpack raw solver output.
+#' res1 <- unpack_results(prob1, "ECOS", ecos_output)
+#' # Without DCP validation (so be sure of your math), above is equivalent to:
+#' # res1 <- solve(prob1, solver = "ECOS")
+#' X <- Semidef(2)
+#' Fmat <- rbind(c(1,0), c(0,-1))
+#' obj <- Minimize(sum_squares(X - Fmat))
+#' prob2 <- Problem(obj)
+#' scs_data <- get_problem_data(prob2, "SCS")
+#' scs_output <- scs::scs(
+#'                       A = scs_data[['A']],
+#'                       b = scs_data[['b']],
+#'                       obj = scs_data[['c']],
+#'                       cone = scs_data[['dims']]
+#'                   )
+#' res2 <- unpack_results(prob2, "SCS", scs_output)
+#' # Without DCP validation (so be sure of your math), above is equivalent to:
+#' # res2 <- solve(prob2, solver = "SCS")
+#' }
+#' @docType methods
+#' @rdname unpack_results
+#' @export
 setGeneric("unpack_results", function(object, solver, results_dict) { standardGeneric("unpack_results") })
 setGeneric(".handle_no_solution", function(object, status) { standardGeneric(".handle_no_solution") })
 setGeneric("Problem.save_values", function(object, result_vec, objstore, offset_map) { standardGeneric("Problem.save_values") })

@@ -301,9 +301,10 @@ setMethod("Solver.solve", "ECOS", function(solver, objective, constraints, cache
   data[[DIMS]]['e'] <- data[[DIMS]][[EXP_DIM]]
 
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
-  if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
-  if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
-  data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
+  ## Naras Answer: Fixed in ECOSolveR version >= 0.4
+  ## if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
+  ## if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
+  ## data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
   solver_opts <- ECOSolveR::ecos.control()
   solver_opts$VERBOSE <- as.integer(verbose)
   other_opts <- list(...)

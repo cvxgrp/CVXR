@@ -10,8 +10,8 @@ intf_size <- function(constant) {
     stop("Unknown class: ", class(constant))
 }
 
-intf_sign <- function(constant, tol = 1e-5) {
-  c(min(constant) >= -tol, max(constant) <= tol)
+intf_sign <- function(constant) {
+  c(min(constant) >= 0, max(constant) <= 0)
 }
 
 intf_scalar_value <- function(constant) {

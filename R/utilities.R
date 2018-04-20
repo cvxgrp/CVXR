@@ -55,6 +55,12 @@ SOLUTION_PRESENT = c(OPTIMAL, OPTIMAL_INACCURATE)
 # Statuses that indicate the problem is infeasible or unbounded.
 INF_OR_UNB = c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE)
 
+## Codes from lpSolveAPI solver (partial at the moment)
+DEGENERATE = "degenerate"
+NUMERICAL_FAILURE = "numerical_failure"
+TIMEOUT = "timeout"
+BB_FAILED = "branch_and_bound_failure"
+
 # Solver names.
 CVXOPT_NAME = "CVXOPT"
 GLPK_NAME = "GLPK"
@@ -66,7 +72,8 @@ SCS_NAME = "SCS"
 GUROBI_NAME = "GUROBI"
 MOSEK_NAME = "MOSEK"
 LS_NAME = "LS"
-SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME)   # TODO: Add more when we implement other solvers
+LPSOLVE_NAME = "LPSOLVE"
+SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME, LPSOLVE_NAME, GLPK_NAME, MOSEK_NAME)   # TODO: Add more when we implement other solvers
 
 # Parallel (meta) solver
 PARALLEL = "parallel"
@@ -140,7 +147,7 @@ SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 sum_shapes <- function(shapes) {
   rows <- max(sapply(shapes, function(shape) { shape[1] }))
   cols <- max(sapply(shapes, function(shape) { shape[2] }))
-  
+
   # Validate shapes
   for(shape in shapes) {
     if(!all(shape == c(1,1)) && !all(shape == c(rows,cols)))
@@ -191,12 +198,12 @@ format_axis <- function(t, X, axis) {
   # Reduce to norms of columns
   if(axis == 1)
     X <- lo.transpose(X)
-  
+
   # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
   # gives the format for the elementwise cone constraints.
   cone_size <- 1 + size(X)[1]
   terms <- list()
-  
+
   # Make t_mat
   mat_size <- c(cone_size, 1)
   prod_size <- c(cone_size, size(t)[1])
@@ -221,10 +228,10 @@ format_elemwise <- function(vars_) {
   # gives the format for the elementwise cone constraints.
   spacing <- length(vars_)
   prod_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[2])
-  
+
   # Matrix spaces out columns of the LinOp expressions
   mat_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[1])
-  
+
   mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_size, spacing, offset) })
   terms <- mapply(function(var, mat) { list(lo.mul_expr(mat, var, prod_size)) }, vars_, mats)
   list(create_geq(lo.sum_expr(terms)))
@@ -272,14 +279,14 @@ flatten_list <- function(x) {
 
 # #
 # # The QuadCoeffExtractor class
-# # 
-# # Given a quadratic expression of size m*n, this class extracts the coefficients 
-# # (Ps, Q, R) such that the (i,j) entry of the expression is given by 
+# #
+# # Given a quadratic expression of size m*n, this class extracts the coefficients
+# # (Ps, Q, R) such that the (i,j) entry of the expression is given by
 # # t(X) %*% Ps[[k]] %*% x + Q[k,] %*% x + R[k]
 # # where k = i + j*m. x is the vectorized variables indexed by id_map
-# # 
+# #
 # setClass("QuadCoeffExtractor", representation(id_map = "list", N = "numeric"))
-# 
+#
 # get_coeffs.QuadCoeffExtractor <- function(object, expr) {
 #   if(is_constant(expr))
 #     return(.coeffs_constant(object, expr))
@@ -298,7 +305,7 @@ flatten_list <- function(x) {
 #   else
 #     stop("Unknown expression type: ", class(expr))
 # }
-# 
+#
 # .coeffs_constant.QuadCoeffExtractor <- function(object, expr) {
 #   if(is_scalar(expr)) {
 #     sz <- 1
@@ -311,28 +318,28 @@ flatten_list <- function(x) {
 #   Q <- sparseMatrix(i = c(), j = c(), dims = c(sz, object@N))
 #   list(Ps, Q, R)
 # }
-# 
+#
 # .coeffs_affine.QuadCoeffExtractor <- function(object, expr) {
 #   sz <- prod(size(expr))
 #   canon <- canonical_form(expr)
 #   prob_mat <- get_problem_matrix(list(create_eq(canon[[1]])), object@id_map)
-#   
+#
 #   V <- prob_mat[[1]]
 #   I <- prob_mat[[2]]
 #   J <- prob_mat[[3]]
 #   R <- prob_mat[[4]]
-#   
+#
 #   Q <- sparseMatrix(i = I, j = J, x = V, dims = c(sz, object@N))
 #   Ps <- lapply(1:sz, function(i) { sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N)) })
 #   list(Ps, Q, as.vector(R))   # TODO: Check if R is flattened correctly
 # }
-# 
+#
 # .coeffs_affine_prod.QuadCoeffExtractor <- function(object, expr) {
 #   XPQR <- .coeffs_affine(expr@args[[1]])
 #   YPQR <- .coeffs_affine(expr@args[[2]])
 #   Xsize <- size(expr@args[[1]])
 #   Ysize <- size(expr@args[[2]])
-#   
+#
 #   XQ <- XPQR[[2]]
 #   XR <- XPQR[[3]]
 #   YQ <- YPQR[[2]]
@@ -340,11 +347,11 @@ flatten_list <- function(x) {
 #   m <- Xsize[1]
 #   p <- Xsize[2]
 #   n <- Ysize[2]
-#   
+#
 #   Ps  <- list()
 #   Q <- sparseMatrix(i = c(), j = c(), dims = c(m*n, object@N))
 #   R <- rep(0, m*n)
-#   
+#
 #   ind <- 0
 #   for(j in 1:n) {
 #     for(i in 1:m) {
@@ -352,12 +359,12 @@ flatten_list <- function(x) {
 #       for(k in 1:p) {
 #         Xind <- k*m + i
 #         Yind <- j*p + k
-#         
+#
 #         a <- XQ[Xind,]
 #         b <- XR[Xind]
 #         c <- YQ[Yind,]
 #         d <- YR[Yind]
-#         
+#
 #         M <- M + t(a) %*% c
 #         Q[ind,] <- Q[ind,] + b*c + d*a
 #         R[ind] <- R[ind] + b*d
@@ -368,19 +375,19 @@ flatten_list <- function(x) {
 #   }
 #   list(Ps, Matrix(Q, sparse = TRUE), R)
 # }
-# 
+#
 # .coeffs_quad_over_lin.QuadCoeffExtractor <- function(object, expr) {
 #   coeffs <- .coeffs_affine(object, expr@args[[1]])
 #   A <- coeffs[[2]]
 #   b <- coeffs[[3]]
-#   
+#
 #   P <- t(A) %*% A
 #   q <- Matrix(2*t(b) %*% A)
 #   r <- sum(b*b)
 #   y <- value(expr@args[[2]])
 #   list(list(P/y), q/y, r/y)
 # }
-# 
+#
 # .coeffs_power.QuadCoeffExtractor <- function(object, expr) {
 #   if(expr@p == 1)
 #     return(get_coeffs(object, expr@args[[1]]))
@@ -388,7 +395,7 @@ flatten_list <- function(x) {
 #     coeffs <- .coeffs_affine(object, expr@args[[1]])
 #     A <- coeffs[[2]]
 #     b <- coeffs[[3]]
-#     
+#
 #     Ps <- lapply(1:nrow(A), function(i) { Matrix(t(A[i,]) %*% A[i,], sparse = TRUE) })
 #     Q <- 2*Matrix(diag(b) %*% A, sparse = TRUE)
 #     R <- b^2
@@ -396,7 +403,7 @@ flatten_list <- function(x) {
 #   } else
 #     stop("Error while processing Power")
 # }
-# 
+#
 # .coeffs_matrix_frac <- function(object, expr) {
 #   coeffs <- .coeffs_affine(expr@args[[1]])
 #   A <- coeffs[[2]]
@@ -405,22 +412,22 @@ flatten_list <- function(x) {
 #   m <- arg_size[1]
 #   n <- arg_size[2]
 #   Pinv <- base::solve(value(expr@args[[2]]))
-#   
+#
 #   M <- sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N))
 #   Q <- sparseMatrix(i = c(), j = c(), dims = c(1, object@N))
 #   R <- 0
-#   
+#
 #   for(i in seq(1, m*n, m)) {
 #     A2 <- A[i:(i+m),]
 #     b2 <- b[i:(i+m)]
-#     
+#
 #     M <- M + t(A2) %*% Pinv %*% A2
 #     Q <- Q + 2*t(A2) %*% (Pinv %*% b2)
 #     R <- R + sum(b2 * (Pinv %*% b2))
 #   }
 #   list(list(Matrix(M, sparse = TRUE)), Matrix(Q, sparse = TRUE), R)
 # }
-# 
+#
 # .coeffs_affine_atom <- function(object, expr) {
 #   sz <- prod(size(expr))
 #   Ps <- lapply(1:sz, function(i) { sparseMatrix(i = c(), j = c(), dims = c(object@N, object@N)) })
@@ -428,7 +435,7 @@ flatten_list <- function(x) {
 #   Parg <- NA
 #   Qarg <- NA
 #   Rarg <- NA
-#   
+#
 #   fake_args <- list()
 #   offsets <- list()
 #   offset <- 0
@@ -453,20 +460,20 @@ flatten_list <- function(x) {
 #     }
 #   }
 #   graph <- graph_implementation(expr, fake_args, size(expr), get_data(expr))
-#   
+#
 #   # Get the matrix representation of the function
 #   prob_mat <- get_problem_matrix(list(create_eq(graph[[1]])), offsets)
 #   V <- prob_mat[[1]]
 #   I <- prob_mat[[2]]
 #   J <- prob_mat[[3]]
 #   R <- as.vector(prob_mat[[4]])   # TODO: Check matrix is flattened correctly
-#   
+#
 #   # Return AX + b
 #   for(idx in 1:length(V)) {
 #     v <- V[idx]
 #     i <- I[idx]
 #     j <- J[idx]
-#     
+#
 #     Ps[[i]] <- Ps[[i]] + v*Parg[j]
 #     Q[i,] <- Q[i,] + v*Qarg[j,]
 #     R[i] <- R[i] + v*Rarg[j]
@@ -477,10 +484,10 @@ flatten_list <- function(x) {
 
 #'
 #' The Rdict class.
-#' 
+#'
 #' A simple, internal dictionary composed of a list of keys and a list of values. These keys/values can be any type, including nested lists, S4 objects, etc.
 #' Incredibly inefficient hack, but necessary for the geometric mean atom, since it requires mixed numeric/gmp objects.
-#' 
+#'
 #' @slot keys A list of keys.
 #' @slot values A list of values corresponding to the keys.
 #' @name Rdict-class
@@ -558,7 +565,7 @@ setMethod("[<-", signature(x = "Rdict"), function(x, i, j, ..., value) {
 #'
 #' This is a subclass of \linkS4class{Rdict} that contains an additional slot for a default function, which assigns a value to an input key.
 #' Only partially implemented, but working well enough for the geometric mean. Will be combined with \linkS4class{Rdict} later.
-#' 
+#'
 #' @slot keys A list of keys.
 #' @slot values A list of values corresponding to the keys.
 #' @slot default A function that takes as input a key and outputs a value to assign to that key.
@@ -587,7 +594,7 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
         return(x@values[[k]])
     }
   }
-  
+
   # TODO: Can't update in place. If key doesn't exist, want to create it with default function value.
   stop("Unimplemented: For now, user must manually create key and set its value to default(key)")
   x@keys <- c(x@keys, list(i))
@@ -602,7 +609,7 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
 ###################
 gm <- function(t, x, y) {
   two <- create_const(2, c(1,1))
-  
+
   length <- prod(size(t))
   SOCAxis(lo.reshape(lo.sum_expr(list(x, y)), c(length, 1)),
           lo.vstack(list(
@@ -620,17 +627,17 @@ gm_constrs <- function(t, x_list, p) {
   t_size <- size(t)
   d <- Rdictdefault(default = function(key) { create_var(t_size) })
   d[w] <- t
-  
+
   if(length(x_list) < length(w))
     x_list <- c(x_list, list(t))
-  
+
   if(length(x_list) != length(w))
     stop("Expected length of x_list to be equal to length of w, but got ", length(x_list), " != ", length(w))
-  
+
   for(i in 1:length(w)) {
     p <- w[i]
     v <- x_list[[i]]
-    
+
     if(p > 0) {
       tmp <- rep(0, length(w))
       tmp[i] <- 1
@@ -642,7 +649,7 @@ gm_constrs <- function(t, x_list, p) {
   for(item in tree$items) {
     elem <- item$key
     children <- item$value
-    
+
     if(!any(elem == 1)) {
       for(key in list(elem, children[[1]], children[[2]])) {
         if(!is.element(key, d))
@@ -689,30 +696,30 @@ limit_denominator <- function(num, max_denominator = 10^6) {
     stop("max_denominator should be at least 1")
   if(gmp::denominator(num) <= max_denominator)
     return(gmp::as.bigq(num))
-  
+
   p0 <- 0
   q0 <- 1
   p1 <- 1
   q1 <- 0
-  
+
   n <- as.double(gmp::numerator(num))
   d <- as.double(gmp::denominator(num))
-  
+
   while(TRUE) {
     a <- floor(n/d)
     q2 <- q0 + a*q1
     if(q2 > max_denominator)
       break
-    
+
     p0 <- p1
     q0 <- q1
     p1 <- p0 + a*p1
     q1 <- q2
-    
+
     n <- d
     d <- n - a*d
   }
-  
+
   k <- floor((max_denominator - q0)/q1)
   bound1 <- gmp::as.bigq(p0 + k*p1, q0 + k*q1)
   bound2 <- gmp::as.bigq(p1, q1)
@@ -757,16 +764,16 @@ is_weight <- function(w) {
 fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
   if(any(a < 0))
     stop("Input powers must be non-negative")
-  
+
   if(!(gmp::is.whole(max_denom) && max_denom > 0))
     stop("Input denominator must be an integer")
-  
+
   # TODO: Handle case where a contains mixture of BigQ, BigZ, and regular R numbers
   # if(is.matrix(a) || is.vector(a))
   #  a <- as.list(a)
   max_denom <- next_pow2(max_denom)
   total <- sum(a)
-  
+
   if(force_dyad)
     w_frac <- make_frac(a, max_denom)
   else if(all(sapply(a, function(v) { gmp::is.whole(v) || gmp::is.bigq(v) }))) {
@@ -793,10 +800,10 @@ make_frac <- function(a, denom) {
   b <- sapply(a, function(v) { as.double(v * denom) })
   b <- as.matrix(as.integer(b))
   err <- b/as.double(denom) - a
-  
+
   inds <- order(err)[1:(denom - sum(b))]
   b[inds] <- b[inds] + 1
-  
+
   denom <- as.integer(denom)
   bout <- rep(gmp::as.bigq(0), length(b))
   for(i in 1:length(b))
@@ -811,7 +818,7 @@ dyad_completion <- function(w) {
   for(i in 1:length(w))
     w[i] <- gmp::as.bigq(w[i])
   d <- gmp::as.bigq(max(gmp::denominator(w)))
-  
+
   # if extra_index
   p <- next_pow2(d)
   if(p == d)
@@ -834,16 +841,16 @@ approx_error <- function(a_orig, w_approx) {
     stop("w_approx must be a weight vector")
   if(length(a_orig) != length(w_approx))
     stop("a_orig and w_approx must have the same length")
-  
+
   w_orig <- as.matrix(a_orig)/sum(a_orig)
-  
+
   as.double(max(abs(w_orig - w_approx)))
 }
 
 # Return first power of 2 >= n
 next_pow2 <- function(n) {
   if(n <= 0) return(1)
-  
+
   # len <- nchar(R.utils::intToBin(n))
   # n2 <- bitwShiftL(1, len)
   # if(bitwShiftR(n2, 1) == n)
@@ -858,15 +865,15 @@ next_pow2 <- function(n) {
 check_dyad <- function(w, w_dyad) {
   if(!(is_weight(w) && is_dyad_weight(w_dyad)))
     return(FALSE)
-  
+
   if(length(w) == length(w_dyad) && all(w == w_dyad))
     # w is its own dyadic completion
     return(TRUE)
-  
+
   if(length(w_dyad) == length(w) + 1) {
     if(length(w) == 0)
       return(TRUE)
-    
+
     denom <- 1-w_dyad[length(w_dyad)]
     cmp <- rep(gmp::as.bigq(0), length(w_dyad)-1)
     for(i in 1:(length(w_dyad)-1))
@@ -881,7 +888,7 @@ split <- function(w_dyad) {
   # vector is all zeros with single 1, so can't be split and no children
   if(any(w_dyad == 1))
     return(list())
-  
+
   bit <- gmp::as.bigq(1, 1)
   child1 <- rep(gmp::as.bigq(0), length(w_dyad))
   if(is.list(w_dyad)) {
@@ -890,7 +897,7 @@ split <- function(w_dyad) {
       child2[i] <- 2*w_dyad[[i]]
   } else
     child2 <- 2*w_dyad
-  
+
   while(TRUE) {
     for(ind in 1:length(child2)) {
       val <- child2[ind]
@@ -910,7 +917,7 @@ split <- function(w_dyad) {
 decompose <- function(w_dyad) {
   if(!is_dyad_weight(w_dyad))
     stop("input must be a dyadic weight vector")
-  
+
   tree <- Rdict()
   todo <- list(as.vector(w_dyad))
 
@@ -962,7 +969,7 @@ lower_bound <- function(w_dyad) {
   if(!is_dyad_weight(w_dyad))
     stop("w_dyad must be a dyadic weight")
   md <- get_max_denom(w_dyad)
-  
+
   if(is(md, "bigq") || is(md, "bigz")) {
     md_int <- bit64::as.integer64(gmp::asNumeric(md))
     bstr <- sub("^[0]+", "", bit64::as.bitstring(md_int))   # Get rid of leading zeros
@@ -970,7 +977,7 @@ lower_bound <- function(w_dyad) {
     # TODO: Should use formatBin in mpfr, but running into problems with precision
   } else
     lb1 <- nchar(R.utils::intToBin(md))-1
-  
+
   # don't include zero entries
   lb2 <- sum(w_dyad != 0) - 1
   max(lb1, lb2)
@@ -996,7 +1003,7 @@ Key <- function(row, col) {
 ku_validate_key <- function(key, shape) {
   nrow <- shape[1]
   ncol <- shape[2]
-  
+
   if(length(key) > 2)
     stop("Invalid index/slice")
   else if(length(key) == 2) {
@@ -1028,7 +1035,7 @@ ku_slice_mat <- function(mat, key) {
 
 ku_size <- function(key, shape) {
   dims <- c()
-  
+
   for(i in 1:2) {
     idx <- key[[i]]
     if(idx == "all")
@@ -1040,4 +1047,12 @@ ku_size <- function(key, shape) {
     dims <- c(dims, size)
   }
   dims
+}
+
+r2py_sparse <- function(spmat) {
+    ##mat <- as(mat_or_spmat, "dgCMatrix")
+    dims <- dim(spmat)
+    tuple <- reticulate::tuple(spmat@x, spmat@i, spmat@p)
+    shape <- reticulate::tuple(dims[1L], dims[2L])
+    get_sp()$csc_matrix(tuple, shape)
 }

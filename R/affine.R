@@ -787,9 +787,9 @@ Index.get_special_slice <- function(expr, row, col) {
   if(is.matrix(row) && is.null(col))
     select_mat <- idx_mat[row]
   else if(is.null(row) && !is.null(col))
-    select_mat <- idx_mat[,col]
+    select_mat <- idx_mat[ , col]
   else if(!is.null(row) && is.null(col))
-    select_mat <- idx_mat[row,]
+    select_mat <- idx_mat[row, ]
   else
     select_mat <- idx_mat[row, col]
 
@@ -800,12 +800,15 @@ Index.get_special_slice <- function(expr, row, col) {
 
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
+  ##select_vec <- as.matrix(select_mat, nrow=final_size[1L], ncol=final_size[2L])
+
   identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
-  idmat <- matrix(identity[select_vec,], ncol = expr_prod)
-  if(is_scalar(Vec(expr)) || is_scalar(as.Constant(idmat)))
-    Reshape(idmat * Vec(expr), final_size[1], final_size[2])
+  idmat <- matrix(identity[select_vec, ], ncol = expr_prod)
+  v <- Vec(expr)
+  if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
+    Reshape(idmat * v, final_size[1], final_size[2])
   else
-    Reshape(idmat %*% Vec(expr), final_size[1], final_size[2])
+    Reshape(idmat %*% v, final_size[1], final_size[2])
 }
 
 #

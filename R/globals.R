@@ -3,12 +3,14 @@
 #' @importFrom Rmpfr mpfr getPrec
 #' @importFrom gmp as.bigq as.bigz is.bigq is.bigz is.whole numerator denominator asNumeric
 #' @importFrom bit64 as.integer64 as.bitstring
+#' @importFrom reticulate import import_from_path py_module_available
 #' @importClassesFrom gmp bigq bigz
 
 ##
 ## Global variable for package CVXR
+## idCounter, numpy handle, scipy.sparse handle
 ##
-.CVXR.options <- list(idCounter = 0L)
+.CVXR.options <- list(idCounter = 0L, np = NULL, sp = NULL, mosekglue = NULL)
 
 #'
 #' Set ID Counter
@@ -40,7 +42,7 @@ setIdCounter <- function(value = 0L) {
 #'   resetOptions()
 #' }
 resetOptions <- function() {
-    assignInMyNamespace(".CVXR.options", list(idCounter = 0L))
+    assignInMyNamespace(".CVXR.options", list(idCounter = 0L, np = NULL, sp = NULL, mosekglue = NULL))
     .CVXR.options
 }
 
@@ -60,3 +62,61 @@ get_id <- function() {
     assignInMyNamespace(".CVXR.options", .CVXR.options)
     id
 }
+
+#'
+#' Get scipy handle
+#'
+#' Get the scipy handle or fail if not available
+#'
+#' @return the scipy handle
+#' @export
+#' @examples
+#' \dontrun{
+#'    get_sp
+#' }
+get_sp <- function() {
+    sp <- .CVXR.options$sp
+    if (is.null(sp)) {
+        stop("Scipy not available")
+    }
+    sp
+}
+
+#'
+#' Get numpy handle
+#'
+#' Get the numpy handle or fail if not available
+#'
+#' @return the numpy handle
+#' @export
+#' @examples
+#' \dontrun{
+#'    get_np
+#' }
+get_np <- function() {
+    np <- .CVXR.options$np
+    if (is.null(np)) {
+        stop("Numpy not available")
+    }
+    np
+}
+
+#'
+#' Get our mosekglue handle
+#'
+#' Get the mosekglue handle or fail if not available
+#'
+#' @return the mosekglue handle
+#' @export
+#' @examples
+#' \dontrun{
+#'    get_mosekglue
+#' }
+get_mosekglue <- function() {
+    mosekglue <- .CVXR.options$mosekglue
+    if (is.null(mosekglue)) {
+        stop("CVXR python mosekglue not available")
+    }
+    mosekglue
+}
+

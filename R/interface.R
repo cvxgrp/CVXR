@@ -1,5 +1,5 @@
 intf_size <- function(constant) {
-  if((is.null(dim(constant)) && length(constant) == 1) || 
+  if((is.null(dim(constant)) && length(constant) == 1) ||
      (!is.null(dim(constant)) && all(dim(constant) == c(1,1))))
     return(c(1,1))
   else if(is.vector(constant) && !is.list(constant))
@@ -10,8 +10,8 @@ intf_size <- function(constant) {
     stop("Unknown class: ", class(constant))
 }
 
-intf_sign <- function(constant, tol = 1e-5) {
-  c(min(constant) >= -tol, max(constant) <= tol)
+intf_sign <- function(constant) {
+  c(min(constant) >= 0, max(constant) <= 0)
 }
 
 intf_scalar_value <- function(constant) {

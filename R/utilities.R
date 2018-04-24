@@ -61,6 +61,9 @@ NUMERICAL_FAILURE = "numerical_failure"
 TIMEOUT = "timeout"
 BB_FAILED = "branch_and_bound_failure"
 
+## Codes from GLPK (partial)
+UNDEFINED = "undefined"
+
 # Solver names.
 CVXOPT_NAME = "CVXOPT"
 GLPK_NAME = "GLPK"

@@ -71,7 +71,7 @@ This class is an interface for Gnu Linear Programming Toolkit solver
 
 \item \code{name}: The name of the solver.
 
-\item \code{import_solver}: Imports the Rmosek library.
+\item \code{import_solver}: Imports the Rgpkk library.
 
 \item \code{Solver.solve}: Call the solver on the canonicalized problem.
 

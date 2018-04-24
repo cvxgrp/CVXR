@@ -52,16 +52,16 @@ setMethod("status_map", "GLPK", function(solver, status) {
     ##GLP_OPT <- 5  /* solution is optimal */
     ##GLP_UNBND <- 6  /* solution is unbounded */
 
-    if(status == 0) {
-        OPTIMAL
-    } else if(status == 1) {
-        OPTIMAL_INACCURATE
+    if(status == 1) {
+        UNDEFINED
     } else if(status == 2) {
+        OPTIMAL_INACCURATE
+    } else if(status == 3 || status == 4) {
         INFEASIBLE
-    } else if(status == 3) {
+    } else if(status == 5) {
+        OPTIMAL
+    } else if(status == 6) {
         UNBOUNDED
-    } else if(status %in% seq(4, 13)) {
-        SOLVER_ERROR
     } else stop("GLPK status unrecognized: ", status)
 })
 #
@@ -87,12 +87,11 @@ setMethod("split_constr", "GLPK", function(solver, constr_map) {
 #' @param ... Additional arguments to the solver.
 #' @describeIn GLPK Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "GLPK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
-
+    solver_opts <- list(...)
     if (verbose) {
-       solver_opts <- c(list(...), list(verbose = verbose))
-    } else {
-        solver_opts <- list(...)
+        solver_opts$verbose <- verbose
     }
+    solver_opts$canonicalize_status <- FALSE
 
     data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
@@ -120,9 +119,8 @@ setMethod("Solver.solve", "GLPK", function(solver, objective, constraints, cache
                                           rhs = b,
                                           bounds = bounds,
                                           types = types,
-                                          control = list(),
-                                          max = FALSE,
-                                          solver_opts)
+                                          control = solver_opts,
+                                          max = FALSE)
     format_results(solver, results_dict, data, cached_data)
 })
 

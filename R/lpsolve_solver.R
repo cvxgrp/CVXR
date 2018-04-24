@@ -50,9 +50,11 @@ setMethod("status_map", "LPSOLVE", function(solver, status) {
         INFEASIBLE
     } else if(status == 3) {
         UNBOUNDED
-    } else if(status %in% seq(4, 13)) {
+    } else if (status %in% seq(4, 13)){
         SOLVER_ERROR
-    } else stop("LPSOLVE status unrecognized: ", status)
+    } else {
+        stop(sprintf("LPSOLVE status %d unrecognized!"))
+    }
 })
 #
 #' @describeIn LPSOLVE The name of the solver.
@@ -79,9 +81,7 @@ setMethod("Solver.solve", "LPSOLVE", function(solver, objective, constraints, ca
 
     solver_opts <- list(...)
     if (verbose) {
-       solver_opts <- c(list(...), list(verbose = 'detailed'))
-    } else {
-        solver_opts <- list(...)
+       solver_opts$verbose <- 'normal'
     }
 
     data <- Solver.get_problem_data(solver, objective, constraints, cached_data)

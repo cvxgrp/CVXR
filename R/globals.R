@@ -120,3 +120,22 @@ get_mosekglue <- function() {
     mosekglue
 }
 
+#'
+#' Get our gurobiglue handle
+#'
+#' Get the gurobiglue handle or fail if not available
+#'
+#' @return the gurobiglue handle
+#' @export
+#' @examples
+#' \dontrun{
+#'    get_gurobiglue
+#' }
+get_gurobiglue <- function() {
+    gurobiglue <- .CVXR.options$gurobiglue
+    if (is.null(gurobiglue)) {
+        stop("CVXR python gurobiglue not available")
+    }
+    gurobiglue
+}
+

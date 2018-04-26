@@ -1,5 +1,6 @@
 """
-Copyright 2017 Steven Diamond
+Copyright 2015 Enzo Busseti
+  [ Modified by Balasubramanian Narasimhan ]
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

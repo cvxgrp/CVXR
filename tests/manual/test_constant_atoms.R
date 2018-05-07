@@ -227,7 +227,7 @@ test_that("Test all constant atoms", {
             variables <- list()
             constraints <- list()
             for(expr in args) {
-              expr_size <- intf_size(expr)
+              expr_size <- CVXR:::intf_size(expr)
               variables <- c(variables, Variable(expr_size[1], expr_size[2]))
               constraints <- c(constraints, variables[[length(variables)]] == expr)
             }

@@ -3,7 +3,7 @@
 #'
 #' This class is an interface for Gnu Linear Programming Toolkit solver
 #'
-#' @seealso the \href{http://www.gnu.org/software/LPSOLVE/}{Gnu GLKP site}.
+#' @seealso the \href{https://cran.r-project.org/package=lpSolveAPI}{CRAN lpSolveAPI package}.
 #' @name LPSOLVE-class
 #' @aliases LPSOLVE
 #' @rdname LPSOLVE-class
@@ -122,6 +122,7 @@ setMethod("Solver.solve", "LPSOLVE", function(solver, objective, constraints, ca
     format_results(solver, results_dict, data, cached_data)
 })
 
+#' @param results_dict A list containing the solver output.
 #' @param data A list containing information about the problem.
 #' @describeIn LPSOLVE Convert raw solver output into standard list of results.
 setMethod("format_results", "LPSOLVE", function(solver, results_dict, data, cached_data) {

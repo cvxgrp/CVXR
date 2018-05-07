@@ -107,56 +107,6 @@ setMethod("split_constr", "GUROBI", function(solver, constr_map) {
 #' @describeIn GUROBI Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "GUROBI", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
 
-  solver_opts <- list(...)
-
-  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
-
-    A <- data[[A_KEY]]
-    b <- data[[B_KEY]]
-    ##G <- data[[G_KEY]]
-    ##h <- unlist(data[[H_KEY]])
-    c <- matrix(unlist(data[[C_KEY]]), ncol = 1)
-    offset <- data[[OFFSET]]
-    bool_idx <- data[[BOOL_IDX]]
-    int_idx <- data[[INT_IDX]]
-
-  dims <- data[[DIMS]]
-  if (is.null(dims$s)) {
-      dims$s <- list()
-  } else {
-      dims$s <- as.integer(dims$s)
-  }
-  dims$q <- as.integer(dims$q)
-  dims$l <- as.integer(dims$l)
-  dims$f <- as.integer(dims$f)
-  dims$ep <- as.integer(dims$ep)
-
-  results_dict <- get_gurobiglue()$gurobi_intf(r2py_sparse(A),
-                                               b,
-                                               c,
-                                               bool_idx,
-                                               int_idx,
-                                               dims,
-                                               offset,
-                                               reticulate::dict(solver_opts),
-                                               verbose)
-    results_dict
-    if (is.null(results_dict)) {
-
-    }
-    results_dict
-    ##format_results(solver, results_dict, data, cached_data)
-})
-
-#' @param objective A list representing the canonicalized objective.
-#' @param constraints A list of canonicalized constraints.
-#' @param cached_data A list mapping solver name to cached problem data.
-#' @param warm_start A logical value indicating whether the previous solver result should be used to warm start.
-#' @param verbose A logical value indicating whether to print solver output.
-#' @param ... Additional arguments to the solver.
-#' @describeIn GUROBI Call the solver on the canonicalized problem.
-setMethod("Solver.solve", "GUROBI", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
-
     solver_opts <- list(...)
 
     data <- Solver.get_problem_data(solver, objective, constraints, cached_data)

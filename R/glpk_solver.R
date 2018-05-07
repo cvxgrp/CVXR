@@ -3,7 +3,7 @@
 #'
 #' This class is an interface for Gnu Linear Programming Toolkit solver
 #'
-#' @seealso the \href{http://www.gnu.org/software/GLPK/}{Gnu GLKP site}.
+#' @seealso the \href{https://www.gnu.org/software/glpk/}{Gnu GLKP site}.
 #' @name GLPK-class
 #' @aliases GLPK
 #' @rdname GLPK-class
@@ -124,6 +124,7 @@ setMethod("Solver.solve", "GLPK", function(solver, objective, constraints, cache
     format_results(solver, results_dict, data, cached_data)
 })
 
+#' @param results_dict A list containing the solver output.
 #' @param data A list containing information about the problem.
 #' @describeIn GLPK Convert raw solver output into standard list of results.
 setMethod("format_results", "GLPK", function(solver, results_dict, data, cached_data) {

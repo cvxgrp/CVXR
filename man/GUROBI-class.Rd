@@ -13,7 +13,6 @@
 \alias{name,GUROBI-method}
 \alias{import_solver,GUROBI-method}
 \alias{Solver.solve,GUROBI-method}
-\alias{Solver.solve,GUROBI-method}
 \title{The GUROBI class.}
 \usage{
 GUROBI()
@@ -34,24 +33,9 @@ GUROBI()
 
 \S4method{Solver.solve}{GUROBI}(solver, objective, constraints, cached_data,
   warm_start, verbose, ...)
-
-\S4method{Solver.solve}{GUROBI}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{GUROBI} object.}
-
-\item{objective}{A list representing the canonicalized objective.}
-
-\item{constraints}{A list of canonicalized constraints.}
-
-\item{cached_data}{A list mapping solver name to cached problem data.}
-
-\item{warm_start}{A logical value indicating whether the previous solver result should be used to warm start.}
-
-\item{verbose}{A logical value indicating whether to print solver output.}
-
-\item{...}{Additional arguments to the solver.}
 
 \item{objective}{A list representing the canonicalized objective.}
 
@@ -83,8 +67,6 @@ This class is an interface for the commercial GUROBI solver.
 \item \code{name}: The name of the solver.
 
 \item \code{import_solver}: Imports the gurobi library.
-
-\item \code{Solver.solve}: Call the solver on the canonicalized problem.
 
 \item \code{Solver.solve}: Call the solver on the canonicalized problem.
 }}

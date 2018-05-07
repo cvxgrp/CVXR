@@ -52,6 +52,8 @@ GLPK()
 
 \item{...}{Additional arguments to the solver.}
 
+\item{results_dict}{A list containing the solver output.}
+
 \item{data}{A list containing information about the problem.}
 }
 \description{
@@ -79,5 +81,5 @@ This class is an interface for Gnu Linear Programming Toolkit solver
 }}
 
 \seealso{
-the \href{http://www.gnu.org/software/GLPK/}{Gnu GLKP site}.
+the \href{https://www.gnu.org/software/glpk/}{Gnu GLKP site}.
 }

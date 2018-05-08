@@ -787,11 +787,11 @@ Index.get_special_slice <- function(expr, row, col) {
   if(is.matrix(row) && is.null(col))
     select_mat <- idx_mat[row]
   else if(is.null(row) && !is.null(col))
-    select_mat <- idx_mat[ , col]
+    select_mat <- idx_mat[ , col, drop = FALSE]
   else if(!is.null(row) && is.null(col))
-    select_mat <- idx_mat[row, ]
+    select_mat <- idx_mat[row, , drop = FALSE]
   else
-    select_mat <- idx_mat[row, col]
+    select_mat <- idx_mat[row, col, drop = FALSE]
 
   if(!is.null(dim(select_mat)))
     final_size <- dim(select_mat)

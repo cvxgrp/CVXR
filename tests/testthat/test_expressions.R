@@ -466,9 +466,9 @@ test_that("test indexing with logical matrices", {
 
   # Index for rows, logical vector for columns
   expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(size(expr), c(1, 2))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(matrix(A[2, c(TRUE, FALSE, FALSE, TRUE)]), value(expr))
+  expect_equal(A[2, c(TRUE, FALSE, FALSE, TRUE), drop = FALSE], value(expr))
 
   # Logical vector for rows, slice for columns
   expr <- C[c(TRUE, TRUE, TRUE), 2:3]
@@ -478,9 +478,9 @@ test_that("test indexing with logical matrices", {
 
   # Slice for rows, logical vector for columns
   expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]
-  expect_equal(size(expr), c(3,1))    # Always cast 1-D arrays as column vectors
+  expect_equal(size(expr), c(1,3))    # Always cast 1-D arrays as column vectors. Edit: NOT!!
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(matrix(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE)]), value(expr))
+  expect_equal(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE), drop = FALSE], value(expr))
 
   # Logical vectors for rows and columns
   expr <- C[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]
@@ -507,9 +507,9 @@ test_that("test indexing with vectors/matrices of indices", {
 
   # Index for rows, vector for columns
   expr <- C[2,c(1,3)]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(size(expr), c(1,2))
   expect_equal(sign(expr), POSITIVE)
-  expect_equal(matrix(A[2,c(1,3)]), value(expr))
+  expect_equal(A[2,c(1,3), drop = FALSE], value(expr))
 
   # Vector for rows, slice for columns
   expr <- C[c(1,3),2:3]

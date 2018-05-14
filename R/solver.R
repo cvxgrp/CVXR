@@ -404,9 +404,11 @@ setMethod("Solver.solve", "ECOS_BB", function(solver, objective, constraints, ca
   data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
   # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
-  if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
-  if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
-  data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
+  # TODO: Naras please fix this by making ECOSolveR handle type conversion, e.g. logical -> integer
+  ## Naras Answer: Fixed in ECOSolveR version >= 0.4
+  ## if(prod(dim(data[[G_KEY]])) == 0) data[[G_KEY]] <- NULL
+  ## if(prod(dim(data[[A_KEY]])) == 0) data[[A_KEY]] <- NULL
+  ## data[[DIMS]] <- lapply(data[[DIMS]], function(dim) { as.integer(dim) })
   storage.mode(data[[BOOL_IDX]]) <- "integer"
   storage.mode(data[[INT_IDX]]) <- "integer"
 
@@ -1060,25 +1062,3 @@ SCS.tri_to_full <- function(lower_tri, n) {
 #   }
 # })
 
-####################
-#                  #
-# Solver utilities #
-#                  #
-####################
-# solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
-solver_intf <- list(ECOS(), ECOS_BB(), SCS())
-SOLVERS <- solver_intf
-names(SOLVERS) <- sapply(solver_intf, function(solver) { name(solver) })
-
-#'
-#' Installed Solvers
-#'
-#' @return The names of all the installed solvers.
-#' @docType methods
-#' @rdname installed_solvers
-#' @export
-installed_solvers <- function() {
-  installed <- sapply(SOLVERS, is_installed)
-  names(SOLVERS)[which(installed)]
-
-}

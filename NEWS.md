@@ -1,0 +1,45 @@
+# CVXR 0.97-1
+
+* Minor typo and documentation fixes.
+
+# CVXR 0.97
+
+* Added `LPSOLVE` via [`lpSolveAPI`](https://cran.r-project.org/package=lpSolveAPI)
+* Added `GLPK` via [`Rglpk`](https://cran.r-project.org/package=Rglpk)
+* Added `MOSEK` 
+* Added `GUROBI`
+* Bug fix: [issue #25](https://github.com/anqif/CVXR/issues/25). 
+  All CVXR expressions retain dimensions. Culprit was `drop =
+  FALSE` (in function `Index.get_special_slice`) as suspected.  
+  
+# CVXR 0.96 
+
+* Added a note that CVXR can probably be compiled from source for
+  earlier versions of R. This is [issue
+  #24](https://github.com/anqif/CVXR/issues/24)
+
+* Using [pkgdown](https://pkgdown.r-lib.org). This also addresses
+  [issue #23](https://github.com/anqif/CVXR/issues/23)
+
+* Bug fix: [issue #28](https://github.com/anqif/CVXR/issues/28)
+  Function `intf_sign` (`interface.R`) was unnecessarily using a
+  tolerance parameter, now eliminated.
+  
+# CVXR 0.95
+
+* Updated Solver.solve to adapt to new ECOSolveR. Require version 0.4 of
+  ECOSolveR now. 
+
+* Updated `unpack_results` to behave exactly like in CVXPY. Added
+  documentation and testthat tests. Documented in [Getting Faster
+  Results article](https://cvxr.rbind.io/post/examples/cvxr_speed/).
+  
+
+# CVXR 0.94-4
+
+* First CRAN release 2017-11-20. 
+
+# CVXR pre-0.94-4
+
+* Several wrong turns and much hand-wringing. Complete rewrite in
+  preparation for release.

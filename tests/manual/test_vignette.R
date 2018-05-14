@@ -1,6 +1,6 @@
 test_that("Test non-negative least squares", {
     require(MASS)
-
+    print("LS")
     ## Generate problem data
     s <- 1
     m <- 10
@@ -56,6 +56,7 @@ test_that("Test censored regression", {
   M <- 50
   K <- 200
 
+  print("CENSORED")
   set.seed(n*M*K)
   X <- matrix(stats::rnorm(K*n), nrow = K, ncol = n)
   beta_true <- matrix(stats::rnorm(n), nrow = n, ncol = 1)
@@ -104,7 +105,7 @@ test_that("Test censored regression", {
 
 test_that("Test Elastic-net regression", {
   set.seed(1)
-  
+    print("ELASTIC")
   # Problem data
   n = 20
   m = 1000
@@ -112,12 +113,12 @@ test_that("Test Elastic-net regression", {
   beta_true = matrix(rnorm(n), ncol = 1)
   idxs <- sample.int(n, size = floor((1-DENSITY)*n), replace = FALSE)
   beta_true[idxs] <- 0
-  
+
   sigma = 45
   X = matrix(rnorm(m*n, sd = 5), nrow = m, ncol = n)
   eps <- matrix(rnorm(m, sd = sigma), ncol = 1)
   y = X %*% beta_true + eps
-  
+
   # Elastic-net penalty function
   elastic_reg <- function(beta, lambda = 0, alpha = 0) {
     ridge <- (1 - alpha) * sum(beta^2)
@@ -128,9 +129,9 @@ test_that("Test Elastic-net regression", {
   TRIALS <- 10
   beta_vals <- matrix(0, nrow = n, ncol = TRIALS)
   lambda_vals <- 10^seq(-2, log10(50), length.out = TRIALS)
-  beta <- Variable(n)  
+  beta <- Variable(n)
   loss <- sum((y - X %*% beta)^2)/(2*m)
-  
+
   # Elastic-net regression
   alpha <- 0.75
   for(i in 1:TRIALS) {
@@ -140,11 +141,11 @@ test_that("Test Elastic-net regression", {
     result <- solve(prob)
     beta_vals[,i] <- result$getValue(beta)
   }
-  
+
   # Plot coefficients against regularization
   plot(0, 0, type = "n", main = "Regularization Path for Elastic-net Regression", xlab = expression(lambda), ylab = expression(beta), ylim = c(-0.75, 1.25), xlim = c(0, 50))
   matlines(lambda_vals, t(beta_vals))
-  
+
   # Compare with glmnet results
   library(glmnet)
   model_net <- glmnet(X, y, family = "gaussian", alpha = alpha, lambda = lambda_vals, standardize = FALSE, intercept = FALSE)
@@ -158,6 +159,7 @@ test_that("Test Huber regression", {
   M <- 1      ## Huber threshold
   p <- 0.1    ## Fraction of responses with sign flipped
 
+  print("HUBER")
   ## Generate problem data
   beta_true <- 5*matrix(stats::rnorm(n), nrow = n)
   X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -207,7 +209,7 @@ test_that("Test logistic regression", {
   offset <- 0
   sigma <- 45
   DENSITY <- 0.2
-
+  print("LOGISTIC")
   beta_true <- stats::rnorm(n)
   idxs <- sample(n, size = floor((1-DENSITY)*n), replace = FALSE)
   beta_true[idxs] <- 0
@@ -228,6 +230,7 @@ test_that("Test logistic regression", {
 
 test_that("Test saturating hinges problem", {
   require(ElemStatLearn)
+    print("SAT HINGES")
   ## Import and sort data
   data(bone)
   X <- bone[bone$gender == "female",]$age
@@ -309,7 +312,7 @@ test_that("Test saturating hinges problem", {
 
 test_that("Test log-concave distribution estimation", {
   set.seed(1)
-
+    print("LOG CONCAVE")
   ## Calculate a piecewise linear function
   pwl_fun <- function(x, knots) {
     n <- nrow(knots)
@@ -372,7 +375,7 @@ test_that("Test channel capacity problem", {
   m <- 2
   P <- rbind(c(0.75, 0.25),    ## Channel transition matrix
              c(0.25, 0.75))
-
+  print("CHANNEL")
   ## Form problem
   x <- Variable(n)   ## Probability distribution of input signal x(t)
   y <- P %*% x       ## Probability distribution of output signal y(t)
@@ -394,6 +397,7 @@ test_that("Test optimal allocation in a Gaussian broadcast channel", {
   beta <- seq(10, n-1+10)/n
   P_tot <- 0.5
   W_tot <- 1.0
+  print("OPTIMAL ALLOCATION")
 
   ## Form problem
   P <- Variable(n)   ## Power
@@ -415,7 +419,7 @@ test_that("Test catenary problem", {
   m <- 101
   L <- 2
   h <- L/(m-1)
-
+  print("CATENARY")
   ## Form objective
   x <- Variable(m)
   y <- Variable(m)
@@ -471,7 +475,8 @@ test_that("Test catenary problem", {
 })
 
 test_that("Test direct standardization problem", {
-  skew_sample <- function(data, bias) {
+    print("DIRECT")
+    skew_sample <- function(data, bias) {
     if(missing(bias))
       bias <- rep(1.0, ncol(data))
     num <- exp(data %*% bias)
@@ -530,7 +535,8 @@ test_that("Test direct standardization problem", {
 })
 
 test_that("Test risk-return tradeoff in portfolio optimization", {
-  ## Problem data
+    print("PORTFOLIO")
+    ## Problem data
   set.seed(10)
   n <- 10
   SAMPLES <- 100
@@ -583,7 +589,8 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
 })
 
 test_that("Test Kelly gambling optimal bets", {
-  set.seed(1)
+    print("KELLY")
+    set.seed(1)
   n <- 20      ## Total bets
   K <- 100     ## Number of possible returns
   PERIODS <- 100
@@ -637,7 +644,8 @@ test_that("Test Kelly gambling optimal bets", {
 })
 
 test_that("Test worst-case covariance", {
-  ## Problem data
+    print("WORST CASE")
+    ## Problem data
   w <- matrix(c(0.1, 0.2, -0.05, 0.1))
   ## Constraint matrix:
   ## [[0.2, + ,  +,   +-],
@@ -687,7 +695,7 @@ test_that("Test worst-case covariance", {
 test_that("Test sparse inverse covariance estimation", {
   require(Matrix)
   require(expm)
-
+    print("SPARSE INV")
   set.seed(1)
   n <- 10      ## Dimension of matrix
   m <- 1000    ## Number of samples
@@ -725,7 +733,8 @@ test_that("Test sparse inverse covariance estimation", {
 })
 
 test_that("Test fastest mixing Markov chain (FMMC)", {
-  ## Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
+    print("MCMC")
+    ## Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
   ## Form the complementary graph
   antiadjacency <- function(g) {
     n <- max(as.numeric(names(g)))   ## Assumes names are integers starting from 1

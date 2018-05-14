@@ -3,7 +3,7 @@
 CVXR
 ====
 
-[![Travis-CI Build Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.org/anqif/CVXR) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR) [![Coverage Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
+[![Travis-CI Build Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.org/anqif/CVXR) [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR) [![Coverage Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
 
 CVXR provides an object-oriented modeling language for convex optimization, similar to `CVX`, `CVXPY`, `YALMIP`, and `Convex.jl`. It allows the user to formulate convex optimization problems in a natural mathematical syntax rather than the restrictive standard form required by most solvers. The user specifies an objective and set of constraints by combining constants, variables, and parameters using a library of functions with known mathematical properties. `CVXR` then applies signed [disciplined convex programming (DCP)](https://web.stanford.edu/~boyd/papers/pdf/disc_cvx_prog.pdf) to verify the problem’s convexity. Once verified, the problem is converted into standard conic form using graph implementations and passed to a cone solver such as [ECOS](https://github.com/embotech/ecos) or [SCS](https://github.com/cvxgrp/scs).
 

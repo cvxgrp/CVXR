@@ -7,7 +7,7 @@ output: github_document
 # CVXR
 
 [![Travis-CI Build Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.org/anqif/CVXR)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
 

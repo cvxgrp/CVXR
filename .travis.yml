@@ -1,22 +1,25 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
-language: R
+language: r
+
 r:
+  - release
   - devel
-sudo: false
+
 cache: packages
+
+r_packages:
+  - covr
 
 addons:
   apt:
     packages:
       - libmpfr-dev
-r:
-- release
-- devel
+
+sudo: false
 
 after_success:
   - Rscript -e 'covr::codecov()'
 
-env:
-  global:
-  - _R_CHECK_FORCE_SUGGESTS_=FALSE
+notifications:
+  email: false

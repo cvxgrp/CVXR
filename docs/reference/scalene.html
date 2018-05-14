@@ -129,7 +129,7 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
+      <td><p>An Expression, vector, or matrix.</p></td>
     </tr>
     <tr>
       <th>alpha</th>
@@ -143,7 +143,7 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the scalene function evaluated at the input.</p>
+    <p>An Expression representing the scalene function evaluated at the input.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -151,7 +151,7 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
 <span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(<span class='fu'>c</span>(-<span class='fl'>5</span>,<span class='fl'>2</span>), <span class='fu'>c</span>(-<span class='fl'>3</span>,<span class='fl'>1</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>,<span class='fl'>2</span>,<span class='fl'>3</span>)[<span class='fl'>1</span>,<span class='fl'>1</span>]), <span class='fu'>list</span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>, <span class='fl'>0.7</span>, <span class='fl'>0.3</span>))
 <span class='co'># }</span></pre>

@@ -127,24 +127,24 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>lh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a> or vector representing the left-hand value.</p></td>
+      <td><p>An Expression or vector representing the left-hand value.</p></td>
     </tr>
     <tr>
       <th>rh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a> or vector representing the right-hand value.</p></td>
+      <td><p>An Expression or vector representing the right-hand value.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the convolution of the input.</p>
+    <p>An Expression representing the convolution of the input.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>5</span>)
 <span class='no'>h</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='kw pkg'>stats</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/stats/topics/Normal'>rnorm</a></span>(<span class='fl'>2</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>conv</span>(<span class='no'>h</span>, <span class='no'>x</span>))))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>sum</span>(<span class='fu'>conv</span>(<span class='no'>h</span>, <span class='no'>x</span>))))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -Inf</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] NA</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

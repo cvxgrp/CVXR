@@ -129,13 +129,13 @@ This is a special case of log(sum(exp)) that evaluates to a vector rather than t
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
+      <td><p>An Expression, vector, or matrix.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the logistic function evaluated at the input.</p>
+    <p>An Expression representing the logistic function evaluated at the input.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -151,14 +151,14 @@ This is a special case of log(sum(exp)) that evaluates to a vector rather than t
 
 <span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>)
 <span class='no'>X_sign</span> <span class='kw'>&lt;-</span> <span class='fu'>apply</span>(<span class='no'>X</span>, <span class='fl'>2</span>, <span class='kw'>function</span>(<span class='no'>x</span>) { <span class='fu'>ifelse</span>(<span class='no'>y</span> <span class='kw'>&lt;=</span> <span class='fl'>0</span>, -<span class='fl'>1</span>, <span class='fl'>1</span>) * <span class='no'>x</span> })
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> -<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>logistic</span>(-<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>&lt;=</span> <span class='fl'>0</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>)) - <span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>logistic</span>(<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>==</span> <span class='fl'>1</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>))
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> -<span class='fu'>sum</span>(<span class='fu'>logistic</span>(-<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>&lt;=</span> <span class='fl'>0</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>)) - <span class='fu'>sum</span>(<span class='fu'>logistic</span>(<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>==</span> <span class='fl'>1</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Maximize</span>(<span class='no'>obj</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)
 
 <span class='no'>log_odds</span> <span class='kw'>&lt;-</span> <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta</span>)
 <span class='no'>beta_res</span> <span class='kw'>&lt;-</span> <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>beta</span>)
-<span class='no'>y_probs</span> <span class='kw'>&lt;-</span> <span class='fl'>1</span>/(<span class='fl'>1</span> + <span class='fu'><a href='exp.html'>exp</a></span>(-<span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta_res</span>))
-<span class='fu'><a href='log.html'>log</a></span>(<span class='no'>y_probs</span>/(<span class='fl'>1</span> - <span class='no'>y_probs</span>))</div><div class='output co'>#&gt;                  [,1]
+<span class='no'>y_probs</span> <span class='kw'>&lt;-</span> <span class='fl'>1</span>/(<span class='fl'>1</span> + <span class='fu'>exp</span>(-<span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta_res</span>))
+<span class='fu'>log</span>(<span class='no'>y_probs</span>/(<span class='fl'>1</span> - <span class='no'>y_probs</span>))</div><div class='output co'>#&gt;                  [,1]
 #&gt;    [1,]  0.1776907115
 #&gt;    [2,]  0.1721152925
 #&gt;    [3,]  1.1377964580

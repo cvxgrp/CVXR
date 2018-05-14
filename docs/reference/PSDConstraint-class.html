@@ -158,15 +158,15 @@ canonicalize(object)</pre>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>e1, e2</th>
-      <td><p>The <a href='Expression-class.html'>Expression</a> objects or numeric constants to compare.</p></td>
+      <td><p>The Expression objects or numeric constants to compare.</p></td>
     </tr>
     <tr>
       <th>lh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, numeric element, vector, or matrix representing the left-hand side of the inequality.</p></td>
+      <td><p>An Expression, numeric element, vector, or matrix representing the left-hand side of the inequality.</p></td>
     </tr>
     <tr>
       <th>rh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, numeric element, vector, or matrix representing the right-hand side of the inequality.</p></td>
+      <td><p>An Expression, numeric element, vector, or matrix representing the right-hand side of the inequality.</p></td>
     </tr>
     <tr>
       <th>object</th>
@@ -178,7 +178,7 @@ canonicalize(object)</pre>
 
     <ul>
 <li><p><code>is_dcp</code>: The constraint is DCP if the left-hand and right-hand expressions are affine.</p></li>
-<li><p><code>residual</code>: A <a href='Expression-class.html'>Expression</a> representing the residual of the constraint.</p></li>
+<li><p><code>residual</code>: A Expression representing the residual of the constraint.</p></li>
 <li><p><code>canonicalize</code>: The graph implementation of the object. Marks the top level constraint as the <code>dual_holder</code> so the dual value will be saved to the PSDConstraint.</p></li>
 </ul>
     
@@ -187,11 +187,11 @@ canonicalize(object)</pre>
     
     <dl class='dl-horizontal'>
 <dt><code>constr_id</code></dt><dd><p>(Internal) A unique integer identification number used internally.</p></dd>
-    <dt><code>lh_exp</code></dt><dd><p>An <a href='Expression-class.html'>Expression</a>, numeric element, vector, or matrix representing the left-hand side of the inequality.</p></dd>
-    <dt><code>rh_exp</code></dt><dd><p>An <a href='Expression-class.html'>Expression</a>, numeric element, vector, or matrix representing the right-hand side of the inequality.</p></dd>
+    <dt><code>lh_exp</code></dt><dd><p>An Expression, numeric element, vector, or matrix representing the left-hand side of the inequality.</p></dd>
+    <dt><code>rh_exp</code></dt><dd><p>An Expression, numeric element, vector, or matrix representing the right-hand side of the inequality.</p></dd>
     <dt><code>args</code></dt><dd><p>(Internal) A list that holds <code>lh_exp</code> and <code>rh_exp</code> for internal use.</p></dd>
-    <dt><code>.expr</code></dt><dd><p>(Internal) An <a href='Expression-class.html'>Expression</a> representing <code>lh_exp - rh_exp</code> for internal use.</p></dd>
-    <dt><code>dual_variable</code></dt><dd><p>(Internal) A <a href='Variable-class.html'>Variable</a> representing the dual variable associated with the constraint.</p></dd>
+    <dt><code>.expr</code></dt><dd><p>(Internal) An Expression representing <code>lh_exp - rh_exp</code> for internal use.</p></dd>
+    <dt><code>dual_variable</code></dt><dd><p>(Internal) A Variable representing the dual variable associated with the constraint.</p></dd>
 </dl>
     
 

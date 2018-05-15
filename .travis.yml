@@ -15,6 +15,7 @@ addons:
   apt:
     packages:
       - libmpfr-dev
+      - libglpk-dev
 
 sudo: false
 

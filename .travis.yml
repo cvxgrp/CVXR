@@ -19,6 +19,11 @@ addons:
 
 sudo: false
 
+script: 
+  - |
+    R CMD build .
+    travis_wait 40 R CMD check CVXR*tar.gz
+    
 after_success:
   - Rscript -e 'covr::codecov()'
 

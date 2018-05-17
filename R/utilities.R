@@ -1052,10 +1052,3 @@ ku_size <- function(key, shape) {
   dims
 }
 
-r2py_sparse <- function(spmat) {
-    ##mat <- as(mat_or_spmat, "dgCMatrix")
-    dims <- dim(spmat)
-    tuple <- reticulate::tuple(spmat@x, spmat@i, spmat@p)
-    shape <- reticulate::tuple(dims[1L], dims[2L])
-    get_sp()$csc_matrix(tuple, shape)
-}

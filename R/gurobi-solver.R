@@ -61,7 +61,7 @@ setMethod("status_map", "GUROBI", function(solver, status) {
 #' @export
 setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
 
-#' @describeIn GUROBI Imports the gurobi library.
+#' @describeIn GUROBI Imports the reticulate library to use the python solver.
 setMethod("import_solver", "GUROBI", function(solver) {
     if (requireNamespace("reticulate", quietly = TRUE)) {
         cvxr_options <- .CVXR.options
@@ -77,9 +77,9 @@ setMethod("import_solver", "GUROBI", function(solver) {
 
         glue_module_path = system.file("python", package = "CVXR")
         if (reticulate::py_module_available(module = "gurobipy")) {
+            ## delay_load removed in reticulate 1.7+
             gurobiglue <- reticulate::import_from_path(module = "gurobiglue",
-                                                       glue_module_path,
-                                                       delay_load = TRUE)
+                                                       glue_module_path)
         }
         cvxr_options$np <- np
         cvxr_options$sp <- sp
@@ -113,12 +113,15 @@ setMethod("Solver.solve", "GUROBI", function(solver, objective, constraints, cac
 
     A <- data[[A_KEY]]
     b <- data[[B_KEY]]
+    if (length(b) == 1L) b <- list(b)
     ##G <- data[[G_KEY]]
     ##h <- unlist(data[[H_KEY]])
     c <- matrix(unlist(data[[C_KEY]]), ncol = 1)
     offset <- data[[OFFSET]]
-    bool_idx <- data[[BOOL_IDX]]
-    int_idx <- data[[INT_IDX]]
+    bool_idx <- as.integer(data[[BOOL_IDX]]) - 1L ## Zero-based indices in python
+    if (length(bool_idx) == 1L) bool_idx <- list(bool_idx)
+    int_idx <- as.integer(data[[INT_IDX]]) -1L ## Zero-based indices in python
+    if (length(int_idx) == 1L) int_idx <- list(int_idx)
 
   dims <- data[[DIMS]]
   if (is.null(dims$s)) {
@@ -131,7 +134,7 @@ setMethod("Solver.solve", "GUROBI", function(solver, objective, constraints, cac
   dims$f <- as.integer(dims$f)
   dims$ep <- as.integer(dims$ep)
 
-  results_dict <- get_gurobiglue()$gurobi_intf(r2py_sparse(A),
+  results_dict <- get_gurobiglue()$gurobi_intf(reticulate::r_to_py(A),
                                                b,
                                                c,
                                                bool_idx,

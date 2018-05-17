@@ -78,6 +78,9 @@ setMethod("format_constr", "BoolConstr", function(object, eq_constr, leq_constr,
     dims[[EQ_DIM]] <- dims[[EQ_DIM]] + prod(size(object))
   }
 
+
+  #########
+  ### INEFFICIENT SECTION Dims keeps accumulating duplicate values for integer ids!
   # Record the .noncvx_var id
   bool_id <- get_expr_vars(object@.noncvx_var)[[1]][[1]]
   constr_type <- constr_type(object)

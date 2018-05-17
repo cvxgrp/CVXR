@@ -1,3 +1,11 @@
+
+# CVXR 0.98
+
+* Dropped `delay_load` parameter dropped in
+  `reticulate::import_from_path`, per changes in `reticulate`.
+
+* Cleaned up hooks into reticulate for commercial solvers.
+
 # CVXR 0.97-1
 
 * Minor typo and documentation fixes.

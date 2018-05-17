@@ -66,7 +66,7 @@ This class is an interface for the commercial GUROBI solver.
 
 \item \code{name}: The name of the solver.
 
-\item \code{import_solver}: Imports the gurobi library.
+\item \code{import_solver}: Imports the reticulate library to use the python solver.
 
 \item \code{Solver.solve}: Call the solver on the canonicalized problem.
 }}

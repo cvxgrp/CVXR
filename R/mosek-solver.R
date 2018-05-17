@@ -1,4 +1,3 @@
-
 #'
 #' The MOSEK class.
 #'
@@ -64,7 +63,7 @@ setMethod("status_map", "MOSEK", function(solver, status) {
 #' @export
 setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
 
-#' @describeIn MOSEK Imports the Rmosek library.
+#' @describeIn MOSEK Imports the reticulate library to use the python solver.
 setMethod("import_solver", "MOSEK", function(solver) {
     if (requireNamespace("reticulate", quietly = TRUE)) {
         cvxr_options <- .CVXR.options
@@ -81,9 +80,9 @@ setMethod("import_solver", "MOSEK", function(solver) {
 
         glue_module_path = system.file("python", package="CVXR")
         if (reticulate::py_module_available(module = "mosek")) {
+            ## delay_load removed in reticulate 1.7+
             mosekglue <- reticulate::import_from_path(module = "mosekglue",
-                                                      glue_module_path,
-                                                      delay_load = TRUE)
+                                                      glue_module_path)
         }
         cvxr_options$np <- np
         cvxr_options$sp <- sp
@@ -108,16 +107,19 @@ setMethod("split_constr", "MOSEK", function(solver, constr_map) {
 #' @describeIn MOSEK Call the solver on the canonicalized problem.
 setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cached_data, warm_start, verbose, ...) {
 
-  solver_opts <- list(...)
+    solver_opts <- list(...)
 
-  data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
+    data <- Solver.get_problem_data(solver, objective, constraints, cached_data)
 
-  A <- data[[A_KEY]]
-  b <- data[[B_KEY]]
-  G <- data[[G_KEY]]
-  h <- unlist(data[[H_KEY]])
-  c <- unlist(data[[C_KEY]])
-  offset <- data[[OFFSET]]
+    A <- data[[A_KEY]]
+    b <- data[[B_KEY]]
+    if (length(b) == 1L) b <- list(b)
+    G <- data[[G_KEY]]
+    h <- unlist(data[[H_KEY]])
+    if (length(h) == 1L) h <- list(h)
+    c <- unlist(data[[C_KEY]])
+    if (length(c) == 1L) c <- list(c)
+    offset <- data[[OFFSET]]
 
   dims <- data[[DIMS]]
   if (is.null(dims$s)) {
@@ -130,9 +132,9 @@ setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cach
   dims$f <- as.integer(dims$f)
   dims$ep <- as.integer(dims$ep)
 
-  results_dict <- get_mosekglue()$mosek_intf(r2py_sparse(A),
+  results_dict <- get_mosekglue()$mosek_intf(reticulate::r_to_py(A),
                                              b,
-                                             r2py_sparse(G),
+                                             reticulate::r_to_py(G),
                                              h,
                                              c,
                                              dims,

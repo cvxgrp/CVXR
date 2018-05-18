@@ -17,9 +17,9 @@
 
 #
 # Symbolic Data Constructor
-# 
+#
 # Construct a \linkS4class{SymData} object.
-# 
+#
 # @param objective A \code{list} representing the objective.
 # @param constraints A \code{list} of canonicalized constraints.
 # @param solver A \linkS4class{Solver} for which to format the data.
@@ -50,27 +50,66 @@ SymData <- function(objective, constraints, solver) {
 # Filter Constraints
 #
 # Separate the constraints by type.
-# 
+#
 # @param constraints A list of \linkS4class{Constraint} objects.
 # @return A list of type to an ordered set of constraints. The types are linear equality (1), linear \eqn{leq} (2), SOC (3), SDP (4), exponential cone (5), boolean (6), and integer (7).
 # @rdname SymData-filter_constraints
 SymData.filter_constraints <- function(constraints) {
-  constr_map <- list()
-  constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinEqConstr" })]
-  constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinLeqConstr" })]
-  constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
-  constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
-  constr_map[[BOOL_MAP]] <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
-  constr_map[[INT_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
-  constr_map
+  ## constr_map <- list()
+  ## constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinEqConstr" })]
+  ## constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinLeqConstr" })]
+  ## constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
+  ## constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  ## constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
+  ## constr_map[[BOOL_MAP]] <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
+  ## constr_map[[INT_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
+  ## constr_map
+    EQ_MAP_TAG <- 1L
+    LEQ_MAP_TAG <- 2L
+    SOC_MAP_TAG <- 3L
+    SOC_EW_MAP_TAG <- 4L
+    SDP_MAP_TAG <- 5L
+    EXP_MAP_TAG <- 6L
+    BOOL_MAP_TAG <- 7L
+    INT_MAP_TAG <- 8L
+
+    constr_tags <- sapply(constraints,
+                          function(c) {
+                              if (is.list(c) && c$class == "LinEqConstr" ) {
+                                  EQ_MAP_TAG
+                              } else if (is.list(c) && c$class == "LinLeqConstr") {
+                                  LEQ_MAP_TAG
+                              } else if (is(c, "SOC")) {
+                                  SOC_MAP_TAG
+                              } else if (is(c, "SDP")) {
+                                  SDP_MAP_TAG
+                              } else if (is(c, "ExpCone")) {
+                                  EXP_MAP_TAG
+                              } else if (is(c, "BoolConstr")) {
+                                  BOOL_MAP_TAG
+                              } else if (is(c, "IntConstr")) {
+                                  INT_MAP_TAG
+                              } else {
+                                  stop("SymData.filter_constraints: Unimplemented Constraint")
+                              }
+                          })
+
+    constr_map <- list(constraints[constr_tags == EQ_MAP_TAG],
+                       constraints[constr_tags == LEQ_MAP_TAG],
+                       constraints[constr_tags == SOC_MAP_TAG],
+                       constraints[constr_tags == SDP_MAP_TAG],
+                       constraints[constr_tags == EXP_MAP_TAG],
+                       constraints[constr_tags == BOOL_MAP_TAG],
+                       constraints[constr_tags == INT_MAP_TAG])
+    names(constr_map) <- c(EQ_MAP, LEQ_MAP, SOC_MAP, SDP_MAP, EXP_MAP, BOOL_MAP, INT_MAP)
+    constr_map
 }
 
 #
 # Pre-Solve
 #
 # Eliminates unnecessary constraints and short circuits the solver if possible.
-# 
+#
 # @param objective A list representing the canonicalized objective.
 # @param constr_map a list mapping constraint type to a list of constraints.
 # @return A list containing the constraint map and feasibility status of the problem.
@@ -130,7 +169,7 @@ SymData.presolve <- function(objective, constr_map) {
 # Format for Solver
 #
 # Formats the problem for the solver.
-# 
+#
 # @param constr_map a list mapping constraint type to a list of constraints.
 # @param solver A string indicating the solver being targeted.
 # @return A list containing the constraint map and dimensions of the cones.
@@ -169,7 +208,7 @@ SymData.format_for_solver <- function(constr_map, solver) {
 # Get Variable Offsets
 #
 # Maps each variable to a horizontal offset.
-# 
+#
 # @param objective A list representing the canonicalized objective.
 # @param constraints A list of canonicalized constraints.
 # @param nonlinear A list of nonlinear constraints.
@@ -210,7 +249,7 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 # The MatrixCache class.
 #
 # This class represents a cached version of the matrix and vector pair in an affine constraint.
-# 
+#
 # @slot coo_tup A \code{(V, I, J)} triplet for the COO (coordinate format) matrix. \code{I} are the row indices, \code{J} are the column indices, and \code{V} are the corresponding values.
 # @slot .param_coo_tup (Internal) A \code{(V, I, J)} triplet for the parameterized COO matrix.
 # @slot const_vec The vector offset.
@@ -224,7 +263,7 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 # Matrix Cache Constructor
 #
 # Construct a \linkS4class{MatrixCache} object.
-# 
+#
 # @param coo_tup A \code{(V, I, J)} triplet for the COO (coordinate format) matrix. \code{I} are the row indices, \code{J} are the column indices, and \code{V} are the corresponding values.
 # @param const_vec The vector offset.
 # @param constraints A list of constraints in the matrix.
@@ -247,7 +286,7 @@ reset_param_data <- function(object) {
 
 #
 # The MatrixData class.
-# 
+#
 # This class represents the matrices for the conic form convex optimization problem.
 #
 # @slot sym_data The \linkS4class{SymData} for the conic form problem.
@@ -272,11 +311,11 @@ reset_param_data <- function(object) {
 # Matrix Data Constructor
 #
 # Construct a \linkS4class{MatrixData} object.
-# 
+#
 # @param sym_data The \linkS4class{SymData} for the conic form problem.
 # @param solver A \linkS4class{Solver} for which to format the data.
 # @param nonlin A logical value indicating whether nonlinear constraints are needed.
-# @return A \linkS4class{MatrixData} object. 
+# @return A \linkS4class{MatrixData} object.
 # @docType methods
 # @rdname MatrixData
 MatrixData <- function(sym_data, solver, nonlin = FALSE) { .MatrixData(sym_data = sym_data, solver = solver, nonlin = nonlin) }
@@ -340,7 +379,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # Initialize Matrix Cache
 #
 # Initializes the data structures for the cached matrix.
-# 
+#
 # @param constraints A list of constraints in the matrix.
 # @param x_length The number of columns in the matrix.
 # @return A \linkS4class{MatrixCache} object.
@@ -359,7 +398,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # Constraints to Matrix/Vector
 #
 # Computes a matrix and vector representing a list of constraints. In the matrix, each constraint is given a block of rows. Each variable coefficient is inserted as a block with upper left corner at matrix[variable offset, constraint offset]. The constant term in the constraint is added to the vector.
-# 
+#
 # @param mat_cache A \linkS4class{MatrixCache} object representing the cached version of the matrix-vector pair.
 # @param caching A logical value indicating whether the data should be cached.
 # @return A \linkS4class{MatrixCache} object
@@ -406,7 +445,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # Cache to Matrix
 #
 # Converts the cached representation of the constraints matrix.
-# 
+#
 # @param mat_cache A \linkS4class{MatrixCache} object representing the cached version of the matrix-vector pair.
 # @return A list of \code{c(matrix, vector)}.
 # @rdname cache_to_matrix-int
@@ -448,7 +487,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # Nonlinear Constraint Matrix
 #
 # Returns an oracle for the nonlinear constraints. The oracle computes the combined function value, gradient, and Hessian.
-# 
+#
 # @param nonlin_constr A list of nonlinear constraints represented as oracle functions.
 # @return An oracle function.
 # @rdname nonlin_matrix-int

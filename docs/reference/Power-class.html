@@ -59,7 +59,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -118,44 +118,44 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
     <div class="ref-description">
     
     <p>This class represents the elementwise power function \(f(x) = x^p\).
-If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalent to <code>Power(expr, p)</code>.</p>
+If <code>expr</code> is a CVXR expression, then <code><a href='power.html'>expr^p</a></code> is equivalent to <code>Power(expr, p)</code>.</p>
     
     </div>
 
     <pre class="usage"><span class='fu'>Power</span>(<span class='no'>x</span>, <span class='no'>p</span>, <span class='kw'>max_denom</span> <span class='kw'>=</span> <span class='fl'>1024</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>validate_args</span>(<span class='no'>object</span>)
+<span class='fu'><a href='validate_args.html'>validate_args</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>get_data</span>(<span class='no'>object</span>)
+<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>to_numeric</span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'><a href='to_numeric.html'>to_numeric</a></span>(<span class='no'>object</span>, <span class='no'>values</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>sign_from_args</span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_atom_convex</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_atom_concave</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_constant</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_constant</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_incr</span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_incr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_decr</span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_decr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>is_quadratic</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_quadratic</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>graph_implementation</span>(<span class='no'>object</span>, <span class='no'>arg_objs</span>, <span class='no'>size</span>,
+<span class='fu'><a href='graph_implementation.html'>graph_implementation</a></span>(<span class='no'>object</span>, <span class='no'>arg_objs</span>, <span class='no'>size</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='fl'>NA_real_</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -163,7 +163,7 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>The Expression to be raised to a power.</p></td>
+      <td><p>The <a href='Expression-class.html'>Expression</a> to be raised to a power.</p></td>
     </tr>
     <tr>
       <th>p</th>
@@ -237,7 +237,7 @@ For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul>
 
     
     <dl class='dl-horizontal'>
-<dt><code>x</code></dt><dd><p>The Expression to be raised to a power.</p></dd>
+<dt><code>x</code></dt><dd><p>The <a href='Expression-class.html'>Expression</a> to be raised to a power.</p></dd>
     <dt><code>p</code></dt><dd><p>A numeric value indicating the scalar power.</p></dd>
     <dt><code>max_denom</code></dt><dd><p>The maximum denominator considered in forming a rational approximation of <code>p</code>.</p></dd>
 </dl>

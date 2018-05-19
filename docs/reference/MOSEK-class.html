@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -123,28 +123,28 @@
     <pre class="usage"><span class='fu'>MOSEK</span>()
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>lp_capable</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='Solver-capable.html'>lp_capable</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>socp_capable</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='Solver-capable.html'>socp_capable</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>sdp_capable</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='Solver-capable.html'>sdp_capable</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>exp_capable</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='Solver-capable.html'>exp_capable</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>mip_capable</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='Solver-capable.html'>mip_capable</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>name</span>(<span class='no'>object</span>)
+<span class='fu'><a href='name.html'>name</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>import_solver</span>(<span class='no'>solver</span>)
+<span class='fu'><a href='import_solver.html'>import_solver</a></span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'>Solver.solve</span>(<span class='no'>solver</span>, <span class='no'>objective</span>, <span class='no'>constraints</span>, <span class='no'>cached_data</span>,
+<span class='fu'><a href='Solver-solve.html'>Solver.solve</a></span>(<span class='no'>solver</span>, <span class='no'>objective</span>, <span class='no'>constraints</span>, <span class='no'>cached_data</span>,
   <span class='no'>warm_start</span>, <span class='no'>verbose</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -189,7 +189,7 @@
 <li><p><code>exp_capable</code>: MOSEK cannot handle exponential cone programs.</p></li>
 <li><p><code>mip_capable</code>: MOSEK cannot handle mixed-integer programs.</p></li>
 <li><p><code>name</code>: The name of the solver.</p></li>
-<li><p><code>import_solver</code>: Imports the Rmosek library.</p></li>
+<li><p><code>import_solver</code>: Imports the reticulate library to use the python solver.</p></li>
 <li><p><code>Solver.solve</code>: Call the solver on the canonicalized problem.</p></li>
 </ul>
     

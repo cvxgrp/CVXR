@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -127,11 +127,11 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>A Problem object.</p></td>
+      <td><p>A <a href='Problem-class.html'>Problem</a> object.</p></td>
     </tr>
     <tr>
       <th>solver</th>
-      <td><p>A string indicating the solver that the problem data is for. Call <code>installed_solvers()</code> to see all available.</p></td>
+      <td><p>A string indicating the solver that the problem data is for. Call <code><a href='installed_solvers.html'>installed_solvers()</a></code> to see all available.</p></td>
     </tr>
     </table>
     
@@ -142,7 +142,7 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"a"</span>)
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>get_problem_data</span>(<span class='fu'>Problem</span>(<span class='fu'>Maximize</span>(<span class='fu'>exp</span>(<span class='no'>a</span>) + <span class='fl'>2</span>)), <span class='st'>"SCS"</span>)
+<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>get_problem_data</span>(<span class='fu'>Problem</span>(<span class='fu'>Maximize</span>(<span class='fu'><a href='exp.html'>exp</a></span>(<span class='no'>a</span>) + <span class='fl'>2</span>)), <span class='st'>"SCS"</span>)
 <span class='no'>data</span><span class='kw'>[[</span><span class='st'>"dims"</span>]]</div><div class='output co'>#&gt; $f
 #&gt; [1] 0
 #&gt; 
@@ -157,7 +157,7 @@
 #&gt; [2,]  .  .
 #&gt; [3,]  . -1</div><div class='input'>
 <span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"x"</span>)
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>get_problem_data</span>(<span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>p_norm</span>(<span class='no'>x</span>) + <span class='fl'>3</span>)), <span class='st'>"ECOS"</span>)
+<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>get_problem_data</span>(<span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>x</span>) + <span class='fl'>3</span>)), <span class='st'>"ECOS"</span>)
 <span class='no'>data</span><span class='kw'>[[</span><span class='st'>"dims"</span>]]</div><div class='output co'>#&gt; $f
 #&gt; [1] 0
 #&gt; 

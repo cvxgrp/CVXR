@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -137,7 +137,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>An Expression object.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a> object.</p></td>
     </tr>
     </table>
     
@@ -152,9 +152,9 @@
 
 <span class='fu'>is_constant</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_constant</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
 <span class='fu'>is_affine</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_affine</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_affine</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
-<span class='fu'>is_convex</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='fu'>sqrt</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
-<span class='fu'>is_concave</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_concave</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_concave</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'><span class='fu'>is_concave</span>(<span class='fu'>sqrt</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
-<span class='fu'>is_quadratic</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_quadratic</span>(<span class='fu'>sqrt</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
+<span class='fu'>is_convex</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_convex</span>(<span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
+<span class='fu'>is_concave</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_concave</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_concave</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'><span class='fu'>is_concave</span>(<span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
+<span class='fu'>is_quadratic</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_quadratic</span>(<span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] FALSE</div><div class='input'>
 <span class='fu'>is_pwl</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_pwl</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>is_pwl</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] FALSE</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

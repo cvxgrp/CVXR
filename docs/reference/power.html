@@ -59,7 +59,7 @@ If expr is a CVXR expression, then expr^p is equivalent to power(expr,p)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -132,7 +132,7 @@ power(x, p, max_denom = 1024)</pre>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>e1</th>
-      <td><p>An Expression object to exponentiate.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a> object to exponentiate.</p></td>
     </tr>
     <tr>
       <th>e2</th>
@@ -140,7 +140,7 @@ power(x, p, max_denom = 1024)</pre>
     </tr>
     <tr>
       <th>x</th>
-      <td><p>An Expression, vector, or matrix.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
     </tr>
     <tr>
       <th>p</th>
@@ -175,7 +175,7 @@ For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul>
     <pre class="examples"><span class='co'># NOT RUN {</span>
 <span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>power</span>(<span class='no'>x</span>,<span class='fl'>1.7</span>) + <span class='fu'>power</span>(<span class='no'>x</span>,-<span class='fl'>2.3</span>) - <span class='fu'>power</span>(<span class='no'>x</span>,<span class='fl'>0.45</span>)))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)
 <span class='co'># }</span></pre>

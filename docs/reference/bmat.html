@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -127,13 +127,13 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>block_lists</th>
-      <td><p>A list of lists containing Expression objects, matrices, or vectors, which represent the blocks of the block matrix.</p></td>
+      <td><p>A list of lists containing <a href='Expression-class.html'>Expression</a> objects, matrices, or vectors, which represent the blocks of the block matrix.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the block matrix.</p>
+    <p>An <a href='Expression-class.html'>Expression</a> representing the block matrix.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -141,8 +141,8 @@
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'>bmat</span>(<span class='fu'>list</span>(<span class='fu'>list</span>(<span class='fu'>matrix</span>(<span class='fl'>1</span>, <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>), <span class='fu'>matrix</span>(<span class='fl'>2</span>, <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>2</span>)),
                 <span class='fu'>list</span>(<span class='fu'>matrix</span>(<span class='fl'>3</span>, <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>2</span>), <span class='no'>x</span>)
              ))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>sum_entries</span>(<span class='no'>expr</span>)), <span class='fu'>list</span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'><a href='sum_entries.html'>sum_entries</a></span>(<span class='no'>expr</span>)), <span class='fu'>list</span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 21</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

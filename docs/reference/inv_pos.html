@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -127,19 +127,19 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An Expression, vector, or matrix.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the reciprocal of the input.</p>
+    <p>An <a href='Expression-class.html'>Expression</a> representing the reciprocal of the input.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(<span class='fu'>c</span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'>c</span>(<span class='fl'>3</span>,<span class='fl'>4</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>inv_pos</span>(<span class='no'>A</span>)[<span class='fl'>1</span>,<span class='fl'>2</span>]), <span class='fu'>list</span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))</div><div class='output co'>#&gt; <span class='error'>Error in inv_pos(A)[1, 2]: object of type 'S4' is not subsettable</span></div><div class='input'><span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>solve</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; <span class='error'>Error in solve(prob): object 'prob' not found</span></div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div></pre>
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>inv_pos</span>(<span class='no'>A</span>)[<span class='fl'>1</span>,<span class='fl'>2</span>]), <span class='fu'>list</span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))</div><div class='output co'>#&gt; <span class='error'>Error in inv_pos(A)[1, 2]: object of type 'S4' is not subsettable</span></div><div class='input'><span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; <span class='error'>Error in solve(prob): object 'prob' not found</span></div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

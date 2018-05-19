@@ -29,7 +29,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.97.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.98.1</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@
       <h1>Disciplined Convex Optimization in R</h1>
                         <h4 class="author">Anqi Fu, Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 class="date">2018-05-14</h4>
+            <h4 class="date">2018-05-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/anqif/CVXR/blob/master/vignettes/cvxr_intro.Rmd"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="hidden name"><code>cvxr_intro.Rmd</code></div>
@@ -193,7 +193,7 @@ knitr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentati
 <ul>
 <li>Step 2. Define the objective to be optimized</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">objective &lt;-<span class="st"> </span><span class="kw">Minimize</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/CVXR/topics/sum_entries">sum</a></span>((Y <span class="op">-</span><span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>betaHat)<span class="op">^</span><span class="dv">2</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">objective &lt;-<span class="st"> </span><span class="kw">Minimize</span>(<span class="kw"><a href="../reference/sum_entries.html">sum</a></span>((Y <span class="op">-</span><span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>betaHat)<span class="op">^</span><span class="dv">2</span>))</code></pre></div>
 <p>Notice how the objective is specified using functions such as <code>sum</code>, <code>*%*</code> and <code>^</code>, that are familiar to R users despite that fact that <code>betaHat</code> is no ordinary R expression but a <code>CVXR</code> expression.</p>
 <ul>
 <li>Step 3. Create a problem to solve</li>
@@ -202,7 +202,7 @@ knitr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentati
 <ul>
 <li>Step 4. Solve it!</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/CVXR/topics/psolve">solve</a></span>(problem)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</code></pre></div>
 <ul>
 <li>Step 5. Extract solution and objective value</li>
 </ul>
@@ -279,7 +279,7 @@ knitr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentati
 <p>So suppose we knew for a fact that the <span class="math inline">\(\beta\)</span>s were nonnegative and we wish to take this fact into account. This is <a href="https://en.wikipedia.org/wiki/Non-negative_least_squares">nonnegative least squares regression</a> and <code>lm</code> would no longer do the job.</p>
 <p>In <code>CVXR</code>, the modified problem merely requires the addition of a constraint to the problem definition.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">problem &lt;-<span class="st"> </span><span class="kw">Problem</span>(objective, <span class="dt">constraints =</span> <span class="kw">list</span>(betaHat <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>))
-result &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/CVXR/topics/psolve">solve</a></span>(problem)
+result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)
 m &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">CVXR.est =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))
 <span class="kw">rownames</span>(m) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)
 knitr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</code></pre></div>
@@ -446,7 +446,7 @@ A\beta &lt; 0
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">constraint1 &lt;-<span class="st"> </span>betaHat[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>betaHat[<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span></code></pre></div>
 <p>but it is easier working with matrices in general with <code>CVXR</code>.</p>
 <p>For the positivity for rest of the variables, we construct a <span class="math inline">\(10\times 10\)</span> matrix <span class="math inline">\(A\)</span> to have 1’s along the diagonal everywhere except rows 2 and 3 and zeros everywhere.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">B &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/CVXR/topics/diag">diag</a></span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw">rep</span>(<span class="dv">1</span>, <span class="dv">7</span>)))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">B &lt;-<span class="st"> </span><span class="kw"><a href="../reference/diag.html">diag</a></span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw">rep</span>(<span class="dv">1</span>, <span class="dv">7</span>)))
 <span class="kw">colnames</span>(B) &lt;-<span class="st"> </span><span class="kw">rownames</span>(B) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)
     knitr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(B)</code></pre></div>
 <table class="table">
@@ -603,7 +603,7 @@ B\beta &gt; 0
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">constraint2 &lt;-<span class="st"> </span>B <span class="op">%*%</span><span class="st"> </span>betaHat <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span></code></pre></div>
 <p>Now we are ready to solve the problem just as before.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">problem &lt;-<span class="st"> </span><span class="kw">Problem</span>(objective, <span class="dt">constraints =</span> <span class="kw">list</span>(constraint1, constraint2))
-result &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/CVXR/topics/psolve">solve</a></span>(problem)</code></pre></div>
+result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</code></pre></div>
 <p>And we can get the estimates of <span class="math inline">\(\beta\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">m &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">CVXR.soln =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))
 <span class="kw">rownames</span>(m) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)

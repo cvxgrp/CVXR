@@ -1,4 +1,16 @@
 
+# CVXR 0.99
+
+* Bug fix: duplicated integer and boolean indices. 
+* Bug fix: correct typo in constraint specification to GLPK.
+* Added tutorial articles based on v0.99 to [CVXR
+website](https://cvxr.rbind.io) on using other solvers, integer
+programming, MOSEK and GUROBI examples. 
+
+# CVXR 0.98-1
+
+* Minor typographical fixes.
+
 # CVXR 0.98
 
 * Dropped `delay_load` parameter dropped in

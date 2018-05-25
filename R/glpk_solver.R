@@ -114,7 +114,7 @@ setMethod("Solver.solve", "GLPK", function(solver, objective, constraints, cache
 
     results_dict <- Rglpk::Rglpk_solve_LP(obj = c,
                                           mat = slam::as.simple_triplet_matrix(A),
-                                          dir = c(rep("=", dims[[EQ_DIM]]),
+                                          dir = c(rep("==", dims[[EQ_DIM]]),
                                                   rep("<=", dims[[LEQ_DIM]])),
                                           rhs = b,
                                           bounds = bounds,

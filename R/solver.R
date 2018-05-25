@@ -130,8 +130,8 @@ setMethod("Solver.get_problem_data", "Solver", function(solver, objective, const
 
   conv_idx <- Solver._noncvx_id_to_idx(data[[DIMS]], sym_data@.var_offsets, sym_data@.var_sizes)
   data[[DIMS]] <- conv_idx$dims
-  data[[BOOL_IDX]] <- conv_idx$bool_idx
-  data[[INT_IDX]] <- conv_idx$int_idx
+  data[[BOOL_IDX]] <- unique(conv_idx$bool_idx)
+  data[[INT_IDX]] <- unique(conv_idx$int_idx)
   data
 })
 

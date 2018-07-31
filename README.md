@@ -8,6 +8,7 @@ Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.o
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
+[![](https://cranlogs.r-pkg.org/badges/CVXR)](https://cloud.r-project.org/package=CVXR)
 
 CVXR provides an object-oriented modeling language for convex
 optimization, similar to `CVX`, `CVXPY`, `YALMIP`, and `Convex.jl`. It

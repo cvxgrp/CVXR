@@ -49,11 +49,14 @@ INFEASIBLE = "infeasible"
 INFEASIBLE_INACCURATE = "infeasible_inaccurate"
 UNBOUNDED = "unbounded"
 UNBOUNDED_INACCURATE = "unbounded_inaccurate"
+USER_LIMIT <- "user_limit"
 SOLVER_ERROR = "solver_error"
 # Statuses that indicate a solution was found.
 SOLUTION_PRESENT = c(OPTIMAL, OPTIMAL_INACCURATE)
 # Statuses that indicate the problem is infeasible or unbounded.
 INF_OR_UNB = c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE)
+# Statuses that indicate an error.
+ERROR <- c(USER_LIMIT, SOLVER_ERROR)
 
 ## Codes from lpSolveAPI solver (partial at the moment)
 DEGENERATE = "degenerate"

@@ -469,3 +469,83 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
     solution@opt_val <- -solution@opt_val
   return(solution)
 })
+
+setClass("MatrixStuffing", contains = "Reduction")
+
+setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
+  inverse_data <- InverseData(problem)
+  
+  stuffed <- stuffed_objective(object, problem, inverse_data)
+  new_obj <- stuffed[[1]]
+  new_var <- stuffed[[2]]
+  
+  # Form the constraints
+  extractor <- CoeffExtractor(inverse_data)
+  new_cons <- list()
+  for(con in problem@constraints) {
+    arg_list <- list()
+    for(arg in con@args) {
+      coeffs <- get_coeffs(extractor, arg)
+      A <- coeffs[[1]]
+      b <- coeffs[[2]]
+      arg_list <- c(arg_list, reshape(A %*% new_var + b, shape(arg)))
+    }
+    new_cons <- c(new_cons, copy(con, arg_list))
+    inverse_data@cons_id_map[[as.character(id(con))]] <- id(new_cons[[length(new_cons)]])
+  }
+  
+  # Map of old constraint id to new constraint id.
+  inverse_data@minimize <- class(problem@objective) == "Minimize"
+  new_prob <- Problem(Minimize(new_obj), new_cons)
+  return(list(new_prob, inverse_data))
+})
+
+setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  var_map <- inverse_data@var_offsets
+  con_map <- inverse_data@cons_id_map
+  
+  # Flip sign of optimal value if maximization.
+  opt_val <- solution@opt_val
+  if(!(solution@status %in% ERROR) && !inverse_data@minimize)
+    opt_val <- -solution@opt_val
+  
+  primal_vars <- list()
+  dual_vars <- list()
+  if(!(solution@status %in% SOLUTION_PRESENT))
+    return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+  
+  # Split vectorized variable into components.
+  x_opt <- solution@primal_vars[[1]]
+  for(var_id in names(var_map)) {
+    offset <- var_map[[var_id]]
+    shape <- inverse_data@var_shapes[[var_id]]
+    size <- prod(shape)
+    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size)], nrow = shape[1], ncol = shape[2])
+  }
+  
+  # Remap dual viarables if dual exists (problem is convex).
+  if(length(solution@dual_vars) > 0) {
+    for(old_con in names(con_map)) {
+      new_con <- con_map[[old_con]]
+      con_obj <- inverse_data@id2cons[[old_con]]
+      shape <- shape(con_obj)
+      # TODO: Rational Exponential.
+      if(length(shape) == 0 || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
+        dual_vars[[old_con]] <- solution@dual_vars[[new_con]]
+      else
+        dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = shape[1], ncol = shape[2])
+    }
+  }
+  
+  # Add constant part
+  if(inverse_data@minimize)
+    opt_val <- opt_val + inverse_data@r
+  else
+    opt_val <- opt_val - inverse_data@r
+  
+  return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+})
+
+setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
+  stop("Unimplemented")
+})

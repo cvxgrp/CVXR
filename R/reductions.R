@@ -118,3 +118,354 @@ setMethod("apply", signature(object = "Reduction", problem = "Problem"), functio
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn Reduction Returns a solution to the original problem given the inverse data.
 setMethod("invert", signature(object = "Reduction", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { stop("Unimplemented") })
+
+replace_params_with_consts <- function(expr) {
+  if(is.list(expr))
+    return(lapply(expr, function(elem) { replace_params_with_consts(elem) }))
+  else if(len(parameters(expr)) == 0)
+    return(expr)
+  else if(is(expr, "Parameter")) {
+    if(is.na(value(expr)))
+      stop("Problem contains unspecified parameters")
+    return(Constant(value(expr)))
+  } else {
+    new_args <- list()
+    for(arg in expr@args)
+      new_args <- c(new_args, replace_params with_consts(arg))
+    return(new_args)
+  }
+}
+
+.Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
+Canonicalization <- function(canon_methods) { .Canonicalization(canon_methods = canon_methods) }
+setMethod("initialize", function(.Object, ..., canon_methods) {
+  .Object@canon_methods <- canon_methods
+  callNextMethod(.Object, ...)
+})
+
+# TODO: This class implicitly assumes the number of variables is > 0. This assumption should either be made explicit or eliminated.
+setMethod("apply", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
+  inverse_data <- InverseData(problem)
+  
+  canon <- canonicalize_tree(object, problem@objective)
+  canon_objective <- canon[[1]]
+  canon_constraints <- canon[[2]]
+  
+  for(constraint in problem@constraints) {
+    # canon_constr is the constraint re-expressed in terms of its canonicalized arguments,
+    # and aux_constr are the constraints generated while canonicalizing the arguments of the original constraint.
+    canon <- canonicalize_tree(object, constraint)
+    canon_constr <- canon[[1]]
+    aux_constr <- canon[[2]]
+    canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
+    inverse_data@cons_id_map[[as.character(constraint@id)]] <- canon_constr@id   # TODO: Check this updates like dict().update in Python
+  }
+  new_problem <- Problem(canon_objective, canon_constraints)
+  return(list(new_problem, inverse_data))
+})
+
+setMethod("invert", signature(object = "Canonicalization", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  pvars <- list()
+  for(vid in names(inverse_data@id_map)) {
+    if(vid %in% names(solution@primal_vars))
+      pvars[[as.character(vid)]] <- solution@primal_vars[[vid]]
+  }
+  
+  dvars <- list()
+  for(orig_id in names(inverse_data@cons_id_map)) {
+    vid <- inverse_data@cons_id_map[[orig_id]]
+    if(as.character(vid) %in% names(solution@dual_vars))
+      dvars[[as.character(orig_id)]] <- solution@dual_vars[[as.character(vid)]]
+  }
+  return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
+})
+
+setMethod("canonicalize_tree", signature(object = "Canonicalization", expr = "Expression"), function(object, expr) {
+  # TODO: Don't copy affine expressions?
+  if(class(expr) == "PartialProblem") {
+    canon <- canonicalize_tree(object, expr@args[[1]]@objective@expr)
+    canon_expr <- canon[[1]]
+    constrs <- canon[[2]]
+    for(constr in expr@args[[1]]@constraints) {
+      canon <- canonicalize_tree(constr)
+      canon_constr <- canon[[1]]
+      aux_constr <- canon[[2]]
+      constrs <- c(constrs, list(canon_constr), aux_constr)
+    }
+  } else {
+    canon_args <- list()
+    constrs <- list()
+    for(arg in expr@args) {
+      canon <- canonicalize_tree(arg)
+      canon_arg <- canon[[1]]
+      c <- canon[[2]]
+      canon_args <- c(canon_args, canon_arg)
+      constrs <- c(constrs, c)
+    }
+  }
+  return(list(canon_expr, constrs))
+})
+
+setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Expression", args = "list"), function(object, expr, args) {
+  if(is(expr, "Expression") && length(variables(expr)) == 0) {
+    # Parameterized expressions are evaluated in a subsequent reduction.
+    if(length(parameters(expr)) > 0) {
+      param <- CallbackParam(function() { value(expr) }, shape(expr))   # TODO: Check the first argument to CallbackParam is correct
+      return(list(param, list()))
+    } else {   # Non-parameterized expressions are evaluated immediately.
+      return(list(Constant(value(expr)), list()))
+    }
+  } else if(class(expr) %in% canon_methods(object))
+    return(canon_methods(object)[[class(expr)]](expr, args))
+  else
+    return(list(copy(expr, args), list()))   # TODO: copy must be defined in Canonical virtual class
+})
+
+#'
+#' The Chain class.
+#' 
+#' This class represents a reduction that replaces symbolic parameters with
+#' their constaint values.
+#' 
+#' @rdname Chain-class
+.Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
+Chain <- function(reductions) { .Chain(reductions = reductions) }
+setMethod("initialize", function(.Object, ..., reductions) {
+  .Object@reductions <- reductions
+  callNextMethod(.Object, ...)
+}
+
+setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {
+  for(r in object@reductions) {
+    if(!accepts(r, problem))
+      return(FALSE)
+    problem <- apply(r, problem)[[1]]
+  }
+  return(TRUE)
+})
+
+setMethod("apply", signature(object = "Chain", problem = "Problem"), function(object, problem) {
+  inverse_data <- list()
+  for(r in object@reductions) {
+    res <- apply(r, problem)
+    problem <- res[[1]]
+    inv <- res[[2]]
+    inverse_data <- c(inverse_data, inv)
+  }
+  return(list(problem, inverse_data))
+})
+
+setMethod("invert", signature(object = "Chain", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
+  m <- min(length(object@reductions), inverse_data)
+  for(i in rev(1:m)) {
+    r <- object@reductions[[i]]
+    inv <- inverse_data[[i]]
+    solution <- invert(r, solution, inv)
+  }
+  return(solution)
+})
+
+# Returns a list of the relevant attributes present among the variables.
+attributes_present <- function(variables, attr_map) {
+  lapply(attr_map, function(attr) { 
+    has_attr <- sapply(variables, function(v) { v@attributes[[attr]] })
+    if(any(has_attr)) return(attr)
+  })
+}
+
+# Convex attributes that generate constraints.
+CONVEX_ATTRIBUTES <- c("nonneg", "nonpos", "symmetric", "diag", "PSD", "NSD")
+convex_attributes <- function(variables) {
+  # Returns a list of the (constraint-generating) convex attributes present among the variables.
+  attributes_present(variables, CONVEX_ATTRIBUTES)
+}
+
+# Attributes related to symmetry.
+SYMMETRIC_ATTRIBUTES <- c("symmetric", "PSD", "NSD")
+symmetric_attributes <- function(variables) {
+  # Returns a list of the (constraint-generating) symmetric attributes present among the variables.
+  attributes_present(variables, SYMMETRIC_ATTRIBUTES)
+}
+
+#'
+#' The CvxAttr2Constr class.
+#' 
+#' This class represents a reduction that expands convex variable attributes into constraints.
+#' 
+#' @rdname CvxAttr2Constr-class
+setClass("CvxAttr2Constr", contains = "Reduction")
+
+setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) { TRUE })
+
+setMethod("apply", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
+  if(length(convex_attributes(variables(problem))) == 0)
+    return(list(problem), list())
+  
+  # For each unique variable, add constraints.
+  id2new_var <- list()
+  id2new_obj <- list()
+  id2old_var <- list()
+  constr <- list()
+  for(var in variables(problem)) {
+    vid <- as.character(id(var))
+    if(!(vid %in% names(id2new_var))) {
+      id2old_var[[vid]] <- var
+      new_var <- FALSE
+      new_attr <- var@attributes
+      for(key in CONVEX_ATTRIBUTES) {
+        if(!is.null(new_attr[[key]])) {
+          new_var <- TRUE
+          new_attr[[key]] <- FALSE
+        }
+      }
+      
+      if(symmetric_attributes(list(var))) {
+        n <- shape(var)[1]
+        shape <- c(floor(n*(n+1)/2), 1)
+        upper_tri <- do.call(Variable, c(list(shape), new_attr))
+        id2new_var[[vid]] <- upper_tri
+        fill_coeff <- Constant(upper_tri_to_full(n))
+        full_mat <- fill_coeff %*% upper_tri
+        obj <- reshape(full_mat, c(n, n))
+      } else if(!is.null(var@attributes$diag)) {
+        diag_var <- do.call(Variable, c(list(shape(var)[1]), new_attr))
+        id2new_var[[vid]] <- diag_var
+        obj <- diag(diag_var)
+      } else if(new_var) {
+        obj <- do.call(Variable, c(list(shape(var)), new_attr))
+        id2new_var[[vid]] <- obj
+      } else {
+        obj <- var
+        id2new_var[[vid]] <- obj
+      }
+      
+      id2new_obj[[vid]] <- obj
+      if(is_nonneg(var))
+        constr <- c(constr, obj >= 0)
+      else if(is_nonpos(var))
+        constr <- c(constr, obj <= 0)
+      else if(is_psd(var))
+        constr <- c(constr, obj %>>% 0)
+      else if(!is.null(var@attributes$NSD))
+        constr <- c(constr, obj %<<% 0)
+    }
+  }
+  
+  # Create new problem.
+  obj <- tree_copy(problem@objective, id_objects = id2new_obj)   # TODO: Implement tree_copy in Canonical virtual class
+  cons_id_map <- list()
+  for(cons in problem@constraints) {
+    constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))
+    cons_id_map[[as.character(id(cons))]] <- id(constr[length(constr)])
+  }
+  inverse_data <- list(id2new_var, id2old_var, cons_id_map)
+  return(list(Problem(obj, constr), inverse_data))
+})
+
+setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  if(is.null(inverse_data) || length(inverse_data) == 0)
+    return(solution)
+  
+  id2new_var <- inverse_data[[1]]
+  id2old_var <- inverse_data[[2]]
+  cons_id_map <- inverse_data[[3]]
+  pvars <- list()
+  for(id in names(id2old_var)) {
+    var <- id2old_var[[id]]
+    new_var <- id2new_var[[id]]
+    
+    # Need to map from constrained to symmetric variable.
+    nvid <- as.character(id(new_var))
+    if(nvid %in% names(solution@primal_vars)) {
+      if(!is.null(var@attributes$diag))
+        pvars[[id]] <- Diagonal(x = as.vector(solution@primal_vars[[nvid]]))
+      else if(length(symmetric_attributes(list(var))) > 0) {
+        n <- shape(var)[1]
+        value <- matrix(0, nrow = n, ncol = n)   # Variable is symmetric
+        idxs <- upper.tri(value, diag = TRUE)
+        value[idxs] <- as.vector(solution@primal_vars[[nvid]])
+        value <- value + t(value) - diag(diag(value))
+        pvars[[id]] <- value
+      } else
+        pvars[[id]] <- project(var, solution@primal_vars[[nvid]])
+    }
+  }
+  
+  dvars <- list()
+  for(orig_id %in% names(cons_id_map)) {
+    vid <- cons_id_map[[orig_id]]
+    if(vid %in% names(solution@dual_vars))
+      dvars[[orig_id]] <- solution@dual_vars[[vid]]
+  }
+  return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
+})
+
+#'
+#' The EvalParams class.
+#' 
+#' This class represents a reduction that replaces symbolic parameters with
+#' their constaint values.
+#' 
+#' @rdname EvalParams-class
+setClass("EvalParams", contains = "Reduction")
+
+setMethod("accepts", signature(object = "EvalParams", problem = "Problem"), function(object, problem) { TRUE })
+setMethod("apply", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
+  # Do not instantiate a new objective if it does not contain parameters.
+  if(length(parameters(problem@objective)) > 0) {
+    obj_expr <- replace_params_with_consts(problem@objective@expr)
+    if(class(problem@objective) == "Maximize")
+      objective <- Maximize(obj_expr)
+    else
+      objective <- Minimize(obj_expr)
+  } else
+    objective <- problem@objective
+  
+  constraints <- list()
+  for(c in problem@constraints) {
+    args <- list()
+    for(arg in c@args)
+      args <- c(args, replace_params_with_consts(arg))
+    
+    # Do not instantiate a new constraint object if it did not contain parameters.
+    id_match <- mapply(function(new, old) { id(new) == id(old) }, args, c@args)
+    if(all(unlist(id_match)))
+      constraints <- c(constraints, c)
+    else {   # Otherwise, create a copy of the constraint.
+      data <- get_data(c)
+      if(!is.na(data) && length(data) > 0)
+        constraints <- c(constraints, do.call(class(c), c(args, data)))
+      else
+        constraints <- c(constraints, do.call(class(c), args))
+    }
+  }
+  return(list(Problem(objective, constraints)), list())
+})
+
+setMethod("invert", signature(object = "EvalParams", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { solution })
+
+#'
+#' The FlipObjective class.
+#' 
+#' This class represents a reduction that flips a minimization objective to a
+#' maximization and vice versa.
+#' 
+#' @rdname FlipObjective-class
+setClass("FlipObjective", contains = "Reduction")
+
+setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
+setMethod("apply", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
+  is_maximize <- class(problem@objective) == "Maximize"
+  if(class(problem@objective) == "Maximize")
+    objective <- Maximize
+  else
+    objective <- Minimize
+  problem <- Problem(objective(-problem@objective@expr), problem@constraints)
+  return(list(problem, list()))
+})
+
+setMethod("invert", signature(object = "FlipObjective", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
+  if(!is.null(solution@opt_val))
+    solution@opt_val <- -solution@opt_val
+  return(solution)
+})

@@ -1,3 +1,9 @@
+are_args_affine <- function(constraints) {
+  all(sapply(constraints, function(constr) {
+    sapply(constr@args, function(arg) { is_affine(arg) })
+  }))
+}
+
 # Factory function for infeasible or unbounded solutions.
 failure_solution <- function(status) {
   if(status == INFEASIBLE)
@@ -136,6 +142,12 @@ replace_params_with_consts <- function(expr) {
   }
 }
 
+#'
+#' The Canonicalization class.
+#' 
+#' This class represents a canonicalization reduction.
+#' 
+#' @rdname Canonicalization-class
 .Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
 Canonicalization <- function(canon_methods) { .Canonicalization(canon_methods = canon_methods) }
 setMethod("initialize", function(.Object, ..., canon_methods) {
@@ -225,7 +237,7 @@ setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Ex
 #' The Chain class.
 #' 
 #' This class represents a reduction that replaces symbolic parameters with
-#' their constaint values.
+#' their constraint values.
 #' 
 #' @rdname Chain-class
 .Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")

@@ -482,6 +482,35 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
   return(solution)
 })
 
+extract_mip_idx <- function(variables) {
+  # Coalesces bool, int indices for variables.
+  # The indexing scheme assumes that the variables will be coalesced into a single
+  # one-dimensional variable with each variable being reshaped in Fortran order.
+  
+  ravel_multi_index <- function(multi_index, x, vert_offset) {
+    # Ravel a multi-index and add a vertical offset to it
+    # TODO: I have no idea what the following Python code does
+    # ravel_idx <- np.ravel_multi_index(multi_index, max(x.shape, (1,)), order = "F")
+    return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
+  }
+  
+  boolean_idx <- c()
+  integer_idx <- c()
+  vert_offset <- 0
+  for(x in variables) {
+    if(!is.null(x@boolean_idx)) {
+      multi_index <- x@boolean_idx
+      boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    if(!is.null(x@integer_idx)) {
+      multi_index <- x@integer_idx
+      integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    vert_offset <- vert_offset + size(x)
+  }
+  return(list(boolean_idx, integer_idx))
+}
+
 setClass("MatrixStuffing", contains = "Reduction")
 
 setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
@@ -535,13 +564,13 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
     primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size)], nrow = shape[1], ncol = shape[2])
   }
   
-  # Remap dual viarables if dual exists (problem is convex).
+  # Remap dual variables if dual exists (problem is convex).
   if(length(solution@dual_vars) > 0) {
     for(old_con in names(con_map)) {
       new_con <- con_map[[old_con]]
       con_obj <- inverse_data@id2cons[[old_con]]
       shape <- shape(con_obj)
-      # TODO: Rational Exponential.
+      # TODO: Rationalize Exponential.
       if(length(shape) == 0 || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
         dual_vars[[old_con]] <- solution@dual_vars[[new_con]]
       else

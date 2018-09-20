@@ -127,3 +127,206 @@ abs_canon <- function(expr, real_args, imag_args, real2imag) {
   }
   return(list(output, NA))
 }
+
+# Affine canonicalization.
+separable_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize linear functions that are separable in real and imaginary parts.
+  if(all(is.na(imag_args)))
+    outputs <- list(copy(expr, real_args), NA)
+  else if(all(is.na(real_args)))
+    ouputs <- list(NA, copy(expr, imag_args))
+  else {   # Mixed real and imaginary arguments.
+    for(idx in length(real_args)) {
+      real_val <- real_args[idx]
+      if(is.na(real_val))
+        real_args[idx] <- Constant(matrix(0, nrow = nrow(imag_args[idx]), ncol = ncol(imag_args[idx])))
+      else if(is.na(imag_args[idx]))
+        imag_args[idx] <- Constant(matrix(0, nrow = nrow(real_args[idx]), ncol = ncol(real_args[idx])))
+    }
+    outputs <- list(copy(expr, real_args), copy(expr, imag_args))
+  }
+  return(outputs)
+}
+
+real_canon <- function(expr, real_args, imag_args, real2imag) {
+  list(real_args[[1]], NA)
+}
+
+imag_canon <- function(expr, real_args, imag_args, real2imag) {
+  list(imag_args[[1]], NA)
+}
+
+conj_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.na(imag_args[[1]]))
+    imag_arg <- NA
+  else
+    imag_arg <- -imag_args[[1]]
+  return(list(real_args[[1]], imag_arg))
+}
+
+join <- function(expr, lh_arg, rh_arg) {
+  # Helper function to combine arguments.
+  if(is.na(lh_arg) || is.na(rh_arg))
+    return(NA)
+  else
+    return(copy(expr, list(lh_arg, rh_arg)))
+}
+
+add <- function(lh_arg, rh_arg, neg = FALSE) {
+  # Helper function to sum arguments.
+  # Negates rh_arg if neg is TRUE.
+  if(!is.na(rh_arg) && neg)
+    rh_arg <- -rh_arg
+  
+  if(is.na(lh_arg) && is.na(rh_arg))
+    return(NA)
+  else if(is.na(lh_arg))
+    return(rh_arg)
+  else if(is.na(rh_arg))
+    return(lh_arg)
+  else
+    return(lh_arg + rh_arg)
+}
+
+binary_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize functions like multiplication.
+  real_by_real <- join(expr, real_args[[1]], real_args[[2]])
+  imag_by_imag <- join(expr, imag_args[[1]], imag_args[[2]])
+  real_by_imag <- join(expr, real_args[[1]], imag_args[[2]])
+  imag_by_real <- join(expr, imag_args[[1]], real_args[[2]])
+  real_output <- add(real_by_real, imag_by_imag, neg = TRUE)
+  imag_output <- add(real_by_imag, imag_by_real, neg = TRUE)
+  return(list(real_output, imag_output))
+}
+
+constant_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is_real(expr))
+    return(list(Constant(Re(value(expr))), NA))
+  else if(is_imag(expr))
+    return(list(NA, Constant(Im(value(expr)))))
+  else
+    return(list(Constant(Re(value(expr))), Constant(Im(value(expr)))))
+}
+
+# Matrix canonicalization.
+# We expand the matrix A to B = [[Re(A), -Im(A)], [Im(A), Re(A)]]
+# B has the same eigenvalues as A (if A is Hermitian).
+# If x is an eigenvector of A, then [Re(x), Im(x)] and [Im(x), -Re(x)]
+# are eigenvectors with same eigenvalue.
+# Thus each eigenvalue is repeated twice.
+hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize functions taht take a Hermitian matrix.
+  if(is.na(imag_args[[1]]))
+    mat <- real_args[[1]]
+  else {
+    if(is.na(real_args[[1]]))
+      real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
+    mat <- bmat(list(list(real_args[[1]], -imag_args[[1]]),
+                     list(imag_args[[1]], real_args[[1]])
+                ))
+  }
+  return(list(copy(expr, list(mat)), NA))
+}
+
+norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize nuclear norm with Hermitian matrix input.
+  # Divide by two because each eigenvalue is repeated twice.
+  canon <- hermitian_canon(expr, real_args, imag_args, real2imag)
+  real <- canon[[1]]
+  imag <- canon[[2]]
+  if(!is.na(imag_args[[1]]))
+    real <- real/2
+  return(list(real, imag))
+}
+
+lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize nuclear norm with Hermitian matrix input.
+  # Divide by two because each eigenvalue is repeated twice.
+  canon <- hermitian_canon(expr, real_args, imag_args, real2imag)
+  real <- canon[[1]]
+  imag <- canon[[2]]
+  real@k <- 2*real@k
+  if(!is.na(imag_args[[1]]))
+    real <- real/2
+  return(list(real, imag))
+}
+
+at_least_2D <- function(expr) {
+  # Upcast 0D and 1D to 2D.
+  if(expr@ndim < 2)
+    return(reshape(expr, c(size(expr), 1)))
+  else
+    return(expr)
+}
+
+quad_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Convert quad_form to real.
+  if(is.na(imag_args[[1]])) {
+    vec <- real_args[[1]]
+    mat <- real_args[[2]]
+  } else if(is.na(real_args[[1]])) {
+    vec <- imag_args[[1]]
+    mat <- real_args[[2]]
+  } else {
+    vec <- vstack(list(at_least_2D(real_args[[1]]),
+                       at_least_2D(imag_args[[1]])))
+    if(is.na(real_args[[2]]))
+      real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
+    else if(is.na(imag_args[[2]]))
+      imag_args[[2]] <- matrix(0, nrow = nrow(real_args[[2]]), ncol = ncol(real_args[[2]]))
+    mat <- bmat(list(list(real_args[[2]], -imag_args[[2]]),
+                     list(imag_args[[2]], real_args[[2]])
+                ))
+    # HACK TODO
+    mat <- Constant(value(mat))
+  }
+  return(list(copy(expr, list(vec, mat)), NA))
+}
+
+matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Convert matrix_frac to real.
+  if(is.na(real_args[[1]]))
+    real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
+  if(is.na(imag_args[[1]]))
+    imag_args[[1]] <- matrix(0, nrow = nrow(real_args[[1]]), ncol = ncol(real_args[[1]]))
+  vec <- vstack(list(at_least_2D(real_args[[1]]),
+                     at_least_2D(imag_args[[1]])))
+  if(is.na(real_args[[2]]))
+    real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
+  else if(is.na(imag_args[[2]]))
+    imag_args[[2]] <- matrix(0, nrow = nrow(real_args[[2]]), ncol = ncol(real_args[[2]]))
+  mat <- bmat(list(list(real_args[[2]], -imag_args[[2]]),
+                   list(imag_args[[2]], real_args[[2]])
+              ))
+  return(list(copy(expr, list(vec, mat)), NA))
+}
+
+pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
+  abs_args <- abs_canon(expr, real_args, imag_args, real2imag)
+  abs_real_args <- abs_args[[1]]
+  return(list(copy(expr, list(abs_real_args)), NA))
+}
+
+variable_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is_real(expr))
+    return(list(expr, NA))
+  
+  imag <- Variable(dim(expr), var_id = real2imag[[as.character(id(expr))]])
+  if(is_imag(expr))
+    return(list(NA, imag))
+  else if(is_complex(expr) && is_hermitian(expr))
+    return(list(Variable(dim(expr), var_id = id(expr), symmetric = TRUE), (imag - t(imag))/2))
+  else   # Complex.
+    return(list(Variable(dim(expr), var_id = id(expr)), imag))
+}
+
+zero_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.na(imag_args[[1]]))
+    return(list(copy(expr, real_args), NA))
+  
+  imag_cons <- Zero(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]])
+  if(is.na(real_args[[1]]))
+    return(list(NA, imag_cons))
+  else
+    return(list(copy(expr, real_args), imag_cons))
+}

@@ -1,3 +1,23 @@
+#'
+#' The EliminatePwl class.
+#' 
+#' This class eliminates piecewise linear atoms.
+#' 
+#' @rdname EliminatePwl-class
+setClass("EliminatePwl", contains = "Canonicalization")
+
+setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
+  atom_types <- sapply(atoms(problem), function(atom) { class(atom) })
+  pwl_types <- c("Abs", "MaxElemwise", "SumLargest", "MaxEntries", "Norm1", "NormInf")
+  return(any(sapply(atom_types, function(atom) { atom %in% pwl_types })))
+})
+
+setMethod("apply", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
+  if(!accepts(object, problem))
+    stop("Cannot canonicalize away piecewise linear atoms.")
+  return(apply(Canonicalization(elim_pwl_methods), problem))
+})
+
 abs_canon <- function(expr, args) {
   x <- args[[1]]
   t <- Variable(shape(expr))
@@ -66,23 +86,3 @@ sum_largest_canon <- function(expr, args) {
   constraints <- list(x <= t + q, t >= 0)
   return(list(obj, constraints))
 }
-
-#'
-#' The EliminatePwl class.
-#' 
-#' This class eliminates piecewise linear atoms.
-#' 
-#' @rdname EliminatePwl-class
-setClass("EliminatePwl", contains = "Canonicalization")
-
-setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
-  atom_types <- sapply(atoms(problem), function(atom) { class(atom) })
-  pwl_types <- c("Abs", "MaxElemwise", "SumLargest", "MaxEntries", "Norm1", "NormInf")
-  return(any(sapply(atom_types, function(atom) { atom %in% pwl_types })))
-})
-
-setMethod("apply", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
-  if(!accepts(object, problem))
-    stop("Cannot canonicalize away piecewise linear atoms.")
-  return(apply(Canonicalization(elim_pwl_methods), problem))
-})

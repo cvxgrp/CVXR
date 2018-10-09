@@ -78,6 +78,7 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   # Map of constraint id to constraint
   .Object@id2cons <- setNames(constrs, sapply(constrs, function(cons) { id(cons) }))
   .Object@cons_id_map <- list()
+  return(.Object)
 })
 
 setMethod("get_var_offsets", signature(object = "InverseData", variables = "list"), function(object, variables) {

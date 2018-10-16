@@ -69,7 +69,7 @@ setMethod("status_map", "GLPK", function(solver, status) {
 #' @export
 setMethod("name", "GLPK", function(object) { GLPK_NAME })
 
-#' @describeIn GLPK Imports the Rgpkk library.
+#' @describeIn GLPK Imports the Rglpk library.
 setMethod("import_solver", "GLPK", function(solver) {
     requireNamespace("Rglpk", quietly = TRUE) &&
         requireNamespace("slam", quietly = TRUE)

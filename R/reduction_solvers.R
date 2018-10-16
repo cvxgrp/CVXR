@@ -107,10 +107,10 @@ construct_solving_chain <- function(problem, solver = NA) {
     reductions <- c(reductions, FlipObjective())
   
   # Attempt to canonicalize the problem to a linearly constrained QP.
-  candidate_qp_solvers <- lapply(QP_SOLVERS, function(s) { if(s in candidates) return(s) })
+  candidate_qp_solvers <- QP_SOLVERS[sapply(QP_SOLVERS, function(s) { s %in% candidates })]
   # Consider only MIQP solvers if problem is integer.
   if(is_mixed_integer(problem))
-    candidate_qp_solvers <- lapply(candidate_qp_solvers, function(s) { if(mip_capable(SOLVER_MAP_QP[s])) return(s) })
+    candidate_qp_solvers <- candidate_qp_solvers[sapply(candidate_qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[s]) })]
   if(length(candidate_qp_solvers) > 0 && accepts(Qp2SymbolicQp(), problem)) {
     idx <- sapply(candidate_qp_solvers, function(s) { min(which(QP_SOLVERS == s)) })
     sorted_candidates[order(idx)]
@@ -120,9 +120,9 @@ construct_solving_chain <- function(problem, solver = NA) {
     return(SolvingChain(reductions = reductions))
   }
   
-  candidate_conic_solvers <- lapply(candidates, function(s) { if(s %in% CONIC_SOLVERS) return(s) })
+  candidate_conic_solvers <- candidates[sapply(candidates, function(s) { s %in% CONIC_SOLVERS })]
   if(is_mixed_integer(problem)) {
-    candidate_conic_solvers <- lapply(candidate_conic_solvers, function(s) { if(mip_capable(SOLVER_MAP_CONIC[s])) return(s) })
+    candidate_conic_solvers <- candidate_conic_solvers[sapply(candidate_conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[s]) })]
     if(length(candidate_conic_solvers) == 0 && length(candidate_qp_solvers) == 0)
       stop(paste("Problem is mixed-integer, but candidate QP/Conic solvers (",
            paste(c(candidate_qp_solvers, candidate_conic_solvers), sep = "", collapse = ",")

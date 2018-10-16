@@ -1,6 +1,6 @@
 are_args_affine <- function(constraints) {
   all(sapply(constraints, function(constr) {
-    sapply(constr@args, function(arg) { is_affine(arg) })
+    all(sapply(constr@args, function(arg) { is_affine(arg) }))
   }))
 }
 
@@ -68,10 +68,10 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@id2var <- setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
   
   # Map of real to imaginary parts of complex variables
-  var_comp <- lapply(varis, function(var) { if(is_complex(var)) var })
+  var_comp <- varis[sapply(varis, function(var) { is_complex(var) })]
   .Object@real2imag <- setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
   constrs <- constraints(problem)
-  constr_comp <- lapply(constrs, function(cons) { if(is_complex(cons)) cons })
+  constr_comp <- constrs[sapply(constrs, function(cons) { is_complex(cons) })]
   constr_dict <- setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
   .Object@real2imag <- update(.Object@real2imag, constr_dict)
   
@@ -280,10 +280,9 @@ setMethod("invert", signature(object = "Chain", solution = "Solution", inverse_d
 
 # Returns a list of the relevant attributes present among the variables.
 attributes_present <- function(variables, attr_map) {
-  lapply(attr_map, function(attr) { 
-    has_attr <- sapply(variables, function(v) { v@attributes[[attr]] })
-    if(any(has_attr)) return(attr)
-  })
+  attr_map[sapply(attr_map, function(attr) { 
+    any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) }))
+  })]
 }
 
 # Convex attributes that generate constraints.

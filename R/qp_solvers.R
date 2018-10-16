@@ -60,8 +60,131 @@ setMethod("invert", "CPLEX", function(object, results, inverse_data) {
 
 setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace(Rcplex, quietly = TRUE)
-  # TODO: Finish this.
+  P <- Matrix(data[P_KEY], byrow = TRUE, sparse = TRUE)
+  q <- data[Q_KEY]
+  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)
+  b <- data[B_KEY]
+  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)
+  g <- data[G_KEY]
+  n_var <- data$n_var
+  n_eq <- data$n_eq
+  n_ineq <- data$n_ineq
+  
+  # Define CPLEX problem.
+  model <- Rcplex::Cplex()
+  
+  # Minimize problem.
+  model@objective@set_sense(model@objective@sense@minimize)
+  
+  # Add variables and linear objective.
+  var_idx <- add(model@variables, obj = q, lb = rep(-Inf, n_var), ub = rep(Inf, n_var))
+  
+  # Constraint binary/integer variables if present.
+  for(i in data[BOOL_IDX])
+    set_types(model@variables, var_idx[i], model@variables@type@binary)
+  
+  for(i in data[INT_IDX])
+    set_types(model@variables, var_idx[i], model@variables@type@integer)
+  
+  # Add constraints.
+  for(i in 1:n_eq) {   # Add equalities.
+    start <- A@p[i]
+    end <- A@p[i+1]
+    row <- list(A@i[start:end], A@j[start:end], A@x[start:end])
+    add(model@linear_constraints, lin_expr = row, senses = "E", rhs = b[i])
+  }
+  
+  for(i in 1:n_ineq) {   # Add inequalities.
+    start <- F@p[i]
+    end <- F@p[i+1]
+    row <- list(Fmat@i[start:end], Fmat@j[start:end], Fmat@x[start:end])
+    add(model@linear_constraints, lin_expr = row, senses = "L", rhs = g[i])
+  }
+  
+  # Set quadratic cost.
+  if(count_nonzero(P)) {   # Only if quadratic form is not null.
+    qmat <- list()
+    for(i in 1:n_var) {
+      start <- P@p[i]
+      end <- P@p[i+1]
+      qmat <- c(qmat, list(P@i[start:end], P@j[start:end], P@x[start:end]))
+    }
+    set_quadratic(model@objective, qmat)
+  }
+  
+  # Set parameters.
+  if(!verbose) {
+    set_results_stream(model, NA)
+    set_log_stream(model, NA)
+    set_error_stream(model, NA)
+    set_warning_stream(model, NA)
+  }
+  
+  # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
+  # and the code is duplicated here. This should be refactored.
+  kwargs <- sort(names(solver_opts))
+  if("cplex_params" %in% kwargs) {
+    for(param in names(solver_opts$cplex_params)) {
+      value <- solver_opts$cplex_params[param]
+      tryCatch({
+          eval(paste("set(model@parameters@", param, ", value)", sep = ""))
+        }, error = function(e) {
+         stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")") 
+      })
+    }
+    kwargs$cplex_params <- NULL  
+  }
+  
+  if("cplex_filename" %in% kwargs) {
+    filename <- solver_opts$cplex_filename
+    if(!is.na(filename) && !is.null(filename))
+      write(model, filename)
+    kwargs$cplex_filename <- NULL
+  }
+  
+  if(!is.null(kwargs) || !is.na(kwargs) || length(kwargs) > 0)
+    stop("Invalid keyword argument ", kwargs[[1]])
+  
+  # Solve problem.
+  results_dict <- list()
+  tryCatch({
+      start <- get_time(model)
+      solve(model)
+      end <- get_time(model)
+      results_dict$cputime <- end - start
+    }, error = function(e) {
+      results_dict$status <- SOLVER_ERROR
+    }
+  )
+  results_dict$model <- model
+  return(results_dict)
 })
+
+# QP interface for the GUROBI solver.
+GUROBI <- setClass("GUROBI", contains = "QpSolver")
+
+setMethod("mip_capable", "GUROBI", function(object) { TRUE })
+
+# Map of GUROBI status to CVXR status.
+setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
+  if(status == 2)
+    OPTIMAL
+  else if(status == 3)
+    INFEASIBLE
+  else if(status == 5)
+    UNBOUNDED
+  else if(status %in% c(4,6,7,8,10,11,12,13))
+    SOLVER_ERROR
+  else if(status == 9)
+    OPTIMAL_INACCURATE
+  else if(!is.null(default)) {
+    warning("GUROBI status unrecognized: ", status)
+    return(default)
+  } else
+    stop("GUROBI status unrecognized: ", status)
+})
+
+# TODO: Finish implementing GUROBI solver interface.
 
 # QP interface for the OSQP solver.
 OSQP <- setClass("OSQP", contains = "QpSolver")

@@ -174,9 +174,9 @@ setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
   else if(status == 5)
     UNBOUNDED
   else if(status %in% c(4,6,7,8,10,11,12,13))
-    SOLVER_ERROR
+    SOLVER_ERROR   # TODO: Could be anything
   else if(status == 9)
-    OPTIMAL_INACCURATE
+    OPTIMAL_INACCURATE   # Means time expired.
   else if(!is.null(default)) {
     warning("GUROBI status unrecognized: ", status)
     return(default)
@@ -184,7 +184,141 @@ setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
     stop("GUROBI status unrecognized: ", status)
 })
 
-# TODO: Finish implementing GUROBI solver interface.
+setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
+setMethod("import_solver", "GUROBI", function(object) {
+  requireNamespace("gurobi", quietly = TRUE)
+})
+
+setMethod("invert", "GUROBI", function(object, results, inverse_data) {
+  model <- results$model
+  x_grb <- getVars(model)
+  n <- length(x_grb)
+  constraints_grb <- getConstrs(model)
+  m <- length(constraints_grb)
+  
+  # Start populating attribute dictionary.
+  attr <- list()
+  attr[SOLVE_TIME] <- model@Runtime
+  attr[NUM_ITERS] <- model@BarIterCount
+  
+  # Map GUROBI statuses back to CVXR statuses.
+  status <- status_map(object, model@Status, SOLVER_ERROR)
+  
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- model@objVal
+    x <- sapply(1:n, function(i) { x_grb[i]@X })
+    
+    primal_vars <- list()
+    primal_vars[names(inverse_data@id_map)[1]] <- x
+    
+    # Only add duals if not a MIP.
+    dual_vars <- NA
+    if(!is_mip(inverse_data)) {
+      y <- -sapply(1:m, function(i) { constraints_grb[i]@Pi })
+      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+    }
+  } else {
+    primal_vars <- NA
+    dual_vars <- NA
+    opt_val <- Inf
+    if(status == UNBOUNDED)
+      opt_val <- -Inf
+  }
+  
+  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+})
+
+setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  requireNamespace(gurobi, quietly = TRUE)
+  
+  # N.B. Here we assume that the matrices in data are in CSC format.
+  P <- data[P_KEY]   # TODO: Convert P matrix to COO format?
+  q <- data[Q_KEY]
+  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)   # Convert A matrix to CSR format.
+  b <- data[B_KEY]
+  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)   # Convert F matrix to CSR format.
+  g <- data[G_KEY]
+  n <- data$n_var
+  
+  # Create a new model.
+  model <- gurobi::Model()
+  
+  # Add variables.
+  for(i in 1:n) {
+    # Set variable type.
+    if(i %in% data[BOOL_IDX])
+      vtype <- gurobi::GRB.BINARY
+    else if(i %in% data[INT_IDX])
+      vtype <- gurobi::GRB.INTEGER
+    else
+      vtype <- gurobi::GRB.CONTINUOUS
+    addVar(model, ub = Inf, lb = -Inf, vtype = vtype)
+  }
+  
+  update(model)
+  x <- getVars(model)
+  
+  # Add equality constraints: iterate over the rows of A,
+  # adding each row into the model.
+  if(nrow(A) > 0) {
+    for(i in 1:nrow(A)) {
+      start <- A@p[i]
+      end <- A@p[i+1]
+      variables <- mapply(function(i,j) { x[i,j] }, A@i[start:end], A@j[start:end])
+      coeff <- A@x[start:end]
+      expr <- gurobi::LinExpr(coeff, variables)
+      addConstr(model, expr, gurobi::GRB.EQUAL, b[i])
+    }
+  }
+  update(model)
+  
+  # Add inequality constraints: iterate over the rows of F,
+  # Adding each row into the model.
+  if(nrow(Fmat) > 0) {
+    for(i in 1:nrow(Fmat)) {
+      start <- Fmat@p[i]
+      end <- Fmat@p[i+1]
+      variables <- mapply(function(i, j) { x[i,j] }, Fmat@i[start:end], Fmat@j[start:end])
+      coeff <- Fmat@x[start:end]
+      expr <- gurobi::LinExpr(coeff, variables)
+      addConstr(model, expr, gurobi::GRB.LESS_EQUAL, g[i])
+    }
+  }
+  update(model)
+  
+  # Define objective.
+  obj <- gurobi::QuadExpr()
+  if(count_nonzero(P)) {   # If there are any nonzero elements in P.
+    for(i in 1:nnzero(P))
+      add(obj, 0.5*P@x[i,j]*x[P@i[i]]*x[P@j[i]])
+  }
+  add(obj, gurobi::LinExpr(q, x))   # Add linear part.
+  setObjective(model, obj)   # Set objective.
+  update(model)
+  
+  # Set verbosity and other parameters.
+  setParam(model, "OutputFlag", verbose)
+  
+  # TODO: user option to not compute duals.
+  setParam(model, "QCPDual", TRUE)
+  
+  for(key in names(solver_opts))
+    setParam(model, key, solver_opts[key])
+  
+  # Update model.
+  update(model)
+  
+  # Solve problem.
+  results_dict <- list()
+  tryCatch({
+    optimize(model)
+  }, error = function(e) {
+    results_dict$status <- SOLVER_ERROR
+  })
+  
+  results_dict$model <- model
+  return(results_dict)
+})
 
 # QP interface for the OSQP solver.
 OSQP <- setClass("OSQP", contains = "QpSolver")

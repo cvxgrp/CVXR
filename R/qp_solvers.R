@@ -224,6 +224,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
         opt_val <- -Inf
     }
   }
+  
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 

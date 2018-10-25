@@ -174,9 +174,9 @@ setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
   else if(status == 5)
     UNBOUNDED
   else if(status %in% c(4,6,7,8,10,11,12,13))
-    SOLVER_ERROR
+    SOLVER_ERROR   # TODO: Could be anything
   else if(status == 9)
-    OPTIMAL_INACCURATE
+    OPTIMAL_INACCURATE   # Means time expired.
   else if(!is.null(default)) {
     warning("GUROBI status unrecognized: ", status)
     return(default)
@@ -206,7 +206,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
   
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- model@objVal
-    x <- as.matrix(sapply(1:n, function(i) { x_grb[i]$X }))
+    x <- as.matrix(sapply(1:n, function(i) { x_grb[i]@X }))
     
     primal_vars <- list()
     primal_vars[names(inverse_data@id_map)[1]] <- x
@@ -214,7 +214,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
     # Only add duals if not a MIP.
     dual_vars <- NA
     if(!is_mip(inverse_data)) {
-      y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]$Pi }))
+      y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]@Pi }))
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     } else {
       primal_vars <- NA
@@ -229,12 +229,12 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
 
 setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace(gurobi, quietly = TRUE)
-  # N.B. Here we assume that the matrices in data are in csc format.
-  P <- Matrix(data[P_KEY], byrow = TRUE, sparse = TRUE)
+  # N.B. Here we assume that the matrices in data are in CSC format.
+  P <- data[P_KEY]   # TODO: Convert P matrix to COO format?
   q <- data[Q_KEY]
-  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)
+  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)   # Convert A matrix to CSR format.
   b <- data[B_KEY]
-  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)
+  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)   # Convert F matrix to CSR format.
   g <- data[G_KEY]
   n <- data$n_var
   

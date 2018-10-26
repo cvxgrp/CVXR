@@ -26,6 +26,15 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
 }
 
 ReductionSolver <- setClass("ReductionSolver", contains = "Reduction")
+
+# Solver capabilities.
+setMethod("mip_capable", function(object) { FALSE })
+
+# Keys for inverse data.
+setMethod("var_id", function(object) { "var_id" })
+setMethod("eq_constr", function(object) { "eq_constr" })
+setMethod("neq_constr", function(object) { "other_constr" })
+
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
 setMethod("import_solver", "ReductionSolver", function(object) { stop("Unimplemented") })
 setMethod("is_installed", "ReductionSolver", function(object) {

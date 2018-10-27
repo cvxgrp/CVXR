@@ -187,8 +187,8 @@ setMethod("invert", "ConicSolver", signature(object = "ConicSolver", solution = 
     opt_val <- solution$value
     primal_vars <- list()
     primal_vars[inverse_data[var_id(object)]] <- solution$primal
-    eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[EQ_CONSTR])
-    leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[NEQ_CONSTR])
+    eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[eq_constr(object)])
+    leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[neq_constr(object)])
     update(eq_dual, leq_dual)
     dual_vars <- eq_dual
   } else {
@@ -221,7 +221,7 @@ setMethod("status_map_lp", "CBC", function(object) {
 
 setMethod("name", "CBC", function(x) { CBC_NAME })
 setMethod("import_solver", "CBC", function(object) {
-  requireNamespace(rcbc, quietly = TRUE)
+  requireNamespace("rcbc", quietly = TRUE)
 })
 
 setMethod("accepts", signature(object = "CBC", problem = "Problem"), function(object, problem) {
@@ -256,9 +256,9 @@ setMethod("apply", signature(object = "CBC", problem = "Problem"), function(obje
   inv_data <- list()
   inv_data[var_id(object)] <- id(variables(problem)[[1]])
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[EQ_CONSTR] <- eq_constr
+  inv_data[eq_constr(object)] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
-  inv_data[NEQ_CONSTR] <- leq_constr
+  inv_data[neq_constr(object)] <- leq_constr
   return(list(data, inv_data))
 })
 
@@ -297,7 +297,7 @@ CPLEX <- setClass("CPLEX", contains = "ConicSolver")
 setMethod("mip_capable", "CPLEX", function(object) { TRUE })
 setMethod("supported_constraints", "CPLEX", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
 setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(object) { requireNamespace(Rcplex, quietly = TRUE) })
+setMethod("import_solver", "CPLEX", function(object) { requireNamespace("Rcplex", quietly = TRUE) })
 setMethod("accepts", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
   # Can CPLEX solve the problem?
   # TODO: Check if the matrix is stuffed.
@@ -387,7 +387,7 @@ setMethod("status_map", "CVXOPT", function(object, status) {
 })
 
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
-setMethod("import_solver", "CVXOPT", function(object) { requireNamespace(cccopt, quietly = TRUE) })
+setMethod("import_solver", "CVXOPT", function(object) { requireNamespace("cccopt", quietly = TRUE) })
 
 setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   # Can CVXOPT solver the problem?
@@ -433,6 +433,211 @@ setMethod("apply", signature(object = "CVXOPT", problem = "Problem"), function(o
 
 setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   solver <- CVXOPT_OLD()
+  prob_data <- list()
+  prob_data[name(object)] <- ProblemData()
+  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+})
+
+ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
+
+setMethod("mip_capable", "ECOS_BB", function(object) { TRUE })
+setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
+setMethod("apply", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
+  res <- callNextMethod(object, problem)
+  data <- res[[1]]
+  inv_data <- res[[2]]
+  
+  # Because the problem variable is single dimensional, every
+  # boolean/integer index has length one.
+  var <- variables(problem)[[1]]
+  data[BOOL_IDX] <- lapply(var@boolean_idx, function(t) { as.integer(t[1]) })
+  data[INT_IDX] <- lapply(var@integer_idx, function(t) { as.integer(t[1]) })
+  return(list(data, inv_data))
+})
+
+setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  requireNamespace("ECOSolveR", quietly = TRUE)
+  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  
+  # Default verbose to false for BB wrapper.
+  if("mi_verbose" %in% names(solver_opts)) {
+    mi_verbose <- solver_opts$mi_verbose
+    solver_opts$mi_verbose <- NULL
+  } else
+    mi_verbose <- verbose
+  solution <- ECOSolveR::solve(data[C_KEY], data[G_KEY], data[H_KEY], cones, data[A_KEY], data[B_KEY],
+                               verbose = verbose, mi_verbose = mi_verbose, bool_vars_idx = data[BOOL_IDX], int_vars_id = data[INT_IDX], solver_opts)
+  return(solution)
+})
+
+# Utility method for formatting a ConeDims instance into a dictionary
+# that can be supplied to ECOS.
+dims_to_solver <- function(cone_dims) {
+  cones <- list(l = as.integer(cone_dims@nonpos),
+                q = lapply(cone_dims@soc, function(v) { as.integer(v) }),
+                e = as.integer(cone_dims@exp))
+  return(cones)
+}
+
+ECOS <- setClass("ECOS", contains = "ConicSolver")
+
+# Solver capabilities.
+setMethod("mip_capable", "ECOS", function(object) { FALSE })
+setMethod("supported_constraints", "ECOS", function(object) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone") })
+
+# EXITCODES from ECOS
+# ECOS_OPTIMAL  (0)   Problem solved to optimality
+# ECOS_PINF     (1)   Found certificate of primal infeasibility
+# ECOS_DINF     (2)   Found certificate of dual infeasibility
+# ECOS_INACC_OFFSET (10)  Offset exitflag at inaccurate results
+# ECOS_MAXIT    (-1)  Maximum number of iterations reached
+# ECOS_NUMERICS (-2)  Search direction unreliable
+# ECOS_OUTCONE  (-3)  s or z got outside the cone, numerics?
+# ECOS_SIGINT   (-4)  solver interrupted by a signal/ctrl-c
+# ECOS_FATAL    (-7)  Unknown problem in solver
+
+# Map of ECOS status to CVXR status.
+setMethod("status_map", "ECOS", function(object, status) {
+  if(status == 0)
+    return(OPTIMAL)
+  else if(status == 1)
+    return(INFEASIBLE)
+  else if(status == 2)
+    return(UNBOUNDED)
+  else if(status == 10)
+    return(OPTIMAL_INACCURATE)
+  else if(status == 11)
+    return(INFEASIBLE_INACCURATE)
+  else if(status == 12)
+    return(UNBOUNDED_INACCURATE)
+  else if(status %in% c(-1, -2, -3, -4, -7))
+    return(SOLVER_ERROR)
+  else
+    stop("ECOS status unrecognized: ", status)
+})
+
+# Order of exponential cone arguments for solver.
+setMethod("exp_cone_order", "ECOS", function(object) { c(0, 2, 1) })
+
+setMethod("import_solver", "ECOS", function(object) {
+  requireNamespace("ECOSolveR", quietly = TRUE)
+})
+
+setMethod("name", "ECOS", function(x) { ECOS_NAME })
+setMethod("apply", "ECOS", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
+  data <- list()
+  inv_data <- list()
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  offsets <- get_coeff_offset(ConicSolver(), problem@objective@args[[1]])
+  data[C_KEY] <- as.vector(offsets[[1]])
+  data[OFFSET] <- offsets[[2]]
+  inv_data[OFFSET] <- data[OFFSET][[1]]
+  
+  constr_map <- group_constraints(problem@constraints)
+  data[dims(ConicSolver())] <- ConeDims(constr_map)
+  
+  inv_data[eq_constr(object)] <- constr_map$Zero
+  offsets <- group_coeff_offset(object, problem, constr_map$Zero, exp_cone_order(ECOS()))
+  data[A_KEY] <- offsets[[1]]
+  data[[B_KEY]] <- offsets[[2]]
+  
+  # Order and group nonlinear constraints.
+  neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$ExpCone)
+  inv_data[neq_constr(object)] <- neq_constr
+  offsets <- group_coeff_offset(object, problem, neq_constr, exp_cone_order(ECOS()))
+  data[G_KEY] <- offsets[[1]]
+  data[H_KEY] <- offsets[[2]]
+  
+  return(list(data, inv_data))
+})
+
+setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  status <- status_map(object, solution$info$exitFlag)
+  
+  # Timing data.
+  attr <- list()
+  attr[SOLVE_TIME] <- solution$info$timing$tsolve
+  attr[SETUP_TIME] <- solution$info$timing$tsetup
+  attr[NUM_ITERS] <- solution$info$iter
+  
+  if(status %in% SOLUTION_PRESENT) {
+    primal_val <- solution$info$pcost
+    opt_val <- primal_val + inverse_data[OFFSET]
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- as.matrix(solution$x)
+    
+    eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[eq_constr(object)])
+    leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[neq_constr(object)])
+    update(eq_dual, leq_dual)
+    dual_vars <- eq_dual
+    
+    return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+  } else
+    return(failure_solution(status))
+})
+
+setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  requireNamespace("ECOSolveR", quietly = TRUE)
+  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  solution <- ECOSolveR::solve(data[C_KEY], data[G_KEY], data[H_KEY], cones, data[A_KEY], data[B_KEY], verbose = verbose, solver_opts)
+  return(solution)
+})
+
+Elemental <- setClass("Elemental", contains = "ConicSolver")
+
+# Solver capabilities
+setMethod("mip_capable", "Elemental", function(object) { FALSE })
+setMethod("supported_constraints", "Elemental", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+
+# TODO: Map of Elemental status to CVXR status.
+setMethod("status_map", "Elemental", function(object, status) {
+  if(status == 0)
+    return(OPTIMAL)
+  else
+    stop("Unimplemented")
+})
+
+setMethod("import_solver", "Elemental", function(object) {
+  stop("Elemental is currently unavailable in R. Please see http://libelemental.org/about/ for more information.")
+})
+
+setMethod("name", "Elemental", function(x) { ELEMENTAL_NAME })
+setMethod("accepts", signature(object = "Elemental", problem = "Problem"), function(object, problem) {
+  # Can Elemental solve the problem?
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!class(constr) %in% supported_constraints(object))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+setMethod("apply", signature(object = "Elemental", problem = "Problem"), function(object, problem) {
+  data <- list()
+  objective <- canonical_form(problem@objective)[[1]]
+  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
+  constraints <- unlist(constraints, recursive = TRUE)
+  data$objective <- objective
+  data$constraints <- constraints
+  inv_data <- list()
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  
+  # Order and group constraints.
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  inv_data[eq_constr(object)] <- eq_constr
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  inv_data[neq_constr(object)] <- leq_constr
+  return(list(data, inv_data))
+})
+
+setMethod("solve_via_data", "Elemental", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  solver <- EL_OLD()
   prob_data <- list()
   prob_data[name(object)] <- ProblemData()
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)

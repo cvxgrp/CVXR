@@ -22,7 +22,7 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
 })
 
 setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(object) { requireNamespace(Rcplex, quietly = TRUE) })
+setMethod("import_solver", "CPLEX", function(object) { requireNamespace("Rcplex", quietly = TRUE) })
 setMethod("invert", "CPLEX", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
@@ -59,7 +59,7 @@ setMethod("invert", "CPLEX", function(object, results, inverse_data) {
 })
 
 setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
-  requireNamespace(Rcplex, quietly = TRUE)
+  requireNamespace("Rcplex", quietly = TRUE)
   P <- Matrix(data[P_KEY], byrow = TRUE, sparse = TRUE)
   q <- data[Q_KEY]
   A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)
@@ -186,7 +186,7 @@ setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
 
 setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
 setMethod("import_solver", "GUROBI", function(object) { 
-  requireNamespace(gurobi, quietly = TRUE)  
+  requireNamespace("gurobi", quietly = TRUE)  
 })
 
 setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -229,7 +229,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
 })
 
 setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
-  requireNamespace(gurobi, quietly = TRUE)
+  requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[P_KEY]   # TODO: Convert P matrix to COO format?
   q <- data[Q_KEY]
@@ -349,7 +349,7 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
 
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
 setMethod("import_solver", "OSQP", function(object) {
-  requireNamespace(osqp, quietly = TRUE)
+  requireNamespace("osqp", quietly = TRUE)
 })
 
 setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -377,7 +377,7 @@ setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_da
 })
 
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
-  requireNamespace(osqp, quietly = TRUE)
+  requireNamespace("osqp", quietly = TRUE)
   P <- data[P_KEY]
   q <- data[Q_KEY]
   A <- Matrix(do.call(rbind, list(data[A_KEY], data[F_KEY])), sparse = TRUE)

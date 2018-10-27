@@ -45,7 +45,7 @@ setMethod("name", "CBCSolver", function(x) { CBC_NAME })
 
 # Imports the solver.
 setMethod("import_solver", "CBCSolver", function(object) {
-  if(!requireNamespace(rcbc, quietly = TRUE))
+  if(!requireNamespace("rcbc", quietly = TRUE))
     stop("Required R package rcbc not found. Please install from https://github.com/dirkschumacher/rcbc")
 })
 

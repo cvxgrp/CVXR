@@ -189,7 +189,7 @@ setMethod("invert", "ConicSolver", signature(object = "ConicSolver", solution = 
     primal_vars[inverse_data[var_id(object)]] <- solution$primal
     eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[eq_constr(object)])
     leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[neq_constr(object)])
-    update(eq_dual, leq_dual)
+    eq_dual <- modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
   } else {
     if(status == INFEASIBLE)
@@ -351,7 +351,7 @@ setMethod("invert", signature(object = "CPLEX", solution = "Solution", inverse_d
     if(!inverse_data$is_mip) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[eq_constr(object)])
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[neq_constr(object)])
-      update(eq_dual, leq_dual)
+      eq_dual <- modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     } else {
       if(status == INFEASIBLE)
@@ -568,7 +568,7 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
     
     eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[eq_constr(object)])
     leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[neq_constr(object)])
-    update(eq_dual, leq_dual)
+    eq_dual <- modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
     
     return(Solution(status, opt_val, primal_vars, dual_vars, attr))
@@ -638,6 +638,172 @@ setMethod("apply", signature(object = "Elemental", problem = "Problem"), functio
 
 setMethod("solve_via_data", "Elemental", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   solver <- EL_OLD()
+  prob_data <- list()
+  prob_data[name(object)] <- ProblemData()
+  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+})
+
+GLPK <- setClass("GLPK", contains = "CVXOPT")
+setMethod("mip_capable", "GLPK", function(object) { FALSE })
+setMethod("supported_constraints", "GLPK", function(object) { supported_constraints(ConicSolver()) })
+
+setMethod("name", "GLPK", function(x) { GLPK_NAME })
+setMethod("import_solver", "GLPK", function(object) {
+  requireNamespace("Rglpk", quietly = TRUE)
+})
+
+setMethod("accepts", signature(object = "GLPK", problem = "Problem"), function(object, problem) {
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!class(constr) %in% supported_constraints(object))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  status <- solution$status
+  
+  primal_vars <- NA
+  dual_vars <- NA
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution$value
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+  } else {
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA
+  }
+  
+  return(Solution(status, opt_val, primal_vars, dual_vars, list()))
+})
+
+setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  solver <- GLPK_OLD()
+  prob_data <- list()
+  prob_data[name(object)] <- ProblemData()
+  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+})
+
+GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
+setMethod("mip_capable", "GLPK_MI", function(object) { TRUE })
+setMethod("supported_constraints", "GLPK_MI", function(object) { supported_constraints(ConicSolver()) })
+setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
+setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  solver <- GLPK_OLD()
+  solver_opts[BOOL_IDX] <- data[BOOL_IDX]
+  solver_opts[INT_IDX] <- data[INT_IDX]
+  prob_data <- list()
+  prob_data[name(object)] <- ProblemData()
+  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+})
+
+GUROBI <- setClass("GUROBI", contains = "ConicSolver")
+
+# Solver capabilities.
+setMethod("mip_capable", "GUROBI", function(object) { TRUE })
+setMethod("supported_constraints", "GUROBI", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+
+# Map of Gurobi status to CVXR status.
+setMethod("status_map", "GUROBI", function(object, status) {
+  if(status == 2)
+    return(OPTIMAL)
+  else if(status == 3)
+    return(INFEASIBLE)
+  else if(status == 5)
+    return(UNBOUNDED)
+  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+    return(SOLVER_ERROR)
+  else if(status == 9)   # TODO: Could be anything. Means time expired.
+    return(OPTIMAL_INACCURATE)
+  else
+    stop("GUROBI status unrecognized: ", status)
+})
+
+setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
+setMethod("import_solver", "GUROBI", function(object) {
+  requireNamespace("gurobi", quietly = TRUE)
+})
+
+setMethod("accepts", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!class(constr) %in% supported_constraints(object))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+setMethod("apply", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
+  data <- list()
+  objective <- canonical_form(problem@objective)[[1]]
+  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
+  constraints <- unlist(constraints, recursive = TRUE)
+  data$objective <- objective
+  data$constraints <- constraints
+  variables <- variables(problem)[[1]]
+  data[BOOL_IDX] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[INT_IDX] <- lapply(variables@integer_idx, function(t) { t[1] })
+  
+  # Order and group constraints.
+  inv_data <- list()
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  inv_data[eq_constr(object)] <- eq_constr
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
+  inv_data[neq_constr(object)] <- c(leq_constr, soc_constr)
+  inv_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+  return(list(data, inv_data))
+})
+
+setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  status <- solution$status
+  
+  primal_vars <- NA
+  dual_vars <- NA
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution$value
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    if(!inverse_data$is_mip) {
+      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data(eq_constr(object)))
+      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data(neq_constr(object)))
+      eq_dual <- modifyList(eq_dual, leq_dual)
+      dual_vars <- eq_dual
+    }
+  } else {
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA
+  }
+  
+  return(Solution(status, opt_val, primal_vars, dual_vars, list()))
+})
+
+setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  solver <- GUROBI_OLD()
+  solver_opts[BOOL_IDX] <- data[BOOL_IDX]
+  solver_opts[INT_IDX] <- data[INT_IDX]
   prob_data <- list()
   prob_data[name(object)] <- ProblemData()
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)

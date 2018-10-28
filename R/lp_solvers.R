@@ -88,7 +88,7 @@ setMethod("invert", signature(object = "CBCSolver", solution = "Solution", inver
     primal_vars <- list(inverse_data[object@VAR_ID] = solution[PRIMAL])
     eq_dual <- ConicSolver.get_dual_values(solution[EQ_DUAL], inverse_data[EQ_CONSTR])
     leq_dual <- ConicSolver.get_dual_values(solution[INEQ_DUAL], inverse_data[NEQ_CONSTR])
-    eq_dual <- update(eq_dual, leq_dual)
+    eq_dual <- modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual)
   } else {
     if(status == INFEASIBLE)

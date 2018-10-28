@@ -1,3 +1,33 @@
+# Solver definitions.
+solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
+solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX())
+
+SOLVER_MAP_CONIC <- solver_conic_intf
+names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, function(solver) { name(solver) })
+
+SOLVER_MAP_QP <- solver_qp_intf
+names(SOLVER_MAP_QP) <- sapply(solver_conic_qp, function(solver) { name(solver) })
+
+# CONIC_SOLVERS and QP_SOLVERS are sorted in order of decreasing solver preference.
+# QP_SOLVERS are those for which we have written interfaces and are supported by QpSolver.
+CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, ECOS_BB_NAME, SUPER_SCS_NAME, SCS_NAME,
+                   GUROBI_NAME, GLPK_NAME, XPRESS_NAME,
+                   GLPK_MI_NAME, CBC_NAME, ELEMENTAL_NAME, JULIA_OPT_NAME, CVXOPT_NAME,
+                   CPLEX_NAME)
+QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
+
+installed_solvers <- function() {
+  # Check conic solvers.
+  installed_conic <- SOLVER_MAP_CONIC[sapply(SOLVER_MAP_CONIC, function(solver) { is_installed(solver) })]
+  installed_qp <- SOLVER_MAP_QP[sapply(SOLVER_MAP_QP, function(solver) { is_installed(solver) })]
+  installed <- c(names(installed_conic), names(installed_qp))
+  installed <- unique(installed)   # Remove duplicate names (for solvers that handle both conic and QP problems)
+  return(installed)
+}
+
+INSTALLED_SOLVERS <- installed_solvers()
+
+# Solver utility functions.
 group_constraints <- function(constraints) {
   constr_map <- list()
   for(c in constraints)

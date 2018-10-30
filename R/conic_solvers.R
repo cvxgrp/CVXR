@@ -808,3 +808,475 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   prob_data[name(object)] <- ProblemData()
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
+
+LS <- setClass("LS", contains = "Solver")
+
+# LS is incapable of solving any general cone program
+# and must be invoked through a special path.
+setMethod("lp_capable", "LS", function(object) { FALSE })
+setMethod("socp_capable", "LS", function(object) { FALSE })
+setMethod("psd_capable", "LS", function(object) { FALSE })
+setMethod("exp_capable", "LS", function(object) { FALSE })
+setMethod("mip_capable", "LS", function(object) { FALSE })
+
+setMethod("import_solver", "LS", function(object) { })
+setMethod("name", "LS", function(x) { LS_NAME })
+setMethod("split_constr", "LS", function(object, constr_map) {
+  return(list(constr_map[EQ_MAP], constr_map[LEQ_MAP], list()))
+})
+
+setMethod("suitable", signature(object = "LS", problem = "Problem"), function(object, problem) {
+  allowedVariables <- c("Variable")
+  # TODO: Handle affine objective.
+  is_dcp(problem) && is_quadratic(problem@objective@args[[1]]) && !is_affine(problem@objective@args[[1]])
+    && all(sapply(problem@constraints, function(c) { is(c, "Zero") }))
+    && all(sapply(variables(problem), function(v) { class(v) %in% allowedVariables }))
+    && all(sapply(variables(problem), function(v) { is.na(domain(v)) || length(domain(v)) == 0 }))   # No implicit variable domains
+  # TODO: Domains are not implemented yet.
+})
+
+setMethod("validate_solver", signature(object = "LS", problem = "Problem"), function(object, problem) {
+  if(!suitable(object, problem))
+    stop("The solver ", name(object), " cannot solve the problem.")
+})
+
+setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_data = NA) {
+  FakeSymData <- setClass("FakeSymData", representation(constr_map = "list", vars_ = "list", var_offsets = "numeric", var_sizes = "list", x_length = "numeric"),
+                                         prototype(constr_map = list(), vars_ = list(), var_offsets = NA_integer_, var_sizes = list(), x_length = NA_real_))
+  
+  setMethod("initialize", "FakeSymData", function(.Object) {
+    .Object@constr_map <- list()
+    .Object@constr_map[EQ_MAP] <- constraints
+    vars_ <- variables(objective)
+    for(c in constraints)
+      vars_ <- c(vars_, variables(c))
+    vars_ <- unique(vars_)
+    .Object@vars_ <- vars_
+    offsets <- get_var_offsets(solver, vars_)
+    .Object@var_offsets <- offsets[[1]]
+    .Object@var_sizes <- offsets[[2]]
+    .Object@x_length <- offsets[[2]]
+    return(.Object)
+  })
+  
+  setMethod("get_var_offsets", "FakeSymData", function(object, variables) {
+    var_offsets <- list()
+    var_sizes <- list()
+    vert_offset <- 0
+    for(x in variables) {
+      x_id <- as.character(id(x))
+      var_sizes[x_id] <- size(x)
+      var_offsets[x_id] <- vert_offset
+      vert_offset <- vert_offset + size(x)[1]*size(x)[2]
+    }
+    return(list(var_offsets, var_sizes, vert_offset))
+  })
+  
+  return(FakeSymData(objective, constraints))
+})
+
+setMethod("solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+  sym_data <- get_sym_data(solver, objective, constraints)
+  
+  id_map <- sym_data@var_offsets
+  N <- sym_data@x_length
+  extractor <- CoeffExtractor(id_map, N)
+  
+  # Extract the coefficients.
+  coeffs <- get_coeffs(extractor, objective@args[[1]])
+  Ps <- coeffs[[1]]
+  Q <- coeffs[[2]]
+  R <- coeffs[[3]]
+  
+  P <- Ps[1]
+  q <- as.vector(Q)
+  r <- R[1]
+  
+  # Forming the KKT system.
+  if(length(constraints) > 0) {
+    Cs <- lapply(constraints, function(c) { get_coeffs(constraints, c@.expr)[-1] })
+    As <- do.call("rbind", lapply(Cs, function(C) { C[1] }))
+    bs <- sapply(Cs, function(C) { C[2] })
+    lhs <- rbind(cbind(2*P, t(As)), cbind(As, matrix(0, nrow = ncol(As), ncol = nrow(As))))
+    lhs <- Matrix(lhs, sparse = TRUE)
+    rhs <- c(-q, -bs)
+  } else {
+    lhs <- 2*P
+    rhs <- -q
+  }
+  
+  # TODO: Actually solve the KKT system.
+  tryCatch({
+    sol <- SLA.spsolve(lhs, rhs)
+    x <- sol[1:N]
+    nu <- sol[(N+1):length(sol)]
+    p_star <- t(x) %*% (P %*% x + q) + r
+  }, error = function(e) {
+    if(e == SLA.MatrixRankWarning) {
+      x <- NA
+      nu <- NA
+      p_star <- NA
+    }
+  })
+  
+  result_dict <- list()
+  result_dict[PRIMAL] <- x
+  result_dict[DUAL] <- nu
+  result_dict[VALUE] <- p_star
+  return(format_results(result_dict, NA, cached_data))
+})
+
+setMethod("format_results", "LS", function(object, result_dict, data, cached_data) {
+  new_results <- result_dict
+  if(is.na(result_dict[PRIMAL]) || is.null(result_dict[PRIMAL]))
+    new_results[STATUS] <- INFEASIBLE
+  else
+    new_results[STATUS] <- OPTIMAL
+  return(new_results)
+})
+
+# Utility method for formatting a ConeDims instance into a dictionary
+# that can be supplied to SCS.
+dims_to_solver_dict <- function(cone_dims) {
+  cones <- list(f = as.integer(cone_dims@zero),
+                l = as.integer(cone_dims@nonpos),
+                q = sapply(cone_dims@soc, as.integer),
+                ep = as.integer(cone_dims@exp),
+                s = sapply(cone_dims@psd, as.integer))
+  return(cones)
+}
+
+# Utility methods for special handling of semidefinite constraints.
+scaled_lower_tri <- function(matrix) {
+  # Returns an expression representing the lower triangular entries.
+  # Scales the strictly lower triangular entries by sqrt(2), as
+  # required by SCS.
+  rows <- cols <- nrow(matrix)
+  entries <- rows * floor((cols + 1)/2)
+  val_arr <- c()
+  row_arr <- c()
+  col_arr <- c()
+  count <- 0
+  
+  for(j in 1:cols) {
+    for(i in 1:rows) {
+      if(j <= i) {
+        # Index in the original matrix.
+        col_arr <- c(col_arr, (j-1)*rows + i)
+        # Index in the extracted vector.
+        row_arr <- c(row_arr, count + 1)
+        if(j == i)
+          val_arr <- c(val_arr, 1.0)
+        else
+          val_arr <- c(val_arr, sqrt(2))
+        count <- count + 1
+      }
+    }
+  }
+  
+  shape <- c(entries, rows*cols)
+  coeff <- Constant(sparseMatrix(i = row_arr, j = col_arr, x = val_arr), shape)
+  vectorized_matrix <- reshape(matrix, c(rows*cols, 1))
+  return(coeff %*% vectorized_matrix)
+}
+
+tri_to_full <- function(lower_tri, n) {
+  # Expands n*floor((n+1)/2) lower triangular to full matrix.
+  # Scales off-diagonal by 1/sqrt(2), as per the SCS specification.
+  full <- matrix(0, nrow = n, ncol = n)
+  for(col in 1:n) {
+    for(row in col:n) {
+      idx <- row - col + n*floor((n+1)/2) - (n-col+1)*floor((n-col+2)/2) + 1
+      if(row != col) {
+        full[row, col] <- lower_tri[idx]/sqrt(2)
+        full[col, row] <- lower_tri[idx]/sqrt(2)
+      } else
+        full[row, col] <- lower_tri[idx]
+    }
+  }
+  matrix(full, nrow = n*n, byrow = FALSE)
+}
+
+SCS <- setClass("SCS", contains = "ConicSolver")
+
+# Solver capabilities.
+setMethod("mip_capable", "SCS", function(object) { FALSE })
+setMethod("supported_constraints", "SCS", function(object) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSD") })
+
+requires_constr.SCS <- function(object) { TRUE }
+
+# Map of SCS status to CVXR status.
+setMethod("status_map", "SCS", function(object, status) {
+  if(status == "Solved")
+    return(OPTIMAL)
+  else if(status == "Solved/Inaccurate")
+    return(OPTIMAL_INACCURATE)
+  else if(status == "Unbounded")
+    return(UNBOUNDED)
+  else if(status == "Unbounded/Inaccurate")
+    return(UNBOUNDED_INACCURATE)
+  else if(status == "Infeasible")
+    return(INFEASIBLE)
+  else if(status == "Infeasible/Inaccurate")
+    return(INFEASIBLE_INACCURATE)
+  else if(status %in% c("Failure", "Indeterminate", "Interrupted"))
+    return(SOLVER_ERROR)
+  else
+    stop("SCS status unrecognized: ", status)
+})
+
+# Order of exponential cone arguments for solver.
+exp_cone_order.SCS <- function(object) { c(0, 1, 2) }
+
+setMethod("name", "SCS", function(object) { SCS_NAME })
+setMethod("import_solver", "SCS", function(object) {
+  requireNamespace("scs", quietly = TRUE)
+})
+
+setMethod("format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
+  # Extract coefficient and offset vector from constraint.
+  # Special cases PSD constraints, as SCS expects constraints to be
+  # imposed on solely the lower triangular part of the variable matrix.
+  # Moreover, it requires the off-diagonal coefficients to be scaled by
+  # sqrt(2).
+  if(is(constr, "PSD")) {
+    expr <- constr@expr
+    triangularized_expr <- scaled_lower_tri(expr)
+    extractor <- CoeffExtractor(InverseData(problem))
+    Ab <- affine(extractor, triangularized_expr)
+    A_prime <- Ab[[1]]
+    b_prim <- Ab[[2]]
+    
+    # SCS requests constraints to be formatted as Ax + s = b,
+    # where s is constrained to reside in some cone. Here, however,
+    # we are formatting the constraint as A"x + b" = -Ax + b; h ence,
+    # A = -A", b = b".
+    return(list(-1*A_prime, b_prime))
+  } else
+    callNextMethod(object, problem, constr, exp_cone_order)
+})
+
+setMethod("apply", signature(object = "SCS", problem = "Problem"), function(object, problem) {
+  # Returns a new problem and data for inverting the new solution.
+  data <- list()
+  inv_data <- list()
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  
+  # Parse the coefficient vector from the objective.
+  offsets <- get_coeff_offset(object, problem@objective@args[[1]])
+  data[C_KEY] <- offsets[[1]]
+  data[OFFSET] <- offsets[[2]]
+  data[C_KEY] <- as.vector(data[C_KEY])
+  inv_data[OFFSET] <- data[OFFSET][1]
+  
+  # Order and group nonlinear constraints.
+  constr_map <- group_constraints(problem@constraints)
+  data[dims(ConicSolver())] <- ConeDims(constr_map)
+  inv_data[dims(ConicSolver())] <- data[dims(ConicSolver())]
+  
+  # SCS requires constraints to be specified in the following order:
+  # 1) Zero cone.
+  # 2) Non-negative orthant.
+  # 3) SOC.
+  # 4) PSD.
+  # 5) Exponential.
+  zero_constr <- constr_map$Zero
+  neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$PSD, constr_map$ExpCone)
+  inv_data[eq_constr(object)] <- zero_constr
+  inv_data[neq_constr(object)] <- neq_constr
+  
+  # Obtain A, b such that Ax + s = b, s \in cones.
+  # Note that SCS mandates that the cones MUST be ordered with
+  # zero cones first, then non-negative orthant, then SOC, then
+  # PSD, then exponential.
+  offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), exp_cone_order(object))
+  data[A_KEY] <- offsets[[1]]
+  data[B_KEY] <- offsets[[2]]
+  return(list(data, inv_data))
+})
+
+setMethod("extract_dual_value", "SCS", function(object, result_vec, offset, constraint) {
+  # Extracts the dual value for constraint starting at offset.
+  # Special cases PSD constraints, as per the SCS specification.
+  if(is(constraint, "PSD")) {
+    dim <- nrow(constraint)
+    lower_tri_dim <- dim*floor((dim+1)/2)
+    new_offset <- offset + lower_tri_dim
+    lower_tri <- result_vec[offset:new_offset]
+    full <- tri_to_full(lower_tri, dim)
+    return(list(full, new_offset))
+  } else
+    return(extract_dual_value(result_vec, offset, constraint))
+})
+
+setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  # Returns the solution to the original problem given the inverse_data.
+  status <- status_map(object, solution$info$status)
+  
+  attr <- list()
+  attr[SOLVE_TIME] <- solution$info$solveTime
+  attr[SETUP_TIME] <- solution$info$setupTime
+  attr[NUM_ITERS] <- solution$info$iter
+  
+  if(status %in% SOLUTION_PRESENT) {
+    primal_val <- solution$info$pobj
+    opt_val <- primal_val + inverse_data[OFFSET]
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- as.matrix(solution$x)
+    
+    eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[dims(ConicSolver())]@zero]),
+      extract_dual_value(object), inverse_data[eq_constr(object)])
+    
+    ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[dims(ConicSolver())]@zero:length(solution$y)]),
+                                      extract_dual_value(object), inverse_data[neq_constr(object)])
+    
+    dual_vars <- list()
+    dual_vars <- modifyList(dual_vars, eq_dual_vars)
+    dual_vars <- modifyList(dual_vars, ineq_dual_vars)
+    return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+  } else
+    return(failure_solution(status))
+})
+
+setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  # Returns the result of the call to the solver.
+  requireNamespace("scs", quietly = TRUE)
+  args <- list(A = data[A_KEY], b = data[B_KEY], c = data[C_KEY])
+  if(warm_start && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
+    args$x <- solver_cache[name(object)]$x
+    args$y <- solver_cache[name(object)]$y
+    args$s <- solver_cache[name(object)]$s
+  }
+  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  results <- scs::solve(args, cones, verbose = verbose, solver_opts)
+  if(!is.na(solver_cache))
+    solver_cache[name(object)] <- results
+  return(results)
+})
+
+SuperSCS <- setClass("SuperSCS", contains = "SCS")
+default_settings.SuperSCS <- function(object) {
+  list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
+}
+
+setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
+setMethod("import_solver", "SuperSCS", function(object) {
+  stop("Unimplemented: SuperSCS is currently unavailable in R.")
+})
+
+setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  args <- list(A = data[A_KEY], b = data[B_KEY], c = data[C_KEY])
+  if(warm_start && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
+    args$x <- solver_cache[name(object)]$x
+    args$y <- solver_cache[name(object)]$y
+    args$s <- solver_cache[name(object)]$s
+  }
+  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  
+  # Settings.
+  user_opts <- names(solver_opts)
+  for(k in names(default_settings(SuperSCS))) {
+    if(!k %in% user_opts)
+      solver_opts[k] <- default_settings(SuperSCS)[k]
+  }
+  results <- SuperSCS::solve(args, cones, verbose = verbose, solver_opts)
+  if(!is.na(solver_cache))
+    solver_cache[name(object)] <- results
+  return(results)
+})
+
+XPRESS <- setClass("XPRESS", contains = "ConicSolver")
+
+# Solver capabilities.
+setMethod("mip_capable", "XPRESS", function(object) { TRUE })
+setMethod("supported_constraints", "XPRESS", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+
+# Map of XPRESS status to CVXR status.
+setMethod("status_map", "XPRESS", function(object, status) {
+  if(status == 2)
+    return(OPTIMAL)
+  else if(status == 3)
+    return(INFEASIBLE)
+  else if(status == 5)
+    return(UNBOUNDED)
+  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+    return(SOLVER_ERROR)
+  else if(status == 9)   # TODO: Could be anything. Means time expired.
+    return(OPTIMAL_INACCURATE)
+  else
+    stop("XPRESS status unrecognized: ", status)
+})
+
+setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
+setMethod("import_solver", "XPRESS", function(object) {
+    stop("Unimplemented: XPRESS solver unavailable in R.")
+})
+
+setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!class(constr) %in% supported_constraints(object))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+setMethod("apply", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
+  data <- list()
+  objective <- canonical_form(problem@objective)[[1]]
+  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
+  constraints <- unlist(constraints, recursive = TRUE)
+  data$objective <- objective
+  data$constraints <- constraints
+  variables <- variables(problem)[[1]]
+  data[BOOL_IDX] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[INT_IDX] <- lapply(variables@integer_idx, function(t) { t[1] })
+  
+  # Order and group constraints.
+  inv_data <- list()
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[EQ_CONSTR] <- problem@constraints
+  inv_data$is_mip <- is_mixed_integer(problem)
+  return(list(data, inv_data))
+})
+
+setMethod("invert", signature(object = "XPRESS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  status <- solution[STATUS]
+  
+  primal_vars <- NA
+  dual_vars <- NA
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution[VALUE]
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    if(!is_mip(inverse_data))
+      dual_vars <- get_dual_values(solution[EQ_DUAL], extract_dual_value, inverse_data[EQ_CONSTR])
+  } else {
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA
+  }
+  
+  other <- list()
+  other[XPRESS_IIS] <- solution[XPRESS_IIS]
+  other[XPRESS_TROW] <- solution[XPRESS_TROW]
+  return(Solution(status, opt_val, primal_vars, dual_vars, other))
+})
+
+setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  solver <- XPRESS_OLD()
+  solver_opts[BOOL_IDX] <- data[BOOL_IDX]
+  solver_opts[INT_IDX] <- data[INT_IDX]
+  prob_data <- list()
+  prob_data[name(object)] <- ProblemData()
+  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+})

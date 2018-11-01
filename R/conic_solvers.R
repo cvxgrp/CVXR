@@ -935,6 +935,194 @@ setMethod("format_results", "LS", function(object, result_dict, data, cached_dat
   return(new_results)
 })
 
+vectorized_lower_tri_to_mat <- function(v, dim) {
+  # Return the symmetric 2D array defined by taking "v" to specify its lower triangular entries.
+  rows <- c()
+  cols <- c()
+  vals <- c()
+  running_idx <- 1
+  for(j in 1:dim) {
+    rows <- c(rows, j + 0:(dim - j))
+    cols <- c(cols, rep(j, dim - j + 1))
+    vals <- c(vals, v[running_idx:(running_idx + dim - j + 1)])
+    running_idx <- running_idx + dim - j + 1
+  }
+  A <- sparseMatrix(i = rows, j = cols, x = vals, dims = c(dim, dim))
+  d <- diag(diag(A))
+  A <- A + t(A) - d
+  return(A)
+}
+
+psd_coeff_offset <- function(problem, c) {
+  # Returns an array "G" and vector "h" such that the given constraint is equivalent to "G * z <=_{PSD} h".
+  extractor <- CoeffExtractor(InverseData(problem))
+  Ab_vec <- affine(extractor, c@expr)
+  G <- -Ab_vec[[1]]
+  h <- Ab_vec[[2]]
+  dim <- nrow(c@expr)
+  return(list(G, h, dim))
+}
+
+MOSEK <- setClass("MOSEK", contains = "ConicSolver")
+
+setMethod("mip_capable", "MOSEK", function(object) { TRUE })
+setMethod("supported_constraints", "MOSEK", function(object) { c(supported_constraints(ConicSolver()), "SOC", "PSD") })
+setMethod("exp_cone_order", "MOSEK", function(object) { c(2, 1, 0) })
+
+setMethod("import_solver", "MOSEK", function(object) {
+  requireNamespace("Rmosek", quietly = TRUE)
+  # TODO: Add exponential cone support.
+})
+
+setMethod("name", "MOSEK", function(x) { MOSEK_NAME })
+setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
+  # TODO: Check if the matrix is stuffed.
+  import_solver(object)
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!class(constr) %in% supported_constraints(object))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_cone_order = NA) {
+  if(length(constraints) == 0 || is.null(constraints) || is.na(constraints))
+    return(list(NA, NA))
+  matrices <- list()
+  offsets <- list()
+  lengths <- c()
+  ids <- c()
+  
+  for(con in constraints) {
+    coeff_offs <- format_constr(object, problem, con, exp_cone_order)
+    coeff <- coeff_offs[[1]]
+    offset <- coeff_offs[[2]]
+    matrices <- c(matrices, coeff)
+    offsets <- c(offsets, offset)
+    lengths <- c(size(offset))
+    ids <- c(ids, id(con))
+  }
+  coeff <- Matrix(do.bind("rbind", matrices), sparse = TRUE)
+  offset <- do.bind("cbind", offsets)
+  return(list(coeff, offset, lengths, ids))
+})
+
+setMethod("apply", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
+  data <- list()
+  inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
+  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  
+  # Get integrality constraint information.
+  var <- variables(problem)[[1]]
+  data[BOOL_IDX] <- sapply(var@boolean_idx, function(t) { as.integer(t[1]) })
+  data[INT_IDX] <- sapply(var@integer_idx, function(t) { as.integer(t[1]) })
+  inv_data$integer_variables <- length(data[BOOL_IDX]) + length(data[INT_IDX]) > 0
+  
+  # Parse the coefficient vector from the objective.
+  coeff_offs <- get_coeff_offset(object, problem@objective@args[[1]])
+  c <- coeff_offs[[1]]
+  constant <- coeff_offs[[2]]
+  data[C_MAP] <- as.vector(c)
+  inv_data$n0 <- length(data[C_KEY])
+  data[OBJ_OFFSET] <- constant[1]
+  data[DIMS] <- list()
+  data[DIMS][SOC_DIM] <- list()
+  data[DIMS][EXP_DIM] <- list()
+  data[DIMS][PSD_DIM] <- list()
+  data[DIMS][LEQ_DIM] <- 0
+  data[DIMS][EQ_DIM] <- 0
+  inv_data[OBJ_OFFSET] <- constant[1]
+  Gs <- list()
+  hs <- list()
+  
+  # Linear inequalities.
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "NonPos" })]
+  if(length(leq_constr) > 0) {
+    blform <- block_format(object, problem, leq_constr)   # G, h : G*z <= h.
+    G <- blform[[1]]
+    h <- blform[[2]]
+    lengths <- blform[[3]]
+    ids <- blform[[4]]
+    inv_data$suc_slacks <- c(inv_data$suc_slacks, lapply(1:length(lengths), function(k) { c(ids[k], lengths[k]) }))
+    data[DIMS][LEQ_DIM] <- sum(lengths)
+    Gs <- c(Gs, G)
+    hs <- c(hs, h)
+  }
+  
+  # Linear equations.
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "Zero" })]
+  if(length(leq_constr) > 0) {
+    blform <- block_format(object, problem, eq_constr)   # G, h : G*z == h.
+    G <- blform[[1]]
+    h <- blform[[2]]
+    lengths <- blform[[3]]
+    ids <- blform[[4]]
+    inv_data$y_slacks <- c(inv_data$y_slacks, lapply(1:length(lengths), function(k) { c(ids[k], lengths[k]) }))
+    data[DIMS][EQ_DIM] <- sum(lengths)
+    Gs <- c(Gs, G)
+    hs <- c(hs, h)
+  }
+  
+  # Second order cone.
+  soc_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "SOC" })]
+  data[DIMS][SOC_DIM] <- list()
+  for(ci in soc_constr)
+    data[DIMS][SOC_DIM] <- c(data[DIMS][SOC_DIM], cone_sizes(ci))
+  if(length(soc_constr) > 0) {
+    blform <- block_format(object, problem, soc_constr)   # G*z <=_{soc} h.
+    G <- blform[[1]]
+    h <- blform[[2]]
+    lengths <- blform[[3]]
+    ids <- blform[[4]]
+    inv_data$snx_slacks <- c(inv_data$snx_slacks, lapply(1:length(lengths), function(k) { c(ids[k], lengths[k]) }))
+    Gs <- c(Gs, G)
+    hs <- c(hs, h)
+  }
+  
+  # Exponential cone.
+  exp_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ExpCone" })]
+  if(length(exp_constr) > 0) {
+    # G*z <=_{EXP} h.
+    blform <- block_format(object, problem, exp_constr, exp_cone_order(object))
+    G <- blform[[1]]
+    h <- blform[[2]]
+    lengths <- blform[[3]]
+    ids <- blform[[4]]
+    data[DIMS][EXP_DIM] <- lengths
+    Gs <- c(Gs, G)
+    hs <- c(hs, h)
+  }
+  
+  # PSD constraints.
+  psd_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "PSD" })]
+  if(length(psd_constr) > 0) {
+    data[DIMS][PSD_DIM] <- list()
+    for(c in psd_constr) {
+      coeff_offs <- psd_coeff_offset(problem, c)
+      G_vec <- coeff_offs[[1]]
+      h_vec <- coeff_offs[[2]]
+      dim <- coeff_offs[[3]]
+      inv_data$psd_dims <- c(inv_data$psd_dims, c(id(c), dim))
+      data[DIMS][PSD_DIM] <- c(data[DIMS][PSD_DIM], dim)
+      Gs <- c(Gs, G_vec)
+      hs <- c(hs, h_vec)
+    }
+  }
+  
+  data[G_KEY] <- Matrix(do.call("rbind", Gs), sparse = TRUE)
+  data[H_KEY] <- Matrix(do.call("cbind", hs), sparse = TRUE)
+  inv_data$is_LP <- (length(psd_constr) + length(exp_constr) + length(soc_constr)) == 0
+  return(list(data, inv_data))
+})
+
+# TODO: Finish MOSEK class implementation.
+
 # Utility method for formatting a ConeDims instance into a dictionary
 # that can be supplied to SCS.
 dims_to_solver_dict <- function(cone_dims) {

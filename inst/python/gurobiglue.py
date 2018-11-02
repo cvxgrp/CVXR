@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import sys
 import settings as s
 import numpy as np
 from scipy.sparse import dok_matrix
@@ -171,7 +172,11 @@ def add_model_lin_constr(model, variables,
     # print(vec)
     constr = []
     expr_list = {i: [] for i in rows}
-    for (i, j), c in mat.iteritems():
+    if sys.version_info[0] == 3:
+        iterableObj = mat.items()
+    else:
+        iterableObj = mat.iteritems()
+    for (i, j), c in iterableObj:
         v = variables[j]
         if i in rows:
             expr_list[i].append((c, v))
@@ -212,7 +217,11 @@ def add_model_soc_constr(model, variables,
     import gurobipy
     # Assume first expression (i.e. t) is nonzero.
     expr_list = {i: [] for i in rows}
-    for (i, j), c in mat.iteritems():
+    if sys.version_info[0] == 3:
+        iterableObj = mat.items()
+    else:
+        iterableObj = mat.iteritems()
+    for (i, j), c in iterableObj:
         v = variables[j]
         if i in rows:
             expr_list[i].append((c, v))

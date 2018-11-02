@@ -1,3 +1,9 @@
+# CVXR 0.99-1
+
+* Bug fix: Updated python glue for both version 2 and 3
+(`gurobiglue.py`)
+* Bug fix: Workaround for zero extent sparse matrices in R not being
+  handled by reticulate (`mosekglue.py`)
 
 # CVXR 0.99
 

@@ -1122,6 +1122,347 @@ setMethod("apply", signature(object = "MOSEK", problem = "Problem"), function(ob
 })
 
 # TODO: Finish MOSEK class implementation.
+setMethd("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  requireNamespace("Rmosek", quietly = TRUE)
+  env <- Rmosek::Env()
+  task <- env.Task(0,0)
+  
+  # TODO: Handle logging for verbose.
+  
+  # Parse all user-specified parameters (override default logging
+  # parameters if applicable).
+  kwargs <- sort(names(solver_opts))
+  save_file <- NA_character_
+  if("mosek_params" %in% kwargs) {
+    MOSEK._handle_mosek_params(task, solver_opts$mosek_params)
+    kwargs$mosek_params <- NULL
+  }
+  if("save_file" %in% kwargs) {
+    save_file <- solver_opts$save_file
+    kwargs$save_file <- NULL
+  }
+  if("bfs" %in% kwargs)
+    kwargs$bfs <- NULL
+  if(!(is.null(kwargs) || length(kwargs) == 0))
+    stop("Invalid keyword-argument ", kwargs[[1]])
+  
+  # Check if the CVXR standard form has zero variables. If so,
+  # return a trivial solution. This is necessary because MOSEK
+  # will crash if handed a problem with zero variables.
+  if(length(data[C_KEY]) == 0) {
+    res <- list()
+    res[STATUS] <- OPTIMAL
+    res[PRIMAL] <- list()
+    res[VALUE] <- data[OFFSET]
+    res[EQ_DUAL] <- list()
+    res[INEQ_DUAL] <- list()
+    return(res)
+  }
+  
+  # The following lines recover problem parameters, and define helper constants.
+  #
+  #   The problem's objective is "min c.T * z".
+  #   The problem's constraint set is "G * z <=_K h."
+  #   The rows in (G, h) are formatted in order of
+  #       (1) linear inequalities,
+  #       (2) linear equations,
+  #       (3) soc constraints,
+  #       (4) exponential cone constraints,
+  #       (5) vectorized linear matrix inequalities.
+  #   The parameter "dims" indicates the exact
+  #   dimensions of each of these cones.
+  #
+  #   MOSEK's standard form requires that we replace generalized
+  #   inequalities with slack variables and linear equations.
+  #   The parameter "n" is the size of the column-vector variable
+  #   after adding slacks for SOC and EXP constraints. To be
+  #   consistent with MOSEK documentation, subsequent comments
+  #   refer to this variable as "x".
+  
+  c <- data[C_KEY]
+  G <- data[G_KEY]
+  h <- data[H_KEY]
+  n0 <- length(c)
+  n <- n0 + sum(dims[SOC_DIM]) + sum(dims[EXP_DIM])
+  psd_total_dims <- sum(dims[PSD_DIM]^2)
+  m <- length(h)
+  num_bool <- length(data[BOOL_IDX])
+  num_int <- length(data[INT_IDX])
+  
+  # Define variables, cone constraints, and integrality constraints.
+  #
+  #   The variable "x" is a length-n block vector, with
+  #       Block 1: "z" from "G * z <=_K h",
+  #       Block 2: slacks for SOC constraints, and
+  #       Block 3: slacks for EXP cone constraints.
+  #
+  #   Once we declare x in the MOSEK model, we add the necessary
+  #   conic constraints for slack variables (Blocks 2 and 3).
+  #   The last step is to add integrality constraints.
+  #
+  #   Note that the API call for PSD variables contains the word "bar".
+  #   MOSEK documentation consistently uses "bar" as a sort of flag,
+  #   indicating that a function deals with PSD variables.
+  
+  task.appendvars(n)
+  task.putvarboundlist(1:n, rep(mosek.boundkey.fr, n), matrix(0, nrow = n, ncol = 1), matrix(0, nrow = n, ncol = 1))
+  if(psd_total_dims > 0)
+    task.appendbarvars(dims[PSD_DIM])
+  running_idx <- n0
+  for(size_cone in dims[SOC_DIM]) {
+    task.appendcone("quad", 0, running_idx:(running_idx + size_cone))
+    running_idx <- running_idx + size_cone
+  }
+  for(k in 1:floor(sum(dims[EXP_DIM])/3)) {
+    task.appendcone("pexp", 0, running_idx:(running_idx + 3))
+    running_idx <- running_idx + 3
+  }
+  if(num_bools + num_int > 0) {
+    task.putvartypelist(data[BOOL_IDX], rep("integer", num_bool))
+    task.putvarboundlist(data[BOOL_IDX], rep(boundkey, num_bool), rep(0, num_bool), rep(1, num_bool))
+    task.putvartypelist(data[INT_IDX], rep("integer", num_int))
+  }
+  
+  # Define linear inequality and equality constraints.
+  #
+  #   Mosek will see a total of m linear expressions, which must
+  #   define linear inequalities and equalities. The variable x
+  #   contributes to these linear expressions by standard
+  #   matrix-vector multiplication; the matrix in question is
+  #   referred to as "A" in the mosek documentation. The PSD
+  #   variables have a different means of contributing to the
+  #   linear expressions. Specifically, a PSD variable Xj contributes
+  #   "+tr( \bar{A}_{ij} * Xj )" to the i-th linear expression,
+  #   where \bar{A}_{ij} is specified by a call to putbaraij.
+  #
+  #   The following code has three phases.
+  #       (1) Build the matrix A.
+  #       (2) Specify the \bar{A}_{ij} for PSD variables.
+  #       (3) Specify the RHS of the m linear (in)equalities.
+  #
+  #   Remark : The parameter G gives every row in the first
+  #   n0 columns of A. The remaining columns of A are for SOC
+  #   and EXP slack variables. We can actually account for all
+  #   of these slack variables at once by specifying a giant
+  #   identity matrix in the appropriate position in A.
+  
+  task.appendcons(m)
+  G_sparse <- as(as.matrix(G), "sparseMatrix")
+  G_sum <- summary(G_sparse)
+  rows <- G_sum$i
+  cols <- G_sum$j
+  vals <- G_sum$x
+  task.putaijlist(as.list(row), as.list(col), as.list(vals))
+  total_soc_exp_slacks <- sum(dims[SOC_DIM]) + sum(dims[EXP_DIM])
+  if(total_soc_exp_slacks > 0) {
+    i <- dims[LEQ_DIM] + dims[EQ_DIM]   # Constraint index in (1, ..., m)
+    j <- length(c)   # Index of the first slack variable in the block vector "x".
+    rows <- as.list(i:(i + total_soc_exp_slacks))
+    cols <- as.list(j:(j + total_soc_exp_slacks))
+    task.putaijlist(rows, cols, rep(1, total_soc_exp_slacks))
+  }
+  
+  # Constraint index: start of LMIs.
+  i <- dims[LEQ_DIM] + dims[EQ_DIM] + total_soc_exp_slacks
+  for(j in 1:dims[PSD_DIM]) {   # SDP slack variable "Xj"
+    dim <- dims[PSD_DIM][j]
+    for(row_idx in 1:dim) {
+      for(col_idx in 1:dim) {
+        val <- ifelse(row_idx == col_idx, 1, 0.5)
+        row <- max(row_idx, col_idx)
+        col <- min(row_idx, col_idx)
+        mat <- task.appendsparsesymmat(dim, list(row), list(col), list(val))
+        task.putbaraij(i, j, list(mat), list(1.0))
+        i <- i + 1
+      }
+    }
+  }
+  
+  num_eq <- length(h) - dims[LEQ_DIM]
+  type_constraint <- rep(mosek.boundkey.up, dims[LEQ_DIM]) + rep(mosek.boundkey.fx, num_eq)
+  task.putconboundlist(1:m, type_constraint, h, h)
+  
+  # Define the objective and optimize the MOSEK task.
+  task.putclist(1:length(c), c)
+  task.putobjsense(mosek.objsense.minimize)
+  if(!is.na(save_file))
+    task.writedata(save_file)
+  task.optimize
+  
+  if(verbose)
+    task.solutionsummary(mosek.streamtype.msg)
+  
+  return(list(env = env, task = task, solver_options = solver_opts))
+})
+
+setMethod("invert", "MOSEK", function(object, results, inverse_data) {
+  requireNamespace("Rmosek", quietly = TRUE)
+  
+  has_attr <- !is.null(mosek.solsta$near_optimal)
+  status_map <- function(status) {
+    if(status %in% c("optimal", "integer_optimal"))
+      return(OPTIMAL)
+    else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
+      return(OPTIMAL_INACCURATE)
+    else if(status == "prim_infeas_cer") {
+      if(has_attr)
+        return(INFEASIBLE_INACCURATE)
+      else
+        return(INFEASIBLE)
+    } else if(status == "dual_infeas_cer") {
+      if(has_attr)
+        return(UNBOUNDED_INACCURATE)
+      else
+        return(UNBOUNDED)
+    } else
+      return(SOLVER_ERROR)
+  }
+  
+  env <- results$env
+  task <- results$task
+  solver_opts <- results$solver_options
+  
+  if(inverse_data$integer_variables)
+    sol <- mosek.soltype.itg
+  else if(!is.null(solver_opts$bfs) && solver_opts$bfs && inverse_data$is_LP)
+    sol <- mosek.soltype.bas   # The basic feasible solution.
+  else
+    sol <- mosek.soltype.itr   # The solution found via interior point method.
+  
+  problem_status <- task.getprosta(sol)
+  solution_status <- task.getsolsta(sol)
+  
+  status <- status_map(solution_status)
+  
+  # For integer problems, problem status determines infeasibility (no solution).
+  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)
+    status <- INFEASIBLE
+  
+  if(status %in% SOLUTION_PRESENT) {
+    # Get objective value.
+    opt_val <- task.getprimalobj(sol) + inverse_data[OBJ_OFFSET]
+    # Recover the CVXR standard form primal variable.
+    z <- rep(0, inverse_data$n0)
+    task.getxxslice(sol, 0, length(z), z)
+    primal_vars <- list()
+    primal_vars[inverse_data[var_id(object)]] <- z
+    # Recover the CVXR standard form dual variables.
+    if(sol == mosek.soltype.itg)
+      dual_vars <- NA
+    else
+      dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
+  } else {
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA
+    primal_vars <- NA
+    dual_vars <- NA
+  }
+  
+  # Store computation time.
+  attr <- list()
+  attr[SOLVE_TIME] <- task.getdouinf(mosek.dinfitem.optimizer_time)
+  
+  # Delete the MOSEK Task and Environment
+  task.__exit__(NA, NA, NA)
+  env.__exit__(NA, NA, NA)
+  
+  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+})
+
+MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
+  dual_vars <- list()
+  
+  # Dua variables for the inequality constraints.
+  suc_len <- sum(sapply(inverse_data$suc_slacks, function(val) { val[[2]] }))
+  if(suc_len > 0) {
+    suc <- rep(0, suc_len)
+    task.getsucslice(sol, 0, suc_len, suc)
+    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(suc, inverse_data$suc_slacks))
+  }
+  
+  # Dual variables for the original equality constraints.
+  y_len <- sum(sapply(inverse_data$y_slacks, function(val) { val[[2]] }))
+  if(y_len > 0) {
+    y <- rep(0, y_len)
+    task.getyslice(sol, suc_len, suc_len + y_len, y)
+    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(y, inverse_data$y_slacks))
+  }
+  
+  # Dual variables for SOC and EXP constraints.
+  snx_len <- sum(sapply(inverse_data$snx_slacks, function(val) { val[[2]] }))
+  if(snx_len > 0) {
+    snx <- matrix(0, nrow = snx_len, ncol = 1)
+    task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)
+    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(snx, inverse_data$snx_slacks))
+  }
+  
+  # Dual variables for PSD constraints.
+  for(j in 1:length(inverse_data$psd_dims)) {
+    id <- inverse_data$psd_dims[j][[1]]
+    dim <- inverse_data$psd_dims[j][[2]]
+    sj <- rep(0, dim*floor((dim + 1)/2))
+    task.getbars(sol, j, sj)
+    dual_vars[id] <- vectorized_lower_tri_to_mat(sj, dim)
+  }
+  return(dual_vars)
+}
+
+MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {
+  dual_vars <- list()
+  running_idx <- 1
+  for(val in constr_id_to_constr_dim) {
+    id <- val[[1]]
+    dim <- val[[2]]
+    if(dim == 1)
+      dual_vars[id] <- dual_vars[running_idx]   # a scalar.
+    else
+      dual_vars[id] <- as.matrix(dual_vars[running_idx:(running_idx + dim)])
+    running_idx <- running_idx + dim
+  }
+  return(dual_vars)
+}
+
+MOSEK._handle_mosek_params <- function(task, params) {
+  if(is.na(params))
+    return()
+  
+  requireNamespace("Rmosek", quietly = TRUE)
+  
+  handle_str_param <- function(param, value) {
+    if(startsWith(param, "MSK_DPAR_"))
+      task.putnadourparam(param, value)
+    else if(startsWith(param, "MSK_IPAR_"))
+      task.putnaintparam(param, value)
+    else if(startsWith(param, "MSK_SPAR_"))
+      task.putnastrparam(param, value)
+    else
+      stop("Invalid MOSEK parameter ", param)
+  }
+  
+  handle_enum_param <- function(param, value) {
+    if(is(param, "dparam"))
+      task.putdouparam(param, value)
+    else if(is(param, "iparam"))
+      task.putintparam(param, value)
+    else if(is(param, "sparam"))
+      task.putstrparam(param, value)
+    else
+      stop("Invalid MOSEK parameter ", param)
+  }
+  
+  for(p in params) {
+    param <- p[[1]]
+    value <- p[[2]]
+    if(is(param, "character"))
+      handle_str_param(param, value)
+    else
+      handle_enum_param(param, value)
+  }
+}
 
 # Utility method for formatting a ConeDims instance into a dictionary
 # that can be supplied to SCS.

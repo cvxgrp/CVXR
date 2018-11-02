@@ -132,6 +132,12 @@ setMethod("Solver.solve", "MOSEK", function(solver, objective, constraints, cach
   dims$f <- as.integer(dims$f)
   dims$ep <- as.integer(dims$ep)
 
+  ## Fix for 0 dimension matrices
+    nDims <- dim(A)
+    if (prod(nDims) == 0) A <- matrix(nrow = nDims[1], ncol = nDims[2])
+    nDims <- dim(G)
+    if (prod(nDims) == 0) G <- matrix(nrow = nDims[1], ncol = nDims[2])
+
   results_dict <- get_mosekglue()$mosek_intf(reticulate::r_to_py(A),
                                              b,
                                              reticulate::r_to_py(G),

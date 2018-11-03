@@ -5,7 +5,6 @@
 \alias{IntConstr-class}
 \alias{.IntConstr}
 \alias{IntConstr}
-\alias{IntConstr}
 \title{The IntConstr class.}
 \usage{
 IntConstr(lin_op)

@@ -5,7 +5,6 @@
 \alias{Reshape-class}
 \alias{.Reshape}
 \alias{Reshape}
-\alias{Reshape}
 \alias{validate_args,Reshape-method}
 \alias{to_numeric,Reshape-method}
 \alias{size_from_args,Reshape-method}

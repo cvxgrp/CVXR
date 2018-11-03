@@ -5,7 +5,6 @@
 \alias{QuadOverLin-class}
 \alias{.QuadOverLin}
 \alias{QuadOverLin}
-\alias{QuadOverLin}
 \alias{validate_args,QuadOverLin-method}
 \alias{to_numeric,QuadOverLin-method}
 \alias{size_from_args,QuadOverLin-method}

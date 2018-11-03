@@ -4,7 +4,6 @@
 \name{LPSOLVE-class}
 \alias{LPSOLVE-class}
 \alias{LPSOLVE}
-\alias{LPSOLVE}
 \alias{lp_capable,LPSOLVE-method}
 \alias{socp_capable,LPSOLVE-method}
 \alias{sdp_capable,LPSOLVE-method}
@@ -32,8 +31,8 @@ LPSOLVE()
 
 \S4method{import_solver}{LPSOLVE}(solver)
 
-\S4method{Solver.solve}{LPSOLVE}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{LPSOLVE}(solver, objective, constraints,
+  cached_data, warm_start, verbose, ...)
 
 \S4method{format_results}{LPSOLVE}(solver, results_dict, data, cached_data)
 }

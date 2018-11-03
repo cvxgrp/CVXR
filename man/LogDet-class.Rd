@@ -5,7 +5,6 @@
 \alias{LogDet-class}
 \alias{.LogDet}
 \alias{LogDet}
-\alias{LogDet}
 \alias{validate_args,LogDet-method}
 \alias{to_numeric,LogDet-method}
 \alias{size_from_args,LogDet-method}

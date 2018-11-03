@@ -5,7 +5,6 @@
 \alias{Minimize-class}
 \alias{.Minimize}
 \alias{Minimize}
-\alias{Minimize}
 \alias{canonicalize,Minimize-method}
 \alias{variables,Minimize-method}
 \alias{parameters,Minimize-method}

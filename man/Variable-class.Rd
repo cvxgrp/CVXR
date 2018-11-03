@@ -5,7 +5,6 @@
 \alias{Variable-class}
 \alias{.Variable}
 \alias{Variable}
-\alias{Variable}
 \alias{as.character,Variable-method}
 \alias{id,Variable-method}
 \alias{is_positive,Variable-method}

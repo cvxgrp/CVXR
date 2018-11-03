@@ -5,7 +5,6 @@
 \alias{MaxEntries-class}
 \alias{.MaxEntries}
 \alias{MaxEntries}
-\alias{MaxEntries}
 \alias{to_numeric,MaxEntries-method}
 \alias{sign_from_args,MaxEntries-method}
 \alias{is_atom_convex,MaxEntries-method}

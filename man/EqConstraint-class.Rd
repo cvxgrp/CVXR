@@ -8,7 +8,6 @@
 \alias{EqConstraint-class}
 \alias{.EqConstraint}
 \alias{EqConstraint}
-\alias{EqConstraint}
 \alias{is_dcp,EqConstraint-method}
 \alias{residual,EqConstraint-method}
 \alias{canonicalize,EqConstraint-method}

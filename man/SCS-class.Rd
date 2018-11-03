@@ -4,7 +4,6 @@
 \name{SCS-class}
 \alias{SCS-class}
 \alias{SCS}
-\alias{SCS}
 \alias{lp_capable,SCS-method}
 \alias{socp_capable,SCS-method}
 \alias{sdp_capable,SCS-method}

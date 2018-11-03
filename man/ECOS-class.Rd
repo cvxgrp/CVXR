@@ -4,7 +4,6 @@
 \name{ECOS-class}
 \alias{ECOS-class}
 \alias{ECOS}
-\alias{ECOS}
 \alias{lp_capable,ECOS-method}
 \alias{socp_capable,ECOS-method}
 \alias{sdp_capable,ECOS-method}

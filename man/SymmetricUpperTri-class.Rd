@@ -5,7 +5,6 @@
 \alias{SymmetricUpperTri-class}
 \alias{.SymmetricUpperTri}
 \alias{SymmetricUpperTri}
-\alias{SymmetricUpperTri}
 \alias{as.character,SymmetricUpperTri-method}
 \alias{get_data,SymmetricUpperTri-method}
 \title{The SymmetricUpperTri class.}

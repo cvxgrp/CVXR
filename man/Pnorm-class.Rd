@@ -5,7 +5,6 @@
 \alias{Pnorm-class}
 \alias{.Pnorm}
 \alias{Pnorm}
-\alias{Pnorm}
 \alias{validate_args,Pnorm-method}
 \alias{name,Pnorm-method}
 \alias{to_numeric,Pnorm-method}

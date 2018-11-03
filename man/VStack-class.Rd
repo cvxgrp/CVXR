@@ -5,7 +5,6 @@
 \alias{VStack-class}
 \alias{.VStack}
 \alias{VStack}
-\alias{VStack}
 \alias{validate_args,VStack-method}
 \alias{to_numeric,VStack-method}
 \alias{size_from_args,VStack-method}

@@ -5,7 +5,6 @@
 \alias{Square-class}
 \alias{.Square}
 \alias{Square}
-\alias{Square}
 \alias{validate_args,Square-method}
 \alias{to_numeric,Square-method}
 \alias{get_data,Square-method}

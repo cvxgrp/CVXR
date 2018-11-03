@@ -5,7 +5,6 @@
 \alias{Problem-class}
 \alias{.Problem}
 \alias{Problem}
-\alias{Problem}
 \alias{objective,Problem-method}
 \alias{objective<-,Problem-method}
 \alias{constraints,Problem-method}

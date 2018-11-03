@@ -3,7 +3,6 @@
 \docType{methods}
 \name{canonicalize}
 \alias{canonicalize}
-\alias{canonicalize}
 \alias{canonical_form}
 \title{Canonicalize}
 \usage{

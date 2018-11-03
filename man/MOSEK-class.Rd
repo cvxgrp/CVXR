@@ -4,7 +4,6 @@
 \name{MOSEK-class}
 \alias{MOSEK-class}
 \alias{MOSEK}
-\alias{MOSEK}
 \alias{lp_capable,MOSEK-method}
 \alias{socp_capable,MOSEK-method}
 \alias{sdp_capable,MOSEK-method}

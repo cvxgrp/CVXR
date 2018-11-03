@@ -5,7 +5,6 @@
 \alias{LogSumExp-class}
 \alias{.LogSumExp}
 \alias{LogSumExp}
-\alias{LogSumExp}
 \alias{to_numeric,LogSumExp-method}
 \alias{sign_from_args,LogSumExp-method}
 \alias{is_atom_convex,LogSumExp-method}

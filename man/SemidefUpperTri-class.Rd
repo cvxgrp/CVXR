@@ -5,7 +5,6 @@
 \alias{SemidefUpperTri-class}
 \alias{.SemidefUpperTri}
 \alias{SemidefUpperTri}
-\alias{SemidefUpperTri}
 \alias{as.character,SemidefUpperTri-method}
 \alias{get_data,SemidefUpperTri-method}
 \alias{canonicalize,SemidefUpperTri-method}

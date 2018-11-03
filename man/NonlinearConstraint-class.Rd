@@ -5,7 +5,6 @@
 \alias{NonlinearConstraint-class}
 \alias{.NonlinearConstraint}
 \alias{NonlinearConstraint}
-\alias{NonlinearConstraint}
 \alias{variables,NonlinearConstraint-method}
 \title{The NonlinearConstraint class.}
 \usage{

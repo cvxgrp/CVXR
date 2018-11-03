@@ -5,7 +5,6 @@
 \alias{CumSum-class}
 \alias{.CumSum}
 \alias{CumSum}
-\alias{CumSum}
 \alias{to_numeric,CumSum-method}
 \alias{size_from_args,CumSum-method}
 \alias{validate_args,CumSum-method}

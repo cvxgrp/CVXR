@@ -17,7 +17,6 @@
 \alias{LeqConstraint-class}
 \alias{.LeqConstraint}
 \alias{LeqConstraint}
-\alias{LeqConstraint}
 \alias{as.character,LeqConstraint-method}
 \alias{id,LeqConstraint-method}
 \alias{size,LeqConstraint-method}

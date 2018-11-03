@@ -43,7 +43,8 @@
 
 \S4method{canonicalize}{Atom}(object)
 
-\S4method{graph_implementation}{Atom}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Atom}(object, arg_objs, size,
+  data = NA_real_)
 
 \S4method{variables}{Atom}(object)
 

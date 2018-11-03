@@ -5,7 +5,6 @@
 \alias{SDP-class}
 \alias{.SDP}
 \alias{SDP}
-\alias{SDP}
 \alias{as.character,SDP-method}
 \alias{size,SDP-method}
 \alias{format_constr,SDP-method}

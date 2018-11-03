@@ -5,7 +5,6 @@
 \alias{GeoMean-class}
 \alias{.GeoMean}
 \alias{GeoMean}
-\alias{GeoMean}
 \alias{validate_args,GeoMean-method}
 \alias{to_numeric,GeoMean-method}
 \alias{size_from_args,GeoMean-method}

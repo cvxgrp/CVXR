@@ -5,7 +5,6 @@
 \alias{Int-class}
 \alias{.Int}
 \alias{Int}
-\alias{Int}
 \alias{as.character,Int-method}
 \alias{canonicalize,Int-method}
 \title{The Int class.}

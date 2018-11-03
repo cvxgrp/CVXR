@@ -4,7 +4,6 @@
 \name{Rdictdefault-class}
 \alias{Rdictdefault-class}
 \alias{Rdictdefault}
-\alias{Rdictdefault}
 \alias{[,Rdictdefault,ANY,ANY,ANY-method}
 \title{The Rdictdefault class.}
 \usage{

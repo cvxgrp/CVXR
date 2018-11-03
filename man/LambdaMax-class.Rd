@@ -5,7 +5,6 @@
 \alias{LambdaMax-class}
 \alias{.LambdaMax}
 \alias{LambdaMax}
-\alias{LambdaMax}
 \alias{validate_args,LambdaMax-method}
 \alias{to_numeric,LambdaMax-method}
 \alias{size_from_args,LambdaMax-method}

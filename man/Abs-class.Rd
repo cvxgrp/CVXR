@@ -5,7 +5,6 @@
 \alias{Abs-class}
 \alias{.Abs}
 \alias{Abs}
-\alias{Abs}
 \alias{to_numeric,Abs-method}
 \alias{sign_from_args,Abs-method}
 \alias{is_atom_convex,Abs-method}
@@ -32,7 +31,8 @@ Abs(x)
 
 \S4method{is_pwl}{Abs}(object)
 
-\S4method{graph_implementation}{Abs}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Abs}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}

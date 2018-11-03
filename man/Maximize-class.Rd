@@ -5,7 +5,6 @@
 \alias{Maximize-class}
 \alias{.Maximize}
 \alias{Maximize}
-\alias{Maximize}
 \alias{canonicalize,Maximize-method}
 \alias{is_dcp,Maximize-method}
 \alias{is_quadratic,Maximize-method}

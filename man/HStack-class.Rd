@@ -5,7 +5,6 @@
 \alias{HStack-class}
 \alias{.HStack}
 \alias{HStack}
-\alias{HStack}
 \alias{validate_args,HStack-method}
 \alias{to_numeric,HStack-method}
 \alias{size_from_args,HStack-method}

@@ -5,7 +5,6 @@
 \alias{SumLargest-class}
 \alias{.SumLargest}
 \alias{SumLargest}
-\alias{SumLargest}
 \alias{validate_args,SumLargest-method}
 \alias{to_numeric,SumLargest-method}
 \alias{size_from_args,SumLargest-method}

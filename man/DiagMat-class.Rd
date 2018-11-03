@@ -5,7 +5,6 @@
 \alias{DiagMat-class}
 \alias{.DiagMat}
 \alias{DiagMat}
-\alias{DiagMat}
 \alias{to_numeric,DiagMat-method}
 \alias{size_from_args,DiagMat-method}
 \alias{graph_implementation,DiagMat-method}

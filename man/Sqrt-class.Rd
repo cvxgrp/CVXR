@@ -5,7 +5,6 @@
 \alias{Sqrt-class}
 \alias{.Sqrt}
 \alias{Sqrt}
-\alias{Sqrt}
 \alias{validate_args,Sqrt-method}
 \alias{to_numeric,Sqrt-method}
 \alias{get_data,Sqrt-method}
@@ -38,7 +37,8 @@ Sqrt(x)
 
 \S4method{is_quadratic}{Sqrt}(object)
 
-\S4method{graph_implementation}{Sqrt}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Sqrt}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}

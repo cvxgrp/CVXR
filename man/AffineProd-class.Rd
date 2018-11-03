@@ -5,7 +5,6 @@
 \alias{AffineProd-class}
 \alias{.AffineProd}
 \alias{AffineProd}
-\alias{AffineProd}
 \alias{validate_args,AffineProd-method}
 \alias{to_numeric,AffineProd-method}
 \alias{size_from_args,AffineProd-method}

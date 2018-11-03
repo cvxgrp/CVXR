@@ -5,7 +5,6 @@
 \alias{Bool-class}
 \alias{.Bool}
 \alias{Bool}
-\alias{Bool}
 \alias{as.character,Bool-method}
 \alias{canonicalize,Bool-method}
 \alias{is_positive,Bool-method}

@@ -5,7 +5,6 @@
 \alias{SizeMetrics-class}
 \alias{.SizeMetrics}
 \alias{SizeMetrics}
-\alias{SizeMetrics}
 \title{The SizeMetrics class.}
 \usage{
 SizeMetrics(problem)

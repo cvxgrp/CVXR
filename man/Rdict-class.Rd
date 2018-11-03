@@ -4,7 +4,6 @@
 \name{Rdict-class}
 \alias{Rdict-class}
 \alias{Rdict}
-\alias{Rdict}
 \alias{$,Rdict-method}
 \alias{length,Rdict-method}
 \alias{is.element,ANY,Rdict-method}

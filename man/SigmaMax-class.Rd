@@ -5,7 +5,6 @@
 \alias{SigmaMax-class}
 \alias{.SigmaMax}
 \alias{SigmaMax}
-\alias{SigmaMax}
 \alias{to_numeric,SigmaMax-method}
 \alias{size_from_args,SigmaMax-method}
 \alias{sign_from_args,SigmaMax-method}

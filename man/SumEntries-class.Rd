@@ -5,7 +5,6 @@
 \alias{SumEntries-class}
 \alias{.SumEntries}
 \alias{SumEntries}
-\alias{SumEntries}
 \alias{to_numeric,SumEntries-method}
 \alias{graph_implementation,SumEntries-method}
 \title{The SumEntries class.}

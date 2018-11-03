@@ -5,7 +5,6 @@
 \alias{NormNuc-class}
 \alias{.NormNuc}
 \alias{NormNuc}
-\alias{NormNuc}
 \alias{to_numeric,NormNuc-method}
 \alias{size_from_args,NormNuc-method}
 \alias{sign_from_args,NormNuc-method}

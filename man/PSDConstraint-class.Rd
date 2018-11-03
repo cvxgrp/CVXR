@@ -13,7 +13,6 @@
 \alias{PSDConstraint-class}
 \alias{.PSDConstraint}
 \alias{PSDConstraint}
-\alias{PSDConstraint}
 \alias{is_dcp,PSDConstraint-method}
 \alias{residual,PSDConstraint-method}
 \alias{canonicalize,PSDConstraint-method}

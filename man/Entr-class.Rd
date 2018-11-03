@@ -5,7 +5,6 @@
 \alias{Entr-class}
 \alias{.Entr}
 \alias{Entr}
-\alias{Entr}
 \alias{to_numeric,Entr-method}
 \alias{sign_from_args,Entr-method}
 \alias{is_atom_convex,Entr-method}
@@ -29,7 +28,8 @@ Entr(x)
 
 \S4method{is_decr}{Entr}(object, idx)
 
-\S4method{graph_implementation}{Entr}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Entr}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

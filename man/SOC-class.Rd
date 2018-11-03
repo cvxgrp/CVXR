@@ -5,7 +5,6 @@
 \alias{SOC-class}
 \alias{.SOC}
 \alias{SOC}
-\alias{SOC}
 \alias{as.character,SOC-method}
 \alias{format_constr,SOC-method}
 \alias{size,SOC-method}

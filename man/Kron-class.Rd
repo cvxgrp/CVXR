@@ -5,7 +5,6 @@
 \alias{Kron-class}
 \alias{.Kron}
 \alias{Kron}
-\alias{Kron}
 \alias{validate_args,Kron-method}
 \alias{to_numeric,Kron-method}
 \alias{size_from_args,Kron-method}
@@ -29,7 +28,8 @@ Kron(lh_exp, rh_exp)
 
 \S4method{is_decr}{Kron}(object, idx)
 
-\S4method{graph_implementation}{Kron}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Kron}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or numeric constant representing the left-hand matrix.}

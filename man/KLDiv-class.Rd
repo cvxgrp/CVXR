@@ -5,7 +5,6 @@
 \alias{KLDiv-class}
 \alias{.KLDiv}
 \alias{KLDiv}
-\alias{KLDiv}
 \alias{to_numeric,KLDiv-method}
 \alias{sign_from_args,KLDiv-method}
 \alias{is_atom_convex,KLDiv-method}

@@ -5,7 +5,6 @@
 \alias{Exp-class}
 \alias{.Exp}
 \alias{Exp}
-\alias{Exp}
 \alias{to_numeric,Exp-method}
 \alias{sign_from_args,Exp-method}
 \alias{is_atom_convex,Exp-method}
@@ -29,7 +28,8 @@ Exp(x)
 
 \S4method{is_decr}{Exp}(object, idx)
 
-\S4method{graph_implementation}{Exp}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Exp}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}

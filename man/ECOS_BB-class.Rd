@@ -4,7 +4,6 @@
 \name{ECOS_BB-class}
 \alias{ECOS_BB-class}
 \alias{ECOS_BB}
-\alias{ECOS_BB}
 \alias{lp_capable,ECOS_BB-method}
 \alias{socp_capable,ECOS_BB-method}
 \alias{sdp_capable,ECOS_BB-method}
@@ -28,8 +27,8 @@ ECOS_BB()
 
 \S4method{name}{ECOS_BB}(object)
 
-\S4method{Solver.solve}{ECOS_BB}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{ECOS_BB}(solver, objective, constraints,
+  cached_data, warm_start, verbose, ...)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{ECOS_BB} object.}

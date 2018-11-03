@@ -5,7 +5,6 @@
 \alias{Constant-class}
 \alias{.Constant}
 \alias{Constant}
-\alias{Constant}
 \alias{as.character,Constant-method}
 \alias{constants,Constant-method}
 \alias{get_data,Constant-method}

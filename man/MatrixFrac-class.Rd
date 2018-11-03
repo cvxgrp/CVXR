@@ -5,7 +5,6 @@
 \alias{MatrixFrac-class}
 \alias{.MatrixFrac}
 \alias{MatrixFrac}
-\alias{MatrixFrac}
 \alias{validate_args,MatrixFrac-method}
 \alias{to_numeric,MatrixFrac-method}
 \alias{size_from_args,MatrixFrac-method}

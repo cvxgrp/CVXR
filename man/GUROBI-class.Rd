@@ -4,7 +4,6 @@
 \name{GUROBI-class}
 \alias{GUROBI-class}
 \alias{GUROBI}
-\alias{GUROBI}
 \alias{lp_capable,GUROBI-method}
 \alias{socp_capable,GUROBI-method}
 \alias{sdp_capable,GUROBI-method}
@@ -31,8 +30,8 @@ GUROBI()
 
 \S4method{import_solver}{GUROBI}(solver)
 
-\S4method{Solver.solve}{GUROBI}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{GUROBI}(solver, objective, constraints,
+  cached_data, warm_start, verbose, ...)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{GUROBI} object.}

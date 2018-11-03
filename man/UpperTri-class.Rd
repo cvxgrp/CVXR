@@ -5,7 +5,6 @@
 \alias{UpperTri-class}
 \alias{.UpperTri}
 \alias{UpperTri}
-\alias{UpperTri}
 \alias{validate_args,UpperTri-method}
 \alias{to_numeric,UpperTri-method}
 \alias{size_from_args,UpperTri-method}

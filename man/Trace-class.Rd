@@ -5,7 +5,6 @@
 \alias{Trace-class}
 \alias{.Trace}
 \alias{Trace}
-\alias{Trace}
 \alias{validate_args,Trace-method}
 \alias{to_numeric,Trace-method}
 \alias{size_from_args,Trace-method}

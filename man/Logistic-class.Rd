@@ -5,7 +5,6 @@
 \alias{Logistic-class}
 \alias{.Logistic}
 \alias{Logistic}
-\alias{Logistic}
 \alias{to_numeric,Logistic-method}
 \alias{sign_from_args,Logistic-method}
 \alias{is_atom_convex,Logistic-method}

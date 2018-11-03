@@ -5,7 +5,6 @@
 \alias{Huber-class}
 \alias{.Huber}
 \alias{Huber}
-\alias{Huber}
 \alias{validate_args,Huber-method}
 \alias{to_numeric,Huber-method}
 \alias{sign_from_args,Huber-method}

@@ -5,7 +5,6 @@
 \alias{CallbackParam-class}
 \alias{.CallbackParam}
 \alias{CallbackParam}
-\alias{CallbackParam}
 \alias{value,CallbackParam-method}
 \alias{get_data,CallbackParam-method}
 \title{The CallbackParam class.}

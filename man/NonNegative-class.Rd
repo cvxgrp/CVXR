@@ -5,7 +5,6 @@
 \alias{NonNegative-class}
 \alias{.NonNegative}
 \alias{NonNegative}
-\alias{NonNegative}
 \alias{as.character,NonNegative-method}
 \alias{canonicalize,NonNegative-method}
 \alias{is_positive,NonNegative-method}

@@ -5,7 +5,6 @@
 \alias{Log1p-class}
 \alias{.Log1p}
 \alias{Log1p}
-\alias{Log1p}
 \alias{to_numeric,Log1p-method}
 \alias{sign_from_args,Log1p-method}
 \alias{graph_implementation,Log1p-method}

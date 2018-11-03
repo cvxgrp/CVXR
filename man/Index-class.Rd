@@ -13,7 +13,6 @@
 \alias{Index-class}
 \alias{.Index}
 \alias{Index}
-\alias{Index}
 \alias{to_numeric,Index-method}
 \alias{size_from_args,Index-method}
 \alias{get_data,Index-method}

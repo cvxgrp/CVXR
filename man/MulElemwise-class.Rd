@@ -5,7 +5,6 @@
 \alias{MulElemwise-class}
 \alias{.MulElemwise}
 \alias{MulElemwise}
-\alias{MulElemwise}
 \alias{validate_args,MulElemwise-method}
 \alias{to_numeric,MulElemwise-method}
 \alias{size_from_args,MulElemwise-method}

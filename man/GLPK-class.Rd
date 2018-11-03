@@ -4,7 +4,6 @@
 \name{GLPK-class}
 \alias{GLPK-class}
 \alias{GLPK}
-\alias{GLPK}
 \alias{lp_capable,GLPK-method}
 \alias{socp_capable,GLPK-method}
 \alias{sdp_capable,GLPK-method}

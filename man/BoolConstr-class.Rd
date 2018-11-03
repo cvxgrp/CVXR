@@ -5,7 +5,6 @@
 \alias{BoolConstr-class}
 \alias{.BoolConstr}
 \alias{BoolConstr}
-\alias{BoolConstr}
 \alias{format_constr,BoolConstr-method}
 \alias{size,BoolConstr-method}
 \title{The BoolConstr class.}

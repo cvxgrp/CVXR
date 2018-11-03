@@ -5,7 +5,6 @@
 \alias{MaxElemwise-class}
 \alias{.MaxElemwise}
 \alias{MaxElemwise}
-\alias{MaxElemwise}
 \alias{to_numeric,MaxElemwise-method}
 \alias{sign_from_args,MaxElemwise-method}
 \alias{is_atom_convex,MaxElemwise-method}

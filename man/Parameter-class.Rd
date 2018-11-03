@@ -5,7 +5,6 @@
 \alias{Parameter-class}
 \alias{.Parameter}
 \alias{Parameter}
-\alias{Parameter}
 \alias{as.character,Parameter-method}
 \alias{get_data,Parameter-method}
 \alias{name,Parameter-method}

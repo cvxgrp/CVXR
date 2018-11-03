@@ -5,7 +5,6 @@
 \alias{DiagVec-class}
 \alias{.DiagVec}
 \alias{DiagVec}
-\alias{DiagVec}
 \alias{to_numeric,DiagVec-method}
 \alias{size_from_args,DiagVec-method}
 \alias{graph_implementation,DiagVec-method}

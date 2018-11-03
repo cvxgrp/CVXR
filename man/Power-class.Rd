@@ -5,7 +5,6 @@
 \alias{Power-class}
 \alias{.Power}
 \alias{Power}
-\alias{Power}
 \alias{validate_args,Power-method}
 \alias{get_data,Power-method}
 \alias{to_numeric,Power-method}

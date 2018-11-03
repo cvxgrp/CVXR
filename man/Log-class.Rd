@@ -5,7 +5,6 @@
 \alias{Log-class}
 \alias{.Log}
 \alias{Log}
-\alias{Log}
 \alias{to_numeric,Log-method}
 \alias{sign_from_args,Log-method}
 \alias{is_atom_convex,Log-method}
@@ -29,7 +28,8 @@ Log(x)
 
 \S4method{is_decr}{Log}(object, idx)
 
-\S4method{graph_implementation}{Log}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Log}(object, arg_objs, size,
+  data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

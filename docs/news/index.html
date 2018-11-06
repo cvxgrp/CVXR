@@ -58,7 +58,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -108,6 +108,14 @@
       
     </div>
 
+    <div id="cvxr-0-99-2" class="section level1">
+<h1 class="page-header">
+<a href="#cvxr-0-99-2" class="anchor"></a>CVXR 0.99-2<small> Unreleased </small>
+</h1>
+<ul>
+<li>Typo fixes to URLs.</li>
+</ul>
+</div>
     <div id="cvxr-0-99-1" class="section level1">
 <h1 class="page-header">
 <a href="#cvxr-0-99-1" class="anchor"></a>CVXR 0.99-1<small> Unreleased </small>
@@ -165,7 +173,7 @@
 </li>
 <li>Added <code>GUROBI</code>
 </li>
-<li>Bug fix: <a href="https://github.com/anqif/CVXR/issues/25">issue #25</a>. All CVXR expressions retain dimensions. Culprit was <code>drop = FALSE</code> (in function <code>Index.get_special_slice</code>) as suspected.</li>
+<li>Bug fix: <a href="https://github.com/anqif/CVXR/issues/25">issue #25</a>. All CVXR expressions retain dimensions. Culprit was <code>drop =   FALSE</code> (in function <code>Index.get_special_slice</code>) as suspected.</li>
 </ul>
 </div>
     <div id="cvxr-0-96" class="section level1">
@@ -173,9 +181,7 @@
 <a href="#cvxr-0-96" class="anchor"></a>CVXR 0.96<small> Unreleased </small>
 </h1>
 <ul>
-<li>Added a note that CVXR can probably be compiled from source for earlier versions of R. This is [issue
-<p>#24](<a href="https://github.com/anqif/CVXR/issues/24" class="uri">https://github.com/anqif/CVXR/issues/24</a>)</p>
-</li>
+<li><p>Added a note that CVXR can probably be compiled from source for earlier versions of R. This is <a href="https://github.com/anqif/CVXR/issues/24">issue #24</a></p></li>
 <li><p>Using <a href="https://pkgdown.r-lib.org">pkgdown</a>. This also addresses <a href="https://github.com/anqif/CVXR/issues/23">issue #23</a></p></li>
 <li><p>Bug fix: <a href="https://github.com/anqif/CVXR/issues/28">issue #28</a> Function <code>intf_sign</code> (<code>interface.R</code>) was unnecessarily using a tolerance parameter, now eliminated.</p></li>
 </ul>
@@ -186,7 +192,7 @@
 </h1>
 <ul>
 <li><p>Updated Solver.solve to adapt to new ECOSolveR. Require version 0.4 of ECOSolveR now.</p></li>
-<li><p>Updated <code>unpack_results</code> to behave exactly like in CVXPY. Added documentation and testthat tests. Documented in <a href="https://cvxr.rbind.io/post/examples/cvxr_speed/">Getting Faster Results article</a>.</p></li>
+<li><p>Updated <code>unpack_results</code> to behave exactly like in CVXPY. Added documentation and testthat tests. Documented in <a href="https://cvxr.rbind.io/cvxr_examples/cvxr_speed/">Getting Faster Results article</a>.</p></li>
 </ul>
 </div>
     <div id="cvxr-0-94-4" class="section level1">
@@ -203,6 +209,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
+        <li><a href="#cvxr-0-99-2">0.99-2</a></li>
         <li><a href="#cvxr-0-99-1">0.99-1</a></li>
         <li><a href="#cvxr-0-99">0.99</a></li>
         <li><a href="#cvxr-0-98-1">0.98-1</a></li>

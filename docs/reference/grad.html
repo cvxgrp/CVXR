@@ -62,7 +62,7 @@ Matrix expressions are vectorized, so the gradient is a matrix. NA indicates var
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -137,8 +137,8 @@ Matrix expressions are vectorized, so the gradient is a matrix. <code>NA</code> 
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"x"</span>)
-<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"A"</span>)
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"x"</span>)
+<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"A"</span>)
 
 <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>x</span>) <span class='kw'>&lt;-</span> <span class='fu'>c</span>(-<span class='fl'>3</span>,<span class='fl'>4</span>)
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>x</span>, <span class='fl'>2</span>)

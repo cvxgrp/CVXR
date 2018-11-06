@@ -62,7 +62,7 @@ When calling cumsum, matrices are automatically flattened into column-major orde
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -141,15 +141,15 @@ When calling <code>cumsum</code>, matrices are automatically flattened into colu
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(<span class='fu'>c</span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'>c</span>(<span class='fl'>3</span>,<span class='fl'>4</span>))
-<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cumsum</span>(<span class='fu'>Constant</span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1]
+<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cumsum</span>(<span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    1
 #&gt; [2,]    3
 #&gt; [3,]    6
-#&gt; [4,]   10</div><div class='input'><span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cumsum_axis</span>(<span class='fu'>Constant</span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1] [,2]
+#&gt; [4,]   10</div><div class='input'><span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cumsum_axis</span>(<span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1] [,2]
 #&gt; [1,]    1    3
 #&gt; [2,]    3    7</div><div class='input'>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>cumsum</span>(<span class='no'>x</span>)[<span class='fl'>4</span>]), <span class='fu'>list</span>(<span class='no'>x</span> <span class='kw'>==</span> <span class='no'>val</span>))</div><div class='output co'>#&gt; <span class='error'>Error in cumsum(x)[4]: object of type 'S4' is not subsettable</span></div><div class='input'><span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; <span class='error'>Error in solve(prob): object 'prob' not found</span></div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>cumsum</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div></pre>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>cumsum</span>(<span class='no'>x</span>)[<span class='fl'>4</span>]), <span class='fu'>list</span>(<span class='no'>x</span> <span class='kw'>==</span> <span class='no'>val</span>))</div><div class='output co'>#&gt; <span class='error'>Error in cumsum(x)[4]: object of type 'S4' is not subsettable</span></div><div class='input'><span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; <span class='error'>Error in solve(prob): object 'prob' not found</span></div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>cumsum</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'result' not found</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

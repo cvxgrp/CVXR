@@ -62,7 +62,7 @@ This is equivalent to alpha*pos(x) + beta*neg(x)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -146,9 +146,9 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
+<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(<span class='fu'>c</span>(-<span class='fl'>5</span>,<span class='fl'>2</span>), <span class='fu'>c</span>(-<span class='fl'>3</span>,<span class='fl'>1</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>,<span class='fl'>2</span>,<span class='fl'>3</span>)[<span class='fl'>1</span>,<span class='fl'>1</span>]), <span class='fu'>list</span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>scalene</span>(<span class='no'>A</span>,<span class='fl'>2</span>,<span class='fl'>3</span>)[<span class='fl'>1</span>,<span class='fl'>1</span>]), <span class='fu'>list</span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>, <span class='fl'>0.7</span>, <span class='fl'>0.3</span>))

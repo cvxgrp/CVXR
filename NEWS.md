@@ -1,3 +1,7 @@
+# CVXR 0.99-2
+
+* Typo fixes to URLs.
+
 # CVXR 0.99-1
 
 * Bug fix: Updated python glue for both version 2 and 3

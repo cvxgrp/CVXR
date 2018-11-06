@@ -61,7 +61,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -154,10 +154,10 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Minimize</span>(<span class='no'>x</span>[<span class='fl'>1</span>] + <span class='fu'><a href='cvxr_norm.html'>cvxr_norm</a></span>(<span class='no'>x</span>, <span class='fl'>1</span>))
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>[<span class='fl'>1</span>] + <span class='fu'><a href='cvxr_norm.html'>cvxr_norm</a></span>(<span class='no'>x</span>, <span class='fl'>1</span>))
 <span class='no'>constraints</span> <span class='kw'>&lt;-</span> <span class='fu'>list</span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>2</span>)
-<span class='no'>prob1</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
+<span class='no'>prob1</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
 <span class='co'># Solve with ECOS.</span>
 <span class='no'>ecos_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span>(<span class='no'>prob1</span>, <span class='st'>"ECOS"</span>)
 <span class='co'># Call ECOS solver interface directly</span>
@@ -175,8 +175,8 @@
 <span class='co'># res1 &lt;- solve(prob1, solver = "ECOS")</span>
 <span class='no'>X</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Semidef.html'>Semidef</a></span>(<span class='fl'>2</span>)
 <span class='no'>Fmat</span> <span class='kw'>&lt;-</span> <span class='fu'>rbind</span>(<span class='fu'>c</span>(<span class='fl'>1</span>,<span class='fl'>0</span>), <span class='fu'>c</span>(<span class='fl'>0</span>,-<span class='fl'>1</span>))
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Minimize</span>(<span class='fu'><a href='sum_squares.html'>sum_squares</a></span>(<span class='no'>X</span> - <span class='no'>Fmat</span>))
-<span class='no'>prob2</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='sum_squares.html'>sum_squares</a></span>(<span class='no'>X</span> - <span class='no'>Fmat</span>))
+<span class='no'>prob2</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>)
 <span class='no'>scs_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span>(<span class='no'>prob2</span>, <span class='st'>"SCS"</span>)
 <span class='no'>scs_output</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>scs</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/scs/topics/scs'>scs</a></span>(
                       <span class='kw'>A</span> <span class='kw'>=</span> <span class='no'>scs_data</span><span class='kw'>[[</span><span class='st'>'A'</span>]],

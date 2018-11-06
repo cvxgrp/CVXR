@@ -61,7 +61,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -141,10 +141,10 @@
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>m</span> <span class='kw'>&lt;-</span> <span class='fl'>50</span>
 <span class='no'>n</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>
-<span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>)
+<span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='fu'>rnorm</span>(<span class='no'>m</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='no'>m</span>)
 <span class='no'>X</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='fu'>rnorm</span>(<span class='no'>m</span>*<span class='no'>n</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='no'>m</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='no'>n</span>)
-<span class='no'>lambda</span> <span class='kw'>&lt;-</span> <span class='fu'>Parameter</span>()
+<span class='no'>lambda</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Parameter-class.html'>Parameter</a></span>()
 
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='sum_squares.html'>sum_squares</a></span>(<span class='no'>y</span> - <span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta</span>) + <span class='no'>lambda</span>*<span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>beta</span>, <span class='fl'>1</span>)
 <span class='fu'>variables</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; [[1]]

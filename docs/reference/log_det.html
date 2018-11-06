@@ -61,7 +61,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -140,11 +140,11 @@
 <span class='no'>n</span> <span class='kw'>&lt;-</span> <span class='fu'>nrow</span>(<span class='no'>x</span>)
 <span class='no'>m</span> <span class='kw'>&lt;-</span> <span class='fu'>ncol</span>(<span class='no'>x</span>)
 
-<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>,<span class='no'>n</span>)
-<span class='no'>b</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Maximize</span>(<span class='fu'>log_det</span>(<span class='no'>A</span>))
+<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>,<span class='no'>n</span>)
+<span class='no'>b</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>log_det</span>(<span class='no'>A</span>))
 <span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'>lapply</span>(<span class='fl'>1</span>:<span class='no'>m</span>, <span class='kw'>function</span>(<span class='no'>i</span>) { <span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>A</span> <span class='kw'>%*%</span> <span class='fu'>as.matrix</span>(<span class='no'>x</span>[,<span class='no'>i</span>]) + <span class='no'>b</span>) <span class='kw'>&lt;=</span> <span class='fl'>1</span> })
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 1.976801</div></pre>
   </div>

@@ -61,7 +61,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -155,10 +155,10 @@
 <span class='no'>r</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='transpose.html'>t</a></span>(<span class='no'>b</span>) <span class='kw'>%*%</span> <span class='no'>b</span>
 <span class='no'>Pinv</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>base</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/base/topics/solve'>solve</a></span>(<span class='no'>P</span>)
 
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>)
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
 <span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix_frac</span>(<span class='no'>x</span>, <span class='no'>Pinv</span>) + <span class='fu'><a href='transpose.html'>t</a></span>(<span class='no'>q</span>) <span class='kw'>%*%</span> <span class='no'>x</span> + <span class='no'>r</span>
 <span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'>list</span>(<span class='no'>G</span> <span class='kw'>%*%</span> <span class='no'>x</span> <span class='kw'>==</span> <span class='no'>h</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='no'>obj</span>), <span class='no'>constr</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>obj</span>), <span class='no'>constr</span>)
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='co'># }</span></pre>

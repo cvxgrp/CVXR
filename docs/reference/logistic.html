@@ -62,7 +62,7 @@ This is a special case of log(sum(exp)) that evaluates to a vector rather than t
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.99.2</span>
       </span>
     </div>
 
@@ -147,10 +147,10 @@ This is a special case of log(sum(exp)) that evaluates to a vector rather than t
 <span class='no'>X</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='kw pkg'>stats</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/stats/topics/Normal'>rnorm</a></span>(<span class='no'>m</span>*<span class='no'>n</span>, <span class='fl'>0</span>, <span class='fl'>5</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='no'>m</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='no'>n</span>)
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>sign</span>(<span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta_true</span> + <span class='kw pkg'>stats</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/stats/topics/Normal'>rnorm</a></span>(<span class='no'>m</span>, <span class='fl'>0</span>, <span class='no'>sigma</span>))
 
-<span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>n</span>)
+<span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
 <span class='no'>X_sign</span> <span class='kw'>&lt;-</span> <span class='fu'>apply</span>(<span class='no'>X</span>, <span class='fl'>2</span>, <span class='kw'>function</span>(<span class='no'>x</span>) { <span class='fu'>ifelse</span>(<span class='no'>y</span> <span class='kw'>&lt;=</span> <span class='fl'>0</span>, -<span class='fl'>1</span>, <span class='fl'>1</span>) * <span class='no'>x</span> })
 <span class='no'>obj</span> <span class='kw'>&lt;-</span> -<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>logistic</span>(-<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>&lt;=</span> <span class='fl'>0</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>)) - <span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>logistic</span>(<span class='no'>X</span>[<span class='no'>y</span> <span class='kw'>==</span> <span class='fl'>1</span>,] <span class='kw'>%*%</span> <span class='no'>beta</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Maximize</span>(<span class='no'>obj</span>))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='no'>obj</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 
 <span class='no'>log_odds</span> <span class='kw'>&lt;-</span> <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta</span>)

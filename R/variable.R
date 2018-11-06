@@ -3,24 +3,21 @@
 #'
 #' This class represents an optimization variable.
 #'
-#' @slot id (Internal) A unique identification number used internally.
-#' @slot rows The number of rows in the variable.
-#' @slot cols The number of columns in the variable.
+#' @slot shape The dimensions of the variable.
 #' @slot name (Optional) A character string representing the name of the variable.
-#' @slot primal_value (Internal) The primal value of the variable stored internally.
+#' @slot var_id (Internal) A unique identification number used internally.
 #' @name Variable-class
 #' @aliases Variable
 #' @rdname Variable-class
-.Variable <- setClass("Variable", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", primal_value = "ConstVal"),
-                                 prototype(rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_),
-                                 validity = function(object) {
-                                   if(!is.na(object@primal_value))
-                                     stop("[Variable: validation] primal_value is an internal slot and should not be set by user")
-                                   return(TRUE)
-                                 }, contains = "Leaf")
+.Variable <- setClass("Variable", representation(shape = "NumORNULL", name = "character", var_id = "integer", value = "ConstVal"),
+                                  prototype(shape = NULL, name = NA_character_, var_id = NA_integer_, value = NA_real_), 
+                                  validity = function(object) {
+                                    if(!is.na(object@value))
+                                      stop("[Variable: validation] value is an internal slot and should not be set by the user")
+                                    return(TRUE)
+                                  }, contains = "Leaf")
 
-#' @param rows The number of rows in the variable.
-#' @param cols The number of columns in the variable.
+#' @param shape The dimensions of the variable.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Variable-class
 #' @examples
@@ -38,46 +35,30 @@
 #' variables(y)
 #' canonicalize(y)
 #' @export
-Variable <- function(rows = 1, cols = 1, name = NA_character_) { .Variable(rows = rows, cols = cols, name = name) }
+Variable <- function(shape = NULL, name = NA_character_) { .Variable(shape = shape, name = name) }
 
-setMethod("initialize", "Variable", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, primal_value = NA_real_) {
-  .Object@id <- id
-  .Object@rows <- rows
-  .Object@cols <- cols
+setMethod("initialize", "Variable", function(.Object, ..., shape = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
+  .Object@var_id <- var_id
   if(is.na(name))
     .Object@name <- sprintf("%s%s", VAR_PREFIX, .Object@id)
   else
     .Object@name <- name
-  .Object@primal_value <- primal_value
-  callNextMethod(.Object, ...)
+  .Object@value <- NA_real_
+  callNextMethod(.Object, ..., shape = shape)
 })
 
 setMethod("show", "Variable", function(object) {
-  size <- size(object)
-  cat("Variable(", size[1], ", ", size[2], ")", sep = "")
+  paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
 })
 
 #' @param x,object A \linkS4class{Variable} object.
 #' @rdname Variable-class
 setMethod("as.character", "Variable", function(x) {
-  size <- size(x)
-  paste("Variable(", size[1], ", ", size[2], ")", sep = "")
+  paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
 })
 
 #' @describeIn Variable The unique ID of the variable.
 setMethod("id", "Variable", function(object) { object@id })
-
-#' @describeIn Variable A logical value indicating whether the variable is positive.
-setMethod("is_positive", "Variable", function(object) { FALSE })
-
-#' @describeIn Variable A logical value indicating whether the variable is negative.
-setMethod("is_negative", "Variable", function(object) { FALSE })
-
-#' @describeIn Variable The \code{c(row, col)} dimensions of the variable.
-setMethod("size", "Variable", function(object) { c(object@rows, object@cols) })
-
-#' @describeIn Variable Returns \code{list(rows, cols, name)}.
-setMethod("get_data", "Variable", function(object) { list(object@rows, object@cols, object@name) })
 
 #' @describeIn Variable The name of the variable.
 #' @export
@@ -102,9 +83,10 @@ setReplaceMethod("value", "Variable", function(object, value) {
 
 #' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix.
 setMethod("grad", "Variable", function(object) {
-  len <- prod(size(object))
+  # TODO: Do not assume shape is 2-D.
+  len <- size(object)
   result <- list(sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
-  names(result) <- as.character(object@id)
+  names(result) <- as.character(id(object))
   result
 })
 
@@ -113,7 +95,7 @@ setMethod("variables", "Variable", function(object) { list(object) })
 
 #' @describeIn Variable The canonical form of the variable.
 setMethod("canonicalize", "Variable", function(object) {
-  obj <- create_var(size(object), object@id)
+  obj <- create_var(shape(object), id(object))
   list(obj, list())
 })
 

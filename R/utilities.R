@@ -7,18 +7,38 @@
 setClass("Canonical", contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Canonical} object.
+#' @describeIn Canonical The expression associated with the input.
+setMethod("expr", "Canonical", function(object) {
+  if(length(object@args) != 1)
+    stop("'expr' is ambiguous, there should only be one argument.")
+  return(object@args[[1]])
+})
+
 #' @describeIn Canonical The graph implementation of the input.
 setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
 #' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.
-setMethod("variables", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("variables", "Canonical", function(object) {
+  unique(flatten_list(lapply(object@args, function(arg) { variables(arg) })))
+})
 
 #' @describeIn Canonical List of \linkS4class{Parameter} objects in the expression.
-setMethod("parameters", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("parameters", "Canonical", function(object) { 
+  unique(flatten_list(lapply(object@args, function(arg) { parameters(arg) })))
+})
 
 #' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
-setMethod("constants", "Canonical", function(object) { stop("Unimplemented") })
+setMethod("constants", "Canonical", function(object) { 
+  const_list <- flatten_list(lapply(object@args, function(arg) { constants(arg) }))
+  const_id <- sapply(const_list, function(constant) { id(constant) })
+  const_list[!duplicated(const_id)]
+})
+
+#' @describeIn Canonical List of \linkS4class{Atom} objects in the expression.
+setMethod("atoms", "Canonical", function(object) {
+  unique(flatten_list(lapply(object@args, function(arg) { atoms(arg) })))
+})
 
 #' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
 setMethod("get_data", "Canonical", function(object) { list() })
@@ -282,6 +302,115 @@ flatten_list <- function(x) {
   rapply(x, function(x) y <<- c(y,x))
   y
 }
+
+# TODO: Find best format for sparse matrices.
+.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_shapes = "list"),
+                                              prototype(id_map = list(), N = NA_real_, var_shapes = list()))
+
+CoeffExtractor <- function(inverse_data) { .CoeffExtractor(inverse_data = inverse_data) }
+
+setMethod("initialize", function(.Object, inverse_data, id_map, N, var_shapes) {
+  .Object@id_map <- inverse_data@var_offsets
+  .Object@N <- inverse_data@x_length
+  .Object@var_shapes <- inverse_data@var_shapes
+  return(.Object)
+})
+
+setMethod("get_coeffs", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+  if(is_constant(expr))
+    return(constant(object, expr))
+  else if(is_affine(expr))
+    return(affine(object, expr))
+  else if(is_quadratic(expr))
+    return(quad_form(object, expr))
+  else
+    stop("Unknown expression type ", class(expr))
+})
+
+setMethod("constant", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+  size <- size(expr)
+  list(Matrix(nrow = size, ncol = object@N), as.vector(value(expr)))
+})
+
+setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+  if(!is_affine(expr))
+    stop("Expression is not affine")
+  s <- canonical_form(expr)[[1]]
+  VIJb <- get_problem_matrix(list(create_eq(s)), object@id_map)
+  V <- VIJb[[1]]
+  I <- VIJb[[2]]
+  J <- VIJb[[3]]
+  b <- VIJb[[4]]
+  A <- sparseMatrix(i = I, j = J, x = V, dims = c(size(expr), object@N))
+  list(A, as.vector(b))
+})
+
+setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_expr, quad_forms) {
+  # Extract affine data.
+  affine_problem <- Problem(Minimize(affine_expr), list())
+  affine_inverse_data <- InverseData(affine_problem)
+  affine_id_map <- affine_inverse_data@id_map
+  affine_var_shapes <- affine_inverse_data@var_shapes
+  extractor <- CoeffExtractor(affine_inverse_data)
+  cb <- affine(extractor, affine_problem@objective@expr)
+  c <- cb[[1]]
+  b <- cb[[2]]
+  
+  # Combine affine data with quadratic forms.
+  coeffs <- list()
+  for(var in variables(affine_problem)) {
+    if(id(var) %in% quad_forms) {
+      var_id <- id(var)
+      orig_id <- id(quad_forms[var_id][3]@args[1])
+      var_offset <- affine_id_map[var_id][1]
+      var_size <- affine_id_map[var_id][2]
+      if(!is.na(value(quad_forms[var_id][3]@P))) {
+        c_part <- as.vector(c[1, var_offset:(var_offset + var_size)])
+        P <- value(quad_forms[var_id][3]@P)
+        if(is(P, "sparseMatrix"))
+          P <- as.matrix(P)
+        P <- c_part %*% P
+      } else
+        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, var_offset:(var_offset + var_size)])
+      if(orig_id %in% coeffs) {
+        coeffs[orig_id]$P <- coeffs[orig_id]$P + P
+        coeffs[orig_id]$q <- coeffs[orig_id]$q + matrix(0, nrow = nrow(P), ncol = 1)
+      } else {
+        coeffs[orig_id] <- list()
+        coeffs[orig_id]$P <- P
+        coeffs[orig_id]$q <- matrix(0, nrow = nrow(P), ncol = 1)
+      }
+    } else {
+      var_offset <- affine_id_map[id(var)][1]
+      var_size <- as.integer(prod(affine_var_shapes[id(var)]))
+      if(id(var) %in% coeffs) {
+        coeffs[id(var)]$P <- coeffs[id(var)]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
+        coeffs[id(var)]$q <- coeffs[id(var)]$q + as.vector(c[1, var_offset:(var_offset + var_size)])
+      } else {
+        coeffs[id(var)] <- list()
+        coeffs[id(var)]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
+        coeffs[id(var)]$q <- coeffs[id(var)]$q + as.vector(c[1, var_offset:(var_offset + var_size)])
+      }
+    }
+  }
+  return(list(coeffs, b))
+})
+
+setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+  # Extract quadratic, linear constant parts of a quadratic objective.
+  # Insert no-op such that root is never a quadratic form, for easier processing.
+  root <- LinOp(NO_OP, dim(expr), list(expr), list())
+  
+  # Replace quadratic forms with dummy variables.
+  quad_forms <- replace_quad_forms(root, list())
+  
+  # Calculate affine parts and combine them with quadratic forms to get the coefficients.
+  tmp <- extract_quadratic_coeffs(object, root@args[[1]], quad_forms)
+  coeffs <- tmp[[1]]
+  constant <- tmp[[2]]
+  
+  # TODO: Finish this function.
+})
 
 # #
 # # The QuadCoeffExtractor class

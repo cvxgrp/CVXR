@@ -18,6 +18,7 @@ setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
+setClassUnion("NumORNULL", c("numeric", "NULL"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
 #' @rdname size
@@ -48,19 +49,31 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
 setMethod("show", "Expression", function(object) {
-  cat("Expression(", curvature(object), ", ", sign(object), ", ", size(object), ")", sep = "")
+  cat("Expression(", curvature(object), ", ", sign(object), ", ", shape(object), ")", sep = "")
 })
 
 #' @rdname Expression-class
 setMethod("as.character", "Expression", function(x) {
-  paste("Expression(", curvature(x), ", ", sign(x), ", ", size(x), ")", sep = "")
+  paste("Expression(", curvature(x), ", ", sign(x), ", ", shape(x), ")", sep = "")
 })
 
 #' @describeIn Expression The string representation of the expression.
 #' @export
 setMethod("name", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression The curvature of the expression.
+#' @describeIn Expression The expression itself.
+setMethod("expr", "Expression", function(object) { object })
+
+#'
+#' Curvature of Expression
+#'
+#' The curvature of an expression.
+#'
+#' @param x An \linkS4class{Expression} object.
+#' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX", "CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname curvature
+#' @export
 setMethod("curvature", "Expression", function(object) {
   if(is_constant(object))
     curvature_str <- CONSTANT
@@ -76,7 +89,7 @@ setMethod("curvature", "Expression", function(object) {
 })
 
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
-setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) })
+setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) || 0 %in% shape(object) })
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
@@ -90,11 +103,26 @@ setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") }
 #' @describeIn Expression The expression is DCP if it is convex or concave.
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
 
+#' @describeIn Expression A logical value indicating whether the expression is a Hermitian matrix.
+setMethod("is_hermitian", "Expression", function(object) { is_real(object) && is_symmetric(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a positive semidefinite matrix.
+setMethod("is_psd", "Expression", function(object) { FALSE })
+
+#' @describeIn Expression A logical value indicating whether the expression is a negative semidefinite matrix.
+setMethod("is_nsd", "Expression", function(object) { FALSE })
+
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
 setMethod("is_quadratic", "Expression", function(object) { FALSE })
 
+#' @describeIn Expression A logical value indicating whether the expression is symmetric.
+setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
+
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
 setMethod("is_pwl", "Expression", function(object) { FALSE })
+
+#' @describeIn Expression A logical value indicating whether the expression is quadratic or piecewise affine.
+setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
 
 #'
 #' Sign of Expression
@@ -102,50 +130,68 @@ setMethod("is_pwl", "Expression", function(object) { FALSE })
 #' The sign of an expression.
 #'
 #' @param x An \linkS4class{Expression} object.
-#' @return A string indicating the sign of the expression, either "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+#' @return A string indicating the sign of the expression, either "ZERO", "NONNEG", "NONPOS", or "UNKNOWN".
 #' @docType methods
 #' @rdname sign
 #' @export
 setMethod("sign", "Expression", function(x) {
   if(is_zero(x))
     sign_str <- ZERO
-  else if(is_positive(x))
-    sign_str <- POSITIVE
-  else if(is_negative(x))
-    sign_str <- NEGATIVE
+  else if(is_nonneg(x))
+    sign_str <- NONNEG
+  else if(is_nonpos(x))
+    sign_str <- NONPOS
   else
     sign_str <- UNKNOWN
   sign_str
 })
 
-#' @describeIn Expression The expression is zero if it is both positive and negative.
-setMethod("is_zero", "Expression", function(object) { is_positive(object) && is_negative(object) })
+#' @describeIn Expression The expression is zero if it is both nonnegative and nonpositive.
+setMethod("is_zero", "Expression", function(object) { is_nonneg(object) && is_nonpos(object) })
 
-#' @describeIn Expression A logical value indicating whether the expression is positive.
-setMethod("is_positive", "Expression", function(object) { stop("Unimplemented") })
+#' @describeIn Expression A logical value indicating whether the expression is nonnegative.
+setMethod("is_nonneg", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression A logical value indicating whether the expression is negative.
-setMethod("is_negative", "Expression", function(object) { stop("Unimplemented") })
+#' @describeIn Expression A logical value indicating whether the expression is nonpositive.
+setMethod("is_nonpos", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The \code{c(row, col)} dimensions of the expression.
-setMethod("size", "Expression", function(object) { stop("Unimplemented") })
+setMethod("shape", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression The expression is scalar if rows = cols = 1.
-setMethod("is_scalar", "Expression", function(object) { all(size(object) == c(1,1)) })
+#' @describeIn Expression A logical value indicating whether the expression is real.
+setMethod("is_real", "Expression", function(object) { !is_complex(object) })
 
-#' @describeIn Expression The expression is a vector if min(rows, cols) = 1.
-setMethod("is_vector", "Expression", function(object) { min(size(object)) == 1 })
+#' @describeIn Expression A logical value indicating whether the expression is imaginary.
+setMethod("is_imag", "Expression", function(object) { stop("Unimplemented") })
 
-#' @describeIn Expression The expression is a matrix if rows > 1 and cols > 1.
-setMethod("is_matrix", "Expression", function(object) { size(object)[1] > 1 && size(object)[2] > 1 })
+#' @describeIn Expression A logical value indicating whether the expression is complex.
+setMethod("is_complex", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The number of entries in the expression.
+setMethod("size", "Expression", function(object) { as.integer(prod(shape(object))) })
+
+#' @describeIn Expression The number of dimensions in the expression's shape.
+setMethod("ndim", "Expression", function(object) { length(shape(object)) })
+
+#' @describeIn Expression Vectorizes the expression.
+setMethod("flatten", "Expression", function(object) { Vec(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a scalar.
+setMethod("is_scalar", "Expression", function(object) { all(shape(object) == 1) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a row or column vector.
+setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1 || (ndim(object) == 1 && min(shape(object)) == 1) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a matrix.
+setMethod("is_matrix", "Expression", function(object) { ndim(object) == 2 && shape(object)[1] > 1 && shape(object)[2] > 1 })
 
 #' @describeIn Expression Number of rows in the expression.
 #' @export
-setMethod("nrow", "Expression", function(x) { size(x)[1] })
+setMethod("nrow", "Expression", function(x) { shape(x)[1] })
 
 #' @describeIn Expression Number of columns in the expression.
 #' @export
-setMethod("ncol", "Expression", function(x) { size(x)[2] })
+setMethod("ncol", "Expression", function(x) { shape(x)[2] })
 
 # Slice operators
 #' @param i,j The row and column indices of the slice.
@@ -297,7 +343,7 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 #' @rdname transpose
 #' @method t Expression
 #' @export
-t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
+t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
 
 #' @docType methods
 #' @rdname transpose
@@ -305,7 +351,10 @@ t.Expression <- function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) 
 #' x <- Variable(3, 4)
 #' t(x)
 #' @export
-setMethod("t", signature(x = "Expression"), function(x) { if(is_scalar(x)) x else Transpose(args = list(x)) })
+setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(args = list(x)) })
+
+Conj.Expression <- function(z) { if(is_real(z)) z else Conjugate(z) }
+setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z else Conjugate(z) })
 
 #' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
 #' @rdname MulExpression-class
@@ -432,6 +481,9 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
 
 #' @param object A \linkS4class{Leaf} object.
+#' @describeIn Leaf The dimensions of the leaf node.
+setMethod("shape", "Leaf", function(object) { object@shape })
+
 #' @describeIn Leaf List of \linkS4class{Variable} objects in the leaf node.
 setMethod("variables", "Leaf", function(object) { list() })
 
@@ -447,14 +499,43 @@ setMethod("is_convex", "Leaf", function(object) { TRUE })
 #' @describeIn Leaf A logical value indicating whether the leaf node is concave.
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 
-#' @describeIn Leaf A logical value indicating whether the leaf node is quadratic.
-setMethod("is_quadratic", "Leaf", function(object) { TRUE })
+#' @describeIn Leaf A logical value indicating whether the leaf node is nonnegative.
+setMethod("is_nonneg", "Leaf", function(object) { object@attributes$nonneg || object@attributes$boolean })
 
-#' @describeIn Leaf A logical value indicating whether the leaf node is piecewise linear.
-setMethod("is_pwl", "Leaf", function(object) { TRUE })
+#' @describeIn Leaf A logical value indicating whether the leaf node is nonpositive.
+setMethod("is_nonpos", "Leaf", function(object) { object@attributes$nonpos })
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is hermitian.
+setMethod("is_hermitian", "Leaf", function(object) {
+  (is_real(object) && is_symmetric(object)) || object@attributes$hermitian || is_psd(object) || is_nsd(object)
+})
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is symmetric.
+setMethod("is_symmetric", "Leaf", function(object) {
+  is_scalar(object) || any(sapply(c("diag", "symmetric", "PSD", "NSD"), function(key) { object@attributes[key] }))
+})
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is imaginary.
+setMethod("is_imag", "Leaf", function(object) { object@attributes$imag })
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is complex.
+setMethod("is_complex", "Leaf", function(object) {
+  object@attributes$complex || is_imag(object) || object@attributes$hermitian
+})
 
 #' @describeIn Leaf A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
-setMethod("domain", "Leaf", function(object) { list() })   # Default is full domain
+setMethod("domain", "Leaf", function(object) {
+  domain <- list()
+  if(object@attributes$nonneg)
+    domain <- c(domain, object >= 0)
+  else if(object@attributes$nonpos)
+    domain <- c(domain, object <= 0)
+  else if(object@attributes$PSD)
+    domain <- c(domain, object %>>% 0)
+  else if(object@attributes$NSD)
+    domain <- c(domain, object %<<% 0)
+  return(domain)
+})
 
 #' @param val The assigned value.
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
@@ -482,3 +563,17 @@ setMethod("validate_val", "Leaf", function(object, val) {
   }
   return(val)
 })
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is a positive semidefinite matrix.
+setMethod("is_psd", "Leaf", function(object) { object@attributes$PSD })
+
+#' @describeIn Leaf A logical value indicating whether the leaf node is a negative semidefinite matrix.
+setMethod("is_nsd", "Leaf", function(object) { object@attributes$NSD })
+
+#' @describeIn Leaf Leaf nodes are always quadratic.
+setMethod("is_quadratic", "Leaf", function(object) { TRUE })
+
+#' @describeIn Leaf Leaf nodes are always piecewise linear.
+setMethod("is_pwl", "Leaf", function(object) { TRUE })
+
+setMethod("atoms", "Leaf", function(object) { list() })

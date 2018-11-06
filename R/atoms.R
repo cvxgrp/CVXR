@@ -148,8 +148,9 @@ setMethod("parameters", "Atom", function(object) {
 
 #' @describeIn Atom List of \linkS4class{Constant} objects in the atom.
 setMethod("constants", "Atom", function(object) {
-  const_list <- lapply(object@args, function(arg) { constants(arg) })
-  unique(flatten_list(const_list))   # TODO: Is this the correct way to remove duplicates?
+  const_list <- flatten_list(lapply(object@args, function(arg) { constants(arg) }))
+  const_id <- sapply(const_list, function(constant) { id(constant) })
+  const_list[!duplicated(const_id)]
 })
 
 #' @describeIn Atom The value of the atom.

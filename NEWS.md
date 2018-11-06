@@ -58,7 +58,7 @@ programming, MOSEK and GUROBI examples.
 
 * Updated `unpack_results` to behave exactly like in CVXPY. Added
   documentation and testthat tests. Documented in [Getting Faster
-  Results article](https://cvxr.rbind.io/post/examples/cvxr_speed/).
+  Results article](https://cvxr.rbind.io/cvxr_examples/cvxr_speed/).
   
 
 # CVXR 0.94-4

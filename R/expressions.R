@@ -411,7 +411,7 @@ setMethod("<=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 setMethod("<=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) <= e2 })
 
 #' @rdname LeqConstraint-class
-setMethod("<",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 <= e2 })
+setMethod("<",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
 
 #' @rdname LeqConstraint-class
 setMethod("<",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 < as.Constant(e2) })
@@ -429,7 +429,7 @@ setMethod(">=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 setMethod(">=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) >= e2 })
 
 #' @rdname LeqConstraint-class
-setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 >= e2 })
+setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
 
 #' @rdname LeqConstraint-class
 setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 > as.Constant(e2) })
@@ -478,9 +478,75 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(args = "list"), prototype(args = list()), contains = "Expression")
+Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical", 
+                                        complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
+                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
+                                        integer = "logical", sparsity = "logical"), 
+                         prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE,
+                                   symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE,
+                                   boolean = FALSE, integer = FALSE, sparsity = NA_real_), contains = "Expression")
+
+setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA_real_) {
+  if(length(shape) > 2)
+    stop("Expressions of dimension greater than 2 are not supported.")
+  
+  for(d in shape) {
+    if(!is.integer(d) || d <= 0)
+      stop("Invalid dimensions ", shape)
+  }
+  .Object@shape <- as.integer(shape)
+  
+  if((PSD || NSD || symmetric || diag || hermitian) && (length(shape) != 2 || shape[1] != shape[2]))
+    stop("Invalid dimensions ", shape, ". Must be a square matrix.")
+  
+  # Process attributes.
+  .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, complex = complex, imag = imag,
+                             symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
+                             boolean = as.logical(boolean), integer = integer, sparsity = sparsity)
+  if(boolean) {
+    if(!is.logical(boolean))
+      .Object@boolean_idx <- boolean
+    else
+      .Object@boolean_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
+  } else
+    .Object@boolean_idx <- list()
+  
+  if(integer) {
+    if(!is.logical(integer))
+      .Object@integer_idx <- integer
+    else
+      .Object@integer_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
+  } else
+    .Object@integer_idx <- list()
+  
+  # Only one attribute can be TRUE (except boolean and integer).
+  true_attr <- sum(unlist(.Object@attributes))
+  if(boolean && integer)
+    true_attr <- true_attr - 1
+  if(true_attr > 1)
+    stop("Cannot set more than one special attribute.")
+  
+  if(!is.na(value))
+    .Object@value <- value
+  .Object@args <- list()
+  callNextMethod(.Object, ...)  
+})
+
+setMethod("get_attr_str", "Leaf", function(object) {
+  # Get a string representing the attributes
+  attr_str <- ""
+  for(attr in names(object@attributes)) {
+    val <- object@attributes[attr]
+    if(attr != "real" && !is.na(val))
+      attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
+  }
+  attr_str
+})
 
 #' @param object A \linkS4class{Leaf} object.
+#' @describeIn Leaf Leaves are not copied.
+setMethod("get_data", "Leaf", function(object) { })
+
 #' @describeIn Leaf The dimensions of the leaf node.
 setMethod("shape", "Leaf", function(object) { object@shape })
 
@@ -537,29 +603,112 @@ setMethod("domain", "Leaf", function(object) {
   return(domain)
 })
 
+#' @describeIn Leaf Project value onto the attribute set of the leaf.
+setMethod("project", "Leaf", function(object, val) {
+  if(!is_complex(object))
+    val <- Re(val)
+  
+  if(object@attributes$nonpos && object@attributes$nonneg)
+    return(0*val)
+  else if(object@attributes$nonpos)
+    return(pmin(val, 0))
+  else if(object@attributes$nonneg)
+    return(pmax(val, 0))
+  else if(object@attributes$imag)
+    return(Im(val))
+  else if(object@attributes$complex)
+    return(as.complex(val))
+  else if(object@attributes$boolean)
+    # TODO: Respect the boolean indices.
+    return(round(pmax(pmin(val, 1), 0)))
+  else if(object@attributes$integer)
+    # TODO: Respect the integer indices. Also, variable may be integer in some indices and boolean in others.
+    return(round(val))
+  else if(object@attributes$diag) {
+    val <- diag(val)
+    return(sparseMatrix(i = 1:length(val), j = 1:length(val), x = val))
+  } else if(object@attributes$hermitian)
+    return(val + t(Conj(val))/2)
+  else if(any(sapply(c("symmetric", "PSD", "NSD"), function(key) { object@attributes[key] }))) {
+    val <- val + t(val)
+    val <- val/2
+    if(object@attributes$symmetric)
+      return(val)
+    
+    wV <- eigen(val, symmetric = TRUE, only.values = FALSE)
+    w <- wV$values
+    V <- wV$vectors
+    
+    if(object@attributes$PSD) {
+      bad <- w < 0
+      if(!any(bad))
+        return(val)
+      w[bad] <- 0
+    } else {   # NSD
+      bad <- w > 0
+      if(!any(bad))
+        return(val)
+      w[bad] <- 0
+    }
+    return((V %*% w) %*% t(V))
+  } else
+    return(val)
+})
+
 #' @param val The assigned value.
+#' @describeIn Leaf Get the value of the leaf.
+setMethod("value", "Leaf", function(object) { object@value })
+
+#' @describeIn Leaf Set the value of the leaf.
+setReplaceMethod("value", "Leaf", function(object, value) {
+  object@value <- validate_val(object, value)
+  return(object)
+})
+
+#' @describeIn Leaf Project and assign a value to the leaf.
+setMethod("project_and_assign", "Leaf", function(object, val) {
+  object@value <- project(object, val)
+  return(object)
+})
+
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
-  if(length(val) > 1 || !(length(val) == 1 && is.na(val))) {
-    # Convert val to the proper matrix type
-    if(!(is.null(dim(val)) && length(val) == 1))
-      val <- as.matrix(val)
-    size <- intf_size(val)
-    if(any(size != size(object)))
-      stop("Invalid dimensions (", size[1], ", ", size[2], ") for ", class(object), " value")
-
-    # All signs are valid if sign is unknown
-    # Otherwise value sign must match declared sign
-    sign <- intf_sign(val)
-    pos_val <- sign[1]
-    neg_val <- sign[2]
-    if(is_positive(object) && !pos_val || is_negative(object) && !neg_val)
-      stop("Invalid sign for ", class(object), " value")
-    # Round to correct sign
-    else if(is_positive(object))
-      val <- pmax(val, 0)
-    else if(is_negative(object))
-      val <- pmin(val, 0)
+  if(!is.na(val)) {
+    val <- intf_convert(val)
+    if(any(intf_shape(val) != shape(object)))
+      stop("Invalid dimensions ", intf_shape(val), " for value")
+    projection <- project(object, val)
+    delta <- abs(val - projection)
+    
+    if(is(delta, "sparseMatrix"))
+      close_enough <- all(abs(delta@x) <= SPARSE_PROJECTION_TOL)
+    else {
+      delta <- as.matrix(delta)
+      if(object@attributes$PSD || object@attributes$NSD)
+        close_enough <- norm(delta, type = "2") <= PSD_NSD_PROJECTION_TOL
+      else
+        close_enough <- all(abs(delta) <= GENERAL_PROJECTION_TOL)
+    }
+    
+    if(!close_enough) {
+      if(object@attributes$nonneg)
+        attr_str <- "nonnegative"
+      else if(object@attributes$nonpos)
+        attr_str <- "nonpositive"
+      else if(object@attributes$diag)
+        attr_str <- "diagonal"
+      else if(object@attributes$PSD)
+        attr_str <- "positive semidefinite"
+      else if(object@attributes$NSD)
+        attr_str <- "negative semidefinite"
+      else if(object@attributes$imag)
+        attr_str <- "imaginary"
+      else {
+        attr_str <- names(object@attributes)[unlist(object@attributes)]
+        attr_str <- c(attr_str, "real")[1]
+      }
+      stop("Value must be ", attr_str)
+    }
   }
   return(val)
 })

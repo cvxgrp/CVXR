@@ -40,7 +40,7 @@ Variable <- function(shape = NULL, name = NA_character_) { .Variable(shape = sha
 setMethod("initialize", "Variable", function(.Object, ..., shape = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
   .Object@var_id <- var_id
   if(is.na(name))
-    .Object@name <- sprintf("%s%s", VAR_PREFIX, .Object@id)
+    .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)
   else
     .Object@name <- name
   .Object@value <- NA_real_
@@ -48,13 +48,21 @@ setMethod("initialize", "Variable", function(.Object, ..., shape = NULL, name = 
 })
 
 setMethod("show", "Variable", function(object) {
-  paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
+  attr_str <- .get_attr_str(object)
+  if(length(attr_str) > 0)
+    paste("Variable((", paste(shape(object), collapse = ", "), "), ", attr_str, ")", sep = "")
+  else
+    paste("Variable(", paste(shape(object), collapse = ", "), ")", sep = "")
 })
 
 #' @param x,object A \linkS4class{Variable} object.
 #' @rdname Variable-class
 setMethod("as.character", "Variable", function(x) {
-  paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
+  attr_str <- get_attr_str(x)
+  if(length(attr_str) > 0)
+    paste("Variable((", paste(shape(x), collapse = ", "), "), ", attr_str, ")", sep = "")
+  else
+    paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
 })
 
 #' @describeIn Variable The unique ID of the variable.
@@ -63,23 +71,6 @@ setMethod("id", "Variable", function(object) { object@id })
 #' @describeIn Variable The name of the variable.
 #' @export
 setMethod("name", "Variable", function(object) { object@name })
-
-# Set the value of the primal variable.
-setMethod("save_value", "Variable", function(object, value) {
-  value <- validate_val(object, value)
-  object@primal_value <- value
-  object
-})
-
-#' @describeIn Variable The value of the variable.
-setMethod("value", "Variable", function(object) { object@primal_value })
-
-#' @param value The value to assign to the primal variable.
-#' @describeIn Variable Set the value of the primal variable.
-setReplaceMethod("value", "Variable", function(object, value) {
-  object <- save_value(object, value)
-  object
-})
 
 #' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix.
 setMethod("grad", "Variable", function(object) {

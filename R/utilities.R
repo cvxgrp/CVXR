@@ -220,6 +220,7 @@ mul_sign <- function(lh_expr, rh_expr) {
 # Utility functions for constraints #
 #                                   #
 #####################################
+# Formats all the row/column cones for the solver.
 format_axis <- function(t, X, axis) {
   # Reduce to norms of columns
   if(axis == 1)
@@ -227,48 +228,57 @@ format_axis <- function(t, X, axis) {
 
   # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
   # gives the format for the elementwise cone constraints.
-  cone_size <- 1 + size(X)[1]
+  cone_size <- 1 + shape(X)[1]
   terms <- list()
 
-  # Make t_mat
-  mat_size <- c(cone_size, 1)
-  prod_size <- c(cone_size, size(t)[1])
-  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_size)
-  t_mat <- create_const(t_mat, mat_size, sparse = TRUE)
-  terms <- c(terms, list(lo.mul_expr(t_mat, lo.transpose(t), prod_size)))
+  # Make t_mat.
+  mat_shape <- c(cone_size, 1)
+  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_shape)
+  t_mat <- create_const(t_mat, mat_shape, sparse = TRUE)
+  t_vec <- t
+  if(is.null(shape(t)))   # t is scalar.
+    t_vec <- lo.reshape(t, c(1,1))
+  else   # t is 1-D.
+    t_vec <- lo.reshape(t, c(1, shape(t)[1]))
+  mul_shape <- c(cone_size, shape(t_vec)[2])
+  terms <- c(terms, list(lo.mul_expr(t_mat, t_vec, mul_shape)))
 
-  # Make X_mat
-  mat_size <- c(cone_size, size(X)[1])
-  prod_size <- c(cone_size, size(X)[2])
+  # Make X_mat.
+  if(length(shape(X)) == 1)
+    X <- lo.reshape(X, c(shape(X)[1], 1))
+  mat_shape <- c(cone_size, shape(X)[1])
   val_arr <- rep(1.0, cone_size - 1)
   row_arr <- 2:cone_size
   col_arr <- 1:(cone_size - 1)
-  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_size)
-  X_mat <- create_const(X_mat, mat_size, sparse = TRUE)
-  terms <- c(terms, list(lo.mul_expr(X_mat, X, prod_size)))
+  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_shape)
+  X_mat <- create_const(X_mat, mat_shape, sparse = TRUE)
+  mul_shape <- c(cone_size, shape(X)[2])
+  terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_shape)))
   list(create_geq(lo.sum_expr(terms)))
 }
 
+# Formats all the elementwise cones for the solver.
 format_elemwise <- function(vars_) {
   # Create matrices A_i such that 0 <= A_0*x_0 + ... + A_n*x_n
   # gives the format for the elementwise cone constraints.
   spacing <- length(vars_)
-  prod_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[2])
 
   # Matrix spaces out columns of the LinOp expressions
-  mat_size <- c(spacing*vars_[[1]]$size[1], vars_[[1]]$size[1])
+  shape <- vars_[[1]]$shape
+  mat_shape <- c(spacing*shape[1], shape[1])
 
-  mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_size, spacing, offset) })
-  terms <- mapply(function(var, mat) { list(lo.mul_expr(mat, var, prod_size)) }, vars_, mats)
+  mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_shape, spacing, offset) })
+  terms <- mapply(function(var, mat) { list(lo.mul_expr(mat, var)) }, vars_, mats)
   list(create_geq(lo.sum_expr(terms)))
 }
 
-get_spacing_matrix <- function(size, spacing, offset) {
-  col_arr <- 1:size[2]
+# Returns a sparse matrix LinOp that spaces out an expression.
+get_spacing_matrix <- function(shape, spacing, offset) {
+  col_arr <- 1:shape[2]
   row_arr <- spacing*(col_arr - 1) + 1 + offset
-  val_arr <- rep(1.0, size[2])
-  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = size)
-  create_const(mat, size, sparse = TRUE)
+  val_arr <- rep(1.0, shape[2])
+  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = shape)
+  create_const(mat, shape, sparse = TRUE)
 }
 
 ###################################

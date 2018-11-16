@@ -131,34 +131,32 @@ setMethod("residual", "NonPosConstraint", function(object) {
 #' @name NonlinearConstraint-class
 #' @aliases NonlinearConstraint
 #' @rdname NonlinearConstraint-class
-.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_size = "numeric"),
-                                 prototype(.x_size = NA_integer_), contains = "Constraint")
+.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_shape = "numeric"),
+                                 prototype(.x_shape = NA_integer_), contains = "Constraint")
 
 #' @param f A nonlinear function.
 #' @param vars_ A list of variables involved in the function.
 #' @rdname NonlinearConstraint-class
-NonlinearConstraint <- function(f, vars_) { .NonlinearConstraint(f = f, vars_ = vars_) }
+NonlinearConstraint <- function(f, vars_, constr_id = NA_integer_) { .NonlinearConstraint(f = f, vars_ = vars_, constr_id = constr_id) }
 
 setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) {
   .Object@f <- f
   .Object@vars_ <- vars_
 
   # The shape of vars_ in f(vars_)
-  cols <- size(.Object@vars_[[1]])[2]
-  rows <- sum(sapply(.Object@vars_, function(var) { size(var)[1] }))
-  .Object@.x_size <- c(rows*cols, 1)
-  callNextMethod(.Object, ...)
+  sizes <- sapply(.Object@vars_, function(v) { as.integer(prod(shape(v))) })
+  .Object@x_shape <- c(sum(sizes), 1)
+  callNextMethod(.Object, ..., args = .Object@vars_)
 })
 
-#' @param object A \linkS4class{NonlinearConstraint} object.
-#' @describeIn NonlinearConstraint The variables involved in the function in order, i.e. \code{f(vars_) = f(vstack(variables))}.
-setMethod("variables", "NonlinearConstraint", function(object) { object@vars_ })
-
-setMethod("block_add", "NonlinearConstraint", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
+# Add the block to a slice of the matrix.
+setMethod("block_add", "NonlinearConstraint", function(object, matrix, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
+  if(is(matrix, "sparseMatrix") && is.matrix(block))
+    block <- Matrix(block, sparse = TRUE)
   row_seq <- seq(vert_offset, rows + vert_offset, vert_step)
   col_seq <- seq(horiz_offset, cols + horiz_offset, horiz_step)
-  mat[row_seq, col_seq] <- mat[row_seq, col_seq] + block
-  mat
+  matrix[row_seq, col_seq] <- matrix[row_seq, col_seq] + block
+  matrix
 })
 
 # Place \code{x_0 = f()} in the vector of all variables.
@@ -167,11 +165,11 @@ setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets
   m <- tmp[[1]]
   x0 <- tmp[[2]]
   offset <- 0
-  for(var in variables(object)) {
-    var_size <- prod(size(var))
-    var_x0 <- x0[offset:(offset + var_size)]
-    big_x <- block_add(object, big_x, var_x0, var_offsets[get_data(var)], 0, var_size, 1)
-    offset <- offset + var_size
+  for(var in object@args) {
+    var_shape <- as.integer(prod(shape(var)))
+    var_x0 <- x0[offset:(offset + var_shape)]
+    big_x <- block_add(object, big_x, var_x0, var_offsets[get_data(var)], 0, var_shape, 1)
+    offset <- offset + var_shape
   }
   big_x
 })
@@ -179,11 +177,11 @@ setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets
 # Place \code{Df} in the gradient of all functions.
 setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_offsets, vert_offset) {
   horiz_offset <- 0
-  for(var in variables(object)) {
-    var_size <- prod(size(var))
-    var_Df <- Df[, horiz_offset:(horiz_offset + var_size)]
-    big_Df <- block_add(object, big_Df, var_Df, vert_offset, var_offsets[get_data(var)], prod(size(object)), var_size)
-    horiz_offset <- horiz_offset + var_size
+  for(var in object@args) {
+    var_shape <- as.integer(prod(shape(var)))
+    var_Df <- Df[, horiz_offset:(horiz_offset + var_shape)]
+    big_Df <- block_add(object, big_Df, var_Df, vert_offset, var_offsets[get_data(var)], num_cones(object), var_shape)
+    horiz_offset <- horiz_offset + var_shape
   }
   big_Df
 })
@@ -191,29 +189,28 @@ setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_of
 # Place \code{H} in the Hessian of all functions.
 setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offsets) {
   offset <- 0
-  for(var in variables(object)) {
-    var_size <- prod(size(var))
-    var_H <- H[offset:(offset + var_size), offset:(offset + var_size)]
-    big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_size, var_size)
-    offset <- offset + var_size
+  for(var in object@args) {
+    var_size <- as.integer(prod(shape(var)))
+    var_H <- H[offset:(offset + var_shape), offset:(offset + var_shape)]
+    big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_shape, var_shape)
+    offset <- offset + var_shape
   }
   big_H
 })
 
 # Extract the function variables from the vector \code{x} of all variables.
 setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_offsets) {
-  local_x <- matrix(0, nrow = object@.x_size[1], ncol = object@.x_size[2])
+  local_x <- matrix(0, nrow = object@.x_shape[1], ncol = object@.x_shape[2])
   offset <- 0
-  for(var in variables(object)) {
-    var_size <- prod(size(var))
-    value <- x[var_offsets[get_data(var)]:(var_offsets[get_data(var)] + var_size)]
-    local_x <- block_add(object, local_x, value, offset, 0, var_size, 1)
-    offset <- offset + var_size
+  for(var in object@args) {
+    var_shape <- as.integer(prod(shape(var)))
+    value <- x[var_offsets[get_data(var)]:(var_offsets[get_data(var)] + var_shape)]
+    local_x <- block_add(object, local_x, value, offset, 0, var_shape, 1)
+    offset <- offset + var_shape
   }
   local_x
 })
 
-# TODO: This should inherit from NonlinearConstraint once that is complete.
 #'
 #' The ExpCone class.
 #'
@@ -221,48 +218,59 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #'
 #' Original cone:
 #' \deqn{
-#' K = \{(a,b,c) | b > 0, be^{a/b} \leq c\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
+#' K = \{(x,y,z) | y > 0, ye^{x/y} \leq z\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 #' }
 #' Reformulated cone:
 #' \deqn{
-#' K = \{(a,b,c) | b, c > 0, b\log(b) + a \leq b\log(c)\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
+#' K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 #' }
 #'
 #' @slot constr_id (Internal) A unique integer identification number used internally.
-#' @slot a The variable \eqn{a} in the exponential cone.
-#' @slot b The variable \eqn{b} in the exponential cone.
-#' @slot c The variable \eqn{c} in the exponential cone.
+#' @slot x The variable \eqn{x} in the exponential cone.
+#' @slot y The variable \eqn{y} in the exponential cone.
+#' @slot z The variable \eqn{z} in the exponential cone.
 #' @name ExpCone-class
 #' @aliases ExpCone
 #' @rdname ExpCone-class
-.ExpCone <- setClass("ExpCone", representation(a = "list", b = "list", c = "list"), contains = "Constraint")
+.ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "NonlinearConstraint")
 
-#' @param a The variable \eqn{a} in the exponential cone.
-#' @param b The variable \eqn{b} in the exponential cone.
-#' @param c The variable \eqn{c} in the exponential cone.
+#' @param x The variable \eqn{x} in the exponential cone.
+#' @param y The variable \eqn{y} in the exponential cone.
+#' @param z The variable \eqn{z} in the exponential cone.
 #' @rdname ExpCone-class
 ## #' @export
-ExpCone <- function(a, b, c) { .ExpCone(a = a, b = b, c = c) }
+ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
 
-setMethod("initialize", "ExpCone", function(.Object, ..., a, b, c) {
-  .Object@a <- a
-  .Object@b <- b
-  .Object@c <- c
-  callNextMethod(.Object, ...)
+setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
+  .Object@x <- x
+  .Object@y <- y
+  .Object@z <- z
+  callNextMethod(.Object, ..., f = solver_hook(.Object), vars_ = list(.Object@x, .Object@y, .Object@z))
 })
 
-# TODO: Is this the correct size method for the exponential cone class?
-#' @param x,object A \linkS4class{ExpCone} object.
-#' @describeIn ExpCone The size of the \code{x} argument.
-setMethod("size", "ExpCone", function(object) { size(object@a) })
+setMethod("show", "ExpCone", function(object) {
+  paste("ExpCone(", as.character(x@a), ", ", as.character(x@b), ", ", as.character(x@c), ")", sep = "")
+})
 
 #' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@a), ", ", as.character(x@b), ", ", as.character(x@c), ")", sep = "")
 })
 
-#' @describeIn ExpCone List of \linkS4class{Variable} objects in the exponential cone.
-setMethod("variables", "ExpCone", function(object) { list(object@a, object@b, object@c) })
+#' @param x,object A \linkS4class{ExpCone} object.
+#' @describeIn ExpCone The size of the \code{x} argument.
+setMethod("residual", "ExpCone", function(object) {
+  # TODO: The projection should be implemented directly.
+  if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
+    return(NA_real_)
+  x <- Variable(shape(object@x))
+  y <- Variable(shape(object@y))
+  z <- Variable(shape(object@z))
+  constr <- list(ExpCone(x, y, z))
+  obj <- Minimize(norm2(hstack(list(x, y, z)) - hstack(list(value(object@x), value(object@y), value(object@z)))))
+  prob <- Problem(obj, constr)
+  return(solve(prob))
+})
 
 #' @param eq_constr A list of the equality constraints in the canonical problem.
 #' @param leq_constr A list of the inequality constraints in the canonical problem.
@@ -280,15 +288,15 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
         object@vars_[[i]] <- lone_var
       }
     }
-    list(constraints, list(), object)
+    list(constraints, list())
   }
 
   .ecos_format <- function(object) {
-    list(list(), format_elemwise(list(object@a, object@c, object@b)))
+    list(list(), format_elemwise(list(object@x, object@y, object@z)))
   }
 
   .scs_format <- function(object) {
-    list(list(), format_elemwise(list(object@a, object@b, object@c)))
+    list(list(), format_elemwise(list(object@z, object@y, object@z)))
   }
 
   if(is(solver, "CVXOPT"))
@@ -296,15 +304,98 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
     # tmp <- .cvxopt_format(object)
     # object <- tmp[[3]]   # TODO: Need to pass along updated constraint object
     # eq_constr <- c(eq_constr, tmp[[1]])
-  else if(is(solver, "SCS"))
+  else if(is(solver, "SCS") || is(solver, "JULIA_OPT"))
     leq_constr <- c(leq_constr, .scs_format(object)[[2]])
   else if(is(solver, "ECOS"))
     leq_constr <- c(leq_constr, .ecos_format(object)[[2]])
   else
     stop("Solver does not support exponential cone")
   # Update dims
-  dims[[EXP_DIM]] <- dims[[EXP_DIM]] + prod(size(object))
+  dims[[EXP_DIM]] <- dims[[EXP_DIM]] + num_cones(object)
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
+})
+
+#' @describeIn ExpCone The number of entries in the combined cones.
+setMethod("size", "ExpCone", function(object) {
+  # TODO: Use size of dual variable(s) instead.
+  sum(cone_sizes(object)) 
+})
+
+#' @describeIn ExpCone The number of elementwise cones.
+setMethod("num_cones", "ExpCone", function(object) {
+  as.integer(prod(shape(object@args[[1]])))
+})
+
+#' @describeIn ExpCone The dimensions of the exponential cones.
+setMethod("cone_sizes", "ExpCone", function(object) {
+  rep(num_cones(object), 3)
+})
+
+#' @describeIn ExpCone An exponential constraint is DCP if each argument is affine.
+setMethod("is_dcp", "ExpCone", function(object) {
+  all(sapply(object@args, function(arg) { is_affine(arg) }))
+})
+
+#' @describeIn ExpCone Canonicalizes by converting expressions to LinOps.
+setMethod("canonicalize", "ExpCone", function(object) {
+  arg_objs <- list()
+  arg_constr <- list()
+  for(arg in object@args) {
+    canon <- canonical_form(arg)
+    arg_objs <- c(arg_objs, canon[[1]])
+    arg_constr <- c(arg_constr, canon[[2]])
+  }
+  exp_constr <- do.call(ExpCone, arg_objs)
+  list(0, c(list(exp_constr), arg_constr))
+})
+
+# A function used by CVXOPT's nonlinear solver.
+# Based on f(x,y,z) = y * log(y) + x - y * log(z)
+setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
+  entries <- as.integer(prod(shape(object)))
+  if(is.na(vars_)) {
+    x_init <- rep(0, entries)
+    y_init <- rep(0.5, entries)
+    z_init <- rep(1.0, entries)
+    return(list(entries, matrix(x_init + y_init + z_init)))
+  }
+  
+  # Unpack vars_
+  x <- vars_[1:entries]
+  y <- vars_[entries:(2*entries)]
+  z <- vars_[(2*entries):length(vars_)]
+  
+  # Out of domain.
+  # TODO: What if y == 0.0?
+  if(min(y) <= 0.0 || min(z) <= 0.0)
+    return(NA)
+  
+  # Evaluate the function.
+  f <- matrix(0, nrow = entries, ncol = 1)
+  for(i in 1:entries)
+    f[i] <- x[i] - y[i]*log(z[i]) + y[i]*log(y[i])
+  
+  # Compute the gradient.
+  Df <- matrix(0, nrow = entries, ncol = 3*entries)
+  for(i in 1:entries) {
+    Df[i,i] <- 1.0
+    Df[i, entries+i] <- log(y[i]) - log(z[i]) + 1.0
+    Df[i, 2*entries+i] <- -y[i]/z[i]
+  }
+  
+  if(is.na(scaling))
+    return(list(f, Df))
+  
+  # Compute the Hessian.
+  big_H <- sparseMatrix(i = c(), j = c(), dims = c(3*entries, 3*entries))
+  for(i in 1:entries) {
+    H <- rbind(c(0.0, 0.0, 0.0),
+               c(0.0, 1.0/y[i], -1.0/z[i]),
+               c(0.0, -1.0/z[i], y[i]/(z[i]^2)))
+    idx <- seq(i, 3*entries, entries)
+    big_H[idx, idx] <- scaling[i]*H
+  }
+  return(list(f, Df, big_H))
 })
 
 #'

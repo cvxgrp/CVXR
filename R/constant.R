@@ -4,16 +4,14 @@
 #' This class represents a constant.
 #'
 #' @slot value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
-#' @slot is_1D_array (Internal) A logical value indicating whether the value is a vector or 1-D matrix.
 #' @slot sparse (Internal) A logical value indicating whether the value is a sparse matrix.
-#' @slot size (Internal) A vector of containing the number of rows and columns.
 #' @slot is_pos (Internal) A logical value indicating whether all elements are non-negative.
 #' @slot is_neg (Internal) A logical value indicating whether all elements are non-positive.
 #' @name Constant-class
 #' @aliases Constant
 #' @rdname Constant-class
-.Constant <- setClass("Constant", representation(value = "ConstVal", is_1D_array = "logical", sparse = "logical", size = "numeric", is_pos = "logical", is_neg = "logical"),
-                                 prototype(value = NA_real_, is_1D_array = FALSE, sparse = NA, size = NA_real_, is_pos = NA, is_neg = NA),
+.Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric"),
+                                 prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_),
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -34,40 +32,35 @@
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
-setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, is_1D_array = FALSE, .sparse = NA, .size = NA_real_, .is_pos = NA, .is_neg = NA) {
-  .Object@is_1D_array <- is_1D_array
-  .Object@value <- value
+setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_) {
+  # Keep sparse matrices sparse.
   if(is(value, "ConstSparseVal")) {
     .Object@value <- Matrix(value, sparse = TRUE)
     .Object@sparse <- TRUE
   } else {
-    if(is.vector(value) && length(value) > 1)
-      .Object@is_1D_array <- TRUE
     .Object@value <- as.matrix(value)
     .Object@sparse <- FALSE
   }
-  .Object@size <- intf_size(.Object@value)
-  sign <- intf_sign(.Object@value)
-  .Object@is_pos <- sign[1]
-  .Object@is_neg <- sign[2]
-  callNextMethod(.Object, ...)
-})
-
-setMethod("show", "Constant", function(object) {
-  cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(size(object), collapse = ","), "))", sep = "")
+  .Object@imag <- imag
+  .Object@nonneg <- nonneg
+  .Object@nonpos <- nonpos
+  .Object@symm <- symm
+  .Object@herm <- herm
+  .Object@eigvals <- eigvals
+  callNextMethod(.Object, ..., intf_shape(.Object@value))
 })
 
 #' @param x,object A \linkS4class{Constant} object.
 #' @rdname Constant-class
-setMethod("as.character", "Constant", function(x) {
-  paste("Constant(", curvature(x), ", ", sign(x), ", (", paste(size(x), collapse = ","), "))", sep = "")
+setMethod("show", "Constant", function(object) {
+  cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(shape(object), collapse = ","), "))", sep = "")
 })
+
+#' @describeIn Constant The name of the constant.
+setMethod("name", "Constant", function(x) { as.character(x@value) })
 
 #' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })
-
-#' @describeIn Constant A list with the value of the constant.
-setMethod("get_data", "Constant", function(object) { list(value(object)) })
 
 #' @describeIn Constant The value of the constant.
 setMethod("value", "Constant", function(object) { object@value })
@@ -76,19 +69,138 @@ setMethod("value", "Constant", function(object) { object@value })
 setMethod("grad", "Constant", function(object) { list() })
 
 #' @describeIn Constant The \code{c(row, col)} dimensions of the constant.
-setMethod("size", "Constant", function(object) { object@size })
-
-#' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-negative.
-setMethod("is_positive", "Constant", function(object) { object@is_pos })
-
-#' @describeIn Constant A logical value indicating whether all elemenets of the constant are non-positive.
-setMethod("is_negative", "Constant", function(object) { object@is_neg })
+setMethod("shape", "Constant", function(object) { object@shape })
 
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(value(object), size(object), object@sparse)
+  obj <- create_const(value(object), shape(object), object@sparse)
   list(obj, list())
 })
+
+#' @describeIn Constant A logical value indicating whether all elements of the constant are non-negative.
+setMethod("is_nonneg", "Constant", function(object) { 
+  if(is.na(object@nonneg))
+    object <- compute_attr(object)
+  object@nonneg
+})
+
+#' @describeIn Constant A logical value indicating whether all elements of the constant are non-positive.
+setMethod("is_nonpos", "Constant", function(object) {
+  if(is.na(object@nonpos))
+    object <- compute_attr(object)
+  object@nonpos
+})
+
+#' @describeIn Constant A logical value indicating whether the constant is imaginary.
+setMethod("is_imag", "Constant", function(object) {
+  if(is.na(object@imag))
+    object <- compute_attr(object)
+  object@imag
+})
+
+#' @describeIn Constant A logical value indicating whether the constant is complex-valued.
+setMethod("is_complex", "Constant", function(object) { is.complex(value(object)) })
+
+#' @describeIn Constant A logical value indicating whether the constant is symmetric.
+setMethod("is_symmetric", "Constant", function(object) {
+  if(is_scalar(object))
+    return(TRUE)
+  else if(ndim(object) == 2 && shape(object)[1] == shape(object)[2]) {
+    if(is.na(object@symm))
+      object <- compute_symm_attr(object)
+    return(object@symm)
+  } else
+    return(FALSE)
+})
+
+#' @describeIn Constant A logical value indicating whether the constant is a Hermitian matrix.
+setMethod("is_hermitian", "Constant", function(object) {
+  if(is_scalar(object) && is_real(object))
+    return(TRUE)
+  else if(ndim(object) == 2 && shape(object)[1] == shape(object)[2]) {
+    if(is.na(object@herm))
+      object <- compute_symm_attr(object)
+    return(object@herm)
+  } else
+    return(FALSE)
+})
+
+# Compute the attributes of the constant related to complex/real, sign.
+compute_attr.Constant <- function(object) {
+  # Set DCP attributes.
+  res <- intf_is_complex(value(object))
+  is_real <- res[[1]]
+  is_imag <- res[[2]]
+  
+  if(is_complex(object)) {
+    is_nonneg <- FALSE
+    is_nonpos <- FALSE
+  } else {
+    sign <- intf_sign(value(object))
+    is_nonneg <- sign[[1]]
+    is_nonpos <- sign[[2]]
+  }
+  
+  object@imag <- is_imag && !is_real
+  object@nonpos <- is_nonpos
+  object@nonneg <- is_nonneg
+  object
+}
+
+# Determine whether the constant is symmetric/Hermitian.
+compute_symm_attr.Constant <- function(object) {
+  # Set DCP attributes.
+  res <- intf_is_hermitian(value(object))
+  object@symm <- res[[1]]
+  object@herm <- res[[2]]
+  object
+}
+
+#' @describeIn Constant A logical value indicating whether the constant is a positive semidefinite matrix.
+setMethod("is_psd", "Constant", function(object) {
+  # Symbolic only cases.
+  if(is_scalar(object) && is_nonneg(object))
+    return(TRUE)
+  else if(is_scalar(object))
+    return(FALSE)
+  else if(ndim(object) == 1)
+    return(FALSE)
+  else if(ndim(object) == 2 && shape(object)[1] != shape(object)[2])
+    return(FALSE)
+  else if(!is_hermitian(object))
+    return(FALSE)
+  
+  # Compute eigenvalues if absent.
+  if(is.na(object@eigvals))
+    object <- compute_eigvals(object)
+  return(all(Re(object@eigvals) >= -EIGVAL_TOL))
+})
+
+#' @describeIn Constant A logical value indicating whether the constant is a negative semidefinite matrix.
+setMethod("is_nsd", "Constant", function(object) {
+  # Symbolic only cases.
+  if(is_scalar(object) && is_nonpos(object))
+    return(TRUE)
+  else if(is_scalar(object))
+    return(FALSE)
+  else if(ndim(object) == 1)
+    return(FALSE)
+  else if(ndim(object) == 2 && shape(object)[1] != shape(object)[2])
+    return(FALSE)
+  else if(!is_hermitian(object))
+    return(FALSE)
+  
+  # Compute eigenvalues if absent.
+  if(is.na(object@eigvals))
+    object <- compute_eigvals(object)
+  return(all(Re(object@eigvals) <= EIGVAL_TOL))
+})
+
+# Compute the eigenvalues of the Hermitian or symmetric matrix represented by this constant.
+compute_eigvals.Constant <- function(object) {
+  object@eigvals <- eigen(value(object), only.values = TRUE)$values
+  object
+}
 
 #'
 #' Cast to a Constant
@@ -121,14 +233,8 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(id = "integer", rows = "numeric", cols = "numeric", name = "character", sign_str = "character", value = "ConstVal"),
-                                    prototype(rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_),
-                      validity = function(object) {
-                        if(!(object@sign_str %in% SIGN_STRINGS))
-                          stop("[Sign: validation] sign_str must be in ", paste(SIGN_STRINGS, collapse = ", "))
-                        else
-                          return(TRUE)
-                        }, contains = "Leaf")
+.Parameter <- setClass("Parameter", representation(id = "integer", shape = "numeric", name = "character", value = "ConstVal"),
+                                    prototype(shape = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
@@ -142,60 +248,30 @@ as.Constant <- function(expr) {
 #' is_negative(x)
 #' size(x)
 #' @export
-Parameter <- function(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN, value = NA_real_) {
-  .Parameter(rows = rows, cols = cols, name = name, sign_str = toupper(sign), value = value)
+Parameter <- function(shape = NULL, name = NA_character_, value = NA_real_, ...) {
+  .Parameter(shape = shape, name = name, value = value, ...)
 }
 
-setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), rows = 1, cols = 1, name = NA_character_, sign_str = UNKNOWN, value = NA_real_) {
+setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), shape = NULL, name = NA_character_, value = NA_real_) {
   .Object@id <- id
-  .Object@rows <- rows
-  .Object@cols <- cols
-  .Object@sign_str <- sign_str
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
     .Object@name <- name
 
   # Initialize with value if provided
-  .Object@value <- NA_real_
-  if(!(length(value) == 1 && is.na(value)))
-    value(.Object) <- value
-  callNextMethod(.Object, ...)
+  .Object@value <- value
+  callNextMethod(.Object, ..., shape, value)
 })
 
-setMethod("show", "Parameter", function(object) {
-  cat("Parameter(", object@rows, ", ", object@cols, ", sign = ", sign(object), ")", sep = "")
-})
-
-#' @param x,object A \linkS4class{Parameter} object.
-#' @rdname Parameter-class
-setMethod("as.character", "Parameter", function(x) {
-  paste("Parameter(", x@rows, ", ", x@cols, ", sign = ", sign(x), ")", sep = "")
-})
-
-#' @describeIn Parameter Returns \code{list(rows, cols, name, sign string, value)}.
+#' @describeIn Parameter Returns \code{list(shape, name, value, attributes)}.
 setMethod("get_data", "Parameter", function(object) {
-  list(rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str, value = object@value)
+  list(shape = shape(object), name = object@name, value = value(object), attributes = attributes(object))
 })
 
 #' @describeIn Parameter The name of the parameter.
 #' @export
 setMethod("name", "Parameter", function(object) { object@name })
-
-#' @describeIn Parameter The \code{c(rows, cols)} dimensions of the parameter.
-setMethod("size", "Parameter", function(object) { c(object@rows, object@cols) })
-
-#' @describeIn Parameter Is the parameter non-negative?
-setMethod("is_positive", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == POSITIVE })
-
-#' @describeIn Parameter Is the parameter non-positive?
-setMethod("is_negative", "Parameter", function(object) { object@sign_str == ZERO || toupper(object@sign_str) == NEGATIVE })
-
-#' @describeIn Parameter An empty list since the gradient of a parameter is zero.
-setMethod("grad", "Parameter", function(object) { list() })
-
-#' @describeIn Parameter Returns itself as a parameter.
-setMethod("parameters", "Parameter", function(object) { list(object) })
 
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) { object@value })
@@ -206,10 +282,24 @@ setReplaceMethod("value", "Parameter", function(object, value) {
   object
 })
 
+#' @describeIn Parameter An empty list since the gradient of a parameter is zero.
+setMethod("grad", "Parameter", function(object) { list() })
+
+#' @describeIn Parameter Returns itself as a parameter.
+setMethod("parameters", "Parameter", function(object) { list(object) })
+
 #' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
-  obj <- create_param(object, size(object))
+  obj <- create_param(object, shape(object))
   list(obj, list())
+})
+
+setMethod("show", "Parameter", function(object) {
+  attr_str <- get_attr_str(object)
+  if(length(attr_str) > 0)
+    paste("Parameter(", paste(shape(object), collapse = ", "), ", ", attr_str, ")", sep = "")
+  else
+    paste("Parameter(", paste(shape(object), collapse = ", "), ")", sep = "")
 })
 
 #'
@@ -221,7 +311,8 @@ setMethod("canonicalize", "Parameter", function(object) {
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
-.CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal"), contains = "Parameter")
+.CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal", shape = "numeric"), 
+                                            prototype(shape = NULL), contains = "Parameter")
 
 #' @param callback A numeric element, vector, matrix, or data.frame
 #' @param rows The number of rows in the parameter.
@@ -235,15 +326,15 @@ setMethod("canonicalize", "Parameter", function(object) {
 #' y <- CallbackParam(value(x), dim[1], dim[2], sign = "POSITIVE")
 #' get_data(y)
 #' @export
-CallbackParam <- function(callback, rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN) {
-  .CallbackParam(callback = callback, rows = rows, cols = cols, name = name, sign_str = sign)
+CallbackParam <- function(callback, shape = NULL, ...) {
+  .CallbackParam(callback = callback, shape = shape, ...)
 }
+
+setMethod("initialize", "CallbackParam", function(.Object, ..., callback, shape = NULL) {
+  .Object@callback <- callback
+  callNextMethod(.Object, ..., shape = shape)
+})
 
 #' @param object A \linkS4class{CallbackParam} object.
 #' @rdname CallbackParam-class
-setMethod("value", "CallbackParam", function(object) { validate_val(object, value(object@callback)) })
-
-#' @describeIn CallbackParam Returns \code{list(callback, rows, cols, name, sign string)}.
-setMethod("get_data", "CallbackParam", function(object) {
-  list(callback = object@callback, rows = object@rows, cols = object@cols, name = object@name, sign_str = object@sign_str)
-})
+setMethod("value", "CallbackParam", function(object) { validate_val(object, callback(object)) })

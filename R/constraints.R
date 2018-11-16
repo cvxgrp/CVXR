@@ -7,21 +7,59 @@
 #' @name Constraint-class
 #' @aliases Constraint
 #' @rdname Constraint-class
-setClass("Constraint", representation(constr_id = "integer"), contains = "VIRTUAL")
+setClass("Constraint", representation(args = "list", constr_id = "integer", dual_variables = "list"), 
+                       prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
 
-setMethod("initialize", "Constraint", function(.Object, constr_id = get_id()) {
+setMethod("initialize", "Constraint", function(.Object, ..., args, constr_id = get_id(), dual_variables = list()) {
+  .Object@args <- args
   .Object@constr_id <- constr_id
-  .Object
+  .Object@dual_variables <- lapply(args, function(arg) { Variable(shape(arg)) })
+  callNextMethod(.Object, ...)
+})
+
+setMethod("as.character", "Constraint", function(x) { name(x) })
+
+setMethod("show", "Constraint", function(object) {
+  paste(class(object), "(", as.character(object@args[[1]]), ")")
+})
+
+setMethod("shape", "Constraint", function(object) { shape(object@args[[1]]) })
+setMethod("size", "Constraint", function(object) { size(object@args[[1]]) })
+setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
+setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
+setMethod("is_complex", "Constraint", function(object) { any(sapply(object@args, is_complex)) })
+setMethod("is_dcp", "Constraint", function(object) { stop("Unimplemented") })
+setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
+
+setMethod("violation", "Constraint", function(object) { 
+  residual <- object@residual
+  if(is.na(residual))
+    stop("Cannot compute the violation of a constraint whose expression is NA-valued.")
+  return(residual)
+})
+
+setMethod("value", "Constraint", function(object, tolerance = 1e-8) {
+  residual <- object@residual
+  if(is.na(residual))
+    stop("Cannot compute the value of a constraint whose expression is NA-valued.")
+  return(all(residual <= tolerance))
 })
 
 setClassUnion("ListORConstr", c("list", "Constraint"))
 
 # Helper function since syntax is different for LinOp (list) vs. Constraint object
-setMethod("constr_id", "ListORConstr", function(object) {
+setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id
   else
-    object@id
+    object@constr_id
+})
+
+setMethod("get_data", "Constraint", function(object) { list(id(object)) })
+setMethod("dual_value", "Constraint", function(object) { value(object@dual_variables[[1]]) })
+setMethod("save_dual_value", "Constraint", function(object, value) {
+  object@dual_variables[[1]] <- value
+  object
 })
 
 #'

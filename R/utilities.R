@@ -1,48 +1,3 @@
-#'
-#' The Canonical class.
-#'
-#' This virtual class represents a canonical expression.
-#'
-#' @rdname Canonical-class
-setClass("Canonical", contains = "VIRTUAL")
-
-#' @param object A \linkS4class{Canonical} object.
-#' @describeIn Canonical The expression associated with the input.
-setMethod("expr", "Canonical", function(object) {
-  if(length(object@args) != 1)
-    stop("'expr' is ambiguous, there should only be one argument.")
-  return(object@args[[1]])
-})
-
-#' @describeIn Canonical The graph implementation of the input.
-setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
-setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
-
-#' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.
-setMethod("variables", "Canonical", function(object) {
-  unique(flatten_list(lapply(object@args, function(arg) { variables(arg) })))
-})
-
-#' @describeIn Canonical List of \linkS4class{Parameter} objects in the expression.
-setMethod("parameters", "Canonical", function(object) { 
-  unique(flatten_list(lapply(object@args, function(arg) { parameters(arg) })))
-})
-
-#' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
-setMethod("constants", "Canonical", function(object) { 
-  const_list <- flatten_list(lapply(object@args, function(arg) { constants(arg) }))
-  const_id <- sapply(const_list, function(constant) { id(constant) })
-  const_list[!duplicated(const_id)]
-})
-
-#' @describeIn Canonical List of \linkS4class{Atom} objects in the expression.
-setMethod("atoms", "Canonical", function(object) {
-  unique(flatten_list(lapply(object@args, function(arg) { atoms(arg) })))
-})
-
-#' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
-setMethod("get_data", "Canonical", function(object) { list() })
-
 ##########################
 #                        #
 # CVXR Package Constants #
@@ -365,7 +320,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   cb <- affine(extractor, affine_problem@objective@expr)
   c <- cb[[1]]
   b <- cb[[2]]
-  
+
   # Combine affine data with quadratic forms.
   coeffs <- list()
   for(var in variables(affine_problem)) {
@@ -410,15 +365,15 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
   # Extract quadratic, linear constant parts of a quadratic objective.
   # Insert no-op such that root is never a quadratic form, for easier processing.
   root <- LinOp(NO_OP, dim(expr), list(expr), list())
-  
+
   # Replace quadratic forms with dummy variables.
   quad_forms <- replace_quad_forms(root, list())
-  
+
   # Calculate affine parts and combine them with quadratic forms to get the coefficients.
   tmp <- extract_quadratic_coeffs(object, root@args[[1]], quad_forms)
   coeffs <- tmp[[1]]
   constant <- tmp[[2]]
-  
+
   # TODO: Finish this function.
 })
 

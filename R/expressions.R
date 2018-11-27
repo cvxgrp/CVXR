@@ -478,27 +478,27 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical", 
+Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical",
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
                                         PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
-                                        integer = "logical", sparsity = "logical"), 
+                                        integer = "logical", sparsity = "logical"),
                          prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE,
                                    symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE,
-                                   boolean = FALSE, integer = FALSE, sparsity = NA_real_), contains = "Expression")
+                                   boolean = FALSE, integer = FALSE, sparsity = NA), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA_real_) {
+setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA) {
   if(length(shape) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
-  
+
   for(d in shape) {
     if(!is.integer(d) || d <= 0)
       stop("Invalid dimensions ", shape)
   }
   .Object@shape <- as.integer(shape)
-  
+
   if((PSD || NSD || symmetric || diag || hermitian) && (length(shape) != 2 || shape[1] != shape[2]))
     stop("Invalid dimensions ", shape, ". Must be a square matrix.")
-  
+
   # Process attributes.
   .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, complex = complex, imag = imag,
                              symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
@@ -510,7 +510,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, 
       .Object@boolean_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
   } else
     .Object@boolean_idx <- list()
-  
+
   if(integer) {
     if(!is.logical(integer))
       .Object@integer_idx <- integer
@@ -518,18 +518,18 @@ setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, 
       .Object@integer_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
   } else
     .Object@integer_idx <- list()
-  
+
   # Only one attribute can be TRUE (except boolean and integer).
   true_attr <- sum(unlist(.Object@attributes))
   if(boolean && integer)
     true_attr <- true_attr - 1
   if(true_attr > 1)
     stop("Cannot set more than one special attribute.")
-  
+
   if(!is.na(value))
     .Object@value <- value
   .Object@args <- list()
-  callNextMethod(.Object, ...)  
+  callNextMethod(.Object, ...)
 })
 
 setMethod("get_attr_str", "Leaf", function(object) {
@@ -607,7 +607,7 @@ setMethod("domain", "Leaf", function(object) {
 setMethod("project", "Leaf", function(object, val) {
   if(!is_complex(object))
     val <- Re(val)
-  
+
   if(object@attributes$nonpos && object@attributes$nonneg)
     return(0*val)
   else if(object@attributes$nonpos)
@@ -634,11 +634,11 @@ setMethod("project", "Leaf", function(object, val) {
     val <- val/2
     if(object@attributes$symmetric)
       return(val)
-    
+
     wV <- eigen(val, symmetric = TRUE, only.values = FALSE)
     w <- wV$values
     V <- wV$vectors
-    
+
     if(object@attributes$PSD) {
       bad <- w < 0
       if(!any(bad))
@@ -679,7 +679,7 @@ setMethod("validate_val", "Leaf", function(object, val) {
       stop("Invalid dimensions ", intf_shape(val), " for value")
     projection <- project(object, val)
     delta <- abs(val - projection)
-    
+
     if(is(delta, "sparseMatrix"))
       close_enough <- all(abs(delta@x) <= SPARSE_PROJECTION_TOL)
     else {
@@ -689,7 +689,7 @@ setMethod("validate_val", "Leaf", function(object, val) {
       else
         close_enough <- all(abs(delta) <= GENERAL_PROJECTION_TOL)
     }
-    
+
     if(!close_enough) {
       if(object@attributes$nonneg)
         attr_str <- "nonnegative"

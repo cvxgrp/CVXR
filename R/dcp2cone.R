@@ -13,26 +13,28 @@ setMethod("apply", signature(object = "Dcp2Cone", problem = "Problem"), function
 setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
-  class(problem@objective) == "Minimize" && is_affine(problem@objective@expr)
-  && length(convex_attributes(variables(problem))) == 0 && are_args_affine(problem@constraints)
+    class(problem@objective) == "Minimize" &&
+        is_affine(problem@objective@expr) &&
+        length(convex_attributes(variables(problem))) == 0 &&
+        are_args_affine(problem@constraints)
 })
 
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
   extractor <- CoeffExtractor(inverse_data)
-  
+
   # Extract to t(c) %*% x, store in r
   CR <- get_coeffs(extractor, problem@objective@expr)
   C <- CR[[1]]
   R <- CR[[2]]
-  
+
   c <- matrix(C, ncol = 1)   # TODO: Check if converted to dense matrix and flattened like in CVXPY
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
   x <- Variable(inverse_data@x_length, boolean = boolean, integer = integer)
-  
+
   new_obj <- t(c) %*% x + 0
-  
+
   inverse_data@r <- R[[1]]
   return(list(new_obj, x))
 })
@@ -40,7 +42,7 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
 cumsum_canon <- function(expr, args) {
   X <- args[[1]]
   axis <- expr@axis
-  
+
   # Implicit O(n) definition:
   # X = Y[1,:] - Y[2:nrow(Y),:]
   Y <- Variable(shape(expr))
@@ -55,7 +57,7 @@ entr_canon <- function(expr, args) {
   x <- args[[1]]
   shape <- shape(expr)
   t <- Variable(shape)
-  
+
   # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
   ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
@@ -77,9 +79,9 @@ geo_mean_canon <- function(expr, args) {
   w <- expr@w
   shape <- shape(expr)
   t <- Variable(shape)
-  
+
   x_list <- lapply(1:length(w), function(i) { x[i] })
-  
+
   # TODO: Catch cases where we have (0,0,1)?
   # TODO: What about curvature case (should be affine) in trivial case of (0,0,1)?
   # Should this behavior match with what we do in power?
@@ -92,7 +94,7 @@ huber_canon <- function(expr, args) {
   shape <- shape(expr)
   n <- Variable(shape)
   s <- Variable(shape)
-  
+
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a
   # power/abs expression for readiability's sake
@@ -100,14 +102,14 @@ huber_canon <- function(expr, args) {
   canon <- power_canon(power_expr, power_expr@args)
   n2 <- canon[[1]]
   constr_sq <- canon[[2]]
-  
+
   abs_expr <- abs(s)
   canon <- abs_canon(abs_expr, abs_expr@args)
   abs_s <- canon[[1]]
   constr_abs <- canon[[2]]
-  
+
   obj <- n2 + 2*M*abs_s
-  
+
   # x == s + n
   constraints <- c(constr_sq, constr_abs)
   constraints <- c(constraints, x == s + n)
@@ -155,7 +157,7 @@ lambda_sum_largest_canon <- function(expr, args) {
   #
   # We have equality when s = lambda_k and Z diagonal
   #  with Z_{ii} = (lambda_i - lambda_k)_+
-  
+
   X <- expr@args[[1]]
   k <- expr@k
   Z <- Variable(c(shape(X)[1], shape(X)[1]), PSD = TRUE)
@@ -210,19 +212,19 @@ log_det_canon <- function(expr, args) {
   # Returns
   # -------
   # (Variable for objective, list of constraints)
-  
+
   A <- args[[1]]   # n by n matrix
   n <- shape(A)[1]
   # Require that X and A are PSD.
   X <- Variable(c(2*n, 2*n), PSD = TRUE)
   constraints <- list(PSD(A))
-  
+
   # Fix Z as upper triangular
   # TODO: Represent Z as upper triangular vector
   Z <- Variable(c(n,n))
   Z_lower_tri <- upper_tri(transpose(Z))
   constraints <- list(Z_lower_tri == 0)
-  
+
   # Fix diag(D) = Diag(Z): D[i,i] = Z[i,i]
   D <- Variable(n)
   constraints <- c(constraints, D == diag_mat(Z))
@@ -249,12 +251,12 @@ logistic_canon <- function(expr, args) {
   t0 <- Variable(shape)
   canon1 <- exp_canon(expr, list(-t0))
   canon2 <- exp_canon(expr, list(x - t0))
-  
+
   t1 <- canon1[[1]]
   constr1 <- canon1[[2]]
   t2 <- canon2[[1]]
   constr2 <- canon2[[2]]
-  
+
   ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
   constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
   return(list(t0, constraints))
@@ -263,13 +265,13 @@ logistic_canon <- function(expr, args) {
 matrix_frac_canon <- function(expr, args) {
   X <- args[[1]]   # n by m matrix
   P <- args[[2]]   # n by n matrix
-  
+
   if(length(shape(X)) == 1)
     X <- reshape(X, c(shape(X)[1], 1))
   shape <- shape(X)
   n <- shape[1]
   m <- shape[2]
-  
+
   # Create a matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X
   M <- Variable(c(n+m, n+m), PSD = TRUE)
   Tvar <- Variable(c(m,m), symmetric = TRUE)
@@ -289,14 +291,14 @@ normNuc_canon <- function(expr, args) {
   shape <- shape(A)
   m <- shape[1]
   n <- shape[2]
-  
+
   # Create the equivalent problem:
   #   minimize (trace(U) + trace(V))/2
   #   subject to:
   #            [U A; t(A) V] is positive semidefinite
   X <- Variable(c(m+n, m+n), PSD = TRUE)
   constraints <- list()
-  
+
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:rows, (rows+1):(rows+cols)] == A
   constraints <- c(constraints, X[1:m, (m+1):(m+n)] == A)
@@ -310,7 +312,7 @@ pnorm_canon <- function(expr, args) {
   axis <- expr@axis
   shape <- shape(expr)
   t <- Variable(shape)
-  
+
   if(p == 2) {
     if(is.na(axis)) {
       if(!is.null(shape))
@@ -319,7 +321,7 @@ pnorm_canon <- function(expr, args) {
     } else
       return(list(t, list(SOC(vec(t), x, axis))))
   }
-  
+
   # We need an absolute value constraint for the symmetric convex branches (p > 1)
   constraints <- list()
   if(p > 1) {
@@ -330,13 +332,13 @@ pnorm_canon <- function(expr, args) {
     abs_constraints <- canon[[2]]
     constraints <- c(constraints, abs_constraints)
   }
-  
+
   # Now, we take care of the remaining convex and concave branches to create the
   # rational powers. We need a new variable, r, and the constraint sum(r) == t
   r <- Variable(shape(x))
   constraints <- c(constraints, list(sum(r) == t))
-  
-  # TODO: No need to run gm_constr to form the tree each time. 
+
+  # TODO: No need to run gm_constr to form the tree each time.
   # We only need to form the tree once.
   promoted_t <- Constant(matrix(1, nrow = shape(x)[1], ncol = shape(x)[2])) %*% t
   p <- Fraction(p)
@@ -353,10 +355,10 @@ power_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
   w <- expr@w
-  
+
   if(p == 1)
     return(list(x, list()))
-  
+
   shape <- shape(expr)
   ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
   if(p == 0)
@@ -380,7 +382,7 @@ quad_form_canon <- function(expr, args) {
   scale <- decomp[[1]]
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]
-  
+
   if(size(M1) > 0)
     expr <- sum_squares(Constant(t(M1)) %*% args[[1]])
   else if(size(M2)> 0) {
@@ -411,18 +413,18 @@ sigma_max_canon <- function(expr, args) {
   n <- shape[1]
   m <- shape[2]
   X <- Variable(c(n+m, n+m), PSD = TRUE)
-  
+
   shape <- shape(expr)
   t <- Variable(shape)
   constraints <- list()
-  
+
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:n, 1:n] == I_n*t
   constraints <- c(constraints, X[1:n, 1:n] == Constant(sparseMatrix(i = 1:n, j = 1:n, x = 1) %*% t))
-  
+
   # X[1:n, (n+1):(n+m)] == A
   constraints <- c(constraints, X[1:n, (n+1):(n+m)] == A)
-  
+
   # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
   constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1) %*% t))
   return(list(t, constraints))

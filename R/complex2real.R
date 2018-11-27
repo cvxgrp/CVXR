@@ -7,15 +7,15 @@ setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), fu
 
 setMethod("apply", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
-  
+
   leaf_map <- list()
   obj <- canonicalize_tree(object, problem@objective, inverse_data@real2imag, leaf_map)
   real_obj <- obj[[1]]
   imag_obj <- obj[[2]]
-  
+
   if(length(imag_obj) > 0)
     stop("Cannot have imaginary component in canonicalized objective")
-  
+
   constrs <- list()
   for(constraint in problem@constraints) {
     constr <- canonicalize_tree(object, constraint, inverse_data@real2imag, leaf_map)
@@ -26,7 +26,7 @@ setMethod("apply", signature(object = "Complex2Real", problem = "Problem"), func
     if(!is.na(imag_constr))
       constrs <- c(constrs, imag_constr)
   }
-  
+
   new_problem <- Problem(real_obj, constrs)
   return(list(new_problem, inverse_data))
 })
@@ -51,7 +51,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[imag_id]]
       }
     }
-    
+
     for(cid in names(inverse_data@id2cons)) {
       cons <- inverse_data@id2cons[[cid]]
       if(is_real(cons))
@@ -92,13 +92,13 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
   }
 }
 
-Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map) {
+Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
   if(is(expr, "Expression") && length(variables(expr)) == 0) {
     # Parameterized expressions are evaluated in a subsequent reduction.
     if(length(parameters(expr)) > 0)
       stop("Unimplemented")
     else   # Non-parameterized expressions are evaluated immediately.
-      return(elim_cplx_methods$Constant(Constant(value(expr)), real_args, imag_args, real2imag)
+        return(elim_cplx_methods$Constant(Constant(value(expr)), real_args, imag_args, real2imag))
   } else if(type(expr) %in% names(elim_cplx_methods)) {
     # Only canonicalize a variable/constant/parameter once.
     if(length(expr@args) == 0 && expr %in% leaf_map)
@@ -177,7 +177,7 @@ add <- function(lh_arg, rh_arg, neg = FALSE) {
   # Negates rh_arg if neg is TRUE.
   if(!is.na(rh_arg) && neg)
     rh_arg <- -rh_arg
-  
+
   if(is.na(lh_arg) && is.na(rh_arg))
     return(NA)
   else if(is.na(lh_arg))
@@ -310,7 +310,7 @@ pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
 variable_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(expr, NA))
-  
+
   imag <- Variable(dim(expr), var_id = real2imag[[as.character(id(expr))]])
   if(is_imag(expr))
     return(list(NA, imag))
@@ -323,7 +323,7 @@ variable_canon <- function(expr, real_args, imag_args, real2imag) {
 zero_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(imag_args[[1]]))
     return(list(copy(expr, real_args), NA))
-  
+
   imag_cons <- Zero(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]])
   if(is.na(real_args[[1]]))
     return(list(NA, imag_cons))

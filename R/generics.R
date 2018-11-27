@@ -999,3 +999,26 @@ setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 
 # Map of solver status code to CVXR status.
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
+
+## Version 1.0 edits
+
+## Start of newly added generics
+setGeneric("expr", function(object) { standardGeneric("expr") })
+setGeneric("atoms", function(object) { standardGeneric("atoms") })
+setGeneric("is_hermitian", function(object) { standardGeneric("is_hermitian") })
+setGeneric("is_psd", function(object) { standardGeneric("is_psd") })
+setGeneric("is_nsd", function(object) { standardGeneric("is_nsd") })
+setGeneric("is_qpwa", function(object) { standardGeneric("is_qpwa") })
+setGeneric("is_nonneg", function(object) { standardGeneric("is_nonneg") })
+setGeneric("is_nonpos", function(object) { standardGeneric("is_nonpos") })
+setGeneric("is_symmetric", function(object) { standardGeneric("is_symmetric") })
+setGeneric("shape", function(object) { standardGeneric("shape") })
+setGeneric("ndim", function(object) { standardGeneric("ndim") })
+setGeneric("flatten", function(object) { standardGeneric("flatten") })
+setGeneric("get_attr_str", function(object) { standardGeneric("get_attr_str") })
+setGeneric("project", function(object, val) { standardGeneric("project") })
+setGeneric("project_and_assign", function(object, val) { standardGeneric("project_and_assign") })
+setGeneric("is_real", function(object) { standardGeneric("is_real") })
+setGeneric("is_imag", function(object) { standardGeneric("is_imag") })
+setGeneric("is_complex", function(object) { standardGeneric("is_complex") })
+## End of newly added generics

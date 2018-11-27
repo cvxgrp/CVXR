@@ -7,7 +7,7 @@
 #' @name Constraint-class
 #' @aliases Constraint
 #' @rdname Constraint-class
-setClass("Constraint", representation(args = "list", constr_id = "integer", dual_variables = "list"), 
+setClass("Constraint", representation(args = "list", constr_id = "integer", dual_variables = "list"),
                        prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
 
 setMethod("initialize", "Constraint", function(.Object, ..., args, constr_id = get_id(), dual_variables = list()) {
@@ -30,7 +30,7 @@ setMethod("is_complex", "Constraint", function(object) { any(sapply(object@args,
 setMethod("is_dcp", "Constraint", function(object) { stop("Unimplemented") })
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
-setMethod("violation", "Constraint", function(object) { 
+setMethod("violation", "Constraint", function(object) {
   residual <- object@residual
   if(is.na(residual))
     stop("Cannot compute the violation of a constraint whose expression is NA-valued.")
@@ -68,7 +68,7 @@ setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
-setMethod("name", "ZeroConstraint", function(x) { 
+setMethod("name", "ZeroConstraint", function(x) {
   paste(as.character(x@args[[1]]), "== 0")
 })
 
@@ -87,11 +87,11 @@ setMethod("canonicalize", "ZeroConstraint", function(object) {
   return(list(NA, c(constraints, list(dual_holder))))
 })
 
-.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "ConstValORExpr"), 
+.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "ConstValORExpr"),
                               validity = function(object) {
                                 if(is_complex(object@expr))
                                   stop("Inequality constraints cannot be complex.")
-                                return(TRUE)  
+                                return(TRUE)
                               }, contains = "Constraint")
 NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
 
@@ -318,7 +318,7 @@ setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, di
 #' @describeIn ExpCone The number of entries in the combined cones.
 setMethod("size", "ExpCone", function(object) {
   # TODO: Use size of dual variable(s) instead.
-  sum(cone_sizes(object)) 
+  sum(cone_sizes(object))
 })
 
 #' @describeIn ExpCone The number of elementwise cones.
@@ -359,22 +359,22 @@ setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
     z_init <- rep(1.0, entries)
     return(list(entries, matrix(x_init + y_init + z_init)))
   }
-  
+
   # Unpack vars_
   x <- vars_[1:entries]
   y <- vars_[entries:(2*entries)]
   z <- vars_[(2*entries):length(vars_)]
-  
+
   # Out of domain.
   # TODO: What if y == 0.0?
   if(min(y) <= 0.0 || min(z) <= 0.0)
     return(NA)
-  
+
   # Evaluate the function.
   f <- matrix(0, nrow = entries, ncol = 1)
   for(i in 1:entries)
     f[i] <- x[i] - y[i]*log(z[i]) + y[i]*log(y[i])
-  
+
   # Compute the gradient.
   Df <- matrix(0, nrow = entries, ncol = 3*entries)
   for(i in 1:entries) {
@@ -382,10 +382,10 @@ setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
     Df[i, entries+i] <- log(y[i]) - log(z[i]) + 1.0
     Df[i, 2*entries+i] <- -y[i]/z[i]
   }
-  
+
   if(is.na(scaling))
     return(list(f, Df))
-  
+
   # Compute the Hessian.
   big_H <- sparseMatrix(i = c(), j = c(), dims = c(3*entries, 3*entries))
   for(i in 1:entries) {
@@ -456,7 +456,7 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
     return(list(leq_constr))
   }
   new_leq_constr <- .format(object)
-  
+
   # 0 <= A.
   leq_constr <- c(leq_constr, new_leq_constr)
   # Update dims.
@@ -507,7 +507,7 @@ setMethod("residual", "SOC", function(object) {
     return(NA)
   if(object@axis == 2)
     X <- t(X)
-  
+
   norms <- apply(X, 1, function(row) { norm(row, "2") })
   zero_indices <- which(X <= -t)[1]
   averaged_indices <- which(X >= abs(t))[1]
@@ -518,7 +518,7 @@ setMethod("residual", "SOC", function(object) {
   avg_coeff <- 0.5*(1 + t/norms)
   X_proj[averaged_indices] <- avg_coeff * X[averaged_indices]
   t_proj[averaged_indices] <- avg_coeff * t[averaged_indices]
-  
+
   Xt_diff <- cbind(X, t) - cbind(X_proj, t_proj)
   apply(Xt_diff, 1, function(col) { norm(col, "2") })
 })
@@ -533,7 +533,7 @@ setMethod("get_data", "SOC", function(object) { list(object@axis) })
 #' @describeIn SOC Format SOC constraints as inequalities for the solver.
 setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
-    list(list(), format_axis(object@args[[1]], object@args[[2]], object@axis)
+    list(list(), format_axis(object@args[[1]], object@args[[2]], object@axis))
   }
 
   leq_constr <- c(leq_constr, .format(object)[[2]])
@@ -575,11 +575,11 @@ setMethod("canonicalize", "SOC", function(object) {
   canon_t <- canonical_form(object@args[[1]])
   t <- canon_t[[1]]
   t_cons <- canon_t[[2]]
-  
+
   canon_X <- canonical_form(object@args[[2]])
   X <- canon_X[[1]]
   X_cons <- canon_X[[2]]
-  
+
   new_soc <- SOC(t, X, object@axis)
   return(list(NA, c(list(new_soc), t_cons, X_cons)))
 })

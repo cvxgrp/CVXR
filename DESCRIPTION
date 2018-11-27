@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 0.99
+Version: 0.991
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -61,8 +61,8 @@ Collate:
     'data.R'
     'globals.R'
     'generics.R'
-    'utilities.R'
     'interface.R'
+    'canonical.R'
     'expressions.R'
     'constant.R'
     'variable.R'
@@ -73,10 +73,20 @@ Collate:
     'constraints.R'
     'elementwise.R'
     'solver.R'
+    'reductions.R'
+    'reduction_solvers.R'
+    'utilities.R'	
     'mosek-solver.R'
     'gurobi-solver.R'
     'lpsolve_solver.R'
-    'glpk_solver.R'    
+    'glpk_solver.R'
+    'complex2real.R'
+    'conic_solvers.R'
+    'dcp2cone.R'
+    'eliminate_pwl.R'
+    'lp_solvers.R'
+    'qp2quad_form.R'
+    'qp_solvers.R'
     'solver_utilities.R'
     'problem_data.R'
     'transforms.R'

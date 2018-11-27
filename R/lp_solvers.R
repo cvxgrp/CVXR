@@ -9,15 +9,15 @@ setMethod("mip_capable", "CBCSolver", function(object) { TRUE })
 
 # Map of GLPK MIP status to CVXR status.
 setMethod("status_map_mip", "CBCSolver", function(object) {
-  list(solution = OPTIMAL, 
-       relaxation_infeasible = INFEASIBLE, 
+  list(solution = OPTIMAL,
+       relaxation_infeasible = INFEASIBLE,
        stopped_on_user_event= SOLVER_ERROR)
 })
 
 setMethod("status_map_lp", "CBCSolver", function(object) {
-  list(optimal = OPTIMAL, 
-       primal_infeasible = INFEASIBLE, 
-       stopped_due_to_errors = SOLVER_ERROR, 
+  list(optimal = OPTIMAL,
+       primal_infeasible = INFEASIBLE,
+       stopped_due_to_errors = SOLVER_ERROR,
        stopped_by_event_handler = SOLVER_ERROR)   # stopped by event handler (virtual int ClpEventHandler::event())
 })
 
@@ -68,9 +68,10 @@ setMethod("accepts", signature(object = "CBCSolver", problem = "Problem"), funct
 # Returns a new problem and data for inverting the new solution.
 setMethod("apply", signature(object = "CBCSolver", problem = "Problem"), function(object, problem) {
   data <- list()
-  inv_data <- list(object@VAR_ID = id(variables(problem)[[1]]))
+  inv_data <- list(id(variables(problem)[[1]]))
+  names(inv_data) <- object@VAR_ID
   inv_data[OFFSET] <- data[OFFSET][[1]]
-  
+
   # Order and group constraints.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
   inv_data[EQ_CONSTR] <- eq_constr
@@ -82,14 +83,15 @@ setMethod("apply", signature(object = "CBCSolver", problem = "Problem"), functio
 # Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CBCSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   status <- solution[STATUS]
-  
+
   if(status %in% SOLUTION_PRESENT) {
-    opt_val <- solution[VALUE]
-    primal_vars <- list(inverse_data[object@VAR_ID] = solution[PRIMAL])
-    eq_dual <- ConicSolver.get_dual_values(solution[EQ_DUAL], inverse_data[EQ_CONSTR])
-    leq_dual <- ConicSolver.get_dual_values(solution[INEQ_DUAL], inverse_data[NEQ_CONSTR])
-    eq_dual <- modifyList(eq_dual, leq_dual)
-    dual_vars <- eq_dual)
+      opt_val <- solution[VALUE]
+      primal_vars <- list(solution[PRIMAL])
+      names(primal_variables) <- inverse_data[object@VAR_ID]
+      eq_dual <- ConicSolver.get_dual_values(solution[EQ_DUAL], inverse_data[EQ_CONSTR])
+      leq_dual <- ConicSolver.get_dual_values(solution[INEQ_DUAL], inverse_data[NEQ_CONSTR])
+      eq_dual <- modifyList(eq_dual, leq_dual)
+      dual_vars <- eq_dual
   } else {
     if(status == INFEASIBLE)
       opt_val <- Inf
@@ -100,7 +102,7 @@ setMethod("invert", signature(object = "CBCSolver", solution = "Solution", inver
     primal_vars <- NA
     dual_vars <- NA
   }
-  
+
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
@@ -109,6 +111,8 @@ setMethod("solve", "CBCSolver", function(object, problem, warm_start, verbose, s
   inv_data <- apply(object, problem)[[2]]
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { unlist(canonical_form(c)[[2]]) })
-  sol <- solve(solver, objective, constraints, list(name(object) = ProblemData()), warm_start, verbose, solver_opts)
+  prob_data <- list(ProblemData())
+  names(prob_data) <- name(object)
+  sol <- solve(solver, objective, constraints, prob_data, warm_start, verbose, solver_opts)
   invert(object, sol, inv_data)
 })

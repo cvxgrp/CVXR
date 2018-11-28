@@ -12,6 +12,12 @@ AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 #' @describeIn AffAtom The sign of the atom.
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
 
+#' @describeIn AffAtom Is the atom imaginary?
+setMethod("is_imag", "AffAtom", function(object) { all(sapply(object@args, is_imag)) })
+
+#' @describeIn AffAtom Is the atom complex valued?
+setMethod("is_complex", "AffAtom", function(object) { all(sapply(object@args, is_complex)) })
+
 #' @describeIn AffAtom The atom is convex.
 setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
 
@@ -26,62 +32,85 @@ setMethod("is_incr", "AffAtom", function(object, idx) { TRUE })
 setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 
 #' @describeIn AffAtom Is every argument quadratic?
-setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_quadratic(arg) })) })
+setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, is_quadratic)) })
+
+#' @describeIn AffAtom Is every argument quadratic or piecewise affine?
+setMethod("is_qpwa", "AffAtom", function(object) { all(sapply(object@args, is_qpwa)) })
 
 #' @describeIn AffAtom Is every argument piecewise linear?
-setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, function(arg) { is_pwl(arg) })) })
+setMethod("is_pwl", "AffAtom", function(object) { all(sapply(object@args, is_pwl)) })
+
+#' @describeIn AffAtom Is the atom a positive semidefinite matrix?
+setMethod("is_psd", "AffAtom", function(object) {
+  for(idx in seq_len(length(object@args))) {
+    arg <- object@args[[idx]]
+    if(!((is_incr(object, idx) && is_psd(arg)) || (is_decr(object, idx) && is_nsd(arg))))
+      return(FALSE)
+  }
+  return(TRUE)
+})
+
+#' @describeIn AffAtom Is the atom a negative semidefinite matrix?
+setMethod("is_nsd", "AffAtom", function(object) {
+  for(idx in seq_len(length(object@args))) {
+    arg <- object@args[[1]]
+    if(!((is_decr(object, idx) && is_psd(arg)) || (is_incr(object, idx) && is_nsd(arg))))
+      return(FALSE)
+  }
+  return(TRUE)
+})
 
 setMethod(".grad", "AffAtom", function(object, values) {
-  # TODO: Should be a simple function in CVXcanon for this
+  # TODO: Should be a simple function in CVXcore for this.
   # Make a fake LinOp tree for the function
   fake_args <- list()
   var_offsets <- c()
   var_names <- c()
   offset <- 0
   idx <- 1
-  for(arg in object@args) {
+  for(idx in seq_len(length(object@args))) {
+    arg <- object@args[[idx]]
     if(is_constant(arg))
-      fake_args <- c(fake_args, list(create_const(value(arg), size(arg))))
+      fake_args <- c(fake_args, list(canonical_form(Constant(value(arg)))[[1]]))
     else {
-      fake_args <- c(fake_args, list(create_var(size(arg), idx)))
+      fake_args <- c(fake_args, list(create_var(shape(arg), idx)))
       var_offsets <- c(var_offsets, offset)
       var_names <- c(var_names, idx)
-      offset <- offset + prod(size(arg))
+      offset <- offset + size(arg)
     }
-    idx <- idx + 1
   }
   names(var_offsets) <- var_names
-  graph <- graph_implementation(object, fake_args, size(object), get_data(object))
+  graph <- graph_implementation(object, fake_args, shape(object), get_data(object))
   fake_expr <- graph[[1]]
 
-  # Get the matrix representation of the function
-  prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets)
+  # Get the matrix representation of the function.
+  prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets, NA)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
   J <- prob_mat[[3]] + 1
-  shape <- c(offset, prod(size(object)))
+  shape <- c(offset, size(object))
   stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = shape)
 
-  # Break up into per argument matrices
+  # Break up into per argument matrices.
   grad_list <- list()
   start <- 1
   for(arg in object@args) {
     if(is_constant(arg)) {
-      grad_shape <- c(prod(size(arg)), shape[2])
+      grad_shape <- c(size(arg), shape[2])
       if(all(grad_shape == c(1,1)))
         grad_list <- c(grad_list, list(0))
       else
         grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = grad_shape)))
     } else {
-      stop <- start + prod(size(arg))
+      stop <- start + size(arg)
       if(stop == start)
-        grad_list <- c(grad_list, list( sparseMatrix(i = c(), j = c(), dims = c(0, shape[2])) ))
+        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = c(0, shape[2]))))
       else
         grad_list <- c(grad_list, list(stacked_grad[start:(stop-1),]))
       start <- stop
     }
   }
-  grad_list
+  return(grad_list)
 })
 
 #'
@@ -100,22 +129,39 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   .Object <- callNextMethod(.Object, ..., args = arg_groups)   # Casts R values to Constant objects
   .Object@args <- lapply(.Object@args, function(group) { if(is(group,"AddExpression")) group@args else group })
   .Object@args <- flatten_list(.Object@args)   # Need to flatten list of expressions
-  return(.Object)
 })
 
-#' @param object An \linkS4class{AddExpression} object.
+#' @param x,object An \linkS4class{AddExpression} object.
+#' @describeIn AddExpression The size of the expression.
+setMethod("shape_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, shape)) })
+
+setMethod("name", "AddExpression", function(x) {
+  return(paste(sapply(object@args, as.character), collapse = " + "))
+})
+
 #' @param values A list of arguments to the atom.
 #' @describeIn AddExpression Sum all the values.
 setMethod("to_numeric", "AddExpression", function(object, values) {
-  values <- lapply(values, intf_convert_if_scalar)
+  # values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
 })
 
-#' @describeIn AddExpression The size of the expression.
-setMethod("size_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, function(arg) { size(arg) })) })
+setMethod("is_symmetric", "AddExpression", function(object) {
+  symm_args <- all(sapply(object@args, is_symmetric))
+  return(shape(object)[1] == shape(object)[2] && symm_args)
+})
+
+setMethod("is_hermitian", "AddExpression", function(object) {
+  herm_args <- all(sapply(object@args, is_hermitian))
+  return(shape(object)[1] == shape(object)[2] && herm_args)
+})
 
 AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  arg_objs <- lapply(arg_objs, function(arg) { if(!all(arg$size == size)) lo.promote(arg, size) else arg })
+  arg_objs <- lapply(arg_objs, function(arg) { 
+    if(!all(arg$shape == shape) && lo.is_scalar(arg)) 
+      lo.promote(arg, shape) 
+    else 
+      arg })
   list(lo.sum_expr(arg_objs), list())
 }
 

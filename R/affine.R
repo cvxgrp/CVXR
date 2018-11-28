@@ -132,7 +132,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 })
 
 #' @param x,object An \linkS4class{AddExpression} object.
-#' @describeIn AddExpression The size of the expression.
+#' @describeIn AddExpression The shape of the expression.
 setMethod("shape_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, shape)) })
 
 setMethod("name", "AddExpression", function(x) {
@@ -156,8 +156,8 @@ setMethod("is_hermitian", "AddExpression", function(object) {
   return(shape(object)[1] == shape(object)[2] && herm_args)
 })
 
-AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  arg_objs <- lapply(arg_objs, function(arg) { 
+AddExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  arg_objs <- lapply(arg_objs, function(arg) {
     if(!all(arg$shape == shape) && lo.is_scalar(arg)) 
       lo.promote(arg, shape) 
     else 
@@ -166,11 +166,11 @@ AddExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) 
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn AddExpression The graph implementation of the expression.
-setMethod("graph_implementation", "AddExpression", function(object, arg_objs, size, data = NA_real_) {
-  AddExpression.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "AddExpression", function(object, arg_objs, shape, data = NA_real_) {
+  AddExpression.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -183,12 +183,24 @@ setMethod("graph_implementation", "AddExpression", function(object, arg_objs, si
 #' @name UnaryOperator-class
 #' @aliases UnaryOperator
 #' @rdname UnaryOperator-class
-UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character"), contains = "AffAtom")
+UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character", op_func = "function"), contains = "AffAtom")
 
-setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
+setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name, op_func) {
   .Object@expr <- expr
   .Object@op_name <- op_name
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  .Object@op_func <- op_func
+  callNextMethod(.Object, ..., args = list(expr))
+})
+
+setMethod("name", "UnaryOperator", function(x) {
+  paste(x@op_name, name(x@args[[1]]), sep = "")
+})
+
+#' @param object A \linkS4class{UnaryOperator} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn UnaryOperator Applies the unary operator to the value.
+setMethod("to_numeric", "UnaryOperator", function(object, values) {
+  object@op_func(values[[1]])
 })
 
 #'
@@ -202,19 +214,14 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name) {
 NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 
 setMethod("initialize", "NegExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "-")
+  callNextMethod(.Object, ..., op_name = "-", op_func = function(x) { -x })
 })
 
-#' @param object A \linkS4class{NegExpression} object.
-#' @param values A list of arguments to the atom.
-#' @describeIn NegExpression Negate the value.
-setMethod("to_numeric", "NegExpression", function(object, values) { -values[[1]] })
+#' @describeIn NegExpression The (row, col) shape of the expression.
+setMethod("shape_from_args", "NegExpression", function(object) { shape(object@args[[1]]) })
 
-#' @describeIn NegExpression The size of the expression.
-setMethod("size_from_args", "NegExpression", function(object) { size(object@args[[1]]) })
-
-#' @describeIn NegExpression The sign of the expression.
-setMethod("sign_from_args", "NegExpression", function(object) { c(is_negative(object@args[[1]]), is_positive(object@args[[1]])) })
+#' @describeIn NegExpression The (is positive, is negative) sign of the expression.
+setMethod("sign_from_args", "NegExpression", function(object) { c(is_nonpos(object@args[[1]]), is_nonneg(object@args[[1]])) })
 
 #' @param idx An index into the atom.
 #' @describeIn NegExpression The expression is not weakly increasing in any argument.
@@ -223,16 +230,22 @@ setMethod("is_incr", "NegExpression", function(object, idx) { FALSE })
 #' @describeIn NegExpression The expression is weakly decreasing in every argument.
 setMethod("is_decr", "NegExpression", function(object, idx) { TRUE })
 
-NegExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+#' @describeIn NegExpression Is the expression symmetric?
+setMethod("is_symmetric", "NegExpression", function(object) { is_symmetric(object@args[[1]]) })
+
+#' @describeIn NegExpression Is the expression Hermitian?
+setMethod("is_hermitian", "NegExpression", function(object) { is_hermitian(object@args[[1]]) })
+
+NegExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.neg_expr(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn NegExpression The graph implementation of the expression.
-setMethod("graph_implementation", "NegExpression", function(object, arg_objs, size, data = NA_real_) {
-  NegExpression.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "NegExpression", function(object, arg_objs, shape, data = NA_real_) {
+  NegExpression.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -246,25 +259,47 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, si
 #' @name BinaryOperator-class
 #' @aliases BinaryOperator
 #' @rdname BinaryOperator-class
-BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), contains = "AffAtom")
+BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), 
+                                             prototype(op_name = "BINARY_OP"), contains = "AffAtom")
 
-setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp, op_name) {
+setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp, op_name = "BINARY_OP") {
   .Object@lh_exp = lh_exp
   .Object@rh_exp = rh_exp
   .Object@op_name = op_name
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-#' @param object A \linkS4class{BinaryOperator} object.
+#' @param x,object A \linkS4class{BinaryOperator} object.
+setMethod("name", "BinaryOperator", function(x) {
+  pretty_args <- list()
+  for(a in x@args) {
+    if(is(a, "AddExpression") || is(a, "DivExpression"))
+      pretty_args <- list(pretty_args, paste("(", name(a), ")", sep = ""))
+    else
+      pretty_args <- list(pretty_args, name(a))
+  }
+  paste(pretty_args[[1]], x@op_name, pretty_args[[2]])
+})
+
 #' @param values A list of arguments to the atom.
 #' @describeIn BinaryOperator Apply the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
-  values <- lapply(values, intf_convert_if_scalar)
+  # values <- lapply(values, intf_convert_if_scalar)
   Reduce(object@op_name, values)
 })
 
-#' @describeIn BinaryOperator The sign of the expression.
+#' @describeIn BinaryOperator Default to rule for multiplication.
 setMethod("sign_from_args", "BinaryOperator", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+
+#' @describeIn BinaryOperator Is the expression imaginary?
+setMethod("is_imag", "BinaryOperator", function(object) {
+  (is_imag(object@args[[1]]) && is_real(object@args[[2]])) || (is_real(object@args[[1]]) && is_imag(object@args[[2]]))
+})
+
+#' @describeIn BinaryOperator Is the expression complex valued?
+setMethod("is_complex", "BinaryOperator", function(object) {
+  (is_complex(object@args[[1]]) || is_complex(object@args[[2]])) && !(is_imag(object@args[[1]]) && is_imag(object@args[[2]]))
+})
 
 #'
 #' The MulExpression class.
@@ -283,72 +318,74 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
 })
 
 #' @param object A \linkS4class{MulExpression} object.
-#' @describeIn MulExpression Check the dimensions.
-setMethod("validate_args", "MulExpression", function(object) {
-  mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
+#' @param values A list of arguments to the atom.
+#' @describeIn MulExpression Matrix multiplication.
+setMethod("to_numeric", "MulExpression", function(object, values) {
+  return(values[[1]] %*% values[[2]])
 })
 
-#' @describeIn MulExpression The size of the expression.
-setMethod("size_from_args", "MulExpression", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
+#' @describeIn MulExpression The (row, col) shape of the expression.
+setMethod("shape_from_args", "MulExpression", function(object) { mul_shapes(shape(object@args[[1]]), shape(object@args[[2]])) })
+
+#' @describeIn MulExpression Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
+setMethod("is_atom_convex", "MulExpression", function(object) {
+  is_constant(object@args[[1]]) || is_constant(object@args[[2]])
+})
+
+#' @describeIn MulExpression If the multiplication atom is convex, then it is affine.
+setMethod("is_atom_concave", "MulExpression", function(object) { is_atom_convex(object) })
 
 #' @param idx An index into the atom.
 #' @describeIn MulExpression Is the left-hand expression positive?
-setMethod("is_incr", "MulExpression", function(object, idx) { is_positive(object@args[[1]]) })
+setMethod("is_incr", "MulExpression", function(object, idx) { is_nonneg(object@args[[3-idx]]) })
 
 #' @describeIn MulExpression Is the left-hand expression negative?
-setMethod("is_decr", "MulExpression", function(object, idx) { is_negative(object@args[[1]]) })
+setMethod("is_decr", "MulExpression", function(object, idx) { is_nonpos(object@args[[3-idx]]) })
 
-MulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # Promote the right-hand side to a diagonal matrix if necessary
-  if(size[2] != 1 && all(arg_objs[[2]]$size == c(1,1))) {
-    arg <- lo.promote(arg_objs[[2]], c(size[2], 1))
-    arg_objs[[2]] <- lo.diag_vec(arg)
-  }
-  list(lo.mul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn MulExpression The graph implementation of the expression.
-setMethod("graph_implementation", "MulExpression", function(object, arg_objs, size, data = NA_real_) {
-  MulExpression.graph_implementation(arg_objs, size, data)
+setMethod(".grad", "MulExpression", function(object, values) {
+  if(is_constant(object@args[[1]]) || is_constant(object@args[[2]]))
+    return(callNextMethod(object, values))
+  
+  # TODO: Verify that the following code is correct for non-affine arguments.
+  X <- values[[1]]
+  Y <- values[[2]]
+  
+  DX_rows <- size(object@args[[1]])
+  cols <- size(object@args[[1]])
+  
+  # DX = [diag(Y11), diag(Y12), ...]
+  #      [diag(Y21), diag(Y22), ...]
+  #      [   ...       ...      ...]
+  DX <- sparseMatrix(i = c(), j = c(), dims = c(DX_rows, cols))
+  step <- shape(object@args[[1]])[1]
+  for(k in 1:step) {
+    DX[seq(k, DX_rows, step), seq(k, cols, step)] <- Y
+  if(length(shape(object@args[[2]])) == 1)
+    cols <- 1
+  else
+    cols <- shape(object@args[[2]])[2]
+  DY <- Matrix(bdiag(lapply(1:cols, function(k) { t(X) })), sparse = TRUE)
+  return(list(DX, DY))
 })
 
-#'
-#' The RMulExpression class.
-#'
-#' This class represents the matrix product of an expression with a constant on the right.
-#'
-#' @seealso \linkS4class{MulExpression}
-#' @name RMulExpression-class
-#' @aliases RMulExpression
-#' @rdname RMulExpression-class
-RMulExpression <- setClass("RMulExpression", contains = "MulExpression")
-
-#' @param object A \linkS4class{RMulExpression} object.
-#' @param idx An index into the atom.
-#' @describeIn RMulExpression Is the right-hand expression positive?
-setMethod("is_incr", "RMulExpression", function(object, idx) { is_positive(object@args[[2]]) })
-
-#' @describeIn RMulExpression Is the right-hand expression negative?
-setMethod("is_decr", "RMulExpression", function(object, idx) { is_negative(object@args[[2]]) })
-
-RMulExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # Promote the left-hand side to a diagonal matrix if necessary
-  if(size[1] != 1 && all(arg_objs[[1]]$size == c(1,1))) {
-    arg <- lo.promote(arg_objs[[1]], c(size[1], 1))
-    arg_objs[[1]] <- lo.diag_vec(arg)
-  }
-  list(lo.rmul_expr(arg_objs[[1]], arg_objs[[2]], size), list())
+MulExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  # Promote the right-hand side to a diagonal matrix if necessary
+  lhs <- arg_objs[[1]]
+  rhs <- arg_objs[[2]]
+  if(lo.is_const(lhs))
+    return(list(lo.mul_expr(lhs, rhs, shape), list()))
+  else if(lo.is_const(rhs))
+    return(list(lo.rmul_expr(lhs, rhs, shape), list()))
+  else
+    stop("Product of two non-constant expressions is not DCP.")
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
-#' @describeIn RMulExpression The graph implementation of the expression.
-setMethod("graph_implementation", "RMulExpression", function(object, arg_objs, size, data = NA_real_) {
-  RMulExpression.graph_implementation(arg_objs, size, data)
+#' @describeIn MulExpression The graph implementation of the expression.
+setMethod("graph_implementation", "MulExpression", function(object, arg_objs, shape, data = NA_real_) {
+  MulExpression.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -371,26 +408,69 @@ setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
-#' @describeIn DivExpression The size of the left-hand expression.
-setMethod("size_from_args", "DivExpression", function(object) { size(object@args[[1]]) })
+#' @describeIn DivExpression Is the expression quadratic or piecewise affine?
+setMethod("is_qpwa", "DivExpression", function(object) {
+  is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
+})
+
+#' @describeIn DivExpression The (row, col) shape of the left-hand expression.
+setMethod("shape_from_args", "DivExpression", function(object) { shape(object@args[[1]]) })
 
 #' @param idx An index into the atom.
 #' @describeIn DivExpression Is the right-hand expression positive?
-setMethod("is_incr", "DivExpression", function(object, idx) { is_positive(object@args[[2]]) })
+setMethod("is_incr", "DivExpression", function(object, idx) { is_nonneg(object@args[[2]]) })
 
 #' @describeIn DivExpression Is the right-hand expression negative?
-setMethod("is_decr", "DivExpression", function(object, idx) { is_negative(object@args[[2]]) })
+setMethod("is_decr", "DivExpression", function(object, idx) { is_nonpos(object@args[[2]]) })
 
-DivExpression.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+DivExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DivExpression The graph implementation of the expression.
-setMethod("graph_implementation", "DivExpression", function(object, arg_objs, size, data = NA_real_) {
-  DivExpression.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "DivExpression", function(object, arg_objs, shape, data = NA_real_) {
+  DivExpression.graph_implementation(arg_objs, shape, data)
+})
+
+# Multiplies two expressions elementwise.
+setClass("multiply", contains = "MulExpression")
+
+setMethod("initialize", "multiply", function(.Object, ..., lh_exp, rh_exp) {
+  lh_exp <- multiply.cast_to_const(lh_exp)
+  rh_exp <- multiply.cast_to_const(rh_exp)
+  if(is_scalar(lh_exp) && !is_scalar(rh_exp))
+    lh_exp <- promote(lh_exp, shape(rh_exp))
+  else if(is_scalar(rh_exp) && !is_scalar(lh_exp))
+    rh_exp <- promote(rh_exp, shape(lh_exp))
+  callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
+})
+
+#' @describeIn multiply Multiples the values elementwise.
+setMethod("to_numeric", "multiply", function(object, values) { values[[1]] * values[[2]] })
+
+#' @describeIn multiply The sum of the argument dimensions - 1.
+setMethod("shape_from_args", "multiply", function(object) { sum_shapes(lapply(object@args, shape)) })
+
+multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  lhs <- arg_objs[[1]]
+  rhs <- arg_objs[[2]]
+  if(lo.is_const(lhs))
+    return(list(lo.multiply(lhs, rhs), list()))
+  else if(lo.is_const(rhs))
+    return(list(lo.multiply(rhs, lhs), list()))
+  else
+    stop("Product of two non-constant expressions is not DCP.")
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn DivExpression The graph implementation of the expression.
+setMethod("graph_implementation", "multiply", function(object, arg_objs, shape, data = NA_real_) {
+  multiply.graph_implementation(arg_objs, shape, data)
 })
 
 #'

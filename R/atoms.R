@@ -6,7 +6,7 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), prototype(args = list(), .size = NA_real_),
+Atom <- setClass("Atom", representation(args = "list", .shape = "numeric"), prototype(args = list(), .size = NA_real_),
                  validity = function(object) {
                    if(length(object@args) == 0)
                      stop("[Atom: args] no arguments given to ", class(object))
@@ -14,43 +14,71 @@ Atom <- setClass("Atom", representation(args = "list", .size = "numeric"), proto
                  }, contains = c("VIRTUAL", "Expression"))
 
 setMethod("initialize", "Atom", function(.Object, ..., args = list(), .size = NA_real_) {
-  .Object@args <- lapply(args, function(arg) { as.Constant(arg) })
+  .Object@args <- lapply(args, as.Constant)
   validate_args(.Object)
-  .Object@.size <- size_from_args(.Object)
+  .Object@.shape <- shape_from_args(.Object)
+  if(length(.Object@.shape) > 2)
+    stop("Atoms must be at most 2D.")
   callNextMethod(.Object, ...)
 })
 
+#' @param x,object An \linkS4class{Atom} object.
 setMethod("show", "Atom", function(object) {
-  cat(class(object), "(", paste(lapply(object@args, function(arg) { as.character(arg) }), collapse = ", "), ")", sep = "")
+  if(is.na(get_data(object)))
+    data <- list()
+  else
+    data <- sapply(get_data(object), as.character)
+  arg_names <- sapply(object@args, name)
+  cat(class(object), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
 })
 
-#' @param x,object An \linkS4class{Atom} object.
+setMethod("name", "Atom", function(x) {
+  if(is.na(get_data(object)))
+    data <- list()
+  else
+    data <- sapply(get_data(object), as.character)
+  arg_names <- sapply(object@args, name)
+  paste(class(object), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
+})
+
 #' @describeIn Atom Raises an error if the arguments are invalid.
-setMethod("validate_args", "Atom", function(object) { return() })
+setMethod("validate_args", "Atom", function(object) { 
+  if(!allow_complex(object) && any(sapply(object@args, is_complex)))
+    stop("Arguments to ", class(object), " cannot be complex.")
+})
 
-#' @rdname size_from_args
-setMethod("size_from_args", "Atom", function(object) { stop("Unimplemented") })
+#' @rdname allow_complex
+setMethod("allow_complex", "Atom", function(object) { FALSE })
+
+#' @rdname shape_from_args
+setMethod("shape_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
-setMethod("size", "Atom", function(object) { object@.size })
+setMethod("shape", "Atom", function(object) { object@.shape })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
-setMethod("dim", "Atom", function(x) { size(x) })
+setMethod("dim", "Atom", function(x) { shape(x) })
 
 #' @describeIn Atom The number of rows in the atom.
-setMethod("nrow", "Atom", function(x) { size(x)[1] })
+setMethod("nrow", "Atom", function(x) { shape(x)[1] })
 
 #' @describeIn Atom The number of columns in the atom.
-setMethod("ncol", "Atom", function(x) { size(x)[2] })
+setMethod("ncol", "Atom", function(x) { shape(x)[2] })
 
 #' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
-#' @describeIn Atom A logical value indicating whether the atom is positive.
-setMethod("is_positive", "Atom", function(object) { sign_from_args(object)[1] })
+#' @describeIn Atom A logical value indicating whether the atom is nonnegative.
+setMethod("is_nonneg", "Atom", function(object) { sign_from_args(object)[1] })
 
-#' @describeIn Atom A logical value indicating whether the atom is negative.
-setMethod("is_negative", "Atom", function(object) { sign_from_args(object)[2] })
+#' @describeIn Atom A logical value indicating whether the atom is nonpositive.
+setMethod("is_nonpos", "Atom", function(object) { sign_from_args(object)[2] })
+
+#' @describeIn Atom A logical value indicating whether the atom is imaginary.
+setMethod("is_imag", "Atom", function(object) { FALSE })
+
+#' @describeIn Atom A logical value indicating whether the atom is complex valued.
+setMethod("is_complex", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
 setMethod("is_atom_convex", "Atom", function(object) { stop("Unimplemented") })
@@ -103,14 +131,13 @@ setMethod("is_concave", "Atom", function(object) {
 
 #' @describeIn Atom Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
-  # Constant atoms are treated as a leaf
+  # Constant atoms are treated as a leaf.
   if(is_constant(object)) {
-    # Parameterized expressions are evaluated later
+    # Parameterized expressions are evaluated later.
     if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
-      size <- size(object)
-      param <- CallbackParam(value(object), size[1], size[2])
+      param <- CallbackParam(value(object), shape(object))
       return(canonical_form(param))
-    # Non-parameterized expressions are evaluated immediately
+    # Non-parameterized expressions are evaluated immediately.
     } else
       return(canonical_form(Constant(value(object))))
   } else {
@@ -121,9 +148,9 @@ setMethod("canonicalize", "Atom", function(object) {
       arg_objs[[length(arg_objs) + 1]] <- canon[[1]]
       constraints <- c(constraints, canon[[2]])
     }
-    # Special info required by the graph implementation
+    # Special info required by the graph implementation.
     data <- get_data(object)
-    graph <- graph_implementation(object, arg_objs, size(object), data)
+    graph <- graph_implementation(object, arg_objs, shape(object), data)
     return(list(graph[[1]], c(constraints, graph[[2]])))
   }
 })
@@ -134,56 +161,30 @@ setMethod("canonicalize", "Atom", function(object) {
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
 
-#' @describeIn Atom List of \linkS4class{Variable} objects in the atom.
-setMethod("variables", "Atom", function(object) {
-  var_list <- lapply(object@args, function(arg) { variables(arg) })
-  unique(flatten_list(var_list))
-})
-
-#' @describeIn Atom List of \linkS4class{Parameter} objects in the atom.
-setMethod("parameters", "Atom", function(object) {
-  param_list <- lapply(object@args, function(arg) { parameters(arg) })
-  unique(flatten_list(param_list))
-})
-
-#' @describeIn Atom List of \linkS4class{Constant} objects in the atom.
-setMethod("constants", "Atom", function(object) {
-  const_list <- flatten_list(lapply(object@args, function(arg) { constants(arg) }))
-  const_id <- sapply(const_list, function(constant) { id(constant) })
-  const_list[!duplicated(const_id)]
-})
-
 #' @describeIn Atom The value of the atom.
 setMethod("value", "Atom", function(object) {
+  shape <- shape(object)
+  # shapes with 0's dropped in presolve.
+  if(0 in shape)
+    result <- matrix(nrow = 0, ncol = 0)
   # Catch the case when the expression is known to be zero through DCP analysis
-  if(is_zero(object)) {
-    size <- size(object)
-    result <- matrix(0, nrow = size[1], ncol = size[2])
-  } else {
+  else if(is_zero(object))
+    result <- matrix(0, nrow = shape[1], ncol = shape[2])
+  else {
     arg_values <- list()
-    idx <- 1
     for(arg in object@args) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value(arg)
       if(any(is.na(arg_val)) && !is_constant(object))
         return(NA)
-      else {
-        arg_values[[idx]] <- arg_val
-        idx <- idx + 1
-      }
+      else
+        arg_values <- c(arg_values, list(arg_val))
     }
     result <- to_numeric(object, arg_values)
   }
-
-  # Reduce to scalar if possible
-  if(all(intf_size(result) == c(1,1)))
-    intf_scalar_value(result)
-  else
-    result
+  return(result)
 })
-
-setMethod(".grad", "Atom", function(object, values) { stop("Unimplemented") })
 
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {
@@ -208,17 +209,17 @@ setMethod("grad", "Atom", function(object) {
   result <- list()
   idx <- 1
   for(arg in object@args) {
-    # A dictionary of gradients wrt variables
-    # Partial argument / partial x
+    # A dictionary of gradients wrt variables.
+    # Partial argument / partial x.
     grad_arg <- grad(arg)
     for(key in names(grad_arg)) {
-      # None indicates gradient is not defined
+      # None indicates gradient is not defined.
       if(any(is.na( as.numeric(grad_arg[[key]]) )) || any(is.na( as.numeric(grad_self[[idx]]) )))
         result[[key]] <- NA_real_
       else {
         D <- grad_arg[[key]] %*% grad_self[[idx]]
-        # Convert 1x1 matrices to scalars
-        if((is.matrix(D) || is(D, "Matrix")) && dim(D) == c(1,1))
+        # Convert 1x1 matrices to scalars.
+        if((is.matrix(D) || is(D, "Matrix")) && all(shape(D) == c(1,1)))
           D <- D[1,1]
 
         if(key %in% names(result))
@@ -232,7 +233,7 @@ setMethod("grad", "Atom", function(object) {
   return(result)
 })
 
-setMethod(".domain", "Atom", function(object) { list() })
+setMethod(".grad", "Atom", function(object, values) { stop("Unimplemented") })
 
 #' @describeIn Atom A list of constraints describing the closure of the region where the expression is finite.
 setMethod("domain", "Atom", function(object) {
@@ -242,6 +243,16 @@ setMethod("domain", "Atom", function(object) {
       cons <- c(cons, con)
   }
   c(.domain(object), cons)
+})
+
+setMethod(".domain", "Atom", function(object) { list() })
+
+setMethod("atoms", "Atom", function(object) {
+  atom_list <- list()
+  for(arg in object@args)
+    atom_list <- c(atom_list, atoms(arg))
+  atom_list <- c(atom_list, list(class(object)))
+  return(unique(atom_list))
 })
 
 #'
@@ -254,48 +265,51 @@ setMethod("domain", "Atom", function(object) {
 #' @name AxisAtom-class
 #' @aliases AxisAtom
 #' @rdname AxisAtom-class
-AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY"), prototype(axis = NA_real_),
-                     validity = function(object) {
-                       if(length(object@axis) != 1 || !(is.numeric(axis) || is.logical(axis)))
-                         stop("[AxisAtom: axis] axis must equal 1 (row), 2 (column), or NA (row and column)")
-                       return(TRUE)
-                     }, contains = c("VIRTUAL", "Atom"))
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY", keepdims = "logical"), 
+                                 prototype(axis = NA_real_, keepdims = FALSE), contains = c("VIRTUAL", "Atom"))
 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
   .Object@expr <- expr
   .Object@axis <- axis
+  .Object@keepdims <- keepdims
   .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Atom} object.
-#' @describeIn AxisAtom The size of the atom deteremined from its arguments.
-setMethod("size_from_args", "AxisAtom", function(object) {
-  if(is.na(object@axis))
-    c(1, 1)
-  else if(object@axis == 1)
-    c(size(object@args[[1]])[1], 1)
-  else   # axis == 2
-    c(1, size(object@args[[1]])[2])
+#' @describeIn AxisAtom The shape of the atom determined from its arguments.
+setMethod("shape_from_args", "AxisAtom", function(object) {
+  shape <- shape(object@args[[1]])
+  if(object@keepdims && is.na(object@axis))   # Copy scalar to maintain original dimensions.
+    shape <- rep(1, length(shape))
+  else if(object@keepdims && !is.na(object@axis)) {   # Collapse dimensions NOT in axis to 1.
+    collapse <- setdiff(1:length(shape), object@axis)
+    shape[collapse] <- 1
+  } else if(!object@keepdims && is.na(object@axis))   # Return a scalar.
+    shape <- NULL   # TODO: Should this be NA instead?
+  else   # Drop dimensions NOT in axis and collapse atom.
+    shape <- shape[object@axis]
+  return(shape)
 })
 
-#' @describeIn AxisAtom A list containing \code{axis}.
-setMethod("get_data", "AxisAtom", function(object) { list(object@axis) })
+#' @describeIn AxisAtom A list containing \code{axis} and \code{keepdims}.
+setMethod("get_data", "AxisAtom", function(object) { list(object@axis, object@keepdims) })
 
 #' @describeIn AxisAtom Check that the new shape has the same number of entries as the old.
 setMethod("validate_args", "AxisAtom", function(object) {
-  if(length(object@axis) != 1 || !(is.na(object@axis) || object@axis %in% c(1,2)))
-     stop("Invalid argument for axis: must equal 1 (row), 2 (column), or NA (row and column)")
+  if(!is.na(object@axis) && any(object@axis > ndim(object@args[[1]]) || object@axis <= 0))
+    stop("Invalid argument for axis. Must be an integer between 1 and ", ndim(object@args[[1]]))
+  callNextMethod()
 })
 
 setMethod(".axis_grad", "AxisAtom", function(object, values) {
-  m <- size(object@args[[1]])[1]
-  n <- size(object@args[[1]])[2]
-  if(is.na(object@axis)) {
-    value <- matrix(values[[1]], nrow = m*n, ncol = 1)
+  if(is.na(object@axis) || ndim(object@args[[1]]) < 2) {
+    value <- matrix(values[[1]], nrow = size(object@args[[1]]), ncol = 1)
     D <- .column_grad(object, value)
     if(is(D, "Matrix") || !any(is.na(D)))
       D <- Matrix(D, sparse = TRUE)
   } else {
+    m <- nrow(object@args[[1]])
+    n <- ncol(object@args[[1]])
     if(object@axis == 2) {   # Function apply to each column
       D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, n))
       for(i in 1:n) {

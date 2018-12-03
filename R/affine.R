@@ -9,6 +9,9 @@
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
 #' @param object An \linkS4class{AffAtom} object.
+#' @describeIn AffAtom Affine atoms can be complex valued.
+setMethod("allow_complex", "Atom", function(object) { TRUE })
+
 #' @describeIn AffAtom The sign of the atom.
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
 
@@ -67,7 +70,6 @@ setMethod(".grad", "AffAtom", function(object, values) {
   var_offsets <- c()
   var_names <- c()
   offset <- 0
-  idx <- 1
   for(idx in seq_len(length(object@args))) {
     arg <- object@args[[idx]]
     if(is_constant(arg))
@@ -436,9 +438,10 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, sh
 })
 
 # Multiplies two expressions elementwise.
-setClass("multiply", contains = "MulExpression")
+.Multiply <- setClass("Multiply", contains = "MulExpression")
+Multiply <- function(lh_exp, rh_exp) { .Multiply(lh_exp = lh_exp, rh_exp = rh_exp) }
 
-setMethod("initialize", "multiply", function(.Object, ..., lh_exp, rh_exp) {
+setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
   lh_exp <- multiply.cast_to_const(lh_exp)
   rh_exp <- multiply.cast_to_const(rh_exp)
   if(is_scalar(lh_exp) && !is_scalar(rh_exp))
@@ -448,13 +451,13 @@ setMethod("initialize", "multiply", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
 })
 
-#' @describeIn multiply Multiples the values elementwise.
-setMethod("to_numeric", "multiply", function(object, values) { values[[1]] * values[[2]] })
+#' @describeIn Multiply Multiples the values elementwise.
+setMethod("to_numeric", "Multiply", function(object, values) { values[[1]] * values[[2]] })
 
-#' @describeIn multiply The sum of the argument dimensions - 1.
-setMethod("shape_from_args", "multiply", function(object) { sum_shapes(lapply(object@args, shape)) })
+#' @describeIn Multiply The sum of the argument dimensions - 1.
+setMethod("shape_from_args", "Multiply", function(object) { sum_shapes(lapply(object@args, shape)) })
 
-multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   lhs <- arg_objs[[1]]
   rhs <- arg_objs[[2]]
   if(lo.is_const(lhs))
@@ -468,10 +471,51 @@ multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
 #' @param arg_objs A list of linear expressions for each argument.
 #' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
-#' @describeIn DivExpression The graph implementation of the expression.
-setMethod("graph_implementation", "multiply", function(object, arg_objs, shape, data = NA_real_) {
-  multiply.graph_implementation(arg_objs, shape, data)
+#' @describeIn Multiply The graph implementation of the expression.
+setMethod("graph_implementation", "Multiply", function(object, arg_objs, shape, data = NA_real_) {
+  Multiply.graph_implementation(arg_objs, shape, data)
 })
+
+#'
+#' The Conjugate class.
+#' 
+#' This class represents the complex conjugate of an expression.
+#' 
+#' @slot expr An \linkS4class{Expression} or R numeric data.
+#' @name Conjugate-class
+#' @aliases Conjugate
+#' @rdname Conjugate-class
+.Conjugate <- setClass("Conjugate", representation(expr = "ConstValORExpr"), contains = "AffAtom")
+
+#' @param expr An \linkS4class{Expression} or R numeric data.
+#' @rdname Conjugate-class
+Conjugate <- function(expr) { .Conjugate(expr = expr) }
+
+setMethod("initialize", "Conjugate", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+})
+
+#' @param object A \linkS4class{Conjugate} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Conjugate Elementwise complex conjugate of the constant.
+setMethod("to_numeric", "Conjugate", function(object, values) { Conj(values[[1]]) })
+
+#' @describeIn Conjugate The (row, col) shape of the expression.
+setMethod("shape_from_args", "Conjugate", function(object) { shape(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn Conjugate Is the composition weakly increasing in argument idx?
+setMethod("is_incr", "Conjugate", function(object, idx) { FALSE })
+
+#' @describeIn Conjugate Is the composition weakly decreasing in argument idx?
+setMethod("is_decr", "Conjugate", function(object, idx) { FALSE })
+
+#' @describeIn Conjugate Is the expression symmetric?
+setMethod("is_symmetric", "Conjugate", function(object) { is_symmetric(object@args[[1]]) })
+
+#' @describeIn Conjugate Is the expression hermitian?
+setMethod("is_hermitian", "Conjugate", function(object) { is_hermitian(object@args[[1]]) })
 
 #'
 #' The Conv class.

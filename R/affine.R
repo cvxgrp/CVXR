@@ -437,13 +437,24 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, sh
   DivExpression.graph_implementation(arg_objs, shape, data)
 })
 
-# Multiplies two expressions elementwise.
+#'
+#' The Multiply class.
+#'
+#' This class represents the elementwise product of two expressions.
+#'
+#' @name Multiply-class
+#' @aliases Multiply
+#' @rdname Multiply-class
 .Multiply <- setClass("Multiply", contains = "MulExpression")
+
+#' @param lh_exp An \linkS4class{Expression} or R numeric data.
+#' @param rh_exp An \linkS4class{Expression} or R numeric data.
+#' @rdname Multiply-class
 Multiply <- function(lh_exp, rh_exp) { .Multiply(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
-  lh_exp <- multiply.cast_to_const(lh_exp)
-  rh_exp <- multiply.cast_to_const(rh_exp)
+  lh_exp <- as.Constant(lh_exp)
+  rh_exp <- as.Constant(rh_exp)
   if(is_scalar(lh_exp) && !is_scalar(rh_exp))
     lh_exp <- promote(lh_exp, shape(rh_exp))
   else if(is_scalar(rh_exp) && !is_scalar(lh_exp))
@@ -953,7 +964,7 @@ setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
-  .Object@key <- ku_validate_key(key, size(expr))   # TODO: Double check key validation
+  .Object@key <- ku_validate_key(key, shape(expr))   # TODO: Double check key validation
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
@@ -965,25 +976,25 @@ setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key)
 })
 
-#' @describeIn Index The size of the atom.
-setMethod("size_from_args", "Index", function(object) {
-  ku_size(object@key, size(object@args[[1]]))
+#' @describeIn Index The shape of the atom.
+setMethod("shape_from_args", "Index", function(object) {
+  ku_shape(object@key, shape(object@args[[1]]))
 })
 
 #' @describeIn Index A list containing \code{key}.
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
-Index.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  obj <- lo.index(arg_objs[[1]], size, data[[1]])
+Index.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  obj <- lo.index(arg_objs[[1]], shape, data[[1]])
   list(obj, list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the size of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Index The graph implementation of the atom.
-setMethod("graph_implementation", "Index", function(object, arg_objs, size, data = NA_real_) {
-  Index.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Index", function(object, arg_objs, shape, data = NA_real_) {
+  Index.graph_implementation(arg_objs, shape, data)
 })
 
 #
@@ -1000,11 +1011,11 @@ Index.get_special_slice <- function(expr, row, col) {
   expr <- as.Constant(expr)
 
   # Order the entries of expr and select them using key.
-  expr_size <- size(expr)
-  expr_prod <- prod(expr_size)
+  expr_shape <- shape(expr)
+  expr_size <- expr_size
 
-  idx_mat <- seq(expr_prod)
-  idx_mat <- matrix(idx_mat, nrow = expr_size[1], ncol = expr_size[2])
+  idx_mat <- seq(expr_size)
+  idx_mat <- matrix(idx_mat, nrow = expr_shape[1], ncol = expr_shape[2])
   if(is.matrix(row) && is.null(col))
     select_mat <- idx_mat[row]
   else if(is.null(row) && !is.null(col))
@@ -1015,21 +1026,21 @@ Index.get_special_slice <- function(expr, row, col) {
     select_mat <- idx_mat[row, col, drop = FALSE]
 
   if(!is.null(dim(select_mat)))
-    final_size <- dim(select_mat)
+    final_shape <- dim(select_mat)
   else   # Always cast 1-D arrays as column vectors
-    final_size <- c(length(select_mat), 1)
+    final_shape <- c(length(select_mat), 1)
 
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
-  ##select_vec <- as.matrix(select_mat, nrow=final_size[1L], ncol=final_size[2L])
+  ##select_vec <- as.matrix(select_mat, nrow=final_shape[1L], ncol=final_shape[2L])
 
-  identity <- sparseMatrix(i = 1:expr_prod, j = 1:expr_prod, x = rep(1, expr_prod))
-  idmat <- matrix(identity[select_vec, ], ncol = expr_prod)
+  identity <- sparseMatrix(i = 1:expr_size, j = 1:expr_size, x = rep(1, expr_size))
+  idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
   if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
-    Reshape(idmat * v, final_size[1], final_size[2])
+    Reshape(idmat * v, final_shape[1], final_shape[2])
   else
-    Reshape(idmat %*% v, final_size[1], final_size[2])
+    Reshape(idmat %*% v, final_shape[1], final_shape[2])
 }
 
 #
@@ -1102,12 +1113,6 @@ setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
-#' @describeIn Kron Check both arguments are vectors and the first is a constant.
-setMethod("validate_args", "Kron", function(object) {
-  if(!is_constant(object@args[[1]]))
-    stop("The first argument to Kron must be constant")
-})
-
 #' @param object A \linkS4class{Kron} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Kron The kronecker product of the two values.
@@ -1115,10 +1120,18 @@ setMethod("to_numeric", "Kron", function(object, values) {
   base::kronecker(values[[1]], values[[2]])
 })
 
-#' @describeIn Kron The size of the atom.
-setMethod("size_from_args", "Kron", function(object) {
-  rows <- size(object@args[[1]])[1] * size(object@args[[2]])[1]
-  cols <- size(object@args[[1]])[2] * size(object@args[[2]])[2]
+#' @describeIn Kron Check both arguments are vectors and the first is a constant.
+setMethod("validate_args", "Kron", function(object) {
+  if(!is_constant(object@args[[1]]))
+    stop("The first argument to Kron must be constant.")
+  else if(ndim(object@args[[1]]) != 2 || ndim(object@args[[2]]) != 2)
+    stop("Kron requires matrix arguments.")
+})
+
+#' @describeIn Kron The shape of the atom.
+setMethod("shape_from_args", "Kron", function(object) {
+  rows <- shape(object@args[[1]])[1] * shape(object@args[[2]])[1]
+  cols <- shape(object@args[[1]])[2] * shape(object@args[[2]])[2]
   c(rows, cols)
 })
 
@@ -1127,94 +1140,80 @@ setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]]
 
 #' @param idx An index into the atom.
 #' @describeIn Kron Is the left-hand expression positive?
-setMethod("is_incr", "Kron", function(object, idx) { is_positive(object@args[[1]]) })
+setMethod("is_incr", "Kron", function(object, idx) { is_nonneg(object@args[[1]]) })
 
 #' @describeIn Kron Is the right-hand expression negative?
-setMethod("is_decr", "Kron", function(object, idx) { is_negative(object@args[[2]]) })
+setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[2]]) })
 
-Kron.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(lo.kron(arg_objs[[1]], arg_objs[[2]], size), list())
+Kron.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.kron(arg_objs[[1]], arg_objs[[2]], shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the size of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Kron The graph implementation of the atom.
-setMethod("graph_implementation", "Kron", function(object, arg_objs, size, data = NA_real_) {
-  Kron.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Kron", function(object, arg_objs, shape, data = NA_real_) {
+  Kron.graph_implementation(arg_objs, shape, data)
 })
 
 #'
-#' The MulElemwise class.
+#' The Promote class.
+#' 
+#' This class represents the promotion of a scalar expression into a vector/matrix.
 #'
-#' This class represents the elementwise multiplication of two expressions. The first expression must be constant.
-#'
-#' @slot lh_const A constant \linkS4class{Expression} or numeric value.
-#' @slot rh_exp An \linkS4class{Expression}.
-#' @name MulElemwise-class
-#' @aliases MulElemwise
-#' @rdname MulElemwise-class
-.MulElemwise <- setClass("MulElemwise", representation(lh_const = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
+#' @slot expr An \linkS4class{Expression} or numeric constant.
+#' @slot promoted_shape The desired shape.
+#' @name Promote-class
+#' @aliases Promote
+#' @rdname Promote-class
+.Promote <- setClass("Promote", representation(expr = "Expression", promoted_shape = "numeric"), contains = "AffAtom")
 
-#' @param lh_const A constant \linkS4class{Expression} or numeric value.
-#' @param rh_exp An \linkS4class{Expression}.
-#' @rdname MulElemwise-class
-MulElemwise <- function(lh_const, rh_exp) { .MulElemwise(lh_const = lh_const, rh_exp = rh_exp) }
+#' @param expr An \linkS4class{Expression} or numeric constant.
+#' @param promoted_shape The desired shape.
+#' @rdname Promote-class
+Promote <- function(expr, promoted_shape) { 
+  expr <- as.Constant(expr)
+  if(!all(shape(expr) == shape)) {
+    if(!is_scalar(expr))
+      stop("Only scalars may be promoted.")
+    return(.Promote(expr = expr, promoted_shape = promoted_shape))
+  } else
+    return(expr)
+}
 
-setMethod("initialize", "MulElemwise", function(.Object, ..., lh_const, rh_exp) {
-  .Object@lh_const <- lh_const
-  .Object@rh_exp <- rh_exp
-  callNextMethod(.Object, ..., args = list(.Object@lh_const, .Object@rh_exp))
+setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_shape) {
+  .Object@expr <- expr
+  .Object@promoted_shape <- promoted_shape
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+}
+
+#' @describeIn Promote Promotes the value to the new shape.
+setMethod("to_numeric", "Promote", function(object, values) {
+  array(1, dim = object@promoted_shape) * values[[1]]
 })
 
-#' @describeIn MulElemwise Check the first argument is a constant.
-setMethod("validate_args", "MulElemwise", function(object) {
-  if(!is_constant(object@args[[1]]))
-    stop("The first argument to MulElemwise must be constant.")
+#' @describeIn Promote Is the expression symmetric?
+setMethod("is_symmetric", "Promote", function(object) {
+  ndim(object) == 2 && shape(object)[1] == shape(object)[2]
 })
 
-#' @param object A \linkS4class{MulElemwise} object.
-#' @param values A list of arguments to the atom.
-#' @describeIn MulElemwise Multiply the values elementwise.
-setMethod("to_numeric", "MulElemwise", function(object, values) {
-  values <- lapply(values, intf_convert_if_scalar)
-  values[[1]] * values[[2]]
-})
+#' @describeIn Promote Returns the (row, col) shape of the expression.
+setMethod("shape_from_args", "Promote", function(object) { object@promoted_shape })
 
-#' @describeIn MulElemwise The size of the atom.
-setMethod("size_from_args", "MulElemwise", function(object) {
-  sum_shapes(lapply(object@args, function(arg) { size(arg) }))
-})
+#' @describeIn Promote Returns information needed to reconstruct the expression besides the args.
+setMethod("get_data", "Promote", function(object) { list(object@promoted_shape) })
 
-#' @describeIn MulElemwise The sign of the atom.
-setMethod("sign_from_args", "MulElemwise", function(object) {
-  mul_sign(object@args[[1]], object@args[[2]])
-})
-
-#' @param idx An index into the atom.
-#' @describeIn MulElemwise Is the left-hand constant positive?
-setMethod("is_incr", "MulElemwise", function(object, idx) { is_positive(object@args[[1]]) })
-
-#' @describeIn MulElemwise Is the left-hand constant negative?
-setMethod("is_decr", "MulElemwise", function(object, idx) { is_negative(object@args[[1]]) })
-
-#' @describeIn MulElemwise Is the right-hand expression quadratic?
-setMethod("is_quadratic", "MulElemwise", function(object) { is_quadratic(object@args[[2]]) })
-
-MulElemwise.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # One of the arguments is a scalar, so we can use normal multiplication
-  if(any(arg_objs[[1]]$size != arg_objs[[2]]$size))
-    MulExpression.graph_implementation(arg_objs, size, data)
-  else
-    list(lo.mul_elemwise(arg_objs[[1]], arg_objs[[2]]), list())
+Promote.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.promote(arg_objs[[1]], shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
-#' @describeIn MulElemwise The graph implementation of the atom.
-setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size, data = NA_real_) {
-  MulElemwise.graph_implementation(arg_objs, size, data)
+#' @describeIn Promote The graph implementation of the atom.
+setMethod("graph_implementation", "Promote", function(object, arg_objs, shape, data = NA_real_) {
+  Promote.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -1261,58 +1260,55 @@ setMethod("is_symmetric", "Real", function(object) { is_hermitian(object@args[[1
 #' then unvectorizes it into the new shape. Entries are stored in column-major order.
 #'
 #' @slot expr An \linkS4class{Expression} or numeric matrix.
-#' @slot rows The new number of rows.
-#' @slot cols The new number of columns.
+#' @slot shape The new shape.
 #' @name Reshape-class
 #' @aliases Reshape
 #' @rdname Reshape-class
-.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", rows = "numeric", cols = "numeric"), contains = "AffAtom")
+.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", new_shape = "numeric"), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} or numeric matrix.
-#' @param rows The new number of rows.
-#' @param cols The new number of columns.
+#' @param shape The new shape.
 #' @rdname Reshape-class
-Reshape <- function(expr, rows, cols) { .Reshape(expr = expr, rows = rows, cols = cols) }
+Reshape <- function(expr, new_shape) { .Reshape(expr = expr, new_shape = new_shape) }
 
-setMethod("initialize", "Reshape", function(.Object, ..., expr, rows, cols) {
-  .Object@rows <- rows
-  .Object@cols <- cols
+setMethod("initialize", "Reshape", function(.Object, ..., expr, new_shape) {
+  .Object@new_shape <- new_shape
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
-})
-
-#' @describeIn Reshape Check the new shape has the same number of entries as the old.
-setMethod("validate_args", "Reshape", function(object) {
-  old_len <- prod(size(object@args[[1]]))
-  new_len <- object@rows * object@cols
-  if(old_len != new_len)
-    stop(sprintf("Invalid reshape dimensions (%i, %i)", object@rows, object@cols))
 })
 
 #' @param object A \linkS4class{Reshape} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Reshape Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
-  dim(values[[1]]) <- c(object@rows, object@cols)
+  dim(values[[1]]) <- object@new_shape
   values[[1]]
 })
 
-#' @describeIn Reshape The \code{c(rows, cols)} of the new expression.
-setMethod("size_from_args", "Reshape", function(object) { c(object@rows, object@cols) })
+#' @describeIn Reshape Check the new shape has the same number of entries as the old.
+setMethod("validate_args", "Reshape", function(object) {
+  old_len <- size(object@args[[1]])
+  new_len <- prod(object@new_shape)
+  if(old_len != new_len)
+    stop("Invalid reshape dimensions (", paste(object@new_shape, sep = ","), ")")
+})
 
-#' @describeIn Reshape Returns \code{list(rows, cols)}.
-setMethod("get_data", "Reshape", function(object) { list(object@rows, object@cols) })
+#' @describeIn Reshape The \code{c(rows, cols)} shape of the new expression.
+setMethod("shape_from_args", "Reshape", function(object) { object@new_shape })
 
-Reshape.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(lo.reshape(arg_objs[[1]], size), list())
+#' @describeIn Reshape Returns a list containing the new shape.
+setMethod("get_data", "Reshape", function(object) { list(object@new_shape) })
+
+Reshape.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.reshape(arg_objs[[1]], shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Reshape The graph implementation of the atom.
-setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, data = NA_real_) {
-  Reshape.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Reshape", function(object, arg_objs, shape, data = NA_real_) {
+  Reshape.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -1330,40 +1326,48 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, size, da
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname SumEntries-class
-SumEntries <- function(expr, axis = NA_real_) { .SumEntries(expr = expr, axis = axis) }
+SumEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .SumEntries(expr = expr, axis = axis, keepdims = keepdims) }
 
 #' @param object A \linkS4class{SumEntries} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn SumEntries Sum the entries along the specified axis.
 setMethod("to_numeric", "SumEntries", function(object, values) {
   if(is.na(object@axis))
-    sum(values[[1]])
+    result <- sum(values[[1]])
   else
-    apply(values[[1]], object@axis, sum)
+    result <- apply(values[[1]], object@axis, sum)
+  # TODO: Drop dimensions only if keepdims = FALSE. Possibly use vapply?
 })
 
-SumEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+SumEntries.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   axis <- data[[1]]
+  keepdims <- data[[2]]
   if(is.na(axis))
-    obj <- lo.sum_entries(arg_objs[[1]])
+    obj <- lo.sum_entries(arg_objs[[1]], shape = shape)
   else if(axis == 1) {
-    const_size <- c(arg_objs[[1]]$size[2], 1)
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- lo.rmul_expr(arg_objs[[1]], ones, size)
+    if(keepdims)
+      const_shape <- c(arg_objs[[1]]$shape[2], 1)
+    else
+      const_shape <- c(arg_objs[[1]]$shape[2], NA_integer_)
+    ones <- create_const(array(1, dim = const_shape), const_shape)
+    obj <- lo.rmul_expr(arg_objs[[1]], ones, shape)
   } else {   # axis == 2
-    const_size <- c(1, arg_objs[[1]]$size[1])
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- lo.mul_expr(ones, arg_objs[[1]], size)
+    if(keepdims)
+      const_shape <- c(1, arg_objs[[1]]$shape[1])
+    else
+      const_shape <- c(arg_objs[[1]]$shape[1], NA_integer_)
+    ones <- create_const(array(1, dim = const_shape), const_shape)
+    obj <- lo.mul_expr(ones, arg_objs[[1]], shape)
   }
   list(obj, list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn SumEntries The graph implementation of the atom.
-setMethod("graph_implementation", "SumEntries", function(object, arg_objs, size, data = NA_real_) {
-  SumEntries.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "SumEntries", function(object, arg_objs, shape, data = NA_real_) {
+  SumEntries.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -1386,31 +1390,31 @@ setMethod("initialize", "Trace", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn Trace Check the argument is a square matrix.
-setMethod("validate_args", "Trace", function(object) {
-  size <- size(object@args[[1]])
-  if(size[1] != size[2])
-    stop("Argument to trace must be a square matrix")
-})
-
 #' @param object A \linkS4class{Trace} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Trace Sum the diagonal entries.
 setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]])) })
 
-#' @describeIn Trace The atom is a scalar.
-setMethod("size_from_args", "Trace", function(object){ c(1, 1) })
+#' @describeIn Trace Check the argument is a square matrix.
+setMethod("validate_args", "Trace", function(object) {
+  shape <- shape(object@args[[1]])
+  if(shape[1] != shape[2])
+    stop("Argument to Trace must be a square matrix")
+})
 
-Trace.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+#' @describeIn Trace The atom is a scalar.
+setMethod("shape_from_args", "Trace", function(object){ c() })
+
+Trace.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.trace(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Trace The graph implementation of the atom.
-setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data = NA_real_) {
-  Trace.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Trace", function(object, arg_objs, shape, data = NA_real_) {
+  Trace.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -1421,29 +1425,48 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, size, data
 #' @name Transpose-class
 #' @aliases Transpose
 #' @rdname Transpose-class
-Transpose <- setClass("Transpose", contains = "AffAtom")
+.Transpose <- setClass("Transpose", representation(expr = "Expression", axes = "ConstValORNull"), prototype(axes = NULL), contains = "AffAtom")
+
+Transpose <- function(expr, axes = NULL) { .Transpose(expr = expr, axes = axes) }
+
+setMethod("initialize", "Transpose", function(.Object, ..., expr, axes = NULL) {
+  .Object@expr <- expr
+  .Object@axes <- axes
+  callNextMethod(.Object, ... args = list(.Object@expr))
+})
 
 #' @param object A \linkS4class{Transpose} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Transpose The transpose of the given value.
-setMethod("to_numeric", "Transpose", function(object, values) { t(values[[1]]) })
+setMethod("to_numeric", "Transpose", function(object, values) { aperm(values[[1]], perm = object@axes) })
 
-#' @describeIn Transpose The size of the atom.
-setMethod("size_from_args", "Transpose", function(object) {
-  size <- size(object@args[[1]])
-  c(size[2], size[1])
+#' @describeIn Transpose Is the expression symmetric?
+setMethod("is_symmetric", "Transpose", function(object) { is_symmetric(object@args[[1]]) })
+
+#' @describeIn Transpose Is the expression hermitian?
+setMethod("is_hermitian", "Transpose", function(object) { is_hermitian(object@args[[1]]) })
+
+#' @describeIn Transpose The shape of the atom.
+setMethod("shape_from_args", "Transpose", function(object) {
+  if(is.null(object@axes))
+    rev(shape(object@args[[1]]))
+  else
+    shape(object@args[[1]])[object@axes]
 })
 
-Transpose.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+#' @describeIn Transpose Returns the axes for transposition.
+setMethod("get_data", "Transpose", function(object) { list(object@axes) })
+
+Transpose.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.transpose(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Transpose The graph implementation of the atom.
-setMethod("graph_implementation", "Transpose", function(object, arg_objs, size, data = NA_real_) {
-  Transpose.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Transpose", function(object, arg_objs, shape, data = NA_real_) {
+  Transpose.graph_implementation(arg_objs, shape, data)
 })
 
 #'

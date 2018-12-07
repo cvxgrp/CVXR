@@ -104,11 +104,9 @@ setMethod("is_pwl", "Abs", function(object) {
 
 setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
-  rows <- size(object@args[[1]])
+  rows <- size(object@expr)
   cols <- size(object)
-
-  arg_shape <- shape(object@args[[1]])
-  D <- matrix(0, nrow = arg_shape[1], ncol = arg_shape[2])
+  D <- array(0, dim = shape(object@args[[1]]))
   D <- D + (values[[1]] > 0)
   D <- D - (values[[1]] < 0)
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
@@ -278,7 +276,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
   else if(is.vector(val))
     2*sapply(val, function(v) { huber_loss(M_val, v) })
   else
-    2*apply(val, c(1,2), function(v) { huber_loss(M_val, v) })
+    2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
 })
 
 #' @describeIn Huber The atom is positive.
@@ -481,9 +479,9 @@ setMethod(".grad", "Log1p", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
 
-  # Outside domain or on boundary
+  # Outside domain or on boundary.
   if(min(values[[1]]) <= -1)
-    return(list(NA_real_))   # Non-differentiable
+    return(list(NA_real_))   # Non-differentiable.
   else {
     grad_vals <- 1.0/(values[[1]] + 1)
     return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -606,11 +604,11 @@ setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, is
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(object, values)
-  dims <- dim(max_vals)
+  val_dims <- dim(max_vals)
   if(is.null(dims))
     unused <- matrix(TRUE, nrow = length(max_vals), ncol = 1)
   else
-    unused <- matrix(TRUE, nrow = dims[1], ncol = dims[2])
+    unused <- array(TRUE, dim = val_dims)
   grad_list <- list()
   idx <- 1
   for(value in values) {
@@ -718,7 +716,7 @@ setMethod("to_numeric", "Power", function(object, values) {
   # Throw error if negative and Power doesn't handle that
   if(object@p < 0 && min(values[[1]]) <= 0)
     stop("Power cannot be applied to negative or zero values")
-  else if(is_power2(object@p) && object@p != 0 && min(values[[1]]) < 0)
+  else if(!is_power2(object@p) && object@p != 0 && min(values[[1]]) < 0)
     stop("Power cannot be applied to negative values")
   else
     return(values[[1]]^(as.double(object@p)))
@@ -831,46 +829,6 @@ setMethod("name", "Power", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ", ", x@p, ")", sep = "")
 })
 
-Power.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  p <- data[[1]]
-  w <- data[[2]]
-
-  if(p == 1)
-    return(list(x, list()))
-  else {
-    one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-    if(p == 0)
-      return(one, list())
-    else {
-      t <- create_var(size)
-
-      # TODO: Temporary hack for powers of 1/2 and 2 until gm_constrs works
-      # if(p == 1/2)
-      #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
-      # else if(p == 2)
-      #   return(list(t, gm_constrs_spec(t, list(x, one), w)))
-
-      if(p > 0 && p < 1)
-        return(list(t, gm_constrs(t, list(x, one), w)))
-      else if(p > 1)
-        return(list(t, gm_constrs(x, list(t, one), w)))
-      else if(p < 0)
-        return(list(t, gm_constrs(one, list(x, t), w)))
-      else
-        stop("This power is not yet supported")
-    }
-  }
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn Power The graph implementation of the atom.
-setMethod("graph_implementation", "Power", function(object, arg_objs, size, data = NA_real_) {
-  Power.graph_implementation(arg_objs, size, data)
-})
-
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 #'
@@ -931,27 +889,27 @@ setMethod(".grad", "Sqrt", function(object, values) {
 
 setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
-Sqrt.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+Sqrt.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   x <- arg_objs[[1]]
-  t <- create_var(size)
-  one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  t <- create_var(shape)
+  one <- create_const(array(1, dim = shape), shape)
   two <- create_const(2, c(1, 1))
-  length <- prod(size(x))
+  length <- size(x)
   constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(x, one)), c(length, 1)),
                               lo.vstack(list(
                               lo.reshape(lo.sub_expr(x, one), c(1, length)),
-                              lo.reshape(lo.mul_expr(two, t, size(t)), c(1, length))
+                              lo.reshape(lo.mul_expr(two, t, shape(t)), c(1, length))
                               ), c(2, length)),
                             2))
   list(t, constraints)
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Sqrt The graph implementation of the atom.
-setMethod("graph_implementation", "Sqrt", function(object, arg_objs, size, data = NA_real_) {
-  Sqrt.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Sqrt", function(object, arg_objs, shape, data = NA_real_) {
+  Sqrt.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -1013,7 +971,7 @@ setMethod(".domain", "Square", function(object) { list() })
 Square.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   x <- arg_objs[[1]]
   t <- create_var(shape)
-  one <- create_const(matrix(1, nrow = shape[1], ncol = shape[2]), shape)
+  one <- create_const(array(1, dim = shape), shape)
   two <- create_const(2, c(1, 1))
   length <- size(x)
   constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(t, one)), c(length, 1)),

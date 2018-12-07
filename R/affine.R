@@ -1336,7 +1336,13 @@ setMethod("to_numeric", "SumEntries", function(object, values) {
     result <- sum(values[[1]])
   else
     result <- apply(values[[1]], object@axis, sum)
-  # TODO: Drop dimensions only if keepdims = FALSE. Possibly use vapply?
+  
+  if(keepdims) {
+    new_dim <- dim(values[[1]])
+    collapse <- setdiff(1:length(new_dim), object@axis)
+    new_dim[collapse] <- 1
+    dim(result) <- new_dim
+  }
 })
 
 SumEntries.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
@@ -1489,13 +1495,6 @@ setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @describeIn UpperTri Check the argument is a square matrix.
-setMethod("validate_args", "UpperTri", function(object) {
-  size <- size(object@args[[1]])
-  if(size[1] != size[2])
-    stop("Argument to UpperTri must be a square matrix.")
-})
-
 #' @param object An \linkS4class{UpperTri} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn UpperTri Vectorize the upper triagonal entries.
@@ -1505,24 +1504,31 @@ setMethod("to_numeric", "UpperTri", function(object, values) {
   values[[1]][tridx]
 })
 
-#' @describeIn UpperTri The size of the atom.
-setMethod("size_from_args", "UpperTri", function(object) {
-  size <- size(object@args[[1]])
-  rows <- size[1]
-  cols <- size[2]
-  c(rows*(cols-1)/2, 1)
+#' @describeIn UpperTri Check the argument is a square matrix.
+setMethod("validate_args", "UpperTri", function(object) {
+  shape <- shape(object@args[[1]])
+  if(ndim(object@args[[1]]) != 2 || shape[1] != shape[2])
+    stop("Argument to UpperTri must be a square matrix.")
 })
 
-UpperTri.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+#' @describeIn UpperTri The shape of the atom.
+setMethod("shape_from_args", "UpperTri", function(object) {
+  size <- shape(object@args[[1]])
+  rows <- size[1]
+  cols <- size[2]
+  c(floor(rows*(cols-1)/2), 1)
+})
+
+UpperTri.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn UpperTri The graph implementation of the atom.
-setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, data = NA_real_) {
-  UpperTri.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "UpperTri", function(object, arg_objs, shape, data = NA_real_) {
+  UpperTri.graph_implementation(arg_objs, shape, data)
 })
 
 Vec <- function(X) {
@@ -1545,42 +1551,52 @@ Vec <- function(X) {
 #' @rdname VStack-class
 VStack <- function(...) { .VStack(args = list(...)) }
 
-#' @describeIn VStack Check all arguments have the same width.
-setMethod("validate_args", "VStack", function(object) {
-  arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
-  if(max(arg_cols) != min(arg_cols))
-    stop("All arguments to VStack must have the same number of columns")
-})
-
 #' @param object A \linkS4class{VStack} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn VStack Vertically concatenate the values using \code{rbind}.
 setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
 
-#' @describeIn VStack The size of the atom.
-setMethod("size_from_args", "VStack", function(object) {
-  cols <- size(object@args[[1]])[2]
-  arg_rows <- sapply(object@args, function(arg) { size(arg)[1] })
-  rows <- sum(arg_rows)
-  c(rows, cols)
+#' @describeIn VStack Check all arguments have the same width.
+setMethod("validate_args", "VStack", function(object) {
+  model <- shape(object@args[[1]])
+  if(length(object@args) >= 2) {
+    for(arg in object@args[2:length(object@args)]) {
+      arg_shape <- shape(arg)
+      if(length(arg_shape) != length(model) || length(model) != length(arg_shape) ||
+         (length(model) > 1 && any(model[2:length(model)] != arg_shape[2:length(arg_shape)])) ||
+         (length(model) <= 1 && any(model != arg_shape)))
+        stop("All the input dimensions except for axis 1 must match exactly.")
+    }
+  }
 })
 
-VStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(lo.vstack(arg_objs, size), list())
+#' @describeIn VStack The shape of the atom.
+setMethod("shape_from_args", "VStack", function(object) {
+  if(ndim(object@args[[1]]) == 0)
+    c(length(object@args), 1)
+  else if(ndim(object@args[[1]]) == 1)
+    c(length(object@args), shape(object@args[[1]])[1])
+  else {
+    rows <- sum(sapply(object@args, function(arg) { shape(arg)[1] }))
+    arg_shape <- shape(object@args[[1]])
+    if(length(arg_shape) < 2)
+      c(rows, NA)
+    else
+      c(rows, arg_shape[2:length(arg_shape)])
+  }
+})
+
+VStack.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.vstack(arg_objs, shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn VStack The graph implementation of the atom.
-setMethod("graph_implementation", "VStack", function(object, arg_objs, size, data = NA_real_) {
-  VStack.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "VStack", function(object, arg_objs, shape, data = NA_real_) {
+  VStack.graph_implementation(arg_objs, shape, data)
 })
 
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
-
-Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
-  .VStack(args = row_blocks)
-}

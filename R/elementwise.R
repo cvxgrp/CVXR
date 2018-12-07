@@ -9,14 +9,15 @@
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
 #' @param object An \linkS4class{Elementwise} object.
-#' @describeIn Elementwise Shape is the same as the sum of the arguments' sizes.
+#' @describeIn Elementwise Shape is the same as the sum of the arguments' shapes.
 setMethod("shape_from_args", "Elementwise", function(object) {
   sum_shapes(lapply(object@args, shape))
 })
 
 #' @describeIn Elementwise Verify that all the shapes are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
-  sum_shapes(lapply(object@args, function(arg) { size(arg) }))
+  sum_shapes(lapply(object@args, shape))
+  callNextMethod()
 })
 
 #' @describeIn Elementwise Is the expression symmetric?
@@ -1009,25 +1010,25 @@ setMethod(".grad", "Square", function(object, values) {
 
 setMethod(".domain", "Square", function(object) { list() })
 
-Square.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+Square.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   x <- arg_objs[[1]]
-  t <- create_var(size)
-  one <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
+  t <- create_var(shape)
+  one <- create_const(matrix(1, nrow = shape[1], ncol = shape[2]), shape)
   two <- create_const(2, c(1, 1))
-  length <- prod(size(x))
+  length <- size(x)
   constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(t, one)), c(length, 1)),
                               lo.vstack(list(
                                 lo.reshape(lo.sub_expr(t, one), c(1, length)),
-                                lo.reshape(lo.mul_expr(two, x, size(x)), c(1, length))
+                                lo.reshape(lo.mul_expr(two, x, shape(x)), c(1, length))
                                 ), c(2, length)),
                               2))
   list(t, constraints)
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Square The graph implementation of the atom.
-setMethod("graph_implementation", "Square", function(object, arg_objs, size, data = NA_real_) {
-  Square.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "Square", function(object, arg_objs, shape, data = NA_real_) {
+  Square.graph_implementation(arg_objs, shape, data)
 })

@@ -540,6 +540,13 @@ setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
+#' @param object A \linkS4class{Conv} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Conv The convolution of the two values.
+setMethod("to_numeric", "Conv", function(object, values) {
+  .Call('_CVXR_cpp_convolve', PACKAGE = 'CVXR', as.vector(values[[1]]), as.vector(values[[2]]))
+})
+
 #' @describeIn Conv Check both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Conv", function(object) {
   if(!is_vector(object@args[[1]]) || !is_vector(object@args[[2]]))
@@ -548,17 +555,10 @@ setMethod("validate_args", "Conv", function(object) {
     stop("The first argument to Conv must be constant.")
 })
 
-#' @param object A \linkS4class{Conv} object.
-#' @param values A list of arguments to the atom.
-#' @describeIn Conv The convolution of the two values.
-setMethod("to_numeric", "Conv", function(object, values) {
-    .Call('_CVXR_cpp_convolve', PACKAGE = 'CVXR', as.vector(values[[1]]), as.vector(values[[2]]))
-})
-
-#' @describeIn Conv The size of the atom.
-setMethod("size_from_args", "Conv", function(object) {
-  lh_length <- size(object@args[[1]])[1]
-  rh_length <- size(object@args[[2]])[1]
+#' @describeIn Conv The shape of the atom.
+setMethod("shape_from_args", "Conv", function(object) {
+  lh_length <- shape(object@args[[1]])[1]
+  rh_length <- shape(object@args[[2]])[1]
   c(lh_length + rh_length - 1, 1)
 })
 
@@ -567,62 +567,21 @@ setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]]
 
 #' @param idx An index into the atom.
 #' @describeIn Conv Is the left-hand expression positive?
-setMethod("is_incr", "Conv", function(object, idx) { is_positive(object@args[[1]]) })
+setMethod("is_incr", "Conv", function(object, idx) { is_nonneg(object@args[[1]]) })
 
 #' @describeIn Conv Is the left-hand expression negative?
-setMethod("is_decr", "Conv", function(object, idx) { is_negative(object@args[[1]]) })
+setMethod("is_decr", "Conv", function(object, idx) { is_nonpos(object@args[[1]]) })
 
-Conv.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(lo.conv(arg_objs[[1]], arg_objs[[2]], size), list())
+Conv.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.conv(arg_objs[[1]], arg_objs[[2]], shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Conv The graph implementation of the atom.
-setMethod("graph_implementation", "Conv", function(object, arg_objs, size, data = NA_real_) {
-  Conv.graph_implementation(arg_objs, size, data)
-})
-
-#'
-#' The CumSum class.
-#'
-#' This class represents the cumulative sum.
-#'
-#' @slot expr An \linkS4class{Expression} to be summed.
-#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
-#' @name CumSum-class
-#' @aliases CumSum
-#' @rdname CumSum-class
-.CumSum <- setClass("CumSum", representation(axis = "numeric"), prototype(axis = 2),
-                    validity = function(object) {
-                      if(!(length(object@axis) == 1 && object@axis %in% c(1,2)))
-                        stop("[CumSum: axis] axis must equal 1 (row) or 2 (column)")
-                      return(TRUE)
-                    }, contains = c("AxisAtom", "AffAtom"))
-
-#' @param expr An \linkS4class{Expression} to be summed.
-#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
-#' @rdname CumSum-class
-CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
-
-#' @param object A \linkS4class{CumSum} object.
-#' @param values A list of arguments to the atom.
-#' @describeIn CumSum The cumulative sum of the values along the specified axis.
-setMethod("to_numeric", "CumSum", function(object, values) {
-  if(object@axis == 1)
-    t(apply(values[[1]], 1, base::cumsum))
-  else    # axis = 2
-    apply(values[[1]], 2, base::cumsum)
-})
-
-#' @describeIn CumSum The size of the atom.
-setMethod("size_from_args", "CumSum", function(object) { size(object@args[[1]]) })
-
-#' @describeIn CumSum Check that axis is either 1 or 2.
-setMethod("validate_args", "CumSum", function(object) {
-  if(length(object@axis) != 1 || !(object@axis %in% c(1,2)))
-    stop("Invalid argument for axis: must equal 1 (row) or 2 (column)")
+setMethod("graph_implementation", "Conv", function(object, arg_objs, shape, data = NA_real_) {
+  Conv.graph_implementation(arg_objs, shape, data)
 })
 
 #
@@ -638,7 +597,7 @@ get_diff_mat <- function(dim, axis) {
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
-
+  
   for(i in 1:dim) {
     val_arr <- c(val_arr, 1)
     row_arr <- c(row_arr, i)
@@ -649,28 +608,51 @@ get_diff_mat <- function(dim, axis) {
       col_arr <- c(col_arr, i-1)
     }
   }
-
+  
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(dim, dim))
-
+  
   if(axis == 2)
     mat
   else
     t(mat)
 }
 
+#'
+#' The CumSum class.
+#'
+#' This class represents the cumulative sum.
+#'
+#' @slot expr An \linkS4class{Expression} to be summed.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @name CumSum-class
+#' @aliases CumSum
+#' @rdname CumSum-class
+.CumSum <- setClass("CumSum", prototype(axis = 2), contains = c("AffAtom", "AxisAtom"))
+
+#' @param expr An \linkS4class{Expression} to be summed.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @rdname CumSum-class
+CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
+
+#' @param object A \linkS4class{CumSum} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn CumSum The cumulative sum of the values along the specified axis.
+setMethod("to_numeric", "CumSum", function(object, values) {
+  apply(values[[1]], object@axis, base::cumsum)
+})
+
+#' @describeIn CumSum The shape of the atom.
+setMethod("shape_from_args", "CumSum", function(object) { shape(object@args[[1]]) })
+
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
-  if(object@axis == 1)
-    dim <- dim(values[[1]])[2]
-  else if(object@axis == 2)
-    dim <- dim(values[[1]])[1]
-  else
-    stop("Invalid axis ", object@axis)
+  val_shape <- shape(object@values[[1]])
+  collapse <- setdiff(1:length(val_shape), object@axis)
+  dim <- val_shape[collapse]
   mat <- matrix(0, nrow = dim, ncol = dim)
   mat[lower.tri(mat, diag = TRUE)] <- 1
 
-  size <- size(object@args[[1]])
-  var <- Variable(size[1], size[2])
+  var <- Variable(shape(object@args[[1]]))
   if(object@axis == 2)
     grad <- .grad(new("MulExpression", lh_exp = mat, rh_exp = var), values)[[2]]
   else
@@ -678,31 +660,32 @@ setMethod(".grad", "CumSum", function(object, values) {
   list(grad)
 })
 
-CumSum.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  # Implicit 0(n) definition:
+#' @describeIn CumSum Returns the axis being summed.
+setMethod("get_data", "CumSum", function(object) { list(object@axis) })
+
+CumSum.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  # Implicit O(n) definition:
   # X = Y[:1,:] - Y[1:,:]
-  Y <- create_var(size)
+  Y <- create_var(shape)
   axis <- data[[1]]
-  if(axis == 2)
-    dim <- size[1]
-  else
-    dim <- size[2]
+  collapse <- setdiff(1:length(shape), axis)
+  dim <- shape[collapse]
   diff_mat <- get_diff_mat(dim, axis)
   diff_mat <- create_const(diff_mat, c(dim, dim), sparse = TRUE)
 
   if(axis == 2)
-    diff <- lo.mul_expr(diff_mat, Y, size)
+    diff <- lo.mul_expr(diff_mat, Y)
   else
-    diff <- lo.rmul_expr(Y, diff_mat, size)
+    diff <- lo.rmul_expr(Y, diff_mat)
   list(Y, list(create_eq(arg_objs[[1]], diff)))
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn CumSum The graph implementation of the atom.
-setMethod("graph_implementation", "CumSum", function(object, arg_objs, size, data = NA_real_) {
-  CumSum.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "CumSum", function(object, arg_objs, shape, data = NA_real_) {
+  CumSum.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -730,22 +713,28 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
 #' @describeIn DiagVec Convert the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
-#' @describeIn DiagVec The size of the atom.
-setMethod("size_from_args", "DiagVec", function(object) {
-  rows <- size(object@args[[1]])[1]
+#' @describeIn DiagVec The shape of the atom.
+setMethod("shape_from_args", "DiagVec", function(object) {
+  rows <- shape(object@args[[1]])[1]
   c(rows, rows)
 })
 
-DiagVec.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+#' @describeIn DiagVec Is the expression symmetric?
+setMethod("is_symmetric", "DiagVec", function(object) { TRUE })
+
+#' @describeIn DiagVec Is the expression hermitian?
+setMethod("is_hermitian", "DiagVec", function(object) { TRUE })
+
+DiagVec.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.diag_vec(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DiagVec The graph implementation of the atom.
-setMethod("graph_implementation", "DiagVec", function(object, arg_objs, size, data = NA_real_) {
-  DiagVec.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "DiagVec", function(object, arg_objs, shape, data = NA_real_) {
+  DiagVec.graph_implementation(arg_objs, shape, data)
 })
 
 #'
@@ -774,61 +763,59 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
 #' @describeIn DiagMat The size of the atom.
-setMethod("size_from_args", "DiagMat", function(object) {
-  rows <- size(object@args[[1]])[1]
+setMethod("shape_from_args", "DiagMat", function(object) {
+  rows <- shape(object@args[[1]])[1]
   c(rows, 1)
 })
 
-DiagMat.graph_implementation <- function(arg_objs, size, data = NA_real_) {
+DiagMat.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DiagMat The graph implementation of the atom.
-setMethod("graph_implementation", "DiagMat", function(object, arg_objs, size, data = NA_real_) {
-  DiagMat.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "DiagMat", function(object, arg_objs, shape, data = NA_real_) {
+  DiagMat.graph_implementation(arg_objs, shape, data)
 })
 
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr)) {
-    if(size(expr)[2] == 1)
-      return(DiagVec(expr = expr))
-    else {   # Convert a row vector to a column vector
-      expr <- Reshape(expr, size(expr)[2], 1)
-      return(DiagVec(expr = expr))
-    }
-  } else if(size(expr)[1] == size(expr)[2])
+    return(DiagVec(Vec(expr)))
+  else if(ndim(expr) == 2 && shape(expr)[1] == shape(expr)[2])
     return(DiagMat(expr = expr))
   else
-    stop("Argument to Diag must be a vector or square matrix")
+    stop("Argument to Diag must be a vector or square matrix.")
 }
 
 Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
-  if(axis == 2)
+  if((axis == 1 && ndim(x) < 2) || ndim(x) == 0)
+    stop("Invalid axis given input dimensions.")
+  else if(axis == 2)
     x <- t(x)
-
-  size <- size(x)
-  m <- size[1]
-  n <- size[2]
-  if(n != 1)
-    stop("x must be a 1-D vector")
+  
+  x_shape <- shape(x)
+  collapse <- setdiff(1:length(x_shape), axis)
+  m <- x_shape[collapse]
   if(k <= 0 || k >= m)
-    stop("Must have 0 < k < number of elements in x")
+    stop("Must have k > 0 and x must have < k elements along collapsed axis.")
   if(lag <= 0 || lag >= m)
-    stop("Must have 0 < lag < number of elements in x")
+    stop("Must have lag > 0 and x must have < lag elements along collapsed axis.")
 
   d <- x
   len <- m
   for(i in 1:k) {
-    d <- d[(1+lag):m,] - d[1:(m-lag),]
+    if(ndim(x) == 2)
+      d <- d[(1+lag):m,] - d[1:(m-lag),]
+    else
+      d <- d[(1+lag):m] - d[1:(m-lag)]
     m <- m-1
   }
 
-  if(axis == 2)
+  if(axis == 1)
     t(d)
   else
     d
@@ -839,50 +826,114 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #'
 #' Horizontal concatenation of values.
 #'
-#' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
+#' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same dimensions except for axis 2 (columns).
 #' @name HStack-class
 #' @aliases HStack
 #' @rdname HStack-class
 .HStack <- setClass("HStack", contains = "AffAtom")
 
-#' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.
+#' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same dimensions except for axis 2 (columns).
 #' @rdname HStack-class
-HStack <- function(...) { .HStack(args = list(...)) }
-
-#' @describeIn HStack Check all arguments have the same height.
-setMethod("validate_args", "HStack", function(object) {
-  arg_cols <- sapply(object@args, function(arg) { size(arg)[1] })
-  if(max(arg_cols) != min(arg_cols))
-    stop("All arguments to HStack must have the same number of rows")
-})
+HStack <- function(...) {
+  arg_list <- lapply(list(...), as.Constant)
+  for(idx in length(arg_list)) {
+    arg <- arg_list[[idx]]
+    if(ndim(arg) == 0)
+      arg_list[[idx]] <- as.vector(arg)
+  }
+  .HStack(args = arg_list)
+}
 
 #' @param object A \linkS4class{HStack} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
-#' @describeIn HStack The size of the atom.
-setMethod("size_from_args", "HStack", function(object) {
-  arg_cols <- sapply(object@args, function(arg) { size(arg)[2] })
-  cols <- sum(arg_cols)
-  rows <- size(object@args[[1]])[1]
-  c(rows, cols)
+#' @describeIn HStack The shape of the atom.
+setMethod("shape_from_args", "HStack", function(object) {
+  if(ndim(object@args[[1]]) == 1)
+    return(c(sum(sapply(object@args, size)), NA))
+  else{
+    cols <- sum(sapply(object@args, function(arg) { shape(arg)[2] }))
+    arg_shape <- shape(object@args[[1]])
+    dims <- c(arg_shape[1], cols)
+    if(length(arg_shape) >= 3)
+      dims <- c(dims, arg_shape[3:length(arg_shape)])
+    return(dims)
+  }
 })
 
-HStack.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  list(lo.hstack(arg_objs, size), list())
+#' @describeIn HStack Check all arguments have the same height.
+setMethod("validate_args", "HStack", function(object) {
+  model <- shape(object@args[[1]])
+  error <- "All the input dimensions except for axis 2 (columns) must match exactly."
+  len <- length(object@args)
+  
+  if(len >= 2) {
+    for(arg in object@args[2:len]) {
+      if(length(shape(arg)) != length(model))
+        stop(error)
+      else if(length(model) > 1) {
+        for(i in 1:length(model)) {
+          if(i != 2 && shape(arg)[i] != model[i])
+            stop(error)
+        }
+      }
+    }
+  }
+})
+
+HStack.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+  list(lo.hstack(arg_objs, shape), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param shape A vector with two elements representing the shape of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn HStack The graph implementation of the atom.
-setMethod("graph_implementation", "HStack", function(object, arg_objs, size, data = NA_real_) {
-  HStack.graph_implementation(arg_objs, size, data)
+setMethod("graph_implementation", "HStack", function(object, arg_objs, shape, data = NA_real_) {
+  HStack.graph_implementation(arg_objs, shape, data)
 })
 
 setMethod("cbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { HStack(x, y) })
 setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { HStack(x, y) })
+
+#'
+#' The Imag class.
+#'
+#' This class represents the imaginary part of an expression.
+#'
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @name Imag-class
+#' @aliases Imag
+#' @rdname Imag-class
+.Imag <- setClass("Imag", representation(expr = "Expression"), contains = "AffAtom")
+
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @rdname Imag-class
+Imag <- function(expr) { .Imag(expr = expr) }
+
+setMethod("initialize", "Imag", function(.Object, ..., expr) {
+  .Object@expr
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+})
+
+#' @param object An \linkS4class{Imag} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Imag The imaginary part of the given value.
+setMethod("to_numeric", "Imag", function(object, values) { Im(values[[1]]) })
+
+#' @describeIn Imag The shape of the atom.
+setMethod("shape_from_args", "Imag", function(object) { shape(object@args[[1]]) })
+
+#' @describeIn Imag Is the atom imaginary?
+setMethod("is_imag", "Imag", function(object) { FALSE })
+
+#' @describeIn Imag Is the atom complex valued?
+setMethod("is_complex", "Imag", function(object) { FALSE })
+
+#' @describeIn Imag Is the atom symmetric?
+setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1]]) })
 
 #'
 #' The Index class.
@@ -907,7 +958,7 @@ setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
-#' @param x,object An \linkS4class{Index} object.
+#' @param object An \linkS4class{Index} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Index The index/slice into the given value.
 setMethod("to_numeric", "Index", function(object, values) {
@@ -1167,6 +1218,43 @@ setMethod("graph_implementation", "MulElemwise", function(object, arg_objs, size
 })
 
 #'
+#' The Real class.
+#'
+#' This class represents the real part of an expression.
+#'
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @name Real-class
+#' @aliases Real
+#' @rdname Real-class
+.Real <- setClass("Real", representation(expr = "Expression"), contains = "AffAtom")
+
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @rdname Real-class
+Imag <- function(expr) { .Real(expr = expr) }
+
+setMethod("initialize", "Real", function(.Object, ..., expr) {
+  .Object@expr
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+})
+
+#' @param object An \linkS4class{Real} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Real The imaginary part of the given value.
+setMethod("to_numeric", "Real", function(object, values) { Re(values[[1]]) })
+
+#' @describeIn Real The shape of the atom.
+setMethod("shape_from_args", "Real", function(object) { shape(object@args[[1]]) })
+
+#' @describeIn Real Is the atom imaginary?
+setMethod("is_imag", "Real", function(object) { FALSE })
+
+#' @describeIn Real Is the atom complex valued?
+setMethod("is_complex", "Real", function(object) { FALSE })
+
+#' @describeIn Real Is the atom symmetric?
+setMethod("is_symmetric", "Real", function(object) { is_hermitian(object@args[[1]]) })
+
+#'
 #' The Reshape class.
 #'
 #' This class represents the reshaping of an expression. The operator vectorizes the expression,
@@ -1416,7 +1504,7 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, size, d
 
 Vec <- function(X) {
   X <- as.Constant(X)
-  Reshape(expr = X, rows = prod(size(X)), cols = 1)
+  Reshape(expr = X, shape = c(size(X), NA))
 }
 
 #'

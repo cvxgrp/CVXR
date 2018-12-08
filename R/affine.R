@@ -1332,17 +1332,7 @@ SumEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .SumEntries(ex
 #' @param values A list of arguments to the atom.
 #' @describeIn SumEntries Sum the entries along the specified axis.
 setMethod("to_numeric", "SumEntries", function(object, values) {
-  if(is.na(object@axis))
-    result <- sum(values[[1]])
-  else
-    result <- apply(values[[1]], object@axis, sum)
-  
-  if(keepdims) {
-    new_dim <- dim(values[[1]])
-    collapse <- setdiff(1:length(new_dim), object@axis)
-    new_dim[collapse] <- 1
-    dim(result) <- new_dim
-  }
+  apply_with_keepdims(values[[1]], sum, axis = object@axis, keepdims = object@keepdims)
 })
 
 SumEntries.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
@@ -1600,3 +1590,8 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, shape, da
 
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
+
+Bmat <- function(block_lists) {
+  row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
+  .VStack(args = row_blocks)
+}

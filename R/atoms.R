@@ -341,82 +341,52 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
 setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 #'
-#' The AffineProd class.
-#'
-#' This class represents the product of two affine expressions.
-#'
-#' @slot x An \linkS4class{Expression} or numeric constant representing the left-hand value.
-#' @slot y An \linkS4class{Expression} or numeric constant representing the right-hand value.
-#' @name AffineProd-class
-#' @aliases AffineProd
-#' @rdname AffineProd-class
-.AffineProd <- setClass("AffineProd", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Atom")
+#' The CumMax class.
+#' 
+#' This class represents the cumulative maximum of an expression.
+#' 
+#' @slot x An \linkS4class{Expression}.
+#' @name CumMax-class
+#' @aliases CumMax
+#' @rdname CumMax-class
+.CumMax <- setClass("CumMax", contains = "AxisAtom")
 
-#' @param x An \linkS4class{Expression} or numeric constant representing the left-hand value.
-#' @param y An \linkS4class{Expression} or numeric constant representing the right-hand value.
-#' @rdname AffineProd-class
-AffineProd <- function(x, y) { .AffineProd(x = x, y = y) }
+#' @param x An \linkS4class{Expression}
+#' @param axis A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.
+#' @rdname CumMax-class
+CumMax <- function(x, axis = NA_real_) { .CumMax(expr = x, axis = axis) }
 
-setMethod("initialize", "AffineProd", function(.Object, ..., x, y) {
-  .Object@x <- x
-  .Object@y <- y
-  callNextMethod(.Object, ..., args = list(x, y))
-})
-
-#' @describeIn AffineProd Check dimensions of arguments and linearity.
-setMethod("validate_args", "AffineProd", function(object) {
-  if(!is_affine(object@args[[1]]) || !is_affine(object@args[[2]]))
-    stop("The arguments to AffineProd must be affine")
-  mul_shapes(size(object@args[[1]]), size(object@args[[2]]))
-})
-
-#' @param object An \linkS4class{AffineProd} object.
+#' @param object A \linkS4class{CumMax} object.
 #' @param values A list of arguments to the atom.
-#' @describeIn AffineProd The product of two affine expressions.
-setMethod("to_numeric", "AffineProd", function(object, values) { values[[1]] %*% values[[2]] })
+#' @rdname CumMax-class The cumulative maximum along the axis.
+setMethod("to_numeric", "CumMax", function(object, values) { apply(values[[1]], object@axis, max) })
 
-#' @describeIn AffineProd The size of the atom.
-setMethod("size_from_args", "AffineProd", function(object) { mul_shapes(size(object@args[[1]]), size(object@args[[2]])) })
+setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, values) })
 
-#' @describeIn AffineProd Default to rules for times.
-setMethod("sign_from_args", "AffineProd", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
+setMethod(".column_grad", "CumMax", function(object, value) {
+  # Grad: 1 for a largest index.
+  value <- as.numeric(value)
+  idx <- (value == max(value))
+  D <- matrix(0, nrow = length(value), ncol = 1)
+  D[idx,1] <- 1
+  return(D)
+})
 
-#' @describeIn AffineProd Affine times affine is not convex.
-setMethod("is_atom_convex", "AffineProd", function(object) { FALSE })
+#' @rdname CumMax-class The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "CumMax", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
-#' @describeIn AffineProd Affine times affine is not concave.
-setMethod("is_atom_concave", "AffineProd", function(object) { FALSE })
+#' @rdname CumMax-class Is the atom convex?
+setMethod("is_atom_convex", "CumMax", function(object) { TRUE })
+
+#' @rdname CumMax-class Is the atom concave?
+setMethod("is_atom_concave", "CumMax", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @describeIn AffineProd A logical value indicating whether the atom is weakly increasing in \code{idx}.
-setMethod("is_incr", "AffineProd", function(object, idx) { is_positive(object@args[[2-idx]]) })
+#' @rdname CumMax-class Is the atom weakly increasing in the index?
+setMethod("is_incr", "CumMax", function(object, idx) { TRUE })
 
-#' @describeIn AffineProd A logical value indicating whether the atom is weakly decreasing in \code{idx}.
-setMethod("is_decr", "AffineProd", function(object, idx) { is_negative(object@args[[2-idx]]) })
-
-#' @describeIn AffineProd The affine product is always quadratic.
-setMethod("is_quadratic", "AffineProd", function(object) { TRUE })
-
-setMethod(".grad", "AffineProd", function(object, values) {
-  X <- values[[1]]
-  Y <- values[[2]]
-  size11 <- size(object@args[[1]])[1]
-  size22 <- size(object@args[[2]])[2]
-
-  DX_rows <- prod(size(object@args[[1]]))
-  cols <- size11 * size22
-
-  # DX = [diag(Y11), diag(Y12), ...]
-  #      [diag(Y21), diag(Y22), ...]
-  #      [  ...        ...      ...]
-  if(!(is.matrix(Y) || is(Y, "Matrix")))
-    Y <- as.matrix(Y)
-  DX <- do.call("rbind", apply(Y, 1, function(row) {
-      do.call("cbind", lapply(row, function(x) { sparseMatrix(i = 1:size11, j = 1:size11, x = x) }))
-    }))
-  DY <- bdiag(lapply(1:size22, function(i) { t(X) }))
-  list(DX, DY)
-})
+#' @rdname CumMax-class Is the atom weakly decreasing in the index?
+setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 
 #'
 #' The GeoMean class.
@@ -576,7 +546,7 @@ setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, da
 
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
-  prod(size(x)) * Pnorm(x = x, p = -1)
+  size(x) * Pnorm(x = x, p = -1)
 }
 
 #'
@@ -599,23 +569,39 @@ setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn LambdaMax Check that \code{A} is square.
-setMethod("validate_args", "LambdaMax", function(object) {
-  if(size(object@args[[1]])[1] != size(object@args[[1]])[2])
-    stop("The argument to LambdaMax must resolve to a square matrix")
-})
-
 #' @param object A \linkS4class{LambdaMax} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn LambdaMax The largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
 setMethod("to_numeric", "LambdaMax", function(object, values) {
-  if(!all(t(values[[1]]) == values[[1]]))
-    stop("LambdaMax called on a non-symmetric matrix")
+  # if(any(t(values[[1]]) != values[[1]]))
+  #  stop("LambdaMax called on a non-symmetric matrix")
   max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
+#' @rdname LambdaMax Returns the constraints describing the domain of the atom.
+setMethod(".domain", "LambdaMax", function(object) { list(Conj(t(object@args[[1]])) == object@args[[1]]) })
+
+#' @rdname LambdaMax Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
+setMethod(".grad", "LambdaMax", function(object, values) {
+  r <- eigen(values[[1]], only.values = FALSE)
+  v <- r$vectors  # eigenvectors
+  w <- r$values   # eigenvalues
+  
+  d <- array(0, dim = dim(w))
+  d[length(d)] <- 1
+  d <- diag(d)
+  D <- v %*% d %*% t(v)
+  list(Matrix(as.numeric(D), sparse = TRUE))
+})
+
+#' @describeIn LambdaMax Check that \code{A} is square.
+setMethod("validate_args", "LambdaMax", function(object) {
+  if(ndim(object@args[[1]]) != 2 || shape(object@args[[1]])[1] != shape(object@args[[1]])[2])
+    stop("The argument to LambdaMax must resolve to a square matrix")
+})
+
 #' @describeIn LambdaMax The atom is a scalar.
-setMethod("size_from_args", "LambdaMax", function(object) { c(1, 1) })
+setMethod("shape_from_args", "LambdaMax", function(object) { c() })
 
 #' @describeIn LambdaMax The sign of the atom is unknown.
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
@@ -633,54 +619,57 @@ setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 #' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
-setMethod(".domain", "LambdaMax", function(object) { list(t(object@args[[1]]) == object@args[[1]]) })
-
-setMethod(".grad", "LambdaMax", function(object, values) {
-  r <- eigen(values[[1]], only.values = FALSE)
-  v <- r$vectors  # eigenvectors
-  w <- r$values   # eigenvalues
-
-  d <- rep(0, length(w))
-  d[1] <- 1
-  d <- diag(d)
-  D <- v %*% d %*% t(v)
-  list(Matrix(as.numeric(D), sparse = TRUE))
-})
-
-LambdaMax.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  A <- arg_objs[[1]]
-  n <- size(A)[1]
-  # SDP constraint.
-  t <- create_var(c(1,1))
-  prom_t <- lo.promote(t, c(n,1))
-  # I*t - A
-  expr <- lo.sub_expr(lo.diag_vec(prom_t), A)
-  list(t, list(SDP(expr)))
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn LambdaMax The graph implementation of the atom.
-setMethod("graph_implementation", "LambdaMax", function(object, arg_objs, size, data = NA_real_) {
-  LambdaMax.graph_implementation(arg_objs, size, data)
-})
-
 LambdaMin <- function(A) {
   A <- as.Constant(A)
   -LambdaMax(-A)
 }
 
-LambdaSumLargest <- function(A, k) {
-  A <- as.Constant(A)
-  if(size(A)[1] != size(A)[2])
-    stop("First argument must be a square matrix")
-  else if(as.integer(k) != k || k <= 0)
-    stop("Second argument must be a positive integer")
+#'
+#' The LambdaSumLargest class.
+#'
+#' This class represents the sum of the \code{k} largest eigenvalues of a matrix.
+#'
+#' @slot k A positive integer.
+#' @name LambdaSumLargest-class
+#' @aliases LambdaSumLargest
+#' @rdname LambdaSumLargest-class
+.LambdaSumLargest <- setClass("LambdaSumLargest", representation(k = "numeric"), contains = "LambdaMax")
 
-  Z <- Semidef(size(A)[1])
-  k*LambdaMax(A - Z) + Trace(Z)
-}
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @param k A positive integer.
+#' @rdname LambdaSumLargest-class
+LambdaSumLargest <- function(A, k) { .LambdaSumLargest(A = A, k = k) }
+
+setMethod("initialize", "LambdaSumLargest", function(.Object, ..., k) {
+  .Object@k <- k
+  callNextMethod(.Object, ...)
+})
+
+#' @param object A \linkS4class{LambdaSumLargest} object.
+#' @rdname LambdaSumLargest Can the atom operate on complex values?
+setMethod("allow_complex", "LambdaSumLargest", function(object) { TRUE })
+
+#' @param values A list of arguments to the atom.
+#' @rdname LambdaSumLargest Returns the largest eigenvalue of \code{A}, which must be symmetric.
+setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
+  # if(any(t(values[[1]]) != values[[1]]))
+  #  stop("LambdaSumLargest called on a non-symmetric matrix")
+  eigs <- eigen(values[[1]], only.values = TRUE)$values
+  value(SumLargest(eigs, object@k))
+})
+
+#' @rdname LambdaSumLargest Verify that the argument \code{A} is square.
+setMethod("validate_args", "LambdaSumLargest", function(object) {
+  A <- object@args[[1]]
+  if(ndim(X) != 2 || shape(X)[1] != shape(X)[2])
+    stop("First argument must be a square matrix.")
+  else if(as.integer(object@k) != object@k || object@k <= 0)
+    stop("Second argument must be a positive integer.")
+})
+
+#' @rdname LambdaSumLargest Returns the parameter \code{k}.
+setMethod("get_data", "LambdaSumLargest", function(object) { list(object@k) })
+setMethod(".grad", "LambdaSumLargest", function(object, values) { stop("Unimplemented") })
 
 LambdaSumSmallest <- function(A, k) {
   A <- as.Constant(A)
@@ -707,13 +696,6 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
   callNextMethod(.Object, ..., args = list(.Object@A))
 })
 
-#' @describeIn LogDet Check that \code{A} is square.
-setMethod("validate_args", "LogDet", function(object) {
-  size <- size(object@args[[1]])
-  if(size[1] != size[2])
-    stop("The argument to LogDet must be a square matrix")
-})
-
 #' @param object A \linkS4class{LogDet} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn LogDet The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
@@ -725,8 +707,15 @@ setMethod("to_numeric", "LogDet", function(object, values) {
     return(-Inf)
 })
 
+#' @describeIn LogDet Check that \code{A} is square.
+setMethod("validate_args", "LogDet", function(object) {
+  shape <- shape(object@args[[1]])
+  if(shape[1] != shape[2])
+    stop("The argument to LogDet must be a square matrix")
+})
+
 #' @describeIn LogDet The atom is a scalar.
-setMethod("size_from_args", "LogDet", function(object) { c(1, 1) })
+setMethod("shape_from_args", "LogDet", function(object) { c() })
 
 #' @describeIn LogDet The atom is non-negative.
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
@@ -756,51 +745,6 @@ setMethod(".grad", "LogDet", function(object, values) {
 })
 
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
-
-LogDet.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  A <- arg_objs[[1]]  # n by n matrix
-  n <- size(A)[1]
-  X <- create_var(c(2*n, 2*n))
-  canon <- canonical_form(Semidef(2*n))
-  X <- canon[[1]]
-  constraints <- canon[[2]]
-  Z <- create_var(c(n,n))
-  D <- create_var(c(n,1))
-
-  # Require that X and A are PSD
-  constraints <- c(constraints, list(SDP(A)))
-
-  # Fix Z as upper triangular, D as diagonal, and diag(D) as diag(Z)
-  Z_lower_tri <- lo.upper_tri(lo.transpose(Z))
-  constraints <- c(constraints, list(create_eq(Z_lower_tri)))
-
-  # D[i,i] = Z[i,i]
-  constraints <- c(constraints, list(create_eq(D, lo.diag_mat(Z))))
-
-  # Fix X using the fact that A must be affine by the DCP rules
-  # X[1:n, 1:n] == D
-  constraints <- Index.block_eq(X, lo.diag_vec(D), constraints, 1, n, 1, n)
-
-  # X[1:n, (n+1):(2*n)] == Z
-  constraints <- Index.block_eq(X, Z, constraints, 1, n, n+1, 2*n)
-
-  # X[(n+1):(2*n), (n+1):(2*n)] == A
-  constraints <- Index.block_eq(X, A, constraints, n+1, 2*n, n+1, 2*n)
-
-  # Add the objective sum(log(D[i,i]))
-  graph <- Log.graph_implementation(list(D), c(n, 1))
-  obj <- graph[[1]]
-  constr <- graph[[2]]
-  list(lo.sum_entries(obj), c(constraints, constr))
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn LogDet The graph implementation of the atom.
-setMethod("graph_implementation", "LogDet", function(object, arg_objs, size, data = NA_real_) {
-  LogDet.graph_implementation(arg_objs, size, data)
-})
 
 #'
 #' The LogSumExp class.
@@ -838,8 +782,8 @@ setMethod(".column_grad", "LogSumExp", function(object, value) {
   D
 })
 
-#' @describeIn LogSumExp The atom is positive.
-setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
+#' @describeIn LogSumExp Returns sign (is positive, is negative) of the atom.
+setMethod("sign_from_args",  "LogSumExp", function(object) { c(FALSE, FALSE) })
 
 #' @describeIn LogSumExp The atom is convex.
 setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
@@ -848,63 +792,11 @@ setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
 setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @describeIn LogSumExp The atom is not monotonic in any argument.
-setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
+#' @describeIn LogSumExp The atom is weakly increasing in the index.
+setMethod("is_incr", "LogSumExp", function(object, idx) { TRUE })
 
-#' @describeIn LogSumExp The atom is not monotonic in any argument.
+#' @describeIn LogSumExp The atom is not weakly decreasing in the index.
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
-
-LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  x <- arg_objs[[1]]
-  axis <- data[[1]]
-  t <- create_var(size)
-
-  # sum(exp(x - t)) <= 1
-  if(is.na(axis)) {
-    prom_t <- lo.promote(t, size(x))
-    expr <- lo.sub_expr(x, prom_t)
-    graph <- Exp.graph_implementation(list(expr), size(x))
-    obj <- graph[[1]]
-    constraints <- graph[[2]]
-    obj <- lo.sum_entries(obj)
-  } else if(axis == 2) {
-    prom_size <- c(size(x)[1], 1)
-    ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
-    prom_t <- lo.mul_expr(ones, t, size(x))
-    expr <- lo.sub_expr(x, prom_t)
-    graph <- Exp.graph_implementation(list(expr), size(x))
-    obj <- graph[[1]]
-    constraints <- graph[[2]]
-
-    const_size <- c(1, size(x)[1])
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- lo.mul_expr(ones, obj, size)
-  } else {    # axis == 1
-    prom_size <- c(1, size(x)[2])
-    ones <- create_const(matrix(1, nrow = prom_size[1], ncol = prom_size[2]), prom_size)
-    prom_t <- lo.rmul_expr(t, ones, size(x))
-    expr <- lo.sub_expr(x, prom_t)
-    graph <- Exp.graph_implementation(list(expr), size(x))
-    obj <- graph[[1]]
-    constraints <- graph[[2]]
-
-    const_size <- c(size(x)[2], 1)
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    obj <- lo.rmul_expr(obj, ones, size)
-  }
-
-  ones <- create_const(matrix(1, nrow = size[1], ncol = size[2]), size)
-  constraints <- c(constraints, list(create_leq(obj, ones)))
-  list(t, constraints)
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn LogSumExp The graph implementation of the atom.
-setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, data = NA_real_) {
-  LogSumExp.graph_implementation(arg_objs, size, data)
-})
 
 #'
 #' The MatrixFrac class.
@@ -921,7 +813,13 @@ setMethod("graph_implementation", "LogSumExp", function(object, arg_objs, size, 
 #' @param X An \linkS4class{Expression} or numeric matrix.
 #' @param P An \linkS4class{Expression} or numeric matrix.
 #' @rdname MatrixFrac-class
-MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
+MatrixFrac <- function(X, P) {
+  if(is.array(P) || is.matrix(P)) {
+    invP <- as.matrix(base::solve(P))
+    .QuadForm(x = X, P = (invP + t(Conj(invP))) / 2.0)
+  } else
+    .MatrixFrac(X = X, P = P)
+}
 
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
@@ -929,15 +827,8 @@ setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
 })
 
-#' @describeIn MatrixFrac Check that the dimensions of \code{x} and \code{P} match.
-setMethod("validate_args", "MatrixFrac", function(object) {
-  X <- object@args[[1]]
-  P <- object@args[[2]]
-  if(size(P)[1] != size(P)[2])
-    stop("The second argument to MatrixFrac must be a square matrix")
-  else if(size(X)[1] != size(P)[1])
-    stop("The arguments to MatrixFrac have incompatible dimensions")
-})
+#' @rdname MatrixFrac Can the atom operate on complex values?
+setMethod("allow_complex", "MatrixFrac", function(object) { TRUE })
 
 #' @param object A \linkS4class{MatrixFrac} object.
 #' @param values A list of arguments to the atom.
@@ -946,11 +837,29 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   # TODO: Raise error if not invertible?
   X <- values[[1]]
   P <- values[[2]]
-  sum(diag(t(X) %*% base::solve(P) %*% X))
+  if(is_complex(object@args[[1]]))
+    product <- t(Conj(X)) %*% base:solve(P) %*% X
+  else
+    product <- t(X) %*% base:solve(P) %*% X
+  
+  if(length(shape(product)) == 2)
+    return(sum(diag(product)))
+  else
+    return(product)
+})
+
+#' @describeIn MatrixFrac Check that the dimensions of \code{x} and \code{P} match.
+setMethod("validate_args", "MatrixFrac", function(object) {
+  X <- object@args[[1]]
+  P <- object@args[[2]]
+  if(ndim(P) != 2 || shape(P)[1] != shape(P)[2])
+    stop("The second argument to MatrixFrac must be a square matrix.")
+  else if(shape(X)[1] != shape(P)[1])
+    stop("The arguments to MatrixFrac have incompatible dimensions.")
 })
 
 #' @describeIn MatrixFrac The atom is a scalar.
-setMethod("size_from_args", "MatrixFrac", function(object) { c(1, 1) })
+setMethod("shape_from_args", "MatrixFrac", function(object) { c() })
 
 #' @describeIn MatrixFrac The atom is positive.
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
@@ -979,7 +888,7 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   P_inv <- tryCatch({
     base::solve(P)
   }, error = function(e) {
-    return(NA_real_)
+    return(list(NA_real_, NA_real_))
   })
 
   if(is.null(dim(P_inv)) && is.na(P_inv))
@@ -999,40 +908,6 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   list(DX, DP)
 })
 
-MatrixFrac.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  X <- arg_objs[[1]]   # n by m matrix
-  P <- arg_objs[[2]]   # n by n matrix
-  size <- size(X)
-  n <- size[1]
-  m <- size[2]
-
-  # Create a matrix with Schur complement Tmat - t(X) * P^-1 * X
-  M <- create_var(c(n+m, n+m))
-  Tmat <- create_var(c(m, m))
-  constraints <- list()
-
-  # Fix M using the fact that P must be affine by the DCP rules.
-  # M[1:n, 1:n] == P
-  constraints <- Index.block_eq(M, P, constraints, 1, n, 1, n)
-
-  # M[1:n, (n+1):(n+m)] == X
-  constraints <- Index.block_eq(M, X, constraints, 1, n, n+1, n+m)
-
-  # M[(n+1):(n+m), (n+1):(n+m)] == Tmat
-  constraints <- Index.block_eq(M, Tmat, constraints, n+1, n+m, n+1, n+m)
-
-  # Add SDP constraints.
-  list(lo.trace(Tmat), c(constraints, list(SDP(M))))
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn MatrixFrac The graph implementation of the atom.
-setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size, data = NA_real_) {
-  MatrixFrac.graph_implementation(arg_objs, size, data)
-})
-
 #'
 #' The MaxEntries class.
 #'
@@ -1048,20 +923,17 @@ setMethod("graph_implementation", "MatrixFrac", function(object, arg_objs, size,
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname MaxEntries-class
-MaxEntries <- function(x, axis = NA_real_) { .MaxEntries(expr = x, axis = axis) }
+MaxEntries <- function(x, axis = NA_real_, keepdims = FALSE) { .MaxEntries(expr = x, axis = axis, keepdims = keepdims) }
 
 #' @param object A \linkS4class{MaxEntries} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn MaxEntries The largest entry in \code{x}.
 setMethod("to_numeric", "MaxEntries", function(object, values) {
-  if(is.na(object@axis))
-    max(values[[1]])
-  else
-    apply(values[[1]], object@axis, max)
+  apply_with_keepdims(values[[1]], max, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn MaxEntries The sign of the atom.
-setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_positive(object@args[[1]]), is_negative(object@args[[1]])) })
+setMethod("sign_from_args",  "MaxEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
 #' @describeIn MaxEntries The atom is convex.
 setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
@@ -1084,44 +956,15 @@ setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, v
 setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
   value <- as.numeric(value)
-  idx <- which.max(value)
-  D <- rep(0, length(value))
-  D[idx] <- 1
+  idx <- (value == max(value))
+  D <- matrix(0, nrow = length(value), ncol = 1)
+  D[idx,1] <- 1
   D
 })
 
-MaxEntries.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  axis <- data[[1]]
-  if(is.na(axis)) {
-    t <- create_var(c(1,1))
-    promoted_t <- lo.promote(t, size(arg_objs[[1]]))
-  } else if(axis == 2) {
-    t <- create_var(c(1, size(arg_objs[[1]])[2]))
-    const_size <- c(size(arg_objs[[1]])[1], 1)
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    promoted_t <- lo.mul_expr(ones, t, size(arg_objs[[1]]))
-  } else {   # axis == 1
-    t <- create_var(c(size(arg_objs[[1]])[1], 1))
-    const_size <- c(1, size(arg_objs[[1]])[2])
-    ones <- create_const(matrix(1, nrow = const_size[1], ncol = const_size[2]), const_size)
-    promoted_t <- lo.rmul_expr(t, ones, size(arg_objs[[1]]))
-  }
-
-  constraints <- list(create_leq(arg_objs[[1]], promoted_t))
-  list(t, constraints)
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn MaxEntries The graph implementation of the atom.
-setMethod("graph_implementation", "MaxEntries", function(object, arg_objs, size, data = NA_real_) {
-  MaxEntries.graph_implementation(arg_objs, size, data)
-})
-
-MinEntries <- function(x, axis = NA_real_) {
+MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
-  -MaxEntries(-x, axis = axis)
+  -MaxEntries(-x, axis = axis, keepdims = keepdims)
 }
 
 #'
@@ -1352,6 +1195,16 @@ setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data
   Pnorm.graph_implementation(arg_objs, size, data)
 })
 
+MixedNorm <- function(X, p = 2, q = 1) {
+  X <- as.Constant(X)
+  
+  # Inner norms
+  vecnorms <- Norm(X, p, axis = 1)
+  
+  # Outer norms
+  Norm(vecnorms, q)
+}
+
 Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
 
@@ -1373,18 +1226,99 @@ Norm <- function(x, p = 2, axis = NA_real_) {
     Pnorm(x = x, p = p, axis = axis)
 }
 
-Norm1   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 1, axis = axis) }
-Norm2   <- function(x, axis = NA_real_) { Pnorm(x = x, p = 2, axis = axis) }
-NormInf <- function(x, axis = NA_real_) { Pnorm(x = x, p = Inf, axis = axis) }
-MixedNorm <- function(X, p = 2, q = 1) {
-  X <- as.Constant(X)
+#'
+#' The Norm1 class.
+#' 
+#' This class represents the 1-norm of an expression.
+#'
+#' @slot x An \linkS4class{Expression} object.
+#' @name Norm1-class
+#' @aliases Norm1
+#' @rdname Norm1-class
+Norm1 <- setClass("Norm1", contains = "AxisAtom")
 
-  # Inner norms
-  vecnorms <- lapply(1:size(X)[1], function(i) { Norm(X[i,], p) })
+#' @param x,object A \linkS4class{Norm1} object.
+#' @rdname Norm1 Can the atom operate on complex values?
+setMethod("allow_complex", "Norm1", function(object) { TRUE })
 
-  # Outer norms
-  Norm(new("HStack", args = vecnorms), q)
-}
+setMethod("name", "Norm1", function(x) {
+  paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
+})
+
+#' @param values A list of arguments to the atom.
+#' @rdname Norm1 Returns the 1-norm of x along the given axis.
+setMethod("to_numeric", "Norm1", function(object, values) {
+  if(is.na(object@axis))
+    norm(values[[1]], type = "O")
+  else
+    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "O") }, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @rdname Norm1 The atom is always positive.
+setMethod("sign_from_args", "Norm1", function(object) { c(TRUE, FALSE) })
+
+#' @rdname Norm1 The atom is convex.
+setMethod("is_atom_convex", "Norm1", function(object) { TRUE })
+
+#' @rdname Norm1 The atom is not concave.
+setMethod("is_atom_concave", "Norm1", function(object) { FALSE })
+
+#' @rdname Norm1 Is the composition weakly increasing in argument \code{idx}?
+setMethod("is_incr", "Norm1", function(object, idx) { is_nonneg(object@args[[1]]) })
+
+#' @rdname Norm1 Is the composition weakly decreasing in argument \code{idx}?
+setMethod("is_decr", "Norm1", function(object, idx) { is_nonpos(object@args[[1]]) })
+
+#' @rdname Norm1 Is the atom piecewise linear?
+setMethod("is_pwl", "Norm1", function(object) {
+  is_pwl(object@args[[1]]) && (is_real(object@args[[1]]) || is_imag(object@args[[1]]))
+})
+
+#' @rdname Norm1 Returns the axis.
+setMethod("get_data", "Norm1", function(object) { list(object@axis) })
+
+setMethod(".domain", "Norm1", function(object) { list() })
+
+setMethod(".grad", "Norm1", function(object, values) { .axis_grad(object, values) })
+
+setMethod(".column_grad", "Norm1", function(object, values) {
+  rows <- size(object@args[[1]])
+  D_null <- Matrix(0, nrow = rows, ncol = 1, sparse = TRUE)
+  D_null <- D_null + (value > 0)
+  D_null <- D_null - (value < 0)
+  D_null   # TODO: Check this is same as ravel and transpose command in CVXPY.
+})
+
+#'
+#' The NormInf class.
+#'
+#' @name NormInf-class
+#' @aliases NormInf
+#' @rdname NormInf-class
+NormInf <- setClass("NormInf", contains = "AxisAtom")
+
+#' @rdname NormInf Can the atom operate on complex values?
+setMethod("allow_complex", "NormInf", function(object) { TRUE })
+
+setMethod("to_numeric", "NormInf", function(object, values) {
+  if(is.na(object@axis))
+    norm(values[[1]], type = "I")
+  else
+    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "I") }, axis = object@axis, keepdims = object@keepdims)
+})
+setMethod("sign_from_args", "NormInf", function(object) { c(TRUE, FALSE) })
+setMethod("is_atom_convex", "NormInf", function(object) { TRUE })
+setMethod("is_atom_concave", "NormInf", function(object) { FALSE })
+setMethod("is_incr", "NormInf", function(object, idx) { is_nonneg(object@args[[1]]) })
+setMethod("is_decr", "NormInf", function(object, idx) { is_nonpos(object@args[[1]]) })
+setMethod("is_pwl", "NormInf", function(object) { is_pwl(object@args[[1]]) })
+setMethod("get_data", "NormInf", function(object) { list(object@axis) })
+setMethod("name", "NormInf", function(x) {
+  paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
+})
+setMethod(".domain", "NormInf", function(object) { list() })
+setMethod(".grad", "NormInf", function(object, values) { .axis_grad(object, values) })
+setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented")   # TODO: Implement this! })
 
 #'
 #' The NormNuc class.
@@ -1415,7 +1349,7 @@ setMethod("to_numeric", "NormNuc", function(object, values) {
 })
 
 #' @describeIn NormNuc The atom is a scalar.
-setMethod("size_from_args", "NormNuc", function(object) { c(1, 1) })
+setMethod("shape_from_args", "NormNuc", function(object) { c() })
 
 #' @describeIn NormNuc The atom is positive.
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
@@ -1437,71 +1371,8 @@ setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
   s <- svd(values[[1]])
   D <- s$u %*% t(s$v)
-  list(Matrix(as.numeric(D), sparse = TRUE))   # TODO: Make sure D is vectorized correctly
+  list(Matrix(as.numeric(D), sparse = TRUE))
 })
-
-NormNuc.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  A <- arg_objs[[1]]
-  size <- size(A)
-  rows <- size[1]
-  cols <- size[2]
-
-  # Create the equivalent problem:
-  # minimize (trace(U) + trace(V))/2
-  # subject to: [U A; t(A) V] is positive semidefinite
-  X <- create_var(c(rows+cols, rows+cols))
-  constraints <- list()
-
-  # Fix X using the fact that A must be affine by the DCP rules.
-  # X[1:rows, (rows+1):(rows+cols)] == A
-  constraints <- Index.block_eq(X, A, constraints, 1, rows, rows+1, rows+cols)
-  half <- create_const(0.5, c(1,1))
-  trace_expr <- lo.mul_expr(half, lo.trace(X), c(1, 1))
-
-  # Add SDP constraint.
-  list(trace_expr, c(list(SDP(X)), constraints))
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn NormNuc The graph implementation of the atom.
-setMethod("graph_implementation", "NormNuc", function(object, arg_objs, size, data = NA_real_) {
-  NormNuc.graph_implementation(arg_objs, size, data)
-})
-
-.decomp_quad <- function(P, cond = NA, rcond = NA) {
-  eig <- eigen(P, only.values = FALSE)
-  w <- eig$values
-  V <- eig$vectors
-
-  if(!is.na(rcond))
-    cond <- rcond
-  if(cond == -1 || is.na(cond))
-    cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
-
-  scale <- max(abs(w))
-  if(scale < cond)
-    return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
-  w_scaled <- w / scale
-  maskp <- w_scaled > cond
-  maskn <- w_scaled < -cond
-
-  # TODO: Allow indefinite QuadForm
-  if(any(maskp) && any(maskn))
-    warning("Forming a non-convex expression QuadForm(x, indefinite)")
-
-  if(sum(maskp) <= 1)
-    M1 <- as.matrix(V[,maskp] * sqrt(w_scaled[maskp]))
-  else
-    M1 <- V[,maskp] %*% diag(sqrt(w_scaled[maskp]))
-
-  if(sum(maskn) <= 1)
-    M2 <- as.matrix(V[,maskn]) * sqrt(-w_scaled[maskn])
-  else
-    M2 <- V[,maskn] %*% diag(sqrt(-w_scaled[maskn]))
-  list(scale = scale, M1 = M1, M2 = M2)
-}
 
 QuadForm <- function(x, P) {
   # x^T P x
@@ -1534,6 +1405,39 @@ QuadForm <- function(x, P) {
     return(ret)
   } else
     stop("At least one argument to QuadForm must be constant")
+}
+
+.decomp_quad <- function(P, cond = NA, rcond = NA) {
+  eig <- eigen(P, only.values = FALSE)
+  w <- eig$values
+  V <- eig$vectors
+  
+  if(!is.na(rcond))
+    cond <- rcond
+  if(cond == -1 || is.na(cond))
+    cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
+  
+  scale <- max(abs(w))
+  if(scale < cond)
+    return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
+  w_scaled <- w / scale
+  maskp <- w_scaled > cond
+  maskn <- w_scaled < -cond
+  
+  # TODO: Allow indefinite QuadForm
+  if(any(maskp) && any(maskn))
+    warning("Forming a non-convex expression QuadForm(x, indefinite)")
+  
+  if(sum(maskp) <= 1)
+    M1 <- as.matrix(V[,maskp] * sqrt(w_scaled[maskp]))
+  else
+    M1 <- V[,maskp] %*% diag(sqrt(w_scaled[maskp]))
+  
+  if(sum(maskn) <= 1)
+    M2 <- as.matrix(V[,maskn]) * sqrt(-w_scaled[maskn])
+  else
+    M2 <- V[,maskn] %*% diag(sqrt(-w_scaled[maskn]))
+  list(scale = scale, M1 = M1, M2 = M2)
 }
 
 #'

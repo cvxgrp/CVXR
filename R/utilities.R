@@ -120,6 +120,23 @@ UNKNOWN = "UNKNOWN"
 
 SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 
+apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
+  if(is.na(axis))
+    result <- fun(x)
+  else
+    result <- apply(x, axis, fun)
+  
+  if(keepdims) {
+    new_dim <- dim(x)
+    if(is.null(new_dim))
+      return(result)
+    collapse <- setdiff(1:length(new_dim), axis)
+    new_dim[collapse] <- 1
+    dim(result) <- new_dim
+  }
+  result
+}
+
 ################################
 #                              #
 # Utility functions for shapes #

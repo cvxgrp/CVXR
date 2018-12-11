@@ -1012,8 +1012,8 @@ Index.get_special_slice <- function(expr, row, col) {
 
   # Order the entries of expr and select them using key.
   expr_shape <- shape(expr)
-  expr_size <- expr_size
-
+  expr_size <- size(expr)
+  
   idx_mat <- seq(expr_size)
   idx_mat <- matrix(idx_mat, nrow = expr_shape[1], ncol = expr_shape[2])
   if(is.matrix(row) && is.null(col))
@@ -1041,53 +1041,6 @@ Index.get_special_slice <- function(expr, row, col) {
     Reshape(idmat * v, final_shape[1], final_shape[2])
   else
     Reshape(idmat %*% v, final_shape[1], final_shape[2])
-}
-
-#
-# Get Index
-#
-# Returns a canonicalized index into a matrix.
-#
-# @param matrix A LinOp representing the matrix to be indexed.
-# @param constraints A list of \linkS4class{Constraint} objects to append to.
-# @param row The row index.
-# @param col The column index.
-# @return A list with the canonicalized index and updated constraints.
-# @rdname Index-get_index
-Index.get_index <- function(matrix, constraints, row, col) {
-  key <- Key(row, col)
-  graph <- Index.graph_implementation(list(matrix), c(1, 1), list(key))
-  idx <- graph[[1]]
-  idx_constr <- graph[[2]]
-  constraints <- c(constraints, idx_constr)
-  list(idx = idx, constraints = constraints)
-}
-
-#
-# Index Block Equation
-#
-# Adds an equality setting a section of the matrix equal to a block. Assumes the block does not need to be promoted.
-#
-# @param matrix A LinOp representing the matrix to be indexed.
-# @param block A LinOp representing the block in the block equality.
-# @param constraints A list of \linkS4class{Constraint} objects to append to.
-# @param row_start  The first row of the matrix section.
-# @param row_end The last row of the matrix section.
-# @param col_start The first column of the matrix section.
-# @param col_end The last column of the matrix section.
-# @return A list of \linkS4class{Constraint} objects.
-# @rdname Index-block_eq
-Index.block_eq <- function(matrix, block, constraints, row_start, row_end, col_start, col_end) {
-  key <- Key(row_start:row_end, col_start:col_end)
-  rows <- row_end - row_start + 1
-  cols <- col_end - col_start + 1
-  if(!all(size(block) == c(rows, cols)))
-    stop("Block must have rows = ", rows, " and cols = ", cols)
-  graph <- Index.graph_implementation(list(matrix), c(rows, cols), list(key))
-  slc <- graph[[1]]
-  idx_constr <- graph[[2]]
-  constraints <- c(constraints, list(create_eq(slc, block)), idx_constr)
-  constraints
 }
 
 #'

@@ -424,21 +424,19 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
 
   x <- .Object@args[[1]]
-  if(size(x)[1] == 1)
-    n <- size(x)[2]
-  else if(size(x)[2] == 1)
-    n <- size(x)[1]
+  if(is_vector(x))
+    n <- ifelse(1, ndim(x) == 0, max(shape(x)))
   else
-    stop("x must be a row or column vector")
-
-  if(any(is.na(p)))
+    stop("x must be a row or column vector.")
+  
+  if(is.na(p))
     p <- rep(1, n)
-
+  
   if(length(p) != n)
-    stop("x and p must have the same number of elements")
+    stop("x and p must have the same number of elements.")
 
   if(any(p < 0) || sum(p) <= 0)
-    stop("powers must be nonnegative and not all zero")
+    stop("powers must be nonnegative and not all zero.")
 
   frac <- fracify(p, max_denom)
   .Object@w <- frac[[1]]
@@ -458,28 +456,18 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object
 })
 
-#' @describeIn GeoMean Empty function since validation of arguments is done during atom initialization.
-setMethod("validate_args", "GeoMean", function(object) { return() })
-
 #' @param object A \linkS4class{GeoMean} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn GeoMean The (weighted) geometric mean of the elements of \code{x}.
 setMethod("to_numeric", "GeoMean", function(object, values) {
   values <- as.numeric(values[[1]])
-
-## The requireNamespace is not needed since these are now imported!
-##  if(requireNamespace("Rmpfr") && requireNamespace("gmp")) {
-    val <- 1.0
-    for(idx in 1:length(values)) {
-      x <- values[[idx]]
-      p <- object@w[idx]
-      val <- val * Rmpfr::mpfr(x, Rmpfr::getPrec(x))^p
-    }
-    return(gmp::asNumeric(val))   # TODO: Handle mpfr objects in the backend later
-##  }
-
-##  val <- mapply(function(x, p) { x^p }, values, gmp::asNumeric(object@w))
-##  Reduce("*", val)
+  val <- 1.0
+  for(idx in 1:length(values)) {
+    x <- values[[idx]]
+    p <- object@w[idx]
+    val <- val * Rmpfr::mpfr(x, Rmpfr::getPrec(x))^p
+  }
+  return(gmp::asNumeric(val))   # TODO: Handle mpfr objects in the backend later
 })
 
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
@@ -498,7 +486,7 @@ setMethod(".grad", "GeoMean", function(object, values) {
 })
 
 #' @describeIn GeoMean The atom is a scalar.
-setMethod("size_from_args", "GeoMean", function(object) { c(1,1) })
+setMethod("shape_from_args", "GeoMean", function(object) { c() })
 
 #' @describeIn GeoMean The atom is non-negative.
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
@@ -518,31 +506,6 @@ setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 
 #' @describeIn GeoMean Returns \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
-
-GeoMean.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  w <- data[[1]]
-  w_dyad <- data[[2]]
-  tree <- data[[3]]
-  t <- create_var(c(1,1))
-
-  if(size(arg_objs[[1]])[2] == 1)
-    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), i, 1)$idx })
-  else if(size(arg_objs[[1]])[1] == 1)
-    x_list <- lapply(1:length(w), function(i) { Index.get_index(arg_objs[[1]], list(), 1, i)$idx })
-
-  # TODO: Catch cases where we have (0,0,1)?
-  # TODO: What about curvature (should be affine) in trivial case of (0,0,1),
-  # should this behavior match what we do in power?
-  list(t, gm_constrs(t, x_list, w))
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn GeoMean The graph implementation of the atom.
-setMethod("graph_implementation", "GeoMean", function(object, arg_objs, size, data = NA_real_) {
-  GeoMean.graph_implementation(arg_objs, size, data)
-})
 
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
@@ -999,45 +962,33 @@ MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) {
 #' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname Pnorm-class
-Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) { .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom) }
+Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) {
+  if(p == 1)
+    Norm1(x, axis = axis, keepdims = keepdims)
+  else if(p %in% c(Inf, "inf", "Inf"))
+    NormInf(x, axis = axis, keepdims = keepdims)
+  else
+    .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom)
+}
 
 setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
-  .Object@max_denom <- max_denom
-
-  # TODO: Deal with fractional powers correctly
-  p_old <- p
-  # if(p == Inf)
-  #  .Object@p <- Inf
+  if(p == 1)
+    stop("Use the Norm1 class to instantiate a 1-norm.")
+  else if(p %in% c(Inf, "inf", "Inf"))
+    stop("Use the NormInf class to instantiate an infinity-norm.")
   # else if(p < 0)
   #  .Object@p <- pow_neg(p, max_denom)
   # else if(p > 0 && p < 1)
   #  .Object@p <- pow_mid(p, max_denom)
   # else if(p > 1)
   #  .Object@p <- pow_high(p, max_denom)
-  # else if(p == 1)
-  #  .Object@p <- 1
   # else
-  #  stop("[Pnorm: validation] Invalid value for p ", p)
+  #  stop("Invalid value of p.")
 
   .Object@p <- p
-  if(.Object@p == Inf)
-    .Object@.approx_error <- 0
-  else
-    .Object@.approx_error <- abs(.Object@p - p_old)
+  .Object@max_denom <- max_denom
+  .Object@.approx_error <- abs(.Object@p - p_old)
   callNextMethod(.Object, ...)
-})
-
-#' @describeIn Pnorm Check that the arguments are valid.
-setMethod("validate_args", "Pnorm", function(object) {
-  callNextMethod()
-  if(!is.na(object@axis) && object@p != 2)
-    stop("The axis parameter is only supported for p = 2")
-})
-
-#' @describeIn Pnorm The name and arguments of the atom.
-#' @export
-setMethod("name", "Pnorm", function(object) {
-  sprintf("%s(%s, %s)", class(object), name(object@args[1]), object@p)
 })
 
 # Internal method for calculating the p-norm
@@ -1062,41 +1013,53 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     values <- as.numeric(values[[1]])
   else
     values <- as.matrix(values[[1]])
-
+  
   if(object@p < 1 && any(values < 0))
     return(-Inf)
-
   if(object@p < 0 && any(values == 0))
     return(0)
-
-  if(is.na(object@axis))
-    retval <- .p_norm(values, object@p)
-  else
-    retval <- apply(values, object@axis, function(x) { .p_norm(x, object@p) })
-  retval
+  
+  apply_with_keepdims(values, function(x) { .p_norm(x, object@p) }, axis = object@axis, keepdims = object@keepdims)
 })
+
+#' @describeIn Pnorm Check that the arguments are valid.
+setMethod("validate_args", "Pnorm", function(object) {
+  callNextMethod()
+  if(!is.na(object@axis) && object@p != 2)
+    stop("The axis parameter is only supported for p = 2.")
+  if(object@p < 1 && is_complex(object@args[[1]]))
+    stop("pnorm(x, p) cannot have x complex for p < 1.")
+})
+
+#' @describeIn Pnorm Can the atom operate on complex values?
+setMethod("allow_complex", "Pnorm", function(object) { TRUE })
 
 #' @describeIn Pnorm The atom is positive.
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
 
 #' @describeIn Pnorm The atom is convex if \eqn{p \geq 1}.
-setMethod("is_atom_convex", "Pnorm", function(object) { object@p >= 1})
+setMethod("is_atom_convex", "Pnorm", function(object) { object@p > 1})
 
 #' @describeIn Pnorm The atom is concave if \eqn{p < 1}.
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
 
 #' @param idx An index into the atom.
-#' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p \geq 1} and \code{x} is positive.
-setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p >= 1 && is_positive(object@args[[1]])) })
+#' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
+setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p > 1 && is_nonneg(object@args[[1]])) })
 
-#' @describeIn Pnorm The atom is weakly decreasing if \eqn{p \geq 1} and \code{x} is negative.
-setMethod("is_decr", "Pnorm", function(object, idx) { object@p >= 1 && is_negative(object@args[[1]]) })
+#' @describeIn Pnorm The atom is weakly decreasing if \eqn{p > 1} and \code{x} is negative.
+setMethod("is_decr", "Pnorm", function(object, idx) { object@p > 1 && is_nonpos(object@args[[1]]) })
 
-#' @describeIn Pnorm The atom is piecewise linear only if \code{x} is piecewise linear, and either \eqn{p = 1} or \eqn{p = \infty}.
-setMethod("is_pwl", "Pnorm", function(object) { (object@p == 1 || object@p == Inf) && is_pwl(object@args[[1]]) })
+#' @describeIn Pnorm The atom is not piecewise linear unless \eqn{p = 1} or \eqn{p = \infty}.
+setMethod("is_pwl", "Pnorm", function(object) { FALSE })
 
 #' @describeIn Pnorm Returns \code{list(p, axis)}.
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
+
+#' @describeIn Pnorm The name and arguments of the atom.
+setMethod("name", "Pnorm", function(object) {
+  sprintf("%s(%s, %s)", class(object), name(object@args[[1]]), object@p)
+})
 
 setMethod(".domain", "Pnorm", function(object) {
   if(object@p < 1 && object@p != 0)
@@ -1108,24 +1071,20 @@ setMethod(".domain", "Pnorm", function(object) {
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
 
 setMethod(".column_grad", "Pnorm", function(object, value) {
-  rows <- prod(size(object@args[[1]]))
+  rows <- size(object@args[[1]])
   value <- as.matrix(value)
 
   # Outside domain
   if(object@p < 1 && any(value <= 0))
     return(NA_real_)
+  
   D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
-  if(object@p == 1) {
-    D_null <- D_null + (value > 0)
-    D_null <- D_null - (value < 0)
-    return(Matrix(as.numeric(D_null), sparse = TRUE))   # TODO: Is this redundant? Check against CVXPY
-  }
   denominator <- .p_norm(value, object@p)
   denominator <- denominator^(object@p - 1)
 
   # Subgrad is 0 when denom is 0 (or undefined)
   if(denominator == 0) {
-    if(object@p >= 1)
+    if(object@p > 1)
       return(D_null)
     else
       return(NA_real_)
@@ -1134,65 +1093,6 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
     frac <- numerator / denominator
     return(matrix(as.numeric(frac)))
   }
-})
-
-#' @importFrom gmp as.bigq
-Pnorm.graph_implementation <- function(arg_objs, size, data = NA_real_) {
-  p <- data[[1]]
-  axis <- data[[2]]
-  x <- arg_objs[[1]]
-  t <- create_var(c(1,1))
-  constraints <- list()
-
-  # First, take care of special cases p = 2, Inf, and 1
-  if(p == 2) {
-    if(is.na(axis))
-      return(list(t, list(SOC(t, list(x)))))
-    else {
-      t <- create_var(size)
-      return(list(t, list(SOCAxis(lo.reshape(t, c(prod(t$size), 1)), x, axis))))
-    }
-  }
-
-  if(p == Inf) {
-    t_ <- lo.promote(t, x$size)
-    return(list(t, list(create_leq(x, t_), create_geq(lo.sum_expr(list(x, t_))))))
-  }
-
-  # We need absolute value constraint for symmetric convex branches (p >= 1)
-  # We alias |x| as x from this point forward to make code pretty
-  if(p >= 1) {
-    absx <- create_var(x$size)
-    constraints <- c(constraints, list(create_leq(x, absx), create_geq(lo.sum_expr(list(x, absx))) ))
-    x <- absx
-  }
-
-  if(p == 1)
-    return(list(lo.sum_entries(x), constraints))
-
-  # Now take care of remaining convex/concave branches
-  # To create rational powers, need new variable r and constraint sum(r) == t
-  r <- create_var(x$size)
-  t_ <- lo.promote(t, x$size)
-  constraints <- c(constraints, list(create_eq(lo.sum_entries(r), t)))
-
-  p <- gmp::as.bigq(p)   # TODO: Can we simplify the fraction, e.g. for p = 1.6?
-  if(p < 0)
-    constraints <- c(constraints, gm_constrs(t_, list(x, r), c(-p/(1-p), 1/(1-p)) ))
-  else if(p > 0 && p < 1)
-    constraints <- c(constraints, gm_constrs(r, list(x, t_), c(p, 1-p)))
-  else if(p > 1)
-    constraints <- c(constraints, gm_constrs(x, list(r, t_), c(1/p, 1-1/p)))
-
-  list(t, constraints)
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn Pnorm The graph implementation of the atom.
-setMethod("graph_implementation", "Pnorm", function(object, arg_objs, size, data = NA_real_) {
-  Pnorm.graph_implementation(arg_objs, size, data)
 })
 
 MixedNorm <- function(X, p = 2, q = 1) {

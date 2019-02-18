@@ -127,13 +127,16 @@ setMethod("Solver.solve", "GUROBI", function(solver, objective, constraints, cac
   if (is.null(dims$s)) {
       dims$s <- list()
   } else {
-      dims$s <- as.integer(dims$s)
+      dims$s <- as.list(as.integer(dims$s))
   }
-  dims$q <- as.integer(dims$q)
+  dims$q <- as.list(as.integer(dims$q))
   dims$l <- as.integer(dims$l)
   dims$f <- as.integer(dims$f)
-  dims$ep <- as.integer(dims$ep)
+  dims$ep <- as.list(as.integer(dims$ep))
 
+  ## Fix for 0 dimension matrices
+    nDims <- dim(A)
+    if (prod(nDims) == 0) A <- matrix(nrow = nDims[1], ncol = nDims[2])
   results_dict <- get_gurobiglue()$gurobi_intf(reticulate::r_to_py(A),
                                                b,
                                                c,

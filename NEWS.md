@@ -1,3 +1,10 @@
+# CVXR 0.99-3
+
+* Bug fix to MOSEK and GUROBI solver interfaces; dimensions now
+  converted to expected python types.
+* Sanitized src directory: proper naming of CVXR header to include
+  while compiling attributes with Rcpp.
+
 # CVXR 0.99-2
 
 * Typo fixes to URLs.

@@ -5,3 +5,4 @@ cvxr.Rproj
 .Rhistory
 src/*.o
 src/cvxr.so
+inst/issues/*

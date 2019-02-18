@@ -17,7 +17,6 @@
 
 #include <vector>
 #include <map>
-#include "Utils.h"
 #include "LinOp.h"
 
 std::map<int, Matrix> get_variable_coeffs(LinOp &lin);

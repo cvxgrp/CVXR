@@ -12,9 +12,10 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
+// [[Rcpp::depends(RcppEigen)]]
+
 #include "LinOp.h"
 #include "LinOpOperations.h"
-#include "Utils.h"
 #include <cassert>
 #include <map>
 #include <iostream>

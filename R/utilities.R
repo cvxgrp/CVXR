@@ -120,6 +120,8 @@ UNKNOWN = "UNKNOWN"
 
 SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 
+SolveResult <- list(SolveResult = list("opt_value", "status", "primal_values", "dual_values"))
+
 apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
   if(is.na(axis))
     result <- fun(x)

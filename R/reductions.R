@@ -150,14 +150,13 @@ replace_params_with_consts <- function(expr) {
 #' This class represents a canonicalization reduction.
 #'
 #' @rdname Canonicalization-class
-.Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
-Canonicalization <- function(canon_methods) { .Canonicalization(canon_methods = canon_methods) }
-setMethod("initialize", function(.Object, ..., canon_methods) {
+.Canonicalization <- setClass("Canonicalization", representation(problem = "Problem", canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
+Canonicalization <- function(problem, canon_methods) { .Canonicalization(problem = problem, canon_methods = canon_methods) }
+setMethod("initialize", function(.Object, ..., problem, canon_methods) {
   .Object@canon_methods <- canon_methods
-  callNextMethod(.Object, ...)
+  callNextMethod(.Object, ..., problem = problem)
 })
 
-# TODO: This class implicitly assumes the number of variables is > 0. This assumption should either be made explicit or eliminated.
 setMethod("apply", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
@@ -242,11 +241,11 @@ setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Ex
 #' their constraint values.
 #'
 #' @rdname Chain-class
-.Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
-Chain <- function(reductions) { .Chain(reductions = reductions) }
-setMethod("initialize", function(.Object, ..., reductions) {
+.Chain <- setClass("Chain", representation(problem = "Problem", reductions = "list"), prototype(reductions = list()), contains = "Reduction")
+Chain <- function(problem, reductions) { .Chain(problem = problem, reductions = reductions) }
+setMethod("initialize", function(.Object, ..., problem, reductions) {
   .Object@reductions <- reductions
-  callNextMethod(.Object, ...)
+  callNextMethod(.Object, ..., problem = problem)
 })
 
 setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {

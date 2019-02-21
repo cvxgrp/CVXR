@@ -301,6 +301,19 @@ matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(vec, mat)), NA))
 }
 
+param_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is_real(expr))
+    return(list(expr, NA))
+  else if(is_imag(expr)) {
+    imag <- CallbackParam(function() { list(Im(value(expr)), shape(expr)) })
+    return(list(NA, imag))
+  } else {
+    real <- CallbackParam(function() { list(Re(value(expr)), shape(expr)) })
+    imag <- CallbackParam(function() { list(Im(value(expr)), shape(expr)) })
+    return(list(real, imag))
+  }
+}
+
 pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
   abs_args <- abs_canon(expr, real_args, imag_args, real2imag)
   abs_real_args <- abs_args[[1]]

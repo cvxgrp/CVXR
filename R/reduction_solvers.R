@@ -228,3 +228,34 @@ setMethod("solve", "SolvingChain", function(object, problem, warm_start, verbose
 setMethod("solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
 })
+
+setMethod("construct_intermediate_chain", "Problem", function(problem, candidates, gp = FALSE) {
+  reductions <- list()
+  if(length(variables(problem)) == 0)
+    return(Chain(reductions = reductions))
+  if(accepts(Complex2Real(), problem))
+    reductions <- c(reductions, Complex2Real())
+  if(gp)
+    reductions <- c(reductions, Dgp2Dcp())
+  
+  if(!gp && !is_dcp(problem))
+    stop("Problem does not follow DCP rules. However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
+  else if(gp && !is_dcp(problem))
+    stop("Problem does not follow DGP rules. However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
+  
+  # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
+  if(class(problem@objective) == "Maximize")
+    reductions <- c(reductions, FlipObjective())
+  
+  # First, attempt to canonicalize the problem to a linearly constrained QP.
+  if(candidates$qp_solvers && accepts(qp2symbolic_qp(), problem)) {
+    reductions <- c(reductions, CVXAttr2Constr(), Qp2SymbolicQp())
+    return(Chain(reductions = reductions))
+  }
+  
+  # Canonicalize it to conic problem.
+  if(!candidates$conic_solvers)
+    stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
+  reductions <- c(reductions, Dcp2Cone(), CvxAttr2Constr())
+  return(Chain(reductions = reductions))
+})

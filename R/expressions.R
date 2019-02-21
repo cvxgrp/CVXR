@@ -615,7 +615,7 @@ setMethod("project", "Leaf", function(object, val) {
   else if(object@attributes$nonneg)
     return(pmax(val, 0))
   else if(object@attributes$imag)
-    return(Im(val))
+    return(Im(val)*1i)
   else if(object@attributes$complex)
     return(as.complex(val))
   else if(object@attributes$boolean)

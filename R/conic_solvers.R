@@ -458,6 +458,8 @@ setMethod("apply", signature(object = "ECOS_BB", problem = "Problem"), function(
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  if(is.null(solver_opts$eps))
+    solver_opts$eps <- 1e-4
 
   # Default verbose to false for BB wrapper.
   if("mi_verbose" %in% names(solver_opts)) {
@@ -1572,7 +1574,7 @@ setMethod("format_constr", "SCS", function(object, problem, constr, exp_cone_ord
   # sqrt(2).
   if(is(constr, "PSD")) {
     expr <- constr@expr
-    triangularized_expr <- scaled_lower_tri(expr)
+    triangularized_expr <- scaled_lower_tri(expr + t(expr))/2
     extractor <- CoeffExtractor(InverseData(problem))
     Ab <- affine(extractor, triangularized_expr)
     A_prime <- Ab[[1]]

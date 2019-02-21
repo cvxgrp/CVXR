@@ -89,7 +89,7 @@ setMethod("curvature", "Expression", function(object) {
 })
 
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
-setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) || 0 %in% shape(object) })
+setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || 0 %in% shape(object) })
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })

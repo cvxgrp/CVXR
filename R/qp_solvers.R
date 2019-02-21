@@ -387,6 +387,12 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   lA <- c(data[B_KEY], rep(-Inf, length(data[G_KEY])))
   data$l <- lA
   
+  # Default to eps_bas = eps_rel = 1e-4 instead of 1e-3.
+  if(is.null(solver_opts$eps_abs))
+    solver_opts$eps_abs <- 1e-4
+  if(is.null(solver_opts$eps_rel))
+    solver_opts$eps_rel <- 1e-4
+  
   if(!is.na(solver_cache) && name(object) %in% solver_cache) {
     # Use cached data.
     cache <- solver_cache[name(object)]

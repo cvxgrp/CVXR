@@ -1322,11 +1322,11 @@ setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 
 #' @rdname QuadForm Returns the quadratic form.
 setMethod("to_numeric", "QuadForm", function(object, values) {
+  prod <- values[[2]] %*% values[[1]]
   if(is_complex(object@args[[1]]))
-    prod <- Conj(t(values[[1]])) %*% values[[2]]
+    return(Conj(t(values[[1]])) %*% prod)
   else
-    prod <- t(values[[1]]) %*% values[[2]]
-  prod %*% values[[1]]
+    return(t(values[[1]]) %*% prod)
 })
 
 #' @rdname QuadForm Checks the dimensions of the arguments.

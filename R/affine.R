@@ -337,6 +337,12 @@ setMethod("is_atom_convex", "MulExpression", function(object) {
 #' @describeIn MulExpression If the multiplication atom is convex, then it is affine.
 setMethod("is_atom_concave", "MulExpression", function(object) { is_atom_convex(object) })
 
+#' @describeIn MulExpression Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "MulExpression", function(object) { TRUE })
+
+#' @describeIn MulExpression Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "MulExpression", function(object) { FALSE })
+
 #' @param idx An index into the atom.
 #' @describeIn MulExpression Is the left-hand expression positive?
 setMethod("is_incr", "MulExpression", function(object, idx) { is_nonneg(object@args[[3-idx]]) })
@@ -418,12 +424,34 @@ setMethod("is_qpwa", "DivExpression", function(object) {
 #' @describeIn DivExpression The (row, col) shape of the left-hand expression.
 setMethod("shape_from_args", "DivExpression", function(object) { shape(object@args[[1]]) })
 
+#' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
+setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) && is_scalar(object@args[[2]]) })
+
+#' @describeIn DivExpression Division is concave (affine) in its arguments only if the denominator is constant.
+setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(object) })
+
+#' @describeIn DivExpression Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "DivExpression", function(object) { TRUE })
+
+#' @describeIn DivExpression Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "DivExpression", function(object) { FALSE })
+
 #' @param idx An index into the atom.
 #' @describeIn DivExpression Is the right-hand expression positive?
-setMethod("is_incr", "DivExpression", function(object, idx) { is_nonneg(object@args[[2]]) })
+setMethod("is_incr", "DivExpression", function(object, idx) {
+  if(idx == 1)
+    return(is_nonneg(object@args[[2]]))
+  else
+    return(is_nonpos(object@args[[1]]))
+})
 
 #' @describeIn DivExpression Is the right-hand expression negative?
-setMethod("is_decr", "DivExpression", function(object, idx) { is_nonpos(object@args[[2]]) })
+setMethod("is_decr", "DivExpression", function(object, idx) {
+  if(idx == 1)
+    return(is_nonpos(object@args[[2]]))
+  else
+    return(is_nonneg(object@args[[1]]))
+})
 
 DivExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
@@ -467,6 +495,22 @@ setMethod("to_numeric", "Multiply", function(object, values) { values[[1]] * val
 
 #' @describeIn Multiply The sum of the argument dimensions - 1.
 setMethod("shape_from_args", "Multiply", function(object) { sum_shapes(lapply(object@args, shape)) })
+
+#' @describeIn Multiply Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Multiply", function(object) { TRUE })
+
+#' @describeIn Multiply Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Multiply", function(object) { TRUE })
+
+#' @describeIn Multiply Is the expression a positive semidefinite matrix?
+setMethod("is_psd", "Multiply", function(object) {
+  (is_psd(object@args[[1]]) && is_nsd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_psd(object@args[[2]]))
+})
+
+#' @describeIn Multiply Is the expression a negative semidefinite matrix?
+setMethod("is_nsd", "Multiply", function(object) {
+  (is_psd(object@args[[1]]) && is_nsd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_psd(object@args[[2]]))
+})
 
 Multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   lhs <- arg_objs[[1]]

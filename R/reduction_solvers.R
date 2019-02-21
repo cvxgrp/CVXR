@@ -233,6 +233,7 @@ setMethod("construct_intermediate_chain", "Problem", function(problem, candidate
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
+  # TODO: Reduce boolean constraints.
   if(accepts(Complex2Real(), problem))
     reductions <- c(reductions, Complex2Real())
   if(gp)

@@ -1046,6 +1046,12 @@ setMethod("shape_from_args", "Index", function(object) {
   ku_shape(object@key, shape(object@args[[1]]))
 })
 
+#' @describeIn Index Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Index", function(object) { TRUE })
+
+#' @describeIn Index Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Index", function(object) { TRUE })
+
 #' @describeIn Index A list containing \code{key}.
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
@@ -1062,19 +1068,29 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, shape, dat
   Index.graph_implementation(arg_objs, shape, data)
 })
 
-#
-# Get Special Slice Index
-#
-# Indexing using logical indexing or a list of indices.
-#
-# @param expr An \linkS4class{Expression} object.
-# @param row The row index.
-# @param col The column index.
-# @return An \linkS4class{Expression} representing the index/slice.
-# @rdname Index-get_special_slice
-Index.get_special_slice <- function(expr, row, col) {
-  expr <- as.Constant(expr)
+#'
+#' The SpecialIndex class.
+#'
+#' This class represents indexing using logical indexing or a list of indices into a matrix.
+#'
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @slot key A list containing the start index, end index, and step size of the slice.
+#' @name SpecialIndex-class
+#' @aliases SpecialIndex
+#' @rdname SpecialIndex-class
+.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "numeric", .shape = "numeric"),
+                          prototype(.select_mat = NA_real_, .shape = NA_real_), contains = "AffAtom")
 
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @param key A list containing the start index, end index, and step size of the slice.
+#' @rdname SpecialIndex-class
+SpecialIndex <- function(expr, key) { .SpecialIndex(expr = expr, key = key) }
+
+setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
+  .Object@key <- key
+  row <- key[[1]]
+  col <- key[[2]]
+  
   # Order the entries of expr and select them using key.
   expr_shape <- shape(expr)
   expr_size <- size(expr)
@@ -1089,24 +1105,55 @@ Index.get_special_slice <- function(expr, row, col) {
     select_mat <- idx_mat[row, , drop = FALSE]
   else
     select_mat <- idx_mat[row, col, drop = FALSE]
+  
+  .Object@.select_mat <- select_mat
+  .Object@.shape <- shape(.Object@.select_mat)
+  callNextMethod(.Object, ..., args = list(.Object@expr))
+})
 
+setMethod("name", "SpecialIndex", function(x) { paste(name(x@args[[1]]), as.character(x@key)) })
+
+#' @param object An \linkS4class{Index} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Index The index/slice into the given value.
+setMethod("to_numeric", "SpecialIndex", function(object, values) {
+  ku_slice_mat(values[[1]], object@key)
+})
+
+#' @describeIn Index The shape of the atom.
+setMethod("shape_from_args", "SpecialIndex", function(object) { object@.shape })
+
+#' @describeIn SpecialIndex Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "SpecialIndex", function(object) { TRUE })
+
+#' @describeIn SpecialIndex Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "SpecialIndex", function(object) { TRUE })
+
+#' @describeIn SpecialIndex A list containing \code{key}.
+setMethod("get_data", "SpecialIndex", function(object) { list(object@key) })
+
+setMethod(".grad", "SpecialIndex", function(object) {
+  select_mat <- object@.select_mat
+  
   if(!is.null(dim(select_mat)))
     final_shape <- dim(select_mat)
   else   # Always cast 1-D arrays as column vectors
     final_shape <- c(length(select_mat), 1)
-
+  
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
   ##select_vec <- as.matrix(select_mat, nrow=final_shape[1L], ncol=final_shape[2L])
-
+  
+  expr_size <- size(object@args[[1]])
   identity <- sparseMatrix(i = 1:expr_size, j = 1:expr_size, x = rep(1, expr_size))
   idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
   if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
-    Reshape(idmat * v, final_shape[1], final_shape[2])
+    lowered <- Reshape(idmat * v, final_shape[1], final_shape[2])
   else
-    Reshape(idmat %*% v, final_shape[1], final_shape[2])
-}
+    lowered <- Reshape(idmat %*% v, final_shape[1], final_shape[2])
+  return(grad(lowered))
+})
 
 #'
 #' The Kron class.
@@ -1219,6 +1266,12 @@ setMethod("is_symmetric", "Promote", function(object) {
 #' @describeIn Promote Returns the (row, col) shape of the expression.
 setMethod("shape_from_args", "Promote", function(object) { object@promoted_shape })
 
+#' @describeIn Promote Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Promote", function(object) { TRUE })
+
+#' @describeIn Promote Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Promote", function(object) { TRUE })
+
 #' @describeIn Promote Returns information needed to reconstruct the expression besides the args.
 setMethod("get_data", "Promote", function(object) { list(object@promoted_shape) })
 
@@ -1314,6 +1367,12 @@ setMethod("validate_args", "Reshape", function(object) {
 #' @describeIn Reshape The \code{c(rows, cols)} shape of the new expression.
 setMethod("shape_from_args", "Reshape", function(object) { object@new_shape })
 
+#' @describeIn Reshape Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Reshape", function(object) { TRUE })
+
+#' @describeIn Reshape Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Reshape", function(object) { TRUE })
+
 #' @describeIn Reshape Returns a list containing the new shape.
 setMethod("get_data", "Reshape", function(object) { list(object@new_shape) })
 
@@ -1352,6 +1411,12 @@ SumEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .SumEntries(ex
 setMethod("to_numeric", "SumEntries", function(object, values) {
   apply_with_keepdims(values[[1]], sum, axis = object@axis, keepdims = object@keepdims)
 })
+
+#' @describeIn SumEntries Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "SumEntries", function(object) { TRUE })
+
+#' @describeIn SumEntries Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "SumEntries", function(object) { FALSE })
 
 SumEntries.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   axis <- data[[1]]
@@ -1419,6 +1484,12 @@ setMethod("validate_args", "Trace", function(object) {
 #' @describeIn Trace The atom is a scalar.
 setMethod("shape_from_args", "Trace", function(object){ c() })
 
+#' @describeIn Trace Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })
+
+#' @describeIn Trace Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Trace", function(object) { FALSE })
+
 Trace.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.trace(arg_objs[[1]]), list())
 }
@@ -1467,6 +1538,12 @@ setMethod("shape_from_args", "Transpose", function(object) {
   else
     shape(object@args[[1]])[object@axes]
 })
+
+#' @describeIn Transpose Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Transpose", function(object) { TRUE })
+
+#' @describeIn Transpose Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Transpose", function(object) { TRUE })
 
 #' @describeIn Transpose Returns the axes for transposition.
 setMethod("get_data", "Transpose", function(object) { list(object@axes) })
@@ -1526,6 +1603,12 @@ setMethod("shape_from_args", "UpperTri", function(object) {
   cols <- size[2]
   c(floor(rows*(cols-1)/2), 1)
 })
+
+#' @describeIn UpperTri Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "UpperTri", function(object) { TRUE })
+
+#' @describeIn UpperTri Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "UpperTri", function(object) { TRUE })
 
 UpperTri.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
@@ -1593,6 +1676,12 @@ setMethod("shape_from_args", "VStack", function(object) {
       c(rows, arg_shape[2:length(arg_shape)])
   }
 })
+
+#' @describeIn VStack Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "VStack", function(object) { TRUE })
+
+#' @describeIn VStack Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "VStack", function(object) { TRUE })
 
 VStack.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.vstack(arg_objs, shape), list())

@@ -89,6 +89,15 @@ setMethod("is_atom_concave", "Atom", function(object) { stop("Unimplemented") })
 #' @rdname curvature-atom
 setMethod("is_atom_affine", "Atom", function(object) { is_atom_concave(object) && is_atom_convex(object) })
 
+#' @rdname curvature-atom
+setMethod("is_atom_log_log_convex", "Atom", function(object) { FALSE })
+
+#' @rdname curvature-atom
+setMethod("is_atom_log_log_concave", "Atom", function(object) { FALSE })
+
+#' @rdname curvature-atom
+setMethod("is_atom_log_log_affine", "Atom", function(object) { is_atom_log_log_concave(object) && is_atom_log_log_convex(object) })
+
 #' @rdname curvature-comp
 setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 
@@ -121,6 +130,40 @@ setMethod("is_concave", "Atom", function(object) {
     idx <- 1
     for(arg in object@args) {
       if(!(is_affine(arg) || (is_concave(arg) && is_incr(object, idx)) || (is_convex(arg) && is_decr(object, idx))))
+        return(FALSE)
+      idx <- idx + 1
+    }
+    return(TRUE)
+  } else
+    return(FALSE)
+})
+
+#' @describeIn Atom A logical value indicating whether the atom is log-log convex.
+setMethod("is_log_log_convex", "Atom", function(object) {
+  # Verifies DGP composition rule.
+  if(is_log_log_constant(object))
+    return(TRUE)
+  else if(is_atom_log_log_convex(object)) {
+    idx <- 1
+    for(arg in object@args) {
+      if(!(is_log_log_affine(arg) || (is_log_log_convex(arg) && is_incr(object, idx)) || (is_log_log_concave(arg) && is_decr(object, idx))))
+        return(FALSE)
+      idx <- idx + 1
+    }
+    return(TRUE)
+  } else
+    return(FALSE)
+})
+
+#' @describeIn Atom A logical value indicating whether the atom is log-log concave.
+setMethod("is_log_log_concave", "Atom", function(object) {
+  # Verifies DGP composition rule.
+  if(is_log_log_constant(object))
+    return(TRUE)
+  else if(is_atom_log_log_concave(object)) {
+    idx <- 1
+    for(arg in object@args) {
+      if(!(is_log_log_affine(arg) || (is_log_log_concave(arg) && is_incr(object, idx)) || (is_log_log_convex(arg) && is_decr(object, idx))))
         return(FALSE)
       idx <- idx + 1
     }
@@ -163,6 +206,12 @@ setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data 
 
 #' @describeIn Atom The value of the atom.
 setMethod("value", "Atom", function(object) {
+  if(any(sapply(parameters(object), function(p) { is.na(value(p)) })))
+    return(NA_real_)
+  return(.value_impl(object))
+})
+
+.value_impl.Atom <- function(object) {
   shape <- shape(object)
   # shapes with 0's dropped in presolve.
   if(0 in shape)
@@ -175,7 +224,7 @@ setMethod("value", "Atom", function(object) {
     for(arg in object@args) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
-      arg_val <- value(arg)
+      arg_val <- .value_impl(arg)
       if(any(is.na(arg_val)) && !is_constant(object))
         return(NA)
       else
@@ -184,7 +233,7 @@ setMethod("value", "Atom", function(object) {
     result <- to_numeric(object, arg_values)
   }
   return(result)
-})
+}
 
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {

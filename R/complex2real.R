@@ -93,13 +93,7 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
 }
 
 Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
-  if(is(expr, "Expression") && length(variables(expr)) == 0) {
-    # Parameterized expressions are evaluated in a subsequent reduction.
-    if(length(parameters(expr)) > 0)
-      stop("Unimplemented")
-    else   # Non-parameterized expressions are evaluated immediately.
-        return(elim_cplx_methods$Constant(Constant(value(expr)), real_args, imag_args, real2imag))
-  } else if(type(expr) %in% names(elim_cplx_methods)) {
+  if(type(expr) %in% names(elim_cplx_methods)) {
     # Only canonicalize a variable/constant/parameter once.
     if(length(expr@args) == 0 && expr %in% leaf_map)
       return(leaf_map[expr])

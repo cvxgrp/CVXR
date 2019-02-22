@@ -323,7 +323,10 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
 #' @param values A list of arguments to the atom.
 #' @describeIn MulExpression Matrix multiplication.
 setMethod("to_numeric", "MulExpression", function(object, values) {
-  return(values[[1]] %*% values[[2]])
+  if(is.null(shape(object@args[[1]])) || is.null(shape@args[[2]]))
+    return(values[[1]] * values[[2]])
+  else
+    return(values[[1]] %*% values[[2]])
 })
 
 #' @describeIn MulExpression The (row, col) shape of the expression.
@@ -434,7 +437,7 @@ setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(
 setMethod("is_atom_log_log_convex", "DivExpression", function(object) { TRUE })
 
 #' @describeIn DivExpression Is the atom log-log concave?
-setMethod("is_atom_log_log_concave", "DivExpression", function(object) { FALSE })
+setMethod("is_atom_log_log_concave", "DivExpression", function(object) { TRUE })
 
 #' @param idx An index into the atom.
 #' @describeIn DivExpression Is the right-hand expression positive?
@@ -774,6 +777,12 @@ setMethod("shape_from_args", "DiagVec", function(object) {
   c(rows, rows)
 })
 
+#' @describeIn DiagVec Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "DiagVec", function(object) { TRUE })
+
+#' @describeIn DiagVec Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "DiagVec", function(object) { TRUE })
+
 #' @describeIn DiagVec Is the expression symmetric?
 setMethod("is_symmetric", "DiagVec", function(object) { TRUE })
 
@@ -822,6 +831,12 @@ setMethod("shape_from_args", "DiagMat", function(object) {
   rows <- shape(object@args[[1]])[1]
   c(rows, 1)
 })
+
+#' @describeIn DiagMat Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "DiagMat", function(object) { TRUE })
+
+#' @describeIn DiagMat Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "DiagMat", function(object) { TRUE })
 
 DiagMat.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
@@ -917,6 +932,12 @@ setMethod("shape_from_args", "HStack", function(object) {
     return(dims)
   }
 })
+
+#' @describeIn HStack Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "HStack", function(object) { TRUE })
+
+#' @describeIn HStack Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "HStack", function(object) { TRUE })
 
 #' @describeIn HStack Check all arguments have the same height.
 setMethod("validate_args", "HStack", function(object) {

@@ -87,19 +87,29 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
     set_types(model@variables, var_idx[i], model@variables@type@integer)
   
   # Add constraints.
+  lin_expr <- list()
+  rhs <- list()
   for(i in 1:n_eq) {   # Add equalities.
     start <- A@p[i]
     end <- A@p[i+1]
     row <- list(A@i[start:end], A@j[start:end], A@x[start:end])
-    add(model@linear_constraints, lin_expr = row, senses = "E", rhs = b[i])
+    lin_expr <- c(lin_expr, list(row))
+    rhs <- c(rhs, b[i])
   }
+  if(length(lin_expr) > 0)
+    add(model@linear_constraints, lin_expr = lin_expr, senses = rep("E", length(lin_expr)), rhs = rhs)
   
+  lin_expr <- list()
+  rhs <- list()
   for(i in 1:n_ineq) {   # Add inequalities.
     start <- Fmat@p[i]
     end <- Fmat@p[i+1]
     row <- list(Fmat@i[start:end], Fmat@j[start:end], Fmat@x[start:end])
-    add(model@linear_constraints, lin_expr = row, senses = "L", rhs = g[i])
+    lin_expr <- c(lin_expr, list(row))
+    rhs <- c(rhs, g[i])
   }
+  if(length(lin_expr) > 0)
+    add(model@linear_constraints, lin_expr = lin_expr, senses = rep("L", length(lin_expr)), rhs = rhs)
   
   # Set quadratic cost.
   if(nnzero(P) > 0) {   # Only if quadratic form is not null.
@@ -169,13 +179,15 @@ setMethod("mip_capable", "GUROBI", function(object) { TRUE })
 setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
   if(status == 2)
     OPTIMAL
-  else if(status == 3)
+  else if(status == 3 || status == 6)
     INFEASIBLE
   else if(status == 5)
     UNBOUNDED
-  else if(status %in% c(4,6,7,8,10,11,12,13))
+  else if(status == 4)
+    INFEASIBLE_INACCURATE
+  else if(status %in% c(7,8,9,10,11,12))
     SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 9)
+  else if(status == 13)
     OPTIMAL_INACCURATE   # Means time expired.
   else if(!is.null(default)) {
     warning("GUROBI status unrecognized: ", status)
@@ -262,7 +274,8 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
     for(i in 1:nrow(A)) {
       start <- A@p[i]
       end <- A@p[i+1]
-      variables <- mapply(function(i, j) { x[i,j] }, A@i[start:end], A@j[start:end])   # Get nnz.
+      # variables <- mapply(function(i, j) { x[i,j] }, A@i[start:end], A@j[start:end])   # Get nnz.
+      variables <- x[A@i[start:end]]
       coeff <- A@x[start:end]
       expr <- gurobi::LinExpr(coeff, variables)
       addConstr(model, expr, "equal", b[i])
@@ -276,7 +289,8 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
     for(i in nrow(Fmat)) {
       start <- Fmat@p[i]
       end <- Fmat@p[i+1]
-      variables <- mapply(function(i, j) { x[i,j] }, Fmat@i[start:end], Fmat@j[start:end])   # Get nnz.
+      # variables <- mapply(function(i, j) { x[i,j] }, Fmat@i[start:end], Fmat@j[start:end])   # Get nnz.
+      variables <- x[Fmat@i[start:end]]
       coeff <- Fmat@x[start:end]
       expr <- gurobi::LinExpr(coeff, variables)
       addConstr(model, expr, "less_equal", g[i])
@@ -326,8 +340,6 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
     OPTIMAL
   else if(status == 2)
     OPTIMAL_INACCURATE
-  else if(status == -2)   # Maxiter reached.
-    SOLVER_ERROR
   else if(status == -3)
     INFEASIBLE
   else if(status == 3)
@@ -336,9 +348,7 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
     UNBOUNDED
   else if(status == 4)
     UNBOUNDED_INACCURATE
-  else if(status == -5)   # Interrupted by user.
-    SOLVER_ERROR
-  else if(status == -10)  # Unsolved.
+  else if(status == -2 || status == -5 || status == -10)   # -2: Maxiter reached. 5: Interrupted by user. 10: Unsolved.
     SOLVER_ERROR
   else if(!is.null(default)) {
     warning("OSQP status unrecognized: ", status)
@@ -400,8 +410,8 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     old_data <- cache[[2]]
     results <- cache[[3]]
     
-    same_pattern <- all(dim(P) == dim(old_data[P_KEY])) && all(P@p == old_data[P_KEY]@p) &&
-                    all(dim(A) == dim(old_data$full_A)) && all(A@p == old_data$full_A@p)
+    same_pattern <- all(dim(P) == dim(old_data[P_KEY])) && all(P@p == old_data[P_KEY]@p) && all(P@i == old_data[P_KEY]@i) &&
+                    all(dim(A) == dim(old_data$full_A)) && all(A@p == old_data$full_A@p) && all(A@i == old_data$full_A@i)
   } else
     same_pattern <- FALSE
   
@@ -415,22 +425,16 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     }
     factorizing <- FALSE
     
-    if(any(P@i != old_data[P_KEY]@i) || any(P@j != old_data[P_KEY]@j)) {
-      new_args$Px_idx <- cbind(P@i, P@j)
-      factorizing <- TRUE
-    }
     if(any(P@x != old_data[P_KEY]@x)) {
-      new_args$Px <- P@x
-      factorizing <- TRUE
-    }
-    if(any(A@i != old_data$full_A@i) || any(A@j != old_data$full_A@j)) {
-      new_args$Ax_idx <- cbind(A@i, A@j)
+      P_triu <- triu(P)
+      new_args$Px <- P_triu@x
       factorizing <- TRUE
     }
     if(any(A@x != old_data$full_A@x)) {
       new_args$Ax <- A@x
       factorizing <- TRUE
     }
+    
     if(length(new_args) > 0)
       update(solver, new_args)
     

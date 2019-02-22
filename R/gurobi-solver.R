@@ -45,13 +45,15 @@ setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
 setMethod("status_map", "GUROBI", function(solver, status) {
   if(status == 2)
     OPTIMAL
-  else if(status == 3)
+  else if(status == 3 || status == 6)
     INFEASIBLE
   else if(status == 5)
     UNBOUNDED
-  else if(status == 9)
+  else if(status == 4)
+    INFEASIBLE_INACCURATE
+  else if(status == 13)
     OPTIMAL_INACCURATE
-  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+  else if(status %in% c(7, 8, 9, 10, 11, 12))
     SOLVER_ERROR
   else
     stop("GUROBI status unrecognized: ", status)

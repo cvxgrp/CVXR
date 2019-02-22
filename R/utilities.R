@@ -330,6 +330,7 @@ setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), f
 })
 
 setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_expr, quad_forms) {
+  # Assumes quadratic forms all have variable arguments. Affine expressions can be anything.
   # Extract affine data.
   affine_problem <- Problem(Minimize(affine_expr), list())
   affine_inverse_data <- InverseData(affine_problem)
@@ -393,8 +394,46 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
   coeffs <- tmp[[1]]
   constant <- tmp[[2]]
 
-  # TODO: Finish this function.
+  # Restore expression.
+  restore_quad_forms(root$args[[1]], quad_forms)
+  
+  # TODO: Finish this block of code.
+  
+  if((shape(P)[1] != shape(P)[2] && shape(P)[2] != object@N) || shape(q)[1] != object@N)
+    stop("Resulting quadratic form does not have appropriate dimensions.")
+  
+  if(size(constant) != 1)
+    stop("Constant must be a scalar.")
+  return(list(P, q, constant[1]))
 })
+
+replace_quad_forms <- function(expr, quad_forms) {
+  for(idx in 1:length(expr@args)) {
+    arg <- expr@args[[idx]]
+    if(is(arg, "SymbolicQuadForm") || is(arg, "QuadForm"))
+      quad_forms <- replace_quad_form(expr, idx, quad_forms)
+    else
+      quad_forms <- replace_quad_forms(arg, quad_forms)
+  }
+  return(quad_forms)
+}
+
+replace_quad_form <- function(expr, idx, quad_forms) {
+  quad_form <- expr@args[[idx]]
+  placeholder <- Variable(shape(quad_form))
+  expr@args[[idx]] <- placeholder
+  quad_forms[[as.character(id(placeholder))]] <- list(expr, idx, quad_form)
+  return(quad_forms)
+}
+
+restore_quad_forms <- function(expr, quad_forms) {
+  for(idx in 1:length(expr@args)) {
+    if(is(arg, "Variable") && id(arg) %in% quad_forms)
+      expr@args[[idx]] <- quad_forms[[as.character(id(arg))]][3]
+    else
+      restore_quad_forms(arg, quad_forms)
+  }
+}
 
 # #
 # # The QuadCoeffExtractor class

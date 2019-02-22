@@ -403,7 +403,7 @@ quad_over_lin_canon <- function(expr, args) {
   t <- Variable(1)
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*matrix(x, ncol = 1))), axis = 1), y >= 0)
+  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*matrix(x, ncol = 1))), axis = 1))
   return(list(t, constraints))
 }
 

@@ -220,14 +220,8 @@ setMethod("canonicalize_tree", signature(object = "Canonicalization", expr = "Ex
 })
 
 setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Expression", args = "list"), function(object, expr, args) {
-  if(is(expr, "Expression") && length(variables(expr)) == 0) {
-    # Parameterized expressions are evaluated in a subsequent reduction.
-    if(length(parameters(expr)) > 0) {
-      param <- CallbackParam(function() { value(expr) }, shape(expr))   # TODO: Check the first argument to CallbackParam is correct
-      return(list(param, list()))
-    } else {   # Non-parameterized expressions are evaluated immediately.
-      return(list(Constant(value(expr)), list()))
-    }
+  if(is(expr, "Expression") && is_constant(expr)) {
+    return(list(expr, list()))
   } else if(class(expr) %in% canon_methods(object))
     return(canon_methods(object)[[class(expr)]](expr, args))
   else

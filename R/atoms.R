@@ -784,6 +784,14 @@ MatrixFrac <- function(X, P) {
     .MatrixFrac(X = X, P = P)
 }
 
+matrix_frac <- function(X, P) {
+  if(is.array(P)) {
+    invP <- base::solve(P)
+    return(QuadForm(X, (invP + t(Conj(invP)))/2.0))
+  } else
+    return(MatrixFrac(X, P))
+}
+
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
   .Object@P <- P
@@ -842,6 +850,9 @@ setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
 
 #' @describeIn MatrixFrac True if x is affine and P is constant.
 setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+
+#' @describeIn MatrixFrac True if x is piecewise linear and P is constant.
+setMethod("is_qpwa", "MatrixFrac", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
 
@@ -1354,6 +1365,12 @@ setMethod("is_atom_convex", "QuadForm", function(object) { is_psd(object@args[[2
 #' @rdname QuadForm Is the atom concave?
 setMethod("is_atom_concave", "QuadForm", function(object) { is_nsd(object@args[[2]]) })
 
+#' @rdname QuadForm Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "QuadForm", function(object) { TRUE })
+
+#' @rdname QuadForm Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "QuadForm", function(object) { FALSE })
+
 #' @rdname QuadForm Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "QuadForm", function(object, idx) {
   (is_nonneg(object@args[[1]]) && is_nonneg(object@args[[2]])) ||
@@ -1376,7 +1393,12 @@ setMethod("name", "QuadForm", function(x) {
   paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
 })
 
-setMethod(".grad", "QuadForm", function(object) { object@args[[2]] %*% object@args[[1]] })
+setMethod(".grad", "QuadForm", function(object) {
+  x <- values[[1]]
+  P <- values[[2]]
+  D <- 2*P %*% t(x)
+  Matrix(as.vector(t(D)), sparse = TRUE)
+})
 
 #'
 #' The SymbolicQuadForm class.

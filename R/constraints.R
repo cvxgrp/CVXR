@@ -28,6 +28,7 @@ setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
 setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
 setMethod("is_complex", "Constraint", function(object) { any(sapply(object@args, is_complex)) })
 setMethod("is_dcp", "Constraint", function(object) { stop("Unimplemented") })
+setMethod("is_dgp", "Constraint", function(object) { stop("Unimplemented") })
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
 setMethod("violation", "Constraint", function(object) {
@@ -72,7 +73,10 @@ setMethod("name", "ZeroConstraint", function(x) {
   paste(as.character(x@args[[1]]), "== 0")
 })
 
+setMethod("shape", "ZeroConstraint", function(object) { shape(object@args[[1]]) })
+setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
+setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
 setMethod("residual", "ZeroConstraint", function(object) {
   if(is.na(value(object@expr)))
     return(NA_real_)
@@ -85,6 +89,35 @@ setMethod("canonicalize", "ZeroConstraint", function(object) {
   constraints <- canon[[2]]
   dual_holder <- create_eq(obj, constr_id = id(object))
   return(list(NA, c(constraints, list(dual_holder))))
+})
+
+.EqConstraint <- setClass("EqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
+EqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
+
+setMethod("initialize", "EqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
+  .Object@expr <- lhs - rhs
+  callNextMethod(.Object, ..., args = list(lhs, rhs))
+})
+
+setMethod(".construct_dual_variables", "EqConstraint", function(object, args) {
+  callNextMethod(object, list(object@expr))
+})
+
+setMethod("name", "EqConstraint", function(x) {
+  paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
+})
+
+setMethod("shape", "EqConstraint", function(object) { shape(object@expr) })
+setMethod("size", "EqConstraint", function(object) { size(object@expr) })
+setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@expr) })
+setMethod("is_dgp", "EqConstraint", function(object) {
+  is_log_log_affine(object@args[[1]]) && is_log_log_affine(object@args[[2]])
+})
+
+setMethod("residual", "EqConstraint", function(object) {
+  if(is.na(value(object@expr)))
+    return(NA_real_)
+  return(abs(value(object@expr)))
 })
 
 .NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "ConstValORExpr"),
@@ -104,6 +137,7 @@ setMethod("name", "NonPosConstraint", function(x) {
 })
 
 setMethod("is_dcp", "NonPosConstraint", function(object) { is_convex(object@args[[1]]) })
+setMethod("is_dgp", "NonPosConstraint", function(object) { FALSE })
 setMethod("canonicalize", "NonPosConstraint", function(object) {
   canon <- canonical_form(object@args[[1]])
   obj <- canon[[1]]
@@ -113,6 +147,36 @@ setMethod("canonicalize", "NonPosConstraint", function(object) {
 })
 
 setMethod("residual", "NonPosConstraint", function(object) {
+  if(is.na(value(object@expr)))
+    return(NA_real_)
+  return(pmax(value(object@expr), 0))
+})
+
+.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_),
+                                  validity = function(object) {
+                                    if(is_complex(object@lhs - object@rhs))
+                                      stop("Inequality constraints cannot be complex.")
+                                    return(TRUE)
+                                  }, contains = "Constraint")
+
+IneqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
+
+setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
+  .Object@expr <- lhs - rhs
+  callNextMethod(.Object, ..., args = list(lhs, rhs))
+})
+
+setMethod("name", "IneqConstraint", function(x) {
+  paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
+})
+
+setMethod("shape", "IneqConstraint", function(object) { size(object@expr) })
+setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
+setMethod("is_dcp", "IneqConstraint", function(object) { is_convex(object@expr) })
+setMethod("is_dgp", "IneqConstraint", function(object) {
+  is_log_log_convex(object@args[[1]]) && is_log_log_concave(object@args[[2]])
+})
+setMethod("residual", "IneqConstraint", function(object) {
   if(is.na(value(object@expr)))
     return(NA_real_)
   return(pmax(value(object@expr), 0))
@@ -407,7 +471,7 @@ setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
 #' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
-#' @slot .expr (Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.
+#' @slot expr (Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.
 #' @slot dual_variable (Internal) A \linkS4class{Variable} representing the dual variable associated with the constraint.
 #' @name PSDConstraint-class
 #' @aliases PSDConstraint

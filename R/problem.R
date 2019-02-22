@@ -221,7 +221,7 @@ SizeMetrics <- function(problem) {
   # num_scalar_variables
   num_scalar_variables <- 0
   for(var in variables(problem))
-    num_scalar_variables <- num_scalar_variables + prod(size(var))
+    num_scalar_variables <- num_scalar_variables + size(var)
 
   # num_scalar_data, max_data_dimension, and max_big_small_squared
   max_data_dimension <- 0
@@ -230,9 +230,9 @@ SizeMetrics <- function(problem) {
   for(const in c(constants(problem), parameters(problem))) {
     big <- 0
     # Compute number of data
-    num_scalar_data <- num_scalar_data + prod(size(const))
-    big <- max(size(const))
-    small <- min(size(const))
+    num_scalar_data <- num_scalar_data + size(const)
+    big <- ifelse(1, length(shape(const)) == 0, max(shape(const)))
+    small <- ifelse(1, length(shape(const)) == 0, min(shape(const)))
 
     # Get max data dimension
     if(max_data_dimension < big)
@@ -245,15 +245,15 @@ SizeMetrics <- function(problem) {
   # num_scalar_eq_constr
   num_scalar_eq_constr <- 0
   for(constraint in problem@constraints) {
-    if(is(constraint, "EqConstraint"))
-      num_scalar_eq_constr <- num_scalar_eq_constr + prod(size(constraint@.expr))
+    if(is(constraint, "EqConstraint") || is(constraint, "ZeroConstraint"))
+      num_scalar_eq_constr <- num_scalar_eq_constr + size(constraint@expr)
   }
 
   # num_scalar_leq_constr
   num_scalar_leq_constr <- 0
   for(constraint in problem@constraints) {
-    if(is(constraint, "LeqConstraint") && class(constraint) == "LeqConstraint")
-      num_scalar_leq_constr <- num_scalar_leq_constr + prod(size(constraint@.expr))
+    if(is(constraint, "IneqConstraint") || is(constraint, "NonPosConstraint"))
+      num_scalar_leq_constr <- num_scalar_leq_constr + size(constraint@expr)
   }
 
   .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,
@@ -278,8 +278,8 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @name Problem-class
 #' @aliases Problem
 #' @rdname Problem-class
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", value = "numeric", status = "character", .cached_data = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "SolutionORNULL", .intermediate_chain = "ChainORNULL", .solving_chain = "ChainORNULL", .cached_chain_key = "character", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list", args = "list", .solver_cache = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be of class Minimize or Maximize")
@@ -287,12 +287,24 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
                         stop("[Problem: value] value should not be set by user")
                       if(!is.na(object@status))
                         stop("[Problem: status] status should not be set by user")
-                      if(length(object@.cached_data) > 0)
-                        stop("[Problem: .cached_data] .cached_data is an internal slot and should not be set by user")
+                      if(!is.null(object@solution))
+                        stop("[Problem: solution] solution should not be set by user")
+                      if(!is.null(object@.intermediate_chain))
+                        stop("[Problem: .intermediate_chain] .intermediate_chain is an internal slot and should not be set by user")
+                      if(!is.null(object@.solving_chain))
+                        stop("[Problem: .solving_chain] .solving_chain is an internal slot and should not be set by user")
+                      if(!is.na(object@.cached_chain_key))
+                        stop("[Problem: .cached_chain_key] .cached_chain_key is an internal slot and should not be set by user")
                       if(length(object@.separable_problems) > 0)
                         stop("[Problem: .separable_problems] .separable_problems is an internal slot and should not be set by user")
+                      if(!is.null(object@.size_metrics))
+                        stop("[Problem: .size_metrics] .size_metrics is an internal slot and should not be set by user")
                       if(length(object@.solver_stats) > 0)
                         stop("[Problem: .solver_stats] .solver_stats is an internal slot and should not be set by user")
+                      if(length(object@args) > 0)
+                        stop("[Problem: args] args is an internal slot and should not be set by user")
+                      if(length(object@.solver_cache) > 0)
+                        stop("[Problem: .solver_cache] .solver_cache is an internal slot and should not be set by user")
                       return(TRUE)
                     }, contains = "Canonical")
 
@@ -304,36 +316,34 @@ Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
-# Used in problem@.cached_data to check if the problem's objective or constraints have changed.
-CachedProblem <- function(objective, constraints) { list(objective = objective, constraints = constraints, class = "CachedProblem") }
-
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
-setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, .cached_data = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list()) {
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
+  .Object@variables <- .variables(.Object)
   .Object@value <- value
   .Object@status <- status
-
-  # Cached processed data for each solver.
-  .reset_cache <- function(object) {
-    for(solver_name in names(SOLVERS))
-      object@.cached_data[[solver_name]] <- ProblemData()
-    object@.cached_data[[PARALLEL]] <- CachedProblem(NA, NULL)
-    object
-  }
-  .Object@.cached_data <- .cached_data
-  .Object <- .reset_cache(.Object)
+  .Object@solution <- solution
+  
+  # The intermediate and solving chains to canonicalize and solve the problem.
+  .Object@.intermediate_chain <- intermediate_chain
+  .Object@.solving_chain <- solving_chain
+  .Object@.cached_chain_key <- cached_chain_key
 
   # List of separable (sub)problems
   .Object@.separable_problems <- .separable_problems
 
-  # Information about the size of the problem and its constituent parts
+  # Information about the shape of the problem and its constituent parts
   .Object@.size_metrics <- SizeMetrics(.Object)
 
-  # Benchmarks reported by the solver
+  # Benchmarks reported by the solver.
   .Object@.solver_stats <- .solver_stats
+  .Object@args <- list(.Object@objective, .Object@constraints)
+  
+  # Cache for warm start.
+  .Object@.solver_cache <- list()
   .Object
 })
 
@@ -356,8 +366,13 @@ setReplaceMethod("constraints", "Problem", function(object, value) {
   object
 })
 
-#' @describeIn Problem The value from the last time the problem was solved.
-setMethod("value", "Problem", function(object) { object@value })
+#' @describeIn Problem The value from the last time the problem was solved (or NA if not solved).
+setMethod("value", "Problem", function(object) { 
+  if(is.na(object@value))
+    return(NA_real_)
+  else
+    return(scalar_value(object@value))
+})
 
 #' @param value A \linkS4class{Minimize} or \linkS4class{Maximize} object (objective), list of \linkS4class{Constraint} objects (constraints), or numeric scalar (value).
 #' @describeIn Problem Set the value of the optimal objective.
@@ -366,7 +381,7 @@ setReplaceMethod("value", "Problem", function(object, value) {
     object
 })
 
-# The status from the last time the problem was solved.
+# The status from the last time the problem was solved. One of optimal, infeasible, or unbounded.
 setMethod("status", "Problem", function(object) { object@status })
 
 # Set the status of the problem.
@@ -374,6 +389,9 @@ setReplaceMethod("status", "Problem", function(object, value) {
     object@status <- value
     object
 })
+
+# The solution from the last time the problem was solved.
+setMethod("solution", "Problem", function(object) { object@solution })
 
 #' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
 #' @examples
@@ -384,6 +402,11 @@ setMethod("is_dcp", "Problem", function(object) {
   all(sapply(c(object@constraints, list(object@objective)), is_dcp))
 })
 
+#' @describeIn Problem A logical value indicating whether the problem statisfies DGP rules.
+setMethod("is_dgp", "Problem", function(object) {
+  all(sapply(c(object@constraints, list(object@objective)), is_dgp))
+})
+
 #' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
 #' @examples
 #' x <- Variable(2)
@@ -392,10 +415,14 @@ setMethod("is_dcp", "Problem", function(object) {
 #' is_qp(p)
 setMethod("is_qp", "Problem", function(object) {
   for(c in object@constraints) {
-    if(!(is(c, "EqConstraint") || is_pwl(c@.expr)))
+    if(!(is(c, "EqConstraint") || is(c, "ZeroConstraint") || is_pwl(c@args[[1]])))
       return(FALSE)
   }
-  return(is_dcp(object) && is_quadratic(object@objective@expr))
+  for(var in variables(object)) {
+    if(is_psd(var) || is_nsd(var))
+      return(FALSE)
+  }
+  return(is_dcp(object) && is_qpwa(object@objective@args[[1]]))
 })
 
 #' @describeIn Problem The graph implementation of the problem.
@@ -408,8 +435,14 @@ setMethod("canonicalize", "Problem", function(object) {
   list(obj_canon[[1]], canon_constr)
 })
 
+setMethod("is_mixed_integer", "Problem", function(object) {
+  any(sapply(variables(object), function(v) { v@attributes$boolean || v@attributes$integer }))
+})
+
 #' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
-setMethod("variables", "Problem", function(object) {
+setMethod("variables", "Problem", function(object) { object@variables })
+
+setMethod(".variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
@@ -427,6 +460,13 @@ setMethod("constants", "Problem", function(object) {
   constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
   constants_ <- c(constants(object@objective), constants_)
   unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
+})
+
+#' @describeIn Problem List of \linkS4class{Atom} objects in the problem.
+setMethod("atoms", "Problem", function(object) {
+  atoms_ <- lapply(object@constraints, function(constr) { atoms(constr) })
+  atoms_ <- c(atoms_, atoms(object@objective))
+  unique(flatten_list(atoms_))
 })
 
 #' @describeIn Problem Information about the size of the problem.
@@ -456,81 +496,85 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character"), function(object, solver) {
-  canon <- canonicalize(object)
-  objective <- canon[[1]]
-  constraints <- canon[[2]]
-
-  # Raise an error if the solver cannot handle the problem
-  validate_solver(SOLVERS[[solver]], constraints)
-  Solver.get_problem_data(SOLVERS[[solver]], objective, constraints, object@.cached_data)
+setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp = FALSE) {
+  object <- .construct_chains(solver = solver, gp = gp)
+  
+  tmp <- apply(object@.solving_chain, object@.intermediate_problem)
+  data <- tmp[[1]]
+  solving_inverse_data <- tmp[[2]]
+  
+  full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
+  inverse_data <- object@.intermediate_inverse_data + solving_inverse_data
+  
+  return(list(data, full_chain, inverse_data))
 })
+
+.find_candiate_solvers.Problem <- function(object, solver = NA, gp = FALSE) {
+  candidates <- list(qp_solvers = list(), conic_solvers = list())
+  if(!is.na(solver)) {
+    if(!(solver %in% slv_def.INSTALLED_SOLVERS))
+      stop("The solver is not installed")
+    if(solver %in% slv_def.CONIC_SOLVERS)
+      candidates$conic_solvers <- c(candidates$conic_solvers, solver)
+    if(solver %in% slv_def.QP_SOLVERS)
+      candidates$qp_solvers <- c(candidates$qp_solvers, solver)
+  } else {
+    candidates$qp_solvers <- slv_def.INSTALLED_SOLVERS[[slv_def.INSTALLED_SOLVERS %in% slv_def.QP_SOLVERS]]
+    candidates$conic_solvers <- slv_def.INSTALLED_SOLVERS[[slv_def.INSTALLED_SOLVERS %in% slv_def.CONIC_SOLVERS]]
+  }
+  
+  # If gp, we must have only conic solvers.
+  if(gp) {
+    if(!is.na(solver) && !(solver %in% slv_def.CONIC_SOLVERS))
+      stop("When gp = TRUE, solver must be a conic solver. Try calling solve() with solver = ECOS()")
+    else if(is.na(solver))
+      candidates$qp_solvers <- list()   # No QP solvers allowed.
+  }
+  
+  if(is_mixed_integer(object)) {
+    qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(slv_def.SOLVER_MAP_QP[s]) })
+    candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
+    conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(slv_def.SOLVER_MAP_CONIC[s]) })
+    candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
+    
+    if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
+      stop("Problem is mixed-integer, but candidate QP/Conic solvers are not MIP-capable")
+  }
+  return(candidates)
+}
+
+.construct_chains.Problem <- function(object, solver = NA, gp = FALSE) {
+  chain_key <- list(solver, gp)
+  if(chain_key != object@.cached_chain_key) {
+    candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
+    object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
+    tmp <- apply(object@.intermediate_chain, object)
+    object@.intermediate_problem <- tmp[[1]]
+    object@.intermediate_inverse_data <- tmp[[2]]
+    
+    object@.solving_chain <- construct_solving_chain(object@.intermediate_problem, candidate_solvers)
+    object@.cached_chain_key <- chain_key
+  }
+  return(object)
+}
 
 #' @docType methods
 #' @rdname psolve
 #' @export
-setMethod("psolve", "Problem", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) {
-  if(!is_dcp(object)) {
-    if(ignore_dcp)
-      print("Problem does not follow DCP rules. Solving a convex relaxation.")
-    else
-      stop("Problem does not follow DCP rules.")
-  }
-
-  # Standard cone problem
-  canon <- canonicalize(object)
-  objective <- canon[[1]]
-  constraints <- canon[[2]]
-
-  # Solve in parallel
-  if(parallel) {
-    stop("Unimplemented")     # TODO: Uncomment once parallel solve and separable problems are implemented.
-    # # Check if the objective or constraint has changed
-    # if(objective != object@.cached_data[[PARALLEL]]@objective ||
-    #    constraints != object@.cached_data[[PARALLEL]]@constraints) {
-    #   object@.separable_problems <- get_separable_problems(object)
-    #   object@.cached_data[[PARALLEL]] <- CachedProblem(objective, constraints)
-    # }
-    #
-    # if(length(object@.separable_problems) > 1)
-    #   .parallel_solve(object, solver, ignore_dcp, warm_start, verbose, ...)
-  }
-
-  # Choose a solver/check the chosen solver
-  if(missing(solver) || is.null(solver) || is.na(solver))
-    solver <- Solver.choose_solver(constraints)
-  else if(solver %in% names(SOLVERS)) {
-    solver <- SOLVERS[[solver]]
-    validate_solver(solver, constraints)
-  } else
-    stop("Unknown solver")
-
-  cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-  object@.cached_data <- cached_data
-  sym_data <- cached_data[[name(solver)]]@sym_data
-
-  # Presolve couldn't solve the problem.
-  if(is.na(sym_data@.presolve_status))
-    results_dict <- Solver.solve(solver, objective, constraints, object@.cached_data, warm_start, verbose, ...)
-  # Presolve determined problem was unbounded or infeasible
-  else {
-    results_dict <- list(sym_data@.presolve_status)
-    names(results_dict) <- STATUS
-  }
-
-  # Correct optimal value if the objective is Maximize
-  if(results_dict[[STATUS]] %in% SOLUTION_PRESENT)
-    results_dict[[VALUE]] <- primal_to_result(object@objective, results_dict[[VALUE]])
-  ##return(results_dict)
-
-  ##Update object
-  ##status(object) <- results_dict[[STATUS]]
-  ##solver_stats(object) <- SolverStats(results_dict, name(solver))
-
-  ## TODO: For now, don't update and save problem state since R can't modify in place variable slots.
-  ##object <- .update_problem_state(object, results_dict, sym_data, solver)
-  ##return(object)
-  return(valuesById(object, results_dict, sym_data, solver))
+setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) {
+  if(parallel)
+    stop("Unimplemented")
+  
+  object <- .construct_chains(object, solver = solver, gp = gp)
+  tmp <- apply(object@.solving_chain, object@.intermediate_problem)
+  data <- tmp[[1]]
+  solving_inverse_data <- tmp[[2]]
+  solution <- solve_via_data(object@.solving_chain, object, data, warm_start, verbose, ...)
+  
+  full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
+  inverse_data <- object@.intermediate_inverse_data + solving_inverse_data
+  object <- unpack_results(object, solution, full_chain, inverse_data)
+  return(value(object))
 })
 
 #' @docType methods
@@ -672,31 +716,38 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     result
 }
 
+setMethod("unpack", signature(object = "Problem", solution = "Solution"), function(object, solution) {
+  if(solution@status %in% SOLUTION_PRESENT) {
+    for(v in variables(object))
+      object <- save_value(v, solution@primal_vars[id(v)])
+    for(c in object@constraints) {
+      if(id(c) %in% solution@dual_vars)
+        object <- save_value(c, solution@dual_vars[id(c)])
+    } else if(solution@status %in% INF_OR_UNB) {
+      for(v in variables(object))
+        object <- save_value(v, NA)
+      for(constr in object@constraints)
+        object <- save_value(constr, NA)
+    } else
+      stop("Cannot unpack invalid solution")
+  }
+  object@value <- solution@opt_val
+  object@status <- solution@status
+  object@solution <- solution
+  return(object)
+})
+
 #' @describeIn Problem
 #' Parses the output from a solver and updates the problem state, including the status,
 #' objective value, and values of the primal and dual variables.
 #' Assumes the results are from the given solver.
 #' @param results_dict A list containing the solver output.
 #' @docType methods
-setMethod("unpack_results", "Problem", function(object, solver, results_dict) {
-
-    if(solver %in% names(SOLVERS)) {
-        solver <- SOLVERS[[solver]]
-        ##validate_solver(solver, constraints)
-    } else
-        stop("Unknown solver")
-
-    canon <- canonicalize(object)
-    objective <- canon[[1]]
-    constraints <- canon[[2]]
-
-    object@.cached_data <- get_sym_data(solver, objective, constraints, object@.cached_data)
-    sym_data <- object@.cached_data[[name(solver)]]@sym_data
-    data <- list(sym_data@.dims, 0)
-    names(data) <- c(DIMS, OFFSET)
-    results_dict <- format_results(solver, results_dict, data, object@.cached_data)
-    ##    .update_problem_state(object, results_dict, sym_data, solver)
-    return(valuesById(object, results_dict, sym_data, solver))
+setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
+    solution <- invert(chain, solution, inverse_data)
+    object <- unpack(object, solution)
+    object@.solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
+    return(object)
 })
 
 handleNoSolution <- function(object, status) {

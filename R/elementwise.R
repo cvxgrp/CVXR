@@ -106,7 +106,7 @@ setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- size(object@expr)
   cols <- size(object)
-  D <- array(0, dim = shape(object@args[[1]]))
+  D <- array(0, dim = shape(object@expr))
   D <- D + (values[[1]] > 0)
   D <- D - (values[[1]] < 0)
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))

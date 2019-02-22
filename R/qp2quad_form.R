@@ -39,7 +39,7 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
         is_dcp(problem) &&
         length(convex_attributes(variables(problem))) == 0 &&
         are_args_affine(problem@constraints) &&
-        all(sapply(problem@constraints, function(c) { class(c) == "Zero" || class(c) == "NonPos" }))
+        all(sapply(problem@constraints, function(c) { class(c) %in% c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") }))
 })
 
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
@@ -73,6 +73,31 @@ setMethod("apply", signature(object = "Qp2SymbolicQp", problem = "Problem"), fun
 })
 
 # Atom canonicalizers
+huber_canon <- function(expr, args) {
+  M <- expr@M
+  x <- args[[1]]
+  shape <- shape(expr)
+  n <- Variable(shape)
+  s <- Variable(shape)
+  
+  # n^2 + 2*M*|s|
+  # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
+  power_expr <- Power(n, 2)
+  canon <- power_canon(power_expr, power_expr@args)
+  n2 <- canon[[1]]
+  constr_sq <- canon[[2]]
+  
+  abs_expr <- abs(s)
+  canon <- abs_canon(abs_expr, abs_expr@args)
+  abs_s <- canon[[1]]
+  constr_abs <- canon[[2]]
+  obj <- n2 + 2*M*abs_s
+  
+  constraints <- c(constr_sq, constr_abs)
+  constraints <- c(constraints, list(x == s + n))
+  return(list(obj, constraints))
+}
+
 power_canon <- function(expr, args) {
   affine_expr <- args[[1]]
   p <- expr@p
@@ -83,8 +108,12 @@ power_canon <- function(expr, args) {
   else if(p == 1)
     return(list(affine_expr, list()))
   else if(p == 2) {
-    t <- Variable(shape(affine_expr))
-    return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
+    if(is(affine_expr, "Variable"))
+      return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr)), expr), list()))
+    else {
+      t <- Variable(shape(affine_expr))
+      return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
+    }
   }
   stop("Non-constant quadratic forms cannot be raised to a power greater than 2.")
 }
@@ -92,13 +121,21 @@ power_canon <- function(expr, args) {
 quad_form_canon <- function(expr, args) {
   affine_expr <- expr@args[[1]]
   P <- expr@args[[2]]
-  t <- Variable(shape(affine_expr))
-  return(list(SymbolicQuadForm(t, P, expr), list(affine_expr == t)))
+  if(is(affine_expr, "Variable"))
+    return(list(SymbolicQuadForm(affine_expr, P, expr), list()))
+  else {
+    t <- Variable(shape(affine_expr))
+    return(list(SymbolicQuadForm(t, P, expr), list(affine_expr == t)))
+  }
 }
 
 quad_over_lin_canon <- function(expr, args) {
   affine_expr <- args[[1]]
   y <- args[[2]]
-  t <- Variable(shape(affine_expr))
-  return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
+  if(is(affine_expr, "Variable"))
+    return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr))/y, expr), list()))
+  else {
+    t <- Variable(shape(affine_expr))
+    return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
+  }
 }

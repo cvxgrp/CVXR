@@ -287,7 +287,7 @@ setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
     MulElemwise(lh_const = e1, rh_exp = e2)
   else if(is_constant(e2))
     MulElemwise(lh_const = e2, rh_exp = e1)
-  else if(all(size(e1) == c(1,1)) && all(size(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
+  else if(all(shape(e1) == c(1,1)) && all(shape(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
     warning("Forming a non-convex expression (affine) * (affine)")
     AffineProd(x = e1, y = e2)
   } else
@@ -365,7 +365,7 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {
-    if(size(x)[1] == size(y)[1] && size(x)[2] != size(y)[1] && is(x, "Constant") && x@is_1D_array)
+    if(shape(x)[1] == shape(y)[1] && shape(x)[2] != shape(y)[1] && is(x, "Constant") && x@is_1D_array)
       x <- t(x)
     return(MulExpression(lh_exp = x, rh_exp = y))
   } else if(is_constant(y)) {

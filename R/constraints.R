@@ -170,12 +170,21 @@ setMethod("name", "IneqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
 })
 
+#' @describeIn IneqConstraint The shape of the constrained expression.
 setMethod("shape", "IneqConstraint", function(object) { size(object@expr) })
+
+#' @describeIn IneqConstraint The size of the constrained expression.
 setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
+
+#' @describeIn IneqConstraint A non-positive constraint is DCP if its argument is convex.
 setMethod("is_dcp", "IneqConstraint", function(object) { is_convex(object@expr) })
+
+#' @describeIn IneqConstraint Is the constraint DGP?
 setMethod("is_dgp", "IneqConstraint", function(object) {
   is_log_log_convex(object@args[[1]]) && is_log_log_concave(object@args[[2]])
 })
+
+#' @describeIn IneqConstraint The residual of the constraint.
 setMethod("residual", "IneqConstraint", function(object) {
   if(is.na(value(object@expr)))
     return(NA_real_)
@@ -400,6 +409,9 @@ setMethod("is_dcp", "ExpCone", function(object) {
   all(sapply(object@args, function(arg) { is_affine(arg) }))
 })
 
+#' @describeIn ExpCone Is the constraint DGP?
+setMethod("is_dgp", "ExpCone", function(object) { FALSE })
+
 #' @describeIn ExpCone Canonicalizes by converting expressions to LinOps.
 setMethod("canonicalize", "ExpCone", function(object) {
   arg_objs <- list()
@@ -496,6 +508,9 @@ setMethod("name", "PSDConstraint", function(x) {
 #' @param object A \linkS4class{PSDConstraint} object.
 #' @describeIn PSDConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@args[[1]]) })
+
+#' @describeIn PSDConstraint Is the constraint DGP?
+setMethod("is_dgp", "PSDConstraint", function(object) { FALSE })
 
 #' @describeIn PSDConstraint A \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "PSDConstraint", function(object) {
@@ -633,6 +648,9 @@ setMethod("cone_sizes", "SOC", function(object) {
 setMethod("is_dcp", "SOC", function(object) {
   all(sapply(object@args, function(arg) { is_affine(arg) }))
 })
+
+#' @describeIn SOC Is the constraint DGP?
+setMethod("is_dgp", "SOC", function(object) { FALSE })
 
 # TODO: Hack.
 setMethod("canonicalize", "SOC", function(object) {

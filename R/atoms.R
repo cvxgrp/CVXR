@@ -421,21 +421,95 @@ setMethod(".column_grad", "CumMax", function(object, value) {
   return(D)
 })
 
-#' @rdname CumMax-class The (is positive, is negative) sign of the atom.
+#' @describeIn CumMax The (is positive, is negative) sign of the atom.
 setMethod("sign_from_args", "CumMax", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
-#' @rdname CumMax-class Is the atom convex?
+#' @describeIn CumMax Is the atom convex?
 setMethod("is_atom_convex", "CumMax", function(object) { TRUE })
 
-#' @rdname CumMax-class Is the atom concave?
+#' @describeIn CumMax Is the atom concave?
 setMethod("is_atom_concave", "CumMax", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @rdname CumMax-class Is the atom weakly increasing in the index?
+#' @describeIn CumMax Is the atom weakly increasing in the index?
 setMethod("is_incr", "CumMax", function(object, idx) { TRUE })
 
-#' @rdname CumMax-class Is the atom weakly decreasing in the index?
+#' @describeIn CumMax Is the atom weakly decreasing in the index?
 setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
+
+#'
+#' The EyeMinusInv class.
+#'
+#' This class represents the unity resolvent of an elementwise positive matrix \eqn{X}, i.e., \eqn{(I - X)^{-1}},
+#' and it enforces the constraint that the spectral radius of \eqn{X} is at most 1.
+#' This atom is log-log convex.
+#' 
+#' @slot X An \linkS4class{Expression} or numeric matrix.
+#' @name EyeMinusInv-class
+#' @aliases EyeMinusInv
+#' @rdname EyeMinusInv-class
+.EyeMinusInv <- setClass("EyeMinusInv", representation(X = "ConstValORExpr"), 
+                         validity = function(object) {
+                           if(length(shape(X)) != 2 || shape(X)[1] != shape(X)[2])
+                             stop("[EyeMinusInv: X] The argument X must be a square matrix.")
+                           return(TRUE)
+                          }, contains = "Atom")
+
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @rdname EyeMinusInv-class
+EyeMinusInv <- function(X) { .EyeMinusInv(X = X) }
+
+setMethod("initialize", "EyeMinusInv", function(.Object, ..., X) {
+  .Object@X <- X
+  callNextMethod(.Object, ..., args = list(.Object@X))
+})
+
+#' @param object A \linkS4class{EyeMinusInv} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn EyeMinusInv The unity resolvent of the matrix.
+setMethod("to_numeric", "EyeMinusInv", function(object, values) {
+  base::solve(diag(shape(object@args[[1]])[1]) - values[[1]])
+})
+
+#' @param x,object An \linkS4class{EyeMinusInv} object.
+setMethod("name", "EyeMinusInv", function(x) { paste(class(x), x@args[[1]]) })
+
+#' @describeIn EyeMinusInv The shape of the atom determined from its arguments.
+setMethod("shape_from_args", "EyeMinusInv", function(object) { shape(object@args[[1]]) })
+
+#' @describeIn EyeMinusInv The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "EyeMinusInv", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn EyeMinusInv Is the atom convex?
+setMethod("is_atom_convex", "EyeMinusInv", function(object) { FALSE })
+
+#' @describeIn EyeMinusInv Is the atom concave?
+setMethod("is_atom_concave", "EyeMinusInv", function(object) { FALSE })
+
+#' @describeIn EyeMinusInv Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "EyeMinusInv", function(object) { TRUE })
+
+#' @describeIn EyeMinusInv Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "EyeMinusInv", function(object) { FALSE })
+
+# TODO: Figure out monotonicity.
+#' @param idx An index into the atom.
+#' @describeIn EyeMinusInv Is the atom weakly increasing in the index?
+setMethod("is_incr", "EyeMinusInv", function(object, idx) { FALSE })
+
+#' @describeIn EyeMinusInv Is the atom weakly decreasing in the index?
+setMethod("is_decr", "EyeMinusInv", function(object, idx) { FALSE })
+
+setMethod(".grad", "EyeMinusInv", function(object, values) { NA_real_ })
+
+# The resolvent of a positive matrix, (sI - X)^(-1).
+# For an elementwise positive matrix X and a positive scalar s, this atom computes
+# (sI - X)^(-1), and it enforces the constraint that the spectral radius of X/s is
+# at most 1.
+# This atom is log-log convex.
+Resolvent <- function(X, s) {
+  1.0 / (s * EyeMinusInv(X / s))
+}
 
 #'
 #' The GeoMean class.
@@ -480,6 +554,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   
   if(is.na(p))
     p <- rep(1, n)
+  .Object@p <- p
   
   if(length(p) != n)
     stop("x and p must have the same number of elements.")
@@ -545,6 +620,12 @@ setMethod("is_atom_convex", "GeoMean", function(object) { FALSE })
 
 #' @describeIn GeoMean The atom is concave.
 setMethod("is_atom_concave", "GeoMean", function(object) { TRUE })
+
+#' @describeIn GeoMean Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "GeoMean", function(object) { TRUE })
+
+#' @describeIn GeoMean Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "GeoMean", function(object) { TRUE })
 
 #' @param idx An index into the atom.
 #' @describeIn GeoMean The atom is weakly increasing in every argument.
@@ -964,6 +1045,12 @@ setMethod("is_atom_convex", "MaxEntries", function(object) { TRUE })
 #' @describeIn MaxEntries The atom is not concave.
 setMethod("is_atom_concave", "MaxEntries", function(object) { FALSE })
 
+#' @describeIn MaxEntries Is the atom log-log convex.
+setMethod("is_atom_log_log_convex", "MaxEntries", function(object) { TRUE })
+
+#' @describeIn MaxEntries Is the atom log-log concave.
+setMethod("is_atom_log_log_concave", "MaxEntries", function(object) { FALSE })
+
 #' @param idx An index into the atom.
 #' @describeIn MaxEntries The atom is weakly increasing in every argument.
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
@@ -985,10 +1072,65 @@ setMethod(".column_grad", "MaxEntries", function(object, value) {
   D
 })
 
-MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) {
-  x <- as.Constant(x)
-  -MaxEntries(-x, axis = axis, keepdims = keepdims)
-}
+#'
+#' The MinEntries class.
+#'
+#' The minimum of an expression.
+#'
+#' @slot x An \linkS4class{Expression} representing a vector or matrix.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @name MinEntries-class
+#' @aliases MinEntries
+#' @rdname MinEntries-class
+.MinEntries <- setClass("MinEntries", contains = "AxisAtom")
+
+#' @param x An \linkS4class{Expression} representing a vector or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @rdname MinEntries-class
+MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) { .MinEntries(expr = x, axis = axis, keepdims = keepdims) }
+
+#' @param object A \linkS4class{MinEntries} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn MinEntries The largest entry in \code{x}.
+setMethod("to_numeric", "MinEntries", function(object, values) {
+  apply_with_keepdims(values[[1]], min, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn MinEntries The sign of the atom.
+setMethod("sign_from_args",  "MinEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
+
+#' @describeIn MinEntries The atom is not convex.
+setMethod("is_atom_convex", "MaxEntries", function(object) { FALSE })
+
+#' @describeIn MinEntries The atom is concave.
+setMethod("is_atom_concave", "MinEntries", function(object) { TRUE })
+
+#' @describeIn MinEntries Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "MinEntries", function(object) { FALSE })
+
+#' @describeIn MinEntries Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "MinEntries", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn MinEntries The atom is weakly increasing in every argument.
+setMethod("is_incr", "MinEntries", function(object, idx) { TRUE })
+
+#' @describeIn MinEntries The atom is not weakly decreasing in any argument.
+setMethod("is_decr", "MinEntries", function(object, idx) { FALSE })
+
+#' @describeIn MinEntries Is \code{x} piecewise linear?
+setMethod("is_pwl", "MinEntries", function(object) { is_pwl(object@args[[1]]) })
+
+setMethod(".grad", "MinEntries", function(object, values) { .axis_grad(object, values) })
+
+setMethod(".column_grad", "MinEntries", function(object, value) {
+  # Grad: 1 for a largest index
+  value <- as.numeric(value)
+  idx <- (value == min(value))
+  D <- matrix(0, nrow = length(value), ncol = 1)
+  D[idx,1] <- 1
+  D
+})
 
 #'
 #' The Pnorm class.
@@ -1014,8 +1156,8 @@ MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) {
 #' @name Pnorm-class
 #' @aliases Pnorm
 #' @rdname Pnorm-class
-.Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric"),
-                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_), contains = "AxisAtom")
+.Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric", .original_p = "numeric"),
+                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_), contains = "AxisAtom")
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
@@ -1031,7 +1173,7 @@ Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) {
     .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom)
 }
 
-setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_) {
+setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_) {
   if(p == 1)
     stop("Use the Norm1 class to instantiate a 1-norm.")
   else if(p %in% c(Inf, "inf", "Inf"))
@@ -1048,6 +1190,7 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   .Object@p <- p
   .Object@max_denom <- max_denom
   .Object@.approx_error <- abs(.Object@p - p_old)
+  .Object@.original_p <- p
   callNextMethod(.Object, ...)
 })
 
@@ -1098,10 +1241,16 @@ setMethod("allow_complex", "Pnorm", function(object) { TRUE })
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
 
 #' @describeIn Pnorm The atom is convex if \eqn{p \geq 1}.
-setMethod("is_atom_convex", "Pnorm", function(object) { object@p > 1})
+setMethod("is_atom_convex", "Pnorm", function(object) { object@p > 1 })
 
 #' @describeIn Pnorm The atom is concave if \eqn{p < 1}.
 setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
+
+#' @describeIn Pnorm Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Pnorm", function(object) { TRUE })
+
+#' @describeIn Pnorm Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Pnorm", function(object) { FALSE })
 
 #' @param idx An index into the atom.
 #' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
@@ -1257,19 +1406,21 @@ setMethod(".column_grad", "Norm1", function(object, values) {
 #'
 #' The NormInf class.
 #'
+#' This class represents the infinity-norm.
+#'
 #' @name NormInf-class
 #' @aliases NormInf
 #' @rdname NormInf-class
 NormInf <- setClass("NormInf", contains = "AxisAtom")
 
-#' @rdname NormInf Can the atom operate on complex values?
+#' @describeIn NormInf Can the atom operate on complex values?
 setMethod("allow_complex", "NormInf", function(object) { TRUE })
 
 setMethod("name", "NormInf", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
 })
 
-#' @rdname NormInf Returns the nuclear norm of \code{x}.
+#' @describeIn NormInf Returns the infinity norm of \code{x}.
 setMethod("to_numeric", "NormInf", function(object, values) {
   if(is.na(object@axis))
     base::norm(values[[1]], type = "I")
@@ -1277,25 +1428,31 @@ setMethod("to_numeric", "NormInf", function(object, values) {
     apply_with_keepdims(values[[1]], function(x) { norm(x, type = "I") }, axis = object@axis, keepdims = object@keepdims)
 })
 
-#' @rdname NormInf The atom is always positive.
+#' @describeIn NormInf The atom is always positive.
 setMethod("sign_from_args", "NormInf", function(object) { c(TRUE, FALSE) })
 
-#' @rdname NormInf The atom is convex.
+#' @describeIn NormInf The atom is convex.
 setMethod("is_atom_convex", "NormInf", function(object) { TRUE })
 
-#' @rdname NormInf The atom is not concave.
+#' @describeIn NormInf The atom is not concave.
 setMethod("is_atom_concave", "NormInf", function(object) { FALSE })
 
-#' @rdname NormInf Is the composition weakly increasing in argument \code{idx}?
+#' @describeIn NormInf Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "NormInf", function(object) { TRUE })
+
+#' @describeIn NormInf Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "NormInf", function(object) { FALSE })
+
+#' @describeIn NormInf Is the composition weakly increasing in argument \code{idx}?
 setMethod("is_incr", "NormInf", function(object, idx) { is_nonneg(object@args[[1]]) })
 
-#' @rdname NormInf Is the composition weakly decreasing in argument \code{idx}?
+#' @describeIn NormInf Is the composition weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "NormInf", function(object, idx) { is_nonpos(object@args[[1]]) })
 
-#' @rdname NormInf Is the atom piecewise linear?
+#' @describeIn NormInf Is the atom piecewise linear?
 setMethod("is_pwl", "NormInf", function(object) { is_pwl(object@args[[1]]) })
 
-#' @rdname NormInf Returns the axis.
+#' @describeIn NormInf Returns the axis.
 setMethod("get_data", "NormInf", function(object) { list(object@axis) })
 
 setMethod(".domain", "NormInf", function(object) { list() })
@@ -1357,9 +1514,183 @@ setMethod(".grad", "NormNuc", function(object, values) {
 })
 
 #'
+#' The OneMinusPos class.
+#'
+#' This class represents the difference \eqn{1 - x} with domain \eqn{\{x : 0 < x < 1}\}
+#' 
+#' @slot x An \linkS4class{Expression} or numeric matrix.
+#' @name OneMinusPos-class
+#' @aliases OneMinusPos
+#' @rdname OneMinusPos-class
+.OneMinusPos <- setClass("OneMinusPos", representation(x = "ConstValORExpr", .ones = "numeric"), prototype(.ones = NA_real_), contains = "Atom")
+
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @rdname OneMinusPos-class
+OneMinusPos <- function(x) { .OneMinusPos(x = x) }
+
+setMethod("initialize", "OneMinusPos", function(.Object, ..., x) {
+  .Object@x <- x
+  .Object@.ones <- matrix(1, nrow = shape(x)[1], ncol = shape(x)[2])
+  callNextMethod(.Object, ..., args = list(.Object@x))
+})
+
+#' @param x,object A \linkS4class{OneMinusPos} object.
+setMethod("name", "OneMinusPos", function(x) { paste(class(x), x@args[[1]]) })
+
+#' @param values A list of arguments to the atom.
+#' @describeIn OneMinusPos Returns one minus the value.
+setMethod("to_numeric", "OneMinusPos", function(object, values) { object@.ones - values[[1]] })
+
+#' @describeIn OneMinusPos The shape of the atom.
+setMethod("shape_from_args", "OneMinusPos", function(object) { shape(object@args[[1]]) })
+
+#' @describeIn OneMinusPos Returns the sign (is positive, is negative) of the atom.
+setMethod("sign_from_args", "OneMinusPos", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn OneMinusPos Is the atom convex?
+setMethod("is_atom_convex", "OneMinusPos", function(object) { FALSE })
+
+#' @describeIn OneMinusPos Is the atom concave?
+setMethod("is_atom_concave", "OneMinusPos", function(object) { FALSE })
+
+#' @describeIn OneMinusPos Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "OneMinusPos", function(object) { FALSE })
+
+#' @describeIn OneMinusPos Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "OneMinusPos", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn OneMinusPos Is the atom weakly increasing in the argument \code{idx}?
+setMethod("is_incr", "OneMinusPos", function(object, idx) { FALSE })
+
+#' @describeIn OneMinusPos Is the atom weakly decreasing in the argument \code{idx}?
+setMethod("is_decr", "OneMinusPos", function(object, idx) { TRUE })
+
+setMethod(".grad", "OneMinusPos", function(object, values) { Matrix(-object@.ones, sparse = TRUE) })
+
+# The difference x - y with domain {x,y: x > y > 0}.
+DiffPos <- function(x, y) {
+  x * OneMinusPos(y/x)
+}
+
+#'
+#' The PfEigenvalue class.
+#'
+#' This class represents the Perron-Frobenius eigenvalue of a positive matrix.
+#' 
+#' @slot x An \linkS4class{Expression} or numeric matrix.
+#' @name PfEigenvalue-class
+#' @aliases PfEigenvalue
+#' @rdname PfEigenvalue-class
+.PfEigenvalue <- setClass("PfEigenvalue", representation(X = "ConstValORExpr"), 
+                          validity = function(object) {
+                            if(length(shape(X)) != 2 || shape(X)[1] != shape(X)[2])
+                              stop("Argument must be a square matrix")
+                          }, contains = "Atom")
+
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @rdname PfEigenvalue-class
+PfEigenvalue <- function(X) { .PfEigenvalue(X = X) }
+
+setMethod("initialize", "PfEigenvalue", function(.Object, ..., X = X) {
+  .Object@X <- X
+  callNextMethod(.Object, ..., args = list(.Object@X))
+})
+
+#' @param x,object A \linkS4class{PfEigenvalue} object.
+setMethod("name", "PfEigenvalue", function(x) { paste(class(x), x@args[[1]]) })
+
+#' @param values A list of arguments to the atom.
+#' @describeIn PfEigenvalue Returns the Perron-Frobenius eigenvalue of \code{X}.
+setMethod("to_numeric", "PfEigenvalue", function(object, values) {
+  eig <- eigen(values[[1]], only.values = TRUE)
+  max(abs(eig$values))
+})
+
+#' @describeIn PfEigenvalue The shape of the atom.
+setMethod("shape_from_args", "PfEigenvalue", function(object) { NULL })
+
+#' @describeIn PfEigenvalue Returns the sign (is positive, is negative) of the atom.
+setMethod("sign_from_args", "PfEigenvalue", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn PfEigenvalue Is the atom convex?
+setMethod("is_atom_convex", "PfEigenvalue", function(object) { FALSE })
+
+#' @describeIn PfEigenvalue Is the atom concave?
+setMethod("is_atom_concave", "PfEigenvalue", function(object) { FALSE })
+
+#' @describeIn PfEigenvalue Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "PfEigenvalue", function(object) { TRUE })
+
+#' @describeIn PfEigenvalue Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "PfEigenvalue", function(object) { FALSE })
+
+# TODO: Figure out monotonicity.
+#' @param idx An index into the atom.
+#' @describeIn PfEigenvalue Is the atom weakly increasing in the argument \code{idx}?
+setMethod("is_incr", "PfEigenvalue", function(object, idx) { FALSE })
+
+#' @describeIn PfEigenvalue Is the atom weakly decreasing in the argument \code{idx}?
+setMethod("is_decr", "PfEigenvalue", function(object, idx) { FALSE })
+
+setMethod(".grad", "PfEigenvalue", function(object, values) { NA_real_ })
+
+#'
+#' The ProdEntries class.
+#'
+#' The product of the entries in an expression.
+#'
+#' @slot x An \linkS4class{Expression} representing a vector or matrix.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @name ProdEntries-class
+#' @aliases ProdEntries
+#' @rdname ProdEntries-class
+.ProdEntries <- setClass("ProdEntries", contains = "AxisAtom")
+
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @rdname ProdEntries-class
+ProdEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .ProdEntries(expr = expr, axis = axis, keepdims = keepdims) }
+
+#' @describeIn ProdEntries The product of all the entries.
+setMethod("to_numeric", "ProdEntries", function(object, values) {
+  apply_with_keepdims(values[[1]], prod, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn ProdEntries Returns the sign (is positive, is negative) of the atom.
+setMethod("sign_from_args", "ProdEntries", function(object) { 
+  if(is_nonneg(object@args[[1]]))
+    c(TRUE, FALSE)
+  else
+    c(FALSE, FALSE)
+})
+
+#' @describeIn ProdEntries Is the atom convex?
+setMethod("is_atom_convex", "ProdEntries", function(object) { FALSE })
+
+#' @describeIn ProdEntries Is the atom concave?
+setMethod("is_atom_concave", "ProdEntries", function(object) { FALSE })
+
+#' @describeIn ProdEntries Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "ProdEntries", function(object) { TRUE })
+
+#' @describeIn ProdEntries is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "ProdEntries", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn ProdEntries Is the atom weakly increasing in the argument \code{idx}?
+setMethod("is_incr", "ProdEntries", function(object, idx) { is_nonneg(object@args[[1]]) })
+
+#' @describeIn ProdEntries Is the atom weakly decreasing in the argument \code{idx}?
+setMethod("is_decr", "ProdEntries", function(object, idx) { FALSE })
+
+setMethod(".column_grad", "ProdEntries", function(object, value) { prod(value)/value })
+setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, values) })
+
+#'
 #' The QuadForm class.
 #'
-#' This class represents the quadratic form \eqn{x^T P x}/
+#' This class represents the quadratic form \eqn{x^T P x}
 #' 
 #' @slot x An \linkS4class{Expression} or numeric vector.
 #' @slot P An \linkS4class{Expression}, numeric matrix, or vector.
@@ -1371,16 +1702,22 @@ setMethod(".grad", "NormNuc", function(object, values) {
 #' @param x An \linkS4class{Expression} or numeric vector.
 #' @param P An \linkS4class{Expression}, numeric matrix, or vector.
 #' @rdname QuadForm-class
+QuadForm <- function(x, P) { .QuadForm(x = x, P = P) }
+
 setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
   .Object@x <- x
   .Object@P <- P
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@P))
 })
 
-#' @rdname QuadForm Can the atom operate on complex values?
+setMethod("name", "QuadForm", function(x) {
+  paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
+})
+
+#' @describeIn QuadForm Can the atom operate on complex values?
 setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 
-#' @rdname QuadForm Returns the quadratic form.
+#' @describeIn QuadForm Returns the quadratic form.
 setMethod("to_numeric", "QuadForm", function(object, values) {
   prod <- values[[2]] %*% values[[1]]
   if(is_complex(object@args[[1]]))
@@ -1389,7 +1726,7 @@ setMethod("to_numeric", "QuadForm", function(object, values) {
     return(t(values[[1]]) %*% prod)
 })
 
-#' @rdname QuadForm Checks the dimensions of the arguments.
+#' @describeIn QuadForm Checks the dimensions of the arguments.
 setMethod("validate_args", "QuadForm", function(object) {
   callNextMethod()
   n <- shape(object@args[[2]])[1]
@@ -1397,10 +1734,10 @@ setMethod("validate_args", "QuadForm", function(object) {
     stop("Invalid dimensions for arguments.")
 })
 
-#' @rdname QuadForm Returns the sign (is positive, is negative) of the atom.
+#' @describeIn QuadForm Returns the sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "QuadForm", function(object) { c(is_atom_convex(object), is_atom_concave(object)) })
 
-#' @rdname QuadForm The shape of the atom.
+#' @describeIn QuadForm The shape of the atom.
 setMethod("shape_from_args", "QuadForm", function(object) { 
   if(ndim(object@args[[1]]) == 0)
     c()
@@ -1408,39 +1745,35 @@ setMethod("shape_from_args", "QuadForm", function(object) {
     c(1,1)
 })
 
-#' @rdname QuadForm Is the atom convex?
+#' @describeIn QuadForm Is the atom convex?
 setMethod("is_atom_convex", "QuadForm", function(object) { is_psd(object@args[[2]]) })
 
-#' @rdname QuadForm Is the atom concave?
+#' @describeIn QuadForm Is the atom concave?
 setMethod("is_atom_concave", "QuadForm", function(object) { is_nsd(object@args[[2]]) })
 
-#' @rdname QuadForm Is the atom log-log convex?
+#' @describeIn QuadForm Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "QuadForm", function(object) { TRUE })
 
-#' @rdname QuadForm Is the atom log-log concave?
+#' @describeIn QuadForm Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "QuadForm", function(object) { FALSE })
 
-#' @rdname QuadForm Is the atom weakly increasing in the argument \code{idx}?
+#' @describeIn QuadForm Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "QuadForm", function(object, idx) {
   (is_nonneg(object@args[[1]]) && is_nonneg(object@args[[2]])) ||
     (is_nonpos(object@args[[1]]) && is_nonneg(object@args[[2]]))
 })
 
-#' @rdname QuadForm Is the atom weakly decreasing in the argument \code{idx}?
+#' @describeIn QuadForm Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "QuadForm", function(object, idx) {
   (is_nonneg(object@args[[1]]) && is_nonpos(object@args[[2]])) ||
     (is_nonpos(object@args[[1]]) && is_nonpos(object@args[[2]]))
 })
 
-#' @rdname QuadForm Is the atom quadratic?
+#' @describeIn QuadForm Is the atom quadratic?
 setMethod("is_quadratic", "QuadForm", function(object) { TRUE })
 
-#' @rdname QuadForm Is the atom piecewise linear?
+#' @describeIn QuadForm Is the atom piecewise linear?
 setMethod("is_pwl", "QuadForm", function(object) { FALSE })
-
-setMethod("name", "QuadForm", function(x) {
-  paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
-})
 
 setMethod(".grad", "QuadForm", function(object) {
   x <- values[[1]]
@@ -1597,6 +1930,12 @@ setMethod("is_atom_convex", "QuadOverLin", function(object) { TRUE })
 
 #' @describeIn QuadOverLin The atom is not concave.
 setMethod("is_atom_concave", "QuadOverLin", function(object) { FALSE })
+
+#' @describeIn QuadOverLin Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "QuadOverLin", function(object) { TRUE })
+
+#' @describeIn QuadOverLin Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "QuadOverLin", function(object) { FALSE })
 
 #' @param idx An index into the atom.
 #' @describeIn QuadOverLin A logical value indicating whether the atom is weakly increasing.

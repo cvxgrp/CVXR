@@ -1,3 +1,4 @@
+# Lifts complex numbers to a real representation.
 setClass("Complex2Real", contains = "Reduction")
 
 setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
@@ -18,6 +19,8 @@ setMethod("apply", signature(object = "Complex2Real", problem = "Problem"), func
 
   constrs <- list()
   for(constraint in problem@constraints) {
+    if(class(constraint) == "EqConstraint")
+      constraint <- lower_equality(constraint)
     constr <- canonicalize_tree(object, constraint, inverse_data@real2imag, leaf_map)
     real_constr <- constr[[1]]
     imag_constr <- constr[[2]]
@@ -60,7 +63,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         imag_id <- inverse_data@real2imag[[cid]]
         dvars[[cid]] <- 1i*solution@dual_vars[[imag_id]]
       # For equality and inequality constraints.
-      } else if((is(cons, "Zero") || is(cons, "NonPos")) && is_complex(cons)) {
+      } else if((is(cons, "ZeroConstraint") || is(cons, "EqConstraint") || is(cons, "NonPosConstraint")) && is_complex(cons)) {
         imag_id <- inverse_data@real2imag[[cid]]
         dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
       # For PSD constraints.

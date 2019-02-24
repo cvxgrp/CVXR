@@ -49,6 +49,20 @@ max_elemwise_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+min_entries_canon <- function(expr, args) {
+  if(length(args) != 1)
+    stop("Length of args must be one")
+  tmp <- MaxEntries(-args[[1]])
+  canon <- max_entries_canon(tmp, tmp@args)
+  return(list(-canon[[1]], canon[[2]]))
+}
+
+min_elemwise_canon <- function(expr, args) {
+  tmp <- do.call(MaxElemwise, lapply(args, function(arg) { -arg }))
+  canon <- max_elemwise_canon(tmp, tmp@args)
+  return(list(-canon[[1]], canon[[2]]))
+}
+
 norm1_canon <- function(expr, args) {
   x <- args[[1]]
   axis <- expr@axis

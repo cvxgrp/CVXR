@@ -1,3 +1,28 @@
+# Reduction utility functions.
+lower_inequality <- function(inequality) {
+  lhs <- inequality@args[[1]]
+  rhs <- inequality@args[[2]]
+  NonPosConstraint(lhs - rhs, constr_id = inequality@constr_id)
+}
+
+lower_equality <- function(equality) {
+  lhs <- equality@args[[1]]
+  rhs <- equality@args[[2]]
+  ZeroConstraint(lhs - rhs, constr_id = equality@constr_id)
+}
+
+special_index_canon <- function(expr, args) {
+  select_mat <- expr@.select_mat
+  final_shape <- shape(expr@.select_mat)
+  select_vec <- matrix(select_mat, nrow = size(select_mat))
+  
+  # Select the chosen entries from expr.
+  arg <- args[[1]]
+  identity <- diag(size(arg))
+  lowered <- Reshape(identity[select_vec]*vec(arg), final_shape)
+  list(lowered, list())
+}
+
 are_args_affine <- function(constraints) {
   all(sapply(constraints, function(constr) {
     all(sapply(constr@args, function(arg) { is_affine(arg) }))
@@ -346,9 +371,9 @@ setMethod("apply", signature(object = "CvxAttr2Constr", problem = "Problem"), fu
       }
 
       id2new_obj[[vid]] <- obj
-      if(is_nonneg(var))
+      if(is_nonneg(var) || is_pos(var))
         constr <- c(constr, obj >= 0)
-      else if(is_nonpos(var))
+      else if(is_nonpos(var) || is_neg(var))
         constr <- c(constr, obj <= 0)
       else if(is_psd(var))
         constr <- c(constr, obj %>>% 0)
@@ -509,7 +534,6 @@ setClass("MatrixStuffing", contains = "Reduction")
 
 setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
-
   stuffed <- stuffed_objective(object, problem, inverse_data)
   new_obj <- stuffed[[1]]
   new_var <- stuffed[[2]]
@@ -519,6 +543,11 @@ setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), fu
   new_cons <- list()
   for(con in problem@constraints) {
     arg_list <- list()
+    if(is(con, "EqConstraint"))
+      con <- lower_equality(con)
+    else if(is(con, "IneqConstraint"))
+      con <- lower_inequality(con)
+    
     for(arg in con@args) {
       coeffs <- get_coeffs(extractor, arg)
       A <- coeffs[[1]]

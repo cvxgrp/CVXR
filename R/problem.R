@@ -39,6 +39,9 @@ setMethod("constants", "Minimize", function(object) { constants(object@expr) })
 #' @describeIn Minimize A logical value indicating whether the objective is convex.
 setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
 
+#' @describeIn Minimize A logical value indicating whether the objective is log-log convex.
+setMethod("is_dgp", "Minimize", function(object) { is_log_log_convex(object@expr) })
+
 #' @describeIn Minimize The value of the objective expression.
 setMethod("value", "Minimize", function(object) { value(object@expr) })
 
@@ -69,9 +72,7 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' @param expr A scalar \linkS4class{Expression} to maximize.
 #' @rdname Maximize-class
 #' @export
-Maximize <- function(expr) {
-  .Maximize(expr = expr)
-}
+Maximize <- function(expr) { .Maximize(expr = expr) }
 
 #'
 #' Arithmetic Operations on Objectives
@@ -146,6 +147,9 @@ setMethod("canonicalize", "Maximize", function(object) {
 
 #' @describeIn Maximize A logical value indicating whether the objective is concave.
 setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
+
+#' @describeIn Maximize A logical value indicating whether the objective is log-log concave.
+setMethod("is_dgp", "Maximize", function(object) { is_log_log_concave(object@expr) })
 
 #' @describeIn Maximize A logical value indicating whether the objective is quadratic.
 setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })

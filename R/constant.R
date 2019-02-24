@@ -10,8 +10,8 @@
 #' @name Constant-class
 #' @aliases Constant
 #' @rdname Constant-class
-.Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric"),
-                                 prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_),
+.Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric", .cached_is_pos = "logical"),
+                                 prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA),
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -32,7 +32,7 @@
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
-setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_) {
+setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA) {
   # Keep sparse matrices sparse.
   if(is(value, "ConstSparseVal")) {
     .Object@value <- Matrix(value, sparse = TRUE)
@@ -47,6 +47,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
   .Object@symm <- symm
   .Object@herm <- herm
   .Object@eigvals <- eigvals
+  .Object@.cached_is_pos <- .cached_is_pos
   callNextMethod(.Object, ..., intf_shape(.Object@value))
 })
 
@@ -64,6 +65,12 @@ setMethod("constants", "Constant", function(object) { list(object) })
 
 #' @describeIn Constant The value of the constant.
 setMethod("value", "Constant", function(object) { object@value })
+
+setMethod("is_pos", "Constant", function(object) {
+  if(!is.na(object@.cached_is_pos))
+    object@.cached_is_pos <- all(object@value > 0)
+  object@.cached_is_pos
+})
 
 #' @describeIn Constant An empty list since the gradient of a constant is zero.
 setMethod("grad", "Constant", function(object) { list() })

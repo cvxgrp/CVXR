@@ -118,6 +118,12 @@ POSITIVE = "POSITIVE"
 NEGATIVE = "NEGATIVE"
 UNKNOWN = "UNKNOWN"
 
+# Keys for log-log curvature
+LOG_LOG_CONSTANT = "LOG_LOG_CONSTANT"
+LOG_LOG_AFFINE = "LOG_LOG_AFFINE"
+LOG_LOG_CONVEX = "LOG_LOG_CONVEX"
+LOG_LOG_CONCAVE = "LOG_LOG_CONCAVE"
+
 SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
 
 SolveResult <- list(SolveResult = list("opt_value", "status", "primal_values", "dual_values"))

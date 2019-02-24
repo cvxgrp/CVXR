@@ -38,6 +38,8 @@ setMethod("size", "ListORExpr", function(object) {
   cast_op
 }
 
+.value_impl.Expression <- function(object) { object@value }
+
 #' @param x,object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
@@ -88,8 +90,32 @@ setMethod("curvature", "Expression", function(object) {
   curvature_str
 })
 
+#'
+#' Log-Log Curvature of Expression
+#' 
+#' The log-log curvature of an expression.
+#' 
+#' @param x An \linkS4class{Expression} object.
+#' @return A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX", "LOG_LOG_CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname log_log_curvature
+#' @export
+setMethod("log_log_curvature", "Expression", function(object) {
+  if(is_log_log_constant(object))
+    curvature_str <- LOG_LOG_CONSTANT
+  else if(is_log_log_affine(object))
+    curvature_str <- LOG_LOG_AFFINE
+  else if(is_log_log_convex(object))
+    curvature_str <- LOG_LOG_CONVEX
+  else if(is_log_log_concave(object))
+    curvature_str <- LOG_LOG_CONCAVE
+  else
+    curvature_str <- UNKNOWN
+  curvature_str
+})
+
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
-setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || 0 %in% shape(object) })
+setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || is_zero(object) || 0 %in% shape(object) })
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
@@ -102,6 +128,31 @@ setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") }
 
 #' @describeIn Expression The expression is DCP if it is convex or concave.
 setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
+
+#' @describeIn Expression Is the expression log-log constant, i.e., elementwise positive?
+setMethod("is_log_log_constant", "Expression", function(object) {
+  if(!is_constant(object))
+    return(FALSE)
+  
+  if(is(object, "Constant") || is(object, "Parameter"))
+    return(is_pos(object))
+  else
+    return(!is.na(value(object)) && all(value(object) > 0))
+})
+
+#' @describeIn Expression Is the expression log-log affine?
+setMethod("is_log_log_affine", "Expression", function(object) {
+  is_log_log_constant(object) || (is_log_log_convex(object) && is_log_log_concave(object))
+})
+
+#' @describeIn Expression Is the expression log-log convex?
+setMethod("is_log_log_convex", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression Is the expression log-log concave?
+setMethod("is_log_log_concave", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The expression is DGP if it is log-log DCP.
+setMethod("is_dgp", "Expression", function(object) { is_log_log_convex(object) || is_log_log_concave(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a Hermitian matrix.
 setMethod("is_hermitian", "Expression", function(object) { is_real(object) && is_symmetric(object) })
@@ -205,46 +256,46 @@ setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = 
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   if(is_vector(x) && size(x)[1] < size(x)[2])
-    Index.get_special_slice(x, NULL, i)   # If only first index given, apply it along longer dimension of vector
+    SpecialIndex(x, c(NULL, i))   # If only first index given, apply it along longer dimension of vector
   else
-    Index.get_special_slice(x, i, NULL)
+    SpecialIndex(x, c(i, NULL))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  Index.get_special_slice(x, NULL, j)
+  SpecialIndex(x, c(NULL, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  Index.get_special_slice(x, i, j)
+  SpecialIndex(x, c(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  Index.get_special_slice(x, i, j)
+  SpecialIndex(x, c(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  Index.get_special_slice(x, i, j)
+  SpecialIndex(x, c(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  Index.get_special_slice(x, i, j)
+  SpecialIndex(x, c(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices
-  Index.get_special_slice(x, i, NULL)
+  SpecialIndex(x, c(i, NULL))
 })
 
 # #' @rdname Index-class
@@ -305,10 +356,10 @@ setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if(is_constant(e2) && is_scalar(e2))
+  if(is_scalar(e2) && all(shape(e1) == shape(e2)))
     DivExpression(lh_exp = e1, rh_exp = e2)
   else
-    stop("Can only divide by a scalar constant")
+    stop("Incompatible shapes for division")
 })
 
 #' @rdname DivExpression-class
@@ -401,40 +452,40 @@ setMethod("==", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2
 setMethod("==", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) == e2 })
 
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
-#' @rdname LeqConstraint-class
-setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { LeqConstraint(lh_exp = e1, rh_exp = e2) })
+#' @rdname IneqConstraint-class
+setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { IneqConstraint(lh_exp = e1, rh_exp = e2) })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod("<=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 <= as.Constant(e2) })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod("<=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) <= e2 })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod("<",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod("<",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 < as.Constant(e2) })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod("<",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) < e2 })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e2 <= e1 })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 >= as.Constant(e2) })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) >= e2 })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 > as.Constant(e2) })
 
-#' @rdname LeqConstraint-class
+#' @rdname IneqConstraint-class
 setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
 
 # Positive definite inequalities
@@ -481,12 +532,12 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical",
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
                                         PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
-                                        integer = "logical", sparsity = "logical"),
+                                        integer = "logical", sparsity = "logical", pos = "logical", neg = "logical"),
                          prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE,
                                    symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE,
-                                   boolean = FALSE, integer = FALSE, sparsity = NA), contains = "Expression")
+                                   boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA) {
+setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE) {
   if(length(shape) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
 
@@ -500,7 +551,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, 
     stop("Invalid dimensions ", shape, ". Must be a square matrix.")
 
   # Process attributes.
-  .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, complex = complex, imag = imag,
+  .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, pos = pos, neg = neg, complex = complex, imag = imag,
                              symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
                              boolean = as.logical(boolean), integer = integer, sparsity = sparsity)
   if(boolean) {
@@ -565,11 +616,23 @@ setMethod("is_convex", "Leaf", function(object) { TRUE })
 #' @describeIn Leaf A logical value indicating whether the leaf node is concave.
 setMethod("is_concave", "Leaf", function(object) { TRUE })
 
+#' @describeIn Leaf Is the expression log-log convex?
+setMethod("is_log_log_convex", "Leaf", function(object) { is_pos(object) })
+
+#' @describeIn Leaf Is the expression log-log concave?
+setMethod("is_log_log_concave", "Leaf", function(object) { is_pos(object) })
+
 #' @describeIn Leaf A logical value indicating whether the leaf node is nonnegative.
-setMethod("is_nonneg", "Leaf", function(object) { object@attributes$nonneg || object@attributes$boolean })
+setMethod("is_nonneg", "Leaf", function(object) { object@attributes$nonneg || object@attributes$pos || object@attributes$boolean })
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is nonpositive.
-setMethod("is_nonpos", "Leaf", function(object) { object@attributes$nonpos })
+setMethod("is_nonpos", "Leaf", function(object) { object@attributes$nonpos || object@attributes$neg })
+
+#' @describeIn Leaf Is the expression positive?
+setMethod("is_pos", "Leaf", function(object) { object@attributes$pos })
+
+#' @describeIn Leaf Is the expression negative?
+setMethod("is_neg", "Leaf", function(object) { object@attributes$neg })
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is hermitian.
 setMethod("is_hermitian", "Leaf", function(object) {
@@ -610,9 +673,9 @@ setMethod("project", "Leaf", function(object, val) {
 
   if(object@attributes$nonpos && object@attributes$nonneg)
     return(0*val)
-  else if(object@attributes$nonpos)
+  else if(object@attributes$nonpos || object@attributes$neg)
     return(pmin(val, 0))
-  else if(object@attributes$nonneg)
+  else if(object@attributes$nonneg || object@attributes$pos)
     return(pmax(val, 0))
   else if(object@attributes$imag)
     return(Im(val)*1i)
@@ -693,8 +756,12 @@ setMethod("validate_val", "Leaf", function(object, val) {
     if(!close_enough) {
       if(object@attributes$nonneg)
         attr_str <- "nonnegative"
+      else if(object@attributes$pos)
+        attr_str <- "positive"
       else if(object@attributes$nonpos)
         attr_str <- "nonpositive"
+      else if(object@attributes$neg)
+        attr_str <- "negative"
       else if(object@attributes$diag)
         attr_str <- "diagonal"
       else if(object@attributes$PSD)

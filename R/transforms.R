@@ -121,10 +121,20 @@ linearize <- function(expr) {
 # setMethod("is_concave", "PartialProblem", function(object) {
 #   is_dcp(object@args[[1]]) && class(object@args[[1]]@objective) == "Maximize"
 # })
-# setMethod("is_positive", "PartialProblem", function(object) { is_positive(object@args[[1]]@objective@args[[1]]) })
-# setMethod("is_negative", "PartialProblem", function(object) { is_negative(object@args[[1]]@objective@args[[1]]) })
-# setMethod("size", "PartialProblem", function(object) { c(1,1) })
-# setMethod("variables", "PartialProblem", function(object) { object@dont_opt_vars })
+# setMethod("is_log_log_convex", "PartialProblem", function(object) {
+#   is_dgp(object@args[[1]]) && class(object@args[[1]]@objective) == "Minimize"
+# })
+# setMethod("is_log_log_concave", "PartialProblem", function(object) {
+#   is_dgp(object@args[[1]]) && class(object@args[[1]]@objective) == "Maximize"
+# })
+# setMethod("is_nonneg", "PartialProblem", function(object) { is_nonneg(object@args[[1]]@objective@args[[1]]) })
+# setMethod("is_nonpos", "PartialProblem", function(object) { is_nonpos(object@args[[1]]@objective@args[[1]]) })
+# setMethod("is_imag", "PartialProblem", function(object) { FALSE })
+# setMethod("is_complex", "PartialProblem", function(object) { FALSE })
+# setMethod("shape", "PartialProblem", function(object) { c() })
+# setMethod("variables", "PartialProblem", function(object) { variables(object@args[[1]]) })
+# setMethod("parameters", "PartialProblem", function(object) { parameters(object@args[[1]]) })
+# setMethod("constants", "PartialProblem", function(object) { constants(object@args[[1]]) })
 # setMethod("grad", "PartialProblem", function(object) {
 #   # Short circuit for constant
 #   if(is_constant(object))

@@ -4,7 +4,23 @@
 #' This class eliminates piecewise linear atoms.
 #' 
 #' @rdname EliminatePwl-class
-setClass("EliminatePwl", contains = "Canonicalization")
+.EliminatePwl <- setClass("EliminatePwl", representation(problem = "ProblemORNull"), prototype(problem = NULL), contains = "Canonicalization")
+
+EliminatePwl <- function(problem = NULL) { .EliminatePwl(problem = problem) }
+
+EPWL_CANON_METHODS <- list("Abs" = abs_canon, 
+                           "MaxEntries" = max_entries_canon,
+                           "MaxElemwise" = max_elemwise_canon,
+                           "MinEntries" = min_entries_canon,
+                           "MinElemwise" = min_elemwise_canon,
+                           "Norm1" = norm1_canon,
+                           "NormInf" = norm_inf_canon,
+                           "SumLargest" = sum_largest_canon)
+
+setMethod("initialize", "EliminatePwl", function(.Object, ..., problem = NULL) {
+  .Object@problem <- problem
+  callNextMethod(.Object, ..., problem = problem, canon_methods = EPWL_CANON_METHODS)
+})
 
 setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
   atom_types <- sapply(atoms(problem), function(atom) { class(atom) })
@@ -15,7 +31,7 @@ setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), fu
 setMethod("apply", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot canonicalize away piecewise linear atoms.")
-  return(apply(Canonicalization(elim_pwl_methods), problem))
+  callNextMethod(object, problem)
 })
 
 abs_canon <- function(expr, args) {

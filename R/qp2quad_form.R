@@ -13,9 +13,15 @@ setMethod("accepts", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
     is_qpwa(problem@objective@expr) &&
         !any(convex_attributes(variables(problem)) %in% c("PSD", "NSD")) &&
         all(sapply(problem@constraints, function(c) {
-            (class(c) == "NonPos" && is_pwl(c@args[[1]])) ||
-                (class(c) == "Zero" && are_args_affine(list(c)))
+            ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint")) && is_pwl(c@args[[1]])) ||
+            ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
         }))
+})
+
+setMethod("apply", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
+  if(!accepts(object, problem))
+    stop("Cannot reduce problem to symbolic QP")
+  callNextMethod(object, problem)
 })
 
 #'

@@ -26,6 +26,7 @@ installed_solvers <- function() {
 }
 
 INSTALLED_SOLVERS <- installed_solvers()
+INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[sapply(INSTALLED_SOLVERS, function(slv) { slv %in% CONIC_SOLVERS })]
 
 # Solver utility functions.
 group_constraints <- function(constraints) {
@@ -142,7 +143,7 @@ construct_solving_chain <- function(problem, candidates) {
     stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (", 
                paste(candidates, collapse = ","), ")", sep = ""))
   
-  # Our choice of solver depends upon w hich atoms are present in the problem.
+  # Our choice of solver depends upon which atoms are present in the problem.
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
   cones <- list()
@@ -202,7 +203,8 @@ setMethod("solve_via_data", "SolvingChain", function(object, problem, data, warm
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
 })
 
-setMethod("construct_intermediate_chain", "Problem", function(problem, candidates, gp = FALSE) {
+# Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list", gp = "logical"), function(problem, candidates, gp = FALSE) {
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
@@ -214,7 +216,7 @@ setMethod("construct_intermediate_chain", "Problem", function(problem, candidate
   
   if(!gp && !is_dcp(problem))
     stop("Problem does not follow DCP rules. However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
-  else if(gp && !is_dcp(problem))
+  else if(gp && !is_dgp(problem))
     stop("Problem does not follow DGP rules. However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
   
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
@@ -223,13 +225,13 @@ setMethod("construct_intermediate_chain", "Problem", function(problem, candidate
   
   # First, attempt to canonicalize the problem to a linearly constrained QP.
   if(candidates$qp_solvers && accepts(qp2symbolic_qp(), problem)) {
-    reductions <- c(reductions, CVXAttr2Constr(), Qp2SymbolicQp())
+    reductions <- c(reductions, list(CVXAttr2Constr(), Qp2SymbolicQp()))
     return(Chain(reductions = reductions))
   }
   
   # Canonicalize it to conic problem.
   if(!candidates$conic_solvers)
     stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
-  reductions <- c(reductions, Dcp2Cone(), CvxAttr2Constr())
+  reductions <- c(reductions, list(Dcp2Cone(), CvxAttr2Constr()))
   return(Chain(reductions = reductions))
 })

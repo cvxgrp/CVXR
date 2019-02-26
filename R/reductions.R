@@ -136,12 +136,33 @@ setMethod("get_var_offsets", signature(object = "InverseData", variables = "list
 #' of provenance.
 #'
 #' @rdname Reduction-class
-setClass("Reduction", contains = "VIRTUAL")
+setClass("Reduction", representation(problem = "ProblemORNull", .emitted_problem = "ProblemORNull", .retrieval_data = "InverseDataORNullORList"), 
+                      prototype(problem = NULL, .emitted_problem = NULL, .retrieval_data = NULL), contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Reduction} object.
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn Reduction States whether the reduction accepts a problem.
 setMethod("accepts", signature(object = "Reduction", problem = "Problem"), function(object, problem) { stop("Unimplemented") })
+
+#' @describeIn Reduction Reduces the owned problem to an equivalent problem.
+setMethod("reduce", "Reduction", function(object) {
+  if(!is.null(object@.emitted_problem))
+    return(object@.emitted_problem)
+  
+  if(is.null(object@problem))
+    stop("The reduction was constructed without a Problem")
+  
+  tmp <- apply(object, object@problem)
+  object@.emitted_problem <- problem
+  object@.retrieval_data <- retrieval_data
+  return(list(object, object@.emitted_problem))
+})
+
+setMethod("retrieve", signature(object = "Reduction", solution = "Solution"), function(object, solution) {
+  if(is.null(object@.retrieval_data))
+    stop("reduce must be called before retrieve")
+  return(invert(object, solution, object@.retrieval_data))
+})
 
 #' @describeIn Reduction Applies the reduction to a problem and returns an equivalent problem.
 setMethod("apply", signature(object = "Reduction", problem = "Problem"), function(object, problem) { stop("Unimplemented") })
@@ -260,13 +281,17 @@ setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Ex
 #' their constraint values.
 #'
 #' @rdname Chain-class
-.Chain <- setClass("Chain", representation(problem = "Problem", reductions = "list"), prototype(reductions = list()), contains = "Reduction")
+.Chain <- setClass("Chain", representation(problem = "ProblemORNull", reductions = "list"), prototype(problem = NULL, reductions = list()), contains = "Reduction")
+
 Chain <- function(problem, reductions) { .Chain(problem = problem, reductions = reductions) }
-setMethod("initialize", function(.Object, ..., problem, reductions) {
+
+setMethod("initialize", function(.Object, ..., problem = NULL, reductions = list()) {
   .Object@reductions <- reductions
   callNextMethod(.Object, ..., problem = problem)
 })
 
+setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
+setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
 setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   for(r in object@reductions) {
     if(!accepts(r, problem))

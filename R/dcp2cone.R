@@ -7,7 +7,7 @@ setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), functi
 setMethod("apply", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to cone program")
-  return(apply(Canonicalization(), problem))
+  callNextMethod(object, problem)
 })
 
 setClass("ConeMatrixStuffing", contains = "MatrixStuffing")

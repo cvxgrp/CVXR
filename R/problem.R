@@ -548,8 +548,8 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 }
 
 .construct_chains.Problem <- function(object, solver = NA, gp = FALSE) {
-  chain_key <- list(solver, gp)
-  if(chain_key != object@.cached_chain_key) {
+  chain_key <- c(solver, gp)
+  if(!all(chain_key != object@.cached_chain_key)) {
     candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
     tmp <- apply(object@.intermediate_chain, object)
@@ -576,7 +576,7 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   solution <- solve_via_data(object@.solving_chain, object, data, warm_start, verbose, ...)
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
-  inverse_data <- object@.intermediate_inverse_data + solving_inverse_data
+  inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
   object <- unpack_results(object, solution, full_chain, inverse_data)
   return(value(object))
 })
@@ -719,6 +719,17 @@ valuesById <- function(object, results_dict, sym_data, solver) {
     result$getDualValue <- getDualValue
     result
 }
+
+# .clear_solution.Problem <- function(object) {
+#   for(v in variables(object))
+#     object <- save_value(v, NA)
+#   for(c in constraints(object))
+#     object <- save_value(c, NA)
+#   object@value <- NA
+#   object@status <- NA
+#   object@solution <- NA
+#   return(object)
+# }
 
 setMethod("unpack", signature(object = "Problem", solution = "Solution"), function(object, solution) {
   if(solution@status %in% SOLUTION_PRESENT) {

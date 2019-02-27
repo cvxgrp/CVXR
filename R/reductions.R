@@ -559,25 +559,41 @@ setClass("MatrixStuffing", contains = "Reduction")
 
 setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
-  stuffed <- stuffed_objective(object, problem, inverse_data)
-  new_obj <- stuffed[[1]]
-  new_var <- stuffed[[2]]
 
   # Form the constraints
   extractor <- CoeffExtractor(inverse_data)
-  new_cons <- list()
+  stuffed <- stuffed_objective(object, problem, inverse_data)
+  new_obj <- stuffed[[1]]
+  new_var <- stuffed[[2]]
+  inverse_data@r <- stuffed[[3]]
+  
+  # Lower equality and inequality to ZeroConstraint and NonPosConstraint.
+  cons <- list()
   for(con in problem@constraints) {
-    arg_list <- list()
     if(is(con, "EqConstraint"))
       con <- lower_equality(con)
     else if(is(con, "IneqConstraint"))
       con <- lower_inequality(con)
+    else if(is(con, "SOC") && con@axis == 1)
+      con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, constr_id = con@constr_id)
+    cons <- c(cons, con)
+  }
     
+  # Batch expressions together, then split apart.
+  expr_list <- flatten_list(lapply(cons, function(c) { c@args }))
+  Abfull <- affine(extractor, expr_list)
+  Afull <- Abfull[[1]]
+  bfull <- Abfull[[2]]
+  new_cons <- list()
+  offset <- 0
+  
+  for(con in cons) {
+    arg_list <- list()
     for(arg in con@args) {
-      coeffs <- get_coeffs(extractor, arg)
-      A <- coeffs[[1]]
-      b <- coeffs[[2]]
+      A <- Afull[(offset + 1):(offset + size(arg) + 1),]
+      b <- bfull[(offset + 1):(offset + size(arg) + 1)]
       arg_list <- c(arg_list, reshape(A %*% new_var + b, shape(arg)))
+      offset <- offset + size(arg)
     }
     new_cons <- c(new_cons, copy(con, arg_list))
     inverse_data@cons_id_map[[as.character(id(con))]] <- id(new_cons[[length(new_cons)]])

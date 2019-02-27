@@ -86,7 +86,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
   fake_expr <- graph[[1]]
 
   # Get the matrix representation of the function.
-  prob_mat <- get_problem_matrix(list(create_eq(fake_expr)), var_offsets, NA)
+  prob_mat <- get_problem_matrix(list(fake_expr), var_offsets, NA)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
   J <- prob_mat[[3]] + 1

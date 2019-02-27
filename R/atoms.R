@@ -803,7 +803,7 @@ setMethod("to_numeric", "LogDet", function(object, values) {
 #' @describeIn LogDet Check that \code{A} is square.
 setMethod("validate_args", "LogDet", function(object) {
   shape <- shape(object@args[[1]])
-  if(shape[1] != shape[2])
+  if(length(shape) == 1 || shape[1] != shape[2])
     stop("The argument to LogDet must be a square matrix")
 })
 

@@ -423,8 +423,9 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   storage.mode(constr_offsets) <- "integer"
 
   # Convert the constraints into a matrix and vector offset and add them to the matrix cache.
+  expr_list <- lapply(active_constr, function(con) { con$expr })
   if(length(active_constr) > 0) {
-    mat <- get_problem_matrix(active_constr, object@sym_data@.var_offsets, constr_offsets)
+    mat <- get_problem_matrix(expr_list, object@sym_data@.var_offsets, constr_offsets)
     V <- mat[[1]]
     I <- mat[[2]]
     J <- mat[[3]]

@@ -7,15 +7,19 @@
 #' @rdname Qp2SymbolicQp-class
 setClass("Qp2SymbolicQp", contains = "Canonicalization")
 
+Qp2SymbolicQp.accepts <- function(problem) {
+  is_qpwa(problem@objective@expr) &&
+    length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
+    all(sapply(problem@constraints, function(c) {
+      ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint")) && is_pwl(c@args[[1]])) ||
+        ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
+    }))
+}
+
 # Problems with quadratic, piecewise affine objectives, piecewise-linear constraints, inequality constraints,
 # and affine equality constraints are accepted.
 setMethod("accepts", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
-    is_qpwa(problem@objective@expr) &&
-        !any(convex_attributes(variables(problem)) %in% c("PSD", "NSD")) &&
-        all(sapply(problem@constraints, function(c) {
-            ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint")) && is_pwl(c@args[[1]])) ||
-            ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
-        }))
+    Qp2SymbolicQp.accepts(problem)
 })
 
 setMethod("apply", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
@@ -48,13 +52,9 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
         all(sapply(problem@constraints, function(c) { class(c) %in% c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") }))
 })
 
-setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
-  # We need to copy the problem because we are changing atoms in the expression tree
-  problem_copy <- Problem(Minimize(tree_copy(problem@objective@expr)), lapply(problem@constraints, function(con) { tree_copy(con) }))
-  inverse_data_of_copy <- InverseData(problem_copy)
-  extractor <- CoeffExtractor(inverse_data_of_copy)
-
+setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
+  # TODO: Need to copy objective?
   Pqr <- quad_form(extractor, problem_copy@objective@expr)
   P <- Pqr[[1]]
   q <- Pqr[[2]]
@@ -64,11 +64,11 @@ setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = 
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  x <- Variable(inverse_data@x_length, boolean = boolean, integer = integer)
+  x <- Variable(extractor@N, boolean = boolean, integer = integer)
   new_obj <- QuadForm(x, P) + t(q) %*% x
 
   inverse_data@r <- r
-  return(list(new_obj, x))
+  return(list(new_obj, x, r))
 })
 
 # Converts a QP to an even more symbolic form.

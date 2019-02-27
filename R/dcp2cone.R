@@ -19,11 +19,9 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints)
 })
 
-setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
-  extractor <- CoeffExtractor(inverse_data)
-
+setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
-  CR <- get_coeffs(extractor, problem@objective@expr)
+  CR <- affine(extractor, problem@objective@expr)
   C <- CR[[1]]
   R <- CR[[2]]
 
@@ -31,12 +29,11 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  x <- Variable(inverse_data@x_length, boolean = boolean, integer = integer)
+  x <- Variable(extractor@N, boolean = boolean, integer = integer)
 
   new_obj <- t(c) %*% x + 0
 
-  inverse_data@r <- R[[1]]
-  return(list(new_obj, x))
+  return(list(new_obj, x, R[[1]]))
 })
 
 cumsum_canon <- function(expr, args) {

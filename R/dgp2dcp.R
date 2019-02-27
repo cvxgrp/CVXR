@@ -23,7 +23,7 @@ setMethod("canonicalize_expr", signature(object = "Dgp2Dcp", expr = "Expression"
 })
 
 setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-  solution <- invert(Canonicalization(), solution, inverse_data)
+  solution <- callNextMethod(object, solution, inverse_data)
   if(solution@status == SOLVER_ERROR)
     return(solution)
   for(vid in names(solution@primal_vars))

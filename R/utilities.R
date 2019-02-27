@@ -322,17 +322,20 @@ setMethod("constant", signature(object = "CoeffExtractor", expr = "Expression"),
   list(Matrix(nrow = size, ncol = object@N), as.vector(value(expr)))
 })
 
-setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
-  if(!is_affine(expr))
-    stop("Expression is not affine")
-  s <- canonical_form(expr)[[1]]
-  VIJb <- get_problem_matrix(list(create_eq(s)), object@id_map)
+setMethod("affine", signature(object = "CoeffExtractor", expr = "list"), function(object, expr) {
+  size <- sum(sapply(expr, size))
+  op_list <- lapply(expr, function(e) { canonical_form(e)[[1]] })
+  VIJb <- get_problem_matrix(op_list, object@id_map)
   V <- VIJb[[1]]
   I <- VIJb[[2]]
   J <- VIJb[[3]]
   b <- VIJb[[4]]
-  A <- sparseMatrix(i = I, j = J, x = V, dims = c(size(expr), object@N))
+  A <- sparseMatrix(i = I, j = J, x = V, dims = c(size, object@N))
   list(A, as.vector(b))
+})
+
+setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+  affine(object, list(expr))
 })
 
 setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_expr, quad_forms) {

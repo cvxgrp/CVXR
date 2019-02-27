@@ -209,7 +209,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
   # TODO: Reduce boolean constraints.
-  if(accepts(Complex2Real(), problem))
+  if(Complex2Real.accepts(problem))
     reductions <- c(reductions, Complex2Real())
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
@@ -224,7 +224,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
     reductions <- c(reductions, FlipObjective())
   
   # First, attempt to canonicalize the problem to a linearly constrained QP.
-  if(candidates$qp_solvers && accepts(qp2symbolic_qp(), problem)) {
+  if(candidates$qp_solvers && Qp2SymbolicQp.accepts(problem)) {
     reductions <- c(reductions, list(CVXAttr2Constr(), Qp2SymbolicQp()))
     return(Chain(reductions = reductions))
   }

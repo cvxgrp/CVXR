@@ -120,36 +120,33 @@ setMethod("format_constr", "ConicSolver", function(object, problem, constr, exp_
   offsets <- list()
   for(arg in constr@args) {
     res <- ConicSolver.get_coeff_offset(arg)
-    coeffs <- c(coeffs, Matrix(res[[1]], sparse = TRUE))
+    coeffs <- c(coeffs, res[[1]])
     offsets <- c(offsets, res[[2]])
   }
   height <- sum(sapply(coeffs, function(c) { dim(c)[1] }))
 
-  if(class(constr) %in% c("NonPos", "Zero"))
+  if(class(constr) %in% c("NonPosConstraint", "ZeroConstraint"))
     # Both of these constraints have but a single argument.
     # t(c) %*% x + b (<)= 0 if and only if t(c) %*% x (<)= b.
-    return(list(coeffs[[1]], -offsets[1]))
+    return(list(Matrix(coeffs[[1]], sparse = TRUE), -offsets[1]))
   else if(class(constr) == "SOC") {
     # Group each t row with appropriate X rows.
-    mat_arr <- list()
-    offset <- rep(0, height)
-    if(constr@axis == 2)
-      gap <- nrow(constr@args[[2]]) + 1
-    else
-      gap <- ncol(constr@args[[2]]) + 1
-
-    for(i in 1:size(constr@args[[1]])) {
-      offset[(i-1)*gap+1] <- offsets[1][i]
-      c(mat_arr, coeffs[1][i,])
-      if(constr@axis == 2) {
-        offset[((i-1)*gap+2):(i*gap+1)] <- offsets[2][((i-1)*(gap-1)+1):(i*(gap-1)+1),]
-        mat_arr <- c(mat_arr, coeffs[2][((i-1)*(gap-1)+1):(i*(gap-1)+1),])
-      } else {
-        offset[((i-1)*gap+2):(i*gap+1)] <- offsets[2][seq(i, length(offsets[2]), gap-1)]
-        mat_arr <- c(mat_arr, coeffs[2][seq(i, nrow(coeffs[2]), gap-1),])
-      }
-    }
-    return(list(-Matrix(do.call(rbind, mat_arr), sparse = TRUE), offset))
+    if(constr@axis != 2)
+      stop("SOC must be applied with axis == 2")
+    
+    # Interleave the rows of coeffs[[1]] and coeffs[[2]]:
+    #   coeffs[[1]][1,]
+    #   coeffs[[2]][1:(gap-1),]
+    #   coeffs[[1]][2,]
+    #   coeffs[[2]][gap:(2*(gap-1)),]
+    idx1 <- nrow(coeffs[[1]])
+    idx2 <- sapply(1:(nrow(coeffs[[2]])/(gap-1)), function(i) { rep(i, gap-1) })
+    shuffle <- order(c(idx1, idx2), decreasing = FALSE)
+    stacked <- rbind(coeffs[[1]], coeffs[[2]])
+    stacked <- stacked[shuffle,]
+    offset <- cbind(offsets[[1]], matrix(offsets[[2]], nrow = nrow(offsets[[1]])))
+    offset <- as.vector(t(offset))
+    return(list(Matrix(stacked, sparse = TRUE), offset))
   } else if(class(constr) == "ExpCone") {
     for(i in 1:length(coeffs)) {
       mat <- ConicSolver.get_spacing_matrix(c(height, nrow(coeffs[[i]])), length(exp_cone_order), exp_cone_order[i])
@@ -1119,8 +1116,14 @@ setMethod("apply", signature(object = "MOSEK", problem = "Problem"), function(ob
     }
   }
 
-  data[G_KEY] <- Matrix(do.call("rbind", Gs), sparse = TRUE)
-  data[H_KEY] <- Matrix(do.call("cbind", hs), sparse = TRUE)
+  if(length(Gs) == 0)
+    data[G_KEY] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+  else
+    data[G_KEY] <- Matrix(do.call("rbind", Gs), sparse = TRUE)
+  if(length(Hs) == 0)
+    data[H_KEY] <- matrix(nrow = 0, ncol = 0)
+  else
+    data[H_KEY] <- Matrix(do.call("cbind", hs), sparse = TRUE)
   inv_data$is_LP <- (length(psd_constr) + length(exp_constr) + length(soc_constr)) == 0
   return(list(data, inv_data))
 })
@@ -1485,31 +1488,12 @@ scaled_lower_tri <- function(matrix) {
   # Scales the strictly lower triangular entries by sqrt(2), as
   # required by SCS.
   rows <- cols <- nrow(matrix)
-  entries <- rows * floor((cols + 1)/2)
-  val_arr <- c()
-  row_arr <- c()
-  col_arr <- c()
-  count <- 0
+  val_arr <- matrix(0, nrow = rows, ncol = cols)
+  val_arr[lower.tri(val_arr, diag = TRUE)] <- sqrt(2)
+  diag(val_arr) <- 1
 
-  for(j in 1:cols) {
-    for(i in 1:rows) {
-      if(j <= i) {
-        # Index in the original matrix.
-        col_arr <- c(col_arr, (j-1)*rows + i)
-        # Index in the extracted vector.
-        row_arr <- c(row_arr, count + 1)
-        if(j == i)
-          val_arr <- c(val_arr, 1.0)
-        else
-          val_arr <- c(val_arr, sqrt(2))
-        count <- count + 1
-      }
-    }
-  }
-
-  shape <- c(entries, rows*cols)
-  coeff <- Constant(sparseMatrix(i = row_arr, j = col_arr, x = val_arr), shape)
-  vectorized_matrix <- reshape(matrix, c(rows*cols, 1))
+  coeff <- Constant(Matrix(val_arr, sparse = TRUE))
+  vectorized_matrix <- Reshape(matrix, c(rows*cols, 1))
   return(coeff %*% vectorized_matrix)
 }
 
@@ -1517,16 +1501,13 @@ tri_to_full <- function(lower_tri, n) {
   # Expands n*floor((n+1)/2) lower triangular to full matrix.
   # Scales off-diagonal by 1/sqrt(2), as per the SCS specification.
   full <- matrix(0, nrow = n, ncol = n)
-  for(col in 1:n) {
-    for(row in col:n) {
-      idx <- row - col + n*floor((n+1)/2) - (n-col+1)*floor((n-col+2)/2) + 1
-      if(row != col) {
-        full[row, col] <- lower_tri[idx]/sqrt(2)
-        full[col, row] <- lower_tri[idx]/sqrt(2)
-      } else
-        full[row, col] <- lower_tri[idx]
-    }
-  }
+  full[upper.tri(full, diag = TRUE)] <- lower_tri
+  full[lower.tri(full, diag = TRUE)] <- lower_tri
+  
+  unscaled_diag <- diag(full)
+  full <- full/sqrt(2)
+  diag(full) <- unscaled_diag
+  
   matrix(full, nrow = n*n, byrow = FALSE)
 }
 

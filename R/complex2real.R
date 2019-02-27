@@ -1,9 +1,13 @@
 # Lifts complex numbers to a real representation.
 setClass("Complex2Real", contains = "Reduction")
 
-setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
+Complex2Real.accepts <- function(problem) {
   leaves <- c(variables(problem), parameters(problem), constants(problem))
   any(sapply(leaves, function(l) { is_complex(l) }))
+}
+
+setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
+  Complex2Real.accepts(problem)
 })
 
 setMethod("apply", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {

@@ -1,7 +1,6 @@
 ## Added format_matrix and set_matrix_data.
-get_problem_matrix <- function(constrs, id_to_col = integer(0), constr_offsets = integer(0)) {
+get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = integer(0)) {
     cvxCanon <- CVXcanon$new()
-    linOps <- lapply(constrs, function(constr) { constr$expr })
     lin_vec <- CVXcanon.LinOpVector$new()
 
     ## KLUDGE: Anqi, fix id_to_col to have proper names!

@@ -139,11 +139,11 @@ setMethod("format_constr", "ConicSolver", function(object, problem, constr, exp_
     #   coeffs[[2]][1:(gap-1),]
     #   coeffs[[1]][2,]
     #   coeffs[[2]][gap:(2*(gap-1)),]
-    idx1 <- nrow(coeffs[[1]])
-    idx2 <- sapply(1:(nrow(coeffs[[2]])/(gap-1)), function(i) { rep(i, gap-1) })
-    shuffle <- order(c(idx1, idx2), decreasing = FALSE)
-    stacked <- rbind(coeffs[[1]], coeffs[[2]])
-    stacked <- stacked[shuffle,]
+    X_coeff <- coeffs[[1]]
+    reshaped <- matrix(X_coeff, nrow = shape(coeffs[[1]])[1])
+    stacked <- -cbind(coeffs[[1]], reshaped)
+    stacked <- matrix(stacked, nrow = shape(coeffs[[1]])[1] + shape(X_coeff)[1], shape(coeffs[[1]])[2])
+    
     offset <- cbind(offsets[[1]], matrix(offsets[[2]], nrow = nrow(offsets[[1]])))
     offset <- as.vector(t(offset))
     return(list(Matrix(stacked, sparse = TRUE), offset))

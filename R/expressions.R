@@ -610,6 +610,9 @@ setMethod("parameters", "Leaf", function(object) { list() })
 #' @describeIn Leaf List of \linkS4class{Constant} objects in the leaf node.
 setMethod("constants", "Leaf", function(object) { list() })
 
+#' @describeIn Leaf List of \linkS4class{Atom} objects in the leaf node.
+setMethod("atoms", "Leaf", function(object) { list() })
+
 #' @describeIn Leaf A logical value indicating whether the leaf node is convex.
 setMethod("is_convex", "Leaf", function(object) { TRUE })
 
@@ -718,6 +721,12 @@ setMethod("project", "Leaf", function(object, val) {
     return(val)
 })
 
+#' @describeIn Leaf Project and assign a value to the leaf.
+setReplaceMethod("project", "Leaf", function(object, value) {
+  object@value <- project(object, value)
+  return(object)
+})
+
 #' @param val The assigned value.
 #' @describeIn Leaf Get the value of the leaf.
 setMethod("value", "Leaf", function(object) { object@value })
@@ -725,12 +734,6 @@ setMethod("value", "Leaf", function(object) { object@value })
 #' @describeIn Leaf Set the value of the leaf.
 setReplaceMethod("value", "Leaf", function(object, value) {
   object@value <- validate_val(object, value)
-  return(object)
-})
-
-#' @describeIn Leaf Project and assign a value to the leaf.
-setMethod("project_and_assign", "Leaf", function(object, val) {
-  object@value <- project(object, val)
   return(object)
 })
 
@@ -791,5 +794,3 @@ setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 
 #' @describeIn Leaf Leaf nodes are always piecewise linear.
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
-
-setMethod("atoms", "Leaf", function(object) { list() })

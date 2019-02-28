@@ -40,14 +40,6 @@ setGeneric("is_nonneg", function(object) { standardGeneric("is_nonneg") })
 #' @export
 setGeneric("is_nonpos", function(object) { standardGeneric("is_nonpos") })
 
-#' @rdname sign-methods
-#' @export
-setGeneric("is_psd", function(object) { standardGeneric("is_psd") })
-
-#' @rdname sign-methods
-#' @export
-setGeneric("is_nsd", function(object) { standardGeneric("is_nsd") })
-
 #'
 #' Complex Properties
 #' 
@@ -94,7 +86,7 @@ setGeneric("curvature", function(object) { standardGeneric("curvature") })
 #'
 #' Curvature Properties
 #'
-#' Determine if an expression is constant, affine, convex, concave, quadratic, or piecewise linear (pwl).
+#' Determine if an expression is constant, affine, convex, concave, quadratic, piecewise linear (pwl), or quadratic/piecewise affine (qpwa).
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
@@ -146,19 +138,41 @@ setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 
 #' @rdname curvature-methods
 #' @export
-setGeneric("is_log_log_convex", function(object) { standardGeneric("is_log_log_convex") })
-
-#' @rdname curvature-methods
-#' @export
-setGeneric("is_log_log_concave", function(object) { standardGeneric("is_log_log_concave") })
-
-#' @rdname curvature-methods
-#' @export
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 
 #' @rdname curvature-methods
 #' @export
 setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
+
+#' @rdname curvature-methods
+#' @export
+setGeneric("is_qpwa", function(object) { standardGeneric("is_qpwa") })
+
+#'
+#' Log-Log Curvature Properties
+#'
+#' Determine if an expression is log-log constant, log-log affine, log-log convex, or log-log concave.
+#'
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name log_log_curvature-methods
+NULL
+
+#' @rdname log_log_curvature-methods
+#' @export
+setGeneric("is_log_log_constant", function(object) { standardGeneric("is_log_log_constant") })
+
+#' @rdname log_log_curvature-methods
+#' @export
+setGeneric("is_log_log_affine", function(object) { standardGeneric("is_log_log_affine") })
+
+#' @rdname log_log_curvature-methods
+#' @export
+setGeneric("is_log_log_convex", function(object) { standardGeneric("is_log_log_convex") })
+
+#' @rdname log_log_curvature-methods
+#' @export
+setGeneric("is_log_log_concave", function(object) { standardGeneric("is_log_log_concave") })
 
 #'
 #' DCP Compliance
@@ -256,6 +270,32 @@ setGeneric("is_vector", function(object) { standardGeneric("is_vector") })
 #' @export
 setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 
+#'
+#' Matrix Properties
+#'
+#' Determine if an expression is positive semidefinite, negative semidefinite, hermitian, and/or symmetric.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name matrix_prop-methods
+NULL
+
+#' @rdname matrix_prop-methods
+#' @export
+setGeneric("is_psd", function(object) { standardGeneric("is_psd") })
+
+#' @rdname matrix_prop-methods
+#' @export
+setGeneric("is_nsd", function(object) { standardGeneric("is_nsd") })
+
+#' @rdname matrix_prop-methods
+#' @export
+setGeneric("is_hermitian", function(object) { standardGeneric("is_hermitian") })
+
+#' @rdname matrix_prop-methods
+#' @export
+setGeneric("is_symmetric", function(object) { standardGeneric("is_symmetric") })
+
 # The value of the objective given the solver primal value.
 setGeneric("primal_to_result", function(object, result) { standardGeneric("primal_to_result") })
 
@@ -318,12 +358,12 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 setGeneric("name", function(object) { standardGeneric("name") })
 
 #'
-#' Parts of an Expression
+#' Parts of an Expression Leaf
 #'
-#' List the variables, parameters, or constants in a canonical expression.
+#' List the variables, parameters, constants, or atoms in a canonical expression.
 #'
-#' @param object A \linkS4class{Canonical} expression.
-#' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Constant} objects.
+#' @param object A \linkS4class{Leaf} object.
+#' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Constant}, or \linkS4class{Atom} objects.
 #' @examples
 #' m <- 50
 #' n <- 10
@@ -351,6 +391,28 @@ setGeneric("parameters", function(object) { standardGeneric("parameters") })
 #' @rdname expression-parts
 #' @export
 setGeneric("constants", function(object) { standardGeneric("constants") })
+
+#' @rdname expression-parts
+#' @export
+setGeneric("atoms", function(object) { standardGeneric("atoms") })
+
+#'
+#' Attributes of an Expression Leaf
+#' 
+#' Determine if an expression is positive or negative.
+#' 
+#' @param object A \linkS4class{Leaf} object.
+#' @return A logical value.
+#' @name leaf-attr
+NULL
+
+#' @rdname leaf-attr
+#' @export
+setGeneric("is_pos", function(object) { standardGeneric("is_pos") })
+
+#' @rdname leaf-attr
+#' @export
+setGeneric("is_neg", function(object) { standardGeneric("is_neg") })
 
 #'
 #' Sub/Super-Gradient
@@ -414,6 +476,19 @@ setGeneric("grad", function(object) { standardGeneric("grad") })
 #' @rdname domain
 #' @export
 setGeneric("domain", function(object) { standardGeneric("domain") })
+
+#'
+#' Project Value
+#' 
+#' Project a value onto the attribute set of a \linkS4class{Leaf}.
+#' A sensible idiom is \code{value(leaf) = project(leaf, val)}.
+#' 
+#' @param object A \linkS4class{Leaf} object.
+#' @param val The assigned value.
+#' @return The value rounded to the attribute type.
+#' @docType methods
+#' @rdname project
+setGeneric("project", function(object, val) { standardGeneric("project") })
 
 #'
 #' Validate Value

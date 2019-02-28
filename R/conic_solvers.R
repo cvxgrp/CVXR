@@ -1662,6 +1662,10 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
     args$s <- solver_cache[name(object)]$s
   }
   cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  
+  # Default to eps = 1e-4 instead of 1e-3.
+  if(is.null(solver_opts$eps))
+    solver_opts$eps <- 1e-4
   results <- scs::solve(args, cones, verbose = verbose, solver_opts)
   if(!is.na(solver_cache))
     solver_cache[name(object)] <- results

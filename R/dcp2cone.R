@@ -36,6 +36,38 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   return(list(new_obj, x, R[[1]]))
 })
 
+# TODO: Remove pwl canonicalize methods and use EliminatePwl reduction instead.
+Dcp2Cone.CANON_METHODS <- list(CumSum = cumsum_canon,
+                               GeoMean = geo_mean_canon,
+                               LambdaMax = lambda_max_canon,
+                               LambdaSumLargest = lambda_sum_largest_canon,
+                               LogDet = log_det_canon,
+                               LogSumExp = log_sum_exp_canon,
+                               MatrixFrac = matrix_frac_canon,
+                               MaxEntries = max_entries_canon,
+                               MinEntries = min_entries_canon,
+                               Norm1 = norm1_canon,
+                               NormNuc = normNuc_canon,
+                               NormInf = norm_inf_canon,
+                               Pnorm = pnorm_canon,
+                               QuadForm = quad_form_canon,
+                               QuadOverLin = quad_over_lin_canon,
+                               SigmaMax = sigma_max_canon,
+                               SumLargest = sum_largest_canon,
+                               Abs = abs_canon,
+                               Entr = entr_canon,
+                               Exp = exp_canon,
+                               Huber = huber_canon,
+                               KLDiv = kl_div_canon,
+                               Log = log_canon,
+                               Log1p = log1p_canon,
+                               Logistic = logistic_canon,
+                               MaxElemwise = max_elemwise_canon,
+                               MinElemwise = min_elemwise_canon,
+                               Power = power_canon,
+                               Indicator = indicator_canon,
+                               SpecialIndex = special_index_canon)
+
 cumsum_canon <- function(expr, args) {
   X <- args[[1]]
   axis <- expr@axis
@@ -400,7 +432,7 @@ quad_over_lin_canon <- function(expr, args) {
   t <- Variable(1)
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*matrix(x, ncol = 1))), axis = 1))
+  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*matrix(x, ncol = 1))), axis = 2))
   return(list(t, constraints))
 }
 

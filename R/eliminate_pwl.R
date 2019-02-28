@@ -34,6 +34,15 @@ setMethod("apply", signature(object = "EliminatePwl", problem = "Problem"), func
   callNextMethod(object, problem)
 })
 
+EliminatePwl.CANON_METHODS <- list(Abs = abs_canon,
+                                   MaxElemwise = max_elemwise_canon,
+                                   MaxEntries = max_entries_canon,
+                                   MinElemwise = min_elemwise_canon,
+                                   MinEntries = min_entries_canon,
+                                   Norm1 = norm1_canon,
+                                   NormInf = norm_inf_canon,
+                                   SumLargest = sum_largest_canon)
+
 abs_canon <- function(expr, args) {
   x <- args[[1]]
   t <- Variable(shape(expr))

@@ -270,7 +270,11 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Add equality constraints: iterate over the rows of A,
   # adding each row into the model.
-  if(nrow(A) > 0) {
+  if(!is.null(model$_v811_addMConstrs)) {
+    # @e can pass all of A == b at once.
+    sense <- rep(GRB.EQUAL, nrow(A))
+    model <- model$_v811_addMConstrs(A, sense, b)
+  } else if(nrow(A) > 0) {
     for(i in 1:nrow(A)) {
       start <- A@p[i]
       end <- A@p[i+1]
@@ -285,7 +289,11 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Add inequality constraints: iterate over the rows of F,
   # adding each row into the model.
-  if(nrow(Fmat) > 0) {
+  if(!is.null(model$_v811_addMConstrs)) {
+    # We can pass all of F <= g at once.
+    sense <- rep(GRB.LESS_EQUAL, nrow(Fmat))
+    model <- model$_v811_addMConstrs(Fmat, sense, g)
+  } else if(nrow(Fmat) > 0) {
     for(i in nrow(Fmat)) {
       start <- Fmat@p[i]
       end <- Fmat@p[i+1]
@@ -300,13 +308,17 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Define objective.
   obj <- gurobi::QuadExpr()
-  nnz <- nnzero(P)
-  if(nnz > 0) {   # If there are any nonzero elements in P.
-    for(i in 1:nnz)
-      add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
+  if(!is.null(model$_v811_setMObjective))
+    model <- model$_v811_setMObjective(0.5*P, q)
+  else {
+    nnz <- nnzero(P)
+    if(nnz > 0) {   # If there are any nonzero elements in P.
+      for(i in 1:nnz)
+        add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
+    }
+    add(obj, gurobi::LinExpr(q, x))   # Add linear part.
+    setObjective(model, obj)   # Set objective.
   }
-  add(obj, gurobi::LinExpr(q, x))   # Add linear part.
-  setObjective(model, obj)   # Set objective.
   update(model)
   
   # Set verbosity and other parameters.
@@ -397,11 +409,13 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   lA <- c(data[B_KEY], rep(-Inf, length(data[G_KEY])))
   data$l <- lA
   
-  # Default to eps_bas = eps_rel = 1e-4 instead of 1e-3.
+  # Overwrite defaults eps_abs = eps_rel = 1e-3, max_iter = 4000.
   if(is.null(solver_opts$eps_abs))
     solver_opts$eps_abs <- 1e-4
   if(is.null(solver_opts$eps_rel))
     solver_opts$eps_rel <- 1e-4
+  if(is.null(solver_opts$max_iter))
+    solver_opts$max_iter <- 10000
   
   if(!is.na(solver_cache) && name(object) %in% solver_cache) {
     # Use cached data.

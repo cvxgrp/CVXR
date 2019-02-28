@@ -508,37 +508,38 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   solving_inverse_data <- tmp[[2]]
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
-  inverse_data <- object@.intermediate_inverse_data + solving_inverse_data
+  inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
   
   return(list(data, full_chain, inverse_data))
 })
 
 .find_candiate_solvers.Problem <- function(object, solver = NA, gp = FALSE) {
   candidates <- list(qp_solvers = list(), conic_solvers = list())
+  
   if(!is.na(solver)) {
-    if(!(solver %in% slv_def.INSTALLED_SOLVERS))
+    if(!(solver %in% INSTALLED_SOLVERS))
       stop("The solver is not installed")
-    if(solver %in% slv_def.CONIC_SOLVERS)
+    if(solver %in% CONIC_SOLVERS)
       candidates$conic_solvers <- c(candidates$conic_solvers, solver)
-    if(solver %in% slv_def.QP_SOLVERS)
+    if(solver %in% QP_SOLVERS)
       candidates$qp_solvers <- c(candidates$qp_solvers, solver)
   } else {
-    candidates$qp_solvers <- slv_def.INSTALLED_SOLVERS[[slv_def.INSTALLED_SOLVERS %in% slv_def.QP_SOLVERS]]
-    candidates$conic_solvers <- slv_def.INSTALLED_SOLVERS[[slv_def.INSTALLED_SOLVERS %in% slv_def.CONIC_SOLVERS]]
+    candidates$qp_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% QP_SOLVERS]
+    candidates$conic_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
   }
   
   # If gp, we must have only conic solvers.
   if(gp) {
-    if(!is.na(solver) && !(solver %in% slv_def.CONIC_SOLVERS))
+    if(!is.na(solver) && !(solver %in% CONIC_SOLVERS))
       stop("When gp = TRUE, solver must be a conic solver. Try calling solve() with solver = ECOS()")
     else if(is.na(solver))
       candidates$qp_solvers <- list()   # No QP solvers allowed.
   }
   
   if(is_mixed_integer(object)) {
-    qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(slv_def.SOLVER_MAP_QP[s]) })
+    qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
     candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
-    conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(slv_def.SOLVER_MAP_CONIC[s]) })
+    conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
     candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
     
     if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
@@ -549,8 +550,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 
 .construct_chains.Problem <- function(object, solver = NA, gp = FALSE) {
   chain_key <- c(solver, gp)
-  if(!all(chain_key != object@.cached_chain_key)) {
-    candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
+  
+  if(!all(chain_key == object@.cached_chain_key)) {
+    candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
     tmp <- apply(object@.intermediate_chain, object)
     object@.intermediate_problem <- tmp[[1]]

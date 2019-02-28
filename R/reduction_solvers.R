@@ -117,7 +117,6 @@ setMethod("solve", "ConstantSolver", function(object, problem, warm_start, verbo
 
 construct_solving_chain <- function(problem, candidates) {
   reductions <- list()
-  # Evaluate parameters and short-circuit the solver if the problem is constant.
   if(length(parameters(problem)) > 0)
     reductions <- c(reductions, EvalParams())
   if(length(variables(problem)) == 0) {
@@ -126,43 +125,43 @@ construct_solving_chain <- function(problem, candidates) {
   }
   
   # Conclude the chain with one of the following:
-  #   1) QpMatrixStuffing -> list(a QpSolver)
-  #   2) ConeMatrixStuffing -> list(a ConicSolver)
+  #   1) QpMatrixStuffing -> [a QpSolver]
+  #   2) ConeMatrixStuffing -> [a ConicSolver]
   
-  # Attempt to canonicalize the problem to a linearly constrained QP.
-  if(!is.null(candidates$qp_solvers) && length(candidates$qp_solvers) > 0 && accepts(QpMatrixStuffing(), problem)) {
-    idx <- sapply(candidates$qp_solvers, function(s) { min(which(slv_def.QP_SOLVERS == s)) })
+  # First, attempt to canonicalize the problem to a linearly constrained QP.
+  if(length(candidates$qp_solvers) > 0 && accepts(QpMatrixStuffing(), problem)) {
+    idx <- sapply(candidates$qp_solvers, function(s) { min(which(QP_SOLVERS == s)) })
     sorted_candidates <- candidates$qp_solvers[order(idx)]
-    solver <- sorted_candidates[1]
-    solver_instance <- slv_def.SOLVER_MAP_QP[solver]
+    solver <- sorted_candidates[[1]]
+    solver_instance <- SOLVER_MAP_QP[[solver]]
     reductions <- c(reductions, list(QpMatrixStuffing(), solver_instance))
     return(SolvingChain(reductions = reductions))
   }
   
-  if(is.null(candidates$conic_solvers) || length(candidates$conic_solvers) == 0)
+  if(length(candidates$conic_solvers) == 0)
     stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (", 
                paste(candidates, collapse = ","), ")", sep = ""))
   
   # Our choice of solver depends upon which atoms are present in the problem.
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
-  cones <- list()
+  cones <- c()
   if(any(atoms %in% SOC_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "SOC" })))
-    cones <- c(cones, SOC)
+    cones <- c(cones, "SOC")
   if(any(atoms %in% EXP_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "ExpCone"})))
-    cones <- c(cones, ExpCone)
+    cones <- c(cones, "ExpCone")
   if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "PSD" }))
                                || any(sapply(variables(problem), function(v) { is_psd(v) || is_nsd(v) })))
-    cones <- c(cones, PSD)
+    cones <- c(cones, "PSD")
   
   # Here, we make use of the observation that canonicalization only
   # increases the number of constraints in our problem.
   has_constr <- length(cones) > 0 || length(problem@constraints) > 0
   
   idx <- sapply(candidates$conic_solvers, function(s) { min(which(CONIC_SOLVERS == s)) })
-  sorted_candidates <- candidate_conic_solvers[order(idx)]
+  sorted_candidates <- candidates$conic_solvers[order(idx)]
   for(solver in sorted_candidates) {
-    solver_instance <- slv_def.SOLVER_MAP_CONIC[solver]
+    solver_instance <- SOLVER_MAP_CONIC[[solver]]
     if(all(cones %in% supported_constraints(solver_instance)) && (has_constr || !requires_constr(solver_instance))) {
       reductions <- c(reductions, list(ConeMatrixStuffing(), solver_instance))
       return(SolvingChain(reductions = reductions))
@@ -171,12 +170,17 @@ construct_solving_chain <- function(problem, candidates) {
   
   stop(paste("Either candidate conic solvers (", 
        paste(candidates$conic_solvers, sep = " ", collapse = ","), ") do not support the cones output by the problem (",
-       paste(sapply(cones, function(cone) { name(cone) }), sep = " ", collapse = ","), 
-       "), or there are not enough constraints in the problem.", sep = ""))
+       cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
 }
 
+#'
+#' The SolvingChain class.
+#'
+#' This class represents a reduction chain that ends with a solver.
+#'
+#' @rdname SolvingChain-class
 .SolvingChain <- setClass("SolvingChain", contains = "Chain")
-SolvingChain <- function(reductions) { .SolvingChain(reductions = reductions) }
+SolvingChain <- function(problem = NULL, reductions = list()) { .SolvingChain(problem = problem, reductions = reductions) }
 
 setMethod("initialize", "SolvingChain", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)
@@ -208,7 +212,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
-  # TODO: Reduce boolean constraints.
+  # TODO: Handle boolean constraints.
   if(Complex2Real.accepts(problem))
     reductions <- c(reductions, Complex2Real())
   if(gp)
@@ -224,13 +228,13 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
     reductions <- c(reductions, FlipObjective())
   
   # First, attempt to canonicalize the problem to a linearly constrained QP.
-  if(candidates$qp_solvers && Qp2SymbolicQp.accepts(problem)) {
-    reductions <- c(reductions, list(CVXAttr2Constr(), Qp2SymbolicQp()))
+  if(length(candidates$qp_solvers) > 0 && Qp2SymbolicQp.accepts(problem)) {
+    reductions <- c(reductions, list(CvxAttr2Constr(), Qp2SymbolicQp()))
     return(Chain(reductions = reductions))
   }
   
   # Canonicalize it to conic problem.
-  if(!candidates$conic_solvers)
+  if(length(candidates$conic_solvers) == 0)
     stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
   reductions <- c(reductions, list(Dcp2Cone(), CvxAttr2Constr()))
   return(Chain(reductions = reductions))

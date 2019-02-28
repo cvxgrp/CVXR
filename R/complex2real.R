@@ -100,7 +100,7 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
 }
 
 Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
-  if(type(expr) %in% names(elim_cplx_methods)) {
+  if(class(expr) %in% names(Complex2Real.CANON_METHODS)) {
     # Only canonicalize a variable/constant/parameter once.
     if(length(expr@args) == 0 && expr %in% leaf_map)
       return(leaf_map[expr])
@@ -114,6 +114,50 @@ Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag
     return(list(copy(expr, real_args), NA))
   }
 }
+
+Complex2Real.CANON_METHODS <- list(AddExpression = separable_canon,
+                                   Bmat = separable_canon,
+                                   CumSum = separable_canon,
+                                   Diag = separable_canon,
+                                   HStack = separable_canon,
+                                   Index = separable_canon,
+                                   SpecialIndex = separable_canon,
+                                   Promote = separable_canon,
+                                   Reshape = separable_canon,
+                                   SumEntries = separable_canon,
+                                   Trace = separable_canon,
+                                   Transpose = separable_canon,
+                                   NegExpression = separable_canon,
+                                   UpperTri = separable_canon,
+                                   VStack = separable_canon,
+                                   
+                                   Conv = binary_canon,
+                                   DivExpression = binary_canon,
+                                   Kron = binary_canon,
+                                   MulExpression = binary_canon,
+                                   Multiply = binary_canon,
+                                   
+                                   Conjugate = conj_canon,
+                                   Imag = imag_canon,
+                                   Real = real_canon,
+                                   Variable = variable_canon,
+                                   Constant = constant_canon,
+                                   Parameter = param_canon,
+                                   Zero = zero_canon,
+                                   PSD = hermitian_canon,
+                                   
+                                   Abs = abs_canon,
+                                   Norm1 = pnorm_canon,
+                                   NormInf = pnorm_canon,
+                                   Pnorm = pnorm_canon,
+                                   
+                                   LambdaMax = hermitian_canon,
+                                   LogDet = norm_nuc_canon,
+                                   NormNuc = norm_nuc_canon,
+                                   SigmaMax = hermitian_canon,
+                                   QuadForm = quad_canon,
+                                   MatrixFrac = matrix_frac_canon,
+                                   LambdaSumLargest = lambda_sum_largest_canon)
 
 abs_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(real_args[[1]]))   # Imaginary

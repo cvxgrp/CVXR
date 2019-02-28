@@ -406,9 +406,27 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
   # Restore expression.
   restore_quad_forms(root$args[[1]], quad_forms)
   
-  # TODO: Finish this block of code.
+  # Sort variables corresponding to their starting indices in ascending order.
+  shuffle <- order(unlist(object@id_map), decreasing = FALSE)
+  offsets <- object@id_map[shuffle]
   
-  if((shape(P)[1] != shape(P)[2] && shape(P)[2] != object@N) || shape(q)[1] != object@N)
+  # Concatenate quadratic matrices and vectors.
+  P <- Matrix(nrow = 0, ncol = 0)
+  q <- c()
+  for(var_id in names(offsets)) {
+    offset <- offsets[[var_id]]
+    if(var_id %in% coeffs) {
+      P <- bdiag(P, coeffs[[var_id]]$P)
+      q <- c(q, coeffs[[var_id]]$q)
+    } else {
+      shape <- var_shapes(object)[[var_id]]
+      size <- as.integer(prod(shape))
+      P <- bdiag(P, Matrix(0, nrow = size, ncol = size))
+      q <- c(q, rep(0, size))
+    }
+  }
+  
+  if(!(nrow(P) == ncol(P) && ncol(P) == object@N) || length(q) != object@N)
     stop("Resulting quadratic form does not have appropriate dimensions.")
   
   if(size(constant) != 1)
@@ -437,8 +455,10 @@ replace_quad_form <- function(expr, idx, quad_forms) {
 
 restore_quad_forms <- function(expr, quad_forms) {
   for(idx in 1:length(expr@args)) {
-    if(is(arg, "Variable") && id(arg) %in% quad_forms)
-      expr@args[[idx]] <- quad_forms[[as.character(id(arg))]][3]
+    arg <- expr@args[[idx]]
+    arg_id <- as.character(id(arg))
+    if(is(arg, "Variable") && arg_id %in% names(quad_forms))
+      expr@args[[idx]] <- quad_forms[[arg_id]][3]
     else
       restore_quad_forms(arg, quad_forms)
   }

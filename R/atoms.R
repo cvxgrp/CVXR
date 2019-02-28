@@ -1721,7 +1721,7 @@ setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 setMethod("to_numeric", "QuadForm", function(object, values) {
   prod <- values[[2]] %*% values[[1]]
   if(is_complex(object@args[[1]]))
-    return(Conj(t(values[[1]])) %*% prod)
+    return(t(Conj(values[[1]])) %*% prod)
   else
     return(t(values[[1]]) %*% prod)
 })

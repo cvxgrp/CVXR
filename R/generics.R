@@ -16,15 +16,15 @@
 #' is_zero(unknown)
 #' is_zero(pos + neg)
 #'
-#' is_positive(pos + zero)
-#' is_positive(pos * neg)
-#' is_positive(pos - neg)
-#' is_positive(unknown)
+#' is_nonneg(pos + zero)
+#' is_nonneg(pos * neg)
+#' is_nonneg(pos - neg)
+#' is_nonneg(unknown)
 #'
-#' is_negative(-pos)
-#' is_negative(pos + neg)
-#' is_negative(neg * zero)
-#' is_negative(neg - pos)
+#' is_nonpos(-pos)
+#' is_nonpos(pos + neg)
+#' is_nonpos(neg * zero)
+#' is_nonpos(neg - pos)
 #' @name sign-methods
 NULL
 
@@ -34,11 +34,41 @@ setGeneric("is_zero", function(object) { standardGeneric("is_zero") })
 
 #' @rdname sign-methods
 #' @export
-setGeneric("is_positive", function(object) { standardGeneric("is_positive") })
+setGeneric("is_nonneg", function(object) { standardGeneric("is_nonneg") })
 
 #' @rdname sign-methods
 #' @export
-setGeneric("is_negative", function(object) { standardGeneric("is_negative") })
+setGeneric("is_nonpos", function(object) { standardGeneric("is_nonpos") })
+
+#' @rdname sign-methods
+#' @export
+setGeneric("is_psd", function(object) { standardGeneric("is_psd") })
+
+#' @rdname sign-methods
+#' @export
+setGeneric("is_nsd", function(object) { standardGeneric("is_nsd") })
+
+#'
+#' Complex Properties
+#' 
+#' Determine if an expression is real, imaginary, or complex.
+#' 
+#' @param object An \linkS4class{Expression} object.
+#' @return A logical value.
+#' @name complex-methods
+NULL
+
+#' @rdname complex-methods
+#' @export
+setGeneric("is_real", function(object) { standardGeneric("is_real") })
+
+#' @rdname complex-methods
+#' @export
+setGeneric("is_imag", function(object) { standardGeneric("is_imag") })
+
+#' @rdname complex-methods
+#' @export
+setGeneric("is_complex", function(object) { standardGeneric("is_complex") })
 
 #'
 #' Curvature of Expression
@@ -116,6 +146,14 @@ setGeneric("is_concave", function(object) { standardGeneric("is_concave") })
 
 #' @rdname curvature-methods
 #' @export
+setGeneric("is_log_log_convex", function(object) { standardGeneric("is_log_log_convex") })
+
+#' @rdname curvature-methods
+#' @export
+setGeneric("is_log_log_concave", function(object) { standardGeneric("is_log_log_concave") })
+
+#' @rdname curvature-methods
+#' @export
 setGeneric("is_quadratic", function(object) { standardGeneric("is_quadratic") })
 
 #' @rdname curvature-methods
@@ -138,6 +176,24 @@ setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 #' @rdname is_dcp
 #' @export
 setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
+
+#'
+#' DGP Compliance
+#' 
+#' Determine if a problem or expression complies with the disciplined geometric programming rules.
+#' 
+#' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
+#' @examples 
+#' x <- Variable()
+#' y <- Variable()
+#' prob <- Problem(Minimize(x*y), list(x <= 5, y >= -5))
+#' is_dgp(prob)
+#' solve(prob)
+#' @docType methods
+#' @rdname is_dgp
+#' @export
+setGeneric("is_dgp", function(object) { standardGeneric("is_dgp") })
 
 #'
 #' Size of Expression

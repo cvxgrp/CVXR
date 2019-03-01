@@ -72,7 +72,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
       # For PSD constraints.
       } else if(is(cons, "PSD") && is_complex(cons)) {
-        n <- cons@args[[1]]@shape[1]
+        n <- cons@args[[1]]@dim[1]
         dual <- solution@dual_vars[[cid]]
         dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual), (n+1):ncol(dual)]
       } else
@@ -168,7 +168,7 @@ abs_canon <- function(expr, real_args, imag_args, real2imag) {
     real <- real_args[[1]]
     imag <- imag_args[[1]]
     norms <- pnorm(vstack(c(real, imag)), p = 2, axis = 0)
-    output <- reshape(norms, real_args[[1]]@shape)
+    output <- reshape(norms, real_args[[1]]@dim)
   }
   return(list(output, NA))
 }
@@ -350,11 +350,11 @@ param_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(expr, NA))
   else if(is_imag(expr)) {
-    imag <- CallbackParam(function() { list(Im(value(expr)), shape(expr)) })
+    imag <- CallbackParam(function() { list(Im(value(expr)), dim(expr)) })
     return(list(NA, imag))
   } else {
-    real <- CallbackParam(function() { list(Re(value(expr)), shape(expr)) })
-    imag <- CallbackParam(function() { list(Im(value(expr)), shape(expr)) })
+    real <- CallbackParam(function() { list(Re(value(expr)), dim(expr)) })
+    imag <- CallbackParam(function() { list(Im(value(expr)), dim(expr)) })
     return(list(real, imag))
   }
 }

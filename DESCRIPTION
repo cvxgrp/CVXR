@@ -85,6 +85,7 @@ Collate:
     'complex2real.R'
     'conic_solvers.R'
     'dcp2cone.R'
+    'dgp2dcp.R'
     'eliminate_pwl.R'
     'lp_solvers.R'
     'qp2quad_form.R'

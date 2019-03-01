@@ -13,7 +13,7 @@ setClass("Constraint", representation(args = "list", constr_id = "integer", dual
 setMethod("initialize", "Constraint", function(.Object, ..., args, constr_id = get_id(), dual_variables = list()) {
   .Object@args <- args
   .Object@constr_id <- constr_id
-  .Object@dual_variables <- lapply(args, function(arg) { Variable(shape(arg)) })
+  .Object@dual_variables <- lapply(args, function(arg) { Variable(dim(arg)) })
   callNextMethod(.Object, ...)
 })
 
@@ -22,7 +22,7 @@ setMethod("show", "Constraint", function(object) {
   paste(class(object), "(", as.character(object@args[[1]]), ")")
 })
 
-setMethod("shape", "Constraint", function(object) { shape(object@args[[1]]) })
+setMethod("dim", "Constraint", function(x) { dim(object@args[[1]]) })
 setMethod("size", "Constraint", function(object) { size(object@args[[1]]) })
 setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
 setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
@@ -73,7 +73,7 @@ setMethod("name", "ZeroConstraint", function(x) {
   paste(as.character(x@args[[1]]), "== 0")
 })
 
-setMethod("shape", "ZeroConstraint", function(object) { shape(object@args[[1]]) })
+setMethod("dim", "ZeroConstraint", function(x) { dim(object@args[[1]]) })
 setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
 setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
@@ -107,7 +107,7 @@ setMethod("name", "EqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
 })
 
-setMethod("shape", "EqConstraint", function(object) { shape(object@expr) })
+setMethod("dim", "EqConstraint", function(x) { dim(object@expr) })
 setMethod("size", "EqConstraint", function(object) { size(object@expr) })
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@expr) })
 setMethod("is_dgp", "EqConstraint", function(object) {
@@ -170,8 +170,8 @@ setMethod("name", "IneqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
 })
 
-#' @describeIn IneqConstraint The shape of the constrained expression.
-setMethod("shape", "IneqConstraint", function(object) { size(object@expr) })
+#' @describeIn IneqConstraint The dimensions of the constrained expression.
+setMethod("dim", "IneqConstraint", function(x) { size(object@expr) })
 
 #' @describeIn IneqConstraint The size of the constrained expression.
 setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
@@ -200,12 +200,12 @@ setMethod("residual", "IneqConstraint", function(object) {
 #' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot f A nonlinear function.
 #' @slot vars_ A list of variables involved in the function.
-#' @slot .x_size (Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.
+#' @slot .x_dim (Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.
 #' @name NonlinearConstraint-class
 #' @aliases NonlinearConstraint
 #' @rdname NonlinearConstraint-class
-.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_shape = "numeric"),
-                                 prototype(.x_shape = NA_integer_), contains = "Constraint")
+.NonlinearConstraint <- setClass("NonlinearConstraint", representation(f = "function", vars_ = "list", .x_dim = "numeric"),
+                                 prototype(.x_dim = NULL), contains = "Constraint")
 
 #' @param f A nonlinear function.
 #' @param vars_ A list of variables involved in the function.
@@ -216,9 +216,9 @@ setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) 
   .Object@f <- f
   .Object@vars_ <- vars_
 
-  # The shape of vars_ in f(vars_)
-  sizes <- sapply(.Object@vars_, function(v) { as.integer(prod(shape(v))) })
-  .Object@x_shape <- c(sum(sizes), 1)
+  # The dimensions of vars_ in f(vars_)
+  sizes <- sapply(.Object@vars_, function(v) { as.integer(prod(dim(v))) })
+  .Object@.x_dim <- c(sum(sizes), 1)
   callNextMethod(.Object, ..., args = .Object@vars_)
 })
 
@@ -239,10 +239,10 @@ setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets
   x0 <- tmp[[2]]
   offset <- 0
   for(var in object@args) {
-    var_shape <- as.integer(prod(shape(var)))
-    var_x0 <- x0[offset:(offset + var_shape)]
-    big_x <- block_add(object, big_x, var_x0, var_offsets[get_data(var)], 0, var_shape, 1)
-    offset <- offset + var_shape
+    var_dim <- as.integer(prod(dim(var)))
+    var_x0 <- x0[offset:(offset + var_dim)]
+    big_x <- block_add(object, big_x, var_x0, var_offsets[get_data(var)], 0, var_dim, 1)
+    offset <- offset + var_dim
   }
   big_x
 })
@@ -251,10 +251,10 @@ setMethod("place_x0", "NonlinearConstraint", function(object, big_x, var_offsets
 setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_offsets, vert_offset) {
   horiz_offset <- 0
   for(var in object@args) {
-    var_shape <- as.integer(prod(shape(var)))
-    var_Df <- Df[, horiz_offset:(horiz_offset + var_shape)]
-    big_Df <- block_add(object, big_Df, var_Df, vert_offset, var_offsets[get_data(var)], num_cones(object), var_shape)
-    horiz_offset <- horiz_offset + var_shape
+    var_dim <- as.integer(prod(dim(var)))
+    var_Df <- Df[, horiz_offset:(horiz_offset + var_dim)]
+    big_Df <- block_add(object, big_Df, var_Df, vert_offset, var_offsets[get_data(var)], num_cones(object), var_dim)
+    horiz_offset <- horiz_offset + var_dim
   }
   big_Df
 })
@@ -263,23 +263,23 @@ setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_of
 setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offsets) {
   offset <- 0
   for(var in object@args) {
-    var_size <- as.integer(prod(shape(var)))
-    var_H <- H[offset:(offset + var_shape), offset:(offset + var_shape)]
-    big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_shape, var_shape)
-    offset <- offset + var_shape
+    var_size <- as.integer(prod(dim(var)))
+    var_H <- H[offset:(offset + var_dim), offset:(offset + var_dim)]
+    big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_dim, var_dim)
+    offset <- offset + var_dim
   }
   big_H
 })
 
 # Extract the function variables from the vector \code{x} of all variables.
 setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_offsets) {
-  local_x <- matrix(0, nrow = object@.x_shape[1], ncol = object@.x_shape[2])
+  local_x <- matrix(0, nrow = object@.x_dim[1], ncol = object@.x_dim[2])
   offset <- 0
   for(var in object@args) {
-    var_shape <- as.integer(prod(shape(var)))
-    value <- x[var_offsets[get_data(var)]:(var_offsets[get_data(var)] + var_shape)]
-    local_x <- block_add(object, local_x, value, offset, 0, var_shape, 1)
-    offset <- offset + var_shape
+    var_dim <- as.integer(prod(dim(var)))
+    value <- x[var_offsets[get_data(var)]:(var_offsets[get_data(var)] + var_dim)]
+    local_x <- block_add(object, local_x, value, offset, 0, var_dim, 1)
+    offset <- offset + var_dim
   }
   local_x
 })
@@ -336,9 +336,9 @@ setMethod("residual", "ExpCone", function(object) {
   # TODO: The projection should be implemented directly.
   if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
     return(NA_real_)
-  x <- Variable(shape(object@x))
-  y <- Variable(shape(object@y))
-  z <- Variable(shape(object@z))
+  x <- Variable(dim(object@x))
+  y <- Variable(dim(object@y))
+  z <- Variable(dim(object@z))
   constr <- list(ExpCone(x, y, z))
   obj <- Minimize(norm2(hstack(list(x, y, z)) - hstack(list(value(object@x), value(object@y), value(object@z)))))
   prob <- Problem(obj, constr)
@@ -396,7 +396,7 @@ setMethod("size", "ExpCone", function(object) {
 
 #' @describeIn ExpCone The number of elementwise cones.
 setMethod("num_cones", "ExpCone", function(object) {
-  as.integer(prod(shape(object@args[[1]])))
+  as.integer(prod(dim(object@args[[1]])))
 })
 
 #' @describeIn ExpCone The dimensions of the exponential cones.
@@ -428,7 +428,7 @@ setMethod("canonicalize", "ExpCone", function(object) {
 # A function used by CVXOPT's nonlinear solver.
 # Based on f(x,y,z) = y * log(y) + x - y * log(z)
 setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
-  entries <- as.integer(prod(shape(object)))
+  entries <- as.integer(prod(dim(object)))
   if(is.na(vars_)) {
     x_init <- rep(0, entries)
     y_init <- rep(0.5, entries)
@@ -490,8 +490,8 @@ setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
 #' @rdname PSDConstraint-class
 .PSDConstraint <- setClass("PSDConstraint", representation(expr = "ConstValORExpr"),
                            validity = function(object) {
-                             shape <- shape(object@expr)
-                             if(length(shape) != 2 || shape[1] != shape[2])
+                             expr_dim <- dim(object@expr)
+                             if(length(expr_dim) != 2 || expr_dim[1] != expr_dim[2])
                                stop("Non-square matrix in positive definite constraint.")
                              return(TRUE)
                            }, contains = "Constraint")
@@ -539,7 +539,7 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
   # 0 <= A.
   leq_constr <- c(leq_constr, new_leq_constr)
   # Update dims.
-  dims[[PSD_DIM]] <- c(dims[[PSD_DIM]], shape(object)[1])
+  dims[[PSD_DIM]] <- c(dims[[PSD_DIM]], nrow(object))
   list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
 })
 
@@ -565,7 +565,7 @@ SOC <- function(t, X, axis = 2, constr_id = NA_integer_) { .SOC(t = t, X = X, ax
 
 setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
   # TODO: Allow imaginary X.
-  if(!(is.null(shape(t)) || length(shape(t)) == 1))
+  if(!(is.null(dim(t)) || length(dim(t)) == 1))
     stop("t must be a scalar or 1-dimensional vector.")
   .Object@t <- t
   .Object@X <- X
@@ -621,7 +621,7 @@ setMethod("format_constr", "SOC", function(object, eq_constr, leq_constr, dims, 
 })
 
 #' @describeIn SOC The number of elementwise cones.
-setMethod("num_cones", "SOC", function(object) { prod(shape(object@args[[1]])) })
+setMethod("num_cones", "SOC", function(object) { prod(dim(object@args[[1]])) })
 
 #' @describeIn SOC The number of entries in the combined cones.
 setMethod("size", "SOC", function(object) {
@@ -636,9 +636,9 @@ setMethod("cone_sizes", "SOC", function(object) {
   else   # Collapse rows.
     idx <- 2
   if(object@axis == 2)
-    cone_size <- 1 + shape(object@args[[2]])[1]
+    cone_size <- 1 + nrow(object@args[[2]])
   else if(object@axis == 1)
-    cone_size <- 1 + shape(object@args[[2]])[2]
+    cone_size <- 1 + ncol(object@args[[2]])
   else
     stop("Invalid axis ", object@axis)
   lapply(1:num_cones(object), function(i) { cone_size })
@@ -720,14 +720,14 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
 })
 
 #' @describeIn SOCAxis The number of elementwise cones.
-setMethod("num_cones", "SOCAxis", function(object) { shape(object@t)[1] })
+setMethod("num_cones", "SOCAxis", function(object) { nrow(object@t) })
 
 #' @describeIn SOCAxis The dimensions of a single cone.
 setMethod("cone_size", "SOCAxis", function(object) {
   if(object@axis == 1)   # Return ncols if applying along each row
-    c(1 + shape(object@x_elems[[1]])[2], 1)
+    c(1 + ncol(object@x_elems[[1]]), 1)
   else if(object@axis == 2)   # Return nrows if applying along each column
-    c(1 + shape(object@x_elems[[1]])[1], 1)
+    c(1 + nrow(object@x_elems[[1]]), 1)
   else
     stop("Invalid axis ", object@axis)
 })

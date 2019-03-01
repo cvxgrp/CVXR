@@ -48,13 +48,13 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
   .Object@herm <- herm
   .Object@eigvals <- eigvals
   .Object@.cached_is_pos <- .cached_is_pos
-  callNextMethod(.Object, ..., intf_shape(.Object@value))
+  callNextMethod(.Object, ..., intf_dim(.Object@value))
 })
 
 #' @param x,object A \linkS4class{Constant} object.
 #' @rdname Constant-class
 setMethod("show", "Constant", function(object) {
-  cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(shape(object), collapse = ","), "))", sep = "")
+  cat("Constant(", curvature(object), ", ", sign(object), ", (", paste(dim(object), collapse = ","), "))", sep = "")
 })
 
 #' @describeIn Constant The name of the constant.
@@ -76,11 +76,11 @@ setMethod("is_pos", "Constant", function(object) {
 setMethod("grad", "Constant", function(object) { list() })
 
 #' @describeIn Constant The \code{c(row, col)} dimensions of the constant.
-setMethod("shape", "Constant", function(object) { object@shape })
+setMethod("dim", "Constant", function(x) { object@dim })
 
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(value(object), shape(object), object@sparse)
+  obj <- create_const(value(object), dim(object), object@sparse)
   list(obj, list())
 })
 
@@ -112,7 +112,7 @@ setMethod("is_complex", "Constant", function(object) { is.complex(value(object))
 setMethod("is_symmetric", "Constant", function(object) {
   if(is_scalar(object))
     return(TRUE)
-  else if(ndim(object) == 2 && shape(object)[1] == shape(object)[2]) {
+  else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@symm))
       object <- compute_symm_attr(object)
     return(object@symm)
@@ -124,7 +124,7 @@ setMethod("is_symmetric", "Constant", function(object) {
 setMethod("is_hermitian", "Constant", function(object) {
   if(is_scalar(object) && is_real(object))
     return(TRUE)
-  else if(ndim(object) == 2 && shape(object)[1] == shape(object)[2]) {
+  else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@herm))
       object <- compute_symm_attr(object)
     return(object@herm)
@@ -178,7 +178,7 @@ setMethod("is_psd", "Constant", function(object) {
     return(FALSE)
   else if(ndim(object) == 1)
     return(FALSE)
-  else if(ndim(object) == 2 && shape(object)[1] != shape(object)[2])
+  else if(ndim(object) == 2 && nrow(object) != ncol(object))
     return(FALSE)
   else if(!is_hermitian(object))
     return(FALSE)
@@ -198,7 +198,7 @@ setMethod("is_nsd", "Constant", function(object) {
     return(FALSE)
   else if(ndim(object) == 1)
     return(FALSE)
-  else if(ndim(object) == 2 && shape(object)[1] != shape(object)[2])
+  else if(ndim(object) == 2 && nrow(object) != ncol(object))
     return(FALSE)
   else if(!is_hermitian(object))
     return(FALSE)
@@ -240,8 +240,8 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(id = "integer", shape = "numeric", name = "character", value = "ConstVal"),
-                                    prototype(shape = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
+.Parameter <- setClass("Parameter", representation(id = "integer", dim = "numeric", name = "character", value = "ConstVal"),
+                                    prototype(dim = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
@@ -255,11 +255,11 @@ as.Constant <- function(expr) {
 #' is_negative(x)
 #' size(x)
 #' @export
-Parameter <- function(shape = NULL, name = NA_character_, value = NA_real_, ...) {
-  .Parameter(shape = shape, name = name, value = value, ...)
+Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) {
+  .Parameter(dim = dim, name = name, value = value, ...)
 }
 
-setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), shape = NULL, name = NA_character_, value = NA_real_) {
+setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim = NULL, name = NA_character_, value = NA_real_) {
   .Object@id <- id
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
@@ -268,12 +268,12 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), shape
 
   # Initialize with value if provided
   .Object@value <- value
-  callNextMethod(.Object, ..., shape, value)
+  callNextMethod(.Object, ..., dim, value)
 })
 
-#' @describeIn Parameter Returns \code{list(shape, name, value, attributes)}.
+#' @describeIn Parameter Returns \code{list(dim, name, value, attributes)}.
 setMethod("get_data", "Parameter", function(object) {
-  list(shape = shape(object), name = object@name, value = value(object), attributes = attributes(object))
+  list(dim = dim(object), name = object@name, value = value(object), attributes = attributes(object))
 })
 
 #' @describeIn Parameter The name of the parameter.
@@ -297,16 +297,16 @@ setMethod("parameters", "Parameter", function(object) { list(object) })
 
 #' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
-  obj <- create_param(object, shape(object))
+  obj <- create_param(object, dim(object))
   list(obj, list())
 })
 
 setMethod("show", "Parameter", function(object) {
   attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
-    paste("Parameter(", paste(shape(object), collapse = ", "), ", ", attr_str, ")", sep = "")
+    paste("Parameter(", paste(dim(object), collapse = ", "), ", ", attr_str, ")", sep = "")
   else
-    paste("Parameter(", paste(shape(object), collapse = ", "), ")", sep = "")
+    paste("Parameter(", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
 #'
@@ -318,8 +318,8 @@ setMethod("show", "Parameter", function(object) {
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
-.CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal", shape = "numeric"), 
-                                            prototype(shape = NULL), contains = "Parameter")
+.CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal", dim = "numeric"), 
+                                            prototype(dim = NULL), contains = "Parameter")
 
 #' @param callback A numeric element, vector, matrix, or data.frame
 #' @param rows The number of rows in the parameter.
@@ -333,13 +333,13 @@ setMethod("show", "Parameter", function(object) {
 #' y <- CallbackParam(value(x), dim[1], dim[2], sign = "POSITIVE")
 #' get_data(y)
 #' @export
-CallbackParam <- function(callback, shape = NULL, ...) {
-  .CallbackParam(callback = callback, shape = shape, ...)
+CallbackParam <- function(callback, dim = NULL, ...) {
+  .CallbackParam(callback = callback, dim = dim, ...)
 }
 
-setMethod("initialize", "CallbackParam", function(.Object, ..., callback, shape = NULL) {
+setMethod("initialize", "CallbackParam", function(.Object, ..., callback, dim = NULL) {
   .Object@callback <- callback
-  callNextMethod(.Object, ..., shape = shape)
+  callNextMethod(.Object, ..., dim = dim)
 })
 
 #' @param object A \linkS4class{CallbackParam} object.

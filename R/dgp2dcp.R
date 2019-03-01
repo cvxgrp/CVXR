@@ -75,7 +75,7 @@ setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", 
       if(id(variable) %in% names(x@.variables))
         return(list(variable, list()))
       else {
-        log_variable <- Variable(shape(variable), var_id = id(variable))
+        log_variable <- Variable(dim(variable), var_id = id(variable))
         x@.variables[as.character(id(variable))] <- log_variable
         return(list(log_variable), list())
       }
@@ -90,22 +90,22 @@ add_canon <- function(expr, args) {
     return(list(log_sum_exp(hstack(args)), list()))
   
   rows <- c()
-  summands <- sapply(args, function(s) { if(is_scalar(s)) promote(s, shape(expr)) else s })
-  if(length(shape(expr)) == 1) {
-    for(i in 1:shape(expr)[1]) {
+  summands <- sapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
+  if(length(dim(expr)) == 1) {
+    for(i in 1:nrow(expr)) {
       summand_args <- lapply(summands, function(summand) { summand[i] })
       rows <- c(rows, log_sum_exp(hstack(summand_args)))
     }
-    return(list(reshape(bmat(rows), shape(expr)), list()))
+    return(list(reshape(bmat(rows), dim(expr)), list()))
   } else {
-    for(i in 1:length(shape(expr)[1])) {
+    for(i in 1:nrow(expr)) {
       row <- c()
-      for(j in 1:length(shape(expr)[2])) {
+      for(j in 1:ncol(expr)) {
         summand_args <- lapply(summands, function(summand) { summand[i,j] })
         rows <- c(rows, log_sum_exp(hstack(summand_args)))
       }
     }
-    return(list(reshape(bmat(rows), shape(expr)), list()))
+    return(list(reshape(bmat(rows), dim(expr)), list()))
   }
 }
 
@@ -129,10 +129,10 @@ eye_minus_inv_canon <- function(expr, args) {
   X <- args[[1]]
   # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
   # Y represents log(Y) here, hence no positivity constraint.
-  Y <- Variable(shape(X))
+  Y <- Variable(dim(X))
   prod <- matmul(Y, X)
   lhs <- mulexpression_canon(prod, prod@args)[[1]]
-  lhs <- lhs + diag(1, shape(prod)[1])
+  lhs <- lhs + diag(1, nrow(prod))
   return(list(Y, list(lhs <= Y)))
 }
 
@@ -158,25 +158,25 @@ mul_canon <- function(expr, args) {
 mulexpression_canon <- function(expr, args) {
   lhs <- args[[1]]
   rhs <- args[[2]]
-  shapes <- mul_shapes_promote(shape(lhs), shape(rhs))
-  lhs_shape <- shapes[[1]]
-  rhs_shape <- shapes[[2]]
-  lhs <- reshape(lhs, lhs_shape)
-  rhs <- reshape(rhs, rhs_shape)
+  dims <- mul_dims_promote(dim(lhs), dim(rhs))
+  lhs_dim <- dims[[1]]
+  rhs_dim <- dims[[2]]
+  lhs <- reshape(lhs, lhs_dim)
+  rhs <- reshape(rhs, rhs_dim)
   rows <- c()
   
   # TODO: Parallelize this for large matrices.
-  for(i in 1:length(shape(lhs)[1])) {
+  for(i in 1:nrow(lhs)) {
     row <- c()
-    for(j in 1:length(shape(rhs)[2])) {
-      hstack_args <- lapply(1:shape(lhs)[2], function(k) { lhs[i,k] + rhs[k,j] })
+    for(j in 1:ncol(rhs)) {
+      hstack_args <- lapply(1:ncol(lhs), function(k) { lhs[i,k] + rhs[k,j] })
       row <- c(row, log_sum_exp(hstack(hstack_args)))
     }
     rows <- c(rows, row)
   }
   mat <- bmat(rows)
-  if(!all(shape(mat) == shape(expr)))
-    mat <- reshape(mat, shape(expr))
+  if(!all(dim(mat) == dim(expr)))
+    mat <- reshape(mat, dim(expr))
   return(list(mat, list()))
 }
 
@@ -214,7 +214,7 @@ pf_eigenvalue_canon <- function(expr, args) {
   # rho(X) <= lambda iff there exists v s.t. Xv <= lambda v.
   # v and lambda represent log variables, hence no positivity constraints.
   lambd <- Variable()
-  v <- Variable(shape(X)[1])
+  v <- Variable(nrow(X))
   lhs <- matmul(X, v)
   rhs <- lambd*v
   lhs <- mulexpression_canon(lhs, lhs@args)[[1]]
@@ -225,9 +225,9 @@ pf_eigenvalue_canon <- function(expr, args) {
 pnorm_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@original_p
-  if(is.null(shape(x)))
-    x <- promot(p, c(1))
-  if(is.na(expr@axis) || length(shape(x)) == 1) {
+  if(is.null(dim(x)))
+    x <- promote(p, c(1))
+  if(is.na(expr@axis) || length(dim(x)) == 1) {
     x <- Vec(x)
     hstack_args <- lapply(x, function(xi) { xi^p })
     return(list((1.0/p) * log_sum_exp(hstack(hstack_args)), list()))
@@ -237,7 +237,7 @@ pnorm_canon <- function(expr, args) {
     x <- t(x)
   
   rows <- c()
-  for(i in 1:length(shape(x)[1])) {
+  for(i in 1:nrow(x)) {
     row <- x[i]
     hstack_args <- lapply(row, function(xi) { xi^p })
     rows <- c(rows, (1.0/p)*log_sum_exp(hstack_args))
@@ -258,8 +258,8 @@ quad_form_canon <- function(expr, args) {
   x <- args[[1]]
   P <- args[[2]]
   elems <- list()
-  for(i in 1:length(shape(P)[1])) {
-    for(j in 1:length(shape(P)[1]))
+  for(i in 1:nrow(P)) {
+    for(j in 1:nrow(P))
       elems <- c(elems, P[i,j] + x[i] + x[j])
   }
   return(list(log_sum_exp(hstack(elems)), list()))
@@ -278,21 +278,21 @@ sum_canon <- function(expr, args) {
     x <- Vec(X)
     summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
     canon <- add_canon(summation, summation@args)[[1]]
-    return(list(reshape(canon, shape(expr)), list()))
+    return(list(reshape(canon, dim(expr)), list()))
   }
   
   if(expr@axis == 2)
     X <- t(X)
   
   rows <- list()
-  for(i in 1:length(shape(X)[1])) {
+  for(i in 1:nrow(X)) {
     x <- Vec(X[i])
     summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
     canon <- add_canon(summation, summation@args)[[1]]
     rows <- c(rows, canon)
   }
   canon <- hstack(rows)
-  return(list(reshape(canon, shape(expr)), list()))
+  return(list(reshape(canon, dim(expr)), list()))
 }
 
 trace_canon <- function(expr, args) {

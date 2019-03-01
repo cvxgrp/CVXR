@@ -9,21 +9,21 @@
 Elementwise <- setClass("Elementwise", contains = c("VIRTUAL", "Atom"))
 
 #' @param object An \linkS4class{Elementwise} object.
-#' @describeIn Elementwise Shape is the same as the sum of the arguments' shapes.
-setMethod("shape_from_args", "Elementwise", function(object) {
-  sum_shapes(lapply(object@args, shape))
+#' @describeIn Elementwise Dimensions is the same as the sum of the arguments' dimensions.
+setMethod("dim_from_args", "Elementwise", function(object) {
+  sum_dims(lapply(object@args, dim))
 })
 
-#' @describeIn Elementwise Verify that all the shapes are the same or can be promoted.
+#' @describeIn Elementwise Verify that all the dimensions are the same or can be promoted.
 setMethod("validate_args", "Elementwise", function(object) {
-  sum_shapes(lapply(object@args, shape))
+  sum_dims(lapply(object@args, dim))
   callNextMethod()
 })
 
 #' @describeIn Elementwise Is the expression symmetric?
 setMethod("is_symmetric", "Elementwise", function(object) {
   symm_args <- all(sapply(object@args, is_symmetric))
-  return(shape(object)[1] == shape(object)[2] && symm_args)
+  return(nrow(object) == ncol(object) && symm_args)
 })
 
 #

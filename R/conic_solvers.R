@@ -100,14 +100,14 @@ ConicSolver.get_coeff_offset <- function(expr) {
   return(list(coeff, offset))
 }
 
-ConicSolver.get_spacing_matrix <- function(shape, spacing, offset) {
+ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   # Returns a sparse matrix that spaces out an expression.
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
 
   # Selects from each column.
-  for(var_row in 1:shape[2]) {
+  for(var_row in 1:dim[2]) {
     val_arr <- c(val_arr, 1.0)
     row_arr <- c(row_arr, spacing*var_row + offset)
     col_arr <- c(col_arr, var_row)
@@ -140,9 +140,9 @@ setMethod("format_constr", "ConicSolver", function(object, problem, constr, exp_
     #   coeffs[[1]][2,]
     #   coeffs[[2]][gap:(2*(gap-1)),]
     X_coeff <- coeffs[[1]]
-    reshaped <- matrix(X_coeff, nrow = shape(coeffs[[1]])[1])
+    reshaped <- matrix(X_coeff, nrow = nrow(coeffs[[1]]))
     stacked <- -cbind(coeffs[[1]], reshaped)
-    stacked <- matrix(stacked, nrow = shape(coeffs[[1]])[1] + shape(X_coeff)[1], shape(coeffs[[1]])[2])
+    stacked <- matrix(stacked, nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol(coeffs[[1]]))
     
     offset <- cbind(offsets[[1]], matrix(offsets[[2]], nrow = nrow(offsets[[1]])))
     offset <- as.vector(t(offset))

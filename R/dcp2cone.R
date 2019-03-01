@@ -93,7 +93,7 @@ cumsum_canon <- function(expr, args) {
 
   # Implicit O(n) definition:
   # X = Y[1,:] - Y[2:nrow(Y),:]
-  Y <- Variable(shape(expr))
+  Y <- Variable(dim(expr))
   if(axis == 1)   # Cumulative sum on each column
     constr <- list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),], Y[1,] == X[1,])   # TODO: Check corner cases
   else   # Cumulative sum on each row
@@ -103,21 +103,21 @@ cumsum_canon <- function(expr, args) {
 
 entr_canon <- function(expr, args) {
   x <- args[[1]]
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
 
   # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
-  ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(t, x, ones))
   return(list(t, constraints))
 }
 
 exp_canon <- function(expr, args) {
-  shape <- shape(expr)
-  x <- promote(args[[1]], shape)
-  t <- Variable(shape)
-  ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
+  expr_dim <- dim(expr)
+  x <- promote(args[[1]], expr_dim)
+  t <- Variable(expr_dim)
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(x, ones, t))
   return(list(t, constraints))
 }
@@ -125,8 +125,8 @@ exp_canon <- function(expr, args) {
 geo_mean_canon <- function(expr, args) {
   x <- args[[1]]
   w <- expr@w
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
 
   x_list <- lapply(1:length(w), function(i) { x[i] })
 
@@ -139,9 +139,9 @@ geo_mean_canon <- function(expr, args) {
 huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
-  shape <- shape(expr)
-  n <- Variable(shape)
-  s <- Variable(shape)
+  expr_dim <- dim(expr)
+  n <- Variable(expr_dim)
+  s <- Variable(expr_dim)
 
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a
@@ -169,10 +169,10 @@ indicator_canon <- function(expr, args) {
 }
 
 kl_div_canon <- function(expr, args) {
-  shape <- shape(expr)
-  x <- promote(args[[1]], shape)
-  y <- promote(args[[2]], shape)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  x <- promote(args[[1]], expr_dim)
+  y <- promote(args[[2]], expr_dim)
+  t <- Variable(expr_dim)
   constraints <- list(ExpCone(t, x, y), y >= 0)
   obj <- y - x - t
   return(list(obj, constraints))
@@ -180,7 +180,7 @@ kl_div_canon <- function(expr, args) {
 
 lambda_max_canon <- function(expr, args) {
   A <- args[[1]]
-  n <- shape(A)[1]
+  n <- nrow(A)
   t <- Variable()
   prom_t <- promote(t, c(n,1))
   # Constraint I*t - A to be PSD; note this expression must be symmetric
@@ -208,7 +208,7 @@ lambda_sum_largest_canon <- function(expr, args) {
 
   X <- expr@args[[1]]
   k <- expr@k
-  Z <- Variable(c(shape(X)[1], shape(X)[1]), PSD = TRUE)
+  Z <- Variable(c(nrow(X), nrow(X)), PSD = TRUE)
   canon <- lambda_max_canon(expr, list(X - Z))
   obj <- canon[[1]]
   constr <- canon[[2]]
@@ -222,9 +222,9 @@ log1p_canon <- function(expr, args) {
 
 log_canon <- function(expr, args) {
   x <- args[[1]]
-  shape <- shape(expr)
-  t <- Variable(shape)
-  ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something that we want to change?
   constraints <- list(ExpCone(t, ones, x))
   return(list(t, constraints))
@@ -262,7 +262,7 @@ log_det_canon <- function(expr, args) {
   # (Variable for objective, list of constraints)
 
   A <- args[[1]]   # n by n matrix
-  n <- shape(A)[1]
+  n <- nrow(A)
   # Require that X and A are PSD.
   X <- Variable(c(2*n, 2*n), PSD = TRUE)
   constraints <- list(PSD(A))
@@ -294,9 +294,9 @@ log_det_canon <- function(expr, args) {
 
 logistic_canon <- function(expr, args) {
   x <- args[[1]]
-  shape <- shape(expr)
+  expr_dim <- dim(expr)
   # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
-  t0 <- Variable(shape)
+  t0 <- Variable(expr_dim)
   canon1 <- exp_canon(expr, list(-t0))
   canon2 <- exp_canon(expr, list(x - t0))
 
@@ -305,7 +305,7 @@ logistic_canon <- function(expr, args) {
   t2 <- canon2[[1]]
   constr2 <- canon2[[2]]
 
-  ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
   return(list(t0, constraints))
 }
@@ -314,11 +314,11 @@ matrix_frac_canon <- function(expr, args) {
   X <- args[[1]]   # n by m matrix
   P <- args[[2]]   # n by n matrix
 
-  if(length(shape(X)) == 1)
-    X <- reshape(X, c(shape(X)[1], 1))
-  shape <- shape(X)
-  n <- shape[1]
-  m <- shape[2]
+  if(length(dim(X)) == 1)
+    X <- reshape(X, c(nrow(X), 1))
+  X_dim <- dim(X)
+  n <- X_dim[1]
+  m <- X_dim[2]
 
   # Create a matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X
   M <- Variable(c(n+m, n+m), PSD = TRUE)
@@ -336,9 +336,9 @@ matrix_frac_canon <- function(expr, args) {
 
 normNuc_canon <- function(expr, args) {
   A <- args[[1]]
-  shape <- shape(A)
-  m <- shape[1]
-  n <- shape[2]
+  A_dim <- dim(A)
+  m <- A_dim[1]
+  n <- A_dim[2]
 
   # Create the equivalent problem:
   #   minimize (trace(U) + trace(V))/2
@@ -358,13 +358,13 @@ pnorm_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
   axis <- expr@axis
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
 
   if(p == 2) {
     if(is.na(axis)) {
-      if(!is.null(shape))
-        stop("shape should be NULL")
+      if(!is.null(expr_dim))
+        stop("Dimensions should be NULL")
       return(list(t, list(SOC(t, vec(x)))))
     } else
       return(list(t, list(SOC(vec(t), x, axis))))
@@ -383,12 +383,12 @@ pnorm_canon <- function(expr, args) {
 
   # Now, we take care of the remaining convex and concave branches to create the
   # rational powers. We need a new variable, r, and the constraint sum(r) == t
-  r <- Variable(shape(x))
+  r <- Variable(dim(x))
   constraints <- c(constraints, list(sum(r) == t))
 
   # TODO: No need to run gm_constr to form the tree each time.
   # We only need to form the tree once.
-  promoted_t <- Constant(matrix(1, nrow = shape(x)[1], ncol = shape(x)[2])) %*% t
+  promoted_t <- Constant(matrix(1, nrow = nrow(x), ncol = ncol(x))) %*% t
   p <- Fraction(p)
   if(p < 0)
     constraints <- c(constraints, gm_constrs(promoted_t, list(x, r), c(-p/(1-p), 1/(1-p))))
@@ -407,12 +407,12 @@ power_canon <- function(expr, args) {
   if(p == 1)
     return(list(x, list()))
 
-  shape <- shape(expr)
-  ones <- Constant(matrix(1, nrow = shape[1], ncol = shape[2]))
+  expr_dim <- dim(expr)
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   if(p == 0)
     return(list(ones, list()))
   else {
-    t <- Variable(shape)
+    t <- Variable(expr_dim)
     # TODO: gm_constrs requires each of its inputs to be a Variable; is this something that we want to change?
     if(p > 0 && p < 1)
       return(list(t, gm_constrs(t, list(x, ones), w)))
@@ -447,7 +447,7 @@ quad_over_lin_canon <- function(expr, args) {
   # quad_over_lin := sum_{ij} X^2_{ij} / y
   x <- args[[1]]
   y <- matrix(args[[1]], ncol = 1)
-  # Pre-condition: shape = ()
+  # Pre-condition: dim = c()
   t <- Variable(1)
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
@@ -457,13 +457,13 @@ quad_over_lin_canon <- function(expr, args) {
 
 sigma_max_canon <- function(expr, args) {
   A <- args[[1]]
-  shape <- shape(A)
-  n <- shape[1]
-  m <- shape[2]
+  A_dim <- dim(A)
+  n <- A_dim[1]
+  m <- A_dim[2]
   X <- Variable(c(n+m, n+m), PSD = TRUE)
 
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
   constraints <- list()
 
   # Fix X using the fact that A must be affine by the DCP rules.

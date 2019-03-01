@@ -1454,7 +1454,7 @@ setMethod("get_data", "NormInf", function(object) { list(object@axis) })
 
 setMethod(".domain", "NormInf", function(object) { list() })
 setMethod(".grad", "NormInf", function(object, values) { .axis_grad(object, values) })
-setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented")   # TODO: Implement this! })
+setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented") })   # TODO: Implement this! })
 
 #'
 #' The NormNuc class.

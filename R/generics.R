@@ -149,6 +149,17 @@ setGeneric("is_pwl", function(object) { standardGeneric("is_pwl") })
 setGeneric("is_qpwa", function(object) { standardGeneric("is_qpwa") })
 
 #'
+#' Log-Log Curvature of Expression
+#'
+#' The log-log curvature of an expression.
+#'
+#' @param object An \linkS4class{Expression} object.
+#' @return A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX, "LOG_LOG_CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname log_log_curvature
+setGeneric("log_log_curvature", function(object) { standardGeneric("log_log_curvature") })
+
+#'
 #' Log-Log Curvature Properties
 #'
 #' Determine if an expression is log-log constant, log-log affine, log-log convex, or log-log concave.

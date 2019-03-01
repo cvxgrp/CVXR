@@ -13,13 +13,13 @@ lower_equality <- function(equality) {
 
 special_index_canon <- function(expr, args) {
   select_mat <- expr@.select_mat
-  final_shape <- shape(expr@.select_mat)
+  final_dim <- dim(expr@.select_mat)
   select_vec <- matrix(select_mat, nrow = size(select_mat))
   
   # Select the chosen entries from expr.
   arg <- args[[1]]
   identity <- diag(size(arg))
-  lowered <- Reshape(identity[select_vec]*vec(arg), final_shape)
+  lowered <- Reshape(identity[select_vec]*vec(arg), final_dim)
   list(lowered, list())
 }
 
@@ -73,21 +73,21 @@ setMethod("as.character", "Solution", function(x) {
 #' This class represents the data encoding an optimization problem.
 #'
 #' @rdname InverseData-class
-.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_shapes = "list",
+.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
                                                        id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list"),
-                                        prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_shapes = list(), id2var = list(),
+                                        prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(),
                                                   real2imag = list(), id2cons = list(), cons_id_map = list()))
 
 InverseData <- function(problem) { .InverseData(problem = problem) }
 
-setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_shapes = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list()) {
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list()) {
   # Basic variable offset information
   varis <- variables(problem)
   varoffs <- get_var_offsets(.Object, varis)
   .Object@id_map <- varoffs$id_map
   .Object@var_offsets <- varoffs$var_offsets
   .Object@x_length <- varoffs$x_length
-  .Object@var_shapes <- varoffs$var_shapes
+  .Object@var_dims <- varoffs$var_dims
 
   # Map of variable id to variable
   .Object@id2var <- setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
@@ -107,17 +107,17 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
 })
 
 setMethod("get_var_offsets", signature(object = "InverseData", variables = "list"), function(object, variables) {
-  var_shapes <- list()
+  var_dims <- list()
   var_offsets <- list()
   id_map <- list()
   vert_offset <- 0
   for(x in variables) {
-    var_shapes[[as.character(id(x))]] <- shape(x)   # TODO: Redefine Variable class to include shape parameter
+    var_dims[[as.character(id(x))]] <- dim(x)   # TODO: Redefine Variable class to include dim parameter
     var_offsets[[as.character(id(x))]] <- vert_offset
     id_map[[as.character(id(x))]] <- list(vert_offset, size(x))
     vert_offset <- vert_offset + size(x)
   }
-  return(list(id_map = id_map, var_offsets = var_offsets, x_length = vert_offset, var_shapes = var_shapes))
+  return(list(id_map = id_map, var_offsets = var_offsets, x_length = vert_offset, var_dims = var_dims))
 })
 
 #'
@@ -376,19 +376,19 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
       }
 
       if(symmetric_attributes(list(var))) {
-        n <- shape(var)[1]
-        shape <- c(floor(n*(n+1)/2), 1)
-        upper_tri <- do.call(Variable, c(list(shape), new_attr))
+        n <- nrow(var)
+        new_dim <- c(floor(n*(n+1)/2), 1)
+        upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
         id2new_var[[vid]] <- upper_tri
         fill_coeff <- Constant(upper_tri_to_full(n))
         full_mat <- fill_coeff %*% upper_tri
         obj <- reshape(full_mat, c(n, n))
       } else if(!is.null(var@attributes$diag)) {
-        diag_var <- do.call(Variable, c(list(shape(var)[1]), new_attr))
+        diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
         id2new_var[[vid]] <- diag_var
         obj <- diag(diag_var)
       } else if(new_var) {
-        obj <- do.call(Variable, c(list(shape(var)), new_attr))
+        obj <- do.call(Variable, c(list(dim(var)), new_attr))
         id2new_var[[vid]] <- obj
       } else {
         obj <- var
@@ -436,7 +436,7 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
       if(!is.null(var@attributes$diag))
         pvars[[id]] <- Diagonal(x = as.vector(solution@primal_vars[[nvid]]))
       else if(length(symmetric_attributes(list(var))) > 0) {
-        n <- shape(var)[1]
+        n <- nrow(var)
         value <- matrix(0, nrow = n, ncol = n)   # Variable is symmetric
         idxs <- upper.tri(value, diag = TRUE)
         value[idxs] <- as.vector(solution@primal_vars[[nvid]])
@@ -592,7 +592,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
     for(arg in con@args) {
       A <- Afull[(offset + 1):(offset + size(arg) + 1),]
       b <- bfull[(offset + 1):(offset + size(arg) + 1)]
-      arg_list <- c(arg_list, reshape(A %*% new_var + b, shape(arg)))
+      arg_list <- c(arg_list, reshape(A %*% new_var + b, dim(arg)))
       offset <- offset + size(arg)
     }
     new_cons <- c(new_cons, copy(con, arg_list))
@@ -623,9 +623,9 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
   x_opt <- solution@primal_vars[[1]]
   for(var_id in names(var_map)) {
     offset <- var_map[[var_id]]
-    shape <- inverse_data@var_shapes[[var_id]]
-    size <- prod(shape)
-    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size)], nrow = shape[1], ncol = shape[2])
+    var_dim <- inverse_data@var_dims[[var_id]]
+    size <- prod(var_dim)
+    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size)], nrow = var_dim[1], ncol = var_dim[2])
   }
 
   # Remap dual variables if dual exists (problem is convex).
@@ -633,12 +633,12 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
     for(old_con in names(con_map)) {
       new_con <- con_map[[old_con]]
       con_obj <- inverse_data@id2cons[[old_con]]
-      shape <- shape(con_obj)
+      obj_dim <- dim(con_obj)
       # TODO: Rationalize Exponential.
-      if(length(shape) == 0 || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
+      if(length(obj_dim) == 0 || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
         dual_vars[[old_con]] <- solution@dual_vars[[new_con]]
       else
-        dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = shape[1], ncol = shape[2])
+        dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = obj_dim[1], ncol = obj_dim[2])
     }
   }
 

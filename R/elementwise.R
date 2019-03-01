@@ -44,12 +44,12 @@ Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
 #
 # Promotes the LinOp if necessary.
 # @param arg The LinOp to promote.
-# @param shape The desired shape.
+# @param dim The desired dimensions.
 # @return The promoted LinOp.
 # @rdname Elementwise-promote
-Elementwise.promote <- function(arg, shape) {
-  if(any(shape(arg) != shape))
-    lo.promote(arg, shape)
+Elementwise.promote <- function(arg, dim) {
+  if(any(dim(arg) != dim))
+    lo.promote(arg, dim)
   else
     arg
 }
@@ -106,7 +106,7 @@ setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
   rows <- size(object@expr)
   cols <- size(object)
-  D <- array(0, dim = shape(object@expr))
+  D <- array(0, dim = dim(object@expr))
   D <- D + (values[[1]] > 0)
   D <- D - (values[[1]] < 0)
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
@@ -989,27 +989,27 @@ setMethod(".grad", "Sqrt", function(object, values) {
 
 setMethod(".domain", "Sqrt", function(object) { list(object@args[[1]] >= 0) })
 
-Sqrt.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Sqrt.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   x <- arg_objs[[1]]
-  t <- create_var(shape)
-  one <- create_const(array(1, dim = shape), shape)
+  t <- create_var(dim)
+  one <- create_const(array(1, dim = dim), dim)
   two <- create_const(2, c(1, 1))
   length <- size(x)
   constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(x, one)), c(length, 1)),
                               lo.vstack(list(
                               lo.reshape(lo.sub_expr(x, one), c(1, length)),
-                              lo.reshape(lo.mul_expr(two, t, shape(t)), c(1, length))
+                              lo.reshape(lo.mul_expr(two, t, dim(t)), c(1, length))
                               ), c(2, length)),
                             2))
   list(t, constraints)
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Sqrt The graph implementation of the atom.
-setMethod("graph_implementation", "Sqrt", function(object, arg_objs, shape, data = NA_real_) {
-  Sqrt.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Sqrt", function(object, arg_objs, dim, data = NA_real_) {
+  Sqrt.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1068,25 +1068,25 @@ setMethod(".grad", "Square", function(object, values) {
 
 setMethod(".domain", "Square", function(object) { list() })
 
-Square.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Square.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   x <- arg_objs[[1]]
-  t <- create_var(shape)
-  one <- create_const(array(1, dim = shape), shape)
+  t <- create_var(dim)
+  one <- create_const(array(1, dim = dim), dim)
   two <- create_const(2, c(1, 1))
   length <- size(x)
   constraints <- list(SOCAxis(lo.reshape(lo.sum_expr(list(t, one)), c(length, 1)),
                               lo.vstack(list(
                                 lo.reshape(lo.sub_expr(t, one), c(1, length)),
-                                lo.reshape(lo.mul_expr(two, x, shape(x)), c(1, length))
+                                lo.reshape(lo.mul_expr(two, x, dim(x)), c(1, length))
                                 ), c(2, length)),
                               2))
   list(t, constraints)
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Square The graph implementation of the atom.
-setMethod("graph_implementation", "Square", function(object, arg_objs, shape, data = NA_real_) {
-  Square.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Square", function(object, arg_objs, dim, data = NA_real_) {
+  Square.graph_implementation(arg_objs, dim, data)
 })

@@ -235,8 +235,8 @@ SizeMetrics <- function(problem) {
     big <- 0
     # Compute number of data
     num_scalar_data <- num_scalar_data + size(const)
-    big <- ifelse(1, length(shape(const)) == 0, max(shape(const)))
-    small <- ifelse(1, length(shape(const)) == 0, min(shape(const)))
+    big <- ifelse(1, length(dim(const)) == 0, max(dim(const)))
+    small <- ifelse(1, length(dim(const)) == 0, min(dim(const)))
 
     # Get max data dimension
     if(max_data_dimension < big)
@@ -339,7 +339,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   # List of separable (sub)problems
   .Object@.separable_problems <- .separable_problems
 
-  # Information about the shape of the problem and its constituent parts
+  # Information about the dimensions of the problem and its constituent parts
   .Object@.size_metrics <- SizeMetrics(.Object)
 
   # Benchmarks reported by the solver.

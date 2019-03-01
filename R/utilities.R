@@ -145,32 +145,32 @@ apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
   result
 }
 
-################################
-#                              #
-# Utility functions for shapes #
-#                              #
-################################
-sum_shapes <- function(shapes) {
-  rows <- max(sapply(shapes, function(shape) { shape[1] }))
-  cols <- max(sapply(shapes, function(shape) { shape[2] }))
+####################################
+#                                  #
+# Utility functions for dimensions #
+#                                  #
+####################################
+sum_dims <- function(dims) {
+  rows <- max(sapply(dims, function(dim) { dim[1] }))
+  cols <- max(sapply(dims, function(dim) { dim[2] }))
 
-  # Validate shapes
-  for(shape in shapes) {
-    if(!all(shape == c(1,1)) && !all(shape == c(rows,cols)))
+  # Validate dims
+  for(dim in dims) {
+    if(!all(dim == c(1,1)) && !all(dim == c(rows,cols)))
       stop("Incompatible dimensions")
   }
   c(rows, cols)
 }
 
-mul_shapes <- function(lh_shape, rh_shape) {
-  if(all(lh_shape == c(1,1)))
-    return(rh_shape)
-  else if(all(rh_shape == c(1,1)))
-    return(lh_shape)
+mul_dims <- function(lh_dim, rh_dim) {
+  if(all(lh_dim == c(1,1)))
+    return(rh_dim)
+  else if(all(rh_dim == c(1,1)))
+    return(lh_dim)
   else {
-    if(lh_shape[2] != rh_shape[1])
+    if(lh_dim[2] != rh_dim[1])
       stop("Incompatible dimensions")
-    return(c(lh_shape[1], rh_shape[2]))
+    return(c(lh_dim[1], rh_dim[2]))
   }
 }
 
@@ -208,32 +208,32 @@ format_axis <- function(t, X, axis) {
 
   # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
   # gives the format for the elementwise cone constraints.
-  cone_size <- 1 + shape(X)[1]
+  cone_size <- 1 + nrow(X)
   terms <- list()
 
   # Make t_mat.
-  mat_shape <- c(cone_size, 1)
-  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_shape)
-  t_mat <- create_const(t_mat, mat_shape, sparse = TRUE)
+  mat_dim <- c(cone_size, 1)
+  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_dim)
+  t_mat <- create_const(t_mat, mat_dim, sparse = TRUE)
   t_vec <- t
-  if(is.null(shape(t)))   # t is scalar.
+  if(is.null(dim(t)))   # t is scalar.
     t_vec <- lo.reshape(t, c(1,1))
   else   # t is 1-D.
-    t_vec <- lo.reshape(t, c(1, shape(t)[1]))
-  mul_shape <- c(cone_size, shape(t_vec)[2])
-  terms <- c(terms, list(lo.mul_expr(t_mat, t_vec, mul_shape)))
+    t_vec <- lo.reshape(t, c(1, nrow(t)))
+  mul_dim <- c(cone_size, ncol(t_vec))
+  terms <- c(terms, list(lo.mul_expr(t_mat, t_vec, mul_dim)))
 
   # Make X_mat.
-  if(length(shape(X)) == 1)
-    X <- lo.reshape(X, c(shape(X)[1], 1))
-  mat_shape <- c(cone_size, shape(X)[1])
+  if(length(dim(X)) == 1)
+    X <- lo.reshape(X, c(nrow(X), 1))
+  mat_dim <- c(cone_size, nrow(X))
   val_arr <- rep(1.0, cone_size - 1)
   row_arr <- 2:cone_size
   col_arr <- 1:(cone_size - 1)
-  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_shape)
-  X_mat <- create_const(X_mat, mat_shape, sparse = TRUE)
-  mul_shape <- c(cone_size, shape(X)[2])
-  terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_shape)))
+  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_dim)
+  X_mat <- create_const(X_mat, mat_dim, sparse = TRUE)
+  mul_dim <- c(cone_size, ncol(X))
+  terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_dim)))
   list(create_geq(lo.sum_expr(terms)))
 }
 
@@ -244,21 +244,21 @@ format_elemwise <- function(vars_) {
   spacing <- length(vars_)
 
   # Matrix spaces out columns of the LinOp expressions
-  shape <- vars_[[1]]$shape
-  mat_shape <- c(spacing*shape[1], shape[1])
+  var_dim <- vars_[[1]]$dim
+  mat_dim <- c(spacing*var_dim[1], var_dim[1])
 
-  mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_shape, spacing, offset) })
+  mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_dim, spacing, offset) })
   terms <- mapply(function(var, mat) { list(lo.mul_expr(mat, var)) }, vars_, mats)
   list(create_geq(lo.sum_expr(terms)))
 }
 
 # Returns a sparse matrix LinOp that spaces out an expression.
-get_spacing_matrix <- function(shape, spacing, offset) {
-  col_arr <- 1:shape[2]
+get_spacing_matrix <- function(dim, spacing, offset) {
+  col_arr <- 1:dim[2]
   row_arr <- spacing*(col_arr - 1) + 1 + offset
-  val_arr <- rep(1.0, shape[2])
-  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = shape)
-  create_const(mat, shape, sparse = TRUE)
+  val_arr <- rep(1.0, dim[2])
+  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = dim)
+  create_const(mat, dim, sparse = TRUE)
 }
 
 ###################################
@@ -294,15 +294,15 @@ flatten_list <- function(x) {
 }
 
 # TODO: Find best format for sparse matrices.
-.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_shapes = "list"),
-                                              prototype(id_map = list(), N = NA_real_, var_shapes = list()))
+.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_dims = "list"),
+                                              prototype(id_map = list(), N = NA_real_, var_dims = list()))
 
 CoeffExtractor <- function(inverse_data) { .CoeffExtractor(inverse_data = inverse_data) }
 
-setMethod("initialize", function(.Object, inverse_data, id_map, N, var_shapes) {
+setMethod("initialize", function(.Object, inverse_data, id_map, N, var_dims) {
   .Object@id_map <- inverse_data@var_offsets
   .Object@N <- inverse_data@x_length
-  .Object@var_shapes <- inverse_data@var_shapes
+  .Object@var_dims <- inverse_data@var_dims
   return(.Object)
 })
 
@@ -344,7 +344,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   affine_problem <- Problem(Minimize(affine_expr), list())
   affine_inverse_data <- InverseData(affine_problem)
   affine_id_map <- affine_inverse_data@id_map
-  affine_var_shapes <- affine_inverse_data@var_shapes
+  affine_var_dims <- affine_inverse_data@var_dims
   extractor <- CoeffExtractor(affine_inverse_data)
   cb <- affine(extractor, affine_problem@objective@expr)
   c <- cb[[1]]
@@ -376,7 +376,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       }
     } else {
       var_offset <- affine_id_map[id(var)][1]
-      var_size <- as.integer(prod(affine_var_shapes[id(var)]))
+      var_size <- as.integer(prod(affine_var_dims[id(var)]))
       if(id(var) %in% coeffs) {
         coeffs[id(var)]$P <- coeffs[id(var)]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
         coeffs[id(var)]$q <- coeffs[id(var)]$q + as.vector(c[1, var_offset:(var_offset + var_size)])
@@ -419,8 +419,8 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
       P <- bdiag(P, coeffs[[var_id]]$P)
       q <- c(q, coeffs[[var_id]]$q)
     } else {
-      shape <- var_shapes(object)[[var_id]]
-      size <- as.integer(prod(shape))
+      var_dim <- var_dims(object)[[var_id]]
+      size <- as.integer(prod(var_dim))
       P <- bdiag(P, Matrix(0, nrow = size, ncol = size))
       q <- c(q, rep(0, size))
     }
@@ -447,7 +447,7 @@ replace_quad_forms <- function(expr, quad_forms) {
 
 replace_quad_form <- function(expr, idx, quad_forms) {
   quad_form <- expr@args[[idx]]
-  placeholder <- Variable(shape(quad_form))
+  placeholder <- Variable(dim(quad_form))
   expr@args[[idx]] <- placeholder
   quad_forms[[as.character(id(placeholder))]] <- list(expr, idx, quad_form)
   return(quad_forms)
@@ -1187,9 +1187,9 @@ Key <- function(row, col) {
   list(row = row, col = col, class = "key")
 }
 
-ku_validate_key <- function(key, shape) {
-  nrow <- shape[1]
-  ncol <- shape[2]
+ku_validate_key <- function(key, dim) {
+  nrow <- dim[1]
+  ncol <- dim[2]
 
   if(length(key) > 2)
     stop("Invalid index/slice")
@@ -1220,15 +1220,15 @@ ku_slice_mat <- function(mat, key) {
   select_mat
 }
 
-ku_size <- function(key, shape) {
+ku_size <- function(key, dim) {
   dims <- c()
 
   for(i in 1:2) {
     idx <- key[[i]]
     if(idx == "all")
-      size <- shape[i]
+      size <- dim[i]
     else {
-      selection <- (1:shape[i])[idx]
+      selection <- (1:dim[i])[idx]
       size <- length(selection)
     }
     dims <- c(dims, size)

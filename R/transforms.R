@@ -131,7 +131,7 @@ linearize <- function(expr) {
 # setMethod("is_nonpos", "PartialProblem", function(object) { is_nonpos(object@args[[1]]@objective@args[[1]]) })
 # setMethod("is_imag", "PartialProblem", function(object) { FALSE })
 # setMethod("is_complex", "PartialProblem", function(object) { FALSE })
-# setMethod("shape", "PartialProblem", function(object) { c() })
+# setMethod("dim", "PartialProblem", function(x) { c() })
 # setMethod("variables", "PartialProblem", function(object) { variables(object@args[[1]]) })
 # setMethod("parameters", "PartialProblem", function(object) { parameters(object@args[[1]]) })
 # setMethod("constants", "PartialProblem", function(object) { constants(object@args[[1]]) })

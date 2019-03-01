@@ -45,31 +45,31 @@ EliminatePwl.CANON_METHODS <- list(Abs = abs_canon,
 
 abs_canon <- function(expr, args) {
   x <- args[[1]]
-  t <- Variable(shape(expr))
+  t <- Variable(dim(expr))
   constraints <- list(t >= x, t >= -x)
   return(list(t, constraints))
 }
 
 max_entries_canon <- function(expr, args) {
   x <- args[[1]]
-  shape <- shape(expr)
+  expr_dim <- dim(expr)
   axis <- expr@axis
-  t <- Variable(shape)
+  t <- Variable(expr_dim)
   
-  if(is.na(axis))   # shape = c(1,1)
-    promoted_t <- promote(t, shape(x))
-  else if(axis == 2)   # shape = c(1,n)
-    promoted_t <- Constant(matrix(1, nrow = shape(x)[1], ncol = 1) %*% reshape(t, c(1, shape(x)[2])))
+  if(is.na(axis))   # dim(expr) = c(1,1)
+    promoted_t <- promote(t, dim(x))
+  else if(axis == 2)   # dim(expr) = c(1,n)
+    promoted_t <- Constant(matrix(1, nrow = nrow(x), ncol = 1) %*% reshape(t, c(1, ncol(x))))
   else   # shape = c(m,1)
-    promoted_t <- reshape(t, c(shape(x)[1], 1)) %*% Constant(matrix(1, nrow = 1, ncol = shape(x)[2]))
+    promoted_t <- reshape(t, c(nrow(x), 1)) %*% Constant(matrix(1, nrow = 1, ncol = ncol(x)))
   
   constraints <- list(x <= promoted_t)
   return(list(t, constraints))
 }
 
 max_elemwise_canon <- function(expr, args) {
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
   constraints <- lapply(args, function(elem) { t >= elem })
   return(list(t, constraints))
 }
@@ -106,10 +106,10 @@ norm1_canon <- function(expr, args) {
 
 norm_inf_canon <- function(expr, args) {
   x <- args[[1]]
-  shape <- shape(expr)
-  t <- Variable(shape)
+  expr_dim <- dim(expr)
+  t <- Variable(expr_dim)
   
-  promoted_t <- promote(t, shape(x))
+  promoted_t <- promote(t, dim(x))
   return(list(t, list(x <= promoted_t, x + promoted_t >= 0)))
 }
 
@@ -119,7 +119,7 @@ sum_largest_canon <- function(expr, args) {
   
   # min sum(t) + kq
   # s.t. x <= t + q, 0 <= t
-  t <- Variable(shape(x))
+  t <- Variable(dim(x))
   q <- Variable()
   obj <- sum(t) + k*q
   constraints <- list(x <= t + q, t >= 0)

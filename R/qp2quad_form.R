@@ -101,9 +101,9 @@ Qp2QuadForm.CANON_METHODS <- list(# Reuse cone canonicalization methods.
 huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
-  shape <- shape(expr)
-  n <- Variable(shape)
-  s <- Variable(shape)
+  expr_dim <- dim(expr)
+  n <- Variable(expr_dim)
+  s <- Variable(expr_dim)
   
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
@@ -129,14 +129,14 @@ power_canon <- function(expr, args) {
   if(is_constant(expr))
     return(list(Constant(value(expr)), list()))
   else if(p == 0)
-    return(list(matrix(1, nrow = shape(affine_expr)[1], ncol = shape(affine_expr)[2]), list()))
+    return(list(matrix(1, nrow = nrow(affine_expr), ncol = ncol(affine_expr)), list()))
   else if(p == 1)
     return(list(affine_expr, list()))
   else if(p == 2) {
     if(is(affine_expr, "Variable"))
       return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr)), expr), list()))
     else {
-      t <- Variable(shape(affine_expr))
+      t <- Variable(dim(affine_expr))
       return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
     }
   }
@@ -149,7 +149,7 @@ quad_form_canon <- function(expr, args) {
   if(is(affine_expr, "Variable"))
     return(list(SymbolicQuadForm(affine_expr, P, expr), list()))
   else {
-    t <- Variable(shape(affine_expr))
+    t <- Variable(dim(affine_expr))
     return(list(SymbolicQuadForm(t, P, expr), list(affine_expr == t)))
   }
 }
@@ -160,7 +160,7 @@ quad_over_lin_canon <- function(expr, args) {
   if(is(affine_expr, "Variable"))
     return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr))/y, expr), list()))
   else {
-    t <- Variable(shape(affine_expr))
+    t <- Variable(dim(affine_expr))
     return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
   }
 }

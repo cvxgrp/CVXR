@@ -51,12 +51,12 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
 setMethod("show", "Expression", function(object) {
-  cat("Expression(", curvature(object), ", ", sign(object), ", ", shape(object), ")", sep = "")
+  cat("Expression(", curvature(object), ", ", sign(object), ", ", dim(object), ")", sep = "")
 })
 
 #' @rdname Expression-class
 setMethod("as.character", "Expression", function(x) {
-  paste("Expression(", curvature(x), ", ", sign(x), ", ", shape(x), ")", sep = "")
+  paste("Expression(", curvature(x), ", ", sign(x), ", ", dim(x), ")", sep = "")
 })
 
 #' @describeIn Expression The string representation of the expression.
@@ -115,7 +115,7 @@ setMethod("log_log_curvature", "Expression", function(object) {
 })
 
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
-setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || 0 %in% shape(object) })
+setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || 0 %in% dim(object) })
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
@@ -207,7 +207,7 @@ setMethod("is_nonneg", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_nonpos", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The \code{c(row, col)} dimensions of the expression.
-setMethod("shape", "Expression", function(object) { stop("Unimplemented") })
+setMethod("dim", "Expression", function(x) { stop("Unimplemented") })
 
 #' @describeIn Expression A logical value indicating whether the expression is real.
 setMethod("is_real", "Expression", function(object) { !is_complex(object) })
@@ -219,30 +219,30 @@ setMethod("is_imag", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_complex", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The number of entries in the expression.
-setMethod("size", "Expression", function(object) { as.integer(prod(shape(object))) })
+setMethod("size", "Expression", function(object) { as.integer(prod(dim(object))) })
 
-#' @describeIn Expression The number of dimensions in the expression's shape.
-setMethod("ndim", "Expression", function(object) { length(shape(object)) })
+#' @describeIn Expression The number of dimensions of the expression.
+setMethod("ndim", "Expression", function(object) { length(dim(object)) })
 
 #' @describeIn Expression Vectorizes the expression.
 setMethod("flatten", "Expression", function(object) { Vec(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a scalar.
-setMethod("is_scalar", "Expression", function(object) { all(shape(object) == 1) })
+setMethod("is_scalar", "Expression", function(object) { all(dim(object) == 1) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a row or column vector.
-setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1 || (ndim(object) == 1 && min(shape(object)) == 1) })
+setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1 || (ndim(object) == 1 && min(dim(object)) == 1) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a matrix.
-setMethod("is_matrix", "Expression", function(object) { ndim(object) == 2 && shape(object)[1] > 1 && shape(object)[2] > 1 })
+setMethod("is_matrix", "Expression", function(object) { ndim(object) == 2 && nrow(object) > 1 && ncol(object) > 1 })
 
 #' @describeIn Expression Number of rows in the expression.
 #' @export
-setMethod("nrow", "Expression", function(x) { shape(x)[1] })
+setMethod("nrow", "Expression", function(x) { dim(x)[1] })
 
 #' @describeIn Expression Number of columns in the expression.
 #' @export
-setMethod("ncol", "Expression", function(x) { shape(x)[2] })
+setMethod("ncol", "Expression", function(x) { dim(x)[2] })
 
 # Slice operators
 #' @param i,j The row and column indices of the slice.
@@ -338,7 +338,7 @@ setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
     MulElemwise(lh_const = e1, rh_exp = e2)
   else if(is_constant(e2))
     MulElemwise(lh_const = e2, rh_exp = e1)
-  else if(all(shape(e1) == c(1,1)) && all(shape(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
+  else if(all(dim(e1) == c(1,1)) && all(dim(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
     warning("Forming a non-convex expression (affine) * (affine)")
     AffineProd(x = e1, y = e2)
   } else
@@ -356,10 +356,10 @@ setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if(is_scalar(e2) && all(shape(e1) == shape(e2)))
+  if(is_scalar(e2) && all(dim(e1) == dim(e2)))
     DivExpression(lh_exp = e1, rh_exp = e2)
   else
-    stop("Incompatible shapes for division")
+    stop("Incompatible dimensions for division")
 })
 
 #' @rdname DivExpression-class
@@ -416,7 +416,7 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # Multiplying by a constant on the right is handled differently
   # from multiplying by a constant on the left
   if(is_constant(x)) {
-    if(shape(x)[1] == shape(y)[1] && shape(x)[2] != shape(y)[1] && is(x, "Constant") && x@is_1D_array)
+    if(nrow(x) == nrow(y) && ncol(x) != nrow(y) && is(x, "Constant") && x@is_1D_array)
       x <- t(x)
     return(MulExpression(lh_exp = x, rh_exp = y))
   } else if(is_constant(y)) {
@@ -529,7 +529,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical",
+Leaf <- setClass("Leaf", representation(dim = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical",
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
                                         PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
                                         integer = "logical", sparsity = "logical", pos = "logical", neg = "logical"),
@@ -537,18 +537,18 @@ Leaf <- setClass("Leaf", representation(shape = "numeric", value = "numeric", no
                                    symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE,
                                    boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE) {
-  if(length(shape) > 2)
+setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE) {
+  if(length(dim) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
 
-  for(d in shape) {
+  for(d in dim) {
     if(!is.integer(d) || d <= 0)
-      stop("Invalid dimensions ", shape)
+      stop("Invalid dimensions ", dim)
   }
-  .Object@shape <- as.integer(shape)
+  .Object@dim <- as.integer(dim)
 
-  if((PSD || NSD || symmetric || diag || hermitian) && (length(shape) != 2 || shape[1] != shape[2]))
-    stop("Invalid dimensions ", shape, ". Must be a square matrix.")
+  if((PSD || NSD || symmetric || diag || hermitian) && (length(dim) != 2 || dim[1] != dim[2]))
+    stop("Invalid dimensions ", dim, ". Must be a square matrix.")
 
   # Process attributes.
   .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, pos = pos, neg = neg, complex = complex, imag = imag,
@@ -558,7 +558,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, 
     if(!is.logical(boolean))
       .Object@boolean_idx <- boolean
     else
-      .Object@boolean_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
+      .Object@boolean_idx <- do.call(expand.grid, lapply(dim, function(k) { 1:k }))
   } else
     .Object@boolean_idx <- list()
 
@@ -566,7 +566,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., shape, value = NA_real_, 
     if(!is.logical(integer))
       .Object@integer_idx <- integer
     else
-      .Object@integer_idx <- do.call(expand.grid, lapply(shape, function(k) { 1:k }))
+      .Object@integer_idx <- do.call(expand.grid, lapply(dim, function(k) { 1:k }))
   } else
     .Object@integer_idx <- list()
 
@@ -599,7 +599,7 @@ setMethod("get_attr_str", "Leaf", function(object) {
 setMethod("get_data", "Leaf", function(object) { })
 
 #' @describeIn Leaf The dimensions of the leaf node.
-setMethod("shape", "Leaf", function(object) { object@shape })
+setMethod("dim", "Leaf", function(x) { object@dim })
 
 #' @describeIn Leaf List of \linkS4class{Variable} objects in the leaf node.
 setMethod("variables", "Leaf", function(object) { list() })
@@ -741,8 +741,8 @@ setReplaceMethod("value", "Leaf", function(object, value) {
 setMethod("validate_val", "Leaf", function(object, val) {
   if(!is.na(val)) {
     val <- intf_convert(val)
-    if(any(intf_shape(val) != shape(object)))
-      stop("Invalid dimensions ", intf_shape(val), " for value")
+    if(any(intf_dim(val) != dim(object)))
+      stop("Invalid dimensions ", intf_dim(val), " for value")
     projection <- project(object, val)
     delta <- abs(val - projection)
 

@@ -3,21 +3,21 @@
 #'
 #' This class represents an optimization variable.
 #'
-#' @slot shape The dimensions of the variable.
+#' @slot dim The dimensions of the variable.
 #' @slot name (Optional) A character string representing the name of the variable.
 #' @slot var_id (Internal) A unique identification number used internally.
 #' @name Variable-class
 #' @aliases Variable
 #' @rdname Variable-class
-.Variable <- setClass("Variable", representation(shape = "NumORNULL", name = "character", var_id = "integer", value = "ConstVal"),
-                                  prototype(shape = NULL, name = NA_character_, var_id = NA_integer_, value = NA_real_), 
+.Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", var_id = "integer", value = "ConstVal"),
+                                  prototype(dim = NULL, name = NA_character_, var_id = NA_integer_, value = NA_real_), 
                                   validity = function(object) {
                                     if(!is.na(object@value))
                                       stop("[Variable: validation] value is an internal slot and should not be set by the user")
                                     return(TRUE)
                                   }, contains = "Leaf")
 
-#' @param shape The dimensions of the variable.
+#' @param dim The dimensions of the variable.
 #' @param name (Optional) A character string representing the name of the variable.
 #' @rdname Variable-class
 #' @examples
@@ -35,24 +35,24 @@
 #' variables(y)
 #' canonicalize(y)
 #' @export
-Variable <- function(shape = NULL, name = NA_character_) { .Variable(shape = shape, name = name) }
+Variable <- function(dim = NULL, name = NA_character_) { .Variable(dim = dim, name = name) }
 
-setMethod("initialize", "Variable", function(.Object, ..., shape = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
+setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
   .Object@var_id <- var_id
   if(is.na(name))
     .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)
   else
     .Object@name <- name
   .Object@value <- NA_real_
-  callNextMethod(.Object, ..., shape = shape)
+  callNextMethod(.Object, ..., dim = dim)
 })
 
 setMethod("show", "Variable", function(object) {
   attr_str <- .get_attr_str(object)
   if(length(attr_str) > 0)
-    paste("Variable((", paste(shape(object), collapse = ", "), "), ", attr_str, ")", sep = "")
+    paste("Variable((", paste(dim(object), collapse = ", "), "), ", attr_str, ")", sep = "")
   else
-    paste("Variable(", paste(shape(object), collapse = ", "), ")", sep = "")
+    paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
 #' @param x,object A \linkS4class{Variable} object.
@@ -60,9 +60,9 @@ setMethod("show", "Variable", function(object) {
 setMethod("as.character", "Variable", function(x) {
   attr_str <- get_attr_str(x)
   if(length(attr_str) > 0)
-    paste("Variable((", paste(shape(x), collapse = ", "), "), ", attr_str, ")", sep = "")
+    paste("Variable((", paste(dim(x), collapse = ", "), "), ", attr_str, ")", sep = "")
   else
-    paste("Variable(", paste(shape(x), collapse = ", "), ")", sep = "")
+    paste("Variable(", paste(dim(x), collapse = ", "), ")", sep = "")
 })
 
 #' @describeIn Variable The unique ID of the variable.
@@ -74,7 +74,7 @@ setMethod("name", "Variable", function(object) { object@name })
 
 #' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix.
 setMethod("grad", "Variable", function(object) {
-  # TODO: Do not assume shape is 2-D.
+  # TODO: Do not assume dim is 2-D.
   len <- size(object)
   result <- list(sparseMatrix(i = 1:len, j = 1:len, x = rep(1, len)))
   names(result) <- as.character(id(object))
@@ -86,7 +86,7 @@ setMethod("variables", "Variable", function(object) { list(object) })
 
 #' @describeIn Variable The canonical form of the variable.
 setMethod("canonicalize", "Variable", function(object) {
-  obj <- create_var(shape(object), id(object))
+  obj <- create_var(dim(object), id(object))
   list(obj, list())
 })
 

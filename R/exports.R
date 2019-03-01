@@ -2,6 +2,22 @@
 #     Scalar functions
 # =========================
 #'
+#' Unity Resolvent
+#' 
+#' The unity resolvent of a positive matrix. For an elementwise positive matrix \eqn{X}, this atom represents \eqn{(I - X)^{-1}},
+#' and it enforces the constraint that the spectral radius of \eqn{X} is at most 1.
+#' 
+#' This atom is log-log convex.
+#' 
+#' @param X An \linkS4class{Expression} or positive square matrix.
+#' @return An \linkS4class{Expression} representing the unity resolvent of the input.
+#' @docType methods
+#' @name eye_minus_inv
+#' @rdname eye_minus_inv
+#' @export
+eye_minus_inv <- EyeMinusInv
+
+#'
 #' Geometric Mean
 #'
 #' The (weighted) geometric mean of vector \eqn{x} with optional powers given by \eqn{p}.
@@ -433,6 +449,38 @@ norm_inf <- NormInf
 norm_nuc <- NormNuc
 
 #'
+#' Difference on Restricted Domain
+#' 
+#' The difference \eqn{1 - x} with domain \eqn{\{x : 0 < x < 1\}}.
+#'
+#' This atom is log-log concave.
+#'
+#' @param x An \linkS4class{Expression}, vector, or matrix.
+#' @return An \linkS4class{Expression} representing one minus the input restricted to \eqn{(0,1)}.
+#' @docType methods
+#' @name one_minus_pos
+#' @rdname one_minus_pos
+#' @export
+one_minus_pos <- OneMinusPos
+
+#'
+#' Perron-Frobenius Eigenvalue
+#' 
+#' The Perron-Frobenius eigenvalue of a positive matrix.
+#' 
+#' For an elementwise positive matrix \eqn{X}, this atom represents its spectral radius, i.e., the magnitude of its largest eigenvalue.
+#' Because \eqn{X} is positive, the spectral radius equals its largest eigenvalue, which is guaranteed to be positive.
+#' 
+#' This atom is log-log convex.
+#' @param X An \linkS4class{Expression} or positive square matrix.
+#' @return An \linkS4class{Expression} representing the largest eigenvalue of the input.
+#' @docType methods
+#' @name pf_eigenvalue
+#' @rdname pf_eigenvalue
+#' @export
+pf_eigenvalue <- PfEigenvalue
+
+#'
 #' P-Norm
 #'
 #' The vector p-norm. If given a matrix variable, \code{p_norm} will treat it as a vector and compute the p-norm of the concatenated columns.
@@ -478,6 +526,23 @@ norm_nuc <- NormNuc
 #' @rdname p_norm
 #' @export
 p_norm <- Pnorm
+
+#'
+#' Product of Entries
+#'
+#' The product of entries in a vector or matrix.
+#' 
+#' This atom is log-log affine, but it is neither convex nor concave.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the product of the entries of the input.
+#' @docType methods
+#' @name prod_entries
+#' @aliases prod
+#' @rdname prod_entries
+#' @export
+prod_entries <- ProdEntries
 
 #'
 #' Quadratic Form
@@ -818,6 +883,27 @@ sum.Expression <- function(..., na.rm = FALSE) {
   else {
     sum_num <- sum(sapply(vals[!is_expr], function(v) { sum(v, na.rm = na.rm) }))
     Reduce("+", sum_expr) + sum_num
+  }
+}
+
+#' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
+#' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @docType methods
+#' @rdname prod_entries
+#' @method prod Expression
+#' @export
+prod.Expression <- function(..., na.rm = FALSE) {
+  if(na.rm)
+    warning("na.rm is unimplemented for Expression objects")
+  
+  vals <- list(...)
+  is_expr <- sapply(vals, function(v) { is(v, "Expression") })
+  sum_expr <- lapply(vals[is_expr], function(expr) { ProdEntries(expr = expr) })
+  if(all(is_expr))
+    Reduce("*", sum_expr)
+  else {
+    sum_num <- sum(sapply(vals[!is_expr], function(v) { prod(v, na.rm = na.rm) }))
+    Reduce("*", sum_expr) + sum_num
   }
 }
 

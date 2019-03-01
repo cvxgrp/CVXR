@@ -15,8 +15,9 @@ setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 
 setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "vector", "numeric", "dMatrix"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
-setClassUnion("ListORExpr", c("list", "Expression"))
+setClassUnion("ConstValORNULL", c("ConstVal", "NULL"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
+setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 setClassUnion("NumORNULL", c("numeric", "NULL"))
 

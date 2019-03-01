@@ -720,7 +720,7 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
 #' @docType methods
 #' @rdname graph_implementation
-setGeneric("graph_implementation", function(object, arg_objs, size, data) { standardGeneric("graph_implementation") })
+setGeneric("graph_implementation", function(object, arg_objs, dim, data) { standardGeneric("graph_implementation") })
 
 #'
 #' Identification Number
@@ -881,7 +881,7 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' data[["G"]]
 #' @rdname get_problem_data
 #' @export
-setGeneric("get_problem_data", function(object, solver) { standardGeneric("get_problem_data") })
+setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("get_problem_data") })
 
 #'
 #' Solve a DCP Problem
@@ -931,6 +931,18 @@ setGeneric("psolve", function(object, solver, ignore_dcp = FALSE, warm_start = F
 #' @rdname is_qp
 #' @export
 setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
+
+#'
+#' Is Problem Mixed Integer?
+#' 
+#' Determine if a problem is a mixed-integer program.
+#' 
+#' @param object A \linkS4class{Problem} object.
+#' @return A logical value indicating whether the problem is a mixed-integer program
+#' @docType methods
+#' @rdname is_mixed_integer
+#' @export
+setGeneric("is_mixed_integer", function(object) { standardGeneric("is_mixed_integer") })
 
 #'
 #' Parse output from a solver and updates problem state
@@ -1243,6 +1255,7 @@ setGeneric("ndim", function(object) { standardGeneric("ndim") })
 setGeneric("flatten", function(object) { standardGeneric("flatten") })
 setGeneric("get_attr_str", function(object) { standardGeneric("get_attr_str") })
 setGeneric("get_var_offsets", function(object, variables) { standardGeneric("get_var_offsets") })
+setGeneric("allow_complex", function(object) { standardGeneric("allow_complex") })
 setGeneric("canonicalize_tree", function(object, expr) { standardGeneric("canonicalize_tree") })
 setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("canonicalize_expr") })
 setGeneric("stuffed_objective", function(object, problem, inverse_data) { standardGeneric("stuffed_objective") })

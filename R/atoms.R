@@ -6,20 +6,19 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(args = "list", .dim = "NumORNULL", .allow_complex = "logical"), prototype(args = list(), .dim = NULL, .allow_complex = FALSE),
+Atom <- setClass("Atom", representation(args = "list", .dim = "NumORNULL"), prototype(args = list(), .dim = NULL),
                  validity = function(object) {
                    if(length(object@args) == 0)
                      stop("[Atom: args] no arguments given to ", class(object))
                    return(TRUE)
                  }, contains = c("VIRTUAL", "Expression"))
 
-setMethod("initialize", "Atom", function(.Object, ..., args = list(), .dim = NULL, .allow_complex = FALSE) {
+setMethod("initialize", "Atom", function(.Object, ..., args = list(), .dim = NULL) {
   .Object@args <- lapply(args, as.Constant)
   validate_args(.Object)
   .Object@.dim <- dim_from_args(.Object)
   if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
-  .Object@.allow_complex <- .allow_complex
   callNextMethod(.Object, ...)
 })
 
@@ -59,6 +58,9 @@ setMethod("nrow", "Atom", function(x) { dim(x)[1] })
 
 #' @describeIn Atom The number of columns in the atom.
 setMethod("ncol", "Atom", function(x) { dim(x)[2] })
+
+#' @describeIn Atom Does the atom handle complex numbers?
+setMethod("allow_complex", "Atom", function(object) { FALSE })
 
 #' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
@@ -197,7 +199,7 @@ setMethod("canonicalize", "Atom", function(object) {
 #' @param size A vector with two elements representing the size of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Atom The graph implementation of the atom.
-setMethod("graph_implementation", "Atom", function(object, arg_objs, size, data = NA_real_) { stop("Unimplemented") })
+setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data = NA_real_) { stop("Unimplemented") })
 
 #' @describeIn Atom The value of the atom.
 setMethod("value", "Atom", function(object) {
@@ -721,7 +723,7 @@ LambdaMin <- function(A) {
 #' @name LambdaSumLargest-class
 #' @aliases LambdaSumLargest
 #' @rdname LambdaSumLargest-class
-.LambdaSumLargest <- setClass("LambdaSumLargest", representation(k = "numeric"), prototype(.allow_complex = TRUE), contains = "LambdaMax")
+.LambdaSumLargest <- setClass("LambdaSumLargest", representation(k = "numeric"), contains = "LambdaMax")
 
 #' @param A An \linkS4class{Expression} or numeric matrix.
 #' @param k A positive integer.
@@ -732,6 +734,9 @@ setMethod("initialize", "LambdaSumLargest", function(.Object, ..., k) {
   .Object@k <- k
   callNextMethod(.Object, ...)
 })
+
+#' @describeIn LambdaSumLargest Does the atom handle complex numbers?
+setMethod("allow_complex", "LambdaSumLargest", function(object) { TRUE })
 
 #' @param object A \linkS4class{LambdaSumLargest} object.
 #' @param values A list of arguments to the atom.
@@ -893,7 +898,7 @@ setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 #' @name MatrixFrac-class
 #' @aliases MatrixFrac
 #' @rdname MatrixFrac-class
-.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
+.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 
 #' @param X An \linkS4class{Expression} or numeric matrix.
 #' @param P An \linkS4class{Expression} or numeric matrix.
@@ -919,6 +924,9 @@ setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@P <- P
   callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
 })
+
+#' @describeIn MatrixFrac Does the atom handle complex numbers?
+setMethod("allow_complex", "MatrixFrac", function(object) { TRUE })
 
 #' @param object A \linkS4class{MatrixFrac} object.
 #' @param values A list of arguments to the atom.
@@ -1146,7 +1154,7 @@ setMethod(".column_grad", "MinEntries", function(object, value) {
 #' @aliases Pnorm
 #' @rdname Pnorm-class
 .Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric", .original_p = "numeric"),
-                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_, .allow_complex = TRUE), contains = "AxisAtom")
+                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_), contains = "AxisAtom")
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
@@ -1196,6 +1204,9 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   else
     stop("Invalid p = ", p)
 }
+
+#' @describeIn Pnorm Does the atom handle complex numbers?
+setMethod("allow_complex", "Pnorm", function(object) { TRUE })
 
 #' @param object A \linkS4class{Pnorm} object.
 #' @param values A list of arguments to the atom.
@@ -1337,7 +1348,7 @@ Norm <- function(x, p = 2, axis = NA_real_) {
 #' @name Norm1-class
 #' @aliases Norm1
 #' @rdname Norm1-class
-Norm1 <- setClass("Norm1", prototype(.allow_complex = TRUE), contains = "AxisAtom")
+Norm1 <- setClass("Norm1", contains = "AxisAtom")
 
 #' @param x,object A \linkS4class{Norm1} object.
 setMethod("name", "Norm1", function(x) {
@@ -1352,6 +1363,9 @@ setMethod("to_numeric", "Norm1", function(object, values) {
   else
     apply_with_keepdims(values[[1]], function(x) { norm(x, type = "O") }, axis = object@axis, keepdims = object@keepdims)
 })
+
+#' @describeIn Norm1 Does the atom handle complex numbers?
+setMethod("allow_complex", "Norm1", function(object) { TRUE })
 
 #' @rdname Norm1 The atom is always positive.
 setMethod("sign_from_args", "Norm1", function(object) { c(TRUE, FALSE) })
@@ -1378,7 +1392,7 @@ setMethod("get_data", "Norm1", function(object) { list(object@axis) })
 
 setMethod(".domain", "Norm1", function(object) { list() })
 setMethod(".grad", "Norm1", function(object, values) { .axis_grad(object, values) })
-setMethod(".column_grad", "Norm1", function(object, values) {
+setMethod(".column_grad", "Norm1", function(object, value) {
   rows <- size(object@args[[1]])
   D_null <- Matrix(0, nrow = rows, ncol = 1, sparse = TRUE)
   D_null <- D_null + (value > 0)
@@ -1394,7 +1408,7 @@ setMethod(".column_grad", "Norm1", function(object, values) {
 #' @name NormInf-class
 #' @aliases NormInf
 #' @rdname NormInf-class
-NormInf <- setClass("NormInf", prototype(.allow_complex = TRUE), contains = "AxisAtom")
+NormInf <- setClass("NormInf", contains = "AxisAtom")
 
 setMethod("name", "NormInf", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
@@ -1407,6 +1421,9 @@ setMethod("to_numeric", "NormInf", function(object, values) {
   else
     apply_with_keepdims(values[[1]], function(x) { norm(x, type = "I") }, axis = object@axis, keepdims = object@keepdims)
 })
+
+#' @describeIn NormInf Does the atom handle complex numbers?
+setMethod("allow_complex", "NormInf", function(object) { TRUE })
 
 #' @describeIn NormInf The atom is always positive.
 setMethod("sign_from_args", "NormInf", function(object) { c(TRUE, FALSE) })
@@ -1448,7 +1465,7 @@ setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplement
 #' @name NormNuc-class
 #' @aliases NormNuc
 #' @rdname NormNuc-class
-.NormNuc <- setClass("NormNuc", representation(A = "Expression"), prototype(.allow_complex = TRUE), contains = "Atom")
+.NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
 
 #' @param A An \linkS4class{Expression} representing a matrix.
 #' @rdname NormNuc-class
@@ -1466,6 +1483,9 @@ setMethod("to_numeric", "NormNuc", function(object, values) {
   # Returns the nuclear norm (i.e. the sum of the singular values) of A
   sum(svd(values[[1]])$d)
 })
+
+#' @describeIn NormNuc Does the atom handle complex numbers?
+setMethod("allow_complex", "NormNuc", function(object) { TRUE })
 
 #' @describeIn NormNuc The atom is a scalar.
 setMethod("dim_from_args", "NormNuc", function(object) { c() })
@@ -1677,7 +1697,7 @@ setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, 
 #' @name QuadForm-class
 #' @aliases QuadForm
 #' @rdname QuadForm-class
-.QuadForm <- setClass("QuadForm", representation(x = "ConstValORExpr", P = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
+.QuadForm <- setClass("QuadForm", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
 
 #' @param x An \linkS4class{Expression} or numeric vector.
 #' @param P An \linkS4class{Expression}, numeric matrix, or vector.
@@ -1693,6 +1713,9 @@ setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
 setMethod("name", "QuadForm", function(x) {
   paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
 })
+
+#' @describeIn QuadForm Does the atom handle complex numbers?
+setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 
 #' @describeIn QuadForm Returns the quadratic form.
 setMethod("to_numeric", "QuadForm", function(object, values) {
@@ -1953,7 +1976,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
 #' @name SigmaMax-class
 #' @aliases SigmaMax
 #' @rdname SigmaMax-class
-.SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
+.SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
 
 #' @param A An \linkS4class{Expression} or matrix.
 #' @rdname SigmaMax-class
@@ -1968,6 +1991,9 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
 #' @param values A list of arguments to the atom.
 #' @describeIn SigmaMax The largest singular value of \code{A}.
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
+
+#' @describeIn SigmaMax Does the atom handle complex numbers?
+setMethod("allow_complex", "SigmaMax", function(object) { TRUE })
 
 #' @describeIn SigmaMax The atom is a scalar.
 setMethod("dim_from_args", "SigmaMax", function(object) { c() })

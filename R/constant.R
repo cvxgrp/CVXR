@@ -11,7 +11,7 @@
 #' @aliases Constant
 #' @rdname Constant-class
 .Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric", .cached_is_pos = "logical"),
-                                 prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA),
+                                  prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA),
                       validity = function(object) {
                         if((!is(object@value, "ConstSparseVal") && !is.data.frame(object@value) && !is.numeric(object@value)) ||
                            ((is(object@value, "ConstSparseVal") || is.data.frame(object@value)) && !all(sapply(object@value, is.numeric))))
@@ -48,7 +48,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
   .Object@herm <- herm
   .Object@eigvals <- eigvals
   .Object@.cached_is_pos <- .cached_is_pos
-  callNextMethod(.Object, ..., intf_dim(.Object@value))
+  callNextMethod(.Object, ..., dim = intf_dim(.Object@value))
 })
 
 #' @param x,object A \linkS4class{Constant} object.

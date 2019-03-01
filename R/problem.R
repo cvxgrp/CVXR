@@ -267,6 +267,33 @@ SizeMetrics <- function(problem) {
 setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 
 #'
+#' The Solution class.
+#'
+#' This class represents a solution to an optimization problem.
+#'
+#' @rdname Solution-class
+.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
+                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
+
+Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
+  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
+}
+
+setMethod("show", "Solution", function(object) {
+  cat("Solution(", object@status, ", (",
+      paste(object@primal_vars, collapse = ", "), "), (",
+      paste(object@dual_vars, collapse = ", "), "), (",
+      paste(object@attr, collapse = ", "), "))", sep = "")
+})
+
+setMethod("as.character", "Solution", function(x) {
+  paste("Solution(", x@status, ", (",
+        paste(x@primal_vars, collapse = ", "), "), (",
+        paste(x@dual_vars, collapse = ", "), "), (",
+        paste(x@attr, collapse = ", "), "))", sep = "")
+})
+
+#'
 #' The Problem class.
 #'
 #' This class represents a convex optimization problem.
@@ -282,7 +309,7 @@ setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
 #' @name Problem-class
 #' @aliases Problem
 #' @rdname Problem-class
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "SolutionORNULL", .intermediate_chain = "ChainORNULL", .solving_chain = "ChainORNULL", .cached_chain_key = "character", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list", args = "list", .solver_cache = "list"),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "S4", .intermediate_chain = "S4", .solving_chain = "S4", .cached_chain_key = "character", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list", args = "list", .solver_cache = "list"),
                     prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = list()),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
@@ -385,7 +412,7 @@ setReplaceMethod("value", "Problem", function(object, value) {
     object
 })
 
-# The status from the last time the problem was solved. One of optimal, infeasible, or unbounded.
+#' @describeIn Problem The status from the last time the problem was solved.
 setMethod("status", "Problem", function(object) { object@status })
 
 # Set the status of the problem.
@@ -393,9 +420,6 @@ setReplaceMethod("status", "Problem", function(object, value) {
     object@status <- value
     object
 })
-
-# The solution from the last time the problem was solved.
-setMethod("solution", "Problem", function(object) { object@solution })
 
 #' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
 #' @examples
@@ -446,11 +470,11 @@ setMethod("is_mixed_integer", "Problem", function(object) {
 #' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
 setMethod("variables", "Problem", function(object) { object@variables })
 
-setMethod(".variables", "Problem", function(object) {
+.variables.Problem <- function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
-})
+}
 
 #' @describeIn Problem List of \linkS4class{Parameter} objects in the problem.
 setMethod("parameters", "Problem", function(object) {

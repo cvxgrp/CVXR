@@ -41,33 +41,6 @@ failure_solution <- function(status) {
 }
 
 #'
-#' The Solution class.
-#'
-#' This class represents a solution to an optimization problem.
-#'
-#' @rdname Solution-class
-.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
-                     prototype(primal_vars = list(), dual_vars = list(), attr = list()))
-
-Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
-  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
-}
-
-setMethod("show", "Solution", function(object) {
-  cat("Solution(", object@status, ", (",
-                  paste(object@primal_vars, collapse = ", "), "), (",
-                  paste(object@dual_vars, collapse = ", "), "), (",
-                  paste(object@attr, collapse = ", "), "))", sep = "")
-})
-
-setMethod("as.character", "Solution", function(x) {
-  paste("Solution(", x@status, ", (",
-                    paste(x@primal_vars, collapse = ", "), "), (",
-                    paste(x@dual_vars, collapse = ", "), "), (",
-                    paste(x@attr, collapse = ", "), "))", sep = "")
-})
-
-#'
 #' The InverseData class.
 #'
 #' This class represents the data encoding an optimization problem.
@@ -136,7 +109,7 @@ setMethod("get_var_offsets", signature(object = "InverseData", variables = "list
 #' of provenance.
 #'
 #' @rdname Reduction-class
-setClass("Reduction", representation(problem = "ProblemORNull", .emitted_problem = "ProblemORNull", .retrieval_data = "InverseDataORNullORList"), 
+setClass("Reduction", representation(problem = "Problem", .emitted_problem = "Problem", .retrieval_data = "InverseDataORList"), 
                       prototype(problem = NULL, .emitted_problem = NULL, .retrieval_data = NULL), contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Reduction} object.

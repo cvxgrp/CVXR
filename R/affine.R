@@ -6,7 +6,10 @@
 #' @name AffAtom-class
 #' @aliases AffAtom
 #' @rdname AffAtom-class
-AffAtom <- setClass("AffAtom", prototype(.allow_complex = TRUE), contains = c("VIRTUAL", "Atom"))
+AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
+
+#' @describeIn AffAtom Does the atom handle complex numbers?
+setMethod("allow_complex", "AffAtom", function(object) { TRUE })
 
 #' @describeIn AffAtom The sign of the atom.
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })
@@ -681,7 +684,7 @@ get_diff_mat <- function(dim, axis) {
 #' @name CumSum-class
 #' @aliases CumSum
 #' @rdname CumSum-class
-.CumSum <- setClass("CumSum", prototype(axis = 2), contains = c("AffAtom", "AxisAtom"))
+.CumSum <- setClass("CumSum", prototype = prototype(axis = 2), contains = c("AffAtom", "AxisAtom"))
 
 #' @param expr An \linkS4class{Expression} to be summed.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
@@ -1506,7 +1509,7 @@ setMethod("graph_implementation", "Trace", function(object, arg_objs, dim, data 
 #' @name Transpose-class
 #' @aliases Transpose
 #' @rdname Transpose-class
-.Transpose <- setClass("Transpose", representation(expr = "Expression", axes = "ConstValORNull"), prototype(axes = NULL), contains = "AffAtom")
+.Transpose <- setClass("Transpose", representation(expr = "Expression", axes = "ConstValORNULL"), prototype(axes = NULL), contains = "AffAtom")
 
 Transpose <- function(expr, axes = NULL) { .Transpose(expr = expr, axes = axes) }
 

@@ -23,6 +23,8 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
+Author: Anqi Fu and Balasubramanian Narasimhan
+Maintainer: Anqi Fu <anqif@stanford.edu>
 URL: https://cvxr.rbind.io, https://anqif.github.io/CVXR
 BugReports: https://github.com/anqif/CVXR/issues
 Description: An object-oriented modeling language for disciplined convex

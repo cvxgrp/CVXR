@@ -61,7 +61,7 @@ setMethod("as.character", "Expression", function(x) {
 
 #' @describeIn Expression The string representation of the expression.
 #' @export
-setMethod("name", "Expression", function(object) { stop("Unimplemented") })
+setMethod("name", "Expression", function(x) { stop("Unimplemented") })
 
 #' @describeIn Expression The expression itself.
 setMethod("expr", "Expression", function(object) { object })
@@ -529,7 +529,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(dim = "numeric", value = "numeric", nonneg = "logical", nonpos = "logical",
+Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical",
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
                                         PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
                                         integer = "logical", sparsity = "logical", pos = "logical", neg = "logical"),
@@ -670,59 +670,59 @@ setMethod("domain", "Leaf", function(object) {
 })
 
 #' @describeIn Leaf Project value onto the attribute set of the leaf.
-setMethod("project", "Leaf", function(object, val) {
+setMethod("project", "Leaf", function(object, value) {
   if(!is_complex(object))
-    val <- Re(val)
+    value <- Re(value)
 
   if(object@attributes$nonpos && object@attributes$nonneg)
-    return(0*val)
+    return(0*value)
   else if(object@attributes$nonpos || object@attributes$neg)
-    return(pmin(val, 0))
+    return(pmin(value, 0))
   else if(object@attributes$nonneg || object@attributes$pos)
-    return(pmax(val, 0))
+    return(pmax(value, 0))
   else if(object@attributes$imag)
-    return(Im(val)*1i)
+    return(Im(value)*1i)
   else if(object@attributes$complex)
-    return(as.complex(val))
+    return(as.complex(value))
   else if(object@attributes$boolean)
     # TODO: Respect the boolean indices.
-    return(round(pmax(pmin(val, 1), 0)))
+    return(round(pmax(pmin(value, 1), 0)))
   else if(object@attributes$integer)
     # TODO: Respect the integer indices. Also, variable may be integer in some indices and boolean in others.
-    return(round(val))
+    return(round(value))
   else if(object@attributes$diag) {
-    val <- diag(val)
-    return(sparseMatrix(i = 1:length(val), j = 1:length(val), x = val))
+    val <- diag(value)
+    return(sparseMatrix(i = 1:length(value), j = 1:length(value), x = value))
   } else if(object@attributes$hermitian)
-    return(val + t(Conj(val))/2)
+    return(value + t(Conj(value))/2)
   else if(any(sapply(c("symmetric", "PSD", "NSD"), function(key) { object@attributes[key] }))) {
-    val <- val + t(val)
-    val <- val/2
+    value <- value + t(value)
+    value <- value/2
     if(object@attributes$symmetric)
-      return(val)
+      return(value)
 
-    wV <- eigen(val, symmetric = TRUE, only.values = FALSE)
+    wV <- eigen(value, symmetric = TRUE, only.values = FALSE)
     w <- wV$values
     V <- wV$vectors
 
     if(object@attributes$PSD) {
       bad <- w < 0
       if(!any(bad))
-        return(val)
+        return(value)
       w[bad] <- 0
     } else {   # NSD
       bad <- w > 0
       if(!any(bad))
-        return(val)
+        return(value)
       w[bad] <- 0
     }
     return((V %*% w) %*% t(V))
   } else
-    return(val)
+    return(value)
 })
 
 #' @describeIn Leaf Project and assign a value to the leaf.
-setReplaceMethod("project", "Leaf", function(object, value) {
+setMethod("project_and_assign", "Leaf", function(object, value) {
   object@value <- project(object, value)
   return(object)
 })

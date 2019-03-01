@@ -6,11 +6,7 @@
 #' @name AffAtom-class
 #' @aliases AffAtom
 #' @rdname AffAtom-class
-AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
-
-#' @param object An \linkS4class{AffAtom} object.
-#' @describeIn AffAtom Affine atoms can be complex valued.
-setMethod("allow_complex", "Atom", function(object) { TRUE })
+AffAtom <- setClass("AffAtom", prototype(.allow_complex = TRUE), contains = c("VIRTUAL", "Atom"))
 
 #' @describeIn AffAtom The sign of the atom.
 setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args) })

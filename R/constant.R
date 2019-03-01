@@ -278,7 +278,7 @@ setMethod("get_data", "Parameter", function(object) {
 
 #' @describeIn Parameter The name of the parameter.
 #' @export
-setMethod("name", "Parameter", function(object) { object@name })
+setMethod("name", "Parameter", function(x) { x@name })
 
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) { object@value })

@@ -366,7 +366,7 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 #' name(x)
 #' name(y)
 #' @export
-setGeneric("name", function(object) { standardGeneric("name") })
+setGeneric("name", function(x) { standardGeneric("name") })
 
 #'
 #' Parts of an Expression Leaf
@@ -498,8 +498,16 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 #' @param val The assigned value.
 #' @return The value rounded to the attribute type.
 #' @docType methods
-#' @rdname project
-setGeneric("project", function(object, val) { standardGeneric("project") })
+#' @rdname project-methods
+NULL
+
+#' @rdname project-methods
+#' @export
+setGeneric("project", function(object, value) { standardGeneric("project") })
+
+#' @rdname project-methods
+#' @export
+setGeneric("project_and_assign", function(object, value) { standardGeneric("project_and_assign") })
 
 #'
 #' Validate Value
@@ -577,14 +585,14 @@ setGeneric("%>>%", function(e1, e2) { standardGeneric("%>>%") })
 setGeneric("%<<%", function(e1, e2) { standardGeneric("%<<%") })
 
 #'
-#' Atom Size
+#' Atom Dimensions
 #'
-#' Determine the size of an atom based on its arguments.
+#' Determine the dimensions of an atom based on its arguments.
 #'
 #' @param object A \linkS4class{Atom} object.
-#' @return A numeric vector \code{c(row, col)} indicating the size of the atom.
-#' @rdname size_from_args
-setGeneric("size_from_args", function(object) { standardGeneric("size_from_args") })
+#' @return A numeric vector \code{c(row, col)} indicating the dimensions of the atom.
+#' @rdname dim_from_args
+setGeneric("dim_from_args", function(object) { standardGeneric("dim_from_args") })
 
 #'
 #' Atom Sign
@@ -652,6 +660,28 @@ setGeneric("is_atom_concave", function(object) { standardGeneric("is_atom_concav
 #' @rdname curvature-atom
 #' @export
 setGeneric("is_atom_affine", function(object) { standardGeneric("is_atom_affine") })
+
+#'
+#' Log-Log Curvature of an Atom
+#'
+#' Determine if an atom is log-log convex, concave, or affine.
+#'
+#' @param object A \linkS4class{Atom} object.
+#' @return A logical value.
+#' @name log_log_curvature-atom
+NULL
+
+#' @rdname log_log_curvature-atom
+#' @export
+setGeneric("is_atom_log_log_convex", function(object) { standardGeneric("is_atom_log_log_convex") })
+
+#' @rdname log_log_curvature-atom
+#' @export
+setGeneric("is_atom_log_log_concave", function(object) { standardGeneric("is_atom_log_log_concave") })
+
+#' @rdname log_log_curvature-atom
+#' @export
+setGeneric("is_atom_log_log_affine", function(object) { standardGeneric("is_atom_log_log_affine") })
 
 #'
 #' Curvature of Composition

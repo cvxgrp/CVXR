@@ -63,7 +63,7 @@ Elementwise.promote <- function(arg, dim) {
 #' @name Abs-class
 #' @aliases Abs
 #' @rdname Abs-class
-.Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
+.Abs <- setClass("Abs", representation(x = "Expression"), prototype(.allow_complex = TRUE), contains = "Elementwise")
 
 #' @param x An \linkS4class{Expression} object.
 #' @rdname Abs-class
@@ -75,8 +75,6 @@ setMethod("initialize", "Abs", function(.Object, ..., x) {
 })
 
 #' @param object An \linkS4class{Abs} object.
-setMethod("allow_complex", "Abs", function(object) { TRUE })
-
 #' @param values A list of arguments to the atom.
 #' @describeIn Abs The elementwise absolute value of the input.
 setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })

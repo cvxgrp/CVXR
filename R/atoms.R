@@ -6,19 +6,20 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(args = "list", .dim = "numeric"), prototype(args = list(), .size = NA_real_),
+Atom <- setClass("Atom", representation(args = "list", .dim = "NumORNULL", .allow_complex = "logical"), prototype(args = list(), .dim = NULL, .allow_complex = FALSE),
                  validity = function(object) {
                    if(length(object@args) == 0)
                      stop("[Atom: args] no arguments given to ", class(object))
                    return(TRUE)
                  }, contains = c("VIRTUAL", "Expression"))
 
-setMethod("initialize", "Atom", function(.Object, ..., args = list(), .size = NA_real_) {
+setMethod("initialize", "Atom", function(.Object, ..., args = list(), .dim = NULL, .allow_complex = FALSE) {
   .Object@args <- lapply(args, as.Constant)
   validate_args(.Object)
   .Object@.dim <- dim_from_args(.Object)
   if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
+  .Object@.allow_complex <- .allow_complex
   callNextMethod(.Object, ...)
 })
 
@@ -46,9 +47,6 @@ setMethod("validate_args", "Atom", function(object) {
   if(!allow_complex(object) && any(sapply(object@args, is_complex)))
     stop("Arguments to ", class(object), " cannot be complex.")
 })
-
-#' @rdname allow_complex
-setMethod("allow_complex", "Atom", function(object) { FALSE })
 
 #' @rdname dim_from_args
 setMethod("dim_from_args", "Atom", function(object) { stop("Unimplemented") })
@@ -723,7 +721,7 @@ LambdaMin <- function(A) {
 #' @name LambdaSumLargest-class
 #' @aliases LambdaSumLargest
 #' @rdname LambdaSumLargest-class
-.LambdaSumLargest <- setClass("LambdaSumLargest", representation(k = "numeric"), contains = "LambdaMax")
+.LambdaSumLargest <- setClass("LambdaSumLargest", representation(k = "numeric"), prototype(.allow_complex = TRUE), contains = "LambdaMax")
 
 #' @param A An \linkS4class{Expression} or numeric matrix.
 #' @param k A positive integer.
@@ -736,9 +734,6 @@ setMethod("initialize", "LambdaSumLargest", function(.Object, ..., k) {
 })
 
 #' @param object A \linkS4class{LambdaSumLargest} object.
-#' @rdname LambdaSumLargest Can the atom operate on complex values?
-setMethod("allow_complex", "LambdaSumLargest", function(object) { TRUE })
-
 #' @param values A list of arguments to the atom.
 #' @rdname LambdaSumLargest Returns the largest eigenvalue of \code{A}, which must be symmetric.
 setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
@@ -898,7 +893,7 @@ setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 #' @name MatrixFrac-class
 #' @aliases MatrixFrac
 #' @rdname MatrixFrac-class
-.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
 
 #' @param X An \linkS4class{Expression} or numeric matrix.
 #' @param P An \linkS4class{Expression} or numeric matrix.
@@ -924,9 +919,6 @@ setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@P <- P
   callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
 })
-
-#' @rdname MatrixFrac Can the atom operate on complex values?
-setMethod("allow_complex", "MatrixFrac", function(object) { TRUE })
 
 #' @param object A \linkS4class{MatrixFrac} object.
 #' @param values A list of arguments to the atom.
@@ -1154,7 +1146,7 @@ setMethod(".column_grad", "MinEntries", function(object, value) {
 #' @aliases Pnorm
 #' @rdname Pnorm-class
 .Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric", .original_p = "numeric"),
-                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_), contains = "AxisAtom")
+                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_, .allow_complex = TRUE), contains = "AxisAtom")
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
@@ -1231,9 +1223,6 @@ setMethod("validate_args", "Pnorm", function(object) {
     stop("pnorm(x, p) cannot have x complex for p < 1.")
 })
 
-#' @describeIn Pnorm Can the atom operate on complex values?
-setMethod("allow_complex", "Pnorm", function(object) { TRUE })
-
 #' @describeIn Pnorm The atom is positive.
 setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
 
@@ -1263,8 +1252,8 @@ setMethod("is_pwl", "Pnorm", function(object) { FALSE })
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
 #' @describeIn Pnorm The name and arguments of the atom.
-setMethod("name", "Pnorm", function(object) {
-  sprintf("%s(%s, %s)", class(object), name(object@args[[1]]), object@p)
+setMethod("name", "Pnorm", function(x) {
+  sprintf("%s(%s, %s)", class(x), name(x@args[[1]]), x@p)
 })
 
 setMethod(".domain", "Pnorm", function(object) {
@@ -1348,12 +1337,9 @@ Norm <- function(x, p = 2, axis = NA_real_) {
 #' @name Norm1-class
 #' @aliases Norm1
 #' @rdname Norm1-class
-Norm1 <- setClass("Norm1", contains = "AxisAtom")
+Norm1 <- setClass("Norm1", prototype(.allow_complex = TRUE), contains = "AxisAtom")
 
 #' @param x,object A \linkS4class{Norm1} object.
-#' @rdname Norm1 Can the atom operate on complex values?
-setMethod("allow_complex", "Norm1", function(object) { TRUE })
-
 setMethod("name", "Norm1", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
 })
@@ -1408,10 +1394,7 @@ setMethod(".column_grad", "Norm1", function(object, values) {
 #' @name NormInf-class
 #' @aliases NormInf
 #' @rdname NormInf-class
-NormInf <- setClass("NormInf", contains = "AxisAtom")
-
-#' @describeIn NormInf Can the atom operate on complex values?
-setMethod("allow_complex", "NormInf", function(object) { TRUE })
+NormInf <- setClass("NormInf", prototype(.allow_complex = TRUE), contains = "AxisAtom")
 
 setMethod("name", "NormInf", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
@@ -1465,7 +1448,7 @@ setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplement
 #' @name NormNuc-class
 #' @aliases NormNuc
 #' @rdname NormNuc-class
-.NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
+.NormNuc <- setClass("NormNuc", representation(A = "Expression"), prototype(.allow_complex = TRUE), contains = "Atom")
 
 #' @param A An \linkS4class{Expression} representing a matrix.
 #' @rdname NormNuc-class
@@ -1694,7 +1677,7 @@ setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, 
 #' @name QuadForm-class
 #' @aliases QuadForm
 #' @rdname QuadForm-class
-.QuadForm <- setClass("QuadForm", representation(x = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+.QuadForm <- setClass("QuadForm", representation(x = "ConstValORExpr", P = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
 
 #' @param x An \linkS4class{Expression} or numeric vector.
 #' @param P An \linkS4class{Expression}, numeric matrix, or vector.
@@ -1710,9 +1693,6 @@ setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
 setMethod("name", "QuadForm", function(x) {
   paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
 })
-
-#' @describeIn QuadForm Can the atom operate on complex values?
-setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 
 #' @describeIn QuadForm Returns the quadratic form.
 setMethod("to_numeric", "QuadForm", function(object, values) {
@@ -1973,7 +1953,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
 #' @name SigmaMax-class
 #' @aliases SigmaMax
 #' @rdname SigmaMax-class
-.SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), contains = "Atom")
+.SigmaMax <- setClass("SigmaMax", representation(A = "ConstValORExpr"), prototype(.allow_complex = TRUE), contains = "Atom")
 
 #' @param A An \linkS4class{Expression} or matrix.
 #' @rdname SigmaMax-class

@@ -1265,4 +1265,6 @@ setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { s
 setGeneric("import_solver", function(object) { standardGeneric("import_solver") })
 setGeneric("is_installed", function(object) { standardGeneric("is_installed") })
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
+setGeneric("unpack", function(object, solution) { standardGeneric("unpack") })
+setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGenerid("unpack_results") })
 ## End of newly added generics

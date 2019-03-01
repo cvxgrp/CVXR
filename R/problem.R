@@ -853,48 +853,6 @@ saveValuesById <- function(variables, offset_map, result_vec) {
     result
  }
 
-## getValue <- function(cvxObj, solution) {
-##     solution[[ as.character(id(cvxObj)) ]]
-## }
-
-# @describeIn Problem Saves the values of the optimal primal and dual variables.
-# @param object A \linkS4class{Problem} object.
-# @param result_vec A vector containing the variable values.
-# @param objstore The variables or constraints where the values will be stored.
-# @param offset_map A list mapping object ID to offset in \code{result_vec}.
-setMethod("Problem.save_values", "Problem", function(object, result_vec, objstore, offset_map) {
-##  if(length(result_vec) > 0)   # Cast to desired matrix type
-##    result_vec <- as.matrix(result_vec)
-
-  objects_new <- list()
-  for(obj in objstore) {
-    size <- size(obj)
-    rows <- size[1]
-    cols <- size[2]
-
-    id_char <- as.character(id(obj))
-    if(id_char %in% names(offset_map)) {
-      offset <- offset_map[[id_char]]
-
-      # Handle scalars
-      if(all(c(rows, cols) == c(1,1)))
-        value <- result_vec[offset + 1]
-      else {
-        # value <- matrix(0, nrow = rows, ncol = cols)
-        # value <- intf_block_add(value, result_vec[(offset + 1):(offset + rows*cols)], 0, 0, rows, cols)
-        value <- result_vec[(offset + 1):(offset + rows*cols)]
-        value <- matrix(value, nrow = rows, ncol = cols)
-        offset <- offset + rows * cols
-      }
-    } else  # The variable was multiplied by zero
-      value <- matrix(0, nrow = rows, ncol = cols)
-    obj <- save_value(obj, value)
-    objects_new[[id_char]] <- obj
-  }
-  objects_new
-  # TODO: Update variable values in original problem object
-})
-
 #'
 #' Arithmetic Operations on Problems
 #'

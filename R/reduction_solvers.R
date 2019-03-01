@@ -170,7 +170,7 @@ construct_solving_chain <- function(problem, candidates) {
   
   stop(paste("Either candidate conic solvers (", 
        paste(candidates$conic_solvers, sep = " ", collapse = ","), ") do not support the cones output by the problem (",
-       cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
+       paste(cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
 }
 
 #'

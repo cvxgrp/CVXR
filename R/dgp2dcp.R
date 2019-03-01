@@ -147,7 +147,7 @@ geo_mean_canon <- function(expr, args) {
 }
 
 log_canon <- function(expr, args) {
-  return(list(Log(args[[1]]), list())
+  return(list(Log(args[[1]]), list()))
 }
 
 mul_canon <- function(expr, args) {

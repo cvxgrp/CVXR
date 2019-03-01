@@ -9,11 +9,11 @@ setClass("Qp2SymbolicQp", contains = "Canonicalization")
 
 Qp2SymbolicQp.accepts <- function(problem) {
   is_qpwa(problem@objective@expr) &&
-    length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
-    all(sapply(problem@constraints, function(c) {
-      ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint")) && is_pwl(c@args[[1]])) ||
+  length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
+  all(sapply(problem@constraints, function(c) {
+        ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint") && is_pwl(c@args[[1]])) ||
         ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
-    }))
+  }))
 }
 
 # Problems with quadratic, piecewise affine objectives, piecewise-linear constraints, inequality constraints,

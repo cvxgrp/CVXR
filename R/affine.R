@@ -369,12 +369,12 @@ setMethod(".grad", "MulExpression", function(object, values) {
   #      [   ...       ...      ...]
   DX <- sparseMatrix(i = c(), j = c(), dims = c(DX_rows, cols))
   step <- dim(object@args[[1]])[1]
-  for(k in 1:step) {
+  for(k in 1:step)
     DX[seq(k, DX_rows, step), seq(k, cols, step)] <- Y
   if(length(dim(object@args[[2]])) == 1)
     cols <- 1
   else
-    cols <- dim(object@args[[2]])[2]
+    cols <- ncol(object@args[[2]])
   DY <- Matrix(bdiag(lapply(1:cols, function(k) { t(X) })), sparse = TRUE)
   return(list(DX, DY))
 })
@@ -852,9 +852,9 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, dat
 
 Diag <- function(expr) {
   expr <- as.Constant(expr)
-  if(is_vector(expr)) {
+  if(is_vector(expr))
     return(DiagVec(Vec(expr)))
-  else if(ndim(expr) == 2 && dim(expr)[1] == dim(expr)[2])
+  else if(ndim(expr) == 2 && nrow(expr) == ncol(expr))
     return(DiagMat(expr = expr))
   else
     stop("Argument to Diag must be a vector or square matrix.")
@@ -1251,7 +1251,7 @@ setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
   .Object@expr <- expr
   .Object@promoted_dim <- promoted_dim
   callNextMethod(.Object, ..., args = list(.Object@expr))
-}
+})
 
 #' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
@@ -1517,7 +1517,7 @@ Transpose <- function(expr, axes = NULL) { .Transpose(expr = expr, axes = axes) 
 setMethod("initialize", "Transpose", function(.Object, ..., expr, axes = NULL) {
   .Object@expr <- expr
   .Object@axes <- axes
-  callNextMethod(.Object, ... args = list(.Object@expr))
+  callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{Transpose} object.

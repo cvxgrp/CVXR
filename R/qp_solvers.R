@@ -270,10 +270,10 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Add equality constraints: iterate over the rows of A,
   # adding each row into the model.
-  if(!is.null(model$_v811_addMConstrs)) {
+  if(!is.null(model$v811_addMConstrs)) {
     # @e can pass all of A == b at once.
     sense <- rep(GRB.EQUAL, nrow(A))
-    model <- model$_v811_addMConstrs(A, sense, b)
+    model <- model$v811_addMConstrs(A, sense, b)
   } else if(nrow(A) > 0) {
     for(i in 1:nrow(A)) {
       start <- A@p[i]
@@ -289,10 +289,10 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Add inequality constraints: iterate over the rows of F,
   # adding each row into the model.
-  if(!is.null(model$_v811_addMConstrs)) {
+  if(!is.null(model$v811_addMConstrs)) {
     # We can pass all of F <= g at once.
     sense <- rep(GRB.LESS_EQUAL, nrow(Fmat))
-    model <- model$_v811_addMConstrs(Fmat, sense, g)
+    model <- model$v811_addMConstrs(Fmat, sense, g)
   } else if(nrow(Fmat) > 0) {
     for(i in nrow(Fmat)) {
       start <- Fmat@p[i]
@@ -308,8 +308,8 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   
   # Define objective.
   obj <- gurobi::QuadExpr()
-  if(!is.null(model$_v811_setMObjective))
-    model <- model$_v811_setMObjective(0.5*P, q)
+  if(!is.null(model$v811_setMObjective))
+    model <- model$v811_setMObjective(0.5*P, q)
   else {
     nnz <- nnzero(P)
     if(nnz > 0) {   # If there are any nonzero elements in P.

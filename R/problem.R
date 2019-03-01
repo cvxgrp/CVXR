@@ -740,14 +740,14 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
     for(c in object@constraints) {
       if(id(c) %in% solution@dual_vars)
         object <- save_value(c, solution@dual_vars[id(c)])
-    } else if(solution@status %in% INF_OR_UNB) {
-      for(v in variables(object))
-        object <- save_value(v, NA)
-      for(constr in object@constraints)
-        object <- save_value(constr, NA)
-    } else
-      stop("Cannot unpack invalid solution")
-  }
+    }
+  } else if(solution@status %in% INF_OR_UNB) {
+    for(v in variables(object))
+      object <- save_value(v, NA)
+    for(constr in object@constraints)
+      object <- save_value(constr, NA)
+  } else
+    stop("Cannot unpack invalid solution")
   object@value <- solution@opt_val
   object@status <- solution@status
   object@solution <- solution

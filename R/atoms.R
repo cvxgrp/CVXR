@@ -211,7 +211,7 @@ setMethod("value", "Atom", function(object) {
 .value_impl.Atom <- function(object) {
   obj_dim <- dim(object)
   # dims with 0's dropped in presolve.
-  if(0 in obj_dim)
+  if(0 %in% obj_dim)
     result <- matrix(nrow = 0, ncol = 0)
   # Catch the case when the expression is known to be zero through DCP analysis
   else if(is_zero(object))
@@ -2108,7 +2108,7 @@ TotalVariation <- function(value, ...) {
     val_dim <- dim(value)
     rows <- val_dim[1]
     cols <- val_dim[2]
-    args <- lapply(list(...), as.Constant })
+    args <- lapply(list(...), as.Constant)
     values <- c(list(value), args)
     
     diffs <- list()

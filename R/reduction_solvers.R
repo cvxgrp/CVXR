@@ -79,8 +79,8 @@ setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start
   stop("Unimplemented")
 })
 
-setMethod("solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
-  ret <- apply(object, problem)
+setMethod("psolve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
+  ret <- perform(object, problem)
   data <- ret[[1]]
   inv_data <- ret[[2]]
   solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
@@ -93,7 +93,7 @@ setMethod("accepts", signature(object = "ConstantSolver", problem = "Problem"), 
   return(length(variables(problem)) == 0)
 })
 
-setMethod("apply", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
   return(list(problem, list()))
 })
 
@@ -108,7 +108,7 @@ setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start,
   return(solve(object, data, warm_start, verbose, solver_opts))
 })
 
-setMethod("solve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("psolve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {
   if(all(sapply(problem@constraints, function(c) { !is.na(value(c)) })))
     return(Solution(OPTIMAL, value(problem@objective), list(), list(), list()))
   else
@@ -191,12 +191,13 @@ setMethod("initialize", "SolvingChain", function(.Object, ...) {
   return(.Object)
 })
 
+# Create and return a new SolvingChain by concatenating chain with this instance.
 setMethod("prepend", signature(object = "SolvingChain", chain = "SolvingChain"), function(object, chain) {
   SolvingChain(reductions = c(chain@reductions, object@reductions))
 })
 
-setMethod("solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
-  tmp <- apply(object, problem)
+setMethod("psolve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
+  tmp <- perform(object, problem)
   data <- tmp[[1]]
   inverse_data <- tmp[[2]]
   solution <- solve_via_data(object@solver, data, warm_start, verbose, solver_opts)

@@ -10,7 +10,7 @@ setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), fu
   Complex2Real.accepts(problem)
 })
 
-setMethod("apply", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
   leaf_map <- list()

@@ -66,7 +66,7 @@ setMethod("accepts", signature(object = "CBCSolver", problem = "Problem"), funct
 })
 
 # Returns a new problem and data for inverting the new solution.
-setMethod("apply", signature(object = "CBCSolver", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CBCSolver", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list(id(variables(problem)[[1]]))
   names(inv_data) <- object@VAR_ID
@@ -108,7 +108,7 @@ setMethod("invert", signature(object = "CBCSolver", solution = "Solution", inver
 
 setMethod("solve", "CBCSolver", function(object, problem, warm_start, verbose, solver_opts) {
   solver <- CBC_OLD()
-  inv_data <- apply(object, problem)[[2]]
+  inv_data <- perform(object, problem)[[2]]
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { unlist(canonical_form(c)[[2]]) })
   prob_data <- list(ProblemData())

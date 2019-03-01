@@ -64,7 +64,7 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real
 # Conic solver class with reduction semantics.
 ConicSolver <- setClass("ConicSolver", contains = "Solver")
 
-# The key that maps to ConeDims in the data returned by apply().
+# The key that maps to ConeDims in the data returned by perform().
 setMethod("dims", "ConicSolver", function(object) { "dims" })
 
 # Every conic solver must support Zero and NonPos constraints.
@@ -237,7 +237,7 @@ setMethod("accepts", signature(object = "CBC", problem = "Problem"), function(ob
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "CBC", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CBC", problem = "Problem"), function(object, problem) {
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
@@ -311,7 +311,7 @@ setMethod("accepts", signature(object = "CPLEX", problem = "Problem"), function(
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
@@ -402,7 +402,7 @@ setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[1]] })
@@ -439,7 +439,7 @@ ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
 setMethod("mip_capable", "ECOS_BB", function(object) { TRUE })
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
-setMethod("apply", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
   res <- callNextMethod(object, problem)
   data <- res[[1]]
   inv_data <- res[[2]]
@@ -523,7 +523,7 @@ setMethod("import_solver", "ECOS", function(object) {
 })
 
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
-setMethod("apply", "ECOS", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
+setMethod("perform", "ECOS", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list()
   inv_data[var_id(object)] <- id(variables(problem)[[1]])
@@ -617,7 +617,7 @@ setMethod("accepts", signature(object = "Elemental", problem = "Problem"), funct
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "Elemental", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Elemental", problem = "Problem"), function(object, problem) {
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
@@ -749,7 +749,7 @@ setMethod("accepts", signature(object = "GUROBI", problem = "Problem"), function
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
@@ -876,7 +876,7 @@ setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_
   return(FakeSymData(objective, constraints))
 })
 
-setMethod("solve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+setMethod("psolve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   sym_data <- get_sym_data(solver, objective, constraints)
 
   id_map <- sym_data@var_offsets
@@ -1014,7 +1014,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
   return(list(coeff, offset, lengths, ids))
 })
 
-setMethod("apply", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
   inv_data[var_id(object)] <- id(variables(problem)[[1]])
@@ -1570,7 +1570,7 @@ setMethod("format_constr", "SCS", function(object, problem, constr, exp_cone_ord
     callNextMethod(object, problem, constr, exp_cone_order)
 })
 
-setMethod("apply", signature(object = "SCS", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "SCS", problem = "Problem"), function(object, problem) {
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   inv_data <- list()
@@ -1745,7 +1745,7 @@ setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })

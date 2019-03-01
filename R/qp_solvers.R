@@ -490,7 +490,7 @@ setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), functi
          all(sapply(problem@constraints, function(c) { class(c) == "Zero" || class(c) == "NonPos" })))
 })
 
-setMethod("apply", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   # Construct QP problem data stored in a dictionary.
   # The QP has the following form
   #    minimize 1/2 x' P x + q' x

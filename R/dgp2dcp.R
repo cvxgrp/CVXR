@@ -4,11 +4,11 @@ setMethod("accepts", signature(object = "Dgp2Dcp", problem = "Problem"), functio
   return(is_dgp(problem))
 })
 
-setMethod("apply", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("The supplied problem is not DGP")
   object@canon_methods <- DgpCanonMethods()
-  tmp <- apply(Canonicalization(), problem)
+  tmp <- perform(Canonicalization(), problem)
   equiv_problem <- tmp[[1]]
   inverse_data <- tmp[[2]]
   inverse_data@problem <- problem

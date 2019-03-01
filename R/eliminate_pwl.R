@@ -28,7 +28,7 @@ setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), fu
   return(any(sapply(atom_types, function(atom) { atom %in% pwl_types })))
 })
 
-setMethod("apply", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot canonicalize away piecewise linear atoms.")
   callNextMethod(object, problem)

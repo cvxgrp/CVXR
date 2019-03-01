@@ -1131,25 +1131,84 @@ setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 # Map of solver status code to CVXR status.
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
 
+#'
+#' Reduction Acceptance
+#' 
+#' Determine whether the reduction accepts a problem.
+#' 
+#' @param object A \linkS4class{Reduction} object.
+#' @param problem A \linkS4class{Problem} to check.
+#' @return A logical value indicating whether the reduction can be applied.
+#' @docType methods
+#' @rdname accepts
+setGeneric("accepts", function(object, problem) { standardGeneric("accepts") })
+
+#'
+#' Reduce a Problem
+#'
+#' Reduces the owned problem to an equivalent problem.
+#' 
+#' @param object A \linkS4class{Reduction} object.
+#' @return An equivalent problem, encoded either as a \linkS4class{Problem} object or a list.
+#' @docType methods
+#' @rdname reduce
+setGeneric("reduce", function(object) { standardGeneric("reduce") })
+
+#'
+#' Retrieve Solution
+#' 
+#' Retrieves a solution to the owned problem.
+#' 
+#' @param object A \linkS4class{Reduction} object.
+#' @return A \linkS4class{Solution} to the problem emitted by \code{\link{reduce}}.
+#' @docType methods
+#' @rdname retrieve
+setGeneric("retrieve", function(object, solution) { standardGeneric("retrieve") })
+
+#'
+#' Perform Reduction
+#' 
+#' Performs the reduction on a problem and returns an equivalent problem.
+#' 
+#' @param object A \linkS4class{Reduction} object.
+#' @param problem A \linkS4class{Problem} on which the reduction will be performed.
+#' @return A list containing
+#' \itemize{
+#'    \item{"problem"}{A \linkS4class{Problem} or list representing the equivalent problem.}
+#'    \item{"inverse_data"}{A \linkS4class{InverseData} or list containing the data needed to invert this particular reduction.}
+#' }
+#' @docType methods
+#' @rdname perform
+setGeneric("perform", function(object, problem) { standardGeneric("perform") })
+
+#'
+#' Return Original Solution
+#' 
+#' Returns a solution to the original problem given the inverse data.
+#' 
+#' @param object A \linkS4class{Reduction} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated \code{inverse_data}.
+#' @param inverse_data A \linkS4class{InverseData} object encoding the original problem.
+#' @return A \linkS4class{Solution} to the original problem.
+#' @docType methods
+#' @rdname invert
+setGeneric("invert", function(object, solution, inverse_data) { standardGeneric("invert") })
+
 ## Version 1.0 edits
 
 ## Start of newly added generics
 setGeneric("expr", function(object) { standardGeneric("expr") })
-setGeneric("atoms", function(object) { standardGeneric("atoms") })
-setGeneric("is_hermitian", function(object) { standardGeneric("is_hermitian") })
-setGeneric("is_psd", function(object) { standardGeneric("is_psd") })
-setGeneric("is_nsd", function(object) { standardGeneric("is_nsd") })
-setGeneric("is_qpwa", function(object) { standardGeneric("is_qpwa") })
-setGeneric("is_nonneg", function(object) { standardGeneric("is_nonneg") })
-setGeneric("is_nonpos", function(object) { standardGeneric("is_nonpos") })
-setGeneric("is_symmetric", function(object) { standardGeneric("is_symmetric") })
-setGeneric("shape", function(object) { standardGeneric("shape") })
 setGeneric("ndim", function(object) { standardGeneric("ndim") })
 setGeneric("flatten", function(object) { standardGeneric("flatten") })
 setGeneric("get_attr_str", function(object) { standardGeneric("get_attr_str") })
-setGeneric("project", function(object, val) { standardGeneric("project") })
-setGeneric("project_and_assign", function(object, val) { standardGeneric("project_and_assign") })
-setGeneric("is_real", function(object) { standardGeneric("is_real") })
-setGeneric("is_imag", function(object) { standardGeneric("is_imag") })
-setGeneric("is_complex", function(object) { standardGeneric("is_complex") })
+setGeneric("get_var_offsets", function(object, variables) { standardGeneric("get_var_offsets") })
+setGeneric("canonicalize_tree", function(object, expr) { standardGeneric("canonicalize_tree") })
+setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("canonicalize_expr") })
+setGeneric("stuffed_objective", function(object, problem, inverse_data) { standardGeneric("stuffed_objective") })
+setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
+setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
+setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
+setGeneric("import_solver", function(object) { standardGeneric("import_solver") })
+setGeneric("is_installed", function(object) { standardGeneric("is_installed") })
+setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 ## End of newly added generics

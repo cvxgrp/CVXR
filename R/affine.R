@@ -75,14 +75,14 @@ setMethod(".grad", "AffAtom", function(object, values) {
     if(is_constant(arg))
       fake_args <- c(fake_args, list(canonical_form(Constant(value(arg)))[[1]]))
     else {
-      fake_args <- c(fake_args, list(create_var(shape(arg), idx)))
+      fake_args <- c(fake_args, list(create_var(dim(arg), idx)))
       var_offsets <- c(var_offsets, offset)
       var_names <- c(var_names, idx)
       offset <- offset + size(arg)
     }
   }
   names(var_offsets) <- var_names
-  graph <- graph_implementation(object, fake_args, shape(object), get_data(object))
+  graph <- graph_implementation(object, fake_args, dim(object), get_data(object))
   fake_expr <- graph[[1]]
 
   # Get the matrix representation of the function.
@@ -90,23 +90,23 @@ setMethod(".grad", "AffAtom", function(object, values) {
   V <- prob_mat[[1]]
   I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
   J <- prob_mat[[3]] + 1
-  shape <- c(offset, size(object))
-  stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = shape)
+  dims <- c(offset, size(object))
+  stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = dims)
 
   # Break up into per argument matrices.
   grad_list <- list()
   start <- 1
   for(arg in object@args) {
     if(is_constant(arg)) {
-      grad_shape <- c(size(arg), shape[2])
-      if(all(grad_shape == c(1,1)))
+      grad_dim <- c(size(arg), dims[2])
+      if(all(grad_dim == c(1,1)))
         grad_list <- c(grad_list, list(0))
       else
-        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = grad_shape)))
+        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = grad_dim)))
     } else {
       stop <- start + size(arg)
       if(stop == start)
-        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = c(0, shape[2]))))
+        grad_list <- c(grad_list, list(sparseMatrix(i = c(), j = c(), dims = c(0, dim[2]))))
       else
         grad_list <- c(grad_list, list(stacked_grad[start:(stop-1),]))
       start <- stop
@@ -134,8 +134,8 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 })
 
 #' @param x,object An \linkS4class{AddExpression} object.
-#' @describeIn AddExpression The shape of the expression.
-setMethod("shape_from_args", "AddExpression", function(object) { sum_shapes(lapply(object@args, shape)) })
+#' @describeIn AddExpression The dimensions of the expression.
+setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
 
 setMethod("name", "AddExpression", function(x) {
   paste(sapply(object@args, as.character), collapse = " + ")
@@ -150,29 +150,29 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
 
 setMethod("is_symmetric", "AddExpression", function(object) {
   symm_args <- all(sapply(object@args, is_symmetric))
-  return(shape(object)[1] == shape(object)[2] && symm_args)
+  return(dim(object)[1] == dim(object)[2] && symm_args)
 })
 
 setMethod("is_hermitian", "AddExpression", function(object) {
   herm_args <- all(sapply(object@args, is_hermitian))
-  return(shape(object)[1] == shape(object)[2] && herm_args)
+  return(dim(object)[1] == dim(object)[2] && herm_args)
 })
 
-AddExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+AddExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) {
-    if(!all(arg$shape == shape) && lo.is_scalar(arg)) 
-      lo.promote(arg, shape) 
+    if(!all(arg$dim == dim) && lo.is_scalar(arg)) 
+      lo.promote(arg, dim) 
     else 
       arg })
   list(lo.sum_expr(arg_objs), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn AddExpression The graph implementation of the expression.
-setMethod("graph_implementation", "AddExpression", function(object, arg_objs, shape, data = NA_real_) {
-  AddExpression.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "AddExpression", function(object, arg_objs, dim, data = NA_real_) {
+  AddExpression.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -219,8 +219,8 @@ setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-", op_func = function(x) { -x })
 })
 
-#' @describeIn NegExpression The (row, col) shape of the expression.
-setMethod("shape_from_args", "NegExpression", function(object) { shape(object@args[[1]]) })
+#' @describeIn NegExpression The (row, col) dimensions of the expression.
+setMethod("dim_from_args", "NegExpression", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn NegExpression The (is positive, is negative) sign of the expression.
 setMethod("sign_from_args", "NegExpression", function(object) { c(is_nonpos(object@args[[1]]), is_nonneg(object@args[[1]])) })
@@ -238,16 +238,16 @@ setMethod("is_symmetric", "NegExpression", function(object) { is_symmetric(objec
 #' @describeIn NegExpression Is the expression Hermitian?
 setMethod("is_hermitian", "NegExpression", function(object) { is_hermitian(object@args[[1]]) })
 
-NegExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+NegExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.neg_expr(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn NegExpression The graph implementation of the expression.
-setMethod("graph_implementation", "NegExpression", function(object, arg_objs, shape, data = NA_real_) {
-  NegExpression.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "NegExpression", function(object, arg_objs, dim, data = NA_real_) {
+  NegExpression.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -323,14 +323,14 @@ setMethod("initialize", "MulExpression", function(.Object, ...) {
 #' @param values A list of arguments to the atom.
 #' @describeIn MulExpression Matrix multiplication.
 setMethod("to_numeric", "MulExpression", function(object, values) {
-  if(is.null(shape(object@args[[1]])) || is.null(shape@args[[2]]))
+  if(is.null(dim(object@args[[1]])) || is.null(dim(object@args[[2]])))
     return(values[[1]] * values[[2]])
   else
     return(values[[1]] %*% values[[2]])
 })
 
-#' @describeIn MulExpression The (row, col) shape of the expression.
-setMethod("shape_from_args", "MulExpression", function(object) { mul_shapes(shape(object@args[[1]]), shape(object@args[[2]])) })
+#' @describeIn MulExpression The (row, col) dimensions of the expression.
+setMethod("dim_from_args", "MulExpression", function(object) { mul_dims(dim(object@args[[1]]), dim(object@args[[2]])) })
 
 #' @describeIn MulExpression Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
 setMethod("is_atom_convex", "MulExpression", function(object) {
@@ -368,35 +368,35 @@ setMethod(".grad", "MulExpression", function(object, values) {
   #      [diag(Y21), diag(Y22), ...]
   #      [   ...       ...      ...]
   DX <- sparseMatrix(i = c(), j = c(), dims = c(DX_rows, cols))
-  step <- shape(object@args[[1]])[1]
+  step <- dim(object@args[[1]])[1]
   for(k in 1:step) {
     DX[seq(k, DX_rows, step), seq(k, cols, step)] <- Y
-  if(length(shape(object@args[[2]])) == 1)
+  if(length(dim(object@args[[2]])) == 1)
     cols <- 1
   else
-    cols <- shape(object@args[[2]])[2]
+    cols <- dim(object@args[[2]])[2]
   DY <- Matrix(bdiag(lapply(1:cols, function(k) { t(X) })), sparse = TRUE)
   return(list(DX, DY))
 })
 
-MulExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+MulExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Promote the right-hand side to a diagonal matrix if necessary
   lhs <- arg_objs[[1]]
   rhs <- arg_objs[[2]]
   if(lo.is_const(lhs))
-    return(list(lo.mul_expr(lhs, rhs, shape), list()))
+    return(list(lo.mul_expr(lhs, rhs, dim), list()))
   else if(lo.is_const(rhs))
-    return(list(lo.rmul_expr(lhs, rhs, shape), list()))
+    return(list(lo.rmul_expr(lhs, rhs, dim), list()))
   else
     stop("Product of two non-constant expressions is not DCP.")
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn MulExpression The graph implementation of the expression.
-setMethod("graph_implementation", "MulExpression", function(object, arg_objs, shape, data = NA_real_) {
-  MulExpression.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "MulExpression", function(object, arg_objs, dim, data = NA_real_) {
+  MulExpression.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -424,8 +424,8 @@ setMethod("is_qpwa", "DivExpression", function(object) {
   is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
-#' @describeIn DivExpression The (row, col) shape of the left-hand expression.
-setMethod("shape_from_args", "DivExpression", function(object) { shape(object@args[[1]]) })
+#' @describeIn DivExpression The (row, col) dimensions of the left-hand expression.
+setMethod("dim_from_args", "DivExpression", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
 setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) && is_scalar(object@args[[2]]) })
@@ -456,16 +456,16 @@ setMethod("is_decr", "DivExpression", function(object, idx) {
     return(is_nonneg(object@args[[1]]))
 })
 
-DivExpression.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+DivExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DivExpression The graph implementation of the expression.
-setMethod("graph_implementation", "DivExpression", function(object, arg_objs, shape, data = NA_real_) {
-  DivExpression.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "DivExpression", function(object, arg_objs, dim, data = NA_real_) {
+  DivExpression.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -487,9 +487,9 @@ setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
   lh_exp <- as.Constant(lh_exp)
   rh_exp <- as.Constant(rh_exp)
   if(is_scalar(lh_exp) && !is_scalar(rh_exp))
-    lh_exp <- promote(lh_exp, shape(rh_exp))
+    lh_exp <- promote(lh_exp, dim(rh_exp))
   else if(is_scalar(rh_exp) && !is_scalar(lh_exp))
-    rh_exp <- promote(rh_exp, shape(lh_exp))
+    rh_exp <- promote(rh_exp, dim(lh_exp))
   callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
 })
 
@@ -497,7 +497,7 @@ setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
 setMethod("to_numeric", "Multiply", function(object, values) { values[[1]] * values[[2]] })
 
 #' @describeIn Multiply The sum of the argument dimensions - 1.
-setMethod("shape_from_args", "Multiply", function(object) { sum_shapes(lapply(object@args, shape)) })
+setMethod("dim_from_args", "Multiply", function(object) { sum_dims(lapply(object@args, dim)) })
 
 #' @describeIn Multiply Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Multiply", function(object) { TRUE })
@@ -515,7 +515,7 @@ setMethod("is_nsd", "Multiply", function(object) {
   (is_psd(object@args[[1]]) && is_nsd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_psd(object@args[[2]]))
 })
 
-Multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Multiply.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   lhs <- arg_objs[[1]]
   rhs <- arg_objs[[2]]
   if(lo.is_const(lhs))
@@ -527,11 +527,11 @@ Multiply.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Multiply The graph implementation of the expression.
-setMethod("graph_implementation", "Multiply", function(object, arg_objs, shape, data = NA_real_) {
-  Multiply.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Multiply", function(object, arg_objs, dim, data = NA_real_) {
+  Multiply.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -559,8 +559,8 @@ setMethod("initialize", "Conjugate", function(.Object, ..., expr) {
 #' @describeIn Conjugate Elementwise complex conjugate of the constant.
 setMethod("to_numeric", "Conjugate", function(object, values) { Conj(values[[1]]) })
 
-#' @describeIn Conjugate The (row, col) shape of the expression.
-setMethod("shape_from_args", "Conjugate", function(object) { shape(object@args[[1]]) })
+#' @describeIn Conjugate The (row, col) dimensions of the expression.
+setMethod("dim_from_args", "Conjugate", function(object) { dim(object@args[[1]]) })
 
 #' @param idx An index into the atom.
 #' @describeIn Conjugate Is the composition weakly increasing in argument idx?
@@ -613,10 +613,10 @@ setMethod("validate_args", "Conv", function(object) {
     stop("The first argument to Conv must be constant.")
 })
 
-#' @describeIn Conv The shape of the atom.
-setMethod("shape_from_args", "Conv", function(object) {
-  lh_length <- shape(object@args[[1]])[1]
-  rh_length <- shape(object@args[[2]])[1]
+#' @describeIn Conv The dimensions of the atom.
+setMethod("dim_from_args", "Conv", function(object) {
+  lh_length <- dim(object@args[[1]])[1]
+  rh_length <- dim(object@args[[2]])[1]
   c(lh_length + rh_length - 1, 1)
 })
 
@@ -630,16 +630,16 @@ setMethod("is_incr", "Conv", function(object, idx) { is_nonneg(object@args[[1]])
 #' @describeIn Conv Is the left-hand expression negative?
 setMethod("is_decr", "Conv", function(object, idx) { is_nonpos(object@args[[1]]) })
 
-Conv.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.conv(arg_objs[[1]], arg_objs[[2]], shape), list())
+Conv.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.conv(arg_objs[[1]], arg_objs[[2]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Conv The graph implementation of the atom.
-setMethod("graph_implementation", "Conv", function(object, arg_objs, shape, data = NA_real_) {
-  Conv.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Conv", function(object, arg_objs, dim, data = NA_real_) {
+  Conv.graph_implementation(arg_objs, dim, data)
 })
 
 #
@@ -699,18 +699,18 @@ setMethod("to_numeric", "CumSum", function(object, values) {
   apply(values[[1]], object@axis, base::cumsum)
 })
 
-#' @describeIn CumSum The shape of the atom.
-setMethod("shape_from_args", "CumSum", function(object) { shape(object@args[[1]]) })
+#' @describeIn CumSum The dimensions of the atom.
+setMethod("dim_from_args", "CumSum", function(object) { dim(object@args[[1]]) })
 
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
-  val_shape <- shape(object@values[[1]])
-  collapse <- setdiff(1:length(val_shape), object@axis)
-  dim <- val_shape[collapse]
+  val_dim <- dim(object@values[[1]])
+  collapse <- setdiff(1:length(val_dim), object@axis)
+  dim <- val_dim[collapse]
   mat <- matrix(0, nrow = dim, ncol = dim)
   mat[lower.tri(mat, diag = TRUE)] <- 1
 
-  var <- Variable(shape(object@args[[1]]))
+  var <- Variable(dim(object@args[[1]]))
   if(object@axis == 2)
     grad <- .grad(new("MulExpression", lh_exp = mat, rh_exp = var), values)[[2]]
   else
@@ -721,13 +721,13 @@ setMethod(".grad", "CumSum", function(object, values) {
 #' @describeIn CumSum Returns the axis being summed.
 setMethod("get_data", "CumSum", function(object) { list(object@axis) })
 
-CumSum.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+CumSum.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Implicit O(n) definition:
   # X = Y[:1,:] - Y[1:,:]
-  Y <- create_var(shape)
+  Y <- create_var(dim)
   axis <- data[[1]]
-  collapse <- setdiff(1:length(shape), axis)
-  dim <- shape[collapse]
+  collapse <- setdiff(1:length(dim), axis)
+  dim <- dim[collapse]
   diff_mat <- get_diff_mat(dim, axis)
   diff_mat <- create_const(diff_mat, c(dim, dim), sparse = TRUE)
 
@@ -739,11 +739,11 @@ CumSum.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn CumSum The graph implementation of the atom.
-setMethod("graph_implementation", "CumSum", function(object, arg_objs, shape, data = NA_real_) {
-  CumSum.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "CumSum", function(object, arg_objs, dim, data = NA_real_) {
+  CumSum.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -771,9 +771,9 @@ setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
 #' @describeIn DiagVec Convert the vector constant into a diagonal matrix.
 setMethod("to_numeric", "DiagVec", function(object, values) { diag(as.vector(values[[1]])) })
 
-#' @describeIn DiagVec The shape of the atom.
-setMethod("shape_from_args", "DiagVec", function(object) {
-  rows <- shape(object@args[[1]])[1]
+#' @describeIn DiagVec The dimensions of the atom.
+setMethod("dim_from_args", "DiagVec", function(object) {
+  rows <- dim(object@args[[1]])[1]
   c(rows, rows)
 })
 
@@ -789,16 +789,16 @@ setMethod("is_symmetric", "DiagVec", function(object) { TRUE })
 #' @describeIn DiagVec Is the expression hermitian?
 setMethod("is_hermitian", "DiagVec", function(object) { TRUE })
 
-DiagVec.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+DiagVec.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.diag_vec(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DiagVec The graph implementation of the atom.
-setMethod("graph_implementation", "DiagVec", function(object, arg_objs, shape, data = NA_real_) {
-  DiagVec.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "DiagVec", function(object, arg_objs, dim, data = NA_real_) {
+  DiagVec.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -827,8 +827,8 @@ setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
 setMethod("to_numeric", "DiagMat", function(object, values) { diag(values[[1]]) })
 
 #' @describeIn DiagMat The size of the atom.
-setMethod("shape_from_args", "DiagMat", function(object) {
-  rows <- shape(object@args[[1]])[1]
+setMethod("dim_from_args", "DiagMat", function(object) {
+  rows <- dim(object@args[[1]])[1]
   c(rows, 1)
 })
 
@@ -838,23 +838,23 @@ setMethod("is_atom_log_log_convex", "DiagMat", function(object) { TRUE })
 #' @describeIn DiagMat Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "DiagMat", function(object) { TRUE })
 
-DiagMat.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+DiagMat.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn DiagMat The graph implementation of the atom.
-setMethod("graph_implementation", "DiagMat", function(object, arg_objs, shape, data = NA_real_) {
-  DiagMat.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, data = NA_real_) {
+  DiagMat.graph_implementation(arg_objs, dim, data)
 })
 
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr)) {
     return(DiagVec(Vec(expr)))
-  else if(ndim(expr) == 2 && shape(expr)[1] == shape(expr)[2])
+  else if(ndim(expr) == 2 && dim(expr)[1] == dim(expr)[2])
     return(DiagMat(expr = expr))
   else
     stop("Argument to Diag must be a vector or square matrix.")
@@ -867,9 +867,9 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
   else if(axis == 2)
     x <- t(x)
   
-  x_shape <- shape(x)
-  collapse <- setdiff(1:length(x_shape), axis)
-  m <- x_shape[collapse]
+  x_dim <- dim(x)
+  collapse <- setdiff(1:length(x_dim), axis)
+  m <- x_dim[collapse]
   if(k <= 0 || k >= m)
     stop("Must have k > 0 and x must have < k elements along collapsed axis.")
   if(lag <= 0 || lag >= m)
@@ -919,16 +919,16 @@ HStack <- function(...) {
 #' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
 setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
 
-#' @describeIn HStack The shape of the atom.
-setMethod("shape_from_args", "HStack", function(object) {
+#' @describeIn HStack The dimensions of the atom.
+setMethod("dim_from_args", "HStack", function(object) {
   if(ndim(object@args[[1]]) == 1)
     return(c(sum(sapply(object@args, size)), NA))
   else{
-    cols <- sum(sapply(object@args, function(arg) { shape(arg)[2] }))
-    arg_shape <- shape(object@args[[1]])
-    dims <- c(arg_shape[1], cols)
-    if(length(arg_shape) >= 3)
-      dims <- c(dims, arg_shape[3:length(arg_shape)])
+    cols <- sum(sapply(object@args, function(arg) { dim(arg)[2] }))
+    arg_dim <- dim(object@args[[1]])
+    dims <- c(arg_dim[1], cols)
+    if(length(arg_dim) >= 3)
+      dims <- c(dims, arg_dim[3:length(arg_dim)])
     return(dims)
   }
 })
@@ -941,17 +941,17 @@ setMethod("is_atom_log_log_concave", "HStack", function(object) { TRUE })
 
 #' @describeIn HStack Check all arguments have the same height.
 setMethod("validate_args", "HStack", function(object) {
-  model <- shape(object@args[[1]])
+  model <- dim(object@args[[1]])
   error <- "All the input dimensions except for axis 2 (columns) must match exactly."
   len <- length(object@args)
   
   if(len >= 2) {
     for(arg in object@args[2:len]) {
-      if(length(shape(arg)) != length(model))
+      if(length(dim(arg)) != length(model))
         stop(error)
       else if(length(model) > 1) {
         for(i in 1:length(model)) {
-          if(i != 2 && shape(arg)[i] != model[i])
+          if(i != 2 && dim(arg)[i] != model[i])
             stop(error)
         }
       }
@@ -959,16 +959,16 @@ setMethod("validate_args", "HStack", function(object) {
   }
 })
 
-HStack.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.hstack(arg_objs, shape), list())
+HStack.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.hstack(arg_objs, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn HStack The graph implementation of the atom.
-setMethod("graph_implementation", "HStack", function(object, arg_objs, shape, data = NA_real_) {
-  HStack.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "HStack", function(object, arg_objs, dim, data = NA_real_) {
+  HStack.graph_implementation(arg_objs, dim, data)
 })
 
 setMethod("cbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { HStack(x, y) })
@@ -999,8 +999,8 @@ setMethod("initialize", "Imag", function(.Object, ..., expr) {
 #' @describeIn Imag The imaginary part of the given value.
 setMethod("to_numeric", "Imag", function(object, values) { Im(values[[1]]) })
 
-#' @describeIn Imag The shape of the atom.
-setMethod("shape_from_args", "Imag", function(object) { shape(object@args[[1]]) })
+#' @describeIn Imag The dimensions of the atom.
+setMethod("dim_from_args", "Imag", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn Imag Is the atom imaginary?
 setMethod("is_imag", "Imag", function(object) { FALSE })
@@ -1029,7 +1029,7 @@ setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1
 Index <- function(expr, key) { .Index(expr = expr, key = key) }
 
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
-  .Object@key <- ku_validate_key(key, shape(expr))   # TODO: Double check key validation
+  .Object@key <- ku_validate_key(key, dim(expr))   # TODO: Double check key validation
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
@@ -1041,9 +1041,9 @@ setMethod("to_numeric", "Index", function(object, values) {
   ku_slice_mat(values[[1]], object@key)
 })
 
-#' @describeIn Index The shape of the atom.
-setMethod("shape_from_args", "Index", function(object) {
-  ku_shape(object@key, shape(object@args[[1]]))
+#' @describeIn Index The dimensions of the atom.
+setMethod("dim_from_args", "Index", function(object) {
+  ku_dim(object@key, dim(object@args[[1]]))
 })
 
 #' @describeIn Index Is the atom log-log convex?
@@ -1055,17 +1055,17 @@ setMethod("is_atom_log_log_concave", "Index", function(object) { TRUE })
 #' @describeIn Index A list containing \code{key}.
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
-Index.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  obj <- lo.index(arg_objs[[1]], shape, data[[1]])
+Index.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  obj <- lo.index(arg_objs[[1]], dim, data[[1]])
   list(obj, list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the size of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Index The graph implementation of the atom.
-setMethod("graph_implementation", "Index", function(object, arg_objs, shape, data = NA_real_) {
-  Index.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Index", function(object, arg_objs, dim, data = NA_real_) {
+  Index.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1078,8 +1078,8 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, shape, dat
 #' @name SpecialIndex-class
 #' @aliases SpecialIndex
 #' @rdname SpecialIndex-class
-.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "numeric", .shape = "numeric"),
-                          prototype(.select_mat = NA_real_, .shape = NA_real_), contains = "AffAtom")
+.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "numeric", .dim = "numeric"),
+                          prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param key A list containing the start index, end index, and step size of the slice.
@@ -1092,11 +1092,11 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
   col <- key[[2]]
   
   # Order the entries of expr and select them using key.
-  expr_shape <- shape(expr)
+  expr_dim <- dim(expr)
   expr_size <- size(expr)
   
   idx_mat <- seq(expr_size)
-  idx_mat <- matrix(idx_mat, nrow = expr_shape[1], ncol = expr_shape[2])
+  idx_mat <- matrix(idx_mat, nrow = expr_dim[1], ncol = expr_dim[2])
   if(is.matrix(row) && is.null(col))
     select_mat <- idx_mat[row]
   else if(is.null(row) && !is.null(col))
@@ -1107,7 +1107,7 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
     select_mat <- idx_mat[row, col, drop = FALSE]
   
   .Object@.select_mat <- select_mat
-  .Object@.shape <- shape(.Object@.select_mat)
+  .Object@.dim <- dim(.Object@.select_mat)
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
 
@@ -1120,8 +1120,8 @@ setMethod("to_numeric", "SpecialIndex", function(object, values) {
   ku_slice_mat(values[[1]], object@key)
 })
 
-#' @describeIn Index The shape of the atom.
-setMethod("shape_from_args", "SpecialIndex", function(object) { object@.shape })
+#' @describeIn Index The dimensions of the atom.
+setMethod("dim_from_args", "SpecialIndex", function(object) { object@.dim })
 
 #' @describeIn SpecialIndex Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "SpecialIndex", function(object) { TRUE })
@@ -1136,22 +1136,22 @@ setMethod(".grad", "SpecialIndex", function(object) {
   select_mat <- object@.select_mat
   
   if(!is.null(dim(select_mat)))
-    final_shape <- dim(select_mat)
+    final_dim <- dim(select_mat)
   else   # Always cast 1-D arrays as column vectors
-    final_shape <- c(length(select_mat), 1)
+    final_dim <- c(length(select_mat), 1)
   
   # Select the chosen entries from expr.
   select_vec <- as.vector(select_mat)
-  ##select_vec <- as.matrix(select_mat, nrow=final_shape[1L], ncol=final_shape[2L])
+  ##select_vec <- as.matrix(select_mat, nrow=final_dim[1L], ncol=final_dim[2L])
   
   expr_size <- size(object@args[[1]])
   identity <- sparseMatrix(i = 1:expr_size, j = 1:expr_size, x = rep(1, expr_size))
   idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
   if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
-    lowered <- Reshape(idmat * v, final_shape[1], final_shape[2])
+    lowered <- Reshape(idmat * v, final_dim[1], final_dim[2])
   else
-    lowered <- Reshape(idmat %*% v, final_shape[1], final_shape[2])
+    lowered <- Reshape(idmat %*% v, final_dim[1], final_dim[2])
   return(grad(lowered))
 })
 
@@ -1193,10 +1193,10 @@ setMethod("validate_args", "Kron", function(object) {
     stop("Kron requires matrix arguments.")
 })
 
-#' @describeIn Kron The shape of the atom.
-setMethod("shape_from_args", "Kron", function(object) {
-  rows <- shape(object@args[[1]])[1] * shape(object@args[[2]])[1]
-  cols <- shape(object@args[[1]])[2] * shape(object@args[[2]])[2]
+#' @describeIn Kron The dimensions of the atom.
+setMethod("dim_from_args", "Kron", function(object) {
+  rows <- dim(object@args[[1]])[1] * dim(object@args[[2]])[1]
+  cols <- dim(object@args[[1]])[2] * dim(object@args[[2]])[2]
   c(rows, cols)
 })
 
@@ -1210,16 +1210,16 @@ setMethod("is_incr", "Kron", function(object, idx) { is_nonneg(object@args[[1]])
 #' @describeIn Kron Is the right-hand expression negative?
 setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[2]]) })
 
-Kron.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.kron(arg_objs[[1]], arg_objs[[2]], shape), list())
+Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.kron(arg_objs[[1]], arg_objs[[2]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the size of the resulting expression.
+#' @param dim A vector with two elements representing the size of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Kron The graph implementation of the atom.
-setMethod("graph_implementation", "Kron", function(object, arg_objs, shape, data = NA_real_) {
-  Kron.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Kron", function(object, arg_objs, dim, data = NA_real_) {
+  Kron.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1228,43 +1228,43 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, shape, data
 #' This class represents the promotion of a scalar expression into a vector/matrix.
 #'
 #' @slot expr An \linkS4class{Expression} or numeric constant.
-#' @slot promoted_shape The desired shape.
+#' @slot promoted_dim The desired dimensions.
 #' @name Promote-class
 #' @aliases Promote
 #' @rdname Promote-class
-.Promote <- setClass("Promote", representation(expr = "Expression", promoted_shape = "numeric"), contains = "AffAtom")
+.Promote <- setClass("Promote", representation(expr = "Expression", promoted_dim = "numeric"), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} or numeric constant.
-#' @param promoted_shape The desired shape.
+#' @param promoted_dim The desired dimensions.
 #' @rdname Promote-class
-Promote <- function(expr, promoted_shape) { 
+Promote <- function(expr, promoted_dim) { 
   expr <- as.Constant(expr)
-  if(!all(shape(expr) == shape)) {
+  if(!all(dim(expr) == promoted_dim)) {
     if(!is_scalar(expr))
       stop("Only scalars may be promoted.")
-    return(.Promote(expr = expr, promoted_shape = promoted_shape))
+    return(.Promote(expr = expr, promoted_dim = promoted_dim))
   } else
     return(expr)
 }
 
-setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_shape) {
+setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
   .Object@expr <- expr
-  .Object@promoted_shape <- promoted_shape
+  .Object@promoted_dim <- promoted_dim
   callNextMethod(.Object, ..., args = list(.Object@expr))
 }
 
-#' @describeIn Promote Promotes the value to the new shape.
+#' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
-  array(1, dim = object@promoted_shape) * values[[1]]
+  array(1, dim = object@promoted_dim) * values[[1]]
 })
 
 #' @describeIn Promote Is the expression symmetric?
 setMethod("is_symmetric", "Promote", function(object) {
-  ndim(object) == 2 && shape(object)[1] == shape(object)[2]
+  ndim(object) == 2 && dim(object)[1] == dim(object)[2]
 })
 
-#' @describeIn Promote Returns the (row, col) shape of the expression.
-setMethod("shape_from_args", "Promote", function(object) { object@promoted_shape })
+#' @describeIn Promote Returns the (row, col) dimensions of the expression.
+setMethod("dim_from_args", "Promote", function(object) { object@promoted_dim })
 
 #' @describeIn Promote Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Promote", function(object) { TRUE })
@@ -1273,18 +1273,18 @@ setMethod("is_atom_log_log_convex", "Promote", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "Promote", function(object) { TRUE })
 
 #' @describeIn Promote Returns information needed to reconstruct the expression besides the args.
-setMethod("get_data", "Promote", function(object) { list(object@promoted_shape) })
+setMethod("get_data", "Promote", function(object) { list(object@promoted_dim) })
 
-Promote.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.promote(arg_objs[[1]], shape), list())
+Promote.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.promote(arg_objs[[1]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Promote The graph implementation of the atom.
-setMethod("graph_implementation", "Promote", function(object, arg_objs, shape, data = NA_real_) {
-  Promote.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Promote", function(object, arg_objs, dim, data = NA_real_) {
+  Promote.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1312,8 +1312,8 @@ setMethod("initialize", "Real", function(.Object, ..., expr) {
 #' @describeIn Real The imaginary part of the given value.
 setMethod("to_numeric", "Real", function(object, values) { Re(values[[1]]) })
 
-#' @describeIn Real The shape of the atom.
-setMethod("shape_from_args", "Real", function(object) { shape(object@args[[1]]) })
+#' @describeIn Real The dimensions of the atom.
+setMethod("dim_from_args", "Real", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn Real Is the atom imaginary?
 setMethod("is_imag", "Real", function(object) { FALSE })
@@ -1328,22 +1328,22 @@ setMethod("is_symmetric", "Real", function(object) { is_hermitian(object@args[[1
 #' The Reshape class.
 #'
 #' This class represents the reshaping of an expression. The operator vectorizes the expression,
-#' then unvectorizes it into the new shape. Entries are stored in column-major order.
+#' then unvectorizes it into the new dimensions. Entries are stored in column-major order.
 #'
 #' @slot expr An \linkS4class{Expression} or numeric matrix.
-#' @slot shape The new shape.
+#' @slot new_dim The new dimensions.
 #' @name Reshape-class
 #' @aliases Reshape
 #' @rdname Reshape-class
-.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", new_shape = "numeric"), contains = "AffAtom")
+.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", new_dim = "numeric"), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} or numeric matrix.
-#' @param shape The new shape.
+#' @param new_dim The new dimensions.
 #' @rdname Reshape-class
-Reshape <- function(expr, new_shape) { .Reshape(expr = expr, new_shape = new_shape) }
+Reshape <- function(expr, new_dim) { .Reshape(expr = expr, new_dim = new_dim) }
 
-setMethod("initialize", "Reshape", function(.Object, ..., expr, new_shape) {
-  .Object@new_shape <- new_shape
+setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim) {
+  .Object@new_dim <- new_dim
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(.Object@expr))
 })
@@ -1352,20 +1352,20 @@ setMethod("initialize", "Reshape", function(.Object, ..., expr, new_shape) {
 #' @param values A list of arguments to the atom.
 #' @describeIn Reshape Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
-  dim(values[[1]]) <- object@new_shape
+  dim(values[[1]]) <- object@new_dim
   values[[1]]
 })
 
 #' @describeIn Reshape Check the new shape has the same number of entries as the old.
 setMethod("validate_args", "Reshape", function(object) {
   old_len <- size(object@args[[1]])
-  new_len <- prod(object@new_shape)
+  new_len <- prod(object@new_dim)
   if(old_len != new_len)
-    stop("Invalid reshape dimensions (", paste(object@new_shape, sep = ","), ")")
+    stop("Invalid reshape dimensions (", paste(object@new_dim, sep = ","), ")")
 })
 
-#' @describeIn Reshape The \code{c(rows, cols)} shape of the new expression.
-setMethod("shape_from_args", "Reshape", function(object) { object@new_shape })
+#' @describeIn Reshape The \code{c(rows, cols)} dimensions of the new expression.
+setMethod("dim_from_args", "Reshape", function(object) { object@new_dim })
 
 #' @describeIn Reshape Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Reshape", function(object) { TRUE })
@@ -1374,18 +1374,18 @@ setMethod("is_atom_log_log_convex", "Reshape", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "Reshape", function(object) { TRUE })
 
 #' @describeIn Reshape Returns a list containing the new shape.
-setMethod("get_data", "Reshape", function(object) { list(object@new_shape) })
+setMethod("get_data", "Reshape", function(object) { list(object@new_dim) })
 
-Reshape.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.reshape(arg_objs[[1]], shape), list())
+Reshape.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.reshape(arg_objs[[1]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Reshape The graph implementation of the atom.
-setMethod("graph_implementation", "Reshape", function(object, arg_objs, shape, data = NA_real_) {
-  Reshape.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Reshape", function(object, arg_objs, dim, data = NA_real_) {
+  Reshape.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1418,35 +1418,35 @@ setMethod("is_atom_log_log_convex", "SumEntries", function(object) { TRUE })
 #' @describeIn SumEntries Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "SumEntries", function(object) { FALSE })
 
-SumEntries.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   axis <- data[[1]]
   keepdims <- data[[2]]
   if(is.na(axis))
-    obj <- lo.sum_entries(arg_objs[[1]], shape = shape)
+    obj <- lo.sum_entries(arg_objs[[1]], dim = dim)
   else if(axis == 1) {
     if(keepdims)
-      const_shape <- c(arg_objs[[1]]$shape[2], 1)
+      const_dim <- c(arg_objs[[1]]$dim[2], 1)
     else
-      const_shape <- c(arg_objs[[1]]$shape[2], NA_integer_)
-    ones <- create_const(array(1, dim = const_shape), const_shape)
-    obj <- lo.rmul_expr(arg_objs[[1]], ones, shape)
+      const_dim <- c(arg_objs[[1]]$dim[2], NA_integer_)
+    ones <- create_const(array(1, dim = const_dim), const_dim)
+    obj <- lo.rmul_expr(arg_objs[[1]], ones, dim)
   } else {   # axis == 2
     if(keepdims)
-      const_shape <- c(1, arg_objs[[1]]$shape[1])
+      const_dim <- c(1, arg_objs[[1]]$dim[1])
     else
-      const_shape <- c(arg_objs[[1]]$shape[1], NA_integer_)
-    ones <- create_const(array(1, dim = const_shape), const_shape)
-    obj <- lo.mul_expr(ones, arg_objs[[1]], shape)
+      const_dim <- c(arg_objs[[1]]$dim[1], NA_integer_)
+    ones <- create_const(array(1, dim = const_dim), const_dim)
+    obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
   }
   list(obj, list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn SumEntries The graph implementation of the atom.
-setMethod("graph_implementation", "SumEntries", function(object, arg_objs, shape, data = NA_real_) {
-  SumEntries.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "SumEntries", function(object, arg_objs, dim, data = NA_real_) {
+  SumEntries.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1476,13 +1476,13 @@ setMethod("to_numeric", "Trace", function(object, values) { sum(diag(values[[1]]
 
 #' @describeIn Trace Check the argument is a square matrix.
 setMethod("validate_args", "Trace", function(object) {
-  shape <- shape(object@args[[1]])
-  if(shape[1] != shape[2])
+  arg_dim <- dim(object@args[[1]])
+  if(arg_dim[1] != arg_dim[2])
     stop("Argument to Trace must be a square matrix")
 })
 
 #' @describeIn Trace The atom is a scalar.
-setMethod("shape_from_args", "Trace", function(object){ c() })
+setMethod("dim_from_args", "Trace", function(object){ c() })
 
 #' @describeIn Trace Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })
@@ -1490,16 +1490,16 @@ setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })
 #' @describeIn Trace Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "Trace", function(object) { FALSE })
 
-Trace.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Trace.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.trace(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Trace The graph implementation of the atom.
-setMethod("graph_implementation", "Trace", function(object, arg_objs, shape, data = NA_real_) {
-  Trace.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Trace", function(object, arg_objs, dim, data = NA_real_) {
+  Trace.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1531,12 +1531,12 @@ setMethod("is_symmetric", "Transpose", function(object) { is_symmetric(object@ar
 #' @describeIn Transpose Is the expression hermitian?
 setMethod("is_hermitian", "Transpose", function(object) { is_hermitian(object@args[[1]]) })
 
-#' @describeIn Transpose The shape of the atom.
-setMethod("shape_from_args", "Transpose", function(object) {
+#' @describeIn Transpose The dimensions of the atom.
+setMethod("dim_from_args", "Transpose", function(object) {
   if(is.null(object@axes))
-    rev(shape(object@args[[1]]))
+    rev(dim(object@args[[1]]))
   else
-    shape(object@args[[1]])[object@axes]
+    dim(object@args[[1]])[object@axes]
 })
 
 #' @describeIn Transpose Is the atom log-log convex?
@@ -1548,16 +1548,16 @@ setMethod("is_atom_log_log_concave", "Transpose", function(object) { TRUE })
 #' @describeIn Transpose Returns the axes for transposition.
 setMethod("get_data", "Transpose", function(object) { list(object@axes) })
 
-Transpose.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+Transpose.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.transpose(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Transpose The graph implementation of the atom.
-setMethod("graph_implementation", "Transpose", function(object, arg_objs, shape, data = NA_real_) {
-  Transpose.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "Transpose", function(object, arg_objs, dim, data = NA_real_) {
+  Transpose.graph_implementation(arg_objs, dim, data)
 })
 
 #'
@@ -1591,16 +1591,16 @@ setMethod("to_numeric", "UpperTri", function(object, values) {
 
 #' @describeIn UpperTri Check the argument is a square matrix.
 setMethod("validate_args", "UpperTri", function(object) {
-  shape <- shape(object@args[[1]])
-  if(ndim(object@args[[1]]) != 2 || shape[1] != shape[2])
+  arg_dim <- dim(object@args[[1]])
+  if(ndim(object@args[[1]]) != 2 || arg_dim[1] != arg_dim[2])
     stop("Argument to UpperTri must be a square matrix.")
 })
 
-#' @describeIn UpperTri The shape of the atom.
-setMethod("shape_from_args", "UpperTri", function(object) {
-  size <- shape(object@args[[1]])
-  rows <- size[1]
-  cols <- size[2]
+#' @describeIn UpperTri The dimensions of the atom.
+setMethod("dim_from_args", "UpperTri", function(object) {
+  arg_dim <- dim(object@args[[1]])
+  rows <- arg_dim[1]
+  cols <- arg_dim[2]
   c(floor(rows*(cols-1)/2), 1)
 })
 
@@ -1610,21 +1610,21 @@ setMethod("is_atom_log_log_convex", "UpperTri", function(object) { TRUE })
 #' @describeIn UpperTri Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "UpperTri", function(object) { TRUE })
 
-UpperTri.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
+UpperTri.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn UpperTri The graph implementation of the atom.
-setMethod("graph_implementation", "UpperTri", function(object, arg_objs, shape, data = NA_real_) {
-  UpperTri.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "UpperTri", function(object, arg_objs, dim, data = NA_real_) {
+  UpperTri.graph_implementation(arg_objs, dim, data)
 })
 
 Vec <- function(X) {
   X <- as.Constant(X)
-  Reshape(expr = X, shape = c(size(X), NA))
+  Reshape(expr = X, new_dim = c(size(X), NA))
 }
 
 #'
@@ -1649,31 +1649,31 @@ setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", val
 
 #' @describeIn VStack Check all arguments have the same width.
 setMethod("validate_args", "VStack", function(object) {
-  model <- shape(object@args[[1]])
+  model <- dim(object@args[[1]])
   if(length(object@args) >= 2) {
     for(arg in object@args[2:length(object@args)]) {
-      arg_shape <- shape(arg)
-      if(length(arg_shape) != length(model) || length(model) != length(arg_shape) ||
-         (length(model) > 1 && any(model[2:length(model)] != arg_shape[2:length(arg_shape)])) ||
-         (length(model) <= 1 && any(model != arg_shape)))
+      arg_dim <- dim(arg)
+      if(length(arg_dim) != length(model) || length(model) != length(arg_dim) ||
+         (length(model) > 1 && any(model[2:length(model)] != arg_dim[2:length(arg_dim)])) ||
+         (length(model) <= 1 && any(model != arg_dim)))
         stop("All the input dimensions except for axis 1 must match exactly.")
     }
   }
 })
 
-#' @describeIn VStack The shape of the atom.
-setMethod("shape_from_args", "VStack", function(object) {
+#' @describeIn VStack The dimensions of the atom.
+setMethod("dim_from_args", "VStack", function(object) {
   if(ndim(object@args[[1]]) == 0)
     c(length(object@args), 1)
   else if(ndim(object@args[[1]]) == 1)
-    c(length(object@args), shape(object@args[[1]])[1])
+    c(length(object@args), dim(object@args[[1]])[1])
   else {
-    rows <- sum(sapply(object@args, function(arg) { shape(arg)[1] }))
-    arg_shape <- shape(object@args[[1]])
-    if(length(arg_shape) < 2)
+    rows <- sum(sapply(object@args, function(arg) { dim(arg)[1] }))
+    arg_dim <- dim(object@args[[1]])
+    if(length(arg_dim) < 2)
       c(rows, NA)
     else
-      c(rows, arg_shape[2:length(arg_shape)])
+      c(rows, arg_dim[2:length(arg_dim)])
   }
 })
 
@@ -1683,16 +1683,16 @@ setMethod("is_atom_log_log_convex", "VStack", function(object) { TRUE })
 #' @describeIn VStack Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "VStack", function(object) { TRUE })
 
-VStack.graph_implementation <- function(arg_objs, shape, data = NA_real_) {
-  list(lo.vstack(arg_objs, shape), list())
+VStack.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.vstack(arg_objs, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param shape A vector with two elements representing the shape of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn VStack The graph implementation of the atom.
-setMethod("graph_implementation", "VStack", function(object, arg_objs, shape, data = NA_real_) {
-  VStack.graph_implementation(arg_objs, shape, data)
+setMethod("graph_implementation", "VStack", function(object, arg_objs, dim, data = NA_real_) {
+  VStack.graph_implementation(arg_objs, dim, data)
 })
 
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })

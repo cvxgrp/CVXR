@@ -129,9 +129,9 @@ setMethod("get_var_offsets", signature(object = "InverseData", variables = "list
 #' problem \eqn{B} and then proceed to find a solution to \eqn{B}, we can convert
 #' it to a solution of \eqn{A} with at most a moderate amount of effort.
 #'
-#' Every reduction supports three methods: accepts, apply, and invert. The accepts
+#' Every reduction supports three methods: accepts, perform, and invert. The accepts
 #' method of a particular reduction codifies the types of problems that it is applicable
-#' to, the apply method takes a problem and reduces it to a (new) equivalent form,
+#' to, the perform method takes a problem and reduces it to a (new) equivalent form,
 #' and the invert method maps solutions from reduced-to problems to their problems
 #' of provenance.
 #'
@@ -152,7 +152,7 @@ setMethod("reduce", "Reduction", function(object) {
   if(is.null(object@problem))
     stop("The reduction was constructed without a Problem")
   
-  tmp <- apply(object, object@problem)
+  tmp <- perform(object, object@problem)
   object@.emitted_problem <- problem
   object@.retrieval_data <- retrieval_data
   return(list(object, object@.emitted_problem))
@@ -164,8 +164,8 @@ setMethod("retrieve", signature(object = "Reduction", solution = "Solution"), fu
   return(invert(object, solution, object@.retrieval_data))
 })
 
-#' @describeIn Reduction Applies the reduction to a problem and returns an equivalent problem.
-setMethod("apply", signature(object = "Reduction", problem = "Problem"), function(object, problem) { stop("Unimplemented") })
+#' @describeIn Reduction Performs the reduction on a problem and returns an equivalent problem.
+setMethod("perform", signature(object = "Reduction", problem = "Problem"), function(object, problem) { stop("Unimplemented") })
 
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
 #' @param inverse_data The data encoding the original problem.
@@ -203,7 +203,7 @@ setMethod("initialize", function(.Object, ..., problem, canon_methods) {
   callNextMethod(.Object, ..., problem = problem)
 })
 
-setMethod("apply", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
   canon <- canonicalize_tree(object, problem@objective)
@@ -296,15 +296,15 @@ setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(
   for(r in object@reductions) {
     if(!accepts(r, problem))
       return(FALSE)
-    problem <- apply(r, problem)[[1]]
+    problem <- perform(r, problem)[[1]]
   }
   return(TRUE)
 })
 
-setMethod("apply", signature(object = "Chain", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   inverse_data <- list()
   for(r in object@reductions) {
-    res <- apply(r, problem)
+    res <- perform(r, problem)
     problem <- res[[1]]
     inv <- res[[2]]
     inverse_data <- c(inverse_data, inv)
@@ -353,7 +353,7 @@ setClass("CvxAttr2Constr", contains = "Reduction")
 
 setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) { TRUE })
 
-setMethod("apply", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
   if(length(convex_attributes(variables(problem))) == 0)
     return(list(problem), list())
 
@@ -466,7 +466,7 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
 setClass("EvalParams", contains = "Reduction")
 
 setMethod("accepts", signature(object = "EvalParams", problem = "Problem"), function(object, problem) { TRUE })
-setMethod("apply", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
     obj_expr <- replace_params_with_consts(problem@objective@expr)
@@ -510,7 +510,7 @@ setMethod("invert", signature(object = "EvalParams", solution = "Solution", inve
 setClass("FlipObjective", contains = "Reduction")
 
 setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
-setMethod("apply", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
   is_maximize <- class(problem@objective) == "Maximize"
   if(class(problem@objective) == "Maximize")
     objective <- Maximize
@@ -557,7 +557,7 @@ extract_mip_idx <- function(variables) {
 
 setClass("MatrixStuffing", contains = "Reduction")
 
-setMethod("apply", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
   # Form the constraints

@@ -6,7 +6,7 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(args = "list", .shape = "numeric"), prototype(args = list(), .size = NA_real_),
+Atom <- setClass("Atom", representation(args = "list", .dim = "numeric"), prototype(args = list(), .size = NA_real_),
                  validity = function(object) {
                    if(length(object@args) == 0)
                      stop("[Atom: args] no arguments given to ", class(object))
@@ -16,8 +16,8 @@ Atom <- setClass("Atom", representation(args = "list", .shape = "numeric"), prot
 setMethod("initialize", "Atom", function(.Object, ..., args = list(), .size = NA_real_) {
   .Object@args <- lapply(args, as.Constant)
   validate_args(.Object)
-  .Object@.shape <- shape_from_args(.Object)
-  if(length(.Object@.shape) > 2)
+  .Object@.dim <- dim_from_args(.Object)
+  if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
   callNextMethod(.Object, ...)
 })
@@ -50,20 +50,17 @@ setMethod("validate_args", "Atom", function(object) {
 #' @rdname allow_complex
 setMethod("allow_complex", "Atom", function(object) { FALSE })
 
-#' @rdname shape_from_args
-setMethod("shape_from_args", "Atom", function(object) { stop("Unimplemented") })
+#' @rdname dim_from_args
+setMethod("dim_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
-setMethod("shape", "Atom", function(object) { object@.shape })
-
-#' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
-setMethod("dim", "Atom", function(x) { shape(x) })
+setMethod("dim", "Atom", function(x) { object@.dim })
 
 #' @describeIn Atom The number of rows in the atom.
-setMethod("nrow", "Atom", function(x) { shape(x)[1] })
+setMethod("nrow", "Atom", function(x) { dim(x)[1] })
 
 #' @describeIn Atom The number of columns in the atom.
-setMethod("ncol", "Atom", function(x) { shape(x)[2] })
+setMethod("ncol", "Atom", function(x) { dim(x)[2] })
 
 #' @rdname sign_from_args
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
@@ -178,7 +175,7 @@ setMethod("canonicalize", "Atom", function(object) {
   if(is_constant(object)) {
     # Parameterized expressions are evaluated later.
     if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
-      param <- CallbackParam(value(object), shape(object))
+      param <- CallbackParam(value(object), dim(object))
       return(canonical_form(param))
     # Non-parameterized expressions are evaluated immediately.
     } else
@@ -193,7 +190,7 @@ setMethod("canonicalize", "Atom", function(object) {
     }
     # Special info required by the graph implementation.
     data <- get_data(object)
-    graph <- graph_implementation(object, arg_objs, shape(object), data)
+    graph <- graph_implementation(object, arg_objs, dim(object), data)
     return(list(graph[[1]], c(constraints, graph[[2]])))
   }
 })
@@ -212,13 +209,13 @@ setMethod("value", "Atom", function(object) {
 })
 
 .value_impl.Atom <- function(object) {
-  shape <- shape(object)
-  # shapes with 0's dropped in presolve.
-  if(0 in shape)
+  obj_dim <- dim(object)
+  # dims with 0's dropped in presolve.
+  if(0 in obj_dim)
     result <- matrix(nrow = 0, ncol = 0)
   # Catch the case when the expression is known to be zero through DCP analysis
   else if(is_zero(object))
-    result <- matrix(0, nrow = shape[1], ncol = shape[2])
+    result <- matrix(0, nrow = obj_dim[1], ncol = obj_dim[2])
   else {
     arg_values <- list()
     for(arg in object@args) {
@@ -268,7 +265,7 @@ setMethod("grad", "Atom", function(object) {
       else {
         D <- grad_arg[[key]] %*% grad_self[[idx]]
         # Convert 1x1 matrices to scalars.
-        if((is.matrix(D) || is(D, "Matrix")) && all(shape(D) == c(1,1)))
+        if((is.matrix(D) || is(D, "Matrix")) && all(dim(D) == c(1,1)))
           D <- D[1,1]
 
         if(key %in% names(result))
@@ -325,25 +322,25 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
 })
 
 #' @param object An \linkS4class{Atom} object.
-#' @describeIn AxisAtom The shape of the atom determined from its arguments.
-setMethod("shape_from_args", "AxisAtom", function(object) {
-  shape <- shape(object@args[[1]])
+#' @describeIn AxisAtom The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "AxisAtom", function(object) {
+  arg_dim <- dim(object@args[[1]])
   if(object@keepdims && is.na(object@axis))   # Copy scalar to maintain original dimensions.
-    shape <- rep(1, length(shape))
+    arg_dim <- rep(1, length(arg_dim))
   else if(object@keepdims && !is.na(object@axis)) {   # Collapse dimensions NOT in axis to 1.
-    collapse <- setdiff(1:length(shape), object@axis)
-    shape[collapse] <- 1
+    collapse <- setdiff(1:length(arg_dim), object@axis)
+    arg_dim[collapse] <- 1
   } else if(!object@keepdims && is.na(object@axis))   # Return a scalar.
-    shape <- NULL   # TODO: Should this be NA instead?
+    arg_dim <- NULL   # TODO: Should this be NA instead?
   else   # Drop dimensions NOT in axis and collapse atom.
-    shape <- shape[object@axis]
-  return(shape)
+    arg_dim <- arg_dim[object@axis]
+  return(arg_dim)
 })
 
 #' @describeIn AxisAtom A list containing \code{axis} and \code{keepdims}.
 setMethod("get_data", "AxisAtom", function(object) { list(object@axis, object@keepdims) })
 
-#' @describeIn AxisAtom Check that the new shape has the same number of entries as the old.
+#' @describeIn AxisAtom Check that the new dimensions have the same number of entries as the old.
 setMethod("validate_args", "AxisAtom", function(object) {
   if(!is.na(object@axis) && any(object@axis > ndim(object@args[[1]]) || object@axis <= 0))
     stop("Invalid argument for axis. Must be an integer between 1 and ", ndim(object@args[[1]]))
@@ -450,7 +447,7 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 #' @rdname EyeMinusInv-class
 .EyeMinusInv <- setClass("EyeMinusInv", representation(X = "ConstValORExpr"), 
                          validity = function(object) {
-                           if(length(shape(X)) != 2 || shape(X)[1] != shape(X)[2])
+                           if(length(dim(X)) != 2 || nrow(X) != ncol(X))
                              stop("[EyeMinusInv: X] The argument X must be a square matrix.")
                            return(TRUE)
                           }, contains = "Atom")
@@ -468,14 +465,14 @@ setMethod("initialize", "EyeMinusInv", function(.Object, ..., X) {
 #' @param values A list of arguments to the atom.
 #' @describeIn EyeMinusInv The unity resolvent of the matrix.
 setMethod("to_numeric", "EyeMinusInv", function(object, values) {
-  base::solve(diag(shape(object@args[[1]])[1]) - values[[1]])
+  base::solve(diag(nrow(object@args[[1]])) - values[[1]])
 })
 
 #' @param x,object An \linkS4class{EyeMinusInv} object.
 setMethod("name", "EyeMinusInv", function(x) { paste(class(x), x@args[[1]]) })
 
-#' @describeIn EyeMinusInv The shape of the atom determined from its arguments.
-setMethod("shape_from_args", "EyeMinusInv", function(object) { shape(object@args[[1]]) })
+#' @describeIn EyeMinusInv The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "EyeMinusInv", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn EyeMinusInv The (is positive, is negative) sign of the atom.
 setMethod("sign_from_args", "EyeMinusInv", function(object) { c(TRUE, FALSE) })
@@ -548,7 +545,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
 
   x <- .Object@args[[1]]
   if(is_vector(x))
-    n <- ifelse(1, ndim(x) == 0, max(shape(x)))
+    n <- ifelse(1, ndim(x) == 0, max(dim(x)))
   else
     stop("x must be a row or column vector.")
   
@@ -610,7 +607,7 @@ setMethod(".grad", "GeoMean", function(object, values) {
 })
 
 #' @describeIn GeoMean The atom is a scalar.
-setMethod("shape_from_args", "GeoMean", function(object) { c() })
+setMethod("dim_from_args", "GeoMean", function(object) { c() })
 
 #' @describeIn GeoMean The atom is non-negative.
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })
@@ -689,12 +686,12 @@ setMethod(".grad", "LambdaMax", function(object, values) {
 
 #' @describeIn LambdaMax Check that \code{A} is square.
 setMethod("validate_args", "LambdaMax", function(object) {
-  if(ndim(object@args[[1]]) != 2 || shape(object@args[[1]])[1] != shape(object@args[[1]])[2])
+  if(ndim(object@args[[1]]) != 2 || nrow(object@args[[1]]) != ncol(object@args[[1]]))
     stop("The argument to LambdaMax must resolve to a square matrix")
 })
 
 #' @describeIn LambdaMax The atom is a scalar.
-setMethod("shape_from_args", "LambdaMax", function(object) { c() })
+setMethod("dim_from_args", "LambdaMax", function(object) { c() })
 
 #' @describeIn LambdaMax The sign of the atom is unknown.
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
@@ -754,7 +751,7 @@ setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
 #' @rdname LambdaSumLargest Verify that the argument \code{A} is square.
 setMethod("validate_args", "LambdaSumLargest", function(object) {
   A <- object@args[[1]]
-  if(ndim(X) != 2 || shape(X)[1] != shape(X)[2])
+  if(ndim(X) != 2 || nrow(X) != ncol(X))
     stop("First argument must be a square matrix.")
   else if(as.integer(object@k) != object@k || object@k <= 0)
     stop("Second argument must be a positive integer.")
@@ -802,13 +799,13 @@ setMethod("to_numeric", "LogDet", function(object, values) {
 
 #' @describeIn LogDet Check that \code{A} is square.
 setMethod("validate_args", "LogDet", function(object) {
-  shape <- shape(object@args[[1]])
-  if(length(shape) == 1 || shape[1] != shape[2])
+  arg_dim <- dim(object@args[[1]])
+  if(length(arg_dim) == 1 || arg_dim[1] != arg_dim[2])
     stop("The argument to LogDet must be a square matrix")
 })
 
 #' @describeIn LogDet The atom is a scalar.
-setMethod("shape_from_args", "LogDet", function(object) { c() })
+setMethod("dim_from_args", "LogDet", function(object) { c() })
 
 #' @describeIn LogDet The atom is non-negative.
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
@@ -943,7 +940,7 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   else
     product <- t(X) %*% base:solve(P) %*% X
   
-  if(length(shape(product)) == 2)
+  if(length(dim(product)) == 2)
     return(sum(diag(product)))
   else
     return(product)
@@ -953,14 +950,14 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
 setMethod("validate_args", "MatrixFrac", function(object) {
   X <- object@args[[1]]
   P <- object@args[[2]]
-  if(ndim(P) != 2 || shape(P)[1] != shape(P)[2])
+  if(ndim(P) != 2 || nrow(P) != ncol(P))
     stop("The second argument to MatrixFrac must be a square matrix.")
-  else if(shape(X)[1] != shape(P)[1])
+  else if(nrow(X) != nrow(P))
     stop("The arguments to MatrixFrac have incompatible dimensions.")
 })
 
 #' @describeIn MatrixFrac The atom is a scalar.
-setMethod("shape_from_args", "MatrixFrac", function(object) { c() })
+setMethod("dim_from_args", "MatrixFrac", function(object) { c() })
 
 #' @describeIn MatrixFrac The atom is positive.
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
@@ -1318,7 +1315,7 @@ Norm <- function(x, p = 2, axis = NA_real_) {
   x <- as.Constant(x)
   
   # Matrix norms take precedence.
-  num_nontrivial_idxs <- sum(shape(x) > 1)
+  num_nontrivial_idxs <- sum(dim(x) > 1)
   if(is.na(axis) && ndim(x) == 2) {
     if(p == 1)   # Matrix 1-norm.
       MaxEntries(Norm1(x, axis = 2))
@@ -1488,7 +1485,7 @@ setMethod("to_numeric", "NormNuc", function(object, values) {
 })
 
 #' @describeIn NormNuc The atom is a scalar.
-setMethod("shape_from_args", "NormNuc", function(object) { c() })
+setMethod("dim_from_args", "NormNuc", function(object) { c() })
 
 #' @describeIn NormNuc The atom is positive.
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
@@ -1530,7 +1527,7 @@ OneMinusPos <- function(x) { .OneMinusPos(x = x) }
 
 setMethod("initialize", "OneMinusPos", function(.Object, ..., x) {
   .Object@x <- x
-  .Object@.ones <- matrix(1, nrow = shape(x)[1], ncol = shape(x)[2])
+  .Object@.ones <- matrix(1, nrow = nrow(x), ncol = ncol(x))
   callNextMethod(.Object, ..., args = list(.Object@x))
 })
 
@@ -1541,8 +1538,8 @@ setMethod("name", "OneMinusPos", function(x) { paste(class(x), x@args[[1]]) })
 #' @describeIn OneMinusPos Returns one minus the value.
 setMethod("to_numeric", "OneMinusPos", function(object, values) { object@.ones - values[[1]] })
 
-#' @describeIn OneMinusPos The shape of the atom.
-setMethod("shape_from_args", "OneMinusPos", function(object) { shape(object@args[[1]]) })
+#' @describeIn OneMinusPos The dimensions of the atom.
+setMethod("dim_from_args", "OneMinusPos", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn OneMinusPos Returns the sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "OneMinusPos", function(object) { c(TRUE, FALSE) })
@@ -1584,7 +1581,7 @@ DiffPos <- function(x, y) {
 #' @rdname PfEigenvalue-class
 .PfEigenvalue <- setClass("PfEigenvalue", representation(X = "ConstValORExpr"), 
                           validity = function(object) {
-                            if(length(shape(X)) != 2 || shape(X)[1] != shape(X)[2])
+                            if(length(dim(X)) != 2 || nrow(X) != ncol(X))
                               stop("Argument must be a square matrix")
                           }, contains = "Atom")
 
@@ -1607,8 +1604,8 @@ setMethod("to_numeric", "PfEigenvalue", function(object, values) {
   max(abs(eig$values))
 })
 
-#' @describeIn PfEigenvalue The shape of the atom.
-setMethod("shape_from_args", "PfEigenvalue", function(object) { NULL })
+#' @describeIn PfEigenvalue The dimensions of the atom.
+setMethod("dim_from_args", "PfEigenvalue", function(object) { NULL })
 
 #' @describeIn PfEigenvalue Returns the sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "PfEigenvalue", function(object) { c(TRUE, FALSE) })
@@ -1729,16 +1726,16 @@ setMethod("to_numeric", "QuadForm", function(object, values) {
 #' @describeIn QuadForm Checks the dimensions of the arguments.
 setMethod("validate_args", "QuadForm", function(object) {
   callNextMethod()
-  n <- shape(object@args[[2]])[1]
-  if(shape(object@args[[2]])[2] != n || !(shape(object@args[[1]]) %in% list(c(n, 1), c(n, NA_real_))))
+  n <- nrow(object@args[[2]])
+  if(ncol(object@args[[2]]) != n || !(dim(object@args[[1]]) %in% list(c(n, 1), c(n, NA_real_))))
     stop("Invalid dimensions for arguments.")
 })
 
 #' @describeIn QuadForm Returns the sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "QuadForm", function(object) { c(is_atom_convex(object), is_atom_concave(object)) })
 
-#' @describeIn QuadForm The shape of the atom.
-setMethod("shape_from_args", "QuadForm", function(object) { 
+#' @describeIn QuadForm The dimensions of the atom.
+setMethod("dim_from_args", "QuadForm", function(object) { 
   if(ndim(object@args[[1]]) == 0)
     c()
   else
@@ -1806,8 +1803,8 @@ setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, origina
   .Object
 })
 
-#' @rdname SymbolicQuadForm The shape of the atom.
-setMethod("shape_from_args", "SymbolicQuadForm", function(object) { shape_from_args(object@original_expression) })
+#' @rdname SymbolicQuadForm The dimensions of the atom.
+setMethod("dim_from_args", "SymbolicQuadForm", function(object) { dim_from_args(object@original_expression) })
 
 #' @rdname SymbolicQuadForm The sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "SymbolicQuadForm", function(object) { sign_from_args(object@original_expression) })
@@ -1871,8 +1868,8 @@ QuadForm <- function(x, P) {
   P <- as.Constant(P)
   
   # Check dimensions.
-  P_shape <- shape(P)
-  if(ndim(P) != 2 || P_shape[1] != P_shape[2] || max(shape(x)[1], 1)[1] != P_shape[1])
+  P_dim <- dim(P)
+  if(ndim(P) != 2 || P_dim[1] != P_dim[2] || max(nrow(x), 1) != P_dim[1])
     stop("Invalid dimensions for arguments.")
   
   # P cannot be a parameter.
@@ -1920,7 +1917,7 @@ setMethod("validate_args",   "QuadOverLin", function(object) {
 })
 
 #' @describeIn QuadOverLin The atom is a scalar.
-setMethod("shape_from_args", "QuadOverLin", function(object) { c() })
+setMethod("dim_from_args", "QuadOverLin", function(object) { c() })
 
 #' @describeIn QuadOverLin The atom is positive.
 setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
@@ -1993,7 +1990,7 @@ setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
 setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values[[1]], type = "2") })
 
 #' @describeIn SigmaMax The atom is a scalar.
-setMethod("shape_from_args", "SigmaMax", function(object) { c() })
+setMethod("dim_from_args", "SigmaMax", function(object) { c() })
 
 #' @describeIn SigmaMax The atom is positive.
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
@@ -2062,7 +2059,7 @@ setMethod("validate_args",   "SumLargest", function(object) {
 })
 
 #' @describeIn SumLargest The atom is a scalar.
-setMethod("shape_from_args", "SumLargest", function(object) { c() })
+setMethod("dim_from_args", "SumLargest", function(object) { c() })
 
 #' @describeIn SumLargest The sign of the atom.
 setMethod("sign_from_args", "SumLargest", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
@@ -2088,8 +2085,8 @@ setMethod(".grad", "SumLargest", function(object, values) {
   value <- as.numeric(t(values[[1]]))
   k <- min(object@k, length(value))
   indices <- order(value, decreasing = TRUE)
-  arg_shape <- shape(object@args[[1]])
-  D <- matrix(0, nrow = arg_shape[1]*arg_shape[2], ncol = 1)
+  arg_dim <- dim(object@args[[1]])
+  D <- matrix(0, nrow = arg_dim[1]*arg_dim[2], ncol = 1)
   D[indices[1:k]] <- 1
   list(Matrix(D, sparse = TRUE))
 })
@@ -2106,11 +2103,11 @@ TotalVariation <- function(value, ...) {
   if(ndim(value) == 0)
     stop("TotalVariation cannot take a scalar argument")
   else if(ndim(value) == 1)   # L1 norm for vectors
-    Norm(value[-1] - value[1:(shape(value)[1]-1)], 1)
+    Norm(value[-1] - value[1:(nrow(value)-1)], 1)
   else {   # L2 norm for matrices
-    val_shape <- shape(value)
-    rows <- val_shape[1]
-    cols <- val_shape[2]
+    val_dim <- dim(value)
+    rows <- val_dim[1]
+    cols <- val_dim[2]
     args <- lapply(list(...), as.Constant })
     values <- c(list(value), args)
     
@@ -2119,7 +2116,7 @@ TotalVariation <- function(value, ...) {
       diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
                              mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
     }
-    length <- shape(diffs[[1]])[1] * shape(diffs[[2]])[2]
+    length <- nrow(diffs[[1]]) * ncol(diffs[[2]])
     stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, rows = 1, cols = length) }))
     SumEntries(Norm(stacked, p = 2, axis = 2))
   }

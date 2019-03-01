@@ -1,15 +1,34 @@
+#'
+#' Reduce DCP Problem to Conic Form
+#'
+#' This reduction takes as input (minimization) DCP problems and converts them into problems
+#' with affine objectives and conic constraints whose arguments are affine.
+#' 
+#' @rdname Dcp2Cone-class
 setClass("Dcp2Cone", contains = "Canonicalization")
 
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   class(problem@objective) == "Minimize" && is_dcp(problem)
 })
 
-setMethod("apply", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to cone program")
   callNextMethod(object, problem)
 })
 
+#'
+#' Construct Matrices for Linear Cone Problems
+#'
+#' Linear cone problems are assumed to have a linear objective and cone constraints,
+#' which may have zero or more arguments, all of which must be affine.
+#' 
+#' minimize c^Tx
+#' subject to cone_constr1(A_1*x + b_1, ...)
+#'            ...
+#'            cone_constrK(A_K*x + b_K, ...)
+#'            
+#' @rdname ConeMatrixStuffing-class
 setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {

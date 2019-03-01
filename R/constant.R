@@ -163,6 +163,12 @@ compute_symm_attr.Constant <- function(object) {
   object
 }
 
+# Compute the eigenvalues of the Hermitian or symmetric matrix represented by this constant.
+compute_eigvals.Constant <- function(object) {
+  object@eigvals <- eigen(value(object), only.values = TRUE)$values
+  object
+}
+
 #' @describeIn Constant A logical value indicating whether the constant is a positive semidefinite matrix.
 setMethod("is_psd", "Constant", function(object) {
   # Symbolic only cases.
@@ -202,12 +208,6 @@ setMethod("is_nsd", "Constant", function(object) {
     object <- compute_eigvals(object)
   return(all(Re(object@eigvals) <= EIGVAL_TOL))
 })
-
-# Compute the eigenvalues of the Hermitian or symmetric matrix represented by this constant.
-compute_eigvals.Constant <- function(object) {
-  object@eigvals <- eigen(value(object), only.values = TRUE)$values
-  object
-}
 
 #'
 #' Cast to a Constant

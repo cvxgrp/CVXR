@@ -761,7 +761,7 @@ setGeneric("violation", function(object) { standardGeneric("violation") })
 #'
 #' Second-Order Cone Methods
 #'
-#' The number of elementwise cones or the size of a single cone in a second-order cone constraint.
+#' The number of elementwise cones or a list of the sizes of the elementwise cones.
 #'
 #' @param object An \linkS4class{SOCAxis} object.
 #' @return The number of cones, or the size of a cone.
@@ -773,17 +773,26 @@ NULL
 setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 
 #' @rdname cone-methods
-setGeneric("cone_size", function(object) { standardGeneric("cone_size") })
+setGeneric("cone_sizes", function(object) { standardGeneric("cone_sizes") })
 
 #
-# Dual Value
+# Get and Set Dual Value
 #
-# The value of the dual variable in a constraint.
+# Get and set the value of the dual variable in a constraint.
 #
 # @param object A \linkS4class{Constraint} object.
+# @param value A numeric scalar, vector, or matrix to assign to the object.
 # @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
-# @rdname dual_value
+# @rdname dual_value-methods
+# NULL
+
+# @rdname dual_value-methods
+# @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
+
+# @rdname dual_value-methods
+# @export
+setGeneric("dual_value<-", function(object, value) { standardGeneric("dual_value<-") })
 
 #'
 #' Format Constraints
@@ -1262,9 +1271,9 @@ setGeneric("stuffed_objective", function(object, problem, inverse_data) { standa
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
 setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
-setGeneric("import_solver", function(object) { standardGeneric("import_solver") })
-setGeneric("is_installed", function(object) { standardGeneric("is_installed") })
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack", function(object, solution) { standardGeneric("unpack") })
-setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGenerid("unpack_results") })
+setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })
+setGeneric("constr_value", function(object, tolerance) { standardGeneric("constr_value") })
+setGeneric(".construct_dual_variables", function(object, args) { standardGeneric(".construct_dual_variables") })
 ## End of newly added generics

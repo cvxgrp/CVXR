@@ -279,7 +279,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 
 #' @describeIn ECOS The name of the solver.
 #' @export
-setMethod("name", "ECOS", function(object) { ECOS_NAME })
+setMethod("name", "ECOS", function(x) { ECOS_NAME })
 
 #' @describeIn ECOS Imports the ECOSolveR library.
 setMethod("import_solver", "ECOS", function(solver) { TRUE }) ## ECOSolveR is in imports!
@@ -390,7 +390,7 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 
 #' @describeIn ECOS_BB The name of the solver.
 #' @export
-setMethod("name", "ECOS_BB", function(object) { ECOS_BB_NAME })
+setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
 
 #' @param objective A list representing the canonicalized objective.
 #' @param constraints A list of canonicalized constraints.
@@ -490,7 +490,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 
 #' @describeIn SCS The name of the solver.
 #' @export
-setMethod("name", "SCS", function(object) { SCS_NAME })
+setMethod("name", "SCS", function(x) { SCS_NAME })
 
 #' @describeIn SCS Imports the scs library.
 setMethod("import_solver", "SCS", function(solver) { TRUE }) ## Sincs scs is in imports!
@@ -657,7 +657,7 @@ SCS.tri_to_full <- function(lower_tri, n) {
 #
 # #' @describeIn LS The name of the solver.
 # #' @export
-# setMethod("name", "LS", function(object) { LS_NAME })
+# setMethod("name", "LS", function(x) { LS_NAME })
 #
 # #' @describeIn LS Imports the Matrix library.
 # setMethod("import_solver", "LS", function(solver) { requireNamespace("Matrix") })

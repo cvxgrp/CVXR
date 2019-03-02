@@ -38,7 +38,7 @@ setMethod("violation", "Constraint", function(object) {
   return(residual)
 })
 
-setMethod("value", "Constraint", function(object, tolerance = 1e-8) {
+setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
   residual <- object@residual
   if(is.na(residual))
     stop("Cannot compute the value of a constraint whose expression is NA-valued.")
@@ -57,7 +57,7 @@ setMethod("id", "ListORConstr", function(object) {
 
 setMethod("get_data", "Constraint", function(object) { list(id(object)) })
 setMethod("dual_value", "Constraint", function(object) { value(object@dual_variables[[1]]) })
-setMethod("save_dual_value", "Constraint", function(object, value) {
+setReplaceMethod("dual_value", "Constraint", function(object, value) {
   object@dual_variables[[1]] <- value
   object
 })
@@ -223,13 +223,13 @@ setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) 
 })
 
 # Add the block to a slice of the matrix.
-setMethod("block_add", "NonlinearConstraint", function(object, matrix, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
-  if(is(matrix, "sparseMatrix") && is.matrix(block))
+setMethod("block_add", "NonlinearConstraint", function(object, mat, block, vert_offset, horiz_offset, rows, cols, vert_step = 1, horiz_step = 1) {
+  if(is(mat, "sparseMatrix") && is.matrix(block))
     block <- Matrix(block, sparse = TRUE)
   row_seq <- seq(vert_offset, rows + vert_offset, vert_step)
   col_seq <- seq(horiz_offset, cols + horiz_offset, horiz_step)
-  matrix[row_seq, col_seq] <- matrix[row_seq, col_seq] + block
-  matrix
+  mat[row_seq, col_seq] <- mat[row_seq, col_seq] + block
+  mat
 })
 
 # Place \code{x_0 = f()} in the vector of all variables.
@@ -427,7 +427,7 @@ setMethod("canonicalize", "ExpCone", function(object) {
 
 # A function used by CVXOPT's nonlinear solver.
 # Based on f(x,y,z) = y * log(y) + x - y * log(z)
-setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
+.solver_hook.ExpCone <- function(object, vars_ = NA, scaling = NA) {
   entries <- as.integer(prod(dim(object)))
   if(is.na(vars_)) {
     x_init <- rep(0, entries)
@@ -472,7 +472,7 @@ setMethod("solver_hook", "ExpCone", function(object, vars_ = NA, scaling = NA) {
     big_H[idx, idx] <- scaling[i]*H
   }
   return(list(f, Df, big_H))
-})
+}
 
 #'
 #' The PSDConstraint class.
@@ -723,7 +723,7 @@ setMethod("format_constr", "SOCAxis", function(object, eq_constr, leq_constr, di
 setMethod("num_cones", "SOCAxis", function(object) { nrow(object@t) })
 
 #' @describeIn SOCAxis The dimensions of a single cone.
-setMethod("cone_size", "SOCAxis", function(object) {
+setMethod("cone_sizes", "SOCAxis", function(object) {
   if(object@axis == 1)   # Return ncols if applying along each row
     c(1 + ncol(object@x_elems[[1]]), 1)
   else if(object@axis == 2)   # Return nrows if applying along each column

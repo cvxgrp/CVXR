@@ -93,6 +93,8 @@ setMethod("get_var_offsets", signature(object = "InverseData", variables = "list
   return(list(id_map = id_map, var_offsets = var_offsets, x_length = vert_offset, var_dims = var_dims))
 })
 
+setClassUnion("InverseDataORList", c("InverseData", "list"))
+
 #'
 #' The Reduction class.
 #'
@@ -170,7 +172,9 @@ replace_params_with_consts <- function(expr) {
 #'
 #' @rdname Canonicalization-class
 .Canonicalization <- setClass("Canonicalization", representation(problem = "Problem", canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
+
 Canonicalization <- function(problem, canon_methods) { .Canonicalization(problem = problem, canon_methods = canon_methods) }
+
 setMethod("initialize", function(.Object, ..., problem, canon_methods) {
   .Object@canon_methods <- canon_methods
   callNextMethod(.Object, ..., problem = problem)

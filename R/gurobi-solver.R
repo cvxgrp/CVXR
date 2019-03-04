@@ -61,7 +61,7 @@ setMethod("status_map", "GUROBI", function(solver, status) {
 
 #' @describeIn GUROBI The name of the solver.
 #' @export
-setMethod("name", "GUROBI", function(object) { GUROBI_NAME })
+setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
 
 #' @describeIn GUROBI Imports the reticulate library to use the python solver.
 setMethod("import_solver", "GUROBI", function(solver) {

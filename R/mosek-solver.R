@@ -61,7 +61,7 @@ setMethod("status_map", "MOSEK", function(solver, status) {
 #
 #' @describeIn MOSEK The name of the solver.
 #' @export
-setMethod("name", "MOSEK", function(object) { MOSEK_NAME })
+setMethod("name", "MOSEK", function(x) { MOSEK_NAME })
 
 #' @describeIn MOSEK Imports the reticulate library to use the python solver.
 setMethod("import_solver", "MOSEK", function(solver) {

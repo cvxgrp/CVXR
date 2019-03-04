@@ -59,7 +59,7 @@ setMethod("status_map", "LPSOLVE", function(solver, status) {
 #
 #' @describeIn LPSOLVE The name of the solver.
 #' @export
-setMethod("name", "LPSOLVE", function(object) { LPSOLVE_NAME })
+setMethod("name", "LPSOLVE", function(x) { LPSOLVE_NAME })
 
 #' @describeIn LPSOLVE Imports the Rmosek library.
 setMethod("import_solver", "LPSOLVE", function(solver) {

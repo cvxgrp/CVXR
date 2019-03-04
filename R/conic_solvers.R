@@ -61,11 +61,14 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real
   return(.Object)
 })
 
-# Conic solver class with reduction semantics.
-ConicSolver <- setClass("ConicSolver", contains = "Solver")
-
-# The key that maps to ConeDims in the data returned by perform().
-setMethod("dims", "ConicSolver", function(object) { "dims" })
+#'
+#' The ConicSolver class.
+#'
+#' Conic solver class with reduction semantics.
+#'
+#' @rdname ConicSolver-class
+ConicSolver <- setClass("ConicSolver", representation(dims = "character"),   # The key that maps to ConeDims in the data returned by perform().
+                                       prototype(dims = "dims"), contains = "ReductionSolver")
 
 # Every conic solver must support Zero and NonPos constraints.
 setMethod("supported_constraints", "ConicSolver", function(object) { c("Zero", "NonPos") })
@@ -115,7 +118,7 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   return(sparseMatrix(i = row_arr, j = col_arr, x = val_arr))
 }
 
-setMethod("format_constr", "ConicSolver", function(object, problem, constr, exp_cone_order) {
+setMethod("reduction_format_constr", "ConicSolver", function(object, problem, constr, exp_cone_order) {
   coeffs <- list()
   offsets <- list()
   for(arg in constr@args) {
@@ -183,9 +186,9 @@ setMethod("invert", "ConicSolver", signature(object = "ConicSolver", solution = 
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- solution$primal
-    eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[eq_constr(object)])
-    leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[neq_constr(object)])
+    primal_vars[inverse_data[object@var_id]] <- solution$primal
+    eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[object@eq_constr])
+    leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[object@neq_constr])
     eq_dual <- modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
   } else {
@@ -251,11 +254,11 @@ setMethod("perform", signature(object = "CBC", problem = "Problem"), function(ob
 
   # Order and group constraints.
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[eq_constr(object)] <- eq_constr
+  inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
-  inv_data[neq_constr(object)] <- leq_constr
+  inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })
 
@@ -265,7 +268,7 @@ setMethod("invert", signature(object = "CBC", solution = "Solution", inverse_dat
 
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
-    primal_vars[var_id(object)] <- solution$primal
+    primal_vars[object@var_id] <- solution$primal
   } else {
     if(status == INFEASIBLE)
       opt_val <- Inf
@@ -325,12 +328,12 @@ setMethod("perform", signature(object = "CPLEX", problem = "Problem"), function(
 
   # Order and group constraints.
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[eq_constr(object)] <- eq_constr
+  inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  inv_data[neq_constr(object)] <- c(leq_constr, soc_constr)
+  inv_data[object@neq_constr] <- c(leq_constr, soc_constr)
   inv_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
   return(list(data, inv_data))
 })
@@ -344,10 +347,10 @@ setMethod("invert", signature(object = "CPLEX", solution = "Solution", inverse_d
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    primal_vars[inverse_data[object@var_id]] <- solution$primal
     if(!inverse_data$is_mip) {
-      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[eq_constr(object)])
-      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[neq_constr(object)])
+      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[object@eq_constr])
+      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[object@neq_constr])
       eq_dual <- modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     } else {
@@ -372,7 +375,8 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
-CVXOPT <- setClass("CVXOPT", contains = "ConicSolver")
+setClass("CVXOPT", contains = "ConicSolver")
+CVXOPT <- function() { new("CVXOPT") }
 
 # Solver capabilities.
 setMethod("mip_capable", "CVXOPT", function(object) { FALSE })
@@ -409,22 +413,22 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   constraints <- unlist(constraints, recursive = TRUE)
   data$objective <- objective
   data$constraints <- constraints
-  data[dims(ConicSolver())] <- ConeDims(group_constraints(problem@constraints))
+  data[ConicSolver()@dims] <- ConeDims(group_constraints(problem@constraints))
   variables <- variables(problem)[[1]]
   data[BOOL_IDX] <- lapply(variables@boolean_idx, function(t) { t[[1]] })
   data[INT_IDX] <- lapply(variables@integer_idx, function(c) { t[[1]] })
 
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Order and group constraints.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[eq_constr(CVXOPT())] <- eq_constr
+  inv_data[CVXOPT()@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
   sdp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "PSD" })]
   exp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ExpCone" })]
-  inv_data[neq_constr(CVXOPT())] <- c(leq_constr, soc_constr, sdp_constr, exp_constr)
+  inv_data[CVXOPT()@neq_constr] <- c(leq_constr, soc_constr, sdp_constr, exp_constr)
   return(list(data, inv_data))
 })
 
@@ -454,7 +458,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("ECOSolveR", quietly = TRUE)
-  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  cones <- dims_to_solver_dict(data[ConicSolver()@dims])
   if(is.null(solver_opts$eps))
     solver_opts$eps <- 1e-4
 
@@ -526,23 +530,23 @@ setMethod("name", "ECOS", function(x) { ECOS_NAME })
 setMethod("perform", "ECOS", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
   offsets <- get_coeff_offset(ConicSolver(), problem@objective@args[[1]])
   data[C_KEY] <- as.vector(offsets[[1]])
   data[OFFSET] <- offsets[[2]]
   inv_data[OFFSET] <- data[OFFSET][[1]]
 
   constr_map <- group_constraints(problem@constraints)
-  data[dims(ConicSolver())] <- ConeDims(constr_map)
+  data[ConicSolver()@dims] <- ConeDims(constr_map)
 
-  inv_data[eq_constr(object)] <- constr_map$Zero
+  inv_data[object@eq_constr] <- constr_map$Zero
   offsets <- group_coeff_offset(object, problem, constr_map$Zero, exp_cone_order(ECOS()))
   data[A_KEY] <- offsets[[1]]
   data[[B_KEY]] <- offsets[[2]]
 
   # Order and group nonlinear constraints.
   neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$ExpCone)
-  inv_data[neq_constr(object)] <- neq_constr
+  inv_data[object@neq_constr] <- neq_constr
   offsets <- group_coeff_offset(object, problem, neq_constr, exp_cone_order(ECOS()))
   data[G_KEY] <- offsets[[1]]
   data[H_KEY] <- offsets[[2]]
@@ -563,10 +567,10 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
     primal_val <- solution$info$pcost
     opt_val <- primal_val + inverse_data[OFFSET]
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- as.matrix(solution$x)
+    primal_vars[inverse_data[object@var_id]] <- as.matrix(solution$x)
 
-    eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[eq_constr(object)])
-    leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[neq_constr(object)])
+    eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[object@eq_constr])
+    leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[object@neq_constr])
     eq_dual <- modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
 
@@ -577,7 +581,7 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
 
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("ECOSolveR", quietly = TRUE)
-  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  cones <- dims_to_solver_dict(data[ConicSolver()@dims])
   solution <- ECOSolveR::solve(data[C_KEY], data[G_KEY], data[H_KEY], cones, data[A_KEY], data[B_KEY], verbose = verbose, solver_opts)
   return(solution)
 })
@@ -625,13 +629,13 @@ setMethod("perform", signature(object = "Elemental", problem = "Problem"), funct
   data$objective <- objective
   data$constraints <- constraints
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Order and group constraints.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[eq_constr(object)] <- eq_constr
+  inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
-  inv_data[neq_constr(object)] <- leq_constr
+  inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })
 
@@ -674,7 +678,7 @@ setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_da
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    primal_vars[inverse_data[object@var_id]] <- solution$primal
   } else {
     if(status == INFEASIBLE)
       opt_val <- Inf
@@ -762,12 +766,12 @@ setMethod("perform", signature(object = "GUROBI", problem = "Problem"), function
 
   # Order and group constraints.
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[eq_constr(object)] <- eq_constr
+  inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  inv_data[neq_constr(object)] <- c(leq_constr, soc_constr)
+  inv_data[object@neq_constr] <- c(leq_constr, soc_constr)
   inv_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
   return(list(data, inv_data))
 })
@@ -780,10 +784,10 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    primal_vars[inverse_data[object@var_id]] <- solution$primal
     if(!inverse_data$is_mip) {
-      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data(eq_constr(object)))
-      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data(neq_constr(object)))
+      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data(object@eq_constr))
+      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data(object@neq_constr))
       eq_dual <- modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     }
@@ -808,7 +812,7 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
-LS <- setClass("LS", contains = "Solver")
+LS <- setClass("LS", contains = "ReductionSolver")
 
 # LS is incapable of solving any general cone program
 # and must be invoked through a special path.
@@ -1017,7 +1021,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
 setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Get integrality constraint information.
   var <- variables(problem)[[1]]
@@ -1352,7 +1356,7 @@ setMethod("invert", "MOSEK", function(object, results, inverse_data) {
     z <- rep(0, inverse_data$n0)
     task.getxxslice(sol, 0, length(z), z)
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- z
+    primal_vars[inverse_data[object@var_id]] <- z
     # Recover the CVXR standard form dual variables.
     if(sol == mosek.soltype.itg)
       dual_vars <- NA
@@ -1574,7 +1578,7 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Parse the coefficient vector from the objective.
   offsets <- get_coeff_offset(object, problem@objective@args[[1]])
@@ -1585,8 +1589,8 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
 
   # Order and group nonlinear constraints.
   constr_map <- group_constraints(problem@constraints)
-  data[dims(ConicSolver())] <- ConeDims(constr_map)
-  inv_data[dims(ConicSolver())] <- data[dims(ConicSolver())]
+  data[ConicSolver()@dims] <- ConeDims(constr_map)
+  inv_data[ConicSolver()@dims] <- data[ConicSolver()@dims]
 
   # SCS requires constraints to be specified in the following order:
   # 1) Zero cone.
@@ -1596,8 +1600,8 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   # 5) Exponential.
   zero_constr <- constr_map$Zero
   neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$PSD, constr_map$ExpCone)
-  inv_data[eq_constr(object)] <- zero_constr
-  inv_data[neq_constr(object)] <- neq_constr
+  inv_data[object@eq_constr] <- zero_constr
+  inv_data[object@neq_constr] <- neq_constr
 
   # Obtain A, b such that Ax + s = b, s \in cones.
   # Note that SCS mandates that the cones MUST be ordered with
@@ -1636,13 +1640,13 @@ setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_dat
     primal_val <- solution$info$pobj
     opt_val <- primal_val + inverse_data[OFFSET]
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- as.matrix(solution$x)
+    primal_vars[inverse_data[object@var_id]] <- as.matrix(solution$x)
 
-    eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[dims(ConicSolver())]@zero]),
-      extract_dual_value(object), inverse_data[eq_constr(object)])
+    eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[ConicSolver()@dims]@zero]),
+      extract_dual_value(object), inverse_data[object@eq_constr])
 
-    ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[dims(ConicSolver())]@zero:length(solution$y)]),
-                                      extract_dual_value(object), inverse_data[neq_constr(object)])
+    ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[ConicSolver()@dims]@zero:length(solution$y)]),
+                                      extract_dual_value(object), inverse_data[object@neq_constr])
 
     dual_vars <- list()
     dual_vars <- modifyList(dual_vars, eq_dual_vars)
@@ -1661,7 +1665,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
     args$y <- solver_cache[name(object)]$y
     args$s <- solver_cache[name(object)]$s
   }
-  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  cones <- dims_to_solver_dict(data[ConicSolver()@dims])
   
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
@@ -1689,7 +1693,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
     args$y <- solver_cache[name(object)]$y
     args$s <- solver_cache[name(object)]$s
   }
-  cones <- dims_to_solver_dict(data[dims(ConicSolver())])
+  cones <- dims_to_solver_dict(data[ConicSolver()@dims])
 
   # Settings.
   user_opts <- names(solver_opts)
@@ -1758,7 +1762,7 @@ setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function
 
   # Order and group constraints.
   inv_data <- list()
-  inv_data[var_id(object)] <- id(variables(problem)[[1]])
+  inv_data[object@var_id] <- id(variables(problem)[[1]])
   inv_data[EQ_CONSTR] <- problem@constraints
   inv_data$is_mip <- is_mixed_integer(problem)
   return(list(data, inv_data))
@@ -1772,7 +1776,7 @@ setMethod("invert", signature(object = "XPRESS", solution = "Solution", inverse_
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution[VALUE]
     primal_vars <- list()
-    primal_vars[inverse_data[var_id(object)]] <- solution$primal
+    primal_vars[inverse_data[object@var_id]] <- solution$primal
     if(!is_mip(inverse_data))
       dual_vars <- get_dual_values(solution[EQ_DUAL], extract_dual_value, inverse_data[EQ_CONSTR])
   } else {

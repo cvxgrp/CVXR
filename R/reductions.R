@@ -171,14 +171,9 @@ replace_params_with_consts <- function(expr) {
 #' This class represents a canonicalization reduction.
 #'
 #' @rdname Canonicalization-class
-.Canonicalization <- setClass("Canonicalization", representation(problem = "Problem", canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
+.Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
 
 Canonicalization <- function(problem, canon_methods) { .Canonicalization(problem = problem, canon_methods = canon_methods) }
-
-setMethod("initialize", function(.Object, ..., problem, canon_methods) {
-  .Object@canon_methods <- canon_methods
-  callNextMethod(.Object, ..., problem = problem)
-})
 
 setMethod("perform", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
@@ -258,14 +253,8 @@ setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Ex
 #' their constraint values.
 #'
 #' @rdname Chain-class
-.Chain <- setClass("Chain", representation(problem = "ProblemORNull", reductions = "list"), prototype(problem = NULL, reductions = list()), contains = "Reduction")
-
+.Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
 Chain <- function(problem, reductions) { .Chain(problem = problem, reductions = reductions) }
-
-setMethod("initialize", function(.Object, ..., problem = NULL, reductions = list()) {
-  .Object@reductions <- reductions
-  callNextMethod(.Object, ..., problem = problem)
-})
 
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
@@ -503,35 +492,10 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
   return(solution)
 })
 
-extract_mip_idx <- function(variables) {
-  # Coalesces bool, int indices for variables.
-  # The indexing scheme assumes that the variables will be coalesced into a single
-  # one-dimensional variable with each variable being reshaped in Fortran order.
-
-  ravel_multi_index <- function(multi_index, x, vert_offset) {
-    # Ravel a multi-index and add a vertical offset to it
-    # TODO: I have no idea what the following Python code does
-    # ravel_idx <- np.ravel_multi_index(multi_index, max(x.shape, (1,)), order = "F")
-    return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
-  }
-
-  boolean_idx <- c()
-  integer_idx <- c()
-  vert_offset <- 0
-  for(x in variables) {
-    if(!is.null(x@boolean_idx)) {
-      multi_index <- x@boolean_idx
-      boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
-    }
-    if(!is.null(x@integer_idx)) {
-      multi_index <- x@integer_idx
-      integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
-    }
-    vert_offset <- vert_offset + size(x)
-  }
-  return(list(boolean_idx, integer_idx))
-}
-
+#'
+#' The MatrixStuffing class.
+#'
+#' @rdname MatrixStuffing-class
 setClass("MatrixStuffing", contains = "Reduction")
 
 setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
@@ -631,3 +595,32 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
 setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
   stop("Unimplemented")
 })
+
+extract_mip_idx <- function(variables) {
+  # Coalesces bool, int indices for variables.
+  # The indexing scheme assumes that the variables will be coalesced into a single
+  # one-dimensional variable with each variable being reshaped in Fortran order.
+  
+  ravel_multi_index <- function(multi_index, x, vert_offset) {
+    # Ravel a multi-index and add a vertical offset to it
+    # TODO: I have no idea what the following Python code does
+    # ravel_idx <- np.ravel_multi_index(multi_index, max(x.shape, (1,)), order = "F")
+    return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
+  }
+  
+  boolean_idx <- c()
+  integer_idx <- c()
+  vert_offset <- 0
+  for(x in variables) {
+    if(!is.null(x@boolean_idx)) {
+      multi_index <- x@boolean_idx
+      boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    if(!is.null(x@integer_idx)) {
+      multi_index <- x@integer_idx
+      integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    vert_offset <- vert_offset + size(x)
+  }
+  return(list(boolean_idx, integer_idx))
+}

@@ -74,9 +74,9 @@ setMethod("perform", signature(object = "CBCSolver", problem = "Problem"), funct
 
   # Order and group constraints.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  inv_data[EQ_CONSTR] <- eq_constr
+  inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
-  inv_data[NEQ_CONSTR] <- leq_constr
+  inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })
 
@@ -87,9 +87,9 @@ setMethod("invert", signature(object = "CBCSolver", solution = "Solution", inver
   if(status %in% SOLUTION_PRESENT) {
       opt_val <- solution[VALUE]
       primal_vars <- list(solution[PRIMAL])
-      names(primal_variables) <- inverse_data[object@VAR_ID]
+      names(primal_variables) <- inverse_data[object@var_id]
       eq_dual <- ConicSolver.get_dual_values(solution[EQ_DUAL], inverse_data[EQ_CONSTR])
-      leq_dual <- ConicSolver.get_dual_values(solution[INEQ_DUAL], inverse_data[NEQ_CONSTR])
+      leq_dual <- ConicSolver.get_dual_values(solution[INEQ_DUAL], inverse_data[object@neq_constr])
       eq_dual <- modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
   } else {

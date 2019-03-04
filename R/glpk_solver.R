@@ -67,7 +67,7 @@ setMethod("status_map", "GLPK", function(solver, status) {
 #
 #' @describeIn GLPK The name of the solver.
 #' @export
-setMethod("name", "GLPK", function(object) { GLPK_NAME })
+setMethod("name", "GLPK", function(x) { GLPK_NAME })
 
 #' @describeIn GLPK Imports the Rglpk library.
 setMethod("import_solver", "GLPK", function(solver) {

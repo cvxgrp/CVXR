@@ -1,33 +1,3 @@
-# Solver definitions.
-solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
-solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX())
-
-SOLVER_MAP_CONIC <- solver_conic_intf
-names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, function(solver) { name(solver) })
-
-SOLVER_MAP_QP <- solver_qp_intf
-names(SOLVER_MAP_QP) <- sapply(solver_conic_qp, function(solver) { name(solver) })
-
-# CONIC_SOLVERS and QP_SOLVERS are sorted in order of decreasing solver preference.
-# QP_SOLVERS are those for which we have written interfaces and are supported by QpSolver.
-CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, ECOS_BB_NAME, SUPER_SCS_NAME, SCS_NAME,
-                   GUROBI_NAME, GLPK_NAME, XPRESS_NAME,
-                   GLPK_MI_NAME, CBC_NAME, ELEMENTAL_NAME, JULIA_OPT_NAME, CVXOPT_NAME,
-                   CPLEX_NAME)
-QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
-
-installed_solvers <- function() {
-  # Check conic solvers.
-  installed_conic <- SOLVER_MAP_CONIC[sapply(SOLVER_MAP_CONIC, function(solver) { is_installed(solver) })]
-  installed_qp <- SOLVER_MAP_QP[sapply(SOLVER_MAP_QP, function(solver) { is_installed(solver) })]
-  installed <- c(names(installed_conic), names(installed_qp))
-  installed <- unique(installed)   # Remove duplicate names (for solvers that handle both conic and QP problems)
-  return(installed)
-}
-
-INSTALLED_SOLVERS <- installed_solvers()
-INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[sapply(INSTALLED_SOLVERS, function(slv) { slv %in% CONIC_SOLVERS })]
-
 # Solver utility functions.
 group_constraints <- function(constraints) {
   constr_map <- list()
@@ -56,19 +26,19 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
   return(dual_vars)
 }
 
-ReductionSolver <- setClass("ReductionSolver", contains = "Reduction")
+#'
+#' The ReductionSolver class.
+#'
+#' @rdname ReductionSolver-class
+setClass("ReductionSolver", representation(var_id = "character", eq_constr = "character", neq_constr = "character"),   # Keys for inverse data. Internal use only!
+                            prototype(var_id = "var_id", eq_constr = "eq_constr", neq_constr = "other_constr"), contains = "Reduction")
 
 # Solver capabilities.
-setMethod("mip_capable", function(object) { FALSE })
-
-# Keys for inverse data.
-setMethod("var_id", function(object) { "var_id" })
-setMethod("eq_constr", function(object) { "eq_constr" })
-setMethod("neq_constr", function(object) { "other_constr" })
+setMethod("mip_capable", "ReductionSolver", function(solver) { FALSE })
 
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
-setMethod("import_solver", "ReductionSolver", function(object) { stop("Unimplemented") })
-setMethod("is_installed", "ReductionSolver", function(object) {
+setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
+setMethod("is_installed", "ReductionSolver", function(solver) {
   tryCatch(import_solver(object),
            error = function(e) { return(FALSE) },
            finally = return(TRUE)
@@ -79,7 +49,7 @@ setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start
   stop("Unimplemented")
 })
 
-setMethod("psolve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
   data <- ret[[1]]
   inv_data <- ret[[2]]
@@ -88,7 +58,7 @@ setMethod("psolve", "ReductionSolver", function(object, problem, warm_start, ver
 })
 
 ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")
-setMethod("mip_capable", "ConstantSolver", function(object) { TRUE })
+setMethod("mip_capable", "ConstantSolver", function(solver) { TRUE })
 setMethod("accepts", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
   return(length(variables(problem)) == 0)
 })
@@ -102,13 +72,13 @@ setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", 
 })
 
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
-setMethod("import_solver", "ConstantSolver", function(object) { })
-setMethod("is_installed", "ConstantSolver", function(object) { TRUE })
+setMethod("import_solver", "ConstantSolver", function(solver) { })
+setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   return(solve(object, data, warm_start, verbose, solver_opts))
 })
 
-setMethod("psolve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {
   if(all(sapply(problem@constraints, function(c) { !is.na(value(c)) })))
     return(Solution(OPTIMAL, value(problem@objective), list(), list(), list()))
   else
@@ -196,7 +166,7 @@ setMethod("prepend", signature(object = "SolvingChain", chain = "SolvingChain"),
   SolvingChain(reductions = c(chain@reductions, object@reductions))
 })
 
-setMethod("psolve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
   tmp <- perform(object, problem)
   data <- tmp[[1]]
   inverse_data <- tmp[[2]]
@@ -204,7 +174,7 @@ setMethod("psolve", signature(object = "SolvingChain", problem = "Problem"), fun
   return(invert(object, solution, inverse_data))
 })
 
-setMethod("solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
 })
 

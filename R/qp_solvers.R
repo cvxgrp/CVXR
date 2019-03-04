@@ -1,3 +1,87 @@
+# QPSolver requires objectives to be stuffed in the following way.
+is_stuffed_qp_objective <- function(objective) {
+  expr <- objective@expr
+  return(class(expr) == "AddExpression" && length(expr@args) == 2 && class(expr@args[[1]]) == "QuadForm" && class(expr@args[[2]]) == "MulExpression" && is_affine(expr@args[[2]]))
+}
+
+# A QP solver interface.
+setClass("QpSolver", contains = "ReductionSolver")
+
+setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
+  return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
+           all(sapply(problem@constraints, function(c) { class(c) == "Zero" || class(c) == "NonPos" })))
+})
+
+setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
+  # Construct QP problem data stored in a dictionary.
+  # The QP has the following form
+  #    minimize 1/2 x' P x + q' x
+  #    subject to A x = b
+  #               F x <= g
+  inverse_data <- InverseData(problem)
+  
+  obj <- problem@objective
+  # quadratic part of objective is x.T * P * x, but solvers expect 0.5*x.T * P * x.
+  P <- 2*value(obj@expr@args[[1]]@args[[2]])
+  q <- as.vector(value(obj@expr@args[[2]]@args[[1]]))
+  
+  # Get number of variables.
+  n <- problem@size_metrics@num_scalar_variables
+  
+  # TODO: This dependence on ConicSolver is hacky; something should change here.
+  eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  if(length(eq_cons) > 0) {
+    eq_coeffs <- list(list(), c())
+    for(con in eq_cons) {
+      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
+      eq_coeffs[[1]] <- c(eq_coeffs[[1]], coeff_offset[[1]])
+      eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
+    }
+    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
+    b <- -eq_coeffs[[2]]
+  } else {
+    A <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
+    b <- -matrix(nrow = 0, ncol = 0)
+  }
+  
+  ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  if(length(ineq_cons) > 0) {
+    ineq_coeffs <- list(list(), c())
+    for(con in ineq_cons) {
+      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
+      ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], coeff_offset[[1]])
+      ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
+    }
+    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
+    g <- -ineq_coeffs[[2]]
+  } else {
+    Fmat <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
+    g <- -matrix(nrow = 0, ncol = 0)
+  }
+  
+  # Create dictionary with problem data.
+  variables <- variables(problem)[[1]]
+  data <- list()
+  data[P_KEY] <- Matrix(P, sparse = TRUE)
+  data[Q_KEY] <- q
+  data[A_KEY] <- Matrix(A, sparse = TRUE)
+  data[B_KEY] <- b
+  data[F_KEY] <- Matrix(Fmat, sparse = TRUE)
+  data[G_KEY] <- g
+  data[BOOL_IDX] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
+  data[INT_IDX] <- sapply(variables@integer_idx, function(t) { t[[1]] })
+  data$n_var <- n
+  data$n_eq <- nrow(A)
+  data$n_ineq <- nrow(Fmat)
+  
+  inverse_data@sorted_constraints <- c(eq_cons, ineq_cons)
+  
+  # Add information about integer variables.
+  inverse_data@is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+  
+  return(list(data, inverse_data))
+})
+
 # QP interface for the CPLEX solver.
 CPLEX <- setClass("CPLEX", contains = "QpSolver")
 
@@ -474,88 +558,4 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   if(!is.na(solver_cache))
     solver_cache[name(object)] <- list(solver, data, results)
   return(results)
-})
-
-# QPSolver requires objectives to be stuffed in the following way.
-is_stuffed_qp_objective <- function(objective) {
-  expr <- objective@expr
-  return(class(expr) == "AddExpression" && length(expr@args) == 2 && class(expr@args[[1]]) == "QuadForm" && class(expr@args[[2]]) == "MulExpression" && is_affine(expr@args[[2]]))
-}
-
-# A QP solver interface.
-QpSolver <- setClass("QpSolver", contains = "ReductionSolver")
-
-setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
-  return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
-         all(sapply(problem@constraints, function(c) { class(c) == "Zero" || class(c) == "NonPos" })))
-})
-
-setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
-  # Construct QP problem data stored in a dictionary.
-  # The QP has the following form
-  #    minimize 1/2 x' P x + q' x
-  #    subject to A x = b
-  #               F x <= g
-  inverse_data <- InverseData(problem)
-  
-  obj <- problem@objective
-  # quadratic part of objective is x.T * P * x, but solvers expect 0.5*x.T * P * x.
-  P <- 2*value(obj@expr@args[[1]]@args[[2]])
-  q <- as.vector(value(obj@expr@args[[2]]@args[[1]]))
-  
-  # Get number of variables.
-  n <- problem@size_metrics@num_scalar_variables
-  
-  # TODO: This dependence on ConicSolver is hacky; something should change here.
-  eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
-  if(length(eq_cons) > 0) {
-    eq_coeffs <- list(list(), c())
-    for(con in eq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
-      eq_coeffs[[1]] <- c(eq_coeffs[[1]], coeff_offset[[1]])
-      eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
-    }
-    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
-    b <- -eq_coeffs[[2]]
-  } else {
-    A <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
-    b <- -matrix(nrow = 0, ncol = 0)
-  }
-  
-  ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
-  if(length(ineq_cons) > 0) {
-    ineq_coeffs <- list(list(), c())
-    for(con in ineq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
-      ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], coeff_offset[[1]])
-      ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
-    }
-    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
-    g <- -ineq_coeffs[[2]]
-  } else {
-    Fmat <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
-    g <- -matrix(nrow = 0, ncol = 0)
-  }
-  
-  # Create dictionary with problem data.
-  variables <- variables(problem)[[1]]
-  data <- list()
-  data[P_KEY] <- Matrix(P, sparse = TRUE)
-  data[Q_KEY] <- q
-  data[A_KEY] <- Matrix(A, sparse = TRUE)
-  data[B_KEY] <- b
-  data[F_KEY] <- Matrix(Fmat, sparse = TRUE)
-  data[G_KEY] <- g
-  data[BOOL_IDX] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
-  data[INT_IDX] <- sapply(variables@integer_idx, function(t) { t[[1]] })
-  data$n_var <- n
-  data$n_eq <- nrow(A)
-  data$n_ineq <- nrow(Fmat)
-  
-  inverse_data@sorted_constraints <- c(eq_cons, ineq_cons)
-  
-  # Add information about integer variables.
-  inverse_data@is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
-  
-  return(list(data, inverse_data))
 })

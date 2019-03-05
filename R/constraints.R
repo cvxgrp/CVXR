@@ -22,7 +22,7 @@ setMethod("show", "Constraint", function(object) {
   paste(class(object), "(", as.character(object@args[[1]]), ")")
 })
 
-setMethod("dim", "Constraint", function(x) { dim(object@args[[1]]) })
+setMethod("dim", "Constraint", function(x) { dim(x@args[[1]]) })
 setMethod("size", "Constraint", function(object) { size(object@args[[1]]) })
 setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
 setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
@@ -73,7 +73,7 @@ setMethod("name", "ZeroConstraint", function(x) {
   paste(as.character(x@args[[1]]), "== 0")
 })
 
-setMethod("dim", "ZeroConstraint", function(x) { dim(object@args[[1]]) })
+setMethod("dim", "ZeroConstraint", function(x) { dim(x@args[[1]]) })
 setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
 setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
@@ -107,7 +107,7 @@ setMethod("name", "EqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
 })
 
-setMethod("dim", "EqConstraint", function(x) { dim(object@expr) })
+setMethod("dim", "EqConstraint", function(x) { dim(x@expr) })
 setMethod("size", "EqConstraint", function(object) { size(object@expr) })
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@expr) })
 setMethod("is_dgp", "EqConstraint", function(object) {
@@ -171,7 +171,7 @@ setMethod("name", "IneqConstraint", function(x) {
 })
 
 #' @describeIn IneqConstraint The dimensions of the constrained expression.
-setMethod("dim", "IneqConstraint", function(x) { size(object@expr) })
+setMethod("dim", "IneqConstraint", function(x) { size(x@expr) })
 
 #' @describeIn IneqConstraint The size of the constrained expression.
 setMethod("size", "IneqConstraint", function(object) { size(object@expr) })

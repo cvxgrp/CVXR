@@ -25,7 +25,7 @@ Solver.choose_solver <- function(constraints) {
   else if(length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0)
     return(ECOS_BB())
   # If SDP, defaults to CVXOPT.
-  else if(length(constr_map[[SDP_MAP]]) > 0) {
+  else if(length(constr_map[[PSD_MAP]]) > 0) {
     # if(requireNamespace("cccp")) {
     #  return(CVXOPT())
     # } else
@@ -56,7 +56,7 @@ setMethod("is_installed", "Solver", function(solver) {
 #' 
 #'   if( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver))
 #'     Solver._reject_problem(solver, "it cannot solve mixed-integer problems")
-#'   else if(length(constr_map[[SDP_MAP]]) > 0 && !psd_capable(solver))
+#'   else if(length(constr_map[[PSD_MAP]]) > 0 && !psd_capable(solver))
 #'     Solver._reject_problem(solver, "it cannot solve semidefinite problems")
 #'   else if(length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver))
 #'     Solver._reject_problem(solver, "it cannot solve exponential cone problems")
@@ -559,12 +559,12 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
       new_results[[EQ_DUAL]] <- numeric(0)
 
     y <- results_dict$y[(dims[[EQ_DIM]]+1):length(results_dict$y)]
-    if(is.null(dims[[SDP_DIM]])) {
+    if(is.null(dims[[PSD_DIM]])) {
       old_sdp_sizes <- 0
       new_sdp_sizes <- 0
     } else {
-      old_sdp_sizes <- sum(floor(dims[[SDP_DIM]] * (dims[[SDP_DIM]] + 1)/2))
-      new_sdp_sizes <- sum(dims[[SDP_DIM]]^2)
+      old_sdp_sizes <- sum(floor(dims[[PSD_DIM]] * (dims[[PSD_DIM]] + 1)/2))
+      new_sdp_sizes <- sum(dims[[PSD_DIM]]^2)
     }
     if(is.null(dims[[SOC_DIM]]))
       y_offset <- dims[[LEQ_DIM]]
@@ -576,7 +576,7 @@ setMethod("format_results", "SCS", function(solver, results_dict, data, cached_d
       y_true[1:y_true_offset] <- y[1:y_offset]
 
     # Expand SDP duals from lower triangular to full matrix, scaling off diagonal entries by 1/sqrt(2)
-    for(n in dims[[SDP_DIM]]) {
+    for(n in dims[[PSD_DIM]]) {
       if(n > 0) {
         tri <- y[(y_offset + 1):(y_offset + floor(n*(n+1)/2))]
         y_true[(y_true_offset + 1):(y_true_offset + n^2)] <- SCS.tri_to_full(tri, n)

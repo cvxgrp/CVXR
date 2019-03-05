@@ -537,7 +537,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   return(list(data, full_chain, inverse_data))
 })
 
-.find_candiate_solvers.Problem <- function(object, solver = NA, gp = FALSE) {
+.find_candidate_solvers <- function(object, solver = NA, gp = FALSE) {
   candidates <- list(qp_solvers = list(), conic_solvers = list())
   
   if(!is.na(solver)) {
@@ -572,7 +572,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   return(candidates)
 }
 
-.construct_chains.Problem <- function(object, solver = NA, gp = FALSE) {
+.construct_chains <- function(object, solver = NA, gp = FALSE) {
   chain_key <- c(solver, gp)
   
   if(!all(chain_key == object@.cached_chain_key)) {

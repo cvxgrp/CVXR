@@ -76,7 +76,7 @@ setMethod("is_pos", "Constant", function(object) {
 setMethod("grad", "Constant", function(object) { list() })
 
 #' @describeIn Constant The \code{c(row, col)} dimensions of the constant.
-setMethod("dim", "Constant", function(x) { object@dim })
+setMethod("dim", "Constant", function(x) { x@dim })
 
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {

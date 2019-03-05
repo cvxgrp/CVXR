@@ -1,4 +1,5 @@
-intf_size <- function(constant) {
+# Get the dimensions of the constant.
+intf_dim <- function(constant) {
   if((is.null(dim(constant)) && length(constant) == 1) ||
      (!is.null(dim(constant)) && all(dim(constant) == c(1,1))))
     return(c(1,1))
@@ -10,6 +11,17 @@ intf_size <- function(constant) {
     stop("Unknown class: ", class(constant))
 }
 
+# Is the constant a column vector?
+intf_is_vector <- function(constant) {
+  dim(constant)[2] == 1
+}
+
+# Is the constant a scalar?
+intf_is_scalar <- function(constant) {
+  all(dim(constant) == c(1,1))
+}
+
+# Return the collective sign of the matrix entries.
 intf_sign <- function(constant) {
   c(min(constant) >= 0, max(constant) <= 0)
 }

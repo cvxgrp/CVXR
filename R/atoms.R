@@ -51,7 +51,7 @@ setMethod("validate_args", "Atom", function(object) {
 setMethod("dim_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
-setMethod("dim", "Atom", function(x) { object@.dim })
+setMethod("dim", "Atom", function(x) { x@.dim })
 
 #' @describeIn Atom The number of rows in the atom.
 setMethod("nrow", "Atom", function(x) { dim(x)[1] })
@@ -201,14 +201,7 @@ setMethod("canonicalize", "Atom", function(object) {
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data = NA_real_) { stop("Unimplemented") })
 
-#' @describeIn Atom The value of the atom.
-setMethod("value", "Atom", function(object) {
-  if(any(sapply(parameters(object), function(p) { is.na(value(p)) })))
-    return(NA_real_)
-  return(.value_impl(object))
-})
-
-.value_impl.Atom <- function(object) {
+.value_impl <- function(object) {
   obj_dim <- dim(object)
   # dims with 0's dropped in presolve.
   if(0 %in% obj_dim)
@@ -231,6 +224,13 @@ setMethod("value", "Atom", function(object) {
   }
   return(result)
 }
+
+#' @describeIn Atom The value of the atom.
+setMethod("value", "Atom", function(object) {
+  if(any(sapply(parameters(object), function(p) { is.na(value(p)) })))
+    return(NA_real_)
+  return(.value_impl(object))
+})
 
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {
@@ -314,7 +314,7 @@ setMethod("atoms", "Atom", function(object) {
 AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY", keepdims = "logical"), 
                                  prototype(axis = NA_real_, keepdims = FALSE), contains = c("VIRTUAL", "Atom"))
 
-setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis) {
+setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_, keepdims = FALSE) {
   .Object@expr <- expr
   .Object@axis <- axis
   .Object@keepdims <- keepdims

@@ -39,7 +39,7 @@ setMethod("mip_capable", "ReductionSolver", function(solver) { FALSE })
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
 setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
 setMethod("is_installed", "ReductionSolver", function(solver) {
-  tryCatch(import_solver(object),
+  tryCatch(import_solver(solver),
            error = function(e) { return(FALSE) },
            finally = return(TRUE)
           )

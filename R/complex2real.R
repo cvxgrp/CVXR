@@ -84,7 +84,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
 
 Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
   # TODO: Don't copy affine expressions?
-  if(type(expr) == "PartialProblem")
+  if(class(expr) == "PartialProblem")
     stop("Unimplemented")
   else {
     real_args <- list()
@@ -104,7 +104,7 @@ Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag
     # Only canonicalize a variable/constant/parameter once.
     if(length(expr@args) == 0 && expr %in% leaf_map)
       return(leaf_map[expr])
-    result <- elim_cplx_methods[type(expr)](expr, real_args, imag_args, real2imag)
+    result <- Complex2Real.CANON_METHODS[[class(expr)]](expr, real_args, imag_args, real2imag)
     if(length(expr@args) == 0)
       leaf_map[expr] <- result
     return(result)
@@ -125,7 +125,7 @@ Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
     real <- real_args[[1]]
     imag <- imag_args[[1]]
     norms <- p_norm(vstack(c(real, imag)), p = 2, axis = 2)
-    output <- reshape(norms, real_args[[1]]@dim)
+    output <- reshape_expr(norms, real_args[[1]]@dim)
   }
   return(list(output, NA))
 }
@@ -256,7 +256,7 @@ Complex2Real.lambda_sum_largest_canon <- function(expr, real_args, imag_args, re
 Complex2Real.at_least_2D <- function(expr) {
   # Upcast 0D and 1D to 2D.
   if(ndim(expr) < 2)
-    return(reshape(expr, c(size(expr), 1)))
+    return(reshape_expr(expr, c(size(expr), 1)))
   else
     return(expr)
 }

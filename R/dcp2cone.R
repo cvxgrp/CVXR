@@ -153,7 +153,7 @@ Dcp2Cone.lambda_max_canon <- function(expr, args) {
   t <- Variable()
   prom_t <- promote(t, c(n,1))
   # Constraint I*t - A to be PSD; note this expression must be symmetric
-  tmp_expr <- diag_vec(prom_t) - A
+  tmp_expr <- DiagVec(prom_t) - A
   constr <- list(tmp_expr == t(tmp_expr), PSDConstraint(tmp_expr))
   return(list(t, constr))
 }
@@ -239,15 +239,15 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   # Fix Z as upper triangular
   # TODO: Represent Z as upper triangular vector
   Z <- Variable(c(n,n))
-  Z_lower_tri <- upper_tri(transpose(Z))
+  Z_lower_tri <- upper_tri(t(Z))
   constraints <- list(Z_lower_tri == 0)
 
   # Fix diag(D) = Diag(Z): D[i,i] = Z[i,i]
   D <- Variable(n)
-  constraints <- c(constraints, D == diag_mat(Z))
+  constraints <- c(constraints, D == DiagMat(Z))
   # Fix X using the fact that A must be affine by the DCP rules
   # X[1:n, 1:n] == D
-  constraints <- c(constraints, X[1:n, 1:n] == diag_vec(D))
+  constraints <- c(constraints, X[1:n, 1:n] == DiagVec(D))
   # X[1:n, (n+1):(2*n)] == Z
   constraints <- c(constraints, X[1:n, (n+1):(2*n)] == Z)
   # X[(n+1):(2*n),  (n+1):(2*n)] == A
@@ -263,24 +263,24 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
 
 Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   x <- args[[1]]
-  x_shape <- shape(x)
-  expr_shape <- shape(expr)
+  x_dim <- dim(x)
+  expr_dim <- dim(expr)
   axis <- expr@axis
   keepdims <- expr@keepdims
-  t <- Variable(expr_shape)
+  t <- Variable(expr_dim)
   
   # log(sum(exp(x))) <= t <=> sum(exp(x-t)) <= 1.
   if(is.na(axis))   # shape = c(1,1)
-    promoted_t <- promote(t, x_shape)
+    promoted_t <- promote(t, x_dim)
   else if(axis == 2)   # shape = c(1,n)
-    promoted_t <- Constant(matrix(1, nrow = x_shape[1], ncol = 1) %*% reshape(t, c(1 + x_shape[2], x_shape[3:length(x_shape)])))
+    promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1) %*% reshape_expr(t, c(1 + x_dim[2], x_dim[3:length(x_dim)])))
   else   # shape = c(m,1)
-    promoted_t <- reshape(t, c(1 + x_shape[1], x_shape[2:(length(x_shape)-1)])) %*% Constant(matrix(1, nrow = 1, ncol = x_shape[2]))
+    promoted_t <- reshape_expr(t, c(1 + x_dim[1], x_dim[2:(length(x_dim)-1)])) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
   
   exp_expr <- exp(x - promoted_t)
-  canon <- exp_canon(exp_expr, exp_expr@args)
-  obj <- sum(canon[[1]], axis = axis, keepdims = keepdims)
-  ones <- Constant(matrix(1, nrow = expr_shape[1], ncol = expr_shape[2]))
+  canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
+  obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
+  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(canon[[2]], obj <= ones)
   return(list(t, constraints))
 }
@@ -308,7 +308,7 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   P <- args[[2]]   # n by n matrix
 
   if(length(dim(X)) == 1)
-    X <- reshape(X, c(nrow(X), 1))
+    X <- reshape_expr(X, c(nrow(X), 1))
   X_dim <- dim(X)
   n <- X_dim[1]
   m <- X_dim[2]
@@ -419,7 +419,7 @@ Dcp2Cone.power_canon <- function(expr, args) {
 }
 
 Dcp2Cone.quad_form_canon <- function(expr, args) {
-  decomp <- decomp_quad(value(args[[1]]))
+  decomp <- .decomp_quad(value(args[[1]]))
   scale <- decomp[[1]]
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]

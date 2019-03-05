@@ -46,7 +46,7 @@ Dgp2Dcp.add_canon <- function(expr, args) {
       summand_args <- lapply(summands, function(summand) { summand[i] })
       rows <- c(rows, log_sum_exp(hstack(summand_args)))
     }
-    return(list(reshape(bmat(rows), dim(expr)), list()))
+    return(list(reshape_expr(bmat(rows), dim(expr)), list()))
   } else {
     for(i in 1:nrow(expr)) {
       row <- c()
@@ -55,7 +55,7 @@ Dgp2Dcp.add_canon <- function(expr, args) {
         rows <- c(rows, log_sum_exp(hstack(summand_args)))
       }
     }
-    return(list(reshape(bmat(rows), dim(expr)), list()))
+    return(list(reshape_expr(bmat(rows), dim(expr)), list()))
   }
 }
 
@@ -80,7 +80,7 @@ Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
   # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
   # Y represents log(Y) here, hence no positivity constraint.
   Y <- Variable(dim(X))
-  prod <- matmul(Y, X)
+  prod <- MulExpression(Y, X)
   lhs <- Dgp2Dcp.mulexpression_canon(prod, prod@args)[[1]]
   lhs <- lhs + diag(1, nrow(prod))
   return(list(Y, list(lhs <= Y)))
@@ -111,8 +111,8 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
   dims <- mul_dims_promote(dim(lhs), dim(rhs))
   lhs_dim <- dims[[1]]
   rhs_dim <- dims[[2]]
-  lhs <- reshape(lhs, lhs_dim)
-  rhs <- reshape(rhs, rhs_dim)
+  lhs <- reshape_expr(lhs, lhs_dim)
+  rhs <- reshape_expr(rhs, rhs_dim)
   rows <- c()
   
   # TODO: Parallelize this for large matrices.
@@ -126,7 +126,7 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
   }
   mat <- bmat(rows)
   if(!all(dim(mat) == dim(expr)))
-    mat <- reshape(mat, dim(expr))
+    mat <- reshape_expr(mat, dim(expr))
   return(list(mat, list()))
 }
 
@@ -140,14 +140,14 @@ Dgp2Dcp.norm1_canon <- function(expr, args) {
   if(length(args) != 1)
     stop("Must have exactly 1 argument")
   tmp <- SumEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
-  return(sum_canon(tmp, tmp@args))
+  return(Dgp2Dcp.sum_canon(tmp, tmp@args))
 }
 
 Dgp2Dcp.norm_inf_canon <- function(expr, args) {
   if(length(args) != 1)
     stop("Must have exactly 1 argument")
   tmp <- MaxEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
-  return(EliminatePwl.max_canon(tmp, tmp@args))
+  return(EliminatePwl.max_entries_canon(tmp, tmp@args))
 }
 
 Dgp2Dcp.one_minus_pos_canon <- function(expr, args) {
@@ -165,7 +165,7 @@ Dgp2Dcp.pf_eigenvalue_canon <- function(expr, args) {
   # v and lambda represent log variables, hence no positivity constraints.
   lambd <- Variable()
   v <- Variable(nrow(X))
-  lhs <- matmul(X, v)
+  lhs <- MulExpression(X, v)
   rhs <- lambd*v
   lhs <- Dgp2Dcp.mulexpression_canon(lhs, lhs@args)[[1]]
   rhs <- Dgp2Dcp.mul_canon(rhs, rhs@args)[[1]]
@@ -228,7 +228,7 @@ Dgp2Dcp.sum_canon <- function(expr, args) {
     x <- Vec(X)
     summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
     canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
-    return(list(reshape(canon, dim(expr)), list()))
+    return(list(reshape_expr(canon, dim(expr)), list()))
   }
   
   if(expr@axis == 2)
@@ -242,7 +242,7 @@ Dgp2Dcp.sum_canon <- function(expr, args) {
     rows <- c(rows, canon)
   }
   canon <- hstack(rows)
-  return(list(reshape(canon, dim(expr)), list()))
+  return(list(reshape_expr(canon, dim(expr)), list()))
 }
 
 Dgp2Dcp.trace_canon <- function(expr, args) {

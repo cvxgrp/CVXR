@@ -312,7 +312,8 @@ setMethod("is_complex", "BinaryOperator", function(object) {
 #' @name MulExpression-class
 #' @aliases MulExpression
 #' @rdname MulExpression-class
-MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
+.MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
+MulExpression <- function(lh_exp, rh_exp) { .MulExpression(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "MulExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "%*%")
@@ -1148,9 +1149,9 @@ setMethod(".grad", "SpecialIndex", function(object) {
   idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
   if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
-    lowered <- Reshape(idmat * v, final_dim[1], final_dim[2])
+    lowered <- Reshape(idmat * v, c(final_dim[1], final_dim[2]))
   else
-    lowered <- Reshape(idmat %*% v, final_dim[1], final_dim[2])
+    lowered <- Reshape(idmat %*% v, c(final_dim[1], final_dim[2]))
   return(grad(lowered))
 })
 
@@ -1236,12 +1237,14 @@ setMethod("graph_implementation", "Kron", function(object, arg_objs, dim, data =
 #' @param expr An \linkS4class{Expression} or numeric constant.
 #' @param promoted_dim The desired dimensions.
 #' @rdname Promote-class
-Promote <- function(expr, promoted_dim) { 
+Promote <- function(expr, promoted_dim) { .Promote(expr = expr, promoted_dim = promoted_dim) } 
+
+promote <- function(expr, promoted_dim) { 
   expr <- as.Constant(expr)
   if(!all(dim(expr) == promoted_dim)) {
     if(!is_scalar(expr))
       stop("Only scalars may be promoted.")
-    return(.Promote(expr = expr, promoted_dim = promoted_dim))
+    return(Promote(expr = expr, promoted_dim = promoted_dim))
   } else
     return(expr)
 }

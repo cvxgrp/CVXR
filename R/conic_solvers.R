@@ -1031,8 +1031,8 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
     lengths <- c(size(offset))
     ids <- c(ids, id(con))
   }
-  coeff <- Matrix(do.bind("rbind", matrices), sparse = TRUE)
-  offset <- do.bind("cbind", offsets)
+  coeff <- Matrix(do.call("rbind", matrices), sparse = TRUE)
+  offset <- do.call("cbind", offsets)
   return(list(coeff, offset, lengths, ids))
 })
 

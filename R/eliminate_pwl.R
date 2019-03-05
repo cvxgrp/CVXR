@@ -10,7 +10,7 @@ EliminatePwl <- function(problem = NULL) { .EliminatePwl(problem = problem) }
 
 setMethod("initialize", "EliminatePwl", function(.Object, ..., problem = NULL) {
   .Object@problem <- problem
-  callNextMethod(.Object, ..., problem = problem, canon_methods = EPWL_CANON_METHODS)
+  callNextMethod(.Object, ..., problem = problem, canon_methods = EliminatePwl.CANON_METHODS)
 })
 
 setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
@@ -42,9 +42,9 @@ EliminatePwl.max_entries_canon <- function(expr, args) {
   if(is.na(axis))   # dim(expr) = c(1,1)
     promoted_t <- promote(t, dim(x))
   else if(axis == 2)   # dim(expr) = c(1,n)
-    promoted_t <- Constant(matrix(1, nrow = nrow(x), ncol = 1) %*% reshape(t, c(1, ncol(x))))
+    promoted_t <- Constant(matrix(1, nrow = nrow(x), ncol = 1) %*% reshape_expr(t, c(1, ncol(x))))
   else   # shape = c(m,1)
-    promoted_t <- reshape(t, c(nrow(x), 1)) %*% Constant(matrix(1, nrow = 1, ncol = ncol(x)))
+    promoted_t <- reshape_expr(t, c(nrow(x), 1)) %*% Constant(matrix(1, nrow = 1, ncol = ncol(x)))
   
   constraints <- list(x <= promoted_t)
   return(list(t, constraints))

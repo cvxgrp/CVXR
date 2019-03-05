@@ -600,7 +600,7 @@ setMethod("get_attr_str", "Leaf", function(object) {
 setMethod("get_data", "Leaf", function(object) { })
 
 #' @describeIn Leaf The dimensions of the leaf node.
-setMethod("dim", "Leaf", function(x) { object@dim })
+setMethod("dim", "Leaf", function(x) { x@dim })
 
 #' @describeIn Leaf List of \linkS4class{Variable} objects in the leaf node.
 setMethod("variables", "Leaf", function(object) { list() })

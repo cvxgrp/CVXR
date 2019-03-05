@@ -59,7 +59,7 @@ SymData.filter_constraints <- function(constraints) {
   ## constr_map[[EQ_MAP]]   <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinEqConstr" })]
   ## constr_map[[LEQ_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is.list(c) && c$class == "LinLeqConstr" })]
   ## constr_map[[SOC_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SOC") })]
-  ## constr_map[[SDP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
+  ## constr_map[[PSD_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "SDP") })]
   ## constr_map[[EXP_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "ExpCone") })]
   ## constr_map[[BOOL_MAP]] <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "BoolConstr") })]
   ## constr_map[[INT_MAP]]  <- if(length(constraints) == 0) list() else constraints[sapply(constraints, function(c) { is(c, "IntConstr") })]
@@ -68,7 +68,7 @@ SymData.filter_constraints <- function(constraints) {
     LEQ_MAP_TAG <- 2L
     SOC_MAP_TAG <- 3L
     SOC_EW_MAP_TAG <- 4L
-    SDP_MAP_TAG <- 5L
+    PSD_MAP_TAG <- 5L
     EXP_MAP_TAG <- 6L
     BOOL_MAP_TAG <- 7L
     INT_MAP_TAG <- 8L
@@ -82,7 +82,7 @@ SymData.filter_constraints <- function(constraints) {
                               } else if (is(c, "SOC")) {
                                   SOC_MAP_TAG
                               } else if (is(c, "SDP")) {
-                                  SDP_MAP_TAG
+                                  PSD_MAP_TAG
                               } else if (is(c, "ExpCone")) {
                                   EXP_MAP_TAG
                               } else if (is(c, "BoolConstr")) {
@@ -97,11 +97,11 @@ SymData.filter_constraints <- function(constraints) {
     constr_map <- list(constraints[constr_tags == EQ_MAP_TAG],
                        constraints[constr_tags == LEQ_MAP_TAG],
                        constraints[constr_tags == SOC_MAP_TAG],
-                       constraints[constr_tags == SDP_MAP_TAG],
+                       constraints[constr_tags == PSD_MAP_TAG],
                        constraints[constr_tags == EXP_MAP_TAG],
                        constraints[constr_tags == BOOL_MAP_TAG],
                        constraints[constr_tags == INT_MAP_TAG])
-    names(constr_map) <- c(EQ_MAP, LEQ_MAP, SOC_MAP, SDP_MAP, EXP_MAP, BOOL_MAP, INT_MAP)
+    names(constr_map) <- c(EQ_MAP, LEQ_MAP, SOC_MAP, PSD_MAP, EXP_MAP, BOOL_MAP, INT_MAP)
     constr_map
 }
 
@@ -185,7 +185,7 @@ SymData.format_for_solver <- function(constr_map, solver) {
   else
     dims[[LEQ_DIM]] <- 0
   dims[[SOC_DIM]]  <- c()
-  dims[[SDP_DIM]]  <- c()
+  dims[[PSD_DIM]]  <- c()
   dims[[EXP_DIM]]  <- 0
   dims[[BOOL_IDS]] <- c()
   dims[[INT_IDS]]  <- c()

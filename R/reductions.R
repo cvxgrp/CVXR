@@ -240,8 +240,8 @@ setMethod("canonicalize_tree", signature(object = "Canonicalization", expr = "Ex
 setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Expression", args = "list"), function(object, expr, args) {
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
-  } else if(class(expr) %in% canon_methods(object))
-    return(canon_methods(object)[[class(expr)]](expr, args))
+  } else if(class(expr) %in% object@canon_methods)
+    return(object@canon_methods[[class(expr)]](expr, args))
   else
     return(list(copy(expr, args), list()))   # TODO: copy must be defined in Canonical virtual class
 })

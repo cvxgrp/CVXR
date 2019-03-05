@@ -24,7 +24,7 @@ setMethod("lp_capable", "MOSEK", function(solver) { TRUE })
 setMethod("socp_capable", "MOSEK", function(solver) { TRUE })
 
 #' @describeIn MOSEK MOSEK can handle semidefinite programs.
-setMethod("sdp_capable", "MOSEK", function(solver) { TRUE })
+setMethod("psd_capable", "MOSEK", function(solver) { TRUE })
 
 #' @describeIn MOSEK MOSEK cannot handle exponential cone programs.
 setMethod("exp_capable", "MOSEK", function(solver) { FALSE })

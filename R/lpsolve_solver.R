@@ -23,7 +23,7 @@ setMethod("lp_capable", "LPSOLVE", function(solver) { TRUE })
 setMethod("socp_capable", "LPSOLVE", function(solver) { FALSE })
 
 #' @describeIn LPSOLVE LPSOLVE can handle semidefinite programs.
-setMethod("sdp_capable", "LPSOLVE", function(solver) { FALSE })
+setMethod("psd_capable", "LPSOLVE", function(solver) { FALSE })
 
 #' @describeIn LPSOLVE LPSOLVE cannot handle exponential cone programs.
 setMethod("exp_capable", "LPSOLVE", function(solver) { FALSE })

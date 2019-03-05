@@ -25,7 +25,7 @@ setMethod("lp_capable", "GLPK", function(solver) { TRUE })
 setMethod("socp_capable", "GLPK", function(solver) { FALSE })
 
 #' @describeIn GLPK GLPK can handle semidefinite programs.
-setMethod("sdp_capable", "GLPK", function(solver) { FALSE })
+setMethod("psd_capable", "GLPK", function(solver) { FALSE })
 
 #' @describeIn GLPK GLPK cannot handle exponential cone programs.
 setMethod("exp_capable", "GLPK", function(solver) { FALSE })

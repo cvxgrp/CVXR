@@ -3,7 +3,7 @@
 #'
 #' This reduction takes as input (minimization) DCP problems and converts them into problems
 #' with affine objectives and conic constraints whose arguments are affine.
-#' 
+#'
 #' @rdname Dcp2Cone-class
 setClass("Dcp2Cone", contains = "Canonicalization")
 
@@ -22,12 +22,12 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 #'
 #' Linear cone problems are assumed to have a linear objective and cone constraints,
 #' which may have zero or more arguments, all of which must be affine.
-#' 
+#'
 #' minimize c^Tx
 #' subject to cone_constr1(A_1*x + b_1, ...)
 #'            ...
 #'            cone_constrK(A_K*x + b_K, ...)
-#'            
+#'
 #' @rdname ConeMatrixStuffing-class
 setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
@@ -38,7 +38,7 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints)
 })
 
-setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
+setMethod("cone_stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
   CR <- affine(extractor, problem@objective@expr)
   C <- CR[[1]]
@@ -55,38 +55,7 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   return(list(new_obj, x, R[[1]]))
 })
 
-# TODO: Remove pwl canonicalize methods and use EliminatePwl reduction instead.
-Dcp2Cone.CANON_METHODS <- list(CumSum = cumsum_canon,
-                               GeoMean = geo_mean_canon,
-                               LambdaMax = lambda_max_canon,
-                               LambdaSumLargest = lambda_sum_largest_canon,
-                               LogDet = log_det_canon,
-                               LogSumExp = log_sum_exp_canon,
-                               MatrixFrac = matrix_frac_canon,
-                               MaxEntries = max_entries_canon,
-                               MinEntries = min_entries_canon,
-                               Norm1 = norm1_canon,
-                               NormNuc = normNuc_canon,
-                               NormInf = norm_inf_canon,
-                               Pnorm = pnorm_canon,
-                               QuadForm = quad_form_canon,
-                               QuadOverLin = quad_over_lin_canon,
-                               SigmaMax = sigma_max_canon,
-                               SumLargest = sum_largest_canon,
-                               Abs = abs_canon,
-                               Entr = entr_canon,
-                               Exp = exp_canon,
-                               Huber = huber_canon,
-                               KLDiv = kl_div_canon,
-                               Log = log_canon,
-                               Log1p = log1p_canon,
-                               Logistic = logistic_canon,
-                               MaxElemwise = max_elemwise_canon,
-                               MinElemwise = min_elemwise_canon,
-                               Power = power_canon,
-                               Indicator = indicator_canon,
-                               SpecialIndex = special_index_canon)
-
+# Atom canonicalizers.
 cumsum_canon <- function(expr, args) {
   X <- args[[1]]
   axis <- expr@axis
@@ -292,6 +261,30 @@ log_det_canon <- function(expr, args) {
   return(list(sum(obj), constraints))
 }
 
+log_sum_exp_canon <- function(expr, args) {
+  x <- args[[1]]
+  x_shape <- shape(x)
+  expr_shape <- shape(expr)
+  axis <- expr@axis
+  keepdims <- expr@keepdims
+  t <- Variable(expr_shape)
+  
+  # log(sum(exp(x))) <= t <=> sum(exp(x-t)) <= 1.
+  if(is.na(axis))   # shape = c(1,1)
+    promoted_t <- promote(t, x_shape)
+  else if(axis == 2)   # shape = c(1,n)
+    promoted_t <- Constant(matrix(1, nrow = x_shape[1], ncol = 1) %*% reshape(t, c(1 + x_shape[2], x_shape[3:length(x_shape)])))
+  else   # shape = c(m,1)
+    promoted_t <- reshape(t, c(1 + x_shape[1], x_shape[2:(length(x_shape)-1)])) %*% Constant(matrix(1, nrow = 1, ncol = x_shape[2]))
+  
+  exp_expr <- exp(x - promoted_t)
+  canon <- exp_canon(exp_expr, exp_expr@args)
+  obj <- sum(canon[[1]], axis = axis, keepdims = keepdims)
+  ones <- Constant(matrix(1, nrow = expr_shape[1], ncol = expr_shape[2]))
+  constraints <- c(canon[[2]], obj <= ones)
+  return(list(t, constraints))
+}
+
 logistic_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -477,3 +470,35 @@ sigma_max_canon <- function(expr, args) {
   constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1) %*% t))
   return(list(t, constraints))
 }
+
+# TODO: Remove pwl canonicalize methods and use EliminatePwl reduction instead.
+Dcp2Cone.CANON_METHODS <- list(CumSum = cumsum_canon,
+                               GeoMean = geo_mean_canon,
+                               LambdaMax = lambda_max_canon,
+                               LambdaSumLargest = lambda_sum_largest_canon,
+                               LogDet = log_det_canon,
+                               LogSumExp = log_sum_exp_canon,
+                               MatrixFrac = matrix_frac_canon,
+                               MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
+                               MinEntries = EliminatePwl.CANON_METHODS$MinEntries,
+                               Norm1 = EliminatePwl.CANON_METHODS$Norm1,
+                               NormNuc = normNuc_canon,
+                               NormInf = EliminatePwl.CANON_METHODS$NormInf,
+                               Pnorm = pnorm_canon,
+                               QuadForm = quad_form_canon,
+                               QuadOverLin = quad_over_lin_canon,
+                               SigmaMax = sigma_max_canon,
+                               SumLargest = EliminatePwl.CANON_METHODS$SumLargest,
+                               Abs = EliminatePwl.CANON_METHODS$Abs,
+                               Entr = entr_canon,
+                               Exp = exp_canon,
+                               Huber = huber_canon,
+                               KLDiv = kl_div_canon,
+                               Log = log_canon,
+                               Log1p = log1p_canon,
+                               Logistic = logistic_canon,
+                               MaxElemwise = EliminatePwl.CANON_METHODS$MaxElemwise,
+                               MinElemwise = EliminatePwl.CANON_METHODS$MinElemwise,
+                               Power = power_canon,
+                               Indicator = indicator_canon,
+                               SpecialIndex = special_index_canon)

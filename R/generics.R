@@ -1059,10 +1059,10 @@ setGeneric("nonlin_constr", function(solver) { standardGeneric("nonlin_constr") 
 #' Raises an exception if the solver cannot solve the problem.
 #'
 #' @param solver A \linkS4class{Solver} object.
-#' @param constraints A list of canonicalized constraints
+#' @param problem A \linkS4class{Problem} object.
 #' @docType methods
 #' @rdname validate_solver
-setGeneric("validate_solver", function(solver, constraints) { standardGeneric("validate_solver") })
+setGeneric("validate_solver", function(solver, problem) { standardGeneric("validate_solver") })
 
 #
 # Validate Cache
@@ -1157,14 +1157,14 @@ setGeneric("format_results", function(solver, results_dict, data, cached_data) {
 #'
 #' Solver Capabilities
 #'
-#' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), semidefinite program (SDP), exponential cone program (EXP), or mixed-integer program (MIP).
+#' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), positive semidefinite program (PSD), exponential cone program (EXP), or mixed-integer program (MIP).
 #'
 #' @param solver A \linkS4class{Solver} object.
 #' @return A logical value.
 #' @examples
 #' lp_capable(ECOS())
 #' socp_capable(ECOS())
-#' sdp_capable(ECOS())
+#' psd_capable(ECOS())
 #' exp_capable(ECOS())
 #' mip_capable(ECOS())
 #' @name Solver-capable
@@ -1180,7 +1180,7 @@ setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
 
 #' @rdname Solver-capable
 #' @export
-setGeneric("sdp_capable", function(solver) { standardGeneric("sdp_capable") })
+setGeneric("psd_capable", function(solver) { standardGeneric("psd_capable") })
 
 #' @rdname Solver-capable
 #' @export
@@ -1192,6 +1192,10 @@ setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 
 # Map of solver status code to CVXR status.
 setGeneric("status_map", function(solver, status) { standardGeneric("status_map") })
+
+# Map of CBC MIP/LP status to CVXR status.
+setGeneric("status_map_mip", function(solver, status) { standardGeneric("status_map_mip") })
+setGeneric("status_map_lp", function(solver, status) { standardGeneric("status_map_lp") })
 
 #'
 #' Reduction Acceptance
@@ -1255,6 +1259,7 @@ setGeneric("perform", function(object, problem) { standardGeneric("perform") })
 #' @docType methods
 #' @rdname invert
 setGeneric("invert", function(object, solution, inverse_data) { standardGeneric("invert") })
+setGeneric("mosek_invert", function(object, results, inverse_data) { standardGeneric("mosek_invert") })
 
 ## Version 1.0 edits
 
@@ -1269,6 +1274,7 @@ setGeneric("allow_complex", function(object) { standardGeneric("allow_complex") 
 setGeneric("canonicalize_tree", function(object, expr) { standardGeneric("canonicalize_tree") })
 setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("canonicalize_expr") })
 setGeneric("stuffed_objective", function(object, problem, inverse_data) { standardGeneric("stuffed_objective") })
+setGeneric("cone_stuffed_objective", function(object, problem, extractor) { standardGeneric("cone_stuffed_objective") })
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
 setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
@@ -1280,6 +1286,14 @@ setGeneric(".construct_dual_variables", function(object, args) { standardGeneric
 setGeneric("reduction_solve", function(object, problem, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve") })
 setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve_via_data") })
 setGeneric("reduction_format_constr", function(object, problem, constr, exp_cone_order) { standardGeneric("reduction_format_constr") })
-setGeneric("supported_constraints", function(object) { standardGeneric("supported_constraints") })
-setGeneric("requires_constr", function(object) { standardGeneric("requires_constr") })
+setGeneric("block_format", function(object, problem, constraints, exp_cone_order) { standardGeneric("block_format") })
+setGeneric("suitable", function(solver, problem) { standardGeneric("suitable") })
+setGeneric("ls_solve", function(object, objective, constraints, cached_data, warm_start, verbose, solver_opts) { standardGeneric("ls_solve") })
+setGeneric("supported_constraints", function(solver) { standardGeneric("supported_constraints") })
+setGeneric("requires_constr", function(solver) { standardGeneric("requires_constr") })
+setGeneric("get_coeffs", function(object, expr) { standardGeneric("get_coeffs") })
+setGeneric("constant", function(object, expr) { standardGeneric("constant") })
+setGeneric("affine", function(object, expr) { standardGeneric("affine") })
+setGeneric("extract_quadratic_coeffs", function(object, affine_expr, quad_forms) { standardGeneric("extract_quadratic_coeffs") })
+setGeneric("quad_form", function(object, expr) { standardGeneric("quad_form") })
 ## End of newly added generics

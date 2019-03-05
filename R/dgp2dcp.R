@@ -35,56 +35,6 @@ setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse
 
 # Atom canonicalizers
 # TODO: Implement sum_largest/sum_smallest.
-Dgp2Dcp.CANON_METHODS <- list(AddExpression = add_canon,
-                              Constant = constant_canon,
-                              DivExpression = div_canon,
-                              Exp = exp_canon,
-                              EyeMinusInv = eye_minus_inv_canon,
-                              GeoMean = geo_mean_canon,
-                              Log = log_canon,
-                              MulExpression = mulexpression_canon,
-                              Multiply = mul_canon,
-                              Norm1 = norm1_canon,
-                              NormInf = norm_inf_canon,
-                              OneMinusPos = one_minus_pos_canon,
-                              Parameter = parameter_canon,
-                              PfEigenvalue = pf_eigenvalue_canon,
-                              Pnorm = pnorm_canon,
-                              Power = power_canon,
-                              Prod = prod_canon,
-                              QuadForm = quad_form_canon,
-                              QuadOverLin = quad_over_lin_canon,
-                              Trace = trace_canon,
-                              SumEntries = sum_canon,
-                              Variable = NULL,
-                              
-                              MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
-                              MinEntries = EliminatePwl.CANON_METHODS$MinEntries,
-                              MaxElemwise = EliminatePwl.CANON_METHODS$MaxElemwise,
-                              MinElemwise = EliminatePwl.CANON_METHODS$MinElemwise)
-
-# Canonicalization of DGPs is a stateful procedure, hence the need for a class.
-.DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list"), prototype(.variables = list()), contains = "list")
-DgpCanonMethods <- function(...) { .DgpCanonMethods(...) }
-
-setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  if(i == "Variable") {
-    # TODO: Check scoping of x here is correct.
-    variable_canon <- function(variable, args) {
-      # Swap out positive variables for unconstrained variables.
-      if(id(variable) %in% names(x@.variables))
-        return(list(variable, list()))
-      else {
-        log_variable <- Variable(dim(variable), var_id = id(variable))
-        x@.variables[as.character(id(variable))] <- log_variable
-        return(list(log_variable), list())
-      }
-    }
-    return(variable_canon)
-  } else
-    return(Dgp2Dcp.CANON_METHODS[[key]])
-})
-
 add_canon <- function(expr, args) {
   if(is_scalar(expr))
     return(list(log_sum_exp(hstack(args)), list()))
@@ -305,3 +255,53 @@ zero_constr_canon <- function(expr, args) {
     stop("Must have exactly 2 arguments")
   return(list(Zero(args[[1]] - args[[2]], constr_id = id(expr)), list()))
 }
+
+Dgp2Dcp.CANON_METHODS <- list(AddExpression = add_canon,
+                              Constant = constant_canon,
+                              DivExpression = div_canon,
+                              Exp = exp_canon,
+                              EyeMinusInv = eye_minus_inv_canon,
+                              GeoMean = geo_mean_canon,
+                              Log = log_canon,
+                              MulExpression = mulexpression_canon,
+                              Multiply = mul_canon,
+                              Norm1 = norm1_canon,
+                              NormInf = norm_inf_canon,
+                              OneMinusPos = one_minus_pos_canon,
+                              Parameter = parameter_canon,
+                              PfEigenvalue = pf_eigenvalue_canon,
+                              Pnorm = pnorm_canon,
+                              Power = power_canon,
+                              Prod = prod_canon,
+                              QuadForm = quad_form_canon,
+                              QuadOverLin = quad_over_lin_canon,
+                              Trace = trace_canon,
+                              SumEntries = sum_canon,
+                              Variable = NULL,
+                              
+                              MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
+                              MinEntries = EliminatePwl.CANON_METHODS$MinEntries,
+                              MaxElemwise = EliminatePwl.CANON_METHODS$MaxElemwise,
+                              MinElemwise = EliminatePwl.CANON_METHODS$MinElemwise)
+
+# Canonicalization of DGPs is a stateful procedure, hence the need for a class.
+.DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list"), prototype(.variables = list()), contains = "list")
+DgpCanonMethods <- function(...) { .DgpCanonMethods(...) }
+
+setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(i == "Variable") {
+    # TODO: Check scoping of x here is correct.
+    variable_canon <- function(variable, args) {
+      # Swap out positive variables for unconstrained variables.
+      if(id(variable) %in% names(x@.variables))
+        return(list(variable, list()))
+      else {
+        log_variable <- Variable(dim(variable), var_id = id(variable))
+        x@.variables[as.character(id(variable))] <- log_variable
+        return(list(log_variable), list())
+      }
+    }
+    return(variable_canon)
+  } else
+    return(Dgp2Dcp.CANON_METHODS[[key]])
+})

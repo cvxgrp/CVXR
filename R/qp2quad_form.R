@@ -79,25 +79,6 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 })
 
 # Atom canonicalizers
-Qp2QuadForm.CANON_METHODS <- list(# Reuse cone canonicalization methods.
-                                  Abs = Dcp2Cone.CANON_METHODS$Abs,
-                                  CumSum = Dcp2Cone.CANON_METHODS$CumSum,
-                                  MaxElemwise = Dcp2Cone.CANON_METHODS$MaxElemwise,
-                                  MinElemwise = Dcp2Cone.CANON_METHODS$MinElemwise,
-                                  SumLargest = Dcp2Cone.CANON_METHODS$SumLargest,
-                                  MaxEntries = Dcp2Cone.CANON_METHODS$MaxEntries,
-                                  MinEntries = Dcp2Cone.CANON_METHODS$MinEntries,
-                                  Norm1 = Dcp2Cone.CANON_METHODS$Norm1,
-                                  NormInf = Dcp2Cone.CANON_METHODS$NormInf,
-                                  Indicator = Dcp2Cone.CANON_METHODS$Indicator,
-                                  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex,
-                                  
-                                  # Canonicalizations that are different for QPs.
-                                  QuadOverLin = quad_over_lin_canon,
-                                  Power = power_canon,
-                                  Huber = huber_canon,
-                                  QuadForm = quad_form_canon)
-
 huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
@@ -164,3 +145,23 @@ quad_over_lin_canon <- function(expr, args) {
     return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
   }
 }
+
+Qp2QuadForm.CANON_METHODS <- list(
+  # Reuse cone canonicalization methods.
+  Abs = Dcp2Cone.CANON_METHODS$Abs,
+  CumSum = Dcp2Cone.CANON_METHODS$CumSum,
+  MaxElemwise = Dcp2Cone.CANON_METHODS$MaxElemwise,
+  MinElemwise = Dcp2Cone.CANON_METHODS$MinElemwise,
+  SumLargest = Dcp2Cone.CANON_METHODS$SumLargest,
+  MaxEntries = Dcp2Cone.CANON_METHODS$MaxEntries,
+  MinEntries = Dcp2Cone.CANON_METHODS$MinEntries,
+  Norm1 = Dcp2Cone.CANON_METHODS$Norm1,
+  NormInf = Dcp2Cone.CANON_METHODS$NormInf,
+  Indicator = Dcp2Cone.CANON_METHODS$Indicator,
+  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex,
+  
+  # Canonicalizations that are different for QPs.
+  QuadOverLin = quad_over_lin_canon,
+  Power = power_canon,
+  Huber = huber_canon,
+  QuadForm = quad_form_canon)

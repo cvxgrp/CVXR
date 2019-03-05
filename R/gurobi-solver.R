@@ -24,7 +24,7 @@ setMethod("lp_capable", "GUROBI", function(solver) { TRUE })
 setMethod("socp_capable", "GUROBI", function(solver) { TRUE })
 
 #' @describeIn GUROBI GUROBI cannot handle semidefinite programs.
-setMethod("sdp_capable", "GUROBI", function(solver) { FALSE })
+setMethod("psd_capable", "GUROBI", function(solver) { FALSE })
 
 #' @describeIn GUROBI GUROBI cannot handle exponential cone programs.
 setMethod("exp_capable", "GUROBI", function(solver) { FALSE })

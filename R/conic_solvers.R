@@ -71,11 +71,11 @@ ConicSolver <- setClass("ConicSolver", representation(dims = "character"),   # T
                                        prototype(dims = "dims"), contains = "ReductionSolver")
 
 # Every conic solver must support Zero and NonPos constraints.
-setMethod("supported_constraints", "ConicSolver", function(object) { c("Zero", "NonPos") })
+setMethod("supported_constraints", "ConicSolver", function(solver) { c("ZeroConstraint", "NonPosConstraint") })
 
 # Some solvers cannot solve problems that do not have constraints.
 # For such solvers, requires_constr should return TRUE.
-setMethod("requires_constr", "ConicSolver", function(object) { FALSE })
+setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
@@ -171,7 +171,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
   matrices <- list()
   offsets <- list()
   for(cons in constraints) {
-    res <- format_constr(object, problem, cons, exp_cone_order)
+    res <- reduction_format_constr(object, problem, cons, exp_cone_order)
     matrices <- c(matrices, res[[1]])
     offsets <- c(offsets, res[[2]])
   }
@@ -180,7 +180,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
   return(list(coeff, offset))
 })
 
-setMethod("invert", "ConicSolver", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
   if(status %in% SOLUTION_PRESENT) {
@@ -204,28 +204,41 @@ setMethod("invert", "ConicSolver", signature(object = "ConicSolver", solution = 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-CBC <- setClass("CBC", contains = "ConicSolver")
+CBC_CONIC <- setClass("CBC_CONIC", contains = "ConicSolver")
 
 # Solver capabilities.
-setMethod("mip_capable", "CBC", function(object) { TRUE })
+setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
-# Map of GLPK MIP status to CVXR status.
-setMethod("status_map_mip", "CBC", function(object) {
-  list(solution = OPTIMAL, relaxation_infeasible = INFEASIBLE, stopped_on_user_event = SOLVER_ERROR)
+# Map of CBC_CONIC MIP/LP status to CVXR status.
+setMethod("status_map_mip", "CBC_CONIC", function(solver, status) {
+  if(status == "solution")
+    OPTIMAL
+  else if(status == "relaxation_infeasible")
+    INFEASIBLE
+  else if(status == "stopped_on_user_event")
+    SOLVER_ERROR
+  else
+    stop("CBC_CONIC MIP status unrecognized: ", status)
 })
 
-setMethod("status_map_lp", "CBC", function(object) {
-  list(optimal = OPTIMAL, primal_infeasible = INFEASIBLE, stopped_due_to_errors = SOLVER_ERROR,
-       stopped_by_event_handler = SOLVER_ERROR)
+setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
+  if(status == "optimal")
+    OPTIMAL
+  else if(status == "primal_infeasible")
+    INFEASIBLE
+  else if(status == "stopped_due_to_errors" || status == "stopped_by_event_handler")
+    SOLVER_ERROR
+  else
+    stop("CBC_CONIC LP status unrecognized: ", status)
 })
 
-setMethod("name", "CBC", function(x) { CBC_NAME })
-setMethod("import_solver", "CBC", function(object) {
+setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
+setMethod("import_solver", "CBC_CONIC", function(solver) {
   requireNamespace("rcbc", quietly = TRUE)
 })
 
-setMethod("accepts", signature(object = "CBC", problem = "Problem"), function(object, problem) {
-  # Can CBC solve the problem?
+setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
+  # Can CBC_CONIC solve the problem?
   # TODO: Check if the matrix is stuffed.
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
@@ -240,7 +253,7 @@ setMethod("accepts", signature(object = "CBC", problem = "Problem"), function(ob
   return(TRUE)
 })
 
-setMethod("perform", signature(object = "CBC", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   objective <- canonical_form(problem@objective)[[1]]
@@ -262,7 +275,7 @@ setMethod("perform", signature(object = "CBC", problem = "Problem"), function(ob
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "CBC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "CBC_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
 
@@ -283,7 +296,7 @@ setMethod("invert", signature(object = "CBC", solution = "Solution", inverse_dat
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "CBC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   solver <- CBC_OLD()
   solver_opts[BOOL_IDX] <- data[BOOL_IDX]
   solver_opts[INT_IDX] <- data[INT_IDX]
@@ -294,10 +307,10 @@ setMethod("solve_via_data", "CBC", function(object, data, warm_start, verbose, s
 
 CPLEX <- setClass("CPLEX", contains = "ConicSolver")
 
-setMethod("mip_capable", "CPLEX", function(object) { TRUE })
-setMethod("supported_constraints", "CPLEX", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("mip_capable", "CPLEX", function(solver) { TRUE })
+setMethod("supported_constraints", "CPLEX", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(object) { requireNamespace("Rcplex", quietly = TRUE) })
+setMethod("import_solver", "CPLEX", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 setMethod("accepts", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
   # Can CPLEX solve the problem?
   # TODO: Check if the matrix is stuffed.
@@ -379,16 +392,25 @@ setClass("CVXOPT", contains = "ConicSolver")
 CVXOPT <- function() { new("CVXOPT") }
 
 # Solver capabilities.
-setMethod("mip_capable", "CVXOPT", function(object) { FALSE })
-setMethod("supported_constraints", "CVXOPT", function(object) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSD") })
+setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
+setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of CVXOPT status to CVXR status.
-setMethod("status_map", "CVXOPT", function(object, status) {
-  list(optimal = OPTIMAL, infeasible = INFEASIBLE, unbounded = UNBOUNDED, solver_error = SOLVER_ERROR)
+setMethod("status_map", "CVXOPT", function(solver, status) {
+  if(status == "optimal")
+    OPTIMAL
+  else if(status == "infeasible")
+    INFEASIBLE
+  else if(status == "unbounded")
+    UNBOUNDED
+  else if(status == "solver_error")
+    SOLVER_ERROR
+  else
+    stop("CVXOPT status unrecognized: ", status)
 })
 
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
-setMethod("import_solver", "CVXOPT", function(object) { requireNamespace("cccopt", quietly = TRUE) })
+setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
 
 setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   # Can CVXOPT solver the problem?
@@ -441,7 +463,7 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
-setMethod("mip_capable", "ECOS_BB", function(object) { TRUE })
+setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
 setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
   res <- callNextMethod(object, problem)
@@ -482,11 +504,12 @@ dims_to_solver <- function(cone_dims) {
   return(cones)
 }
 
-ECOS <- setClass("ECOS", contains = "ConicSolver")
+ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
+                         prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
 
 # Solver capabilities.
-setMethod("mip_capable", "ECOS", function(object) { FALSE })
-setMethod("supported_constraints", "ECOS", function(object) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone") })
+setMethod("mip_capable", "ECOS", function(solver) { FALSE })
+setMethod("supported_constraints", "ECOS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone") })
 
 # EXITCODES from ECOS
 # ECOS_OPTIMAL  (0)   Problem solved to optimality
@@ -500,7 +523,7 @@ setMethod("supported_constraints", "ECOS", function(object) { c(supported_constr
 # ECOS_FATAL    (-7)  Unknown problem in solver
 
 # Map of ECOS status to CVXR status.
-setMethod("status_map", "ECOS", function(object, status) {
+setMethod("status_map", "ECOS", function(solver, status) {
   if(status == 0)
     return(OPTIMAL)
   else if(status == 1)
@@ -519,15 +542,12 @@ setMethod("status_map", "ECOS", function(object, status) {
     stop("ECOS status unrecognized: ", status)
 })
 
-# Order of exponential cone arguments for solver.
-setMethod("exp_cone_order", "ECOS", function(object) { c(0, 2, 1) })
-
-setMethod("import_solver", "ECOS", function(object) {
+setMethod("import_solver", "ECOS", function(solver) {
   requireNamespace("ECOSolveR", quietly = TRUE)
 })
 
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
-setMethod("perform", "ECOS", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list()
   inv_data[object@var_id] <- id(variables(problem)[[1]])
@@ -540,14 +560,14 @@ setMethod("perform", "ECOS", signature(object = "ECOS", problem = "Problem"), fu
   data[ConicSolver()@dims] <- ConeDims(constr_map)
 
   inv_data[object@eq_constr] <- constr_map$Zero
-  offsets <- group_coeff_offset(object, problem, constr_map$Zero, exp_cone_order(ECOS()))
+  offsets <- group_coeff_offset(object, problem, constr_map$Zero, ECOS()@exp_cone_order)
   data[A_KEY] <- offsets[[1]]
   data[[B_KEY]] <- offsets[[2]]
 
   # Order and group nonlinear constraints.
   neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$ExpCone)
   inv_data[object@neq_constr] <- neq_constr
-  offsets <- group_coeff_offset(object, problem, neq_constr, exp_cone_order(ECOS()))
+  offsets <- group_coeff_offset(object, problem, neq_constr, ECOS()@exp_cone_order)
   data[G_KEY] <- offsets[[1]]
   data[H_KEY] <- offsets[[2]]
 
@@ -589,18 +609,18 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
 Elemental <- setClass("Elemental", contains = "ConicSolver")
 
 # Solver capabilities
-setMethod("mip_capable", "Elemental", function(object) { FALSE })
-setMethod("supported_constraints", "Elemental", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("mip_capable", "Elemental", function(solver) { FALSE })
+setMethod("supported_constraints", "Elemental", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 # TODO: Map of Elemental status to CVXR status.
-setMethod("status_map", "Elemental", function(object, status) {
+setMethod("status_map", "Elemental", function(solver, status) {
   if(status == 0)
     return(OPTIMAL)
   else
     stop("Unimplemented")
 })
 
-setMethod("import_solver", "Elemental", function(object) {
+setMethod("import_solver", "Elemental", function(solver) {
   stop("Elemental is currently unavailable in R. Please see http://libelemental.org/about/ for more information.")
 })
 
@@ -647,11 +667,11 @@ setMethod("solve_via_data", "Elemental", function(object, data, warm_start, verb
 })
 
 GLPK <- setClass("GLPK", contains = "CVXOPT")
-setMethod("mip_capable", "GLPK", function(object) { FALSE })
-setMethod("supported_constraints", "GLPK", function(object) { supported_constraints(ConicSolver()) })
+setMethod("mip_capable", "GLPK", function(solver) { FALSE })
+setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
 setMethod("name", "GLPK", function(x) { GLPK_NAME })
-setMethod("import_solver", "GLPK", function(object) {
+setMethod("import_solver", "GLPK", function(solver) {
   requireNamespace("Rglpk", quietly = TRUE)
 })
 
@@ -699,8 +719,8 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 })
 
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
-setMethod("mip_capable", "GLPK_MI", function(object) { TRUE })
-setMethod("supported_constraints", "GLPK_MI", function(object) { supported_constraints(ConicSolver()) })
+setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
+setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   solver <- GLPK_OLD()
@@ -714,11 +734,11 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 GUROBI <- setClass("GUROBI", contains = "ConicSolver")
 
 # Solver capabilities.
-setMethod("mip_capable", "GUROBI", function(object) { TRUE })
-setMethod("supported_constraints", "GUROBI", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
+setMethod("supported_constraints", "GUROBI", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 # Map of Gurobi status to CVXR status.
-setMethod("status_map", "GUROBI", function(object, status) {
+setMethod("status_map", "GUROBI", function(solver, status) {
   if(status == 2)
     return(OPTIMAL)
   else if(status == 3)
@@ -734,7 +754,7 @@ setMethod("status_map", "GUROBI", function(object, status) {
 })
 
 setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI", function(object) {
+setMethod("import_solver", "GUROBI", function(solver) {
   requireNamespace("gurobi", quietly = TRUE)
 })
 
@@ -816,19 +836,20 @@ LS <- setClass("LS", contains = "ReductionSolver")
 
 # LS is incapable of solving any general cone program
 # and must be invoked through a special path.
-setMethod("lp_capable", "LS", function(object) { FALSE })
-setMethod("socp_capable", "LS", function(object) { FALSE })
-setMethod("psd_capable", "LS", function(object) { FALSE })
-setMethod("exp_capable", "LS", function(object) { FALSE })
-setMethod("mip_capable", "LS", function(object) { FALSE })
+setMethod("lp_capable", "LS", function(solver) { FALSE })
+setMethod("socp_capable", "LS", function(solver) { FALSE })
+setMethod("psd_capable", "LS", function(solver) { FALSE })
+setMethod("exp_capable", "LS", function(solver) { FALSE })
+setMethod("mip_capable", "LS", function(solver) { FALSE })
 
-setMethod("import_solver", "LS", function(object) { })
+setMethod("import_solver", "LS", function(solver) { })
 setMethod("name", "LS", function(x) { LS_NAME })
-setMethod("split_constr", "LS", function(object, constr_map) {
+setMethod("split_constr", "LS", function(solver, constr_map) {
   return(list(constr_map[EQ_MAP], constr_map[LEQ_MAP], list()))
 })
 
-setMethod("suitable", signature(object = "LS", problem = "Problem"), function(object, problem) {
+# Temporary method to determine whether the given Problem object is suitable for LS solver.
+setMethod("suitable", signature(solver = "LS", problem = "Problem"), function(solver, problem) {
   allowedVariables <- c("Variable")
   # TODO: Handle affine objective.
   is_dcp(problem) &&
@@ -840,9 +861,9 @@ setMethod("suitable", signature(object = "LS", problem = "Problem"), function(ob
   # TODO: Domains are not implemented yet.
 })
 
-setMethod("validate_solver", signature(object = "LS", problem = "Problem"), function(object, problem) {
-  if(!suitable(object, problem))
-    stop("The solver ", name(object), " cannot solve the problem.")
+setMethod("validate_solver", signature(solver = "LS", problem = "Problem"), function(solver, problem) {
+  if(!suitable(solver, problem))
+    stop("The solver ", name(solver), " cannot solve the problem.")
 })
 
 setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_data = NA) {
@@ -880,8 +901,8 @@ setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_
   return(FakeSymData(objective, constraints))
 })
 
-setMethod("psolve", "LS", function(solver, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
-  sym_data <- get_sym_data(solver, objective, constraints)
+setMethod("ls_solve", "LS", function(object, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
+  sym_data <- get_sym_data(object, objective, constraints)
 
   id_map <- sym_data@var_offsets
   N <- sym_data@x_length
@@ -931,9 +952,9 @@ setMethod("psolve", "LS", function(solver, objective, constraints, cached_data, 
   return(format_results(result_dict, NA, cached_data))
 })
 
-setMethod("format_results", "LS", function(object, result_dict, data, cached_data) {
-  new_results <- result_dict
-  if(is.na(result_dict[PRIMAL]) || is.null(result_dict[PRIMAL]))
+setMethod("format_results", "LS", function(solver, results_dict, data, cached_data) {
+  new_results <- results_dict
+  if(is.na(results_dict[PRIMAL]) || is.null(results_dict[PRIMAL]))
     new_results[STATUS] <- INFEASIBLE
   else
     new_results[STATUS] <- OPTIMAL
@@ -968,13 +989,13 @@ psd_coeff_offset <- function(problem, c) {
   return(list(G, h, dim))
 }
 
-MOSEK <- setClass("MOSEK", contains = "ConicSolver")
+MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
+                           prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
-setMethod("mip_capable", "MOSEK", function(object) { TRUE })
-setMethod("supported_constraints", "MOSEK", function(object) { c(supported_constraints(ConicSolver()), "SOC", "PSD") })
-setMethod("exp_cone_order", "MOSEK", function(object) { c(2, 1, 0) })
+setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
+setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
-setMethod("import_solver", "MOSEK", function(object) {
+setMethod("import_solver", "MOSEK", function(solver) {
   requireNamespace("Rmosek", quietly = TRUE)
   # TODO: Add exponential cone support.
 })
@@ -1005,7 +1026,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
   ids <- c()
 
   for(con in constraints) {
-    coeff_offs <- format_constr(object, problem, con, exp_cone_order)
+    coeff_offs <- reduction_format_constr(object, problem, con, exp_cone_order)
     coeff <- coeff_offs[[1]]
     offset <- coeff_offs[[2]]
     matrices <- c(matrices, coeff)
@@ -1094,7 +1115,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   exp_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ExpCone" })]
   if(length(exp_constr) > 0) {
     # G*z <=_{EXP} h.
-    blform <- block_format(object, problem, exp_constr, exp_cone_order(object))
+    blform <- block_format(object, problem, exp_constr, object@exp_cone_order)
     G <- blform[[1]]
     h <- blform[[2]]
     lengths <- blform[[3]]
@@ -1133,7 +1154,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 })
 
 # TODO: Finish MOSEK class implementation.
-setMethd("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("Rmosek", quietly = TRUE)
   env <- Rmosek::Env()
   task <- env.Task(0,0)
@@ -1306,7 +1327,7 @@ setMethd("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, 
   return(list(env = env, task = task, solver_options = solver_opts))
 })
 
-setMethod("invert", "MOSEK", function(object, results, inverse_data) {
+setMethod("mosek_invert", "MOSEK", function(object, results, inverse_data) {
   requireNamespace("Rmosek", quietly = TRUE)
 
   has_attr <- !is.null(mosek.solsta$near_optimal)
@@ -1507,24 +1528,24 @@ tri_to_full <- function(lower_tri, n) {
   full <- matrix(0, nrow = n, ncol = n)
   full[upper.tri(full, diag = TRUE)] <- lower_tri
   full[lower.tri(full, diag = TRUE)] <- lower_tri
-  
+
   unscaled_diag <- diag(full)
   full <- full/sqrt(2)
   diag(full) <- unscaled_diag
-  
+
   matrix(full, nrow = n*n, byrow = FALSE)
 }
 
-SCS <- setClass("SCS", contains = "ConicSolver")
+SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
+                       prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
 
 # Solver capabilities.
-setMethod("mip_capable", "SCS", function(object) { FALSE })
-setMethod("supported_constraints", "SCS", function(object) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSD") })
-
-requires_constr.SCS <- function(object) { TRUE }
+setMethod("mip_capable", "SCS", function(solver) { FALSE })
+setMethod("requires_constr", "SCS", function(solver) { TRUE })
+setMethod("supported_constraints", "SCS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of SCS status to CVXR status.
-setMethod("status_map", "SCS", function(object, status) {
+setMethod("status_map", "SCS", function(solver, status) {
   if(status == "Solved")
     return(OPTIMAL)
   else if(status == "Solved/Inaccurate")
@@ -1543,15 +1564,12 @@ setMethod("status_map", "SCS", function(object, status) {
     stop("SCS status unrecognized: ", status)
 })
 
-# Order of exponential cone arguments for solver.
-exp_cone_order.SCS <- function(object) { c(0, 1, 2) }
-
-setMethod("name", "SCS", function(object) { SCS_NAME })
-setMethod("import_solver", "SCS", function(object) {
+setMethod("name", "SCS", function(x) { SCS_NAME })
+setMethod("import_solver", "SCS", function(solver) {
   requireNamespace("scs", quietly = TRUE)
 })
 
-setMethod("format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
+setMethod("reduction_format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
   # Extract coefficient and offset vector from constraint.
   # Special cases PSD constraints, as SCS expects constraints to be
   # imposed on solely the lower triangular part of the variable matrix.
@@ -1607,16 +1625,16 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   # Note that SCS mandates that the cones MUST be ordered with
   # zero cones first, then non-negative orthant, then SOC, then
   # PSD, then exponential.
-  offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), exp_cone_order(object))
+  offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), object@exp_cone_order)
   data[A_KEY] <- offsets[[1]]
   data[B_KEY] <- offsets[[2]]
   return(list(data, inv_data))
 })
 
-setMethod("extract_dual_value", "SCS", function(object, result_vec, offset, constraint) {
+SCS.extract_dual_value <- function(result_vec, offset, constraint) {
   # Extracts the dual value for constraint starting at offset.
   # Special cases PSD constraints, as per the SCS specification.
-  if(is(constraint, "PSD")) {
+  if(is(constraint, "PSDConstraint")) {
     dim <- nrow(constraint)
     lower_tri_dim <- dim*floor((dim+1)/2)
     new_offset <- offset + lower_tri_dim
@@ -1625,7 +1643,7 @@ setMethod("extract_dual_value", "SCS", function(object, result_vec, offset, cons
     return(list(full, new_offset))
   } else
     return(extract_dual_value(result_vec, offset, constraint))
-})
+}
 
 setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
@@ -1641,12 +1659,12 @@ setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_dat
     opt_val <- primal_val + inverse_data[OFFSET]
     primal_vars <- list()
     primal_vars[inverse_data[object@var_id]] <- as.matrix(solution$x)
-
+    
     eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[ConicSolver()@dims]@zero]),
-      extract_dual_value(object), inverse_data[object@eq_constr])
+      SCS.extract_dual_value, inverse_data[object@eq_constr])
 
     ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[ConicSolver()@dims]@zero:length(solution$y)]),
-                                      extract_dual_value(object), inverse_data[object@neq_constr])
+                                      SCS.extract_dual_value, inverse_data[object@neq_constr])
 
     dual_vars <- list()
     dual_vars <- modifyList(dual_vars, eq_dual_vars)
@@ -1666,7 +1684,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
     args$s <- solver_cache[name(object)]$s
   }
   cones <- dims_to_solver_dict(data[ConicSolver()@dims])
-  
+
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
     solver_opts$eps <- 1e-4
@@ -1682,7 +1700,7 @@ default_settings.SuperSCS <- function(object) {
 }
 
 setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
-setMethod("import_solver", "SuperSCS", function(object) {
+setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })
 
@@ -1710,11 +1728,11 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 XPRESS <- setClass("XPRESS", contains = "ConicSolver")
 
 # Solver capabilities.
-setMethod("mip_capable", "XPRESS", function(object) { TRUE })
-setMethod("supported_constraints", "XPRESS", function(object) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
+setMethod("supported_constraints", "XPRESS", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 # Map of XPRESS status to CVXR status.
-setMethod("status_map", "XPRESS", function(object, status) {
+setMethod("status_map", "XPRESS", function(solver, status) {
   if(status == 2)
     return(OPTIMAL)
   else if(status == 3)
@@ -1730,7 +1748,7 @@ setMethod("status_map", "XPRESS", function(object, status) {
 })
 
 setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
-setMethod("import_solver", "XPRESS", function(object) {
+setMethod("import_solver", "XPRESS", function(solver) {
     stop("Unimplemented: XPRESS solver unavailable in R.")
 })
 

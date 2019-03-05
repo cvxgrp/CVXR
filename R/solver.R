@@ -44,27 +44,27 @@ setMethod("is_installed", "Solver", function(solver) {
   })
 })
 
-#' @param solver A \linkS4class{Solver} object.
-#' @describeIn Solver Verify the solver can solve the problem.
-setMethod("validate_solver", "Solver", function(solver, constraints) {
-  # Check the solver is installed.
-  if(!import_solver(solver))
-    stop("The solver ", name(solver), " is not installed.")
-
-  # Check the solver can solve the problem.
-  constr_map <- SymData.filter_constraints(constraints)
-
-  if( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver))
-    Solver._reject_problem(solver, "it cannot solve mixed-integer problems")
-  else if(length(constr_map[[SDP_MAP]]) > 0 && !sdp_capable(solver))
-    Solver._reject_problem(solver, "it cannot solve semidefinite problems")
-  else if(length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver))
-    Solver._reject_problem(solver, "it cannot solve exponential cone problems")
-  else if(length(constr_map[[SOC_MAP]]) > 0 && !socp_capable(solver))
-    Solver._reject_problem(solver, "it cannot solve second-order cone problems")
-  else if(length(constraints) == 0 && name(solver) %in% c("SCS", "GLPK"))
-    Solver._reject_problem(solver, "it cannot solve unconstrained problems")
-})
+#' #' @param solver A \linkS4class{Solver} object.
+#' #' @describeIn Solver Verify the solver can solve the problem.
+#' setMethod("validate_solver", "Solver", function(solver, constraints) {
+#'   # Check the solver is installed.
+#'   if(!import_solver(solver))
+#'     stop("The solver ", name(solver), " is not installed.")
+#' 
+#'   # Check the solver can solve the problem.
+#'   constr_map <- SymData.filter_constraints(constraints)
+#' 
+#'   if( (length(constr_map[[BOOL_MAP]]) > 0 || length(constr_map[[INT_MAP]]) > 0) && !mip_capable(solver))
+#'     Solver._reject_problem(solver, "it cannot solve mixed-integer problems")
+#'   else if(length(constr_map[[SDP_MAP]]) > 0 && !psd_capable(solver))
+#'     Solver._reject_problem(solver, "it cannot solve semidefinite problems")
+#'   else if(length(constr_map[[EXP_MAP]]) > 0 && !exp_capable(solver))
+#'     Solver._reject_problem(solver, "it cannot solve exponential cone problems")
+#'   else if(length(constr_map[[SOC_MAP]]) > 0 && !socp_capable(solver))
+#'     Solver._reject_problem(solver, "it cannot solve second-order cone problems")
+#'   else if(length(constraints) == 0 && name(solver) %in% c("SCS", "GLPK"))
+#'     Solver._reject_problem(solver, "it cannot solve unconstrained problems")
+#' })
 
 #
 # Reject Problem
@@ -211,7 +211,7 @@ setClass("ECOS", contains = "Solver")
 #' @examples
 #' ecos <- ECOS()
 #' lp_capable(ecos)
-#' sdp_capable(ecos)
+#' psd_capable(ecos)
 #' socp_capable(ecos)
 #' exp_capable(ecos)
 #' mip_capable(ecos)
@@ -230,7 +230,7 @@ setMethod("lp_capable", "ECOS", function(solver) { TRUE })
 setMethod("socp_capable", "ECOS", function(solver) { TRUE })
 
 #' @describeIn ECOS ECOS cannot handle semidefinite programs.
-setMethod("sdp_capable", "ECOS", function(solver) { FALSE })
+setMethod("psd_capable", "ECOS", function(solver) { FALSE })
 
 #' @describeIn ECOS ECOS can handle exponential cone programs.
 setMethod("exp_capable", "ECOS", function(solver) { TRUE })
@@ -353,7 +353,7 @@ setClass("ECOS_BB", contains = "ECOS")
 #' @examples
 #' ecos_bb <- ECOS_BB()
 #' lp_capable(ecos_bb)
-#' sdp_capable(ecos_bb)
+#' psd_capable(ecos_bb)
 #' socp_capable(ecos_bb)
 #' exp_capable(ecos_bb)
 #' mip_capable(ecos_bb)
@@ -372,7 +372,7 @@ setMethod("lp_capable", "ECOS_BB", function(solver) { TRUE })
 setMethod("socp_capable", "ECOS_BB", function(solver) { TRUE })
 
 #' @describeIn ECOS_BB ECOS_BB cannot handle semidefinite programs.
-setMethod("sdp_capable", "ECOS_BB", function(solver) { FALSE })
+setMethod("psd_capable", "ECOS_BB", function(solver) { FALSE })
 
 #' @describeIn ECOS_BB ECOS_BB cannot handle exponential cone programs.
 setMethod("exp_capable", "ECOS_BB", function(solver) { FALSE })
@@ -438,7 +438,7 @@ setClass("SCS", contains = "ECOS")
 #' @examples
 #' scs <- SCS()
 #' lp_capable(scs)
-#' sdp_capable(scs)
+#' psd_capable(scs)
 #' socp_capable(scs)
 #' exp_capable(scs)
 #' mip_capable(scs)
@@ -459,7 +459,7 @@ setMethod("lp_capable", "SCS", function(solver) { TRUE })
 setMethod("socp_capable", "SCS", function(solver) { TRUE })
 
 #' @describeIn SCS SCS can handle semidefinite programs.
-setMethod("sdp_capable", "SCS", function(solver) { TRUE })
+setMethod("psd_capable", "SCS", function(solver) { TRUE })
 
 #' @describeIn SCS SCS can handle exponential cone programs.
 setMethod("exp_capable", "SCS", function(solver) { TRUE })
@@ -647,7 +647,7 @@ SCS.tri_to_full <- function(lower_tri, n) {
 # setMethod("socp_capable", "LS", function(solver) { FALSE })
 #
 # #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
-# setMethod("sdp_capable", "LS", function(solver) { FALSE })
+# setMethod("psd_capable", "LS", function(solver) { FALSE })
 #
 # #' @describeIn LS Returns \code{FALSE} since LS must be invoked through a special path.
 # setMethod("exp_capable", "LS", function(solver) { FALSE })

@@ -4,18 +4,9 @@
 #' This class eliminates piecewise linear atoms.
 #' 
 #' @rdname EliminatePwl-class
-.EliminatePwl <- setClass("EliminatePwl", representation(problem = "ProblemORNull"), prototype(problem = NULL), contains = "Canonicalization")
+.EliminatePwl <- setClass("EliminatePwl", representation(problem = "Problem"), prototype(problem = NULL), contains = "Canonicalization")
 
 EliminatePwl <- function(problem = NULL) { .EliminatePwl(problem = problem) }
-
-EPWL_CANON_METHODS <- list("Abs" = abs_canon, 
-                           "MaxEntries" = max_entries_canon,
-                           "MaxElemwise" = max_elemwise_canon,
-                           "MinEntries" = min_entries_canon,
-                           "MinElemwise" = min_elemwise_canon,
-                           "Norm1" = norm1_canon,
-                           "NormInf" = norm_inf_canon,
-                           "SumLargest" = sum_largest_canon)
 
 setMethod("initialize", "EliminatePwl", function(.Object, ..., problem = NULL) {
   .Object@problem <- problem
@@ -34,15 +25,7 @@ setMethod("perform", signature(object = "EliminatePwl", problem = "Problem"), fu
   callNextMethod(object, problem)
 })
 
-EliminatePwl.CANON_METHODS <- list(Abs = abs_canon,
-                                   MaxElemwise = max_elemwise_canon,
-                                   MaxEntries = max_entries_canon,
-                                   MinElemwise = min_elemwise_canon,
-                                   MinEntries = min_entries_canon,
-                                   Norm1 = norm1_canon,
-                                   NormInf = norm_inf_canon,
-                                   SumLargest = sum_largest_canon)
-
+# Atom canonicalizers.
 abs_canon <- function(expr, args) {
   x <- args[[1]]
   t <- Variable(dim(expr))
@@ -125,3 +108,12 @@ sum_largest_canon <- function(expr, args) {
   constraints <- list(x <= t + q, t >= 0)
   return(list(obj, constraints))
 }
+
+EliminatePwl.CANON_METHODS <- list(Abs = abs_canon,
+                                   MaxElemwise = max_elemwise_canon,
+                                   MaxEntries = max_entries_canon,
+                                   MinElemwise = min_elemwise_canon,
+                                   MinEntries = min_entries_canon,
+                                   Norm1 = norm1_canon,
+                                   NormInf = norm_inf_canon,
+                                   SumLargest = sum_largest_canon)

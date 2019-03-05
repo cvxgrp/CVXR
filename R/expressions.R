@@ -444,7 +444,7 @@ setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { a
 # Comparison operators
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
 #' @rdname EqConstraint-class
-setMethod("==", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { EqConstraint(lh_exp = e1, rh_exp = e2) })
+setMethod("==", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { EqConstraint(e1, e2) })
 
 #' @rdname EqConstraint-class
 setMethod("==", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 == as.Constant(e2) })
@@ -454,7 +454,7 @@ setMethod("==", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
 #' @rdname IneqConstraint-class
-setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { IneqConstraint(lh_exp = e1, rh_exp = e2) })
+setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { IneqConstraint(e1, e2) })
 
 #' @rdname IneqConstraint-class
 setMethod("<=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 <= as.Constant(e2) })

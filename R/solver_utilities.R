@@ -5,7 +5,7 @@
 ####################
 # solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
 solver_intf <- list(ECOS(), ECOS_BB(), SCS(), MOSEK(), LPSOLVE(), GLPK(), GUROBI())
-solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
+solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
 solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX())
 
 SOLVERS <- solver_intf

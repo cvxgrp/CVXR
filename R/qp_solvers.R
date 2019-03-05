@@ -85,11 +85,11 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 # QP interface for the CPLEX solver.
 CPLEX <- setClass("CPLEX", contains = "QpSolver")
 
-setMethod("mip_capable", "CPLEX", function(object) { TRUE })
+setMethod("mip_capable", "CPLEX", function(solver) { TRUE })
 
 # Map of CPLEX status to CVXR status.
 # TODO: Add more!
-setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
+setMethod("status_map", "CPLEX", function(solver, status) {
   if(status %in% c(1, 101))
     OPTIMAL
   else if(status %in% c(3, 22, 4, 103))
@@ -98,16 +98,13 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
     UNBOUNDED
   else if(status %in% c(10, 107))
     USER_LIMIT
-  else if(!is.null(default)) {
-    warning("CPLEX status unrecognized: ", status)
-    return(default)
-  } else
+  else
     stop("CPLEX status unrecognized: ", status)
 })
 
 setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(object) { requireNamespace("Rcplex", quietly = TRUE) })
-setMethod("invert", "CPLEX", function(object, results, inverse_data) {
+setMethod("import_solver", "CPLEX", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
+setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
   if("cputime" %in% names(results))
@@ -257,10 +254,10 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
 # QP interface for the GUROBI solver.
 GUROBI <- setClass("GUROBI", contains = "QpSolver")
 
-setMethod("mip_capable", "GUROBI", function(object) { TRUE })
+setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
 
 # Map of GUROBI status to CVXR status.
-setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
+setMethod("status_map", "GUROBI", function(solver, status) {
   if(status == 2)
     OPTIMAL
   else if(status == 3 || status == 6)
@@ -273,15 +270,12 @@ setMethod("status_map", "GUROBI", function(solver, status, default = NULL) {
     SOLVER_ERROR   # TODO: Could be anything
   else if(status == 13)
     OPTIMAL_INACCURATE   # Means time expired.
-  else if(!is.null(default)) {
-    warning("GUROBI status unrecognized: ", status)
-    return(default)
-  } else
+  else
     stop("GUROBI status unrecognized: ", status)
 })
 
 setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI", function(object) { 
+setMethod("import_solver", "GUROBI", function(solver) { 
   requireNamespace("gurobi", quietly = TRUE)  
 })
 
@@ -431,7 +425,7 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
 OSQP <- setClass("OSQP", contains = "QpSolver")
 
 # Map of OSQP status to CVXPY status.
-setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
+setMethod("status_map", "OSQP", function(solver, status) {
   if(status == 1)
     OPTIMAL
   else if(status == 2)
@@ -446,15 +440,12 @@ setMethod("status_map", "OSQP", function(solver, status, default = NULL) {
     UNBOUNDED_INACCURATE
   else if(status == -2 || status == -5 || status == -10)   # -2: Maxiter reached. 5: Interrupted by user. 10: Unsolved.
     SOLVER_ERROR
-  else if(!is.null(default)) {
-    warning("OSQP status unrecognized: ", status)
-    return(default)
-  } else
+ else
     stop("OSQP status unrecognized: ", status)
 })
 
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
-setMethod("import_solver", "OSQP", function(object) {
+setMethod("import_solver", "OSQP", function(solver) {
   requireNamespace("osqp", quietly = TRUE)
 })
 

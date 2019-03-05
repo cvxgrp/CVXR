@@ -1259,7 +1259,7 @@ setGeneric("perform", function(object, problem) { standardGeneric("perform") })
 #' @docType methods
 #' @rdname invert
 setGeneric("invert", function(object, solution, inverse_data) { standardGeneric("invert") })
-setGeneric("mosek_invert", function(object, results, inverse_data) { standardGeneric("mosek_invert") })
+setGeneric("alt_invert", function(object, results, inverse_data) { standardGeneric("alt_invert") })
 
 ## Version 1.0 edits
 
@@ -1296,4 +1296,5 @@ setGeneric("constant", function(object, expr) { standardGeneric("constant") })
 setGeneric("affine", function(object, expr) { standardGeneric("affine") })
 setGeneric("extract_quadratic_coeffs", function(object, affine_expr, quad_forms) { standardGeneric("extract_quadratic_coeffs") })
 setGeneric("quad_form", function(object, expr) { standardGeneric("quad_form") })
+setGeneric("qp_stuffed_objective", function(object, problem, extractor) { standardGeneric("qp_stuffed_objective") })
 ## End of newly added generics

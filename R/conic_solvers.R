@@ -1327,7 +1327,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   return(list(env = env, task = task, solver_options = solver_opts))
 })
 
-setMethod("mosek_invert", "MOSEK", function(object, results, inverse_data) {
+setMethod("alt_invert", "MOSEK", function(object, results, inverse_data) {
   requireNamespace("Rmosek", quietly = TRUE)
 
   has_attr <- !is.null(mosek.solsta$near_optimal)

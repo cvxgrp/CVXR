@@ -1135,18 +1135,18 @@ min_elemwise <- MinElemwise
 #' @examples
 #' A <- Variable(2,2)
 #' c <- cbind(c(1,-1), c(2,-2))
-#' expr <- mul_elemwise(c, A)
+#' expr <- multiply(c, A)
 #' obj <- Minimize(norm_inf(expr))
 #' prob <- Problem(obj, list(A == 5))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(expr)
 #' @docType methods
-#' @name mul_elemwise
+#' @name multiply
 #' @aliases *
-#' @rdname mul_elemwise
+#' @rdname multiply
 #' @export
-mul_elemwise <- MulElemwise
+multiply <- Multiply
 
 #'
 #' Elementwise Negative
@@ -1402,20 +1402,6 @@ setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
 # =========================
 # Matrix/vector operations
 # =========================
-#'
-#' Affine Product
-#'
-#' The product of two affine expressions.
-#'
-#' @param x An \linkS4class{Expression} or numeric constant representing the left-hand value.
-#' @param y An \linkS4class{Expression} or numeric constant representing the right-hand value.
-#' @return An \linkS4class{Expression} representing the product of \code{x} and \code{y}.
-#' @docType methods
-#' @name affine_prod
-#' @rdname affine_prod
-#' @export
-affine_prod <- AffineProd
-
 #'
 #' Block Matrix
 #'

@@ -1339,6 +1339,10 @@ Norm <- function(x, p = 2, axis = NA_real_) {
   }
 }
 
+Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
+  Pnorm(x, p = 2, axis = axis, keepdims = keepdims)
+}
+
 #'
 #' The Norm1 class.
 #' 

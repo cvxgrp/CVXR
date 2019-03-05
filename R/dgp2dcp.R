@@ -35,7 +35,7 @@ setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse
 
 # Atom canonicalizers
 # TODO: Implement sum_largest/sum_smallest.
-add_canon <- function(expr, args) {
+Dgp2Dcp.add_canon <- function(expr, args) {
   if(is_scalar(expr))
     return(list(log_sum_exp(hstack(args)), list()))
   
@@ -59,34 +59,34 @@ add_canon <- function(expr, args) {
   }
 }
 
-constant_canon <- function(expr, args) {
+Dgp2Dcp.constant_canon <- function(expr, args) {
   # args <- list()
   return(list(Constant(log(value(expr))), list()))
 }
 
-div_canon <- function(expr, args) {
+Dgp2Dcp.div_canon <- function(expr, args) {
   # expr <- NULL
   # x / y == x * y^(-1)
   return(list(args[[1]] - args[[2]], list()))
 }
 
-exp_canon <- function(expr, args) {
+Dgp2Dcp.exp_canon <- function(expr, args) {
   # expr <- NULL
   return(list(Exp(args[[1]]), list()))
 }
 
-eye_minus_inv_canon <- function(expr, args) {
+Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
   X <- args[[1]]
   # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
   # Y represents log(Y) here, hence no positivity constraint.
   Y <- Variable(dim(X))
   prod <- matmul(Y, X)
-  lhs <- mulexpression_canon(prod, prod@args)[[1]]
+  lhs <- Dgp2Dcp.mulexpression_canon(prod, prod@args)[[1]]
   lhs <- lhs + diag(1, nrow(prod))
   return(list(Y, list(lhs <= Y)))
 }
 
-geo_mean_canon <- function(expr, args) {
+Dgp2Dcp.geo_mean_canon <- function(expr, args) {
   out <- 0.0
   for(i in 1:length(args[[1]])) {
     x_i <- args[[1]][[i]]
@@ -96,16 +96,16 @@ geo_mean_canon <- function(expr, args) {
   return(list((1 / sum(expr@p))*out, list()))
 }
 
-log_canon <- function(expr, args) {
+Dgp2Dcp.log_canon <- function(expr, args) {
   return(list(Log(args[[1]]), list()))
 }
 
-mul_canon <- function(expr, args) {
+Dgp2Dcp.mul_canon <- function(expr, args) {
   # expr <- NULL
   return(list(AddExpression(args), list()))
 }
 
-mulexpression_canon <- function(expr, args) {
+Dgp2Dcp.mulexpression_canon <- function(expr, args) {
   lhs <- args[[1]]
   rhs <- args[[2]]
   dims <- mul_dims_promote(dim(lhs), dim(rhs))
@@ -130,36 +130,36 @@ mulexpression_canon <- function(expr, args) {
   return(list(mat, list()))
 }
 
-nonpos_constr_canon <- function(expr, args) {
+Dgp2Dcp.nonpos_constr_canon <- function(expr, args) {
   if(length(args) != 2)
     stop("Must have exactly 2 arguments")
-  return(list(NonPos(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+  return(list(NonPosConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
 }
 
-norm1_canon <- function(expr, args) {
+Dgp2Dcp.norm1_canon <- function(expr, args) {
   if(length(args) != 1)
     stop("Must have exactly 1 argument")
   tmp <- SumEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
   return(sum_canon(tmp, tmp@args))
 }
 
-norm_inf_canon <- function(expr, args) {
+Dgp2Dcp.norm_inf_canon <- function(expr, args) {
   if(length(args) != 1)
     stop("Must have exactly 1 argument")
   tmp <- MaxEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
-  return(max_canon(tmp, tmp@args))
+  return(EliminatePwl.max_canon(tmp, tmp@args))
 }
 
-one_minus_pos_canon <- function(expr, args) {
+Dgp2Dcp.one_minus_pos_canon <- function(expr, args) {
   return(list(Log(expr@ones - Exp(args[[1]])), list()))
 }
 
-parameter_canon <- function(expr, args) {
+Dgp2Dcp.parameter_canon <- function(expr, args) {
   # args <- list()
   return(list(Parameter(log(value(expr)), name = name(expr)), list()))
 }
 
-pf_eigenvalue_canon <- function(expr, args) {
+Dgp2Dcp.pf_eigenvalue_canon <- function(expr, args) {
   X <- args[[1]]
   # rho(X) <= lambda iff there exists v s.t. Xv <= lambda v.
   # v and lambda represent log variables, hence no positivity constraints.
@@ -167,12 +167,12 @@ pf_eigenvalue_canon <- function(expr, args) {
   v <- Variable(nrow(X))
   lhs <- matmul(X, v)
   rhs <- lambd*v
-  lhs <- mulexpression_canon(lhs, lhs@args)[[1]]
-  rhs <- mul_canon(rhs, rhs@args)[[1]]
+  lhs <- Dgp2Dcp.mulexpression_canon(lhs, lhs@args)[[1]]
+  rhs <- Dgp2Dcp.mul_canon(rhs, rhs@args)[[1]]
   return(list(lambd, list(lhs <= rhs)))
 }
 
-pnorm_canon <- function(expr, args) {
+Dgp2Dcp.pnorm_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@original_p
   if(is.null(dim(x)))
@@ -195,16 +195,16 @@ pnorm_canon <- function(expr, args) {
   return(list(vstack(rows), list()))
 }
 
-power_canon <- function(expr, args) {
+Dgp2Dcp.power_canon <- function(expr, args) {
   # y = log(x); x^p --> exp(y^p) --> p*log(exp(y)) = p*y.
   return(list(expr@p*args[[1]], list()))
 }
 
-prod_canon <- function(expr, args) {
+Dgp2Dcp.prod_canon <- function(expr, args) {
   return(list(SumEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims), list()))
 }
 
-quad_form_canon <- function(expr, args) {
+Dgp2Dcp.quad_form_canon <- function(expr, args) {
   x <- args[[1]]
   P <- args[[2]]
   elems <- list()
@@ -215,19 +215,19 @@ quad_form_canon <- function(expr, args) {
   return(list(log_sum_exp(hstack(elems)), list()))
 }
 
-quad_over_lin_canon <- function(expr, args) {
+Dgp2Dcp.quad_over_lin_canon <- function(expr, args) {
   x <- Vec(args[[1]])
   y <- args[[2]]
   numerator <- sum(sapply(x, function(xi) { 2*xi }))
   return(list(numerator - y, list()))
 }
 
-sum_canon <- function(expr, args) {
+Dgp2Dcp.sum_canon <- function(expr, args) {
   X <- args[[1]]
   if(is.na(expr@axis)) {
     x <- Vec(X)
     summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
-    canon <- add_canon(summation, summation@args)[[1]]
+    canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
     return(list(reshape(canon, dim(expr)), list()))
   }
   
@@ -238,45 +238,45 @@ sum_canon <- function(expr, args) {
   for(i in 1:nrow(X)) {
     x <- Vec(X[i])
     summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
-    canon <- add_canon(summation, summation@args)[[1]]
+    canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
     rows <- c(rows, canon)
   }
   canon <- hstack(rows)
   return(list(reshape(canon, dim(expr)), list()))
 }
 
-trace_canon <- function(expr, args) {
+Dgp2Dcp.trace_canon <- function(expr, args) {
   diag_sum <- sum(Diag(args[[1]]))
-  return(add_canon(diag_sum, diag_sum@args))
+  return(Dgp2Dcp.add_canon(diag_sum, diag_sum@args))
 }
 
-zero_constr_canon <- function(expr, args) {
+Dgp2Dcp.zero_constr_canon <- function(expr, args) {
   if(length(args) != 2)
     stop("Must have exactly 2 arguments")
-  return(list(Zero(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+  return(list(ZeroConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
 }
 
-Dgp2Dcp.CANON_METHODS <- list(AddExpression = add_canon,
-                              Constant = constant_canon,
-                              DivExpression = div_canon,
-                              Exp = exp_canon,
-                              EyeMinusInv = eye_minus_inv_canon,
-                              GeoMean = geo_mean_canon,
-                              Log = log_canon,
-                              MulExpression = mulexpression_canon,
-                              Multiply = mul_canon,
-                              Norm1 = norm1_canon,
-                              NormInf = norm_inf_canon,
-                              OneMinusPos = one_minus_pos_canon,
-                              Parameter = parameter_canon,
-                              PfEigenvalue = pf_eigenvalue_canon,
-                              Pnorm = pnorm_canon,
-                              Power = power_canon,
-                              Prod = prod_canon,
-                              QuadForm = quad_form_canon,
-                              QuadOverLin = quad_over_lin_canon,
-                              Trace = trace_canon,
-                              SumEntries = sum_canon,
+Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
+                              Constant = Dgp2Dcp.constant_canon,
+                              DivExpression = Dgp2Dcp.div_canon,
+                              Exp = Dgp2Dcp.exp_canon,
+                              EyeMinusInv = Dgp2Dcp.eye_minus_inv_canon,
+                              GeoMean = Dgp2Dcp.geo_mean_canon,
+                              Log = Dgp2Dcp.log_canon,
+                              MulExpression = Dgp2Dcp.mulexpression_canon,
+                              Multiply = Dgp2Dcp.mul_canon,
+                              Norm1 = Dgp2Dcp.norm1_canon,
+                              NormInf = Dgp2Dcp.norm_inf_canon,
+                              OneMinusPos = Dgp2Dcp.one_minus_pos_canon,
+                              Parameter = Dgp2Dcp.parameter_canon,
+                              PfEigenvalue = Dgp2Dcp.pf_eigenvalue_canon,
+                              Pnorm = Dgp2Dcp.pnorm_canon,
+                              Power = Dgp2Dcp.power_canon,
+                              Prod = Dgp2Dcp.prod_canon,
+                              QuadForm = Dgp2Dcp.quad_form_canon,
+                              QuadOverLin = Dgp2Dcp.quad_over_lin_canon,
+                              Trace = Dgp2Dcp.trace_canon,
+                              SumEntries = Dgp2Dcp.sum_canon,
                               Variable = NULL,
                               
                               MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,

@@ -79,7 +79,7 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 })
 
 # Atom canonicalizers
-huber_canon <- function(expr, args) {
+Qp2QuadForm.huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -89,12 +89,12 @@ huber_canon <- function(expr, args) {
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
   power_expr <- Power(n, 2)
-  canon <- power_canon(power_expr, power_expr@args)
+  canon <- Qp2QuadForm.power_canon(power_expr, power_expr@args)
   n2 <- canon[[1]]
   constr_sq <- canon[[2]]
   
   abs_expr <- abs(s)
-  canon <- abs_canon(abs_expr, abs_expr@args)
+  canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
   abs_s <- canon[[1]]
   constr_abs <- canon[[2]]
   obj <- n2 + 2*M*abs_s
@@ -104,7 +104,7 @@ huber_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-power_canon <- function(expr, args) {
+Qp2QuadForm.power_canon <- function(expr, args) {
   affine_expr <- args[[1]]
   p <- expr@p
   if(is_constant(expr))
@@ -124,7 +124,7 @@ power_canon <- function(expr, args) {
   stop("Non-constant quadratic forms cannot be raised to a power greater than 2.")
 }
 
-quad_form_canon <- function(expr, args) {
+Qp2QuadForm.quad_form_canon <- function(expr, args) {
   affine_expr <- expr@args[[1]]
   P <- expr@args[[2]]
   if(is(affine_expr, "Variable"))
@@ -135,7 +135,7 @@ quad_form_canon <- function(expr, args) {
   }
 }
 
-quad_over_lin_canon <- function(expr, args) {
+Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
   affine_expr <- args[[1]]
   y <- args[[2]]
   if(is(affine_expr, "Variable"))
@@ -161,7 +161,7 @@ Qp2QuadForm.CANON_METHODS <- list(
   SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex,
   
   # Canonicalizations that are different for QPs.
-  QuadOverLin = quad_over_lin_canon,
-  Power = power_canon,
-  Huber = huber_canon,
-  QuadForm = quad_form_canon)
+  QuadOverLin = Qp2QuadForm.quad_over_lin_canon,
+  Power = Qp2QuadForm.power_canon,
+  Huber = Qp2QuadForm.huber_canon,
+  QuadForm = Qp2QuadForm.quad_form_canon)

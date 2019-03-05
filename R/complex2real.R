@@ -116,7 +116,7 @@ Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag
 }
 
 # Atom canonicalizers.
-abs_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(real_args[[1]]))   # Imaginary
     output <- abs(imag_args[[1]])
   else if(is.na(imag_args[[1]]))   # Real
@@ -131,7 +131,7 @@ abs_canon <- function(expr, real_args, imag_args, real2imag) {
 }
 
 # Affine canonicalization.
-separable_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize linear functions that are separable in real and imaginary parts.
   if(all(is.na(imag_args)))
     outputs <- list(copy(expr, real_args), NA)
@@ -150,15 +150,15 @@ separable_canon <- function(expr, real_args, imag_args, real2imag) {
   return(outputs)
 }
 
-real_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
   list(real_args[[1]], NA)
 }
 
-imag_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
   list(imag_args[[1]], NA)
 }
 
-conj_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(imag_args[[1]]))
     imag_arg <- NA
   else
@@ -166,7 +166,7 @@ conj_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(real_args[[1]], imag_arg))
 }
 
-join <- function(expr, lh_arg, rh_arg) {
+Complex2Real.join <- function(expr, lh_arg, rh_arg) {
   # Helper function to combine arguments.
   if(is.na(lh_arg) || is.na(rh_arg))
     return(NA)
@@ -174,7 +174,7 @@ join <- function(expr, lh_arg, rh_arg) {
     return(copy(expr, list(lh_arg, rh_arg)))
 }
 
-add <- function(lh_arg, rh_arg, neg = FALSE) {
+Complex2Real.add <- function(lh_arg, rh_arg, neg = FALSE) {
   # Helper function to sum arguments.
   # Negates rh_arg if neg is TRUE.
   if(!is.na(rh_arg) && neg)
@@ -190,18 +190,18 @@ add <- function(lh_arg, rh_arg, neg = FALSE) {
     return(lh_arg + rh_arg)
 }
 
-binary_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.binary_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize functions like multiplication.
-  real_by_real <- join(expr, real_args[[1]], real_args[[2]])
-  imag_by_imag <- join(expr, imag_args[[1]], imag_args[[2]])
-  real_by_imag <- join(expr, real_args[[1]], imag_args[[2]])
-  imag_by_real <- join(expr, imag_args[[1]], real_args[[2]])
-  real_output <- add(real_by_real, imag_by_imag, neg = TRUE)
-  imag_output <- add(real_by_imag, imag_by_real, neg = TRUE)
+  real_by_real <- Complex2Real.join(expr, real_args[[1]], real_args[[2]])
+  imag_by_imag <- Complex2Real.join(expr, imag_args[[1]], imag_args[[2]])
+  real_by_imag <- Complex2Real.join(expr, real_args[[1]], imag_args[[2]])
+  imag_by_real <- Complex2Real.join(expr, imag_args[[1]], real_args[[2]])
+  real_output <- Complex2Real.add(real_by_real, imag_by_imag, neg = TRUE)
+  imag_output <- Complex2Real.add(real_by_imag, imag_by_real, neg = TRUE)
   return(list(real_output, imag_output))
 }
 
-constant_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(Constant(Re(value(expr))), NA))
   else if(is_imag(expr))
@@ -216,7 +216,7 @@ constant_canon <- function(expr, real_args, imag_args, real2imag) {
 # If x is an eigenvector of A, then [Re(x), Im(x)] and [Im(x), -Re(x)]
 # are eigenvectors with same eigenvalue.
 # Thus each eigenvalue is repeated twice.
-hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize functions taht take a Hermitian matrix.
   if(is.na(imag_args[[1]]))
     mat <- real_args[[1]]
@@ -230,10 +230,10 @@ hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(mat)), NA))
 }
 
-norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize nuclear norm with Hermitian matrix input.
   # Divide by two because each eigenvalue is repeated twice.
-  canon <- hermitian_canon(expr, real_args, imag_args, real2imag)
+  canon <- Complex2Real.hermitian_canon(expr, real_args, imag_args, real2imag)
   real <- canon[[1]]
   imag <- canon[[2]]
   if(!is.na(imag_args[[1]]))
@@ -241,10 +241,10 @@ norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(real, imag))
 }
 
-lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize nuclear norm with Hermitian matrix input.
   # Divide by two because each eigenvalue is repeated twice.
-  canon <- hermitian_canon(expr, real_args, imag_args, real2imag)
+  canon <- Complex2Real.hermitian_canon(expr, real_args, imag_args, real2imag)
   real <- canon[[1]]
   imag <- canon[[2]]
   real@k <- 2*real@k
@@ -253,15 +253,15 @@ lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(real, imag))
 }
 
-at_least_2D <- function(expr) {
+Complex2Real.at_least_2D <- function(expr) {
   # Upcast 0D and 1D to 2D.
-  if(expr@ndim < 2)
+  if(ndim(expr) < 2)
     return(reshape(expr, c(size(expr), 1)))
   else
     return(expr)
 }
 
-quad_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
   # Convert quad_form to real.
   if(is.na(imag_args[[1]])) {
     vec <- real_args[[1]]
@@ -270,8 +270,8 @@ quad_canon <- function(expr, real_args, imag_args, real2imag) {
     vec <- imag_args[[1]]
     mat <- real_args[[2]]
   } else {
-    vec <- vstack(list(at_least_2D(real_args[[1]]),
-                       at_least_2D(imag_args[[1]])))
+    vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
+                       Complex2Real.at_least_2D(imag_args[[1]])))
     if(is.na(real_args[[2]]))
       real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
     else if(is.na(imag_args[[2]]))
@@ -285,14 +285,14 @@ quad_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(vec, mat)), NA))
 }
 
-matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   # Convert matrix_frac to real.
   if(is.na(real_args[[1]]))
     real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
   if(is.na(imag_args[[1]]))
     imag_args[[1]] <- matrix(0, nrow = nrow(real_args[[1]]), ncol = ncol(real_args[[1]]))
-  vec <- vstack(list(at_least_2D(real_args[[1]]),
-                     at_least_2D(imag_args[[1]])))
+  vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
+                     Complex2Real.at_least_2D(imag_args[[1]])))
   if(is.na(real_args[[2]]))
     real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
   else if(is.na(imag_args[[2]]))
@@ -303,7 +303,7 @@ matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(vec, mat)), NA))
 }
 
-param_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(expr, NA))
   else if(is_imag(expr)) {
@@ -316,13 +316,13 @@ param_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
-  abs_args <- abs_canon(expr, real_args, imag_args, real2imag)
+Complex2Real.pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
+  abs_args <- Complex2Real.abs_canon(expr, real_args, imag_args, real2imag)
   abs_real_args <- abs_args[[1]]
   return(list(copy(expr, list(abs_real_args)), NA))
 }
 
-variable_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(expr, NA))
 
@@ -335,57 +335,57 @@ variable_canon <- function(expr, real_args, imag_args, real2imag) {
     return(list(Variable(dim(expr), var_id = id(expr)), imag))
 }
 
-zero_canon <- function(expr, real_args, imag_args, real2imag) {
+Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(imag_args[[1]]))
     return(list(copy(expr, real_args), NA))
 
-  imag_cons <- Zero(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]])
+  imag_cons <- ZeroConstraint(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]])
   if(is.na(real_args[[1]]))
     return(list(NA, imag_cons))
   else
     return(list(copy(expr, real_args), imag_cons))
 }
 
-Complex2Real.CANON_METHODS <- list(AddExpression = separable_canon,
-                                   Bmat = separable_canon,
-                                   CumSum = separable_canon,
-                                   Diag = separable_canon,
-                                   HStack = separable_canon,
-                                   Index = separable_canon,
-                                   SpecialIndex = separable_canon,
-                                   Promote = separable_canon,
-                                   Reshape = separable_canon,
-                                   SumEntries = separable_canon,
-                                   Trace = separable_canon,
-                                   Transpose = separable_canon,
-                                   NegExpression = separable_canon,
-                                   UpperTri = separable_canon,
-                                   VStack = separable_canon,
+Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
+                                   Bmat = Complex2Real.separable_canon,
+                                   CumSum = Complex2Real.separable_canon,
+                                   Diag = Complex2Real.separable_canon,
+                                   HStack = Complex2Real.separable_canon,
+                                   Index = Complex2Real.separable_canon,
+                                   SpecialIndex = Complex2Real.separable_canon,
+                                   Promote = Complex2Real.separable_canon,
+                                   Reshape = Complex2Real.separable_canon,
+                                   SumEntries = Complex2Real.separable_canon,
+                                   Trace = Complex2Real.separable_canon,
+                                   Transpose = Complex2Real.separable_canon,
+                                   NegExpression = Complex2Real.separable_canon,
+                                   UpperTri = Complex2Real.separable_canon,
+                                   VStack = Complex2Real.separable_canon,
                                    
-                                   Conv = binary_canon,
-                                   DivExpression = binary_canon,
-                                   Kron = binary_canon,
-                                   MulExpression = binary_canon,
-                                   Multiply = binary_canon,
+                                   Conv = Complex2Real.binary_canon,
+                                   DivExpression = Complex2Real.binary_canon,
+                                   Kron = Complex2Real.binary_canon,
+                                   MulExpression = Complex2Real.binary_canon,
+                                   Multiply = Complex2Real.binary_canon,
                                    
-                                   Conjugate = conj_canon,
-                                   Imag = imag_canon,
-                                   Real = real_canon,
-                                   Variable = variable_canon,
-                                   Constant = constant_canon,
-                                   Parameter = param_canon,
-                                   Zero = zero_canon,
-                                   PSD = hermitian_canon,
+                                   Conjugate = Complex2Real.conj_canon,
+                                   Imag = Complex2Real.imag_canon,
+                                   Real = Complex2Real.real_canon,
+                                   Variable = Complex2Real.variable_canon,
+                                   Constant = Complex2Real.constant_canon,
+                                   Parameter = Complex2Real.param_canon,
+                                   Zero = Complex2Real.zero_canon,
+                                   PSD = Complex2Real.hermitian_canon,
                                    
-                                   Abs = abs_canon,
-                                   Norm1 = pnorm_canon,
-                                   NormInf = pnorm_canon,
-                                   Pnorm = pnorm_canon,
+                                   Abs = Complex2Real.abs_canon,
+                                   Norm1 = Complex2Real.pnorm_canon,
+                                   NormInf = Complex2Real.pnorm_canon,
+                                   Pnorm = Complex2Real.pnorm_canon,
                                    
-                                   LambdaMax = hermitian_canon,
-                                   LogDet = norm_nuc_canon,
-                                   NormNuc = norm_nuc_canon,
-                                   SigmaMax = hermitian_canon,
-                                   QuadForm = quad_canon,
-                                   MatrixFrac = matrix_frac_canon,
-                                   LambdaSumLargest = lambda_sum_largest_canon)
+                                   LambdaMax = Complex2Real.hermitian_canon,
+                                   LogDet = Complex2Real.norm_nuc_canon,
+                                   NormNuc = Complex2Real.norm_nuc_canon,
+                                   SigmaMax = Complex2Real.hermitian_canon,
+                                   QuadForm = Complex2Real.quad_canon,
+                                   MatrixFrac = Complex2Real.matrix_frac_canon,
+                                   LambdaSumLargest = Complex2Real.lambda_sum_largest_canon)

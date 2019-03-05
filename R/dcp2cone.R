@@ -56,7 +56,7 @@ setMethod("cone_stuffed_objective", signature(object = "ConeMatrixStuffing", pro
 })
 
 # Atom canonicalizers.
-cumsum_canon <- function(expr, args) {
+Dcp2Cone.cumsum_canon <- function(expr, args) {
   X <- args[[1]]
   axis <- expr@axis
 
@@ -70,7 +70,7 @@ cumsum_canon <- function(expr, args) {
   return(list(Y, constr))
 }
 
-entr_canon <- function(expr, args) {
+Dcp2Cone.entr_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   t <- Variable(expr_dim)
@@ -82,7 +82,7 @@ entr_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-exp_canon <- function(expr, args) {
+Dcp2Cone.exp_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
   t <- Variable(expr_dim)
@@ -91,7 +91,7 @@ exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-geo_mean_canon <- function(expr, args) {
+Dcp2Cone.geo_mean_canon <- function(expr, args) {
   x <- args[[1]]
   w <- expr@w
   expr_dim <- dim(expr)
@@ -105,7 +105,7 @@ geo_mean_canon <- function(expr, args) {
   return(list(t, gm_constrs(t, x_list, w)))
 }
 
-huber_canon <- function(expr, args) {
+Dcp2Cone.huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -116,12 +116,12 @@ huber_canon <- function(expr, args) {
   # TODO: Make use of recursion inherent to canonicalization process and just return a
   # power/abs expression for readiability's sake
   power_expr <- power(n,2)
-  canon <- power_canon(power_expr, power_expr@args)
+  canon <- Dcp2Cone.power_canon(power_expr, power_expr@args)
   n2 <- canon[[1]]
   constr_sq <- canon[[2]]
 
   abs_expr <- abs(s)
-  canon <- abs_canon(abs_expr, abs_expr@args)
+  canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
   abs_s <- canon[[1]]
   constr_abs <- canon[[2]]
 
@@ -133,11 +133,11 @@ huber_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-indicator_canon <- function(expr, args) {
+Dcp2Cone.indicator_canon <- function(expr, args) {
   return(list(0, args))
 }
 
-kl_div_canon <- function(expr, args) {
+Dcp2Cone.kl_div_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
   y <- promote(args[[2]], expr_dim)
@@ -147,18 +147,18 @@ kl_div_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-lambda_max_canon <- function(expr, args) {
+Dcp2Cone.lambda_max_canon <- function(expr, args) {
   A <- args[[1]]
   n <- nrow(A)
   t <- Variable()
   prom_t <- promote(t, c(n,1))
   # Constraint I*t - A to be PSD; note this expression must be symmetric
   tmp_expr <- diag_vec(prom_t) - A
-  constr <- list(tmp_expr == t(tmp_expr), PSD(tmp_expr))
+  constr <- list(tmp_expr == t(tmp_expr), PSDConstraint(tmp_expr))
   return(list(t, constr))
 }
 
-lambda_sum_largest_canon <- function(expr, args) {
+Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   # S_k(X) denotes lambda_sum_largest(X, k)
   # t >= k S_k(X - Z) + trace(Z), Z is PSD
   # implies
@@ -178,18 +178,18 @@ lambda_sum_largest_canon <- function(expr, args) {
   X <- expr@args[[1]]
   k <- expr@k
   Z <- Variable(c(nrow(X), nrow(X)), PSD = TRUE)
-  canon <- lambda_max_canon(expr, list(X - Z))
+  canon <- Dcp2Cone.lambda_max_canon(expr, list(X - Z))
   obj <- canon[[1]]
   constr <- canon[[2]]
   obj <- k*obj + trace(Z)
   return(list(obj, constr))
 }
 
-log1p_canon <- function(expr, args) {
-  return(log_canon(expr, list(args[[1]] + 1)))
+Dcp2Cone.log1p_canon <- function(expr, args) {
+  return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
 }
 
-log_canon <- function(expr, args) {
+Dcp2Cone.log_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   t <- Variable(expr_dim)
@@ -199,7 +199,7 @@ log_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-log_det_canon <- function(expr, args) {
+Dcp2Cone.log_det_canon <- function(expr, args) {
   # Reduces the atom to an affine expression and list of constraints.
   #
   # Creates the equivalent problem::
@@ -234,7 +234,7 @@ log_det_canon <- function(expr, args) {
   n <- nrow(A)
   # Require that X and A are PSD.
   X <- Variable(c(2*n, 2*n), PSD = TRUE)
-  constraints <- list(PSD(A))
+  constraints <- list(PSDConstraint(A))
 
   # Fix Z as upper triangular
   # TODO: Represent Z as upper triangular vector
@@ -254,14 +254,14 @@ log_det_canon <- function(expr, args) {
   constraints <- c(constraints, X[(n+1):(2*n), (n+1):(2*n)] == A)
   # Add the objective sum(log(D[i,i]))
   log_expr <- log(D)
-  canon <- log_canon(log_expr, log_expr@args)
+  canon <- Dcp2Cone.log_canon(log_expr, log_expr@args)
   obj <- canon[[1]]
   constr <- canon[[2]]
   constraints <- c(constraints, constr)
   return(list(sum(obj), constraints))
 }
 
-log_sum_exp_canon <- function(expr, args) {
+Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   x <- args[[1]]
   x_shape <- shape(x)
   expr_shape <- shape(expr)
@@ -285,13 +285,13 @@ log_sum_exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-logistic_canon <- function(expr, args) {
+Dcp2Cone.logistic_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
   t0 <- Variable(expr_dim)
-  canon1 <- exp_canon(expr, list(-t0))
-  canon2 <- exp_canon(expr, list(x - t0))
+  canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
+  canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
 
   t1 <- canon1[[1]]
   constr1 <- canon1[[2]]
@@ -303,7 +303,7 @@ logistic_canon <- function(expr, args) {
   return(list(t0, constraints))
 }
 
-matrix_frac_canon <- function(expr, args) {
+Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   X <- args[[1]]   # n by m matrix
   P <- args[[2]]   # n by n matrix
 
@@ -327,7 +327,7 @@ matrix_frac_canon <- function(expr, args) {
   return(list(trace(Tvar), constraints))
 }
 
-normNuc_canon <- function(expr, args) {
+Dcp2Cone.normNuc_canon <- function(expr, args) {
   A <- args[[1]]
   A_dim <- dim(A)
   m <- A_dim[1]
@@ -347,7 +347,7 @@ normNuc_canon <- function(expr, args) {
   return(list(trace_value, constraints))
 }
 
-pnorm_canon <- function(expr, args) {
+Dcp2Cone.pnorm_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
   axis <- expr@axis
@@ -368,7 +368,7 @@ pnorm_canon <- function(expr, args) {
   if(p > 1) {
     # TODO: Express this more naturally (recursively) in terms of the other atoms
     abs_expr <- abs(x)
-    canon <- abs_canon(abs_expr, abs_expr@args)
+    canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
     x <- canon[[1]]
     abs_constraints <- canon[[2]]
     constraints <- c(constraints, abs_constraints)
@@ -392,7 +392,7 @@ pnorm_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-power_canon <- function(expr, args) {
+Dcp2Cone.power_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
   w <- expr@w
@@ -418,7 +418,7 @@ power_canon <- function(expr, args) {
   }
 }
 
-quad_form_canon <- function(expr, args) {
+Dcp2Cone.quad_form_canon <- function(expr, args) {
   decomp <- decomp_quad(value(args[[1]]))
   scale <- decomp[[1]]
   M1 <- decomp[[2]]
@@ -430,13 +430,13 @@ quad_form_canon <- function(expr, args) {
     scale <- -scale
     expr <- sum_squares(Constant(t(M2)) %*% args[[1]])
   }
-  canon <- quad_over_lin_canon(expr, expr@args)
+  canon <- Dcp2Cone.quad_over_lin_canon(expr, expr@args)
   obj <- canon[[1]]
   constr <- canon[[2]]
   return(list(scale * obj, constr))
 }
 
-quad_over_lin_canon <- function(expr, args) {
+Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   # quad_over_lin := sum_{ij} X^2_{ij} / y
   x <- args[[1]]
   y <- matrix(args[[1]], ncol = 1)
@@ -448,7 +448,7 @@ quad_over_lin_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-sigma_max_canon <- function(expr, args) {
+Dcp2Cone.sigma_max_canon <- function(expr, args) {
   A <- args[[1]]
   A_dim <- dim(A)
   n <- A_dim[1]
@@ -472,33 +472,33 @@ sigma_max_canon <- function(expr, args) {
 }
 
 # TODO: Remove pwl canonicalize methods and use EliminatePwl reduction instead.
-Dcp2Cone.CANON_METHODS <- list(CumSum = cumsum_canon,
-                               GeoMean = geo_mean_canon,
-                               LambdaMax = lambda_max_canon,
-                               LambdaSumLargest = lambda_sum_largest_canon,
-                               LogDet = log_det_canon,
-                               LogSumExp = log_sum_exp_canon,
-                               MatrixFrac = matrix_frac_canon,
+Dcp2Cone.CANON_METHODS <- list(CumSum = Dcp2Cone.cumsum_canon,
+                               GeoMean = Dcp2Cone.geo_mean_canon,
+                               LambdaMax = Dcp2Cone.lambda_max_canon,
+                               LambdaSumLargest = Dcp2Cone.lambda_sum_largest_canon,
+                               LogDet = Dcp2Cone.log_det_canon,
+                               LogSumExp = Dcp2Cone.log_sum_exp_canon,
+                               MatrixFrac = Dcp2Cone.matrix_frac_canon,
                                MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
                                MinEntries = EliminatePwl.CANON_METHODS$MinEntries,
                                Norm1 = EliminatePwl.CANON_METHODS$Norm1,
-                               NormNuc = normNuc_canon,
+                               NormNuc = Dcp2Cone.normNuc_canon,
                                NormInf = EliminatePwl.CANON_METHODS$NormInf,
-                               Pnorm = pnorm_canon,
-                               QuadForm = quad_form_canon,
-                               QuadOverLin = quad_over_lin_canon,
-                               SigmaMax = sigma_max_canon,
+                               Pnorm = Dcp2Cone.pnorm_canon,
+                               QuadForm = Dcp2Cone.quad_form_canon,
+                               QuadOverLin = Dcp2Cone.quad_over_lin_canon,
+                               SigmaMax = Dcp2Cone.sigma_max_canon,
                                SumLargest = EliminatePwl.CANON_METHODS$SumLargest,
                                Abs = EliminatePwl.CANON_METHODS$Abs,
-                               Entr = entr_canon,
-                               Exp = exp_canon,
-                               Huber = huber_canon,
-                               KLDiv = kl_div_canon,
-                               Log = log_canon,
-                               Log1p = log1p_canon,
-                               Logistic = logistic_canon,
+                               Entr = Dcp2Cone.entr_canon,
+                               Exp = Dcp2Cone.exp_canon,
+                               Huber = Dcp2Cone.huber_canon,
+                               KLDiv = Dcp2Cone.kl_div_canon,
+                               Log = Dcp2Cone.log_canon,
+                               Log1p = Dcp2Cone.log1p_canon,
+                               Logistic = Dcp2Cone.logistic_canon,
                                MaxElemwise = EliminatePwl.CANON_METHODS$MaxElemwise,
                                MinElemwise = EliminatePwl.CANON_METHODS$MinElemwise,
-                               Power = power_canon,
-                               Indicator = indicator_canon,
+                               Power = Dcp2Cone.power_canon,
+                               Indicator = Dcp2Cone.indicator_canon,
                                SpecialIndex = special_index_canon)

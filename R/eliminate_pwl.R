@@ -26,14 +26,14 @@ setMethod("perform", signature(object = "EliminatePwl", problem = "Problem"), fu
 })
 
 # Atom canonicalizers.
-abs_canon <- function(expr, args) {
+EliminatePwl.abs_canon <- function(expr, args) {
   x <- args[[1]]
   t <- Variable(dim(expr))
   constraints <- list(t >= x, t >= -x)
   return(list(t, constraints))
 }
 
-max_entries_canon <- function(expr, args) {
+EliminatePwl.max_entries_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   axis <- expr@axis
@@ -50,28 +50,28 @@ max_entries_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-max_elemwise_canon <- function(expr, args) {
+EliminatePwl.max_elemwise_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   t <- Variable(expr_dim)
   constraints <- lapply(args, function(elem) { t >= elem })
   return(list(t, constraints))
 }
 
-min_entries_canon <- function(expr, args) {
+EliminatePwl.min_entries_canon <- function(expr, args) {
   if(length(args) != 1)
     stop("Length of args must be one")
   tmp <- MaxEntries(-args[[1]])
-  canon <- max_entries_canon(tmp, tmp@args)
+  canon <- EliminatePwl.max_entries_canon(tmp, tmp@args)
   return(list(-canon[[1]], canon[[2]]))
 }
 
-min_elemwise_canon <- function(expr, args) {
+EliminatePwl.min_elemwise_canon <- function(expr, args) {
   tmp <- do.call(MaxElemwise, lapply(args, function(arg) { -arg }))
-  canon <- max_elemwise_canon(tmp, tmp@args)
+  canon <- EliminatePwl.max_elemwise_canon(tmp, tmp@args)
   return(list(-canon[[1]], canon[[2]]))
 }
 
-norm1_canon <- function(expr, args) {
+EliminatePwl.norm1_canon <- function(expr, args) {
   x <- args[[1]]
   axis <- expr@axis
   
@@ -80,14 +80,14 @@ norm1_canon <- function(expr, args) {
   
   # TODO: Express this more naturally (recursively) in terms of the other atoms
   abs_expr <- abs(x)
-  xconstr <- abs_canon(abs_expr, abs_expr@args)
+  xconstr <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
   abs_x <- xconstr[[1]]
   abs_constraints <- xconstr[[2]]
   constraints <- c(constraints, abs_constraints)
   return(list(SumEntries(abs_x, axis = axis), constraints))
 }
 
-norm_inf_canon <- function(expr, args) {
+EliminatePwl.norm_inf_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   t <- Variable(expr_dim)
@@ -96,7 +96,7 @@ norm_inf_canon <- function(expr, args) {
   return(list(t, list(x <= promoted_t, x + promoted_t >= 0)))
 }
 
-sum_largest_canon <- function(expr, args) {
+EliminatePwl.sum_largest_canon <- function(expr, args) {
   x <- args[[1]]
   k <- expr@k
   
@@ -109,11 +109,11 @@ sum_largest_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-EliminatePwl.CANON_METHODS <- list(Abs = abs_canon,
-                                   MaxElemwise = max_elemwise_canon,
-                                   MaxEntries = max_entries_canon,
-                                   MinElemwise = min_elemwise_canon,
-                                   MinEntries = min_entries_canon,
-                                   Norm1 = norm1_canon,
-                                   NormInf = norm_inf_canon,
-                                   SumLargest = sum_largest_canon)
+EliminatePwl.CANON_METHODS <- list(Abs = EliminatePwl.abs_canon,
+                                   MaxElemwise = EliminatePwl.max_elemwise_canon,
+                                   MaxEntries = EliminatePwl.max_entries_canon,
+                                   MinElemwise = EliminatePwl.min_elemwise_canon,
+                                   MinEntries = EliminatePwl.min_entries_canon,
+                                   Norm1 = EliminatePwl.norm1_canon,
+                                   NormInf = EliminatePwl.norm_inf_canon,
+                                   SumLargest = EliminatePwl.sum_largest_canon)

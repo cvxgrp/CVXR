@@ -63,7 +63,7 @@ linearize <- function(expr) {
       else if(is_matrix(var)) {
         flattened <- t(Constant(grad_var)) %*% Vec(var - value(var))
         size <- size(expr)
-        tangent <- tangent + Reshape(flattened, size[1], size[2])
+        tangent <- tangent + Reshape(flattened, size)
       } else
         tangent <- tangent + t(Constant(grad_var)) %*% (var - value(var))
     }

@@ -35,7 +35,7 @@
 #' variables(y)
 #' canonicalize(y)
 #' @export
-Variable <- function(dim = NULL, name = NA_character_) { .Variable(dim = dim, name = name) }
+Variable <- function(dim = NULL, name = NA_character_, var_id = NA_integer_, ...) { .Variable(dim = dim, name = name, var_id = var_id, ...) }
 
 setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
   .Object@var_id <- var_id

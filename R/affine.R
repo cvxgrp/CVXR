@@ -1421,7 +1421,7 @@ SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   axis <- data[[1]]
   keepdims <- data[[2]]
   if(is.na(axis))
-    obj <- lo.sum_entries(arg_objs[[1]], dim = dim)
+    obj <- lo.sum_entries(arg_objs[[1]], dim)
   else if(axis == 1) {
     if(keepdims)
       const_dim <- c(arg_objs[[1]]$dim[2], 1)

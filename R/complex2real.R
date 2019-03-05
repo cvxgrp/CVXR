@@ -14,7 +14,7 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
   inverse_data <- InverseData(problem)
 
   leaf_map <- list()
-  obj <- canonicalize_tree(object, problem@objective, inverse_data@real2imag, leaf_map)
+  obj <- Complex2Real.canonicalize_tree(problem@objective, inverse_data@real2imag, leaf_map)
   real_obj <- obj[[1]]
   imag_obj <- obj[[2]]
 
@@ -25,7 +25,7 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
   for(constraint in problem@constraints) {
     if(class(constraint) == "EqConstraint")
       constraint <- lower_equality(constraint)
-    constr <- canonicalize_tree(object, constraint, inverse_data@real2imag, leaf_map)
+    constr <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
     real_constr <- constr[[1]]
     imag_constr <- constr[[2]]
     if(!is.na(real_constr))
@@ -94,7 +94,7 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
       real_args <- c(real_args, canon[[1]])
       imag_args <- c(imag_args, canon[[2]])
     }
-    outs <- canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
+    outs <- Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
     return(list(real_out = outs[[1]], imag_out = outs[[2]]))
   }
 }
@@ -115,6 +115,7 @@ Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag
   }
 }
 
+# Atom canonicalizers.
 abs_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.na(real_args[[1]]))   # Imaginary
     output <- abs(imag_args[[1]])
@@ -123,7 +124,7 @@ abs_canon <- function(expr, real_args, imag_args, real2imag) {
   else {   # Complex
     real <- real_args[[1]]
     imag <- imag_args[[1]]
-    norms <- pnorm(vstack(c(real, imag)), p = 2, axis = 0)
+    norms <- p_norm(vstack(c(real, imag)), p = 2, axis = 2)
     output <- reshape(norms, real_args[[1]]@dim)
   }
   return(list(output, NA))

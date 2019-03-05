@@ -1161,13 +1161,13 @@ setMethod(".column_grad", "MinEntries", function(object, value) {
 #' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname Pnorm-class
-Pnorm <- function(x, p = 2, axis = NA_real_, max_denom = 1024) {
+Pnorm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
   if(p == 1)
     Norm1(x, axis = axis, keepdims = keepdims)
   else if(p %in% c(Inf, "inf", "Inf"))
     NormInf(x, axis = axis, keepdims = keepdims)
   else
-    .Pnorm(expr = x, axis = axis, p = p, max_denom = max_denom)
+    .Pnorm(expr = x, axis = axis, keepdims = keepdims, p = p, max_denom = max_denom)
 }
 
 setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_) {
@@ -1231,7 +1231,7 @@ setMethod("validate_args", "Pnorm", function(object) {
   if(!is.na(object@axis) && object@p != 2)
     stop("The axis parameter is only supported for p = 2.")
   if(object@p < 1 && is_complex(object@args[[1]]))
-    stop("pnorm(x, p) cannot have x complex for p < 1.")
+    stop("Pnorm(x, p) cannot have x complex for p < 1.")
 })
 
 #' @describeIn Pnorm The atom is positive.
@@ -1339,8 +1339,8 @@ Norm <- function(x, p = 2, axis = NA_real_) {
   }
 }
 
-Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
-  Pnorm(x, p = 2, axis = axis, keepdims = keepdims)
+Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
+  Pnorm(x, p = 2, axis = axis, keepdims = keepdims, max_denom = max_denom)
 }
 
 #'
@@ -2126,8 +2126,8 @@ TotalVariation <- function(value, ...) {
       diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
                              mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
     }
-    length <- nrow(diffs[[1]]) * ncol(diffs[[2]])
-    stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, rows = 1, cols = length) }))
+    len <- nrow(diffs[[1]]) * ncol(diffs[[2]])
+    stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, c(1, len)) }))
     SumEntries(Norm(stacked, p = 2, axis = 2))
   }
 }

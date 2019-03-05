@@ -395,7 +395,7 @@ setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
 #' @rdname transpose
 #' @method t Expression
 #' @export
-t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(args = list(x)) }   # Need S3 method dispatch as well
+t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(x) }   # Need S3 method dispatch as well
 
 #' @docType methods
 #' @rdname transpose
@@ -403,7 +403,7 @@ t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(args = list(x)) 
 #' x <- Variable(3, 4)
 #' t(x)
 #' @export
-setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(args = list(x)) })
+setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(x) })
 
 Conj.Expression <- function(z) { if(is_real(z)) z else Conjugate(z) }
 setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z else Conjugate(z) })

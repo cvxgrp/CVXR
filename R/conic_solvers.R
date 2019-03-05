@@ -903,10 +903,7 @@ setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_
 
 setMethod("ls_solve", "LS", function(object, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   sym_data <- get_sym_data(object, objective, constraints)
-
-  id_map <- sym_data@var_offsets
-  N <- sym_data@x_length
-  extractor <- CoeffExtractor(id_map, N)
+  extractor <- CoeffExtractor(sym_data)
 
   # Extract the coefficients.
   coeffs <- get_coeffs(extractor, objective@args[[1]])

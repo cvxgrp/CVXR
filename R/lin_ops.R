@@ -41,141 +41,164 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  DIAG_MAT = "DIAG_MAT",
                  UPPER_TRI = "UPPER_TRI",
                  CONV = "CONV",
+                 KRON = "KRON",
                  HSTACK = "HSTACK",
                  VSTACK = "VSTACK",
                  SCALAR_CONST = "SCALAR_CONST",
                  DENSE_CONST = "DENSE_CONST",
                  SPARSE_CONST = "SPARSE_CONST",
+                 PARAM = "PARAM",
                  NO_OP = "NO_OP",
-                 KRON = "KRON")
-
-PARAM = "param"
-CONSTANT_ID = "constant_id"
+                 CONSTANT_ID = "CONSTANT_ID")
 
 # Create lists to represent linear operators and constraints
-LinOp <- function(type, size, args = list(), data = NULL, class = "LinOp") {
+LinOp <- function(type, dim, args = list(), data = NULL, class = "LinOp") {
   if(!is.character(type)) stop("type must be a character string")
-  if(!is.numeric(size)) stop("size must be a numeric vector")
+  if(!is.numeric(dim)) stop("dim must be a numeric vector")
   if(!is.list(args)) stop("args must be a list of arguments")
-  list(type = type, size = size, args = args, data = data, class = "LinOp")
+  list(type = type, dim = dim, args = args, data = data, class = "LinOp")
 }
 
-LinConstr <- function(expr, constr_id, size, class = "LinConstr") {
+LinConstr <- function(expr, constr_id, dim, class = "LinConstr") {
     ##if(!is.character(constr_id)) stop("constr_id must be a character string")
   if(!is.integer(constr_id)) stop("constr_id must be an integer!")
-  if(!is.numeric(size)) stop("size must be a numeric vector")
-  list(expr = expr, constr_id = constr_id, size = size, class = class)
+  if(!is.numeric(dim)) stop("dim must be a numeric vector")
+  list(expr = expr, constr_id = constr_id, dim = dim, class = class)
 }
 
-LinEqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinEqConstr") }
-LinLeqConstr <- function(expr, constr_id, size) { LinConstr(expr, constr_id, size, class = "LinLeqConstr") }
+LinEqConstr <- function(expr, constr_id, dim) { LinConstr(expr, constr_id, dim, class = "LinEqConstr") }
+LinLeqConstr <- function(expr, constr_id, dim) { LinConstr(expr, constr_id, dim, class = "LinLeqConstr") }
 
 ## get_id <- function() {
 ##   # sample.int(.Machine$integer.max, 1)
 ##     uuid::UUIDgenerate()
 ## }
 
-create_var <- function(size, var_id = get_id()) {
-  LinOp(VARIABLE, size, list(), var_id)
+create_var <- function(dim, var_id = get_id()) {
+  LinOp(VARIABLE, dim, list(), var_id)
 }
 
-create_param <- function(value, size) {
-  LinOp(PARAM, size, list(), value)
+create_param <- function(value, dim) {
+  LinOp(PARAM, dim, list(), value)
 }
 
-create_const <- function(value, size, sparse = FALSE) {
-  if(all(size == c(1,1)))
+create_const <- function(value, dim, sparse = FALSE) {
+  if(all(dim == c(1,1)))
     op_type <- SCALAR_CONST
   else if(sparse)
     op_type <- SPARSE_CONST
   else
     op_type <- DENSE_CONST
-  LinOp(op_type, size, list(), value)
+  LinOp(op_type, dim, list(), value)
+}
+
+lo.is_scalar <- function(operator) {
+  length(operator$dim) == 0 || as.integer(prod(operator$dim)) == 1
+}
+
+lo.is_const <- function(operator) {
+  operator$type %in% c(SCALAR_CONST, SPARSE_CONST, DENSE_CONST)
 }
 
 lo.sum_expr <- function(operators) {
-  LinOp(SUM, operators[[1]]$size, operators)
+  LinOp(SUM, operators[[1]]$dim, operators)
 }
 
 lo.neg_expr <- function(operator) {
-  LinOp(NEG, operator$size, list(operator))
+  LinOp(NEG, operator$dim, list(operator))
 }
 
 lo.sub_expr <- function(lh_op, rh_op) {
   lo.sum_expr(list(lh_op, lo.neg_expr(rh_op)))
 }
 
-lo.mul_expr <- function(lh_op, rh_op, size) {
-  LinOp(MUL, size, list(rh_op), lh_op)
+lo.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
+  tmp <- mul_shapes_promote(lh_op$shape, rh_op$shape)
+  lh_dim <- tmp[[1]]
+  rh_dim <- tmp[[2]]
+  new_dim <- tmp[[3]]
+  lh_op <- LinOp(lh_op$type, lh_dim, lh_op$args, lh_op$data)
+  rh_op <- LinOp(rh_op$type, rh_dim, rh_op$args, rh_op$data)
+  list(lh_op, rh_op, new_dim)
 }
 
-lo.rmul_expr <- function(lh_op, rh_op, size) {
-  LinOp(RMUL, size, list(lh_op), rh_op)
+lo.mul_expr <- function(lh_op, rh_op, dim) {
+  LinOp(MUL, dim, list(rh_op), lh_op)
 }
 
-lo.mul_elemwise <- function(lh_op, rh_op) {
-  LinOp(MUL_ELEM, lh_op$size, list(rh_op), lh_op)
+lo.rmul_expr <- function(lh_op, rh_op, dim) {
+  LinOp(RMUL, dim, list(lh_op), rh_op)
 }
 
-lo.kron <- function(lh_op, rh_op, size) {
-  LinOp(KRON, size, list(rh_op), lh_op)
+lo.multiply <- function(lh_op, rh_op) {
+  LinOp(MUL_ELEM, lh_op$dim, list(rh_op), lh_op)
+}
+
+lo.kron <- function(lh_op, rh_op, dim) {
+  LinOp(KRON, dim, list(rh_op), lh_op)
 }
 
 lo.div_expr <- function(lh_op, rh_op) {
-  LinOp(DIV, lh_op$size, list(lh_op), rh_op)
+  LinOp(DIV, lh_op$dim, list(lh_op), rh_op)
 }
 
-lo.promote <- function(operator, size) {
-  LinOp(PROMOTE, size, list(operator))
+lo.promote <- function(operator, dim) {
+  LinOp(PROMOTE, dim, list(operator))
 }
 
-lo.sum_entries <- function(operator) {
-  LinOp(SUM_ENTRIES, c(1,1), list(operator))
+lo.sum_entries <- function(operator, dim) {
+  LinOp(SUM_ENTRIES, dim, list(operator))
 }
 
 lo.trace <- function(operator) {
   LinOp(TRACE, c(1,1), list(operator))
 }
 
-lo.index <- function(operator, size, keys) {
-  LinOp(INDEX, size, list(operator), keys)
+lo.index <- function(operator, dim, keys) {
+  LinOp(INDEX, dim, list(operator), keys)
 }
 
-lo.conv <- function(lh_op, rh_op, size) {
-  LinOp(CONV, size, list(rh_op), lh_op)
+lo.conv <- function(lh_op, rh_op, dim) {
+  LinOp(CONV, dim, list(rh_op), lh_op)
 }
 
 lo.transpose <- function(operator) {
-  size = c(operator$size[2], operator$size[1])
-  LinOp(TRANSPOSE, size, list(operator))
+  if(length(operator$dim) < 2)
+    operator
+  else if(length(operator$dim) > 2)
+    stop("Unimplemented")
+  else {
+    new_dim = c(operator$dim[2], operator$dim[1])
+    LinOp(TRANSPOSE, new_dim, list(operator))
+  }
 }
 
-lo.reshape <- function(operator, size) {
-  LinOp(RESHAPE, size, list(operator))
+lo.reshape <- function(operator, dim) {
+  LinOp(RESHAPE, dim, list(operator))
 }
 
 lo.diag_vec <- function(operator) {
-  size <- c(operator$size[1], operator$size[1])
-  LinOp(DIAG_VEC, size, list(operator))
+  new_dim <- c(operator$dim[1], operator$dim[1])
+  LinOp(DIAG_VEC, new_dim, list(operator))
 }
 
 lo.diag_mat <- function(operator) {
-  size = c(operator$size[1], 1)
-  LinOp(DIAG_MAT, size, list(operator))
+  new_dim = c(operator$dim[1], 1)
+  LinOp(DIAG_MAT, new_dim, list(operator))
 }
 
 lo.upper_tri <- function(operator) {
-  entries <- operator$size[1] * operator$size[2]
-  size <- c(floor((entries - operator$size[1])/2), 1)
-  LinOp(UPPER_TRI, size, list(operator))
+  entries <- operator$dim[1] * operator$dim[2]
+  new_dim <- c(floor((entries - operator$dim[1])/2), 1)
+  LinOp(UPPER_TRI, new_dim, list(operator))
 }
 
-lo.hstack <- function(operators, size) {
-  LinOp(HSTACK, size, operators)
+lo.hstack <- function(operators, dim) {
+  LinOp(HSTACK, dim, operators)
 }
 
-lo.vstack <- function(operators, size) {
-  LinOp(VSTACK, size, operators)
+lo.vstack <- function(operators, dim) {
+  LinOp(VSTACK, dim, operators)
 }
 
 get_constr_expr <- function(lh_op, rh_op) {
@@ -187,12 +210,12 @@ get_constr_expr <- function(lh_op, rh_op) {
 
 create_eq <- function(lh_op, rh_op, constr_id = get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
-  LinEqConstr(expr, constr_id, lh_op$size)
+  LinEqConstr(expr, constr_id, lh_op$dim)
 }
 
 create_leq <- function(lh_op, rh_op, constr_id = get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
-  LinLeqConstr(expr, constr_id, lh_op$size)
+  LinLeqConstr(expr, constr_id, lh_op$dim)
 }
 
 create_geq <- function(lh_op, rh_op, constr_id = get_id()) {
@@ -203,7 +226,7 @@ create_geq <- function(lh_op, rh_op, constr_id = get_id()) {
 
 get_expr_vars <- function(operator) {
   if(operator$type == VARIABLE)
-    list(list(operator$data, operator$size))
+    list(list(operator$data, operator$dim))
   else {
     vars_ <- list()
     for(arg in operator$args)
@@ -227,7 +250,7 @@ get_expr_params <- function(operator) {
 
 copy_constr <- function(constr, func) {
   expr <- func(constr$expr)
-  new(class(constr), expr, constr$constr_id, constr$size)
+  new(class(constr), expr, constr$constr_id, constr$dim)
 }
 
 replace_new_vars <- function(expr, id_to_new_var) {
@@ -237,13 +260,13 @@ replace_new_vars <- function(expr, id_to_new_var) {
     new_args <- list()
     for(arg in expr$args)
       new_args <- c(new_args, replace_new_vars(arg, id_to_new_var))
-    LinOp(expr$type, expr$size, new_args, expr$data)
+    LinOp(expr$type, expr$dim, new_args, expr$data)
   }
 }
 
 replace_params_with_consts <- function(expr) {
   if(expr$type == PARAM)
-    create_const(expr$data$value, expr$size)
+    create_const(expr$data$value, expr$dim)
   else {
     new_args <- list()
     for(arg in expr$args)
@@ -251,9 +274,9 @@ replace_params_with_consts <- function(expr) {
     # Data could also be a parameter
     if(is(expr$data, "LinOp") && expr$data$type == PARAM) {
       data_lin_op <- expr$data
-      data <- create_const(data_lin_op$data$value, data_lin_op$size)
+      data <- create_const(data_lin_op$data$value, data_lin_op$dim)
     } else
       data <- expr$data
-    LinOp(expr$type, expr$size, new_args, data)
+    LinOp(expr$type, expr$dim, new_args, data)
   }
 }

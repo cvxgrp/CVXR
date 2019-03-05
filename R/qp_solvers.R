@@ -111,7 +111,7 @@ setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
     attr[SOLVE_TIME] <- results$cputime
   attr[NUM_ITERS] <- as.integer(get_num_barrier_iterations(model@solution@progress))
   
-  status <- status_map(object, get_status(model@solution), SOLVER_ERROR)
+  status <- status_map(object, get_status(model@solution))
   
   if(status %in% SOLUTION_PRESENT) {
     # Get objective value.
@@ -158,7 +158,7 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
   model@objective@set_sense(model@objective@sense@minimize)
   
   # Add variables and linear objective.
-  var_idx <- add(model@variables, obj = q, lb = rep(-Inf, n_var), ub = rep(Inf, n_var))
+  var_idx <- cplex_add(model@variables, obj = q, lb = rep(-Inf, n_var), ub = rep(Inf, n_var))
   
   # Constraint binary/integer variables if present.
   for(i in data[BOOL_IDX])
@@ -178,7 +178,7 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
     rhs <- c(rhs, b[i])
   }
   if(length(lin_expr) > 0)
-    add(model@linear_constraints, lin_expr = lin_expr, senses = rep("E", length(lin_expr)), rhs = rhs)
+    cplex_add(model@linear_constraints, lin_expr = lin_expr, senses = rep("E", length(lin_expr)), rhs = rhs)
   
   lin_expr <- list()
   rhs <- list()
@@ -190,7 +190,7 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
     rhs <- c(rhs, g[i])
   }
   if(length(lin_expr) > 0)
-    add(model@linear_constraints, lin_expr = lin_expr, senses = rep("L", length(lin_expr)), rhs = rhs)
+    cplex_add(model@linear_constraints, lin_expr = lin_expr, senses = rep("L", length(lin_expr)), rhs = rhs)
   
   # Set quadratic cost.
   if(nnzero(P) > 0) {   # Only if quadratic form is not null.
@@ -292,7 +292,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
   attr[NUM_ITERS] <- model@BarIterCount
   
   # Map GUROBI statuses back to CVXR statuses.
-  status <- status_map(object, model@Status, SOLVER_ERROR)
+  status <- status_map(object, model@Status)
   
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- model@objVal
@@ -392,9 +392,9 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
     nnz <- nnzero(P)
     if(nnz > 0) {   # If there are any nonzero elements in P.
       for(i in 1:nnz)
-        add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
+        gurobi_add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
     }
-    add(obj, gurobi::LinExpr(q, x))   # Add linear part.
+    gurobi_add(obj, gurobi::LinExpr(q, x))   # Add linear part.
     setObjective(model, obj)   # Set objective.
   }
   update(model)
@@ -454,7 +454,7 @@ setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_da
   attr[SOLVE_TIME] <- solution@info@run_time
   
   # Map OSQP statuses back to CVXR statuses.
-  status <- status_map(object, solution@info@status_val, SOLVER_ERROR)
+  status <- status_map(object, solution@info@status_val)
   
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution@info@obj_val
@@ -528,7 +528,7 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
       update(solver, new_args)
     
     # Map OSQP statuses back to CVXR statuses.
-    status <- status_map(object, results@info@status_val, SOLVER_ERROR)
+    status <- status_map(object, results@info@status_val)
     if(status == OPTIMAL)
       warm_start(solver, results@x, results@y)
     

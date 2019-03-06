@@ -902,6 +902,7 @@ setMethod("get_sym_data", "LS", function(solver, objective, constraints, cached_
 
 setMethod("ls_solve", "LS", function(object, objective, constraints, cached_data, warm_start, verbose, solver_opts) {
   sym_data <- get_sym_data(object, objective, constraints)
+  N <- sym_data@x_length
   extractor <- CoeffExtractor(sym_data)
 
   # Extract the coefficients.
@@ -943,7 +944,7 @@ setMethod("ls_solve", "LS", function(object, objective, constraints, cached_data
 
   result_dict <- list()
   result_dict[PRIMAL] <- x
-  result_dict[DUAL] <- nu
+  result_dict[EQ_DUAL] <- nu
   result_dict[VALUE] <- p_star
   return(format_results(result_dict, NA, cached_data))
 })

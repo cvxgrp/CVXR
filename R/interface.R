@@ -45,6 +45,13 @@ intf_is_hermitian <- function(constant) {
   c(is_symm, is_herm)
 }
 
+intf_convert <- function(constant, sparse = FALSE) {
+  if(sparse)
+    return(Matrix(constant, sparse = TRUE))
+  else
+    as.matrix(constant)
+}
+
 intf_scalar_value <- function(constant) {
   if(is.list(constant))
     constant[[1]]

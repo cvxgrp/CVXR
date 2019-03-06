@@ -9,8 +9,8 @@
 #' @name Variable-class
 #' @aliases Variable
 #' @rdname Variable-class
-.Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", var_id = "integer", value = "ConstVal"),
-                                  prototype(dim = NULL, name = NA_character_, var_id = NA_integer_, value = NA_real_), 
+.Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", id = "integer", value = "ConstVal"),
+                                  prototype(dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_), 
                                   validity = function(object) {
                                     if(!is.na(object@value))
                                       stop("[Variable: validation] value is an internal slot and should not be set by the user")
@@ -35,10 +35,10 @@
 #' variables(y)
 #' canonicalize(y)
 #' @export
-Variable <- function(dim = NULL, name = NA_character_, var_id = NA_integer_, ...) { .Variable(dim = dim, name = name, var_id = var_id, ...) }
+Variable <- function(dim = NULL, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = dim, name = name, id = id, ...) }
 
-setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, var_id = get_id(), value = NA_real_) {
-  .Object@var_id <- var_id
+setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = get_id(), value = NA_real_) {
+  .Object@id <- id
   if(is.na(name))
     .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)
   else
@@ -96,3 +96,42 @@ Int <- function(...) { Variable(..., integer = TRUE) }
 NonNegative <- function(...) { Variable(..., nonneg = TRUE) }
 Symmetric <- function(...) { Variable(..., symmetric = TRUE) }
 Semidef <- function(...) { Variable(..., semidef = TRUE) }
+
+#
+# Upper Triangle to Full Matrix
+#
+# Returns a coefficient matrix to create a symmetric matrix.
+#
+# @param n The width/height of the matrix
+# @return The coefficient matrix.
+upper_tri_to_full <- function(n) {
+  if(n == 0)
+    return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
+  
+  entries <- floor(n*(n+1)/2)
+  
+  val_arr <- c()
+  row_arr <- c()
+  col_arr <- c()
+  count <- 1
+  for(i in 1:n) {
+    for(j in i:n) {
+      # Index in the original matrix
+      col_arr <- c(col_arr, count)
+      
+      # Index in the filled matrix
+      row_arr <- c(row_arr, (j-1)*n + i)
+      val_arr <- c(val_arr, 1.0)
+      if(i != j) {
+        # Index in the original matrix
+        col_arr <- c(col_arr, count)
+        
+        # Index in the filled matrix
+        row_arr <- c(row_arr, (i-1)*n + j)
+        val_arr <- c(val_arr, 1.0)
+      }
+      count <- count + 1
+    }
+  }
+  sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
+}

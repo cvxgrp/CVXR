@@ -81,7 +81,7 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
     && !convex_attributes(variables(problem)) && (length(problem@constraints) > 0 || !requires_constr(object))
     && all(sapply(problem@constraints, function(c) { class(c) %in% supported_constraints(object) }))
-    && all(sapply(problem@constraints, function(c) { is_stuffed_cone_constraints(c) })))
+    && all(sapply(problem@constraints, function(c) { is_stuffed_cone_constraint(c) })))
 })
 
 ConicSolver.get_coeff_offset <- function(expr) {
@@ -268,9 +268,9 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
   # Order and group constraints.
   inv_data <- list()
   inv_data[object@var_id] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })
@@ -342,9 +342,9 @@ setMethod("perform", signature(object = "CPLEX", problem = "Problem"), function(
   # Order and group constraints.
   inv_data <- list()
   inv_data[object@var_id] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
   inv_data[object@neq_constr] <- c(leq_constr, soc_constr)
   inv_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
@@ -444,11 +444,11 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Order and group constraints.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[CVXOPT()@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  sdp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "PSD" })]
+  sdp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "PSDConstraint" })]
   exp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ExpCone" })]
   inv_data[CVXOPT()@neq_constr] <- c(leq_constr, soc_constr, sdp_constr, exp_constr)
   return(list(data, inv_data))
@@ -652,9 +652,9 @@ setMethod("perform", signature(object = "Elemental", problem = "Problem"), funct
   inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Order and group constraints.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })
@@ -690,8 +690,7 @@ setMethod("accepts", signature(object = "GLPK", problem = "Problem"), function(o
   return(TRUE)
 })
 
-setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-  status <- solution$status
+setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {  status <- solution$status
 
   primal_vars <- NA
   dual_vars <- NA
@@ -787,9 +786,9 @@ setMethod("perform", signature(object = "GUROBI", problem = "Problem"), function
   # Order and group constraints.
   inv_data <- list()
   inv_data[object@var_id] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
   inv_data[object@neq_constr] <- c(leq_constr, soc_constr)
   inv_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
@@ -855,7 +854,7 @@ setMethod("suitable", signature(solver = "LS", problem = "Problem"), function(so
   is_dcp(problem) &&
       is_quadratic(problem@objective@args[[1]]) &&
       !is_affine(problem@objective@args[[1]]) &&
-      all(sapply(problem@constraints, function(c) { is(c, "Zero") })) &&
+      all(sapply(problem@constraints, function(c) { is(c, "ZeroConstraint") })) &&
       all(sapply(variables(problem), function(v) { class(v) %in% allowedVariables })) &&
       all(sapply(variables(problem), function(v) { is.na(domain(v)) || length(domain(v)) == 0 }))   # No implicit variable domains
   # TODO: Domains are not implemented yet.
@@ -1065,7 +1064,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   hs <- list()
 
   # Linear inequalities.
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "NonPosConstraint" })]
   if(length(leq_constr) > 0) {
     blform <- block_format(object, problem, leq_constr)   # G, h : G*z <= h.
     G <- blform[[1]]
@@ -1079,7 +1078,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # Linear equations.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ZeroConstraint" })]
   if(length(leq_constr) > 0) {
     blform <- block_format(object, problem, eq_constr)   # G, h : G*z == h.
     G <- blform[[1]]
@@ -1792,7 +1791,7 @@ setMethod("invert", signature(object = "XPRESS", solution = "Solution", inverse_
     opt_val <- solution[VALUE]
     primal_vars <- list()
     primal_vars[inverse_data[object@var_id]] <- solution$primal
-    if(!is_mip(inverse_data))
+    if(!inverse_data$is_mip)
       dual_vars <- get_dual_values(solution[EQ_DUAL], extract_dual_value, inverse_data[EQ_CONSTR])
   } else {
     if(status == INFEASIBLE)

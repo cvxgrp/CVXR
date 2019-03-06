@@ -1,5 +1,5 @@
 # Lifts complex numbers to a real representation.
-setClass("Complex2Real", contains = "Reduction")
+Complex2Real <- setClass("Complex2Real", contains = "Reduction")
 
 Complex2Real.accepts <- function(problem) {
   leaves <- c(variables(problem), parameters(problem), constants(problem))

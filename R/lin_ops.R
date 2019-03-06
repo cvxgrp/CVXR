@@ -11,18 +11,20 @@ INDEX = "index"
 TRANSPOSE = "transpose"
 SUM_ENTRIES = "sum_entries"
 TRACE = "trace"
-RESHAPE = "reshape"
+RESHAPE = "reshape_expr"
 DIAG_VEC = "diag_vec"
 DIAG_MAT = "diag_mat"
 UPPER_TRI = "upper_tri"
 CONV = "conv"
+KRON = "kron"
 HSTACK = "hstack"
 VSTACK = "vstack"
 SCALAR_CONST = "scalar_const"
 DENSE_CONST = "dense_const"
 SPARSE_CONST = "sparse_const"
+PARAM = "param"
 NO_OP = "no_op"
-KRON = "kron"
+CONSTANT_ID = "constant_id"
 
 LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  PROMOTE = "PROMOTE",
@@ -113,7 +115,7 @@ lo.sub_expr <- function(lh_op, rh_op) {
 }
 
 lo.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
-  tmp <- mul_shapes_promote(lh_op$shape, rh_op$shape)
+  tmp <- mul_dims_promote(lh_op$dim, rh_op$dim)
   lh_dim <- tmp[[1]]
   rh_dim <- tmp[[2]]
   new_dim <- tmp[[3]]

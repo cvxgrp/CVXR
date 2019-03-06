@@ -137,7 +137,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
 
 setMethod("name", "AddExpression", function(x) {
-  paste(sapply(object@args, as.character), collapse = " + ")
+  paste(sapply(x@args, as.character), collapse = " + ")
 })
 
 #' @param values A list of arguments to the atom.
@@ -306,9 +306,9 @@ setMethod("is_complex", "BinaryOperator", function(object) {
 #' The MulExpression class.
 #'
 #' This class represents the matrix product of two linear expressions.
-#' See \linkS4class{MulElemwise} for the elementwise product.
+#' See \linkS4class{Multiply} for the elementwise product.
 #'
-#' @seealso \linkS4class{MulElemwise}
+#' @seealso \linkS4class{Multiply}
 #' @name MulExpression-class
 #' @aliases MulExpression
 #' @rdname MulExpression-class

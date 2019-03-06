@@ -5,7 +5,7 @@
 #' expressions and symbolic quadratic forms.
 #'
 #' @rdname Qp2SymbolicQp-class
-setClass("Qp2SymbolicQp", contains = "Canonicalization")
+Qp2SymbolicQp <- setClass("Qp2SymbolicQp", contains = "Canonicalization")
 
 Qp2SymbolicQp.accepts <- function(problem) {
   is_qpwa(problem@objective@expr) &&
@@ -41,7 +41,7 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #' affine arguments
 #'
 #' @rdname QpMatrixStuffing-class
-setClass("QpMatrixStuffing", contains = "MatrixStuffing")
+QpMatrixStuffing <- setClass("QpMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem"), function(object, problem) {
     class(problem@objective) == "Minimize" &&
@@ -75,7 +75,7 @@ setMethod("qp_stuffed_objective", signature(object = "QpMatrixStuffing", problem
 setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
   if(!(accepts(object, problem)))
     stop("Cannot reduce problem to symbolic QP")
-  return(perform(Canonicalization(qp_canon_methods), problem))
+  callNextMethod(object, problem)
 })
 
 # Atom canonicalizers

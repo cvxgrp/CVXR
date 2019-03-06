@@ -1,4 +1,4 @@
-setClass("Dgp2Dcp", contains = "Canonicalization")
+Dgp2Dcp <- setClass("Dgp2Dcp", contains = "Canonicalization")
 
 setMethod("accepts", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
   return(is_dgp(problem))
@@ -303,5 +303,5 @@ setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", 
     }
     return(variable_canon)
   } else
-    return(Dgp2Dcp.CANON_METHODS[[key]])
+    return(Dgp2Dcp.CANON_METHODS[[i]])
 })

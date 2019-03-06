@@ -353,15 +353,15 @@ SolveResult <- function(opt_value, status, primal_values, dual_values) { list(op
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache = list()) {
   .Object@objective <- objective
   .Object@constraints <- constraints
-  .Object@variables <- .variables(.Object)
+  .Object@variables <- Problem.build_variables(.Object)
   .Object@value <- value
   .Object@status <- status
   .Object@solution <- solution
   
   # The intermediate and solving chains to canonicalize and solve the problem.
-  .Object@.intermediate_chain <- intermediate_chain
-  .Object@.solving_chain <- solving_chain
-  .Object@.cached_chain_key <- cached_chain_key
+  .Object@.intermediate_chain <- .intermediate_chain
+  .Object@.solving_chain <- .solving_chain
+  .Object@.cached_chain_key <- .cached_chain_key
 
   # List of separable (sub)problems
   .Object@.separable_problems <- .separable_problems
@@ -470,7 +470,7 @@ setMethod("is_mixed_integer", "Problem", function(object) {
 #' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
 setMethod("variables", "Problem", function(object) { object@variables })
 
-.variables.Problem <- function(object) {
+Problem.build_variables <- function(object) {
   vars_ <- variables(object@objective)
   constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
   unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
@@ -730,7 +730,7 @@ valuesById <- function(object, results_dict, sym_data, solver) {
         }
 
         ## Reduce to scalar if possible
-        if(all(intf_size(valResult) == c(1, 1)))
+        if(all(intf_dim(valResult) == c(1, 1)))
             intf_scalar_value(valResult)
         else
             valResult

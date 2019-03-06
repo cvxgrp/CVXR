@@ -13,9 +13,14 @@ VAR_PREFIX = "var"
 # Prefix for default named parameters.
 PARAM_PREFIX = "param"
 
-# Constraint types
+# Constraint types.
 EQ_CONSTR = "=="
 INEQ_CONSTR = "<="
+
+# Atom groups.
+SOC_ATOMS = c("GeoMean", "Pnorm", "QuadForm", "QuadOverLin", "Power")
+EXP_ATOMS = c("LogSumExp", "LogDet", "Entr", "Exp", "KLDiv", "Log", "Log1p", "Logistic")
+PSD_ATOMS = c("LambdaMax", "LambdaSumLargest", "LogDet", "MatrixFrac", "NormNuc", "SigmaMax")
 
 # Solver Constants
 OPTIMAL = "optimal"
@@ -136,6 +141,8 @@ NUM_ITERS = "num_iters"    # number of iterations
 # Keys for problem data dict.
 C_KEY = "c"
 OFFSET = "offset"
+P_KEY = "P"
+Q_KEY = "q"
 A_KEY = "A"
 B_KEY = "b"
 G_KEY = "G"
@@ -151,8 +158,8 @@ AFFINE = "AFFINE"
 CONVEX = "CONVEX"
 CONCAVE = "CONCAVE"
 ZERO = "ZERO"
-POSITIVE = "POSITIVE"
-NEGATIVE = "NEGATIVE"
+NONNEG = "NONNEGATIVE"
+NONPOS = "NONPOSITIVE"
 UNKNOWN = "UNKNOWN"
 
 # Keys for log-log curvature
@@ -161,7 +168,13 @@ LOG_LOG_AFFINE = "LOG_LOG_AFFINE"
 LOG_LOG_CONVEX = "LOG_LOG_CONVEX"
 LOG_LOG_CONCAVE = "LOG_LOG_CONCAVE"
 
-SIGN_STRINGS = c(ZERO, POSITIVE, NEGATIVE, UNKNOWN)
+SIGN_STRINGS = c(ZERO, NONNEG, NONPOS, UNKNOWN)
+
+# Numerical tolerances.
+EIGVAL_TOL = 1e-10
+PSD_NSD_PROJECTION_TOL = 1e-8
+GENERAL_PROJECTION_TOL = 1e-10
+SPARSE_PROJECTION_TOL = 1e-10
 
 SolveResult <- list(SolveResult = list("opt_value", "status", "primal_values", "dual_values"))
 
@@ -199,6 +212,23 @@ sum_dims <- function(dims) {
   c(rows, cols)
 }
 
+mul_dims_promote <- function(lh_dim, rh_dim) {
+  if(is.null(lh_dim) || is.null(rh_dim))
+    stop("Multiplication by scalars is not permitted")
+  
+  if(length(lh_dim) == 1)
+    lh_dim[1] <- lh_dim[1] + 1
+  if(length(rh_dim) == 1)
+    rh_dim[1] <- rh_dim[1] + 1
+  
+  # TODO: Deal with case when dimension length < 2.
+  lh_mat_dim <- lh_dim[(length(lh_dim)-2):length(lh_dim)]
+  rh_mat_dim <- rh_dim[(length(rh_dim)-2):length(rh_dim)]
+  if(lh_mat_dim[2] != rh_mat_dim[1] || !all(lh_dim[1:(length(lh_dim)-2)] == rh_dim[1:(length(rh_dim)-2)]))
+    stop("Incompatible dimensions")
+  list(lh_dim, rh_dim, c(lh_dim[1:(length(lh_dim)-2)], lh_mat_dim[1], rh_mat_dim[2]))
+}
+
 mul_dims <- function(lh_dim, rh_dim) {
   if(all(lh_dim == c(1,1)))
     return(rh_dim)
@@ -217,18 +247,27 @@ mul_dims <- function(lh_dim, rh_dim) {
 #                             #
 ###############################
 sum_signs <- function(exprs) {
-  is_pos <- all(sapply(exprs, function(expr) { is_positive(expr) }))
-  is_neg <- all(sapply(exprs, function(expr) { is_negative(expr) }))
+  is_pos <- all(sapply(exprs, function(expr) { is_nonneg(expr) }))
+  is_neg <- all(sapply(exprs, function(expr) { is_nonpos(expr) }))
   c(is_pos, is_neg)
 }
 
 mul_sign <- function(lh_expr, rh_expr) {
   # ZERO * ANYTHING == ZERO
-  # POSITIVE * POSITIVE == POSITIVE
-  # NEGATIVE * POSITIVE == NEGATIVE
-  # NEGATIVE * NEGATIVE == POSITIVE
-  is_pos <- (is_zero(lh_expr) || is_zero(rh_expr)) || (is_positive(lh_expr) && is_positive(rh_expr)) || (is_negative(lh_expr) && is_negative(rh_expr))
-  is_neg <- (is_zero(lh_expr) || is_zero(rh_expr)) || (is_positive(lh_expr) && is_negative(rh_expr)) || (is_negative(lh_expr) && is_positive(rh_expr))
+  # NONNEGATIVE * NONNEGATIVE == NONNEGATIVE
+  # NONPOSITIVE * NONNEGATIVE == NONPOSITIVE
+  # NONPOSITIVE * NONPOSITIVE == NONNEGATIVE
+  lh_nonneg <- is_nonneg(lh_expr)
+  rh_nonneg <- is_nonneg(rh_expr)
+  lh_nonpos <- is_nonpos(lh_expr)
+  rh_nonpos <- is_nonpos(rh_expr)
+  
+  lh_zero <- lh_nonneg && lh_nonpos
+  rh_zero <- rh_nonneg && rh_nonpos
+  is_zero <- lh_zero || rh_zero
+  
+  is_pos <- is_zero || (lh_nonneg && rh_nonneg) || (lh_nonpos && rh_nonpos)
+  is_neg <- is_zero || (lh_nonneg && rh_nonpos) || (lh_nonpos && rh_nonneg)
   c(is_pos, is_neg)
 }
 

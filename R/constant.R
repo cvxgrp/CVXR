@@ -87,21 +87,21 @@ setMethod("canonicalize", "Constant", function(object) {
 #' @describeIn Constant A logical value indicating whether all elements of the constant are non-negative.
 setMethod("is_nonneg", "Constant", function(object) { 
   if(is.na(object@nonneg))
-    object <- compute_attr(object)
+    object <- .compute_attr(object)
   object@nonneg
 })
 
 #' @describeIn Constant A logical value indicating whether all elements of the constant are non-positive.
 setMethod("is_nonpos", "Constant", function(object) {
   if(is.na(object@nonpos))
-    object <- compute_attr(object)
+    object <- .compute_attr(object)
   object@nonpos
 })
 
 #' @describeIn Constant A logical value indicating whether the constant is imaginary.
 setMethod("is_imag", "Constant", function(object) {
   if(is.na(object@imag))
-    object <- compute_attr(object)
+    object <- .compute_attr(object)
   object@imag
 })
 
@@ -114,7 +114,7 @@ setMethod("is_symmetric", "Constant", function(object) {
     return(TRUE)
   else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@symm))
-      object <- compute_symm_attr(object)
+      object <- .compute_symm_attr(object)
     return(object@symm)
   } else
     return(FALSE)
@@ -126,14 +126,14 @@ setMethod("is_hermitian", "Constant", function(object) {
     return(TRUE)
   else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@herm))
-      object <- compute_symm_attr(object)
+      object <- .compute_symm_attr(object)
     return(object@herm)
   } else
     return(FALSE)
 })
 
 # Compute the attributes of the constant related to complex/real, sign.
-compute_attr.Constant <- function(object) {
+.compute_attr <- function(object) {
   # Set DCP attributes.
   res <- intf_is_complex(value(object))
   is_real <- res[[1]]
@@ -155,7 +155,7 @@ compute_attr.Constant <- function(object) {
 }
 
 # Determine whether the constant is symmetric/Hermitian.
-compute_symm_attr.Constant <- function(object) {
+.compute_symm_attr <- function(object) {
   # Set DCP attributes.
   res <- intf_is_hermitian(value(object))
   object@symm <- res[[1]]
@@ -164,7 +164,7 @@ compute_symm_attr.Constant <- function(object) {
 }
 
 # Compute the eigenvalues of the Hermitian or symmetric matrix represented by this constant.
-compute_eigvals.Constant <- function(object) {
+.compute_eigvals <- function(object) {
   object@eigvals <- eigen(value(object), only.values = TRUE)$values
   object
 }
@@ -185,7 +185,7 @@ setMethod("is_psd", "Constant", function(object) {
   
   # Compute eigenvalues if absent.
   if(is.na(object@eigvals))
-    object <- compute_eigvals(object)
+    object <- .compute_eigvals(object)
   return(all(Re(object@eigvals) >= -EIGVAL_TOL))
 })
 
@@ -205,7 +205,7 @@ setMethod("is_nsd", "Constant", function(object) {
   
   # Compute eigenvalues if absent.
   if(is.na(object@eigvals))
-    object <- compute_eigvals(object)
+    object <- .compute_eigvals(object)
   return(all(Re(object@eigvals) <= EIGVAL_TOL))
 })
 
@@ -235,7 +235,7 @@ as.Constant <- function(expr) {
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.
 #' @slot name (Optional) A character string representing the name of the parameter.
-#' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+#' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 #' @slot value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @name Parameter-class
 #' @aliases Parameter
@@ -246,11 +246,11 @@ as.Constant <- function(expr) {
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
 #' @param name (Optional) A character string representing the name of the parameter.
-#' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN". Defaults to "UNKNOWN".
+#' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN". Defaults to "UNKNOWN".
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @rdname Parameter-class
 #' @examples
-#' x <- Parameter(3, name = "x0", sign="NEGATIVE") ## 3-vec negative
+#' x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
 #' is_positive(x)
 #' is_negative(x)
 #' size(x)
@@ -325,12 +325,12 @@ setMethod("show", "Parameter", function(object) {
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
 #' @param name (Optional) A character string representing the name of the parameter.
-#' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+#' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 #' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)
 #' dim <- size(x)
-#' y <- CallbackParam(value(x), dim[1], dim[2], sign = "POSITIVE")
+#' y <- CallbackParam(value(x), dim[1], dim[2], sign = "NONNEGATIVE")
 #' get_data(y)
 #' @export
 CallbackParam <- function(callback, dim = NULL, ...) {

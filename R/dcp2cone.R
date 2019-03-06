@@ -5,7 +5,7 @@
 #' with affine objectives and conic constraints whose arguments are affine.
 #'
 #' @rdname Dcp2Cone-class
-setClass("Dcp2Cone", contains = "Canonicalization")
+Dcp2Cone <- setClass("Dcp2Cone", contains = "Canonicalization")
 
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   class(problem@objective) == "Minimize" && is_dcp(problem)
@@ -29,7 +29,7 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 #'            cone_constrK(A_K*x + b_K, ...)
 #'
 #' @rdname ConeMatrixStuffing-class
-setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
+ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
     class(problem@objective) == "Minimize" &&

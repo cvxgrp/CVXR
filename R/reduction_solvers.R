@@ -116,13 +116,13 @@ construct_solving_chain <- function(problem, candidates) {
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
   cones <- c()
-  if(any(atoms %in% SOC_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "SOC" })))
+  if(any(sapply(atoms, class) %in% SOC_ATOMS) || any(sapply(problem@constraints, class) == "SOC"))
     cones <- c(cones, "SOC")
-  if(any(atoms %in% EXP_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "ExpCone"})))
+  if(any(sapply(atoms, class) %in% EXP_ATOMS) || any(sapply(problem@constraints, class) == "ExpCone"))
     cones <- c(cones, "ExpCone")
-  if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, function(c) { class(c) == "PSD" }))
+  if(any(sapply(atoms, class) %in% PSD_ATOMS) || any(sapply(problem@constraints, class) == "PSDConstraint")
                                || any(sapply(variables(problem), function(v) { is_psd(v) || is_nsd(v) })))
-    cones <- c(cones, "PSD")
+    cones <- c(cones, "PSDConstraint")
   
   # Here, we make use of the observation that canonicalization only
   # increases the number of constraints in our problem.
@@ -183,6 +183,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
+  
   # TODO: Handle boolean constraints.
   if(Complex2Real.accepts(problem))
     reductions <- c(reductions, Complex2Real())

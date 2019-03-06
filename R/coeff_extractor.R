@@ -125,7 +125,7 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
       P <- bdiag(P, coeffs[[var_id]]$P)
       q <- c(q, coeffs[[var_id]]$q)
     } else {
-      var_dim <- var_dims(object)[[var_id]]
+      var_dim <- object@var_dims[[var_id]]
       size <- as.integer(prod(var_dim))
       P <- bdiag(P, Matrix(0, nrow = size, ncol = size))
       q <- c(q, rep(0, size))

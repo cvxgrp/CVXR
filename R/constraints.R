@@ -263,7 +263,7 @@ setMethod("place_Df", "NonlinearConstraint", function(object, big_Df, Df, var_of
 setMethod("place_H", "NonlinearConstraint", function(object, big_H, H, var_offsets) {
   offset <- 0
   for(var in object@args) {
-    var_size <- as.integer(prod(dim(var)))
+    var_dim <- as.integer(prod(dim(var)))
     var_H <- H[offset:(offset + var_dim), offset:(offset + var_dim)]
     big_H <- block_add(object, big_H, var_H, var_offsets[get_data(var)], var_offsets[get_data(var)], var_dim, var_dim)
     offset <- offset + var_dim
@@ -322,7 +322,7 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 })
 
 setMethod("show", "ExpCone", function(object) {
-  paste("ExpCone(", as.character(x@a), ", ", as.character(x@b), ", ", as.character(x@c), ")", sep = "")
+  paste("ExpCone(", as.character(object@a), ", ", as.character(object@b), ", ", as.character(object@c), ")", sep = "")
 })
 
 #' @rdname ExpCone-class

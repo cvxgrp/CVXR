@@ -33,12 +33,12 @@ setMethod("show", "Atom", function(object) {
 })
 
 setMethod("name", "Atom", function(x) {
-  if(is.na(get_data(object)))
+  if(is.na(get_data(x)))
     data <- list()
   else
-    data <- sapply(get_data(object), as.character)
-  arg_names <- sapply(object@args, name)
-  paste(class(object), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
+    data <- sapply(get_data(x), as.character)
+  arg_names <- sapply(x@args, name)
+  paste(class(x), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
 })
 
 #' @describeIn Atom Raises an error if the arguments are invalid.
@@ -751,7 +751,7 @@ setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
 #' @rdname LambdaSumLargest Verify that the argument \code{A} is square.
 setMethod("validate_args", "LambdaSumLargest", function(object) {
   A <- object@args[[1]]
-  if(ndim(X) != 2 || nrow(X) != ncol(X))
+  if(ndim(A) != 2 || nrow(A) != ncol(A))
     stop("First argument must be a square matrix.")
   else if(as.integer(object@k) != object@k || object@k <= 0)
     stop("Second argument must be a positive integer.")
@@ -936,9 +936,9 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
   X <- values[[1]]
   P <- values[[2]]
   if(is_complex(object@args[[1]]))
-    product <- t(Conj(X)) %*% base:solve(P) %*% X
+    product <- t(Conj(X)) %*% base::solve(P) %*% X
   else
-    product <- t(X) %*% base:solve(P) %*% X
+    product <- t(X) %*% base::solve(P) %*% X
   
   if(length(dim(product)) == 2)
     return(sum(diag(product)))
@@ -1715,7 +1715,7 @@ setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
 })
 
 setMethod("name", "QuadForm", function(x) {
-  paste(class(x), "(", object@args[[1]], ", ", object@args[[2]], ")", sep = "")
+  paste(class(x), "(", x@args[[1]], ", ", x@args[[2]], ")", sep = "")
 })
 
 #' @describeIn QuadForm Does the atom handle complex numbers?
@@ -1779,7 +1779,7 @@ setMethod("is_quadratic", "QuadForm", function(object) { TRUE })
 #' @describeIn QuadForm Is the atom piecewise linear?
 setMethod("is_pwl", "QuadForm", function(object) { FALSE })
 
-setMethod(".grad", "QuadForm", function(object) {
+setMethod(".grad", "QuadForm", function(object, values) {
   x <- values[[1]]
   P <- values[[2]]
   D <- 2*P %*% t(x)

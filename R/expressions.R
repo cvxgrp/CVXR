@@ -182,7 +182,7 @@ setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is
 #' The sign of an expression.
 #'
 #' @param x An \linkS4class{Expression} object.
-#' @return A string indicating the sign of the expression, either "ZERO", "NONNEG", "NONPOS", or "UNKNOWN".
+#' @return A string indicating the sign of the expression, either "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 #' @docType methods
 #' @rdname sign
 #' @export
@@ -336,12 +336,12 @@ setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   if(is_constant(e1))
-    MulElemwise(lh_const = e1, rh_exp = e2)
+    Multiply(lh_exp = e1, rh_exp = e2)
   else if(is_constant(e2))
-    MulElemwise(lh_const = e2, rh_exp = e1)
+    Multiply(lh_exp = e2, rh_exp = e1)
   else if(all(dim(e1) == c(1,1)) && all(dim(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
     warning("Forming a non-convex expression (affine) * (affine)")
-    AffineProd(x = e1, y = e2)
+    MulExpression(lh_exp = e1, rh_exp = e2)
   } else
     stop("Cannot multiply elementwise ", curvature(e1), " and ", curvature(e2))
 })

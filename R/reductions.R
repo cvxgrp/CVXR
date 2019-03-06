@@ -19,7 +19,7 @@ special_index_canon <- function(expr, args) {
   # Select the chosen entries from expr.
   arg <- args[[1]]
   identity <- diag(size(arg))
-  lowered <- Reshape(identity[select_vec]*vec(arg), final_dim)
+  lowered <- reshape_expr(identity[select_vec]*vec(arg), final_dim)
   list(lowered, list())
 }
 
@@ -128,8 +128,8 @@ setMethod("reduce", "Reduction", function(object) {
     stop("The reduction was constructed without a Problem")
   
   tmp <- perform(object, object@problem)
-  object@.emitted_problem <- problem
-  object@.retrieval_data <- retrieval_data
+  object@.emitted_problem <- tmp[[1]]
+  object@.retrieval_data <- tmp[[2]]
   return(list(object, object@.emitted_problem))
 })
 
@@ -146,24 +146,6 @@ setMethod("perform", signature(object = "Reduction", problem = "Problem"), funct
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn Reduction Returns a solution to the original problem given the inverse data.
 setMethod("invert", signature(object = "Reduction", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { stop("Unimplemented") })
-
-replace_params_with_consts <- function(expr) {
-  if(is.list(expr))
-    return(lapply(expr, function(elem) { replace_params_with_consts(elem) }))
-  else if(len(parameters(expr)) == 0)
-    return(expr)
-  else if(is(expr, "Parameter")) {
-    if(is.na(value(expr)))
-      stop("Problem contains unspecified parameters")
-    return(Constant(value(expr)))
-  } else {
-    new_args <- list()
-    for(arg in expr@args)
-        51
-    new_args <- c(new_args, replace_params_with_consts(arg))
-    return(new_args)
-  }
-}
 
 #'
 #' The Canonicalization class.
@@ -315,7 +297,7 @@ symmetric_attributes <- function(variables) {
 #' This class represents a reduction that expands convex variable attributes into constraints.
 #'
 #' @rdname CvxAttr2Constr-class
-setClass("CvxAttr2Constr", contains = "Reduction")
+CvxAttr2Constr <- setClass("CvxAttr2Constr", contains = "Reduction")
 
 setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) { TRUE })
 
@@ -348,7 +330,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         id2new_var[[vid]] <- upper_tri
         fill_coeff <- Constant(upper_tri_to_full(n))
         full_mat <- fill_coeff %*% upper_tri
-        obj <- reshape(full_mat, c(n, n))
+        obj <- reshape_expr(full_mat, c(n, n))
       } else if(!is.null(var@attributes$diag)) {
         diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
         id2new_var[[vid]] <- diag_var
@@ -429,13 +411,31 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
 #' their constaint values.
 #'
 #' @rdname EvalParams-class
-setClass("EvalParams", contains = "Reduction")
+EvalParams <- setClass("EvalParams", contains = "Reduction")
+
+EvalParams.replace_params_with_consts <- function(expr) {
+  if(is.list(expr))
+    return(lapply(expr, function(elem) { EvalParams.replace_params_with_consts(elem) }))
+  else if(length(parameters(expr)) == 0)
+    return(expr)
+  else if(is(expr, "Parameter")) {
+    if(is.na(value(expr)))
+      stop("Problem contains unspecified parameters")
+    return(Constant(value(expr)))
+  } else {
+    new_args <- list()
+    for(arg in expr@args)
+      51
+    new_args <- c(new_args, EvalParams.replace_params_with_consts(arg))
+    return(new_args)
+  }
+}
 
 setMethod("accepts", signature(object = "EvalParams", problem = "Problem"), function(object, problem) { TRUE })
 setMethod("perform", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
-    obj_expr <- replace_params_with_consts(problem@objective@expr)
+    obj_expr <- EvalParams.replace_params_with_consts(problem@objective@expr)
     if(class(problem@objective) == "Maximize")
       objective <- Maximize(obj_expr)
     else
@@ -447,7 +447,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
   for(c in problem@constraints) {
     args <- list()
     for(arg in c@args)
-      args <- c(args, replace_params_with_consts(arg))
+      args <- c(args, EvalParams.replace_params_with_consts(arg))
 
     # Do not instantiate a new constraint object if it did not contain parameters.
     id_match <- mapply(function(new, old) { id(new) == id(old) }, args, c@args)
@@ -473,7 +473,7 @@ setMethod("invert", signature(object = "EvalParams", solution = "Solution", inve
 #' maximization and vice versa.
 #'
 #' @rdname FlipObjective-class
-setClass("FlipObjective", contains = "Reduction")
+FlipObjective <- setClass("FlipObjective", contains = "Reduction")
 
 setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
 setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
@@ -496,7 +496,7 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
 #' The MatrixStuffing class.
 #'
 #' @rdname MatrixStuffing-class
-setClass("MatrixStuffing", contains = "Reduction")
+MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
 
 setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
@@ -533,7 +533,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
     for(arg in con@args) {
       A <- Afull[(offset + 1):(offset + size(arg) + 1),]
       b <- bfull[(offset + 1):(offset + size(arg) + 1)]
-      arg_list <- c(arg_list, reshape(A %*% new_var + b, dim(arg)))
+      arg_list <- c(arg_list, reshape_expr(A %*% new_var + b, dim(arg)))
       offset <- offset + size(arg)
     }
     new_cons <- c(new_cons, copy(con, arg_list))

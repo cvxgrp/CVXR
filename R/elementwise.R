@@ -588,12 +588,12 @@ setMethod("to_numeric", "MaxElemwise", function(object, values) {
 #' @describeIn MaxElemwise The sign of the atom.
 setMethod("sign_from_args", "MaxElemwise", function(object) {
   # Reduces the list of argument signs according to the following rules:
-  #    POSITIVE, ANYTHING = POSITIVE
-  #    ZERO, UNKNOWN = POSITIVE
+  #    NONNEGATIVE, ANYTHING = NONNEGATIVE
+  #    ZERO, UNKNOWN = NONNEGATIVE
   #    ZERO, ZERO = ZERO
-  #    ZERO, NEGATIVE = ZERO
-  #    UNKNOWN, NEGATIVE = UNKNOWN
-  #    NEGATIVE, NEGATIVE = NEGATIVE
+  #    ZERO, NONPOSITIVE = ZERO
+  #    UNKNOWN, NONPOSITIVE = UNKNOWN
+  #    NONPOSITIVE, NONPOSITIVE = NONPOSITIVE
   is_pos <- any(sapply(object@args, is_nonneg))
   is_neg <- all(sapply(object@args, is_nonpos))
   c(is_pos, is_neg)
@@ -623,11 +623,11 @@ setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, is
 
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(object, values)
-  val_dims <- dim(max_vals)
-  if(is.null(dims))
+  vals_dim <- dim(max_vals)
+  if(is.null(vals_dim))
     unused <- matrix(TRUE, nrow = length(max_vals), ncol = 1)
   else
-    unused <- array(TRUE, dim = val_dims)
+    unused <- array(TRUE, dim = vals_dim)
   grad_list <- list()
   idx <- 1
   for(value in values) {
@@ -705,11 +705,11 @@ setMethod("is_pwl", "MinElemwise", function(object) { all(sapply(object@args, is
 
 setMethod(".grad", "MinElemwise", function(object, values) {
   min_vals <- to_numeric(object, values)
-  val_dims <- dim(min_vals)
-  if(is.null(dims))
+  vals_dim <- dim(min_vals)
+  if(is.null(vals_dim))
     unused <- matrix(TRUE, nrow = length(min_vals), ncol = 1)
   else
-    unused <- array(TRUE, dim = val_dims)
+    unused <- array(TRUE, dim = vals_dim)
   grad_list <- list()
   idx <- 1
   for(value in values) {

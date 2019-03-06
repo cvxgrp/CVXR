@@ -189,7 +189,7 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
     primal_vars[inverse_data[object@var_id]] <- solution$primal
     eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[object@eq_constr])
     leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[object@neq_constr])
-    eq_dual <- modifyList(eq_dual, leq_dual)
+    eq_dual <- utils::modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
   } else {
     if(status == INFEASIBLE)
@@ -364,7 +364,7 @@ setMethod("invert", signature(object = "CPLEX", solution = "Solution", inverse_d
     if(!inverse_data$is_mip) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[object@eq_constr])
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[object@neq_constr])
-      eq_dual <- modifyList(eq_dual, leq_dual)
+      eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     } else {
       if(status == INFEASIBLE)
@@ -551,7 +551,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   data <- list()
   inv_data <- list()
   inv_data[object@var_id] <- id(variables(problem)[[1]])
-  offsets <- get_coeff_offset(ConicSolver(), problem@objective@args[[1]])
+  offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   data[C_KEY] <- as.vector(offsets[[1]])
   data[OFFSET] <- offsets[[2]]
   inv_data[OFFSET] <- data[OFFSET][[1]]
@@ -591,7 +591,7 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
 
     eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[object@eq_constr])
     leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[object@neq_constr])
-    eq_dual <- modifyList(eq_dual, leq_dual)
+    eq_dual <- utils::modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
 
     return(Solution(status, opt_val, primal_vars, dual_vars, attr))
@@ -807,7 +807,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
     if(!inverse_data$is_mip) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data(object@eq_constr))
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data(object@neq_constr))
-      eq_dual <- modifyList(eq_dual, leq_dual)
+      eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     }
   } else {
@@ -1047,10 +1047,10 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   inv_data$integer_variables <- length(data[BOOL_IDX]) + length(data[INT_IDX]) > 0
 
   # Parse the coefficient vector from the objective.
-  coeff_offs <- get_coeff_offset(object, problem@objective@args[[1]])
+  coeff_offs <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   c <- coeff_offs[[1]]
   constant <- coeff_offs[[2]]
-  data[C_MAP] <- as.vector(c)
+  data[C_KEY] <- as.vector(c)
   inv_data$n0 <- length(data[C_KEY])
   data[OBJ_OFFSET] <- constant[1]
   data[DIMS] <- list()
@@ -1141,7 +1141,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
     data[G_KEY] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
   else
     data[G_KEY] <- Matrix(do.call("rbind", Gs), sparse = TRUE)
-  if(length(Hs) == 0)
+  if(length(hs) == 0)
     data[H_KEY] <- matrix(nrow = 0, ncol = 0)
   else
     data[H_KEY] <- Matrix(do.call("cbind", hs), sparse = TRUE)
@@ -1409,7 +1409,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
   if(suc_len > 0) {
     suc <- rep(0, suc_len)
     task.getsucslice(sol, 0, suc_len, suc)
-    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(suc, inverse_data$suc_slacks))
+    dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(suc, inverse_data$suc_slacks))
   }
 
   # Dual variables for the original equality constraints.
@@ -1417,7 +1417,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
   if(y_len > 0) {
     y <- rep(0, y_len)
     task.getyslice(sol, suc_len, suc_len + y_len, y)
-    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(y, inverse_data$y_slacks))
+    dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(y, inverse_data$y_slacks))
   }
 
   # Dual variables for SOC and EXP constraints.
@@ -1425,7 +1425,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
   if(snx_len > 0) {
     snx <- matrix(0, nrow = snx_len, ncol = 1)
     task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)
-    dual_vars <- modifyList(dual_vars, MOSEK.parse_dual_vars(snx, inverse_data$snx_slacks))
+    dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(snx, inverse_data$snx_slacks))
   }
 
   # Dual variables for PSD constraints.
@@ -1577,7 +1577,7 @@ setMethod("reduction_format_constr", "SCS", function(object, problem, constr, ex
     extractor <- CoeffExtractor(InverseData(problem))
     Ab <- affine(extractor, triangularized_expr)
     A_prime <- Ab[[1]]
-    b_prim <- Ab[[2]]
+    b_prime <- Ab[[2]]
 
     # SCS requests constraints to be formatted as Ax + s = b,
     # where s is constrained to reside in some cone. Here, however,
@@ -1595,7 +1595,7 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   inv_data[object@var_id] <- id(variables(problem)[[1]])
 
   # Parse the coefficient vector from the objective.
-  offsets <- get_coeff_offset(object, problem@objective@args[[1]])
+  offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   data[C_KEY] <- offsets[[1]]
   data[OFFSET] <- offsets[[2]]
   data[C_KEY] <- as.vector(data[C_KEY])
@@ -1663,8 +1663,8 @@ setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_dat
                                       SCS.extract_dual_value, inverse_data[object@neq_constr])
 
     dual_vars <- list()
-    dual_vars <- modifyList(dual_vars, eq_dual_vars)
-    dual_vars <- modifyList(dual_vars, ineq_dual_vars)
+    dual_vars <- utils::modifyList(dual_vars, eq_dual_vars)
+    dual_vars <- utils::modifyList(dual_vars, ineq_dual_vars)
     return(Solution(status, opt_val, primal_vars, dual_vars, attr))
   } else
     return(failure_solution(status))

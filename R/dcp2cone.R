@@ -382,7 +382,7 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
   # TODO: No need to run gm_constr to form the tree each time.
   # We only need to form the tree once.
   promoted_t <- Constant(matrix(1, nrow = nrow(x), ncol = ncol(x))) %*% t
-  p <- Fraction(p)
+  p <- gmp::as.bigq(p)
   if(p < 0)
     constraints <- c(constraints, gm_constrs(promoted_t, list(x, r), c(-p/(1-p), 1/(1-p))))
   else if(p > 0 && p < 1)

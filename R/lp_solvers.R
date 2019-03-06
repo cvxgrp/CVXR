@@ -98,7 +98,7 @@ setMethod("invert", signature(object = "CBC_LP", solution = "Solution", inverse_
       names(primal_variables) <- inverse_data[object@var_id]
       eq_dual <- get_dual_values(solution[EQ_DUAL], extract_dual_value, inverse_data[EQ_CONSTR])
       leq_dual <- get_dual_values(solution[INEQ_DUAL], extract_dual_value, inverse_data[object@neq_constr])
-      eq_dual <- modifyList(eq_dual, leq_dual)
+      eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
   } else {
     if(status == INFEASIBLE)

@@ -318,7 +318,7 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
   .Object@x <- x
   .Object@y <- y
   .Object@z <- z
-  callNextMethod(.Object, ..., f = solver_hook(.Object), vars_ = list(.Object@x, .Object@y, .Object@z))
+  callNextMethod(.Object, ..., f = ExpCone.solver_hook(.Object), vars_ = list(.Object@x, .Object@y, .Object@z))
 })
 
 setMethod("show", "ExpCone", function(object) {
@@ -427,7 +427,7 @@ setMethod("canonicalize", "ExpCone", function(object) {
 
 # A function used by CVXOPT's nonlinear solver.
 # Based on f(x,y,z) = y * log(y) + x - y * log(z)
-.solver_hook.ExpCone <- function(object, vars_ = NA, scaling = NA) {
+ExpCone.solver_hook <- function(object, vars_ = NA, scaling = NA) {
   entries <- as.integer(prod(dim(object)))
   if(is.na(vars_)) {
     x_init <- rep(0, entries)

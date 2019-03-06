@@ -48,7 +48,7 @@ setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA
 })
 
 setMethod("show", "Variable", function(object) {
-  attr_str <- .get_attr_str(object)
+  attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
     paste("Variable((", paste(dim(object), collapse = ", "), "), ", attr_str, ")", sep = "")
   else

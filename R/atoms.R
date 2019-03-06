@@ -1183,10 +1183,10 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   #  .Object@p <- pow_high(p, max_denom)
   # else
   #  stop("Invalid value of p.")
-
   .Object@p <- p
+  
   .Object@max_denom <- max_denom
-  .Object@.approx_error <- abs(.Object@p - p_old)
+  .Object@.approx_error <- abs(.Object@p - p)
   .Object@.original_p <- p
   callNextMethod(.Object, ...)
 })

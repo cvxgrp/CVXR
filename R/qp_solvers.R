@@ -77,7 +77,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   inverse_data@sorted_constraints <- c(eq_cons, ineq_cons)
   
   # Add information about integer variables.
-  inverse_data@is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+  inverse_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
   
   return(list(data, inverse_data))
 })
@@ -124,7 +124,7 @@ setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
     
     # Only add duals if not a MIP.
     dual_vars <- NA
-    if(!inverse_data@is_mip) {
+    if(!inverse_data$is_mip) {
       y <- -as.matrix(get_dual_values(model@solution))
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     }
@@ -279,7 +279,7 @@ setMethod("import_solver", "GUROBI", function(solver) {
   requireNamespace("gurobi", quietly = TRUE)  
 })
 
-setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("alt_invert", "GUROBI", function(object, results, inverse_data) {
   model <- results$model
   x_grb <- getVars(model)
   n <- length(x_grb)
@@ -303,7 +303,7 @@ setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_
     
     # Only add duals if not a MIP.
     dual_vars <- NA
-    if(!is_mip(inverse_data)) {
+    if(!inverse_data$is_mip) {
       y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]@Pi }))
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     } else {

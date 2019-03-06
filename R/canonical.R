@@ -40,6 +40,30 @@ setMethod("atoms", "Canonical", function(object) {
   unique(flatten_list(lapply(object@args, function(arg) { atoms(arg) })))
 })
 
+setMethod("tree_copy", "Canonical", function(object, id_objects = list()) {
+  new_args <- list()
+  for(arg in object@args) {
+    if(is.list(arg)) {
+      arg_list <- lapply(arg, function(elem) { tree_copy(elem, id_objects) })
+      new_args <- c(new_args, arg_list)
+    } else
+      new_args <- c(new_args, tree_copy(arg, id_objects))
+  }
+  return(copy(object, args = new_args, id_objects = id_objects))
+})
+
+setMethod("copy", "Canonical", function(object, args = NA, id_objects = list()) {
+  if(as.character(id(object)) %in% names(id_objects))
+    return(id_objects[[as.character(id(object))]])
+  if(is.na(args))
+    args <- object@args
+  data <- get_data(object)
+  if(!is.na(data) && !is.null(data))
+    return(do.call(class(object), c(args, data)))
+  else
+    return(do.call(class(object), args))
+})
+
 #' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
 setMethod("get_data", "Canonical", function(object) { list() })
 

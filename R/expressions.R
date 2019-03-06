@@ -335,15 +335,12 @@ setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @docType methods
 #' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if(is_constant(e1))
+  e1_dim <- dim(e1)
+  e2_dim <- dim(e2)
+  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))))
     Multiply(lh_exp = e1, rh_exp = e2)
-  else if(is_constant(e2))
-    Multiply(lh_exp = e2, rh_exp = e1)
-  else if(all(dim(e1) == c(1,1)) && all(dim(e2) == c(1,1)) && is_affine(e1) && is_affine(e2)) {
-    warning("Forming a non-convex expression (affine) * (affine)")
-    MulExpression(lh_exp = e1, rh_exp = e2)
-  } else
-    stop("Cannot multiply elementwise ", curvature(e1), " and ", curvature(e2))
+  else
+    stop("Elementwise multiplication is not allowed, use '%*%' for matrix multiplication")
 })
 
 #' @docType methods
@@ -411,28 +408,19 @@ setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z el
 #' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
 #' @rdname MulExpression-class
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
-  # if(is_scalar(x) || is_scalar(y))
-  #  stop("Scalar operands are not allowed, use '*' instead")
-
-  # Multiplying by a constant on the right is handled differently
-  # from multiplying by a constant on the left
-  if(is_constant(x)) {
-    if(nrow(x) == nrow(y) && ncol(x) != nrow(y) && is(x, "Constant") && x@is_1D_array)
-      x <- t(x)
-    return(MulExpression(lh_exp = x, rh_exp = y))
-  } else if(is_constant(y)) {
-    # Having the constant on the left is more efficient
-    if(is_scalar(x) || is_scalar(y))
-      return(MulExpression(lh_exp = y, rh_exp = x))
-    else
-      return(RMulExpression(lh_exp = x, rh_exp = y))
-  # When both expressions are not constant, allow affine * affine, but raise DCPError otherwise
-  # Cannot multiply two non-constant expressions
-  } else if(is_affine(x) && is_affine(y)) {
-    warning("Forming a non-convex expression (affine) * (affine)")
-    return(AffineProd(x = x, y = y))
-  } else
-    stop("Cannot multiply ", curvature(x), " and ", curvature(y))
+  x_dim <- dim(x)
+  y_dim <- dim(y)
+  
+  if(is.null(x_dim) || is.null(y_dim))
+    stop("Scalar operands are not allowed,  use '*' instead")
+  else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
+    stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
+  else if(is_constant(x) || is_constant(y))
+    MulExpression(lh_exp = x, rh_exp = y)
+  else {
+    warning("Forming a non-convex expression")
+    MulExpression(lh_exp = x, rh_exp = y)
+  }
 })
 
 #' @rdname MulExpression-class

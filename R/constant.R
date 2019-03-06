@@ -318,19 +318,17 @@ setMethod("show", "Parameter", function(object) {
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
-.CallbackParam <- setClass("CallbackParam", representation(callback = "ConstVal", dim = "numeric"), 
+.CallbackParam <- setClass("CallbackParam", representation(callback = "function", dim = "numeric"), 
                                             prototype(dim = NULL), contains = "Parameter")
 
-#' @param callback A numeric element, vector, matrix, or data.frame
-#' @param rows The number of rows in the parameter.
-#' @param cols The number of columns in the parameter.
+#' @param callback A callback function that generates the parameter value.
+#' @param dim The dimensions of the parameter.
 #' @param name (Optional) A character string representing the name of the parameter.
 #' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 #' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)
-#' dim <- size(x)
-#' y <- CallbackParam(value(x), dim[1], dim[2], sign = "NONNEGATIVE")
+#' y <- CallbackParam(value(x), dim(x), sign = "NONNEGATIVE")
 #' get_data(y)
 #' @export
 CallbackParam <- function(callback, dim = NULL, ...) {
@@ -344,4 +342,4 @@ setMethod("initialize", "CallbackParam", function(.Object, ..., callback, dim = 
 
 #' @param object A \linkS4class{CallbackParam} object.
 #' @rdname CallbackParam-class
-setMethod("value", "CallbackParam", function(object) { validate_val(object, callback(object)) })
+setMethod("value", "CallbackParam", function(object) { validate_val(object, object@callback()) })

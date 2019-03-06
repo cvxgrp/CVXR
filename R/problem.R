@@ -402,7 +402,7 @@ setMethod("value", "Problem", function(object) {
   if(is.na(object@value))
     return(NA_real_)
   else
-    return(scalar_value(object@value))
+    return(intf_scalar_value(object@value))
 })
 
 #' @param value A \linkS4class{Minimize} or \linkS4class{Maximize} object (objective), list of \linkS4class{Constraint} objects (constraints), or numeric scalar (value).

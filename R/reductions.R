@@ -63,18 +63,18 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@var_dims <- varoffs$var_dims
 
   # Map of variable id to variable
-  .Object@id2var <- setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
+  .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
 
   # Map of real to imaginary parts of complex variables
   var_comp <- varis[sapply(varis, function(var) { is_complex(var) })]
-  .Object@real2imag <- setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
+  .Object@real2imag <- stats::setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
   constrs <- constraints(problem)
   constr_comp <- constrs[sapply(constrs, function(cons) { is_complex(cons) })]
-  constr_dict <- setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
+  constr_dict <- stats::setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
   .Object@real2imag <- update(.Object@real2imag, constr_dict)
 
   # Map of constraint id to constraint
-  .Object@id2cons <- setNames(constrs, sapply(constrs, function(cons) { id(cons) }))
+  .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
   .Object@cons_id_map <- list()
   return(.Object)
 })

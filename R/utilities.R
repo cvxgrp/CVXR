@@ -800,7 +800,7 @@ ku_slice_mat <- function(mat, key) {
   select_mat
 }
 
-ku_size <- function(key, dim) {
+ku_dim <- function(key, dim) {
   dims <- c()
 
   for(i in 1:2) {

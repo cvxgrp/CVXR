@@ -55,7 +55,7 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
 setMethod("qp_stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
   # TODO: Need to copy objective?
-  Pqr <- quad_form(extractor, problem_copy@objective@expr)
+  Pqr <- quad_form(extractor, problem@objective@expr)
   P <- Pqr[[1]]
   q <- Pqr[[2]]
   r <- Pqr[[3]]

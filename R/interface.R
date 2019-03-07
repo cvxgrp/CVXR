@@ -45,6 +45,11 @@ intf_is_hermitian <- function(constant) {
   c(is_symm, is_herm)
 }
 
+# Check if x is an integer, i.e., a whole number. See is.integer documentation Note and Examples.
+intf_is_integer <- function(x, tol = .Machine$double.eps^0.5) {
+  abs(x - round(x)) < tol
+}
+
 intf_convert <- function(constant, sparse = FALSE) {
   if(sparse)
     return(Matrix(constant, sparse = TRUE))

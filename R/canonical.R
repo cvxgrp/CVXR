@@ -4,7 +4,7 @@
 #' This virtual class represents a canonical expression.
 #'
 #' @rdname Canonical-class
-setClass("Canonical", contains = "VIRTUAL")
+setClass("Canonical", representation(args = "list"), prototype(args = list()), contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Canonical} object.
 #' @describeIn Canonical The expression associated with the input.

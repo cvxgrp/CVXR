@@ -518,20 +518,23 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical",
-                                        complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
-                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical",
-                                        integer = "logical", sparsity = "logical", pos = "logical", neg = "logical"),
-                         prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE,
-                                   symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE,
-                                   boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE), contains = "Expression")
+Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical", 
+                                        complex = "logical", imag = "logical", symmetric = "logical", diag = "logical", 
+                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "logical", integer = "logical", 
+                                        sparsity = "logical", pos = "logical", neg = "logical", 
+                                        attributes = "list", boolean_idx = "list", integer_idx = "list"),
+                         prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, 
+                                   complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, 
+                                   PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, 
+                                   sparsity = NULL, pos = FALSE, neg = FALSE, 
+                                   attributes = list(), boolean_idx = list(), integer_idx = list()), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NA, pos = FALSE, neg = FALSE) {
+setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NULL, pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = list(), integer_idx = list()) {
   if(length(dim) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
 
   for(d in dim) {
-    if(!is.integer(d) || d <= 0)
+    if(!intf_is_integer(d) || d <= 0)
       stop("Invalid dimensions ", dim)
   }
   .Object@dim <- as.integer(dim)
@@ -633,7 +636,7 @@ setMethod("is_hermitian", "Leaf", function(object) {
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is symmetric.
 setMethod("is_symmetric", "Leaf", function(object) {
-  is_scalar(object) || any(sapply(c("diag", "symmetric", "PSD", "NSD"), function(key) { object@attributes[key] }))
+  is_scalar(object) || any(sapply(c("diag", "symmetric", "PSD", "NSD"), function(key) { object@attributes[[key]] }))
 })
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is imaginary.

@@ -66,12 +66,12 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
 
   # Map of real to imaginary parts of complex variables
-  var_comp <- varis[sapply(varis, function(var) { is_complex(var) })]
+  var_comp <- Filter(is_complex, varis)
   .Object@real2imag <- stats::setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
   constrs <- constraints(problem)
-  constr_comp <- constrs[sapply(constrs, function(cons) { is_complex(cons) })]
+  constr_comp <- Filter(is_complex, constrs)
   constr_dict <- stats::setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
-  .Object@real2imag <- update(.Object@real2imag, constr_dict)
+  .Object@real2imag <- utils::modifyList(.Object@real2imag, constr_dict)
 
   # Map of constraint id to constraint
   .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
@@ -93,7 +93,7 @@ setMethod("get_var_offsets", signature(object = "InverseData", variables = "list
   return(list(id_map = id_map, var_offsets = var_offsets, x_length = vert_offset, var_dims = var_dims))
 })
 
-setClassUnion("InverseDataORList", c("InverseData", "list"))
+setClassUnion("ProblemORNULL", c("Problem", "NULL"))
 
 #'
 #' The Reduction class.
@@ -111,7 +111,7 @@ setClassUnion("InverseDataORList", c("InverseData", "list"))
 #' of provenance.
 #'
 #' @rdname Reduction-class
-setClass("Reduction", representation(problem = "Problem", .emitted_problem = "Problem", .retrieval_data = "InverseDataORList"), 
+setClass("Reduction", representation(problem = "ProblemORNULL", .emitted_problem = "ANY", .retrieval_data = "ANY"), 
                       prototype(problem = NULL, .emitted_problem = NULL, .retrieval_data = NULL), contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Reduction} object.
@@ -193,7 +193,7 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
 })
 
-setMethod("canonicalize_tree", signature(object = "Canonicalization", expr = "Expression"), function(object, expr) {
+setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   # TODO: Don't copy affine expressions?
   if(class(expr) == "PartialProblem") {
     canon <- canonicalize_tree(object, expr@args[[1]]@objective@expr)
@@ -236,7 +236,7 @@ setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Ex
 #'
 #' @rdname Chain-class
 .Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
-Chain <- function(problem, reductions) { .Chain(problem = problem, reductions = reductions) }
+Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = problem, reductions = reductions) }
 
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })

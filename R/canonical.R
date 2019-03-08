@@ -31,8 +31,9 @@ setMethod("parameters", "Canonical", function(object) {
 #' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
 setMethod("constants", "Canonical", function(object) {
   const_list <- flatten_list(lapply(object@args, function(arg) { constants(arg) }))
-  const_id <- sapply(const_list, function(constant) { id(constant) })
-  const_list[!duplicated(const_id)]
+  # const_id <- sapply(const_list, function(constant) { id(constant) })
+  # const_list[!duplicated(const_id)]
+  const_list[!duplicated(const_list)]
 })
 
 #' @describeIn Canonical List of \linkS4class{Atom} objects in the expression.

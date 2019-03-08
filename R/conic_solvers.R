@@ -1123,7 +1123,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # PSD constraints.
-  psd_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "PSD" })]
+  psd_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "PSDConstraint" })]
   if(length(psd_constr) > 0) {
     data[DIMS][PSD_DIM] <- list()
     for(c in psd_constr) {
@@ -1572,7 +1572,7 @@ setMethod("reduction_format_constr", "SCS", function(object, problem, constr, ex
   # imposed on solely the lower triangular part of the variable matrix.
   # Moreover, it requires the off-diagonal coefficients to be scaled by
   # sqrt(2).
-  if(is(constr, "PSD")) {
+  if(is(constr, "PSDConstraint")) {
     expr <- constr@expr
     triangularized_expr <- scaled_lower_tri(expr + t(expr))/2
     extractor <- CoeffExtractor(InverseData(problem))

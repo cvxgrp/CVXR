@@ -63,7 +63,7 @@ setMethod("accepts", signature(object = "CBC_LP", problem = "Problem"), function
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% c("Zero", "NonPos"))
+    if(!class(constr) %in% c("ZeroConstraint", "NonPosConstraint"))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -81,9 +81,9 @@ setMethod("perform", signature(object = "CBC_LP", problem = "Problem"), function
   inv_data[OFFSET] <- data[OFFSET][[1]]
 
   # Order and group constraints.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   inv_data[object@neq_constr] <- leq_constr
   return(list(data, inv_data))
 })

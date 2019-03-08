@@ -143,26 +143,31 @@ construct_solving_chain <- function(problem, candidates) {
        paste(cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
 }
 
+setClassUnion("ReductionSolverORNULL", c("ReductionSolver", "NULL"))
+
 #'
 #' The SolvingChain class.
 #'
 #' This class represents a reduction chain that ends with a solver.
 #'
 #' @rdname SolvingChain-class
-.SolvingChain <- setClass("SolvingChain", contains = "Chain")
+.SolvingChain <- setClass("SolvingChain", representation(solver = "ReductionSolverORNULL"), prototype(solver = NULL), contains = "Chain")
 SolvingChain <- function(problem = NULL, reductions = list()) { .SolvingChain(problem = problem, reductions = reductions) }
 
 setMethod("initialize", "SolvingChain", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)
-  last <- .Object@reductions[length(.Object@reductions)]
-  if(!is(last, "Solver"))
-    stop("Solving chains must terminate with a Solver.")
+  if(length(.Object@reductions) == 0)
+    stop("Solving chains must terminate with a ReductionSolver")
+  
+  last <- .Object@reductions[[length(.Object@reductions)]]
+  if(!is(last, "ReductionSolver"))
+    stop("Solving chains must terminate with a ReductionSolver.")
   .Object@solver <- last
   return(.Object)
 })
 
 # Create and return a new SolvingChain by concatenating chain with this instance.
-setMethod("prepend", signature(object = "SolvingChain", chain = "SolvingChain"), function(object, chain) {
+setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), function(object, chain) {
   SolvingChain(reductions = c(chain@reductions, object@reductions))
 })
 

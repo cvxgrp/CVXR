@@ -24,7 +24,7 @@ setMethod("initialize", "Atom", function(.Object, ..., args = list(), .dim = NUL
 
 #' @param x,object An \linkS4class{Atom} object.
 setMethod("show", "Atom", function(object) {
-  if(is.na(get_data(object)))
+  if(is.null(get_data(object)))
     data <- list()
   else
     data <- sapply(get_data(object), as.character)
@@ -33,7 +33,7 @@ setMethod("show", "Atom", function(object) {
 })
 
 setMethod("name", "Atom", function(x) {
-  if(is.na(get_data(x)))
+  if(is.null(get_data(x)))
     data <- list()
   else
     data <- sapply(get_data(x), as.character)
@@ -1951,7 +1951,7 @@ setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_no
 #' @describeIn QuadOverLin Quadratic if \code{x} is affine and \code{y} is constant.
 setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
 
-#' @describeIn QuadOverLin Quadratic or piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
+#' @describeIn QuadOverLin Quadratic of piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
 setMethod("is_qpwa", "QuadOverLin", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
 
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })

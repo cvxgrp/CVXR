@@ -36,7 +36,7 @@ setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 #' @describeIn AffAtom Is every argument quadratic?
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, is_quadratic)) })
 
-#' @describeIn AffAtom Is every argument quadratic or piecewise affine?
+#' @describeIn AffAtom Is every argument quadratic of piecewise affine?
 setMethod("is_qpwa", "AffAtom", function(object) { all(sapply(object@args, is_qpwa)) })
 
 #' @describeIn AffAtom Is every argument piecewise linear?
@@ -130,6 +130,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
   .Object <- callNextMethod(.Object, ..., args = arg_groups)   # Casts R values to Constant objects
   .Object@args <- lapply(.Object@args, function(group) { if(is(group,"AddExpression")) group@args else group })
   .Object@args <- flatten_list(.Object@args)   # Need to flatten list of expressions
+  .Object
 })
 
 #' @param x,object An \linkS4class{AddExpression} object.
@@ -419,7 +420,7 @@ setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
-#' @describeIn DivExpression Is the expression quadratic or piecewise affine?
+#' @describeIn DivExpression Is the expression quadratic of piecewise affine?
 setMethod("is_qpwa", "DivExpression", function(object) {
   is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
 })
@@ -493,7 +494,7 @@ setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
 })
 
-#' @describeIn Multiply Multiples the values elementwise.
+#' @describeIn Multiply Multiplies the values elementwise.
 setMethod("to_numeric", "Multiply", function(object, values) { values[[1]] * values[[2]] })
 
 #' @describeIn Multiply The sum of the argument dimensions - 1.

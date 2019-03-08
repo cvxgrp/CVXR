@@ -37,8 +37,8 @@
 #' @export
 Variable <- function(dim = NULL, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = dim, name = name, id = id, ...) }
 
-setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = get_id(), value = NA_real_) {
-  .Object@id <- id
+setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_) {
+  .Object@id <- ifelse(is.na(id), get_id(), id)
   if(is.na(name))
     .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)
   else

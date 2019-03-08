@@ -9,7 +9,7 @@ setClass("QpSolver", contains = "ReductionSolver")
 
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
-           all(sapply(problem@constraints, function(c) { class(c) == "Zero" || class(c) == "NonPos" })))
+           all(sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" || class(c) == "NonPosConstraint" })))
 })
 
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
@@ -29,7 +29,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   n <- problem@size_metrics@num_scalar_variables
   
   # TODO: This dependence on ConicSolver is hacky; something should change here.
-  eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "Zero" })]
+  eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   if(length(eq_cons) > 0) {
     eq_coeffs <- list(list(), c())
     for(con in eq_cons) {
@@ -44,7 +44,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
     b <- -matrix(nrow = 0, ncol = 0)
   }
   
-  ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPos" })]
+  ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   if(length(ineq_cons) > 0) {
     ineq_coeffs <- list(list(), c())
     for(con in ineq_cons) {

@@ -71,7 +71,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         imag_id <- inverse_data@real2imag[[cid]]
         dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
       # For PSD constraints.
-      } else if(is(cons, "PSD") && is_complex(cons)) {
+      } else if(is(cons, "PSDConstraint") && is_complex(cons)) {
         n <- cons@args[[1]]@dim[1]
         dual <- solution@dual_vars[[cid]]
         dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual), (n+1):ncol(dual)]

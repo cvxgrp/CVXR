@@ -885,7 +885,7 @@ setMethod("is_quadratic", "Power", function(object) {
     return(is_constant(object@args[[1]]))
 })
 
-#' @describeIn Power A logical value indicating whether the atom is quadratic or piecewise affine.
+#' @describeIn Power A logical value indicating whether the atom is quadratic of piecewise affine.
 setMethod("is_qpwa", "Power", function(object) {
   if(object@p == 0)
     return(TRUE)

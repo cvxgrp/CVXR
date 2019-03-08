@@ -1,4 +1,50 @@
 #'
+#' The Objective class.
+#'
+#' This class represents an optimization objective.
+#'
+#' @slot expr A scalar \linkS4class{Expression} to optimize.
+#' @name Objective-class
+#' @aliases Objective
+#' @rdname Objective-class
+.Objective <- setClass("Objective", representation(expr = "ConstValORExpr"), contains = "Canonical")
+
+#' @param expr A scalar \linkS4class{Expression} to optimize.
+#' @rdname Objective-class
+Objective <- function(expr) { .Objective(expr = expr) }
+
+setMethod("initialize", "Objective", function(.Object, expr) {
+  object@expr <- expr
+  object@args <- list(as.Constant(expr))
+  
+  # Validate that the objective resolves to a scalar.
+  if(!is_scalar(object@args[[1]]))
+    stop("The objective must resolve to a scalar")
+  if(!is_real(object@args[[1]]))
+    stop("The objective must be real valued")
+  return(.Object)
+})
+
+#' @describeIn Objective The value of the objective expression.
+setMethod("value", "Objective", function(object) { 
+  v <- value(object@args[[1]])
+  if(is.na(v))
+    return(NA_real_)
+  else
+    return(scalar_value(v))
+})
+
+#' @describeIn Objective Is the objective a quadratic function?
+setMethod("is_quadratic", "Objective", function(object) {
+  is_quadratic(object@args[[1]])
+})
+
+#' @describeIn Objective Is the objective a quadratic of piecewise affine function?
+setMethod("is_qpwa", "Objective", function(object) {
+  is_qpwa(object@args[[1]])
+})
+
+#'
 #' The Minimize class.
 #'
 #' This class represents an optimization objective for minimization.
@@ -25,25 +71,13 @@ setMethod("initialize", "Minimize", function(.Object, expr) {
 
 #' @param object A \linkS4class{Minimize} object.
 #' @describeIn Minimize Pass on the target expression's objective and constraints.
-setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@expr) })
-
-#' @describeIn Minimize List of \linkS4class{Variable} objects in the objective.
-setMethod("variables", "Minimize", function(object) { variables(object@expr) })
-
-#' @describeIn Minimize List of \linkS4class{Parameter} objects in the objective.
-setMethod("parameters", "Minimize", function(object) { parameters(object@expr) })
-
-#' @describeIn Minimize List of \linkS4class{Constant} objects in the objective.
-setMethod("constants", "Minimize", function(object) { constants(object@expr) })
+setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@args[[1]]) })
 
 #' @describeIn Minimize A logical value indicating whether the objective is convex.
-setMethod("is_dcp", "Minimize", function(object) { is_convex(object@expr) })
+setMethod("is_dcp", "Minimize", function(object) { is_convex(object@args[[1]]) })
 
 #' @describeIn Minimize A logical value indicating whether the objective is log-log convex.
-setMethod("is_dgp", "Minimize", function(object) { is_log_log_convex(object@expr) })
-
-#' @describeIn Minimize The value of the objective expression.
-setMethod("value", "Minimize", function(object) { value(object@expr) })
+setMethod("is_dgp", "Minimize", function(object) { is_log_log_convex(object@args[[1]]) })
 
 # The value of the objective given the solver primal value.
 setMethod("primal_to_result", "Minimize", function(object, result) { result })
@@ -74,6 +108,21 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' @export
 Maximize <- function(expr) { .Maximize(expr = expr) }
 
+#' @describeIn Maximize Negates the target expression's objective.
+setMethod("canonicalize", "Maximize", function(object) {
+  canon <- canonical_form(object@args[[1]])
+  list(lo.neg_expr(canon[[1]]), canon[[2]])
+})
+
+#' @describeIn Maximize A logical value indicating whether the objective is concave.
+setMethod("is_dcp", "Maximize", function(object) { is_concave(object@args[[1]]) })
+
+#' @describeIn Maximize A logical value indicating whether the objective is log-log concave.
+setMethod("is_dgp", "Maximize", function(object) { is_log_log_concave(object@args[[1]]) })
+
+# The value of the objective given the solver primal value.
+setMethod("primal_to_result", "Maximize", function(object, result) { -result })
+
 #'
 #' Arithmetic Operations on Objectives
 #'
@@ -86,76 +135,62 @@ Maximize <- function(expr) { .Maximize(expr = expr) }
 NULL
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@expr) })
+setMethod("+", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
 
 #' @rdname Objective-arith
-setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@expr + e2@expr) })
+setMethod("+", signature(e1 = "numeric", e2 = "Objective"), function(e1, e2) { e2 + e1 })
+
+#' @rdname Objective-arith
+setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@args[[1]]) })
+
+#' @rdname Objective-arith
+setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@args[[1]] + e2@args[[2]]) })
 
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
 #' @rdname Objective-arith
-setMethod("+", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
+setMethod("-", signature(e1 = "Objective", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
 
 #' @rdname Objective-arith
-setMethod("+", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 + e1 })
+setMethod("-", signature(e1 = "Objective", e2 = "Maximize"), function(e1, e2) { e1 + (-e2) })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "Minimize", e2 = "Objective"), function(e1, e2) { (-e2) + e1 })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "Maximize", e2 = "Objective"), function(e1, e2) { (-e2) + e1 })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+setMethod("-", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) -e1 else stop("Unimplemented") })
+setMethod("-", signature(e1 = "numeric", e2 = "Objective"), function(e1, e2) { e2 - e1 })
 
 #' @rdname Objective-arith
 setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
-  if(e2 >= 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
+  if(e2 >= 0) Minimize(expr = e1@args[[1]] * e2) else Maximize(expr = e1@args[[1]] * e2)
 })
 
 #' @rdname Objective-arith
 setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
-  if(e2 < 0) Minimize(expr = e1@expr * e2) else Maximize(expr = e1@expr * e2)
+  if(e2 < 0) Minimize(expr = e1@args[[1]] * e2) else Maximize(expr = e1@args[[1]] * e2)
 })
 
 #' @rdname Objective-arith
 setMethod("*", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 * e1 })
 
 #' @rdname Objective-arith
-setMethod("/", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
+setMethod("/", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@expr) })
+setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@args[[1]]) })
 
 #' @rdname Objective-arith
-setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@expr + e2@expr) })
+setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { Maximize(expr = e1@args[[1]] + e2@args[[2]]) })
 
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
-
-#' @describeIn Maximize Negates the target expression's objective.
-setMethod("canonicalize", "Maximize", function(object) {
-  canon <- callNextMethod(object)
-  obj <- canon[[1]]
-  constraints <- canon[[2]]
-  list(lo.neg_expr(obj), constraints)
-})
-
-#' @describeIn Maximize A logical value indicating whether the objective is concave.
-setMethod("is_dcp", "Maximize", function(object) { is_concave(object@expr) })
-
-#' @describeIn Maximize A logical value indicating whether the objective is log-log concave.
-setMethod("is_dgp", "Maximize", function(object) { is_log_log_concave(object@expr) })
-
-#' @describeIn Maximize A logical value indicating whether the objective is quadratic.
-setMethod("is_quadratic", "Maximize", function(object) { is_quadratic(object@expr) })
-
-# The value of the objective given the solver primal value.
-setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 
 #'
 #' The SolverStats class.
@@ -264,7 +299,7 @@ SizeMetrics <- function(problem) {
                max_data_dimension = max_data_dimension, max_big_small_squared = max_big_small_squared)
 }
 
-setClassUnion("SizeMetricsORNull", c("SizeMetrics", "NULL"))
+setClassUnion("SizeMetricsORNULL", c("SizeMetrics", "NULL"))
 
 #'
 #' The Solution class.
@@ -309,8 +344,8 @@ setMethod("as.character", "Solution", function(x) {
 #' @name Problem-class
 #' @aliases Problem
 #' @rdname Problem-class
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "S4", .intermediate_chain = "S4", .solving_chain = "S4", .cached_chain_key = "character", .separable_problems = "list", .size_metrics = "SizeMetricsORNull", .solver_stats = "list", args = "list", .solver_cache = "list"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = list()),
+.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", .intermediate_chain = "ANY", .solving_chain = "ANY", .cached_chain_key = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNULL", .solver_stats = "list", args = "list", .solver_cache = "list", .intermediate_problem = "ANY", .intermediate_inverse_data = "ANY"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = list(), .intermediate_problem = NULL, .intermediate_inverse_data = NULL),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be of class Minimize or Maximize")
@@ -324,7 +359,7 @@ setMethod("as.character", "Solution", function(x) {
                         stop("[Problem: .intermediate_chain] .intermediate_chain is an internal slot and should not be set by user")
                       if(!is.null(object@.solving_chain))
                         stop("[Problem: .solving_chain] .solving_chain is an internal slot and should not be set by user")
-                      if(!is.na(object@.cached_chain_key))
+                      if(length(object@.cached_chain_key) > 0)
                         stop("[Problem: .cached_chain_key] .cached_chain_key is an internal slot and should not be set by user")
                       if(length(object@.separable_problems) > 0)
                         stop("[Problem: .separable_problems] .separable_problems is an internal slot and should not be set by user")
@@ -336,6 +371,10 @@ setMethod("as.character", "Solution", function(x) {
                         stop("[Problem: args] args is an internal slot and should not be set by user")
                       if(length(object@.solver_cache) > 0)
                         stop("[Problem: .solver_cache] .solver_cache is an internal slot and should not be set by user")
+                      if(!is.null(object@.intermediate_problem))
+                        stop("[Problem: .intermediate_problem] .intermediate_problem is an internal slot and should not be set by user")
+                      if(!is.null(object@.intermediate_inverse_data))
+                        stop("[Problem: .intermediate_inverse_data] .intermediate_inverse_data is an internal slot and should not be set by user")
                       return(TRUE)
                     }, contains = "Canonical")
 
@@ -350,13 +389,16 @@ Problem <- function(objective, constraints = list()) {
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
-setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = NA_character_, .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache = list()) {
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache = list(), .intermediate_problem = NULL, .intermediate_inverse_data = NULL) {
   .Object@objective <- objective
   .Object@constraints <- constraints
   .Object@variables <- Problem.build_variables(.Object)
   .Object@value <- value
   .Object@status <- status
   .Object@solution <- solution
+  
+  .Object@.intermediate_problem <- .intermediate_problem
+  .Object@.intermediate_inverse_data <- .intermediate_inverse_data
   
   # The intermediate and solving chains to canonicalize and solve the problem.
   .Object@.intermediate_chain <- .intermediate_chain
@@ -527,7 +569,7 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp = FALSE) {
   object <- .construct_chains(solver = solver, gp = gp)
   
-  tmp <- apply(object@.solving_chain, object@.intermediate_problem)
+  tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   data <- tmp[[1]]
   solving_inverse_data <- tmp[[2]]
   
@@ -573,12 +615,12 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 }
 
 .construct_chains <- function(object, solver = NA, gp = FALSE) {
-  chain_key <- c(solver, gp)
+  chain_key <- list(solver, gp)
   
-  if(!all(chain_key == object@.cached_chain_key)) {
+  if(!identical(chain_key, object@.cached_chain_key)) {
     candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
-    tmp <- apply(object@.intermediate_chain, object)
+    tmp <- perform(object@.intermediate_chain, object)
     object@.intermediate_problem <- tmp[[1]]
     object@.intermediate_inverse_data <- tmp[[2]]
     
@@ -596,10 +638,10 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
     stop("Unimplemented")
   
   object <- .construct_chains(object, solver = solver, gp = gp)
-  tmp <- apply(object@.solving_chain, object@.intermediate_problem)
+  tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   data <- tmp[[1]]
   solving_inverse_data <- tmp[[2]]
-  solution <- solve_via_data(object@.solving_chain, object, data, warm_start, verbose, ...)
+  solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, verbose, list(...))
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)

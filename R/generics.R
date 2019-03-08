@@ -927,7 +927,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...) { standardGeneric("psolve") })
+setGeneric("psolve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, gp, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?

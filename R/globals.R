@@ -138,6 +138,12 @@ get_gurobiglue <- function() {
     gurobiglue
 }
 
+flatten_list <- function(x) {
+  y <- list()
+  rapply(x, function(x) y <<- c(y,x))
+  y
+}
+
 #'
 #' The Rdict class.
 #'

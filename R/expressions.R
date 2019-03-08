@@ -20,6 +20,7 @@ setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 setClassUnion("NumORNULL", c("numeric", "NULL"))
+setClassUnion("S4ORNULL", c("S4", "NULL"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
 #' @rdname size
@@ -173,7 +174,7 @@ setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
 setMethod("is_pwl", "Expression", function(object) { FALSE })
 
-#' @describeIn Expression A logical value indicating whether the expression is quadratic or piecewise affine.
+#' @describeIn Expression A logical value indicating whether the expression is quadratic of piecewise affine.
 setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
 
 #'

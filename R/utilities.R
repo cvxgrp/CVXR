@@ -269,7 +269,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
   else
     rh_head <- c()
   
-  # if(lh_mat_dim[2] != rh_mat_dim[1] || !(length(lh_dim) == length(rh_dim) && all(lh_head == rh_head)))
+  # if(lh_mat_dim[2] != rh_mat_dim[1] || !(length(lh_head) == length(rh_head) && all(lh_head == rh_head)))
   if(lh_mat_dim[2] != rh_mat_dim[1] || !identical(lh_head, rh_head))
     stop("Incompatible dimensions")
   list(lh_dim, rh_dim, c(lh_head, lh_mat_dim[1], rh_mat_dim[2]))

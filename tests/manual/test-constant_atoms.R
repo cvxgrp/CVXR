@@ -207,7 +207,7 @@ test_that("Test all constant atoms", {
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
 
-    skip_on_cran()
+    ##skip_on_cran()
 
     for(a in atoms) {
         atom_list <- a[[1]]

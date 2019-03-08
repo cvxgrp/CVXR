@@ -1,3 +1,13 @@
+# CVXR 0.99-4
+
+* Updated tests to check against `scs` version 1.2.3, which now
+  returns `optimal` rather than `optimal_inaccurrate` as it did
+  earlier (`test-g01-non_optimal.R#35`).
+
+* Some cleanup of manual tests. New SCS returns slightly different
+  values for `Sigma` in manual test (`test-vignette`#646) for
+  worst-case covariance example.
+
 # CVXR 0.99-3
 
 * Bug fix to MOSEK and GUROBI solver interfaces; dimensions now

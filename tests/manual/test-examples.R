@@ -6,7 +6,7 @@ TOL <- 1e-6
 
 test_that("Test examples from the README", {
     ## Problem data
-    skip_on_cran()
+    ##skip_on_cran()
     m <- 30
     n <- 20
     A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -155,7 +155,7 @@ test_that("Test examples from the README", {
 })
 
 test_that("Test image in-painting", {
-    skip_on_cran()
+    ## skip_on_cran()
     set.seed(1)
     rows <- 100
     cols <- 100
@@ -187,7 +187,7 @@ test_that("Test image in-painting", {
 })
 
 test_that("Test the log_sum_exp function", {
-    skip_on_cran()
+    ## skip_on_cran()
     set.seed(1)
     m <- 5
     n <- 2

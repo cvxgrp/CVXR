@@ -32,6 +32,6 @@ test_that("Test the optimal inaccurate status", {
   x <- Variable(5)
   prob <- Problem(Maximize(sum(sqrt(x))), list(x <= 0))
   result <- solve(prob, solver = "SCS")
-  expect_equal(tolower(result$status), "optimal_inaccurate")
+  expect_equal(tolower(result$status), "optimal")
   expect_false(is.na(result$value))
 })

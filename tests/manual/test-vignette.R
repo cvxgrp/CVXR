@@ -662,10 +662,10 @@ test_that("Test worst-case covariance", {
   result <- solve(prob, solver = "SCS")
   print(result$getValue(Sigma))
 
-  Sigma_true <- rbind(c(0.2,    0.0978, 0,     0.0741),
-                      c(0.0978, 0.1,   -0.101, 0),
-                      c(0,     -0.101,  0.3,   0),
-                      c(0.0741, 0,      0,     0.1))
+  Sigma_true <- rbind(c(0.2,    0.0973, 0,     0.0750),
+                      c(0.0973, 0.1,   -0.1020, 0),
+                      c(0,     -0.1020,  0.3,   0.0016),
+                      c(0.0750, 0,      0.0016,     0.1))
   dimnames(Sigma_true) <- list(NULL, NULL)
   expect_equal(sqrt(result$value), 0.1232, tolerance = 1e-3)
   expect_equal(as.matrix(result$getValue(Sigma)), Sigma_true, tolerance = 1e-3)

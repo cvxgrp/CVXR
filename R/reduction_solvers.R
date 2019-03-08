@@ -184,7 +184,7 @@ setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, 
 })
 
 # Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
-setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list", gp = "logical"), function(problem, candidates, gp = FALSE) {
+setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE) {
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))

@@ -200,7 +200,7 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
     canon_expr <- canon[[1]]
     constrs <- canon[[2]]
     for(constr in expr@args[[1]]@constraints) {
-      canon <- canonicalize_tree(constr)
+      canon <- canonicalize_tree(object, constr)
       canon_constr <- canon[[1]]
       aux_constr <- canon[[2]]
       constrs <- c(constrs, list(canon_constr), aux_constr)
@@ -209,12 +209,16 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
     canon_args <- list()
     constrs <- list()
     for(arg in expr@args) {
-      canon <- canonicalize_tree(arg)
+      canon <- canonicalize_tree(object, arg)
       canon_arg <- canon[[1]]
       c <- canon[[2]]
-      canon_args <- c(canon_args, canon_arg)
+      canon_args <- c(canon_args, list(canon_arg))
       constrs <- c(constrs, c)
     }
+    canon <- canonicalize_expr(object, expr, canon_args)
+    canon_expr <- canon[[1]]
+    c <- canon[[2]]
+    constrs <- c(constrs, c)
   }
   return(list(canon_expr, constrs))
 })

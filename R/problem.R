@@ -13,14 +13,15 @@
 #' @rdname Objective-class
 Objective <- function(expr) { .Objective(expr = expr) }
 
-setMethod("initialize", "Objective", function(.Object, expr) {
-  object@expr <- expr
-  object@args <- list(as.Constant(expr))
+setMethod("initialize", "Objective", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  .Object@args <- list(as.Constant(expr))
+  # .Object <- callNextMethod(.Object, ..., args = list(as.Constant(expr)))
   
   # Validate that the objective resolves to a scalar.
-  if(!is_scalar(object@args[[1]]))
+  if(!is_scalar(.Object@args[[1]]))
     stop("The objective must resolve to a scalar")
-  if(!is_real(object@args[[1]]))
+  if(!is_real(.Object@args[[1]]))
     stop("The objective must be real valued")
   return(.Object)
 })
@@ -53,21 +54,12 @@ setMethod("is_qpwa", "Objective", function(object) {
 #' @name Minimize-class
 #' @aliases Minimize
 #' @rdname Minimize-class
-.Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Canonical")
+.Minimize <- setClass("Minimize", representation(expr = "ConstValORExpr"), contains = "Objective")
 
 #' @param expr A scalar \linkS4class{Expression} to minimize.
 #' @rdname Minimize-class
 #' @export
-Minimize <- function(expr) {
-  .Minimize(expr = expr)
-}
-
-setMethod("initialize", "Minimize", function(.Object, expr) {
-    .Object@expr <- as.Constant(expr)
-    if(!all(size(.Object@expr) == c(1,1)))
-      stop("The objective must resolve to a scalar")
-    return(.Object)
-})
+Minimize <- function(expr) { .Minimize(expr = expr) }
 
 #' @param object A \linkS4class{Minimize} object.
 #' @describeIn Minimize Pass on the target expression's objective and constraints.
@@ -100,14 +92,14 @@ setMethod("primal_to_result", "Minimize", function(object, result) { result })
 #' @name Maximize-class
 #' @aliases Maximize
 #' @rdname Maximize-class
-.Maximize <- setClass("Maximize", contains = "Minimize")
+.Maximize <- setClass("Maximize", contains = "Objective")
 
-#' @param object A \linkS4class{Maximize} object.
 #' @param expr A scalar \linkS4class{Expression} to maximize.
 #' @rdname Maximize-class
 #' @export
 Maximize <- function(expr) { .Maximize(expr = expr) }
 
+#' @param object A \linkS4class{Maximize} object.
 #' @describeIn Maximize Negates the target expression's objective.
 setMethod("canonicalize", "Maximize", function(object) {
   canon <- canonical_form(object@args[[1]])

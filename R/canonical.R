@@ -54,8 +54,8 @@ setMethod("tree_copy", "Canonical", function(object, id_objects = list()) {
 })
 
 setMethod("copy", "Canonical", function(object, args = NA, id_objects = list()) {
-  if(as.character(id(object)) %in% names(id_objects))
-    return(id_objects[[as.character(id(object))]])
+  # if(id(object) %in% names(id_objects))
+  #  return(id_objects[[id(object)]])
   if(is.na(args))
     args <- object@args
   data <- get_data(object)

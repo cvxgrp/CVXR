@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.4</span>
       </span>
     </div>
 
@@ -145,10 +145,10 @@
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/cbind'>cbind</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>,<span class='fl'>3</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>4</span>,<span class='fl'>5</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>5</span>,<span class='fl'>6</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>lambda_sum_smallest</span>(<span class='no'>C</span>,<span class='fl'>2</span>)), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -0.3450602</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>C</span>)</div><div class='output co'>#&gt;           [,1]     [,2]     [,3]
-#&gt; [1,] 0.9995614 2.000403 2.999793
-#&gt; [2,] 2.0011907 3.999977 4.999877
-#&gt; [3,] 2.9993534 4.999586 6.000453</div></pre>
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -0.3448142</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>C</span>)</div><div class='output co'>#&gt;      [,1] [,2] [,3]
+#&gt; [1,]    1    2    3
+#&gt; [2,]    2    4    5
+#&gt; [3,]    3    5    6</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

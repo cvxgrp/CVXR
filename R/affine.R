@@ -123,11 +123,12 @@ setMethod(".grad", "AffAtom", function(object, values) {
 #' @name AddExpression-class
 #' @aliases AddExpression
 #' @rdname AddExpression-class
-AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
+.AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
+AddExpression <- function(arg_groups = list()) { .AddExpression(arg_groups = arg_groups) }
 
 setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = list()) {
   .Object@arg_groups <- arg_groups
-  .Object <- callNextMethod(.Object, ..., args = arg_groups)   # Casts R values to Constant objects
+  .Object <- callNextMethod(.Object, ..., atom_args = arg_groups)   # Casts R values to Constant objects
   .Object@args <- lapply(.Object@args, function(group) { if(is(group,"AddExpression")) group@args else group })
   .Object@args <- flatten_list(.Object@args)   # Need to flatten list of expressions
   .Object
@@ -156,6 +157,13 @@ setMethod("is_symmetric", "AddExpression", function(object) {
 setMethod("is_hermitian", "AddExpression", function(object) {
   herm_args <- all(sapply(object@args, is_hermitian))
   return(dim(object)[1] == dim(object)[2] && herm_args)
+})
+
+# As initialize takes in the arg_groups instead of args, we need a special copy function.
+setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = list()) {
+  if(is.null(args))
+    args <- object@arg_groups
+  do.call(class(object), list(arg_groups = args))
 })
 
 AddExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
@@ -191,7 +199,7 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name, o
   .Object@expr <- expr
   .Object@op_name <- op_name
   .Object@op_func <- op_func
-  callNextMethod(.Object, ..., args = list(expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 setMethod("name", "UnaryOperator", function(x) {
@@ -213,7 +221,8 @@ setMethod("to_numeric", "UnaryOperator", function(object, values) {
 #' @name NegExpression-class
 #' @aliases NegExpression
 #' @rdname NegExpression-class
-NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
+.NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
+NegExpression <- function(expr) { .NegExpression(expr = expr) }
 
 setMethod("initialize", "NegExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "-", op_func = function(x) { -x })
@@ -268,7 +277,7 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp,
   .Object@lh_exp = lh_exp
   .Object@rh_exp = rh_exp
   .Object@op_name = op_name
-  callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
+  callNextMethod(.Object, ..., atom_args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
 #' @param x,object A \linkS4class{BinaryOperator} object.
@@ -408,7 +417,8 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, di
 #' @name DivExpression-class
 #' @aliases DivExpression
 #' @rdname DivExpression-class
-DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
+.DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
+DivExpression <- function(lh_exp, rh_exp) { .DivExpression(lh_exp = lh_exp, rh_exp = rh_exp) }
 
 setMethod("initialize", "DivExpression", function(.Object, ...) {
   callNextMethod(.Object, ..., op_name = "/")
@@ -552,7 +562,7 @@ Conjugate <- function(expr) { .Conjugate(expr = expr) }
 
 setMethod("initialize", "Conjugate", function(.Object, ..., expr) {
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{Conjugate} object.
@@ -596,7 +606,7 @@ Conv <- function(lh_exp, rh_exp) { .Conv(lh_exp = lh_exp, rh_exp = rh_exp) }
 setMethod("initialize", "Conv", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
-  callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
+  callNextMethod(.Object, ..., atom_args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
 #' @param object A \linkS4class{Conv} object.
@@ -764,7 +774,7 @@ DiagVec <- function(expr) { .DiagVec(expr = expr) }
 
 setMethod("initialize", "DiagVec", function(.Object, ..., expr) {
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{DiagVec} object.
@@ -819,7 +829,7 @@ DiagMat <- function(expr) { .DiagMat(expr = expr) }
 
 setMethod("initialize", "DiagMat", function(.Object, ..., expr) {
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{DiagMat} object.
@@ -912,7 +922,7 @@ HStack <- function(...) {
     if(ndim(arg) == 0)
       arg_list[[idx]] <- as.vector(arg)
   }
-  .HStack(args = arg_list)
+  .HStack(atom_args = arg_list)
 }
 
 #' @param object A \linkS4class{HStack} object.
@@ -992,7 +1002,7 @@ Imag <- function(expr) { .Imag(expr = expr) }
 
 setMethod("initialize", "Imag", function(.Object, ..., expr) {
   .Object@expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Imag} object.
@@ -1032,7 +1042,7 @@ Index <- function(expr, key) { .Index(expr = expr, key = key) }
 setMethod("initialize", "Index", function(.Object, ..., expr, key) {
   .Object@key <- ku_validate_key(key, dim(expr))   # TODO: Double check key validation
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Index} object.
@@ -1109,7 +1119,7 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
   
   .Object@.select_mat <- select_mat
   .Object@.dim <- dim(.Object@.select_mat)
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 setMethod("name", "SpecialIndex", function(x) { paste(name(x@args[[1]]), as.character(x@key)) })
@@ -1176,7 +1186,7 @@ Kron <- function(lh_exp, rh_exp) { .Kron(lh_exp = lh_exp, rh_exp = rh_exp) }
 setMethod("initialize", "Kron", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp <- lh_exp
   .Object@rh_exp <- rh_exp
-  callNextMethod(.Object, ..., args = list(.Object@lh_exp, .Object@rh_exp))
+  callNextMethod(.Object, ..., atom_args = list(.Object@lh_exp, .Object@rh_exp))
 })
 
 #' @param object A \linkS4class{Kron} object.
@@ -1253,7 +1263,7 @@ promote <- function(expr, promoted_dim) {
 setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
   .Object@expr <- expr
   .Object@promoted_dim <- promoted_dim
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @describeIn Promote Promotes the value to the new dimensions.
@@ -1307,7 +1317,7 @@ Imag <- function(expr) { .Real(expr = expr) }
 
 setMethod("initialize", "Real", function(.Object, ..., expr) {
   .Object@expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Real} object.
@@ -1348,7 +1358,7 @@ Reshape <- function(expr, new_dim) { .Reshape(expr = expr, new_dim = new_dim) }
 setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim) {
   .Object@new_dim <- new_dim
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{Reshape} object.
@@ -1469,7 +1479,7 @@ Trace <- function(expr) { .Trace(expr = expr) }
 
 setMethod("initialize", "Trace", function(.Object, ..., expr) {
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{Trace} object.
@@ -1520,7 +1530,7 @@ Transpose <- function(expr, axes = NULL) { .Transpose(expr = expr, axes = axes) 
 setMethod("initialize", "Transpose", function(.Object, ..., expr, axes = NULL) {
   .Object@expr <- expr
   .Object@axes <- axes
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object A \linkS4class{Transpose} object.
@@ -1580,7 +1590,7 @@ UpperTri <- function(expr) { .UpperTri(expr = expr) }
 
 setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
   .Object@expr <- expr
-  callNextMethod(.Object, ..., args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{UpperTri} object.
@@ -1643,7 +1653,7 @@ Vec <- function(X) {
 
 #' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
 #' @rdname VStack-class
-VStack <- function(...) { .VStack(args = list(...)) }
+VStack <- function(...) { .VStack(atom_args = list(...)) }
 
 #' @param object A \linkS4class{VStack} object.
 #' @param values A list of arguments to the atom.
@@ -1702,6 +1712,6 @@ setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) 
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
 Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { .HStack(args = blocks) })
-  .VStack(args = row_blocks)
+  row_blocks <- lapply(block_lists, function(blocks) { .HStack(atom_args = blocks) })
+  .VStack(atom_args = row_blocks)
 }

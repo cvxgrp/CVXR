@@ -7,11 +7,10 @@
 #' @name Constraint-class
 #' @aliases Constraint
 #' @rdname Constraint-class
-setClass("Constraint", representation(args = "list", constr_id = "integer", dual_variables = "list"),
+setClass("Constraint", representation(constr_id = "integer", dual_variables = "list"),
                        prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
 
-setMethod("initialize", "Constraint", function(.Object, ..., args, constr_id = get_id(), dual_variables = list()) {
-  .Object@args <- args
+setMethod("initialize", "Constraint", function(.Object, ..., constr_id = get_id(), dual_variables = list()) {
   .Object@constr_id <- constr_id
   .Object@dual_variables <- lapply(args, function(arg) { Variable(dim(arg)) })
   callNextMethod(.Object, ...)
@@ -500,6 +499,10 @@ ExpCone.solver_hook <- function(object, vars_ = NA, scaling = NA) {
 #' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @rdname PSDConstraint-class
 PSDConstraint <- function(expr, constr_id = NA_integer_) { .PSDConstraint(expr = expr, constr_id = constr_id) }
+
+setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
+  callNextMethod(.Object, ..., args = list(expr))
+})
 
 setMethod("name", "PSDConstraint", function(x) {
   paste(as.character(x@args[[1]]), ">> 0")

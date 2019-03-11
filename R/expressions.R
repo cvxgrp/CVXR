@@ -53,12 +53,12 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
 setMethod("show", "Expression", function(object) {
-  cat("Expression(", curvature(object), ", ", sign(object), ", ", dim(object), ")", sep = "")
+  cat("Expression(", curvature(object), ", ", sign(object), ", ", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
 #' @rdname Expression-class
 setMethod("as.character", "Expression", function(x) {
-  paste("Expression(", curvature(x), ", ", sign(x), ", ", dim(x), ")", sep = "")
+  paste("Expression(", curvature(x), ", ", sign(x), ", ", paste(dim(x), collapse = ", "), ")", sep = "")
 })
 
 #' @describeIn Expression The string representation of the expression.
@@ -573,18 +573,26 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   if(!is.na(value))
     .Object@value <- value
   .Object@args <- list()
-  callNextMethod(.Object, ...)
+  .Object
+  # callNextMethod(.Object, ...)
 })
 
 setMethod("get_attr_str", "Leaf", function(object) {
   # Get a string representing the attributes
   attr_str <- ""
   for(attr in names(object@attributes)) {
-    val <- object@attributes[attr]
-    if(attr != "real" && !is.na(val))
+    val <- object@attributes[[attr]]
+    if(attr != "real" && !is.null(val))
       attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
   }
   attr_str
+})
+
+# TODO: Get rid of this and just skip calling copy on Leaf objects.
+setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
+  if("id" %in% names(attributes(object)) && as.character(object@id) %in% id_objects)
+    return(id_objects[[object@id]])
+  return(object)   # Leaves are not deep copied.
 })
 
 #' @param object A \linkS4class{Leaf} object.

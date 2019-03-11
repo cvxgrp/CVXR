@@ -313,6 +313,9 @@ setMethod("show", "Solution", function(object) {
       paste(object@attr, collapse = ", "), "))", sep = "")
 })
 
+# TODO: Get rid of this and just skip calling copy on Solution objects.
+setMethod("copy", "Solution", function(object, args = NULL, id_objects = list()) { return(object) })
+
 setMethod("as.character", "Solution", function(x) {
   paste("Solution(", x@status, ", (",
         paste(x@primal_vars, collapse = ", "), "), (",

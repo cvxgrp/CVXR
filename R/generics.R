@@ -927,7 +927,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver, ignore_dcp, warm_start, verbose, parallel, gp, ...) { standardGeneric("psolve") })
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?
@@ -1297,6 +1297,6 @@ setGeneric("affine", function(object, expr) { standardGeneric("affine") })
 setGeneric("extract_quadratic_coeffs", function(object, affine_expr, quad_forms) { standardGeneric("extract_quadratic_coeffs") })
 setGeneric("quad_form", function(object, expr) { standardGeneric("quad_form") })
 setGeneric("qp_stuffed_objective", function(object, problem, extractor) { standardGeneric("qp_stuffed_objective") })
-setGeneric("copy", function(object, args, id_objects) { standardGeneric("copy") })
-setGeneric("tree_copy", function(object, id_objects) { standardGeneric("tree_copy") })
+setGeneric("copy", function(object, args = NULL, id_objects = list()) { standardGeneric("copy") })
+setGeneric("tree_copy", function(object, id_objects = list()) { standardGeneric("tree_copy") })
 ## End of newly added generics

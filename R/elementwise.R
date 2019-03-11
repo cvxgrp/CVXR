@@ -71,7 +71,7 @@ Abs <- function(x) { .Abs(x = x) }
 
 setMethod("initialize", "Abs", function(.Object, ..., x) {
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object An \linkS4class{Abs} object.
@@ -130,7 +130,7 @@ Entr <- function(x) { .Entr(x = x) }
 
 setMethod("initialize", "Entr", function(.Object, ..., x) {
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object An \linkS4class{Entr} object.
@@ -199,7 +199,7 @@ Exp <- function(x) { .Exp(x = x) }
 
 setMethod("initialize", "Exp", function(.Object, ..., x) {
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object An \linkS4class{Exp} object.
@@ -260,7 +260,7 @@ Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
 setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
   .Object@M <- as.Constant(M)
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object A \linkS4class{Huber} object.
@@ -350,7 +350,7 @@ KLDiv <- function(x, y) { .KLDiv(x = x, y = y) }
 setMethod("initialize", "KLDiv", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
-  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))
 })
 
 #' @param object A \linkS4class{KLDiv} object.
@@ -420,7 +420,7 @@ Log <- function(x) { .Log(x = x) }
 
 setMethod("initialize", "Log", function(.Object, ..., x) {
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object A \linkS4class{Log} object.
@@ -522,7 +522,7 @@ Logistic <- function(x) { .Logistic(x = x) }
 
 setMethod("initialize", "Logistic", function(.Object, ..., x) {
   .Object@x <- x
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object A \linkS4class{Logistic} object.
@@ -575,7 +575,7 @@ setMethod(".grad", "Logistic", function(object, values) {
 #' @param arg2 The second \linkS4class{Expression} in the maximum operation.
 #' @param ... Additional \linkS4class{Expression} objects in the maximum operation.
 #' @rdname MaxElemwise-class
-MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(args = list(arg1, arg2, ...)) }
+MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(atom_args = list(arg1, arg2, ...)) }
 
 #' @param object A \linkS4class{MaxElemwise} object.
 #' @param values A list of arguments to the atom.
@@ -664,7 +664,7 @@ setMethod(".grad", "MaxElemwise", function(object, values) {
 #' @param arg2 The second \linkS4class{Expression} in the minimum operation.
 #' @param ... Additional \linkS4class{Expression} objects in the minimum operation.
 #' @rdname MinElemwise-class
-MinElemwise <- function(arg1, arg2, ...) { .MinElemwise(args = list(arg1, arg2, ...)) }
+MinElemwise <- function(arg1, arg2, ...) { .MinElemwise(atom_args = list(arg1, arg2, ...)) }
 
 #' @param object A \linkS4class{MinElemwise} object.
 #' @param values A list of arguments to the atom.
@@ -801,7 +801,7 @@ setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, 
 
   .Object@x <- x
   .Object@max_denom <- max_denom
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object A \linkS4class{Power} object.
@@ -926,6 +926,17 @@ setMethod(".domain", "Power", function(object) {
 #' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
+setMethod("copy", "Power", function(object, args = NULL, id_objects = list()) {
+  if(is.null(args))
+    args <- object@args
+  data <- get_data(object)
+  copy <- do.call(class(object), args)
+  copy@p <- data[[1]]
+  copy@w <- data[[2]]
+  copy@approx_error <- object@approx_error
+  copy
+})
+
 setMethod("name", "Power", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ", ", x@p, ")", sep = "")
 })
@@ -945,7 +956,7 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 
 #' @param x An \linkS4class{Expression} object.
 #' @rdname Sqrt-class
-Sqrt <- function(x) { .Sqrt(args = list(x)) }
+Sqrt <- function(x) { .Sqrt(atom_args = list(x)) }
 # Sqrt <- function(x) { Power(x, 1/2) }
 # TODO: Get rid of Sqrt class once Fraction handling is implemented in Power
 
@@ -957,8 +968,8 @@ setMethod("validate_args", "Sqrt", function(object) { return() })
 #' @describeIn Sqrt The elementwise square root of the input value.
 setMethod("to_numeric", "Sqrt", function(object, values) { sqrt(values[[1]]) })
 
-#' @describeIn Sqrt A list containing the output of \code{pow_mid}.
-setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
+# @describeIn Sqrt A list containing the output of \code{pow_mid}.
+# setMethod("get_data", "Sqrt", function(object) { list(0.5, c(0.5, 0.5)) })
 
 #' @describeIn Sqrt The atom is positive.
 setMethod("sign_from_args", "Sqrt", function(object) { c(TRUE, FALSE) })
@@ -969,6 +980,12 @@ setMethod("is_atom_convex", "Sqrt", function(object) { FALSE })
 #' @describeIn Sqrt The atom is concave.
 setMethod("is_atom_concave", "Sqrt", function(object) { TRUE })
 
+#' @describeIn Sqrt The atom is log-log convex.
+setMethod("is_atom_log_log_convex", "Sqrt", function(object) { TRUE })
+
+#' @describeIn Sqrt The atom is log-log concave.
+setMethod("is_atom_log_log_concave", "Sqrt", function(object) { TRUE })
+
 #' @param idx An index into the atom.
 #' @describeIn Sqrt The atom is weakly increasing.
 setMethod("is_incr", "Sqrt", function(object, idx) { TRUE })
@@ -978,6 +995,9 @@ setMethod("is_decr", "Sqrt", function(object, idx) { FALSE })
 
 #' @describeIn Sqrt Is \code{x} constant?
 setMethod("is_quadratic", "Sqrt", function(object) { is_constant(object@args[[1]]) })
+
+#' @describeIn Sqrt Is the expression quadratic of piecewise affine?
+setMethod("is_qpwa", "Sqrt", function(object) { is_constant(object@args[[1]]) })
 
 setMethod(".grad", "Sqrt", function(object, values) {
   rows <- size(object@args[[1]])
@@ -1026,7 +1046,7 @@ setMethod("graph_implementation", "Sqrt", function(object, arg_objs, dim, data =
 
 #' @param x An \linkS4class{Expression} object.
 #' @rdname Square-class
-Square <- function(x) { .Square(args = list(x)) }
+Square <- function(x) { .Square(atom_args = list(x)) }
 # Square <- function(x) { Power(x, 2) }
 # TODO: Get rid of Square class once Fraction object is implemented in Power
 
@@ -1038,8 +1058,8 @@ setMethod("validate_args", "Square", function(object) { return() })
 #' @describeIn Square The elementwise square of the input value.
 setMethod("to_numeric", "Square", function(object, values) { values[[1]]^2 })
 
-#' @describeIn Square A list containing the output of \code{pow_high}.
-setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
+# @describeIn Square A list containing the output of \code{pow_high}.
+# setMethod("get_data", "Square", function(object) { list(0.5, c(2,-1)) })
 
 #' @describeIn Square The atom is positive.
 setMethod("sign_from_args", "Square", function(object) { c(TRUE, FALSE) })
@@ -1050,6 +1070,12 @@ setMethod("is_atom_convex", "Square", function(object) { TRUE })
 #' @describeIn Square The atom is not concave.
 setMethod("is_atom_concave", "Square", function(object) { FALSE })
 
+#' @describeIn Square The atom is log-log convex.
+setMethod("is_atom_log_log_convex", "Sqrt", function(object) { TRUE })
+
+#' @describeIn Square The atom is log-log concave.
+setMethod("is_atom_log_log_concave", "Sqrt", function(object) { TRUE })
+
 #' @param idx An index into the atom.
 #' @describeIn Square A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Square", function(object, idx) { is_nonneg(object@args[[idx]]) })
@@ -1059,6 +1085,9 @@ setMethod("is_decr", "Square", function(object, idx) { is_nonpos(object@args[[id
 
 #' @describeIn Square The atom is quadratic if \code{x} is affine.
 setMethod("is_quadratic", "Square", function(object) { is_affine(object@args[[1]]) })
+
+#' @describeIn Square Is the atom quadratic of piecewise affine?
+setMethod("is_qpwa", "Square", function(object) { is_pwl(object@args[[1]]) })
 
 setMethod(".grad", "Square", function(object, values) {
   rows <- size(object@args[[1]])

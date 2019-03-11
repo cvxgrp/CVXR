@@ -58,7 +58,7 @@ setMethod("show", "Constant", function(object) {
 })
 
 #' @describeIn Constant The name of the constant.
-setMethod("name", "Constant", function(x) { as.character(x@value) })
+setMethod("name", "Constant", function(x) { as.character(head(x@value)) })
 
 #' @describeIn Constant Returns itself as a constant.
 setMethod("constants", "Constant", function(object) { list(object) })

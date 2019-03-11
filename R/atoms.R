@@ -6,20 +6,20 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(args = "list", .dim = "NumORNULL"), prototype(args = list(), .dim = NULL),
+Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"), prototype(atom_args = list(), .dim = NULL),
                  validity = function(object) {
-                   if(length(object@args) == 0)
-                     stop("[Atom: args] no arguments given to ", class(object))
+                   if(length(object@atom_args) == 0)
+                     stop("[Atom: atom_args] no arguments given to ", class(object))
                    return(TRUE)
                  }, contains = c("VIRTUAL", "Expression"))
 
-setMethod("initialize", "Atom", function(.Object, ..., args = list(), .dim = NULL) {
-  .Object@args <- lapply(args, as.Constant)
+setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL) {
+  .Object@args <- lapply(atom_args, as.Constant)
   validate_args(.Object)
   .Object@.dim <- dim_from_args(.Object)
   if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
-  callNextMethod(.Object, ...)
+  .Object
 })
 
 #' @param x,object An \linkS4class{Atom} object.
@@ -318,7 +318,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_
   .Object@expr <- expr
   .Object@axis <- axis
   .Object@keepdims <- keepdims
-  .Object <- callNextMethod(.Object, ..., args = list(.Object@expr))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Atom} object.
@@ -458,7 +458,9 @@ EyeMinusInv <- function(X) { .EyeMinusInv(X = X) }
 
 setMethod("initialize", "EyeMinusInv", function(.Object, ..., X) {
   .Object@X <- X
-  callNextMethod(.Object, ..., args = list(.Object@X))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@X))
+  .Object@args[[1]] <- X
+  .Object
 })
 
 #' @param object A \linkS4class{EyeMinusInv} object.
@@ -541,7 +543,7 @@ GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, 
 
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
   .Object@x <- x
-  .Object <- callNextMethod(.Object, ..., args = list(.Object@x))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x))
 
   x <- .Object@args[[1]]
   if(is_vector(x))
@@ -634,6 +636,23 @@ setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 #' @describeIn GeoMean Returns \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
+setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) {
+  if(is.null(args))
+    args <- object@args
+  
+  copy <- do.call(class(object), args)
+  data <- get_data(object)
+  copy@w <- data[[1]]
+  copy@w_dyad <- data[[2]]
+  copy@tree <- data[[3]]
+  
+  copy@approx_error <- object@approx_error
+  copy@cone_lb <- object@cone_lb
+  copy@cone_num_over <- object@cone_num_over
+  copy@cone_num _ object@cone_num
+  copy
+})
+
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   size(x) * Pnorm(x = x, p = -1)
@@ -656,7 +675,7 @@ LambdaMax <- function(A) { .LambdaMax(A = A) }
 
 setMethod("initialize", "LambdaMax", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., args = list(.Object@A))
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
 })
 
 #' @param object A \linkS4class{LambdaMax} object.
@@ -783,7 +802,7 @@ LogDet <- function(A) { .LogDet(A = A) }
 
 setMethod("initialize", "LogDet", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., args = list(.Object@A))
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
 })
 
 #' @param object A \linkS4class{LogDet} object.
@@ -922,7 +941,7 @@ matrix_frac <- function(X, P) {
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
   .Object@P <- P
-  callNextMethod(.Object, ..., args = list(.Object@X, .Object@P))
+  callNextMethod(.Object, ..., atom_args = list(.Object@X, .Object@P))
 })
 
 #' @describeIn MatrixFrac Does the atom handle complex numbers?
@@ -1477,7 +1496,7 @@ NormNuc <- function(A) { .NormNuc(A = A) }
 
 setMethod("initialize", "NormNuc", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., args = list(.Object@A))
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
 })
 
 #' @param object A \linkS4class{NormNuc} object.
@@ -1535,7 +1554,9 @@ OneMinusPos <- function(x) { .OneMinusPos(x = x) }
 setMethod("initialize", "OneMinusPos", function(.Object, ..., x) {
   .Object@x <- x
   .Object@.ones <- matrix(1, nrow = nrow(x), ncol = ncol(x))
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x))
+  .Object@args[[1]] <- x
+  .Object
 })
 
 #' @param x,object A \linkS4class{OneMinusPos} object.
@@ -1598,7 +1619,9 @@ PfEigenvalue <- function(X) { .PfEigenvalue(X = X) }
 
 setMethod("initialize", "PfEigenvalue", function(.Object, ..., X = X) {
   .Object@X <- X
-  callNextMethod(.Object, ..., args = list(.Object@X))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@X))
+  .Object@args[[1]] <- X
+  .Object
 })
 
 #' @param x,object A \linkS4class{PfEigenvalue} object.
@@ -1711,7 +1734,7 @@ QuadForm <- function(x, P) { .QuadForm(x = x, P = P) }
 setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
   .Object@x <- x
   .Object@P <- P
-  callNextMethod(.Object, ..., args = list(.Object@x, .Object@P))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@P))
 })
 
 setMethod("name", "QuadForm", function(x) {
@@ -1805,7 +1828,7 @@ SymbolicQuadForm <- function(x, P, expr) { .SymbolicQuadForm(x = x, P = P, origi
 
 setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, original_expression) {
   .Object@original_expression <- original_expression
-  .Object <- callNextMethod(.Object, ..., args = list(.Object@x, .Object@P))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@P))
   .Object@P <- .Object@args[[2]]
   .Object
 })
@@ -1908,7 +1931,7 @@ QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
   .Object@x <- x
   .Object@y <- y
-  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))
 })
 
 #' @param object A \linkS4class{QuadOverLin} object.
@@ -1988,7 +2011,7 @@ SigmaMax <- function(A = A) { .SigmaMax(A = A) }
 
 setMethod("initialize", "SigmaMax", function(.Object, ..., A) {
   .Object@A <- A
-  callNextMethod(.Object, ..., args = list(.Object@A))
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
 })
 
 #' @param object A \linkS4class{SigmaMax} object.
@@ -2047,7 +2070,7 @@ SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
 setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
   .Object@x <- x
   .Object@k <- k
-  callNextMethod(.Object, ..., args = list(.Object@x))
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
 })
 
 #' @param object A \linkS4class{SumLargest} object.
@@ -2127,7 +2150,7 @@ TotalVariation <- function(value, ...) {
                              mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
     }
     len <- nrow(diffs[[1]]) * ncol(diffs[[2]])
-    stacked <- .VStack(args = lapply(diffs, function(diff) { Reshape(diff, c(1, len)) }))
+    stacked <- .VStack(atom_args = lapply(diffs, function(diff) { Reshape(diff, c(1, len)) }))
     SumEntries(Norm(stacked, p = 2, axis = 2))
   }
 }

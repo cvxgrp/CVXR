@@ -223,13 +223,13 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   return(list(canon_expr, constrs))
 })
 
-setMethod("canonicalize_expr", signature(object = "Canonicalization", expr = "Expression", args = "list"), function(object, expr, args) {
+setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
   } else if(class(expr) %in% object@canon_methods)
     return(object@canon_methods[[class(expr)]](expr, args))
   else
-    return(list(copy(expr, args), list()))   # TODO: copy must be defined in Canonical virtual class
+    return(list(copy(expr, args), list()))
 })
 
 #'
@@ -327,7 +327,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         }
       }
 
-      if(symmetric_attributes(list(var))) {
+      if(length(symmetric_attributes(list(var))) > 0) {
         n <- nrow(var)
         new_dim <- c(floor(n*(n+1)/2), 1)
         upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
@@ -360,7 +360,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   }
 
   # Create new problem.
-  obj <- tree_copy(problem@objective, id_objects = id2new_obj)   # TODO: Implement tree_copy in Canonical virtual class
+  obj <- tree_copy(problem@objective, id_objects = id2new_obj)
   cons_id_map <- list()
   for(cons in problem@constraints) {
     constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))

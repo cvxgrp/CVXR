@@ -75,7 +75,7 @@ setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
 setMethod("import_solver", "ConstantSolver", function(solver) { })
 setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
-  return(solve(object, data, warm_start, verbose, solver_opts))
+  return(reduction_solve(object, data, warm_start, verbose, solver_opts))
 })
 
 setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {

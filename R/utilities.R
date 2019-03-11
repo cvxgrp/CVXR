@@ -250,7 +250,7 @@ sum_dims <- function(dims) {
 }
 
 mul_dims_promote <- function(lh_dim, rh_dim) {
-  if(is.null(lh_dim) || is.null(rh_dim))
+  if(is.null(lh_dim) || is.null(rh_dim) || length(lh_dim) == 0 || length(rh_dim) == 0)
     stop("Multiplication by scalars is not permitted")
   
   if(length(lh_dim) == 1)

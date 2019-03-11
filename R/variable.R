@@ -50,9 +50,9 @@ setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA
 setMethod("show", "Variable", function(object) {
   attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
-    paste("Variable((", paste(dim(object), collapse = ", "), "), ", attr_str, ")", sep = "")
+    print(paste("Variable((", paste(dim(object), collapse = ", "), ")", attr_str, ")", sep = ""))
   else
-    paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = "")
+    print(paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = ""))
 })
 
 #' @param x,object A \linkS4class{Variable} object.
@@ -60,7 +60,7 @@ setMethod("show", "Variable", function(object) {
 setMethod("as.character", "Variable", function(x) {
   attr_str <- get_attr_str(x)
   if(length(attr_str) > 0)
-    paste("Variable((", paste(dim(x), collapse = ", "), "), ", attr_str, ")", sep = "")
+    paste("Variable((", paste(dim(x), collapse = ", "), ")", attr_str, ")", sep = "")
   else
     paste("Variable(", paste(dim(x), collapse = ", "), ")", sep = "")
 })

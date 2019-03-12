@@ -105,7 +105,7 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
         ## if (!is.na(sl$start_idx))
         ##     start_idx <- sl$start_idx - 1L  ## Using zero-based indexing
 
-        ## stop_idx <- linR$args[[1]]$size[i] - 1L
+        ## stop_idx <- linR$args[[1]]$dim[i] - 1L
         ## if (!is.na(sl$stop_idx))
         ##     stop_idx <- sl$stop_idx - 1L
 
@@ -161,8 +161,8 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
         linC$type <- toupper(linR$type) ## Check with Anqi
 
         ## Setting size
-        linC$size_push_back(as.integer(linR$size[1]))
-        linC$size_push_back(as.integer(linR$size[2]))
+        linC$size_push_back(as.integer(linR$dim[1]))
+        linC$size_push_back(as.integer(linR$dim[2]))
 
         ## Loading the problem data into the approriate array format
         if(!is.null(linR$data)) {

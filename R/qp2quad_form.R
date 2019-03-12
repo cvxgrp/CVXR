@@ -5,7 +5,12 @@
 #' expressions and symbolic quadratic forms.
 #'
 #' @rdname Qp2SymbolicQp-class
-Qp2SymbolicQp <- setClass("Qp2SymbolicQp", contains = "Canonicalization")
+.Qp2SymbolicQp <- setClass("Qp2SymbolicQp", contains = "Canonicalization")
+Qp2SymbolicQp <- function(problem = NULL) { .Qp2SymbolicQp(problem = problem) }
+
+setMethod("initialize", "Qp2SymbolicQp", function(.Object, ...) {
+  callNextMethod(.Object, ..., canon_methods = Qp2QuadForm.CANON_METHODS)
+})
 
 Qp2SymbolicQp.accepts <- function(problem) {
   is_qpwa(problem@objective@expr) &&
@@ -52,7 +57,7 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
         all(sapply(problem@constraints, function(c) { class(c) %in% c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") }))
 })
 
-setMethod("qp_stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
+setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
   # TODO: Need to copy objective?
   Pqr <- quad_form(extractor, problem@objective@expr)

@@ -55,6 +55,7 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
 
 # Create lists to represent linear operators and constraints
 LinOp <- function(type, dim, args = list(), data = NULL, class = "LinOp") {
+  if(is.null(dim)) dim <- c(1,1)   # TODO: Get rid of this with proper multi-dimensional handling.
   if(!is.character(type)) stop("type must be a character string")
   if(!is.numeric(dim)) stop("dim must be a numeric vector")
   if(!is.list(args)) stop("args must be a list of arguments")
@@ -62,8 +63,9 @@ LinOp <- function(type, dim, args = list(), data = NULL, class = "LinOp") {
 }
 
 LinConstr <- function(expr, constr_id, dim, class = "LinConstr") {
+  if(is.null(dim)) dim <- c(1,1)   # TODO: Get rid of this with proper multi-dimensional handling.
     ##if(!is.character(constr_id)) stop("constr_id must be a character string")
-  if(!is.integer(constr_id)) stop("constr_id must be an integer!")
+  if(!is.integer(constr_id)) stop("constr_id must be an integer")
   if(!is.numeric(dim)) stop("dim must be a numeric vector")
   list(expr = expr, constr_id = constr_id, dim = dim, class = class)
 }

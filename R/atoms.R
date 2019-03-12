@@ -447,7 +447,7 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 #' @rdname EyeMinusInv-class
 .EyeMinusInv <- setClass("EyeMinusInv", representation(X = "ConstValORExpr"), 
                          validity = function(object) {
-                           if(length(dim(X)) != 2 || nrow(X) != ncol(X))
+                           if(length(dim(object@X)) != 2 || nrow(object@X) != ncol(object@X))
                              stop("[EyeMinusInv: X] The argument X must be a square matrix.")
                            return(TRUE)
                           }, contains = "Atom")
@@ -649,7 +649,7 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
   copy@approx_error <- object@approx_error
   copy@cone_lb <- object@cone_lb
   copy@cone_num_over <- object@cone_num_over
-  copy@cone_num _ object@cone_num
+  copy@cone_num <- object@cone_num
   copy
 })
 
@@ -1609,8 +1609,9 @@ DiffPos <- function(x, y) {
 #' @rdname PfEigenvalue-class
 .PfEigenvalue <- setClass("PfEigenvalue", representation(X = "ConstValORExpr"), 
                           validity = function(object) {
-                            if(length(dim(X)) != 2 || nrow(X) != ncol(X))
-                              stop("Argument must be a square matrix")
+                            if(length(dim(object@X)) != 2 || nrow(object@X) != ncol(object@X))
+                              stop("[PfEigenvalue: X] The argument X must be a square matrix")
+                            return(TRUE)
                           }, contains = "Atom")
 
 #' @param x An \linkS4class{Expression} or numeric matrix.

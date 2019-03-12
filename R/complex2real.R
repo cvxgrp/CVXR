@@ -122,10 +122,10 @@ Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
   else if(is.na(imag_args[[1]]))   # Real
     output <- abs(real_args[[1]])
   else {   # Complex
-    real <- real_args[[1]]
-    imag <- imag_args[[1]]
-    norms <- p_norm(vstack(c(real, imag)), p = 2, axis = 2)
-    output <- reshape_expr(norms, real_args[[1]]@dim)
+    real <- flatten(real_args[[1]])
+    imag <- flatten(imag_args[[1]])
+    norms <- p_norm(vstack(real, imag), p = 2, axis = 2)
+    output <- reshape_expr(norms, dim(real_args[[1]]))
   }
   return(list(output, NA))
 }

@@ -15,7 +15,6 @@ setMethod("expr", "Canonical", function(object) {
 })
 
 #' @describeIn Canonical The graph implementation of the input.
-setMethod("canonicalize", "Canonical", function(object) { stop("Unimplemented") })
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
 
 #' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.

@@ -5,7 +5,12 @@
 #' with affine objectives and conic constraints whose arguments are affine.
 #'
 #' @rdname Dcp2Cone-class
-Dcp2Cone <- setClass("Dcp2Cone", contains = "Canonicalization")
+.Dcp2Cone <- setClass("Dcp2Cone", contains = "Canonicalization")
+Dcp2Cone <- function(problem = NULL) { .Dcp2Cone(problem = problem) }
+
+setMethod("initialize", "Dcp2Cone", function(.Object, ...) {
+  callNextMethod(.Object, ..., canon_methods = Dcp2Cone.CANON_METHODS)
+})
 
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   class(problem@objective) == "Minimize" && is_dcp(problem)
@@ -38,7 +43,7 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints)
 })
 
-setMethod("cone_stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
+setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
   CR <- affine(extractor, problem@objective@expr)
   C <- CR[[1]]
@@ -419,7 +424,7 @@ Dcp2Cone.power_canon <- function(expr, args) {
 }
 
 Dcp2Cone.quad_form_canon <- function(expr, args) {
-  decomp <- .decomp_quad(value(args[[1]]))
+  decomp <- .decomp_quad(value(args[[2]]))
   scale <- decomp[[1]]
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]
@@ -439,12 +444,14 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
 Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   # quad_over_lin := sum_{ij} X^2_{ij} / y
   x <- args[[1]]
-  y <- matrix(args[[1]], ncol = 1)
+  y <- flatten(args[[2]])
+  
   # Pre-condition: dim = c()
   t <- Variable(1)
+  
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*matrix(x, ncol = 1))), axis = 2))
+  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*flatten(x))), axis = 2))
   return(list(t, constraints))
 }
 

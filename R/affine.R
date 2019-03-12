@@ -1637,7 +1637,7 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, dim, da
 
 Vec <- function(X) {
   X <- as.Constant(X)
-  Reshape(expr = X, new_dim = c(size(X), NA))
+  Reshape(expr = X, new_dim = size(X))
 }
 
 #'

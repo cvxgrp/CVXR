@@ -31,6 +31,9 @@ setMethod("size", "ListORExpr", function(object) {
     size(object)
 })
 
+# Helper function so we can flatten both Expression objects and regular matrices into a single column vector.
+setMethod("flatten", "numeric", function(object) { matrix(object, ncol = 1) })
+
 # Casts the second argument of a binary operator as an Expression
 .cast_other <- function(binary_op) {
   cast_op <- function(object, other) {
@@ -483,7 +486,7 @@ setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2
 #' @docType methods
 #' @rdname PSDConstraint-class
 #' @export
-setMethod("%>>%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e1, e2) })
+setMethod("%>>%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e1 - e2) })
 
 #' @docType methods
 #' @rdname PSDConstraint-class
@@ -498,7 +501,7 @@ setMethod("%>>%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @docType methods
 #' @rdname PSDConstraint-class
 #' @export
-setMethod("%<<%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e2, e1) })
+setMethod("%<<%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e2 - e1) })
 
 #' @docType methods
 #' @rdname PSDConstraint-class

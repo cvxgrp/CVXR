@@ -226,7 +226,7 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
-  } else if(class(expr) %in% object@canon_methods)
+  } else if(class(expr) %in% names(object@canon_methods))
     return(object@canon_methods[[class(expr)]](expr, args))
   else
     return(list(copy(expr, args), list()))
@@ -277,7 +277,7 @@ setMethod("invert", signature(object = "Chain", solution = "Solution", inverse_d
 # Returns a list of the relevant attributes present among the variables.
 attributes_present <- function(variables, attr_map) {
   attr_map[sapply(attr_map, function(attr) {
-    any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) }))
+    any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] }))
   })]
 }
 
@@ -307,7 +307,7 @@ setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), 
 
 setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
   if(length(convex_attributes(variables(problem))) == 0)
-    return(list(problem), list())
+    return(list(problem, list()))
 
   # For each unique variable, add constraints.
   id2new_var <- list()
@@ -507,7 +507,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
 
   # Form the constraints
   extractor <- CoeffExtractor(inverse_data)
-  stuffed <- stuffed_objective(object, problem, inverse_data)
+  stuffed <- stuffed_objective(object, problem, extractor)
   new_obj <- stuffed[[1]]
   new_var <- stuffed[[2]]
   inverse_data@r <- stuffed[[3]]
@@ -596,7 +596,7 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
   return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
 })
 
-setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
+setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   stop("Unimplemented")
 })
 

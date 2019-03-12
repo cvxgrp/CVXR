@@ -16,8 +16,8 @@ setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), functio
 })
 
 setMethod("canonicalize_expr", signature(object = "Dgp2Dcp", expr = "Expression"), function(object, expr, args) {
-  if(class(expr) %in% object@canon_methods)
-    return(object@canon_methods[class(expr)](expr, args))
+  if(class(expr) %in% names(object@canon_methods))
+    return(object@canon_methods[[class(expr)]](expr, args))
   else
     return(list(copy(expr, args), list()))
 })

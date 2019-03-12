@@ -491,7 +491,7 @@ ExpCone.solver_hook <- function(object, vars_ = NA, scaling = NA) {
                            validity = function(object) {
                              expr_dim <- dim(object@expr)
                              if(length(expr_dim) != 2 || expr_dim[1] != expr_dim[2])
-                               stop("Non-square matrix in positive definite constraint.")
+                               stop("[PSDConstraint: expr] Non-square matrix in positive definite constraint.")
                              return(TRUE)
                            }, contains = "Constraint")
 
@@ -501,6 +501,7 @@ ExpCone.solver_hook <- function(object, vars_ = NA, scaling = NA) {
 PSDConstraint <- function(expr, constr_id = NA_integer_) { .PSDConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
+  .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
 })
 

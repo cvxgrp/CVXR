@@ -4,13 +4,11 @@
 #' This class eliminates piecewise linear atoms.
 #' 
 #' @rdname EliminatePwl-class
-.EliminatePwl <- setClass("EliminatePwl", representation(problem = "Problem"), prototype(problem = NULL), contains = "Canonicalization")
-
+.EliminatePwl <- setClass("EliminatePwl", contains = "Canonicalization")
 EliminatePwl <- function(problem = NULL) { .EliminatePwl(problem = problem) }
 
-setMethod("initialize", "EliminatePwl", function(.Object, ..., problem = NULL) {
-  .Object@problem <- problem
-  callNextMethod(.Object, ..., problem = problem, canon_methods = EliminatePwl.CANON_METHODS)
+setMethod("initialize", "EliminatePwl", function(.Object, ...) {
+  callNextMethod(.Object, ..., canon_methods = EliminatePwl.CANON_METHODS)
 })
 
 setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {

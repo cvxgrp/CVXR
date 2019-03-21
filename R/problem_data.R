@@ -8,12 +8,12 @@
 # @slot .constr_map (Internal) A \code{list} mapping constraint type to a list of constraints.
 # @slot .dims (Internal) A \code{list} of the dimensions of the cones.
 # @slot .var_offsets (Internal) A \code{numeric} vector mapping variable ID to horizontal offset.
-# @slot .var_sizes (Internal) A \code{list} mapping variable ID to variable dimensions.
+# @slot .var_dims (Internal) A \code{list} mapping variable ID to variable dimensions.
 # @slot .x_length (Internal) The length of the x vector.
 # @slot .presolve_status (Internal) A \code{character} string indicating the status of the pre-solver. May be \code{NA} if pre-solve has failed.
 # @rdname SymData-class
-.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "numeric", .var_sizes = "list", .x_length = "numeric", .presolve_status = "character"),
-                     prototype(.constr_map = list(), .dims = list(), .var_offsets = NA_integer_, .var_sizes = list(), .x_length = NA_real_, .presolve_status = NA_character_))
+.SymData <- setClass("SymData", representation(objective = "list", constraints = "list", .constr_map = "list", .dims = "list", .var_offsets = "numeric", .var_dims = "list", .x_length = "numeric", .presolve_status = "character"),
+                     prototype(.constr_map = list(), .dims = list(), .var_offsets = NA_integer_, .var_dims = list(), .x_length = NA_real_, .presolve_status = NA_character_))
 
 #
 # Symbolic Data Constructor
@@ -43,7 +43,7 @@ SymData <- function(objective, constraints, solver) {
   else
     nonlinear <- list()
   var_data <- SymData.get_var_offsets(objective, all_ineq, nonlinear)
-  .SymData(objective = objective, constraints = constraints, .constr_map = constr_map, .dims = dims, .var_offsets = var_data[[1]], .var_sizes = var_data[[2]], .x_length = var_data[[3]], .presolve_status = presolve_status)
+  .SymData(objective = objective, constraints = constraints, .constr_map = constr_map, .dims = dims, .var_offsets = var_data[[1]], .var_dims = var_data[[2]], .x_length = var_data[[3]], .presolve_status = presolve_status)
 }
 
 #
@@ -177,11 +177,11 @@ SymData.presolve <- function(objective, constr_map) {
 SymData.format_for_solver <- function(constr_map, solver) {
   dims <- list()
   if(length(constr_map[[EQ_MAP]]) > 0)
-    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]], function(c) { prod(size(c)) }))
+    dims[[EQ_DIM]]   <- sum(sapply(constr_map[[EQ_MAP]], function(c) { prod(dim(c)) }))
   else
     dims[[EQ_DIM]] <- 0
   if(length(constr_map[[LEQ_MAP]]) > 0)
-    dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ_MAP]], function(c) { prod(size(c)) }))
+    dims[[LEQ_DIM]]  <- sum(sapply(constr_map[[LEQ_MAP]], function(c) { prod(dim(c)) }))
   else
     dims[[LEQ_DIM]] <- 0
   dims[[SOC_DIM]]  <- c()
@@ -212,7 +212,7 @@ SymData.format_for_solver <- function(constr_map, solver) {
 # @param objective A list representing the canonicalized objective.
 # @param constraints A list of canonicalized constraints.
 # @param nonlinear A list of nonlinear constraints.
-# @return A list containing variable offsets, variable sizes, and vertical offset.
+# @return A list containing variable offsets, variable dimensions, and vertical offset.
 # @rdname SymData-get_var_offsets
 SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
   vars_ <- get_expr_vars(objective)
@@ -227,22 +227,22 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 
   # Ensure variables are always in same order for same problem.
   var_names <- unique(vars_)
-  var_ids <- sapply(var_names, function(id_and_size) { id_and_size[[1]] })
+  var_ids <- sapply(var_names, function(id_and_dim) { id_and_dim[[1]] })
   names(var_names) <- var_ids
   var_names <- var_names[order(var_ids)]
 
-  # Map variable IDs to offsets and size
-  var_sizes <- lapply(var_names, function(var) { var[[2]] })
-  size_prods <- sapply(var_sizes, function(var_size) { prod(var_size) })
-  if(length(size_prods) == 0) {
+  # Map variable IDs to offsets and dimensions.
+  var_dims <- lapply(var_names, function(var) { var[[2]] })
+  dim_prods <- sapply(var_dims, function(var_dim) { prod(var_dim) })
+  if(length(dim_prods) == 0) {
     var_offsets <- integer(0)
     vert_offset <- 0
   } else {
-    var_offsets <- base::cumsum(c(0, head(size_prods, n = -1)))
+    var_offsets <- base::cumsum(c(0, head(dim_prods, n = -1)))
     names(var_offsets) <- names(var_names)
-    vert_offset <- sum(size_prods)
+    vert_offset <- sum(dim_prods)
   }
-  list(var_offsets = var_offsets, var_sizes = var_sizes, vert_offset = vert_offset)
+  list(var_offsets = var_offsets, var_dims = var_dims, vert_offset = vert_offset)
 }
 
 #
@@ -254,10 +254,10 @@ SymData.get_var_offsets <- function(objective, constraints, nonlinear) {
 # @slot .param_coo_tup (Internal) A \code{(V, I, J)} triplet for the parameterized COO matrix.
 # @slot const_vec The vector offset.
 # @slot constraints A list of constraints in the matrix.
-# @slot .size (Internal) The \code{c(rows, cols)} dimensions of the matrix.
+# @slot .dim (Internal) The \code{c(rows, cols)} dimensions of the matrix.
 # @rdname MatrixCache-class
-.MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", .param_coo_tup = "list", const_vec = "numeric", constraints = "list", .size = "numeric"),
-                         prototype(.size = NA_real_, .param_coo_tup = list(c(), c(), c())))
+.MatrixCache <- setClass("MatrixCache", representation(coo_tup = "list", .param_coo_tup = "list", const_vec = "numeric", constraints = "list", .dim = "numeric"),
+                         prototype(.dim = NA_real_, .param_coo_tup = list(c(), c(), c())))
 
 #
 # Matrix Cache Constructor
@@ -274,9 +274,9 @@ MatrixCache <- function(coo_tup, const_vec, constraints, x_length) {
   if(length(constraints) == 0)
     rows <- 0
   else
-    rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+    rows <- sum(sapply(constraints, function(c) { prod(dim(c)) }))
   cols <- x_length
-  .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, .size = c(rows, cols), .param_coo_tup = list(c(), c(), c()))
+  .MatrixCache(coo_tup = coo_tup, const_vec = const_vec, constraints = constraints, .dim = c(rows, cols), .param_coo_tup = list(c(), c(), c()))
 }
 
 reset_param_data <- function(object) {
@@ -388,7 +388,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
   if(length(constraints) == 0)
     rows <- 0
   else
-    rows <- sum(sapply(constraints, function(c) { prod(size(c)) }))
+    rows <- sum(sapply(constraints, function(c) { prod(dim(c)) }))
   COO <- list(c(), c(), c())
   const_vec <- rep(0, rows)
   MatrixCache(COO, const_vec, constraints, x_length)
@@ -418,7 +418,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
       active_constr <- c(active_constr, list(constr))
       constr_offsets <- c(constr_offsets, vert_offset)
     }
-    vert_offset <- vert_offset + prod(size(constr))
+    vert_offset <- vert_offset + prod(dim(constr))
   }
   storage.mode(constr_offsets) <- "integer"
 
@@ -452,11 +452,11 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # @rdname cache_to_matrix-int
 .cache_to_matrix <- function(object, mat_cache) {
   # Get parameter values.
-  param_cache <- .init_matrix_cache(object, mat_cache@constraints, mat_cache@.size[1])
+  param_cache <- .init_matrix_cache(object, mat_cache@constraints, mat_cache@.dim[1])
   param_cache <- .lin_matrix(object, param_cache)
-  mat_size <- mat_cache@.size
-  rows <- mat_size[1]
-  cols <- mat_size[2]
+  mat_dim <- mat_cache@.dim
+  rows <- mat_dim[1]
+  cols <- mat_dim[2]
 
   # Create the constraints matrix. Combine the cached data with the parameter data.
   mat_coo_tup <- mat_cache@coo_tup
@@ -493,7 +493,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
 # @return An oracle function.
 # @rdname nonlin_matrix-int
 .nonlin_matrix <- function(object, nonlin_constr) {
-  rows <- sum(sapply(nonlin_constr, function(c) { prod(size(c)) }))
+  rows <- sum(sapply(nonlin_constr, function(c) { prod(dim(c)) }))
   cols <- object@sym_data@.x_length
   var_offsets <- object@sym_data@.var_offsets
 
@@ -512,7 +512,7 @@ setMethod("get_nonlin_constr", "MatrixData", function(object) { object@F} )
     offset <- 0
 
     for(constr in nonlin_constr) {
-      constr_entries <- prod(size(constr))
+      constr_entries <- prod(dim(constr))
       local_x <- extract_variables(constr, x, var_offsets)
       if(!is.na(z)) {
         tmp <- constr@f(local_x, z[offset:(offset + constr_entries)])

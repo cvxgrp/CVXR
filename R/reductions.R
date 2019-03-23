@@ -47,13 +47,13 @@ failure_solution <- function(status) {
 #'
 #' @rdname InverseData-class
 .InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
-                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list"),
+                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric"),
                                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(),
-                                                  real2imag = list(), id2cons = list(), cons_id_map = list()))
+                                                  real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_))
 
 InverseData <- function(problem) { .InverseData(problem = problem) }
 
-setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list()) {
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_) {
   # Basic variable offset information
   varis <- variables(problem)
   varoffs <- get_var_offsets(.Object, varis)
@@ -76,6 +76,7 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   # Map of constraint id to constraint
   .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
   .Object@cons_id_map <- list()
+  .Object@r <- r
   return(.Object)
 })
 
@@ -607,8 +608,9 @@ extract_mip_idx <- function(variables) {
   
   ravel_multi_index <- function(multi_index, x, vert_offset) {
     # Ravel a multi-index and add a vertical offset to it
-    # TODO: I have no idea what the following Python code does
-    # ravel_idx <- np.ravel_multi_index(multi_index, max(x.shape, (1,)), order = "F")
+    ravel_idx <- array(FALSE, dim(x))
+    ravel_idx[multi_index] <- TRUE
+    ravel_idx <- which(ravel_idx, arr.ind = FALSE)
     return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
   }
   
@@ -616,15 +618,17 @@ extract_mip_idx <- function(variables) {
   integer_idx <- c()
   vert_offset <- 0
   for(x in variables) {
-    if(!is.null(x@boolean_idx)) {
+    if(!is.null(x@boolean_idx) && prod(dim(x@boolean_idx)) != 0) {
       multi_index <- x@boolean_idx
       boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
     }
-    if(!is.null(x@integer_idx)) {
+    if(!is.null(x@integer_idx) && prod(dim(x@integer_idx)) != 0) {
       multi_index <- x@integer_idx
       integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
     }
     vert_offset <- vert_offset + size(x)
   }
+  boolean_idx <- as.matrix(boolean_idx)
+  integer_idx <- as.matrix(integer_idx)
   return(list(boolean_idx, integer_idx))
 }

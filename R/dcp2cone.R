@@ -57,7 +57,7 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
 
   new_obj <- t(c) %*% x + 0
 
-  return(list(new_obj, x, R[[1]]))
+  return(list(new_obj, x, R[1]))
 })
 
 # Atom canonicalizers.

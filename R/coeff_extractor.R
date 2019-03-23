@@ -33,8 +33,8 @@ setMethod("affine", signature(object = "CoeffExtractor", expr = "list"), functio
   op_list <- lapply(expr, function(e) { canonical_form(e)[[1]] })
   VIJb <- get_problem_matrix(op_list, object@id_map)
   V <- VIJb[[1]]
-  I <- VIJb[[2]]
-  J <- VIJb[[3]]
+  I <- VIJb[[2]] + 1   # TODO: Convert 0-indexing to 1-indexing in get_problem_matrix.
+  J <- VIJb[[3]] + 1
   b <- VIJb[[4]]
   A <- sparseMatrix(i = I, j = J, x = V, dims = c(size, object@N))
   list(A, as.vector(b))

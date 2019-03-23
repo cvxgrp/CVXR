@@ -933,7 +933,8 @@ setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", val
 #' @describeIn HStack The dimensions of the atom.
 setMethod("dim_from_args", "HStack", function(object) {
   if(ndim(object@args[[1]]) == 1)
-    return(c(sum(sapply(object@args, size)), NA))
+    # return(c(sum(sapply(object@args, size)), NA))
+    return(c(sum(sapply(object@args, size)), 1))
   else{
     cols <- sum(sapply(object@args, function(arg) { dim(arg)[2] }))
     arg_dim <- dim(object@args[[1]])
@@ -1684,7 +1685,8 @@ setMethod("dim_from_args", "VStack", function(object) {
     rows <- sum(sapply(object@args, function(arg) { dim(arg)[1] }))
     arg_dim <- dim(object@args[[1]])
     if(length(arg_dim) < 2)
-      c(rows, NA)
+      # c(rows, NA)
+      c(rows, 1)
     else
       c(rows, arg_dim[2:length(arg_dim)])
   }

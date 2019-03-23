@@ -569,7 +569,9 @@ SOC <- function(t, X, axis = 2, constr_id = NA_integer_) { .SOC(t = t, X = X, ax
 
 setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
   # TODO: Allow imaginary X.
-  if(!(is.null(dim(t)) || length(dim(t)) == 1))
+  # if(!(is.null(dim(t)) || length(dim(t)) == 1))
+  t_dim <- dim(t)
+  if(!(is.null(t_dim) || length(t_dim) == 1 || (length(t_dim) == 2 && t_dim[2] == 1)))
     stop("t must be a scalar or 1-dimensional vector.")
   .Object@t <- t
   .Object@X <- X

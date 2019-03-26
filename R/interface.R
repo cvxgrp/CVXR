@@ -23,11 +23,15 @@ intf_is_scalar <- function(constant) {
 
 # Return the collective sign of the matrix entries.
 intf_sign <- function(constant) {
+  if(any(is.na(constant)))
+    return(c(FALSE, FALSE))
   c(min(constant) >= 0, max(constant) <= 0)
 }
 
 # Return (is real, is imaginary).
 intf_is_complex <- function(constant, tol = 1e-5) {
+  if(!is.complex(constant))
+    return(c(TRUE, FALSE))
   real_max <- max(abs(Re(constant)))
   imag_max <- max(abs(Im(constant)))
   c(real_max >= tol, imag_max >= tol)

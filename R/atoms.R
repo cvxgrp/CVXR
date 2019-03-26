@@ -201,7 +201,8 @@ setMethod("canonicalize", "Atom", function(object) {
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data = NA_real_) { stop("Unimplemented") })
 
-.value_impl <- function(object) {
+# .value_impl.Atom <- function(object) {
+setMethod("value_impl", "Atom", function(object) {
   obj_dim <- dim(object)
   # dims with 0's dropped in presolve.
   if(0 %in% obj_dim)
@@ -214,22 +215,22 @@ setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data =
     for(arg in object@args) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
-      arg_val <- .value_impl(arg)
+      arg_val <- value_impl(arg)
       if(any(is.na(arg_val)) && !is_constant(object))
-        return(NA)
+        return(NA_real_)
       else
         arg_values <- c(arg_values, list(arg_val))
     }
     result <- to_numeric(object, arg_values)
   }
   return(result)
-}
+})
 
 #' @describeIn Atom The value of the atom.
 setMethod("value", "Atom", function(object) {
   if(any(sapply(parameters(object), function(p) { is.na(value(p)) })))
     return(NA_real_)
-  return(.value_impl(object))
+  return(value_impl(object))
 })
 
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
@@ -1371,7 +1372,9 @@ Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
 #' @name Norm1-class
 #' @aliases Norm1
 #' @rdname Norm1-class
-Norm1 <- setClass("Norm1", contains = "AxisAtom")
+.Norm1 <- setClass("Norm1", contains = "AxisAtom")
+
+Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(x = x, axis = axis, keepdims = keepdims) }
 
 #' @param x,object A \linkS4class{Norm1} object.
 setMethod("name", "Norm1", function(x) {

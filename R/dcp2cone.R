@@ -451,7 +451,7 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  constraints <- list(SOC(t = y+t, X = hstack(list(y-t, 2*flatten(x))), axis = 2))
+  constraints <- list(SOC(t = y+t, X = HStack(y-t, 2*flatten(x)), axis = 2))
   return(list(t, constraints))
 }
 

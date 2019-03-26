@@ -339,7 +339,7 @@ setMethod("residual", "ExpCone", function(object) {
   y <- Variable(dim(object@y))
   z <- Variable(dim(object@z))
   constr <- list(ExpCone(x, y, z))
-  obj <- Minimize(norm2(hstack(list(x, y, z)) - hstack(list(value(object@x), value(object@y), value(object@z)))))
+  obj <- Minimize(norm2(HStack(x, y, z) - HStack(value(object@x), value(object@y), value(object@z))))
   prob <- Problem(obj, constr)
   return(solve(prob))
 })

@@ -1,4 +1,3 @@
-
 # TODO: Find best format for sparse matrices.
 .CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_dims = "list"),
                             prototype(id_map = list(), N = NA_real_, var_dims = list()))

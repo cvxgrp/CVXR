@@ -1267,6 +1267,7 @@ setGeneric("alt_invert", function(object, results, inverse_data) { standardGener
 setGeneric("expr", function(object) { standardGeneric("expr") })
 setGeneric("ndim", function(object) { standardGeneric("ndim") })
 setGeneric("flatten", function(object) { standardGeneric("flatten") })
+setGeneric("value_impl", function(object) { standardGeneric("value_impl") })
 setGeneric("var_id", function(object) { standardGeneric("var_id") })
 setGeneric("get_attr_str", function(object) { standardGeneric("get_attr_str") })
 setGeneric("get_var_offsets", function(object, variables) { standardGeneric("get_var_offsets") })

@@ -44,7 +44,8 @@ setMethod("flatten", "numeric", function(object) { matrix(object, ncol = 1) })
   cast_op
 }
 
-.value_impl.Expression <- function(object) { object@value }
+# .value_impl.Expression <- function(object) { object@value }
+setMethod("value_impl", "Expression", function(object) { object@value })
 
 #' @param x,object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.

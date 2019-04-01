@@ -11,7 +11,7 @@ INDEX = "index"
 TRANSPOSE = "transpose"
 SUM_ENTRIES = "sum_entries"
 TRACE = "trace"
-RESHAPE = "reshape_expr"
+RESHAPE_EXPR = "reshape_expr"
 DIAG_VEC = "diag_vec"
 DIAG_MAT = "diag_mat"
 UPPER_TRI = "upper_tri"
@@ -38,7 +38,7 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  TRANSPOSE = "TRANSPOSE",
                  SUM_ENTRIES = "SUM_ENTRIES",
                  TRACE = "TRACE",
-                 RESHAPE = "RESHAPE",
+                 RESHAPE_EXPR = "RESHAPE_EXPR",
                  DIAG_VEC = "DIAG_VEC",
                  DIAG_MAT = "DIAG_MAT",
                  UPPER_TRI = "UPPER_TRI",
@@ -178,7 +178,7 @@ lo.transpose <- function(operator) {
 }
 
 lo.reshape <- function(operator, dim) {
-  LinOp(RESHAPE, dim, list(operator))
+  LinOp(RESHAPE_EXPR, dim, list(operator))
 }
 
 lo.diag_vec <- function(operator) {

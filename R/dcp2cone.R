@@ -53,7 +53,8 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  x <- Variable(extractor@N, boolean = boolean, integer = integer)
+  # x <- Variable(extractor@N, boolean = boolean, integer = integer)
+  x <- new("Variable", dim = extractor@N, boolean = boolean, integer = integer)
 
   new_obj <- t(c) %*% x + 0
 
@@ -451,7 +452,10 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  constraints <- list(SOC(t = y+t, X = HStack(y-t, 2*flatten(x)), axis = 2))
+  # BUG: In Python, flatten produces single dimension (n,), but in R, we always treat 
+  # these as column vectors with dimension (n,1), necessitating the use of VStack.
+  # constraints <- list(SOC(t = y+t, X = HStack(y-t, 2*flatten(x)), axis = 2))
+  constraints <- list(SOC(t = y+t, X = VStack(y-t, 2*flatten(x)), axis = 2))
   return(list(t, constraints))
 }
 

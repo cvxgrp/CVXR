@@ -1269,7 +1269,7 @@ setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
 
 #' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
-  array(1, dim = object@promoted_dim) * values[[1]]
+  array(1, dim = object@promoted_dim) * as.numeric(values[[1]])
 })
 
 #' @describeIn Promote Is the expression symmetric?
@@ -1636,9 +1636,11 @@ setMethod("graph_implementation", "UpperTri", function(object, arg_objs, dim, da
   UpperTri.graph_implementation(arg_objs, dim, data)
 })
 
+# Reshape into single column vector.
 Vec <- function(X) {
   X <- as.Constant(X)
-  Reshape(expr = X, new_dim = size(X))
+  # Reshape(expr = X, new_dim = size(X))
+  Reshape(expr = X, new_dim = c(size(X), 1))
 }
 
 #'

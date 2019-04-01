@@ -552,7 +552,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, pos = pos, neg = neg, complex = complex, imag = imag,
                              symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
                              boolean = as.logical(boolean), integer = integer, sparsity = sparsity)
-  if(!is.null(boolean) && length(boolean) > 0) {
+  if(any(boolean)) {
     if(!is.logical(boolean))
       .Object@boolean_idx <- boolean
     else
@@ -560,7 +560,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   } else
     .Object@boolean_idx <- matrix(0, nrow = 0, ncol = 0)
 
-  if(!is.null(integer) && length(integer) > 0) {
+  if(any(integer)) {
     if(!is.logical(integer))
       .Object@integer_idx <- integer
     else
@@ -570,7 +570,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
 
   # Only one attribute can be TRUE (except boolean and integer).
   true_attr <- sum(unlist(.Object@attributes))
-  if(boolean && integer)
+  if(any(boolean) && any(integer))
     true_attr <- true_attr - 1
   if(true_attr > 1)
     stop("Cannot set more than one special attribute.")

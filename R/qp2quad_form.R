@@ -69,7 +69,8 @@ setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = 
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  x <- Variable(extractor@N, boolean = boolean, integer = integer)
+  # x <- Variable(extractor@N, boolean = boolean, integer = integer)
+  x <- new("Variable", dim = extractor@N, boolean = boolean, integer = integer)
   new_obj <- QuadForm(x, P) + t(q) %*% x
 
   inverse_data@r <- r

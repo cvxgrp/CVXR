@@ -628,7 +628,14 @@ extract_mip_idx <- function(variables) {
     }
     vert_offset <- vert_offset + size(x)
   }
-  boolean_idx <- as.matrix(boolean_idx)
-  integer_idx <- as.matrix(integer_idx)
+  
+  if(is.null(boolean_idx))
+    boolean_idx <- matrix(0, nrow = 0, ncol = 0)
+  else
+    boolean_idx <- as.matrix(boolean_idx)
+  if(is.null(integer_idx))
+    integer_idx <- matrix(0, nrow = 0, ncol = 0)
+  else
+    integer_idx <- as.matrix(integer_idx)
   return(list(boolean_idx, integer_idx))
 }

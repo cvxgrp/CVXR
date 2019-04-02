@@ -11,9 +11,11 @@ setClass("Constraint", representation(constr_id = "integer", dual_variables = "l
                        prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
 
 setMethod("initialize", "Constraint", function(.Object, ..., constr_id = get_id(), dual_variables = list()) {
+  .Object <- callNextMethod(.Object, ...)
   .Object@constr_id <- constr_id
-  .Object@dual_variables <- lapply(args, function(arg) { Variable(dim(arg)) })
-  callNextMethod(.Object, ...)
+  # .Object@dual_variables <- lapply(.Object@args, function(arg) { Variable(dim(arg)) })
+  .Object@dual_variables <- lapply(.Object@args, function(arg) { new("Variable", dim = dim(arg)) })
+  return(.Object)
 })
 
 setMethod("as.character", "Constraint", function(x) { name(x) })

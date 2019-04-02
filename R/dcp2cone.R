@@ -54,7 +54,7 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
   # x <- Variable(extractor@N, boolean = boolean, integer = integer)
-  x <- new("Variable", dim = extractor@N, boolean = boolean, integer = integer)
+  x <- Variable(extractor@N, 1, boolean = boolean, integer = integer)
 
   new_obj <- t(c) %*% x + 0
 

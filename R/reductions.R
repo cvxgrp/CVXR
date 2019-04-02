@@ -47,13 +47,13 @@ failure_solution <- function(status) {
 #'
 #' @rdname InverseData-class
 .InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
-                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric"),
+                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric", minimize = "logical"),
                                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(),
-                                                  real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_))
+                                                  real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA))
 
 InverseData <- function(problem) { .InverseData(problem = problem) }
 
-setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_) {
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA) {
   # Basic variable offset information
   varis <- variables(problem)
   varoffs <- get_var_offsets(.Object, varis)
@@ -77,6 +77,7 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
   .Object@cons_id_map <- list()
   .Object@r <- r
+  .Object@minimize <- minimize
   return(.Object)
 })
 
@@ -536,10 +537,16 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   for(con in cons) {
     arg_list <- list()
     for(arg in con@args) {
-      A <- Afull[(offset + 1):(offset + size(arg) + 1),]
-      b <- bfull[(offset + 1):(offset + size(arg) + 1)]
+      arg_size <- size(arg)
+      if(arg_size == 1) {
+        A <- matrix(Afull[offset + 1,], nrow = 1)
+        b <- bfull[offset + 1]
+      } else {
+        A <- Afull[(offset + 1):(offset + arg_size),]
+        b <- bfull[(offset + 1):(offset + arg_size)]
+      }
       arg_list <- c(arg_list, reshape_expr(A %*% new_var + b, dim(arg)))
-      offset <- offset + size(arg)
+      offset <- offset + arg_size
     }
     new_cons <- c(new_cons, copy(con, arg_list))
     inverse_data@cons_id_map[[as.character(id(con))]] <- id(new_cons[[length(new_cons)]])

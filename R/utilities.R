@@ -210,7 +210,8 @@ sum_dims <- function(dims) {
   for(t in dims[2:length(dims)]) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
     # if(!(length(dim) == length(t) && all(dim == t)) && (!is.null(dim) && sum(dim != 1) != 0) && (!is.null(t) && sum(t != 1) != 0))
-    if(!identical(dim, t) && (!is.null(dim) && sum(dim != 1) != 0) && (!is.null(t) && sum(t != 1) != 0))
+    # if(!identical(dim, t) && (!is.null(dim) && !all(dim == 1)) && (!is.null(t) && !all(t == 1)))
+    if(!(identical(dim, t) || all(dim == 1) || all(t == 1)))
       stop("Cannot broadcast dimensions")
     
     if(length(dim) >= length(t))

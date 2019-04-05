@@ -798,7 +798,7 @@ setMethod("perform", signature(object = "GUROBI", problem = "Problem"), function
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "GUROBI", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "GUROBI", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
 
   primal_vars <- NA
@@ -1645,7 +1645,7 @@ SCS.extract_dual_value <- function(result_vec, offset, constraint) {
     return(extract_dual_value(result_vec, offset, constraint))
 }
 
-setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- status_map(object, solution$info$status)
 
@@ -1656,9 +1656,9 @@ setMethod("invert", signature(object = "SCS", solution = "Solution", inverse_dat
 
   if(status %in% SOLUTION_PRESENT) {
     primal_val <- solution$info$pobj
-    opt_val <- primal_val + inverse_data[OFFSET]
+    opt_val <- primal_val + inverse_data[[OFFSET]]
     primal_vars <- list()
-    primal_vars[inverse_data[object@var_id]] <- as.matrix(solution$x)
+    primal_vars[[inverse_data[[object@var_id]]]] <- as.matrix(solution$x)
     
     eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[[ConicSolver()@dims]]@zero]),
       SCS.extract_dual_value, inverse_data[[object@eq_constr]])
@@ -1678,18 +1678,21 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   # Returns the result of the call to the solver.
   requireNamespace("scs", quietly = TRUE)
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
-  if(warm_start && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
-    args$x <- solver_cache[name(object)]$x
-    args$y <- solver_cache[name(object)]$y
-    args$s <- solver_cache[name(object)]$s
+  if(warm_start && length(solver_cache) > 0 && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
+    args$x <- solver_cache[[name(object)]]$x
+    args$y <- solver_cache[[name(object)]]$y
+    args$s <- solver_cache[[name(object)]]$s
   }
   cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
-
+  
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
     solver_opts$eps <- 1e-4
-  results <- scs::scs(args, cones, verbose = verbose, solver_opts)
-  if(!is.na(solver_cache))
+  if(!missing(verbose))
+    solver_opts$verbose <- verbose
+  
+  results <- scs::scs(A = args$A, b = args$b, obj = args$c, cone = cones, control = solver_opts)
+  if(length(solver_cache) > 0 && !is.na(solver_cache))
     solver_cache[[name(object)]] <- results
   return(results)
 })
@@ -1786,7 +1789,7 @@ setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "XPRESS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution[[STATUS]]
 
   primal_vars <- NA

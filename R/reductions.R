@@ -266,8 +266,8 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
   return(list(problem, inverse_data))
 })
 
-setMethod("invert", signature(object = "Chain", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
-  m <- min(length(object@reductions), inverse_data)
+setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inverse_data = "list"), function(object, solution, inverse_data) {
+  m <- min(length(object@reductions), length(inverse_data))
   for(i in rev(1:m)) {
     r <- object@reductions[[i]]
     inv <- inverse_data[[i]]

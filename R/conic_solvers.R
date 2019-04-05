@@ -131,7 +131,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
   if(class(constr) %in% c("NonPosConstraint", "ZeroConstraint"))
     # Both of these constraints have but a single argument.
     # t(c) %*% x + b (<)= 0 if and only if t(c) %*% x (<)= b.
-    return(list(Matrix(coeffs[[1]], sparse = TRUE), -offsets[1]))
+    return(list(Matrix(coeffs[[1]], sparse = TRUE), -offsets[[1]]))
   else if(class(constr) == "SOC") {
     # Group each t row with appropriate X rows.
     if(constr@axis != 2)
@@ -142,13 +142,13 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     #   coeffs[[2]][1:(gap-1),]
     #   coeffs[[1]][2,]
     #   coeffs[[2]][gap:(2*(gap-1)),]
-    X_coeff <- coeffs[[1]]
+    X_coeff <- coeffs[[2]]
     reshaped <- matrix(X_coeff, nrow = nrow(coeffs[[1]]))
     stacked <- -cbind(coeffs[[1]], reshaped)
-    stacked <- matrix(stacked, nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol(coeffs[[1]]))
+    stacked <- matrix(stacked, nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol = ncol(coeffs[[1]]))
     
     offset <- cbind(offsets[[1]], matrix(offsets[[2]], nrow = nrow(offsets[[1]])))
-    offset <- as.vector(t(offset))
+    offset <- matrix(t(offset), ncol = 1)
     return(list(Matrix(stacked, sparse = TRUE), offset))
   } else if(class(constr) == "ExpCone") {
     for(i in 1:length(coeffs)) {
@@ -166,14 +166,14 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
 setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constraints, exp_cone_order) {
   # Combine the constraints into a single matrix, offset.
   if(is.na(constraints) || is.null(constraints) || length(constraints) == 0)
-    return(list(NA, NA))
+    return(list(NULL, NULL))
 
   matrices <- list()
   offsets <- list()
   for(cons in constraints) {
     res <- reduction_format_constr(object, problem, cons, exp_cone_order)
-    matrices <- c(matrices, res[[1]])
-    offsets <- c(offsets, res[[2]])
+    matrices <- c(matrices, list(res[[1]]))
+    offsets <- c(offsets, list(res[[2]]))
   }
   coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
   offset <- do.call(cbind, offsets)
@@ -574,7 +574,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- status_map(object, solution$info$exitFlag)
 
   # Timing data.
@@ -585,12 +585,12 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
 
   if(status %in% SOLUTION_PRESENT) {
     primal_val <- solution$info$pcost
-    opt_val <- primal_val + inverse_data[OFFSET]
+    opt_val <- primal_val + inverse_data[[OFFSET]]
     primal_vars <- list()
-    primal_vars[inverse_data[object@var_id]] <- as.matrix(solution$x)
+    primal_vars[[inverse_data[[object@var_id]]]] <- as.matrix(solution$x)
 
-    eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[object@eq_constr])
-    leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[object@neq_constr])
+    eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@eq_constr]])
+    leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[[object@neq_constr]])
     eq_dual <- utils::modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
 
@@ -1019,7 +1019,7 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
 
 setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_cone_order = NA) {
   if(length(constraints) == 0 || is.null(constraints) || is.na(constraints))
-    return(list(NA, NA))
+    return(list(NULL, NULL))
   matrices <- list()
   offsets <- list()
   lengths <- c()
@@ -1029,9 +1029,9 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
     coeff_offs <- reduction_format_constr(object, problem, con, exp_cone_order)
     coeff <- coeff_offs[[1]]
     offset <- coeff_offs[[2]]
-    matrices <- c(matrices, coeff)
-    offsets <- c(offsets, offset)
-    lengths <- c(size(offset))
+    matrices <- c(matrices, list(coeff))
+    offsets <- c(offsets, list(offset))
+    lengths <- c(lengths, prod(dim(offset)))
     ids <- c(ids, id(con))
   }
   coeff <- Matrix(do.call("rbind", matrices), sparse = TRUE)
@@ -1396,7 +1396,7 @@ setMethod("alt_invert", "MOSEK", function(object, results, inverse_data) {
 
   # Store computation time.
   attr <- list()
-  attr[SOLVE_TIME] <- task.getdouinf(mosek.dinfitem.optimizer_time)
+  attr[[SOLVE_TIME]] <- task.getdouinf(mosek.dinfitem.optimizer_time)
 
   # Delete the MOSEK Task and Environment
   task.__exit__(NA, NA, NA)
@@ -1688,7 +1688,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
     solver_opts$eps <- 1e-4
-  results <- scs::solve(args, cones, verbose = verbose, solver_opts)
+  results <- scs::scs(args, cones, verbose = verbose, solver_opts)
   if(!is.na(solver_cache))
     solver_cache[[name(object)]] <- results
   return(results)

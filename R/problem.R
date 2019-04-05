@@ -323,6 +323,8 @@ setMethod("as.character", "Solution", function(x) {
         paste(x@attr, collapse = ", "), "))", sep = "")
 })
 
+setClassUnion("SolutionORList", c("Solution", "list"))
+
 #'
 #' The Problem class.
 #'

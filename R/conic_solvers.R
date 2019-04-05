@@ -91,11 +91,11 @@ ConicSolver.get_coeff_offset <- function(expr) {
   if(length(expr@args[[1]]@args) == 0) {   # Convert data to float64.
     # expr is t(c) %*% x
     offset <- 0
-    coeff <- as.numeric(value(expr@args[[1]]))
+    coeff <- value(expr@args[[1]])
   } else {
     # expr is t(c) %*% x + d
-    offset <- as.numeric(value(expr@args[[2]]))
-    coeff <- as.numeric(value(expr@args[[1]]@args[[1]]))
+    offset <- matrix(t(value(expr@args[[2]])), ncol = 1)
+    coeff <- value(expr@args[[1]]@args[[1]])
   }
   # Convert scalars to sparse matrices.
   if(is.atomic(coeff) && length(coeff) == 1)
@@ -123,8 +123,8 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
   offsets <- list()
   for(arg in constr@args) {
     res <- ConicSolver.get_coeff_offset(arg)
-    coeffs <- c(coeffs, res[[1]])
-    offsets <- c(offsets, res[[2]])
+    coeffs <- c(coeffs, list(res[[1]]))
+    offsets <- c(offsets, list(res[[2]]))
   }
   height <- ifelse(length(coeffs) == 0, 0, sum(sapply(coeffs, function(c) { dim(c)[1] })))
 
@@ -601,8 +601,11 @@ setMethod("invert", signature(object = "ECOS", solution = "Solution", inverse_da
 
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("ECOSolveR", quietly = TRUE)
-  cones <- dims_to_solver_dict(data[ConicSolver()@dims])
-  solution <- ECOSolveR::solve(data[[C_KEY]], data[[G_KEY]], data[[H_KEY]], cones, data[[A_KEY]], data[[B_KEY]], verbose = verbose, solver_opts)
+  cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
+  ecos_opts <- ECOSolveR::ecos.control()
+  ecos_opts$VERBOSE <- as.integer(verbose)
+  ecos_opts[names(solver_opts)] <- solver_opts
+  solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]], control = ecos_opts)
   return(solution)
 })
 

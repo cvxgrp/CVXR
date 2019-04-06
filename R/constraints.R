@@ -641,15 +641,12 @@ setMethod("size", "SOC", function(object) {
 setMethod("cone_sizes", "SOC", function(object) {
   if(object@axis == 2)   # Collapse columns.
     idx <- 1
-  else   # Collapse rows.
+  else if(object@axis == 1)   # Collapse rows.
     idx <- 2
-  if(object@axis == 2)
-    cone_size <- 1 + nrow(object@args[[2]])
-  else if(object@axis == 1)
-    cone_size <- 1 + ncol(object@args[[2]])
   else
-    stop("Invalid axis ", object@axis)
-  lapply(1:num_cones(object), function(i) { cone_size })
+    stop("Unimplemented")
+  cone_size <- 1 + dim(object@args[[2]])[idx]
+  sapply(1:num_cones(object), function(i) { cone_size })
 })
 
 #' @describeIn SOC An SOC constraint is DCP if each of its arguments is affine.

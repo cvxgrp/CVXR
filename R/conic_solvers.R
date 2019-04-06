@@ -554,7 +554,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   data[[C_KEY]] <- as.vector(offsets[[1]])
   data[[OFFSET]] <- offsets[[2]]
-  inv_data[[OFFSET]] <- data[OFFSET][[1]]
+  inv_data[[OFFSET]] <- data[[OFFSET]][1]
 
   constr_map <- group_constraints(problem@constraints)
   data[[ConicSolver()@dims]] <- ConeDims(constr_map)
@@ -575,16 +575,16 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
 })
 
 setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
-  status <- status_map(object, solution$info$exitFlag)
+  status <- status_map(object, solution$retcodes[["exitFlag"]])
 
   # Timing data.
   attr <- list()
-  attr[[SOLVE_TIME]] <- solution$info$timing$tsolve
-  attr[[SETUP_TIME]] <- solution$info$timing$tsetup
-  attr[[NUM_ITERS]] <- solution$info$iter
+  attr[[SOLVE_TIME]] <- solution$timing[["tsolve"]]
+  attr[[SETUP_TIME]] <- solution$timing[["tsetup"]]
+  attr[[NUM_ITERS]] <- solution$retcodes[["iter"]]
 
   if(status %in% SOLUTION_PRESENT) {
-    primal_val <- solution$info$pcost
+    primal_val <- solution$summary[["pcost"]]
     opt_val <- primal_val + inverse_data[[OFFSET]]
     primal_vars <- list()
     primal_vars[[inverse_data[[object@var_id]]]] <- as.matrix(solution$x)

@@ -261,7 +261,7 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
     res <- perform(r, problem)
     problem <- res[[1]]
     inv <- res[[2]]
-    inverse_data <- c(inverse_data, inv)
+    inverse_data <- c(inverse_data, list(inv))
   }
   return(list(problem, inverse_data))
 })
@@ -467,7 +467,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
         constraints <- c(constraints, do.call(class(c), args))
     }
   }
-  return(list(Problem(objective, constraints)), list())
+  return(list(Problem(objective, constraints), list()))
 })
 
 setMethod("invert", signature(object = "EvalParams", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { solution })

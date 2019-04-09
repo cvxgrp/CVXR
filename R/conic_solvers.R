@@ -587,7 +587,8 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
     primal_val <- solution$summary[["pcost"]]
     opt_val <- primal_val + inverse_data[[OFFSET]]
     primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- as.matrix(solution$x)
+    var_id <- inverse_data[[object@var_id]]
+    primal_vars[[as.character(var_id)]] <- as.matrix(solution$x)
 
     eq_dual <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@eq_constr]])
     leq_dual <- get_dual_values(solution$z, extract_dual_value, inverse_data[[object@neq_constr]])

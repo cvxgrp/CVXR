@@ -372,7 +372,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   return(list(Problem(obj, constr), inverse_data))
 })
 
-setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   if(is.null(inverse_data) || length(inverse_data) == 0)
     return(solution)
 
@@ -578,7 +578,7 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
     offset <- var_map[[var_id]]
     var_dim <- inverse_data@var_dims[[var_id]]
     size <- prod(var_dim)
-    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size)], nrow = var_dim[1], ncol = var_dim[2])
+    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size-1)], nrow = var_dim[1], ncol = var_dim[2])
   }
 
   # Remap dual variables if dual exists (problem is convex).

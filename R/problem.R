@@ -220,11 +220,11 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
         setup_time <- results_dict[[SETUP_TIME]]
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
-    list(SOLVER = solver_name,
-         SOLVE_TIME = solve_time,
-         SETUP_TIME = setup_time,
-         NUM_ITERS = num_iters)
-    ##  .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
+    
+    solver_stats <- list(solver_name, solve_time, setup_time, num_iters)
+    names(solver_stats) <- c(SOLVER_NAME, SOLVE_TIME, SETUP_TIME, NUM_ITERS)
+    return(solver_stats)
+    ## .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
 }
 
 #'
@@ -642,8 +642,9 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
-  object <- unpack_results(object, solution, full_chain, inverse_data)
-  return(value(object))
+  # object <- unpack_results(object, solution, full_chain, inverse_data)
+  # return(value(object))
+  unpack_results(object, solution, full_chain, inverse_data)
 })
 
 #' @docType methods
@@ -738,48 +739,49 @@ valuesById <- function(object, results_dict, sym_data, solver) {
                      num_iters = num_iters))
     ##value <- function(cvxObj) result[[ as.character(id(cvxObj)) ]]
     getValue <- function(objet) {
-        ## We go French!
-        if (is(objet, "Variable") || is(objet, "Constraint")) {
-            return(result[[ as.character(id(objet)) ]])
+      ## We go French!
+      if(is(objet, "Variable") || is(objet, "Constraint"))
+        return(result[[as.character(id(objet))]])
+      if(is_zero(objet)) {
+        dims <- dim(objet)
+        valResult <- matrix(0, nrow = dims[1], ncol = dims[2])
+      } else {
+        arg_values <- list()
+        idx <- 1
+        for(arg in objet@args) {
+          ## An argument without a value makes all higher level values NA.
+          ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
+          arg_val <- if(is_constant(arg))
+                       value(arg)
+                     else {
+                       ## result[[as.character(id(arg))]]
+                       getValue(arg)
+                     }
+          
+          if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
+            return(NA)
+          else {
+            arg_values[[idx]] <- arg_val
+            idx <- idx + 1
+          }
         }
-        if(is_zero(objet)) {
-            size <- size(objet)
-            valResult <- matrix(0, nrow = size[1], ncol = size[2])
-        } else {
-
-            arg_values <- list()
-            idx <- 1
-            for(arg in objet@args) {
-                ## An argument without a value makes all higher level values NA.
-                ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
-                arg_val <- if(is_constant(arg)) {
-                               value(arg)
-                           } else {
-                               ##result[[ as.character(id(arg)) ]]
-                               getValue(arg)
-                           }
-                if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
-                    return(NA)
-                else {
-                    arg_values[[idx]] <- arg_val
-                    idx <- idx + 1
-                }
-            }
-            valResult <- to_numeric(objet, arg_values)
-        }
-
-        ## Reduce to scalar if possible
-        if(all(intf_dim(valResult) == c(1, 1)))
-            intf_scalar_value(valResult)
-        else
-            valResult
+        valResult <- to_numeric(objet, arg_values)
+      }
+      
+      ## Reduce to scalar if possible
+      if(all(intf_dim(valResult) == c(1, 1)))
+        intf_scalar_value(valResult)
+      else
+        valResult
     }
+    
     getDualValue <- function(objet) {
-        if (!is(objet, "Constraint")) {
-            stop("getDualValue: argument should be a Constraint!")
-        }
-        getValue(objet)
+      if(!is(objet, "Constraint")) {
+        stop("getDualValue: argument should be a Constraint!")
+      }
+      getValue(objet)
     }
+    
     result$getValue <- getValue
     result$getDualValue <- getDualValue
     result
@@ -797,24 +799,95 @@ valuesById <- function(object, results_dict, sym_data, solver) {
 # }
 
 setMethod("unpack", signature(object = "Problem", solution = "Solution"), function(object, solution) {
+  # if(solution@status %in% SOLUTION_PRESENT) {
+  #   for(v in variables(object))
+  #     object <- save_value(v, solution@primal_vars[id(v)])
+  #   for(c in object@constraints) {
+  #     if(id(c) %in% solution@dual_vars)
+  #       object <- save_value(c, solution@dual_vars[id(c)])
+  #   }
+  # } else if(solution@status %in% INF_OR_UNB) {
+  #   for(v in variables(object))
+  #     object <- save_value(v, NA)
+  #   for(constr in object@constraints)
+  #     object <- save_value(constr, NA)
+  # } else
+  #   stop("Cannot unpack invalid solution")
+  # object@value <- solution@opt_val
+  # object@status <- solution@status
+  # object@solution <- solution
+  # return(object)
+  
+  result <- list()
   if(solution@status %in% SOLUTION_PRESENT) {
-    for(v in variables(object))
-      object <- save_value(v, solution@primal_vars[id(v)])
+    for(v in variables(object)) {
+      vid <- as.character(id(v))
+      result[[vid]] <- solution@primal_vars[[vid]]
+    }
     for(c in object@constraints) {
-      if(id(c) %in% solution@dual_vars)
-        object <- save_value(c, solution@dual_vars[id(c)])
+      cid <- as.character(id(c))
+      if(cid %in% names(solution@dual_vars))
+        result[[cid]] <- solution@dual_vars[[cid]]
     }
   } else if(solution@status %in% INF_OR_UNB) {
     for(v in variables(object))
-      object <- save_value(v, NA)
-    for(constr in object@constraints)
-      object <- save_value(constr, NA)
+      result[[as.character(id(v))]] <- NA
+    for(c in object@constraints)
+      result[[as.character(id(c))]] <- NA
   } else
     stop("Cannot unpack invalid solution")
-  object@value <- solution@opt_val
-  object@status <- solution@status
-  object@solution <- solution
-  return(object)
+  
+  result$value <- solution@opt_val
+  result$status <- solution@status
+  # result$solution <- solution
+  
+  # Helper functions.
+  getValue <- function(objet) {
+    ## We go French!
+    if(is(objet, "Variable") || is(objet, "Constraint"))
+      return(result[[as.character(id(objet))]])
+    if(is_zero(objet)) {
+      dims <- dim(objet)
+      valResult <- matrix(0, nrow = dims[1], ncol = dims[2])
+    } else {
+      arg_values <- list()
+      idx <- 1
+      for(arg in objet@args) {
+        ## An argument without a value makes all higher level values NA.
+        ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
+        arg_val <- if(is_constant(arg))
+          value(arg)
+        else {
+          ## result[[as.character(id(arg))]]
+          getValue(arg)
+        }
+        
+        if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
+          return(NA)
+        else {
+          arg_values[[idx]] <- arg_val
+          idx <- idx + 1
+        }
+      }
+      valResult <- to_numeric(objet, arg_values)
+    }
+    
+    ## Reduce to scalar if possible
+    if(all(intf_dim(valResult) == c(1, 1)))
+      intf_scalar_value(valResult)
+    else
+      valResult
+  }
+  
+  getDualValue <- function(objet) {
+    if(!is(objet, "Constraint"))
+      stop("getDualValue: argument should be a Constraint!")
+    getValue(objet)
+  }
+  
+  result$getValue <- getValue
+  result$getDualValue <- getDualValue
+  return(result)
 })
 
 #' @describeIn Problem
@@ -824,10 +897,13 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
 #' @param results_dict A list containing the solver output.
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
-    solution <- invert(chain, solution, inverse_data)
-    object <- unpack(object, solution)
-    object@.solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
-    return(object)
+  solution <- invert(chain, solution, inverse_data)
+  # object <- unpack(object, solution)
+  # object@.solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
+  # return(object)
+  results <- unpack(object, solution)
+  solver_stats <- SolverStats(solution@attr, name(chain@solver))
+  return(c(results, solver_stats))
 })
 
 handleNoSolution <- function(object, status) {

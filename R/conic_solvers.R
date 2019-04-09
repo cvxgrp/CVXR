@@ -1639,7 +1639,7 @@ SCS.extract_dual_value <- function(result_vec, offset, constraint) {
     dim <- nrow(constraint)
     lower_tri_dim <- dim*floor((dim+1)/2)
     new_offset <- offset + lower_tri_dim
-    lower_tri <- result_vec[offset:new_offset]
+    lower_tri <- result_vec[(offset + 1):new_offset]
     full <- tri_to_full(lower_tri, dim)
     return(list(full, new_offset))
   } else
@@ -1659,13 +1659,14 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     primal_val <- solution$info$pobj
     opt_val <- primal_val + inverse_data[[OFFSET]]
     primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- as.matrix(solution$x)
+    var_id <- inverse_data[[object@var_id]]
+    primal_vars[[as.character(var_id)]] <- as.matrix(solution$x)
     
     eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[[ConicSolver()@dims]]@zero]),
       SCS.extract_dual_value, inverse_data[[object@eq_constr]])
 
     ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[[ConicSolver()@dims]]@zero:length(solution$y)]),
-                                      SCS.extract_dual_value, inverse_data[object@neq_constr])
+                                      SCS.extract_dual_value, inverse_data[[object@neq_constr]])
 
     dual_vars <- list()
     dual_vars <- utils::modifyList(dual_vars, eq_dual_vars)

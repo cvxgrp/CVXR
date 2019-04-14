@@ -1,3 +1,58 @@
+#'
+#' The InverseData class.
+#'
+#' This class represents the data encoding an optimization problem.
+#'
+#' @rdname InverseData-class
+.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
+                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric", minimize = "logical"),
+                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(),
+                                   real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA))
+
+InverseData <- function(problem) { .InverseData(problem = problem) }
+
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA) {
+  # Basic variable offset information
+  varis <- variables(problem)
+  varoffs <- get_var_offsets(.Object, varis)
+  .Object@id_map <- varoffs$id_map
+  .Object@var_offsets <- varoffs$var_offsets
+  .Object@x_length <- varoffs$x_length
+  .Object@var_dims <- varoffs$var_dims
+  
+  # Map of variable id to variable
+  .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
+  
+  # Map of real to imaginary parts of complex variables
+  var_comp <- Filter(is_complex, varis)
+  .Object@real2imag <- stats::setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
+  constrs <- constraints(problem)
+  constr_comp <- Filter(is_complex, constrs)
+  constr_dict <- stats::setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
+  .Object@real2imag <- utils::modifyList(.Object@real2imag, constr_dict)
+  
+  # Map of constraint id to constraint
+  .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
+  .Object@cons_id_map <- list()
+  .Object@r <- r
+  .Object@minimize <- minimize
+  return(.Object)
+})
+
+setMethod("get_var_offsets", signature(object = "InverseData", variables = "list"), function(object, variables) {
+  var_dims <- list()
+  var_offsets <- list()
+  id_map <- list()
+  vert_offset <- 0
+  for(x in variables) {
+    var_dims[[as.character(id(x))]] <- dim(x)
+    var_offsets[[as.character(id(x))]] <- vert_offset
+    id_map[[as.character(id(x))]] <- list(vert_offset, size(x))
+    vert_offset <- vert_offset + size(x)
+  }
+  return(list(id_map = id_map, var_offsets = var_offsets, x_length = vert_offset, var_dims = var_dims))
+})
+
 # TODO: Find best format for sparse matrices.
 .CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_dims = "list"),
                             prototype(id_map = list(), N = NA_real_, var_dims = list()))

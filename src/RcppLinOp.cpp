@@ -159,10 +159,10 @@ void LinOp__set_type(SEXP xp, int typeValue) {
     oType = PROMOTE;
     break;
   case 2:
-    oType = MUL;
+    oType = MUL_EXPR;
     break;
   case 3:
-    oType = RMUL;
+    oType = RMUL_EXPR;
     break;
   case 4:
     oType = MUL_ELEM;
@@ -259,10 +259,10 @@ int LinOp__get_type(SEXP xp) {
   case PROMOTE:
     oType = 1;
     break;
-  case MUL:
+  case MUL_EXPR:
     oType = 2;
     break;
-  case RMUL:
+  case RMUL_EXPR:
     oType = 3;
     break;
   case MUL_ELEM:

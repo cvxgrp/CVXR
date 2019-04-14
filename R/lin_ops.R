@@ -1,8 +1,8 @@
 # Types of linear operators
 VARIABLE = "variable"
 PROMOTE = "promote"
-MUL = "mul"
-RMUL = "rmul"
+MUL_EXPR = "mul_expr"
+RMUL_EXPR = "rmul_expr"
 MUL_ELEM = "mul_elem"
 DIV = "div"
 SUM = "sum"
@@ -28,8 +28,8 @@ CONSTANT_ID = "constant_id"
 
 LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  PROMOTE = "PROMOTE",
-                 MUL = "MUL",
-                 RMUL = "RMUL",
+                 MUL_EXPR = "MUL_EXPR",
+                 RMUL_EXPR = "RMUL_EXPR",
                  MUL_ELEM = "MUL_ELEM",
                  DIV = "DIV",
                  SUM = "SUM",
@@ -127,11 +127,11 @@ lo.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
 }
 
 lo.mul_expr <- function(lh_op, rh_op, dim) {
-  LinOp(MUL, dim, list(rh_op), lh_op)
+  LinOp(MUL_EXPR, dim, list(rh_op), lh_op)
 }
 
 lo.rmul_expr <- function(lh_op, rh_op, dim) {
-  LinOp(RMUL, dim, list(lh_op), rh_op)
+  LinOp(RMUL_EXPR, dim, list(lh_op), rh_op)
 }
 
 lo.multiply <- function(lh_op, rh_op) {

@@ -61,10 +61,10 @@ std::vector<Matrix> get_func_coeffs(LinOp& lin) {
 	case PROMOTE:
 		coeffs = get_promote_mat(lin);
 		break;
-	case MUL:
+	case MUL_EXPR:
 		coeffs = get_mul_mat(lin);
 		break;
-	case RMUL:
+	case RMUL_EXPR:
 		coeffs = get_rmul_mat(lin);
 		break;
 	case MUL_ELEM:
@@ -670,17 +670,17 @@ std::vector<Matrix> get_mul_elemwise_mat(LinOp &lin) {
 }
 
 /**
- * Return the coefficients for RMUL (right multiplication): a ROWS * N
+ * Return the coefficients for RMUL_EXPR (right multiplication): a ROWS * N
  * by COLS * N matrix given by the kronecker product between the
  * transpose of the constant matrix CONSTANT and a N x N identity matrix.
  *
- * Parameters: linOp of type RMUL
+ * Parameters: linOp of type RMUL_EXPR
  *
  * Returns: vector containing the corresponding coefficient matrix COEFFS
  *
  */
 std::vector<Matrix> get_rmul_mat(LinOp &lin) {
-	assert(lin.type == RMUL);
+	assert(lin.type == RMUL_EXPR);
 	Matrix constant = get_constant_data(lin, false);
 	int rows = constant.rows();
 	int cols = constant.cols();
@@ -709,17 +709,17 @@ std::vector<Matrix> get_rmul_mat(LinOp &lin) {
 }
 
 /**
- * Return the coefficients for MUL (left multiplication): a NUM_BLOCKS * ROWS
+ * Return the coefficients for MUL_EXPR (left multiplication): a NUM_BLOCKS * ROWS
  * by NUM_BLOCKS * COLS block diagonal matrix where each diagonal block is the
  * constant data BLOCK.
  *
- * Parameters: linOp with type MUL
+ * Parameters: linOp with type MUL_EXPR
  *
  * Returns: vector containing coefficient matrix COEFFS
  *
  */
 std::vector<Matrix> get_mul_mat(LinOp &lin) {
-	assert(lin.type == MUL);
+	assert(lin.type == MUL_EXPR);
 	Matrix block = get_constant_data(lin, false);
 	int block_rows = block.rows();
 	int block_cols = block.cols();

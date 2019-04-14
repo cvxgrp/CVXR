@@ -27,8 +27,8 @@ static const int CONSTANT_ID = -1;
 enum operatortype {
 	VARIABLE,
 	PROMOTE,
-	MUL,
-	RMUL,
+	MUL_EXPR,
+	RMUL_EXPR,
 	MUL_ELEM,
 	DIV,
 	SUM,

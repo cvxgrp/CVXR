@@ -255,9 +255,8 @@ as.Constant <- function(expr) {
 #' is_negative(x)
 #' size(x)
 #' @export
-Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) {
-  .Parameter(dim = dim, name = name, value = value, ...)
-}
+# Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = dim, name = name, value = value, ...) }
+Parameter <- function(rows = 1, cols = 1, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
 
 setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim = NULL, name = NA_character_, value = NA_real_) {
   .Object@id <- id

@@ -339,6 +339,19 @@ setGeneric("value<-", function(object, value) { standardGeneric("value<-") })
 setGeneric("save_value", function(object, value) { standardGeneric("save_value") })
 
 #'
+#' Is Constraint Violated?
+#'
+#' Checks whether the constraint violation is less than a tolerance.
+#'
+#' @param object A \linkS4class{Constraint} object.
+#' @param tolerance A numeric scalar representing the absolute tolerance to impose on the violation.
+#' @return A logical value indicating whether the violation is less than the \code{tolerance}. Raises an error if the residual is \code{NA}.
+#' @docType methods
+#' @rdname constr_value
+#' @export
+setGeneric("constr_value", function(object, tolerance) { standardGeneric("constr_value") })
+
+#'
 #' Get Expression Data
 #'
 #' Get information needed to reconstruct the expression aside from its arguments.
@@ -1281,7 +1294,6 @@ setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { s
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack", function(object, solution) { standardGeneric("unpack") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })
-setGeneric("constr_value", function(object, tolerance) { standardGeneric("constr_value") })
 setGeneric(".construct_dual_variables", function(object, args) { standardGeneric(".construct_dual_variables") })
 setGeneric("reduction_solve", function(object, problem, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve") })
 setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve_via_data") })

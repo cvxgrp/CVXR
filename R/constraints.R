@@ -20,7 +20,7 @@ setMethod("initialize", "Constraint", function(.Object, ..., constr_id = get_id(
 
 setMethod("as.character", "Constraint", function(x) { name(x) })
 setMethod("show", "Constraint", function(object) {
-  paste(class(object), "(", as.character(object@args[[1]]), ")")
+  print(paste(class(object), "(", as.character(object@args[[1]]), ")", sep = ""))
 })
 
 setMethod("dim", "Constraint", function(x) { dim(x@args[[1]]) })
@@ -63,10 +63,11 @@ setReplaceMethod("dual_value", "Constraint", function(object, value) {
   object
 })
 
-.ZeroConstraint <- setClass("ZeroConstraint", representation(expr = "ConstValORExpr"), contains = "Constraint")
+.ZeroConstraint <- setClass("ZeroConstraint", representation(expr = "Expression"), contains = "Constraint")
 ZeroConstraint <- function(expr, constr_id = NA_integer_) { .ZeroConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
+  .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
 })
 
@@ -96,6 +97,8 @@ setMethod("canonicalize", "ZeroConstraint", function(object) {
 EqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
 
 setMethod("initialize", "EqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
+  .Object@lhs <- lhs
+  .Object@rhs <- rhs
   .Object@expr <- lhs - rhs
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
@@ -121,7 +124,7 @@ setMethod("residual", "EqConstraint", function(object) {
   return(abs(value(object@expr)))
 })
 
-.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "ConstValORExpr"),
+.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"),
                               validity = function(object) {
                                 if(is_complex(object@expr))
                                   stop("Inequality constraints cannot be complex.")
@@ -130,6 +133,7 @@ setMethod("residual", "EqConstraint", function(object) {
 NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
+  .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
 })
 
@@ -163,6 +167,8 @@ setMethod("residual", "NonPosConstraint", function(object) {
 IneqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
 
 setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
+  .Object@lhs <- lhs
+  .Object@rhs <- rhs
   .Object@expr <- lhs - rhs
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
@@ -172,7 +178,7 @@ setMethod("name", "IneqConstraint", function(x) {
 })
 
 #' @describeIn IneqConstraint The dimensions of the constrained expression.
-setMethod("dim", "IneqConstraint", function(x) { size(x@expr) })
+setMethod("dim", "IneqConstraint", function(x) { c(size(x@expr), 1) })
 
 #' @describeIn IneqConstraint The size of the constrained expression.
 setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
@@ -323,7 +329,7 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 })
 
 setMethod("show", "ExpCone", function(object) {
-  paste("ExpCone(", as.character(object@a), ", ", as.character(object@b), ", ", as.character(object@c), ")", sep = "")
+  print(paste("ExpCone(", as.character(object@a), ", ", as.character(object@b), ", ", as.character(object@c), ")", sep = ""))
 })
 
 #' @rdname ExpCone-class

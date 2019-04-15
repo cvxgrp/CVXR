@@ -1,3 +1,5 @@
+context("test-g01-sign.R")
+
 pos <- Constant(1)
 neg <- Constant(-1)
 zero <- Constant(0)
@@ -30,19 +32,19 @@ test_that("test sign negation", {
   expect_equal(sign(-pos), sign(neg))
 })
 
-test_that("test if sign is positive, negative, or zero", {
-  expect_true(is_positive(pos))
-  expect_false(is_positive(neg))
-  expect_false(is_positive(unknown))
-  expect_true(is_positive(zero))
+test_that("test if sign is nonnegative or nonpositive", {
+  expect_true(is_nonneg(pos))
+  expect_false(is_nonneg(neg))
+  expect_false(is_nonneg(unknown))
+  expect_true(is_nonneg(zero))
   
-  expect_false(is_negative(pos))
-  expect_true(is_negative(neg))
-  expect_false(is_negative(unknown))
-  expect_true(is_negative(zero))
+  expect_false(is_nonpos(pos))
+  expect_true(is_nonpos(neg))
+  expect_false(is_nonpos(unknown))
+  expect_true(is_nonpos(zero))
   
   expect_true(is_zero(zero))
   expect_false(is_zero(neg))
   
-  expect_false(is_positive(unknown) || is_negative(unknown))
+  expect_false(is_nonneg(unknown) || is_nonpos(unknown))
 })

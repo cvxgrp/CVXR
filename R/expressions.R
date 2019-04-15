@@ -342,7 +342,8 @@ setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   e1_dim <- dim(e1)
   e2_dim <- dim(e2)
-  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))))
+  # if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))))
+  if(is_scalar(e1) || is_scalar(e2))
     Multiply(lh_exp = e1, rh_exp = e2)
   else
     stop("Elementwise multiplication is not allowed, use '%*%' for matrix multiplication")
@@ -416,10 +417,12 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   x_dim <- dim(x)
   y_dim <- dim(y)
   
-  if(is.null(x_dim) || is.null(y_dim))
-    stop("Scalar operands are not allowed,  use '*' instead")
-  else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
-    stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
+  # if(is.null(x_dim) || is.null(y_dim))
+  #  stop("Scalar operands are not allowed,  use '*' instead")
+  # else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
+  #   stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
+  if(is_scalar(x_dim) || is_scalar(y_dim))
+    stop("Scalar operands are not allowed, use '*' instead")
   else if(is_constant(x) || is_constant(y))
     MulExpression(lh_exp = x, rh_exp = y)
   else {

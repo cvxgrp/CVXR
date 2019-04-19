@@ -68,7 +68,8 @@ Dcp2Cone.cumsum_canon <- function(expr, args) {
 
   # Implicit O(n) definition:
   # X = Y[1,:] - Y[2:nrow(Y),:]
-  Y <- Variable(dim(expr))
+  # Y <- Variable(dim(expr))
+  Y <- new("Variable", dim = dim(expr))
   if(axis == 1)   # Cumulative sum on each column
     constr <- list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),], Y[1,] == X[1,])   # TODO: Check corner cases
   else   # Cumulative sum on each row
@@ -79,7 +80,8 @@ Dcp2Cone.cumsum_canon <- function(expr, args) {
 Dcp2Cone.entr_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
 
   # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
@@ -91,7 +93,8 @@ Dcp2Cone.entr_canon <- function(expr, args) {
 Dcp2Cone.exp_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
   ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(x, ones, t))
   return(list(t, constraints))
@@ -101,7 +104,8 @@ Dcp2Cone.geo_mean_canon <- function(expr, args) {
   x <- args[[1]]
   w <- expr@w
   expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
 
   x_list <- lapply(1:length(w), function(i) { x[i] })
 
@@ -115,8 +119,10 @@ Dcp2Cone.huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
   expr_dim <- dim(expr)
-  n <- Variable(expr_dim)
-  s <- Variable(expr_dim)
+  # n <- Variable(expr_dim)
+  # s <- Variable(expr_dim)
+  n <- new("Variable", dim = expr_dim)
+  s <- new("Variable", dim = expr_dim)
 
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a
@@ -147,7 +153,8 @@ Dcp2Cone.kl_div_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
   y <- promote(args[[2]], expr_dim)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
   constraints <- list(ExpCone(t, x, y), y >= 0)
   obj <- y - x - t
   return(list(obj, constraints))
@@ -183,7 +190,8 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
 
   X <- expr@args[[1]]
   k <- expr@k
-  Z <- Variable(c(nrow(X), nrow(X)), PSD = TRUE)
+  # Z <- Variable(c(nrow(X), nrow(X)), PSD = TRUE)
+  Z <- Variable(nrow(X), ncol(X), PSD = TRUE)
   canon <- Dcp2Cone.lambda_max_canon(expr, list(X - Z))
   obj <- canon[[1]]
   constr <- canon[[2]]
@@ -198,7 +206,8 @@ Dcp2Cone.log1p_canon <- function(expr, args) {
 Dcp2Cone.log_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
   ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something that we want to change?
   constraints <- list(ExpCone(t, ones, x))
@@ -239,12 +248,14 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   A <- args[[1]]   # n by n matrix
   n <- nrow(A)
   # Require that X and A are PSD.
-  X <- Variable(c(2*n, 2*n), PSD = TRUE)
+  # X <- Variable(c(2*n, 2*n), PSD = TRUE)
+  X <- Variable(2*n, 2*n, PSD = TRUE)
   constraints <- list(PSDConstraint(A))
 
   # Fix Z as upper triangular
   # TODO: Represent Z as upper triangular vector
-  Z <- Variable(c(n,n))
+  # Z <- Variable(c(n,n))
+  Z <- Variable(n,n)
   Z_lower_tri <- upper_tri(t(Z))
   constraints <- list(Z_lower_tri == 0)
 
@@ -273,7 +284,8 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   axis <- expr@axis
   keepdims <- expr@keepdims
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
   
   # log(sum(exp(x))) <= t <=> sum(exp(x-t)) <= 1.
   if(is.na(axis))   # shape = c(1,1)
@@ -295,7 +307,8 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
   # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
-  t0 <- Variable(expr_dim)
+  # t0 <- Variable(expr_dim)
+  t0 <- new("Variable", dim = expr_dim)
   canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
   canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
 
@@ -320,8 +333,10 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   m <- X_dim[2]
 
   # Create a matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X
-  M <- Variable(c(n+m, n+m), PSD = TRUE)
-  Tvar <- Variable(c(m,m), symmetric = TRUE)
+  # M <- Variable(c(n+m, n+m), PSD = TRUE)
+  # Tvar <- Variable(c(m,m), symmetric = TRUE)
+  M <- Variable(n+m, n+m, PSD = TRUE)
+  Tvar <- Variable(m, m, symmetric = TRUE)
   constraints <- list()
   # Fix M using the fact that P must be affine by the DCP rules.
   # M[1:n, 1:n] == P
@@ -343,7 +358,8 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   #   minimize (trace(U) + trace(V))/2
   #   subject to:
   #            [U A; t(A) V] is positive semidefinite
-  X <- Variable(c(m+n, m+n), PSD = TRUE)
+  # X <- Variable(c(m+n, m+n), PSD = TRUE)
+  X <- Variable(m+n, m+n, PSD = TRUE)
   constraints <- list()
 
   # Fix X using the fact that A must be affine by the DCP rules.
@@ -358,7 +374,8 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
   p <- expr@p
   axis <- expr@axis
   expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
 
   if(p == 2) {
     if(is.na(axis)) {
@@ -382,7 +399,8 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
 
   # Now, we take care of the remaining convex and concave branches to create the
   # rational powers. We need a new variable, r, and the constraint sum(r) == t
-  r <- Variable(dim(x))
+  # r <- Variable(dim(x))
+  r <- new("Variable", dim = dim(x))
   constraints <- c(constraints, list(sum(r) == t))
 
   # TODO: No need to run gm_constr to form the tree each time.
@@ -411,7 +429,8 @@ Dcp2Cone.power_canon <- function(expr, args) {
   if(p == 0)
     return(list(ones, list()))
   else {
-    t <- Variable(expr_dim)
+    # t <- Variable(expr_dim)
+    t <- new("Variable", dim = expr_dim)
     # TODO: gm_constrs requires each of its inputs to be a Variable; is this something that we want to change?
     if(p > 0 && p < 1)
       return(list(t, gm_constrs(t, list(x, ones), w)))
@@ -464,7 +483,8 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
   A_dim <- dim(A)
   n <- A_dim[1]
   m <- A_dim[2]
-  X <- Variable(c(n+m, n+m), PSD = TRUE)
+  # X <- Variable(c(n+m, n+m), PSD = TRUE)
+  X <- Variable(n+m, n+m, PSD = TRUE)
 
   expr_dim <- dim(expr)
   t <- Variable(expr_dim)

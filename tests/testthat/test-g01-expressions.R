@@ -1,3 +1,4 @@
+context("test-g01-expressions.R")
 TOL <- 1e-6
 
 a <- Variable(name = "a")
@@ -13,11 +14,13 @@ C <- Variable(3, 2, name = "C")
 test_that("Test the Variable class", {
   x <- Variable(2, name = "x")
   y <- Variable()
-  expect_equal(size(x), c(2,1))
-  expect_equal(size(y), c(1,1))
+  expect_equal(dim(x), c(2,1))
+  expect_equal(dim(y), c(1,1))
   expect_equal(curvature(x), AFFINE)
-  expect_equal(canonical_form(x)[[1]]$size, c(2,1))
-  expect_equal(canonical_form(x)[[2]], list())
+  
+  expect_error(Variable(2,2), diag = TRUE, symmetric = TRUE)
+  expect_error(Variable(2,0))
+  expect_error(Variable(2,0.5))
 })
 
 test_that("Test assigning a value to a variable", {
@@ -43,7 +46,7 @@ test_that("Test assigning a value to a variable", {
   expect_equal(value(A), matrix(1, nrow = 3, ncol = 2))
 
   # Test assigning negative val to non-negative variable
-  x <- NonNegative()
+  x <- Variable(nonneg = TRUE)
   expect_error(value(x) <- -2)
 
   # Small negative values are rounded to zero
@@ -57,14 +60,14 @@ test_that("Test assigning a value to a variable", {
 
 test_that("Test transposing variables", {
   var <- t(a)
-  expect_equal(size(var), c(1,1))
+  expect_equal(dim(var), c(1,1))
 
   a <- save_value(a, 2)
   var <- t(a)
   expect_equal(value(var), 2)
 
   var <- t(x)
-  expect_equal(size(var), c(1,2))
+  expect_equal(dim(var), c(1,2))
 
   x <- save_value(x, matrix(c(1, 2), nrow = 2, ncol = 1))
   var <- t(x)
@@ -72,19 +75,19 @@ test_that("Test transposing variables", {
   expect_equal(value(var)[1,2], 2)
 
   var <- t(C)
-  expect_equal(size(var), c(2,3))
+  expect_equal(dim(var), c(2,3))
 
   index <- var[2,1]
-  expect_equal(size(index), c(1,1))
+  expect_equal(dim(index), c(1,1))
 
   var <- t(t(x))
-  expect_equal(size(var), c(2,1))
+  expect_equal(dim(var), c(2,1))
 })
 
 test_that("Test the Constant class", {
   c <- Constant(2)
   expect_equal(value(c), matrix(2))
-  expect_equal(size(c), c(1,1))
+  expect_equal(dim(c), c(1,1))
   expect_equal(curvature(c), CONSTANT)
   expect_equal(sign(c), POSITIVE)
   expect_equal(sign(Constant(-2)), NEGATIVE)
@@ -94,7 +97,7 @@ test_that("Test the Constant class", {
 
   # Test the sign
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
-  expect_equal(size(c), c(1,2))
+  expect_equal(dim(c), c(1,2))
   expect_equal(sign(c), POSITIVE)
   expect_equal(sign(-c), NEGATIVE)
   expect_equal(sign(0*c), ZERO)
@@ -118,13 +121,13 @@ test_that("test R vectors as constants", {
   p  <- Parameter(2)
   value(p) <- c(1,1)
   expect_equal(value(c %*% p), 3)
-  expect_equal(size(c %*% x), c(1,1))
+  expect_equal(dim(c %*% x), c(1,1))
 })
 
 test_that("test the Parameters class", {
   p <- Parameter(name = "p")
   expect_equal(name(p), "p")
-  expect_equal(size(p), c(1,1))
+  expect_equal(dim(p), c(1,1))
 
   p <- Parameter(4, 3, sign = "positive")
   expect_error(value(p) <- 1)
@@ -163,7 +166,7 @@ test_that("test the AddExpression class", {
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
 
   z <- Variable(2, name = "z")
   exp <- exp + z + x
@@ -172,7 +175,7 @@ test_that("test the AddExpression class", {
   # Matrices
   exp <- A + B
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(2,2))
+  expect_equal(dim(exp), c(2,2))
   expect_error(A + C)
   expect_error(AddExpression(A, C))
 
@@ -189,7 +192,7 @@ test_that("test the SubExpression class", {
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
 
   z <- Variable(2, name = "z")
   exp <- exp - z - x
@@ -198,7 +201,7 @@ test_that("test the SubExpression class", {
   # Matrices
   exp <- A - B
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(2,2))
+  expect_equal(dim(exp), c(2,2))
   expect_error(A - C)
 })
 
@@ -210,7 +213,7 @@ test_that("test the MulExpression class", {
   expect_equal(sign(c[1]*x), UNKNOWN)
   expect_equal(canonical_form(expr)[[1]]$size, c(1,1))
   expect_equal(canonical_form(expr)[[2]], list())
-  expect_equal(size(expr), c(1,1))
+  expect_equal(dim(expr), c(1,1))
 
   expect_error(matrix(c(2,2,3), nrow = 3, ncol = 1) %*% x)
 
@@ -228,7 +231,7 @@ test_that("test the MulExpression class", {
   Tmat <- Constant(cbind(c(1,2,3), c(3,5,5)))
   expr <- (Tmat + Tmat) %*% B
   expect_equal(curvature(expr), AFFINE)
-  expect_equal(size(expr), c(3,2))
+  expect_equal(dim(expr), c(3,2))
 
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2, 2, -2), nrow = 1, ncol = 3))
@@ -252,7 +255,7 @@ test_that("test matrix multiplication operator %*%", {
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(canonical_form(exp)[[1]]$size, c(1,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   # expect_error(x %*% 2)    Note: Allow scalars to be multiplied with %*% to distinguish MulExpression from MulElemwise.
   expect_error(x %*% matrix(c(2,2,3), nrow = 3, ncol = 1))
@@ -286,7 +289,7 @@ test_that("test the DivExpression class", {
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
 
   expect_error(x/c(2,2,3))
 
@@ -294,7 +297,7 @@ test_that("test the DivExpression class", {
   c <- Constant(2)
   exp <- c/(3-5)
   expect_equal(curvature(exp), CONSTANT)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
   expect_equal(sign(exp), NEGATIVE)
 
   # Parameters
@@ -322,12 +325,12 @@ test_that("test the NegExpression class", {
   expect_false(is_positive(exp))
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), size(x))
+  expect_equal(dim(exp), dim(x))
 
   # Matrices
   exp <- -C
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(3,2))
+  expect_equal(dim(exp), c(3,2))
 })
 
 test_that("test promotion of scalar constants", {
@@ -339,19 +342,19 @@ test_that("test promotion of scalar constants", {
   expect_false(is_negative(exp))
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
 
-  expect_equal(size(4 - x), c(2,1))
-  expect_equal(size(4 * x), c(2,1))
-  expect_equal(size(4 <= x), c(2,1))
-  expect_equal(size(4 == x), c(2,1))
-  expect_equal(size(x >= 4), c(2,1))
+  expect_equal(dim(4 - x), c(2,1))
+  expect_equal(dim(4 * x), c(2,1))
+  expect_equal(dim(4 <= x), c(2,1))
+  expect_equal(dim(4 == x), c(2,1))
+  expect_equal(dim(x >= 4), c(2,1))
 
   # Matrices
   exp <- (A + 2) + 4
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(3 * A), c(2,2))
-  expect_equal(size(exp), c(2,2))
+  expect_equal(dim(3 * A), c(2,2))
+  expect_equal(dim(exp), c(2,2))
 })
 
 test_that("test indexing expression", {
@@ -359,25 +362,25 @@ test_that("test indexing expression", {
   exp <- x[2,1]
   expect_equal(curvature(exp), AFFINE)
   expect_true(is_affine(exp))
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
   expect_equal(value(exp), NA)
 
   exp <- t(x[2,1])
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
   expect_error(x[3,1])
 
   # Slicing
   exp <- C[1:2,2]
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
   exp <- C[1:nrow(C),1:2]
-  expect_equal(size(exp), c(3,2))
+  expect_equal(dim(exp), c(3,2))
   exp <- C[seq(1, nrow(C), 2), seq(1, ncol(C), 2)]
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
   exp <- C[1:3, seq(1,2,2)]
-  expect_equal(size(exp), c(3,1))
+  expect_equal(dim(exp), c(3,1))
   exp <- C[1:nrow(C),1]
-  expect_equal(size(exp), c(3,1))
+  expect_equal(dim(exp), c(3,1))
 
   c <- Constant(cbind(c(1,-2), c(0,4)))
   exp <- c[2,2]
@@ -385,58 +388,58 @@ test_that("test indexing expression", {
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(sign(c[1,2]), UNKNOWN)
   expect_equal(sign(c[2,1]), UNKNOWN)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
   expect_equal(value(exp), 4)
 
   c <- Constant(cbind(c(1,-2,3), c(0,4,5), c(7,8,9)))
   exp <- c[1:3, seq(1,4,2)]
   expect_equal(curvature(exp), CONSTANT)
   expect_true(is_constant(exp))
-  expect_equal(size(exp), c(3,2))
+  expect_equal(dim(exp), c(3,2))
   expect_equal(value(exp[1,2]), 7)
 
   # Slice of transpose
   exp <- t(C)[1:2,2]
-  expect_equal(size(exp), c(2,1))
+  expect_equal(dim(exp), c(2,1))
 
   # Arithmetic expression indexing
   exp <- (x + z)[2,1]
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   exp <- (x + a)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   exp <- (x - z)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   exp <- (x - a)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   exp <- (-x)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- (c %*% x)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- (c*a)[2,1]
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
 })
 
 test_that("test negative indices", {
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- c[-1,-1]
   expect_equal(value(exp), 4)
-  expect_equal(size(exp), c(1,1))
+  expect_equal(dim(exp), c(1,1))
   expect_equal(curvature(exp), CONSTANT)
 
   # TODO: More testing of R's negative indices (and sequences of negative indices)
@@ -449,42 +452,42 @@ test_that("test indexing with logical matrices", {
 
   # Logical matrix
   expr <- C[A <= 2]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(dim(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(matrix(A[A <= 2]), value(expr))
 
   expr <- C[A %% 2 == 0]
-  expect_equal(size(expr), c(6,1))
+  expect_equal(dim(expr), c(6,1))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(matrix(A[A %% 2 == 0]), value(expr))
 
   # Logical vector for rows, index for columns
   expr <- C[c(TRUE, FALSE, TRUE), 4]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(dim(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(matrix(A[c(TRUE, FALSE, TRUE), 4]), value(expr))
 
   # Index for rows, logical vector for columns
   expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]
-  expect_equal(size(expr), c(1, 2))
+  expect_equal(dim(expr), c(1, 2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[2, c(TRUE, FALSE, FALSE, TRUE), drop = FALSE], value(expr))
 
   # Logical vector for rows, slice for columns
   expr <- C[c(TRUE, TRUE, TRUE), 2:3]
-  expect_equal(size(expr), c(3,2))
+  expect_equal(dim(expr), c(3,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(TRUE, TRUE, TRUE), 2:3], value(expr))
 
   # Slice for rows, logical vector for columns
   expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]
-  expect_equal(size(expr), c(1,3))    # Always cast 1-D arrays as column vectors. Edit: NOT!!
+  expect_equal(dim(expr), c(1,3))    # Always cast 1-D arrays as column vectors. Edit: NOT!!
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE), drop = FALSE], value(expr))
 
   # Logical vectors for rows and columns
   expr <- C[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]
-  expect_equal(size(expr), c(3,3))
+  expect_equal(dim(expr), c(3,3))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)], value(expr))
 })
@@ -495,43 +498,43 @@ test_that("test indexing with vectors/matrices of indices", {
 
   # Vector for rows
   expr <- C[c(1,2)]
-  expect_equal(size(expr), c(2,4))
+  expect_equal(dim(expr), c(2,4))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(1,2),], value(expr))
 
   # Vector for rows, index for columns
   expr <- C[c(1,3),4]
-  expect_equal(size(expr), c(2,1))
+  expect_equal(dim(expr), c(2,1))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(matrix(A[c(1,3),4]), value(expr))
 
   # Index for rows, vector for columns
   expr <- C[2,c(1,3)]
-  expect_equal(size(expr), c(1,2))
+  expect_equal(dim(expr), c(1,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[2,c(1,3), drop = FALSE], value(expr))
 
   # Vector for rows, slice for columns
   expr <- C[c(1,3),2:3]
-  expect_equal(size(expr), c(2,2))
+  expect_equal(dim(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(1,3), 2:3], value(expr))
 
   # Vector for rows and columns
   expr <- C[c(1,2), c(2,4)]
-  expect_equal(size(expr), c(2,2))
+  expect_equal(dim(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[c(1,2), c(2,4)], value(expr))
 
   # Matrix for rows, vector for columns
   expr <- C[matrix(c(1,2)), c(2,4)]
-  expect_equal(size(expr), c(2,2))
+  expect_equal(dim(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[matrix(c(1,2)), c(2,4)], value(expr))
 
   # Matrix for rows and columns
   expr <- C[matrix(c(1,2)), matrix(c(2,4))]
-  expect_equal(size(expr), c(2,2))
+  expect_equal(dim(expr), c(2,2))
   expect_equal(sign(expr), POSITIVE)
   expect_equal(A[matrix(c(1,2)), matrix(c(2,4))], value(expr))
 })

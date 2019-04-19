@@ -192,11 +192,11 @@ setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is
 #' @rdname sign
 #' @export
 setMethod("sign", "Expression", function(x) {
-  if(is_zero(x))
+  if(!is.na(is_zero(x)) && is_zero(x))
     sign_str <- ZERO
-  else if(is_nonneg(x))
+  else if(!is.na(is_nonneg(x)) && is_nonneg(x))
     sign_str <- NONNEG
-  else if(is_nonpos(x))
+  else if(!is.na(is_nonpos(x)) && is_nonpos(x))
     sign_str <- NONPOS
   else
     sign_str <- UNKNOWN

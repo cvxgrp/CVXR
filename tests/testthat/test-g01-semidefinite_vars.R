@@ -1,8 +1,24 @@
+context("test-g01-semidefinite_vars.R")
 TOL <- 1e-6
 
-X <- Semidef(2)
+X <- Variable(2, 2, PSD = TRUE)
 Y <- Variable(2, 2)
 Fmat <- rbind(c(1,0), c(0,-1))
+
+test_that("test that results are symmetric", {
+  M <- Variable(3, 3, PSD = TRUE)
+  C1 <- rbind(c(0, 0, 1/2), c(0, 0, 0), c(1/2, 0, 1))
+  C2 <- rbind(c(0, 0, 0), c(0, 0, 1/2), c(0, 1/2, 1))
+  x1 <- Variable(3, 3, PSD = TRUE)
+  x2 <- Variable(3, 3, PSD = TRUE)
+  constraints <- list(M + C1 == x1)
+  constraints <- c(constraints, M + C2 == x2)
+  objective <- Minimize(matrix_trace(M))
+  prob <- Problem(objective, constraints)
+  result <- solve(prob)
+  M_val <- result$getValue(M)
+  expect_true(M_val, t(M_val), tolerance = TOL)
+})
 
 test_that("SDP in objective and constraint", {
   # SDP in objective

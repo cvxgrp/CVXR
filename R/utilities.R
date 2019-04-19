@@ -431,14 +431,10 @@ error_grad <- function(expr) {
 #                 #
 ###################
 gm <- function(t, x, y) {
-  two <- create_const(2, c(1,1))
-
-  length <- prod(size(t))
-  SOCAxis(lo.reshape(lo.sum_expr(list(x, y)), c(length, 1)),
-          lo.vstack(list(
-              lo.reshape(lo.sub_expr(x, y), c(1, length)),
-              lo.reshape(lo.mul_expr(two, t, size(t)), c(1, length))
-            ), c(2, length)), 2)
+  length <- size(t)
+  SOC(t = reshape_expr(x+y, c(length, 1)),
+      X = vstack(reshape_expr(x-y, c(1, length)), reshape_expr(2*t, c(1, length))),
+      axis = 2)
 }
 
 # Form internal constraints for weighted geometric mean t <= x^p

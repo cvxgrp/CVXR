@@ -267,7 +267,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim =
 
   # Initialize with value if provided
   .Object@value <- value
-  callNextMethod(.Object, ..., dim, value)
+  callNextMethod(.Object, ..., dim = dim, value = value)
 })
 
 #' @describeIn Parameter Returns \code{list(dim, name, value, attributes)}.

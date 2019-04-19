@@ -523,7 +523,7 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
     offset <- var_map[[var_id]]
     var_dim <- inverse_data@var_dims[[var_id]]
     size <- prod(var_dim)
-    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset+size-1)], nrow = var_dim[1], ncol = var_dim[2])
+    primal_vars[[var_id]] <- matrix(x_opt[(offset+1):(offset+size)], nrow = var_dim[1], ncol = var_dim[2])
   }
 
   # Remap dual variables if dual exists (problem is convex).

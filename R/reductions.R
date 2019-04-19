@@ -118,7 +118,7 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
     canon_constr <- canon[[1]]
     aux_constr <- canon[[2]]
     canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
-    inverse_data@cons_id_map[[as.character(constraint@id)]] <- canon_constr@id   # TODO: Check this updates like dict().update in Python
+    inverse_data@cons_id_map[[as.character(constraint@constr_id)]] <- canon_constr@constr_id   # TODO: Check this updates like dict().update in Python
   }
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(new_problem, inverse_data))
@@ -133,9 +133,9 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
 
   dvars <- list()
   for(orig_id in names(inverse_data@cons_id_map)) {
-    vid <- inverse_data@cons_id_map[[orig_id]]
-    if(as.character(vid) %in% names(solution@dual_vars))
-      dvars[[as.character(orig_id)]] <- solution@dual_vars[[as.character(vid)]]
+    vid <- as.character(inverse_data@cons_id_map[[orig_id]])
+    if(vid %in% names(solution@dual_vars))
+      dvars[[orig_id]] <- solution@dual_vars[[vid]]
   }
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
 })
@@ -311,7 +311,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   cons_id_map <- list()
   for(cons in problem@constraints) {
     constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))
-    cons_id_map[[as.character(id(cons))]] <- id(constr[length(constr)])
+    cons_id_map[[as.character(cons@constr_id)]] <- constr[[length(constr)]]@constr_id
   }
   inverse_data <- list(id2new_var, id2old_var, cons_id_map)
   return(list(Problem(obj, constr), inverse_data))
@@ -348,7 +348,7 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
 
   dvars <- list()
   for(orig_id in names(cons_id_map)) {
-    vid <- cons_id_map[[orig_id]]
+    vid <- as.character(cons_id_map[[orig_id]])
     if(vid %in% names(solution@dual_vars))
       dvars[[orig_id]] <- solution@dual_vars[[vid]]
   }
@@ -494,7 +494,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
       offset <- offset + arg_size
     }
     new_cons <- c(new_cons, copy(con, arg_list))
-    inverse_data@cons_id_map[[as.character(id(con))]] <- id(new_cons[[length(new_cons)]])
+    inverse_data@cons_id_map[[as.character(con@constr_id)]] <- new_cons[[length(new_cons)]]@constr_id
   }
 
   # Map of old constraint id to new constraint id.
@@ -529,7 +529,7 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
   # Remap dual variables if dual exists (problem is convex).
   if(length(solution@dual_vars) > 0) {
     for(old_con in names(con_map)) {
-      new_con <- con_map[[old_con]]
+      new_con <- as.character(con_map[[old_con]])
       con_obj <- inverse_data@id2cons[[old_con]]
       obj_dim <- dim(con_obj)
       # TODO: Rationalize Exponential.

@@ -10,9 +10,9 @@
 setClass("Constraint", representation(constr_id = "integer", dual_variables = "list"),
                        prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
 
-setMethod("initialize", "Constraint", function(.Object, ..., constr_id = get_id(), dual_variables = list()) {
+setMethod("initialize", "Constraint", function(.Object, ..., constr_id = NA_integer_, dual_variables = list()) {
   .Object <- callNextMethod(.Object, ...)
-  .Object@constr_id <- constr_id
+  .Object@constr_id <- ifelse(is.na(constr_id), get_id(), constr_id)
   # .Object@dual_variables <- lapply(.Object@args, function(arg) { Variable(dim(arg)) })
   .Object@dual_variables <- lapply(.Object@args, function(arg) { new("Variable", dim = dim(arg)) })
   return(.Object)

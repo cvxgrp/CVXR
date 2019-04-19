@@ -176,7 +176,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
     offsets <- c(offsets, list(res[[2]]))
   }
   coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
-  offset <- do.call(cbind, offsets)
+  offset <- do.call(rbind, offsets)
   return(list(coeff, offset))
 })
 

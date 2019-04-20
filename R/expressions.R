@@ -376,14 +376,7 @@ setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @param e2 The power of the exponential. Must be a numeric scalar.
 #' @docType methods
 #' @rdname power
-setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) {
-  if(e2 == 2)
-    Square(x = e1)
-  else if(e2 == 0.5)
-    Sqrt(x = e1)
-  else
-    Power(x = e1, p = e2)
-})
+setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 # Matrix operators
 #'

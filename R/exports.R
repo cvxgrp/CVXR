@@ -1255,32 +1255,6 @@ power <- Power
 scalene <- Scalene
 
 #'
-#' Square Function
-#'
-#' The elementwise square function. This is equivalent to \code{power(x,2)}.
-#'
-#' @param x An \linkS4class{Expression}, vector, or matrix.
-#' @return An \linkS4class{Expression} representing the square of the input.
-#' @examples
-#' m <- 30
-#' n <- 20
-#' A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
-#' b <- matrix(stats::rnorm(m), nrow = m, ncol = 1)
-#'
-#' x <- Variable(n)
-#' obj <- Minimize(sum(square(A %*% x - b)))
-#' constr <- list(0 <= x, x <= 1)
-#' prob <- Problem(obj, constr)
-#' result <- solve(prob)
-#' result$value
-#' result$getValue(x)
-#' @docType methods
-#' @name square
-#' @rdname square
-#' @export
-square <- Square
-
-#'
 #' Absolute Value
 #'
 #' The elementwise absolute value.
@@ -1397,7 +1371,7 @@ log1p <- Log1p
 #' @aliases sqrt
 #' @rdname sqrt
 #' @export
-setMethod("sqrt", "Expression", function(x) { Sqrt(x = x) })
+setMethod("sqrt", "Expression", function(x) { Power(x = x, p = 0.5) })
 
 # =========================
 # Matrix/vector operations

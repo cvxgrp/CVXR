@@ -142,12 +142,13 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     #   coeffs[[2]][1:(gap-1),]
     #   coeffs[[1]][2,]
     #   coeffs[[2]][gap:(2*(gap-1)),]
+    # TODO: Keep X_coeff sparse while reshaping!
     X_coeff <- coeffs[[2]]
-    reshaped <- matrix(t(X_coeff), nrow = nrow(coeffs[[1]]))
+    reshaped <- matrix(t(X_coeff), nrow = nrow(coeffs[[1]]), byrow = TRUE)
     stacked <- -cbind(coeffs[[1]], reshaped)
-    stacked <- matrix(stacked, nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol = ncol(coeffs[[1]]), byrow = TRUE)
+    stacked <- matrix(t(stacked), nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol = ncol(coeffs[[1]]), byrow = TRUE)
     
-    offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]])))
+    offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
     offset <- matrix(t(offset), ncol = 1)
     return(list(Matrix(stacked, sparse = TRUE), offset))
   } else if(class(constr) == "ExpCone") {

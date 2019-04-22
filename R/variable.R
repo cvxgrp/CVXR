@@ -92,11 +92,11 @@ setMethod("canonicalize", "Variable", function(object) {
 })
 
 # Deprecated constructors
-Bool <- function(...) { Variable(..., boolean = TRUE) }
-Int <- function(...) { Variable(..., integer = TRUE) }
-NonNegative <- function(...) { Variable(..., nonneg = TRUE) }
-Symmetric <- function(...) { Variable(..., symmetric = TRUE) }
-Semidef <- function(...) { Variable(..., semidef = TRUE) }
+Bool <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = rows, cols = cols, name = name, boolean = TRUE) }
+Int <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = rows, cols = cols, name = name, integer = TRUE) }
+NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = rows, cols = cols, name = name, nonneg = TRUE) }
+Symmetric <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, symmetric = TRUE) }
+Semidef <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, semidef = TRUE) }
 
 #
 # Upper Triangle to Full Matrix

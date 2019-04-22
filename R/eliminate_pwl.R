@@ -26,16 +26,18 @@ setMethod("perform", signature(object = "EliminatePwl", problem = "Problem"), fu
 # Atom canonicalizers.
 EliminatePwl.abs_canon <- function(expr, args) {
   x <- args[[1]]
-  t <- Variable(dim(expr))
+  # t <- Variable(dim(expr))
+  t <- new("Variable", dim = dim(expr))
   constraints <- list(t >= x, t >= -x)
   return(list(t, constraints))
 }
 
 EliminatePwl.max_entries_canon <- function(expr, args) {
   x <- args[[1]]
-  expr_dim <- dim(expr)
   axis <- expr@axis
-  t <- Variable(expr_dim)
+  # expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = dim(expr))
   
   if(is.na(axis))   # dim(expr) = c(1,1)
     promoted_t <- promote(t, dim(x))
@@ -49,8 +51,9 @@ EliminatePwl.max_entries_canon <- function(expr, args) {
 }
 
 EliminatePwl.max_elemwise_canon <- function(expr, args) {
-  expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = dim(expr))
   constraints <- lapply(args, function(elem) { t >= elem })
   return(list(t, constraints))
 }
@@ -87,8 +90,9 @@ EliminatePwl.norm1_canon <- function(expr, args) {
 
 EliminatePwl.norm_inf_canon <- function(expr, args) {
   x <- args[[1]]
-  expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = dim(expr))
   
   promoted_t <- promote(t, dim(x))
   return(list(t, list(x <= promoted_t, x + promoted_t >= 0)))
@@ -100,7 +104,8 @@ EliminatePwl.sum_largest_canon <- function(expr, args) {
   
   # min sum(t) + kq
   # s.t. x <= t + q, 0 <= t
-  t <- Variable(dim(x))
+  # t <- Variable(dim(x))
+  t <- new("Variable", dim = dim(x))
   q <- Variable()
   obj <- sum(t) + k*q
   constraints <- list(x <= t + q, t >= 0)

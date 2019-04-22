@@ -341,11 +341,11 @@ setClassUnion("SolutionORList", c("Solution", "list"))
 #' @name Problem-class
 #' @aliases Problem
 #' @rdname Problem-class
-.Problem <- setClass("Problem", representation(objective = "Minimize", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", .intermediate_chain = "ANY", .solving_chain = "ANY", .cached_chain_key = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNULL", .solver_stats = "list", args = "list", .solver_cache = "list", .intermediate_problem = "ANY", .intermediate_inverse_data = "ANY"),
+.Problem <- setClass("Problem", representation(objective = "Objective", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", .intermediate_chain = "ANY", .solving_chain = "ANY", .cached_chain_key = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNULL", .solver_stats = "list", args = "list", .solver_cache = "list", .intermediate_problem = "ANY", .intermediate_inverse_data = "ANY"),
                     prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = list(), .intermediate_problem = NULL, .intermediate_inverse_data = NULL),
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
-                        stop("[Problem: objective] objective must be of class Minimize or Maximize")
+                        stop("[Problem: objective] objective must be Minimize or Maximize")
                       if(!is.na(object@value))
                         stop("[Problem: value] value should not be set by user")
                       if(!is.na(object@status))

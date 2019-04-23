@@ -113,44 +113,44 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   # Combine affine data with quadratic forms.
   coeffs <- list()
   for(var in variables(affine_problem)) {
-    if(id(var) %in% quad_forms) {
-      var_id <- id(var)
-      orig_id <- id(quad_forms[var_id][3]@args[1])
-      var_offset <- affine_id_map[var_id][1]
-      var_size <- affine_id_map[var_id][2]
-      if(!is.na(value(quad_forms[var_id][3]@P))) {
-        c_part <- as.vector(c[1, var_offset:(var_offset + var_size)])
-        P <- value(quad_forms[var_id][3]@P)
+    var_id <- as.character(id(var))
+    if(var_id %in% names(quad_forms)) {
+      orig_id <- as.character(id(quad_forms[[var_id]][[3]]@args[[1]]))
+      var_offset <- affine_id_map[[var_id]][[1]]
+      var_size <- affine_id_map[[var_id]][[2]]
+      if(!is.na(value(quad_forms[[var_id]][[3]]@P))) {
+        c_part <- as.vector(c[1, (var_offset + 1):(var_offset + 1 + var_size)])
+        P <- value(quad_forms[[var_id]][[3]]@P)
         if(is(P, "sparseMatrix"))
           P <- as.matrix(P)
         P <- c_part %*% P
       } else
-        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, var_offset:(var_offset + var_size)])
-      if(orig_id %in% coeffs) {
-        coeffs[orig_id]$P <- coeffs[orig_id]$P + P
-        coeffs[orig_id]$q <- coeffs[orig_id]$q + matrix(0, nrow = nrow(P), ncol = 1)
+        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + 1 + var_size)])
+      if(orig_id %in% names(coeffs)) {
+        coeffs[[orig_id]]$P <- coeffs[[orig_id]]$P + P
+        coeffs[[orig_id]]$q <- coeffs[[orig_id]]$q + matrix(0, nrow = nrow(P), ncol = 1)
       } else {
-        coeffs[orig_id] <- list()
-        coeffs[orig_id]$P <- P
-        coeffs[orig_id]$q <- matrix(0, nrow = nrow(P), ncol = 1)
+        coeffs[[orig_id]] <- list()
+        coeffs[[orig_id]]$P <- P
+        coeffs[[orig_id]]$q <- matrix(0, nrow = nrow(P), ncol = 1)
       }
     } else {
-      var_offset <- affine_id_map[id(var)][1]
-      var_size <- as.integer(prod(affine_var_dims[id(var)]))
-      if(id(var) %in% coeffs) {
-        coeffs[id(var)]$P <- coeffs[id(var)]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[id(var)]$q <- coeffs[id(var)]$q + as.vector(c[1, var_offset:(var_offset + var_size)])
+      var_offset <- affine_id_map[[var_id]][[1]]
+      var_size <- as.integer(prod(affine_var_dims[[var_id]]))
+      if(var_id %in% names(coeffs)) {
+        coeffs[[var_id]]$P <- coeffs[[var_id]]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.vector(c[1, (var_offset + 1):(var_offset + 1 + var_size)])
       } else {
-        coeffs[id(var)] <- list()
-        coeffs[id(var)]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[id(var)]$q <- coeffs[id(var)]$q + as.vector(c[1, var_offset:(var_offset + var_size)])
+        coeffs[[var_id]] <- list()
+        coeffs[[var_id]]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
+        coeffs[[var_id]]$q <- coeffs[id(var)]$q + as.vector(c[1, (var_offset + 1):(var_offset + 1 + var_size)])
       }
     }
   }
   return(list(coeffs, b))
 })
 
-setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
+setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
   # Extract quadratic, linear constant parts of a quadratic objective.
   # Insert no-op such that root is never a quadratic form, for easier processing.
   root <- LinOp(NO_OP, dim(expr), list(expr), list())
@@ -159,7 +159,7 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
   quad_forms <- replace_quad_forms(root, list())
 
   # Calculate affine parts and combine them with quadratic forms to get the coefficients.
-  tmp <- extract_quadratic_coeffs(object, root@args[[1]], quad_forms)
+  tmp <- extract_quadratic_coeffs(object, root$args[[1]], quad_forms)
   coeffs <- tmp[[1]]
   constant <- tmp[[2]]
 
@@ -195,8 +195,13 @@ setMethod("quad_form", signature(object = "CoeffExtractor", expr = "Expression")
 })
 
 replace_quad_forms <- function(expr, quad_forms) {
-  for(idx in 1:length(expr@args)) {
-    arg <- expr@args[[idx]]
+  if(is(expr, "Expression"))
+    expr_args <- expr@args
+  else
+    expr_args <- expr$args
+  
+  for(idx in 1:length(expr_args)) {
+    arg <- expr_args[[idx]]
     if(is(arg, "SymbolicQuadForm") || is(arg, "QuadForm"))
       quad_forms <- replace_quad_form(expr, idx, quad_forms)
     else
@@ -206,19 +211,30 @@ replace_quad_forms <- function(expr, quad_forms) {
 }
 
 replace_quad_form <- function(expr, idx, quad_forms) {
-  quad_form <- expr@args[[idx]]
-  placeholder <- Variable(dim(quad_form))
-  expr@args[[idx]] <- placeholder
+  if(is(expr, "Expression"))
+    expr_args <- expr@args
+  else
+    expr_args <- expr$args
+  
+  quad_form <- expr_args[[idx]]
+  # placeholder <- Variable(dim(quad_form))
+  placeholder <- new("Variable", dim = dim(quad_form))
+  expr_args[[idx]] <- placeholder
   quad_forms[[as.character(id(placeholder))]] <- list(expr, idx, quad_form)
   return(quad_forms)
 }
 
 restore_quad_forms <- function(expr, quad_forms) {
-  for(idx in 1:length(expr@args)) {
-    arg <- expr@args[[idx]]
+  if(is(expr, "Expression"))
+    expr_args <- expr@args
+  else
+    expr_args <- expr$args
+  
+  for(idx in 1:length(expr_args)) {
+    arg <- expr_args[[idx]]
     arg_id <- as.character(id(arg))
     if(is(arg, "Variable") && arg_id %in% names(quad_forms))
-      expr@args[[idx]] <- quad_forms[[arg_id]][3]
+      expr_args[[idx]] <- quad_forms[[arg_id]][3]
     else
       restore_quad_forms(arg, quad_forms)
   }

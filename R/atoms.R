@@ -1374,7 +1374,7 @@ Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
 #' @rdname Norm1-class
 .Norm1 <- setClass("Norm1", contains = "AxisAtom")
 
-Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(x = x, axis = axis, keepdims = keepdims) }
+Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(expr = x, axis = axis, keepdims = keepdims) }
 
 #' @param x,object A \linkS4class{Norm1} object.
 setMethod("name", "Norm1", function(x) {
@@ -1434,7 +1434,9 @@ setMethod(".column_grad", "Norm1", function(object, value) {
 #' @name NormInf-class
 #' @aliases NormInf
 #' @rdname NormInf-class
-NormInf <- setClass("NormInf", contains = "AxisAtom")
+.NormInf <- setClass("NormInf", contains = "AxisAtom")
+
+NormInf <- function(x, axis = NA_real_, keepdims = FALSE) { .NormInf(expr = x, axis = axis, keepdims = keepdims) }
 
 setMethod("name", "NormInf", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
@@ -1832,7 +1834,7 @@ SymbolicQuadForm <- function(x, P, expr) { .SymbolicQuadForm(x = x, P = P, origi
 
 setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, original_expression) {
   .Object@original_expression <- original_expression
-  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@P))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(x, P))
   .Object@P <- .Object@args[[2]]
   .Object
 })

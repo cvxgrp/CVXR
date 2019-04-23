@@ -428,11 +428,10 @@ FlipObjective <- setClass("FlipObjective", contains = "Reduction")
 
 setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
 setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
-  is_maximize <- class(problem@objective) == "Maximize"
   if(class(problem@objective) == "Maximize")
-    objective <- Maximize
-  else
     objective <- Minimize
+  else
+    objective <- Maximize
   problem <- Problem(objective(-problem@objective@expr), problem@constraints)
   return(list(problem, list()))
 })

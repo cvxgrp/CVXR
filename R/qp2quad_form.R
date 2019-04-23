@@ -60,7 +60,7 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
   # TODO: Need to copy objective?
-  Pqr <- quad_form(extractor, problem@objective@expr)
+  Pqr <- coeff_quad_form(extractor, problem@objective@expr)
   P <- Pqr[[1]]
   q <- Pqr[[2]]
   r <- Pqr[[3]]
@@ -89,8 +89,10 @@ Qp2QuadForm.huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
   expr_dim <- dim(expr)
-  n <- Variable(expr_dim)
-  s <- Variable(expr_dim)
+  # n <- Variable(expr_dim)
+  # s <- Variable(expr_dim)
+  n <- new("Variable", dim = expr_dim)
+  s <- new("Variable", dim = expr_dim)
   
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
@@ -123,7 +125,8 @@ Qp2QuadForm.power_canon <- function(expr, args) {
     if(is(affine_expr, "Variable"))
       return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr)), expr), list()))
     else {
-      t <- Variable(dim(affine_expr))
+      # t <- Variable(dim(affine_expr))
+      t <- new("Variable", dim = dim(affine_expr))
       return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
     }
   }
@@ -136,7 +139,8 @@ Qp2QuadForm.quad_form_canon <- function(expr, args) {
   if(is(affine_expr, "Variable"))
     return(list(SymbolicQuadForm(affine_expr, P, expr), list()))
   else {
-    t <- Variable(dim(affine_expr))
+    # t <- Variable(dim(affine_expr))
+    t <- new("Variable", dim = dim(affine_expr))
     return(list(SymbolicQuadForm(t, P, expr), list(affine_expr == t)))
   }
 }
@@ -147,7 +151,8 @@ Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
   if(is(affine_expr, "Variable"))
     return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr))/y, expr), list()))
   else {
-    t <- Variable(dim(affine_expr))
+    # t <- Variable(dim(affine_expr))
+    t <- new("Variable", dim = dim(affine_expr))
     return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
   }
 }

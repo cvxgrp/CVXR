@@ -112,7 +112,7 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   # Selects from each column.
   for(var_row in 1:dim[2]) {
     val_arr <- c(val_arr, 1.0)
-    row_arr <- c(row_arr, spacing*var_row + offset)
+    row_arr <- c(row_arr, spacing*(var_row - 1) + 1 + offset)
     col_arr <- c(col_arr, var_row)
   }
   return(sparseMatrix(i = row_arr, j = col_arr, x = val_arr))
@@ -154,8 +154,8 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
   } else if(class(constr) == "ExpCone") {
     for(i in 1:length(coeffs)) {
       mat <- ConicSolver.get_spacing_matrix(c(height, nrow(coeffs[[i]])), length(exp_cone_order), exp_cone_order[i])
-      offsets[i] <- mat %*% offsets[i]
-      coeffs[i] <- -mat %*% coeffs[i]
+      offsets[[i]] <- mat %*% offsets[[i]]
+      coeffs[[i]] <- -mat %*% coeffs[[i]]
     }
     # return(list(sum(coeffs), sum(offsets)))
     return(list(Reduce("+", coeffs), Reduce("+", offsets)))

@@ -118,7 +118,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       orig_id <- as.character(id(quad_forms[[var_id]][[3]]@args[[1]]))
       var_offset <- affine_id_map[[var_id]][[1]]
       var_size <- affine_id_map[[var_id]][[2]]
-      if(!is.na(value(quad_forms[[var_id]][[3]]@P))) {
+      if(!any(is.na(value(quad_forms[[var_id]][[3]]@P)))) {
         c_part <- as.vector(c[1, (var_offset + 1):(var_offset + var_size)])
         P <- value(quad_forms[[var_id]][[3]]@P)
         if(is(P, "sparseMatrix"))

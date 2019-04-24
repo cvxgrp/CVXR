@@ -312,20 +312,20 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @name ExpCone-class
 #' @aliases ExpCone
 #' @rdname ExpCone-class
-.ExpCone <- setClass("ExpCone", representation(x = "list", y = "list", z = "list"), contains = "NonlinearConstraint")
+.ExpCone <- setClass("ExpCone", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr"), contains = "Constraint")
 
 #' @param x The variable \eqn{x} in the exponential cone.
 #' @param y The variable \eqn{y} in the exponential cone.
 #' @param z The variable \eqn{z} in the exponential cone.
 #' @rdname ExpCone-class
 ## #' @export
-ExpCone <- function(x, y, z) { .ExpCone(x = x, y = y, z = z) }
+ExpCone <- function(x, y, z, constr_id = NA_integer_) { .ExpCone(x = x, y = y, z = z, constr_id = constr_id) }
 
 setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
   .Object@x <- x
   .Object@y <- y
   .Object@z <- z
-  callNextMethod(.Object, ..., f = ExpCone.solver_hook(.Object), vars_ = list(.Object@x, .Object@y, .Object@z))
+  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y, .Object@z))
 })
 
 setMethod("show", "ExpCone", function(object) {
@@ -341,58 +341,19 @@ setMethod("as.character", "ExpCone", function(x) {
 #' @describeIn ExpCone The size of the \code{x} argument.
 setMethod("residual", "ExpCone", function(object) {
   # TODO: The projection should be implemented directly.
-  if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
+  if(any(is.na(value(object@x))) || any(is.na(value(object@y))) || any(is.na(value(object@z))))
     return(NA_real_)
-  x <- Variable(dim(object@x))
-  y <- Variable(dim(object@y))
-  z <- Variable(dim(object@z))
+  # x <- Variable(dim(object@x))
+  # y <- Variable(dim(object@y))
+  # z <- Variable(dim(object@z))
+  x <- new("Variable", dim = dim(object@x))
+  y <- new("Variable", dim = dim(object@y))
+  z <- new("Variable", dim = dim(object@z))
   constr <- list(ExpCone(x, y, z))
-  obj <- Minimize(norm2(HStack(x, y, z) - HStack(value(object@x), value(object@y), value(object@z))))
+  obj <- Minimize(Norm2(HStack(x, y, z) - HStack(value(object@x), value(object@y), value(object@z))))
   prob <- Problem(obj, constr)
-  return(solve(prob))
-})
-
-#' @param eq_constr A list of the equality constraints in the canonical problem.
-#' @param leq_constr A list of the inequality constraints in the canonical problem.
-#' @param dims A list with the dimensions of the conic constraints.
-#' @param solver A string representing the solver to be called.
-#' @describeIn ExpCone Format exponential cone constraints for the solver.
-setMethod("format_constr", "ExpCone", function(object, eq_constr, leq_constr, dims, solver) {
-  .cvxopt_format <- function(object) {
-    constraints <- list()
-    for(i in 1:length(object@vars_)) {
-      var <- object@vars_[[i]]
-      if(var$type != VARIABLE) {
-        lone_var <- create_var(var$size)
-        constraints <- c(constraints, list(create_eq(lone_var, var)))
-        object@vars_[[i]] <- lone_var
-      }
-    }
-    list(constraints, list())
-  }
-
-  .ecos_format <- function(object) {
-    list(list(), format_elemwise(list(object@x, object@y, object@z)))
-  }
-
-  .scs_format <- function(object) {
-    list(list(), format_elemwise(list(object@z, object@y, object@z)))
-  }
-
-  if(is(solver, "CVXOPT"))
-    stop("CVXOPT formatting has not been implemented")
-    # tmp <- .cvxopt_format(object)
-    # object <- tmp[[3]]   # TODO: Need to pass along updated constraint object
-    # eq_constr <- c(eq_constr, tmp[[1]])
-  else if(is(solver, "SCS") || is(solver, "JULIA_OPT"))
-    leq_constr <- c(leq_constr, .scs_format(object)[[2]])
-  else if(is(solver, "ECOS"))
-    leq_constr <- c(leq_constr, .ecos_format(object)[[2]])
-  else
-    stop("Solver does not support exponential cone")
-  # Update dims
-  dims[[EXP_DIM]] <- dims[[EXP_DIM]] + num_cones(object)
-  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
+  result <- solve(prob)
+  return(result$value)
 })
 
 #' @describeIn ExpCone The number of entries in the combined cones.
@@ -413,7 +374,7 @@ setMethod("cone_sizes", "ExpCone", function(object) {
 
 #' @describeIn ExpCone An exponential constraint is DCP if each argument is affine.
 setMethod("is_dcp", "ExpCone", function(object) {
-  all(sapply(object@args, function(arg) { is_affine(arg) }))
+  all(sapply(object@args, is_affine))
 })
 
 #' @describeIn ExpCone Is the constraint DGP?
@@ -431,55 +392,6 @@ setMethod("canonicalize", "ExpCone", function(object) {
   exp_constr <- do.call(ExpCone, arg_objs)
   list(0, c(list(exp_constr), arg_constr))
 })
-
-# A function used by CVXOPT's nonlinear solver.
-# Based on f(x,y,z) = y * log(y) + x - y * log(z)
-ExpCone.solver_hook <- function(object, vars_ = NA, scaling = NA) {
-  entries <- as.integer(prod(dim(object)))
-  if(is.na(vars_)) {
-    x_init <- rep(0, entries)
-    y_init <- rep(0.5, entries)
-    z_init <- rep(1.0, entries)
-    return(list(entries, matrix(x_init + y_init + z_init)))
-  }
-
-  # Unpack vars_
-  x <- vars_[1:entries]
-  y <- vars_[entries:(2*entries)]
-  z <- vars_[(2*entries):length(vars_)]
-
-  # Out of domain.
-  # TODO: What if y == 0.0?
-  if(min(y) <= 0.0 || min(z) <= 0.0)
-    return(NA)
-
-  # Evaluate the function.
-  f <- matrix(0, nrow = entries, ncol = 1)
-  for(i in 1:entries)
-    f[i] <- x[i] - y[i]*log(z[i]) + y[i]*log(y[i])
-
-  # Compute the gradient.
-  Df <- matrix(0, nrow = entries, ncol = 3*entries)
-  for(i in 1:entries) {
-    Df[i,i] <- 1.0
-    Df[i, entries+i] <- log(y[i]) - log(z[i]) + 1.0
-    Df[i, 2*entries+i] <- -y[i]/z[i]
-  }
-
-  if(is.na(scaling))
-    return(list(f, Df))
-
-  # Compute the Hessian.
-  big_H <- sparseMatrix(i = c(), j = c(), dims = c(3*entries, 3*entries))
-  for(i in 1:entries) {
-    H <- rbind(c(0.0, 0.0, 0.0),
-               c(0.0, 1.0/y[i], -1.0/z[i]),
-               c(0.0, -1.0/z[i], y[i]/(z[i]^2)))
-    idx <- seq(i, 3*entries, entries)
-    big_H[idx, idx] <- scaling[i]*H
-  }
-  return(list(f, Df, big_H))
-}
 
 #'
 #' The PSDConstraint class.
@@ -698,7 +610,7 @@ setMethod("canonicalize", "SOC", function(object) {
 #' @param axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
 #' @rdname SOCAxis-class
 ## #' @export
-SOCAxis <- function(t, X, axis) { .SOCAxis(t = t, X = X, axis = axis) }
+SOCAxis <- function(t, X, axis, constr_id = NA_integer_) { .SOCAxis(t = t, X = X, axis = axis, constr_id = constr_id) }
 
 setMethod("initialize", "SOCAxis", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)

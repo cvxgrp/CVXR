@@ -27,6 +27,7 @@ setMethod("accepts", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
     Qp2SymbolicQp.accepts(problem)
 })
 
+# Converts a QP to an even more symbolic form.
 setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to symbolic QP")
@@ -75,13 +76,6 @@ setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = 
 
   inverse_data@r <- r
   return(list(new_obj, x, r))
-})
-
-# Converts a QP to an even more symbolic form.
-setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), function(object, problem) {
-  if(!(accepts(object, problem)))
-    stop("Cannot reduce problem to symbolic QP")
-  callNextMethod(object, problem)
 })
 
 # Atom canonicalizers

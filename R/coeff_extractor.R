@@ -119,11 +119,13 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       var_offset <- affine_id_map[[var_id]][[1]]
       var_size <- affine_id_map[[var_id]][[2]]
       if(!any(is.na(value(quad_forms[[var_id]][[3]]@P)))) {
-        c_part <- as.vector(c[1, (var_offset + 1):(var_offset + var_size)])
         P <- value(quad_forms[[var_id]][[3]]@P)
         if(is(P, "sparseMatrix"))
           P <- as.matrix(P)
-        P <- c_part %*% P
+        if(var_size == 1)
+          P <- c[1, var_offset + 1] * P
+        else
+          P <- as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1) %*% P
       } else
         P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
       if(orig_id %in% names(coeffs)) {
@@ -139,11 +141,11 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       var_size <- as.integer(prod(affine_var_dims[[var_id]]))
       if(var_id %in% names(coeffs)) {
         coeffs[[var_id]]$P <- coeffs[[var_id]]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.vector(c[1, (var_offset + 1):(var_offset + var_size)])
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
       } else {
         coeffs[[var_id]] <- list()
         coeffs[[var_id]]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[id(var)]$q + as.vector(c[1, (var_offset + 1):(var_offset + var_size)])
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
       }
     }
   }

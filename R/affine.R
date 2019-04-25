@@ -425,6 +425,15 @@ setMethod("initialize", "DivExpression", function(.Object, ...) {
 })
 
 #' @param object A \linkS4class{DivExpression} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn DivExpression Matrix division by a scalar.
+setMethod("to_numeric", "DivExpression", function(object, values) {
+  if(!is.null(dim(values[[2]])) && prod(dim(values[[2]])) == 1)
+    values[[2]] <- as.numeric(values[[2]])
+  return(values[[1]] / values[[2]])
+})
+
+#' @param object A \linkS4class{DivExpression} object.
 #' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
 setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])

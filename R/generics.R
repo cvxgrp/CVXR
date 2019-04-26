@@ -1310,4 +1310,6 @@ setGeneric("extract_quadratic_coeffs", function(object, affine_expr, quad_forms)
 setGeneric("coeff_quad_form", function(object, expr) { standardGeneric("coeff_quad_form") })
 setGeneric("copy", function(object, args = NULL, id_objects = list()) { standardGeneric("copy") })
 setGeneric("tree_copy", function(object, id_objects = list()) { standardGeneric("tree_copy") })
+setGeneric("op_name", function(object) { standardGeneric("op_name") })
+setGeneric("op_func", function(object) { standardGeneric("op_func") })
 ## End of newly added generics

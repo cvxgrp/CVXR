@@ -193,24 +193,24 @@ setMethod("graph_implementation", "AddExpression", function(object, arg_objs, di
 #' @name UnaryOperator-class
 #' @aliases UnaryOperator
 #' @rdname UnaryOperator-class
-UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression", op_name = "character", op_func = "function"), contains = "AffAtom")
+UnaryOperator <- setClass("UnaryOperator", representation(expr = "Expression"), contains = "AffAtom")
 
-setMethod("initialize", "UnaryOperator", function(.Object, ..., expr, op_name, op_func) {
+setMethod("initialize", "UnaryOperator", function(.Object, ..., expr) {
   .Object@expr <- expr
-  .Object@op_name <- op_name
-  .Object@op_func <- op_func
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
+setMethod("op_name", "UnaryOperator", function(object) { stop("Unimplemented") })
+setMethod("op_func", "UnaryOperator", function(object) { stop("Unimplemented") })
 setMethod("name", "UnaryOperator", function(x) {
-  paste(x@op_name, name(x@args[[1]]), sep = "")
+  paste(op_name(x), name(x@args[[1]]), sep = "")
 })
 
 #' @param object A \linkS4class{UnaryOperator} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn UnaryOperator Applies the unary operator to the value.
 setMethod("to_numeric", "UnaryOperator", function(object, values) {
-  object@op_func(values[[1]])
+  op_func(object)(values[[1]])
 })
 
 #'
@@ -224,9 +224,8 @@ setMethod("to_numeric", "UnaryOperator", function(object, values) {
 .NegExpression <- setClass("NegExpression", contains = "UnaryOperator")
 NegExpression <- function(expr) { .NegExpression(expr = expr) }
 
-setMethod("initialize", "NegExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "-", op_func = function(x) { -x })
-})
+setMethod("op_name", "NegExpression", function(object) { "-" })
+setMethod("op_func", "NegExpression", function(object) { function(x) { -x } })
 
 #' @describeIn NegExpression The (row, col) dimensions of the expression.
 setMethod("dim_from_args", "NegExpression", function(object) { dim(object@args[[1]]) })
@@ -270,15 +269,15 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, di
 #' @name BinaryOperator-class
 #' @aliases BinaryOperator
 #' @rdname BinaryOperator-class
-BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr", op_name = "character"), 
-                                             prototype(op_name = "BINARY_OP"), contains = "AffAtom")
+BinaryOperator <- setClass("BinaryOperator", representation(lh_exp = "ConstValORExpr", rh_exp = "ConstValORExpr"), contains = "AffAtom")
 
-setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp, op_name = "BINARY_OP") {
+setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp) {
   .Object@lh_exp = lh_exp
   .Object@rh_exp = rh_exp
-  .Object@op_name = op_name
   callNextMethod(.Object, ..., atom_args = list(.Object@lh_exp, .Object@rh_exp))
 })
+
+setMethod("op_name", "BinaryOperator", function(object) { "BINARY_OP" })
 
 #' @param x,object A \linkS4class{BinaryOperator} object.
 setMethod("name", "BinaryOperator", function(x) {
@@ -289,14 +288,14 @@ setMethod("name", "BinaryOperator", function(x) {
     else
       pretty_args <- list(pretty_args, name(a))
   }
-  paste(pretty_args[[1]], x@op_name, pretty_args[[2]])
+  paste(pretty_args[[1]], op_name(x), pretty_args[[2]])
 })
 
 #' @param values A list of arguments to the atom.
 #' @describeIn BinaryOperator Apply the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
   # values <- lapply(values, intf_convert_if_scalar)
-  Reduce(object@op_name, values)
+  Reduce(op_name(object), values)
 })
 
 #' @describeIn BinaryOperator Default to rule for multiplication.
@@ -325,9 +324,7 @@ setMethod("is_complex", "BinaryOperator", function(object) {
 .MulExpression <- setClass("MulExpression", contains = "BinaryOperator")
 MulExpression <- function(lh_exp, rh_exp) { .MulExpression(lh_exp = lh_exp, rh_exp = rh_exp) }
 
-setMethod("initialize", "MulExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "%*%")
-})
+setMethod("op_name", "MulExpression", function(object) { "*" })
 
 #' @param object A \linkS4class{MulExpression} object.
 #' @param values A list of arguments to the atom.
@@ -410,85 +407,6 @@ setMethod("graph_implementation", "MulExpression", function(object, arg_objs, di
 })
 
 #'
-#' The DivExpression class.
-#'
-#' This class represents one expression divided by another expression.
-#'
-#' @name DivExpression-class
-#' @aliases DivExpression
-#' @rdname DivExpression-class
-.DivExpression <- setClass("DivExpression", contains = "BinaryOperator")
-DivExpression <- function(lh_exp, rh_exp) { .DivExpression(lh_exp = lh_exp, rh_exp = rh_exp) }
-
-setMethod("initialize", "DivExpression", function(.Object, ...) {
-  callNextMethod(.Object, ..., op_name = "/")
-})
-
-#' @param object A \linkS4class{DivExpression} object.
-#' @param values A list of arguments to the atom.
-#' @describeIn DivExpression Matrix division by a scalar.
-setMethod("to_numeric", "DivExpression", function(object, values) {
-  if(!is.null(dim(values[[2]])) && prod(dim(values[[2]])) == 1)
-    values[[2]] <- as.numeric(values[[2]])
-  return(values[[1]] / values[[2]])
-})
-
-#' @param object A \linkS4class{DivExpression} object.
-#' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
-setMethod("is_quadratic", "DivExpression", function(object) {
-  is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
-})
-
-#' @describeIn DivExpression Is the expression quadratic of piecewise affine?
-setMethod("is_qpwa", "DivExpression", function(object) {
-  is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
-})
-
-#' @describeIn DivExpression The (row, col) dimensions of the left-hand expression.
-setMethod("dim_from_args", "DivExpression", function(object) { dim(object@args[[1]]) })
-
-#' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
-setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) && is_scalar(object@args[[2]]) })
-
-#' @describeIn DivExpression Division is concave (affine) in its arguments only if the denominator is constant.
-setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(object) })
-
-#' @describeIn DivExpression Is the atom log-log convex?
-setMethod("is_atom_log_log_convex", "DivExpression", function(object) { TRUE })
-
-#' @describeIn DivExpression Is the atom log-log concave?
-setMethod("is_atom_log_log_concave", "DivExpression", function(object) { TRUE })
-
-#' @param idx An index into the atom.
-#' @describeIn DivExpression Is the right-hand expression positive?
-setMethod("is_incr", "DivExpression", function(object, idx) {
-  if(idx == 1)
-    return(is_nonneg(object@args[[2]]))
-  else
-    return(is_nonpos(object@args[[1]]))
-})
-
-#' @describeIn DivExpression Is the right-hand expression negative?
-setMethod("is_decr", "DivExpression", function(object, idx) {
-  if(idx == 1)
-    return(is_nonpos(object@args[[2]]))
-  else
-    return(is_nonneg(object@args[[1]]))
-})
-
-DivExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
-}
-
-#' @param arg_objs A list of linear expressions for each argument.
-#' @param dim A vector representing the dimensions of the resulting expression.
-#' @param data A list of additional data required by the atom.
-#' @describeIn DivExpression The graph implementation of the expression.
-setMethod("graph_implementation", "DivExpression", function(object, arg_objs, dim, data = NA_real_) {
-  DivExpression.graph_implementation(arg_objs, dim, data)
-})
-
-#'
 #' The Multiply class.
 #'
 #' This class represents the elementwise product of two expressions.
@@ -552,6 +470,83 @@ Multiply.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
 #' @describeIn Multiply The graph implementation of the expression.
 setMethod("graph_implementation", "Multiply", function(object, arg_objs, dim, data = NA_real_) {
   Multiply.graph_implementation(arg_objs, dim, data)
+})
+
+#'
+#' The DivExpression class.
+#'
+#' This class represents one expression divided by another expression.
+#'
+#' @name DivExpression-class
+#' @aliases DivExpression
+#' @rdname DivExpression-class
+.DivExpression <- setClass("DivExpression", contains = "Multiply")
+DivExpression <- function(lh_exp, rh_exp) { .DivExpression(lh_exp = lh_exp, rh_exp = rh_exp) }
+
+setMethod("op_name", "DivExpression", function(object) { "/" })
+
+#' @param object A \linkS4class{DivExpression} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn DivExpression Matrix division by a scalar.
+setMethod("to_numeric", "DivExpression", function(object, values) {
+  if(!is.null(dim(values[[2]])) && prod(dim(values[[2]])) == 1)
+    values[[2]] <- as.numeric(values[[2]])
+  return(values[[1]] / values[[2]])
+})
+
+#' @param object A \linkS4class{DivExpression} object.
+#' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
+setMethod("is_quadratic", "DivExpression", function(object) {
+  is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
+})
+
+#' @describeIn DivExpression Is the expression quadratic of piecewise affine?
+setMethod("is_qpwa", "DivExpression", function(object) {
+  is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
+})
+
+#' @describeIn DivExpression The (row, col) dimensions of the left-hand expression.
+setMethod("dim_from_args", "DivExpression", function(object) { dim(object@args[[1]]) })
+
+#' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
+setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) && is_scalar(object@args[[2]]) })
+
+#' @describeIn DivExpression Division is concave (affine) in its arguments only if the denominator is constant.
+setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(object) })
+
+#' @describeIn DivExpression Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "DivExpression", function(object) { TRUE })
+
+#' @describeIn DivExpression Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "DivExpression", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn DivExpression Is the right-hand expression positive?
+setMethod("is_incr", "DivExpression", function(object, idx) {
+  if(idx == 1)
+    return(is_nonneg(object@args[[2]]))
+  else
+    return(is_nonpos(object@args[[1]]))
+})
+
+#' @describeIn DivExpression Is the right-hand expression negative?
+setMethod("is_decr", "DivExpression", function(object, idx) {
+  if(idx == 1)
+    return(is_nonpos(object@args[[2]]))
+  else
+    return(is_nonneg(object@args[[1]]))
+})
+
+DivExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn DivExpression The graph implementation of the expression.
+setMethod("graph_implementation", "DivExpression", function(object, arg_objs, dim, data = NA_real_) {
+  DivExpression.graph_implementation(arg_objs, dim, data)
 })
 
 #'

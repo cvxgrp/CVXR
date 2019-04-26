@@ -1763,7 +1763,9 @@ setMethod("to_numeric", "QuadForm", function(object, values) {
 setMethod("validate_args", "QuadForm", function(object) {
   callNextMethod()
   n <- nrow(object@args[[2]])
-  if(ncol(object@args[[2]]) != n || !(dim(object@args[[1]]) %in% list(c(n, 1), c(n, NA_real_))))
+  x_dim <- dim(object@args[[1]])
+  # if(ncol(object@args[[2]]) != n || !(dim(object@args[[1]]) %in% list(c(n, 1), c(n, NA_real_))))
+  if(ncol(object@args[[2]]) != n || !(length(x_dim) == 2 && all(x_dim == c(n,1))))
     stop("Invalid dimensions for arguments.")
 })
 

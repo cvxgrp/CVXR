@@ -26,10 +26,17 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   q <- as.vector(value(obj@expr@args[[2]]@args[[1]]))
   
   # Get number of variables.
-  n <- problem@size_metrics@num_scalar_variables
+  n <- problem@.size_metrics@num_scalar_variables
   
-  # TODO: This dependence on ConicSolver is hacky; something should change here.
-  eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
+  if(length(problem@constraints) == 0) {
+    eq_cons <- list()
+    ineq_cons <- list()
+  } else {
+    eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
+    ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
+  }
+
+  # TODO: This dependence on ConicSolver is hacky; something should change here.  
   if(length(eq_cons) > 0) {
     eq_coeffs <- list(list(), c())
     for(con in eq_cons) {
@@ -44,7 +51,6 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
     b <- -matrix(nrow = 0, ncol = 0)
   }
   
-  ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   if(length(ineq_cons) > 0) {
     ineq_coeffs <- list(list(), c())
     for(con in ineq_cons) {
@@ -62,14 +68,14 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   # Create dictionary with problem data.
   variables <- variables(problem)[[1]]
   data <- list()
-  data[P_KEY] <- Matrix(P, sparse = TRUE)
-  data[Q_KEY] <- q
-  data[A_KEY] <- Matrix(A, sparse = TRUE)
-  data[B_KEY] <- b
-  data[F_KEY] <- Matrix(Fmat, sparse = TRUE)
-  data[G_KEY] <- g
-  data[BOOL_IDX] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
-  data[INT_IDX] <- sapply(variables@integer_idx, function(t) { t[[1]] })
+  data[[P_KEY]] <- Matrix(P, sparse = TRUE)
+  data[[Q_KEY]] <- q
+  data[[A_KEY]] <- Matrix(A, sparse = TRUE)
+  data[[B_KEY]] <- b
+  data[[F_KEY]] <- Matrix(Fmat, sparse = TRUE)
+  data[[G_KEY]] <- g
+  data[[BOOL_IDX]] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
+  data[[INT_IDX]] <- sapply(variables@integer_idx, function(t) { t[[1]] })
   data$n_var <- n
   data$n_eq <- nrow(A)
   data$n_ineq <- nrow(Fmat)
@@ -77,7 +83,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   inverse_data@sorted_constraints <- c(eq_cons, ineq_cons)
   
   # Add information about integer variables.
-  inverse_data$is_mip <- length(data[BOOL_IDX]) > 0 || length(data[INT_IDX]) > 0
+  inverse_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
   
   return(list(data, inverse_data))
 })
@@ -141,12 +147,12 @@ setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
 
 setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("Rcplex", quietly = TRUE)
-  P <- Matrix(data[P_KEY], byrow = TRUE, sparse = TRUE)
-  q <- data[Q_KEY]
-  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)
-  b <- data[B_KEY]
-  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)
-  g <- data[G_KEY]
+  P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
+  q <- data[[Q_KEY]]
+  A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE)
+  b <- data[[B_KEY]]
+  Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE)
+  g <- data[[G_KEY]]
   n_var <- data$n_var
   n_eq <- data$n_eq
   n_ineq <- data$n_ineq
@@ -321,12 +327,12 @@ setMethod("alt_invert", "GUROBI", function(object, results, inverse_data) {
 setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
-  P <- data[P_KEY]   # TODO: Convert P matrix to COO format?
-  q <- data[Q_KEY]
-  A <- Matrix(data[A_KEY], byrow = TRUE, sparse = TRUE)   # Convert A matrix to CSR format.
-  b <- data[B_KEY]
-  Fmat <- Matrix(data[F_KEY], byrow = TRUE, sparse = TRUE)   # Convert F matrix to CSR format.
-  g <- data[G_KEY]
+  P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
+  q <- data[[Q_KEY]]
+  A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE)   # Convert A matrix to CSR format.
+  b <- data[[B_KEY]]
+  Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE)   # Convert F matrix to CSR format.
+  g <- data[[G_KEY]]
   n <- data$n_var
   
   # Create a new model.
@@ -335,9 +341,9 @@ setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose
   # Add variables.
   for(i in 1:n) {
     # Set variable type.
-    if(i %in% data[BOOL_IDX])
+    if(i %in% data[[BOOL_IDX]])
       vtype <- "logical"
-    else if(i %in% data[INT_IDX])
+    else if(i %in% data[[INT_IDX]])
       vtype <- "integer"
     else
       vtype <- "numeric"
@@ -451,7 +457,7 @@ setMethod("import_solver", "OSQP", function(solver) {
 
 setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   attr <- list()
-  attr[SOLVE_TIME] <- solution@info@run_time
+  attr[[SOLVE_TIME]] <- solution@info@run_time
   
   # Map OSQP statuses back to CVXR statuses.
   status <- status_map(object, solution@info@status_val)
@@ -461,7 +467,7 @@ setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_da
     primal_vars <- list()
     primal_vars[names(inverse_data@id_map)] <- solution@x
     dual_vars <- get_dual_values(solution@y, extract_dual_value, inverse_data@sorted_constraints)
-    attr[NUM_ITERS] <- solution@info@iter
+    attr[[NUM_ITERS]] <- solution@info@iter
   } else {
     primal_vars <- NA
     dual_vars <- NA
@@ -475,13 +481,13 @@ setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_da
 
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("osqp", quietly = TRUE)
-  P <- data[P_KEY]
-  q <- data[Q_KEY]
-  A <- Matrix(do.call(rbind, list(data[A_KEY], data[F_KEY])), sparse = TRUE)
+  P <- data[[P_KEY]]
+  q <- data[[Q_KEY]]
+  A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
   data$full_A <- A
-  uA <- c(data[B_KEY], data[G_KEY])
+  uA <- c(data[[B_KEY]], data[[G_KEY]])
   data$u <- uA
-  lA <- c(data[B_KEY], rep(-Inf, length(data[G_KEY])))
+  lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
   
   # Overwrite defaults eps_abs = eps_rel = 1e-3, max_iter = 4000.
@@ -494,12 +500,12 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   
   if(!is.na(solver_cache) && name(object) %in% solver_cache) {
     # Use cached data.
-    cache <- solver_cache[name(object)]
+    cache <- solver_cache[[name(object)]]
     solver <- cache[[1]]
     old_data <- cache[[2]]
     results <- cache[[3]]
     
-    same_pattern <- all(dim(P) == dim(old_data[P_KEY])) && all(P@p == old_data[P_KEY]@p) && all(P@i == old_data[P_KEY]@i) &&
+    same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) && all(P@p == old_data[[P_KEY]]@p) && all(P@i == old_data[[P_KEY]]@i) &&
                     all(dim(A) == dim(old_data$full_A)) && all(A@p == old_data$full_A@p) && all(A@i == old_data$full_A@i)
   } else
     same_pattern <- FALSE
@@ -509,12 +515,12 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   if(warm_start && same_pattern) {
     new_args <- list()
     for(key in c("q", "l", "u")) {
-      if(any(data[key] != old_data[key]))
-        new_args[key] <- data[key]
+      if(any(data[[key]] != old_data[[key]]))
+        new_args[[key]] <- data[[key]]
     }
     factorizing <- FALSE
     
-    if(any(P@x != old_data[P_KEY]@x)) {
+    if(any(P@x != old_data[[P_KEY]]@x)) {
       P_triu <- triu(P)
       new_args$Px <- P_triu@x
       factorizing <- TRUE

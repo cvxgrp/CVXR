@@ -71,10 +71,9 @@ setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = 
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
   # x <- Variable(extractor@N, boolean = boolean, integer = integer)
+  #   new_obj <- quad_form(x, P) + t(q) %*% x
   x <- Variable(extractor@N, 1, boolean = boolean, integer = integer)
-  new_obj <- QuadForm(x, P) + t(q) %*% x
-
-  inverse_data@r <- r
+  new_obj <- new("QuadForm", x = x, P = P) + t(q) %*% x
   return(list(new_obj, x, r))
 })
 
@@ -147,7 +146,7 @@ Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
   else {
     # t <- Variable(dim(affine_expr))
     t <- new("Variable", dim = dim(affine_expr))
-    return(list(SymbolicQuadForm(t, diag(size(affine_expr)/y), expr), list(affine_expr == t)))
+    return(list(SymbolicQuadForm(t, diag(size(affine_expr))/y, expr), list(affine_expr == t)))
   }
 }
 

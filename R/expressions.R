@@ -360,7 +360,7 @@ setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if(is_scalar(e2) || all(dim(e1) == dim(e2)))
+  if((is_scalar(e1) || is_scalar(e2)) || all(dim(e1) == dim(e2)))
     DivExpression(lh_exp = e1, rh_exp = e2)
   else
     stop("Incompatible dimensions for division")

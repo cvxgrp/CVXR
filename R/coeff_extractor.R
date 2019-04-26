@@ -5,13 +5,14 @@
 #'
 #' @rdname InverseData-class
 .InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
-                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric", minimize = "logical"),
+                                                       id2var = "list", real2imag = "list", id2cons = "list", cons_id_map = "list", r = "numeric", minimize = "logical", 
+                                                       sorted_constraints = "list", is_mip = "logical"),
                          prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(),
-                                   real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA))
+                                   real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA))
 
 InverseData <- function(problem) { .InverseData(problem = problem) }
 
-setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA) {
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA) {
   # Basic variable offset information
   varis <- variables(problem)
   varoffs <- get_var_offsets(.Object, varis)
@@ -36,6 +37,8 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@cons_id_map <- list()
   .Object@r <- r
   .Object@minimize <- minimize
+  .Object@sorted_constraints <- sorted_constraints
+  .Object@is_mip <- is_mip
   return(.Object)
 })
 
@@ -83,7 +86,10 @@ setMethod("constant", signature(object = "CoeffExtractor", expr = "Expression"),
 })
 
 setMethod("affine", signature(object = "CoeffExtractor", expr = "list"), function(object, expr) {
-  size <- sum(sapply(expr, size))
+  if(length(expr) == 0)
+    size <- 0
+  else
+    size <- sum(sapply(expr, size))
   op_list <- lapply(expr, function(e) { canonical_form(e)[[1]] })
   VIJb <- get_problem_matrix(op_list, object@id_map)
   V <- VIJb[[1]]
@@ -125,7 +131,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
         if(var_size == 1)
           P <- c[1, var_offset + 1] * P
         else
-          P <- as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1) %*% P
+          P <- matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1) %*% P
       } else
         P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
       if(orig_id %in% names(coeffs)) {
@@ -141,11 +147,11 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       var_size <- as.integer(prod(affine_var_dims[[var_id]]))
       if(var_id %in% names(coeffs)) {
         coeffs[[var_id]]$P <- coeffs[[var_id]]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + amatrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
       } else {
         coeffs[[var_id]] <- list()
         coeffs[[var_id]]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + as.matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + matrix(c[1, (var_offset + 1):(var_offset + var_size)], nrow = 1)
       }
     }
   }
@@ -179,7 +185,7 @@ setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expres
   q <- c()
   for(var_id in names(offsets)) {
     offset <- offsets[[var_id]]
-    if(var_id %in% coeffs) {
+    if(var_id %in% names(coeffs)) {
       P <- bdiag(P, coeffs[[var_id]]$P)
       q <- c(q, coeffs[[var_id]]$q)
     } else {

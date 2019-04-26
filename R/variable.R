@@ -39,6 +39,9 @@
 Variable <- function(rows = 1, cols = 1, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = c(rows, cols), name = name, id = id, ...) }
 
 setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_) {
+  if(is.null(dim))   # Force constants to default to c(1,1).
+    dim <- c(1,1)
+  
   .Object@id <- ifelse(is.na(id), get_id(), id)
   if(is.na(name))
     .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)

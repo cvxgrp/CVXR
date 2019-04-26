@@ -44,10 +44,10 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
       eq_coeffs[[1]] <- c(eq_coeffs[[1]], coeff_offset[[1]])
       eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
     }
-    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
+    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), sparse = TRUE)
     b <- -eq_coeffs[[2]]
   } else {
-    A <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
+    A <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
     b <- -matrix(nrow = 0, ncol = 0)
   }
   
@@ -58,10 +58,10 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
       ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], coeff_offset[[1]])
       ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
     }
-    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), byrow = TRUE, sparse = TRUE)
+    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), sparse = TRUE)
     g <- -ineq_coeffs[[2]]
   } else {
-    Fmat <- Matrix(nrow = 0, ncol = n, byrow = TRUE, sparse = TRUE)
+    Fmat <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
     g <- -matrix(nrow = 0, ncol = 0)
   }
   

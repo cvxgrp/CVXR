@@ -1036,15 +1036,15 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
     lengths <- c(lengths, prod(dim(offset)))
     ids <- c(ids, id(con))
   }
-  coeff <- Matrix(do.call("rbind", matrices), sparse = TRUE)
-  offset <- do.call("cbind", offsets)
+  coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
+  offset <- do.call(cbind, offsets)
   return(list(coeff, offset, lengths, ids))
 })
 
 setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
-  inv_data[object@var_id] <- id(variables(problem)[[1]])
+  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
 
   # Get integrality constraint information.
   var <- variables(problem)[[1]]
@@ -1068,6 +1068,13 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   inv_data[[OBJ_OFFSET]] <- constant[1]
   Gs <- list()
   hs <- list()
+  
+  if(length(problem@constraints) == 0) {
+    data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+    data[[H_KEY]] <- matrix(nrow = 0, ncol = 0)
+    inv_data$is_LP <- TRUE
+    return(list(data, inv_data))
+  }
 
   # Linear inequalities.
   leq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "NonPosConstraint" })]
@@ -1085,7 +1092,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 
   # Linear equations.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ZeroConstraint" })]
-  if(length(leq_constr) > 0) {
+  if(length(eq_constr) > 0) {
     blform <- block_format(object, problem, eq_constr)   # G, h : G*z == h.
     G <- blform[[1]]
     h <- blform[[2]]
@@ -1146,11 +1153,11 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   if(length(Gs) == 0)
     data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
   else
-    data[[G_KEY]] <- Matrix(do.call("rbind", Gs), sparse = TRUE)
+    data[[G_KEY]] <- Matrix(do.call(rbind, Gs), sparse = TRUE)
   if(length(hs) == 0)
     data[[H_KEY]] <- matrix(nrow = 0, ncol = 0)
   else
-    data[[H_KEY]] <- Matrix(do.call("cbind", hs), sparse = TRUE)
+    data[[H_KEY]] <- Matrix(do.call(cbind, hs), sparse = TRUE)
   inv_data$is_LP <- (length(psd_constr) + length(exp_constr) + length(soc_constr)) == 0
   return(list(data, inv_data))
 })

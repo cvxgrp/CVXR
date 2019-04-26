@@ -255,9 +255,8 @@ restore_quad_forms <- function(expr, quad_forms) {
   
   for(idx in 1:nargs) {
     arg <- get_args(expr)[[idx]]
-    arg_id <- as.character(id(arg))
-    if(is(arg, "Variable") && arg_id %in% names(quad_forms))
-      expr <- set_args(expr, idx, quad_forms[[arg_id]][[3]])
+    if(is(arg, "Variable") && as.character(id(arg)) %in% names(quad_forms))
+      expr <- set_args(expr, idx, quad_forms[[as.character(id(arg))]][[3]])
     else {
       arg <- restore_quad_forms(arg, quad_forms)
       expr <- set_args(expr, idx, arg)

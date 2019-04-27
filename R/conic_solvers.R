@@ -206,7 +206,7 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-CBC_CONIC <- setClass("CBC_CONIC", contains = "ConicSolver")
+CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
 # Solver capabilities.
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
@@ -256,24 +256,13 @@ setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), funct
 })
 
 setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
-  # Returns a new problem and data for inverting the new solution.
-  data <- list()
-  objective <- canonical_form(problem@objective)[[1]]
-  constraints <- lapply(problem@constraints, function(c) { canonical_form[[2]] })
-  constraints <- unlist(constraints, recursive = TRUE)
-  data$objective <- objective
-  data$constraints <- constraints
+  tmp <- callNextMethod(object, problem)
+  data <- tmp[[1]]
+  inv_data <- tmp[[2]]
   variables <- variables(problem)[[1]]
-  data[BOOL_IDX] <- lapply(variables@boolean_idx, function(t) { as.integer(t[[1]]) })
-  data[INT_IDX] <- lapply(variables@integer_idx, function(t) { as.integer(t[[1]]) })
-
-  # Order and group constraints.
-  inv_data <- list()
-  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
-  inv_data[[object@eq_constr]] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
-  inv_data[[object@neq_constr]] <- leq_constr
+  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+  inv_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
   return(list(data, inv_data))
 })
 
@@ -307,13 +296,13 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
 })
 
-CPLEX <- setClass("CPLEX", contains = "ConicSolver")
+CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
 
-setMethod("mip_capable", "CPLEX", function(solver) { TRUE })
-setMethod("supported_constraints", "CPLEX", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
-setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
-setMethod("accepts", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
+setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
+setMethod("supported_constraints", "CPLEX_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("name", "CPLEX_CONIC", function(x) { CPLEX_NAME })
+setMethod("import_solver", "CPLEX_CONIC", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
+setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
   # Can CPLEX solve the problem?
   # TODO: Check if the matrix is stuffed.
   if(!is_affine(problem@objective@args[[1]]))
@@ -329,31 +318,18 @@ setMethod("accepts", signature(object = "CPLEX", problem = "Problem"), function(
   return(TRUE)
 })
 
-setMethod("perform", signature(object = "CPLEX", problem = "Problem"), function(object, problem) {
-  # Returns a new problem and data for inverting the new solution.
-  data <- list()
-  objective <- canonical_form(problem@objective)[[1]]
-  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
-  constraints <- unlist(constraints, recursive = TRUE)
-  data$objective <- objective
-  data$constraints <- constraints
+setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
+  tmp <- callNextMethod(object, problem)
+  data <- tmp[[1]]
+  inv_data <- tmp[[2]]
   variables <- variables(problem)[[1]]
-  data[BOOL_IDX] <- lapply(variables@boolean_idx, function(t) { t[[1]] })
-  data[INT_IDX] <- lapply(variables@integer_idx, function(t) { t[[1]] })
-
-  # Order and group constraints.
-  inv_data <- list()
-  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
-  inv_data[[object@eq_constr]] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
-  soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  inv_data[[object@neq_constr]] <- c(leq_constr, soc_constr)
-  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+  inv_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "CPLEX", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
 
@@ -381,16 +357,16 @@ setMethod("invert", signature(object = "CPLEX", solution = "Solution", inverse_d
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   solver <- CPLEX_OLD()
-  solver_opts[BOOL_IDX] <- data[BOOL_IDX]
-  solver_opts[INT_IDX] <- data[INT_IDX]
+  solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
+  solver_opts[[INT_IDX]] <- data[[INT_IDX]]
   prob_data <- list()
-  prob_data[name(object)] <- ProblemData()
+  prob_data[[name(object)]] <- ProblemData()
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
-setClass("CVXOPT", contains = "ConicSolver")
+setClass("CVXOPT", contains = "ECOS")
 CVXOPT <- function() { new("CVXOPT") }
 
 # Solver capabilities.
@@ -432,27 +408,27 @@ setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function
 
 setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   data <- list()
-  objective <- canonical_form(problem@objective)[[1]]
-  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[1]] })
-  constraints <- unlist(constraints, recursive = TRUE)
-  data$objective <- objective
-  data$constraints <- constraints
-  data[[ConicSolver()@dims]] <- ConeDims(group_constraints(problem@constraints))
-  variables <- variables(problem)[[1]]
-  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[[1]] })
-  data[[INT_IDX]] <- lapply(variables@integer_idx, function(c) { t[[1]] })
-
   inv_data <- list()
   inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-
-  # Order and group constraints.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
-  inv_data[[CVXOPT()@eq_constr]] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
-  soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  sdp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "PSDConstraint" })]
-  exp_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ExpCone" })]
-  inv_data[[CVXOPT()@neq_constr]] <- c(leq_constr, soc_constr, sdp_constr, exp_constr)
+  tmp <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
+  data[[C_KEY]] <- as.vector(tmp[[1]])
+  data[[OFFSET]] <- tmp[[2]]
+  inv_data[[OFFSET]] <- data[[OFFSET]][1]
+  
+  constr_map <- group_constraints(problem@constraints)
+  data[[ConicSolver()@dims]] <- ConeDims(constr_map)
+  
+  inv_data[[object@eq_constr]] <- constr_map$ZeroConstraint
+  tmp <- group_coeff_offset(object, problem, constr_map$ZeroConstraint, ECOS()@exp_cone_order)
+  data[[A_KEY]] <- tmp[[1]]
+  data[[B_KEY]] <- tmp[[2]]
+  
+  # Order and group nonlinear constraints.
+  neq_constr <- c(constr_map$NonPosConstraint, constr_map$SOC, constr_map$PSDConstraint)
+  inv_data[[object@neq_constr]] <- neq_constr
+  tmp <- group_coeff_offset(object, problem, neq_constr, ECOS()@exp_cone_order)
+  data[[G_KEY]] <- tmp[[1]]
+  data[[H_KEY]] <- tmp[[2]]
   return(list(data, inv_data))
 })
 
@@ -681,23 +657,8 @@ setMethod("import_solver", "GLPK", function(solver) {
   requireNamespace("Rglpk", quietly = TRUE)
 })
 
-setMethod("accepts", signature(object = "GLPK", problem = "Problem"), function(object, problem) {
-  # TODO: Check if the matrix is stuffed.
-  if(!is_affine(problem@objective@args[[1]]))
-    return(FALSE)
-  for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
-      return(FALSE)
-    for(arg in constr@args) {
-      if(!is_affine(arg))
-        return(FALSE)
-    }
-  }
-  return(TRUE)
-})
-
-setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {  status <- solution$status
-
+setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+  status <- solution$status
   primal_vars <- NA
   dual_vars <- NA
   if(status %in% SOLUTION_PRESENT) {
@@ -712,7 +673,6 @@ setMethod("invert", signature(object = "GLPK", solution = "Solution", inverse_da
     else
       opt_val <- NA
   }
-
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
@@ -736,14 +696,14 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
-GUROBI <- setClass("GUROBI", contains = "ConicSolver")
+GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
 
 # Solver capabilities.
-setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
-setMethod("supported_constraints", "GUROBI", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+setMethod("mip_capable", "GUROBI_CONIC", function(solver) { TRUE })
+setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 # Map of Gurobi status to CVXR status.
-setMethod("status_map", "GUROBI", function(solver, status) {
+setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
   if(status == 2)
     return(OPTIMAL)
   else if(status == 3)
@@ -758,12 +718,12 @@ setMethod("status_map", "GUROBI", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
-setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI", function(solver) {
+setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
+setMethod("import_solver", "GUROBI_CONIC", function(solver) {
   requireNamespace("gurobi", quietly = TRUE)
 })
 
-setMethod("accepts", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
+setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
@@ -778,30 +738,18 @@ setMethod("accepts", signature(object = "GUROBI", problem = "Problem"), function
   return(TRUE)
 })
 
-setMethod("perform", signature(object = "GUROBI", problem = "Problem"), function(object, problem) {
-  data <- list()
-  objective <- canonical_form(problem@objective)[[1]]
-  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
-  constraints <- unlist(constraints, recursive = TRUE)
-  data$objective <- objective
-  data$constraints <- constraints
+setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
+  tmp <- callNextMethod(object, problem)
+  data <- tmp[[1]]
+  inv_data <- tmp[[2]]
   variables <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
-
-  # Order and group constraints.
-  inv_data <- list()
-  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
-  inv_data[[object@eq_constr]] <- eq_constr
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
-  soc_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "SOC" })]
-  inv_data[[object@neq_constr]] <- c(leq_constr, soc_constr)
-  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+  inv_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "GUROBI", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
 
   primal_vars <- NA
@@ -828,7 +776,8 @@ setMethod("invert", signature(object = "GUROBI", solution = "list", inverse_data
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+  # TODO: Finish this implementation.
   solver <- GUROBI_OLD()
   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
   solver_opts[[INT_IDX]] <- data[[INT_IDX]]
@@ -850,7 +799,7 @@ setMethod("mip_capable", "LS", function(solver) { FALSE })
 setMethod("import_solver", "LS", function(solver) { })
 setMethod("name", "LS", function(x) { LS_NAME })
 setMethod("split_constr", "LS", function(solver, constr_map) {
-  return(list(constr_map[EQ_MAP], constr_map[LEQ_MAP], list()))
+  return(list(constr_map[[EQ_MAP]], constr_map[[LEQ_MAP]], list()))
 })
 
 # Temporary method to determine whether the given Problem object is suitable for LS solver.
@@ -1386,7 +1335,7 @@ setMethod("alt_invert", "MOSEK", function(object, results, inverse_data) {
     z <- rep(0, inverse_data$n0)
     task.getxxslice(sol, 0, length(z), z)
     primal_vars <- list()
-    primal_vars[inverse_data[object@var_id]] <- z
+    primal_vars[[inverse_data[[object@var_id]]]] <- z
     # Recover the CVXR standard form dual variables.
     if(sol == mosek.soltype.itg)
       dual_vars <- NA
@@ -1605,7 +1554,7 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   inv_data <- list()
-  inv_data[object@var_id] <- id(variables(problem)[[1]])
+  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
 
   # Parse the coefficient vector from the objective.
   offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
@@ -1738,7 +1687,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
   return(results)
 })
 
-XPRESS <- setClass("XPRESS", contains = "ConicSolver")
+XPRESS <- setClass("XPRESS", contains = "SCS")
 
 # Solver capabilities.
 setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
@@ -1781,21 +1730,13 @@ setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function
 })
 
 setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
-  data <- list()
-  objective <- canonical_form(problem@objective)[[1]]
-  constraints <- lapply(problem@constraints, function(c) { canonical_form(c)[[2]] })
-  constraints <- unlist(constraints, recursive = TRUE)
-  data$objective <- objective
-  data$constraints <- constraints
+  tmp <- callNextMethod(object, problem)
+  data <- tmp[[1]]
+  inv_data <- tmp[[2]]
   variables <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
-
-  # Order and group constraints.
-  inv_data <- list()
-  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-  inv_data[[EQ_CONSTR]] <- problem@constraints
-  inv_data$is_mip <- is_mixed_integer(problem)
+  inv_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
   return(list(data, inv_data))
 })
 

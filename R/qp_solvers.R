@@ -89,13 +89,13 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 })
 
 # QP interface for the CPLEX solver.
-CPLEX <- setClass("CPLEX", contains = "QpSolver")
+CPLEX_QP <- setClass("CPLEX_QP", contains = "QpSolver")
 
-setMethod("mip_capable", "CPLEX", function(solver) { TRUE })
+setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 
 # Map of CPLEX status to CVXR status.
 # TODO: Add more!
-setMethod("status_map", "CPLEX", function(solver, status) {
+setMethod("status_map", "CPLEX_QP", function(solver, status) {
   if(status %in% c(1, 101))
     OPTIMAL
   else if(status %in% c(3, 22, 4, 103))
@@ -108,9 +108,9 @@ setMethod("status_map", "CPLEX", function(solver, status) {
     stop("CPLEX status unrecognized: ", status)
 })
 
-setMethod("name", "CPLEX", function(x) { CPLEX_NAME })
-setMethod("import_solver", "CPLEX", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
-setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
+setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
+setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
+setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
   if("cputime" %in% names(results))
@@ -145,7 +145,7 @@ setMethod("alt_invert", "CPLEX", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("Rcplex", quietly = TRUE)
   P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   q <- data[[Q_KEY]]
@@ -258,12 +258,12 @@ setMethod("solve_via_data", "CPLEX", function(object, data, warm_start, verbose,
 })
 
 # QP interface for the GUROBI solver.
-GUROBI <- setClass("GUROBI", contains = "QpSolver")
+GUROBI_QP <- setClass("GUROBI_QP", contains = "QpSolver")
 
-setMethod("mip_capable", "GUROBI", function(solver) { TRUE })
+setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 
 # Map of GUROBI status to CVXR status.
-setMethod("status_map", "GUROBI", function(solver, status) {
+setMethod("status_map", "GUROBI_QP", function(solver, status) {
   if(status == 2)
     OPTIMAL
   else if(status == 3 || status == 6)
@@ -280,12 +280,12 @@ setMethod("status_map", "GUROBI", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
-setMethod("name", "GUROBI", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI", function(solver) { 
+setMethod("name", "GUROBI_QP", function(x) { GUROBI_NAME })
+setMethod("import_solver", "GUROBI_QP", function(solver) { 
   requireNamespace("gurobi", quietly = TRUE)  
 })
 
-setMethod("alt_invert", "GUROBI", function(object, results, inverse_data) {
+setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
   model <- results$model
   x_grb <- getVars(model)
   n <- length(x_grb)
@@ -324,14 +324,14 @@ setMethod("alt_invert", "GUROBI", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-setMethod("solve_via_data", "GUROBI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
   requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
   q <- data[[Q_KEY]]
-  A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE)   # Convert A matrix to CSR format.
+  A <- data[[A_KEY]]   # TODO: Convert A matrix to CSR format?
   b <- data[[B_KEY]]
-  Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE)   # Convert F matrix to CSR format.
+  Fmat <- data[[F_KEY]]   # TODO: Convert F matrix to CSR format?
   g <- data[[G_KEY]]
   n <- data$n_var
   

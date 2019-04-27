@@ -86,10 +86,10 @@ CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, ECOS_BB_NAME, SUPER_SCS_NAME, SCS_NAME
 QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
 
 # Solver definitions.
-SOLVER_MAP_CONIC <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
+SOLVER_MAP_CONIC <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI_CONIC(), Elemental(), MOSEK(), CPLEX_CONIC())
 names(SOLVER_MAP_CONIC) <- sapply(SOLVER_MAP_CONIC, function(solver) { name(solver) })
 
-SOLVER_MAP_QP <- list(OSQP(), GUROBI(), CPLEX())
+SOLVER_MAP_QP <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
 names(SOLVER_MAP_QP) <- sapply(SOLVER_MAP_QP, function(solver) { name(solver) })
 
 installed_solvers <- function() {

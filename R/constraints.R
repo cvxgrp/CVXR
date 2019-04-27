@@ -502,7 +502,7 @@ setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
 #' @param x,object A \linkS4class{SOC} object.
 #' @rdname SOC-class
 setMethod("as.character", "SOC", function(x) {
-  paste("SOC(", as.character(x@t), ", <", paste(lapply(x@x_elems, function(elem) { as.character(elem) }), collapse = ", "), ">)", sep = "")
+  paste("SOC(", as.character(x@t), ", ", as.character(x@X), ")", sep = "")
 })
 
 setMethod("residual", "SOC", function(object) {

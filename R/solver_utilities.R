@@ -4,9 +4,9 @@
 #                  #
 ####################
 # solver_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), GLPK_MI(), CBC(), SCS(), GUROBI(), Elemental(), MOSEK(), LS())
-solver_intf <- list(ECOS(), ECOS_BB(), SCS(), MOSEK(), LPSOLVE(), GLPK(), GUROBI())
-solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI(), Elemental(), MOSEK(), CPLEX())
-solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX())
+solver_intf <- list(ECOS(), ECOS_BB(), SCS(), MOSEK(), LPSOLVE(), GLPK(), GUROBI_CONIC())
+solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI_CONIC(), Elemental(), MOSEK(), CPLEX_CONIC())
+solver_qp_intf <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
 
 SOLVERS <- solver_intf
 names(SOLVERS) <- sapply(solver_intf, name)

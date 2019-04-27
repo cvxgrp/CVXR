@@ -28,7 +28,7 @@ is_stuffed_cone_objective <- function(objective) {
                          && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && class(expr@args[[2]]) == "Constant")
 }
 
-
+#'
 #' Summary of cone dimensions present in constraints.
 #'
 #'    Constraints must be formatted as dictionary that maps from
@@ -56,8 +56,8 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real
   .Object@zero <- ifelse(is.null(constr_map$ZeroConstraint), 0, sum(sapply(constr_map$ZeroConstraint, function(c) { size(c) })))
   .Object@nonpos <- ifelse(is.null(constr_map$NonPosConstraint), 0, sum(sapply(constr_map$NonPosConstraint, function(c) { size(c) })))
   .Object@exp <- ifelse(is.null(constr_map$ExpCone), 0, sum(sapply(constr_map$ExpCone, function(c) { num_cones(c) })))
-  .Object@soc <- lapply(constr_map$SOC, function(c) { cone_sizes(c) })
-  .Object@psd <- lapply(constr_map$PSDConstraint, function(c) { dim(c)[1] })
+  .Object@soc <- as.list(Reduce(c, lapply(constr_map$SOC, function(c) { cone_sizes(c) })))
+  .Object@psd <- sapply(constr_map$PSDConstraint, function(c) { dim(c)[1] })
   return(.Object)
 })
 
@@ -150,7 +150,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     
     offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
     offset <- matrix(t(offset), ncol = 1)
-    return(list(Matrix(stacked, sparse = TRUE), offset))
+    return(list(Matrix(stacked, sparse = TRUE), as.vector(offset)))
   } else if(class(constr) == "ExpCone") {
     for(i in 1:length(coeffs)) {
       mat <- ConicSolver.get_spacing_matrix(c(height, nrow(coeffs[[i]])), length(exp_cone_order), exp_cone_order[i])
@@ -158,7 +158,9 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
       coeffs[[i]] <- -mat %*% coeffs[[i]]
     }
     # return(list(sum(coeffs), sum(offsets)))
-    return(list(Reduce("+", coeffs), Reduce("+", offsets)))
+    coeff_sum <- Reduce("+", coeffs)
+    offset_sum <- Reduce("+", offsets)
+    return(list(coeff_sum, as.vector(offset_sum)))
   } else
     # subclasses must handle PSD constraints.
     stop("Unsupported constraint type.")
@@ -170,14 +172,13 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
     return(list(NULL, NULL))
 
   matrices <- list()
-  offsets <- list()
+  offset <- c()
   for(cons in constraints) {
     res <- reduction_format_constr(object, problem, cons, exp_cone_order)
     matrices <- c(matrices, list(res[[1]]))
-    offsets <- c(offsets, list(res[[2]]))
+    offset <- c(offset, res[[2]])
   }
   coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
-  offset <- do.call(rbind, offsets)
   return(list(coeff, offset))
 })
 
@@ -1023,7 +1024,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
   if(length(constraints) == 0 || is.null(constraints) || is.na(constraints))
     return(list(NULL, NULL))
   matrices <- list()
-  offsets <- list()
+  offsets <- c()
   lengths <- c()
   ids <- c()
 
@@ -1032,13 +1033,12 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
     coeff <- coeff_offs[[1]]
     offset <- coeff_offs[[2]]
     matrices <- c(matrices, list(coeff))
-    offsets <- c(offsets, list(offset))
+    offsets <- c(offsets, offset)
     lengths <- c(lengths, prod(dim(offset)))
     ids <- c(ids, id(con))
   }
   coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
-  offset <- do.call(cbind, offsets)
-  return(list(coeff, offset, lengths, ids))
+  return(list(coeff, offsets, lengths, ids))
 })
 
 setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {

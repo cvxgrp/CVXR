@@ -651,7 +651,12 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
 #' @rdname psolve
 #' @method solve Problem
 #' @export
-solve.Problem <- function(a, b, ...) { CVXR::psolve(a, b, ...) }
+setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b = NA, ...) {
+  if(missing(b))
+    psolve(a, solver = NA, ...)
+  else
+    psolve(a, b, ...)
+})
 
 # # TODO: Finish implementation of parallel solve.
 # .parallel_solve.Problem <- function(object, solver = NULL, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, ...) {

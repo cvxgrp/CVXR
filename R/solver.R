@@ -38,9 +38,9 @@ Solver.choose_solver <- function(constraints) {
 
 setMethod("is_installed", "Solver", function(solver) {
   tryCatch({
-    import_solver(solver)
+    return(import_solver(solver))
   }, error = function(e) {
-    FALSE
+    return(FALSE)
   })
 })
 

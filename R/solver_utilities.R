@@ -27,6 +27,5 @@ names(SOLVER_MAP_QP) <- sapply(solver_qp_intf, name)
 installed_solvers <- function() {
   installed <- sapply(SOLVERS, is_installed)
   names(SOLVERS)[which(installed)]
-
 }
 

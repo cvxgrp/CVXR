@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.5</span>
       </span>
     </div>
 
@@ -155,60 +155,64 @@
 #&gt; [1] "ECOS"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 2.5288e-05
+#&gt; [1] 2.5347e-05
 #&gt; 
 #&gt; $setup_time
-#&gt; [1] 1.7607e-05
+#&gt; [1] 2.0106e-05
 #&gt; 
 #&gt; $num_iters
 #&gt; [1] 8
 #&gt; 
 #&gt; $getValue
-#&gt; function (objet) 
-#&gt; {
-#&gt;     if (is(objet, "Variable") || is(objet, "Constraint")) {
-#&gt;         return(result[[as.character(id(objet))]])
-#&gt;     }
-#&gt;     if (is_zero(objet)) {
-#&gt;         size &lt;- size(objet)
-#&gt;         valResult &lt;- matrix(0, nrow = size[1], ncol = size[2])
-#&gt;     }
-#&gt;     else {
-#&gt;         arg_values &lt;- list()
-#&gt;         idx &lt;- 1
-#&gt;         for (arg in objet@args) {
-#&gt;             arg_val &lt;- if (is_constant(arg)) {
-#&gt;                 value(arg)
-#&gt;             }
-#&gt;             else {
-#&gt;                 getValue(arg)
-#&gt;             }
-#&gt;             if (is.null(arg_val) || (any(is.na(arg_val)) &amp;&amp; !is_constant(objet))) 
-#&gt;                 return(NA)
-#&gt;             else {
-#&gt;                 arg_values[[idx]] &lt;- arg_val
-#&gt;                 idx &lt;- idx + 1
-#&gt;             }
+#&gt; function(objet) {
+#&gt;         ## We go French!
+#&gt;         if (is(objet, "Variable") || is(objet, "Constraint")) {
+#&gt;             return(result[[ as.character(id(objet)) ]])
 #&gt;         }
-#&gt;         valResult &lt;- to_numeric(objet, arg_values)
+#&gt;         if(is_zero(objet)) {
+#&gt;             size &lt;- size(objet)
+#&gt;             valResult &lt;- matrix(0, nrow = size[1], ncol = size[2])
+#&gt;         } else {
+#&gt; 
+#&gt;             arg_values &lt;- list()
+#&gt;             idx &lt;- 1
+#&gt;             for(arg in objet@args) {
+#&gt;                 ## An argument without a value makes all higher level values NA.
+#&gt;                 ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
+#&gt;                 arg_val &lt;- if(is_constant(arg)) {
+#&gt;                                value(arg)
+#&gt;                            } else {
+#&gt;                                ##result[[ as.character(id(arg)) ]]
+#&gt;                                getValue(arg)
+#&gt;                            }
+#&gt;                 if(is.null(arg_val) || (any(is.na(arg_val)) &amp;&amp; !is_constant(objet)))
+#&gt;                     return(NA)
+#&gt;                 else {
+#&gt;                     arg_values[[idx]] &lt;- arg_val
+#&gt;                     idx &lt;- idx + 1
+#&gt;                 }
+#&gt;             }
+#&gt;             valResult &lt;- to_numeric(objet, arg_values)
+#&gt;         }
+#&gt; 
+#&gt;         ## Reduce to scalar if possible
+#&gt;         if(all(intf_size(valResult) == c(1, 1)))
+#&gt;             intf_scalar_value(valResult)
+#&gt;         else
+#&gt;             valResult
 #&gt;     }
-#&gt;     if (all(intf_size(valResult) == c(1, 1))) 
-#&gt;         intf_scalar_value(valResult)
-#&gt;     else valResult
-#&gt; }
-#&gt; &lt;bytecode: 0x7fb657acbcd0&gt;
-#&gt; &lt;environment: 0x7fb656c21928&gt;
+#&gt; &lt;bytecode: 0x7f90e74f0208&gt;
+#&gt; &lt;environment: 0x7f90e0ddb808&gt;
 #&gt; 
 #&gt; $getDualValue
-#&gt; function (objet) 
-#&gt; {
-#&gt;     if (!is(objet, "Constraint")) {
-#&gt;         stop("getDualValue: argument should be a Constraint!")
+#&gt; function(objet) {
+#&gt;         if (!is(objet, "Constraint")) {
+#&gt;             stop("getDualValue: argument should be a Constraint!")
+#&gt;         }
+#&gt;         getValue(objet)
 #&gt;     }
-#&gt;     getValue(objet)
-#&gt; }
-#&gt; &lt;bytecode: 0x7fb6536bbea0&gt;
-#&gt; &lt;environment: 0x7fb656c21928&gt;
+#&gt; &lt;bytecode: 0x7f90e75dd6a8&gt;
+#&gt; &lt;environment: 0x7f90e0ddb808&gt;
 #&gt; </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

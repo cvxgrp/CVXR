@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.5</span>
       </span>
     </div>
 
@@ -148,47 +148,47 @@
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 9.813441</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;                [,1]
-#&gt;  [1,]  3.075110e-01
-#&gt;  [2,]  4.746013e-01
-#&gt;  [3,]  1.719635e-01
-#&gt;  [4,]  3.546111e-08
-#&gt;  [5,]  4.013943e-02
-#&gt;  [6,]  8.963244e-10
-#&gt;  [7,]  1.984734e-09
-#&gt;  [8,]  8.050735e-02
-#&gt;  [9,]  2.689793e-01
-#&gt; [10,] -1.225041e-10
-#&gt; [11,]  2.921991e-09
-#&gt; [12,]  2.441208e-01
-#&gt; [13,]  2.974094e-02
-#&gt; [14,]  2.202891e-01
-#&gt; [15,]  1.954291e-01
-#&gt; [16,]  2.762106e-02
-#&gt; [17,]  1.751774e-01
-#&gt; [18,]  8.997645e-02
-#&gt; [19,]  1.760342e-01
-#&gt; [20,]  7.563559e-02</div><div class='input'><span class='no'>result</span>$<span class='fu'>getDualValue</span>(<span class='no'>constr</span><span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt;               [,1]
-#&gt;  [1,] 7.645705e-08
-#&gt;  [2,] 5.053300e-08
-#&gt;  [3,] 1.294602e-07
-#&gt;  [4,] 5.294848e-01
-#&gt;  [5,] 5.135023e-07
-#&gt;  [6,] 7.499881e+00
-#&gt;  [7,] 5.050196e+00
-#&gt;  [8,] 2.703664e-07
-#&gt;  [9,] 8.766303e-08
-#&gt; [10,] 9.733416e+00
-#&gt; [11,] 4.072360e+00
-#&gt; [12,] 9.280593e-08
-#&gt; [13,] 5.927891e-07
-#&gt; [14,] 1.021562e-07
-#&gt; [15,] 1.119543e-07
-#&gt; [16,] 6.391447e-07
-#&gt; [17,] 1.257439e-07
-#&gt; [18,] 2.092180e-07
-#&gt; [19,] 1.258850e-07
-#&gt; [20,] 2.885748e-07</div></pre>
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 9.468825</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;                [,1]
+#&gt;  [1,]  2.880683e-03
+#&gt;  [2,]  1.950167e-10
+#&gt;  [3,]  1.263104e-04
+#&gt;  [4,]  2.243268e-01
+#&gt;  [5,]  2.121728e-01
+#&gt;  [6,]  2.746179e-01
+#&gt;  [7,]  1.132063e-01
+#&gt;  [8,]  2.221174e-01
+#&gt;  [9,]  1.146115e-01
+#&gt; [10,] -3.949562e-11
+#&gt; [11,]  1.225585e-10
+#&gt; [12,]  5.792472e-10
+#&gt; [13,]  1.035244e-01
+#&gt; [14,]  1.432093e-01
+#&gt; [15,]  1.207694e-01
+#&gt; [16,]  2.892391e-10
+#&gt; [17,]  2.911115e-11
+#&gt; [18,]  2.022934e-01
+#&gt; [19,]  1.730500e-01
+#&gt; [20,]  4.016803e-09</div><div class='input'><span class='no'>result</span>$<span class='fu'>getDualValue</span>(<span class='no'>constr</span><span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt;               [,1]
+#&gt;  [1,] 5.142400e-07
+#&gt;  [2,] 4.601513e+00
+#&gt;  [3,] 5.437608e-06
+#&gt;  [4,] 6.968628e-09
+#&gt;  [5,] 7.364172e-09
+#&gt;  [6,] 5.702537e-09
+#&gt;  [7,] 1.374565e-08
+#&gt;  [8,] 7.042233e-09
+#&gt;  [9,] 1.356044e-08
+#&gt; [10,] 1.572323e+01
+#&gt; [11,] 5.911698e+00
+#&gt; [12,] 2.116358e+00
+#&gt; [13,] 1.501828e-08
+#&gt; [14,] 1.091123e-08
+#&gt; [15,] 1.287818e-08
+#&gt; [16,] 3.628627e+00
+#&gt; [17,] 8.765149e+00
+#&gt; [18,] 7.762451e-09
+#&gt; [19,] 9.009230e-09
+#&gt; [20,] 3.720522e-01</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

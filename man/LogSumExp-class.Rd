@@ -61,9 +61,9 @@ The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{
 
 \item \code{is_atom_concave}: The atom is not concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr}: The atom is monotonically non-decreasing.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr}: The atom is not monotonically non-increasing.
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

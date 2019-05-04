@@ -824,7 +824,7 @@ setMethod(".column_grad", "LogSumExp", function(object, value) {
 })
 
 #' @describeIn LogSumExp The atom is positive.
-setMethod("sign_from_args",  "LogSumExp", function(object) { c(TRUE, FALSE) })
+setMethod("sign_from_args",  "LogSumExp", function(object) { c(FALSE, FALSE) })
 
 #' @describeIn LogSumExp The atom is convex.
 setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
@@ -833,10 +833,10 @@ setMethod("is_atom_convex", "LogSumExp", function(object) { TRUE })
 setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @describeIn LogSumExp The atom is not monotonic in any argument.
-setMethod("is_incr", "LogSumExp", function(object, idx) { FALSE })
+#' @describeIn LogSumExp The atom is monotonically non-decreasing.
+setMethod("is_incr", "LogSumExp", function(object, idx) { TRUE })
 
-#' @describeIn LogSumExp The atom is not monotonic in any argument.
+#' @describeIn LogSumExp The atom is not monotonically non-increasing.
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
 LogSumExp.graph_implementation <- function(arg_objs, size, data = NA_real_) {

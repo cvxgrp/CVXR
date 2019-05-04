@@ -509,7 +509,7 @@ setMethod("is_qpwa", "DivExpression", function(object) {
 setMethod("dim_from_args", "DivExpression", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
-setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) && is_scalar(object@args[[2]]) })
+setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) })
 
 #' @describeIn DivExpression Division is concave (affine) in its arguments only if the denominator is constant.
 setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(object) })

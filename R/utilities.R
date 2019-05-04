@@ -212,7 +212,7 @@ sum_dims <- function(dims) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
     # if(!(length(dim) == length(t) && all(dim == t)) && (!is.null(dim) && sum(dim != 1) != 0) && (!is.null(t) && sum(t != 1) != 0))
     # if(!identical(dim, t) && (!is.null(dim) && !all(dim == 1)) && (!is.null(t) && !all(t == 1)))
-    if(!(identical(dim, t) || all(dim == 1) || all(t == 1)))
+    if(!((length(dim) == length(t) && all(dim == t)) || all(dim == 1) || all(t == 1)))
       stop("Cannot broadcast dimensions")
     
     if(length(dim) >= length(t))
@@ -237,7 +237,7 @@ sum_dims <- function(dims) {
         d1 <- longer[offset + idx]
         d2 <- shorter[idx]
         # if(!(length(d1) == length(d2) && all(d1 == d2)) && !(d1 == 1 || d2 == 1))
-        if(!identical(d1, d2) && !(d1 == 1 || d2 == 1))
+        if(d1 != d2 && !(d1 == 1 || d2 == 1))
           stop("Incompatible dimensions")
         if(d1 >= d2)
           new_d <- d1

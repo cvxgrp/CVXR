@@ -21,7 +21,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   inverse_data <- InverseData(problem)
   
   obj <- problem@objective
-  # quadratic part of objective is x.T * P * x, but solvers expect 0.5*x.T * P * x.
+  # quadratic part of objective is t(x) %*% P %*% x, but solvers expect 0.5*t(x) %*% P %*% x.
   P <- 2*value(obj@expr@args[[1]]@args[[2]])
   q <- as.vector(value(obj@expr@args[[2]]@args[[1]]))
   
@@ -41,7 +41,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
     eq_coeffs <- list(list(), c())
     for(con in eq_cons) {
       coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
-      eq_coeffs[[1]] <- c(eq_coeffs[[1]], coeff_offset[[1]])
+      eq_coeffs[[1]] <- c(eq_coeffs[[1]], list(coeff_offset[[1]]))
       eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
     }
     A <- Matrix(do.call(rbind, eq_coeffs[[1]]), sparse = TRUE)
@@ -55,7 +55,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
     ineq_coeffs <- list(list(), c())
     for(con in ineq_cons) {
       coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
-      ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], coeff_offset[[1]])
+      ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], list(coeff_offset[[1]]))
       ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
     }
     Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), sparse = TRUE)

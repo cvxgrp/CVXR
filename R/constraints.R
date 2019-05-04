@@ -329,12 +329,12 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
 })
 
 setMethod("show", "ExpCone", function(object) {
-  print(paste("ExpCone(", as.character(object@a), ", ", as.character(object@b), ", ", as.character(object@c), ")", sep = ""))
+  print(paste("ExpCone(", as.character(object@x), ", ", as.character(object@y), ", ", as.character(object@z), ")", sep = ""))
 })
 
 #' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
-  paste("ExpCone(", as.character(x@a), ", ", as.character(x@b), ", ", as.character(x@c), ")", sep = "")
+  paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })
 
 #' @param x,object A \linkS4class{ExpCone} object.

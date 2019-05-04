@@ -877,14 +877,12 @@ Diag <- function(expr) {
 
 Diff <- function(x, lag = 1, k = 1, axis = 1) {
   x <- as.Constant(x)
-  if((axis == 1 && ndim(x) < 2) || ndim(x) == 0)
+  if((axis == 2 && ndim(x) < 2) || ndim(x) == 0)
     stop("Invalid axis given input dimensions.")
   else if(axis == 2)
     x <- t(x)
   
-  x_dim <- dim(x)
-  collapse <- setdiff(1:length(x_dim), axis)
-  m <- x_dim[collapse]
+  m <- dim(x)[axis]
   if(k <= 0 || k >= m)
     stop("Must have k > 0 and x must have < k elements along collapsed axis.")
   if(lag <= 0 || lag >= m)
@@ -900,7 +898,7 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
     m <- m-1
   }
 
-  if(axis == 1)
+  if(axis == 2)
     t(d)
   else
     d

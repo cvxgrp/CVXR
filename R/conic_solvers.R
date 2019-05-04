@@ -112,10 +112,19 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   # Selects from each column.
   for(var_row in 1:dim[2]) {
     val_arr <- c(val_arr, 1.0)
-    row_arr <- c(row_arr, spacing*(var_row - 1) + 1 + offset)
+    row_arr <- c(row_arr, spacing*(var_row - 1) + offset + 1)
     col_arr <- c(col_arr, var_row)
   }
-  return(sparseMatrix(i = row_arr, j = col_arr, x = val_arr))
+  
+  # Pad out number of rows with zeroes.
+  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr)
+  if(dim[1] > nrow(mat)) {
+    pad <- sparseMatrix(i = c(), j = c(), dims = c(dim[1] - nrow(mat), ncol(mat)))
+    mat <- rbind(mat, pad)
+  }
+  if(!all(dim(mat) == dim))
+    stop("Dimension mismatch")
+  return(mat)
 }
 
 setMethod("reduction_format_constr", "ConicSolver", function(object, problem, constr, exp_cone_order) {

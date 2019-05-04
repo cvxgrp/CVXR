@@ -652,9 +652,13 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
 #' @method solve Problem
 #' @export
 setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b = NA, ...) {
-  if(missing(b))
-    psolve(a, solver = NA, ...)
-  else
+  kwargs <- list(...)
+  if(missing(b)) {
+    if("solver" %in% names(kwargs))
+      psolve(a, ...)
+    else
+      psolve(a, solver = NA, ...)
+  } else
     psolve(a, b, ...)
 })
 

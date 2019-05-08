@@ -201,7 +201,7 @@ Solver._noncvx_id_to_idx <- function(dims, var_offsets, var_sizes) {
 #' This class is an interface for the ECOS solver.
 #'
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013.
-#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://github.com/embotech/ecos}{ECOS Official Repository}.
 #' @name ECOS-class
 #' @aliases ECOS
 #' @rdname ECOS-class
@@ -343,7 +343,7 @@ setMethod("format_results", "ECOS", function(solver, results_dict, data, cached_
 #' This class is an interface for the ECOS BB (branch-and-bound) solver.
 #'
 #' @references A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013.
-#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+#' @seealso \code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://github.com/embotech/ecos}{ECOS Official Repository}.
 #' @name ECOS_BB-class
 #' @aliases ECOS_BB
 #' @rdname ECOS_BB-class

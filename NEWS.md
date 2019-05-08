@@ -2,6 +2,8 @@
 
 * Bug fix for LogSumExp atom. This should address the issue reported
   on [StackOverflow](https://stackoverflow.com/questions/55737567/extension-to-the-cvxr-example-cvxr-kelly-strategy-not-dcp-compliant)
+* Require ECOSolveR version 0.5.1 and above to avoid convolution
+  example failure on 32-bit platforms.
 
 # CVXR 0.99-4
 

@@ -77,5 +77,5 @@ mip_capable(ecos_bb)
 A. Domahidi, E. Chu, and S. Boyd. "ECOS: An SOCP solver for Embedded Systems." \emph{Proceedings of the European Control Conference}, pp. 3071-3076, 2013.
 }
 \seealso{
-\code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://www.embotech.com/ECOS}{ECOS Official Site}.
+\code{\link[ECOSolveR]{ECOS_csolve}} and the \href{https://github.com/embotech/ecos}{ECOS Official Repository}.
 }

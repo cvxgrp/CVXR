@@ -14,12 +14,14 @@ lower_equality <- function(equality) {
 special_index_canon <- function(expr, args) {
   select_mat <- expr@.select_mat
   final_dim <- dim(expr@.select_mat)
-  select_vec <- matrix(select_mat, nrow = size(select_mat))
+  if(is.null(final_dim))
+    final_dim <- c(length(select_mat), 1)
+  select_vec <- matrix(select_mat, nrow = prod(final_dim))
   
   # Select the chosen entries from expr.
   arg <- args[[1]]
   identity <- diag(size(arg))
-  lowered <- reshape_expr(identity[select_vec]*vec(arg), final_dim)
+  lowered <- reshape_expr(identity[select_vec] %*% vec(arg), final_dim)
   list(lowered, list())
 }
 

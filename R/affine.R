@@ -1092,7 +1092,7 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, dim, data 
 #' @name SpecialIndex-class
 #' @aliases SpecialIndex
 #' @rdname SpecialIndex-class
-.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "numeric", .dim = "numeric"),
+.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "ConstVal", .dim = "numeric"),
                           prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
@@ -1101,6 +1101,7 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, dim, data 
 SpecialIndex <- function(expr, key) { .SpecialIndex(expr = expr, key = key) }
 
 setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
+  .Object@expr <- expr
   .Object@key <- key
   row <- key[[1]]
   col <- key[[2]]

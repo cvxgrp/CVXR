@@ -262,46 +262,46 @@ setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = 
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   if(is_vector(x) && size(x)[1] < size(x)[2])
-    SpecialIndex(x, c(NULL, i))   # If only first index given, apply it along longer dimension of vector
+    SpecialIndex(x, list(NULL, i))   # If only first index given, apply it along longer dimension of vector
   else
-    SpecialIndex(x, c(i, NULL))
+    SpecialIndex(x, list(i, NULL))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  SpecialIndex(x, c(NULL, j))
+  SpecialIndex(x, list(NULL, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  SpecialIndex(x, c(i, j))
+  SpecialIndex(x, list(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  SpecialIndex(x, c(i, j))
+  SpecialIndex(x, list(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  SpecialIndex(x, c(i, j))
+  SpecialIndex(x, list(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  SpecialIndex(x, c(i, j))
+  SpecialIndex(x, list(i, j))
 })
 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices
-  SpecialIndex(x, c(i, NULL))
+  SpecialIndex(x, list(i, NULL))
 })
 
 # #' @rdname Index-class

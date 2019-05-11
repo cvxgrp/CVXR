@@ -44,7 +44,6 @@ Below we provide a simple example to get you started.
 
 Consider a simple linear regression problem where it is desired to
 estimate a set of parameters using a least squares criterion. 
-
 We generate some synthetic data where we know the model completely,
 that is
 
@@ -216,7 +215,7 @@ $$
 which we express in R as
 
 ```{r}
-constraint1 <- A %*% betaHat < 0
+constraint1 <- A %*% betaHat <= 0
 ```
 
 _NOTE_: The above constraint can also be expressed simply as
@@ -245,7 +244,7 @@ $$
 which we express in R as 
 
 ```{r}
-constraint2 <- B %*% betaHat > 0
+constraint2 <- B %*% betaHat >= 0
 ```
 Now we are ready to solve the problem just as before. 
 

@@ -296,12 +296,12 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "Solution", inver
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- CBC_OLD()
-  solver_opts[BOOL_IDX] <- data[BOOL_IDX]
-  solver_opts[INT_IDX] <- data[INT_IDX]
+  solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
+  solver_opts[[INT_IDX]] <- data[[INT_IDX]]
   prob_data <- list()
-  prob_data[name(object)] <- ProblemData()
+  prob_data[[name(object)]] <- ProblemData()
   return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
 })
 
@@ -366,7 +366,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inv
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- CPLEX_OLD()
   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
   solver_opts[[INT_IDX]] <- data[[INT_IDX]]
@@ -441,7 +441,7 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   return(list(data, inv_data))
 })
 
-setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- CVXOPT_OLD()
   prob_data <- list()
   prob_data[[name(object)]] <- ProblemData()
@@ -465,7 +465,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
   return(list(data, inv_data))
 })
 
-setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
   if(is.null(solver_opts$eps))
@@ -587,7 +587,7 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
-setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control()
@@ -650,7 +650,7 @@ setMethod("perform", signature(object = "Elemental", problem = "Problem"), funct
   return(list(data, inv_data))
 })
 
-setMethod("solve_via_data", "Elemental", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "Elemental", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- EL_OLD()
   prob_data <- list()
   prob_data[[name(object)]] <- ProblemData()
@@ -685,7 +685,7 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- GLPK_OLD()
   prob_data <- list()
   prob_data[[name(object)]] <- ProblemData()
@@ -696,7 +696,7 @@ GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
-setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- GLPK_OLD()
   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
   solver_opts[[INT_IDX]] <- data[[INT_IDX]]
@@ -785,7 +785,7 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   # TODO: Finish this implementation.
   solver <- GUROBI_OLD()
   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
@@ -1121,7 +1121,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 })
 
 # TODO: Finish MOSEK class implementation.
-setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("Rmosek", quietly = TRUE)
   env <- Rmosek::Env()
   task <- env.Task(0,0)
@@ -1642,11 +1642,11 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     return(failure_solution(status))
 })
 
-setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   # Returns the result of the call to the solver.
   requireNamespace("scs", quietly = TRUE)
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
-  if(warm_start && length(solver_cache) > 0 && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
+  if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     args$x <- solver_cache[[name(object)]]$x
     args$y <- solver_cache[[name(object)]]$y
     args$s <- solver_cache[[name(object)]]$s
@@ -1660,7 +1660,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
     solver_opts$verbose <- verbose
   
   results <- scs::scs(A = args$A, b = args$b, obj = args$c, cone = cones, control = solver_opts)
-  if(length(solver_cache) > 0 && !is.na(solver_cache))
+  if(!is.null(solver_cache) && length(solver_cache) > 0)
     solver_cache[[name(object)]] <- results
   return(results)
 })
@@ -1675,9 +1675,9 @@ setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })
 
-setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
-  if(warm_start && !is.na(solver_cache) && name(object) %in% names(solver_cache)) {
+  if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     args$x <- solver_cache[[name(object)]]$x
     args$y <- solver_cache[[name(object)]]$y
     args$s <- solver_cache[[name(object)]]$s
@@ -1691,7 +1691,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
       solver_opts[k] <- default_settings(SuperSCS)[k]
   }
   results <- SuperSCS::solve(args, cones, verbose = verbose, solver_opts)
-  if(!is.na(solver_cache))
+  if(!is.null(solver_cache) && length(solver_cache) > 0)
     solver_cache[[name(object)]] <- results
   return(results)
 })
@@ -1775,7 +1775,7 @@ setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data
   return(Solution(status, opt_val, primal_vars, dual_vars, other))
 })
 
-setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- XPRESS_OLD()
   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
   solver_opts[[INT_IDX]] <- data[[INT_IDX]]

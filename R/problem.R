@@ -563,7 +563,7 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp = FALSE) {
+setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
   object <- .construct_chains(solver = solver, gp = gp)
   
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
@@ -626,6 +626,10 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   }
   return(object)
 }
+
+setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
+  get_problem_data(object, solver, gp = FALSE)
+})
 
 #' @docType methods
 #' @rdname psolve

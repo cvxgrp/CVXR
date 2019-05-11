@@ -145,7 +145,7 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("Rcplex", quietly = TRUE)
   P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   q <- data[[Q_KEY]]
@@ -324,7 +324,7 @@ setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
@@ -491,7 +491,7 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("osqp", quietly = TRUE)
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
@@ -510,7 +510,7 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   if(is.null(solver_opts$max_iter))
     solver_opts$max_iter <- 10000
 
-  if(!is.na(solver_cache) && name(object) %in% solver_cache) {
+  if(!is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     # Use cached data.
     cache <- solver_cache[[name(object)]]
     solver <- cache[[1]]
@@ -570,8 +570,8 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   ## DWK CHANGE
   ## results <- solve(solver)
   results <- solver$Solve()
-  ## if(!is.na(solver_cache))
-  if(identical(solver_cache, list()) || !is.na(solver_cache) ) #solver_cache is a list() object, so it throws an error here
+  ## if(!is.null(solver_cache))
+  if(identical(solver_cache, list()) || !is.null(solver_cache))   # solver_cache is a list() object, so it throws an error here
       solver_cache[[name(object)]] <- list(solver, data, results)
   ## DWK CHANGE END
   return(results)

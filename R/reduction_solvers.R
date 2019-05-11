@@ -45,7 +45,7 @@ setMethod("is_installed", "ReductionSolver", function(solver) {
           )
 })
 
-setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   stop("Unimplemented")
 })
 
@@ -74,7 +74,7 @@ setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", 
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
 setMethod("import_solver", "ConstantSolver", function(solver) { })
 setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
-setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   return(reduction_solve(object, data, warm_start, verbose, solver_opts))
 })
 

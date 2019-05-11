@@ -279,17 +279,20 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
       if(length(symmetric_attributes(list(var))) > 0) {
         n <- nrow(var)
         new_dim <- c(floor(n*(n+1)/2), 1)
-        upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
+        # upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
+        upper_tri <- do.call(.Variable, c(list(dim = new_dim), new_attr))
         id2new_var[[vid]] <- upper_tri
         fill_coeff <- Constant(upper_tri_to_full(n))
         full_mat <- fill_coeff %*% upper_tri
         obj <- reshape_expr(full_mat, c(n, n))
       } else if(!is.null(var@attributes$diag)) {
-        diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
+        # diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
+        diag_var <- do.call(.Variable, c(list(dim = c(nrow(var), 1)), new_attr))
         id2new_var[[vid]] <- diag_var
         obj <- diag(diag_var)
       } else if(new_var) {
-        obj <- do.call(Variable, c(list(dim(var)), new_attr))
+        # obj <- do.call(Variable, c(list(dim(var)), new_attr))
+        obj <- do.call(.Variable, c(list(dim = dim(var)), new_attr))
         id2new_var[[vid]] <- obj
       } else {
         obj <- var

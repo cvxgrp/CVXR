@@ -237,7 +237,7 @@ setMethod("flatten", "Expression", function(object) { Vec(object) })
 setMethod("is_scalar", "Expression", function(object) { all(dim(object) == 1) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a row or column vector.
-setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1 || (ndim(object) == 1 && min(dim(object)) == 1) })
+setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1 || (ndim(object) == 2 && min(dim(object)) == 1) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a matrix.
 setMethod("is_matrix", "Expression", function(object) { ndim(object) == 2 && nrow(object) > 1 && ncol(object) > 1 })
@@ -342,11 +342,12 @@ setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   e1_dim <- dim(e1)
   e2_dim <- dim(e2)
-  # if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))))
-  if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
+  
+  # if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
+  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
     Multiply(lh_exp = e1, rh_exp = e2)
   else
-    stop("Elementwise multiplication is not allowed, use '%*%' for matrix multiplication")
+    stop("Incompatible dimensions for elementwise multiplication, use '%*%' for matrix multiplication")
 })
 
 #' @docType methods

@@ -492,13 +492,13 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
 
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:n, 1:n] == I_n*t
-  constraints <- c(constraints, X[1:n, 1:n] == Constant(sparseMatrix(i = 1:n, j = 1:n, x = 1) %*% t))
+  constraints <- c(constraints, X[1:n, 1:n] == Constant(sparseMatrix(i = 1:n, j = 1:n, x = 1)) %*% t)
 
   # X[1:n, (n+1):(n+m)] == A
   constraints <- c(constraints, X[1:n, (n+1):(n+m)] == A)
 
   # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
-  constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1) %*% t))
+  constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1)) %*% t)
   return(list(t, constraints))
 }
 

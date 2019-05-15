@@ -444,7 +444,7 @@ setMethod("status_map", "OSQP", function(solver, status) {
     UNBOUNDED
   else if(status == 4)
     UNBOUNDED_INACCURATE
-  else if(status == -2 || status == -5 || status == -10)   # -2: Maxiter reached. 5: Interrupted by user. 10: Unsolved.
+  else if(status == -2 || status == -5 || status == -10)   # -2: Maxiter reached. -5: Interrupted by user. -10: Unsolved.
     SOLVER_ERROR
  else
     stop("OSQP status unrecognized: ", status)
@@ -479,16 +479,10 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
     primal_vars[[names(inverse_data@id_map)]] <- solution$x
     dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data@sorted_constraints)
     attr[[NUM_ITERS]] <- solution$info$iter
+    return(Solution(status, opt_val, primal_vars, dual_vars, attr))
     ## DWK CHANGE END
-  } else {
-    primal_vars <- NA
-    dual_vars <- NA
-    opt_val <- Inf
-    if(status == UNBOUNDED)
-      opt_val <- -Inf
-  }
-
-  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+  } else
+    return(failure_solution(status))
 })
 
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {

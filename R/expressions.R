@@ -261,7 +261,7 @@ setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = 
 #' @rdname Index-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  if(is_vector(x) && size(x)[1] < size(x)[2])
+  if(is_vector(x) && nrow(x) < ncol(x))
     SpecialIndex(x, list(NULL, i))   # If only first index given, apply it along longer dimension of vector
   else
     SpecialIndex(x, list(i, NULL))
@@ -344,7 +344,8 @@ setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
   e2_dim <- dim(e2)
   
   # if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
-  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
+  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] || e1_dim[1] != e2_dim[length(e2_dim)] 
+                                            && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
     Multiply(lh_exp = e1, rh_exp = e2)
   else
     stop("Incompatible dimensions for elementwise multiplication, use '%*%' for matrix multiplication")
@@ -416,7 +417,8 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   # else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
   #   stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
   if(is.null(x_dim) || is.null(y_dim) || is_scalar(x) || is_scalar(y))
-    stop("Scalar operands are not allowed, use '*' instead")
+    # stop("Scalar operands are not allowed, use '*' instead")
+    Multiply(lh_exp = x, rh_exp = y)
   else if(is_constant(x) || is_constant(y))
     MulExpression(lh_exp = x, rh_exp = y)
   else {

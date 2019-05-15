@@ -1163,7 +1163,7 @@ setMethod(".grad", "SpecialIndex", function(object) {
   identity <- sparseMatrix(i = 1:expr_size, j = 1:expr_size, x = rep(1, expr_size))
   idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
-  if(is_scalar(Vec(v)) || is_scalar(as.Constant(idmat)))
+  if(is_scalar(v) || is_scalar(as.Constant(idmat)))
     lowered <- Reshape(idmat * v, c(final_dim[1], final_dim[2]))
   else
     lowered <- Reshape(idmat %*% v, c(final_dim[1], final_dim[2]))

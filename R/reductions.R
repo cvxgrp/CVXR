@@ -16,12 +16,21 @@ special_index_canon <- function(expr, args) {
   final_dim <- dim(expr@.select_mat)
   if(is.null(final_dim))
     final_dim <- c(length(select_mat), 1)
-  select_vec <- matrix(select_mat, nrow = prod(final_dim))
+  # select_vec <- matrix(select_mat, nrow = prod(final_dim))
+  select_vec <- as.vector(select_mat)
   
   # Select the chosen entries from expr.
   arg <- args[[1]]
-  identity <- diag(size(arg))
-  lowered <- reshape_expr(identity[select_vec] %*% vec(arg), final_dim)
+  arg_size <- size(arg)
+  # identity <- diag(size(arg))
+  identity <- sparseMatrix(i = 1:arg_size, j = 1:arg_size, x = rep(1, arg_size))
+  
+  v <- vec(arg)
+  idmat <- matrix(identity[select_vec,], ncol = arg_size)
+  if(is_scalar(v) || is_scalar(as.Constant(idmat)))
+    lowered <- Reshape(idmat * v, final_dim)
+  else
+    lowered <- Reshape(idmat %*% v, final_dim)
   list(lowered, list())
 }
 

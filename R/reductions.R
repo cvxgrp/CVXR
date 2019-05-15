@@ -583,11 +583,11 @@ extract_mip_idx <- function(variables) {
   integer_idx <- c()
   vert_offset <- 0
   for(x in variables) {
-    if(!is.null(x@boolean_idx) && prod(dim(x@boolean_idx)) != 0) {
+    if(nrow(x@boolean_idx) > 0) {
       multi_index <- x@boolean_idx
       boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
     }
-    if(!is.null(x@integer_idx) && prod(dim(x@integer_idx)) != 0) {
+    if(nrow(x@integer_idx) > 0) {
       multi_index <- x@integer_idx
       integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
     }
@@ -595,11 +595,11 @@ extract_mip_idx <- function(variables) {
   }
   
   if(is.null(boolean_idx))
-    boolean_idx <- matrix(0, nrow = 0, ncol = 0)
+    boolean_idx <- matrix(0, nrow = 0, ncol = 1)
   else
     boolean_idx <- as.matrix(boolean_idx)
   if(is.null(integer_idx))
-    integer_idx <- matrix(0, nrow = 0, ncol = 0)
+    integer_idx <- matrix(0, nrow = 0, ncol = 1)
   else
     integer_idx <- as.matrix(integer_idx)
   return(list(boolean_idx, integer_idx))

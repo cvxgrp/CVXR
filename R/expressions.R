@@ -19,7 +19,7 @@ setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
 setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 setClassUnion("NumORNULL", c("numeric", "NULL"))
-setClassUnion("NumORLogicalORNULL", c("numeric", "logical", "NULL"))
+setClassUnion("NumORLogical", c("logical", "numeric"))
 setClassUnion("S4ORNULL", c("S4", "NULL"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object
@@ -524,16 +524,16 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @rdname Leaf-class
 Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical", 
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical", 
-                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "NumORLogicalORNULL", integer = "NumORLogicalORNULL", 
+                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "NumORLogical", integer = "NumORLogical", 
                                         sparsity = "logical", pos = "logical", neg = "logical", 
                                         attributes = "list", boolean_idx = "matrix", integer_idx = "matrix"),
                          prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, 
                                    complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, 
                                    PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, 
                                    sparsity = NULL, pos = FALSE, neg = FALSE, 
-                                   attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 0), integer_idx = matrix(0, nrow = 0, ncol = 0)), contains = "Expression")
+                                   attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NULL, pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 0), integer_idx = matrix(0, nrow = 0, ncol = 0)) {
+setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NULL, pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)) {
   if(length(dim) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
 
@@ -546,29 +546,37 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   if((PSD || NSD || symmetric || diag || hermitian) && (length(dim) != 2 || dim[1] != dim[2]))
     stop("Invalid dimensions ", dim, ". Must be a square matrix.")
 
+  # Construct matrix of boolean/integer-constrained indices.
+  if(is.logical(boolean)) {
+    if(boolean)
+      .Object@boolean_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
+    else
+      .Object@boolean_idx <- matrix(0, nrow = 0, ncol = length(dim))
+    bool_attr <- boolean
+  } else {
+    .Object@boolean_idx <- boolean
+    bool_attr <- (nrow(boolean) > 0)
+  }
+  
+  if(is.logical(integer)) {
+    if(integer)
+      .Object@integer_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
+    else
+      .Object@integer_idx <- matrix(0, nrow = 0, ncol = length(dim))
+    int_attr <- integer
+  } else {
+    .Object@integer_idx <- integer
+    int_attr <- (nrow(integer) > 0)
+  }
+  
   # Process attributes.
   .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, pos = pos, neg = neg, complex = complex, imag = imag,
                              symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
-                             boolean = as.logical(boolean), integer = integer, sparsity = sparsity)
-  if(any(boolean)) {
-    if(!is.logical(boolean))
-      .Object@boolean_idx <- boolean
-    else
-      .Object@boolean_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
-  } else
-    .Object@boolean_idx <- matrix(0, nrow = 0, ncol = 0)
-
-  if(any(integer)) {
-    if(!is.logical(integer))
-      .Object@integer_idx <- integer
-    else
-      .Object@integer_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
-  } else
-    .Object@integer_idx <- matrix(0, nrow = 0, ncol = 0)
-
+                             boolean = bool_attr, integer = int_attr, sparsity = sparsity)
+  
   # Only one attribute can be TRUE (except boolean and integer).
   true_attr <- sum(unlist(.Object@attributes))
-  if(any(boolean) && any(integer))
+  if(bool_attr && int_attr)
     true_attr <- true_attr - 1
   if(true_attr > 1)
     stop("Cannot set more than one special attribute.")

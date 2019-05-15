@@ -1,3 +1,8 @@
+# CVXR 0.99-6
+
+* Mosek Glue modifications for MOSEK 8+, [issue
+  #49](https://github.com/anqif/CVXR/issues/49).
+
 # CVXR 0.99-5
 
 * Bug fix for LogSumExp atom. This should address the issue reported

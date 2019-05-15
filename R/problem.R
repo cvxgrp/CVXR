@@ -600,10 +600,15 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   }
   
   if(is_mixed_integer(object)) {
-    qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
-    candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
-    conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
-    candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
+    if(length(candidates$qp_solvers) > 0) {
+      qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
+      candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
+    }
+    
+    if(length(candidates$conic_solvers) > 0) {
+      conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
+      candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
+    }
     
     if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
       stop("Problem is mixed-integer, but candidate QP/Conic solvers are not MIP-capable")

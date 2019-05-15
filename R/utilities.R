@@ -814,12 +814,12 @@ over_bound <- function(w_dyad, tree) {
 #               #
 #################
 Key <- function(row, col) {
-  if(missing(row)) row <- "all"   # TODO: Missing row/col index implies that we select all rows/cols
-  if(missing(col)) col <- "all"
+  if(missing(row)) row <- NULL   # Missing row/col index implies that we select all rows/cols
+  if(missing(col)) col <- NULL
   list(row = row, col = col, class = "key")
 }
 
-ku_validate_key <- function(key, dim) {
+ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed for consistency in handling keys.
   nrow <- dim[1]
   ncol <- dim[2]
 
@@ -841,14 +841,14 @@ ku_validate_key <- function(key, dim) {
 }
 
 ku_slice_mat <- function(mat, key) {
-  if(key$row == "all" && key$col == "all")
+  if(is.null(key$row) && is.null(key$col))
     select_mat <- mat
-  else if(key$row == "all")
-    select_mat <- mat[, key$col]
-  else if(key$col == "all")
-    select_mat <- mat[key$row, ]
+  else if(is.null(key$row) && !is.null(key$col))
+    select_mat <- mat[, key$col, drop = FALSE]
+  else if(!is.null(key$row) && is.null(key$col))
+    select_mat <- mat[key$row, , drop = FALSE]
   else
-    select_mat <- mat[key$row, key$col]
+    select_mat <- mat[key$row, key$col, drop = FALSE]
   select_mat
 }
 
@@ -857,7 +857,7 @@ ku_dim <- function(key, dim) {
 
   for(i in 1:2) {
     idx <- key[[i]]
-    if(idx == "all")
+    if(is.null(idx))
       size <- dim[i]
     else {
       selection <- (1:dim[i])[idx]

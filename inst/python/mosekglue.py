@@ -159,7 +159,7 @@ def choose_solution(task):
         # optimal > near_optimal > anything else > None
         if status == mosek.solsta.optimal:
             return 3
-        elif status == mosek.solsta.near_optimal:
+        elif hasattr(mosek.solsta, 'near_optimal') and (status == mosek.solsta.near_optimal):
             return 2
         elif status is not None:
             return 1
@@ -198,16 +198,21 @@ def format_results(task, data):
     """
 
     import mosek
-    # Map of MOSEK status to CVXPY status.
-    # taken from:
-    # http://docs.mosek.com/7.0/pythonapi/Solution_status_keys.html
+    # Status map is taken from:
+    # https://docs.mosek.com/8.1/pythonapi/constants.html?highlight=solsta#mosek.solsta
     STATUS_MAP = {mosek.solsta.optimal: s.OPTIMAL,
+                  mosek.solsta.integer_optimal: s.OPTIMAL,
+                  mosek.solsta.prim_feas: s.OPTIMAL_INACCURATE,    # for integer problems
                   mosek.solsta.prim_infeas_cer: s.INFEASIBLE,
                   mosek.solsta.dual_infeas_cer: s.UNBOUNDED,
-                  mosek.solsta.near_optimal: s.OPTIMAL_INACCURATE,
-                  mosek.solsta.near_prim_infeas_cer: s.INFEASIBLE_INACCURATE,
-                  mosek.solsta.near_dual_infeas_cer: s.UNBOUNDED_INACCURATE,
                   mosek.solsta.unknown: s.SOLVER_ERROR}
+    # "Near" statuses only up to Mosek 8.1
+    if hasattr(mosek.solsta, 'near_optimal'):
+        STATUS_MAP_INACCURATE = {mosek.solsta.near_optimal: s.OPTIMAL_INACCURATE,
+                                 mosek.solsta.near_integer_optimal: s.OPTIMAL_INACCURATE,
+                                 mosek.solsta.near_prim_infeas_cer: s.INFEASIBLE_INACCURATE,
+                                 mosek.solsta.near_dual_infeas_cer: s.UNBOUNDED_INACCURATE}
+        STATUS_MAP.update(STATUS_MAP_INACCURATE)
 
     soltype, solsta = choose_solution(task)
 

@@ -794,11 +794,11 @@ ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed
   nrow <- dim[1]
   ncol <- dim[2]
 
-  if(length(key) > 2)
+  if(length(key) > 3)
     stop("Invalid index/slice")
-  else if(length(key) == 2) {
+  else if(!is.null(key$row) && !is.null(key$col)) {
     key <- Key(row = key$row, col = key$col)
-  } else if(length(key) == 1) {
+  } else if(!is.null(key$row) || !is.null(key$col)) {
     # Change single indices for vectors into double indices
     if(nrow == 1)
       key <- Key(1, key$col)

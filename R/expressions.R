@@ -260,6 +260,27 @@ setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = 
 
 #' @rdname Index-class
 #' @export
+setMethod("[", signature(x = "Expression", i = "numeric", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(is_vector(x) && nrow(x) < ncol(x))
+    Index(x, Key(NULL, i))   # If only first index given, apply it along longer dimension of vector
+  else
+    Index(x, Key(i, NULL))
+})
+
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "missing", j = "numeric", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index(x, Key(NULL, j))
+})
+
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "numeric", j = "numeric", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index(x, Key(i, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   if(is_vector(x) && nrow(x) < ncol(x))
     SpecialIndex(x, Key(NULL, i))   # If only first index given, apply it along longer dimension of vector
@@ -267,37 +288,37 @@ setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "A
     SpecialIndex(x, Key(i, NULL))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   SpecialIndex(x, Key(NULL, j))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   SpecialIndex(x, Key(i, j))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   SpecialIndex(x, Key(i, j))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   SpecialIndex(x, Key(i, j))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   SpecialIndex(x, Key(i, j))
 })
 
-#' @rdname Index-class
+#' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
   # This follows conventions in Matrix package, but differs from base handling of matrices

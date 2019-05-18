@@ -67,7 +67,7 @@ setMethod("perform", signature(object = "ConstantSolver", problem = "Problem"), 
   return(list(problem, list()))
 })
 
-setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   return(solution)
 })
 

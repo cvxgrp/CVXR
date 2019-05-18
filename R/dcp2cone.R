@@ -195,7 +195,7 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   canon <- Dcp2Cone.lambda_max_canon(expr, list(X - Z))
   obj <- canon[[1]]
   constr <- canon[[2]]
-  obj <- k*obj + trace(Z)
+  obj <- k*obj + matrix_trace(Z)
   return(list(obj, constr))
 }
 
@@ -256,8 +256,8 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   # TODO: Represent Z as upper triangular vector
   # Z <- Variable(c(n,n))
   Z <- Variable(n,n)
-  Z_lower_tri <- upper_tri(t(Z))
-  constraints <- list(Z_lower_tri == 0)
+  Z_lower_tri <- UpperTri(t(Z))
+  constraints <- c(constraints, list(Z_lower_tri == 0))
 
   # Fix diag(D) = Diag(Z): D[i,i] = Z[i,i]
   D <- Variable(n)
@@ -270,7 +270,7 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   # X[(n+1):(2*n),  (n+1):(2*n)] == A
   constraints <- c(constraints, X[(n+1):(2*n), (n+1):(2*n)] == A)
   # Add the objective sum(log(D[i,i]))
-  log_expr <- log(D)
+  log_expr <- Log(D)
   canon <- Dcp2Cone.log_canon(log_expr, log_expr@args)
   obj <- canon[[1]]
   constr <- canon[[2]]
@@ -295,7 +295,7 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   else   # shape = c(m,1)
     promoted_t <- reshape_expr(t, c(1 + x_dim[1], x_dim[2:(length(x_dim)-1)])) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
   
-  exp_expr <- exp(x - promoted_t)
+  exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
   obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
   ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))

@@ -57,7 +57,7 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real
   .Object@nonpos <- ifelse(is.null(constr_map$NonPosConstraint), 0, sum(sapply(constr_map$NonPosConstraint, function(c) { size(c) })))
   .Object@exp <- ifelse(is.null(constr_map$ExpCone), 0, sum(sapply(constr_map$ExpCone, function(c) { num_cones(c) })))
   .Object@soc <- as.list(Reduce(c, lapply(constr_map$SOC, function(c) { cone_sizes(c) })))
-  .Object@psd <- sapply(constr_map$PSDConstraint, function(c) { dim(c)[1] })
+  .Object@psd <- lapply(constr_map$PSDConstraint, function(c) { dim(c)[1] })
   return(.Object)
 })
 

@@ -32,7 +32,7 @@ setMethod("value", "Objective", function(object) {
   if(is.na(v))
     return(NA_real_)
   else
-    return(scalar_value(v))
+    return(intf_scalar_value(v))
 })
 
 #' @describeIn Objective Is the objective a quadratic function?

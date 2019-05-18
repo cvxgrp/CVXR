@@ -409,12 +409,13 @@ gm <- function(t, x, y) {
 
 # Form internal constraints for weighted geometric mean t <= x^p
 gm_constrs <- function(t, x_list, p) {
-  if(!is_weight(p)) stop("p must be a valid weight vector")
+  if(!is_weight(p))
+    stop("p must be a valid weight vector")
   w <- dyad_completion(p)
 
   tree <- decompose(w)
-  t_size <- size(t)
-  d <- Rdictdefault(default = function(key) { create_var(t_size) })
+  t_dim <- dim(t)
+  d <- Rdictdefault(default = function(key) { new("Variable", dim = t_dim) })
   d[w] <- t
 
   if(length(x_list) < length(w))

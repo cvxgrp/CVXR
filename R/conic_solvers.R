@@ -1493,11 +1493,20 @@ scaled_lower_tri <- function(matrix) {
   # Scales the strictly lower triangular entries by sqrt(2), as
   # required by SCS.
   rows <- cols <- nrow(matrix)
+  entries <- floor(rows * (cols + 1)/2)
+  
+  row_arr <- 1:entries
+  
+  col_arr <- matrix(1:(rows*cols), nrow = rows, ncol = cols)
+  col_arr <- col_arr[lower.tri(col_arr, diag = TRUE)]
+  
   val_arr <- matrix(0, nrow = rows, ncol = cols)
   val_arr[lower.tri(val_arr, diag = TRUE)] <- sqrt(2)
   diag(val_arr) <- 1
-
-  coeff <- Constant(Matrix(val_arr, sparse = TRUE))
+  val_arr <- as.vector(val_arr)
+  val_arr <- val_arr[val_arr != 0]
+  
+  coeff <- Constant(sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(entries, rows*cols)))
   vectorized_matrix <- reshape_expr(matrix, c(rows*cols, 1))
   return(coeff %*% vectorized_matrix)
 }
@@ -1517,7 +1526,7 @@ tri_to_full <- function(lower_tri, n) {
 }
 
 SuperSCS <- setClass("SuperSCS", contains = "SCS")
-default_settings.SuperSCS <- function(object) {
+SuperSCS.default_settings <- function(object) {
   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
 }
 
@@ -1537,9 +1546,9 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 
   # Settings.
   user_opts <- names(solver_opts)
-  for(k in names(default_settings(SuperSCS))) {
+  for(k in names(SuperSCS.default_settings)) {
     if(!k %in% user_opts)
-      solver_opts[k] <- default_settings(SuperSCS)[k]
+      solver_opts[[k]] <- SuperSCS.default_settings[[k]]
   }
   results <- SuperSCS::solve(args, cones, verbose = verbose, solver_opts)
   if(!is.null(solver_cache) && length(solver_cache) > 0)

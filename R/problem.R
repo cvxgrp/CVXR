@@ -852,6 +852,9 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       result[[as.character(id(v))]] <- NA
     for(c in object@constraints)
       result[[as.character(id(c))]] <- NA
+  } else if(solution@status %in% ERROR) {
+    result$status <- solution@status
+    return(result)
   } else
     stop("Cannot unpack invalid solution")
   

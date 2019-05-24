@@ -52,6 +52,32 @@ test_that("Test quadratic form with a sparse matrix", {
     prob <- Problem(Minimize(cost), list(x == c(1, 2)))
     result <- solve(prob)
     expect_equal(result$value, 5, tolerance = TOL)
+    
+    # Here are our QP factors
+    A <- Constant(Matrix::sparseMatrix(i = 1:4, j = 1:4, x = rep(1, 4)))
+    c <- matrix(1, nrow = 1, ncol = 4)
+    
+    # Here is our optimization variable
+    x <- Variable(4)
+    
+    # And the QP problem setup
+    fun <- quad_form(x, A) - c %*% x
+    objective <- Minimize(fun)
+    problem <- Problem(objective)
+    
+    result <- solve(problem)
+    expect_equal(length(result$getValue(fun)), 1)
+})
+
+test_that("Test quadratic form with a parameter", {
+  P <- Parameter(2,2,PSD = TRUE)
+  Q <- diag(2)
+  x <- Variable(2)
+  cost <- quad_form(x, P)
+  value(P) <- Q
+  prob <- Problem(Minimize(cost), list(x == c(1,2)))
+  result <- solve(prob)
+  expect_equal(result$value, 5, tolerance = TOL)
 })
 
 test_that("Test when P is constant and not symmetric", {
@@ -59,16 +85,40 @@ test_that("Test when P is constant and not symmetric", {
   x <- Variable(2)
   cost <- quad_form(x, P)
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-  result <- solve(prob)
-  expect_equal(result$value, 28, tolerance = TOL)
+  expect_error(solve(prob), "Problem does not follow DCP rules.")
 })
 
 test_that("Test error when P is symmetric but not definite", {
   P <- rbind(c(1, 0), c(0, -1))
   x <- Variable(2)
 
-  ## Forming quadratic form is okay
-  expect_warning(cost <- quad_form(x, P))
+  # Forming quadratic form is okay
+  cost <- quad_form(x, P)
+  # expect_warning(cost <- quad_form(x, P))
   prob <- Problem(Minimize(cost), list(x == c(1, 2)))
-  expect_error(solve(prob))
+  expect_error(solve(prob), "Problem does not follow DCP rules.")
+})
+
+test_that("Test case where objective evaluation differs from result", {
+  x <- Variable(2,1)
+  A <- matrix(1, nrow = 1, ncol = 1)
+  B <- matrix(1, nrow = 2, ncol = 1)
+  obj0 <- -t(B) %*% x
+  obj1 <- quad_form(t(B) %*% x, A)
+  prob <- Problem(Minimize(obj0 + obj1))
+  result <- solve(prob)
+  expect_equal(result$value, result$getValue(prob@objective@expr))
+})
+
+test_that("Test a quadratic form multiplied by zero", {
+  data_norm <- runif(5)
+  M <- matrix(runif(5*2), nrow = 5, ncol = 2)
+  c <- Variable(ncol(M))
+  lopt <- 0
+  laplacian_matrix <- matrix(1, nrow = 2, ncol = 2)
+  design_matrix <- Constant(M)
+  objective <- Minimize(sum_squares(design_matrix %*% c - data_norm) + lopt*quad_form(c, laplacian_matrix))
+  constraints <- list((M[1,1] * c) == 1)   # (K*c >= -0.1)
+  prob <- Problem(objective, constraints)
+  solve(prob)
 })

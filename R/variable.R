@@ -39,8 +39,12 @@
 Variable <- function(rows = 1, cols = 1, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = c(rows, cols), name = name, id = id, ...) }
 
 setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_) {
-  if(is.null(dim))   # Force constants to default to c(1,1).
+  if(length(dim) == 0 || is.null(dim))   # Force constants to default to c(1,1).
     dim <- c(1,1)
+  else if(length(dim) == 1)   # Treat as a column vector.
+    dim <- c(dim,1)
+  else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
+    stop("Unimplemented")
   
   .Object@id <- ifelse(is.na(id), get_id(), id)
   if(is.na(name))

@@ -966,6 +966,36 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
 MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
                            prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
+vectorized_lower_tri_to_mat <- function(v, dim) {
+  rows <- c()
+  cols <- c()
+  vals <- c()
+  running_idx <- 1
+  for(j in 1:dim) {
+    rows <- c(rows, j + 0:(dim-j))
+    cols <- c(cols, rep(j, dim-j))
+    vals <- c(vals, v[running_idx:(running_idx + dim - j)])
+    running_idx <- running_idx + dim - j + 1
+  }
+  A <- sparseMatrix(i = rows, j = cols, x = vals, dims = c(dim, dim))
+  d <- diag(diag(A))
+  A <- A + t(A) - d
+  return(A)
+}
+
+psd_coeff_offset <- function(problem, c) {
+  # Returns an array G and vector h such that the given constraint is
+  # equivalent to G*z <=_{PSD} h.
+  extractor <- CoeffExtractor(InverseData(problem))
+  tmp <- affine(extractor, c@expr)
+  A_vec <- tmp[[1]]
+  b_vec <- tmp[[2]]
+  G <- -A_vec
+  h <- b_vec
+  dim <- nrow(c@expr)
+  return(list(G, h, dim))
+}
+
 setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
 setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 

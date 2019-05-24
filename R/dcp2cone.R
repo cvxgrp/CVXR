@@ -484,10 +484,11 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
   n <- A_dim[1]
   m <- A_dim[2]
   # X <- Variable(c(n+m, n+m), PSD = TRUE)
-  X <- Variable(n+m, n+m, PSD = TRUE)
+  X <- new("Variable", dim = c(n+m, n+m), PSD = TRUE)
 
   expr_dim <- dim(expr)
-  t <- Variable(expr_dim)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
   constraints <- list()
 
   # Fix X using the fact that A must be affine by the DCP rules.

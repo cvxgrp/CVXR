@@ -421,7 +421,7 @@ SCS.extract_dual_value <- function(result_vec, offset, constraint) {
   # Special cases PSD constraints, as per the SCS specification.
   if(is(constraint, "PSDConstraint")) {
     dim <- nrow(constraint)
-    lower_tri_dim <- dim*floor((dim+1)/2)
+    lower_tri_dim <- floor(dim*(dim+1)/2)
     new_offset <- offset + lower_tri_dim
     lower_tri <- result_vec[(offset + 1):new_offset]
     full <- tri_to_full(lower_tri, dim)

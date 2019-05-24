@@ -853,6 +853,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
     for(c in object@constraints)
       result[[as.character(id(c))]] <- NA
   } else if(solution@status %in% ERROR) {
+    warning("Solver returned with status ", solution@status)
     result$status <- solution@status
     return(result)
   } else

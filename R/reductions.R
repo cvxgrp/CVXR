@@ -384,7 +384,7 @@ EvalParams.replace_params_with_consts <- function(expr) {
   else if(length(parameters(expr)) == 0)
     return(expr)
   else if(is(expr, "Parameter")) {
-    if(is.na(value(expr)))
+    if(any(is.na(value(expr))))
       stop("Problem contains unspecified parameters")
     return(Constant(value(expr)))
   } else {

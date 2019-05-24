@@ -728,7 +728,7 @@ setMethod("project", "Leaf", function(object, value) {
     return(sparseMatrix(i = 1:length(value), j = 1:length(value), x = value))
   } else if(object@attributes$hermitian)
     return(value + t(Conj(value))/2)
-  else if(any(sapply(c("symmetric", "PSD", "NSD"), function(key) { object@attributes[key] }))) {
+  else if(any(sapply(c("symmetric", "PSD", "NSD"), function(key) { object@attributes[[key]] }))) {
     value <- value + t(value)
     value <- value/2
     if(object@attributes$symmetric)

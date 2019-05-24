@@ -38,14 +38,19 @@ intf_is_complex <- function(constant, tol = 1e-5) {
 }
 
 # Check if a matrix is Hermitian and/or symmetric
-intf_is_hermitian <- function(constant) {
+intf_is_hermitian <- function(constant, rtol = 1e-5, atol = 1e-8) {
   # I'm replicating np.allclose here to match CVXPY. May want to use base::isSymmetric later.
   # is_herm <- isSymmetric(constant)   # This returns TRUE iff a complex matrix is Hermitian.
-  # TODO: Catch complex symmetric, but not Hermitian?
-  atol <- 1e-8
-  rtol <- 1e-5
-  is_symm <- all(abs(constant - t(constant)) <= atol + rtol*abs(t(constant)))
-  is_herm <- all(abs(constant - Conj(t(constant))) <= atol + rtol*Conj(t(constant)))
+  if(is.complex(constant)) {
+    # TODO: Catch complex symmetric, but not Hermitian?
+    is_symm <- FALSE
+    is_herm <- all(abs(constant - Conj(t(constant))) <= atol + rtol*abs(Conj(t(constant))))
+  } else {
+    is_symm <- all(abs(constant - t(constant)) <= atol + rtol*abs(t(constant)))
+    is_herm <- is_symm
+  }
+  # is_symm <- all(abs(constant - t(constant)) <= atol + rtol*abs(t(constant)))
+  # is_herm <- all(abs(constant - Conj(t(constant))) <= atol + rtol*abs(Conj(t(constant))))
   c(is_symm, is_herm)
 }
 

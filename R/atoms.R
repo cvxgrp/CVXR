@@ -1900,25 +1900,6 @@ setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplem
   list(scale = scale, M1 = M1, M2 = M2)
 }
 
-QuadForm <- function(x, P) {
-  # x^T P x
-  x <- as.Constant(x)
-  P <- as.Constant(P)
-  
-  # Check dimensions.
-  P_dim <- dim(P)
-  if(ndim(P) != 2 || P_dim[1] != P_dim[2] || max(nrow(x), 1) != P_dim[1])
-    stop("Invalid dimensions for arguments.")
-  
-  # P cannot be a parameter.
-  if(is_constant(x))
-    Conj(t(x)) %*% P %*% x
-  else if(is_constant(P))
-    QuadForm(x, P)
-  else
-    stop("At least one argument to QuadForm must be constant.")
-}
-
 #'
 #' The QuadOverLin class.
 #'

@@ -1,3 +1,4 @@
+context("test-g01-convolution")
 TOL <- 1e-6
 
 test_that("test 1D convolution", {
@@ -8,18 +9,18 @@ test_that("test 1D convolution", {
   f_conv_g <- c(0, 1, 2.5, 4, 1.5)
   expr <- conv(f, g)
   expect_true(is_constant(expr))
-  expect_equal(size(expr), c(5, 1))
+  expect_equal(dim(expr), c(5, 1))
   expect_equal(value(expr), f_conv_g)
 
   expr <- conv(f, x)
   expect_true(is_affine(expr))
-  expect_equal(size(expr), c(5, 1))
+  expect_equal(dim(expr), c(5, 1))
 
   # Matrix stuffing
   t <- Variable()
   prob <- Problem(Minimize(p_norm(expr, 1)), list(x == g))
   result <- solve(prob)
-  expect_equal(result$value, sum(f_conv_g), tolerance = TOL)
+  expect_equal(result$value, sum(f_conv_g), tolerance = 1e-3)
   expect_equal(result$getValue(expr), f_conv_g, tolerance = TOL)
 })
 
@@ -30,5 +31,6 @@ test_that("test a problem with convolution", {
   x <- Variable(N)
   v <- conv(h, x)
   obj <- Minimize(sum(y * v[1:N]))
-  solve(Problem(obj, list()))
+  result <- solve(Problem(obj, list()))
+  expect_equal(result$status, "unbounded")
 })

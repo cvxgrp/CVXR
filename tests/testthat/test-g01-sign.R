@@ -1,4 +1,4 @@
-context("test-g01-sign.R")
+context("test-g01-sign")
 
 pos <- Constant(1)
 neg <- Constant(-1)

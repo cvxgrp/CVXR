@@ -1,3 +1,4 @@
+context("test-g01-atoms")
 TOL <- 1e-5
 
 a <- Variable(name = "a")

@@ -1,3 +1,5 @@
+context("test-g01-quadratic")
+
 test_that("test elementwise power", {
   x <- Variable(3)
   y <- Variable(3)
@@ -61,7 +63,7 @@ test_that("test quad_over_lin function", {
 
 test_that("test matrix_frac function", {
   x <- Variable(5)
-  M <- matrix(stats::rnorm(25), nrow = 5, ncol = 5)
+  M <- diag(5)
   P <- t(M) %*% M
   s <- matrix_frac(x, P)
   expect_false(is_constant(s))
@@ -72,8 +74,8 @@ test_that("test matrix_frac function", {
 
 test_that("test quadratic form", {
   x <- Variable(5)
-  P <- matrix(stats::rnorm(25), nrow = 5, ncol = 5)
-  q <- matrix(5, nrow = 5, ncol = 1)
+  P <- diag(5) - 2*matrix(1, nrow = 5, ncol = 5)
+  q <- matrix(1, nrow = 5, ncol = 1)
 
   expect_warning(s <- t(x) %*% P %*% x + t(q) %*% x)
   expect_false(is_constant(s))
@@ -84,9 +86,9 @@ test_that("test quadratic form", {
 
 test_that("test sum_squares function", {
   X <- Variable(5, 4)
-  P <- matrix(stats::rnorm(15), nrow = 3, ncol = 5)
-  Q <- matrix(stats::rnorm(28), nrow = 4, ncol = 7)
-  M <- matrix(stats::rnorm(21), nrow = 3, ncol = 7)
+  P <- matrix(1, nrow = 3, ncol = 5)
+  Q <- matrix(1, nrow = 4, ncol = 7)
+  M <- matrix(1, nrow = 3, ncol = 7)
 
   y <- P %*% X %*% Q + M
   expect_false(is_constant(y))
@@ -114,11 +116,11 @@ test_that("test indefinite quadratic", {
   y <- Variable()
   z <- Variable()
 
-  expect_warning(s <- y * z)
+  s <- y*z
   expect_true(is_quadratic(s))
   expect_false(is_dcp(s))
 
-  expect_warning(t <- (x+y)^2 - s - z * z)
+  t <- (x+y)^2 - s - z*z
   expect_true(is_quadratic(t))
   expect_false(is_dcp(t))
 })
@@ -128,7 +130,8 @@ test_that("test non-quadratic", {
   y <- Variable()
   z <- Variable()
 
-  expect_error(expect_warning(is_quadratic(x * y * z)))
+  s <- max_entries(vstack(x, y, z))^2
+  expect_false(is_quadratic(s))
 
   s <- max_entries(vstack(x^2, power(y, 2), z))
   expect_false(is_quadratic(s))

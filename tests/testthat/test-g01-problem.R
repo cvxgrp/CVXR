@@ -1,3 +1,4 @@
+context("test-g01-problem")
 TOL <- 1e-6
 
 a <- Variable(name = "a")
@@ -37,7 +38,7 @@ test_that("test the constants method", {
   ref <- list(c1, c2)
   expect_equal(length(constants_), length(ref))
   mapply(function(c, r) {
-    expect_equal(size(c), dim(r))
+    expect_equal(dim(c), dim(r))
     expect_true(all(value(c) == r))
   }, constants_, ref)
 
@@ -47,15 +48,15 @@ test_that("test the constants method", {
   ref <- list(matrix(1))
   expect_equal(length(ref), length(constants_))
   mapply(function(c, r) {
-    expect_equal(size(c), dim(r))
+    expect_equal(dim(c), dim(r))
     expect_true(all(value(c) == r))
   }, constants_, ref)
 })
 
 test_that("Test the size_metrics method", {
   p1 <- Parameter()
-  p2 <- Parameter(3, sign = "negative")
-  p3 <- Parameter(4, 4, sign = "positive")
+  p2 <- Parameter(3, nonpos = TRUE)
+  p3 <- Parameter(4, 4, nonneg = TRUE)
 
   c1 <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
   c2 <- matrix(stats::rnorm(2), nrow = 1, ncol = 2)
@@ -65,27 +66,27 @@ test_that("Test the size_metrics method", {
 
   # num_scalar variables
   n_variables <- size_metrics(p)@num_scalar_variables
-  ref <- prod(size(a)) + prod(size(b)) + prod(size(c))
+  ref <- size(a) + size(b) + size(c)
   expect_equal(n_variables, ref)
 
   # num_scalar_data
   n_data <- size_metrics(p)@num_scalar_data
-  ref <- prod(size(p1)) + prod(size(p2)) + prod(size(p3)) + length(constants)  # 2 and c2 %*% c1 are both single scalar constants
+  ref <- size(p1) + size(p2) + size(p3) + length(constants)  # 2 and c2 %*% c1 are both single scalar constants
   expect_equal(n_data, ref)
 
   # num_scalar_eq_constr
   n_eq_constr <- size_metrics(p)@num_scalar_eq_constr
-  ref <- prod(dim(c2 %*% c1))
+  ref <- size(c2 %*% c1)
   expect_equal(n_eq_constr, ref)
 
   # num_scalar_leq_constr
   n_leq_constr <- size_metrics(p)@num_scalar_leq_constr
-  ref <- prod(size(p3)) + prod(size(p2))
+  ref <- size(p3) + size(p2)
   expect_equal(n_leq_constr, ref)
 
   # max_data_dimension
   max_data_dim <- size_metrics(p)@max_data_dimension
-  ref <- max(size(p3))
+  ref <- max(dim(p3))
   expect_equal(max_data_dim, ref)
 })
 
@@ -98,9 +99,7 @@ test_that("Test the solver_stats method", {
 })
 
 test_that("Test the get_problem_data method", {
-  expect_error(get_problem_data(Problem(Maximize(Bool())), "ECOS"))
-
-  data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
+  data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")
   dims <- data[["dims"]]
   expect_equal(dims[["ep"]], 1)
   expect_equal(length(data[["c"]]), 2)
@@ -112,6 +111,35 @@ test_that("Test the get_problem_data method", {
   expect_equal(length(data[["c"]]), 3)
   expect_equal(dim(data[["A"]]), c(0,3))
   expect_equal(dim(data[["G"]]), c(3,3))
+})
+
+test_that("Test unpack results method", {
+  prob <- Problem(Minimize(exp(a)), list(a == 0))
+  tmp <- get_problem_data(prob, solver = "SCS")
+  data <- tmp[[1]]
+  chain <- tmp[[2]]
+  inv <- tmp[[3]]
+  data <- list(c = args[["c"]], A = args[["A"]], b = args[["b"]])
+  cones <- SCS_conif.dims_to_solver_dict(args[["dims"]])
+  solution <- scs::scs(data, cones)
+  prob <- Problem(Minimize(exp(a)), list(a == 0))
+  result <- unpack_results(prob, solution, chain, inv)
+  expect_equal(result$getValue(a), 0, tolerance = 1e-3)
+  expect_equal(result$value, 1, tolerance = 1e-3)
+  expect_equal(result$status, "optimal")
+  
+  prob <- Problem(Minimize(p_norm(x)), list(x == 0))
+  tmp <- get_problem_data(prob, solver = "ECOS")
+  args <- tmp[[1]]
+  chain <- tmp[[2]]
+  inv <- tmp[[3]]
+  cones <- ECOS_conif.dims_to_solver_dict(args[["dims"]])
+  solution <- ECOSolveR::ECOS_csolve(args[["c"]], args[["G"]], args[["h"]], cones, args[["A"]], args[["b"]])
+  prob <- Problem(Minimize(p_norm(x)), list(x == 0))
+  result <- unpack_results(prob, solution, chain, inv)
+  expect_equal(result$getValue(x), c(0,0))
+  expect_equal(result$value, 0)
+  expect_equal(result$status, "optimal")
 })
 
 test_that("Test silencing and enabling solver messages", {
@@ -135,81 +163,81 @@ test_that("Test registering other solve methods", {
   # expect_equal(result$value, c(1,4))
 })
 
-test_that("Test that variables and constraints keep a consistent order", {
-  num_solves <- 4
-  vars_lists <- list()
-  ineqs_lists <- list()
-  var_ids_order_created <- list()
-  for(k in 1:num_solves) {
-    sum <- 0
-    constraints <- list()
-    var_ids <- c()
-    for(i in 1:100) {
-      var <- Variable(name = as.character(i))
-      var_ids <- c(var_ids, var@id)
-      sum <- sum + var
-      constraints <- c(constraints, list(var >= i))
-    }
-    var_ids_order_created <- c(var_ids_order_created, list(var_ids))
-    obj <- Minimize(sum)
-    p <- Problem(obj, constraints)
-    canon <- canonicalize(p)
-    objective <- canon[[1]]
-    constraints <- canon[[2]]
-    sym_data <- SymData(objective, constraints, ECOS())
-
-    # Sort by offset
-    offsets <- sym_data@.var_offsets
-    vars_ <- as.numeric(names(sort(offsets, decreasing = FALSE)))
-    vars_lists <- c(vars_lists, list(vars_))
-    ineqs_lists <- c(ineqs_lists, list(sym_data@.constr_map[[LEQ_MAP]]))
-  }
-
-  # Verify order of variables is consistent
-  for(i in 1:num_solves)
-    expect_equal(var_ids_order_created[[i]], vars_lists[[i]])
-
-  for(i in 1:num_solves) {
-    idx <- 1
-    for(constr in ineqs_lists[[i]]) {
-      var_tmp <- get_expr_vars(constr$expr)[[1]]
-      var_id <- as.numeric(var_tmp[[1]])
-      expect_equal(var_ids_order_created[[i]][idx], var_id)
-      idx <- idx + 1
-    }
-  }
-})
-
-test_that("Test removing duplicate constraints objects", {
-  eq <- (x == 2)
-  le <- (x <= 2)
-  obj <- 0
-
-  test <- function(self) {
-    canon <- canonicalize(self)
-    objective <- canon[[1]]
-    constraints <- canon[[2]]
-    sym_data <- SymData(objective, constraints)   # TODO: What to use instead of CVXOPT?
-    list(length(sym_data@constr_map[EQ_MAP]), length(sym_data@constr_map[LEQ_MAP]))
-  }
-  # Problem.register_solve("test", test)
-  # p <- Problem(Minimize(obj), list(eq, eq, le, le))
-  # result <- solve(p, method = "test")
-  # expect_equal(result$value, c(1,1))
-
-  # Internal constraints
-  X <- Semidef(2)
-  obj <- sum_entries(X + X)
-  p <- Problem(Minimize(obj))
-  # result <- solve(p, method = "test")
-  # expect_equal(result$value, c(0,1))
-
-  # Duplicates from non-linear constraints
-  # exp <- norm(x, "2")
-  # prob <- Problem(Minimize(0), list(exp <= 1, exp <= 2))
-  # result <- solve(prob, method = "test")
-  # expect_equal(result$value, c(0,4))
-})
+# test_that("Test that variables and constraints keep a consistent order", {
+#   num_solves <- 4
+#   vars_lists <- list()
+#   ineqs_lists <- list()
+#   var_ids_order_created <- list()
+#   for(k in 1:num_solves) {
+#     sum <- 0
+#     constraints <- list()
+#     var_ids <- c()
+#     for(i in 1:100) {
+#       var <- Variable(name = as.character(i))
+#       var_ids <- c(var_ids, var@id)
+#       sum <- sum + var
+#       constraints <- c(constraints, list(var >= i))
+#     }
+#     var_ids_order_created <- c(var_ids_order_created, list(var_ids))
+#     obj <- Minimize(sum)
+#     p <- Problem(obj, constraints)
+#     canon <- canonicalize(p)
+#     objective <- canon[[1]]
+#     constraints <- canon[[2]]
+#     sym_data <- SymData(objective, constraints, ECOS())
+# 
+#     # Sort by offset
+#     offsets <- sym_data@.var_offsets
+#     vars_ <- as.numeric(names(sort(offsets, decreasing = FALSE)))
+#     vars_lists <- c(vars_lists, list(vars_))
+#     ineqs_lists <- c(ineqs_lists, list(sym_data@.constr_map[[LEQ_MAP]]))
+#   }
+# 
+#   # Verify order of variables is consistent
+#   for(i in 1:num_solves)
+#     expect_equal(var_ids_order_created[[i]], vars_lists[[i]])
+# 
+#   for(i in 1:num_solves) {
+#     idx <- 1
+#     for(constr in ineqs_lists[[i]]) {
+#       var_tmp <- get_expr_vars(constr$expr)[[1]]
+#       var_id <- as.numeric(var_tmp[[1]])
+#       expect_equal(var_ids_order_created[[i]][idx], var_id)
+#       idx <- idx + 1
+#     }
+#   }
+# })
+# 
+# test_that("Test removing duplicate constraints objects", {
+#   eq <- (x == 2)
+#   le <- (x <= 2)
+#   obj <- 0
+# 
+#   test <- function(self) {
+#     canon <- canonicalize(self)
+#     objective <- canon[[1]]
+#     constraints <- canon[[2]]
+#     sym_data <- SymData(objective, constraints)   # TODO: What to use instead of CVXOPT?
+#     list(length(sym_data@constr_map[EQ_MAP]), length(sym_data@constr_map[LEQ_MAP]))
+#   }
+#   # Problem.register_solve("test", test)
+#   # p <- Problem(Minimize(obj), list(eq, eq, le, le))
+#   # result <- solve(p, method = "test")
+#   # expect_equal(result$value, c(1,1))
+# 
+#   # Internal constraints
+#   X <- Semidef(2)
+#   obj <- sum_entries(X + X)
+#   p <- Problem(Minimize(obj))
+#   # result <- solve(p, method = "test")
+#   # expect_equal(result$value, c(0,1))
+# 
+#   # Duplicates from non-linear constraints
+#   # exp <- norm(x, "2")
+#   # prob <- Problem(Minimize(0), list(exp <= 1, exp <= 2))
+#   # result <- solve(prob, method = "test")
+#   # expect_equal(result$value, c(0,4))
+# })
 
 test_that("test the is_dcp method", {
   p <- Problem(Minimize(norm_inf(a)))
@@ -217,8 +245,43 @@ test_that("test the is_dcp method", {
 
   p <- Problem(Maximize(norm_inf(a)))
   expect_false(is_dcp(p))
-  # expect_error(solve(p))
-  # solve(p, ignore_dcp = TRUE)
+  expect_error(solve(p))
+})
+
+test_that("test the is_qp method", {
+  A <- matrix(rnorm(4*3), nrow = 4, ncol = 3)
+  b <- matrix(rnorm(4), nrow = 4)
+  Aeq <- matrix(rnorm(2*3), nrow = 2, ncol = 3)
+  beq <- matrix(rnorm(2), nrow = 2, ncol = 1)
+  Fmat <- matrix(rnorm(2*3), nrow = 2, ncol = 3)
+  g <- matrix(rnorm(2), nrow = 2, ncol = 1)
+  obj <- sum_squares(A %*% y - b)
+  qpwa_obj <- 3*sum_squares(-abs(A %*% y)) + quad_over_lin(pmax(abs(A %*% y), rep(3, 4)), 2)
+  not_qpwa_obj <- 3*sum_squares(abs(A %*% y)) + quad_over_lin(pmin(abs(A %*% y), rep(3, 4)), 2)
+  
+  p <- Problem(Minimize(obj), list())
+  expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(qpwa_obj), list())
+  expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(not_qpwa_obj), list())
+  expect_false(is_qp(p))
+  
+  p <- Problem(Minimize(obj), list(Aeq %*% y == beq, Fmat %*% y <= g))
+  expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(obj), list(pmax(1, 3*y) <= 200, abs(2*y) <= 100, p_norm(2*y, 1) <= 1000, Aeq %*% y == beq))
+  expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(qpwa_obj), list(pmax(1, 3*y) <= 200, abs(2*y) <= 100, p_norm(2*y, 1) <= 1000, Aeq %*% y == beq))
+  expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(obj), list(pmax(1, 3*y^2) <= 200))
+  expect_false(is_qp(p))
+  
+  p <- Problem(Minimize(qpwa_obj), list(pmax(1, 3*y^2) <= 200))
+  expect_false(is_qp(p))
 })
 
 test_that("test problems involving variables with the same name", {
@@ -255,7 +318,7 @@ test_that("test adding problems", {
   expect_equal(length(prob_sum@constraints), 1)
 
   # Test Minimize + Maximize
-  expect_error(prob_bad_sum <- prob1 + prob3)
+  expect_error(prob_bad_sum <- prob1 + prob3, "Problem does not follow DCP rules.")
 })
 
 test_that("test problem multiplication by scalar", {
@@ -273,17 +336,17 @@ test_that("test problem linear combinations", {
   prob2 <- Problem(Minimize(2*b), list(a >= 1, b >= 2))
   prob3 <- Problem(Maximize(-(b + a)^2), list(b >= 3))
 
-  # Simple addition and multiplication
+  # Simple addition and multiplication.
   combo1 <- prob1 + 2 * prob2
   combo1_ref <- Problem(Minimize(a + 4*b), list(a >= b, a >= 1, b >= 2))
   expect_equal(solve(combo1)$value, solve(combo1_ref)$value)
 
-  # Division and subtraction
+  # Division and subtraction.
   combo2 <- prob1 - prob3/2
   combo2_ref <- Problem(Minimize(a + (b + a)^2/2), list(b >= 3, a >= b))
   expect_equal(solve(combo2)$value, solve(combo2_ref)$value)
 
-  # Multiplication with 0 (prob2's constraints should still hold)
+  # Multiplication with 0 (prob2's constraints should still hold).
   combo3 <- prob1 + 0*prob2 - 3*prob3
   combo3_ref <- Problem(Minimize(a + 3*(b + a)^2), list(a >= b, a >= 1, b >= 3))
   expect_equal(solve(combo3)$value, solve(combo3_ref)$value, tolerance = TOL)

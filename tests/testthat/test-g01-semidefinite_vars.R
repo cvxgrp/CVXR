@@ -21,7 +21,7 @@ test_that("test that results are symmetric", {
 })
 
 test_that("SDP in objective and constraint", {
-  # SDP in objective
+  # PSD in objective.
   obj <- Minimize(sum((X - Fmat)^2))
   p <- Problem(obj, list())
   result <- solve(p)
@@ -33,11 +33,12 @@ test_that("SDP in objective and constraint", {
   expect_equal(Xres[2,1], 0, tolerance = TOL)
   expect_equal(Xres[2,2], 0, tolerance = TOL)
   
-  # SDP in constraint
+  # PSD in constraint.
+  # ECHU: note to self, apparently this is a source of redundancy.
   obj <- Minimize(sum((Y - Fmat)^2))
-  p <- Problem(obj, list(Y == Semidef(2)))
+  p <- Problem(obj, list(Y == Variable(2, 2, PSD = TRUE)))
   result <- solve(p)
-    expect_equal(result$value, 1, tolerance = 1e-2)
+  expect_equal(result$value, 1, tolerance = 1e-2)
 
   Yres <- result$getValue(Y)
   expect_equal(Yres[1,1], 1, tolerance = 1e-3)

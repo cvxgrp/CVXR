@@ -1,4 +1,4 @@
-context("test-g01-constraints.R")
+context("test-g01-constraints")
 TOL <- 1e-6
 
 a <- Variable(name = "a")

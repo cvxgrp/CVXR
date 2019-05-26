@@ -542,30 +542,31 @@ Resolvent <- function(X, s) {
 #' @rdname GeoMean-class
 GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, max_denom  = max_denom) }
 
-setMethod("initialize", "GeoMean", function(.Object, ..., x, p, max_denom) {
+setMethod("initialize", "GeoMean", function(.Object, ..., x, p = NA_real_, max_denom = 1024) {
   .Object@x <- x
+  .Object@max_denom <- max_denom
   .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x))
 
   x <- .Object@args[[1]]
   if(is_vector(x))
-    n <- ifelse(1, ndim(x) == 0, max(dim(x)))
+    n <- ifelse(ndim(x) == 0, 1, max(dim(x)))
   else
     stop("x must be a row or column vector.")
   
-  if(is.na(p))
+  if(any(is.na(p)))
     p <- rep(1, n)
   .Object@p <- p
   
-  if(length(p) != n)
+  if(length(.Object@p) != n)
     stop("x and p must have the same number of elements.")
 
-  if(any(p < 0) || sum(p) <= 0)
+  if(any(.Object@p < 0) || sum(.Object@p) <= 0)
     stop("powers must be nonnegative and not all zero.")
 
-  frac <- fracify(p, max_denom)
+  frac <- fracify(.Object@p, .Object@max_denom)
   .Object@w <- frac[[1]]
   .Object@w_dyad <- frac[[2]]
-  .Object@approx_error <- approx_error(p, .Object@w)
+  .Object@approx_error <- approx_error(.Object@p, .Object@w)
 
   .Object@tree <- decompose(.Object@w_dyad)
 

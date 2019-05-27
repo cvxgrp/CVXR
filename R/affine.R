@@ -145,7 +145,7 @@ setMethod("name", "AddExpression", function(x) {
 #' @param values A list of arguments to the atom.
 #' @describeIn AddExpression Sum all the values.
 setMethod("to_numeric", "AddExpression", function(object, values) {
-  # values <- lapply(values, intf_convert_if_scalar)
+  values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
 })
 
@@ -298,7 +298,7 @@ setMethod("name", "BinaryOperator", function(x) {
 #' @param values A list of arguments to the atom.
 #' @describeIn BinaryOperator Apply the binary operator to the values.
 setMethod("to_numeric", "BinaryOperator", function(object, values) {
-  # values <- lapply(values, intf_convert_if_scalar)
+  values <- lapply(values, intf_convert_if_scalar)
   Reduce(op_name(object), values)
 })
 
@@ -373,19 +373,13 @@ setMethod(".grad", "MulExpression", function(object, values) {
   Y <- values[[2]]
   
   DX_rows <- size(object@args[[1]])
-  cols <- size(object@args[[1]])
+  block_rows <- DX_rows/nrow(Y)
   
   # DX = [diag(Y11), diag(Y12), ...]
   #      [diag(Y21), diag(Y22), ...]
   #      [   ...       ...      ...]
-  DX <- sparseMatrix(i = c(), j = c(), dims = c(DX_rows, cols))
-  step <- dim(object@args[[1]])[1]
-  for(k in 1:step)
-    DX[seq(k, DX_rows, step), seq(k, cols, step)] <- Y
-  if(length(dim(object@args[[2]])) == 1)
-    cols <- 1
-  else
-    cols <- ncol(object@args[[2]])
+  DX <- kronecker(Y, sparseMatrix(i = 1:block_rows, j = 1:block_rows, x = 1))
+  cols <- ifelse(length(dim(object@args[[2]])) == 1, 1, ncol(object@args[[2]]))
   DY <- Matrix(bdiag(lapply(1:cols, function(k) { t(X) })), sparse = TRUE)
   return(list(DX, DY))
 })

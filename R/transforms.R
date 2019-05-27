@@ -37,16 +37,23 @@
 #   list(create_const(0, c(1,1)), constraints)
 # })
 
-## #'
-## #' Tangent Approximation to an Expression
-## #'
-## #' Gives an elementwise lower (upper) bound for convex (concave) expressions. No guarantees for non-DCP expressions.
-## #'
-## #' @param expr An \linkS4class{Expression} to linearize.
-## #' @return An affine expression or \code{NA} if cannot be linearized.
-## #' @docType methods
-## #' @rdname linearize
-## #' @export
+#'
+#' Affine Approximation to an Expression
+#'
+#' Gives an elementwise lower (upper) bound for convex (concave) expressions that is tight
+#' at the current variable/parameter values. No guarantees for non-DCP expressions.
+#' 
+#' If f and g are convex, the objective f-g can be (heuristically) minimized using the
+#' implementation below of the convex-concave method:
+#' 
+#' \code{for(iters in 1:N)
+#'    solve(Problem(Minimize(f - linearize(g))))}
+#'
+#' @param expr An \linkS4class{Expression} to linearize.
+#' @return An affine expression or \code{NA} if cannot be linearized.
+#' @docType methods
+#' @rdname linearize
+#' @export
 linearize <- function(expr) {
   expr <- as.Constant(expr)
   if(is_affine(expr))
@@ -62,8 +69,7 @@ linearize <- function(expr) {
         return(NA_real_)
       else if(is_matrix(var)) {
         flattened <- t(Constant(grad_var)) %*% Vec(var - value(var))
-        size <- size(expr)
-        tangent <- tangent + Reshape(flattened, size)
+        tangent <- tangent + Reshape(flattened, dim(expr))
       } else
         tangent <- tangent + t(Constant(grad_var)) %*% (var - value(var))
     }

@@ -11,7 +11,7 @@ C <- Variable(3, 2, name = "C")
 test_that("Test gradient for affine_prod", {
   value(C) <- rbind(c(1,-2), c(3,4), c(-1,-3))
   value(A) <- rbind(c(3,2), c(-5,1))
-  expr <- C %*% A
+  expect_warning(expr <- C %*% A)
 
   expect_equivalent(as.matrix(grad(expr)[[as.character(C@id)]]), rbind(c(3,0,0,2,0,0), c(0,3,0,0,2,0), c(0,0,3,0,0,2),
                                                     c(-5,0,0,1,0,0), c(0,-5,0,0,1,0), c(0,0,-5,0,0,1)))
@@ -248,13 +248,13 @@ test_that("Test linearize method", {
   value(A) <- cbind(c(1,2), c(3,4))
   expr <- A^2 + 5
   lin_expr <- linearize(expr)
-  manual <- value(expr) + 2*reshape_expr(value(diag(vec(A))) %*% vec(A - value(A)), 2, 2)
+  manual <- value(expr) + 2*reshape_expr(value(diag(vec(A))) %*% vec(A - value(A)), c(2, 2))
   expect_equivalent(as.matrix(value(lin_expr)), value(expr))
 
   value(A) <- rbind(c(-5,-5), c(8.2,4.4))
   expr <- A^2 + 5
   lin_expr <- linearize(expr)
-  manual <- value(expr) + 2*reshape_expr(value(diag(vec(A))) %*% vec(A - value(A)), 2, 2)
+  manual <- value(expr) + 2*reshape_expr(value(diag(vec(A))) %*% vec(A - value(A)), c(2, 2))
   expect_true(all(value(lin_expr) <= value(expr)))
   expect_equivalent(as.matrix(value(lin_expr)), value(manual))
 

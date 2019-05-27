@@ -28,7 +28,7 @@ test_that("test curvature subtraction", {
 })
 
 test_that("test multiplication of sign and curvature", {
-  expect_equal(curvature(zero * cvx), curvature(const))
+  expect_equal(curvature(zero * cvx), curvature(aff))
   expect_equal(curvature(neg * cvx), curvature(ccv))
   expect_equal(curvature(neg * ccv), curvature(cvx))
   expect_equal(curvature(neg * unknown_curv), curvature(unknown_curv))

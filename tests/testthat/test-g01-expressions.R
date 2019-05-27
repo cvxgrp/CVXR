@@ -1,4 +1,4 @@
-context("test-g01-expressions.R")
+context("test-g01-expressions")
 TOL <- 1e-6
 
 a <- Variable(name = "a")

@@ -85,7 +85,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
   fake_expr <- graph[[1]]
 
   # Get the matrix representation of the function.
-  prob_mat <- get_problem_matrix(list(fake_expr), var_offsets, NA)
+  prob_mat <- get_problem_matrix(list(fake_expr), var_offsets)
   V <- prob_mat[[1]]
   I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
   J <- prob_mat[[3]] + 1
@@ -148,6 +148,10 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
   # values <- lapply(values, intf_convert_if_scalar)
   Reduce("+", values)
 })
+
+setMethod("is_atom_log_log_convex", "AddExpression", function(object) { TRUE })
+
+setMethod("is_atom_log_log_concave", "AddExpression", function(object) { FALSE })
 
 setMethod("is_symmetric", "AddExpression", function(object) {
   symm_args <- all(sapply(object@args, is_symmetric))
@@ -719,17 +723,18 @@ setMethod("dim_from_args", "CumSum", function(object) { dim(object@args[[1]]) })
 
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
-  val_dim <- dim(object@values[[1]])
+  val_dim <- dim(values[[1]])
   collapse <- setdiff(1:length(val_dim), object@axis)
   dim <- val_dim[collapse]
   mat <- matrix(0, nrow = dim, ncol = dim)
   mat[lower.tri(mat, diag = TRUE)] <- 1
 
-  var <- Variable(dim(object@args[[1]]))
+  # var <- Variable(dim(object@args[[1]]))
+  var <- new("Variable", dim = dim(object@args[[1]]))
   if(object@axis == 2)
     grad <- .grad(new("MulExpression", lh_exp = mat, rh_exp = var), values)[[2]]
   else
-    grad <- .grad(new("RMulExpression", lh_exp = var, rh_exp = t(mat)), values)[[1]]
+    grad <- .grad(new("MulExpression", lh_exp = var, rh_exp = t(mat)), values)[[1]]
   list(grad)
 })
 

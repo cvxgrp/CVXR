@@ -1,3 +1,4 @@
+context("test-g01-dgp")
 TOL <- 1e-6
 
 test_that("test product", {

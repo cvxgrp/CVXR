@@ -67,7 +67,7 @@ setMethod("constants", "Constant", function(object) { list(object) })
 setMethod("value", "Constant", function(object) { object@value })
 
 setMethod("is_pos", "Constant", function(object) {
-  if(!is.na(object@.cached_is_pos))
+  if(is.na(object@.cached_is_pos))
     object@.cached_is_pos <- all(object@value > 0)
   object@.cached_is_pos
 })

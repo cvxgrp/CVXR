@@ -1,3 +1,4 @@
+context("test-g01-domain")
 TOL <- 1e-6
 a <- Variable(name = "a")
 

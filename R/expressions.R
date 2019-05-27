@@ -772,7 +772,7 @@ setReplaceMethod("value", "Leaf", function(object, value) {
 
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
-  if(!is.na(val)) {
+  if(!any(is.na(val))) {
     val <- intf_convert(val)
     if(any(intf_dim(val) != dim(object)))
       stop("Invalid dimensions ", intf_dim(val), " for value")

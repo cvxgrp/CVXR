@@ -1,3 +1,4 @@
+context("test-g01-grad")
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")
@@ -10,7 +11,7 @@ C <- Variable(3, 2, name = "C")
 test_that("Test gradient for affine_prod", {
   value(C) <- rbind(c(1,-2), c(3,4), c(-1,-3))
   value(A) <- rbind(c(3,2), c(-5,1))
-  expr <- affine_prod(C, A)
+  expr <- C %*% A
 
   expect_equivalent(as.matrix(grad(expr)[[as.character(C@id)]]), rbind(c(3,0,0,2,0,0), c(0,3,0,0,2,0), c(0,0,3,0,0,2),
                                                     c(-5,0,0,1,0,0), c(0,-5,0,0,1,0), c(0,0,-5,0,0,1)))
@@ -618,7 +619,7 @@ test_that("Test domain for power", {
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(0, nrow = 2, ncol = 2))
 })
 
-test_that("Test grad for partial minimization/maximization problems", {
+# test_that("Test grad for partial minimization/maximization problems", {
   # for(obj in list(Minimize(a^-1), Maximize(Entr(a)))) {
   #   prob <- Problem(obj, list(x + a >= c(5,8)))
   #
@@ -663,7 +664,7 @@ test_that("Test grad for partial minimization/maximization problems", {
   #   grad <- grad(expr)
   #   expect_equal(grad, list())
   # }
-})
+# })
 
 test_that("Test grad for affine atoms", {
   value(a) <- 2

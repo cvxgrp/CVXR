@@ -1275,6 +1275,7 @@ setGeneric("invert", function(object, solution, inverse_data) { standardGeneric(
 setGeneric("alt_invert", function(object, results, inverse_data) { standardGeneric("alt_invert") })
 
 ## Version 1.0 edits
+setGeneric("square", function(x) { standardGeneric("square") })
 
 ## Start of newly added generics
 setGeneric("expr", function(object) { standardGeneric("expr") })

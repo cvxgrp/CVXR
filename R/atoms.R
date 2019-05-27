@@ -694,12 +694,12 @@ setMethod(".domain", "LambdaMax", function(object) { list(Conj(t(object@args[[1]
 
 #' @rdname LambdaMax Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
 setMethod(".grad", "LambdaMax", function(object, values) {
-  r <- eigen(values[[1]], only.values = FALSE)
+  r <- base::eigen(values[[1]], only.values = FALSE)   # Eigenvalues returned in decreasing order.
   v <- r$vectors  # eigenvectors
   w <- r$values   # eigenvalues
   
-  d <- array(0, dim = dim(w))
-  d[length(d)] <- 1
+  d <- rep(0, length(w))
+  d[1] <- 1
   d <- diag(d)
   D <- v %*% d %*% t(v)
   list(Matrix(as.numeric(D), sparse = TRUE))
@@ -1971,7 +1971,7 @@ setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 
 
 setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
-  y <- values[[2]]
+  y <- as.numeric(values[[2]])
   if(y <= 0)
     return(list(NA_real_, NA_real_))
   else {

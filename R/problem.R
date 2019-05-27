@@ -173,6 +173,9 @@ setMethod("*", signature(e1 = "Maximize", e2 = "numeric"), function(e1, e2) {
 setMethod("*", signature(e1 = "numeric", e2 = "Minimize"), function(e1, e2) { e2 * e1 })
 
 #' @rdname Objective-arith
+setMethod("*", signature(e1 = "numeric", e2 = "Maximize"), function(e1, e2) { e2 * e1 })
+
+#' @rdname Objective-arith
 setMethod("/", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
 #' @rdname Objective-arith

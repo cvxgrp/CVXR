@@ -54,7 +54,8 @@ Suggests:
     reticulate,
     lpSolveAPI,
     Rglpk,
-    slam
+    slam,
+    Rmosek
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true

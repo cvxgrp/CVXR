@@ -18,13 +18,13 @@ special_index_canon <- function(expr, args) {
     final_dim <- c(length(select_mat), 1)
   # select_vec <- matrix(select_mat, nrow = prod(final_dim))
   select_vec <- as.vector(select_mat)
-  
+
   # Select the chosen entries from expr.
   arg <- args[[1]]
   arg_size <- size(arg)
   # identity <- diag(size(arg))
   identity <- sparseMatrix(i = 1:arg_size, j = 1:arg_size, x = rep(1, arg_size))
-  
+
   v <- vec(arg)
   idmat <- matrix(identity[select_vec,], ncol = arg_size)
   if(is_scalar(v) || is_scalar(as.Constant(idmat)))
@@ -69,7 +69,7 @@ setClassUnion("ProblemORNULL", c("Problem", "NULL"))
 #' of provenance.
 #'
 #' @rdname Reduction-class
-setClass("Reduction", representation(problem = "ProblemORNULL", .emitted_problem = "ANY", .retrieval_data = "ANY"), 
+setClass("Reduction", representation(problem = "ProblemORNULL", .emitted_problem = "ANY", .retrieval_data = "ANY"),
                       prototype(problem = NULL, .emitted_problem = NULL, .retrieval_data = NULL), contains = "VIRTUAL")
 
 #' @param object A \linkS4class{Reduction} object.
@@ -81,10 +81,10 @@ setMethod("accepts", signature(object = "Reduction", problem = "Problem"), funct
 setMethod("reduce", "Reduction", function(object) {
   if(!is.null(object@.emitted_problem))
     return(object@.emitted_problem)
-  
+
   if(is.null(object@problem))
     stop("The reduction was constructed without a Problem")
-  
+
   tmp <- perform(object, object@problem)
   object@.emitted_problem <- tmp[[1]]
   object@.retrieval_data <- tmp[[2]]
@@ -471,7 +471,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   new_obj <- stuffed[[1]]
   new_var <- stuffed[[2]]
   inverse_data@r <- stuffed[[3]]
-  
+
   # Lower equality and inequality to ZeroConstraint and NonPosConstraint.
   cons <- list()
   for(con in problem@constraints) {
@@ -483,7 +483,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
       con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, constr_id = con@constr_id)
     cons <- c(cons, con)
   }
-    
+
   # Batch expressions together, then split apart.
   expr_list <- flatten_list(lapply(cons, function(c) { c@args }))
   Abfull <- affine(extractor, expr_list)
@@ -491,7 +491,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   bfull <- Abfull[[2]]
   new_cons <- list()
   offset <- 0
-  
+
   for(con in cons) {
     arg_list <- list()
     for(arg in con@args) {
@@ -517,7 +517,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
 })
 
 setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-  var_map <- inverse_data@var_offsets
+    var_map <- inverse_data@var_offsets
   con_map <- inverse_data@cons_id_map
 
   # Flip sign of optimal value if maximization.
@@ -570,7 +570,7 @@ extract_mip_idx <- function(variables) {
   # Coalesces bool, int indices for variables.
   # The indexing scheme assumes that the variables will be coalesced into a single
   # one-dimensional variable with each variable being reshaped in Fortran order.
-  
+
   ravel_multi_index <- function(multi_index, x, vert_offset) {
     # Ravel a multi-index and add a vertical offset to it
     ravel_idx <- array(FALSE, dim(x))
@@ -578,7 +578,7 @@ extract_mip_idx <- function(variables) {
     ravel_idx <- which(ravel_idx, arr.ind = FALSE)
     return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
   }
-  
+
   boolean_idx <- c()
   integer_idx <- c()
   vert_offset <- 0
@@ -593,7 +593,7 @@ extract_mip_idx <- function(variables) {
     }
     vert_offset <- vert_offset + size(x)
   }
-  
+
   if(is.null(boolean_idx))
     boolean_idx <- matrix(0, nrow = 0, ncol = 1)
   else

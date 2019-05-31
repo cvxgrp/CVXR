@@ -1267,11 +1267,13 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   if(psd_total_dims > 0)
     prob$bardim <- unlist(dims[[PSD_DIM]])
   running_idx <- n0
-  for(i in 1:length(unlist(dims[[SOC_DIM]]))) {
-    prob$cones[,i] <- list("QUAD", as.numeric((running_idx+1):(running_idx + unlist(dims[[SOC_DIM]])[[i]]))) #latter term is size_cone
-    running_idx <- running_idx + unlist(dims[[SOC_DIM]])[[i]]
+  if(length(unlist(dims[[SOC_DIM]])) > 0) {
+    for(i in 1:length(unlist(dims[[SOC_DIM]]))) {
+      prob$cones[,i] <- list("QUAD", as.numeric((running_idx + 1):(running_idx + unlist(dims[[SOC_DIM]])[[i]]))) # latter term is size_cone
+      running_idx <- running_idx + unlist(dims[[SOC_DIM]])[[i]]
+    }
   }
-  if(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3) != 0){ #check this, feels sketchy
+  if(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3) != 0){ # check this, feels sketchy
     for(k in 1:(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)+1) ) {
       prob$cones[,(length(dims[[SOC_DIM]])+k)] <- list("PEXP", as.numeric((running_idx+1):(running_idx + 3)) )
       running_idx <- running_idx + 3
@@ -1359,8 +1361,8 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
 
     for(j in 1:length(dims[[PSD_DIM]])) {   #For each PSD matrix
-      for(row_idx in 1:dims[[PSD_DIM]]) {
-        for(col_idx in 1:dims[[PSD_DIM]]) {
+      for(row_idx in 1:dims[[PSD_DIM]][[j]]) {
+        for(col_idx in 1:dims[[PSD_DIM]][[j]]) {
           val <- ifelse(row_idx == col_idx, 1, 0.5)
           row <- max(row_idx, col_idx)
           col <- min(row_idx, col_idx)

@@ -2,7 +2,7 @@ TOL <- 1e-6
 
 test_that("Test regression", {
     ## Set the random seed to get consistent data
-    skip_on_cran()
+    ##skip_on_cran()
     set.seed(1)
 
     ## Number of examples to use
@@ -43,7 +43,7 @@ test_that("Test regression", {
 test_that("Test control", {
     ## Some constraints on our motion
     ## The object should start from the origin and end at rest
-    skip_on_cran()
+    ##skip_on_cran()
     initial_velocity <- matrix(c(-20, 100), nrow = 2, ncol = 1)
     final_position <- matrix(c(100, 100), nrow = 2, ncol = 1)
 
@@ -108,7 +108,7 @@ test_that("Test control", {
 ## })
 
 test_that("Test equivalent forms", {
-    skip_on_cran()
+    ##skip_on_cran()
     m <- 100
     n <- 80
     r <- 70
@@ -150,7 +150,7 @@ test_that("Test equivalent forms", {
 })
 
 test_that("Test smooth ridge", {
-    skip_on_cran()
+    ##skip_on_cran()
     set.seed(1)
     n <- 500
     k <- 50

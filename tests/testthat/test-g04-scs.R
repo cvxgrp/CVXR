@@ -9,7 +9,7 @@ C <- Variable(3, 2, name = "C")
 
 test_that("Test log problem", {
     ## Log in objective
-    skip_on_cran()
+    ##skip_on_cran()
     obj <- Maximize(sum(log(x)))
     constr <- list(x <= matrix(c(1, exp(1))))
     p <- Problem(obj, constr)
@@ -34,7 +34,7 @@ test_that("Test log problem", {
 })
 
 test_that("Test sigma max", {
-    skip_on_cran()
+    ##skip_on_cran()
     const <- Constant(rbind(c(1,2), c(3,4), c(5,6)))
     constr <- list(C == const)
     prob <- Problem(Minimize(norm(C, "F")), constr)
@@ -44,7 +44,7 @@ test_that("Test sigma max", {
 })
 
 test_that("Test sdp variable", {
-    skip_on_cran()
+    ##skip_on_cran()
     const <- Constant(rbind(c(1,2,3), c(4,5,6), c(7,8,9)))
     X <- Semidef(3)
     prob <- Problem(Minimize(0), list(X == const))
@@ -53,7 +53,7 @@ test_that("Test sdp variable", {
 })
 
 test_that("Test warm starting", {
-    skip_on_cran()
+    ##skip_on_cran()
     x <- Variable(10)
     obj <- Minimize(sum(exp(x)))
     prob <- Problem(obj, list(sum(x) == 1))

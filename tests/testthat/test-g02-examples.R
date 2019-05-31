@@ -1,7 +1,7 @@
 TOL <- 1e-6
 
 test_that("Find the largest Euclidean ball in the polyhedron", {
-    skip_on_cran()
+    ##skip_on_cran()
     ## Create the input data
     a1 <- matrix(c(2,1), nrow = 2, ncol = 1)
     a2 <- matrix(c(2,-1), nrow = 2, ncol = 1)
@@ -29,7 +29,7 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
 
 test_that("Test advanced tutorial", {
     ## Solving a problem with different solvers
-    skip_on_cran()
+    ##skip_on_cran()
     x <- Variable(2)
     obj <- Minimize(x[1] + norm1(x))
     constraints <- list(x >= 2)
@@ -56,7 +56,7 @@ test_that("Test advanced tutorial", {
 })
 
 test_that("Test log determinant", {
-    skip_on_cran()
+    ##skip_on_cran()
     x <- t(data.frame(c(0.55, 0.25, -0.2, -0.25, -0.0, 0.4),
                       c(0.0, 0.35, 0.2, -0.1, -0.3, -0.2)))
     n <- nrow(x)
@@ -73,7 +73,7 @@ test_that("Test log determinant", {
 })
 
 test_that("Test portfolio problem", {
-    skip_on_cran()
+    ##skip_on_cran()
     set.seed(5)
     n <- 100
     m <- 10
@@ -97,7 +97,7 @@ test_that("Test portfolio problem", {
 })
 
 test_that("Test examples from CVXR introduction", {
-    skip_on_cran()
+    ##skip_on_cran()
     m <- 30
     n <- 20
     set.seed(1)

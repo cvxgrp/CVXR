@@ -654,12 +654,26 @@ setMethod("format_constr", "SDP", function(object, eq_constr, leq_constr, dims, 
     list(list(eq_constr), list(leq_constr))
   }
 
-  if(is(solver, "CVXOPT") || is(solver, "MOSEK"))
-    stop("Formatting unimplemented for CVXOPT and MOSEK")
-  else if(is(solver, "SCS")) {
+  .cvxopt_format  <- function(object) {
+      eq_constr <- .get_eq_constr(object)
+      if(is.na(object@constr_id))
+          leq_constr <- create_geq(object@A)
+      else
+          leq_constr <- create_geq(object@A, constr_id = object@constr_id)
+      list(list(eq_constr), list(leq_constr))
+  }
+
+  ## CVXOPT and MOSEK take same format, but CVXOPT not implemented in CVXR pre-1.0!
+  if(is(solver, "CVXOPT")) {
+      stop("Formatting unimplemented for CVXOPT and MOSEK")
+  } else if (is(solver, "MOSEK")) {
+      cvxopt_form  <- .cvxopt_format(object)
+      new_eq_constr <- cvxopt_form[[1L]]
+      new_leq_constr <- cvxopt_form[[2L]]
+  } else if(is(solver, "SCS")) {
     scs_form <- .scs_format(object)
-    new_eq_constr <- scs_form[[1]]
-    new_leq_constr <- scs_form[[2]]
+    new_eq_constr <- scs_form[[1L]]
+    new_leq_constr <- scs_form[[2L]]
   } else
     stop("Solver does not support positive semidefinite cone")
 

@@ -1,7 +1,9 @@
 # CVXR 0.99-6
 
-* Mosek Glue modifications for MOSEK 8+, [issue
-  #49](https://github.com/anqif/CVXR/issues/49).
+* Mosek Glue modifications for MOSEK 8+, [issue 49](https://github.com/anqif/CVXR/issues/49).
+
+* Format constraints bug for MOSEK (`constraints.R`) where `CVXOPT`
+  and `MOSEK` were lumped together (thanks, Trevor Hastie).
 
 # CVXR 0.99-5
 

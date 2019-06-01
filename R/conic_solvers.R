@@ -1267,11 +1267,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   if(psd_total_dims > 0)
     prob$bardim <- unlist(dims[[PSD_DIM]])
   running_idx <- n0
-  if(length(unlist(dims[[SOC_DIM]])) > 0) {
-    for(i in 1:length(unlist(dims[[SOC_DIM]]))) {
-      prob$cones[,i] <- list("QUAD", as.numeric((running_idx + 1):(running_idx + unlist(dims[[SOC_DIM]])[[i]]))) # latter term is size_cone
-      running_idx <- running_idx + unlist(dims[[SOC_DIM]])[[i]]
-    }
+  for(i in seq_along(unlist(dims[[SOC_DIM]]))) {
+    prob$cones[,i] <- list("QUAD", as.numeric((running_idx + 1):(running_idx + unlist(dims[[SOC_DIM]])[[i]]))) # latter term is size_cone
+    running_idx <- running_idx + unlist(dims[[SOC_DIM]])[[i]]
   }
   if(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3) != 0){ # check this, feels sketchy
     for(k in 1:(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)+1) ) {
@@ -1335,7 +1333,6 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   A_holder <- sparseMatrix(row, col, x = val)
   prob$A[1:dim(A_holder)[1], 1:dim(A_holder)[2]] <- A_holder
 
-
   if(total_soc_exp_slacks > 0) {
     i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
     j <- length(c)   # Index of the first slack variable in the block vector "x".
@@ -1353,12 +1350,11 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   if(dim_exist_PSD > 0){
     #A bit hacky here too, specifying the lower triangular part of symmetric coefficient matrix barA
-    barAi <- list() #Specifies row index of block matrix
-    barAj <- list() #Specifies column index of block matrix
-    barAk <- list() #Specifies row index within the block matrix specified above
-    barAl <- list() #Specifies column index within the block matrix specified above
-    barAv <- list() #Values for all the matrices
-
+    barAi <- c() #Specifies row index of block matrix
+    barAj <- c() #Specifies column index of block matrix
+    barAk <- c() #Specifies row index within the block matrix specified above
+    barAl <- c() #Specifies column index within the block matrix specified above
+    barAv <- c() #Values for all the matrices
 
     for(j in 1:length(dims[[PSD_DIM]])) {   #For each PSD matrix
       for(row_idx in 1:dims[[PSD_DIM]][[j]]) {
@@ -1467,7 +1463,10 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
     problem_status <- sol$prosta
     solution_status <- sol$solsta
 
-    status <- status_map(solution_status)
+    if(is.na(solution$response$code))
+      status <- SOLVER_ERROR
+    else
+      status <- status_map(solution_status)
 
     ## For integer problems, problem status determines infeasibility (no solution).
     ##  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)

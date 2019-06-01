@@ -1394,7 +1394,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   hu_holder <- as.numeric(h)
 
   #upper constraints for the LEQ_DIM number of variables, so set lower bound to -Inf
-  hl_holder[1:dims[[LEQ_DIM]]] <- rep(-Inf, dims[[LEQ_DIM]])
+  hl_holder[seq_len(dims[[LEQ_DIM]])] <- rep(-Inf, dims[[LEQ_DIM]])
 
   prob$bc <- rbind(blc = hl_holder,
                    buc = hu_holder)
@@ -1513,8 +1513,8 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
 MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
     dual_vars <- list()
 
-    ## Dua variables for the inequality constraints.
-    suc_len <- sum(sapply(inverse_data$suc_slacks, function(val) { val[[2]] }))
+    ## Dual variables for the inequality constraints.
+    suc_len <- ifelse(length(inverse_data$suc_slacks) == 0, 0, sum(sapply(inverse_data$suc_slacks, function(val) { val[[2]] })))
     if(suc_len > 0) {
         ## suc <- rep(0, suc_len)
         ## task.getsucslice(sol, 0, suc_len, suc)
@@ -1522,7 +1522,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
     }
 
     ## Dual variables for the original equality constraints.
-    y_len <- sum(sapply(inverse_data$y_slacks, function(val) { val[[2]] }))
+    y_len <- ifelse(length(inverse_data$y_slacks) == 0, 0, sum(sapply(inverse_data$y_slacks, function(val) { val[[2]] })))
     if(y_len > 0) {
         ##y <- rep(0, y_len)
         ## task.getyslice(sol, suc_len, suc_len + y_len, y)
@@ -1530,7 +1530,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
     }
 
     ## Dual variables for SOC and EXP constraints.
-    snx_len <- sum(sapply(inverse_data$snx_slacks, function(val) { val[[2]] }))
+    snx_len <- ifelse(length(inverse_data$snx_slacks) == 0, 0, sum(sapply(inverse_data$snx_slacks, function(val) { val[[2]] })))
     if(snx_len > 0) {
         ##snx <- matrix(0, nrow = snx_len, ncol = 1)
         ##task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)

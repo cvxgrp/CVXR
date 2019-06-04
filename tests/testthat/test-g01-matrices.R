@@ -1,3 +1,5 @@
+context("test-g01-matrices")
+
 a <- Variable(name = "a")
 b <- Variable(name = "b")
 c <- Variable(name = "c")
@@ -10,9 +12,9 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-assert_expression <- function(expr, size) {
+assert_expression <- function(expr, dim) {
   expect_true(is(expr, "Expression") || is(expr, "Constraint"))
-  expect_equal(size(expr), size)
+  expect_equal(dim(expr), dim)
 }
 
 test_that("Test R vectors", {

@@ -1539,7 +1539,14 @@ setMethod("initialize", "Transpose", function(.Object, ..., expr, axes = NULL) {
 #' @param object A \linkS4class{Transpose} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Transpose The transpose of the given value.
-setMethod("to_numeric", "Transpose", function(object, values) { aperm(values[[1]], perm = object@axes) })
+setMethod("to_numeric", "Transpose", function(object, values) {
+  if(is(values[[1]], "Matrix")) {
+    if(!is.null(object@axes))
+      stop("Cannot permute Matrix object axes to (", paste(object@axes, collapse = ","), ")")
+    return(t(values[[1]]))
+  } else
+    return(aperm(values[[1]], perm = object@axes))
+})
 
 #' @describeIn Transpose Is the expression symmetric?
 setMethod("is_symmetric", "Transpose", function(object) { is_symmetric(object@args[[1]]) })

@@ -1,3 +1,5 @@
+context("test-g01-monotonicity")
+
 test_that("Test application of DCP composition rules to determine curvature", {
   expr <- 1 + exp(Variable())
   expect_equal(curvature(expr), CONVEX)

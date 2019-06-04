@@ -3,8 +3,11 @@
 # Solver utilities #
 #                  #
 ####################
-solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI_CONIC(), MOSEK(), CPLEX_CONIC())
-solver_qp_intf <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
+# solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI_CONIC(), MOSEK(), CPLEX_CONIC())
+# solver_qp_intf <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
+
+solver_conic_intf <- list(ECOS(), ECOS_BB(), SCS(), GUROBI_CONIC(), MOSEK())
+solver_qp_intf <- list(OSQP(), GUROBI_QP())
 
 SOLVER_MAP_CONIC <- solver_conic_intf
 names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, name)

@@ -1,3 +1,4 @@
+context("test-g01-nonlinear_atoms")
 TOL <- 1e-6
 
 x <- Variable(2, name = "x")

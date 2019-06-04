@@ -843,12 +843,21 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
   if(solution@status %in% SOLUTION_PRESENT) {
     for(v in variables(object)) {
       vid <- as.character(id(v))
-      result[[vid]] <- solution@primal_vars[[vid]]
+      val <- solution@primal_vars[[vid]]
+      if(is.null(dim(val)) || all(dim(val) == 1))
+        val <- as.numeric(val)
+      result[[vid]] <- val
+      # result[[vid]] <- solution@primal_vars[[vid]]
     }
     for(c in object@constraints) {
       cid <- as.character(id(c))
-      if(cid %in% names(solution@dual_vars))
-        result[[cid]] <- solution@dual_vars[[cid]]
+      if(cid %in% names(solution@dual_vars)) {
+        val <- solution@dual_vars[[cid]]
+        if(is.null(dim(val)) || all(dim(val)) == 1)
+          val <- as.numeric(val)
+        result[[cid]] <- val
+        # result[[cid]] <- solution@dual_vars[[cid]]
+      }
     }
   } else if(solution@status %in% INF_OR_UNB) {
     for(v in variables(object))

@@ -1,4 +1,4 @@
-##require(Matrix)
+context("test-g01-lin_ops")
 
 test_that("Test creating a variable", {
   var <- create_var(c(5, 4), var_id = 1)

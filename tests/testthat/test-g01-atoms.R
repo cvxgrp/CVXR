@@ -1,6 +1,14 @@
 context("test-g01-atoms")
 TOL <- 1e-5
 
+AFFINE <- "AFFINE"
+CONVEX <- "CONVEX"
+CONCAVE <- "CONCAVE"
+ZERO <- "ZERO"
+UNKNOWN <- "UNKNOWN"
+NONNEG <- "NONNEGATIVE"
+NONPOS <- "NONPOSITIVE"
+
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")

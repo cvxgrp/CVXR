@@ -148,6 +148,8 @@ setMethod("to_numeric", "Entr", function(object, values) {
 
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
+  if(all(dim(results) == 1))
+    results <- as.numeric(results)
   results
 })
 

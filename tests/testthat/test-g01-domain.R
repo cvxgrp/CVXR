@@ -1,5 +1,6 @@
 context("test-g01-domain")
 TOL <- 1e-6
+
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")
@@ -10,9 +11,9 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-test_that("Test domain for partial minimization/maximization problems", {
-  for(obj in list(Minimize(a^-1), Maximize(log(a)))) {
-    prob <- Problem(obj, list(x + a >= c(5,8)))
+# test_that("Test domain for partial minimization/maximization problems", {
+#   for(obj in list(Minimize(a^-1), Maximize(log(a)))) {
+#     prob <- Problem(obj, list(x + a >= c(5,8)))
     
     # Optimize over nothing
     # expr <- partial_optimize(prob, dont_opt_vars = list(x, a))
@@ -42,8 +43,8 @@ test_that("Test domain for partial minimization/maximization problems", {
     # result <- solve(prob)
     # expect_equal(result$getValue(a), -100, tolerance = TOL)
     # expect_equal(result$getValue(x), matrix(c(0,0)), tolerance = TOL)
-  }
-})
+#   }
+# })
 
 test_that("Test domain for geo_mean", {
   dom <- domain(geo_mean(x))
@@ -116,7 +117,7 @@ test_that("Test domain for power", {
   result <- solve(Problem(Minimize(a), dom))
   expect_equal(result$getValue(a), 0, tolerance = TOL)
   
-  dom <- domain(square(a))
+  dom <- domain(a^2)
   result <- solve(Problem(Minimize(a), c(dom, a >= -100)))
   expect_equal(result$getValue(a), -100, tolerance = TOL)
   

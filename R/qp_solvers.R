@@ -264,13 +264,13 @@ setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 
 # Map of GUROBI status to CVXR status.
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
-  if(status == 2)
+  if(status == 2 || status == "OPTIMAL")
     OPTIMAL
-  else if(status == 3 || status == 6)
+  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
     INFEASIBLE
-  else if(status == 5)
+  else if(status == 5 || status == "UNBOUNDED")
     UNBOUNDED
-  else if(status == 4)
+  else if(status == 4 | status == "INF_OR_UNBD")
     INFEASIBLE_INACCURATE
   else if(status %in% c(7,8,9,10,11,12))
     SOLVER_ERROR   # TODO: Could be anything
@@ -285,6 +285,7 @@ setMethod("import_solver", "GUROBI_QP", function(solver) {
   requireNamespace("gurobi", quietly = TRUE)
 })
 
+##DK: IS THIS FUNCTION NECESSARY ANYMORE WITH invert?
 setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
   model <- results$model
   x_grb <- getVars(model)
@@ -336,95 +337,163 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   n <- data$n_var
 
   # Create a new model.
-  model <- gurobi::Model()
+  model <- list()
 
+  #Doesn't seem like adding variables exists in the R version, but setting var type is
   # Add variables.
-  for(i in 1:n) {
-    # Set variable type.
-    if(i %in% data[[BOOL_IDX]])
-      vtype <- "logical"
-    else if(i %in% data[[INT_IDX]])
-      vtype <- "integer"
-    else
-      vtype <- "numeric"
-    addVar(model, ub = Inf, lb = -Inf, vtype = vtype)
+  
+  #Add variable types
+  vtype <- character(n)
+  for(i in seq_along(data[[BOOL_IDX]])){
+    vtype[data[[BOOL_IDX]][i]] <- 'B' #B for binary
   }
-  update(model)
-  x <- getVars(model)
+  for(i in seq_along(data[[INT_IDX]])){
+    vtype[data[[INT_IDX]][i]] <- 'I' #I for integer
+  }
+  
+  for(i in 1:n) {
+    if(vtype[i] == ""){
+      vtype[i] <- 'C' #C for continuous
+    }
+    #addVar(model, ub = Inf, lb = -Inf, vtype = vtype): don't need in R
+  }
+  model$vtype <- vtype #put in variable types
+  model$lb <- rep(-Inf, n)
+  model$ub <- rep(Inf, n)
+  
+  #update(model): doesn't exist in R
+  #x <- getVars(model)
 
   # Add equality constraints: iterate over the rows of A,
   # adding each row into the model.
-  if(!is.null(model$v811_addMConstrs)) {
-    # @e can pass all of A == b at once.
-    sense <- rep(GRB.EQUAL, nrow(A))
-    model <- model$v811_addMConstrs(A, sense, b)
-  } else if(nrow(A) > 0) {
-    for(i in 1:nrow(A)) {
-      start <- A@p[i]
-      end <- A@p[i+1]
-      # variables <- mapply(function(i, j) { x[i,j] }, A@i[start:end], A@j[start:end])   # Get nnz.
-      variables <- x[A@i[start:end]]
-      coeff <- A@x[start:end]
-      expr <- gurobi::LinExpr(coeff, variables)
-      addConstr(model, expr, "equal", b[i])
-    }
-  }
-  update(model)
+  model$A <- rbind(A, Fmat)
+  model$rhs <- c(b, g)
+  model$sense <- c(rep('=', dim(A)[1]), rep('<', dim(Fmat)[1])) #in their documentation they just have < than not <=?
+  
+  # if(!is.null(model$v811_addMConstrs)) {
+  #   # @e can pass all of A == b at once.
+  #   sense <- rep(GRB.EQUAL, nrow(A))
+  #   model <- model$v811_addMConstrs(A, sense, b)              What is the R equivalent of this??
+  # } else if(nrow(A) > 0) {
+  #   for(i in 1:nrow(A)) {                                     Is this bit ever necessary in R?
+  #     start <- A@p[i]
+  #     end <- A@p[i+1]
+  #     # variables <- mapply(function(i, j) { x[i,j] }, A@i[start:end], A@j[start:end])   # Get nnz.
+  #     variables <- x[A@i[start:end]]
+  #     coeff <- A@x[start:end]
+  #     expr <- gurobi::LinExpr(coeff, variables)
+  #     addConstr(model, expr, "equal", b[i])
+  #   }
+  # }
+  # update(model)
 
   # Add inequality constraints: iterate over the rows of F,
   # adding each row into the model.
-  if(!is.null(model$v811_addMConstrs)) {
-    # We can pass all of F <= g at once.
-    sense <- rep(GRB.LESS_EQUAL, nrow(Fmat))
-    model <- model$v811_addMConstrs(Fmat, sense, g)
-  } else if(nrow(Fmat) > 0) {
-    for(i in nrow(Fmat)) {
-      start <- Fmat@p[i]
-      end <- Fmat@p[i+1]
-      # variables <- mapply(function(i, j) { x[i,j] }, Fmat@i[start:end], Fmat@j[start:end])   # Get nnz.
-      variables <- x[Fmat@i[start:end]]
-      coeff <- Fmat@x[start:end]
-      expr <- gurobi::LinExpr(coeff, variables)
-      addConstr(model, expr, "less_equal", g[i])
-    }
-  }
-  update(model)
+  # if(!is.null(model$v811_addMConstrs)) {
+  #   # We can pass all of F <= g at once.
+  #   sense <- rep(GRB.LESS_EQUAL, nrow(Fmat))
+  #   model <- model$v811_addMConstrs(Fmat, sense, g)
+  # } else if(nrow(Fmat) > 0) {
+  #   for(i in nrow(Fmat)) {
+  #     start <- Fmat@p[i]
+  #     end <- Fmat@p[i+1]
+  #     # variables <- mapply(function(i, j) { x[i,j] }, Fmat@i[start:end], Fmat@j[start:end])   # Get nnz.
+  #     variables <- x[Fmat@i[start:end]]
+  #     coeff <- Fmat@x[start:end]
+  #     expr <- gurobi::LinExpr(coeff, variables)
+  #     addConstr(model, expr, "less_equal", g[i])
+  #   }
+  # }
+  #update(model) Not in R
 
   # Define objective.
-  obj <- gurobi::QuadExpr()
-  if(!is.null(model$v811_setMObjective))
-    model <- model$v811_setMObjective(0.5*P, q)
-  else {
-    nnz <- nnzero(P)
-    if(nnz > 0) {   # If there are any nonzero elements in P.
-      for(i in 1:nnz)
-        gurobi_add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
-    }
-    gurobi_add(obj, gurobi::LinExpr(q, x))   # Add linear part.
-    setObjective(model, obj)   # Set objective.
-  }
-  update(model)
+  
+  
+  ####CHECK MATH####
+  #Conjecture P is Q matrix and q is c, which is obj for gurobi
+  model$Q <- P*.5
+  model$obj <- q 
+  
+  # obj <- gurobi::QuadExpr()
+  # if(!is.null(model$v811_setMObjective))
+  #   model <- model$v811_setMObjective(0.5*P, q)
+  # else {
+  #   nnz <- nnzero(P)
+  #   if(nnz > 0) {   # If there are any nonzero elements in P.
+  #     for(i in 1:nnz)
+  #       gurobi_add(obj, 0.5*P@x[i]*x[P@i[i]]*x[P@j[i]])
+  #   }
+  #   gurobi_add(obj, gurobi::LinExpr(q, x))   # Add linear part.
+  #   setObjective(model, obj)   # Set objective.
+  # }
+  # update(model)
 
   # Set verbosity and other parameters.
-  setParam(model, "OutputFlag", verbose)
+  params <- list()
+  #setParam(model, "OutputFlag", verbose)
+  params$OutputFlag <- as.numeric(verbose)
   # TODO: User option to not compute duals.
-  setParam(model, "QCPDual", TRUE)
+  params$QCPDual <- 1 #equivalent to TRUE
 
-  for(key in names(solver_opts))
-    setParam(model, key, solver_opts[key])
-
-  # Update model.
-  update(model)
+  # for(key in names(solver_opts))
+  #   setParam(model, key, solver_opts[key])
+  for(i in seq_along(solver_opts)){
+    params[[ names(solver_opts)[i] ]] <- solver_opts[i] 
+  }
+  
+  # Update model. Not a thing in R
+  #update(model)
 
   # Solve problem.
+  #results_dict <- gurobi(model, params)
   results_dict <- list()
   tryCatch({
-    optimize(model)   # Solve.
+    results_dict$solution <- gurobi::gurobi(model, params)   # Solve.
   }, error = function(e) {   # Error in the solution.
-    results_dict$status <- SOLVER_ERROR
+    results_dict$status <- 'SOLVER_ERROR'
   })
   results_dict$model <- model
+  
   return(results_dict)
+})
+
+#DK WRITTEN FUNCTION
+setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
+  model <- solution$model
+  solution <- solution$solution
+  x_grb <- model$x
+  n <- length(x_grb)
+  constraints_grb <- model$rhs
+  m = length(constraints_grb)
+  
+  attr <- list()
+  attr[[SOLVE_TIME]] <- solution$runtime
+  attr[[NUM_ITERS]] <- solution$baritercount
+  
+  status <- status_map(object, solution$status)
+  
+  if(status %in% SOLUTION_PRESENT){
+    opt_val <- solution$objval
+    x <- solution$x
+    
+    primal_vars <- list()
+    primal_vars[[names(inverse_data@id_map)[1]]] <- x
+    
+    #Only add duals if not a MIP
+    dual_vars <- NA
+    if(!inverse_data@is_mip){
+      y <- solution$pi
+      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+    } else{
+      primal_vars <- NA
+      dual_vars <- NA
+      opt_val <- Inf
+      if(status == UNBOUNDED){
+        opt_val <- -Inf
+      }
+    }
+  }
+  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
 # QP interface for the OSQP solver.

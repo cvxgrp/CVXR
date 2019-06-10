@@ -1924,15 +1924,20 @@ setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y =
   callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))
 })
 
+#' @describeIn QuadOverLin Does the atom handle complex numbers?
+setMethod("allow_complex", "QuadOverLin", function(object) { TRUE })
+
 #' @param object A \linkS4class{QuadOverLin} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn QuadOverLin The sum of the entries of \code{x} squared over \code{y}.
-setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(values[[1]]^2) / values[[2]] })
+setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(Mod(values[[1]])^2) / values[[2]] })
 
 #' @describeIn QuadOverLin Check the dimensions of the arguments.
 setMethod("validate_args",   "QuadOverLin", function(object) {
   if(!is_scalar(object@args[[2]]))
     stop("The second argument to QuadOverLin must be a scalar.")
+  if(is_complex(object@args[[2]]))
+    stop("The second argument to QuadOverLin cannot be complex.")
   callNextMethod()
 })
 
@@ -1955,10 +1960,10 @@ setMethod("is_atom_log_log_convex", "QuadOverLin", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "QuadOverLin", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @describeIn QuadOverLin A logical value indicating whether the atom is weakly increasing.
+#' @describeIn QuadOverLin A logical value indicating whether the atom is weakly increasing in argument \code{idx}.
 setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_nonneg(object@args[[idx]]) })
 
-#' @describeIn QuadOverLin A logical value indicating whether the atom is weakly decreasing.
+#' @describeIn QuadOverLin A logical value indicating whether the atom is weakly decreasing in argument \code{idx}.
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_nonpos(object@args[[idx]])) || (idx == 2) })
 
 #' @describeIn QuadOverLin Quadratic if \code{x} is affine and \code{y} is constant.
@@ -1976,7 +1981,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
     return(list(NA_real_, NA_real_))
   else {
     # DX = 2X/y, Dy = -||X||^2_2/y^2
-    Dy <- -sum(X^2)/y^2
+    Dy <- -sum(Mod(X)^2)/y^2
     Dy <- Matrix(Dy, sparse = TRUE)
     DX <- 2.0*X/y
     DX <- Matrix(as.numeric(t(DX)), sparse = TRUE)

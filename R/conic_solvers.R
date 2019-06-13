@@ -485,8 +485,19 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
 
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
+
 # Solver capabilities.
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
+
+#DK: CBC_Conic to CVXR status. Check these are correct
+setMethod("status_map", "CBC_CONIC", function(solver, status){
+  if(status$is_proven_optimal)
+    OPTIMAL
+  else if(status$is_proven_dual_infeasible || is_proven_infeasible)
+    INFEASIBLE
+  else
+    SOLVER_ERROR #probably need to check this the most
+})
 
 # Map of CBC_CONIC MIP/LP status to CVXR status.
 setMethod("status_map_mip", "CBC_CONIC", function(solver, status) {
@@ -543,13 +554,16 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
   return(list(data, inv_data))
 })
 
-setMethod("invert", signature(object = "CBC_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+#DK: Changed solution class from "Solution" to rcbc_milp_result. Same with CBC_Conic  to
+#setMethod("invert", "CBC_CONIC", signature(object, solution = "rcbc_milp_result", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+setMethod("invert", "CBC_CONIC",  function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
-  status <- solution$status
+  
+  status <- status_map(solution)
 
   if(status %in% SOLUTION_PRESENT) {
-    opt_val <- solution$value
-    primal_vars[[object@var_id]] <- solution$primal
+    opt_val <- solution$objective_value
+    primal_vars[[object@var_id]] <- solution$column_solution
   } else {
     if(status == INFEASIBLE)
       opt_val <- Inf
@@ -565,12 +579,55 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "Solution", inver
 })
 
 setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  solver <- CBC_OLD()
-  solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
-  solver_opts[[INT_IDX]] <- data[[INT_IDX]]
-  prob_data <- list()
-  prob_data[[name(object)]] <- ProblemData()
-  return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
+  requireNamespace("rcbc", quietly = TRUE)
+  
+  cvar <- data$c
+  b <- data$b
+  A <- data$A
+  dims <- dims_to_solver_dict(data$dims)
+  
+  if(is.null(dim(data$c))){
+    n <- length(cvar) #Should dim be used here?
+  } else{
+    n <- dim(cvar)[1]
+  }
+  
+  #Initialize variable constraints
+  var_lb <- rep(-Inf, n)
+  var_ub <- rep(Inf, n)
+  is_integer <- rep.int(FALSE, n)
+  
+  #Make boolean constraints
+  if(length(data$bool_vars_idx) > 0){
+    var_lb[data$bool_vars_idx] <- 0
+    var_ub[data$bool_vars_idx] <- 1
+    is_integer[data$bool_vars_idx] <- TRUE
+  }
+  
+  if(length(data$int_vars_idx) > 0){
+    is_integer[data$int_vars_idx] <- TRUE
+  }
+  
+  result <- rcbc::cbc_solve(
+    obj = cvar,
+    mat = A,
+    row_ub = b,
+    row_lb = rep(-Inf, dim(A)[1]),
+    col_lb = var_lb,
+    col_ub = var_ub,
+    is_integer = is_integer,
+    max = FALSE
+  )
+  
+  
+  # solver <- 'blah'
+  # solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
+  # solver_opts[[INT_IDX]] <- data[[INT_IDX]]
+  # prob_data <- list()
+  # prob_data[[name(object)]] <- ProblemData()
+  # return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
+  
+  return(result)
 })
 
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")

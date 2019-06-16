@@ -1388,7 +1388,7 @@ setMethod("to_numeric", "Norm1", function(object, values) {
   if(is.na(object@axis))
     base::norm(values[[1]], type = "O")
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "O") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "O") }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn Norm1 Does the atom handle complex numbers?
@@ -1448,7 +1448,7 @@ setMethod("to_numeric", "NormInf", function(object, values) {
   if(is.na(object@axis))
     base::norm(values[[1]], type = "I")
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "I") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "I") }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn NormInf Does the atom handle complex numbers?

@@ -1503,14 +1503,13 @@ hstack <- HStack
 #' This function vectorizes an expression, then unvectorizes it into a new shape. Entries are stored in column-major order.
 #'
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
-#' @param rows The new number of rows.
-#' @param cols The new number of columns.
+#' @param new_dim The new dimensions.
 #' @return An \linkS4class{Expression} representing the reshaped input.
 #' @examples
 #' x <- Variable(4)
 #' mat <- cbind(c(1,-1), c(2,-2))
 #' vec <- matrix(1:4)
-#' expr <- reshape_expr(x,2,2)
+#' expr <- reshape_expr(x,c(2,2))
 #' obj <- Minimize(sum(mat %*% expr))
 #' prob <- Problem(obj, list(x == vec))
 #' result <- solve(prob)
@@ -1518,17 +1517,17 @@ hstack <- HStack
 #'
 #' A <- Variable(2,2)
 #' c <- 1:4
-#' expr <- reshape_expr(A,4,1)
+#' expr <- reshape_expr(A,c(4,1))
 #' obj <- Minimize(t(expr) %*% c)
 #' constraints <- list(A == cbind(c(-1,-2), c(3,4)))
 #' prob <- Problem(obj, constraints)
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(expr)
-#' result$getValue(reshape_expr(expr,2,2))
+#' result$getValue(reshape_expr(expr,c(2,2)))
 #'
 #' C <- Variable(3,2)
-#' expr <- reshape_expr(C,2,3)
+#' expr <- reshape_expr(C,c(2,3))
 #' mat <- rbind(c(1,-1), c(2,-2))
 #' C_mat <- rbind(c(1,4), c(2,5), c(3,6))
 #' obj <- Minimize(sum(mat %*% expr))
@@ -1539,14 +1538,14 @@ hstack <- HStack
 #'
 #' a <- Variable()
 #' c <- cbind(c(1,-1), c(2,-2))
-#' expr <- reshape_expr(c * a,1,4)
+#' expr <- reshape_expr(c * a,c(1,4))
 #' obj <- Minimize(expr %*% (1:4))
 #' prob <- Problem(obj, list(a == 2))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(expr)
 #'
-#' expr <- reshape_expr(c * a,4,1)
+#' expr <- reshape_expr(c * a,c(4,1))
 #' obj <- Minimize(t(expr) %*% (1:4))
 #' prob <- Problem(obj, list(a == 2))
 #' result <- solve(prob)

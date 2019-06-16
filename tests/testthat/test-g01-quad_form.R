@@ -70,16 +70,16 @@ test_that("Test quadratic form with a sparse matrix", {
     expect_equal(length(result$getValue(fun)), 1)
 })
 
-test_that("Test quadratic form with a parameter", {
-  P <- Parameter(2,2,PSD = TRUE)
-  Q <- diag(2)
-  x <- Variable(2)
-  cost <- quad_form(x, P)
-  value(P) <- Q
-  prob <- Problem(Minimize(cost), list(x == c(1,2)))
-  # result <- solve(prob)
-  # expect_equal(result$value, 5, tolerance = TOL)
-})
+# test_that("Test quadratic form with a parameter", {
+#   P <- Parameter(2,2,PSD = TRUE)
+#   Q <- diag(2)
+#   x <- Variable(2)
+#   cost <- quad_form(x, P)
+#   value(P) <- Q
+#   prob <- Problem(Minimize(cost), list(x == c(1,2)))
+#   # result <- solve(prob)
+#   # expect_equal(result$value, 5, tolerance = TOL)
+# })
 
 test_that("Test when P is constant and not symmetric", {
   P <- rbind(c(2, 2), c(3, 4))

@@ -1354,7 +1354,12 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' @aliases log log10 log2 log1p
 #' @rdname log
 #' @export
-setMethod("log", "Expression", function(x, base = base::exp(1)) { Log(x = x)/base::log(base) })
+setMethod("log", "Expression", function(x, base = base::exp(1)) {
+  if(base == base::exp(1))
+    Log(x = x)
+  else
+    Log(x = x)/base::log(base)
+})
 
 #' @docType methods
 #' @rdname log

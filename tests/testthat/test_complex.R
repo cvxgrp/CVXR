@@ -397,29 +397,39 @@ test_that("test with special index", {
 
 test_that("test that complex arguments are rejected", {
   x <- Variable(complex = TRUE)
-  expect_error(x >= 0)
-  expect_error(quad_over_lin(x, x))
-  expect_error(sum_largest(x, 2))
+  expect_error(x >= 0, "Inequality constraints cannot be complex.")
+  expect_error(quad_over_lin(x, x), "The second argument to QuadOverLin cannot be complex.")
+  expect_error(sum_largest(x, 2), "Arguments to SumLargest cannot be complex.")
   
   x <- Variable(2, complex = TRUE)
-  for(atom in c(CVXR:geo_mean, CVXR:log_sum_exp, CVXR:max_entries, CVXR:entr, CVXR:exp, CVXR:huber, CVXR:log, CVXR:log1p, CVXR:logistic)) {
-    print(name(atom))
-    expect_error(atom(x))
+  for(atom in c("GeoMean", "LogSumExp", "MaxEntries", "Entr", "Exp", "Huber", "Log", "Log1p", "Logistic")) {
+    print(atom)
+    error_msg <- paste("Arguments to ", atom, " cannot be complex.", sep = "")
+    
+    if(atom %in% c("LogSumExp", "MaxEntries"))
+      expect_error(new(atom, expr = x), error_msg)
+    else
+      expect_error(new(atom, x = x), error_msg)
   }
   
   x <- Variable(2, complex = TRUE)
-  for(atom in c(CVXR:max_elemwise, CVXR:kl_div)) {
-    print(name(atom))
-    expect_error(atom(x, x))
+  for(atom in c("MaxElemwise", "KLDiv")) {
+    print(atom)
+    error_msg <- paste("Arguments to ", atom, " cannot be complex.", sep = "")
+    
+    if(atom == "MaxElemwise")
+      expect_error(max_elemwise(x, x), error_msg)
+    else
+      expect_error(kl_div(x, x), error_msg)
   }
   
   x <- Variable(2, complex = TRUE)
-  for(atom in c(CVXR:inv_pos, CVXR:sqrt, function(x) { CVXR:power(x, 0.2) })) {
-    expect_error(atom(x))
+  for(atom in c(inv_pos, sqrt, function(y) { power(y, 0.2) })) {
+    expect_error(atom(x), "Arguments to Power cannot be complex.")
   }
   
   x <- Variable(2, complex = TRUE)
-  for(atom in c(CVXR:harmonic_mean, function(x) { CVXR:p_norm(x, 0.2) })) {
-    expect_error(atom(x))
+  for(atom in c(harmonic_mean, function(y) { p_norm(y, 0.2) })) {
+    expect_error(atom(x), "Pnorm(x, p) cannot have x complex for p < 1.", fixed = TRUE)
   }
 })

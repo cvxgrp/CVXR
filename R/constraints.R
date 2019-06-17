@@ -133,6 +133,9 @@ setMethod("residual", "EqConstraint", function(object) {
 NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
+  if(is_complex(expr))
+    stop("Inequality constraints cannot be complex.")
+  
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
 })

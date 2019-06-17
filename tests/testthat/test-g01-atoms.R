@@ -47,20 +47,6 @@ test_that("test quad_form function", {
   expect_false(is_dcp(expr))
 })
 
-test_that("test the norm2 function", {
-  exp <- x + y
-  atom <- norm2(exp)
-
-  expect_equal(dim(atom), NULL)
-  expect_equal(curvature(atom), CONVEX)
-  expect_equal(curvature(norm2(atom)), CONVEX)
-  expect_equal(curvature(norm2(-atom)), CONVEX)
-
-  # Test with axis arg
-  expr <- p_norm(A, 2, axis = 1)
-  expect_equal(dim(expr), c(2, 1))
-})
-
 test_that("test the power function", {
   for(a_dim in list(c(1, 1), c(3, 1), c(2, 3))) {
     # x_pow <- Variable(a_dim)

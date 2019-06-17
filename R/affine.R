@@ -18,7 +18,7 @@ setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args)
 setMethod("is_imag", "AffAtom", function(object) { all(sapply(object@args, is_imag)) })
 
 #' @describeIn AffAtom Is the atom complex valued?
-setMethod("is_complex", "AffAtom", function(object) { all(sapply(object@args, is_complex)) })
+setMethod("is_complex", "AffAtom", function(object) { any(sapply(object@args, is_complex)) })
 
 #' @describeIn AffAtom The atom is convex.
 setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })

@@ -1118,7 +1118,7 @@ setMethod("to_numeric", "MinEntries", function(object, values) {
 setMethod("sign_from_args",  "MinEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
 #' @describeIn MinEntries The atom is not convex.
-setMethod("is_atom_convex", "MaxEntries", function(object) { FALSE })
+setMethod("is_atom_convex", "MinEntries", function(object) { FALSE })
 
 #' @describeIn MinEntries The atom is concave.
 setMethod("is_atom_concave", "MinEntries", function(object) { TRUE })

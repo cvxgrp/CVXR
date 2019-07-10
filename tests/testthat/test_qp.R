@@ -29,7 +29,7 @@ xef <- Variable(80, name = "xef")
 
 # Check for all installed QP solvers
 solvers <- installed_solvers()
-solvers <- solvers[solvers %in% qp_solvers()]
+solvers <- solvers[solvers %in% QP_SOLVERS]
 if("MOSEK" %in% installed_solvers())
   solvers <- c(solvers, "MOSEK")
 
@@ -66,10 +66,10 @@ test_power <- function(solver) {
 }
 
 test_power_matrix <- function(solver) {
-  p <- Problem(Minimize(sum(power(A - 3., 2))), list())
+  p <- Problem(Minimize(sum(power(A - 3, 2))), list())
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(rep(3, 4)), tolerance = 1e-4)
+    expect_equal(result$getValue(var), matrix(3, nrow = 2, ncol = 2), tolerance = 1e-4)
 }
 
 test_square_affine <- function(solver) {
@@ -159,6 +159,56 @@ test_quad_form_bound <- function(solver) {
   result <- solve_QP(p, solver)
   for(var in variables(p))
     expect_equal(result$getValue(var), y_star, tolerance = 1e-4)
+}
+
+test_regression_1 <- function(solver) {
+  # Number of examples to use
+  n <- 100
+  
+  # Specify the true value of the variable
+  true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
+  
+  # Generate data
+  x_data <- 5*rnorm(n)
+  x_data_expanded <- sapply(1:3, function(i) { x_data^i })
+  y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
+  
+  line <- offset + slope*x_data
+  residuals <- line - y_data
+  fit_error <- sum_squares(residuals)
+  p <- Problem(Minimize(fit_error), list())
+  result <- solve_QP(p, solver)
+  
+  model <- lm(y_data ~ x_data)
+  expect_equal(sum((model$residuals)^2), result$value, tolerance = 1e-4)
+  expect_equal(as.numeric(model$coefficients[1]), result$getValue(offset), tolerance = 1e-4)
+  expect_equal(as.numeric(model$coefficients[2]), result$getValue(slope), tolerance = 1e-4)
+}
+
+test_regression_2 <- function(solver) {
+  # Number of examples to use
+  n <- 100
+  
+  # Specify the true value of the variable
+  true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
+  
+  # Generate data
+  x_data <- 5*rnorm(n)
+  x_data_expanded <- sapply(1:3, function(i) { x_data^i })
+  y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
+  
+  quadratic <- offset + slope*x_data + quadratic_coeff*x_data^2
+  residuals <- quadratic - y_data
+  fit_error <- sum_squares(residuals)
+  p <- Problem(Minimize(fit_error), list())
+  result <- solve_QP(p, solver)
+  
+  x_data_sq <- x_data^2
+  model <- lm(y_data ~ x_data + x_data_sq)
+  expect_equal(sum((model$residuals)^2), result$value, tolerance = 1e-4)
+  expect_equal(as.numeric(model$coefficients[1]), result$getValue(offset), tolerance = 1e-4)
+  expect_equal(as.numeric(model$coefficients[2]), result$getValue(slope), tolerance = 1e-4)
+  expect_equal(as.numeric(model$coefficients[3]), result$getValue(quadratic_coeff), tolerance = 1e-4)
 }
 
 test_that("test all solvers", {

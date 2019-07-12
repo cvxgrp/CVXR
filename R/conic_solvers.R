@@ -1194,7 +1194,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   # Check if the CVXR standard form has zero variables. If so,
   # return a trivial solution. This is necessary because MOSEK
   # will crash if handed a problem with zero variables.
-  if(length(data[C_KEY]) == 0) {
+  if(length(data[[C_KEY]]) == 0) {
     res <- list()
     res[[STATUS]] <- OPTIMAL
     res[[PRIMAL]] <- list()
@@ -1310,7 +1310,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #   of these slack variables at once by specifying a giant
   #   identity matrix in the appropriate position in A.
 
-  #task.appendcons(m) is equivalent to prob$bc
+  # task.appendcons(m) is equivalent to prob$bc
 
 
   G_sparse <- as(as.matrix(G), "sparseMatrix")
@@ -1323,10 +1323,10 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   # initializing A matrix
   if(nrow(G_sparse) == 0 || (ncol(G_sparse) + total_soc_exp_slacks) == 0)
-    prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0,0))
+    prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0, 0))
   else {
-    prob$A <- sparseMatrix(rep(1:nrow(G_sparse), ncol(G_sparse) + total_soc_exp_slacks),
-                           rep(1:(ncol(G_sparse) + total_soc_exp_slacks), nrow(G_sparse)),
+    prob$A <- sparseMatrix(i = rep(1:nrow(G_sparse), ncol(G_sparse) + total_soc_exp_slacks),
+                           j = rep(1:(ncol(G_sparse) + total_soc_exp_slacks), nrow(G_sparse)),
                            x = rep(0, nrow(G_sparse)*(ncol(G_sparse) + total_soc_exp_slacks)))
   
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G

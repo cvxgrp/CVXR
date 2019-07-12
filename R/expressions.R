@@ -170,13 +170,13 @@ setMethod("is_psd", "Expression", function(object) { FALSE })
 setMethod("is_nsd", "Expression", function(object) { FALSE })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
-setMethod("is_quadratic", "Expression", function(object) { FALSE })
+setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is symmetric.
 setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
-setMethod("is_pwl", "Expression", function(object) { FALSE })
+setMethod("is_pwl", "Expression", function(object) { is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic of piecewise affine.
 setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
@@ -613,8 +613,12 @@ setMethod("get_attr_str", "Leaf", function(object) {
   attr_str <- ""
   for(attr in names(object@attributes)) {
     val <- object@attributes[[attr]]
-    if(attr != "real" && !is.null(val))
-      attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
+    if(attr != "real" && !is.null(val)) {
+      if(nchar(attr_str) == 0)
+        attr_str <- sprintf("%s=%s", attr, val)
+      else
+        attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
+    }
   }
   attr_str
 })

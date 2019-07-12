@@ -14,6 +14,7 @@ Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"),
                  }, contains = c("VIRTUAL", "Expression"))
 
 setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL) {
+  .Object <- callNextMethod(.Object, ...)
   .Object@args <- lapply(atom_args, as.Constant)
   validate_args(.Object)
   .Object@.dim <- dim_from_args(.Object)

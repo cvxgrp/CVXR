@@ -539,6 +539,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #'
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
+#' @slot id (Internal) A unique integer identification number used internally.
 #' @slot args A list containing the arguments.
 #' @name Leaf-class
 #' @aliases Leaf
@@ -604,9 +605,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
 
   if(!is.na(value))
     .Object@value <- value
-  .Object@args <- list()
-  .Object
-  # callNextMethod(.Object, ...)
+  callNextMethod(.Object, ...)
 })
 
 setMethod("get_attr_str", "Leaf", function(object) {

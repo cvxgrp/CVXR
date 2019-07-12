@@ -231,7 +231,6 @@ as.Constant <- function(expr) {
 #'
 #' This class represents a parameter, either scalar or a matrix.
 #'
-#' @slot id (Internal) A unique integer identification number used internally.
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.
 #' @slot name (Optional) A character string representing the name of the parameter.
@@ -240,7 +239,7 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(id = "integer", dim = "numeric", name = "character", value = "ConstVal"),
+.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", value = "ConstVal"),
                                     prototype(dim = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
@@ -258,8 +257,7 @@ as.Constant <- function(expr) {
 # Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = dim, name = name, value = value, ...) }
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
 
-setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim = NULL, name = NA_character_, value = NA_real_) {
-  .Object@id <- id
+setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_) {
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else

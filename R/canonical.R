@@ -4,7 +4,13 @@
 #' This virtual class represents a canonical expression.
 #'
 #' @rdname Canonical-class
-setClass("Canonical", representation(args = "list"), prototype(args = list()), contains = "VIRTUAL")
+setClass("Canonical", representation(id = "integer", args = "list"), prototype(args = list()), contains = "VIRTUAL")
+
+setMethod("initialize", "Canonical", function(.Object, id = get_id(), args = list()) {
+  .Object@id <- id
+  .Object@args <- args
+  .Object
+})
 
 #' @param object A \linkS4class{Canonical} object.
 #' @describeIn Canonical The expression associated with the input.
@@ -53,7 +59,8 @@ setMethod("tree_copy", "Canonical", function(object, id_objects = list()) {
 })
 
 setMethod("copy", "Canonical", function(object, args = NULL, id_objects = list()) {
-  if("id" %in% names(attributes(object)) && as.character(object@id) %in% names(id_objects))
+  # if("id" %in% names(attributes(object)) && as.character(object@id) %in% names(id_objects))
+  if(length(object@id) > 0 && as.character(object@id) %in% names(id_objects))
     return(id_objects[[as.character(object@id)]])
   if(is.null(args))
     args <- object@args

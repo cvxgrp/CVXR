@@ -449,9 +449,9 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]
 
-  if(size(M1) > 0)
+  if(!is.null(dim(M1)) && prod(dim(M1)) > 0)
     expr <- sum_squares(Constant(t(M1)) %*% args[[1]])
-  else if(size(M2)> 0) {
+  else if(!is.null(dim(M2)) && prod(dim(M2)) > 0) {
     scale <- -scale
     expr <- sum_squares(Constant(t(M2)) %*% args[[1]])
   }

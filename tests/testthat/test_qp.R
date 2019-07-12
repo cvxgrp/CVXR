@@ -29,7 +29,7 @@ xef <- Variable(80, name = "xef")
 
 # Check for all installed QP solvers
 solvers <- installed_solvers()
-solvers <- solvers[solvers %in% QP_SOLVERS]
+solvers <- solvers[solvers %in% CVXR:::QP_SOLVERS]
 if("MOSEK" %in% installed_solvers())
   solvers <- c(solvers, "MOSEK")
 
@@ -292,6 +292,8 @@ test_huber <- function(solver) {
   # Generate problem data
   n <- 3
   m <- 5
+  
+  set.seed(1)
   A <- rsparsematrix(m, n, density=0.8)
   x_true <- matrix(rnorm(n), ncol = 1)/sqrt(n)
   ind95 <- as.numeric(rnorm(m) < 0.95)
@@ -299,13 +301,13 @@ test_huber <- function(solver) {
 
   # Solve the Huber regression problem
   x <- Variable(n)
-  objective <- sum(huber(A %*% x - b))
+  objective <- sum(CVXR::huber(A %*% x - b))
 
   # Solve problem with QP
   p <- Problem(Minimize(objective))
   result <- solve_QP(p, solver)
-  expect_equal(1.327429461061672, result$getValue(objective), tolerance = 1e-3)
-  expect_equal(result$getValue(x), matrix(c(-1.03751745, 0.86657204, -0.9649172)), tolerance = 1e-3)
+  expect_equal(result$getValue(objective), 0.14427356210544268, tolerance = 1e-3)
+  expect_equal(result$getValue(x), matrix(c(0.19534822, 0.56081768, -0.02134507)), tolerance = 1e-3)
 }
 
 test_equivalent_forms_1 <- function(solver) {
@@ -324,7 +326,7 @@ test_equivalent_forms_1 <- function(solver) {
 
   p1 <- Problem(Minimize(obj1), cons)
   result <- solve_QP(p1, solver)
-  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
+  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
 }
 
 test_equivalent_forms_2 <- function(solver) {
@@ -348,7 +350,7 @@ test_equivalent_forms_2 <- function(solver) {
   
   p2 <- Problem(Minimize(obj2), cons)
   result <- solve_QP(p2, solver)
-  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
+  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
 }
 
 test_equivalent_forms_3 <- function(solver) {
@@ -373,7 +375,7 @@ test_equivalent_forms_3 <- function(solver) {
 
   p3 <- Problem(Minimize(obj3), cons)
   result <- solve_QP(p3, solver)
-  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
+  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
 }
 
 test_that("test all solvers", {
@@ -417,14 +419,15 @@ test_that("Test warm start", {
   
   # Construct the problem.
   x <- Variable(n)
-  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
-  
+   
   value(b) <- rnorm(m)
+  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
   result <- solve(prob, warm_start=FALSE)
   result2 <- solve(prob, warm_start=TRUE)
   expect_equal(result$value, result2$value)
   
   value(b) <- rnorm(m)
+  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
   result <- solve(prob, warm_start=TRUE)
   result2 <- solve(prob, warm_start=FALSE)
   expect_equal(result$value, result2$value)
@@ -453,11 +456,10 @@ test_that("Test solve parametric vs. full problem", {
     x_param <- list()
     obj_param <- c()
     b <- Parameter()
-    obj <- Minimize(a*x^2 + b*x)
     constraints <- list(0 <= x, x <= 1)
-    prob <- Problem(obj, constraints)
     for(b_value in b_vec) {
       value(b) <- b_value
+      prob <- Problem(Minimize(a*x^2 + b*x), constraints)
       result <- solve(prob, solver=solver)
       x_param <- c(x_param, list(result$getValue(x)))
       obj_param <- c(obj_param, result$value)

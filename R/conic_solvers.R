@@ -1258,8 +1258,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #                 bux = rep(0,n))
   prob$bx <- rbind(blx = rep(-Inf, n),
                    bux = rep(Inf, n))
-
-
+  
   #Initialize the cone. Not 100% sure about this bit
   NUMCONES <- length(dims[[SOC_DIM]]) + floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)
   prob$cones <- matrix(list(), nrow = 2, ncol = NUMCONES)
@@ -1278,15 +1277,14 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     }
   }
   if(num_bool + num_int > 0) {
-    if(num_bool > 0){
+    if(num_bool > 0) {
       prob$intsub <- unlist(data[[BOOL_IDX]])
       #since the variable constraints are already declared, we are resetting them so they can only be 0 or 1
       prob$bx[, unlist(data[[BOOL_IDX]])] <- rbind( rep(0, length(unlist(data[[BOOL_IDX]]))), rep(1, length(unlist(data[[BOOL_IDX]]))) )
 
     }
-    if(num_int > 0){
+    if(num_int > 0)
       prob$intsub <- unlist(data[[INT_IDX]])
-    }
   }
 
   # Define linear inequality and equality constraints.
@@ -1323,15 +1321,19 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
 
-  #initializing A matrix
-  prob$A <- sparseMatrix( rep(1:dim(G_sparse)[1], dim(G_sparse)[2] + total_soc_exp_slacks),
-                          rep(1:(dim(G_sparse)[2] + total_soc_exp_slacks) , dim(G_sparse)[1]),
-                          x = rep(0, dim(G_sparse)[1]*(dim(G_sparse)[2]+total_soc_exp_slacks)))
-
-  #this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
-  #Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-  A_holder <- sparseMatrix(row, col, x = val)
-  prob$A[1:dim(A_holder)[1], 1:dim(A_holder)[2]] <- A_holder
+  # initializing A matrix
+  if(nrow(G_sparse) == 0 || (ncol(G_sparse) + total_soc_exp_slacks) == 0)
+    prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0,0))
+  else {
+    prob$A <- sparseMatrix(rep(1:nrow(G_sparse), ncol(G_sparse) + total_soc_exp_slacks),
+                           rep(1:(ncol(G_sparse) + total_soc_exp_slacks), nrow(G_sparse)),
+                           x = rep(0, nrow(G_sparse)*(ncol(G_sparse) + total_soc_exp_slacks)))
+  
+    # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
+    # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
+    A_holder <- sparseMatrix(row, col, x = val)
+    prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
+  }
 
   if(total_soc_exp_slacks > 0) {
     i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
@@ -1339,9 +1341,8 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     rows <- (i:(i + total_soc_exp_slacks-1))+1
     cols <- (j:(j + total_soc_exp_slacks-1))+1
     #task.putaijlist(rows, cols, rep(1, total_soc_exp_slacks))
-    for(iter in 1:length(rows)){
+    for(iter in 1:length(rows))
       prob$A[rows[iter],cols[iter]] <- 1
-    }
   }
 
   # Constraint index: start of LMIs.

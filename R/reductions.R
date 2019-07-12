@@ -390,9 +390,8 @@ EvalParams.replace_params_with_consts <- function(expr) {
   } else {
     new_args <- list()
     for(arg in expr@args)
-      51
-    new_args <- c(new_args, EvalParams.replace_params_with_consts(arg))
-    return(new_args)
+      new_args <- c(new_args, EvalParams.replace_params_with_consts(arg))
+    return(copy(expr, new_args))
   }
 }
 
@@ -415,7 +414,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
       args <- c(args, EvalParams.replace_params_with_consts(arg))
 
     # Do not instantiate a new constraint object if it did not contain parameters.
-    id_match <- mapply(function(new, old) { id(new) == id(old) }, args, c@args)
+    id_match <- mapply(function(new, old) { new@id == old@id }, args, c@args)
     if(all(unlist(id_match)))
       constraints <- c(constraints, c)
     else {   # Otherwise, create a copy of the constraint.

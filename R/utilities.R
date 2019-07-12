@@ -796,18 +796,16 @@ ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed
 
   if(length(key) > 3)
     stop("Invalid index/slice")
-  else if(!is.null(key$row) && !is.null(key$col)) {
+  
+  if(!is.null(key$row) && !is.null(key$col))
     key <- Key(row = key$row, col = key$col)
-  } else if(!is.null(key$row) || !is.null(key$col)) {
-    # Change single indices for vectors into double indices
-    if(nrow == 1)
-      key <- Key(1, key$col)
-    else if(ncol == 1)
-      key <- Key(key$row, 1)
-    else
-      stop("Invalid index/slice")
-  } else
-    stop("key cannot be empty")
+  # Change single indices for vectors into double indices
+  else if(is.null(key$row) && !is.null(key$col))
+    key <- Key(row = 1:nrow, col = key$col)
+  else if(!is.null(key$row) && is.null(key$col))
+    key <- Key(row = key$row, col = 1:ncol)
+  else
+    stop("A key cannot be empty")
   return(key)
 }
 

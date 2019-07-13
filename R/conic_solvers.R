@@ -1381,14 +1381,20 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
 
   #initializing A matrix
-  prob$A <- sparseMatrix( rep(1:dim(G_sparse)[1], dim(G_sparse)[2] + total_soc_exp_slacks),
-                          rep(1:(dim(G_sparse)[2] + total_soc_exp_slacks) , dim(G_sparse)[1]),
-                          x = rep(0, dim(G_sparse)[1]*(dim(G_sparse)[2]+total_soc_exp_slacks)))
-
-  #this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
-  #Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-  A_holder <- sparseMatrix(row, col, x = val)
-  prob$A[1:dim(A_holder)[1], 1:dim(A_holder)[2]] <- A_holder
+  if(sum(dim(G_sparse)) == 0){ #If G matrix is empty, then set A as a specific empty matrix
+    prob$A <- Matrix(nrow = 0, ncol = 1)
+  } else {
+    prob$A <- sparseMatrix( rep(1:dim(G_sparse)[1], dim(G_sparse)[2] + total_soc_exp_slacks),
+                            rep(1:(dim(G_sparse)[2] + total_soc_exp_slacks) , dim(G_sparse)[1]),
+                            x = rep(0, dim(G_sparse)[1]*(dim(G_sparse)[2]+total_soc_exp_slacks))) 
+    
+    #this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
+    #Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
+    A_holder <- sparseMatrix(row, col, x = val)
+    prob$A[1:dim(A_holder)[1], 1:dim(A_holder)[2]] <- A_holder
+  }
+  
+  
 
   if(total_soc_exp_slacks > 0) {
     i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
@@ -1491,13 +1497,14 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
             return(OPTIMAL)
         ##        else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
         ##            return(OPTIMAL_INACCURATE)
-        else if(status == "prim_infeas_cer") {
-            if(has_attr)
+        else if(status == "prim_infeas_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
+          #check later
+            if(!is.null(attributes(status))) #check if status has any attributes, hasattr in python
                 return(INFEASIBLE_INACCURATE)
             else
                 return(INFEASIBLE)
-        } else if(status == "dual_infeas_cer") {
-            if(has_attr)
+        } else if(status == "dual_infeasible_cer") {
+            if(!is.null(attributes(status)))
                 return(UNBOUNDED_INACCURATE)
             else
                 return(UNBOUNDED)
@@ -1542,7 +1549,9 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         ## Recover the CVXR standard form dual variables.
         ## if(sol == mosek.soltype.itn)
         if (inverse_data$integer_variables)
-            dual_vars <- NA
+            #dual_vars <- NA 
+            #Solution class doesn't accept NAs for dual/primal vars
+            dual_vars <- list()
         else
             dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
     } else {
@@ -1551,9 +1560,13 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         else if(status == UNBOUNDED)
             opt_val <- -Inf
         else
-            opt_val <- NA
-        primal_vars <- NA
-        dual_vars <- NA
+            #opt_val <- NA
+            opt_val <- NULL #Would Null be better than NA? opt_val should be a numeric
+        #Solution class doesn't accept NAs for dual/primal vars
+        #primal_vars <- NA
+        #dual_vars <- NA
+        primal_vars <- list()
+        dual_vars <- list()
     }
 
     ## Store computation time.

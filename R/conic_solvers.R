@@ -1229,7 +1229,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   h <- data[[H_KEY]]
   dims <- data[[DIMS]]
   n0 <- length(c)
-  n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) #unlisted dims to make sure sum function works and na.rm to handle empty lists
+  n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
   psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
   m <- length(h)
   num_bool <- length(data[[BOOL_IDX]])

@@ -102,7 +102,7 @@ test_affine_problem <- function(solver) {
   p <- Problem(Minimize(sum(x)), list(x >= 0, A %*% x <= b))
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(0,0)), tolerance = 1e-3)
+    expect_equal(result$getValue(var), as.matrix(c(0, 0)), tolerance = 1e-3)
 }
 
 test_maximize_problem <- function(solver) {
@@ -113,7 +113,7 @@ test_maximize_problem <- function(solver) {
   p <- Problem(Maximize(-sum(x)), list(x >= 0, A %*% x <= b))
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(0,0)), tolerance = 1e-3)
+    expect_equal(result$getValue(var), as.matrix(c(0, 0)), tolerance = 1e-3)
 }
 
 test_norm_2 <- function(solver) {

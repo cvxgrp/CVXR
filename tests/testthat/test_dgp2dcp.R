@@ -1,3 +1,5 @@
+Dgp2Dcp <- function(problem) { new("Dgp2Dcp", problem = problem) }
+
 test_that("test unconstrained monomial", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
@@ -62,9 +64,9 @@ test_that("test basic equality constraint", {
 })
 
 test_that("test basic GP", {
-  x <- Variable(3, pos = TRUE)
-  y <- Variable(3, pos = TRUE)
-  z <- Variable(3, pos = TRUE)
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  z <- Variable(pos = TRUE)
   constraints <- list(2*x*y + 2*x*z + 2*y*z <= 1.0, x >= 2*y)
   problem <- Problem(Minimize(1/(x*y*z)), constraints)
   result <- solve(problem, gp = TRUE)

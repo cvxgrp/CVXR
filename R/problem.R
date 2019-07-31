@@ -963,7 +963,7 @@ saveDualValues <- function(object, result_vec, constraints, constr_types) {
     constr_offsets <- integer(0)
     offset <- 0L
     for(constr in constraints) {
-        constr_offsets[as.character(constr_id(constr))] <- offset
+        constr_offsets[as.character(id(constr))] <- offset
         offset <- offset + prod(size(constr))
     }
 

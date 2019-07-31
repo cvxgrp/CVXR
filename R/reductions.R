@@ -2,13 +2,13 @@
 lower_inequality <- function(inequality) {
   lhs <- inequality@args[[1]]
   rhs <- inequality@args[[2]]
-  NonPosConstraint(lhs - rhs, constr_id = inequality@constr_id)
+  NonPosConstraint(lhs - rhs, id = inequality@id)
 }
 
 lower_equality <- function(equality) {
   lhs <- equality@args[[1]]
   rhs <- equality@args[[2]]
-  ZeroConstraint(lhs - rhs, constr_id = equality@constr_id)
+  ZeroConstraint(lhs - rhs, id = equality@id)
 }
 
 special_index_canon <- function(expr, args) {
@@ -129,7 +129,7 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
     canon_constr <- canon[[1]]
     aux_constr <- canon[[2]]
     canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
-    inverse_data@cons_id_map[[as.character(constraint@constr_id)]] <- canon_constr@constr_id   # TODO: Check this updates like dict().update in Python
+    inverse_data@cons_id_map[[as.character(constraint@id)]] <- canon_constr@id   # TODO: Check this updates like dict().update in Python
   }
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(new_problem, inverse_data))
@@ -325,7 +325,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   cons_id_map <- list()
   for(cons in problem@constraints) {
     constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))
-    cons_id_map[[as.character(cons@constr_id)]] <- constr[[length(constr)]]@constr_id
+    cons_id_map[[as.character(cons@id)]] <- constr[[length(constr)]]@id
   }
   inverse_data <- list(id2new_var, id2old_var, cons_id_map)
   return(list(Problem(obj, constr), inverse_data))
@@ -479,7 +479,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
     else if(is(con, "IneqConstraint"))
       con <- lower_inequality(con)
     else if(is(con, "SOC") && con@axis == 1)
-      con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, constr_id = con@constr_id)
+      con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, id = con@id)
     cons <- c(cons, con)
   }
 
@@ -506,7 +506,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
       offset <- offset + arg_size
     }
     new_cons <- c(new_cons, copy(con, arg_list))
-    inverse_data@cons_id_map[[as.character(con@constr_id)]] <- new_cons[[length(new_cons)]]@constr_id
+    inverse_data@cons_id_map[[as.character(con@id)]] <- new_cons[[length(new_cons)]]@id
   }
 
   # Map of old constraint id to new constraint id.

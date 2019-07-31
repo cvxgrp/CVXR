@@ -20,7 +20,7 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
   for(constr in constraints) {
     # TODO: Reshape based on dual variable size.
     parsed <- parse_func(result_vec, offset, constr)
-    dual_vars[[as.character(constr@constr_id)]] <- parsed[[1]]
+    dual_vars[[as.character(constr@id)]] <- parsed[[1]]
     offset <- parsed[[2]]
   }
   return(dual_vars)

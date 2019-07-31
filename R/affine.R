@@ -488,7 +488,7 @@ setMethod("op_name", "DivExpression", function(object) { "/" })
 #' @describeIn DivExpression Matrix division by a scalar.
 setMethod("to_numeric", "DivExpression", function(object, values) {
   if(!is.null(dim(values[[2]])) && prod(dim(values[[2]])) == 1)
-    values[[2]] <- as.numeric(values[[2]])
+    values[[2]] <- as.vector(values[[2]])[1]
   return(values[[1]] / values[[2]])
 })
 
@@ -1003,7 +1003,7 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 Imag <- function(expr) { .Imag(expr = expr) }
 
 setMethod("initialize", "Imag", function(.Object, ..., expr) {
-  .Object@expr
+  .Object@expr <- expr
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
@@ -1271,7 +1271,7 @@ setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
 
 #' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
-  array(1, dim = object@promoted_dim) * as.numeric(values[[1]])
+  array(1, dim = object@promoted_dim) * as.vector(values[[1]])[1]
 })
 
 #' @describeIn Promote Is the expression symmetric?
@@ -1316,10 +1316,10 @@ setMethod("graph_implementation", "Promote", function(object, arg_objs, dim, dat
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @rdname Real-class
-Imag <- function(expr) { .Real(expr = expr) }
+Real <- function(expr) { .Real(expr = expr) }
 
 setMethod("initialize", "Real", function(.Object, ..., expr) {
-  .Object@expr
+  .Object@expr <- expr
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 

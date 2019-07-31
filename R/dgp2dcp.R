@@ -133,7 +133,7 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
 Dgp2Dcp.nonpos_constr_canon <- function(expr, args) {
   if(length(args) != 2)
     stop("Must have exactly 2 arguments")
-  return(list(NonPosConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+  return(list(NonPosConstraint(args[[1]] - args[[2]], id = id(expr)), list()))
 }
 
 Dgp2Dcp.norm1_canon <- function(expr, args) {
@@ -253,7 +253,7 @@ Dgp2Dcp.trace_canon <- function(expr, args) {
 Dgp2Dcp.zero_constr_canon <- function(expr, args) {
   if(length(args) != 2)
     stop("Must have exactly 2 arguments")
-  return(list(ZeroConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+  return(list(ZeroConstraint(args[[1]] - args[[2]], id = id(expr)), list()))
 }
 
 Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,

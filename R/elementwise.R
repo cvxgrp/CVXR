@@ -35,7 +35,7 @@ setMethod("is_symmetric", "Elementwise", function(object) {
 # @return A sparse matrix.
 # @rdname Elementwise-elemwise_grad_to_diag
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
-  value <- as.numeric(value)
+  value <- as.vector(value)
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
@@ -149,7 +149,7 @@ setMethod("to_numeric", "Entr", function(object, values) {
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
   if(all(dim(results) == 1))
-    results <- as.numeric(results)
+    results <- as.vector(results)
   results
 })
 
@@ -288,7 +288,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
     result <- 2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
   
   if(all(dim(result) == 1))
-    result <- as.numeric(result)
+    result <- as.vector(result)
   return(result)
 })
 

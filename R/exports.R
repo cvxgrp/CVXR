@@ -1825,3 +1825,26 @@ setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(l
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
+
+
+#'
+#' Complex Numbers
+#'
+#' Basic atoms that support complex arithmetic.
+#' 
+#' @param z An \linkS4class{Expression} object.
+#' @return An \linkS4class{Expression} object that represents the real, imaginary, or complex conjugate.
+#' @name complex-atoms
+NULL
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Re", "Expression", function(z) { Real(z) })
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Im", "Expression", function(z) { Imag(z) })
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Conj", "Expression", function(z) { Conjugate(z) })

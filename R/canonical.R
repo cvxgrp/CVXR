@@ -4,10 +4,10 @@
 #' This virtual class represents a canonical expression.
 #'
 #' @rdname Canonical-class
-setClass("Canonical", representation(id = "integer", args = "list"), prototype(args = list()), contains = "VIRTUAL")
+setClass("Canonical", representation(id = "integer", args = "list"), prototype(id = NA_integer_, args = list()), contains = "VIRTUAL")
 
-setMethod("initialize", "Canonical", function(.Object, id = get_id(), args = list()) {
-  .Object@id <- id
+setMethod("initialize", "Canonical", function(.Object, id = NA_integer_, args = list()) {
+  .Object@id <- ifelse(is.na(id), get_id(), id)
   .Object@args <- args
   .Object
 })
@@ -19,6 +19,9 @@ setMethod("expr", "Canonical", function(object) {
     stop("'expr' is ambiguous, there should only be one argument.")
   return(object@args[[1]])
 })
+
+#' @describeIn Canonical The unique ID of the canonical expression.
+setMethod("id", "Canonical", function(object) { object@id })
 
 #' @describeIn Canonical The graph implementation of the input.
 setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })

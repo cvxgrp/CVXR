@@ -3,16 +3,13 @@
 #'
 #' This virtual class represents a mathematical constraint.
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @name Constraint-class
 #' @aliases Constraint
 #' @rdname Constraint-class
-setClass("Constraint", representation(constr_id = "integer", dual_variables = "list"),
-                       prototype(constr_id = NA_integer_, dual_variables = list()), contains = "Canonical")
+setClass("Constraint", representation(dual_variables = "list"), prototype(dual_variables = list()), contains = "Canonical")
 
-setMethod("initialize", "Constraint", function(.Object, ..., constr_id = NA_integer_, dual_variables = list()) {
+setMethod("initialize", "Constraint", function(.Object, ..., dual_variables = list()) {
   .Object <- callNextMethod(.Object, ...)
-  .Object@constr_id <- ifelse(is.na(constr_id), get_id(), constr_id)
   # .Object@dual_variables <- lapply(.Object@args, function(arg) { Variable(dim(arg)) })
   .Object@dual_variables <- lapply(.Object@args, function(arg) { new("Variable", dim = dim(arg)) })
   return(.Object)
@@ -53,7 +50,7 @@ setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id
   else
-    object@constr_id
+    object@id
 })
 
 setMethod("get_data", "Constraint", function(object) { list(id(object)) })
@@ -64,7 +61,7 @@ setReplaceMethod("dual_value", "Constraint", function(object, value) {
 })
 
 .ZeroConstraint <- setClass("ZeroConstraint", representation(expr = "Expression"), contains = "Constraint")
-ZeroConstraint <- function(expr, constr_id = NA_integer_) { .ZeroConstraint(expr = expr, constr_id = constr_id) }
+ZeroConstraint <- function(expr, id = NA_integer_) { .ZeroConstraint(expr = expr, id = id) }
 
 setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
   .Object@expr <- expr
@@ -94,7 +91,7 @@ setMethod("canonicalize", "ZeroConstraint", function(object) {
 })
 
 .EqConstraint <- setClass("EqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
-EqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
+EqConstraint <- function(lhs, rhs, id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, id = id) }
 
 setMethod("initialize", "EqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
   .Object@lhs <- lhs
@@ -130,7 +127,7 @@ setMethod("residual", "EqConstraint", function(object) {
                                   stop("Inequality constraints cannot be complex.")
                                 return(TRUE)
                               }, contains = "Constraint")
-NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
+NonPosConstraint <- function(expr, id = NA_integer_) { .NonPosConstraint(expr = expr, id = id) }
 
 setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
   if(is_complex(expr))
@@ -160,19 +157,16 @@ setMethod("residual", "NonPosConstraint", function(object) {
   return(pmax(value(object@expr), 0))
 })
 
-.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_),
-                                  validity = function(object) {
-                                    if(is_complex(object@lhs - object@rhs))
-                                      stop("Inequality constraints cannot be complex.")
-                                    return(TRUE)
-                                  }, contains = "Constraint")
+.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
 
-IneqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
+IneqConstraint <- function(lhs, rhs, id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, id = id) }
 
 setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
   .Object@lhs <- lhs
   .Object@rhs <- rhs
   .Object@expr <- lhs - rhs
+  if(is_complex(.Object@expr))
+    stop("Inequality constraints cannot be complex.")
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
 
@@ -207,7 +201,6 @@ setMethod("residual", "IneqConstraint", function(object) {
 #'
 #' This class represents a nonlinear inequality constraint, \eqn{f(x) \leq 0} where \eqn{f} is twice-differentiable.
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot f A nonlinear function.
 #' @slot vars_ A list of variables involved in the function.
 #' @slot .x_dim (Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.
@@ -220,7 +213,7 @@ setMethod("residual", "IneqConstraint", function(object) {
 #' @param f A nonlinear function.
 #' @param vars_ A list of variables involved in the function.
 #' @rdname NonlinearConstraint-class
-NonlinearConstraint <- function(f, vars_, constr_id = NA_integer_) { .NonlinearConstraint(f = f, vars_ = vars_, constr_id = constr_id) }
+NonlinearConstraint <- function(f, vars_, id = NA_integer_) { .NonlinearConstraint(f = f, vars_ = vars_, id = id) }
 
 setMethod("initialize", "NonlinearConstraint", function(.Object, ..., f, vars_) {
   .Object@f <- f
@@ -308,7 +301,6 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 #' }
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot x The variable \eqn{x} in the exponential cone.
 #' @slot y The variable \eqn{y} in the exponential cone.
 #' @slot z The variable \eqn{z} in the exponential cone.
@@ -322,7 +314,7 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @param z The variable \eqn{z} in the exponential cone.
 #' @rdname ExpCone-class
 ## #' @export
-ExpCone <- function(x, y, z, constr_id = NA_integer_) { .ExpCone(x = x, y = y, z = z, constr_id = constr_id) }
+ExpCone <- function(x, y, z, id = NA_integer_) { .ExpCone(x = x, y = y, z = z, id = id) }
 
 setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
   .Object@x <- x
@@ -401,7 +393,6 @@ setMethod("canonicalize", "ExpCone", function(object) {
 #'
 #' This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i.e. \eqn{z^T(X - Y)z \geq 0} for all \eqn{z}.
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
@@ -421,7 +412,7 @@ setMethod("canonicalize", "ExpCone", function(object) {
 #' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
 #' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
 #' @rdname PSDConstraint-class
-PSDConstraint <- function(expr, constr_id = NA_integer_) { .PSDConstraint(expr = expr, constr_id = constr_id) }
+PSDConstraint <- function(expr, id = NA_integer_) { .PSDConstraint(expr = expr, id = id) }
 
 setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
   .Object@expr <- expr
@@ -452,13 +443,13 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
   canon <- canonical_form(object@args[[1]])
   obj <- canon[[1]]
   constraints <- canon[[2]]
-  dual_holder <- PSDConstraint(obj, constr_id = id(object))
+  dual_holder <- PSDConstraint(obj, id = id(object))
   return(list(NA, c(constraints, list(dual_holder))))
 })
 
 setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
-    leq_constr <- create_geq(object@expr, constr_id = object@constr_id)
+    leq_constr <- create_geq(object@expr, constr_id = object@id)
     return(list(leq_constr))
   }
   new_leq_constr <- .format(object)
@@ -475,7 +466,6 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
 #'
 #' This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot t The scalar part of the second-order constraint.
 #' @slot x_elems A list containing the elements of the vector part of the constraint.
 #' @name SOC-class
@@ -488,7 +478,7 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
 #' @param x_elems A list containing the elements of the vector part of the constraint.
 #' @rdname SOC-class
 ## #' @export
-SOC <- function(t, X, axis = 2, constr_id = NA_integer_) { .SOC(t = t, X = X, axis = axis, constr_id = constr_id) }
+SOC <- function(t, X, axis = 2, id = NA_integer_) { .SOC(t = t, X = X, axis = axis, id = id) }
 
 setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
   # TODO: Allow imaginary X.
@@ -598,7 +588,6 @@ setMethod("canonicalize", "SOC", function(object) {
 #' This class represents a second-order cone constraint for each row/column.
 #' It Assumes \eqn{t} is a vector the same length as \eqn{X}'s rows (columns) for axis == 1 (2).
 #'
-#' @slot constr_id (Internal) A unique integer identification number used internally.
 #' @slot t The scalar part of the second-order constraint.
 #' @slot x_elems A list containing \code{X}, a matrix whose rows/columns are each a cone.
 #' @slot axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
@@ -613,7 +602,7 @@ setMethod("canonicalize", "SOC", function(object) {
 #' @param axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
 #' @rdname SOCAxis-class
 ## #' @export
-SOCAxis <- function(t, X, axis, constr_id = NA_integer_) { .SOCAxis(t = t, X = X, axis = axis, constr_id = constr_id) }
+SOCAxis <- function(t, X, axis, id = NA_integer_) { .SOCAxis(t = t, X = X, axis = axis, id = id) }
 
 setMethod("initialize", "SOCAxis", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)

@@ -1,3 +1,5 @@
+context("test-g01-dgp2dcp")
+
 Dgp2Dcp <- function(problem) { new("Dgp2Dcp", problem = problem) }
 
 test_that("test unconstrained monomial", {

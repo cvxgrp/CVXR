@@ -1919,7 +1919,7 @@ setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplem
 #' @rdname QuadOverLin-class
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
-setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
+setMethod("initialize", "QuadOverLin", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
   callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))

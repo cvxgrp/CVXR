@@ -345,7 +345,7 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   constraints <- c(constraints, M[1:n, (n+1):(n+m)] == X)
   # M[(n+1):(n+m), (n+1):(n+m)] == Tvar
   constraints <- c(constraints, M[(n+1):(n+m), (n+1):(n+m)] == Tvar)
-  return(list(trace(Tvar), constraints))
+  return(list(matrix_trace(Tvar), constraints))
 }
 
 Dcp2Cone.normNuc_canon <- function(expr, args) {

@@ -845,7 +845,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       vid <- as.character(id(v))
       val <- solution@primal_vars[[vid]]
       if(is.null(dim(val)) || all(dim(val) == 1))
-        val <- as.numeric(val)
+        val <- as.vector(val)
       result[[vid]] <- val
       # result[[vid]] <- solution@primal_vars[[vid]]
     }
@@ -854,7 +854,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       if(cid %in% names(solution@dual_vars)) {
         val <- solution@dual_vars[[cid]]
         if(is.null(dim(val)) || all(dim(val)) == 1)
-          val <- as.numeric(val)
+          val <- as.vector(val)
         result[[cid]] <- val
         # result[[cid]] <- solution@dual_vars[[cid]]
       }

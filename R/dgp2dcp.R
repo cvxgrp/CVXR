@@ -15,7 +15,7 @@ setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), functio
   return(list(object, equiv_problem, inverse_data))
 })
 
-setMethod("canonicalize_expr", signature(object = "Dgp2Dcp", expr = "Expression"), function(object, expr, args) {
+setMethod("canonicalize_expr", "Dgp2Dcp", function(object, expr, args) {
   if(class(expr) %in% names(object@canon_methods))
     return(object@canon_methods[[class(expr)]](expr, args))
   else

@@ -48,14 +48,19 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         pvars[[vid]] <- solution@primal_vars[[vid]]
       else if(is_imag(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        pvars[[vid]] <- 1i*solution@primal_vars[[vid]]
+        pvars[[vid]] <- 1i*solution@primal_vars[[as.character(imag_id)]]
       } else if(is_complex(var) && is_hermitian(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        imag_val <- solution@primal_vars[[imag_id]]
-        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*(imag_val - t(imag_val))/2
+        
+        # Imaginary part may have been lost.
+        if(as.character(imag_id) %in% names(solution@primal_vars)) {
+          imag_val <- solution@primal_vars[[as.character(imag_id)]]
+          pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*(imag_val - t(imag_val))/2
+        } else
+          pvars[[vid]] <- solution@primal_vars[[vid]]
       } else if(is_complex(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[imag_id]]
+        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[as.character(imag_id)]]
       }
     }
 
@@ -65,14 +70,14 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         dvars[[vid]] <- solution@dual_vars[[cid]]
       else if(is_imag(cons)) {
         imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- 1i*solution@dual_vars[[imag_id]]
+        dvars[[cid]] <- 1i*solution@dual_vars[[as.character(imag_id)]]
       # For equality and inequality constraints.
       } else if((is(cons, "ZeroConstraint") || is(cons, "EqConstraint") || is(cons, "NonPosConstraint")) && is_complex(cons)) {
         imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
+        dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[as.character(imag_id)]]
       # For PSD constraints.
       } else if(is(cons, "PSDConstraint") && is_complex(cons)) {
-        n <- cons@args[[1]]@dim[1]
+        n <- nrow(cons@args[[1]])
         dual <- solution@dual_vars[[cid]]
         dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual), (n+1):ncol(dual)]
       } else
@@ -91,8 +96,8 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
     imag_args <- list()
     for(arg in expr@args) {
       canon <- Complex2Real.canonicalize_tree(arg, real2imag, leaf_map)
-      real_args <- c(real_args, canon[[1]])
-      imag_args <- c(imag_args, canon[[2]])
+      real_args <- c(real_args, list(canon[[1]]))
+      imag_args <- c(imag_args, list(canon[[2]]))
     }
     outs <- Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
     return(list(real_out = outs[[1]], imag_out = outs[[2]]))
@@ -125,7 +130,7 @@ Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
   else {   # Complex
     real <- flatten(real_args[[1]])
     imag <- flatten(imag_args[[1]])
-    norms <- p_norm(vstack(real, imag), p = 2, axis = 2)
+    norms <- p_norm(hstack(real, imag), p = 2, axis = 1)
     output <- reshape_expr(norms, dim(real_args[[1]]))
   }
   return(list(output, NULL))
@@ -137,9 +142,9 @@ Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) 
   if(all(sapply(imag_args, is.null)))
     outputs <- list(copy(expr, real_args), NULL)
   else if(all(sapply(real_args, is.null)))
-    ouputs <- list(NULL, copy(expr, imag_args))
+    outputs <- list(NULL, copy(expr, imag_args))
   else {   # Mixed real and imaginary arguments.
-    for(idx in length(real_args)) {
+    for(idx in seq_along(real_args)) {
       real_val <- real_args[[idx]]
       if(is.null(real_val))
         real_args[[idx]] <- Constant(matrix(0, nrow = nrow(imag_args[[idx]]), ncol = ncol(imag_args[[idx]])))
@@ -152,11 +157,19 @@ Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) 
 }
 
 Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
-  list(real_args[[1]], NULL)
+  # If no real arguments, return zero.
+  if(is.null(real_args[[1]]))
+    return(list(0, NULL))
+  else
+    return(list(real_args[[1]], NULL))
 }
 
 Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
-  list(imag_args[[1]], NULL)
+  # If no imaginary arguments, return zero.
+  if(is.null(imag_args[[1]]))
+    return(list(0, NULL))
+  else
+    return(list(imag_args[[1]], NULL))
 }
 
 Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -198,7 +211,7 @@ Complex2Real.binary_canon <- function(expr, real_args, imag_args, real2imag) {
   real_by_imag <- Complex2Real.join(expr, real_args[[1]], imag_args[[2]])
   imag_by_real <- Complex2Real.join(expr, imag_args[[1]], real_args[[2]])
   real_output <- Complex2Real.add(real_by_real, imag_by_imag, neg = TRUE)
-  imag_output <- Complex2Real.add(real_by_imag, imag_by_real, neg = TRUE)
+  imag_output <- Complex2Real.add(real_by_imag, imag_by_real, neg = FALSE)
   return(list(real_output, imag_output))
 }
 
@@ -218,7 +231,7 @@ Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
 # are eigenvectors with same eigenvalue.
 # Thus each eigenvalue is repeated twice.
 Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
-  # Canonicalize functions taht take a Hermitian matrix.
+  # Canonicalize functions that take a Hermitian matrix.
   if(is.null(imag_args[[1]]))
     mat <- real_args[[1]]
   else {
@@ -271,8 +284,8 @@ Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
     vec <- imag_args[[1]]
     mat <- real_args[[2]]
   } else {
-    vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
-                       Complex2Real.at_least_2D(imag_args[[1]])))
+    vec <- vstack(Complex2Real.at_least_2D(real_args[[1]]),
+                  Complex2Real.at_least_2D(imag_args[[1]]))
     if(is.null(real_args[[2]]))
       real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
     else if(is.null(imag_args[[2]]))
@@ -292,8 +305,8 @@ Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag
     real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
   if(is.null(imag_args[[1]]))
     imag_args[[1]] <- matrix(0, nrow = nrow(real_args[[1]]), ncol = ncol(real_args[[1]]))
-  vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
-                     Complex2Real.at_least_2D(imag_args[[1]])))
+  vec <- vstack(Complex2Real.at_least_2D(real_args[[1]]),
+                Complex2Real.at_least_2D(imag_args[[1]]))
   if(is.null(real_args[[2]]))
     real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
   else if(is.null(imag_args[[2]]))
@@ -378,8 +391,8 @@ Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
                                    Variable = Complex2Real.variable_canon,
                                    Constant = Complex2Real.constant_canon,
                                    Parameter = Complex2Real.param_canon,
-                                   Zero = Complex2Real.zero_canon,
-                                   PSD = Complex2Real.hermitian_canon,
+                                   ZeroConstraint = Complex2Real.zero_canon,
+                                   PSDConstraint = Complex2Real.hermitian_canon,
                                    
                                    Abs = Complex2Real.abs_canon,
                                    Norm1 = Complex2Real.pnorm_canon,

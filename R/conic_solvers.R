@@ -1145,8 +1145,8 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
       G_vec <- coeff_offs[[1]]
       h_vec <- coeff_offs[[2]]
       dim <- coeff_offs[[3]]
-      inv_data$psd_dims <- c(inv_data$psd_dims, c(id(c), dim))
-      data[[DIMS]][[PSD_DIM]] <- c(data[[DIMS]][[PSD_DIM]], dim)
+      inv_data$psd_dims <- c(inv_data$psd_dims, list(list(id(c), dim)))
+      data[[DIMS]][[PSD_DIM]] <- c(data[[DIMS]][[PSD_DIM]], list(dim))
       Gs <- c(Gs, G_vec)
       hs <- c(hs, h_vec)
     }
@@ -1485,9 +1485,11 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         primal_vars[[as.character(inverse_data[[object@var_id]])]] <- sol$xx
         ## Recover the CVXR standard form dual variables.
         ## if(sol == mosek.soltype.itn)
-        if (inverse_data$integer_variables)
-            dual_vars <- NA
-        else
+        if (inverse_data$integer_variables) {
+          dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
+          dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+          names(dual_vars) <- dual_var_ids
+        } else
             dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
     } else {
         if(status == INFEASIBLE)
@@ -1495,9 +1497,13 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         else if(status == UNBOUNDED)
             opt_val <- -Inf
         else
-            opt_val <- NA
-        primal_vars <- NA
-        dual_vars <- NA
+            opt_val <- NA_real_
+        vid <- 
+        primal_vars <- list()
+        primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
+        dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
+        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+        names(dual_vars) <- dual_var_ids
     }
 
     ## Store computation time.
@@ -1539,14 +1545,14 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
     }
 
     ## Dual variables for PSD constraints.
-    for(j in seq_along(inverse_data$psd_dims)) {
-      id <- inverse_data$psd_dims[j][[1L]]
-      dim <- inverse_data$psd_dims[j][[2L]]
+    for(psd_info in inverse_data$psd_dims) {
+      id <- psd_info[[1L]]
+      dim <- psd_info[[2L]]
       ##sj <- rep(0, dim*floor((dim + 1)/2))
       ##task.getbars(sol, j, sj)
       dual_vars[id] <- vectorized_lower_tri_to_mat(sol$bars, dim)
   }
-    return(dual_vars)
+  return(dual_vars)
 }
 
 MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {

@@ -238,8 +238,7 @@ Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) 
     if(is.null(real_args[[1]]))
       real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
     mat <- bmat(list(list(real_args[[1]], -imag_args[[1]]),
-                     list(imag_args[[1]], real_args[[1]])
-                ))
+                     list(imag_args[[1]], real_args[[1]])))
   }
   return(list(copy(expr, list(mat)), NULL))
 }
@@ -293,8 +292,8 @@ Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
     mat <- bmat(list(list(real_args[[2]], -imag_args[[2]]),
                      list(imag_args[[2]], real_args[[2]])
                 ))
-    # HACK TODO
-    mat <- Constant(value(mat))
+    # mat <- Constant(value(mat))
+    mat <- PSDWrap(mat)
   }
   return(list(copy(expr, list(vec, mat)), NULL))
 }
@@ -341,15 +340,15 @@ Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
     return(list(expr, NULL))
 
   # imag <- Variable(dim(expr), id = real2imag[[as.character(id(expr))]])
-  imag <- new("Variable", dim = dim(expr), id = real2imag[[as.character(id(expr))]])
+  imag <- new("Variable", dim = dim(expr), id = real2imag[[as.character(expr@id)]])
   if(is_imag(expr))
     return(list(NULL, imag))
   else if(is_complex(expr) && is_hermitian(expr))
     # return(list(Variable(dim(expr), id = id(expr), symmetric = TRUE), (imag - t(imag))/2))
-    return(list(new("Variable", dim = dim(expr), id = id(expr), symmetric = TRUE), (imag - t(imag))/2))
+    return(list(new("Variable", dim = dim(expr), id = expr@id, symmetric = TRUE), (imag - t(imag))/2))
   else   # Complex.
     # return(list(Variable(dim(expr), id = id(expr)), imag))
-    return(list(new("Variable", dim = dim(expr), id = id(expr)), imag))
+    return(list(new("Variable", dim = dim(expr), id = expr@id), imag))
 }
 
 Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {

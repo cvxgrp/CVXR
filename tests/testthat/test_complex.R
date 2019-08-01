@@ -155,7 +155,8 @@ test_that("test canonicalization for affine atoms", {
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
   prob <- Problem(Minimize(expr[1]*1i + expr[2]*1i), list(Re(x + 1i) >= 1, Conj(x) <= 0))
-  result <- solve(prob)
+  # TODO: result <- solve(prob)
+  result <- solve(prob, solver = "ECOS")
   expect_equal(result$value, Inf)
   
   x <- Variable(2,2)
@@ -235,7 +236,7 @@ test_that("test eigenvalue atoms", {
   P <- matrix(P, nrow = 3, ncol = 3)
   P1 <- Conj(t(P)) %*% P/10 + diag(0.1, 3)
   P2 <- rbind(c(10, 1i, 0), c(-1i, 10, 0), c(0, 0, 1))
-  for(P in c(P1, P2)) {
+  for(P in list(P1, P2)) {
     value <- value(lambda_max(P))
     # X <- Variable(dim(P), complex = TRUE)
     X <- Variable(nrow(P), ncol(P), complex = TRUE)
@@ -333,8 +334,9 @@ test_that("test Hermitian variables", {
 test_that("test positive semidefinite variables", {
   X <- Variable(2, 2, hermitian = TRUE)
   prob <- Problem(Minimize(Im(X[2,1])), list(X %>>% 0, X[1,1] == -1))
-  result <- solve(prob)
-  expect_equal(result$status, INFEASIBLE)
+  # TODO: result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$status, "infeasible")
 })
 
 test_that("test promotion of complex variables", {

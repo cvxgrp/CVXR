@@ -279,7 +279,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
       new_var <- FALSE
       new_attr <- var@attributes
       for(key in CONVEX_ATTRIBUTES) {
-        if(!is.null(new_attr[[key]])) {
+        if(new_attr[[key]]) {
           new_var <- TRUE
           new_attr[[key]] <- FALSE
         }
@@ -294,7 +294,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         fill_coeff <- Constant(upper_tri_to_full(n))
         full_mat <- fill_coeff %*% upper_tri
         obj <- reshape_expr(full_mat, c(n, n))
-      } else if(!is.null(var@attributes$diag)) {
+      } else if(var@attributes$diag) {
         # diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
         diag_var <- do.call(.Variable, c(list(dim = c(nrow(var), 1)), new_attr))
         id2new_var[[vid]] <- diag_var
@@ -315,7 +315,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         constr <- c(constr, obj <= 0)
       else if(is_psd(var))
         constr <- c(constr, obj %>>% 0)
-      else if(!is.null(var@attributes$NSD))
+      else if(var@attributes$NSD)
         constr <- c(constr, obj %<<% 0)
     }
   }
@@ -346,8 +346,8 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
     # Need to map from constrained to symmetric variable.
     nvid <- as.character(id(new_var))
     if(nvid %in% names(solution@primal_vars)) {
-      if(!is.null(var@attributes$diag))
-        pvars[[id]] <- Diagonal(x = as.vector(solution@primal_vars[[nvid]]))
+      if(var@attributes$diag)
+        pvars[[id]] <- Matrix::Diagonal(x = as.vector(solution@primal_vars[[nvid]]))
       else if(length(symmetric_attributes(list(var))) > 0) {
         n <- nrow(var)
         value <- matrix(0, nrow = n, ncol = n)   # Variable is symmetric

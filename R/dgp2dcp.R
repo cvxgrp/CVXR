@@ -292,13 +292,16 @@ setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", 
   if(i == "Variable") {
     # TODO: Check scoping of x here is correct.
     variable_canon <- function(variable, args) {
+      args <- NULL
+      vid <- as.character(variable@id)
       # Swap out positive variables for unconstrained variables.
-      if(id(variable) %in% names(x@.variables))
-        return(list(variable, list()))
+      if(vid %in% names(x@.variables))
+        return(list(x@.variables[[vid]], list()))
       else {
-        log_variable <- Variable(dim(variable), var_id = id(variable))
-        x@.variables[as.character(id(variable))] <- log_variable
-        return(list(log_variable), list())
+        # log_variable <- Variable(dim(variable), id = variable@id)
+        log_variable <- new("Variable", dim = dim(variable), id = variable@id)
+        x@.variables[[vid]] <- log_variable
+        return(list(log_variable, list()))
       }
     }
     return(variable_canon)

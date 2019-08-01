@@ -1721,6 +1721,59 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, dim, data
   VStack.graph_implementation(arg_objs, dim, data)
 })
 
+#'
+#' The Wrap class.
+#'
+#' This virtual class represents a no-op wrapper to assert properties.
+#'
+#' @name Wrap-class
+#' @aliases Wrap
+#' @rdname Wrap-class
+Wrap <- setClass("Wrap", contains = c("VIRTUAL", "AffAtom"))
+
+#' @param object A \linkS4class{Wrap} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Wrap Returns the input value.
+setMethod("to_numeric", "Wrap", function(object, values) { values[[1]] })
+
+#' @describeIn Wrap The dimensions of the atom.
+setMethod("dim_from_args", "Wrap", function(object) { dim(object@args[[1]]) })
+
+#' @describeIn Wrap Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Wrap", function(object) { TRUE })
+
+#' @describeIn Wrap Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Wrap", function(object) { TRUE })
+
+Wrap.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(arg_objs[[1]], list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn Wrap The graph implementation of the atom.
+setMethod("graph_implementation", "Wrap", function(object, arg_objs, dim, data = NA_real_) {
+  Wrap.graph_implementation(arg_objs, dim, data)
+})
+
+#'
+#' The PSDWrap class.
+#'
+#' A no-op wrapper to assert the input argument is positive semidefinite.
+#'
+#' @name PSDWrap-class
+#' @aliases PSDWrap
+#' @rdname PSDWrap-class
+.PSDWrap <- setClass("PSDWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname PSDWrap-class
+PSDWrap <- function(arg) { .PSDWrap(atom_args = list(arg)) }
+
+#' @describeIn PSDWrap Is the atom positive semidefinite?
+setMethod("is_psd", "PSDWrap", function(object) { TRUE })
+
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 

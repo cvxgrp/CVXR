@@ -12,21 +12,7 @@ setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), functio
   equiv_problem <- tmp[[1]]
   inverse_data <- tmp[[2]]
   inverse_data@problem <- problem
-  return(list(object, equiv_problem, inverse_data))
-})
-
-setMethod("reduce", "Dgp2Dcp", function(object) {
-  if(!is.null(object@.emitted_problem))
-    return(object@.emitted_problem)
-  
-  if(is.null(object@problem))
-    stop("The reduction was constructed without a Problem")
-  
-  tmp <- perform(object, object@problem)
-  object <- tmp[[1]]
-  object@.emitted_problem <- tmp[[2]]
-  object@.retrieval_data <- tmp[[3]]
-  return(list(object, object@.emitted_problem))
+  return(list(equiv_problem, inverse_data))
 })
 
 setMethod("canonicalize_expr", "Dgp2Dcp", function(object, expr, args) {

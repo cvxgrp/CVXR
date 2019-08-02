@@ -52,9 +52,9 @@ setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start
 setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
   data <- ret[[1]]
-  inv_data <- ret[[2]]
+  inverse_data <- ret[[2]]
   solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
-  return(invert(object, solution, inv_data))
+  return(invert(object, solution, inverse_data))
 })
 
 ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")

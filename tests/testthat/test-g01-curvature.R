@@ -1,4 +1,4 @@
-context("test-g01-curvature.R")
+context("test-g01-curvature")
 
 cvx <- Variable()^2
 ccv <- Variable()^0.5

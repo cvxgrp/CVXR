@@ -625,8 +625,9 @@ setMethod("get_attr_str", "Leaf", function(object) {
 
 # TODO: Get rid of this and just skip calling copy on Leaf objects.
 setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
-  if("id" %in% names(attributes(object)) && as.character(object@id) %in% id_objects)
-    return(id_objects[[object@id]])
+  # if("id" %in% names(attributes(object)) && as.character(object@id) %in% names(id_objects))
+  if(!is.na(object@id) && as.character(object@id) %in% names(id_objects))
+    return(id_objects[[as.character(object@id)]])
   return(object)   # Leaves are not deep copied.
 })
 

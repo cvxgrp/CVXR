@@ -1,3 +1,4 @@
+context("test-g02-examples")
 TOL <- 1e-6
 
 test_that("Find the largest Euclidean ball in the polyhedron", {

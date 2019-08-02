@@ -63,7 +63,7 @@ setMethod("tree_copy", "Canonical", function(object, id_objects = list()) {
 
 setMethod("copy", "Canonical", function(object, args = NULL, id_objects = list()) {
   # if("id" %in% names(attributes(object)) && as.character(object@id) %in% names(id_objects))
-  if(length(object@id) > 0 && as.character(object@id) %in% names(id_objects))
+  if(!is.na(object@id) && as.character(object@id) %in% names(id_objects))
     return(id_objects[[as.character(object@id)]])
   if(is.null(args))
     args <- object@args

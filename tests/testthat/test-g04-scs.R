@@ -1,3 +1,4 @@
+context("test-g04-scs")
 TOL <- 1e-3
 
 x <- Variable(2, name = "x")

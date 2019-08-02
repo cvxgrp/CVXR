@@ -15,6 +15,16 @@ C <- Variable(3, 2, name = "C")
 # solvers <- c(ECOS(), GUROBI(), MOSEK(), SCS(), CVXOPT(), GLPK())
 solvers <- c(ECOS())
 
+accepts <- CVXR:::accepts
+perform <- CVXR:::perform
+invert <- CVXR:::invert
+reduction_solve <- CVXR:::reduction_solve
+ConeMatrixStuffing <- CVXR:::ConeMatrixStuffing
+CvxAttr2Constr <- CVXR:::CvxAttr2Constr
+FlipObjective <- CVXR:::FlipObjective
+ExpCone <- CVXR:::ExpCone
+SOC <- CVXR:::SOC
+
 test_that("test scalar LP problems", {
   for(solver in solvers) {
     p <- Problem(Minimize(3*a), list(a >= 2))
@@ -27,7 +37,7 @@ test_that("test scalar LP problems", {
     expect_equal(sltn@opt_val, result$value, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
-    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]], result_new$getValue(a), tolerance = TOL)
+    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a), tolerance = TOL)
     
     # TODO: Maximize.
     p <- Problem(Minimize(-3*a + b), list(a <= 2, b == a, b <= 5))
@@ -38,8 +48,8 @@ test_that("test scalar LP problems", {
     expect_equal(sltn@opt_val, result$value, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
-    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]], result$getValue(a))
-    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]], result$getValue(b))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b))
     
     # With a constant in the objective.
     p <- Problem(Minimize(3*a - b + 100), list(a >= 2, b + 5*c - 2 == a, b <= 5 + c))
@@ -50,8 +60,8 @@ test_that("test scalar LP problems", {
     expect_equal(sltn@opt_val, result$value - 100, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
-    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]], result$getValue(a))
-    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]], result$getValue(b))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b))
     
     # Unbounded problems.
     # TODO: Maximize.
@@ -111,7 +121,7 @@ test_that("test vector LP problems", {
     
     A <- value(Constant(cbind(c(3,5), c(1,2))))
     I <- Constant(diag(2))
-    p <- Problem(Minimize(t(c) %*% x + a), list(A %*% x >= c(-1, 1), 4*I*z == x, z >= c(2, 2), a >= 2))
+    p <- Problem(Minimize(t(c) %*% x + a), list(A %*% x >= c(-1, 1), 4*I %*% z == x, z >= c(2, 2), a >= 2))
     expect_true(accepts(ConeMatrixStuffing(), p))
     result <- solve(p, solver = name(solver))
     p_new <- perform(ConeMatrixStuffing(), p)
@@ -123,7 +133,7 @@ test_that("test vector LP problems", {
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = 0.1)
     for(var in variables(p))
-      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = 0.1)
+      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = 0.1)
   }
 })
 
@@ -137,9 +147,9 @@ test_that("test matrix LP problems", {
     sltn <- reduction_solve(solver, p_new[[1]], FALSE, FALSE, list())
     expect_equal(sltn@opt_val, result$value - 1, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
-    expect_equal(inv_sltn@opt_val, result, tolerance = TOL)
+    expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
     for(var in variables(p))
-      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = TOL)
+      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = TOL)
     
     Tmat <- value(Constant(matrix(2, nrow = 2, ncol = 3)))
     p <- Problem(Minimize(1), list(A >= Tmat %*% C, A == B, C == t(Tmat)))
@@ -151,7 +161,7 @@ test_that("test matrix LP problems", {
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
     for(var in variables(p))
-      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = TOL)
+      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = TOL)
   }
 })
 
@@ -169,7 +179,7 @@ test_that("test SOCP problems", {
       inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
       expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
       for(var in variables(p))
-        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = TOL)
+        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = TOL)
     }
     
     # More complex.
@@ -183,7 +193,7 @@ test_that("test SOCP problems", {
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = 1e-2)
     for(var in variables(p))
-      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = 1e-2)
+      expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = 1e-2)
   }  
 })
 
@@ -201,7 +211,7 @@ test_that("test exponential cone problems", {
       inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
       expect_equal(inv_sltn@opt_val, result$value, tolerance = 0.1)
       for(var in variables(p))
-        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = 0.1)
+        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = 0.1)
     }
     
     # More complex.
@@ -217,7 +227,7 @@ test_that("test exponential cone problems", {
       inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[2]])
       expect_equal(inv_sltn@opt_val, result$value, tolerance = 1)
       for(var in variables(pmod))
-        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], value(var), tolerance = 1)
+        expect_equal(inv_sltn@primal_vars[[as.character(id(var))]], as.matrix(result$getValue(var)), tolerance = 1)
     }
   }  
 })
@@ -243,5 +253,5 @@ test_that("test positive semidefinite constraints", {
   obj <- Minimize(C[1,1])
   constraints <- list(C %<<% diag(2,2))
   tmp <- perform(CvxAttr2Constr(), Problem(obj, constraints))
-  expect_true(accepts(ConeMatrixStuffing, tmp[[1]]))
+  expect_true(accepts(ConeMatrixStuffing(), tmp[[1]]))
 })

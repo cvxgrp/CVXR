@@ -2,7 +2,7 @@ is_stuffed_cone_constraint <- function(constraint) {
   # Conic solvers require constraints to be stuffed in the following way.
   if(length(variables(constraint)) != 1)
     return(FALSE)
-  for(arg in constraints@args) {
+  for(arg in constraint@args) {
     if(class(arg) == "Reshape")
       arg <- arg@args[[1]]
     if(class(arg) == "AddExpression") {
@@ -79,9 +79,9 @@ setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
-    && !convex_attributes(variables(problem)) && (length(problem@constraints) > 0 || !requires_constr(object))
+    && length(convex_attributes(variables(problem))) == 0 && (length(problem@constraints) > 0 || !requires_constr(object))
     && all(sapply(problem@constraints, function(c) { class(c) %in% supported_constraints(object) }))
-    && all(sapply(problem@constraints, function(c) { is_stuffed_cone_constraint(c) })))
+    && all(sapply(problem@constraints, is_stuffed_cone_constraint)))
 })
 
 ConicSolver.get_coeff_offset <- function(expr) {

@@ -298,6 +298,12 @@ Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(vec, mat)), NULL))
 }
 
+Complex2Real.quad_over_lin_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Convert quad_over_lin to real.
+  mat <- bmat(list(real_args[[1]], imag_args[[1]]))
+  return(list(copy(expr, list(mat, real_args[[2]])), NULL))
+}
+
 Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   # Convert matrix_frac to real.
   if(is.null(real_args[[1]]))
@@ -314,6 +320,17 @@ Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag
                    list(imag_args[[2]], real_args[[2]])
               ))
   return(list(copy(expr, list(vec, mat)), NULL))
+}
+
+Complex2Real.nonpos_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(imag_args[[1]]))
+    return(list(list(copy(expr, real_args)), NULL))
+  
+  imag_cons <- list(NonPosConstraint(imag_args[[1]], id = real2imag[[as.character(id(expr))]]))
+  if(is.null(real_args[[1]]))
+    return(list(NULL, imag_cons))
+  else
+    return(list(list(copy(expr, real_args)), imag_cons))
 }
 
 Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -335,6 +352,37 @@ Complex2Real.pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
   return(list(copy(expr, list(abs_real_args)), NULL))
 }
 
+Complex2Real.psd_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize functions that take a Hermitian matrix.
+  if(is.null(imag_args[[1]]))
+    mat <- real_args[[1]]
+  else {
+    if(is.null(real_args[[1]]))
+      real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
+    mat <- bmat(list(list(real_args[[1]], -imag_args[[1]]),
+                     list(imag_args[[1]], real_args[[1]])))
+  }
+  return(list(list(copy(expr, list(mat))), NULL))
+}
+
+Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(real_args[[2]]))   # Imaginary.
+    output <- list(SOC(real_args[[1]], imag_args[[2]], axis = expr@axis, id = real2imag[[as.character(expr@id)]]))
+  else if(is.null(imag_args[[2]]))   # Real.
+    output <- list(SOC(real_args[[1]], real_args[[2]], axis = expr@axis, id = expr@id))
+  else {   # Complex.
+    orig_dim <- dim(real_args[[2]])
+    real <- flatten(real_args[[2]])
+    imag <- flatten(imag_args[[2]])
+    flat_X <- new("Variable", dim = dim(real))
+    inner_SOC <- SOC(flat_X, vstack(real, imag), axis = 1)   # TODO: Check the axis here is correct.
+    real_X <- reshape_expr(flat_X, orig_dim)
+    outer_SOC <- SOC(real_args[[1]], real_X, axis = expr@axis, id = expr@id)
+    output <- list(inner_SOC, outer_SOC)
+  }
+  return(list(output, NULL))
+}
+
 Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
     return(list(expr, NULL))
@@ -353,13 +401,13 @@ Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
 
 Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.null(imag_args[[1]]))
-    return(list(copy(expr, real_args), NULL))
+    return(list(list(copy(expr, real_args)), NULL))
 
-  imag_cons <- ZeroConstraint(imag_args[[1]], id = real2imag[[as.character(id(expr))]])
+  imag_cons <- list(ZeroConstraint(imag_args[[1]], id = real2imag[[as.character(id(expr))]]))
   if(is.null(real_args[[1]]))
     return(list(NULL, imag_cons))
   else
-    return(list(copy(expr, real_args), imag_cons))
+    return(list(list(copy(expr, real_args)), imag_cons))
 }
 
 Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
@@ -390,8 +438,10 @@ Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
                                    Variable = Complex2Real.variable_canon,
                                    Constant = Complex2Real.constant_canon,
                                    Parameter = Complex2Real.param_canon,
+                                   NonPosConstraint = Complex2Real.nonpos_canon,
+                                   PSDConstraint = Complex2Real.psd_canon,
+                                   SOC = Complex2Real.soc_canon,
                                    ZeroConstraint = Complex2Real.zero_canon,
-                                   PSDConstraint = Complex2Real.hermitian_canon,
                                    
                                    Abs = Complex2Real.abs_canon,
                                    Norm1 = Complex2Real.pnorm_canon,
@@ -403,5 +453,6 @@ Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
                                    NormNuc = Complex2Real.norm_nuc_canon,
                                    SigmaMax = Complex2Real.hermitian_canon,
                                    QuadForm = Complex2Real.quad_canon,
+                                   QuadOverLin = Complex2Real.quad_over_lin_canon,
                                    MatrixFrac = Complex2Real.matrix_frac_canon,
                                    LambdaSumLargest = Complex2Real.lambda_sum_largest_canon)

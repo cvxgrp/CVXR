@@ -37,15 +37,15 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
-    class(problem@objective) == "Minimize" &&
-        is_affine(problem@objective@expr) &&
+ return(class(problem@objective) == "Minimize" &&
+        is_affine(problem@objective@args[[1]]) &&
         length(convex_attributes(variables(problem))) == 0 &&
-        are_args_affine(problem@constraints)
+        are_args_affine(problem@constraints))
 })
 
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
-  CR <- affine(extractor, problem@objective@expr)
+  CR <- affine(extractor, problem@objective@args[[1]])
   C <- CR[[1]]
   R <- CR[[2]]
 

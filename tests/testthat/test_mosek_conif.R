@@ -136,7 +136,7 @@ test_that("test MOSEK MI SOCP", {
     obj <- Minimize(3 * x[1] + 2 * x[2] + x[3] + y[1] + 2 * y[2])
     prob <- Problem(obj, constraints)
     result <- solve(prob, solver = "MOSEK")
-    expect_equal(result$getValue(y), c(1,1), tolerance = TOL)
+    expect_equal(result$getValue(y), as.matrix(c(1,1)), tolerance = TOL)
   }
 })
 

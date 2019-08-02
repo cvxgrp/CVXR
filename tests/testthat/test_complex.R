@@ -210,7 +210,8 @@ test_that("test matrix norms", {
   sigma_max <- base:::norm(P, type = "2")
   X <- Variable(2, 4, complex = TRUE)
   prob <- Problem(Minimize(norm(X, "2")), list(X == P))
-  result <- solve(prob)
+  # TODO: result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, sigma_max, tolerance = 1e-3)
   
   # norm_nuc <- TODO: Calculate nuclear norm in R.
@@ -344,7 +345,8 @@ test_that("test promotion of complex variables", {
   obj <- Maximize(Re(sum(v * matrix(1, nrow = 2, ncol = 2))))
   con <- list(cvxr_norm(v) <= 1)
   prob <- Problem(obj, con)
-  result <- solve(prob)
+  # TODO: result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 4.0, tolerance = TOL)
 })
 

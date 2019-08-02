@@ -353,7 +353,7 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
         value <- matrix(0, nrow = n, ncol = n)   # Variable is symmetric
         idxs <- upper.tri(value, diag = TRUE)
         value[idxs] <- as.vector(solution@primal_vars[[nvid]])
-        value <- value + t(value) - diag(diag(value))
+        value <- value + t(value) - diag(diag(value), n, n)
         pvars[[id]] <- value
       } else
         pvars[[id]] <- project(var, solution@primal_vars[[nvid]])

@@ -2,6 +2,11 @@ context("test-g01-dgp2dcp")
 
 Dgp2Dcp <- function(problem) { new("Dgp2Dcp", problem = problem) }
 
+perform <- CVXR:::perform
+reduce <- CVXR:::reduce
+retrieve <- CVXR:::retrieve
+unpack <- CVXR:::unpack
+
 test_that("test unconstrained monomial", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
@@ -9,11 +14,11 @@ test_that("test unconstrained monomial", {
   dgp <- Problem(Minimize(prod))
   dgp2dcp <- Dgp2Dcp(dgp)
   
-  dcp <- reduce(dgp2dcp)
-  expect_equal(class(dcp@objective@expr), "AddExpression")
-  expect_equal(length(dcp@objective@expr@args), 2)
-  expect_equal(class(dcp@objective@expr@args[[1]]), "Variable")
-  expect_equal(class(dcp@objective@expr@args[[2]]), "Variable")
+  dcp <- reduce(dgp2dcp)[[2]]
+  expect_equal(class(dcp@objective@args[[1]]), "AddExpression")
+  expect_equal(length(dcp@objective@args[[1]]@args), 2)
+  expect_equal(class(dcp@objective@args[[1]]@args[[1]]), "Variable")
+  expect_equal(class(dcp@objective@args[[1]]@args[[2]]), "Variable")
   opt <- solve(dcp)
   
   # dcp is solved in log-space, so it is unbounded below
@@ -51,7 +56,7 @@ test_that("test basic equality constraint", {
   dgp2dcp <- Dgp2Dcp(dgp)
   
   dcp <- reduce(dgp2dcp)
-  expect_equal(class(dcp@objective@expr), "Variable")
+  expect_equal(class(dcp@objective@args[[1]]), "Variable")
   opt <- solve(dcp)
   expect_equal(opt$value, 0.0, tolerance = TOL)
   expect_equal(value(variables(dcp)[[1]]), 0.0, tolerance = TOL)
@@ -345,7 +350,7 @@ test_that("test add_canon", {
 test_that("test matmul_canon", {
   X <- Constant(rbind(1:3, 4:6))
   Y <- Constant(matrix(1:3, nrow = 3))
-  Z <- matmul(X, Y)
+  Z <- X %*% Y
   canon <- Dgp2Dcp.mulexpression_canon(Z, Z@args)
   canon_matrix <- canon[[1]]
   constraints <- canon[[2]]

@@ -289,4 +289,3 @@ test_that("Test a basic SDP with MOSEK", {
     expect_error(result <- solve(prob, solver = "MOSEK"), "The solver MOSEK is not installed.")
   }
 })
-

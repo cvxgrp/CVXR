@@ -85,7 +85,10 @@ Dcp2Cone.entr_canon <- function(expr, args) {
 
   # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(t, x, ones))
   return(list(t, constraints))
 }
@@ -95,7 +98,10 @@ Dcp2Cone.exp_canon <- function(expr, args) {
   x <- promote(args[[1]], expr_dim)
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(x, ones, t))
   return(list(t, constraints))
 }
@@ -208,7 +214,10 @@ Dcp2Cone.log_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something that we want to change?
   constraints <- list(ExpCone(t, ones, x))
   return(list(t, constraints))
@@ -298,7 +307,10 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
   obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(canon[[2]], obj <= ones)
   return(list(t, constraints))
 }
@@ -317,7 +329,10 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   t2 <- canon2[[1]]
   constr2 <- canon2[[2]]
 
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
   return(list(t0, constraints))
 }
@@ -425,7 +440,10 @@ Dcp2Cone.power_canon <- function(expr, args) {
     return(list(x, list()))
 
   expr_dim <- dim(expr)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   if(p == 0)
     return(list(ones, list()))
   else {

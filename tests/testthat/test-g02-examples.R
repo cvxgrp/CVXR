@@ -28,6 +28,61 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
     expect_equal(result$getValue(x_c), matrix(c(0,0)), tolerance = TOL)
 })
 
+test_that("Test issue with scalars", {
+    n <- 6
+    eps <- 1e-6
+    set.seed(10)
+    P0 <- matrix(rnorm(n*n), nrow = n, ncol = n)
+    eye <- diag(n)
+    P0 <- t(P0) %*% P0 + eps*eye
+    
+    print(P0)
+    
+    P1 <- matrix(rnorm(n*n), nrow = n, ncol = n)
+    P1 <- t(P1) %*% P1
+    P2 <- matrix(rnorm(n*n), nrow = n, ncol = n)
+    P2 <- t(P2) %*% P2
+    P3 <- matrix(rnorm(n*n), nrow = n, ncol = n)
+    P3 <- t(P3) %*% P3
+    
+    q0 <- matrix(rnorm(n), nrow = n)
+    q1 <- matrix(rnorm(n), nrow = n)
+    q2 <- matrix(rnorm(n), nrow = n)
+    q3 <- matrix(rnorm(n), nrow = n)
+    
+    r0 <- matrix(rnorm(n), nrow = n)
+    r1 <- matrix(rnorm(n), nrow = n)
+    r2 <- matrix(rnorm(n), nrow = n)
+    r3 <- matrix(rnorm(n), nrow = n)
+    
+    slack <- Variable()
+    # Form the problem
+    x <- Variable(n)
+    objective <- Minimize(0.5*quad_form(x, P0) + t(q0) %*% x + r0 + slack)
+    constraints <- list(0.5*quad_form(x, P1) + t(q1) %*% x + r1 <= slack,
+                        0.5*quad_form(x, P2) + t(q2) %*% x + r2 <= slack,
+                        0.5*quad_form(x, P3) + t(q3) %*% x + r3 <= slack)
+    
+    # We now find the primal result and compare it to the dual result to check if strong duality holds, i.e., the duality gap is effectively zero
+    p <- Problem(objective, constraints)
+    result <- solve(p)
+    
+    # Note that since our data is random, we may need to run this program multiple times to get a feasible primal.
+    # When feasible, we can print out the following values.
+    print(result$getValue(x))   # Solution
+    lam1 <- result$getDualValue(constraints[[1]])
+    lam2 <- result$getDualValue(constraints[[2]])
+    lam3 <- result$getDualValue(constraints[[3]])
+    print(class(lam1))
+    
+    P_lam <- P0 + lam1*P1 + lam2*P2 + lam3*P3
+    q_lam <- q0 + lam1*q1 + lam2*q2 + lam3*q3
+    r_lam <- r0 + lam1*r1 + lam2*r2 + lam3*r3
+    dual_result <- -0.5*t(q_lam) %*% P_lam %*% q_lam + r_lam
+    print(dim(dual_result))
+    expect_equal(dim(dual_result), c(1,1))
+})
+
 test_that("Test advanced tutorial", {
     ## Solving a problem with different solvers
     skip_on_cran()
@@ -41,19 +96,49 @@ test_that("Test advanced tutorial", {
     print(paste("optimal value with ECOS:", result$value))
     expect_equal(result$value, 6, tolerance = TOL)
 
+    ## Solve with ECOS_BB
+    result <- solve(prob, solver = "ECOS_BB")
+    print(paste("optimal value with ECOS_BB:", result$value))
+    expect_equal(result$value, 6, tolerance = TOL)
+    
+    ## Solve with CVXOPT
+    if("CVXOPT" %in% installed_solvers()) {
+        result <- solve(prob, solver = "CVXOPT")
+        print(paste("optimal value with CVXOPT:", result$value))
+        expect_equal(result$value, 6, tolerance = TOL)
+    }
+    
     ## Solve with SCS
     result <- solve(prob, solver = "SCS")
     print(paste("optimal value with SCS:", result$value))
-    expect_equal(result$value, 6, tolerance = 1e-3)
-
-    x <- Variable()
-    prob <- Problem(Minimize(x^2), list(x == 2))
-
-    ## Get ECOS arguments
-    data <- get_problem_data(prob, "ECOS")
-
-    ## Get SCS arguments
-    data <- get_problem_data(prob, "SCS")
+    expect_equal(result$value, 6, tolerance = 1e-2)
+    
+    ## Solve with CPLEX
+    if("CPLEX" %in% installed_solvers()) {
+        result <- solve(prob, solver = "CPLEX")
+        print(paste("optimal value with CPLEX:", result$value))
+        expect_equal(result$value, 6, tolerance = TOL)
+    }
+    
+    ## Solve with GLPK
+    if("GLPK" %in% installed_solvers()) {
+        result <- solve(prob, solver = "GLPK")
+        print(paste("optimal value with GLPK:", result$value))
+        expect_equal(result$value, 6, tolerance = TOL)
+        
+        result <- solve(prob, solver = "GLPK_MI")
+        print(paste("optimal value with GLPK_MI:", result$value))
+        expect_equal(result$value, 6, tolerance = TOL)
+    }
+    
+    ## Solve with GUROBI
+    if("GUROBI" %in% installed_solvers()) {
+        result <- solve(prob, solver = "GUROBI")
+        print(paste("optimal value with GUROBI:", result$value))
+        expect_equal(result$value, 6, tolerance = TOL)
+    }
+    
+    print(installed_solvers())
 })
 
 test_that("Test log determinant", {
@@ -161,7 +246,8 @@ test_that("Test examples from CVXR introduction", {
 
     ## An infeasible problem
     prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
-    result <- solve(prob)
+    # TODO: result <- solve(prob)
+    result <- solve(prob, solver = "ECOS")
     cat("status:", result$status)
     cat("optimal value:", result$value)
 
@@ -208,24 +294,24 @@ test_that("Test examples from CVXR introduction", {
 
 ###########################################
     ## Positive scalar parameter
-    m <- Parameter(sign = "positive")
+    m <- Parameter(nonneg = TRUE)
 
     ## Column vector parameter with unknown sign (by default)
     c <- Parameter(5)
 
     ## Matrix parameter with negative entries
-    G <- Parameter(4, 7, sign = "negative")
+    G <- Parameter(4, 7, nonpos = TRUE)
 
     ## Assigns a constant value to G
     value(G) <- -matrix(1, nrow = 4, ncol = 7)
 
 ###########################################
     ## Create parameter, then assign value
-    rho <- Parameter(sign = "positive")
+    rho <- Parameter(nonneg = TRUE)
     value(rho) <- 2
 
     ## Initialize parameter with a value
-    rho <- Parameter(sign = "positive", value = 2)
+    rho <- Parameter(nonneg = TRUE, value = 2)
 
 ###########################################
     ## Problem data
@@ -235,7 +321,7 @@ test_that("Test examples from CVXR introduction", {
     A <- matrix(stats::rnorm(n*m), nrow = n, ncol = m)
     b <- matrix(stats::rnorm(n), nrow = n, ncol = 1)
     ## gamma must be positive due to DCP rules
-    gamma <- Parameter(sign = "positive")
+    gamma <- Parameter(nonneg = TRUE)
 
     ## Construct the problem
     x <- Variable(m)
@@ -269,3 +355,34 @@ test_that("Test examples from CVXR introduction", {
     expect_error(A + X)
 })
 
+test_that("Test advanced tutorial 2", {
+    skip_on_cran()
+    x <- Variable()
+    prob <- Problem(Minimize(x^2), list(x == 2))
+    
+    # Get ECOS arguments.
+    tmp <- get_problem_data(prob, "ECOS")
+    
+    # Get ECOS_BB arguments.
+    tmp <- get_problem_data(prob, "ECOS_BB")
+    
+    # Get CVXOPT arguments.
+    if("CVXOPT" %in% installed_solvers())
+        tmp <- get_problem_data(prob, "CVXOPT")
+    
+    # Get SCS arguments.
+    tmp <- get_problem_data(prob, "SCS")
+    
+    # Get ECOS arguments.
+    library(ECOSolveR)
+    tmp <- get_problem_data(prob, "ECOS")
+    data <- tmp[[1]]
+    chain <- tmp[[2]]
+    inverse <- tmp[[3]]
+    
+    # Call ECOS solver.
+    solution <- ECOSolveR::ECOS_csolve(c = data$c, G = data$G, h = data$h, dims = ECOS.dims_to_solver_dict(data$dims), A = data$A, b = data$b)
+    
+    # Unpack raw solver output.
+    unpack_results(prob, solution, chain, inverse)
+})

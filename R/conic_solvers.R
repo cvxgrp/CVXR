@@ -313,7 +313,7 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
-  cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
+  cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control()
   ecos_opts$VERBOSE <- as.integer(verbose)
   ecos_opts[names(solver_opts)] <- solver_opts
@@ -469,7 +469,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
     args$y <- solver_cache[[name(object)]]$y
     args$s <- solver_cache[[name(object)]]$s
   }
-  cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
+  cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
@@ -735,7 +735,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
-  cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
+  cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control()
   ecos_opts$VERBOSE <- as.integer(verbose)
   ecos_opts[names(solver_opts)] <- solver_opts
@@ -746,7 +746,7 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
 
 # Utility method for formatting a ConeDims instance into a dictionary
 # that can be supplied to ECOS.
-dims_to_solver <- function(cone_dims) {
+ECOS.dims_to_solver_dict <- function(cone_dims) {
   cones <- list(l = as.integer(cone_dims@nonpos),
                 q = lapply(cone_dims@soc, function(v) { as.integer(v) }),
                 e = as.integer(cone_dims@exp))
@@ -1611,7 +1611,7 @@ MOSEK._handle_mosek_params <- function(task, params) {
 
 # Utility method for formatting a ConeDims instance into a dictionary
 # that can be supplied to SCS.
-dims_to_solver_dict <- function(cone_dims) {
+SCS.dims_to_solver_dict <- function(cone_dims) {
   cones <- list(f = as.integer(cone_dims@zero),
                 l = as.integer(cone_dims@nonpos),
                 q = sapply(cone_dims@soc, as.integer),
@@ -1675,7 +1675,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
     args$y <- solver_cache[[name(object)]]$y
     args$s <- solver_cache[[name(object)]]$s
   }
-  cones <- dims_to_solver_dict(data[[ConicSolver()@dims]])
+  cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 
   # Settings.
   user_opts <- names(solver_opts)

@@ -80,14 +80,15 @@ setMethod("accepts", signature(object = "Reduction", problem = "Problem"), funct
 #' @describeIn Reduction Reduces the owned problem to an equivalent problem.
 setMethod("reduce", "Reduction", function(object) {
   if(!is.null(object@.emitted_problem))
-    return(object@.emitted_problem)
+    return(list(object, object@.emitted_problem))
 
   if(is.null(object@problem))
     stop("The reduction was constructed without a Problem")
 
   tmp <- perform(object, object@problem)
-  object@.emitted_problem <- tmp[[1]]
-  object@.retrieval_data <- tmp[[2]]
+  object <- tmp[[1]]
+  object@.emitted_problem <- tmp[[2]]
+  object@.retrieval_data <- tmp[[3]]
   return(list(object, object@.emitted_problem))
 })
 
@@ -132,7 +133,7 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
     inverse_data@cons_id_map[[as.character(constraint@id)]] <- canon_constr@id   # TODO: Check this updates like dict().update in Python
   }
   new_problem <- Problem(canon_objective, canon_constraints)
-  return(list(new_problem, inverse_data))
+  return(list(object, new_problem, inverse_data))
 })
 
 setMethod("invert", signature(object = "Canonicalization", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -185,7 +186,7 @@ setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) 
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
   } else if(class(expr) %in% names(object@canon_methods))
-    return(object@canon_methods[[class(expr)]](expr, args))
+    return(object@canon_methods[[class(expr)]](expr, args))   # TODO: Not working for DgpCanonMethods.
   else
     return(list(copy(expr, args), list()))
 })
@@ -203,28 +204,35 @@ Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = proble
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
 setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {
-  for(r in object@reductions) {
+  for(i in seq_along(object@reductions)) {
+    r <- object@reductions[[i]]
     if(!accepts(r, problem))
       return(FALSE)
-    problem <- perform(r, problem)[[1]]
+    
+    tmp <- perform(r, problem)
+    object@reductions[[i]] <- tmp[[1]]
+    problem <- tmp[[2]]
   }
   return(TRUE)
 })
 
 setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   inverse_data <- list()
-  for(r in object@reductions) {
+  for(i in seq_along(object@reductions)) {
+    r <- object@reductions[[i]]
     res <- perform(r, problem)
-    problem <- res[[1]]
-    inv <- res[[2]]
+    
+    object@reductions[[i]] <- res[[1]]
+    problem <- res[[2]]
+    inv <- res[[3]]
     inverse_data <- c(inverse_data, list(inv))
   }
-  return(list(problem, inverse_data))
+  return(list(object, problem, inverse_data))
 })
 
 setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inverse_data = "list"), function(object, solution, inverse_data) {
   m <- min(length(object@reductions), length(inverse_data))
-  for(i in rev(1:m)) {
+  for(i in rev(seq_len(m))) {
     r <- object@reductions[[i]]
     inv <- inverse_data[[i]]
     solution <- invert(r, solution, inv)
@@ -265,7 +273,7 @@ setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), 
 
 setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
   if(length(convex_attributes(variables(problem))) == 0)
-    return(list(problem, list()))
+    return(list(object, problem, list()))
 
   # For each unique variable, add constraints.
   id2new_var <- list()
@@ -328,7 +336,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
     cons_id_map[[as.character(cons@id)]] <- constr[[length(constr)]]@id
   }
   inverse_data <- list(id2new_var, id2old_var, cons_id_map)
-  return(list(Problem(obj, constr), inverse_data))
+  return(list(object, Problem(obj, constr), inverse_data))
 })
 
 setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
@@ -425,7 +433,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
         constraints <- c(constraints, do.call(class(c), args))
     }
   }
-  return(list(Problem(objective, constraints), list()))
+  return(list(object, Problem(objective, constraints), list()))
 })
 
 setMethod("invert", signature(object = "EvalParams", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { solution })
@@ -446,7 +454,7 @@ setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), f
   else
     objective <- Maximize
   problem <- Problem(objective(-problem@objective@expr), problem@constraints)
-  return(list(problem, list()))
+  return(list(object, problem, list()))
 })
 
 setMethod("invert", signature(object = "FlipObjective", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
@@ -512,7 +520,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   # Map of old constraint id to new constraint id.
   inverse_data@minimize <- class(problem@objective) == "Minimize"
   new_prob <- Problem(Minimize(new_obj), new_cons)
-  return(list(new_prob, inverse_data))
+  return(list(object, new_prob, inverse_data))
 })
 
 setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {

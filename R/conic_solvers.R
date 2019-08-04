@@ -282,7 +282,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   data[[G_KEY]] <- offsets[[1]]
   data[[H_KEY]] <- offsets[[2]]
 
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
@@ -413,7 +413,7 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), object@exp_cone_order)
   data[[A_KEY]] <- offsets[[1]]
   data[[B_KEY]] <- offsets[[2]]
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 SCS.extract_dual_value <- function(result_vec, offset, constraint) {
@@ -540,7 +540,7 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("invert", signature(object = "CBC_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -603,7 +603,7 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -706,7 +706,7 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   tmp <- group_coeff_offset(object, problem, neq_constr, ECOS()@exp_cone_order)
   data[[G_KEY]] <- tmp[[1]]
   data[[H_KEY]] <- tmp[[2]]
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
@@ -730,7 +730,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
   var <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- as.integer(var@boolean_idx[,1])
   data[[INT_IDX]] <- as.integer(var@integer_idx[,1])
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
@@ -923,7 +923,7 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
@@ -1161,7 +1161,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   else
     data[[H_KEY]] <- Matrix(do.call(cbind, hs), sparse = TRUE)
   inv_data$is_LP <- (length(psd_constr) + length(exp_constr) + length(soc_constr)) == 0
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 # TODO: Finish MOSEK class implementation.
@@ -1739,7 +1739,7 @@ setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {

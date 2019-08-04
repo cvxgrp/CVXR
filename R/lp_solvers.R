@@ -78,14 +78,14 @@ setMethod("perform", signature(object = "CBC_LP", problem = "Problem"), function
   data <- list()
   inv_data <- list(id(variables(problem)[[1]]))
   names(inv_data) <- object@VAR_ID
-  inv_data[OFFSET] <- data[OFFSET][[1]]
+  inv_data[[OFFSET]] <- data[[OFFSET]][[1]]
 
   # Order and group constraints.
   eq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
   inv_data[object@eq_constr] <- eq_constr
   leq_constr <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
   inv_data[object@neq_constr] <- leq_constr
-  return(list(data, inv_data))
+  return(list(object, data, inv_data))
 })
 
 # Returns the solution to the original problem given the inverse_data.
@@ -116,7 +116,11 @@ setMethod("invert", signature(object = "CBC_LP", solution = "Solution", inverse_
 
 setMethod("reduction_solve", "CBC_LP", function(object, problem, warm_start, verbose, solver_opts) {
   solver <- CBC_OLD()
-  inv_data <- perform(object, problem)[[2]]
+  tmp <- perform(object, problem)
+  object <- tmp[[1]]
+  data <- tmp[[2]]
+  inv_data <- tmp[[3]]
+  
   objective <- canonical_form(problem@objective)[[1]]
   constraints <- lapply(problem@constraints, function(c) { unlist(canonical_form(c)[[2]]) })
   prob_data <- list(ProblemData())

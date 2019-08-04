@@ -9,10 +9,11 @@ setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), functio
     stop("The supplied problem is not DGP")
   object@canon_methods <- DgpCanonMethods()
   tmp <- callNextMethod(object, problem)
-  equiv_problem <- tmp[[1]]
-  inverse_data <- tmp[[2]]
+  object <- tmp[[1]]
+  equiv_problem <- tmp[[2]]
+  inverse_data <- tmp[[3]]
   inverse_data@problem <- problem
-  return(list(equiv_problem, inverse_data))
+  return(list(object, equiv_problem, inverse_data))
 })
 
 setMethod("canonicalize_expr", "Dgp2Dcp", function(object, expr, args) {
@@ -27,7 +28,7 @@ setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse
   if(solution@status == SOLVER_ERROR)
     return(solution)
   for(vid in names(solution@primal_vars))
-    solution@primal_vars[vid] <- exp(solution@primal_vars[vid])
+    solution@primal_vars[[vid]] <- exp(solution@primal_vars[[vid]])
   # f(x) = e^{F(u)}
   solution@opt_val <- exp(solution@opt_val)
   return(solution)
@@ -79,7 +80,8 @@ Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
   X <- args[[1]]
   # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
   # Y represents log(Y) here, hence no positivity constraint.
-  Y <- Variable(dim(X))
+  # Y <- Variable(dim(X))
+  Y <- new("Variable", dim = dim(X))
   prod <- MulExpression(Y, X)
   lhs <- Dgp2Dcp.mulexpression_canon(prod, prod@args)[[1]]
   lhs <- lhs + diag(1, nrow(prod))
@@ -88,7 +90,7 @@ Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
 
 Dgp2Dcp.geo_mean_canon <- function(expr, args) {
   out <- 0.0
-  for(i in 1:length(args[[1]])) {
+  for(i in seq_along(args[[1]])) {
     x_i <- args[[1]][[i]]
     p_i <- expr@p[i]
     out <- out + p_i * x_i
@@ -288,8 +290,13 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
 .DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list"), prototype(.variables = list()), contains = "list")
 DgpCanonMethods <- function(...) { .DgpCanonMethods(...) }
 
-setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
-  if(i == "Variable") {
+setMethod("names", signature(x = "DgpCanonMethods"), function(x) { names(Dgp2Dcp.CANON_METHODS) })
+
+# TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
+'[[.DgpCanonMethods' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+
+setMethod("$", signature(x = "DgpCanonMethods"), function(x, name) {
+  if(name == "Variable") {
     # TODO: Check scoping of x here is correct.
     variable_canon <- function(variable, args) {
       args <- NULL
@@ -306,5 +313,5 @@ setMethod("[", signature(x = "DgpCanonMethods", i = "character", j = "missing", 
     }
     return(variable_canon)
   } else
-    return(Dgp2Dcp.CANON_METHODS[[i]])
+    return(Dgp2Dcp.CANON_METHODS[[name]])
 })

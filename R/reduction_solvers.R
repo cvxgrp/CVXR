@@ -51,8 +51,9 @@ setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start
 
 setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
-  data <- ret[[1]]
-  inverse_data <- ret[[2]]
+  object <- ret[[1]]
+  data <- ret[[2]]
+  inverse_data <- ret[[3]]
   solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
   return(invert(object, solution, inverse_data))
 })
@@ -64,7 +65,7 @@ setMethod("accepts", signature(object = "ConstantSolver", problem = "Problem"), 
 })
 
 setMethod("perform", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
-  return(list(problem, list()))
+  return(list(object, problem, list()))
 })
 
 setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
@@ -173,8 +174,9 @@ setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), functi
 
 setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
   tmp <- perform(object, problem)
-  data <- tmp[[1]]
-  inverse_data <- tmp[[2]]
+  object <- tmp[[1]]
+  data <- tmp[[2]]
+  inverse_data <- tmp[[3]]
   solution <- solve_via_data(object@solver, data, warm_start, verbose, solver_opts)
   return(invert(object, solution, inverse_data))
 })

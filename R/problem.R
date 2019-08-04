@@ -570,8 +570,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   object <- .construct_chains(object, solver = solver, gp = gp)
   
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  data <- tmp[[1]]
-  solving_inverse_data <- tmp[[2]]
+  object@.solving_chain <- tmp[[1]]
+  data <- tmp[[2]]
+  solving_inverse_data <- tmp[[3]]
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
@@ -630,8 +631,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
     candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
     tmp <- perform(object@.intermediate_chain, object)
-    object@.intermediate_problem <- tmp[[1]]
-    object@.intermediate_inverse_data <- tmp[[2]]
+    object@.intermediate_chain <- tmp[[1]]
+    object@.intermediate_problem <- tmp[[2]]
+    object@.intermediate_inverse_data <- tmp[[3]]
     
     object@.solving_chain <- construct_solving_chain(object@.intermediate_problem, candidate_solvers)
     object@.cached_chain_key <- chain_key
@@ -648,8 +650,9 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   
   object <- .construct_chains(object, solver = solver, gp = gp)
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  data <- tmp[[1]]
-  solving_inverse_data <- tmp[[2]]
+  object@.solving_chain <- tmp[[1]]
+  data <- tmp[[2]]
+  solving_inverse_data <- tmp[[3]]
   solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, verbose, list(...))
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)

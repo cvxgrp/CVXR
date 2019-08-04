@@ -1,11 +1,16 @@
 context("test-g01-dgp2dcp")
-
-Dgp2Dcp <- function(problem) { new("Dgp2Dcp", problem = problem) }
+TOL <- 1e-6
 
 perform <- CVXR:::perform
 reduce <- CVXR:::reduce
 retrieve <- CVXR:::retrieve
 unpack <- CVXR:::unpack
+
+Dgp2Dcp <- function(problem) { new("Dgp2Dcp", problem = problem) }
+Dgp2Dcp.add_canon <- CVXR:::Dgp2Dcp.add_canon
+Dgp2Dcp.mulexpression_canon <- CVXR:::Dgp2Dcp.mulexpression_canon
+Dgp2Dcp.prod_canon <- CVXR:::Dgp2Dcp.prod_canon
+Dgp2Dcp.trace_canon <- CVXR:::Dgp2Dcp.trace_canon
 
 test_that("test unconstrained monomial", {
   x <- Variable(pos = TRUE)
@@ -14,11 +19,14 @@ test_that("test unconstrained monomial", {
   dgp <- Problem(Minimize(prod))
   dgp2dcp <- Dgp2Dcp(dgp)
   
-  dcp <- reduce(dgp2dcp)[[2]]
-  expect_equal(class(dcp@objective@args[[1]]), "AddExpression")
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  
+  expect_equal(class(dcp@objective@args[[1]])[1], "AddExpression")
   expect_equal(length(dcp@objective@args[[1]]@args), 2)
-  expect_equal(class(dcp@objective@args[[1]]@args[[1]]), "Variable")
-  expect_equal(class(dcp@objective@args[[1]]@args[[2]]), "Variable")
+  expect_equal(class(dcp@objective@args[[1]]@args[[1]])[1], "Variable")
+  expect_equal(class(dcp@objective@args[[1]]@args[[2]])[1], "Variable")
   opt <- solve(dcp)
   
   # dcp is solved in log-space, so it is unbounded below
@@ -36,7 +44,9 @@ test_that("test unconstrained monomial", {
   
   dgp <- Problem(Maximize(prod))
   dgp2dcp <- Dgp2Dcp(dgp)
-  dcp <- reduce(dgp2dcp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
   opt <- solve(dcp)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
@@ -55,8 +65,10 @@ test_that("test basic equality constraint", {
   dgp <- Problem(Minimize(x), list(x == 1.0))
   dgp2dcp <- Dgp2Dcp(dgp)
   
-  dcp <- reduce(dgp2dcp)
-  expect_equal(class(dcp@objective@args[[1]]), "Variable")
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  expect_equal(class(dcp@objective@args[[1]])[1], "Variable")
   opt <- solve(dcp)
   expect_equal(opt$value, 0.0, tolerance = TOL)
   expect_equal(value(variables(dcp)[[1]]), 0.0, tolerance = TOL)
@@ -92,7 +104,9 @@ test_that("test max_elemwise", {
   
   dgp <- Problem(obj, constr)
   dgp2dcp <- Dgp2Dcp(dgp)
-  dcp <- reduce(dgp2dcp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
   opt <- solve(dcp)
   unpack(dgp, retrieve(dgp2dcp, opt$solution))
   expect_equal(dgp@value, 6.0, tolerance = TOL)
@@ -151,12 +165,14 @@ test_that("test max_entries", {
   
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
-  obj <- Minimize(max_entries(hstack(list(prod1, prod2))))
+  obj <- Minimize(max_entries(hstack(prod1, prod2)))
   constr <- list(x == 1.0, y == 4.0)
   
   dgp <- Problem(obj, constr)
   dgp2dcp <- Dgp2Dcp(dgp)
-  dcp <- reduce(dgp2dcp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
   opt <- solve(dcp)
   dgp <- unpack(dgp, retrieve(dgp2dcp, opt$solution))
   expect_equal(dgp@value, 6.0)
@@ -194,7 +210,7 @@ test_that("test min_entries", {
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
   posy <- prod1 + prod2
-  obj <- Maximize(min_entries(hstack(list(prod1, prod2, 1/posy))))
+  obj <- Maximize(min_entries(hstack(prod1, prod2, 1/posy)))
   constr <- list(x == 1.0, y == 4.0)
   
   dgp <- Problem(obj, constr)
@@ -211,7 +227,9 @@ test_that("test min_entries", {
 #   constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
 #   dgp <- Problem(obj, constr)
 #   dgp2dcp <- Dgp2Dcp(dgp)
-#   dcp <- reduce(dgp2dcp)
+#   tmp <- reduce(dgp2dcp)
+#   dgp2dcp <- tmp[[1]]
+#   dcp <- tmp[[2]]
 #   result <- solve(dcp)
 #   dgp <- unpack(dgp, retrieve(dgp2dcp, result$solution))
 #   opt <- 6.0
@@ -229,7 +247,9 @@ test_that("test min_entries", {
 #   constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
 #   dgp <- Problem(obj, constr)
 #   dgp2dcp <- Dgp2Dcp(dgp)
-#   dcp <- reduce(dgp2dcp)
+#   tmp <- reduce(dgp2dcp)
+#   dgp2dcp <- tmp[[1]]
+#   dcp <- tmp[[2]]
 #   opt <- solve(dcp)
 #   expect_equal(dcp@value, -Inf)
 #   dgp <- unpack(dgp, retrieve(dgp2dcp, opt$solution))
@@ -245,7 +265,9 @@ test_that("test min_entries", {
 #   obj <- Minimize(sum_largest(x, 1))
 #   dgp <- Problem(obj)
 #   dgp2dcp <- Dgp2Dcp(dgp)
-#   dcp <- reduce(dgp2dcp)
+#   tmp <- reduce(dgp2dcp)
+#   dgp2dcp <- tmp[[1]]
+#   dcp <- tmp[[2]]
 #   opt <- solve(dcp)
 #   expect_equal(result$value, -Inf)
 #   dgp <- unpack(dgp, retrieve(dgp2dcp, opt$solution))
@@ -294,7 +316,9 @@ test_that("test geo_mean", {
   expr <- geo_mean(x, p)
   dgp <- Problem(Minimize(expr))
   dgp2dcp <- Dgp2Dcp(dgp)
-  dcp <- reduce(dgp2dcp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
   result <- solve(dcp)
   expect_equal(result$value, -Inf)
   dgp <- unpack(dgp, retrieve(dgp2dcp, result$solution))
@@ -400,7 +424,7 @@ test_that("test qp solver not allowed", {
 #   obj <- Minimize(sum_largest(hstack(list(3*x1^(0.5) * x2^(0.5), x1*x2 + 0.5*x2*x4^3, x3)), 2))
 #   constr <- list(x1*x2*x3 >= 16)
 #   p <- Problem(obj, constr)
-#   solve(p, gp = TRUE)   # Smoke test.
+#   expect_silent(solve(p, gp = TRUE))   # Smoke test.
 # })
 
 test_that("test paper example one_minus_pos", {
@@ -409,7 +433,7 @@ test_that("test paper example one_minus_pos", {
   obj <- Minimize(x*y)
   constr <- list((y * one_minus_pos(x/y))^2 >= 1, x >= y/3)
   problem <- Problem(obj, constr)
-  solve(problem, gp = TRUE)   # Smoke test.
+  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
 })
 
 test_that("test paper example eye_minus_inv", {
@@ -417,7 +441,7 @@ test_that("test paper example eye_minus_inv", {
   obj <- Minimize(matrix_trace(eye_minus_inv(X)))
   constr <- list(geo_mean(diag(X)) == 0.1)
   problem <- Problem(obj, constr)
-  solve(problem, gp = TRUE, solver = "SCS")   # Smoke test.
+  expect_silent(solve(problem, gp = TRUE, solver = "SCS"))   # Smoke test.
 })
 
 test_that("test paper example exp_log", {
@@ -426,7 +450,7 @@ test_that("test paper example exp_log", {
   obj <- Minimize(x*y)
   constr <- list(exp(y/x) <= log(y))
   problem <- Problem(obj, constr)
-  solve(problem, gp = TRUE)   # Smoke test.
+  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
 })
 
 test_that("test pf matrix completion", {
@@ -436,7 +460,7 @@ test_that("test pf matrix completion", {
   constr <- list(X[known_indices] == c(1.0, 1.9, 0.8, 3.2, 5.9), 
                  X[1,2] * X[2,1] * X[2,3] * X[3,3] == 1.0)
   problem <- Problem(obj, constr)
-  solve(problem, gp = TRUE)   # Smoke test.
+  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
 })
 
 test_that("test rank one nmf", {
@@ -450,7 +474,7 @@ test_that("test rank one nmf", {
                       x[1] * x[2] * x[3] == 1.0)
   # Smoke test.
   prob <- Problem(Minimize(objective), constraints)
-  solve(prob, gp = TRUE)
+  expect_silent(solve(prob, gp = TRUE))
 })
 
 test_that("test documentation problem", {
@@ -461,7 +485,7 @@ test_that("test documentation problem", {
   objective_fn <- x*y*z
   constraints <- list(4*x*y*z + 2*x*z <= 10, x <= 2*y, y <= 2*x, z >= 1)
   problem <- Problem(Maximize(objective_fn), constraints)
-  solve(problem, gp = TRUE)   # Smoke test.
+  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
 })
 
 test_that("test solver error", {
@@ -471,7 +495,7 @@ test_that("test solver error", {
   dgp <- Problem(Minimize(prod))
   dgp2dcp <- Dgp2Dcp()
   inverse_data <- perform(dgp2dcp, dgp)[[2]]
-  soln <- Solution(SOLVER_ERROR, NA, list(), list(), list())
+  soln <- Solution("solver_error", NA, list(), list(), list())
   dgp_soln <- invert(dgp2dcp, soln, inverse_data)
-  expect_equal(dgp_soln$status, SOLVER_ERROR)
+  expect_equal(dgp_soln$status, "solver_error")
 })

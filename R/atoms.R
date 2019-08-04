@@ -1557,7 +1557,7 @@ setMethod(".grad", "NormNuc", function(object, values) {
 #' @name OneMinusPos-class
 #' @aliases OneMinusPos
 #' @rdname OneMinusPos-class
-.OneMinusPos <- setClass("OneMinusPos", representation(x = "ConstValORExpr", .ones = "numeric"), prototype(.ones = NA_real_), contains = "Atom")
+.OneMinusPos <- setClass("OneMinusPos", representation(x = "ConstValORExpr", .ones = "ConstVal"), prototype(.ones = NA_real_), contains = "Atom")
 
 #' @param x An \linkS4class{Expression} or numeric matrix.
 #' @rdname OneMinusPos-class

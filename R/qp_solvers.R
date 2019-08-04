@@ -85,7 +85,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   # Add information about integer variables.
   inverse_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 
-  return(list(data, inverse_data))
+  return(list(object, data, inverse_data))
 })
 
 # QP interface for the CPLEX solver.

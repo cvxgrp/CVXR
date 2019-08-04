@@ -35,7 +35,7 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
   }
 
   new_problem <- Problem(real_obj, constrs)
-  return(list(new_problem, inverse_data))
+  return(list(object, new_problem, inverse_data))
 })
 
 setMethod("invert", signature(object = "Complex2Real", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {

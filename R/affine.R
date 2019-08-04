@@ -918,10 +918,10 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' @rdname HStack-class
 HStack <- function(...) {
   arg_list <- lapply(list(...), as.Constant)
-  for(idx in length(arg_list)) {
+  for(idx in seq_along(arg_list)) {
     arg <- arg_list[[idx]]
     if(ndim(arg) == 0)
-      arg_list[[idx]] <- as.vector(arg)
+      arg_list[[idx]] <- flatten(arg)
   }
   .HStack(atom_args = arg_list)
 }
@@ -936,7 +936,7 @@ setMethod("dim_from_args", "HStack", function(object) {
   if(ndim(object@args[[1]]) == 1)
     # return(c(sum(sapply(object@args, size)), NA))
     return(c(sum(sapply(object@args, size)), 1))
-  else{
+  else {
     cols <- sum(sapply(object@args, function(arg) { dim(arg)[2] }))
     arg_dim <- dim(object@args[[1]])
     dims <- c(arg_dim[1], cols)
@@ -1091,8 +1091,8 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, dim, data 
 #' @name SpecialIndex-class
 #' @aliases SpecialIndex
 #' @rdname SpecialIndex-class
-.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "ConstVal", .dim = "numeric"),
-                          prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
+.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "ConstVal", .dim = "NumORNULL"),
+                                          prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param key A list containing the start index, end index, and step size of the slice.
@@ -1778,6 +1778,6 @@ setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) 
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
 Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { .HStack(atom_args = blocks) })
-  .VStack(atom_args = row_blocks)
+  row_blocks <- lapply(block_lists, function(blocks) { do.call("HStack", blocks) })
+  do.call("VStack", row_blocks)
 }

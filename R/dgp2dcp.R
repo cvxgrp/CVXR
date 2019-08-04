@@ -40,21 +40,23 @@ Dgp2Dcp.add_canon <- function(expr, args) {
   if(is_scalar(expr))
     return(list(log_sum_exp(do.call("HStack", args)), list()))
   
-  rows <- c()
+  rows <- list()
   summands <- sapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
   if(length(dim(expr)) == 1) {
     for(i in 1:nrow(expr)) {
       summand_args <- lapply(summands, function(summand) { summand[i] })
-      rows <- c(rows, log_sum_exp(do.call("HStack", summand_args)))
+      row <- list(log_sum_exp(do.call("HStack", summand_args)))
+      rows <- c(rows, list(row))
     }
     return(list(reshape_expr(bmat(rows), dim(expr)), list()))
   } else {
     for(i in 1:nrow(expr)) {
-      row <- c()
+      row <- list()
       for(j in 1:ncol(expr)) {
         summand_args <- lapply(summands, function(summand) { summand[i,j] })
-        rows <- c(rows, log_sum_exp(do.call("HStack", summand_args)))
+        row <- c(row, log_sum_exp(do.call("HStack", summand_args)))
       }
+      rows <- c(rows, list(row))
     }
     return(list(reshape_expr(bmat(rows), dim(expr)), list()))
   }
@@ -91,7 +93,7 @@ Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
 Dgp2Dcp.geo_mean_canon <- function(expr, args) {
   out <- 0.0
   for(i in seq_along(args[[1]])) {
-    x_i <- args[[1]][[i]]
+    x_i <- args[[1]][i]
     p_i <- expr@p[i]
     out <- out + p_i * x_i
   }
@@ -115,16 +117,16 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
   rhs_dim <- dims[[2]]
   lhs <- reshape_expr(lhs, lhs_dim)
   rhs <- reshape_expr(rhs, rhs_dim)
-  rows <- c()
+  rows <- list()
   
   # TODO: Parallelize this for large matrices.
   for(i in 1:nrow(lhs)) {
-    row <- c()
+    row <- list()
     for(j in 1:ncol(rhs)) {
       hstack_args <- lapply(1:ncol(lhs), function(k) { lhs[i,k] + rhs[k,j] })
       row <- c(row, log_sum_exp(do.call("HStack", hstack_args)))
     }
-    rows <- c(rows, row)
+    rows <- c(rows, list(row))
   }
   mat <- bmat(rows)
   if(!all(dim(mat) == dim(expr)))
@@ -153,7 +155,7 @@ Dgp2Dcp.norm_inf_canon <- function(expr, args) {
 }
 
 Dgp2Dcp.one_minus_pos_canon <- function(expr, args) {
-  return(list(Log(expr@ones - Exp(args[[1]])), list()))
+  return(list(Log(expr@.ones - Exp(args[[1]])), list()))
 }
 
 Dgp2Dcp.parameter_canon <- function(expr, args) {
@@ -274,7 +276,7 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
                               PfEigenvalue = Dgp2Dcp.pf_eigenvalue_canon,
                               Pnorm = Dgp2Dcp.pnorm_canon,
                               Power = Dgp2Dcp.power_canon,
-                              Prod = Dgp2Dcp.prod_canon,
+                              ProdEntries = Dgp2Dcp.prod_canon,
                               QuadForm = Dgp2Dcp.quad_form_canon,
                               QuadOverLin = Dgp2Dcp.quad_over_lin_canon,
                               Trace = Dgp2Dcp.trace_canon,

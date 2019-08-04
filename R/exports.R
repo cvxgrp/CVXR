@@ -1848,3 +1848,30 @@ setMethod("Im", "Expression", function(z) { Imag(z) })
 #' @rdname complex-atoms
 #' @export
 setMethod("Conj", "Expression", function(z) { Conjugate(z) })
+
+#'
+#' Product of Entries
+#'
+#' The product of entries in a vector or matrix.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the product of the entries of the input.
+#' @examples
+#' x <- Variable(2)
+#' prob <- Problem(Minimize(prod_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(x)
+#'
+#' C <- Variable(3,2)
+#' prob <- Problem(Maximize(prod_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(C)
+#' @docType methods
+#' @name prod_entries
+#' @aliases prod
+#' @rdname prod_entries
+#' @export
+prod_entries <- ProdEntries

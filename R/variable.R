@@ -99,7 +99,7 @@ Bool <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = row
 Int <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = rows, cols = cols, name = name, integer = TRUE) }
 NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { Variable(rows = rows, cols = cols, name = name, nonneg = TRUE) }
 Symmetric <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, symmetric = TRUE) }
-Semidef <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, semidef = TRUE) }
+Semidef <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, PSD = TRUE) }
 
 #
 # Upper Triangle to Full Matrix

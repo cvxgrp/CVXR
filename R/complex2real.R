@@ -28,14 +28,14 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
     constr <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
     real_constr <- constr[[1]]
     imag_constr <- constr[[2]]
-    if(!is.na(real_constr))
+    if(!is.null(real_constr))
       constrs <- c(constrs, real_constr)
-    if(!is.na(imag_constr))
+    if(!is.null(imag_constr))
       constrs <- c(constrs, imag_constr)
   }
 
   new_problem <- Problem(real_obj, constrs)
-  return(list(new_problem, inverse_data))
+  return(list(object, new_problem, inverse_data))
 })
 
 setMethod("invert", signature(object = "Complex2Real", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
@@ -48,14 +48,19 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         pvars[[vid]] <- solution@primal_vars[[vid]]
       else if(is_imag(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        pvars[[vid]] <- 1i*solution@primal_vars[[vid]]
+        pvars[[vid]] <- 1i*solution@primal_vars[[as.character(imag_id)]]
       } else if(is_complex(var) && is_hermitian(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        imag_val <- solution@primal_vars[[imag_id]]
-        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*(imag_val - t(imag_val))/2
+        
+        # Imaginary part may have been lost.
+        if(as.character(imag_id) %in% names(solution@primal_vars)) {
+          imag_val <- solution@primal_vars[[as.character(imag_id)]]
+          pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*(imag_val - t(imag_val))/2
+        } else
+          pvars[[vid]] <- solution@primal_vars[[vid]]
       } else if(is_complex(var)) {
         imag_id <- inverse_data@real2imag[[vid]]
-        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[imag_id]]
+        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[as.character(imag_id)]]
       }
     }
 
@@ -65,14 +70,14 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
         dvars[[vid]] <- solution@dual_vars[[cid]]
       else if(is_imag(cons)) {
         imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- 1i*solution@dual_vars[[imag_id]]
+        dvars[[cid]] <- 1i*solution@dual_vars[[as.character(imag_id)]]
       # For equality and inequality constraints.
       } else if((is(cons, "ZeroConstraint") || is(cons, "EqConstraint") || is(cons, "NonPosConstraint")) && is_complex(cons)) {
         imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
+        dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[as.character(imag_id)]]
       # For PSD constraints.
       } else if(is(cons, "PSDConstraint") && is_complex(cons)) {
-        n <- cons@args[[1]]@dim[1]
+        n <- nrow(cons@args[[1]])
         dual <- solution@dual_vars[[cid]]
         dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual), (n+1):ncol(dual)]
       } else
@@ -91,8 +96,8 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
     imag_args <- list()
     for(arg in expr@args) {
       canon <- Complex2Real.canonicalize_tree(arg, real2imag, leaf_map)
-      real_args <- c(real_args, canon[[1]])
-      imag_args <- c(imag_args, canon[[2]])
+      real_args <- c(real_args, list(canon[[1]]))
+      imag_args <- c(imag_args, list(canon[[2]]))
     }
     outs <- Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
     return(list(real_out = outs[[1]], imag_out = outs[[2]]))
@@ -101,49 +106,50 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
 
 Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
   if(class(expr) %in% names(Complex2Real.CANON_METHODS)) {
+    expr_id <- as.character(id(expr))
     # Only canonicalize a variable/constant/parameter once.
-    if(length(expr@args) == 0 && expr %in% leaf_map)
-      return(leaf_map[expr])
+    if(length(expr@args) == 0 && expr_id %in% names(leaf_map))
+      return(leaf_map[[expr_id]])
     result <- Complex2Real.CANON_METHODS[[class(expr)]](expr, real_args, imag_args, real2imag)
     if(length(expr@args) == 0)
-      leaf_map[expr] <- result
+      leaf_map[[expr_id]] <- result
     return(result)
   } else {
-    if(!all(sapply(imag_args, function(v) { is.na(v) || is.null(v) })))
-      stop("Not all imaginary arguments are NA or NULL")
-    return(list(copy(expr, real_args), NA))
+    if(!all(sapply(imag_args, is.null)))
+      stop("Not all imaginary arguments are NULL")
+    return(list(copy(expr, real_args), NULL))
   }
 }
 
 # Atom canonicalizers.
 Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
-  if(is.na(real_args[[1]]))   # Imaginary
+  if(is.null(real_args[[1]]))   # Imaginary
     output <- abs(imag_args[[1]])
-  else if(is.na(imag_args[[1]]))   # Real
+  else if(is.null(imag_args[[1]]))   # Real
     output <- abs(real_args[[1]])
   else {   # Complex
     real <- flatten(real_args[[1]])
     imag <- flatten(imag_args[[1]])
-    norms <- p_norm(vstack(real, imag), p = 2, axis = 2)
+    norms <- p_norm(hstack(real, imag), p = 2, axis = 1)
     output <- reshape_expr(norms, dim(real_args[[1]]))
   }
-  return(list(output, NA))
+  return(list(output, NULL))
 }
 
 # Affine canonicalization.
 Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize linear functions that are separable in real and imaginary parts.
-  if(all(is.na(imag_args)))
-    outputs <- list(copy(expr, real_args), NA)
-  else if(all(is.na(real_args)))
-    ouputs <- list(NA, copy(expr, imag_args))
+  if(all(sapply(imag_args, is.null)))
+    outputs <- list(copy(expr, real_args), NULL)
+  else if(all(sapply(real_args, is.null)))
+    outputs <- list(NULL, copy(expr, imag_args))
   else {   # Mixed real and imaginary arguments.
-    for(idx in length(real_args)) {
-      real_val <- real_args[idx]
-      if(is.na(real_val))
-        real_args[idx] <- Constant(matrix(0, nrow = nrow(imag_args[idx]), ncol = ncol(imag_args[idx])))
-      else if(is.na(imag_args[idx]))
-        imag_args[idx] <- Constant(matrix(0, nrow = nrow(real_args[idx]), ncol = ncol(real_args[idx])))
+    for(idx in seq_along(real_args)) {
+      real_val <- real_args[[idx]]
+      if(is.null(real_val))
+        real_args[[idx]] <- Constant(matrix(0, nrow = nrow(imag_args[[idx]]), ncol = ncol(imag_args[[idx]])))
+      else if(is.null(imag_args[[idx]]))
+        imag_args[[idx]] <- Constant(matrix(0, nrow = nrow(real_args[[idx]]), ncol = ncol(real_args[[idx]])))
     }
     outputs <- list(copy(expr, real_args), copy(expr, imag_args))
   }
@@ -151,16 +157,24 @@ Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) 
 }
 
 Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
-  list(real_args[[1]], NA)
+  # If no real arguments, return zero.
+  if(is.null(real_args[[1]]))
+    return(list(0, NULL))
+  else
+    return(list(real_args[[1]], NULL))
 }
 
 Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
-  list(imag_args[[1]], NA)
+  # If no imaginary arguments, return zero.
+  if(is.null(imag_args[[1]]))
+    return(list(0, NULL))
+  else
+    return(list(imag_args[[1]], NULL))
 }
 
 Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
-  if(is.na(imag_args[[1]]))
-    imag_arg <- NA
+  if(is.null(imag_args[[1]]))
+    imag_arg <- NULL
   else
     imag_arg <- -imag_args[[1]]
   return(list(real_args[[1]], imag_arg))
@@ -168,8 +182,8 @@ Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
 
 Complex2Real.join <- function(expr, lh_arg, rh_arg) {
   # Helper function to combine arguments.
-  if(is.na(lh_arg) || is.na(rh_arg))
-    return(NA)
+  if(is.null(lh_arg) || is.null(rh_arg))
+    return(NULL)
   else
     return(copy(expr, list(lh_arg, rh_arg)))
 }
@@ -177,14 +191,14 @@ Complex2Real.join <- function(expr, lh_arg, rh_arg) {
 Complex2Real.add <- function(lh_arg, rh_arg, neg = FALSE) {
   # Helper function to sum arguments.
   # Negates rh_arg if neg is TRUE.
-  if(!is.na(rh_arg) && neg)
+  if(!is.null(rh_arg) && neg)
     rh_arg <- -rh_arg
 
-  if(is.na(lh_arg) && is.na(rh_arg))
-    return(NA)
-  else if(is.na(lh_arg))
+  if(is.null(lh_arg) && is.null(rh_arg))
+    return(NULL)
+  else if(is.null(lh_arg))
     return(rh_arg)
-  else if(is.na(rh_arg))
+  else if(is.null(rh_arg))
     return(lh_arg)
   else
     return(lh_arg + rh_arg)
@@ -197,15 +211,15 @@ Complex2Real.binary_canon <- function(expr, real_args, imag_args, real2imag) {
   real_by_imag <- Complex2Real.join(expr, real_args[[1]], imag_args[[2]])
   imag_by_real <- Complex2Real.join(expr, imag_args[[1]], real_args[[2]])
   real_output <- Complex2Real.add(real_by_real, imag_by_imag, neg = TRUE)
-  imag_output <- Complex2Real.add(real_by_imag, imag_by_real, neg = TRUE)
+  imag_output <- Complex2Real.add(real_by_imag, imag_by_real, neg = FALSE)
   return(list(real_output, imag_output))
 }
 
 Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
-    return(list(Constant(Re(value(expr))), NA))
+    return(list(Constant(Re(value(expr))), NULL))
   else if(is_imag(expr))
-    return(list(NA, Constant(Im(value(expr)))))
+    return(list(NULL, Constant(Im(value(expr)))))
   else
     return(list(Constant(Re(value(expr))), Constant(Im(value(expr)))))
 }
@@ -217,17 +231,16 @@ Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
 # are eigenvectors with same eigenvalue.
 # Thus each eigenvalue is repeated twice.
 Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
-  # Canonicalize functions taht take a Hermitian matrix.
-  if(is.na(imag_args[[1]]))
+  # Canonicalize functions that take a Hermitian matrix.
+  if(is.null(imag_args[[1]]))
     mat <- real_args[[1]]
   else {
-    if(is.na(real_args[[1]]))
+    if(is.null(real_args[[1]]))
       real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
     mat <- bmat(list(list(real_args[[1]], -imag_args[[1]]),
-                     list(imag_args[[1]], real_args[[1]])
-                ))
+                     list(imag_args[[1]], real_args[[1]])))
   }
-  return(list(copy(expr, list(mat)), NA))
+  return(list(copy(expr, list(mat)), NULL))
 }
 
 Complex2Real.norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -236,7 +249,7 @@ Complex2Real.norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
   canon <- Complex2Real.hermitian_canon(expr, real_args, imag_args, real2imag)
   real <- canon[[1]]
   imag <- canon[[2]]
-  if(!is.na(imag_args[[1]]))
+  if(!is.null(imag_args[[1]]))
     real <- real/2
   return(list(real, imag))
 }
@@ -248,14 +261,14 @@ Complex2Real.lambda_sum_largest_canon <- function(expr, real_args, imag_args, re
   real <- canon[[1]]
   imag <- canon[[2]]
   real@k <- 2*real@k
-  if(!is.na(imag_args[[1]]))
+  if(!is.null(imag_args[[1]]))
     real <- real/2
   return(list(real, imag))
 }
 
 Complex2Real.at_least_2D <- function(expr) {
   # Upcast 0D and 1D to 2D.
-  if(ndim(expr) < 2)
+  if(length(dim(expr)) < 2)
     return(reshape_expr(expr, c(size(expr), 1)))
   else
     return(expr)
@@ -263,52 +276,69 @@ Complex2Real.at_least_2D <- function(expr) {
 
 Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
   # Convert quad_form to real.
-  if(is.na(imag_args[[1]])) {
+  if(is.null(imag_args[[1]])) {
     vec <- real_args[[1]]
     mat <- real_args[[2]]
-  } else if(is.na(real_args[[1]])) {
+  } else if(is.null(real_args[[1]])) {
     vec <- imag_args[[1]]
     mat <- real_args[[2]]
   } else {
-    vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
-                       Complex2Real.at_least_2D(imag_args[[1]])))
-    if(is.na(real_args[[2]]))
+    vec <- vstack(Complex2Real.at_least_2D(real_args[[1]]),
+                  Complex2Real.at_least_2D(imag_args[[1]]))
+    if(is.null(real_args[[2]]))
       real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
-    else if(is.na(imag_args[[2]]))
+    else if(is.null(imag_args[[2]]))
       imag_args[[2]] <- matrix(0, nrow = nrow(real_args[[2]]), ncol = ncol(real_args[[2]]))
     mat <- bmat(list(list(real_args[[2]], -imag_args[[2]]),
                      list(imag_args[[2]], real_args[[2]])
                 ))
-    # HACK TODO
-    mat <- Constant(value(mat))
+    # mat <- Constant(value(mat))
+    mat <- PSDWrap(mat)
   }
-  return(list(copy(expr, list(vec, mat)), NA))
+  return(list(copy(expr, list(vec, mat)), NULL))
+}
+
+Complex2Real.quad_over_lin_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Convert quad_over_lin to real.
+  mat <- bmat(list(real_args[[1]], imag_args[[1]]))
+  return(list(copy(expr, list(mat, real_args[[2]])), NULL))
 }
 
 Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   # Convert matrix_frac to real.
-  if(is.na(real_args[[1]]))
+  if(is.null(real_args[[1]]))
     real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
-  if(is.na(imag_args[[1]]))
+  if(is.null(imag_args[[1]]))
     imag_args[[1]] <- matrix(0, nrow = nrow(real_args[[1]]), ncol = ncol(real_args[[1]]))
-  vec <- vstack(list(Complex2Real.at_least_2D(real_args[[1]]),
-                     Complex2Real.at_least_2D(imag_args[[1]])))
-  if(is.na(real_args[[2]]))
+  vec <- vstack(Complex2Real.at_least_2D(real_args[[1]]),
+                Complex2Real.at_least_2D(imag_args[[1]]))
+  if(is.null(real_args[[2]]))
     real_args[[2]] <- matrix(0, nrow = nrow(imag_args[[2]]), ncol = ncol(imag_args[[2]]))
-  else if(is.na(imag_args[[2]]))
+  else if(is.null(imag_args[[2]]))
     imag_args[[2]] <- matrix(0, nrow = nrow(real_args[[2]]), ncol = ncol(real_args[[2]]))
   mat <- bmat(list(list(real_args[[2]], -imag_args[[2]]),
                    list(imag_args[[2]], real_args[[2]])
               ))
-  return(list(copy(expr, list(vec, mat)), NA))
+  return(list(copy(expr, list(vec, mat)), NULL))
+}
+
+Complex2Real.nonpos_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(imag_args[[1]]))
+    return(list(list(copy(expr, real_args)), NULL))
+  
+  imag_cons <- list(NonPosConstraint(imag_args[[1]], id = real2imag[[as.character(id(expr))]]))
+  if(is.null(real_args[[1]]))
+    return(list(NULL, imag_cons))
+  else
+    return(list(list(copy(expr, real_args)), imag_cons))
 }
 
 Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
-    return(list(expr, NA))
+    return(list(expr, NULL))
   else if(is_imag(expr)) {
     imag <- CallbackParam(function() { list(Im(value(expr)), dim(expr)) })
-    return(list(NA, imag))
+    return(list(NULL, imag))
   } else {
     real <- CallbackParam(function() { list(Re(value(expr)), dim(expr)) })
     imag <- CallbackParam(function() { list(Im(value(expr)), dim(expr)) })
@@ -319,31 +349,65 @@ Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
 Complex2Real.pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
   abs_args <- Complex2Real.abs_canon(expr, real_args, imag_args, real2imag)
   abs_real_args <- abs_args[[1]]
-  return(list(copy(expr, list(abs_real_args)), NA))
+  return(list(copy(expr, list(abs_real_args)), NULL))
+}
+
+Complex2Real.psd_canon <- function(expr, real_args, imag_args, real2imag) {
+  # Canonicalize functions that take a Hermitian matrix.
+  if(is.null(imag_args[[1]]))
+    mat <- real_args[[1]]
+  else {
+    if(is.null(real_args[[1]]))
+      real_args[[1]] <- matrix(0, nrow = nrow(imag_args[[1]]), ncol = ncol(imag_args[[1]]))
+    mat <- bmat(list(list(real_args[[1]], -imag_args[[1]]),
+                     list(imag_args[[1]], real_args[[1]])))
+  }
+  return(list(list(copy(expr, list(mat))), NULL))
+}
+
+Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(real_args[[2]]))   # Imaginary.
+    output <- list(SOC(real_args[[1]], imag_args[[2]], axis = expr@axis, id = real2imag[[as.character(expr@id)]]))
+  else if(is.null(imag_args[[2]]))   # Real.
+    output <- list(SOC(real_args[[1]], real_args[[2]], axis = expr@axis, id = expr@id))
+  else {   # Complex.
+    orig_dim <- dim(real_args[[2]])
+    real <- flatten(real_args[[2]])
+    imag <- flatten(imag_args[[2]])
+    flat_X <- new("Variable", dim = dim(real))
+    inner_SOC <- SOC(flat_X, vstack(real, imag), axis = 1)   # TODO: Check the axis here is correct.
+    real_X <- reshape_expr(flat_X, orig_dim)
+    outer_SOC <- SOC(real_args[[1]], real_X, axis = expr@axis, id = expr@id)
+    output <- list(inner_SOC, outer_SOC)
+  }
+  return(list(output, NULL))
 }
 
 Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is_real(expr))
-    return(list(expr, NA))
+    return(list(expr, NULL))
 
-  imag <- Variable(dim(expr), var_id = real2imag[[as.character(id(expr))]])
+  # imag <- Variable(dim(expr), id = real2imag[[as.character(id(expr))]])
+  imag <- new("Variable", dim = dim(expr), id = real2imag[[as.character(expr@id)]])
   if(is_imag(expr))
-    return(list(NA, imag))
+    return(list(NULL, imag))
   else if(is_complex(expr) && is_hermitian(expr))
-    return(list(Variable(dim(expr), var_id = id(expr), symmetric = TRUE), (imag - t(imag))/2))
+    # return(list(Variable(dim(expr), id = id(expr), symmetric = TRUE), (imag - t(imag))/2))
+    return(list(new("Variable", dim = dim(expr), id = expr@id, symmetric = TRUE), (imag - t(imag))/2))
   else   # Complex.
-    return(list(Variable(dim(expr), var_id = id(expr)), imag))
+    # return(list(Variable(dim(expr), id = id(expr)), imag))
+    return(list(new("Variable", dim = dim(expr), id = expr@id), imag))
 }
 
 Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {
-  if(is.na(imag_args[[1]]))
-    return(list(copy(expr, real_args), NA))
+  if(is.null(imag_args[[1]]))
+    return(list(list(copy(expr, real_args)), NULL))
 
-  imag_cons <- ZeroConstraint(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]])
-  if(is.na(real_args[[1]]))
-    return(list(NA, imag_cons))
+  imag_cons <- list(ZeroConstraint(imag_args[[1]], id = real2imag[[as.character(id(expr))]]))
+  if(is.null(real_args[[1]]))
+    return(list(NULL, imag_cons))
   else
-    return(list(copy(expr, real_args), imag_cons))
+    return(list(list(copy(expr, real_args)), imag_cons))
 }
 
 Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
@@ -374,8 +438,10 @@ Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
                                    Variable = Complex2Real.variable_canon,
                                    Constant = Complex2Real.constant_canon,
                                    Parameter = Complex2Real.param_canon,
-                                   Zero = Complex2Real.zero_canon,
-                                   PSD = Complex2Real.hermitian_canon,
+                                   NonPosConstraint = Complex2Real.nonpos_canon,
+                                   PSDConstraint = Complex2Real.psd_canon,
+                                   SOC = Complex2Real.soc_canon,
+                                   ZeroConstraint = Complex2Real.zero_canon,
                                    
                                    Abs = Complex2Real.abs_canon,
                                    Norm1 = Complex2Real.pnorm_canon,
@@ -387,5 +453,6 @@ Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
                                    NormNuc = Complex2Real.norm_nuc_canon,
                                    SigmaMax = Complex2Real.hermitian_canon,
                                    QuadForm = Complex2Real.quad_canon,
+                                   QuadOverLin = Complex2Real.quad_over_lin_canon,
                                    MatrixFrac = Complex2Real.matrix_frac_canon,
                                    LambdaSumLargest = Complex2Real.lambda_sum_largest_canon)

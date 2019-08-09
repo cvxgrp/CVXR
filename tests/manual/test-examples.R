@@ -37,13 +37,13 @@ test_that("Test examples from the README", {
 
 ###########################################
     ## Positive scalar parameter
-    m <- Parameter(sign = "positive")
+    m <- Parameter(nonneg = TRUE)
 
     ## Column vector parameter with unknown sign (by default)
     c <- Parameter(5)
 
     ## Matrix parameter with negative entries
-    G <- Parameter(4, 7, sign = "negative")
+    G <- Parameter(4, 7, nonpos = TRUE)
 
     ## Assigns a constant value to G
     value(G) <- -matrix(1, nrow = 4, ncol = 7)
@@ -65,7 +65,7 @@ test_that("Test examples from the README", {
     m <- 5
     A <- matrix(stats::rnorm(n*m), nrow = n, ncol = m)
     b <- matrix(stats::rnorm(n), nrow = n, ncol = 1)
-    gamma <- Parameter(sign = "positive")
+    gamma <- Parameter(nonneg = TRUE)
 
     ## Construct the problem
     x <- Variable(m)
@@ -90,7 +90,7 @@ test_that("Test examples from the README", {
     mu <- matrix(stats::rnorm(n), nrow = 1, ncol = n)
     sigma <- matrix(stats::rnorm(n^2), nrow = n, ncol = n)
     sigma <- t(sigma) %*% sigma
-    gamma <- Parameter(sign = "positive")
+    gamma <- Parameter(nonneg = TRUE)
     value(gamma) <- 1
     x <- Variable(n)
 
@@ -125,7 +125,7 @@ test_that("Test examples from the README", {
     data <- c(data1, data2)
 
     ## Construct problem
-    gamma <- Parameter(sign = "positive")
+    gamma <- Parameter(nonneg = TRUE)
     value(gamma) <- 0.1
     a <- Variable(n)
     b <- Variable()
@@ -194,7 +194,8 @@ test_that("Test the log_sum_exp function", {
     X <- matrix(1, nrow = m, ncol = n)
     w <- Variable(n)
 
-    expr2 <- lapply(1:m, function(i) { log_sum_exp(vstack(0, X[i,] %*% w)) })
+    # expr2 <- lapply(1:m, function(i) { log_sum_exp(vstack(0, X[i,] %*% w)) })
+    expr2 <- lapply(1:m, function(i) { log_sum_exp(vstack(0, matrix(X[i,], nrow = 1) %*% w)) })
     expr3 <- Reduce("+", expr2)
     obj <- Minimize(expr3)
     p <- Problem(obj)

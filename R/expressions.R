@@ -12,7 +12,7 @@ setOldClass("data.frame")
 setOldClass("matrix")
 setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 
-setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "numeric", "dMatrix"))
+setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "numeric", "complex", "dMatrix"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ConstValORNULL", c("ConstVal", "NULL"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))
@@ -170,13 +170,13 @@ setMethod("is_psd", "Expression", function(object) { FALSE })
 setMethod("is_nsd", "Expression", function(object) { FALSE })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
-setMethod("is_quadratic", "Expression", function(object) { FALSE })
+setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is symmetric.
 setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
-setMethod("is_pwl", "Expression", function(object) { FALSE })
+setMethod("is_pwl", "Expression", function(object) { is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic of piecewise affine.
 setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
@@ -539,6 +539,7 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #'
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
+#' @slot id (Internal) A unique integer identification number used internally.
 #' @slot args A list containing the arguments.
 #' @name Leaf-class
 #' @aliases Leaf
@@ -604,9 +605,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
 
   if(!is.na(value))
     .Object@value <- value
-  .Object@args <- list()
-  .Object
-  # callNextMethod(.Object, ...)
+  callNextMethod(.Object, ...)
 })
 
 setMethod("get_attr_str", "Leaf", function(object) {
@@ -614,16 +613,21 @@ setMethod("get_attr_str", "Leaf", function(object) {
   attr_str <- ""
   for(attr in names(object@attributes)) {
     val <- object@attributes[[attr]]
-    if(attr != "real" && !is.null(val))
-      attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
+    if(attr != "real" && !is.null(val)) {
+      if(nchar(attr_str) == 0)
+        attr_str <- sprintf("%s=%s", attr, val)
+      else
+        attr_str <- paste(attr_str, sprintf("%s=%s", attr, val), sep = ", ")
+    }
   }
   attr_str
 })
 
 # TODO: Get rid of this and just skip calling copy on Leaf objects.
 setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
-  if("id" %in% names(attributes(object)) && as.character(object@id) %in% id_objects)
-    return(id_objects[[object@id]])
+  # if("id" %in% names(attributes(object)) && as.character(object@id) %in% names(id_objects))
+  if(!is.na(object@id) && as.character(object@id) %in% names(id_objects))
+    return(id_objects[[as.character(object@id)]])
   return(object)   # Leaves are not deep copied.
 })
 

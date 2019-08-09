@@ -18,7 +18,7 @@ setMethod("sign_from_args", "AffAtom", function(object) { sum_signs(object@args)
 setMethod("is_imag", "AffAtom", function(object) { all(sapply(object@args, is_imag)) })
 
 #' @describeIn AffAtom Is the atom complex valued?
-setMethod("is_complex", "AffAtom", function(object) { all(sapply(object@args, is_complex)) })
+setMethod("is_complex", "AffAtom", function(object) { any(sapply(object@args, is_complex)) })
 
 #' @describeIn AffAtom The atom is convex.
 setMethod("is_atom_convex", "AffAtom", function(object) { TRUE })
@@ -488,7 +488,7 @@ setMethod("op_name", "DivExpression", function(object) { "/" })
 #' @describeIn DivExpression Matrix division by a scalar.
 setMethod("to_numeric", "DivExpression", function(object, values) {
   if(!is.null(dim(values[[2]])) && prod(dim(values[[2]])) == 1)
-    values[[2]] <- as.numeric(values[[2]])
+    values[[2]] <- as.vector(values[[2]])[1]
   return(values[[1]] / values[[2]])
 })
 
@@ -918,10 +918,10 @@ Diff <- function(x, lag = 1, k = 1, axis = 1) {
 #' @rdname HStack-class
 HStack <- function(...) {
   arg_list <- lapply(list(...), as.Constant)
-  for(idx in length(arg_list)) {
+  for(idx in seq_along(arg_list)) {
     arg <- arg_list[[idx]]
     if(ndim(arg) == 0)
-      arg_list[[idx]] <- as.vector(arg)
+      arg_list[[idx]] <- flatten(arg)
   }
   .HStack(atom_args = arg_list)
 }
@@ -936,7 +936,7 @@ setMethod("dim_from_args", "HStack", function(object) {
   if(ndim(object@args[[1]]) == 1)
     # return(c(sum(sapply(object@args, size)), NA))
     return(c(sum(sapply(object@args, size)), 1))
-  else{
+  else {
     cols <- sum(sapply(object@args, function(arg) { dim(arg)[2] }))
     arg_dim <- dim(object@args[[1]])
     dims <- c(arg_dim[1], cols)
@@ -1003,7 +1003,7 @@ setMethod("cbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 Imag <- function(expr) { .Imag(expr = expr) }
 
 setMethod("initialize", "Imag", function(.Object, ..., expr) {
-  .Object@expr
+  .Object@expr <- expr
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
@@ -1091,8 +1091,8 @@ setMethod("graph_implementation", "Index", function(object, arg_objs, dim, data 
 #' @name SpecialIndex-class
 #' @aliases SpecialIndex
 #' @rdname SpecialIndex-class
-.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "ConstVal", .dim = "numeric"),
-                          prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
+.SpecialIndex <- setClass("SpecialIndex", representation(expr = "Expression", key = "list", .select_mat = "ConstVal", .dim = "NumORNULL"),
+                                          prototype(.select_mat = NA_real_, .dim = NA_real_), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param key A list containing the start index, end index, and step size of the slice.
@@ -1271,7 +1271,7 @@ setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
 
 #' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
-  array(1, dim = object@promoted_dim) * as.numeric(values[[1]])
+  array(1, dim = object@promoted_dim) * as.vector(values[[1]])[1]
 })
 
 #' @describeIn Promote Is the expression symmetric?
@@ -1316,10 +1316,10 @@ setMethod("graph_implementation", "Promote", function(object, arg_objs, dim, dat
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @rdname Real-class
-Imag <- function(expr) { .Real(expr = expr) }
+Real <- function(expr) { .Real(expr = expr) }
 
 setMethod("initialize", "Real", function(.Object, ..., expr) {
-  .Object@expr
+  .Object@expr <- expr
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
@@ -1721,10 +1721,63 @@ setMethod("graph_implementation", "VStack", function(object, arg_objs, dim, data
   VStack.graph_implementation(arg_objs, dim, data)
 })
 
+#'
+#' The Wrap class.
+#'
+#' This virtual class represents a no-op wrapper to assert properties.
+#'
+#' @name Wrap-class
+#' @aliases Wrap
+#' @rdname Wrap-class
+Wrap <- setClass("Wrap", contains = c("VIRTUAL", "AffAtom"))
+
+#' @param object A \linkS4class{Wrap} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Wrap Returns the input value.
+setMethod("to_numeric", "Wrap", function(object, values) { values[[1]] })
+
+#' @describeIn Wrap The dimensions of the atom.
+setMethod("dim_from_args", "Wrap", function(object) { dim(object@args[[1]]) })
+
+#' @describeIn Wrap Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Wrap", function(object) { TRUE })
+
+#' @describeIn Wrap Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Wrap", function(object) { TRUE })
+
+Wrap.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(arg_objs[[1]], list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn Wrap The graph implementation of the atom.
+setMethod("graph_implementation", "Wrap", function(object, arg_objs, dim, data = NA_real_) {
+  Wrap.graph_implementation(arg_objs, dim, data)
+})
+
+#'
+#' The PSDWrap class.
+#'
+#' A no-op wrapper to assert the input argument is positive semidefinite.
+#'
+#' @name PSDWrap-class
+#' @aliases PSDWrap
+#' @rdname PSDWrap-class
+.PSDWrap <- setClass("PSDWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname PSDWrap-class
+PSDWrap <- function(arg) { .PSDWrap(atom_args = list(arg)) }
+
+#' @describeIn PSDWrap Is the atom positive semidefinite?
+setMethod("is_psd", "PSDWrap", function(object) { TRUE })
+
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
 
 Bmat <- function(block_lists) {
-  row_blocks <- lapply(block_lists, function(blocks) { .HStack(atom_args = blocks) })
-  .VStack(atom_args = row_blocks)
+  row_blocks <- lapply(block_lists, function(blocks) { do.call("HStack", blocks) })
+  do.call("VStack", row_blocks)
 }

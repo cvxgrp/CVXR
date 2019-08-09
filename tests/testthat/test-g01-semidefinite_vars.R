@@ -1,4 +1,4 @@
-context("test-g01-semidefinite_vars.R")
+context("test-g01-semidefinite_vars")
 TOL <- 1e-6
 
 X <- Variable(2, 2, PSD = TRUE)

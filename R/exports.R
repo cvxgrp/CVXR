@@ -1354,7 +1354,12 @@ setMethod("exp", "Expression", function(x) { Exp(x = x) })
 #' @aliases log log10 log2 log1p
 #' @rdname log
 #' @export
-setMethod("log", "Expression", function(x, base = base::exp(1)) { Log(x = x)/base::log(base) })
+setMethod("log", "Expression", function(x, base = base::exp(1)) {
+  if(base == base::exp(1))
+    Log(x = x)
+  else
+    Log(x = x)/base::log(base)
+})
 
 #' @docType methods
 #' @rdname log
@@ -1503,14 +1508,13 @@ hstack <- HStack
 #' This function vectorizes an expression, then unvectorizes it into a new shape. Entries are stored in column-major order.
 #'
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
-#' @param rows The new number of rows.
-#' @param cols The new number of columns.
+#' @param new_dim The new dimensions.
 #' @return An \linkS4class{Expression} representing the reshaped input.
 #' @examples
 #' x <- Variable(4)
 #' mat <- cbind(c(1,-1), c(2,-2))
 #' vec <- matrix(1:4)
-#' expr <- reshape_expr(x,2,2)
+#' expr <- reshape_expr(x,c(2,2))
 #' obj <- Minimize(sum(mat %*% expr))
 #' prob <- Problem(obj, list(x == vec))
 #' result <- solve(prob)
@@ -1518,17 +1522,17 @@ hstack <- HStack
 #'
 #' A <- Variable(2,2)
 #' c <- 1:4
-#' expr <- reshape_expr(A,4,1)
+#' expr <- reshape_expr(A,c(4,1))
 #' obj <- Minimize(t(expr) %*% c)
 #' constraints <- list(A == cbind(c(-1,-2), c(3,4)))
 #' prob <- Problem(obj, constraints)
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(expr)
-#' result$getValue(reshape_expr(expr,2,2))
+#' result$getValue(reshape_expr(expr,c(2,2)))
 #'
 #' C <- Variable(3,2)
-#' expr <- reshape_expr(C,2,3)
+#' expr <- reshape_expr(C,c(2,3))
 #' mat <- rbind(c(1,-1), c(2,-2))
 #' C_mat <- rbind(c(1,4), c(2,5), c(3,6))
 #' obj <- Minimize(sum(mat %*% expr))
@@ -1539,14 +1543,14 @@ hstack <- HStack
 #'
 #' a <- Variable()
 #' c <- cbind(c(1,-1), c(2,-2))
-#' expr <- reshape_expr(c * a,1,4)
+#' expr <- reshape_expr(c * a,c(1,4))
 #' obj <- Minimize(expr %*% (1:4))
 #' prob <- Problem(obj, list(a == 2))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(expr)
 #'
-#' expr <- reshape_expr(c * a,4,1)
+#' expr <- reshape_expr(c * a,c(4,1))
 #' obj <- Minimize(t(expr) %*% (1:4))
 #' prob <- Problem(obj, list(a == 2))
 #' result <- solve(prob)
@@ -1821,3 +1825,53 @@ setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(l
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
+
+
+#'
+#' Complex Numbers
+#'
+#' Basic atoms that support complex arithmetic.
+#' 
+#' @param z An \linkS4class{Expression} object.
+#' @return An \linkS4class{Expression} object that represents the real, imaginary, or complex conjugate.
+#' @name complex-atoms
+NULL
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Re", "Expression", function(z) { Real(z) })
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Im", "Expression", function(z) { Imag(z) })
+
+#' @rdname complex-atoms
+#' @export
+setMethod("Conj", "Expression", function(z) { Conjugate(z) })
+
+#'
+#' Product of Entries
+#'
+#' The product of entries in a vector or matrix.
+#'
+#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @return An \linkS4class{Expression} representing the product of the entries of the input.
+#' @examples
+#' x <- Variable(2)
+#' prob <- Problem(Minimize(prod_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(x)
+#'
+#' C <- Variable(3,2)
+#' prob <- Problem(Maximize(prod_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(C)
+#' @docType methods
+#' @name prod_entries
+#' @aliases prod
+#' @rdname prod_entries
+#' @export
+prod_entries <- ProdEntries

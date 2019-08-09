@@ -26,10 +26,12 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   
   # Map of real to imaginary parts of complex variables
   var_comp <- Filter(is_complex, varis)
-  .Object@real2imag <- stats::setNames(var_comp, sapply(var_comp, function(var) { as.character(id(var)) }))
+  .Object@real2imag <- lapply(seq_along(var_comp), function(i) { get_id() })
+  names(.Object@real2imag) <- sapply(var_comp, function(var) { as.character(id(var)) })
   constrs <- constraints(problem)
   constr_comp <- Filter(is_complex, constrs)
-  constr_dict <- stats::setNames(constr_comp, sapply(constr_comp, function(cons) { as.character(id(cons)) }))
+  constr_dict <- lapply(seq_along(constr_comp), function(i) { get_id() })
+  names(constr_dict) <- sapply(constr_comp, function(cons) { as.character(id(cons)) })
   .Object@real2imag <- utils::modifyList(.Object@real2imag, constr_dict)
   
   # Map of constraint id to constraint

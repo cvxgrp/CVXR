@@ -2,15 +2,14 @@
 #' The Variable class.
 #'
 #' This class represents an optimization variable.
-#'
+#' 
 #' @slot dim The dimensions of the variable.
 #' @slot name (Optional) A character string representing the name of the variable.
-#' @slot var_id (Internal) A unique identification number used internally.
 #' @name Variable-class
 #' @aliases Variable
 #' @rdname Variable-class
-.Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", id = "integer", value = "ConstVal"),
-                                  prototype(dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_), 
+.Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", value = "ConstVal"),
+                                  prototype(dim = NULL, name = NA_character_, value = NA_real_), 
                                   validity = function(object) {
                                     if(!is.na(object@value))
                                       stop("[Variable: validation] value is an internal slot and should not be set by the user")
@@ -36,9 +35,9 @@
 #' canonicalize(y)
 #' @export
 # Variable <- function(dim = NULL, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = dim, name = name, id = id, ...) }
-Variable <- function(rows = 1, cols = 1, name = NA_character_, id = NA_integer_, ...) { .Variable(dim = c(rows, cols), name = name, id = id, ...) }
+Variable <- function(rows = 1, cols = 1, name = NA_character_, ...) { .Variable(dim = c(rows, cols), name = name, ...) }
 
-setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, id = NA_integer_, value = NA_real_) {
+setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_) {
   if(length(dim) == 0 || is.null(dim))   # Force constants to default to c(1,1).
     dim <- c(1,1)
   else if(length(dim) == 1)   # Treat as a column vector.
@@ -46,7 +45,7 @@ setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA
   else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
     stop("Unimplemented")
   
-  .Object@id <- ifelse(is.na(id), get_id(), id)
+  # .Object@id <- ifelse(is.na(id), get_id(), id)
   if(is.na(name))
     .Object@name <- sprintf("%s%d", VAR_PREFIX, .Object@id)
   else
@@ -72,9 +71,6 @@ setMethod("as.character", "Variable", function(x) {
   else
     paste("Variable(", paste(dim(x), collapse = ", "), ")", sep = "")
 })
-
-#' @describeIn Variable The unique ID of the variable.
-setMethod("id", "Variable", function(object) { object@id })
 
 #' @describeIn Variable The name of the variable.
 #' @export

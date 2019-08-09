@@ -570,8 +570,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   object <- .construct_chains(object, solver = solver, gp = gp)
   
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  data <- tmp[[1]]
-  solving_inverse_data <- tmp[[2]]
+  object@.solving_chain <- tmp[[1]]
+  data <- tmp[[2]]
+  solving_inverse_data <- tmp[[3]]
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
@@ -630,8 +631,9 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
     candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
     tmp <- perform(object@.intermediate_chain, object)
-    object@.intermediate_problem <- tmp[[1]]
-    object@.intermediate_inverse_data <- tmp[[2]]
+    object@.intermediate_chain <- tmp[[1]]
+    object@.intermediate_problem <- tmp[[2]]
+    object@.intermediate_inverse_data <- tmp[[3]]
     
     object@.solving_chain <- construct_solving_chain(object@.intermediate_problem, candidate_solvers)
     object@.cached_chain_key <- chain_key
@@ -648,8 +650,9 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   
   object <- .construct_chains(object, solver = solver, gp = gp)
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  data <- tmp[[1]]
-  solving_inverse_data <- tmp[[2]]
+  object@.solving_chain <- tmp[[1]]
+  data <- tmp[[2]]
+  solving_inverse_data <- tmp[[3]]
   solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, verbose, list(...))
   
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
@@ -845,7 +848,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       vid <- as.character(id(v))
       val <- solution@primal_vars[[vid]]
       if(is.null(dim(val)) || all(dim(val) == 1))
-        val <- as.numeric(val)
+        val <- as.vector(val)
       result[[vid]] <- val
       # result[[vid]] <- solution@primal_vars[[vid]]
     }
@@ -854,7 +857,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       if(cid %in% names(solution@dual_vars)) {
         val <- solution@dual_vars[[cid]]
         if(is.null(dim(val)) || all(dim(val)) == 1)
-          val <- as.numeric(val)
+          val <- as.vector(val)
         result[[cid]] <- val
         # result[[cid]] <- solution@dual_vars[[cid]]
       }
@@ -963,7 +966,7 @@ saveDualValues <- function(object, result_vec, constraints, constr_types) {
     constr_offsets <- integer(0)
     offset <- 0L
     for(constr in constraints) {
-        constr_offsets[as.character(constr_id(constr))] <- offset
+        constr_offsets[as.character(id(constr))] <- offset
         offset <- offset + prod(size(constr))
     }
 

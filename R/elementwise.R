@@ -35,7 +35,7 @@ setMethod("is_symmetric", "Elementwise", function(object) {
 # @return A sparse matrix.
 # @rdname Elementwise-elemwise_grad_to_diag
 Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
-  value <- as.numeric(value)
+  value <- as.vector(value)
   sparseMatrix(i = 1:rows, j = 1:cols, x = value, dims = c(rows, cols))
 }
 
@@ -149,7 +149,7 @@ setMethod("to_numeric", "Entr", function(object, values) {
   # Return -Inf outside the domain
   results[is.na(results)] <- -Inf
   if(all(dim(results) == 1))
-    results <- as.numeric(results)
+    results <- as.vector(results)
   results
 })
 
@@ -281,11 +281,15 @@ setMethod("to_numeric", "Huber", function(object, values) {
   M_val <- value(object@M)
   val <- values[[1]]
   if(is.null(dim(val)))
-    2*huber_loss(M_val, val)
+    result <- 2*huber_loss(M_val, val)
   else if(is.vector(val))
-    2*sapply(val, function(v) { huber_loss(M_val, v) })
+    result <- 2*sapply(val, function(v) { huber_loss(M_val, v) })
   else
-    2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
+    result <- 2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
+  
+  if(all(dim(result) == 1))
+    result <- as.vector(result)
+  return(result)
 })
 
 #' @describeIn Huber The atom is positive.
@@ -678,8 +682,8 @@ setMethod("to_numeric", "MinElemwise", function(object, values) {
 
 #' @describeIn MinElemwise The sign of the atom.
 setMethod("sign_from_args", "MinElemwise", function(object) {
-  is_pos <- any(sapply(object@args, is_nonneg))
-  is_neg <- all(sapply(object@args, is_nonpos))
+  is_pos <- all(sapply(object@args, is_nonneg))
+  is_neg <- any(sapply(object@args, is_nonpos))
   c(is_pos, is_neg)
 })
 

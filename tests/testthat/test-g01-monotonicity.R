@@ -1,5 +1,11 @@
 context("test-g01-monotonicity")
 
+CONSTANT <- "CONSTANT"
+AFFINE <- "AFFINE"
+CONVEX <- "CONVEX"
+CONCAVE <- "CONCAVE"
+UNKNOWN <- "UNKNOWN"
+
 test_that("Test application of DCP composition rules to determine curvature", {
   expr <- 1 + exp(Variable())
   expect_equal(curvature(expr), CONVEX)
@@ -48,7 +54,7 @@ test_that("Test DCP composition rules with signed monotonicity", {
   expr <- abs(log(Variable()))
   expect_equal(curvature(expr), UNKNOWN)
   
-  expr <- abs(square(Variable()))
+  expr <- abs(Variable()^2)
   expect_equal(curvature(expr), CONVEX)
   
   expr <- abs(entr(Variable()))

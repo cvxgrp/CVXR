@@ -231,7 +231,6 @@ as.Constant <- function(expr) {
 #'
 #' This class represents a parameter, either scalar or a matrix.
 #'
-#' @slot id (Internal) A unique integer identification number used internally.
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.
 #' @slot name (Optional) A character string representing the name of the parameter.
@@ -240,7 +239,7 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(id = "integer", dim = "numeric", name = "character", value = "ConstVal"),
+.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", value = "ConstVal"),
                                     prototype(dim = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
@@ -258,8 +257,8 @@ as.Constant <- function(expr) {
 # Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = dim, name = name, value = value, ...) }
 Parameter <- function(rows = 1, cols = 1, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
 
-setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim = NULL, name = NA_character_, value = NA_real_) {
-  .Object@id <- id
+setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_) {
+  .Object@id <- get_id()
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
@@ -267,7 +266,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., id = get_id(), dim =
 
   # Initialize with value if provided
   .Object@value <- value
-  callNextMethod(.Object, ..., dim = dim, value = value)
+  callNextMethod(.Object, ..., id = .Object@id, dim = dim, value = value)
 })
 
 #' @describeIn Parameter Returns \code{list(dim, name, value, attributes)}.
@@ -303,9 +302,9 @@ setMethod("canonicalize", "Parameter", function(object) {
 setMethod("show", "Parameter", function(object) {
   attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
-    paste("Parameter(", paste(dim(object), collapse = ", "), ", ", attr_str, ")", sep = "")
+    cat("Parameter(", paste(dim(object), collapse = ", "), ", ", attr_str, ")", sep = "")
   else
-    paste("Parameter(", paste(dim(object), collapse = ", "), ")", sep = "")
+    cat("Parameter(", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
 #'

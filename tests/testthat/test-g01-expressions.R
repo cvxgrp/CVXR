@@ -1,6 +1,16 @@
 context("test-g01-expressions")
 TOL <- 1e-6
 
+CONSTANT <- "CONSTANT"
+AFFINE <- "AFFINE"
+CONVEX <- "CONVEX"
+CONCAVE <- "CONCAVE"
+UNKNOWN <- "UNKNOWN"
+
+ZERO <- "ZERO"
+NONNEG <- "NONNEGATIVE"
+NONPOS <- "NONPOSITIVE"
+
 a <- Variable(name = "a")
 
 x <- Variable(2, name = "x")
@@ -18,7 +28,7 @@ test_that("Test the Variable class", {
   expect_equal(dim(y), c(1,1))
   expect_equal(curvature(x), AFFINE)
   
-  expect_error(Variable(2,2), diag = TRUE, symmetric = TRUE)
+  expect_error(Variable(2,2, diag = TRUE, symmetric = TRUE))
   expect_error(Variable(2,0))
   expect_error(Variable(2,0.5))
 })
@@ -32,7 +42,7 @@ test_that("Test assigning a value to a variable", {
 
   # Test assigning None
   value(a) <- 1
-  value(a) <- NA
+  value(a) <- NA_real_
   expect_true(is.na(value(a)))
 
   # Vector variable
@@ -89,8 +99,8 @@ test_that("Test the Constant class", {
   expect_equal(value(c), matrix(2))
   expect_equal(dim(c), c(1,1))
   expect_equal(curvature(c), CONSTANT)
-  expect_equal(sign(c), POSITIVE)
-  expect_equal(sign(Constant(-2)), NEGATIVE)
+  expect_equal(sign(c), NONNEG)
+  expect_equal(sign(Constant(-2)), NONPOS)
   expect_equal(sign(Constant(0)), ZERO)
   expect_equal(canonical_form(c)[[1]]$size, c(1,1))
   expect_equal(canonical_form(c)[[2]], list())
@@ -98,8 +108,8 @@ test_that("Test the Constant class", {
   # Test the sign
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
   expect_equal(dim(c), c(1,2))
-  expect_equal(sign(c), POSITIVE)
-  expect_equal(sign(-c), NEGATIVE)
+  expect_equal(sign(c), NONNEG)
+  expect_equal(sign(-c), NONPOS)
   expect_equal(sign(0*c), ZERO)
   c <- Constant(matrix(c(2, -2), nrow = 1, ncol = 2))
   expect_equal(sign(c), UNKNOWN)
@@ -108,10 +118,10 @@ test_that("Test the Constant class", {
   c <- Constant(matrix(c(1,2), nrow = 2, ncol = 1))
   Acon <- Constant(matrix(1, nrow = 2, ncol = 2))
   exp <- t(c) %*% Acon %*% c
-  expect_equal(sign(exp), POSITIVE)
-  expect_equal(sign(t(c) %*% c), POSITIVE)
+  expect_equal(sign(exp), NONNEG)
+  expect_equal(sign(t(c) %*% c), NONNEG)
   exp <- t(t(c))
-  expect_equal(sign(exp), POSITIVE)
+  expect_equal(sign(exp), NONNEG)
   exp <- t(c) %*% A
   expect_equal(sign(exp), UNKNOWN)
 })
@@ -151,11 +161,11 @@ test_that("test the Parameters class", {
 
   # Test assigning NA
   value(p) <- 10
-  value(p) <- NA
+  value(p) <- NA_real_
   expect_true(is.na(value(p)))
 
-  expect_error(p <- Parameter(2, 1, sign = "negative", value = c(2,1)))
-  expect_error(p <- Parameter(4, 3, sign = "positive", value = c(1,2)))
+  expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = c(2,1)))
+  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = c(1,2)))
 })
 
 test_that("test the AddExpression class", {
@@ -322,7 +332,7 @@ test_that("test the NegExpression class", {
   expect_equal(curvature(exp), AFFINE)
   expect_true(is_affine(exp))
   expect_equal(sign(exp), UNKNOWN)
-  expect_false(is_positive(exp))
+  expect_false(is_nonneg(exp))
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
   expect_equal(dim(exp), dim(x))
@@ -339,7 +349,7 @@ test_that("test promotion of scalar constants", {
   expect_equal(curvature(exp), AFFINE)
   expect_true(is_affine(exp))
   expect_equal(sign(exp), UNKNOWN)
-  expect_false(is_negative(exp))
+  expect_false(is_nonpos(exp))
   expect_equal(canonical_form(exp)[[1]]$size, c(2,1))
   expect_equal(canonical_form(exp)[[2]], list())
   expect_equal(dim(exp), c(2,1))

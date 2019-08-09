@@ -1,3 +1,4 @@
+context("test-g03-ls")
 TOL <- 1e-6
 
 test_that("Test regression", {

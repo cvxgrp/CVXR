@@ -76,7 +76,7 @@ test_that("Test the size_metrics method", {
 
   # num_scalar_eq_constr
   n_eq_constr <- size_metrics(p)@num_scalar_eq_constr
-  ref <- size(c2 %*% c1)
+  ref <- prod(dim(c2 %*% c1))
   expect_equal(n_eq_constr, ref)
 
   # num_scalar_leq_constr
@@ -354,7 +354,7 @@ test_that("test problem linear combinations", {
 
 test_that("test solving problems in parallel", {
   p <- Parameter()
-  problem <- Problem(Minimize(square(a) + square(b) + p), list(b >= 2, a >= 1))
+  problem <- Problem(Minimize(a^2 + b^2 + p), list(b >= 2, a >= 1))
   value(p) <- 1
 
   # Ensure that parallel solver still works after repeated calls
@@ -377,7 +377,7 @@ test_that("test solving problems in parallel", {
   # expect_equal(result$getValue(b), 2, tolerance = TOL)
 
   # Ensure that parallel solver works when problem changes
-  problem@objective <- Minimize(square(a) + square(b))
+  problem@objective <- Minimize(a^2 + b^2)
   # result <- solve(problem, parallel = TRUE)
   # expect_equal(result$value, 5.0, tolerance = TOL)
   # expect_equal(tolower(result$status), "optimal")
@@ -782,7 +782,7 @@ test_that("Test the vstack function", {
   expect_equal(result$value, 0, tolerance = TOL)
 
   c <- matrix(c(1,-1), nrow = 2, ncol = 1)
-  p <- Problem(Minimize(t(c) %*% vstack(square(a), sqrt(b))), list(a == 2, b == 16))
+  p <- Problem(Minimize(t(c) %*% vstack(a^2, sqrt(b))), list(a == 2, b == 16))
   expect_error(solve(p))
 })
 
@@ -809,7 +809,7 @@ test_that("Test the hstack function", {
   expect_equal(result$value, 13, tolerance = TOL)
 
   c <- matrix(c(1,-1), nrow = 2, ncol = 1)
-  p <- Problem(Minimize(t(c) %*% t(hstack(t(square(a)), t(sqrt(b))))), list(a == 2, b == 16))
+  p <- Problem(Minimize(t(c) %*% t(hstack(t(a^2), t(sqrt(b))))), list(a == 2, b == 16))
   expect_error(solve(p))
 })
 
@@ -853,7 +853,7 @@ test_that("Test variable transpose", {
   expect_equal(result$value, 6, tolerance = TOL)
 
   c <- cbind(c(1,-1,2), c(1,-1,2))
-  p <- Problem(Minimize(sum_entries(t(square(t(c)))[,1])))
+  p <- Problem(Minimize(sum_entries(t(t(c)^2)[,1])))
   result <- solve(p)
   expect_equal(result$value, 6, tolerance = TOL)
 
@@ -890,7 +890,7 @@ test_that("Test redundant constraints", {
   result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 4, tolerance = TOL)
 
-  obj <- Minimize(sum_entries(square(x)))
+  obj <- Minimize(sum_entries(x^2))
   constraints <- list(x == x)
   p <- Problem(obj, constraints)
   result <- solve(p, solver = "ECOS")
@@ -954,9 +954,9 @@ test_that("Tests a problem with division", {
   expect_equal(result$value, 1, tolerance = TOL)
 })
 
-test_that("Tests problems with mul_elemwise", {
+test_that("Tests problems with multiply", {
   c <- cbind(c(1,-1), c(2,-2))
-  expr <- mul_elemwise(c, A)
+  expr <- multiply(c, A)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(A == 5))
   result <- solve(p)
@@ -965,7 +965,7 @@ test_that("Tests problems with mul_elemwise", {
 
   # Test with a sparse matrix
   c <- sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
-  expr <- mul_elemwise(c, x)
+  expr <- multiply(c, x)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(x == 5))
   result <- solve(p)
@@ -974,7 +974,7 @@ test_that("Tests problems with mul_elemwise", {
 
   # Test promotion
   c <- cbind(c(1,-1), c(2,-2))
-  expr <- mul_elemwise(c, a)
+  expr <- multiply(c, a)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(a == 5))
   result <- solve(p)
@@ -990,14 +990,14 @@ test_that("Tests that errors occur when you use an invalid solver", {
 
 test_that("Tests problems with reshape_expr", {
   # Test on scalars
-  expect_equal(value(reshape_expr(1,1,1)), 1)
+  expect_equal(value(reshape_expr(1,c(1,1))), 1)
 
   # Test vector to matrix
   x <- Variable(4)
   mat <- cbind(c(1,-1), c(2,-2))
   vec <- matrix(1:4)
   vec_mat <- cbind(c(1,2), c(3,4))
-  expr <- reshape_expr(x,2,2)
+  expr <- reshape_expr(x,c(2,2))
   obj <- Minimize(sum_entries(mat %*% expr))
   prob <- Problem(obj, list(x == vec))
   result <- solve(prob)
@@ -1005,17 +1005,17 @@ test_that("Tests problems with reshape_expr", {
 
   # Test on matrix to vector
   c <- 1:4
-  expr <- reshape_expr(A,4,1)
+  expr <- reshape_expr(A,c(4,1))
   obj <- Minimize(t(expr) %*% c)
   constraints <- list(A == cbind(c(-1,-2), c(3,4)))
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$value, 20, tolerance = TOL)
   expect_equal(result$getValue(expr), matrix(c(-1,-2,3,4)))
-  expect_equal(result$getValue(reshape_expr(expr,2,2)), cbind(c(-1,-2), c(3,4)))
+  expect_equal(result$getValue(reshape_expr(expr,c(2,2))), cbind(c(-1,-2), c(3,4)))
 
   # Test matrix to matrix
-  expr <- reshape_expr(C,2,3)
+  expr <- reshape_expr(C,c(2,3))
   mat <- rbind(c(1,-1), c(2,-2))
   C_mat <- rbind(c(1,4), c(2,5), c(3,6))
   obj <- Minimize(sum_entries(mat %*% expr))
@@ -1027,14 +1027,14 @@ test_that("Tests problems with reshape_expr", {
 
   # Test promoted expressions
   c <- cbind(c(1,-1), c(2,-2))
-  expr <- reshape_expr(c * a,1,4)
+  expr <- reshape_expr(c * a,c(1,4))
   obj <- Minimize(expr %*% (1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
   expect_equal(result$value, -6, tolerance = TOL)
   expect_equal(result$getValue(expr), 2*matrix(c, nrow = 1), tolerance = TOL)
 
-  expr <- reshape_expr(c * a,4,1)
+  expr <- reshape_expr(c * a,c(4,1))
   obj <- Minimize(t(expr) %*% (1:4))
   prob <- Problem(obj, list(a == 2))
   result <- solve(prob)
@@ -1322,7 +1322,7 @@ test_that("Test power function", {
   expect_true(abs(1.7*xs^0.7 - 2.3*xs^-3.3 - 0.45*xs^-0.55) <= 1e-3)
 })
 
-test_that("Test a problem with mul_elemwise by a scalar", {
+test_that("Test a problem with multiply by a scalar", {
   Tnum <- 10
   Jnum <- 20
   rvec <- matrix(stats::rnorm(Tnum*Jnum), nrow = Tnum, ncol = Jnum)
@@ -1331,16 +1331,16 @@ test_that("Test a problem with mul_elemwise by a scalar", {
 
   delta <- 1e-3
   loglambda <- rvec %*% theta   # rvec: TxJ regressor matrix, theta: (Jx1) cvx variable
-  a <- mul_elemwise(dy[1:Tnum], loglambda)  # size (Tx1)
+  a <- multiply(dy[1:Tnum], loglambda)  # size (Tx1)
   b1 <- exp(loglambda)
-  b2 <- mul_elemwise(delta, b1)
+  b2 <- multiply(delta, b1)
   cost <- -a + b1
 
   cost <- -a + b2  # size (Tx1)
   prob <- Problem(Minimize(sum_entries(cost)))
   result <- solve(prob, solver = "SCS")
 
-  obj <- Minimize(sum_entries(mul_elemwise(2, x)))
+  obj <- Minimize(sum_entries(multiply(2, x)))
   prob <- Problem(obj, list(x == 2))
   result <- solve(prob)
   expect_equal(result$value, 8, tolerance = TOL)

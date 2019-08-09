@@ -37,15 +37,15 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
-    class(problem@objective) == "Minimize" &&
-        is_affine(problem@objective@expr) &&
+ return(class(problem@objective) == "Minimize" &&
+        is_affine(problem@objective@args[[1]]) &&
         length(convex_attributes(variables(problem))) == 0 &&
-        are_args_affine(problem@constraints)
+        are_args_affine(problem@constraints))
 })
 
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
-  CR <- affine(extractor, problem@objective@expr)
+  CR <- affine(extractor, problem@objective@args[[1]])
   C <- CR[[1]]
   R <- CR[[2]]
 
@@ -85,7 +85,10 @@ Dcp2Cone.entr_canon <- function(expr, args) {
 
   # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(t, x, ones))
   return(list(t, constraints))
 }
@@ -95,7 +98,10 @@ Dcp2Cone.exp_canon <- function(expr, args) {
   x <- promote(args[[1]], expr_dim)
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- list(ExpCone(x, ones, t))
   return(list(t, constraints))
 }
@@ -208,7 +214,10 @@ Dcp2Cone.log_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something that we want to change?
   constraints <- list(ExpCone(t, ones, x))
   return(list(t, constraints))
@@ -298,7 +307,10 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
   obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(canon[[2]], obj <= ones)
   return(list(t, constraints))
 }
@@ -317,7 +329,10 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   t2 <- canon2[[1]]
   constr2 <- canon2[[2]]
 
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
   return(list(t0, constraints))
 }
@@ -345,7 +360,7 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   constraints <- c(constraints, M[1:n, (n+1):(n+m)] == X)
   # M[(n+1):(n+m), (n+1):(n+m)] == Tvar
   constraints <- c(constraints, M[(n+1):(n+m), (n+1):(n+m)] == Tvar)
-  return(list(trace(Tvar), constraints))
+  return(list(matrix_trace(Tvar), constraints))
 }
 
 Dcp2Cone.normNuc_canon <- function(expr, args) {
@@ -425,7 +440,10 @@ Dcp2Cone.power_canon <- function(expr, args) {
     return(list(x, list()))
 
   expr_dim <- dim(expr)
-  ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   if(p == 0)
     return(list(ones, list()))
   else {
@@ -449,9 +467,9 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]
 
-  if(size(M1) > 0)
+  if(!is.null(dim(M1)) && prod(dim(M1)) > 0)
     expr <- sum_squares(Constant(t(M1)) %*% args[[1]])
-  else if(size(M2)> 0) {
+  else if(!is.null(dim(M2)) && prod(dim(M2)) > 0) {
     scale <- -scale
     expr <- sum_squares(Constant(t(M2)) %*% args[[1]])
   }

@@ -14,6 +14,7 @@ Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"),
                  }, contains = c("VIRTUAL", "Expression"))
 
 setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL) {
+  .Object <- callNextMethod(.Object, ...)
   .Object@args <- lapply(atom_args, as.Constant)
   validate_args(.Object)
   .Object@.dim <- dim_from_args(.Object)
@@ -261,7 +262,7 @@ setMethod("grad", "Atom", function(object) {
     grad_arg <- grad(arg)
     for(key in names(grad_arg)) {
       # None indicates gradient is not defined.
-      if(any(is.na( as.numeric(grad_arg[[key]]) )) || any(is.na( as.numeric(grad_self[[idx]]) )))
+      if(any(is.na( as.vector(grad_arg[[key]]) )) || any(is.na( as.vector(grad_self[[idx]]) )))
         result[[key]] <- NA_real_
       else {
         D <- grad_arg[[key]] %*% grad_self[[idx]]
@@ -362,11 +363,11 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
       for(i in 1:n) {
         value <- values[[1]][,i]
         d <- t(.column_grad(object, value))
-        if(any(is.na(as.numeric(d))))
+        if(any(is.na(as.vector(d))))
           return(list(NA_real_))
         row <- seq((i-1)*n+1, (i-1)*n+m, length.out = m)
         col <- rep(1,m) * i
-        D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, n))
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, n))
       }
     } else {   # Function apply to each row
       values <- t(values[[1]])
@@ -374,11 +375,11 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
       for(i in 1:m) {
         value <- values[,i]
         d <- t(.column_grad(object, value))
-        if(any(is.na(as.numeric(d))))
+        if(any(is.na(as.vector(d))))
           return(list(NA_real_))
         row <- seq(i, i+(n-1)*m, length.out = n)
         col <- rep(1,n)*i
-        D <- D + sparseMatrix(i = row, j = col, x = as.numeric(d), dims = c(m*n, m))
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, m))
       }
     }
   }
@@ -412,7 +413,7 @@ setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, value
 
 setMethod(".column_grad", "CumMax", function(object, value) {
   # Grad: 1 for a largest index.
-  value <- as.numeric(value)
+  value <- as.vector(value)
   idx <- (value == max(value))
   D <- matrix(0, nrow = length(value), ncol = 1)
   D[idx,1] <- 1
@@ -585,7 +586,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p = NA_real_, max_d
 #' @param values A list of arguments to the atom.
 #' @describeIn GeoMean The (weighted) geometric mean of the elements of \code{x}.
 setMethod("to_numeric", "GeoMean", function(object, values) {
-  values <- as.numeric(values[[1]])
+  values <- as.vector(values[[1]])
   val <- 1.0
   for(idx in 1:length(values)) {
     x <- values[[idx]]
@@ -600,12 +601,12 @@ setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@
 setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
-  w_arr <- as.numeric(object@w)
+  w_arr <- as.vector(object@w)
   # Outside domain
   if(any(x[w_arr > 0] <= 0))
     return(list(NA_real_))
   else {
-    D <- w_arr/as.numeric(x) * to_numeric(object, values)
+    D <- w_arr/as.vector(x) * to_numeric(object, values)
     return(list(Matrix(D, sparse = TRUE)))
   }
 })
@@ -702,7 +703,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   d[1] <- 1
   d <- diag(d)
   D <- v %*% d %*% t(v)
-  list(Matrix(as.numeric(D), sparse = TRUE))
+  list(Matrix(as.vector(D), sparse = TRUE))
 })
 
 #' @describeIn LambdaMax Check that \code{A} is square.
@@ -811,11 +812,16 @@ setMethod("initialize", "LogDet", function(.Object, ..., A) {
 #' @param values A list of arguments to the atom.
 #' @describeIn LogDet The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 setMethod("to_numeric", "LogDet", function(object, values) {
-  logdet <- determinant(values[[1]], logarithm = TRUE)
-  if(logdet$sign == 1)
-    return(as.numeric(logdet$modulus))
-  else
-    return(-Inf)
+  if(is.complex(values[[1]])) {
+    eigvals <- eigen(values[[1]], only.values = TRUE)$values
+    return(log(prod(eigvals)))
+  } else {
+    logdet <- determinant(values[[1]], logarithm = TRUE)
+    if(logdet$sign == 1)
+      return(as.numeric(logdet$modulus))
+    else
+      return(-Inf)
+  }
 })
 
 #' @describeIn LogDet Check that \code{A} is square.
@@ -850,7 +856,7 @@ setMethod(".grad", "LogDet", function(object, values) {
   if(min(eigen_val) > 0) {
     # Grad: t(X^(-1))
     D <- t(base::solve(X))
-    return(list(Matrix(as.numeric(D), sparse = TRUE)))
+    return(list(Matrix(as.vector(D), sparse = TRUE)))
   } else   # Outside domain
     return(list(NA_real_))
 })
@@ -1019,14 +1025,14 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
   DX <- (P_inv + t(P_inv)) %*% X
-  DX <- as.numeric(t(DX))
+  DX <- as.vector(t(DX))
   DX <- Matrix(DX, sparse = TRUE)
 
   DP <- P_inv %*% X
   DP <- DP %*% t(X)
   DP <- DP %*% P_inv
   DP <- -t(DP)
-  DP <- Matrix(as.numeric(t(DP)), sparse = TRUE)
+  DP <- Matrix(as.vector(t(DP)), sparse = TRUE)
   list(DX, DP)
 })
 
@@ -1083,7 +1089,7 @@ setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, v
 
 setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
-  value <- as.numeric(value)
+  value <- as.vector(value)
   idx <- (value == max(value))
   D <- matrix(0, nrow = length(value), ncol = 1)
   D[idx,1] <- 1
@@ -1118,7 +1124,7 @@ setMethod("to_numeric", "MinEntries", function(object, values) {
 setMethod("sign_from_args",  "MinEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
 #' @describeIn MinEntries The atom is not convex.
-setMethod("is_atom_convex", "MaxEntries", function(object) { FALSE })
+setMethod("is_atom_convex", "MinEntries", function(object) { FALSE })
 
 #' @describeIn MinEntries The atom is concave.
 setMethod("is_atom_concave", "MinEntries", function(object) { TRUE })
@@ -1143,7 +1149,7 @@ setMethod(".grad", "MinEntries", function(object, values) { .axis_grad(object, v
 
 setMethod(".column_grad", "MinEntries", function(object, value) {
   # Grad: 1 for a largest index
-  value <- as.numeric(value)
+  value <- as.vector(value)
   idx <- (value == min(value))
   D <- matrix(0, nrow = length(value), ncol = 1)
   D[idx,1] <- 1
@@ -1234,7 +1240,7 @@ setMethod("allow_complex", "Pnorm", function(object) { TRUE })
 #' @describeIn Pnorm The p-norm of \code{x}.
 setMethod("to_numeric", "Pnorm", function(object, values) {
   if(is.na(object@axis))
-    values <- as.numeric(values[[1]])
+    values <- as.vector(values[[1]])
   else
     values <- as.matrix(values[[1]])
   
@@ -1318,7 +1324,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   } else {
     numerator <- value^(object@p - 1)
     frac <- numerator / denominator
-    return(matrix(as.numeric(frac)))
+    return(matrix(as.vector(frac)))
   }
 })
 
@@ -1388,7 +1394,7 @@ setMethod("to_numeric", "Norm1", function(object, values) {
   if(is.na(object@axis))
     base::norm(values[[1]], type = "O")
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "O") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "O") }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn Norm1 Does the atom handle complex numbers?
@@ -1448,7 +1454,7 @@ setMethod("to_numeric", "NormInf", function(object, values) {
   if(is.na(object@axis))
     base::norm(values[[1]], type = "I")
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(x, type = "I") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "I") }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn NormInf Does the atom handle complex numbers?
@@ -1539,7 +1545,7 @@ setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
   s <- svd(values[[1]])
   D <- s$u %*% t(s$v)
-  list(Matrix(as.numeric(D), sparse = TRUE))
+  list(Matrix(as.vector(D), sparse = TRUE))
 })
 
 #'
@@ -1551,7 +1557,7 @@ setMethod(".grad", "NormNuc", function(object, values) {
 #' @name OneMinusPos-class
 #' @aliases OneMinusPos
 #' @rdname OneMinusPos-class
-.OneMinusPos <- setClass("OneMinusPos", representation(x = "ConstValORExpr", .ones = "numeric"), prototype(.ones = NA_real_), contains = "Atom")
+.OneMinusPos <- setClass("OneMinusPos", representation(x = "ConstValORExpr", .ones = "ConstVal"), prototype(.ones = NA_real_), contains = "Atom")
 
 #' @param x An \linkS4class{Expression} or numeric matrix.
 #' @rdname OneMinusPos-class
@@ -1674,17 +1680,25 @@ setMethod(".grad", "PfEigenvalue", function(object, values) { NA_real_ })
 #'
 #' The product of the entries in an expression.
 #'
-#' @slot x An \linkS4class{Expression} representing a vector or matrix.
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @name ProdEntries-class
 #' @aliases ProdEntries
 #' @rdname ProdEntries-class
 .ProdEntries <- setClass("ProdEntries", contains = "AxisAtom")
 
-#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @param ... \linkS4class{Expression} objects or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname ProdEntries-class
-ProdEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .ProdEntries(expr = expr, axis = axis, keepdims = keepdims) }
+ProdEntries <- function(..., axis = NA_real_, keepdims = FALSE) {
+  exprs <- list(...)
+  if(length(exprs) == 0)
+    stop("Must provide at least one expression")
+  else if(length(exprs) == 1)
+    .ProdEntries(expr = exprs[[1]], axis = axis, keepdims = keepdims)
+  else
+    .ProdEntries(expr = do.call("HStack", exprs))
+}
 
 #' @describeIn ProdEntries The product of all the entries.
 setMethod("to_numeric", "ProdEntries", function(object, values) {
@@ -1918,7 +1932,7 @@ setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplem
 #' @rdname QuadOverLin-class
 QuadOverLin <- function(x, y) { .QuadOverLin(x = x, y = y) }
 
-setMethod("initialize", "QuadOverLin", function(.Object, ..., x = .Object@x, y = .Object@y) {
+setMethod("initialize", "QuadOverLin", function(.Object, ..., x, y) {
   .Object@x <- x
   .Object@y <- y
   callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))
@@ -1976,7 +1990,7 @@ setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 
 
 setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
-  y <- as.numeric(values[[2]])
+  y <- as.vector(values[[2]])
   if(y <= 0)
     return(list(NA_real_, NA_real_))
   else {
@@ -1984,7 +1998,7 @@ setMethod(".grad", "QuadOverLin", function(object, values) {
     Dy <- -sum(Mod(X)^2)/y^2
     Dy <- Matrix(Dy, sparse = TRUE)
     DX <- 2.0*X/y
-    DX <- Matrix(as.numeric(t(DX)), sparse = TRUE)
+    DX <- Matrix(as.vector(t(DX)), sparse = TRUE)
     return(list(DX, Dy))
   }
 })
@@ -2042,7 +2056,7 @@ setMethod(".grad", "SigmaMax", function(object, values) {
   ds <- rep(0, length(s$d))
   ds[1] <- 1
   D <- s$u %*% diag(ds) %*% t(s$v)
-  list(Matrix(as.numeric(D), sparse = TRUE))
+  list(Matrix(as.vector(D), sparse = TRUE))
 })
 
 #'
@@ -2073,7 +2087,7 @@ setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
 #' @describeIn SumLargest The sum of the \code{k} largest entries of the vector or matrix.
 setMethod("to_numeric", "SumLargest", function(object, values) {
   # Return the sum of the k largest entries of the matrix
-  value <- as.numeric(values[[1]])
+  value <- as.vector(values[[1]])
   k <- min(object@k, length(value))
   val_sort <- sort(value, decreasing = TRUE)
   sum(val_sort[1:k])
@@ -2110,7 +2124,7 @@ setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
 setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
-  value <- as.numeric(t(values[[1]]))
+  value <- as.vector(t(values[[1]]))
   k <- min(object@k, length(value))
   indices <- order(value, decreasing = TRUE)
   arg_dim <- dim(object@args[[1]])

@@ -70,7 +70,7 @@ intf_scalar_value <- function(constant) {
   if(is.list(constant))
     constant[[1]]
   else
-    as.numeric(constant)
+    as.vector(constant)[1]
 }
 
 intf_convert_if_scalar <- function(constant) {

@@ -119,7 +119,7 @@ SymData.presolve <- function(objective, constr_map) {
   constr_map <- lapply(constr_map, function(constraints) {
       constr_ids <- sapply(constraints, function(c) {
         if(is(c, "Constraint"))
-          c@constr_id
+          c@id
         else if(is.list(c) && !is.null(c$constr_id))
           c$constr_id
         else

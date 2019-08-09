@@ -1,5 +1,6 @@
 CVXR_Load.R
 cvxr.Rproj
+testthat.Rproj
 .Rproj.user
 .RData
 .Rhistory

@@ -110,45 +110,6 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
 
 setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
-
-#DK: Writing new invert function because not sure how to get alt_invert to work
-setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
-  model <- solution$model
-  attr <- list()
-  
-  #Can't seem to find a way to increase verbosity of cplex. Can't get cputime
-  #if("cputime" %in% names(solution))
-  #  attr[SOLVE_TIME] <- results$cputime
-  #attr[NUM_ITERS] <- as.integer(get_num_barrier_iterations(model@solution@progress))
-  
-  status <- status_map(object, solution$model$status)
-  
-  if(status %in% SOLUTION_PRESENT) {
-    # Get objective value.
-    opt_val <- model$obj
-    
-    # Get solution.
-    x <- model$xopt
-    primal_vars <- list()
-    primal_vars[[names(inverse_data@id_map)[1]]] <- x
-    
-    # Only add duals if not a MIP.
-    dual_vars <- NA
-    if(!inverse_data@is_mip) {
-      y <- -as.matrix(model$extra$lambda) #there's a negative here, should we keep this?
-      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
-    }
-  } else {
-    primal_vars <- NA
-    dual_vars <- NA
-    opt_val <- Inf
-    if(status == UNBOUNDED)
-      opt_val <- -Inf
-  }
-  
-  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
-})
-
 setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
@@ -186,77 +147,108 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
 
 setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("Rcplex", quietly = TRUE)
-  #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
-  P <- data[[P_KEY]]
+  P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   q <- data[[Q_KEY]]
-  #A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE) #Equality constraints
-  A <- data[[A_KEY]]
-  b <- data[[B_KEY]] #Equality constraint RHS
-  #Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE) #Inequality constraints
-  Fmat <- data[[F_KEY]]
-  g <- data[[G_KEY]] #inequality constraint RHS
+  A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE)
+  b <- data[[B_KEY]]
+  Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE)
+  g <- data[[G_KEY]]
   n_var <- data$n_var
   n_eq <- data$n_eq
   n_ineq <- data$n_ineq
 
-  #Create one big constraint matrix with both inequalities and equalities
-  Amat <- rbind(A, Fmat)
-  bvec <- c(b, g)
-  sense_vec = c(rep("E", n_eq), rep("L", n_ineq))
-  
-  #Initializing variable types
-  vtype <- rep("C", n_var)
-  
-  #Setting Boolean variable types
-  for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
-    vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
+  # Define CPLEX problem.
+  model <- Rcplex::Cplex()
+
+  # Minimize problem.
+  model@objective@set_sense(model@objective@sense@minimize)
+
+  # Add variables and linear objective.
+  var_idx <- cplex_add(model@variables, obj = q, lb = rep(-Inf, n_var), ub = rep(Inf, n_var))
+
+  # Constraint binary/integer variables if present.
+  for(i in data[BOOL_IDX])
+    set_types(model@variables, var_idx[i], model@variables@type@binary)
+
+  for(i in data[INT_IDX])
+    set_types(model@variables, var_idx[i], model@variables@type@integer)
+
+  # Add constraints.
+  lin_expr <- list()
+  rhs <- list()
+  for(i in 1:n_eq) {   # Add equalities.
+    start <- A@p[i]
+    end <- A@p[i+1]
+    row <- list(A@i[start:end], A@j[start:end], A@x[start:end])
+    lin_expr <- c(lin_expr, list(row))
+    rhs <- c(rhs, b[i])
   }
-  #Setting Integer variable types
-  for(i in seq_along(data[INT_IDX]$int_vars_idx)){
-    vtype[data[BOOL_IDX]$int_vars_idx[i]] <- "I"
+  if(length(lin_expr) > 0)
+    cplex_add(model@linear_constraints, lin_expr = lin_expr, senses = rep("E", length(lin_expr)), rhs = rhs)
+
+  lin_expr <- list()
+  rhs <- list()
+  for(i in 1:n_ineq) {   # Add inequalities.
+    start <- Fmat@p[i]
+    end <- Fmat@p[i+1]
+    row <- list(Fmat@i[start:end], Fmat@j[start:end], Fmat@x[start:end])
+    lin_expr <- c(lin_expr, list(row))
+    rhs <- c(rhs, g[i])
   }
-  
-  #Setting verbosity off
-  if(!verbose){
-    control <- list(trace=0)
-  } else{
-    control <- list(trace=1)
+  if(length(lin_expr) > 0)
+    cplex_add(model@linear_constraints, lin_expr = lin_expr, senses = rep("L", length(lin_expr)), rhs = rhs)
+
+  # Set quadratic cost.
+  if(nnzero(P) > 0) {   # Only if quadratic form is not null.
+    qmat <- list()
+    for(i in 1:n_var) {
+      start <- P@p[i]
+      end <- P@p[i+1]
+      qmat <- c(qmat, list(P@i[start:end], P@j[start:end], P@x[start:end]))
+    }
+    set_quadratic(model@objective, qmat)
   }
 
-  #David: not sure what to do with this part
+  # Set parameters.
+  if(!verbose) {
+    set_results_stream(model, NA)
+    set_log_stream(model, NA)
+    set_error_stream(model, NA)
+    set_warning_stream(model, NA)
+  }
+
   # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
   # and the code is duplicated here. This should be refactored.
-  if(length(solver_opts) > 0){
-    kwargs <- sort(names(solver_opts))
-    if("cplex_params" %in% kwargs) {
-      for(param in names(solver_opts$cplex_params)) {
-        value <- solver_opts$cplex_params[param]
-        tryCatch({
-            eval(paste("set(model@parameters@", param, ", value)", sep = ""))
-          }, error = function(e) {
-           stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")")
-        })
-      }
-      kwargs$cplex_params <- NULL
+  kwargs <- sort(names(solver_opts))
+  if("cplex_params" %in% kwargs) {
+    for(param in names(solver_opts$cplex_params)) {
+      value <- solver_opts$cplex_params[param]
+      tryCatch({
+          eval(paste("set(model@parameters@", param, ", value)", sep = ""))
+        }, error = function(e) {
+         stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")")
+      })
     }
-  
-    if("cplex_filename" %in% kwargs) {
-      filename <- solver_opts$cplex_filename
-      if(!is.na(filename) && !is.null(filename))
-        write(model, filename)
-      kwargs$cplex_filename <- NULL
-    }
-  
-    if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
-      stop("Invalid keyword argument ", kwargs[[1]])
+    kwargs$cplex_params <- NULL
   }
+
+  if("cplex_filename" %in% kwargs) {
+    filename <- solver_opts$cplex_filename
+    if(!is.na(filename) && !is.null(filename))
+      write(model, filename)
+    kwargs$cplex_filename <- NULL
+  }
+
+  if(!is.null(kwargs) || !is.na(kwargs) || length(kwargs) > 0)
+    stop("Invalid keyword argument ", kwargs[[1]])
+
   # Solve problem.
   results_dict <- list()
   tryCatch({
-    # Define CPLEX problem and solve
-    model <- Rcplex::Rcplex(cvec=q, Amat=Amat, bvec=bvec, Qmat=P, lb=-Inf, ub=Inf, 
-                            control=control, objsense="min", sense=sense_vec, vtype=vtype)
-    #control parameter would be used to set specific solver arguments. See cran Rcplex documentation
+      start <- get_time(model)
+      solve(model)
+      end <- get_time(model)
+      results_dict$cputime <- end - start
     }, error = function(e) {
       results_dict$status <- SOLVER_ERROR
     }

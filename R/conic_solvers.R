@@ -558,26 +558,26 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
 })
 
 #DK: Changed solution class from "Solution" to rcbc_milp_result. Same with CBC_Conic  to
-#setMethod("invert", "CBC_CONIC", signature(object, solution = "rcbc_milp_result", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-setMethod("invert", "CBC_CONIC",  function(object, solution, inverse_data) {
+#setMethod("invert", "CBC_CONIC",  function(object, solution, inverse_data) {
+setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_data = "list"),  function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
-  status <- solution$status
+  solution <- solution[[1]]
+  status <- status_map(object, solution)
+  
+  primal_vars <- list()
   
   if(status %in% SOLUTION_PRESENT) {
-    opt_val <- solution$value + inverse_data[[OFFSET]]
-    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
-    return(Solution(status, opt_val, primal_vars, list(), list()))
+    opt_val <- solution$objective_value
+    primal_vars[[object@var_id]] <- solution$column_solution
   } else {
-    primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
-    
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
       opt_val <- -Inf
     else
-      opt_val <- NA_real_
+      opt_val <- NA
   }
+  dual_vars <- list()
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
@@ -631,7 +631,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   # prob_data[[name(object)]] <- ProblemData()
   # return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
   
-  return(result)
+  return(list(result))
 })
 
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")

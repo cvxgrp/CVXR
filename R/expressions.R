@@ -12,7 +12,7 @@ setOldClass("data.frame")
 setOldClass("matrix")
 setClassUnion("ConstSparseVal", c("CsparseMatrix", "TsparseMatrix"))
 
-setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "numeric", "complex", "dMatrix"))
+setClassUnion("ConstVal", c("ConstSparseVal", "data.frame", "matrix", "numeric", "complex", "dMatrix", "bigq", "bigz"))
 setClassUnion("ConstValORExpr", c("ConstVal", "Expression"))
 setClassUnion("ConstValORNULL", c("ConstVal", "NULL"))
 setClassUnion("ConstValListORExpr", c("ConstVal", "list", "Expression"))

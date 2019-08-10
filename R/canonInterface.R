@@ -60,6 +60,14 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
 format_matrix <- function(matrix, format='dense') {
     ## Returns the matrix in the appropriate form,
     ## so that it can be efficiently loaded with our swig wrapper
+    
+    ## TODO: Should we convert bigq/bigz values? What if it's a sparse matrix?
+    if(is.bigq(matrix) || is.bigz(matrix)) {
+        matdbl <- matrix(sapply(matrix, as.double))
+        dim(matdbl) <- dim(matrix)
+        matrix <- matdbl
+    }
+    
     if (format == 'dense') {
         ## Ensure is 2D.
         as.matrix(matrix)

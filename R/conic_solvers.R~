@@ -194,6 +194,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
 setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
+  
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
@@ -203,14 +204,16 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
     eq_dual <- utils::modifyList(eq_dual, leq_dual)
     dual_vars <- eq_dual
   } else {
+    primal_vars <- list()
+    primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
+    dual_vars <- NA
+    
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
       opt_val <- -Inf
     else
-      opt_val <- NA
-    primal_vars <- NA
-    dual_vars <- NA
+      opt_val <- NA_real_
   }
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
@@ -558,22 +561,32 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
 #setMethod("invert", "CBC_CONIC", signature(object, solution = "rcbc_milp_result", inverse_data = "InverseData"), function(object, solution, inverse_data) {
 setMethod("invert", "CBC_CONIC",  function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
+<<<<<<< HEAD
   
   status <- status_map(solution)
 
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$objective_value
     primal_vars[[object@var_id]] <- solution$column_solution
+=======
+  status <- solution$status
+  
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution$value + inverse_data[[OFFSET]]
+    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
+    return(Solution(status, opt_val, primal_vars, list(), list()))
+>>>>>>> 1.0
   } else {
+    primal_vars <- list()
+    primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
+    
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
       opt_val <- -Inf
     else
-      opt_val <- NA
-    primal_vars <- NA
+      opt_val <- NA_real_
   }
-  dual_vars <- NA
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
@@ -666,19 +679,26 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
-
-  primal_vars <- NA
-  dual_vars <- NA
+  dual_vars <- list()
+  
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
     primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
-    if(!inverse_data$is_mip) {
+    if(!inverse_data@is_mip) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
       eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     } else {
+      primal_vars <- list()
+      primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
+      if(!inverse_data@is_mip) {
+        dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
+        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+        names(dual_vars) <- dual_var_ids
+      }
+      
       if(status == INFEASIBLE)
         opt_val <- Inf
       else if(status == UNBOUNDED)
@@ -826,7 +846,7 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
+    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
     return(Solution(status, opt_val, primal_vars, dual_vars, list()))
   } else
     return(failure_solution(status))
@@ -985,26 +1005,33 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
-
-  primal_vars <- NA
-  dual_vars <- NA
+  dual_vars <- list()
+  
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
-    if(!inverse_data$is_mip) {
+    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
+    if(!inverse_data@is_mip) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
       eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
     }
   } else {
+    primal_vars <- list()
+    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- NA_real_
+    if(!inverse_data@is_mip) {
+      dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+    }
+    
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
       opt_val <- -Inf
     else
-      opt_val <- NA
+      opt_val <- NA_real_
   }
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
@@ -1132,7 +1159,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
     data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
     data[[H_KEY]] <- matrix(nrow = 0, ncol = 0)
     inv_data$is_LP <- TRUE
-    return(list(data, inv_data))
+    return(list(object, data, inv_data))
   }
 
   # Linear inequalities.
@@ -1378,23 +1405,6 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
 
-<<<<<<< HEAD
-  #initializing A matrix
-  if(sum(dim(G_sparse)) == 0){ #If G matrix is empty, then set A as a specific empty matrix
-    prob$A <- Matrix(nrow = 0, ncol = 1)
-  } else {
-    prob$A <- sparseMatrix( rep(1:dim(G_sparse)[1], dim(G_sparse)[2] + total_soc_exp_slacks),
-                            rep(1:(dim(G_sparse)[2] + total_soc_exp_slacks) , dim(G_sparse)[1]),
-                            x = rep(0, dim(G_sparse)[1]*(dim(G_sparse)[2]+total_soc_exp_slacks))) 
-    
-    #this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
-    #Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-    A_holder <- sparseMatrix(row, col, x = val)
-    prob$A[1:dim(A_holder)[1], 1:dim(A_holder)[2]] <- A_holder
-  }
-  
-  
-=======
   # initializing A matrix
   if(nrow(G_sparse) == 0 || (ncol(G_sparse) + total_soc_exp_slacks) == 0)
     prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0, 0))
@@ -1408,7 +1418,6 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     A_holder <- sparseMatrix(row, col, x = val)
     prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
   }
->>>>>>> 1.0
 
   if(total_soc_exp_slacks > 0) {
     i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
@@ -1561,36 +1570,18 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         primal_vars[[as.character(inverse_data[[object@var_id]])]] <- sol$xx
         ## Recover the CVXR standard form dual variables.
         ## if(sol == mosek.soltype.itn)
-<<<<<<< HEAD
-        if (inverse_data$integer_variables)
-            #dual_vars <- NA 
-            #Solution class doesn't accept NAs for dual/primal vars
-            dual_vars <- list()
-        else
-            dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
-=======
         if (inverse_data$integer_variables) {
           dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
           dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
           names(dual_vars) <- dual_var_ids
         } else
           dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
->>>>>>> 1.0
     } else {
         if(status == INFEASIBLE)
             opt_val <- Inf
         else if(status == UNBOUNDED)
             opt_val <- -Inf
         else
-<<<<<<< HEAD
-            #opt_val <- NA
-            opt_val <- NULL #Would Null be better than NA? opt_val should be a numeric
-        #Solution class doesn't accept NAs for dual/primal vars
-        #primal_vars <- NA
-        #dual_vars <- NA
-        primal_vars <- list()
-        dual_vars <- list()
-=======
             opt_val <- NA_real_
         vid <- 
         primal_vars <- list()
@@ -1598,7 +1589,6 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
->>>>>>> 1.0
     }
 
     ## Store computation time.
@@ -1839,16 +1829,22 @@ setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function
 
 setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution[[STATUS]]
-
-  primal_vars <- NA
-  dual_vars <- NA
+  
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution[[VALUE]]
     primal_vars <- list()
     primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
-    if(!inverse_data$is_mip)
+    if(!inverse_data@is_mip)
       dual_vars <- get_dual_values(solution[[EQ_DUAL]], extract_dual_value, inverse_data[[EQ_CONSTR]])
   } else {
+    primal_vars <- list()
+    primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
+    if(!inverse_data@is_mip) {
+      dual_var_ids <- sapply(inverse_data[[EQ_CONSTR]], function(constr) { constr@id })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+    }
+    
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)

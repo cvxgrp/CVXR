@@ -41,11 +41,11 @@ Dgp2Dcp.add_canon <- function(expr, args) {
     return(list(log_sum_exp(do.call("HStack", args)), list()))
   
   rows <- list()
-  summands <- sapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
+  summands <- lapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
   if(length(dim(expr)) == 1) {
     for(i in 1:nrow(expr)) {
       summand_args <- lapply(summands, function(summand) { summand[i] })
-      row <- list(log_sum_exp(do.call("HStack", summand_args)))
+      row <- log_sum_exp(do.call("HStack", summand_args))
       rows <- c(rows, list(row))
     }
     return(list(reshape_expr(bmat(rows), dim(expr)), list()))
@@ -54,7 +54,7 @@ Dgp2Dcp.add_canon <- function(expr, args) {
       row <- list()
       for(j in 1:ncol(expr)) {
         summand_args <- lapply(summands, function(summand) { summand[i,j] })
-        row <- c(row, log_sum_exp(do.call("HStack", summand_args)))
+        row <- c(row, list(log_sum_exp(do.call("HStack", summand_args))))
       }
       rows <- c(rows, list(row))
     }
@@ -124,7 +124,7 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
     row <- list()
     for(j in 1:ncol(rhs)) {
       hstack_args <- lapply(1:ncol(lhs), function(k) { lhs[i,k] + rhs[k,j] })
-      row <- c(row, log_sum_exp(do.call("HStack", hstack_args)))
+      row <- c(row, list(log_sum_exp(do.call("HStack", hstack_args))))
     }
     rows <- c(rows, list(row))
   }
@@ -183,20 +183,22 @@ Dgp2Dcp.pnorm_canon <- function(expr, args) {
     x <- promote(p, c(1))
   if(is.na(expr@axis) || length(dim(x)) == 1) {
     x <- Vec(x)
-    hstack_args <- lapply(x, function(xi) { xi^p })
-    return(list((1.0/p) * log_sum_exp(do.call("HStack", hstack_args)), list()))
+    # hstack_args <- lapply(seq_len(size(x)), function(j) { x[j]^p })
+    # return(list((1.0/p) * log_sum_exp(do.call("HStack", hstack_args)), list()))
+    return(list((1.0/p) * log_sum_exp(x^p), list()))
   }
   
   if(expr@axis == 2)
     x <- t(x)
   
-  rows <- c()
+  rows <- list()
   for(i in 1:nrow(x)) {
-    row <- x[i]
-    hstack_args <- lapply(row, function(xi) { xi^p })
-    rows <- c(rows, (1.0/p)*log_sum_exp(do.call("HStack", hstack_args)))
+    row <- x[i,]
+    # hstack_args <- lapply(seq_len(size(row)), function(j) { row[j]^p })
+    # rows <- c(rows, list((1.0/p)*log_sum_exp(do.call("HStack", hstack_args))))
+    rows <- c(rows, list((1.0/p) * log_sum_exp(row^p)))
   }
-  return(list(vstack(rows), list()))
+  return(list(do.call("VStack", rows), list()))
 }
 
 Dgp2Dcp.power_canon <- function(expr, args) {
@@ -214,7 +216,7 @@ Dgp2Dcp.quad_form_canon <- function(expr, args) {
   elems <- list()
   for(i in 1:nrow(P)) {
     for(j in 1:nrow(P))
-      elems <- c(elems, P[i,j] + x[i] + x[j])
+      elems <- c(elems, list(P[i,j] + x[i] + x[j]))
   }
   return(list(log_sum_exp(do.call("HStack", elems)), list()))
 }
@@ -222,17 +224,21 @@ Dgp2Dcp.quad_form_canon <- function(expr, args) {
 Dgp2Dcp.quad_over_lin_canon <- function(expr, args) {
   x <- Vec(args[[1]])
   y <- args[[2]]
-  numerator <- sum(sapply(x, function(xi) { 2*xi }))
+  numerator <- 2*sum(x)
   return(list(numerator - y, list()))
 }
 
 Dgp2Dcp.sum_canon <- function(expr, args) {
   X <- args[[1]]
+  new_dim <- dim(expr)
+  if(is.null(new_dim))
+    new_dim <- c(1,1)
+  
   if(is.na(expr@axis)) {
     x <- Vec(X)
-    summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
+    summation <- sum(x)
     canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
-    return(list(reshape_expr(canon, dim(expr)), list()))
+    return(list(reshape_expr(canon, new_dim), list()))
   }
   
   if(expr@axis == 2)
@@ -240,13 +246,13 @@ Dgp2Dcp.sum_canon <- function(expr, args) {
   
   rows <- list()
   for(i in 1:nrow(X)) {
-    x <- Vec(X[i])
-    summation <- do.call("sum", args = lapply(x, function(xi) { xi }))
+    x <- Vec(X[i,])
+    summation <- sum(x)
     canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
-    rows <- c(rows, canon)
+    rows <- c(rows, list(canon))
   }
   canon <- do.call("HStack", rows)
-  return(list(reshape_expr(canon, dim(expr)), list()))
+  return(list(reshape_expr(canon, new_dim), list()))
 }
 
 Dgp2Dcp.trace_canon <- function(expr, args) {

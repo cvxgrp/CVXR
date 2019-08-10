@@ -206,7 +206,7 @@ test_that("test with p-norm", {
 
 test_that("test matrix norms", {
   P <- 0:7 - 2i*(0:7)
-  P <- matrix(P, nrow = 2, ncol = 4)
+  P <- matrix(P, nrow = 2, ncol = 4, byrow = TRUE)
   sigma_max <- base:::norm(P, type = "2")
   X <- Variable(2, 4, complex = TRUE)
   prob <- Problem(Minimize(norm(X, "2")), list(X == P))

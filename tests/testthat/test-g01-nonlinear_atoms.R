@@ -55,7 +55,7 @@ test_that("Test a problem with KL-divergence", {
   npSPriors <- npSPriors/sum(npSPriors)
 
   # Reference distribution
-  p_refProb <- Parameter(kK, 1, sign = "positive")
+  p_refProb <- Parameter(kK, 1, nonneg = TRUE)
 
   # Distribution to be estimated
   v_prob <- Variable(kK, 1)

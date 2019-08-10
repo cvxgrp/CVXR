@@ -50,10 +50,10 @@ test_that("Test issue with scalars", {
     q2 <- matrix(rnorm(n), nrow = n)
     q3 <- matrix(rnorm(n), nrow = n)
     
-    r0 <- matrix(rnorm(n), nrow = n)
-    r1 <- matrix(rnorm(n), nrow = n)
-    r2 <- matrix(rnorm(n), nrow = n)
-    r3 <- matrix(rnorm(n), nrow = n)
+    r0 <- matrix(rnorm(1))
+    r1 <- matrix(rnorm(1))
+    r2 <- matrix(rnorm(1))
+    r3 <- matrix(rnorm(1))
     
     slack <- Variable()
     # Form the problem

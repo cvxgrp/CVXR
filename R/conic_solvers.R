@@ -178,7 +178,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
 setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constraints, exp_cone_order) {
   # Combine the constraints into a single matrix, offset.
   if(is.na(constraints) || is.null(constraints) || length(constraints) == 0)
-    return(list(NULL, NULL))
+    return(list(Matrix(0, nrow = 0, ncol = 0), numeric(0)))
 
   matrices <- list()
   offset <- c()
@@ -734,8 +734,9 @@ setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
 setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
   res <- callNextMethod(object, problem)
-  data <- res[[1]]
-  inv_data <- res[[2]]
+  object <- res[[1]]
+  data <- res[[2]]
+  inv_data <- res[[3]]
 
   # Because the problem variable is single dimensional, every
   # boolean/integer index has length one.
@@ -794,10 +795,20 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 
   # Construct problem data.
   c <- data[[C_KEY]]
-  dims <- data[[DIMS]]
+  dims <- data[[ConicSolver()@dims]]
   nvar <- length(c)
   A <- data[[A_KEY]]
   b <- data[[B_KEY]]
+  if(nrow(A) == 0)
+    A <- Matrix(0, nrow = 0, ncol = length(c))
+  
+  G <- data[[G_KEY]]
+  h <- data[[H_KEY]]
+  if(nrow(G) == 0)
+    G <- Matrix(0, nrow = 0, ncol = length(c))
+  
+  mat <- rbind(A, G)
+  rhs <- c(b, h)
 
   bounds <- list(lower = list(ind = seq_along(c), val = rep(-Inf, nvar)))
   types <- rep("C", nvar)
@@ -811,10 +822,10 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   }
 
   results_dict <- Rglpk::Rglpk_solve_LP(obj = c,
-                                        mat = slam::as.simple_triplet_matrix(A),
-                                        dir = c(rep("==", dims[[EQ_DIM]]),
-                                                rep("<=", dims[[LEQ_DIM]])),
-                                        rhs = b,
+                                        mat = slam::as.simple_triplet_matrix(mat),
+                                        dir = c(rep("==", dims@zero),
+                                                rep("<=", dims@nonpos)),
+                                        rhs = rhs,
                                         bounds = bounds,
                                         types = types,
                                         control = solver_opts,
@@ -827,7 +838,7 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
     ## Get primal variable values
     solution[[PRIMAL]] <- results_dict$solution
     ## Get objective value
-    solution[[VALUE]] <- results_dict$objval
+    solution[[VALUE]] <- results_dict$optimum
     # solution[[EQ_DUAL]] <- results_dict$auxiliary[[1]]   # TODO: How do we get the dual variables?
     # solution[[INEQ_DUAL]] <- results_dict$auxiliar[[2]]
   }
@@ -845,11 +856,20 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 
   # Construct problem data.
   c <- data[[C_KEY]]
-  dims <- data[[DIMS]]
+  dims <- data[[ConicSolver()@dims]]
   nvar <- length(c)
   A <- data[[A_KEY]]
   b <- data[[B_KEY]]
-
+  if(nrow(A) == 0)
+    A <- Matrix(0, nrow = 0, ncol = length(c))
+  
+  G <- data[[G_KEY]]
+  h <- data[[H_KEY]]
+  if(nrow(G) == 0)
+    G <- Matrix(0, nrow = 0, ncol = length(c))
+  
+  mat <- rbind(A, G)
+  rhs <- c(b, h)
   bounds <- list(lower = list(ind = seq_along(c), val = rep(-Inf, nvar)))
   types <- rep("C", nvar)
   bools <- data[[BOOL_IDX]]
@@ -862,10 +882,10 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   }
 
   results_dict <- Rglpk::Rglpk_solve_LP(obj = c,
-                                        mat = slam::as.simple_triplet_matrix(A),
-                                        dir = c(rep("==", dims[[EQ_DIM]]),
-                                                rep("<=", dims[[LEQ_DIM]])),
-                                        rhs = b,
+                                        mat = slam::as.simple_triplet_matrix(mat),
+                                        dir = c(rep("==", dims@zero),
+                                                rep("<=", dims@nonpos)),
+                                        rhs = rhs,
                                         bounds = bounds,
                                         types = types,
                                         control = solver_opts,
@@ -878,7 +898,7 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
     ## Get primal variable values
     solution[[PRIMAL]] <- results_dict$solution
     ## Get objective value
-    solution[[VALUE]] <- results_dict$objval
+    solution[[VALUE]] <- results_dict$optimum
     # solution[[EQ_DUAL]] <- results_dict$auxiliary[[1]]   # TODO: How do we get the dual variables?
     # solution[[INEQ_DUAL]] <- results_dict$auxiliar[[2]]
   }

@@ -153,8 +153,8 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
   if("cputime" %in% names(results))
-    attr[SOLVE_TIME] <- results$cputime
-  attr[NUM_ITERS] <- as.integer(get_num_barrier_iterations(model@solution@progress))
+    attr[[SOLVE_TIME]] <- results$cputime
+  attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model@solution@progress))
 
   status <- status_map(object, get_status(model@solution))
 
@@ -168,14 +168,22 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
     primal_vars[names(inverse_data@id_map)[1]] <- x
 
     # Only add duals if not a MIP.
-    dual_vars <- NA
-    if(!inverse_data$is_mip) {
+    dual_vars <- list()
+    if(!inverse_data@is_mip) {
       y <- -as.matrix(get_dual_values(model@solution))
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     }
   } else {
-    primal_vars <- NA
-    dual_vars <- NA
+    primal_vars <- list()
+    primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
+    
+    dual_vars <- list()
+    if(!inverse_data@is_mip) {
+      dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+    }
+    
     opt_val <- Inf
     if(status == UNBOUNDED)
       opt_val <- -Inf
@@ -303,8 +311,8 @@ setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
 
   # Start populating attribute dictionary.
   attr <- list()
-  attr[SOLVE_TIME] <- model@Runtime
-  attr[NUM_ITERS] <- model@BarIterCount
+  attr[[SOLVE_TIME]] <- model@Runtime
+  attr[[NUM_ITERS]] <- model@BarIterCount
 
   # Map GUROBI statuses back to CVXR statuses.
   status <- status_map(object, model@Status)
@@ -317,13 +325,21 @@ setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
     primal_vars[names(inverse_data@id_map)[1]] <- x
 
     # Only add duals if not a MIP.
-    dual_vars <- NA
-    if(!inverse_data$is_mip) {
+    dual_vars <- list()
+    if(!inverse_data@is_mip) {
       y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]@Pi }))
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     } else {
-      primal_vars <- NA
-      dual_vars <- NA
+      primal_vars <- list()
+      primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
+      
+      dual_vars <- list()
+      if(!inverse_data@is_mip) {
+        dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
+        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+        names(dual_vars) <- dual_var_ids
+      }
+      
       opt_val <- Inf
       if(status == UNBOUNDED)
         opt_val <- -Inf
@@ -480,7 +496,7 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
   
   status <- status_map(object, solution$status)
   
-  if(status %in% SOLUTION_PRESENT){
+  if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$objval
     x <- solution$x
     
@@ -488,18 +504,25 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
     primal_vars[[names(inverse_data@id_map)[1]]] <- x
     
     #Only add duals if not a MIP
-    dual_vars <- NA
-    if(!inverse_data@is_mip){
+    dual_vars <- list()
+    if(!inverse_data@is_mip) {
       y <- solution$pi
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
-    } else{
-      primal_vars <- NA
-      dual_vars <- NA
-      opt_val <- Inf
-      if(status == UNBOUNDED){
-        opt_val <- -Inf
+    } 
+  } else {
+      primal_vars <- list()
+      primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
+      
+      dual_vars <- list()
+      if(!inverse_data@is_mip) {
+        dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
+        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+        names(dual_vars) <- dual_var_ids
       }
-    }
+      
+      opt_val <- Inf
+      if(status == UNBOUNDED)
+        opt_val <- -Inf
   }
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })

@@ -647,7 +647,6 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) {
   if(parallel)
     stop("Unimplemented")
-  #browser()
   object <- .construct_chains(object, solver = solver, gp = gp)
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   object@.solving_chain <- tmp[[1]]

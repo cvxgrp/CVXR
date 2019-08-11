@@ -775,6 +775,12 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   tmp <- group_coeff_offset(object, problem, neq_constr, ECOS()@exp_cone_order)
   data[[G_KEY]] <- tmp[[1]]
   data[[H_KEY]] <- tmp[[2]]
+  
+  var <- variables(problem)[[1]]
+  data[[BOOL_IDX]] <- as.integer(var@boolean_idx[,1])
+  data[[INT_IDX]] <- as.integer(var@integer_idx[,1])
+  
+  #Add information about
   return(list(object, data, inv_data))
 })
 
@@ -827,6 +833,20 @@ GLPK <- setClass("GLPK", contains = "CVXOPT")
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
+# Map of GLPK_MI status to CVXR status.
+setMethod("status_map", "GLPK", function(solver, status) {
+  if(status == 5)
+    OPTIMAL
+  else if(status == 2)
+    SOLUTION_PRESENT
+  else if(status == 3 | status == 4)
+    INFEASIBLE
+  else if(status == 1 | status == 6)
+    UNBOUNDED
+  else
+    stop("GLPK status unrecognized: ", status)
+})
+
 setMethod("name", "GLPK", function(x) { GLPK_NAME })
 setMethod("import_solver", "GLPK", function(solver) {
   requireNamespace("Rglpk", quietly = TRUE)
@@ -834,12 +854,12 @@ setMethod("import_solver", "GLPK", function(solver) {
 
 setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
-  primal_vars <- NA
-  dual_vars <- NA
+  primal_vars <- list()
+  dual_vars <- list()
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
-    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
+    primal_vars[[as.character(inverse_data[[as.character(object@var_id)]])]] <- solution$primal
     return(Solution(status, opt_val, primal_vars, dual_vars, list()))
   } else
     return(failure_solution(status))
@@ -871,13 +891,15 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   types <- rep("C", nvar)
   bools <- data[[BOOL_IDX]]
   ints <- data[[INT_IDX]]
+  
+  
   if (length(bools) > 0) {
     types[bools] <- "B"
   }
   if (length(ints) > 0) {
     types[ints] <- "I"
   }
-
+  
   results_dict <- Rglpk::Rglpk_solve_LP(obj = c,
                                         mat = slam::as.simple_triplet_matrix(mat),
                                         dir = c(rep("==", dims@zero),
@@ -899,12 +921,27 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
     # solution[[EQ_DUAL]] <- results_dict$auxiliary[[1]]   # TODO: How do we get the dual variables?
     # solution[[INEQ_DUAL]] <- results_dict$auxiliar[[2]]
   }
-  solution
+  return(solution)
 })
 
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
+
+# Map of GLPK_MI status to CVXR status.
+setMethod("status_map", "GLPK_MI", function(solver, status) {
+  if(status == 5)
+    OPTIMAL
+  else if(status == 2)
+    SOLUTION_PRESENT #Not sure if feasible is the same thing as this
+  else if(status == 3 | status == 4)
+    INFEASIBLE
+  else if(status == 1 | status == 6)
+    UNBOUNDED
+  else
+    stop("GLPK_MI status unrecognized: ", status)
+})
+
 setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   if(verbose)
@@ -950,6 +987,7 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 
   # Convert results to solution format.
   solution <- list()
+  
   solution[[STATUS]] <- status_map(object, results_dict$status)
   if(solution[[STATUS]] %in% SOLUTION_PRESENT) {
     ## Get primal variable values
@@ -958,6 +996,8 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
     solution[[VALUE]] <- results_dict$optimum
     # solution[[EQ_DUAL]] <- results_dict$auxiliary[[1]]   # TODO: How do we get the dual variables?
     # solution[[INEQ_DUAL]] <- results_dict$auxiliar[[2]]
+    solution[[EQ_DUAL]] <- list()
+    solution[[INEQ_DUAL]] <- list()
   }
   solution
 })
@@ -1005,7 +1045,6 @@ setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 })
 
 setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
-  browser()
   tmp <- callNextMethod(object, problem)
   data <- tmp[[1]]
   inv_data <- tmp[[2]]
@@ -1140,8 +1179,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
 })
 
 setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
-    ##browser()
-    data <- list()
+  data <- list()
   inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
   inv_data[[object@var_id]] <- id(variables(problem)[[1]])
 

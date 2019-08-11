@@ -548,8 +548,9 @@ setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), funct
 
 setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
   tmp <- callNextMethod(object, problem)
-  data <- tmp[[1]]
-  inv_data <- tmp[[2]]
+  object <- tmp[[1]]
+  data <- tmp[[2]]
+  inv_data <- tmp[[3]]
   variables <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
@@ -588,7 +589,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   cvar <- data$c
   b <- data$b
   A <- data$A
-  dims <- dims_to_solver_dict(data$dims)
+  dims <- SCS.dims_to_solver_dict(data$dims)
   
   if(is.null(dim(data$c))){
     n <- length(cvar) #Should dim be used here?
@@ -603,13 +604,13 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   
   #Make boolean constraints
   if(length(data$bool_vars_idx) > 0){
-    var_lb[data$bool_vars_idx] <- 0
-    var_ub[data$bool_vars_idx] <- 1
-    is_integer[data$bool_vars_idx] <- TRUE
+    var_lb[unlist(data$bool_vars_idx)] <- 0
+    var_ub[unlist(data$bool_vars_idx)] <- 1
+    is_integer[unlist(data$bool_vars_idx)] <- TRUE
   }
   
   if(length(data$int_vars_idx) > 0){
-    is_integer[data$int_vars_idx] <- TRUE
+    is_integer[unlist(data$int_vars_idx)] <- TRUE
   }
   
   result <- rcbc::cbc_solve(
@@ -1004,6 +1005,7 @@ setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 })
 
 setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
+  browser()
   tmp <- callNextMethod(object, problem)
   data <- tmp[[1]]
   inv_data <- tmp[[2]]

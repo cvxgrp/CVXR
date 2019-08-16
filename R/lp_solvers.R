@@ -92,14 +92,16 @@ setMethod("perform", signature(object = "CBC_LP", problem = "Problem"), function
 
 # Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CBC_LP", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-  status <- solution[STATUS]
+  status <- solution[[STATUS]]
 
+  primal_vars <- list()
+  dual_vars <- list()
   if(status %in% SOLUTION_PRESENT) {
-      opt_val <- solution[VALUE]
-      primal_vars <- list(solution[PRIMAL])
+      opt_val <- solution[[VALUE]]
+      primal_vars <- list(solution[[PRIMAL]])
       names(primal_variables) <- inverse_data[object@var_id]
-      eq_dual <- get_dual_values(solution[EQ_DUAL], extract_dual_value, inverse_data[EQ_CONSTR])
-      leq_dual <- get_dual_values(solution[INEQ_DUAL], extract_dual_value, inverse_data[object@neq_constr])
+      eq_dual <- get_dual_values(solution[[EQ_DUAL]], extract_dual_value, inverse_data[[EQ_CONSTR]])
+      leq_dual <- get_dual_values(solution[[INEQ_DUAL]], extract_dual_value, inverse_data[[object@neq_constr]])
       eq_dual <- utils::modifyList(eq_dual, leq_dual)
       dual_vars <- eq_dual
   } else {
@@ -109,8 +111,6 @@ setMethod("invert", signature(object = "CBC_LP", solution = "Solution", inverse_
       opt_val <- -Inf
     else
       opt_val <- NA_real_
-    primal_vars <- NA
-    dual_vars <- NA
   }
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))

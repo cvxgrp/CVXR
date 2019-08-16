@@ -489,13 +489,13 @@ CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
 #DK: CBC_Conic to CVXR status. Check these are correct
-setMethod("status_map", "CBC_CONIC", function(solver, status){
+setMethod("status_map", "CBC_CONIC", function(solver, status) {
   if(status$is_proven_optimal)
     OPTIMAL
-  else if(status$is_proven_dual_infeasible || is_proven_infeasible)
+  else if(status$is_proven_dual_infeasible || status$is_proven_infeasible)
     INFEASIBLE
   else
-    SOLVER_ERROR #probably need to check this the most
+    SOLVER_ERROR # probably need to check this the most
 })
 
 # Map of CBC_CONIC MIP/LP status to CVXR status.
@@ -565,7 +565,7 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
   status <- status_map(object, solution)
   
   primal_vars <- list()
-  
+  dual_vars <- list()
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$objective_value
     primal_vars[[object@var_id]] <- solution$column_solution
@@ -575,9 +575,8 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
     else if(status == UNBOUNDED)
       opt_val <- -Inf
     else
-      opt_val <- NA
+      opt_val <- NA_real_
   }
-  dual_vars <- list()
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })

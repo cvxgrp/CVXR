@@ -30,17 +30,17 @@ setMethod("is_dgp", "Constraint", function(object) { stop("Unimplemented") })
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
 setMethod("violation", "Constraint", function(object) {
-  residual <- object@residual
-  if(is.na(residual))
+  resid <- residual(object)
+  if(any(is.na(resid)))
     stop("Cannot compute the violation of a constraint whose expression is NA-valued.")
-  return(residual)
+  return(resid)
 })
 
 setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
-  residual <- object@residual
-  if(is.na(residual))
+  resid <- residual(object)
+  if(any(is.na(resid)))
     stop("Cannot compute the value of a constraint whose expression is NA-valued.")
-  return(all(residual <= tolerance))
+  return(all(resid <= tolerance))
 })
 
 setClassUnion("ListORConstr", c("list", "Constraint"))
@@ -69,7 +69,8 @@ setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
 })
 
 setMethod("name", "ZeroConstraint", function(x) {
-  paste(as.character(x@args[[1]]), "== 0")
+  # paste(as.character(x@args[[1]]), "== 0")
+  paste(name(x@args[[1]]), "== 0")
 })
 
 setMethod("dim", "ZeroConstraint", function(x) { dim(x@args[[1]]) })
@@ -77,7 +78,7 @@ setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
 setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
 setMethod("residual", "ZeroConstraint", function(object) {
-  if(is.na(value(object@expr)))
+  if(any(is.na(value(object@expr))))
     return(NA_real_)
   return(abs(value(object@expr)))
 })
@@ -105,7 +106,8 @@ setMethod(".construct_dual_variables", "EqConstraint", function(object, args) {
 })
 
 setMethod("name", "EqConstraint", function(x) {
-  paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
+  # paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
+  paste(name(x@args[[1]]), "==", name(x@args[[2]]))
 })
 
 setMethod("dim", "EqConstraint", function(x) { dim(x@expr) })
@@ -116,7 +118,7 @@ setMethod("is_dgp", "EqConstraint", function(object) {
 })
 
 setMethod("residual", "EqConstraint", function(object) {
-  if(is.na(value(object@expr)))
+  if(any(is.na(value(object@expr))))
     return(NA_real_)
   return(abs(value(object@expr)))
 })
@@ -138,7 +140,8 @@ setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
 })
 
 setMethod("name", "NonPosConstraint", function(x) {
-  paste(as.character(x@args[[1]]), "<= 0")
+  # paste(as.character(x@args[[1]]), "<= 0")
+  paste(name(x@args[[1]]), "<= 0")
 })
 
 setMethod("is_dcp", "NonPosConstraint", function(object) { is_convex(object@args[[1]]) })
@@ -152,7 +155,7 @@ setMethod("canonicalize", "NonPosConstraint", function(object) {
 })
 
 setMethod("residual", "NonPosConstraint", function(object) {
-  if(is.na(value(object@expr)))
+  if(any(is.na(value(object@expr))))
     return(NA_real_)
   return(pmax(value(object@expr), 0))
 })
@@ -171,7 +174,8 @@ setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr 
 })
 
 setMethod("name", "IneqConstraint", function(x) {
-  paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
+  # paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
+  paste(name(x@args[[1]]), "<=", name(x@args[[2]]))
 })
 
 #' @describeIn IneqConstraint The dimensions of the constrained expression.
@@ -190,7 +194,7 @@ setMethod("is_dgp", "IneqConstraint", function(object) {
 
 #' @describeIn IneqConstraint The residual of the constraint.
 setMethod("residual", "IneqConstraint", function(object) {
-  if(is.na(value(object@expr)))
+  if(any(is.na(value(object@expr))))
     return(NA_real_)
   return(pmax(value(object@expr), 0))
 })
@@ -405,7 +409,7 @@ setMethod("canonicalize", "ExpCone", function(object) {
                            validity = function(object) {
                              expr_dim <- dim(object@expr)
                              if(length(expr_dim) != 2 || expr_dim[1] != expr_dim[2])
-                               stop("[PSDConstraint: expr] Non-square matrix in positive definite constraint.")
+                               stop("Non-square matrix in positive definite constraint.")
                              return(TRUE)
                            }, contains = "Constraint")
 
@@ -420,7 +424,8 @@ setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
 })
 
 setMethod("name", "PSDConstraint", function(x) {
-  paste(as.character(x@args[[1]]), ">> 0")
+  # paste(as.character(x@args[[1]]), ">> 0")
+  paste(name(x@args[[1]]), ">> 0")
 })
 
 #' @param object A \linkS4class{PSDConstraint} object.
@@ -432,7 +437,7 @@ setMethod("is_dgp", "PSDConstraint", function(object) { FALSE })
 
 #' @describeIn PSDConstraint A \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "PSDConstraint", function(object) {
-  if(is.na(value(object@expr)))
+  if(any(is.na(value(object@expr))))
     return(NA_real_)
   min_eig <- LambdaMin(object@args[[1]] + t(object@args[[1]]))/2
   value(Neg(min_eig))

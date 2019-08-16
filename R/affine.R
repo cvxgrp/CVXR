@@ -139,7 +139,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
 
 setMethod("name", "AddExpression", function(x) {
-  paste(sapply(x@args, as.character), collapse = " + ")
+  paste(sapply(x@args, name), collapse = " + ")
 })
 
 #' @param values A list of arguments to the atom.

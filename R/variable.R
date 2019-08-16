@@ -57,7 +57,7 @@ setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA
 setMethod("show", "Variable", function(object) {
   attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
-    print(paste("Variable((", paste(dim(object), collapse = ", "), ")", attr_str, ")", sep = ""))
+    print(paste("Variable((", paste(dim(object), collapse = ", "), "), ", attr_str, ")", sep = ""))
   else
     print(paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = ""))
 })
@@ -67,7 +67,7 @@ setMethod("show", "Variable", function(object) {
 setMethod("as.character", "Variable", function(x) {
   attr_str <- get_attr_str(x)
   if(length(attr_str) > 0)
-    paste("Variable((", paste(dim(x), collapse = ", "), ")", attr_str, ")", sep = "")
+    paste("Variable((", paste(dim(x), collapse = ", "), "), ", attr_str, ")", sep = "")
   else
     paste("Variable(", paste(dim(x), collapse = ", "), ")", sep = "")
 })
@@ -92,6 +92,12 @@ setMethod("variables", "Variable", function(object) { list(object) })
 setMethod("canonicalize", "Variable", function(object) {
   obj <- create_var(dim(object), id(object))
   list(obj, list())
+})
+
+# This differs from value(object) <- value because there is no validation.
+setMethod("save_value", "Variable", function(object, value) {
+  object@value <- value
+  object
 })
 
 # Deprecated constructors

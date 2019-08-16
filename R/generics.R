@@ -349,7 +349,7 @@ setGeneric("save_value", function(object, value) { standardGeneric("save_value")
 #' @docType methods
 #' @rdname constr_value
 #' @export
-setGeneric("constr_value", function(object, tolerance) { standardGeneric("constr_value") })
+setGeneric("constr_value", function(object, tolerance = 1e-8) { standardGeneric("constr_value") })
 
 #'
 #' Get Expression Data
@@ -766,9 +766,11 @@ setGeneric("id", function(object) { standardGeneric("id") })
 NULL
 
 #' @rdname residual-methods
+#' @export
 setGeneric("residual", function(object) { standardGeneric("residual") })
 
 #' @rdname residual-methods
+#' @export
 setGeneric("violation", function(object) { standardGeneric("violation") })
 
 #'
@@ -788,23 +790,23 @@ setGeneric("num_cones", function(object) { standardGeneric("num_cones") })
 #' @rdname cone-methods
 setGeneric("cone_sizes", function(object) { standardGeneric("cone_sizes") })
 
-#
-# Get and Set Dual Value
-#
-# Get and set the value of the dual variable in a constraint.
-#
-# @param object A \linkS4class{Constraint} object.
-# @param value A numeric scalar, vector, or matrix to assign to the object.
-# @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
-# @rdname dual_value-methods
-# NULL
+#'
+#' Get and Set Dual Value
+#'
+#' Get and set the value of the dual variable in a constraint.
+#'
+#' @param object A \linkS4class{Constraint} object.
+#' @param value A numeric scalar, vector, or matrix to assign to the object.
+#' @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
+#' @rdname dual_value-methods
+NULL
 
-# @rdname dual_value-methods
-# @export
+#' @rdname dual_value-methods
+#' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
 
-# @rdname dual_value-methods
-# @export
+#' @rdname dual_value-methods
+#' @export
 setGeneric("dual_value<-", function(object, value) { standardGeneric("dual_value<-") })
 
 #'

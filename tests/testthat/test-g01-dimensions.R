@@ -1,5 +1,8 @@
 context("test-g01-dimensions")
 
+sum_dims <- CVXR:::sum_dims
+mul_dims <- CVXR:::mul_dims
+
 test_that("test addition of matching dimensions", {
   expect_equal(sum_dims(list(c(3,4), c(3,4))), c(3,4))
   expect_equal(sum_dims(lapply(1:5, function(i) { c(3,4) })), c(3,4))

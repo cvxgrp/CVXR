@@ -21,6 +21,9 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
+canonical_form <- CVXR:::canonical_form
+save_value <- CVXR:::save_value
+
 test_that("Test the Variable class", {
   x <- Variable(2, name = "x")
   y <- Variable()
@@ -139,16 +142,16 @@ test_that("test the Parameters class", {
   expect_equal(name(p), "p")
   expect_equal(dim(p), c(1,1))
 
-  p <- Parameter(4, 3, sign = "positive")
+  p <- Parameter(4, 3, nonneg = TRUE)
   expect_error(value(p) <- 1)
 
   val <- matrix(-1, nrow = 4, ncol = 3)
   val[1,1] <- 2
 
-  p <- Parameter(4, 3, sign = "positive")
+  p <- Parameter(4, 3, nonneg = TRUE)
   expect_error(value(p) <- val)
 
-  p <- Parameter(4, 3, sign = "negative")
+  p <- Parameter(4, 3, nonpos = TRUE)
   expect_error(value(p) <- val)
 
   # No error for unknown sign
@@ -311,19 +314,19 @@ test_that("test the DivExpression class", {
   expect_equal(sign(exp), NEGATIVE)
 
   # Parameters
-  p <- Parameter(sign = "positive")
+  p <- Parameter(nonneg = TRUE)
   value(p) <- 2
   exp <- 2/p
   expect_equal(value(exp), 1)
 
-  rho <- Parameter(sign = "positive")
+  rho <- Parameter(nonneg = TRUE)
   value(rho) <- 1
 
-  expect_equal(sign(rho), POSITIVE)
-  expect_equal(sign(Constant(2)), POSITIVE)
-  expect_equal(sign(Constant(2)/Constant(2)), POSITIVE)
-  expect_equal(sign(Constant(2)*rho), POSITIVE)
-  expect_equal(sign(rho/2), POSITIVE)
+  expect_equal(sign(rho), NONNEG)
+  expect_equal(sign(Constant(2)), NONNEG)
+  expect_equal(sign(Constant(2)/Constant(2)), NONNEG)
+  expect_equal(sign(Constant(2)*rho), NONNEG)
+  expect_equal(sign(rho/2), NONNEG)
 })
 
 test_that("test the NegExpression class", {
@@ -463,42 +466,42 @@ test_that("test indexing with logical matrices", {
   # Logical matrix
   expr <- C[A <= 2]
   expect_equal(dim(expr), c(2,1))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(matrix(A[A <= 2]), value(expr))
 
   expr <- C[A %% 2 == 0]
   expect_equal(dim(expr), c(6,1))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(matrix(A[A %% 2 == 0]), value(expr))
 
   # Logical vector for rows, index for columns
   expr <- C[c(TRUE, FALSE, TRUE), 4]
   expect_equal(dim(expr), c(2,1))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(matrix(A[c(TRUE, FALSE, TRUE), 4]), value(expr))
 
   # Index for rows, logical vector for columns
   expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]
   expect_equal(dim(expr), c(1, 2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[2, c(TRUE, FALSE, FALSE, TRUE), drop = FALSE], value(expr))
 
   # Logical vector for rows, slice for columns
   expr <- C[c(TRUE, TRUE, TRUE), 2:3]
   expect_equal(dim(expr), c(3,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[c(TRUE, TRUE, TRUE), 2:3], value(expr))
 
   # Slice for rows, logical vector for columns
   expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]
   expect_equal(dim(expr), c(1,3))    # Always cast 1-D arrays as column vectors. Edit: NOT!!
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE), drop = FALSE], value(expr))
 
   # Logical vectors for rows and columns
   expr <- C[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)]
   expect_equal(dim(expr), c(3,3))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[c(TRUE, TRUE, TRUE), c(TRUE, FALSE, TRUE, TRUE)], value(expr))
 })
 
@@ -509,43 +512,43 @@ test_that("test indexing with vectors/matrices of indices", {
   # Vector for rows
   expr <- C[c(1,2)]
   expect_equal(dim(expr), c(2,4))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[c(1,2),], value(expr))
 
   # Vector for rows, index for columns
   expr <- C[c(1,3),4]
   expect_equal(dim(expr), c(2,1))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(matrix(A[c(1,3),4]), value(expr))
 
   # Index for rows, vector for columns
   expr <- C[2,c(1,3)]
   expect_equal(dim(expr), c(1,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[2,c(1,3), drop = FALSE], value(expr))
 
   # Vector for rows, slice for columns
   expr <- C[c(1,3),2:3]
   expect_equal(dim(expr), c(2,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[c(1,3), 2:3], value(expr))
 
   # Vector for rows and columns
   expr <- C[c(1,2), c(2,4)]
   expect_equal(dim(expr), c(2,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[c(1,2), c(2,4)], value(expr))
 
   # Matrix for rows, vector for columns
   expr <- C[matrix(c(1,2)), c(2,4)]
   expect_equal(dim(expr), c(2,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[matrix(c(1,2)), c(2,4)], value(expr))
 
   # Matrix for rows and columns
   expr <- C[matrix(c(1,2)), matrix(c(2,4))]
   expect_equal(dim(expr), c(2,2))
-  expect_equal(sign(expr), POSITIVE)
+  expect_equal(sign(expr), NONNEG)
   expect_equal(A[matrix(c(1,2)), matrix(c(2,4))], value(expr))
 })
 

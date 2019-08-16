@@ -547,15 +547,15 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical", 
                                         complex = "logical", imag = "logical", symmetric = "logical", diag = "logical", 
                                         PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "NumORLogical", integer = "NumORLogical", 
-                                        sparsity = "logical", pos = "logical", neg = "logical", 
+                                        sparsity = "matrix", pos = "logical", neg = "logical", 
                                         attributes = "list", boolean_idx = "matrix", integer_idx = "matrix"),
                          prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, 
                                    complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, 
                                    PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, 
-                                   sparsity = NULL, pos = FALSE, neg = FALSE, 
+                                   sparsity = matrix(0, nrow = 0, ncol = 1), pos = FALSE, neg = FALSE, 
                                    attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)), contains = "Expression")
 
-setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = NULL, pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)) {
+setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = matrix(0, nrow = 0, ncol = 1), pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)) {
   if(length(dim) > 2)
     stop("Expressions of dimension greater than 2 are not supported.")
 
@@ -597,7 +597,10 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
                              boolean = bool_attr, integer = int_attr, sparsity = sparsity)
   
   # Only one attribute can be TRUE (except boolean and integer).
-  true_attr <- sum(unlist(.Object@attributes))
+  attrs <- .Object@attributes
+  attrs$sparsity <- prod(dim(attrs$sparsity)) != 0
+  true_attr <- sum(unlist(attrs))
+  
   if(bool_attr && int_attr)
     true_attr <- true_attr - 1
   if(true_attr > 1)

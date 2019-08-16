@@ -4,11 +4,13 @@
 #' This virtual class represents a canonical expression.
 #'
 #' @rdname Canonical-class
-setClass("Canonical", representation(id = "integer", args = "list"), prototype(id = NA_integer_, args = list()), contains = "VIRTUAL")
+setClass("Canonical", representation(id = "integer", args = "list", validate = "logical"), prototype(id = NA_integer_, args = list(), validate = TRUE), contains = "VIRTUAL")
 
-setMethod("initialize", "Canonical", function(.Object, id = NA_integer_, args = list()) {
+setMethod("initialize", "Canonical", function(.Object, id = NA_integer_, args = list(), validate = TRUE) {
   .Object@id <- ifelse(is.na(id), get_id(), id)
   .Object@args <- args
+  if(validate)
+    validObject(.Object)
   .Object
 })
 

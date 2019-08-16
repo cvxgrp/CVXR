@@ -6,20 +6,22 @@
 #' @name Atom-class
 #' @aliases Atom
 #' @rdname Atom-class
-Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"), prototype(atom_args = list(), .dim = NULL),
-                 validity = function(object) {
-                   if(length(object@atom_args) == 0)
-                     stop("[Atom: atom_args] no arguments given to ", class(object))
-                   return(TRUE)
-                 }, contains = c("VIRTUAL", "Expression"))
+Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"), prototype(atom_args = list(), .dim = NULL), contains = c("VIRTUAL", "Expression"))
 
-setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL) {
-  .Object <- callNextMethod(.Object, ...)
+setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL, validate = TRUE) {
+  # .Object@id <- ifelse(is.na(id), get_id(), id)
+  .Object <- callNextMethod(.Object, ..., validate = FALSE)
+  
+  if(length(atom_args) == 0)
+    stop("No arguments given to ", class(.Object), ".")
   .Object@args <- lapply(atom_args, as.Constant)
   validate_args(.Object)
+  
   .Object@.dim <- dim_from_args(.Object)
   if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
+  if(validate)
+    validObject(.Object)
   .Object
 })
 
@@ -546,7 +548,7 @@ GeoMean <- function(x, p = NA_real_, max_denom = 1024) { .GeoMean(x = x, p = p, 
 setMethod("initialize", "GeoMean", function(.Object, ..., x, p = NA_real_, max_denom = 1024) {
   .Object@x <- x
   .Object@max_denom <- max_denom
-  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x), validate = FALSE)
 
   x <- .Object@args[[1]]
   if(is_vector(x))
@@ -579,6 +581,7 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p = NA_real_, max_d
 
   # number of cones used
   .Object@cone_num <- .Object@cone_lb + .Object@cone_num_over
+  validObject(.Object)
   .Object
 })
 
@@ -1850,9 +1853,11 @@ setMethod(".grad", "QuadForm", function(object, values) {
 SymbolicQuadForm <- function(x, P, expr) { .SymbolicQuadForm(x = x, P = P, original_expression = expr) }
 
 setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, original_expression) {
+  .Object@x <- x
   .Object@original_expression <- original_expression
-  .Object <- callNextMethod(.Object, ..., atom_args = list(x, P))
+  .Object <- callNextMethod(.Object, ..., atom_args = list(x, P), validate = FALSE)
   .Object@P <- .Object@args[[2]]
+  validObject(.Object)
   .Object
 })
 

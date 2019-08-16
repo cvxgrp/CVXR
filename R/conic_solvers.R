@@ -484,7 +484,6 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
 
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
-
 # Solver capabilities.
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
@@ -590,38 +589,37 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   dims <- SCS.dims_to_solver_dict(data$dims)
   
   if(is.null(dim(data$c))){
-    n <- length(cvar) #Should dim be used here?
-  } else{
+    n <- length(cvar) # Should dim be used here?
+  } else {
     n <- dim(cvar)[1]
   }
   
-  #Initialize variable constraints
+  # Initialize variable constraints
   var_lb <- rep(-Inf, n)
   var_ub <- rep(Inf, n)
   is_integer <- rep.int(FALSE, n)
   
-  #Make boolean constraints
+  # Make boolean constraints
   if(length(data$bool_vars_idx) > 0){
     var_lb[unlist(data$bool_vars_idx)] <- 0
     var_ub[unlist(data$bool_vars_idx)] <- 1
     is_integer[unlist(data$bool_vars_idx)] <- TRUE
   }
   
-  if(length(data$int_vars_idx) > 0){
+  if(length(data$int_vars_idx) > 0) {
     is_integer[unlist(data$int_vars_idx)] <- TRUE
   }
   
   result <- rcbc::cbc_solve(
     obj = cvar,
     mat = A,
-    row_ub = b,
     row_lb = rep(-Inf, dim(A)[1]),
+    row_ub = b,
     col_lb = var_lb,
     col_ub = var_ub,
     is_integer = is_integer,
     max = FALSE
   )
-  
   
   # solver <- 'blah'
   # solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]

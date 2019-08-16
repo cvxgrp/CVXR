@@ -256,9 +256,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
     stop("ECOS status unrecognized: ", status)
 })
 
-setMethod("import_solver", "ECOS", function(solver) {
-  requireNamespace("ECOSolveR", quietly = TRUE)
-})
+setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
 
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
 setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
@@ -353,9 +351,7 @@ setMethod("status_map", "SCS", function(solver, status) {
 })
 
 setMethod("name", "SCS", function(x) { SCS_NAME })
-setMethod("import_solver", "SCS", function(solver) {
-  requireNamespace("scs", quietly = TRUE)
-})
+setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs", quietly = TRUE) })
 
 setMethod("reduction_format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
   # Extract coefficient and offset vector from constraint.
@@ -526,8 +522,11 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
 })
 
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
-setMethod("import_solver", "CBC_CONIC", function(solver) {
-  requireNamespace("rcbc", quietly = TRUE)
+setMethod("import_solver", "CBC_CONIC", function(solver) { 
+  installed <- requireNamespace("rcbc", quietly = TRUE)
+  if(!installed)
+    stop("Required R package rcbc not found. Please install from https://github.com/dirkschumacher/rcbc")
+  return(installed)
 })
 
 setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
@@ -848,9 +847,7 @@ setMethod("status_map", "GLPK", function(solver, status) {
 })
 
 setMethod("name", "GLPK", function(x) { GLPK_NAME })
-setMethod("import_solver", "GLPK", function(solver) {
-  requireNamespace("Rglpk", quietly = TRUE)
-})
+setMethod("import_solver", "GLPK", function(solver) { requireNamespace("Rglpk", quietly = TRUE) })
 
 setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
@@ -1025,9 +1022,7 @@ setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
 })
 
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI_CONIC", function(solver) {
-  requireNamespace("gurobi", quietly = TRUE)
-})
+setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
@@ -1136,7 +1131,7 @@ setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
 setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
 setMethod("import_solver", "MOSEK", function(solver) {
-    requireNamespace("Rmosek", quietly = TRUE)
+  requireNamespace("Rmosek", quietly = TRUE)
   # TODO: Add exponential cone support.
 })
 
@@ -1849,7 +1844,7 @@ setMethod("status_map", "XPRESS", function(solver, status) {
 
 setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
 setMethod("import_solver", "XPRESS", function(solver) {
-    stop("Unimplemented: XPRESS solver unavailable in R.")
+  stop("Unimplemented: XPRESS solver unavailable in R.")
 })
 
 setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {

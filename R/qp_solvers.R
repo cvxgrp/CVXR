@@ -297,9 +297,7 @@ setMethod("status_map", "GUROBI_QP", function(solver, status) {
 })
 
 setMethod("name", "GUROBI_QP", function(x) { GUROBI_NAME })
-setMethod("import_solver", "GUROBI_QP", function(solver) {
-  requireNamespace("gurobi", quietly = TRUE)
-})
+setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 ##DK: IS THIS FUNCTION NECESSARY ANYMORE WITH invert?
 setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
@@ -551,9 +549,7 @@ setMethod("status_map", "OSQP", function(solver, status) {
 })
 
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
-setMethod("import_solver", "OSQP", function(solver) {
-  requireNamespace("osqp", quietly = TRUE)
-})
+setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
 
 ## DWK CHANGE
 ## solution = "Solution" before. CVXPY has osqp.OSQP.results class

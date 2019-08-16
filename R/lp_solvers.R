@@ -53,8 +53,10 @@ setMethod("name", "CBC_LP", function(x) { CBC_NAME })
 
 # Imports the solver.
 setMethod("import_solver", "CBC_LP", function(solver) {
-  if(!requireNamespace("rcbc", quietly = TRUE))
+  installed <- requireNamespace("rcbc", quietly = TRUE)
+  if(!installed)
     stop("Required R package rcbc not found. Please install from https://github.com/dirkschumacher/rcbc")
+  return(installed)
 })
 
 # Can CBC solve the problem?

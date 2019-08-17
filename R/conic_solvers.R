@@ -496,7 +496,7 @@ setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 setMethod("status_map", "CBC_CONIC", function(solver, status){
   if(status$is_proven_optimal)
     OPTIMAL
-  else if(status$is_proven_dual_infeasible || is_proven_infeasible)
+  else if(status$is_proven_dual_infeasible || status$is_proven_infeasible)
     INFEASIBLE
   else
     SOLVER_ERROR #probably need to check this the most

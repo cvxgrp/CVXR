@@ -605,14 +605,16 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   row_lb <- rep(-Inf, nrow(A))
   
   #Setting equality constraints
-  row_ub[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
-  row_lb[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
+  if(dims[[EQ_DIM]] > 0){
+    row_ub[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
+    row_lb[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]  
+  }
   
   #Setting inequality constraints
   leq_start <- dims[[EQ_DIM]]
   leq_end <- dims[[EQ_DIM]] + dims[[LEQ_DIM]]
   if(leq_start != leq_end){
-    row_ub[(leq_start+1):(leq_end+1)] <- b[(leq_start+1):(leq_end+1)]
+    row_ub[(leq_start+1):(leq_end)] <- b[(leq_start+1):(leq_end)]
   }
   
   #Make boolean constraints

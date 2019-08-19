@@ -1038,8 +1038,9 @@ setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 
 setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   tmp <- callNextMethod(object, problem)
-  data <- tmp[[1]]
-  inv_data <- tmp[[2]]
+  object <- tmp[[1]]
+  data <- tmp[[2]]
+  inv_data <- tmp[[3]]
   variables <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
@@ -1099,9 +1100,9 @@ vectorized_lower_tri_to_mat <- function(v, dim) {
   cols <- c()
   vals <- c()
   running_idx <- 1
-  for(j in 1:dim) {
-    rows <- c(rows, j + 0:(dim-j))
-    cols <- c(cols, rep(j, dim-j))
+  for(j in seq_len(dim)) {
+    rows <- c(rows, j + seq_len(dim-j+1) - 1)
+    cols <- c(cols, rep(j, dim-j+1))
     vals <- c(vals, v[running_idx:(running_idx + dim - j)])
     running_idx <- running_idx + dim - j + 1
   }
@@ -1678,7 +1679,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
       dim <- psd_info[[2L]]
       ##sj <- rep(0, dim*floor((dim + 1)/2))
       ##task.getbars(sol, j, sj)
-      dual_vars[[id]] <- vectorized_lower_tri_to_mat(sol$bars, dim)
+      dual_vars[[id]] <- vectorized_lower_tri_to_mat(sol$bars[[1L]], dim)
   }
   return(dual_vars)
 }

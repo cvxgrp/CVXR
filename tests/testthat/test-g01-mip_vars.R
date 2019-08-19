@@ -18,8 +18,8 @@ test_that("Test that MIP problems are deterministic", {
   # Check that problem data and result is always the same
   for(i in 1:5) {
     for(key in c("c", "A", "b", "G", "h", "bool_vars_idx", "int_vars_idx")) {
-      lh_item <- data_recs[[1]][[key]]
-      rh_item <- data_recs[[i]][[key]]
+      lh_item <- data_recs[[1]][[1]][[key]]
+      rh_item <- data_recs[[i]][[1]][[key]]
       if(key %in% c("A", "G")) {
         lh_item <- as.matrix(lh_item)
         rh_item <- as.matrix(rh_item)

@@ -15,9 +15,10 @@ test_that("test that results are symmetric", {
   constraints <- c(constraints, M + C2 == x2)
   objective <- Minimize(matrix_trace(M))
   prob <- Problem(objective, constraints)
-  result <- solve(prob)
+  # TODO: result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   M_val <- result$getValue(M)
-  expect_true(M_val, t(M_val), tolerance = TOL)
+  expect_equal(M_val, t(M_val), tolerance = TOL)
 })
 
 test_that("SDP in objective and constraint", {

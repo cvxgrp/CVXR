@@ -604,7 +604,7 @@ setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@
 setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
-  w_arr <- as.vector(object@w)
+  w_arr <- as.double(object@w)   # TODO: I'm casting bigq/bigz to double to construct Matrix properly.
   # Outside domain
   if(any(x[w_arr > 0] <= 0))
     return(list(NA_real_))

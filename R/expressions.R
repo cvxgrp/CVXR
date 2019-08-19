@@ -424,9 +424,6 @@ t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(x) }   # Need S3
 #' @export
 setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(x) })
 
-Conj.Expression <- function(z) { if(is_real(z)) z else Conjugate(z) }
-setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z else Conjugate(z) })
-
 #' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
 #' @rdname MulExpression-class
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {

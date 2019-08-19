@@ -284,8 +284,7 @@ test_that("Test gradient for log", {
 
   value(a) <- -1
   expr <- log(a)
-  expect_warning(expr_grad <- grad(expr)[[as.character(a@id)]])
-  expect_true(is.na(expr_grad))
+  expect_true(is.na(grad(expr)[[as.character(a@id)]]))
 
   value(x) <- c(3,4)
   expr <- log(x)
@@ -294,8 +293,7 @@ test_that("Test gradient for log", {
 
   value(x) <- c(-1e-9,4)
   expr <- log(x)
-  expect_warning(expr_grad <- grad(expr)[[as.character(x@id)]])
-  expect_true(is.na(expr_grad))
+  expect_true(is.na(grad(expr)[[as.character(x@id)]]))
 
   value(A) <- cbind(c(1,2), c(3,4))
   expr <- log(A)

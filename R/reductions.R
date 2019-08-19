@@ -248,7 +248,7 @@ attributes_present <- function(variables, attr_map) {
 }
 
 # Convex attributes that generate constraints.
-CONVEX_ATTRIBUTES <- c("nonneg", "nonpos", "symmetric", "diag", "PSD", "NSD")
+CONVEX_ATTRIBUTES <- c("nonneg", "nonpos", "pos", "neg", "symmetric", "diag", "PSD", "NSD")
 convex_attributes <- function(variables) {
   # Returns a list of the (constraint-generating) convex attributes present among the variables.
   attributes_present(variables, CONVEX_ATTRIBUTES)

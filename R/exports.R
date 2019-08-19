@@ -1847,7 +1847,7 @@ setMethod("Im", "Expression", function(z) { Imag(z) })
 
 #' @rdname complex-atoms
 #' @export
-setMethod("Conj", "Expression", function(z) { Conjugate(z) })
+setMethod("Conj", "Expression", function(z) { if(is_real(z)) z else Conjugate(z) })
 
 #'
 #' Product of Entries

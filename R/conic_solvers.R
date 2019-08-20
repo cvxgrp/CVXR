@@ -1466,7 +1466,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   G_sum <- summary(G_sparse)
   row <- G_sum$i
   col <- G_sum$j
-  val <- G_sum$x
+  vals <- G_sum$x
 
   total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
 
@@ -1480,7 +1480,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
     # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-    A_holder <- sparseMatrix(row, col, x = val)
+    A_holder <- sparseMatrix(row, col, x = vals)
     prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
   }
 
@@ -1495,7 +1495,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   }
 
   # Constraint index: start of LMIs.
-  i <- dims[[LEQ_DIM]] + dims[[EQ_DIM]] + total_soc_exp_slacks
+  i <- dims[[LEQ_DIM]] + dims[[EQ_DIM]] + total_soc_exp_slacks + 1
   dim_exist_PSD <- length(dims[[PSD_DIM]]) #indicates whether or not we have any LMIs
 
   if(dim_exist_PSD > 0){
@@ -1574,97 +1574,122 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 })
 
 setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
-    ## REMOVE LATER
-    ## results  <- solution
-    ##    has_attr <- !is.null(mosek.solsta$near_optimal)
-    ## We ignore MOSEK 8.1 and below.
-    status_map <- function(status) {
-        status  <- tolower(status)
-        if(status %in% c("optimal", "integer_optimal"))
-            return(OPTIMAL)
-        ##        else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
-        ##            return(OPTIMAL_INACCURATE)
-        else if(status == "prim_infeas_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
-          #check later
-            if(!is.null(attributes(status))) #check if status has any attributes, hasattr in python
-                return(INFEASIBLE_INACCURATE)
-            else
-                return(INFEASIBLE)
-        } else if(status == "dual_infeasible_cer") {
-            if(!is.null(attributes(status)))
-                return(UNBOUNDED_INACCURATE)
-            else
-                return(UNBOUNDED)
-        } else
-            return(SOLVER_ERROR)
-    }
+  ## REMOVE LATER
+  ## results  <- solution
+  ##    has_attr <- !is.null(mosek.solsta$near_optimal)
+  ## We ignore MOSEK 8.1 and below.
+  status_map <- function(status) {
+      status  <- tolower(status)
+      if(status %in% c("optimal", "integer_optimal"))
+          return(OPTIMAL)
+      ##        else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
+      ##            return(OPTIMAL_INACCURATE)
+      else if(status == "prim_infeas_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
+        #check later
+          if(!is.null(attributes(status))) #check if status has any attributes, hasattr in python
+              return(INFEASIBLE_INACCURATE)
+          else
+              return(INFEASIBLE)
+      } else if(status == "dual_infeasible_cer") {
+          if(!is.null(attributes(status)))
+              return(UNBOUNDED_INACCURATE)
+          else
+              return(UNBOUNDED)
+      } else
+          return(SOLVER_ERROR)
+  }
 
-    ##env <- results$env
-    ##task <- results$task
-    ## Naras: FIX solver_opts
-    solver_opts <- solution$solver_options
+  ##env <- results$env
+  ##task <- results$task
+  ## Naras: FIX solver_opts
+  solver_opts <- solution$solver_options
 
-    if(inverse_data$integer_variables)
-        sol <- solution$sol$int
-    else if(!is.null(solver_opts$bfs) && solver_opts$bfs && inverse_data$is_LP)
-        sol <- solution$sol$bas   # The basic feasible solution.
-    else
-        sol <- solution$sol$itr   # The solution found via interior point method.
+  if(inverse_data$integer_variables)
+      sol <- solution$sol$int
+  else if(!is.null(solver_opts$bfs) && solver_opts$bfs && inverse_data$is_LP)
+      sol <- solution$sol$bas   # The basic feasible solution.
+  else
+      sol <- solution$sol$itr   # The solution found via interior point method.
 
-    problem_status <- sol$prosta
-    solution_status <- sol$solsta
+  problem_status <- sol$prosta
+  solution_status <- sol$solsta
 
-    if(is.na(solution$response$code))
-      status <- SOLVER_ERROR
-    else
-      status <- status_map(solution_status)
+  if(is.na(solution$response$code))
+    status <- SOLVER_ERROR
+  else
+    status <- status_map(solution_status)
 
-    ## For integer problems, problem status determines infeasibility (no solution).
-    ##  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)
-    ## Using reference https://docs.mosek.com/9.0/rmosek/accessing-solution.html
-    if(inverse_data$integer_variables && problem_status == "MSK_PRO_STA_PRIM_INFEAS")
-        status <- INFEASIBLE
+  ## For integer problems, problem status determines infeasibility (no solution).
+  ##  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)
+  ## Using reference https://docs.mosek.com/9.0/rmosek/accessing-solution.html
+  if(inverse_data$integer_variables && problem_status == "MSK_PRO_STA_PRIM_INFEAS")
+      status <- INFEASIBLE
 
-    if(status %in% SOLUTION_PRESENT) {
-                                        # Get objective value.
-        opt_val <- sol$pobjval + inverse_data[[OBJ_OFFSET]]
-                                        # Recover the CVXR standard form primal variable.
-        ## z <- rep(0, inverse_data$n0)
-        ## task.getxxslice(sol, 0, length(z), z)
-        primal_vars <- list()
-        primal_vars[[as.character(inverse_data[[object@var_id]])]] <- sol$xx
-        ## Recover the CVXR standard form dual variables.
-        ## if(sol == mosek.soltype.itn)
-        if (inverse_data$integer_variables) {
-          dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
-          dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-          names(dual_vars) <- dual_var_ids
-        } else
-          dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
-    } else {
-        if(status == INFEASIBLE)
-            opt_val <- Inf
-        else if(status == UNBOUNDED)
-            opt_val <- -Inf
-        else
-            opt_val <- NA_real_
-        vid <- 
-        primal_vars <- list()
-        primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
+  if(status %in% SOLUTION_PRESENT) {
+                                      # Get objective value.
+      opt_val <- sol$pobjval + inverse_data[[OBJ_OFFSET]]
+                                      # Recover the CVXR standard form primal variable.
+      ## z <- rep(0, inverse_data$n0)
+      ## task.getxxslice(sol, 0, length(z), z)
+      primal_vars <- list()
+      primal_vars[[as.character(inverse_data[[object@var_id]])]] <- sol$xx
+      ## Recover the CVXR standard form dual variables.
+      ## if(sol == mosek.soltype.itn)
+      if (inverse_data$integer_variables) {
         dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
-    }
+      } else
+        #dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data), not implemented in R. Same gist of it is below
+        dual_vars <- list()
+        
+        # Dual variables for the inequality constraints
+        suc_len <- ifelse(length(inverse_data[['suc_slacks']]) > 0, unlist(inverse_data[['suc_slacks']])[2], 0)
+        if(suc_len > 0){
+          dual_vars[[as.character(unlist(inverse_data[['suc_slacks']])[1])]] <- sol$suc[1:suc_len]
+        }
+        
+        # Dual variables for the original equality constraints
+        y_len <- ifelse(length(inverse_data[['y_slacks']]) > 0, unlist(inverse_data[['y_slacks']])[2], 0)
+        if(y_len > 0){
+          dual_vars[[as.character(unlist(inverse_data[['y_slacks']])[1])]] <- sol$slc[(suc_len+1):(suc_len+y_len)]
+        }
+        
+        # Dual variables for SOC and EXP constraints
+        snx_len <- ifelse(length(inverse_data[['snx_slacks']]) > 0, unlist(inverse_data[['snx_slacks']])[2], 0)
+        if(snx_len > 0){
+          dual_vars[[as.character(unlist(inverse_data[['snx_slacks']])[1])]] <- sol$snx[(inverse_data[['n0']]+1):(inverse_data[['n0']]+snx_len)] 
+        }
+      
+        # Dual variables for PSD constraints
+        for(i in seq_along(inverse_data[['psd_dims']])){
+          dual_vars[[as.character(unlist(inverse_data[['psd_dims']][[i]])[1])]] <- sol$bars[[i]]
+        }
+      
+  } else {
+      if(status == INFEASIBLE)
+          opt_val <- Inf
+      else if(status == UNBOUNDED)
+          opt_val <- -Inf
+      else
+          opt_val <- NA_real_
+      vid <- 
+      primal_vars <- list()
+      primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
+      dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+  }
 
-    ## Store computation time.
-    attr <- list()
-    attr[[SOLVE_TIME]] <- solution$dinfo$OPTIMIZER_TIME
+  ## Store computation time.
+  attr <- list()
+  attr[[SOLVE_TIME]] <- solution$dinfo$OPTIMIZER_TIME
 
-    ## Delete the MOSEK Task and Environment
-    ##task.__exit__(NA, NA, NA)
-    ##env.__exit__(NA, NA, NA)
+  ## Delete the MOSEK Task and Environment
+  ##task.__exit__(NA, NA, NA)
+  ##env.__exit__(NA, NA, NA)
 
-    return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
 MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {

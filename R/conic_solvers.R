@@ -1117,13 +1117,14 @@ MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order
                            prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
 vectorized_lower_tri_to_mat <- function(v, dim) {
+  v <- unlist(v)
   rows <- c()
   cols <- c()
   vals <- c()
   running_idx <- 1
   for(j in 1:dim) {
-    rows <- c(rows, j + 0:(dim-j))
-    cols <- c(cols, rep(j, dim-j))
+    rows <- c(rows, rep(j, dim-j+1) + 0:(dim-j))
+    cols <- c(cols, rep(j, dim-j+1))
     vals <- c(vals, v[running_idx:(running_idx + dim - j)])
     running_idx <- running_idx + dim - j + 1
   }
@@ -1640,31 +1641,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
       } else
-        #dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data), not implemented in R. Same gist of it is below
-        dual_vars <- list()
-        
-        # Dual variables for the inequality constraints
-        suc_len <- ifelse(length(inverse_data[['suc_slacks']]) > 0, unlist(inverse_data[['suc_slacks']])[2], 0)
-        if(suc_len > 0){
-          dual_vars[[as.character(unlist(inverse_data[['suc_slacks']])[1])]] <- sol$suc[1:suc_len]
-        }
-        
-        # Dual variables for the original equality constraints
-        y_len <- ifelse(length(inverse_data[['y_slacks']]) > 0, unlist(inverse_data[['y_slacks']])[2], 0)
-        if(y_len > 0){
-          dual_vars[[as.character(unlist(inverse_data[['y_slacks']])[1])]] <- sol$slc[(suc_len+1):(suc_len+y_len)]
-        }
-        
-        # Dual variables for SOC and EXP constraints
-        snx_len <- ifelse(length(inverse_data[['snx_slacks']]) > 0, unlist(inverse_data[['snx_slacks']])[2], 0)
-        if(snx_len > 0){
-          dual_vars[[as.character(unlist(inverse_data[['snx_slacks']])[1])]] <- sol$snx[(inverse_data[['n0']]+1):(inverse_data[['n0']]+snx_len)] 
-        }
-      
-        # Dual variables for PSD constraints
-        for(i in seq_along(inverse_data[['psd_dims']])){
-          dual_vars[[as.character(unlist(inverse_data[['psd_dims']][[i]])[1])]] <- sol$bars[[i]]
-        }
+        dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
       
   } else {
       if(status == INFEASIBLE)
@@ -1693,40 +1670,41 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
 })
 
 MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
-    dual_vars <- list()
+  dual_vars <- list()
 
-    ## Dual variables for the inequality constraints.
-    suc_len <- ifelse(length(inverse_data$suc_slacks) == 0, 0, sum(sapply(inverse_data$suc_slacks, function(val) { val[[2]] })))
-    if(suc_len > 0) {
-        ## suc <- rep(0, suc_len)
-        ## task.getsucslice(sol, 0, suc_len, suc)
-        dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$suc[seq_len(suc_len)], inverse_data$suc_slacks))
-    }
-
-    ## Dual variables for the original equality constraints.
-    y_len <- ifelse(length(inverse_data$y_slacks) == 0, 0, sum(sapply(inverse_data$y_slacks, function(val) { val[[2]] })))
-    if(y_len > 0) {
-        ##y <- rep(0, y_len)
-        ## task.getyslice(sol, suc_len, suc_len + y_len, y)
-        dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$suc[seq.int(suc_len, length.out = y_len)], inverse_data$y_slacks))
-    }
-
-    ## Dual variables for SOC and EXP constraints.
-    snx_len <- ifelse(length(inverse_data$snx_slacks) == 0, 0, sum(sapply(inverse_data$snx_slacks, function(val) { val[[2]] })))
-    if(snx_len > 0) {
-        ##snx <- matrix(0, nrow = snx_len, ncol = 1)
-        ##task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)
-        dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$snx, inverse_data$snx_slacks))
-    }
-
-    ## Dual variables for PSD constraints.
-    for(psd_info in inverse_data$psd_dims) {
-      id <- as.character(psd_info[[1L]])
-      dim <- psd_info[[2L]]
-      ##sj <- rep(0, dim*floor((dim + 1)/2))
-      ##task.getbars(sol, j, sj)
-      dual_vars[[id]] <- vectorized_lower_tri_to_mat(sol$bars, dim)
+  ## Dual variables for the inequality constraints.
+  suc_len <- ifelse(length(inverse_data$suc_slacks) == 0, 0, sum(sapply(inverse_data$suc_slacks, function(val) { val[[2]] })))
+  if(suc_len > 0) {
+      ## suc <- rep(0, suc_len)
+      ## task.getsucslice(sol, 0, suc_len, suc)
+      dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$suc[seq_len(suc_len)], inverse_data$suc_slacks))
   }
+
+  ## Dual variables for the original equality constraints.
+  y_len <- ifelse(length(inverse_data$y_slacks) == 0, 0, sum(sapply(inverse_data$y_slacks, function(val) { val[[2]] })))
+  if(y_len > 0) {
+      ##y <- rep(0, y_len)
+      ## task.getyslice(sol, suc_len, suc_len + y_len, y)
+      dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$suc[seq.int(suc_len, length.out = y_len)], inverse_data$y_slacks))
+  }
+
+  ## Dual variables for SOC and EXP constraints.
+  snx_len <- ifelse(length(inverse_data$snx_slacks) == 0, 0, sum(sapply(inverse_data$snx_slacks, function(val) { val[[2]] })))
+  if(snx_len > 0) {
+      ##snx <- matrix(0, nrow = snx_len, ncol = 1)
+      ##task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)
+      dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$snx, inverse_data$snx_slacks))
+  }
+
+  ## Dual variables for PSD constraints.
+  for(psd_info in inverse_data$psd_dims) {
+    id <- as.character(psd_info[[1L]])
+    dim <- psd_info[[2L]]
+    ##sj <- rep(0, dim*floor((dim + 1)/2))
+    ##task.getbars(sol, j, sj)
+    dual_vars[[id]] <- vectorized_lower_tri_to_mat(sol$bars, dim)
+  }
+  
   return(dual_vars)
 }
 

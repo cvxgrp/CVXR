@@ -21,6 +21,11 @@ CVXcanon <- R6::R6Class("CVXcanon",
                                 ## id_to_col is an integer vector with names that are
                                 ## integers converted to chacracters
                                 ## constr_offsets is a standard integer vector in R
+                                ## cat("Linvec\n")
+                                ## constraints$print()
+                                ## cat("id_to_col\n")
+                                ## print(id_to_col)
+
                                 if (missing(constr_offsets)) {
                                     objPtr <- .Call('_CVXR_build_matrix_0',
                                                     constraints$getXPtr(),

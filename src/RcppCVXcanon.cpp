@@ -58,6 +58,9 @@ SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v) {
   //  Rcpp::XPtr<ProblemData> resPtr(&res, true);
 
   Rcpp::XPtr<ProblemData> resPtr(new ProblemData(), true);
+#ifdef _R_DEBUG_
+  Rcpp::Rcout << "After resPtr" <<std::endl;
+#endif    
   build_matrix_2(ptrX->linvec, id_to_col, resPtr);
 #ifdef _R_DEBUG_
   Rcpp::Rcout << "After constructing external ptr" <<std::endl;

@@ -38,10 +38,10 @@ test_that("test unconstrained monomial", {
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
   
-  expect_equal(class(dcp@objective@args[[1]])[1], "AddExpression")
-  expect_equal(length(dcp@objective@args[[1]]@args), 2)
-  expect_equal(class(dcp@objective@args[[1]]@args[[1]])[1], "Variable")
-  expect_equal(class(dcp@objective@args[[1]]@args[[2]])[1], "Variable")
+  expect_equal(class(expr(dcp@objective))[1], "AddExpression")
+  expect_equal(length(expr(dcp@objective)@args), 2)
+  expect_equal(class(expr(dcp@objective)@args[[1]])[1], "Variable")
+  expect_equal(class(expr(dcp@objective)@args[[2]])[1], "Variable")
   opt <- solve(dcp)
   
   # dcp is solved in log-space, so it is unbounded below

@@ -166,7 +166,7 @@ linearize <- function(expr) {
 #     for(constr in object@.prob@constraints) {
 #       # TODO: better way to get constraint expressions.
 #       lagr_multiplier <- as.Constant(sign*sol$constr@dual_value)   # TODO: Fix this once result retrieval finished
-#       lagr <- lagr + Trace(t(lagr_multiplier) * constr@.expr)
+#       lagr <- lagr + Trace(t(lagr_multiplier) * expr(constr))
 #     }
 #     grad_map <- grad(lagr)
 #     result <- lapply(variables(object), function(var) { grad_map[[id(var)]] })

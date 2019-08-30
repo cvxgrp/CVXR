@@ -114,7 +114,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   affine_id_map <- affine_inverse_data@id_map
   affine_var_dims <- affine_inverse_data@var_dims
   extractor <- CoeffExtractor(affine_inverse_data)
-  cb <- affine(extractor, affine_problem@objective@expr)
+  cb <- affine(extractor, expr(affine_problem@objective))
   c <- cb[[1]]
   b <- cb[[2]]
 

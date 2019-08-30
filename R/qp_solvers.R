@@ -1,6 +1,6 @@
 # QPSolver requires objectives to be stuffed in the following way.
 is_stuffed_qp_objective <- function(objective) {
-  expr <- objective@expr
+  expr <- expr(objective)
   return(class(expr) == "AddExpression" && length(expr@args) == 2 && class(expr@args[[1]]) == "QuadForm" && class(expr@args[[2]]) == "MulExpression" && is_affine(expr@args[[2]]))
 }
 
@@ -22,8 +22,8 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 
   obj <- problem@objective
   # quadratic part of objective is t(x) %*% P %*% x, but solvers expect 0.5*t(x) %*% P %*% x.
-  P <- 2*value(obj@expr@args[[1]]@args[[2]])
-  q <- as.vector(value(obj@expr@args[[2]]@args[[1]]))
+  P <- 2*value(expr(obj)@args[[1]]@args[[2]])
+  q <- as.vector(value(expr(obj)@args[[2]]@args[[1]]))
 
   # Get number of variables.
   n <- problem@.size_metrics@num_scalar_variables
@@ -40,7 +40,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   if(length(eq_cons) > 0) {
     eq_coeffs <- list(list(), c())
     for(con in eq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
+      coeff_offset <- ConicSolver.get_coeff_offset(expr(con))
       eq_coeffs[[1]] <- c(eq_coeffs[[1]], list(coeff_offset[[1]]))
       eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
     }
@@ -54,7 +54,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   if(length(ineq_cons) > 0) {
     ineq_coeffs <- list(list(), c())
     for(con in ineq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(con@expr)
+      coeff_offset <- ConicSolver.get_coeff_offset(expr(con))
       ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], list(coeff_offset[[1]]))
       ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
     }

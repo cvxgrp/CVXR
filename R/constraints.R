@@ -78,9 +78,10 @@ setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
 setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
 setMethod("residual", "ZeroConstraint", function(object) {
-  if(any(is.na(value(object@expr))))
+  val <- value(expr(object))
+  if(any(is.na(val)))
     return(NA_real_)
-  return(abs(value(object@expr)))
+  return(abs(val))
 })
 
 setMethod("canonicalize", "ZeroConstraint", function(object) {
@@ -112,29 +113,23 @@ setMethod("name", "EqConstraint", function(x) {
 
 setMethod("dim", "EqConstraint", function(x) { dim(x@expr) })
 setMethod("size", "EqConstraint", function(object) { size(object@expr) })
+setMethod("expr", "EqConstraint", function(object) { object@expr })
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@expr) })
 setMethod("is_dgp", "EqConstraint", function(object) {
   is_log_log_affine(object@args[[1]]) && is_log_log_affine(object@args[[2]])
 })
 
 setMethod("residual", "EqConstraint", function(object) {
-  if(any(is.na(value(object@expr))))
+  val <- value(object@expr)
+  if(any(is.na(val)))
     return(NA_real_)
-  return(abs(value(object@expr)))
+  return(abs(val))
 })
 
-.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"),
-                              validity = function(object) {
-                                if(is_complex(object@expr))
-                                  stop("Inequality constraints cannot be complex.")
-                                return(TRUE)
-                              }, contains = "Constraint")
+.NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"), contains = "Constraint")
 NonPosConstraint <- function(expr, id = NA_integer_) { .NonPosConstraint(expr = expr, id = id) }
 
 setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
-  if(is_complex(expr))
-    stop("Inequality constraints cannot be complex.")
-  
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
 })
@@ -155,9 +150,10 @@ setMethod("canonicalize", "NonPosConstraint", function(object) {
 })
 
 setMethod("residual", "NonPosConstraint", function(object) {
-  if(any(is.na(value(object@expr))))
+  val <- value(expr(object))
+  if(any(is.na(val)))
     return(NA_real_)
-  return(pmax(value(object@expr), 0))
+  return(pmax(val, 0))
 })
 
 .IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
@@ -179,10 +175,13 @@ setMethod("name", "IneqConstraint", function(x) {
 })
 
 #' @describeIn IneqConstraint The dimensions of the constrained expression.
-setMethod("dim", "IneqConstraint", function(x) { c(size(x@expr), 1) })
+setMethod("dim", "IneqConstraint", function(x) { dim(x@expr) })
 
 #' @describeIn IneqConstraint The size of the constrained expression.
 setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
+
+#' @describeIn IneqConstraint The expression to constrain.
+setMethod("expr", "IneqConstraint", function(object) { object@expr })
 
 #' @describeIn IneqConstraint A non-positive constraint is DCP if its argument is convex.
 setMethod("is_dcp", "IneqConstraint", function(object) { is_convex(object@expr) })
@@ -194,9 +193,10 @@ setMethod("is_dgp", "IneqConstraint", function(object) {
 
 #' @describeIn IneqConstraint The residual of the constraint.
 setMethod("residual", "IneqConstraint", function(object) {
-  if(any(is.na(value(object@expr))))
+  val <- value(object@expr)
+  if(any(is.na(val)))
     return(NA_real_)
-  return(pmax(value(object@expr), 0))
+  return(pmax(val, 0))
 })
 
 # TODO: Do I need the NonlinearConstraint class?
@@ -437,7 +437,8 @@ setMethod("is_dgp", "PSDConstraint", function(object) { FALSE })
 
 #' @describeIn PSDConstraint A \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "PSDConstraint", function(object) {
-  if(any(is.na(value(object@expr))))
+  val <- value(expr(object))
+  if(any(is.na(val)))
     return(NA_real_)
   min_eig <- LambdaMin(object@args[[1]] + t(object@args[[1]]))/2
   value(Neg(min_eig))
@@ -454,7 +455,7 @@ setMethod("canonicalize", "PSDConstraint", function(object) {
 
 setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_constr, dims, solver) {
   .format <- function(object) {
-    leq_constr <- create_geq(object@expr, constr_id = object@id)
+    leq_constr <- create_geq(expr(object), constr_id = object@id)
     return(list(leq_constr))
   }
   new_leq_constr <- .format(object)

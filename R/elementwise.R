@@ -105,9 +105,9 @@ setMethod("is_pwl", "Abs", function(object) {
 
 setMethod(".grad", "Abs", function(object, values) {
   # Grad: +1 if positive, -1 if negative
-  rows <- size(object@x)
+  rows <- size(expr(object))
   cols <- size(object)
-  D <- array(0, dim = dim(object@x))
+  D <- array(0, dim = dim(expr(object)))
   D <- D + (values[[1]] > 0)
   D <- D - (values[[1]] < 0)
   list(Elementwise.elemwise_grad_to_diag(D, rows, cols))

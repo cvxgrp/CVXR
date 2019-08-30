@@ -13,10 +13,10 @@ setMethod("initialize", "Qp2SymbolicQp", function(.Object, ...) {
 })
 
 Qp2SymbolicQp.accepts <- function(problem) {
-  is_qpwa(problem@objective) &&
+  is_qpwa(expr(problem@objective)) &&
   length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
   all(sapply(problem@constraints, function(c) {
-        ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint") && is_pwl(c@args[[1]])) ||
+        ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint") && is_pwl(expr(c))) ||
         ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
   }))
 }
@@ -60,8 +60,8 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
 
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
-  # TODO: Need to copy objective?
-  Pqr <- coeff_quad_form(extractor, problem@objective@expr)
+  expr <- copy(expr(problem@objective))     # TODO: Need to copy objective?
+  Pqr <- coeff_quad_form(extractor, expr)
   P <- Pqr[[1]]
   q <- Pqr[[2]]
   r <- Pqr[[3]]

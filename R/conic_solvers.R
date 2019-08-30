@@ -23,7 +23,7 @@ is_stuffed_cone_constraint <- function(constraint) {
 
 is_stuffed_cone_objective <- function(objective) {
   # Conic solvers require objectives to be stuffed in the following way.
-  expr <- objective@expr
+  expr <- expr(objective)
   return(is_affine(expr) && length(variables(expr)) == 1 && class(expr) == "AddExpression" && length(expr@args) == 2
                          && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && class(expr@args[[2]]) == "Constant")
 }
@@ -360,7 +360,7 @@ setMethod("reduction_format_constr", "SCS", function(object, problem, constr, ex
   # Moreover, it requires the off-diagonal coefficients to be scaled by
   # sqrt(2).
   if(is(constr, "PSDConstraint")) {
-    expr <- constr@expr
+    expr <- expr(constr)
     triangularized_expr <- scaled_lower_tri(expr + t(expr))/2
     extractor <- CoeffExtractor(InverseData(problem))
     Ab <- affine(extractor, triangularized_expr)
@@ -1132,12 +1132,12 @@ psd_coeff_offset <- function(problem, c) {
   # Returns an array G and vector h such that the given constraint is
   # equivalent to G*z <=_{PSD} h.
   extractor <- CoeffExtractor(InverseData(problem))
-  tmp <- affine(extractor, c@expr)
+  tmp <- affine(extractor, expr(c))
   A_vec <- tmp[[1]]
   b_vec <- tmp[[2]]
   G <- -A_vec
   h <- b_vec
-  dim <- nrow(c@expr)
+  dim <- nrow(expr(c))
   return(list(G, h, dim))
 }
 

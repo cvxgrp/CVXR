@@ -280,14 +280,14 @@ SizeMetrics <- function(problem) {
   num_scalar_eq_constr <- 0
   for(constraint in problem@constraints) {
     if(is(constraint, "EqConstraint") || is(constraint, "ZeroConstraint"))
-      num_scalar_eq_constr <- num_scalar_eq_constr + size(constraint@expr)
+      num_scalar_eq_constr <- num_scalar_eq_constr + size(expr(constraint))
   }
 
   # num_scalar_leq_constr
   num_scalar_leq_constr <- 0
   for(constraint in problem@constraints) {
     if(is(constraint, "IneqConstraint") || is(constraint, "NonPosConstraint"))
-      num_scalar_leq_constr <- num_scalar_leq_constr + size(constraint@expr)
+      num_scalar_leq_constr <- num_scalar_leq_constr + size(expr(constraint))
   }
 
   .SizeMetrics(num_scalar_variables = num_scalar_variables, num_scalar_data = num_scalar_data, num_scalar_eq_constr = num_scalar_eq_constr, num_scalar_leq_constr = num_scalar_leq_constr,

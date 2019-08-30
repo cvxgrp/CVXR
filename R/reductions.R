@@ -155,7 +155,7 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
 setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   # TODO: Don't copy affine expressions?
   if(class(expr) == "PartialProblem") {
-    canon <- canonicalize_tree(object, expr@args[[1]]@objective@expr)
+    canon <- canonicalize_tree(object, expr(expr@args[[1]]@objective))
     canon_expr <- canon[[1]]
     constrs <- canon[[2]]
     for(constr in expr@args[[1]]@constraints) {
@@ -407,7 +407,7 @@ setMethod("accepts", signature(object = "EvalParams", problem = "Problem"), func
 setMethod("perform", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
-    obj_expr <- EvalParams.replace_params_with_consts(problem@objective@expr)
+    obj_expr <- EvalParams.replace_params_with_consts(expr(problem@objective))
     if(class(problem@objective) == "Maximize")
       objective <- Maximize(obj_expr)
     else
@@ -453,7 +453,7 @@ setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), f
     objective <- Minimize
   else
     objective <- Maximize
-  problem <- Problem(objective(-problem@objective@expr), problem@constraints)
+  problem <- Problem(objective(-expr(problem@objective)), problem@constraints)
   return(list(object, problem, list()))
 })
 

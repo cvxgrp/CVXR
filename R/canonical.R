@@ -9,7 +9,8 @@ setClass("Canonical", representation(id = "integer", args = "list", validate = "
 setMethod("initialize", "Canonical", function(.Object, id = NA_integer_, args = list(), validate = TRUE) {
   .Object@id <- ifelse(is.na(id), get_id(), id)
   .Object@args <- args
-  if(validate)
+  .Object@validate <- validate
+  if(.Object@validate)
     validObject(.Object)
   .Object
 })

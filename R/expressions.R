@@ -603,8 +603,8 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   if(true_attr > 1)
     stop("Cannot set more than one special attribute.")
 
-  if(!is.na(value))
-    .Object@value <- value
+  if(!any(is.na(value)))
+    value(.Object) <- value
   callNextMethod(.Object, ...)
 })
 
@@ -779,7 +779,7 @@ setMethod("validate_val", "Leaf", function(object, val) {
   if(!any(is.na(val))) {
     val <- intf_convert(val)
     if(any(intf_dim(val) != dim(object)))
-      stop("Invalid dimensions ", intf_dim(val), " for value")
+      stop("Invalid dimensions (", paste(intf_dim(val), collapse = ","), ") for value")
     projection <- project(object, val)
     delta <- abs(val - projection)
 

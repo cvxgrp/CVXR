@@ -998,11 +998,15 @@ saveValuesById <- function(variables, offset_map, result_vec) {
             ## The variable was multiplied by zero
             value <- matrix(0, nrow = rows, ncol = cols)
         }
+        
+        ## Convert matrix back to scalar/vector when appropriate.
+        if(var@.is_vector)
+          value <- as.vector(value)
         value
     })
     names(result) = sapply(variables, function(x) as.character(id(x)))
     result
- }
+}
 
 #'
 #' Arithmetic Operations on Problems

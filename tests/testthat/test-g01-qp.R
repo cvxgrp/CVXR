@@ -43,7 +43,7 @@ test_quad_over_lin <- function(solver) {
   for(var in variables(p))
     expect_equal(result$getValue(var), as.matrix(c(-1, -1)), tolerance = 1e-4)
   
-  # TODO: dual values should be cast to matrix form for consistency.
+  # TODO: Dual values should be cast to matrix form for consistency.
   for(con in constraints(p))
     expect_equal(result$getDualValue(con), as.matrix(c(2, 2)), tolerance = 1e-4)
 }

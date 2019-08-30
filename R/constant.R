@@ -10,8 +10,8 @@
 #' @name Constant-class
 #' @aliases Constant
 #' @rdname Constant-class
-.Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric", .cached_is_pos = "logical"),
-                                  prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA), contains = "Leaf")
+.Constant <- setClass("Constant", representation(value = "ConstVal", sparse = "logical", imag = "logical", nonneg = "logical", nonpos = "logical", symm = "logical", herm = "logical", eigvals = "numeric", .is_vector = "logical", .cached_is_pos = "logical"),
+                                  prototype(value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .is_vector = NA, .cached_is_pos = NA), contains = "Leaf")
 
 #' @param value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
 #' @rdname Constant-class
@@ -26,7 +26,7 @@
 #' @export
 Constant <- function(value) { .Constant(value = value) }
 
-setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .cached_is_pos = NA) {
+setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, sparse = NA, imag = NA, nonneg = NA, nonpos = NA, symm = NA, herm = NA, eigvals = NA_real_, .is_vector = NA, .cached_is_pos = NA) {
   # Keep sparse matrices sparse.
   if(is(value, "ConstSparseVal")) {
     .Object@value <- Matrix(value, sparse = TRUE)
@@ -41,6 +41,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
   .Object@symm <- symm
   .Object@herm <- herm
   .Object@eigvals <- eigvals
+  .Object@.is_vector <- is.vector(value)
   .Object@.cached_is_pos <- .cached_is_pos
   callNextMethod(.Object, ..., dim = intf_dim(.Object@value))
 })
@@ -58,7 +59,11 @@ setMethod("name", "Constant", function(x) { as.character(head(x@value)) })
 setMethod("constants", "Constant", function(object) { list(object) })
 
 #' @describeIn Constant The value of the constant.
-setMethod("value", "Constant", function(object) { object@value })
+setMethod("value", "Constant", function(object) {
+  if(object@.is_vector)
+    return(as.vector(object@value))
+  return(object@value)
+})
 
 setMethod("is_pos", "Constant", function(object) {
   if(is.na(object@.cached_is_pos))
@@ -233,8 +238,8 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", value = "ConstVal"),
-                                    prototype(dim = NULL, name = NA_character_, value = NA_real_), contains = "Leaf")
+.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", value = "ConstVal", .is_vector = "logical"),
+                                    prototype(dim = NULL, name = NA_character_, value = NA_real_, .is_vector = NA), contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
@@ -249,18 +254,32 @@ as.Constant <- function(expr) {
 #' size(x)
 #' @export
 # Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = dim, name = name, value = value, ...) }
-Parameter <- function(rows = 1, cols = 1, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
+# Parameter <- function(rows = 1, cols = 1, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
+Parameter <- function(rows = NULL, cols = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
 
-setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_) {
-  .Object@id <- get_id()
+setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_, .is_vector = NA) {
+  # .Object@id <- get_id()
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
     .Object@name <- name
+  
+  if(length(dim) == 0 || is.null(dim)) {  # Force constants to default to c(1,1).
+    dim <- c(1,1)
+    .Object@.is_vector <- TRUE
+  } else if(length(dim) == 1) {  # Treat as a column vector.
+    dim <- c(dim,1)
+    .Object@.is_vector <- TRUE
+  } else if(length(dim) == 2)
+    .Object@.is_vector <- FALSE
+  else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
+    stop("Unimplemented")
 
   # Initialize with value if provided
-  .Object@value <- value
-  callNextMethod(.Object, ..., id = .Object@id, dim = dim, value = value)
+  # .Object@value <- value
+  # callNextMethod(.Object, ..., id = .Object@id, dim = dim, value = value)
+  .Object@value <- NA_real_
+  callNextMethod(.Object, ..., dim = dim, value = value)
 })
 
 #' @describeIn Parameter Returns \code{list(dim, name, value, attributes)}.
@@ -273,7 +292,11 @@ setMethod("get_data", "Parameter", function(object) {
 setMethod("name", "Parameter", function(x) { x@name })
 
 #' @describeIn Parameter The value of the parameter.
-setMethod("value", "Parameter", function(object) { object@value })
+setMethod("value", "Parameter", function(object) {
+  if(object@.is_vector)
+    return(as.vector(object@value))
+  return(object@value)
+})
 
 #' @describeIn Parameter Set the value of the parameter.
 setReplaceMethod("value", "Parameter", function(object, value) {
@@ -334,4 +357,4 @@ setMethod("initialize", "CallbackParam", function(.Object, ..., callback, dim = 
 
 #' @param object A \linkS4class{CallbackParam} object.
 #' @rdname CallbackParam-class
-setMethod("value", "CallbackParam", function(object) { validate_val(object, object@callback()) })
+setMethod("value", "CallbackParam", function(object) { validate_val(object, object@callback()) })   # TODO: Cast to vector if object@.is_vector == TRUE.

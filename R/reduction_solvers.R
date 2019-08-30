@@ -106,17 +106,17 @@ construct_solving_chain <- function(problem, candidates) {
   
   if(length(candidates$conic_solvers) == 0)
     stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (", 
-               paste(candidates, collapse = ","), ")", sep = ""))
+               paste(unlist(candidates), collapse = ","), ")", sep = ""))
   
   # Our choice of solver depends upon which atoms are present in the problem.
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
   cones <- c()
-  if(any(sapply(atoms, class) %in% SOC_ATOMS) || any(sapply(problem@constraints, class) == "SOC"))
+  if(any(atoms %in% SOC_ATOMS) || any(sapply(problem@constraints, class) == "SOC"))
     cones <- c(cones, "SOC")
-  if(any(sapply(atoms, class) %in% EXP_ATOMS) || any(sapply(problem@constraints, class) == "ExpCone"))
+  if(any(atoms %in% EXP_ATOMS) || any(sapply(problem@constraints, class) == "ExpCone"))
     cones <- c(cones, "ExpCone")
-  if(any(sapply(atoms, class) %in% PSD_ATOMS) || any(sapply(problem@constraints, class) == "PSDConstraint")
+  if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, class) == "PSDConstraint")
                                || any(sapply(variables(problem), function(v) { is_psd(v) || is_nsd(v) })))
     cones <- c(cones, "PSDConstraint")
   

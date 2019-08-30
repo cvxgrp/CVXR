@@ -311,7 +311,7 @@ test_that("test the DivExpression class", {
   exp <- c/(3-5)
   expect_equal(curvature(exp), CONSTANT)
   expect_equal(dim(exp), c(1,1))
-  expect_equal(sign(exp), NEGATIVE)
+  expect_equal(sign(exp), NONPOS)
 
   # Parameters
   p <- Parameter(nonneg = TRUE)

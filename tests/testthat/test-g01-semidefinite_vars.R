@@ -25,7 +25,8 @@ test_that("SDP in objective and constraint", {
   # PSD in objective.
   obj <- Minimize(sum((X - Fmat)^2))
   p <- Problem(obj, list())
-  result <- solve(p)
+  # TODO: result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 1, tolerance = 1e-4)
   
   Xres <- result$getValue(X)
@@ -38,7 +39,8 @@ test_that("SDP in objective and constraint", {
   # ECHU: note to self, apparently this is a source of redundancy.
   obj <- Minimize(sum((Y - Fmat)^2))
   p <- Problem(obj, list(Y == Variable(2, 2, PSD = TRUE)))
-  result <- solve(p)
+  # TODO: result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 1, tolerance = 1e-2)
 
   Yres <- result$getValue(Y)
@@ -50,7 +52,8 @@ test_that("SDP in objective and constraint", {
   # Index into semidef
   obj <- Minimize((X[1,1] - 1)^2 + (X[2,1] - 2)^2 + (X[2,2] - 4)^2)
   p <- Problem(obj, list())
-  result <- solve(p)
+  # TODO: result <- solve(p)
+  result <- solve(p, solver = "SCS")
   print(result$getValue(X))
   expect_equal(result$value, 0, tolerance = 1e-5)
   

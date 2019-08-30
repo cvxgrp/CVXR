@@ -73,7 +73,8 @@ test_that("Test Integer problems", {
   # Infeasible integer problem
   obj <- Minimize(0)
   p <- Problem(obj, list(y_int == 0.5))
-  result <- solve(p)
+  # result <- solve(p)   # TODO: Returns solver_error (MOSEK) or freezes (ECOS_BB).
+  result <- solve(p, solver = "CBC")
   expect_equal(result$status, "infeasible")
 })
 

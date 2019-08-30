@@ -60,8 +60,8 @@ setMethod("constants", "Constant", function(object) { list(object) })
 
 #' @describeIn Constant The value of the constant.
 setMethod("value", "Constant", function(object) {
-  if(object@.is_vector)
-    return(as.vector(object@value))
+  # if(object@.is_vector)
+  #  return(as.vector(object@value))
   return(object@value)
 })
 
@@ -293,8 +293,8 @@ setMethod("name", "Parameter", function(x) { x@name })
 
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) {
-  if(object@.is_vector)
-    return(as.vector(object@value))
+  # if(object@.is_vector)
+  #  return(as.vector(object@value))
   return(object@value)
 })
 

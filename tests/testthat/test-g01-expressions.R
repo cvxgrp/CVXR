@@ -40,7 +40,7 @@ test_that("Test assigning a value to a variable", {
   # Scalar variable
   a <- Variable()
   value(a) <- 1
-  expect_equal(value(a), 1)
+  expect_equal(value(a), matrix(1))
   expect_error(value(a) <- c(2,1))
 
   # Test assigning None
@@ -51,7 +51,7 @@ test_that("Test assigning a value to a variable", {
   # Vector variable
   x <- Variable(2)
   value(x) <- c(2,1)
-  expect_equal(value(x), c(2,1), tolerance = TOL)
+  expect_equal(value(x), matrix(c(2,1)))
 
   # Matrix variable
   A <- Variable(3, 2)
@@ -99,7 +99,7 @@ test_that("Test transposing variables", {
 
 test_that("Test the Constant class", {
   c <- Constant(2)
-  expect_equal(value(c), 2)
+  expect_equal(value(c), matrix(2))
   expect_equal(dim(c), c(1,1))
   expect_equal(curvature(c), CONSTANT)
   expect_equal(sign(c), NONNEG)
@@ -160,7 +160,7 @@ test_that("test the Parameters class", {
 
   # Initialize a parameter with a value
   p <- Parameter(value = 10)
-  expect_equal(value(p), 10)
+  expect_equal(value(p), matrix(10))
 
   # Test assigning NA
   value(p) <- 10
@@ -318,7 +318,7 @@ test_that("test the DivExpression class", {
   p <- Parameter(nonneg = TRUE)
   value(p) <- 2
   exp <- 2/p
-  expect_equal(value(exp), 1)
+  expect_equal(value(exp), matrix(1))
 
   rho <- Parameter(nonneg = TRUE)
   value(rho) <- 1
@@ -383,6 +383,7 @@ test_that("test indexing expression", {
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
   expect_error(x[3,1])
+  expect_error(x[3])
 
   # Slicing
   exp <- C[1:2,2]
@@ -403,14 +404,14 @@ test_that("test indexing expression", {
   expect_equal(sign(c[1,2]), UNKNOWN)
   expect_equal(sign(c[2,1]), UNKNOWN)
   expect_equal(dim(exp), c(1,1))
-  expect_equal(value(exp), 4)
+  expect_equal(value(exp), matrix(4))
 
   c <- Constant(cbind(c(1,-2,3), c(0,4,5), c(7,8,9)))
   exp <- c[1:3, seq(1,4,2)]
   expect_equal(curvature(exp), CONSTANT)
   expect_true(is_constant(exp))
   expect_equal(dim(exp), c(3,2))
-  expect_equal(value(exp[1,2]), 7)
+  expect_equal(value(exp[1,2]), matrix(7))
 
   # Slice of transpose
   exp <- t(C)[1:2,2]
@@ -452,7 +453,7 @@ test_that("test indexing expression", {
 test_that("test negative indices", {
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- c[-1,-1]
-  expect_equal(value(exp), 4)
+  expect_equal(value(exp), matrix(4))
   expect_equal(dim(exp), c(1,1))
   expect_equal(curvature(exp), CONSTANT)
 

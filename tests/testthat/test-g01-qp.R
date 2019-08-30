@@ -1,3 +1,4 @@
+# TODO: This test is pretty time consuming. Move to manual group?
 context("test-g01-qp")
 TOL <- 1e-6
 
@@ -41,11 +42,11 @@ test_quad_over_lin <- function(solver) {
   p <- Problem(Minimize(0.5 * quad_over_lin(abs(x-1), 1)), list(x <= -1))
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(-1, -1)), tolerance = 1e-4)
+    expect_equal(result$getValue(var), matrix(c(-1, -1)), tolerance = 1e-4)
   
   # TODO: Dual values should be cast to matrix form for consistency.
   for(con in constraints(p))
-    expect_equal(result$getDualValue(con), as.matrix(c(2, 2)), tolerance = 1e-4)
+    expect_equal(result$getDualValue(con), matrix(c(2, 2)), tolerance = 1e-4)
 }
 
 test_abs <- function(solver) {
@@ -63,7 +64,7 @@ test_power <- function(solver) {
   p <- Problem(Minimize(sum(power(x, 2))), list())
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(0, 0)), tolerance = 1e-4)
+    expect_equal(result$getValue(var), matrix(c(0, 0)), tolerance = 1e-4)
 }
 
 test_power_matrix <- function(solver) {
@@ -103,7 +104,7 @@ test_affine_problem <- function(solver) {
   p <- Problem(Minimize(sum(x)), list(x >= 0, A %*% x <= b))
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(0, 0)), tolerance = 1e-3)
+    expect_equal(result$getValue(var), matrix(c(0, 0)), tolerance = 1e-3)
 }
 
 test_maximize_problem <- function(solver) {
@@ -114,7 +115,7 @@ test_maximize_problem <- function(solver) {
   p <- Problem(Maximize(-sum(x)), list(x >= 0, A %*% x <= b))
   result <- solve_QP(p, solver)
   for(var in variables(p))
-    expect_equal(result$getValue(var), as.matrix(c(0, 0)), tolerance = 1e-3)
+    expect_equal(result$getValue(var), matrix(c(0, 0)), tolerance = 1e-3)
 }
 
 test_norm_2 <- function(solver) {
@@ -152,9 +153,9 @@ test_quad_form_coeff <- function(solver) {
 
 test_quad_form_bound <- function(solver) {
   P <- rbind(c(13, 12, -2), c(12, 17, 6), c(-2, 6, 12))
-  q <- as.matrix(c(-22, -14.5, 13))
+  q <- matrix(c(-22, -14.5, 13))
   r <- 1
-  y_star <- as.matrix(c(1, 0.5, -1))
+  y_star <- matrix(c(1, 0.5, -1))
   p <- Problem(Minimize(0.5*quad_form(y, P) + t(q) %*% y + r),
                list(y >= -1, y <= 1))
   result <- solve_QP(p, solver)

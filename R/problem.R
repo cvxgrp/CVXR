@@ -1000,8 +1000,8 @@ saveValuesById <- function(variables, offset_map, result_vec) {
         }
         
         ## Convert matrix back to scalar/vector when appropriate.
-        if(var@.is_vector)
-          value <- as.vector(value)
+        # if(var@.is_vector)
+        #  value <- as.vector(value)
         value
     })
     names(result) = sapply(variables, function(x) as.character(id(x)))

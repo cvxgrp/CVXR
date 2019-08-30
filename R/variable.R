@@ -83,8 +83,8 @@ setMethod("name", "Variable", function(x) { x@name })
 
 #' @describeIn Variable Get the value of the variable.
 setMethod("value", "Variable", function(object) {
-  if(object@.is_vector)
-    return(as.vector(object@value))
+  # if(object@.is_vector)
+  #  return(as.vector(object@value))
   return(object@value)
 })
 

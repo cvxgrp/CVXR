@@ -22,8 +22,8 @@ test_that("test the variables method", {
 
 test_that("test the parameters method", {
   p1 <- Parameter()
-  p2 <- Parameter(3, sign = "negative")
-  p3 <- Parameter(4, 4, sign = "positive")
+  p2 <- Parameter(3, nonpos = TRUE)
+  p3 <- Parameter(4, 4, nonneg = TRUE)
   p <- Problem(Minimize(p1), list(a + p1 <= p2, b <= p3 + p3 + 2))
   params <- parameters(p)
   ref <- c(p1, p2, p3)

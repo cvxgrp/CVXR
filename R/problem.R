@@ -265,8 +265,8 @@ SizeMetrics <- function(problem) {
     big <- 0
     # Compute number of data
     num_scalar_data <- num_scalar_data + size(const)
-    big <- ifelse(1, length(dim(const)) == 0, max(dim(const)))
-    small <- ifelse(1, length(dim(const)) == 0, min(dim(const)))
+    big <- ifelse(length(dim(const)) == 0, 1, max(dim(const)))
+    small <- ifelse(length(dim(const)) == 0, 1, min(dim(const)))
 
     # Get max data dimension
     if(max_data_dimension < big)

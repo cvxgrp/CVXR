@@ -855,7 +855,7 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
       cid <- as.character(id(c))
       if(cid %in% names(solution@dual_vars)) {
         val <- solution@dual_vars[[cid]]
-        if(is.null(dim(val)) || all(dim(val)) == 1)
+        if(is.null(dim(val)) || all(dim(val) == 1))
           val <- as.vector(val)
         result[[cid]] <- val
         # result[[cid]] <- solution@dual_vars[[cid]]
@@ -971,7 +971,7 @@ saveDualValues <- function(object, result_vec, constraints, constr_types) {
 
     active_constraints <- list()
     for(constr in object@constraints) {
-                                        # Ignore constraints of the wrong type
+        # Ignore constraints of the wrong type
         if(class(constr) %in% constr_types)
             active_constraints <- c(active_constraints, constr)
     }

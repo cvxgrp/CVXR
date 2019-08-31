@@ -127,7 +127,7 @@ test_that("Test equivalent forms", {
     x <- Variable(n)
 
     obj1 <- sum_squares(A %*% x - b)
-    obj2 <- sum_entries(square(A %*% x - b))
+    obj2 <- sum_entries((A %*% x - b)^2)
     obj3 <- quad_form(x, P) + t(q) %*% x + r
     obj4 <- matrix_frac(x, Pinv) + t(q) %*% x + r
 

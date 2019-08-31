@@ -1,6 +1,8 @@
 context("test-g02-examples")
 TOL <- 1e-6
 
+ECOS.dims_to_solver_dict <- CVXR:::ECOS.dims_to_solver_dict
+
 test_that("Find the largest Euclidean ball in the polyhedron", {
     skip_on_cran()
     ## Create the input data

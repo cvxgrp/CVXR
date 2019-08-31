@@ -13,7 +13,11 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-test_that("test that all the ECOS solver options work", {
+SOLVER_MAP_CONIC <- CVXR:::SOLVER_MAP_CONIC
+SOLVER_MAP_QP <- CVXR:::SOLVER_MAP_QP
+INSTALLED_SOLVERS <- CVXR:::INSTALLED_SOLVERS
+
+test_that("Test that all the ECOS solver options work", {
   # Test ecos
   # feastol, abstol, reltol, feastol_inacc,
   # abstol_inacc, and reltol_inacc for tolerance values
@@ -29,7 +33,7 @@ test_that("test that all the ECOS solver options work", {
   expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
 })
 
-test_that("test that all the ECOS BB solver options work", {
+test_that("Test that all the ECOS BB solver options work", {
   # 'mi_maxiter'
   # maximum number of branch and bound iterations (default: 1000)
   # 'mi_abs_eps'
@@ -44,7 +48,7 @@ test_that("test that all the ECOS BB solver options work", {
   expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
 })
 
-test_that("test that all the SCS solver options work", {
+test_that("Test that all the SCS solver options work", {
   # Test SCS
   # MAX_ITERS, EPS, ALPHA, UNDET_TOL, VERBOSE, and NORMALIZE.
   # If opts is missing, then the algorithm uses default settings.
@@ -59,7 +63,76 @@ test_that("test that all the SCS solver options work", {
   expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = 1e-2)
 })
 
-test_that("test a basic LP with GUROBI", {
+# test_that("Test that all the CVXOPT solver options work", {
+#   if("CVXOPT" %in% installed_solvers()) {
+#     EPS <- 1e-7
+#     for(i in 1:2) {
+#       result <- solve(prob, solver = "CVXOPT", feastol = EPS, abstol = EPS, reltol = EPS,
+#                       max_iters = 20, verbose = TRUE, kktsolver = "chol", refinement = 2, warm_start = TRUE)
+#     }
+#     expect_equal(result$value, 1.0, tolerance = TOL)
+#     expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
+#   }
+# })
+
+test_that("Test a basic LP with GLPK", {
+  # Either the problem is solved or GLPK is not installed.
+  if("GLPK" %in% installed_solvers()) {
+    prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
+    result <- solve(prob, solver = "GLPK")
+    expect_equal(result$value, 1.0, tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
+    
+    # Example from
+    # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
+    objective <- Minimize(-4*x[1] - 5*x[2])
+    constraints <- list(2*x[1] + x[2] <= 3, 
+                        x[1] + 2*x[2] <= 3,
+                        x[1] >= 0,
+                        x[2] >= 0)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GLPK")
+    expect_equal(result$value, -9, tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
+  } else {
+    prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
+    expect_error(result <- solve(prob, solver = "GLPK"), "The solver GLPK is not installed.")
+  }
+})
+
+test_that("Test a basic MILP with GLPK", {
+  # Either the problem is solved or GLPK is not installed.
+  if("GLPK_MI" %in% installed_solvers()) {
+    bool_var <- Variable(boolean = TRUE)
+    int_var <- Variable(integer = TRUE)
+    prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == bool_var, bool_var == 0))
+    result <- solve(prob, solver = "GLPK_MI", verbose = TRUE)
+    expect_equal(result$value, 1.0, tolerance = TOL)
+    expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
+    
+    # Example from
+    # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
+    objective <- Minimize(-4*x[1] - 5*x[2])
+    constraints <- list(2*x[1] + x[2] <= int_var,
+                        x[1] + 2*x[2] <= 3*bool_var,
+                        x[1] >= 0,
+                        x[2] >= 0,
+                        int_var == 3*bool_var,
+                        int_var == 3)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GLPK_MI", verbose = TRUE)
+    expect_equal(result$value, -9, tolerance = TOL)
+    expect_equal(result$getValue(int_var), 3, tolerance = TOL)
+    expect_equal(result$getValue(bool_var), 1, tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
+  } else {
+    prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
+    expect_error(result <- solve(prob, solver = "GLPK_MI"), "The solver GLPK_MI is not installed.")
+  }
+})
+
+test_that("Test a basic LP with GUROBI", {
   if("GUROBI" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "GUROBI")
@@ -108,7 +181,7 @@ test_that("test a basic LP with GUROBI", {
   }
 })
 
-test_that("test a basic SOCP with GUROBI", {
+test_that("Test a basic SOCP with GUROBI", {
   if("GUROBI" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "GUROBI")
@@ -185,7 +258,7 @@ test_that("Make sure GUROBI's dual result matches other solvers", {
   }
 })
 
-test_that("test a basic LP with MOSEK", {
+test_that("Test a basic LP with MOSEK", {
   if("MOSEK" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "MOSEK")
@@ -214,7 +287,7 @@ test_that("test a basic LP with MOSEK", {
   }
 })
 
-test_that("test a basic SOCP with MOSEK", {
+test_that("Test a basic SOCP with MOSEK", {
   if("MOSEK" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "MOSEK")
@@ -287,5 +360,118 @@ test_that("Test a basic SDP with MOSEK", {
   } else {
     prob <- Problem(Minimize(p_norm(x,1)), list(x == 0))
     expect_error(result <- solve(prob, solver = "MOSEK"), "The solver MOSEK is not installed.")
+  }
+})
+
+test_that("Test MOSEK parameters", {
+  if("MOSEK" %in% installed_solvers()) {
+    n <- 10
+    m <- 4
+    A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+    x <- matrix(rnorm(n), nrow = n, ncol = 1)
+    y <- A %*% x
+    
+    # Solve a simple basis pursuit problem for testing purposes.
+    z <- Variable(n)
+    objective <- Minimize(norm1(z))
+    constraints <- list(A %*% z == y)
+    problem <- Problem(objective, constraints)
+    expect_error(result <- solve(problem, solver = "MOSEK", invalid_kwarg = NA))
+  }
+})
+
+test_that("Test GUROBI warm start", {
+  # Make sure that warm starting GUROBI behaves as expected.
+  # Note: This only checks output, not whether or not GUROBI is warm starting internally.
+  if("GUROBI" %in% installed_solvers()) {
+    A <- Parameter(2, 2)
+    b <- Parameter(2)
+    h <- Parameter(2)
+    c <- Parameter(2)
+    
+    value(A) <- rbind(c(1,0), c(0,0))
+    value(b) <- c(1,0)
+    value(h) <- c(2,2)
+    value(c) <- c(1,1)
+    
+    objective <- Maximize(c[1]*x[1] + c[2]*x[2])
+    constraints <- list(x[1] <= h[1],
+                        x[2] <= h[2],
+                        A %*% x == b)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
+    expect_equal(result$value, 3)
+    expect_equal(result$getValue(x), matrix(c(1, 2)), tolerance = TOL)
+    
+    # Change A and b from the original values.
+    value(A) <- rbind(c(0,0), c(0,1))   # <----- Changed.
+    value(b) <- c(0,1)   # <----- Changed.
+    value(h) <- c(2,2)
+    value(c) <- c(1,1)
+    
+    # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
+    objective <- Maximize(c[1]*x[1] + c[2]*x[2])
+    constraints <- list(x[1] <= h[1],
+                        x[2] <= h[2],
+                        A %*% x == b)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
+    expect_equal(result$value, 3)
+    expect_equal(result$getValue(x), matrix(c(2, 1)), tolerance = TOL)
+    
+    # Change h from the original values.
+    value(A) <- rbind(c(1,0), c(0,0))
+    value(b) <- c(1,0)
+    value(h) <- c(1,1)   # <----- Changed.
+    value(c) <- c(1,1)
+    
+    # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
+    objective <- Maximize(c[1]*x[1] + c[2]*x[2])
+    constraints <- list(x[1] <= h[1],
+                        x[2] <= h[2],
+                        A %*% x == b)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
+    expect_equal(result$value, 2)
+    expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
+    
+    # Change c from the original values.
+    value(A) <- rbind(c(1,0), c(0,0))
+    value(b) <- c(1,0)
+    value(h) <- c(2,2)
+    value(c) <- c(2,1)   # <----- Changed.
+    
+    # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
+    objective <- Maximize(c[1]*x[1] + c[2]*x[2])
+    constraints <- list(x[1] <= h[1],
+                        x[2] <= h[2],
+                        A %*% x == b)
+    prob <- Problem(objective, constraints)
+    result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
+    expect_equal(result$value, 4)
+    expect_equal(result$getValue(x), matrix(c(1, 2)), tolerance = TOL)
+  } else {
+    prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
+    expect_error(result <- solve(prob, solver = "GUROBI", warm_start), "The solver GUROBI is not installed.")
+  }
+})
+
+test_that("Test the list of installed solvers", {
+  prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
+  for(solver in names(SOLVER_MAP_CONIC)) {
+    if(solver %in% INSTALLED_SOLVERS) {
+      result <- solve(prob, solver = solver)
+      expect_equal(result$value, 1.0, tolerance = TOL)
+      expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
+    } else
+      expect_error(result <- solve(prob, solver = solver), paste("The solver", solver, "is not installed."))
+  }
+  
+  for(solver in names(SOLVER_MAP_QP)) {
+    if(solver %in% INSTALLED_SOLVERS) {
+      result <- solve(prob, solver = solver)
+      expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
+    } else
+      expect_error(result <- solve(prob, solver = solver), paste("The solver", solver, "is not installed."))
   }
 })

@@ -504,7 +504,7 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
     #Only add duals if not a MIP
     dual_vars <- list()
     if(!inverse_data@is_mip) {
-      y <- solution$pi
+      y <- -solution$pi
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     } 
   } else {

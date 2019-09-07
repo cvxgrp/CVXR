@@ -585,7 +585,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   
   if(!is.na(solver)) {
     if(!(solver %in% INSTALLED_SOLVERS))
-      stop("The solver is not installed")
+      stop("The solver ", solver, " is not installed")
     if(solver %in% CONIC_SOLVERS)
       candidates$conic_solvers <- c(candidates$conic_solvers, solver)
     if(solver %in% QP_SOLVERS)

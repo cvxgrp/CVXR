@@ -1,7 +1,10 @@
-context("test-g02-benchmarks")
+context("test-benchmarks")
 
 if(!require(microbenchmark))
   install.packages("microbenchmark")
+
+perform <- CVXR:::perform
+ConeMatrixStuffing <- CVXR:::ConeMatrixStuffing
 
 test_that("test diffcp SDP example", {
   randn_symm <- function(n) {
@@ -39,7 +42,7 @@ test_that("test TV inpainting", {
   known <- array(0, dim = c(rows, cols, colors))
   for(i in seq_len(rows)) {
     for(j in seq_len(cols)) {
-      if(runif() > 0.7) {
+      if(runif(1) > 0.7) {
         for(k in seq_len(colors))
           known[i,j,k] <- 1
       }

@@ -70,8 +70,8 @@ test_that("test MOSEK SDP", {
     Y <- result$getDualValue(constraints[[length(constraints)]])
     eigs <- eigen(Y, only.values = TRUE)
     expect_true(all(eigs$value >= 0))
-    complementary_slackness <- sum(diag(result_mosek$getValue(rho) %*% Y))
-    expect_equal(complementary_slackness, 0.0, tolereance = TOL)
+    complementary_slackness <- sum(diag(result$getValue(rho) %*% Y))
+    expect_equal(complementary_slackness, 0.0, tolerance = TOL)
   }
 })
 

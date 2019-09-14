@@ -791,26 +791,51 @@ Key <- function(row, col) {
 }
 
 ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed for consistency in handling keys.
-  nrow <- dim[1]
-  ncol <- dim[2]
-
   if(length(key) > 3)
     stop("Invalid index/slice")
+  
+  nrow <- dim[1]
+  ncol <- dim[2]
+  row <- ku_format_slice(key$row, nrow)
+  col <- ku_format_slice(key$col, ncol)
 
-  if(!is.null(key$row) && !is.null(key$col))
-    key <- Key(row = key$row, col = key$col)
+  if(!is.null(row) && !is.null(col))
+    key <- Key(row = row, col = col)
   # Change single indices for vectors into double indices
-  else if(is.null(key$row) && !is.null(key$col))
-    key <- Key(row = seq_len(nrow), col = key$col)
-  else if(!is.null(key$row) && is.null(key$col))
-    key <- Key(row = key$row, col = seq_len(ncol))
+  else if(is.null(row) && !is.null(col))
+    key <- Key(row = seq_len(nrow), col = col)
+  else if(!is.null(row) && is.null(col))
+    key <- Key(row = row, col = seq_len(ncol))
   else
     stop("A key cannot be empty")
   return(key)
 }
 
+ku_format_slice <- function(key_val, dim) {
+  if(is.null(key_val))
+    return(NULL)
+  orig_key_val <- as.integer(key_val)
+  
+  # Return if all zero indices.
+  if(all(orig_key_val == 0))
+    return(orig_key_val)
+  
+  # Convert negative indices to positive indices.
+  if(all(orig_key_val >= 0))
+    key_val <- orig_key_val
+  else if(all(orig_key_val <= 0))
+    key_val <- setdiff(seq_len(dim), -orig_key_val)
+  else
+    stop("Only 0's may be mixed with negative subscripts")
+  
+  if(all(key_val >= 0 && key_val <= dim))
+    return(key_val)
+  else
+    stop("Index is out of bounds for axis with size ", dim)
+}
+
 ku_slice_mat <- function(mat, key) {
-  if (is.matrix(key$row) && is.null(key$col))
+  if(is.matrix(key$row) && is.null(key$col))
     select_mat  <- matrix(mat[key$row], ncol = 1)
   else if (is.null(key$row) && is.null(key$col))
     select_mat <- mat

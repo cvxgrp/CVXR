@@ -695,7 +695,7 @@ test_that("Test recovery of dual variables", {
       expect_equal(result$getValue(z), matrix(c(-4,1)), tolerance = acc)
   
       # Dual values
-      expect_equal(result$getDualValue(p@constraints[[1]]), matrix(c(0,1)), tolerance = acc)   # TODO: Numbers are wrong here.
+      expect_equal(result$getDualValue(p@constraints[[1]]), matrix(c(0,1)), tolerance = acc)   # TODO: Numbers are wrong here for SCS.
       expect_equal(result$getDualValue(p@constraints[[2]]), matrix(c(-1,0.5)), tolerance = acc)
       expect_equal(result$getDualValue(p@constraints[[3]]), 0, tolerance = acc)
   

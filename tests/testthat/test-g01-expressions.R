@@ -457,6 +457,24 @@ test_that("test negative indices", {
   expect_equal(dim(exp), c(1,1))
   expect_equal(curvature(exp), CONSTANT)
 
+  c <- Constant(1:4)
+  exp <- c[c(-1,-4)]
+  expect_equal(value(exp), matrix(c(2,3)))
+  expect_equal(dim(exp), c(2,1))
+  expect_equal(curvature(exp), CONSTANT)
+  
+  c <- Constant(1:4)
+  exp <- c[seq(4,1,-1)]
+  expect_equal(value(exp), matrix(c(4,3,2,1)))
+  expect_equal(dim(exp), c(4,1))
+  expect_equal(curvature(exp), CONSTANT)
+  
+  x <- Variable(4)
+  expect_equal(dim(x[seq(4,1,-1)]), c(4,1))
+  prob <- Problem(Minimize(0), list(x[seq(4,1,-1)] == c))
+  result <- solve(prob)
+  expect_equal(result$getValue(x), matrix(c(4,3,2,1)))   # TODO: This is giving wrong numbers.
+  
   # TODO: More testing of R's negative indices (and sequences of negative indices)
 })
 

@@ -540,7 +540,7 @@ test_that("test problems with parameters", {
   value(p2) <- -matrix(1, nrow = 3, ncol = 1)
   value(p3) <- matrix(1, nrow = 4, ncol = 4)
   p <- Problem(Maximize(p1*a), list(a + p1 <= p2, b <= p3 + p3 + 2))
-  result <- solve(p)   # TODO: Numbers are wrong here.
+  result <- solve(p)
   expect_equal(result$value, -6, tolerance = TOL)
 
   value(p1) <- NA_real_

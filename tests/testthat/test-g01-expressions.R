@@ -31,9 +31,10 @@ test_that("Test the Variable class", {
   expect_equal(dim(y), c(1,1))
   expect_equal(curvature(x), AFFINE)
   
-  expect_error(Variable(2,2, diag = TRUE, symmetric = TRUE))
-  expect_error(Variable(2,0))
-  expect_error(Variable(2,0.5))
+  expect_error(Variable(2,2, diag = TRUE, symmetric = TRUE), "Cannot set more than one special attribute.", fixed = TRUE)
+  expect_error(Variable(2,0), "Invalid dimensions 20", fixed = TRUE)
+  expect_error(Variable(2,0.5), "Invalid dimensions 20.5", fixed = TRUE)
+  
 })
 
 test_that("Test assigning a value to a variable", {
@@ -41,7 +42,7 @@ test_that("Test assigning a value to a variable", {
   a <- Variable()
   value(a) <- 1
   expect_equal(value(a), matrix(1))
-  expect_error(value(a) <- c(2,1))
+  expect_error(value(a) <- c(2,1), "Invalid dimensions (2,1) for value", fixed = TRUE)
 
   # Test assigning None
   value(a) <- 1
@@ -60,7 +61,7 @@ test_that("Test assigning a value to a variable", {
 
   # Test assigning negative val to non-negative variable
   x <- Variable(nonneg = TRUE)
-  expect_error(value(x) <- -2)
+  expect_error(value(x) <- -2, "Value must be nonnegative", fixed = TRUE)
 
   # Small negative values are rounded to zero
   # *** BEGIN BN EDIT
@@ -143,16 +144,19 @@ test_that("test the Parameters class", {
   expect_equal(dim(p), c(1,1))
 
   p <- Parameter(4, 3, nonneg = TRUE)
-  expect_error(value(p) <- 1)
+  expect_error(value(p) <- 1,
+               "Invalid dimensions (1,1) for value", fixed = TRUE)
 
   val <- matrix(-1, nrow = 4, ncol = 3)
   val[1,1] <- 2
 
   p <- Parameter(4, 3, nonneg = TRUE)
-  expect_error(value(p) <- val)
+  expect_error(value(p) <- val,
+               "Value must be nonnegative", fixed = TRUE)
 
   p <- Parameter(4, 3, nonpos = TRUE)
-  expect_error(value(p) <- val)
+  expect_error(value(p) <- val,
+               "Value must be nonpositive", fixed = TRUE)
 
   # No error for unknown sign
   p <- Parameter(4, 3)
@@ -166,9 +170,16 @@ test_that("test the Parameters class", {
   value(p) <- 10
   value(p) <- NA_real_
   expect_true(is.na(value(p)))
+  
+  # Test valid diagonal parameter
+  p <- Parameter(2, 2, diag = TRUE)
+  value(p) <- sparseMatrix(i = 1:2, j = 1:2, x=c(1,1))
+  expect_equal(as.matrix(value(p)), diag(2), check.attributes = FALSE)
 
-  expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = c(2,1)))
-  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = c(1,2)))
+  expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = c(2,1)),
+               "Value must be nonpositive", fixed = TRUE)
+  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = c(1,2)),
+               "Invalid dimensions (2,1) for value", fixed = TRUE)
 })
 
 #DK
@@ -255,6 +266,7 @@ test_that("test the Parameter class on bad inputs",{
   
 })
 
+#DK
 test_that("test symmetric variables",{
   expect_error(v <- Variable(4, 3, symmetric = TRUE),
                'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
@@ -288,6 +300,7 @@ test_that("test symmetric variables",{
   
 })
 
+#DK
 test_that("test Hermitian variables", {
   expect_error(v <- Variable(4, 3, hermitian = TRUE),
                'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
@@ -367,9 +380,7 @@ test_that("test rounding for attributes", {
   expect_equal(CVXR:::is_psd(A), TRUE)
   expect_equal(CVXR:::is_nsd(A), TRUE)
   
-  
 })
-
 
 test_that("test the AddExpression class", {
   # Vectors
@@ -494,6 +505,22 @@ test_that("test matrix multiplication operator %*%", {
   c <- Constant(matrix(c(2,2,-2), nrow = 1, ncol = 3))
   exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
   expect_equal(sign(exp), UNKNOWN)
+  
+  # Testing shape.
+  a <- Parameter(1)
+  x <- Variable(1)
+  expr <- a%*%x
+  expect_equal(dim(expr), c(1,1))
+  
+  A <- Parameter(4,4)
+  z <- Variable(4,1)
+  expr <- A %*% z
+  expect_equal(dim(expr), c(4,1))
+  
+  v <- Variable(1,1)
+  col_scalar <- Parameter(1,1)
+  expect_true(identical(dim(v), dim(col_scalar), dim(col_scalar)))
+  
 })
 
 test_that("test the DivExpression class", {
@@ -505,7 +532,8 @@ test_that("test the DivExpression class", {
   expect_equal(canonical_form(exp)[[2]], list())
   expect_equal(dim(exp), c(2,1))
 
-  expect_error(x/c(2,2,3))
+  expect_error(x/c(2,2,3),
+               "Incompatible dimensions for division", fixed = TRUE)
 
   # Constant expressions
   c <- Constant(2)

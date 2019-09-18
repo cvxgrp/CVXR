@@ -443,7 +443,7 @@ setMethod("is_atom_log_log_concave", "Multiply", function(object) { TRUE })
 
 #' @describeIn Multiply Is the expression a positive semidefinite matrix?
 setMethod("is_psd", "Multiply", function(object) {
-  (is_psd(object@args[[1]]) && is_nsd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_psd(object@args[[2]]))
+  (is_psd(object@args[[1]]) && is_psd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_nsd(object@args[[2]]))
 })
 
 #' @describeIn Multiply Is the expression a negative semidefinite matrix?

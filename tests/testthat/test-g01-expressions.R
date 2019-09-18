@@ -171,6 +171,206 @@ test_that("test the Parameters class", {
   expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = c(1,2)))
 })
 
+#DK
+test_that("test the PSD/NSD matrices", {
+  # Test valid rank-deficient PSD parameter.
+  set.seed(42)
+  a <- matrix(rnorm(100*95), nrow = 100)
+  a2 <- a%*%t(a) # This must be a PSD matrix.
+  p <- Parameter(100, 100, PSD = TRUE)
+  value(p) <- a2
+  expect_equal(value(p), a2, TOL)
+  
+  # Test positive definite matrix with non-distinct eigenvalues
+  m <- 10
+  n <- 5
+  A <- matrix(rnorm(m*n), nrow = m) + 1i * matrix(rnorm(m*n), nrow = m) # a random complex matrix
+  A <- Conj(t(A)) %*% A # a random Hermitian positive definite matrix
+  A <- rbind(cbind(Re(A), -Im(A)), cbind(Im(A), Re(A)))
+  
+  p <- Parameter(2*n, 2*n, PSD = TRUE)
+  value(p) <- A
+  expect_equal(value(p), A, TOL)
+  
+  # Test invalid PSD parameter
+  expect_error(p <- Parameter(2, 2, PSD = TRUE, value = matrix(c(1, 0, 0, -1), nrow = 2)),
+               'Value must be positive semidefinite', fixed = TRUE)
+  
+  #Test invalid NSD parameter
+  expect_error(p <- Parameter(2, 2, NSD = TRUE, value = matrix(c(1, 0, 0, -1), nrow = 2)),
+               'Value must be negative semidefinite', fixed = TRUE)
+  
+  # Test arithmetic.
+  p <- Parameter(2, 2, PSD = TRUE)
+  expect_true(CVXR:::is_psd(2*p))
+  expect_true(CVXR:::is_psd(p+p))
+  expect_true(CVXR:::is_nsd(-p))
+  expect_true(CVXR:::is_psd(-2*-p))
+  
+})
+
+#DK
+test_that("test the Parameter class on bad inputs",{
+  p <- Parameter(name = 'p')
+  expect_equal(name(p), "p")
+  expect_equal(dim(p), c(1,1))
+  
+  p <- Parameter(4, 3, nonneg = TRUE)
+  #DK: I changed this from the python version because the dimensions aren't exactly the same as in cvxpy
+  expect_error(value(p) <- c(1,1), "Invalid dimensions (2,1) for value", fixed = TRUE) 
+  
+  val <- matrix(rep(-1, 12), nrow = 4)
+  val[1,1] <- 2
+  
+  p <- Parameter(4, 3, nonneg = TRUE)
+  expect_error(value(p) <- val, 'Value must be nonnegative', fixed = TRUE)
+  
+  p <- Parameter(4, 3, nonpos = TRUE)
+  expect_error(value(p) <- val, 'Value must be nonpositive', fixed = TRUE)
+  
+  expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = matrix(c(2,1))),
+               'Value must be nonpositive', fixed = TRUE)
+  
+  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = matrix(c(2,1))),
+               'Invalid dimensions (2,1) for value', fixed = TRUE)
+
+  expect_error(p <- Parameter(2, 2, diag = TRUE, symmetric = TRUE),
+               'Cannot set more than one special attribute.', fixed = TRUE)
+  
+  # Boolean
+  expect_error(p <- Parameter(2, 2, boolean = TRUE, value = matrix(c(1, 1, 1, -1), nrow = 2)),
+               'Value must be boolean', fixed = TRUE)
+  
+  # Integer
+  expect_error(p <- Parameter(2, 2, integer = TRUE, value = matrix(c(1, 1.5, 1, -1), nrow = 2)),
+               'Value must be integer', fixed = TRUE)
+  
+  # Diag
+  expect_error(p <- Parameter(2, 2, diag = TRUE, value = matrix(c(1, 1, 1, -1), nrow = 2)),
+               'Value must be diagonal', fixed = TRUE)
+  
+  #Symmetric
+  expect_error(p <- Parameter(2, 2, symmetric = TRUE, value = matrix(c(1, 1, -1, -1), nrow = 2)),
+               'Value must be symmetric', fixed = TRUE)
+  
+})
+
+test_that("test symmetric variables",{
+  expect_error(v <- Variable(4, 3, symmetric = TRUE),
+               'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
+  
+  v <- Variable(2, 2, symmetric = TRUE)
+  expect_true(CVXR:::is_symmetric(v))
+  v <- Variable(2, 2, PSD = TRUE)
+  expect_true(CVXR:::is_symmetric(v))
+  v <- Variable(2, 2, NSD = TRUE)
+  expect_true(CVXR:::is_symmetric(v))
+  v <- Variable(2, 2, diag = TRUE)
+  expect_true(CVXR:::is_symmetric(v))
+  expect_true(CVXR:::is_symmetric(a))
+  expect_true(!CVXR:::is_symmetric(A))
+  
+  v <- Variable(2, 2, symmetric = TRUE)
+  expr <- v + v
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- -v
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- t(v)
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- CVXR:::Real(v)
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- CVXR:::Imag(v)
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- CVXR:::Conjugate(v)
+  expect_true(CVXR:::is_symmetric(expr))
+  expr <- CVXR:::Promote(Variable(), c(2,2))
+  expect_true(CVXR:::is_symmetric(expr))
+  
+})
+
+test_that("test Hermitian variables", {
+  expect_error(v <- Variable(4, 3, hermitian = TRUE),
+               'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
+  
+  v <- Variable(2, 2, hermitian = TRUE)
+  expect_true(CVXR:::is_hermitian(v))
+  v <- Variable(2, 2, diag = TRUE)
+  expect_true(CVXR:::is_hermitian(v))
+  
+  
+  v <- Variable(2, 2, hermitian = TRUE)
+  expr <- v + v
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- -v
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- t(v)
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- CVXR:::Real(v)
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- CVXR:::Imag(v)
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- CVXR:::Conjugate(v)
+  expect_true(CVXR:::is_hermitian(expr))
+  expr <- CVXR:::Promote(Variable(), c(2,2))
+  expect_true(CVXR:::is_hermitian(expr))
+})
+
+test_that("test rounding for attributes", {
+  
+  # Nonpos
+  v <- Variable(1, nonpos = TRUE)
+  expect_equal(CVXR:::project(v, 1), 0)
+  v <- Variable(2, nonpos = TRUE)
+  expect_equal(CVXR:::project(v, c(1, -1)), c(0,-1))
+  
+  # Nonneg
+  v <- Variable(1, nonneg = TRUE)
+  expect_equal(CVXR:::project(v, -1), 0)
+  v <- Variable(2, nonneg = TRUE)
+  expect_equal(CVXR:::project(v, c(1, -1)), c(1,0))
+  
+  # Boolean
+  v <- Variable(2, 2, boolean = TRUE)
+  expect_equal(CVXR:::project(v, t(matrix(c(1, 1, -1, 0), nrow =2))), c(1, 0, 1, 0), check.attributes = FALSE)
+  
+  # Integer
+  v <- Variable(2, 2, integer = TRUE)
+  expect_equal(CVXR:::project(v, t(matrix(c(1, 1, -1.6, 0), nrow =2))), c(1, -2, 1, 0), check.attributes = FALSE)
+  
+  # Symmetric
+  v <- Variable(2, 2, symmetric = TRUE)
+  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, 0), nrow =2)), c(1, 0, 0, 0), check.attributes = FALSE)
+  
+  # PSD
+  v <- Variable(2, 2, PSD = TRUE)
+  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, -1), nrow =2)), c(1, 0, 0, 0), check.attributes = FALSE)
+  
+  # NSD
+  v <- Variable(2, 2, NSD = TRUE)
+  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, -1), nrow =2)), c(0, 0, 0, -1), check.attributes = FALSE)
+  
+  # diag
+  v <- Variable(2, 2, diag = TRUE)
+  expect_equal(as.matrix(CVXR:::project(v, matrix(c(1, 1, -1, 0), nrow =2))), c(1, 0, 0, 0), check.attributes = FALSE)
+  
+  # Hermitian 
+  v <- Variable(2, 2, hermitian = TRUE)
+  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1i, 0), nrow =2)), matrix(c(1, 0.5 + 0.5i, 0.5 - 0.5i, 0), nrow = 2), check.attributes = FALSE)
+  
+  A <- Constant(1.0)
+  expect_equal(CVXR:::is_psd(A), TRUE)
+  expect_equal(CVXR:::is_nsd(A), FALSE)
+  A <- Constant(-1.0)
+  expect_equal(CVXR:::is_psd(A), FALSE)
+  expect_equal(CVXR:::is_nsd(A), TRUE)
+  A <- Constant(0.0)
+  expect_equal(CVXR:::is_psd(A), TRUE)
+  expect_equal(CVXR:::is_nsd(A), TRUE)
+  
+  
+})
+
+
 test_that("test the AddExpression class", {
   # Vectors
   c <- Constant(c(2,2))
@@ -449,6 +649,27 @@ test_that("test indexing expression", {
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 })
+
+# DK: not sure if applicable in CVXR
+# test_that("test NA as idx", {
+#   expr <- a[NA, NA]
+#   expect_equal(dim(expr), c(1, 1))
+#   
+#   expr <- x[, NA]
+#   expect_equal(dim(expr), c(2, 1))
+#   
+#   expr <- x[NA, ]
+#   expect_equal(dim(expr), c(1, 2))
+#   
+#   expr <- Constant(c(1,2))[NA,]
+#   expect_equal(dim(expr), c(1, 2))
+#   expect_equal(value(expr), c(1,2))
+#   
+# })
+# test_that("test ouf of bounds indices", {
+#   expect_error(x[100])
+#   expect_error(x[-100])
+# })
 
 test_that("test negative indices", {
   c <- Constant(rbind(c(1,2), c(3,4)))

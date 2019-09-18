@@ -473,17 +473,17 @@ test_that("test the kronecker function", {
 #   t <- Variable(dims)
 #   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_equal(curvature(g), CONVEX)
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_equal(curvature(g), CONVEX)
 # 
 #   p2 <- Problem(Maximize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_equal(curvature(g), CONCAVE)
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_equal(curvature(g), CONCAVE)
 # 
 #   p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_false(is_convex(g))
-#   # expect_false(is_concave(g))
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_false(is_convex(g))
+#   expect_false(is_concave(g))
 # })
 # 
 # test_that("test the partial_optimize eval 1-norm", {
@@ -680,4 +680,34 @@ test_that("test mixed_norm", {
 #   c[1] <- -1
 #   expect_equal(value(expr), 3, tolerance = TOL)
 #   expect_true(is_dcp(expr))
+# })
+
+#DK, L2 work but both of these fail
+test_that("test that norm1 and normInf match definition for matrices", {
+  A <- rbind(c(1,2), c(3,4))
+  print(A)
+  X <- Variable(2, 2)
+  obj <- Minimize(norm1(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob)
+  print(result$value)
+  expect_equal(result$value, value(norm1(A)), TOL)
+  
+  obj <- Minimize(norm_inf(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob)
+  print(result$value)
+  expect_equal(result$value, value(norm_inf(A)), TOL)
+})
+
+#DK, uncomment once Indicator in transforms is uncommented
+# test_that("test indicator", {
+#   x <- Variable()
+#   constraints <- list(0 <= x, x <= 1)
+#   expr <- Indicator(constraints)
+#   x@value <- .5
+#   expect_equal(value(expr), 0.0)
+#   x@value <- 2
+#   expect_equal(value(expr), Inf)
+#   
 # })

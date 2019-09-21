@@ -72,6 +72,12 @@ test_that("test the power function", {
         expect_equal(sign(atom), NONNEG)
     }
   }
+  expect_error(value(power(-1, 3)), 
+               "Power cannot be applied to negative values", fixed = TRUE)
+  
+  expect_error(value(power(0, -1)), 
+               "Power cannot be applied to negative or zero values", fixed = TRUE)
+  
 })
 
 test_that("test the geo_mean function", {
@@ -161,12 +167,15 @@ test_that("test the quad_over_lin function", {
   expect_equal(curvature(atom), UNKNOWN)
   expect_false(is_dcp(atom))
 
-  expect_error(quad_over_lin(x, x))
+  expect_error(quad_over_lin(x, x),
+               "The second argument to QuadOverLin must be a scalar.", fixed = TRUE)
 })
 
 test_that("test the arg count for max_elemwise and min_elemwise", {
-  expect_error(max_elemwise(1))
-  expect_error(min_elemwise(1))
+  expect_error(max_elemwise(1),
+               "argument \"arg2\" is missing, with no default", fixed = TRUE)
+  expect_error(min_elemwise(1),
+               "argument \"arg2\" is missing, with no default", fixed = TRUE)
 })
 
 test_that("test the matrix_frac function", {
@@ -175,8 +184,10 @@ test_that("test the matrix_frac function", {
   expect_equal(curvature(atom), CONVEX)
 
   # Test matrix_frac dim validation
-  expect_error(matrix_frac(x, C))
-  expect_error(matrix_frac(Variable(3), A))
+  expect_error(matrix_frac(x, C),
+               "The second argument to MatrixFrac must be a square matrix.", fixed = TRUE)
+  expect_error(matrix_frac(Variable(3), A),
+               "The arguments to MatrixFrac have incompatible dimensions.", fixed = TRUE)
 })
 
 test_that("test the sign for max_entries", {
@@ -194,7 +205,8 @@ test_that("test the sign for max_entries", {
   expect_equal(dim(max_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
 
   # Invalid axis
-  expect_error(max_entries(x, axis = 4))
+  expect_error(max_entries(x, axis = 4),
+               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
 })
 
 test_that("test the sign for min_entries", {
@@ -212,7 +224,8 @@ test_that("test the sign for min_entries", {
   expect_equal(dim(min_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
   
   # Invalid axis
-  expect_error(min_entries(x, axis = 4))
+  expect_error(min_entries(x, axis = 4),
+               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
 })
 
 test_that("test sign logic for max_elemwise", {
@@ -287,7 +300,15 @@ test_that("test the sum_entries function", {
   expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = FALSE)), 3)
 
   # Invalid axis
-  expect_error(sum_entries(x, axis = 4))
+  expect_error(sum_entries(x, axis = 4),
+               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
+  
+  A <- diag(3)
+  expect_equal(value(CVXR::sum_entries(A)), 3)
+  
+  A <- diag(3)
+  expect_equal(value(CVXR::sum_entries(A, axis = 1)), c(1, 1, 1))
+  
 })
 
 test_that("test the multiply function", {
@@ -328,7 +349,9 @@ test_that("test the vstack function", {
   atom <- do.call(vstack, entries)
   # atom <- vstack(x[1,1], x[2,1])
 
-  expect_error(vstack(C, 1))
+  expect_error(vstack(C, 1),
+               "All the input dimensions except for axis 1 must match exactly.", fixed = TRUE)
+
 })
 
 test_that("test the reshape_expr function", {
@@ -345,7 +368,8 @@ test_that("test the reshape_expr function", {
   expect_equal(curvature(expr), CONVEX)
   expect_equal(dim(expr), c(1, 2))
 
-  expect_error(reshape_expr(C, c(5, 4)))
+  expect_error(reshape_expr(C, c(5, 4)),
+               "Invalid reshape dimensions (54)", fixed = TRUE)
 })
 
 test_that("test the vec function", {
@@ -379,7 +403,8 @@ test_that("test the diag function", {
   expect_equal(curvature(expr), AFFINE)
   expect_equal(dim(expr), c(2, 2))
 
-  expect_error(diag(C))
+  expect_error(diag(C),
+               "Argument to Diag must be a vector or square matrix.", fixed = TRUE)
 })
 
 test_that("test the matrix_trace function", {
@@ -388,7 +413,8 @@ test_that("test the matrix_trace function", {
   expect_equal(curvature(expr), AFFINE)
   expect_equal(dim(expr), NULL)
 
-  expect_error(matrix_trace(C))
+  expect_error(matrix_trace(C), 
+               "Argument to Trace must be a square matrix", fixed = TRUE)
 })
 
 test_that("test the log1p function", {
@@ -401,13 +427,16 @@ test_that("test the log1p function", {
 })
 
 test_that("test the upper_tri function", {
-  expect_error(upper_tri(C))
+  expect_error(upper_tri(C),
+               "Argument to UpperTri must be a square matrix.", fixed = TRUE)
 })
 
 test_that("test the huber function", {
   huber(x, 1)
-  expect_error(huber(x, -1))
-  expect_error(huber(x, c(1, 1)))
+  expect_error(huber(x, -1),
+               "M must be a non-negative scalar constant", fixed = TRUE)
+  expect_error(huber(x, c(1, 1)),
+               "M must be a non-negative scalar constant", fixed = TRUE)
 
   # M parameter
   M <- Parameter(nonneg = TRUE)
@@ -417,18 +446,24 @@ test_that("test the huber function", {
   expect_equal(value(huber(2, M)), 3, tolerance = TOL)
   # Invalid
   M <- Parameter(nonpos = TRUE)
-  expect_error(huber(x, M))
+  expect_error(huber(x, M),
+               "M must be a non-negative scalar constant", fixed = TRUE)
 })
 
 test_that("test the sum_largest function", {
-  expect_error(sum_largest(x, -1))
-  expect_error(lambda_sum_largest(x, 2.4))
-  expect_error(lambda_sum_largest(Variable(2, 2), 2.4))
+  expect_error(sum_largest(x, -1),
+               "[SumLargest: validation] k must be a positive integer", fixed = TRUE)
+  expect_error(lambda_sum_largest(x, 2.4),
+               "First argument must be a square matrix.", fixed = TRUE)
+  expect_error(lambda_sum_largest(Variable(2, 2), 2.4),
+               "Second argument must be a positive integer.", fixed = TRUE)
 })
 
 test_that("test the sum_smallest function", {
-  expect_error(sum_smallest(x, -1))
-  expect_error(lambda_sum_smallest(Variable(2, 2), 2.4))
+  expect_error(sum_smallest(x, -1),
+               "[SumLargest: validation] k must be a positive integer", fixed = TRUE)
+  expect_error(lambda_sum_smallest(Variable(2, 2), 2.4), 
+               "Second argument must be a positive integer.", fixed = TRUE)
 })
 
 test_that("test the bmat function", {
@@ -450,8 +485,10 @@ test_that("test the conv function", {
   b <- Parameter(2, nonpos = TRUE)
   expr <- conv(a, b)
   expect_true(is_nonpos(expr))
-  expect_error(conv(x, -1))
-  expect_error(conv(cbind(c(0, 1), c(0, 1)), x))
+  expect_error(conv(x, -1),
+               "The first argument to Conv must be constant.", fixed = TRUE)
+  expect_error(conv(cbind(c(0, 1), c(0, 1)), x),
+               "The arguments to Conv must resolve to vectors.", fixed = TRUE)
 })
 
 test_that("test the kronecker function", {
@@ -463,7 +500,8 @@ test_that("test the kronecker function", {
   b <- Parameter(2, nonpos = TRUE)
   expr <- kronecker(a, b)
   expect_true(is_nonpos(expr))
-  expect_error(kronecker(x, -1))
+  expect_error(kronecker(x, -1),
+               "The first argument to Kron must be constant.", fixed = TRUE)
 })
 
 # test_that("test DCP properties of partial optimize", {
@@ -473,17 +511,17 @@ test_that("test the kronecker function", {
 #   t <- Variable(dims)
 #   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_equal(curvature(g), CONVEX)
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_equal(curvature(g), CONVEX)
 # 
 #   p2 <- Problem(Maximize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_equal(curvature(g), CONCAVE)
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_equal(curvature(g), CONCAVE)
 # 
 #   p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # expect_false(is_convex(g))
-#   # expect_false(is_concave(g))
+#   g <- partial_optimize(p2, list(t), list(x))
+#   expect_false(is_convex(g))
+#   expect_false(is_concave(g))
 # })
 # 
 # test_that("test the partial_optimize eval 1-norm", {
@@ -680,4 +718,34 @@ test_that("test mixed_norm", {
 #   c[1] <- -1
 #   expect_equal(value(expr), 3, tolerance = TOL)
 #   expect_true(is_dcp(expr))
+# })
+
+#DK, L2 work but both of these fail
+test_that("test that norm1 and normInf match definition for matrices", {
+  A <- rbind(c(1,2), c(3,4))
+  print(A)
+  X <- Variable(2, 2)
+  obj <- Minimize(norm1(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob)
+  print(result$value)
+  expect_equal(result$value, value(norm1(A)), TOL)
+  
+  obj <- Minimize(norm_inf(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob)
+  print(result$value)
+  expect_equal(result$value, value(norm_inf(A)), TOL)
+})
+
+#DK, uncomment once Indicator in transforms is uncommented
+# test_that("test indicator", {
+#   x <- Variable()
+#   constraints <- list(0 <= x, x <= 1)
+#   expr <- Indicator(constraints)
+#   x@value <- .5
+#   expect_equal(value(expr), 0.0)
+#   x@value <- 2
+#   expect_equal(value(expr), Inf)
+#   
 # })

@@ -729,9 +729,9 @@ setMethod("project", "Leaf", function(object, value) {
     return(round(value))
   else if(object@attributes$diag) {
     val <- diag(value)
-    return(sparseMatrix(i = 1:length(value), j = 1:length(value), x = value))
+    return(sparseMatrix(i = 1:length(val), j = 1:length(val), x = val))
   } else if(object@attributes$hermitian)
-    return(value + t(Conj(value))/2)
+    return((value + t(Conj(value)))/2)
   else if(any(sapply(c("symmetric", "PSD", "NSD"), function(key) { object@attributes[[key]] }))) {
     value <- value + t(value)
     value <- value/2
@@ -753,7 +753,7 @@ setMethod("project", "Leaf", function(object, value) {
         return(value)
       w[bad] <- 0
     }
-    return((V %*% w) %*% t(V))
+    return((V %*% diag(w)) %*% t(V))
   } else
     return(value)
 })
@@ -811,7 +811,7 @@ setMethod("validate_val", "Leaf", function(object, val) {
       else if(object@attributes$imag)
         attr_str <- "imaginary"
       else {
-        attr_str <- names(object@attributes)[unlist(object@attributes)]
+        attr_str <- names(object@attributes)[unlist(object@attributes) == 1]
         attr_str <- c(attr_str, "real")[1]
       }
       stop("Value must be ", attr_str)

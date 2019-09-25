@@ -207,10 +207,22 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   n_eq <- data$n_eq
   n_ineq <- data$n_ineq
 
+  #In case the b and g variables are empty
+  if( (0 %in% dim(b)) & (0 %in% dim(g)) ){
+    bvec <- rep(0, n_var)
+  } else{
+    bvec <- c(b, g)
+  }
+
   #Create one big constraint matrix with both inequalities and equalities
   Amat <- rbind(A, Fmat)
-  bvec <- c(b, g)
-  sense_vec = c(rep("E", n_eq), rep("L", n_ineq))
+  if(n_eq + n_ineq == 0){
+    #If both number of equalities and inequalities are 0, then constraints dont matter so set equal
+    sense_vec <- c(rep("E", n_var))
+  } else{
+    sense_vec = c(rep("E", n_eq), rep("L", n_ineq))  
+  }
+  
   
   #Initializing variable types
   vtype <- rep("C", n_var)
@@ -260,6 +272,12 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   }
   # Solve problem.
   results_dict <- list()
+  
+  #In case A matrix is empty
+  if(0 %in% dim(Amat)){
+    Amat <- matrix(0, nrow = length(q), ncol = length(q))
+  }
+  
   tryCatch({
     # Define CPLEX problem and solve
     model <- Rcplex::Rcplex(cvec=q, Amat=Amat, bvec=bvec, Qmat=P, lb=-Inf, ub=Inf, 
@@ -504,8 +522,10 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
     #Only add duals if not a MIP
     dual_vars <- list()
     if(!inverse_data@is_mip) {
-      y <- -solution$pi
-      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+      if(!is.null(solution$pi)){
+        y <- -solution$pi
+        dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+      }
     } 
   } else {
       primal_vars <- list()

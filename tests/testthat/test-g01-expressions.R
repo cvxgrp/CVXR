@@ -678,6 +678,7 @@ test_that("test indexing expression", {
   expect_equal(dim(exp), c(1,1))
 })
 
+<<<<<<< Updated upstream
 # DK: not sure if applicable in CVXR
 # test_that("test NA as idx", {
 #   expr <- a[NA, NA]
@@ -698,6 +699,20 @@ test_that("test indexing expression", {
 #   expect_error(x[100])
 #   expect_error(x[-100])
 # })
+
+test_that("test out of bounds indices", {
+  expect_error(x[100])
+  expect_error(x[c(1,-2)])
+  
+  exp <- x[-100]
+  expect_equal(dim(exp), c(2,1))
+  
+  exp <- x[0]
+  expect_equal(dim(exp), c(0,1))
+  expect_equal(value(exp), matrix(NA, nrow = 0, ncol = 0))
+  
+  # TODO: More testing of R's out of bounds indices.
+})
 
 test_that("test negative indices", {
   c <- Constant(rbind(c(1,2), c(3,4)))

@@ -7,7 +7,7 @@ group_constraints <- function(constraints) {
 }
 
 extract_dual_value <- function(result_vec, offset, constraint) {
-  value <- result_vec[(offset + 1):(offset + size(constraint))]
+  value <- result_vec[seq(offset + 1, length.out = size(constraint))]
   if(size(constraint) == 1)
     value <- as.numeric(value)
   offset <- offset + size(constraint)

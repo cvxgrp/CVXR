@@ -444,12 +444,12 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     primal_vars <- list()
     var_id <- inverse_data[[object@var_id]]
     primal_vars[[as.character(var_id)]] <- as.matrix(solution$x)
-
-    eq_dual_vars <- get_dual_values(as.matrix(solution$y[1:inverse_data[[ConicSolver()@dims]]@zero]),
-                                    SCS.extract_dual_value, inverse_data[[object@eq_constr]])
-
-    ineq_dual_vars <- get_dual_values(as.matrix(solution$y[inverse_data[[ConicSolver()@dims]]@zero:length(solution$y)]),
-                                      SCS.extract_dual_value, inverse_data[[object@neq_constr]])
+    
+    num_zero <- inverse_data[[ConicSolver()@dims]]@zero
+    eq_idx <- seq_len(num_zero)
+    ineq_idx <- seq(num_zero + 1, length.out = length(solution$y) - num_zero)
+    eq_dual_vars <- get_dual_values(solution$y[eq_idx], SCS.extract_dual_value, inverse_data[[object@eq_constr]])
+    ineq_dual_vars <- get_dual_values(solution$y[ineq_idx], SCS.extract_dual_value, inverse_data[[object@neq_constr]])
 
     dual_vars <- list()
     dual_vars <- utils::modifyList(dual_vars, eq_dual_vars)
@@ -1775,7 +1775,7 @@ scaled_lower_tri <- function(matrix) {
   rows <- cols <- nrow(matrix)
   entries <- floor(rows * (cols + 1)/2)
 
-  row_arr <- 1:entries
+  row_arr <- seq_len(entries)
 
   col_arr <- matrix(1:(rows*cols), nrow = rows, ncol = cols)
   col_arr <- col_arr[lower.tri(col_arr, diag = TRUE)]

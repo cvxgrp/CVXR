@@ -7,6 +7,7 @@ reduce <- CVXR:::reduce
 invert <- CVXR:::invert
 retrieve <- CVXR:::retrieve
 unpack <- CVXR:::unpack
+expr <- CVXR::expr
 
 Dgp2Dcp <- function(problem = NULL) { new("Dgp2Dcp", problem = problem) }
 Dgp2Dcp.add_canon <- CVXR:::Dgp2Dcp.add_canon

@@ -253,7 +253,7 @@ test_that("Test examples from CVXR introduction", {
     cat("status:", result$status)
     cat("optimal value:", result$value)
 
-    expect_equal(tolower(result$status), "infeasible")
+    expect_equal(result$status, "infeasible")
     expect_equal(result$value, Inf)
 
     ## An unbounded problem

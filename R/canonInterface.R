@@ -60,14 +60,14 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
 format_matrix <- function(matrix, format='dense') {
     ## Returns the matrix in the appropriate form,
     ## so that it can be efficiently loaded with our swig wrapper
-    
+
     ## TODO: Should we convert bigq/bigz values? What if it's a sparse matrix?
     if(is.bigq(matrix) || is.bigz(matrix)) {
         matdbl <- matrix(sapply(matrix, as.double))
         dim(matdbl) <- dim(matrix)
         matrix <- matdbl
     }
-    
+
     if (format == 'dense') {
         ## Ensure is 2D.
         as.matrix(matrix)
@@ -131,17 +131,17 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
         ##for(var in c(start_idx, stop_idx, step))
         ##    vec$push_back(var)
         ## vec <- c(start_idx, stop_idx, step)
-        if (length(sl) == 1L) {
-            vec <- c(sl - 1L, sl, 1L)
-        } else if (length(sl) == 2L) {
-            vec <- c(sl[1L] - 1L, sl[2L], 1L)  # Using zero-based indexing, and step assumed to be 1.
-        } else {
-            r <- range(sl)
-            vec <- c(r[1L] - 1L, r[2L], 1L)
-        }
+        ## if (length(sl) == 1L) {
+        ##     vec <- c(sl - 1L, sl, 1L)
+        ## } else if (length(sl) == 2L) {
+        ##     vec <- c(sl[1L] - 1L, sl[2L], 1L)  # Using zero-based indexing, and step assumed to be 1.
+        ## } else {
+        ##     r <- range(sl)
+        ##     vec <- c(r[1L] - 1L, r[2L], 1L)
+        ## }
 
         ##vec <- c(sl, 1L)  # Using 1-based indexing, and step assumed to be 1.
-        linC$slice_push_back(vec)
+        linC$slice_push_back(sl - 1) ## Make indices zero-based for C++
     }
 }
 

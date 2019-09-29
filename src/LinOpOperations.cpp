@@ -595,6 +595,26 @@ std::vector<Matrix> get_index_mat(LinOp &lin) {
 		return build_vector(coeffs);
 	}
 
+#ifdef _R_INTERFACE_	
+	
+	/* Set the index coefficients by looping over the column selection
+	 * first to remain consistent with CVXPY. */
+	std::vector<Triplet> tripletList;
+	std::vector<int> col_slice = lin.slice[1];
+	std::vector<int> row_slice = lin.slice[0];
+	int counter = 0;
+	for (int j = 0; j < col_slice.size(); j++) {
+	  for (int i = 0; i < row_slice.size(); i++) {
+#ifdef _R_DEBUG_
+	    Rcpp::Rcout << "i, j: "  << col_slice[j] << ", " << row_slice[i] << std::endl;	      
+#endif
+	    int row_idx = counter;
+	    int col_idx = col_slice[j] * rows + row_slice[i];
+	    tripletList.push_back(Triplet(row_idx, col_idx, 1.0));
+	    counter++;
+	  }
+	}
+#else
 	std::vector<std::vector<int> > slices = get_slice_data(lin, rows, cols);
 
 	/* Row Slice Data */
@@ -635,8 +655,12 @@ std::vector<Matrix> get_index_mat(LinOp &lin) {
 			break;
 		}
 	}
+#endif
 	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
 	coeffs.makeCompressed();
+#ifdef _R_DEBUG_
+	Rcpp::Rcout << Eigen::MatrixXd(coeffs) << std::endl;
+#endif	
 	return build_vector(coeffs);
 }
 

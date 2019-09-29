@@ -1,8 +1,22 @@
-SOLVERS_TO_TRY <- c("ECOS", "SCS")
-SOLVERS_TO_TOL <- list(ECOS = 1e-6, SCS = 1e-2)
+ROBUST_CVXOPT <- "robust_cvxopt"
+SOLVERS_TO_TRY <- c("ECOS", "SCS", "OSQP")
+SOLVERS_TO_TOL <- list(ECOS = 1e-6, SCS = 1e-2, OSQP = 1e-1)
+
+# Test CVXOPT if installed.
+if("CVXOPT" %in% installed_solvers()) {
+    SOLVERS_TO_TRYS <- c(SOLVERS_TO_TRY, "CVXOPT", ROBUST_CVXOPT)
+    SOLVERS_TO_TOL$CVXOPT <- 1e-7
+    SOLVERS_TO_TOL[[ROBUST_CVXOPT]] <- 1e-7
+}
+
+# Test MOSEK if installed.
+if("MOSEK" %in% installed_solvers()) {
+    SOLVERS_TO_TRY <- c(SOLVERS_TO_TRY, "MOSEK")
+    SOLVERS_TO_TOL$MOSEK <- 1e-6
+}
 
 v_np <- matrix(c(-1, 2, -2), nrow = 1, ncol = 3)
-log_sum_exp_axis_1 <- function(x) { log_sum_exp(x, axis = 1) }
+log_sum_exp_axis_1 <- function(x) { log_sum_exp(x, axis = 1, keepdims = TRUE) }
 log_sum_exp_axis_2 <- function(x) { log_sum_exp(x, axis = 2) }
 
 atoms <- list(

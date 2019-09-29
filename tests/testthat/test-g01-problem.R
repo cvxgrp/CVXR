@@ -748,11 +748,10 @@ test_that("Test problems with slicing", {
   expect_equal(result$value, 10, tolerance = TOL)
   expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
   
-  # TODO: This part is crashing R!
-  # p <- Problem(Maximize(sum_entries(C[seq(1,3,2),2])), list(C[2:3,] <= 2, C[1,] == 1))
-  # result <- solve(p)
-  # expect_equal(result$value, 3, tolerance = TOL)
-  # expect_equal(result$getValue(C[seq(1,3,2),2]), matrix(c(1,2)))
+  p <- Problem(Maximize(sum_entries(C[seq(1,3,2),2])), list(C[2:3,] <= 2, C[1,] == 1))
+  result <- solve(p)
+  expect_equal(result$value, 3, tolerance = TOL)
+  expect_equal(result$getValue(C[seq(1,3,2),2]), matrix(c(1,2)))
 
   p <- Problem(Maximize(sum_entries((C[1:2,] + A)[,1:2])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
                                                              (A + B)[,2] == 2, B == 1))
@@ -925,7 +924,8 @@ test_that("Test that symmetry is enforced", {
   expect_equal(result$getValue(A), t(result$getValue(A)), tolerance = 1e-3)
 
   p <- Problem(Minimize(lambda_max(A)), list(A == cbind(c(1,2), c(3,4))))
-  result <- solve(p)
+  # TODO: result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$status, "infeasible")
 })
 

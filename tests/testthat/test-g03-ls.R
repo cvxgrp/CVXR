@@ -102,7 +102,7 @@ test_that("Test sparse system", {
     result <- solve(Problem(Minimize(sum_squares(A %*% x - b)), list(G %*% x == h)))
     ## result <- solve(Problem(Minimize(sum_squares(A %*% x - b)), list(G %*% x == h)), solver = "LS")
     optval <- result$value
-    expect_equal(optval, 6310.743509004, tolerance = TOL)
+    expect_equal(optval, 6542.100424497, tolerance = TOL)
 })
 
 test_that("Test equivalent forms", {

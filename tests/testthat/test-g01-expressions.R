@@ -678,7 +678,6 @@ test_that("test indexing expression", {
   expect_equal(dim(exp), c(1,1))
 })
 
-<<<<<<< Updated upstream
 # DK: not sure if applicable in CVXR
 # test_that("test NA as idx", {
 #   expr <- a[NA, NA]
@@ -737,7 +736,7 @@ test_that("test negative indices", {
   expect_equal(dim(x[seq(4,1,-1)]), c(4,1))
   prob <- Problem(Minimize(0), list(x[seq(4,1,-1)] == c))
   result <- solve(prob)
-  expect_equal(result$getValue(x), matrix(c(4,3,2,1)))   # TODO: This is giving wrong numbers.
+  expect_equal(result$getValue(x), matrix(c(4,3,2,1)))
   
   # TODO: More testing of R's negative indices (and sequences of negative indices)
 })

@@ -1579,10 +1579,10 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
           return(OPTIMAL)
       ##        else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
       ##            return(OPTIMAL_INACCURATE)
-      else if(status == "prim_infeas_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
+      else if(status == "prim_infeas_cer" || status == "primal_infeasible_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
         #check later
           if(!is.null(attributes(status))) #check if status has any attributes, hasattr in python
-              return(INFEASIBLE_INACCURATE)
+              return(INFEASIBLE)
           else
               return(INFEASIBLE)
       } else if(status == "dual_infeasible_cer") {
@@ -1590,7 +1590,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
               return(UNBOUNDED_INACCURATE)
           else
               return(UNBOUNDED)
-      } else
+      }  else
           return(SOLVER_ERROR)
   }
 

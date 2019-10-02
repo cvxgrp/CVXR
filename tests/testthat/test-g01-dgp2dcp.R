@@ -54,7 +54,6 @@ test_that("test unconstrained monomial", {
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
   opt <- solve(dgp, gp = TRUE)
-  opt <- solve(dgp, solver = "ECOS", gp = TRUE)
   expect_equal(opt$value, 0.0)
   expect_equal(opt$status, "unbounded")
 
@@ -72,7 +71,6 @@ test_that("test unconstrained monomial", {
   expect_equal(dgp_unpack$value, Inf)
   expect_equal(dgp_unpack$status, "unbounded")
   opt <- solve(dgp, gp = TRUE)
-  opt <- solve(dgp, solver = "ECOS", gp = TRUE)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
 })
@@ -136,7 +134,7 @@ test_that("test max_elemwise", {
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
 })
 
-# TODO: Test keepdims.
+# TODO_NARAS_5: Test keepdims. Need to edit test to match CVXPY.
 test_that("test prod_entries", {
   X <- matrix(0:11, nrow = 4, ncol = 3)
   expect_equal(prod(X), value(prod_entries(X)))
@@ -345,7 +343,6 @@ test_that("test geo_mean", {
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
   result <- solve(dgp, gp = TRUE)
-  result <- solve(dgp, solver = "ECOS", gp = TRUE)
   expect_equal(result$value, 0.0)
   expect_equal(result$status, "unbounded")
 })
@@ -362,7 +359,6 @@ test_that("test solving non-dcp problem raises error", {
   problem <- Problem(Minimize(Variable(pos = TRUE) * Variable(pos = TRUE)))
   expect_error(solve(problem))
   result <- solve(problem, gp = TRUE)
-  result <- solve(problem, solver = "ECOS", gp = TRUE)
   expect_equal(result$status, "unbounded", tolerance = TOL)
   expect_equal(result$value, 0.0, tolerance = TOL)
 })

@@ -1,3 +1,4 @@
+# TODO_NARAS_12: Should we retire this test since it no longer exists in CVXPY?
 context("test-g03-ls")
 TOL <- 1e-6
 

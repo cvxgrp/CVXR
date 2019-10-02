@@ -710,7 +710,7 @@ test_that("test out of bounds indices", {
   expect_equal(dim(exp), c(0,1))
   expect_equal(value(exp), matrix(NA, nrow = 0, ncol = 0))
   
-  # TODO: More testing of R's out of bounds indices.
+  # TODO_NARAS_8: More testing of R's out of bounds indices. R's behavior is different from Python, so we can't copy CVXPY's tests.
 })
 
 test_that("test negative indices", {
@@ -738,7 +738,7 @@ test_that("test negative indices", {
   result <- solve(prob)
   expect_equal(result$getValue(x), matrix(c(4,3,2,1)))
   
-  # TODO: More testing of R's negative indices (and sequences of negative indices)
+  # TODO_NARAS_9: More testing of R's negative indices (and sequences of negative indices)
 })
 
 test_that("test indexing with logical matrices", {

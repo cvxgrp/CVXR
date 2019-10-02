@@ -175,6 +175,7 @@ test_that("Test unpack results method", {
 #  expect_equal(result$value, c(1,4))
 # })
 
+# TODO: Adapt this test to the reduction infrastructure.
 # test_that("Test that variables and constraints keep a consistent order", {
 #   num_solves <- 4
 #   vars_lists <- list()
@@ -220,6 +221,7 @@ test_that("Test unpack results method", {
 #   }
 # })
 
+# TODO: Adapt this test to the reduction infrastructure.
 # test_that("Test removing duplicate constraints objects", {
 #   eq <- (x == 2)
 #   le <- (x <= 2)
@@ -229,7 +231,7 @@ test_that("Test unpack results method", {
 #     canon <- canonicalize(self)
 #     objective <- canon[[1]]
 #     constraints <- canon[[2]]
-#     sym_data <- SymData(objective, constraints)   # TODO: What to use instead of CVXOPT?
+#     sym_data <- SymData(objective, constraints)
 #     list(length(sym_data@constr_map[EQ_MAP]), length(sym_data@constr_map[LEQ_MAP]))
 #   }
 #   # Problem.register_solve("test", test)

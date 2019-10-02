@@ -1,3 +1,5 @@
+context("test-constant_atoms")
+
 ROBUST_CVXOPT <- "robust_cvxopt"
 SOLVERS_TO_TRY <- c("ECOS", "SCS", "OSQP")
 SOLVERS_TO_TOL <- list(ECOS = 1e-6, SCS = 1e-2, OSQP = 1e-1)

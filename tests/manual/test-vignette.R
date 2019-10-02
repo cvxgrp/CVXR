@@ -1,3 +1,5 @@
+context("test-vignettes")
+
 test_that("Test non-negative least squares", {
     require(MASS)
     print("LS")

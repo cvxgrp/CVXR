@@ -194,7 +194,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
 setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
@@ -207,7 +207,7 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
     primal_vars <- list()
     primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
     dual_vars <- NA
-    
+
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
@@ -444,7 +444,7 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     primal_vars <- list()
     var_id <- inverse_data[[object@var_id]]
     primal_vars[[as.character(var_id)]] <- as.matrix(solution$x)
-    
+
     num_zero <- inverse_data[[ConicSolver()@dims]]@zero
     eq_idx <- seq_len(num_zero)
     ineq_idx <- seq(num_zero + 1, length.out = length(solution$y) - num_zero)
@@ -521,7 +521,7 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
 })
 
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
-setMethod("import_solver", "CBC_CONIC", function(solver) { 
+setMethod("import_solver", "CBC_CONIC", function(solver) {
   installed <- requireNamespace("rcbc", quietly = TRUE)
   if(!installed)
     stop("Required R package rcbc not found. Please install from https://github.com/dirkschumacher/rcbc")
@@ -562,7 +562,7 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
   # Returns the solution to the original problem given the inverse_data.
   solution <- solution[[1]]
   status <- status_map(object, solution)
-  
+
   primal_vars <- list()
   dual_vars <- list()
   if(status %in% SOLUTION_PRESENT) {
@@ -582,49 +582,49 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
 
 setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("rcbc", quietly = TRUE)
-  
+
   cvar <- data$c
   b <- data$b
   A <- data$A
   dims <- SCS.dims_to_solver_dict(data$dims)
-  
+
   if(is.null(dim(data$c))){
     n <- length(cvar) # Should dim be used here?
   } else {
     n <- dim(cvar)[1]
   }
-  
+
   # Initialize variable constraints
   var_lb <- rep(-Inf, n)
   var_ub <- rep(Inf, n)
   is_integer <- rep.int(FALSE, n)
   row_ub <- rep(Inf, nrow(A))
   row_lb <- rep(-Inf, nrow(A))
-  
+
   #Setting equality constraints
   if(dims[[EQ_DIM]] > 0){
     row_ub[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
-    row_lb[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]  
+    row_lb[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
   }
-  
+
   #Setting inequality constraints
   leq_start <- dims[[EQ_DIM]]
   leq_end <- dims[[EQ_DIM]] + dims[[LEQ_DIM]]
   if(leq_start != leq_end){
     row_ub[(leq_start+1):(leq_end)] <- b[(leq_start+1):(leq_end)]
   }
-  
+
   # Make boolean constraints
   if(length(data$bool_vars_idx) > 0){
     var_lb[unlist(data$bool_vars_idx)] <- 0
     var_ub[unlist(data$bool_vars_idx)] <- 1
     is_integer[unlist(data$bool_vars_idx)] <- TRUE
   }
-  
+
   if(length(data$int_vars_idx) > 0) {
     is_integer[unlist(data$int_vars_idx)] <- TRUE
   }
-  
+
   result <- rcbc::cbc_solve(
     obj = cvar,
     mat = A,
@@ -635,14 +635,14 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
     is_integer = is_integer,
     max = FALSE
   )
-  
+
   # solver <- 'blah'
   # solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
   # solver_opts[[INT_IDX]] <- data[[INT_IDX]]
   # prob_data <- list()
   # prob_data[[name(object)]] <- ProblemData()
   # return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
-  
+
   return(list(result))
 })
 
@@ -683,7 +683,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inv
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
   dual_vars <- list()
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
@@ -701,7 +701,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "Solution", inv
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
       }
-      
+
       if(status == INFEASIBLE)
         opt_val <- Inf
       else if(status == UNBOUNDED)
@@ -786,11 +786,11 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   tmp <- group_coeff_offset(object, problem, neq_constr, ECOS()@exp_cone_order)
   data[[G_KEY]] <- tmp[[1]]
   data[[H_KEY]] <- tmp[[2]]
-  
+
   var <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- as.integer(var@boolean_idx[,1])
   data[[INT_IDX]] <- as.integer(var@integer_idx[,1])
-  
+
   #Add information about
   return(list(object, data, inv_data))
 })
@@ -887,12 +887,12 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   b <- data[[B_KEY]]
   if(nrow(A) == 0)
     A <- Matrix(0, nrow = 0, ncol = length(c))
-  
+
   G <- data[[G_KEY]]
   h <- data[[H_KEY]]
   if(nrow(G) == 0)
     G <- Matrix(0, nrow = 0, ncol = length(c))
-  
+
   mat <- rbind(A, G)
   rhs <- c(b, h)
 
@@ -900,15 +900,15 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   types <- rep("C", nvar)
   bools <- data[[BOOL_IDX]]
   ints <- data[[INT_IDX]]
-  
-  
+
+
   if (length(bools) > 0) {
     types[bools] <- "B"
   }
   if (length(ints) > 0) {
     types[ints] <- "I"
   }
-  
+
   results_dict <- Rglpk::Rglpk_solve_LP(obj = c,
                                         mat = slam::as.simple_triplet_matrix(mat),
                                         dir = c(rep("==", dims@zero),
@@ -965,12 +965,12 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   b <- data[[B_KEY]]
   if(nrow(A) == 0)
     A <- Matrix(0, nrow = 0, ncol = length(c))
-  
+
   G <- data[[G_KEY]]
   h <- data[[H_KEY]]
   if(nrow(G) == 0)
     G <- Matrix(0, nrow = 0, ncol = length(c))
-  
+
   mat <- rbind(A, G)
   rhs <- c(b, h)
   bounds <- list(lower = list(ind = seq_along(c), val = rep(-Inf, nvar)))
@@ -996,7 +996,7 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 
   # Convert results to solution format.
   solution <- list()
-  
+
   solution[[STATUS]] <- status_map(object, results_dict$status)
   if(solution[[STATUS]] %in% SOLUTION_PRESENT) {
     ## Get primal variable values
@@ -1066,7 +1066,7 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
   dual_vars <- list()
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value
     primal_vars <- list()
@@ -1085,7 +1085,7 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
       names(dual_vars) <- dual_var_ids
     }
-    
+
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)
@@ -1216,7 +1216,9 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   hs <- list()
 
   if(length(problem@constraints) == 0) {
-    data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+    ##data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+    ## Ensure G's dimensions match that of c.
+    data[[G_KEY]] <- Matrix(nrow = 0, ncol = length(c), sparse = TRUE)
     data[[H_KEY]] <- matrix(nrow = 0, ncol = 0)
     inv_data$is_LP <- TRUE
     return(list(object, data, inv_data))
@@ -1297,7 +1299,9 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   if(length(Gs) == 0)
-    data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+    ## data[[G_KEY]] <- Matrix(nrow = 0, ncol = 0, sparse = TRUE)
+    ## G is already sparse
+    data[[G_KEY]] <- G
   else
     data[[G_KEY]] <- Matrix(do.call(rbind, Gs), sparse = TRUE)
   if(length(hs) == 0)
@@ -1402,7 +1406,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #                 bux = rep(0,n))
   prob$bx <- rbind(blx = rep(-Inf, n),
                    bux = rep(Inf, n))
-  
+
   #Initialize the cone. Not 100% sure about this bit
   NUMCONES <- length(dims[[SOC_DIM]]) + floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)
   prob$cones <- matrix(list(), nrow = 2, ncol = NUMCONES)
@@ -1457,7 +1461,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   # task.appendcons(m) is equivalent to prob$bc
 
 
-  G_sparse <- as(as.matrix(G), "sparseMatrix")
+  ##G_sparse <- as(as.matrix(G), "sparseMatrix")
+  ##G is already sparse
+  G_sparse  <- G
   G_sum <- summary(G_sparse)
   row <- G_sum$i
   col <- G_sum$j
@@ -1467,12 +1473,14 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   # initializing A matrix
   if(nrow(G_sparse) == 0 || (ncol(G_sparse) + total_soc_exp_slacks) == 0)
-    prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0, 0))
+    ## prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0, 0))
+    ## G is already sparse
+    prob$A  <- G
   else {
     prob$A <- sparseMatrix(i = rep(1:nrow(G_sparse), ncol(G_sparse) + total_soc_exp_slacks),
                            j = rep(1:(ncol(G_sparse) + total_soc_exp_slacks), nrow(G_sparse)),
                            x = rep(0, nrow(G_sparse)*(ncol(G_sparse) + total_soc_exp_slacks)))
-  
+
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
     # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
     A_holder <- sparseMatrix(row, col, x = vals)
@@ -1579,7 +1587,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
           return(OPTIMAL)
       ##        else if(status %in% c("prim_feas", "near_optimal", "near_integer_optimal"))
       ##            return(OPTIMAL_INACCURATE)
-      else if(status == "prim_infeas_cer" || status == "primal_infeasible_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong 
+      else if(status == "prim_infeas_cer" || status == "primal_infeasible_cer") { #Documentation says it's this, but docs also say it spits out dual_infeas_cer, which is wrong
         #check later
           if(!is.null(attributes(status))) #check if status has any attributes, hasattr in python
               return(INFEASIBLE)
@@ -1636,7 +1644,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         names(dual_vars) <- dual_var_ids
       } else
         dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
-      
+
   } else {
       if(status == INFEASIBLE)
           opt_val <- Inf
@@ -1644,7 +1652,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
           opt_val <- -Inf
       else
           opt_val <- NA_real_
-      vid <- 
+      vid <-
       primal_vars <- list()
       primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
       dual_var_ids <- sapply(c(inverse_data$suc_slacks, inverse_data$y_slacks, inverse_data$snx_slacks, inverse_data$psd_dims), function(slack) { slack[[1L]] })
@@ -1689,7 +1697,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
       ##task.getsnxslice(sol, inverse_data$n0, inverse_data$n0 + snx_len, snx)
       dual_vars <- utils::modifyList(dual_vars, MOSEK.parse_dual_vars(sol$snx, inverse_data$snx_slacks))
   }
-  
+
   ## Dual variables for PSD constraints.
   for(psd_info in inverse_data$psd_dims) {
     id <- as.character(psd_info[[1L]])
@@ -1698,7 +1706,7 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
     ##task.getbars(sol, j, sj)
     dual_vars[[id]] <- vectorized_lower_tri_to_mat(sol$bars[[1L]], dim)
   }
-  
+
   return(dual_vars)
 }
 
@@ -1891,7 +1899,7 @@ setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function
 
 setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution[[STATUS]]
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution[[VALUE]]
     primal_vars <- list()
@@ -1906,7 +1914,7 @@ setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data
       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
       names(dual_vars) <- dual_var_ids
     }
-    
+
     if(status == INFEASIBLE)
       opt_val <- Inf
     else if(status == UNBOUNDED)

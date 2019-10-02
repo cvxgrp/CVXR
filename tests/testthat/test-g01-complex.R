@@ -155,7 +155,7 @@ test_that("test canonicalization for affine atoms", {
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
   prob <- Problem(Minimize(expr[1]*1i + expr[2]*1i), list(Re(x + 1i) >= 1, Conj(x) <= 0))
-  result <- solve(prob)   # TODO: OSQP returns a solver_error, but ECOS is correct.
+  result <- solve(prob)   # TODO_NARAS_1: OSQP returns a solver_error, but ECOS is correct.
   expect_equal(result$value, Inf)
   
   x <- Variable(2,2)
@@ -346,7 +346,7 @@ test_that("test promotion of complex variables", {
   expect_equal(result$value, 4.0, tolerance = TOL)
 })
 
-# TODO: Figure out how to handle complex sparse matrices in R.
+# TODO_NARAS_2: Figure out how to handle complex sparse matrices in R.
 # test_that("test problem with complex sparse matrix", {
 #   # Define sparse matrix [[0, 1i], [-1i, 0]]
 #   require(Matrix)

@@ -837,7 +837,7 @@ ku_format_slice <- function(key_val, dim) {
 ku_slice_mat <- function(mat, key) {
   if(is.matrix(key$row) && is.null(key$col))
     select_mat  <- matrix(mat[key$row], ncol = 1)
-  else if (is.null(key$row) && is.null(key$col))
+  else if(is.null(key$row) && is.null(key$col))
     select_mat <- mat
   else if(is.null(key$row) && !is.null(key$col))
     select_mat <- mat[, key$col, drop = FALSE]

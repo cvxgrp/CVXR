@@ -1036,6 +1036,25 @@ setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
 setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
+# Map of GUROBI status to CVXR status.
+setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
+  if(status == 2 || status == "OPTIMAL")
+    OPTIMAL
+  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
+    INFEASIBLE
+  else if(status == 5 || status == "UNBOUNDED")
+    UNBOUNDED
+  else if(status == 4 | status == "INF_OR_UNBD")
+    INFEASIBLE_INACCURATE
+  else if(status %in% c(7,8,9,10,11,12))
+    SOLVER_ERROR   # TODO: Could be anything
+  else if(status == 13)
+    OPTIMAL_INACCURATE   # Means time expired.
+  else
+    stop("GUROBI status unrecognized: ", status)
+})
+
+
 setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
   if(!is_affine(problem@objective@args[[1]]))
@@ -1098,13 +1117,106 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 })
 
 setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  # TODO: Finish this implementation.
-  solver <- GUROBI_OLD()
-  solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
-  solver_opts[[INT_IDX]] <- data[[INT_IDX]]
-  prob_data <- list()
-  prob_data[[name(object)]] <- ProblemData()
-  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+  requireNamespace("gurobi", quietly = TRUE)
+  
+  cvar <- data[[C_KEY]]
+  b <- data[[B_KEY]]
+  A <- data[[A_KEY]]
+  dims <- data[[DIMS]]
+  
+  n <- length(cvar)
+  
+  #Create a new model and add objective term
+  model <- list()
+  model$obj <- c(cvar, rep(0, sum(unlist(dims@soc))))
+  
+  #Add variable types
+  vtype <- character(n)
+  for(i in seq_along(data[[BOOL_IDX]])){
+    vtype[data[[BOOL_IDX]][i]] <- 'B' #B for binary
+  }
+  for(i in seq_along(data[[INT_IDX]])){
+    vtype[data[[INT_IDX]][i]] <- 'I' #I for integer
+  }
+  
+  for(i in 1:n) {
+    if(vtype[i] == ""){
+      vtype[i] <- 'C' #C for continuous
+    }
+  }
+  model$vtype <- vtype #put in variable types
+  model$lb <- rep(-Inf, n)
+  model$ub <- rep(Inf, n)
+  
+  # Add equality constraints: iterate over the rows of A,
+  # adding each row into the model.
+  model$A <- A
+  model$rhs <- b
+  model$sense <- c(rep('=', dims@zero), rep('<',  dims@nonpos), rep('=', sum(unlist(dims@soc))))
+  
+  soc_start <- dims@zero
+  soc_end <- soc_start
+  
+  total_soc <- sum(unlist(dims@soc))
+  current_vars <- n
+  
+  # Add SOC variables
+  # Sort of strange. A good example of how it works can be seen in
+  # https://www.gurobi.com/documentation/8.1/examples/qcp_r.html#subsubsection:qcp.R
+  for(i in seq_along(dims@soc)){
+    n_soc <- dims@soc[[i]]
+    model$vtype <- c(model$vtype, rep('C', n_soc))
+    model$lb <- c(model$lb, 0, rep(-Inf, n_soc - 1))
+    model$ub <- c(model$ub, rep(Inf, n_soc))
+    model$A <- cbind(model$A, rbind(matrix(0, nrow = soc_end, ncol = n_soc), diag(rep(1, n_soc))))
+    
+    qc <- list()
+    qc$Qc <- matrix(0, nrow = n + total_soc, ncol = n + total_soc)
+    qc$Qc[current_vars + 1, current_vars + 1] <- -1
+    for(j in 1:(n_soc-1)){
+      qc$Qc[current_vars + 1 + j, current_vars + 1 + j] <- 1
+    }
+    qc$rhs <- 0.0
+    
+    model$quadcon[[i]] <- qc
+    
+    soc_end <- soc_start + n_soc
+    current_vars <- current_vars + n_soc
+    
+  }
+  
+  params <- list()
+  params$OutputFlag <- as.numeric(verbose)
+  params$QCPDual <- 1 #equivalent to TRUE
+  for(i in seq_along(solver_opts)){
+    params[[ names(solver_opts)[i] ]] <- solver_opts[i] 
+  }
+  
+  solution <- list()
+  tryCatch({
+    result <- gurobi::gurobi(model, params)   # Solve.
+    solution[["value"]] <- result$objval
+    solution[["primal"]] <- result$x
+    
+    #Only add duals if it's not a MIP
+    if(sum(unlist(data[[BOOL_IDX]])) + sum(unlist(data[[INT_IDX]])) == 0 ){
+      solution[["y"]] <- -append(result$pi, result$qcpi, soc_start)
+      
+    }
+    
+  }, error = function(e) {   # Error in the solution.
+  })
+  
+  solution[[SOLVE_TIME]] <- result$runtime
+  solution[["status"]] <- status_map(result$status)
+  
+  # Is there a better way to check if there is a solution?
+  # if(solution[["status"]] == SOLVER_ERROR && !is.na(result$x)){
+  #  solution[["status"]] <- OPTIMAL_INACCURATE
+  # }
+  
+  return(solution)
+  
 })
 
 MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!

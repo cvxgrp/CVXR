@@ -23,6 +23,10 @@ atoms <- list(
     list(
         list(
             list(abs, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(5,2), c(3,1)))),
+            list(function(x) { cumsum(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-8,3))))),
+            list(function(x) { cumsum(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,-3), c(-3,-2))))),
+            list(function(x) { cummax(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-3,2))))),
+            list(function(x) { cummax(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-3,1))))),
             list(diag, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-5,1))),
             list(diag, c(2,2), list(matrix(c(-5,1))), Constant(cbind(c(-5,0), c(0,1)))),
             list(exp, c(2,2), list(cbind(c(1,0), c(2,-1))), Constant(cbind(c(exp(1),1), c(exp(2), exp(-1))))),
@@ -64,14 +68,14 @@ atoms <- list(
             list(function(x) { sum_largest(abs(x),3) }, c(1,1), list(matrix(c(1,2,3,-4,-5))), Constant(5+4+3)),
             list(function(x) { mixed_norm(x,1,1) }, c(1,1), list(cbind(c(1,2), c(3,4), c(5,6))), Constant(21)),
             list(function(x) { mixed_norm(x,1,1) }, c(1,1), list(cbind(1:3, 4:6)), Constant(21)),
-            list(function(x) { mixed_norm(x,2,1) }, c(1,1), list(cbind(c(3,3), c(4,4))), Constant(10)),
+            list(function(x) { mixed_norm(x,2,1) }, c(1,1), list(cbind(c(3,1), c(4,sqrt(3)))), Constant(7)),
             list(function(x) { mixed_norm(x,1,Inf) }, c(1,1), list(cbind(c(1,4), c(5,6))), Constant(10)),
 
             list(p_norm, c(1,1), list(matrix(1:3)), Constant(3.7416573867739413)),
             list(function(x) { p_norm(x,1) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(6.1)),
             list(function(x) { p_norm(x,2) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.7696153649941531)),
-            list(function(x) { p_norm(x,2,axis=1) }, c(2,1), list(rbind(c(1,2), c(3,4))), Constant(c(sqrt(5), 5))),
-            list(function(x) { p_norm(x,2,axis=2) }, c(1,2), list(rbind(c(1,2), c(4,5))), t(Constant(c(sqrt(17), sqrt(29))))),
+            list(function(x) { p_norm(x,2,axis=2) }, c(2,1), list(rbind(c(1,2), c(3,4))), Constant(c(sqrt(5), 5))),
+            list(function(x) { p_norm(x,2,axis=1) }, c(1,2), list(rbind(c(1,2), c(4,5))), t(Constant(c(sqrt(17), sqrt(29))))),
             list(function(x) { p_norm(x,Inf) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3)),
             list(function(x) { p_norm(x,3) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.3120161866074733)),
             list(function(x) { p_norm(x,5.6) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.0548953718931089)),
@@ -81,7 +85,6 @@ atoms <- list(
             list(pos, c(2,1), list(matrix(c(-3,2))), Constant(c(0,2))),
             list(neg, c(2,1), list(matrix(c(-3,3))), Constant(c(3,0))),
 
-            list(function(x) { power(x,0) }, c(1,1), list(7.45), Constant(1)),
             list(function(x) { power(x,1) }, c(1,1), list(7.45), Constant(7.45)),
             list(function(x) { power(x,2) }, c(1,1), list(7.45), Constant(55.502500000000005)),
             list(function(x) { power(x,-1) }, c(1,1), list(7.45), Constant(0.1342281879194631)),
@@ -127,22 +130,24 @@ atoms <- list(
                                              c(8, 16, 2, 4),
                                              c(5, 2, 5, 2),
                                              c(2, 4, 2, 4))), Constant(7.7424020218157814)),
-            ## list(geo_mean, c(1,1), list(matrix(c(4,1))), Constant(2)),
-            ## list(geo_mean, c(1,1), list(matrix(c(0.01,7))), Constant(0.2645751311064591)),
-            ## list(geo_mean, c(1,1), list(matrix(c(63,7))), Constant(21)),
-            ## list(geo_mean, c(1,1), list(matrix(c(1,10))), Constant(sqrt(10))),
-            ## list(function(x) { geo_mean(x, c(1,1)) }, c(1,1), list(matrix(c(1,10))), Constant(sqrt(10))),
-            ## list(function(x) { geo_mean(x, c(0.4,0.8,4.9)) }, c(1,1), list(matrix(c(0.5,1.8,17))), Constant(10.04921378316062)),
-
+            list(geo_mean, c(1,1), list(matrix(c(4,1))), Constant(2)),
+            list(geo_mean, c(1,1), list(matrix(c(0.01,7))), Constant(0.2645751311064591)),
+            list(geo_mean, c(1,1), list(matrix(c(63,7))), Constant(21)),
+            list(geo_mean, c(1,1), list(matrix(c(1,10))), Constant(sqrt(10))),
+            list(function(x) { geo_mean(x, c(1,1)) }, c(1,1), list(matrix(c(1,10))), Constant(sqrt(10))),
+            list(function(x) { geo_mean(x, c(0.4,0.8,4.9)) }, c(1,1), list(matrix(c(0.5,1.8,17))), Constant(10.04921378316062)),
             list(harmonic_mean, c(1,1), list(matrix(c(1,2,3))), Constant(1.6363636363636365)),
             list(harmonic_mean, c(1,1), list(matrix(c(2.5,2.5,2.5,2.5))), Constant(2.5)),
             list(harmonic_mean, c(1,1), list(matrix(c(0,1,2))), Constant(0)),
 
+            list(function(x) { diff(x, differences = 0) }, c(3,1), list(matrix(c(1,2,3)), Constant(c(1,2,3)))),
             list(diff, c(2,1), list(matrix(c(1,2,3))), Constant(c(1,1))),
             list(diff, c(1,1), list(matrix(c(1.1,2.3))), Constant(1.2)),
             list(function(x) { diff(x, differences = 2) }, c(1,1), list(matrix(c(1,2,3))), Constant(0)),
             list(diff, c(3,1), list(matrix(c(2.1,1,4.5,-0.1))), Constant(c(-1.1,3.5,-4.6))),
             list(function(x) { diff(x, differences = 2) }, c(2,1), list(matrix(c(2.1,1,4.5,-0.1))), Constant(c(4.6,-8.1))),
+            list(function(x) { diff(x, differences = 1, axis = 2) }, c(1,2), list(cbind(c(-5,-3), c(2,1)), Constant(matrix(c(7,4), nrow = 1)))),
+            list(function(x) { diff(x, differences = 1, axis = 1) }, c(2,1), list(cbind(c(-5,-3), c(2,1)), Constant(c(2,-1)))),
 
             list(function(x) { p_norm(x,0.5) }, c(1,1), list(matrix(c(1.1,2,0.1))), Constant(7.724231543909264)),
             list(function(x) { p_norm(x,-0.4) }, c(1,1), list(matrix(c(1.1,2,0.1))), Constant(0.02713620334)),
@@ -171,13 +176,11 @@ atoms <- list(
 )
 
 check_solver <- function(prob, solver_name) {
-    canon <- canonicalize(prob)
-    objective <- canon[[1]]
-    constraints <- canon[[2]]
-    solver <- CVXR:::SOLVERS[[solver_name]]
-
     tryCatch({
-        validate_solver(solver, constraints)
+        if(solver_name == ROBUST_CVXOPT)
+            solver_name <- "CVXOPT"
+        
+        CVXR:::.construct_chains(prob, solver = solver_name)   # TODO: Reveal .construct_chains function so it can be called.
         return(TRUE)
     }, error = function(e) {
         return(FALSE)
@@ -186,6 +189,7 @@ check_solver <- function(prob, solver_name) {
 
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     expect_true(is_dcp(problem))
+    print(problem)
     if(verbose) {
         print(problem@objective)
         print(problem@constraints)
@@ -197,14 +201,14 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
         tolerance <- SOLVERS_TO_TOL[[solver]]
         result <- solve(problem, solver = solver, verbose = verbose)
 
-        if(tolower(result$status) %in% c("optimal", "optimal_inaccurate")) {
+        if(result$status %in% c("optimal", "optimal_inaccurate")) {
             if(verbose) {
                 print(result$value)
                 print(obj_val)
             }
 
-            diff <- (result$value - obj_val)/(1+abs(obj_val))
-            expect_true(abs(diff) <= tolerance)
+            obj_diff <- (result$value - obj_val)/(1+abs(obj_val))
+            expect_true(abs(obj_diff) <= tolerance)
 
             ## if(abs(diff) > tolerance) {
             ##  sink("test_constant_atoms_out.txt", append = TRUE)
@@ -235,7 +239,7 @@ test_that("Test all constant atoms", {
                 for(col in 1:size[2]) {
                     for(solver in SOLVERS_TO_TRY) {
                         ## Atoms with Constant arguments
-                        const_args <- lapply(args, function(arg) { Constant(arg) })
+                        const_args <- lapply(args, Constant)
                         run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
                                  value(obj_val[row, col]), solver)
 
@@ -243,8 +247,8 @@ test_that("Test all constant atoms", {
                         variables <- list()
                         constraints <- list()
                         for(expr in args) {
-                            expr_size <- CVXR:::intf_size(expr)
-                            variables <- c(variables, Variable(expr_size[1], expr_size[2]))
+                            expr_dim <- CVXR:::intf_dim(expr)
+                            variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
                             constraints <- c(constraints, variables[[length(variables)]] == expr)
                         }
                         objective <- objective_type(do.call(atom, variables)[row, col])
@@ -255,8 +259,8 @@ test_that("Test all constant atoms", {
                         ## Atoms with Parameter arguments
                         ## parameters <- list()
                         ## for(expr in args) {
-                        ##  expr_size <- intf_size(expr)
-                        ##  parameters <- c(parameters, Parameter(expr_size[1], expr_size[2]))
+                        ##  expr_dim <- intf_dim(expr)
+                        ##  parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
                         ##  value(parameters[[length(parameters)]]) <- as.matrix(expr)
                         ## }
                         ## objective <- objective_type(do.call(atom, parameters)[row, col])

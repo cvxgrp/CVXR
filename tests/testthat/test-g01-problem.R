@@ -926,7 +926,8 @@ test_that("Test that symmetry is enforced", {
   expect_equal(result$getValue(A), t(result$getValue(A)), tolerance = 1e-3)
 
   p <- Problem(Minimize(lambda_max(A)), list(A == cbind(c(1,2), c(3,4))))
-  result <- solve(p)
+  # TODO: result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$status, "infeasible")
 })
 

@@ -1083,14 +1083,20 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 })
 
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+  
   status <- solution$status
   dual_vars <- list()
   
+  #CVXPY doesn't include for some reason?
+  #attr <- list()
+  #attr[[SOLVE_TIME]] <- solution$runtime
+  #attr[[NUM_ITERS]] <- solution$baritercount
+  
   if(status %in% SOLUTION_PRESENT) {
-    opt_val <- solution$value
+    opt_val <- solution$value + inverse_data[[OFFSET]]
     primal_vars <- list()
-    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- solution$primal
-    if(!inverse_data@is_mip) {
+    primal_vars[[as.character(inverse_data[[as.character(object@var_id)]])]] <- solution$primal
+    if(!inverse_data[["is_mip"]]) {
       eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
       leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
       eq_dual <- utils::modifyList(eq_dual, leq_dual)
@@ -1098,8 +1104,8 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
     }
   } else {
     primal_vars <- list()
-    primal_vars[[inverse_data[[as.character(object@var_id)]]]] <- NA_real_
-    if(!inverse_data@is_mip) {
+    primal_vars[[as.character(inverse_data[[as.character(object@var_id)]])]] <- NA_real_
+    if(!inverse_data[["is_mip"]]) {
       dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
       names(dual_vars) <- dual_var_ids
@@ -1133,10 +1139,10 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   #Add variable types
   vtype <- character(n)
   for(i in seq_along(data[[BOOL_IDX]])){
-    vtype[data[[BOOL_IDX]][i]] <- 'B' #B for binary
+    vtype[data[[BOOL_IDX]][[i]]] <- 'B' #B for binary
   }
   for(i in seq_along(data[[INT_IDX]])){
-    vtype[data[[INT_IDX]][i]] <- 'I' #I for integer
+    vtype[data[[INT_IDX]][[i]]] <- 'I' #I for integer
   }
   
   for(i in 1:n) {
@@ -1154,22 +1160,26 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   model$rhs <- b
   model$sense <- c(rep('=', dims@zero), rep('<',  dims@nonpos), rep('=', sum(unlist(dims@soc))))
   
-  soc_start <- dims@zero
-  soc_end <- soc_start
-  
   total_soc <- sum(unlist(dims@soc))
   current_vars <- n
+  current_rows <- dims@zero + dims@nonpos + 1
   
   # Add SOC variables
   # Sort of strange. A good example of how it works can be seen in
   # https://www.gurobi.com/documentation/8.1/examples/qcp_r.html#subsubsection:qcp.R
   for(i in seq_along(dims@soc)){
     n_soc <- dims@soc[[i]]
+    
     model$vtype <- c(model$vtype, rep('C', n_soc))
     model$lb <- c(model$lb, 0, rep(-Inf, n_soc - 1))
     model$ub <- c(model$ub, rep(Inf, n_soc))
-    model$A <- cbind(model$A, rbind(matrix(0, nrow = soc_end, ncol = n_soc), diag(rep(1, n_soc))))
+    Asub <- matrix(0, nrow = nrow(A), ncol = n_soc)
+    Asub[current_rows:(current_rows + n_soc - 1),] <- diag(rep(1, n_soc))
+    model$A <- cbind(model$A, Asub)
     
+    # To create quadratic constraints, first create a 0 square matrix with dimension of
+    # the total number of variables (normal + SOC). Then fill the diagonals of the 
+    # SOC part with the first being negative and the rest being positive
     qc <- list()
     qc$Qc <- matrix(0, nrow = n + total_soc, ncol = n + total_soc)
     qc$Qc[current_vars + 1, current_vars + 1] <- -1
@@ -1179,9 +1189,9 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     qc$rhs <- 0.0
     
     model$quadcon[[i]] <- qc
-    
-    soc_end <- soc_start + n_soc
+  
     current_vars <- current_vars + n_soc
+    current_rows = current_rows + n_soc
     
   }
   
@@ -1199,16 +1209,24 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     solution[["primal"]] <- result$x
     
     #Only add duals if it's not a MIP
-    if(sum(unlist(data[[BOOL_IDX]])) + sum(unlist(data[[INT_IDX]])) == 0 ){
-      solution[["y"]] <- -append(result$pi, result$qcpi, soc_start)
+    if(sum(unlist(data[[BOOL_IDX]])) + sum(unlist(data[[INT_IDX]])) == 0){
+      solution[["y"]] <- -append(result$pi, result$qcpi, dims@zero + dims@nonpos)
       
+      if(dims@zero == 0){
+        solution[["eq_dual"]] <- c()
+        solution[["ineq_dual"]] <- solution[["y"]]
+      } else {
+        solution[["eq_dual"]] <- solution[["y"]][1:dims@zero]
+        solution[["ineq_dual"]] <- solution[["y"]][-(1:dims@zero)]  
+      }
     }
     
   }, error = function(e) {   # Error in the solution.
   })
   
   solution[[SOLVE_TIME]] <- result$runtime
-  solution[["status"]] <- status_map(result$status)
+  solution[["status"]] <- status_map(object, result$status)
+  solution[["num_iters"]] <- result$baritercount
   
   # Is there a better way to check if there is a solution?
   # if(solution[["status"]] == SOLVER_ERROR && !is.na(result$x)){

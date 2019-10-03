@@ -1086,16 +1086,12 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
   
   status <- solution$status
   dual_vars <- list()
-<<<<<<< HEAD
   
   #CVXPY doesn't include for some reason?
   #attr <- list()
   #attr[[SOLVE_TIME]] <- solution$runtime
   #attr[[NUM_ITERS]] <- solution$baritercount
   
-=======
-
->>>>>>> 1.0
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value + inverse_data[[OFFSET]]
     primal_vars <- list()

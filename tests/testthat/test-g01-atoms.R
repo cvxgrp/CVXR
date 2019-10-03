@@ -720,7 +720,6 @@ test_that("test mixed_norm", {
 #   expect_true(is_dcp(expr))
 # })
 
-#DK, L2 work but both of these fail
 test_that("test that norm1 and normInf match definition for matrices", {
   A <- rbind(c(1,2), c(3,4))
   print(A)

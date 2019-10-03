@@ -1,4 +1,4 @@
-# TODO: This test is pretty time consuming. Move to manual group?
+# TODO_NARAS_11: This test is pretty time consuming. Move to manual group?
 context("test-g01-qp")
 TOL <- 1e-6
 
@@ -44,7 +44,6 @@ test_quad_over_lin <- function(solver) {
   for(var in variables(p))
     expect_equal(result$getValue(var), matrix(c(-1, -1)), tolerance = 1e-4)
   
-  # TODO: Dual values should be cast to matrix form for consistency.
   for(con in constraints(p))
     expect_equal(result$getDualValue(con), matrix(c(2, 2)), tolerance = 1e-4)
 }

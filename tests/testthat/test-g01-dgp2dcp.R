@@ -18,11 +18,11 @@ form_solution <- function(prob, result) {
   primal <- list()
   for(var in prob@variables)
     primal[[as.character(var@id)]] <- result$getValue(var)
-  
+
   dual <- list()
   for(constr in prob@constraints)
     dual[[as.character(constr@id)]] <- result$getDualValue(constr)
-  
+
   attr <- list(solve_time = result$solve_time, setup_time = result$setup_time, num_iters = result$num_iters)
   Solution(result$status, result$value, primal, dual, attr)
 }
@@ -33,31 +33,30 @@ test_that("test unconstrained monomial", {
   prod <- x*y
   dgp <- Problem(Minimize(prod))
   dgp2dcp <- Dgp2Dcp(dgp)
-  
+
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  
-  expect_equal(class(expr(dcp@objective))[1], "AddExpression")
-  expect_equal(length(expr(dcp@objective)@args), 2)
-  expect_equal(class(expr(dcp@objective)@args[[1]])[1], "Variable")
-  expect_equal(class(expr(dcp@objective)@args[[2]])[1], "Variable")
+
+  expect_equal(class(CVXR::expr(dcp@objective))[1], "AddExpression")
+  expect_equal(length(CVXR::expr(dcp@objective)@args), 2)
+  expect_equal(class(CVXR::expr(dcp@objective)@args[[1]])[1], "Variable")
+  expect_equal(class(CVXR::expr(dcp@objective)@args[[2]])[1], "Variable")
   opt <- solve(dcp)
-  
+
   # dcp is solved in log-space, so it is unbounded below
   # (since the OPT for dgp is 0 + epsilon).
   expect_equal(opt$value, -Inf)
   expect_equal(opt$status, "unbounded")
-  
+
   solution <- form_solution(dcp, opt)
   dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
-  # TODO: opt <- solve(dgp, gp = TRUE)
-  opt <- solve(dgp, solver = "ECOS", gp = TRUE)
+  opt <- solve(dgp, gp = TRUE)
   expect_equal(opt$value, 0.0)
   expect_equal(opt$status, "unbounded")
-  
+
   dgp <- Problem(Maximize(prod))
   dgp2dcp <- Dgp2Dcp(dgp)
   tmp <- reduce(dgp2dcp)
@@ -66,13 +65,12 @@ test_that("test unconstrained monomial", {
   opt <- solve(dcp)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
-  
+
   solution <- form_solution(dcp, opt)
   dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, Inf)
   expect_equal(dgp_unpack$status, "unbounded")
-  # TODO: opt <- solve(dgp, gp = TRUE)
-  opt <- solve(dgp, solver = "ECOS", gp = TRUE)
+  opt <- solve(dgp, gp = TRUE)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
 })
@@ -81,16 +79,16 @@ test_that("test basic equality constraint", {
   x <- Variable(pos = TRUE)
   dgp <- Problem(Minimize(x), list(x == 1.0))
   dgp2dcp <- Dgp2Dcp(dgp)
-  
+
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
   expect_equal(class(dcp@objective@args[[1]])[1], "Variable")
-  
+
   opt <- solve(dcp)
   expect_equal(opt$value, 0.0, tolerance = TOL)
   expect_equal(opt$getValue(variables(dcp)[[1]]), 0.0, tolerance = TOL)
-  
+
   solution <- form_solution(dcp, opt)
   dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 1.0, tolerance = TOL)
@@ -114,12 +112,12 @@ test_that("test max_elemwise", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
-  
+
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
   obj <- Minimize(max_elemwise(prod1, prod2))
   constr <- list(x == 1.0, y == 4.0)
-  
+
   dgp <- Problem(obj, constr)
   dgp2dcp <- Dgp2Dcp(dgp)
   tmp <- reduce(dgp2dcp)
@@ -136,32 +134,32 @@ test_that("test max_elemwise", {
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
 })
 
-# TODO: Test keepdims.
+# TODO_NARAS_5: Test keepdims. Need to edit test to match CVXPY.
 test_that("test prod_entries", {
   X <- matrix(0:11, nrow = 4, ncol = 3)
   expect_equal(prod(X), value(prod_entries(X)))
   expect_equal(apply(X, 1, prod), value(prod_entries(X, axis = 1)))
   expect_equal(apply(X, 2, prod), value(prod_entries(X, axis = 2)))
-  
+
   prod <- prod_entries(X)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
   expect_equal(sum(X), value(X_canon))
-  
+
   prod <- prod_entries(X, axis = 1)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
   expect_equal(apply(X, 1, sum), value(X_canon))
-  
+
   prod <- prod_entries(X, axis = 2)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
   expect_equal(apply(X, 2, sum), value(X_canon))
-  
+
   X <- matrix(0:11, nrow = 12, ncol = 1)
   expect_equal(prod(X), value(prod_entries(X)))
-  
+
   prod <- prod_entries(X)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
   expect_equal(sum(X), value(X_canon))
-  
+
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   posy1 <- x*y^(0.5) + 3.0*x*y^(0.5)
@@ -169,7 +167,7 @@ test_that("test prod_entries", {
   expect_true(is_log_log_convex(prod_entries(posy1, posy2)))
   expect_false(is_log_log_concave(prod_entries(posy1, posy2)))
   expect_false(is_dgp(prod_entries(posy1, 1/posy1)))
-  
+
   m <- x*y^(0.5)
   expect_true(is_log_log_affine(prod_entries(m, m)))
   expect_true(is_log_log_concave(prod_entries(m, 1/posy1)))
@@ -180,12 +178,12 @@ test_that("test max_entries", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
-  
+
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
   obj <- Minimize(max_entries(hstack(prod1, prod2)))
   constr <- list(x == 1.0, y == 4.0)
-  
+
   dgp <- Problem(obj, constr)
   dgp2dcp <- Dgp2Dcp(dgp)
   tmp <- reduce(dgp2dcp)
@@ -206,13 +204,13 @@ test_that("test min_elemwise", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
-  
+
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
   posy <- prod1 + prod2
   obj <- Maximize(min_elemwise(prod1, prod2, 1/posy))
   constr <- list(x == 1.0, y == 4.0)
-  
+
   dgp <- Problem(obj, constr)
   result <- solve(dgp, gp = TRUE)
   expect_equal(result$value, 1.0/(2.0 + 6.0), tolerance = TOL)
@@ -224,13 +222,13 @@ test_that("test min_entries", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
-  
+
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
   posy <- prod1 + prod2
   obj <- Maximize(min_entries(hstack(prod1, prod2, 1/posy)))
   constr <- list(x == 1.0, y == 4.0)
-  
+
   dgp <- Problem(obj, constr)
   result <- solve(dgp, gp = TRUE)
   expect_equal(result$value, 1.0/(2.0 + 6.0), tolerance = TOL)
@@ -257,7 +255,7 @@ test_that("test min_entries", {
 #   result <- solve(dgp, gp = TRUE)
 #   expect_equal(result$value, opt, tolerance = TOL)
 #   expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
-#   
+#
 #   # An unbounded problem.
 #   x <- Variable(4, pos = TRUE)
 #   y <- Variable(pos = TRUE)
@@ -277,7 +275,7 @@ test_that("test min_entries", {
 #   result <- solve(dgp, gp = TRUE)
 #   expect_equal(result$value, 0.0, tolerance = TOL)
 #   expect_equal(result$status, "unbounded")
-#   
+#
 #   # Another unbounded problem.
 #   x <- Variable(2, pos = TRUE)
 #   obj <- Minimize(sum_largest(x, 1))
@@ -295,7 +293,7 @@ test_that("test min_entries", {
 #   result <- solve(dgp, gp = TRUE)
 #   expect_equal(dgp@value, 0.0, tolerance = TOL)
 #   expect_equal(dgp@status, "unbounded")
-#   
+#
 #   # Composition with posynomials.
 #   x <- Variable(4, pos = TRUE)
 #   obj <- Minimize(sum_largest(hstack(list(3*x[1]^(0.5) * x[2]^(0.5), x[1]*x[2] + 0.5*x[2]*x[4]^3, x[3])), 2))
@@ -305,7 +303,7 @@ test_that("test min_entries", {
 #   dcp <- reduce(dgp2dcp)
 #   result <- solve(dcp)
 #   dgp <- unpack(dgp, retrieve(dgp2dcp, result$solution))
-#   
+#
 #   # opt = 3 * sqrt(4) * sqrt(4) + (4 * 4 + 0.5 * 4 * epsilon) = 28
 #   opt <- 28.0
 #   expect_equal(dgp@value, opt, tolerance = 1e-2)
@@ -339,13 +337,12 @@ test_that("test geo_mean", {
   dcp <- tmp[[2]]
   result <- solve(dcp)
   expect_equal(result$value, -Inf)
-  
+
   solution <- form_solution(dcp, result)
   dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
-  # TODO: result <- solve(dgp, gp = TRUE)
-  result <- solve(dgp, solver = "ECOS", gp = TRUE)
+  result <- solve(dgp, gp = TRUE)
   expect_equal(result$value, 0.0)
   expect_equal(result$status, "unbounded")
 })
@@ -361,8 +358,7 @@ test_that("test solving non-dgp problem raises error", {
 test_that("test solving non-dcp problem raises error", {
   problem <- Problem(Minimize(Variable(pos = TRUE) * Variable(pos = TRUE)))
   expect_error(solve(problem))
-  # TODO: result <- solve(problem, gp = TRUE)
-  result <- solve(problem, solver = "ECOS", gp = TRUE)
+  result <- solve(problem, gp = TRUE)
   expect_equal(result$status, "unbounded", tolerance = TOL)
   expect_equal(result$value, 0.0, tolerance = TOL)
 })
@@ -378,7 +374,7 @@ test_that("test add_canon", {
   expect_equal(dim(canon_matrix), dim(Z))
   expected <- log(exp(value(X)) + exp(value(Y)))
   expect_equal(expected, value(canon_matrix), tolerance = TOL)
-  
+
   # Test promotion.
   X <- Constant(rbind(1:3, 4:6))
   y <- Constant(2.0)
@@ -478,7 +474,7 @@ test_that("test pf matrix completion", {
   X <- Variable(3,3, pos = TRUE)
   obj <- Minimize(pf_eigenvalue(X))
   known_indices <- cbind(c(1,1,2,3,3), c(1,3,2,1,2))
-  constr <- list(X[known_indices] == c(1.0, 1.9, 0.8, 3.2, 5.9), 
+  constr <- list(X[known_indices] == c(1.0, 1.9, 0.8, 3.2, 5.9),
                  X[1,2] * X[2,1] * X[2,3] * X[3,3] == 1.0)
   problem <- Problem(obj, constr)
   expect_silent(solve(problem, gp = TRUE))   # Smoke test.
@@ -502,7 +498,7 @@ test_that("test documentation problem", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
-  
+
   objective_fn <- x*y*z
   constraints <- list(4*x*y*z + 2*x*z <= 10, x <= 2*y, y <= 2*x, z >= 1)
   problem <- Problem(Maximize(objective_fn), constraints)
@@ -519,7 +515,7 @@ test_that("test solver error", {
   dgp2dcp <- tmp[[1]]
   data <- tmp[[2]]
   inverse_data <- tmp[[3]]
-  
+
   soln <- Solution("solver_error", NA_real_, list(), list(), list())
   dgp_soln <- invert(dgp2dcp, soln, inverse_data)
   expect_equal(dgp_soln@status, "solver_error")

@@ -155,8 +155,7 @@ test_that("test canonicalization for affine atoms", {
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
   prob <- Problem(Minimize(expr[1]*1i + expr[2]*1i), list(Re(x + 1i) >= 1, Conj(x) <= 0))
-  # TODO: result <- solve(prob)
-  result <- solve(prob, solver = "ECOS")
+  result <- solve(prob)   # TODO_NARAS_1: OSQP returns a solver_error, but ECOS is correct.
   expect_equal(result$value, Inf)
   
   x <- Variable(2,2)
@@ -210,15 +209,14 @@ test_that("test matrix norms", {
   sigma_max <- base:::norm(P, type = "2")
   X <- Variable(2, 4, complex = TRUE)
   prob <- Problem(Minimize(norm(X, "2")), list(X == P))
-  # TODO: result <- solve(prob)
-  result <- solve(prob, solver = "SCS")
+  result <- solve(prob)
   expect_equal(result$value, sigma_max, tolerance = 1e-3)
   
-  # norm_nuc <- TODO: Calculate nuclear norm in R.
-  # X <- Variable(2, 4, complex = TRUE)
-  # prob <- Problem(Minimize(norm_nuc(X)), list(X == P))
-  # result <- solve(prob, solver = "SCS", eps = 1e-4)
-  # expect_equal(result$value, norm_nuc, tolerance = 0.1)
+  norm_nuc_val <- sum(svd(P)$d)
+  X <- Variable(2, 4, complex = TRUE)
+  prob <- Problem(Minimize(norm_nuc(X)), list(X == P))
+  result <- solve(prob, solver = "SCS", eps = 1e-4)
+  expect_equal(result$value, norm_nuc_val, tolerance = 0.1)
 })
 
 test_that("test log-determinant", {
@@ -242,8 +240,7 @@ test_that("test eigenvalue atoms", {
     # X <- Variable(dim(P), complex = TRUE)
     X <- Variable(nrow(P), ncol(P), complex = TRUE)
     prob <- Problem(Minimize(lambda_max(X)), list(X == P))
-    # TODO: result <- solve(prob, solver = "SCS", eps = 1e-5)
-    result <- solve(prob, solver = "SCS", eps = 1e-8)
+    result <- solve(prob, solver = "SCS", eps = 1e-5)
     expect_equal(result$value, value, tolerance = 1e-2)
     
     eigs <- Re(eigen(P, only.values = TRUE)$values)
@@ -336,8 +333,7 @@ test_that("test Hermitian variables", {
 test_that("test positive semidefinite variables", {
   X <- Variable(2, 2, hermitian = TRUE)
   prob <- Problem(Minimize(Im(X[2,1])), list(X %>>% 0, X[1,1] == -1))
-  # TODO: result <- solve(prob)
-  result <- solve(prob, solver = "SCS")
+  result <- solve(prob)
   expect_equal(result$status, "infeasible")
 })
 
@@ -346,12 +342,11 @@ test_that("test promotion of complex variables", {
   obj <- Maximize(Re(sum(v * matrix(1, nrow = 2, ncol = 2))))
   con <- list(cvxr_norm(v) <= 1)
   prob <- Problem(obj, con)
-  # TODO: result <- solve(prob)
-  result <- solve(prob, solver = "SCS")
+  result <- solve(prob)
   expect_equal(result$value, 4.0, tolerance = TOL)
 })
 
-# TODO: Figure out how to handle complex sparse matrices in R.
+# TODO_NARAS_2: Figure out how to handle complex sparse matrices in R.
 # test_that("test problem with complex sparse matrix", {
 #   # Define sparse matrix [[0, 1i], [-1i, 0]]
 #   require(Matrix)
@@ -398,8 +393,7 @@ test_that("test with special index", {
   
   # Form and solve problem.
   prob <- Problem(obj, constraints)
-  # TODO: sol <- solve(prob)
-  sol <- solve(prob, solver = "SCS")
+  sol <- solve(prob)
   expect_equal(sol$status, "optimal")
 })
 

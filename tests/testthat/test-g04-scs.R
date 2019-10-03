@@ -153,7 +153,7 @@ test_that("Test PSD constraint", {
     prob <- Problem(obj, const)
     r <- solve(prob, solver = "SCS")
     s <- r$getValue(s)
-    # TODO: print(residual(const[[1]]))
+    # TODO_NARAS_13: print(residual(const[[1]]))   TODO: Need to implement the residual function.
     cat("value", r$value)
     cat("s", s)
     eigs <- eigen(s + t(s), only.values = TRUE)$values

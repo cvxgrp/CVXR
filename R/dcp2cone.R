@@ -380,7 +380,7 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   # Fix X using the fact that A must be affine by the DCP rules.
   # X[1:rows, (rows+1):(rows+cols)] == A
   constraints <- c(constraints, X[1:m, (m+1):(m+n)] == A)
-  trace_value <- 0.5*trace(X)
+  trace_value <- 0.5*matrix_trace(X)
   return(list(trace_value, constraints))
 }
 

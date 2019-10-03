@@ -699,6 +699,20 @@ test_that("test indexing expression", {
 #   expect_error(x[-100])
 # })
 
+test_that("test out of bounds indices", {
+  expect_error(x[100])
+  expect_error(x[c(1,-2)])
+  
+  exp <- x[-100]
+  expect_equal(dim(exp), c(2,1))
+  
+  exp <- x[0]
+  expect_equal(dim(exp), c(0,1))
+  expect_equal(value(exp), matrix(NA, nrow = 0, ncol = 0))
+  
+  # TODO_NARAS_8: More testing of R's out of bounds indices. R's behavior is different from Python, so we can't copy CVXPY's tests.
+})
+
 test_that("test negative indices", {
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- c[-1,-1]
@@ -706,7 +720,25 @@ test_that("test negative indices", {
   expect_equal(dim(exp), c(1,1))
   expect_equal(curvature(exp), CONSTANT)
 
-  # TODO: More testing of R's negative indices (and sequences of negative indices)
+  c <- Constant(1:4)
+  exp <- c[c(-1,-4)]
+  expect_equal(value(exp), matrix(c(2,3)))
+  expect_equal(dim(exp), c(2,1))
+  expect_equal(curvature(exp), CONSTANT)
+  
+  c <- Constant(1:4)
+  exp <- c[seq(4,1,-1)]
+  expect_equal(value(exp), matrix(c(4,3,2,1)))
+  expect_equal(dim(exp), c(4,1))
+  expect_equal(curvature(exp), CONSTANT)
+  
+  x <- Variable(4)
+  expect_equal(dim(x[seq(4,1,-1)]), c(4,1))
+  prob <- Problem(Minimize(0), list(x[seq(4,1,-1)] == c))
+  result <- solve(prob)
+  expect_equal(result$getValue(x), matrix(c(4,3,2,1)))
+  
+  # TODO_NARAS_9: More testing of R's negative indices (and sequences of negative indices)
 })
 
 test_that("test indexing with logical matrices", {

@@ -1112,7 +1112,9 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
   idx_mat <- seq(expr_size)
   idx_mat <- matrix(idx_mat, nrow = expr_dim[1], ncol = expr_dim[2])
   if(is.matrix(row) && is.null(col))
-    select_mat <- idx_mat[row]
+    select_mat <- matrix(idx_mat[row], ncol = 1)
+  else if(is.null(row) && is.null(col))
+    select_mat <- idx_mat
   else if(is.null(row) && !is.null(col))
     select_mat <- idx_mat[ , col, drop = FALSE]
   else if(!is.null(row) && is.null(col))

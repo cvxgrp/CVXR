@@ -154,7 +154,7 @@ apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
     result <- fun(x)
   else
     result <- apply(x, axis, fun)
-  
+
   if(keepdims) {
     new_dim <- dim(x)
     if(is.null(new_dim))
@@ -176,7 +176,7 @@ sum_dims <- function(dims) {
     return(NULL)
   else if(length(dims) == 1)
     return(dims[[1]])
-  
+
   dim <- dims[[1]]
   for(t in dims[2:length(dims)]) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
@@ -184,24 +184,24 @@ sum_dims <- function(dims) {
     # if(!identical(dim, t) && (!is.null(dim) && !all(dim == 1)) && (!is.null(t) && !all(t == 1)))
     if(!((length(dim) == length(t) && all(dim == t)) || all(dim == 1) || all(t == 1)))
       stop("Cannot broadcast dimensions")
-    
+
     if(length(dim) >= length(t))
       longer <- dim
     else
       longer <- t
-    
+
     if(length(dim) < length(t))
       shorter <- dim
     else
       shorter <- t
-    
+
     offset <- length(longer) - length(shorter)
     if(offset == 0)
       prefix <- c()
     else
       prefix <- longer[1:offset]
     suffix <- c()
-    
+
     if(length(shorter) > 0) {
       for(idx in length(shorter):1) {
         d1 <- longer[offset + idx]
@@ -224,12 +224,12 @@ sum_dims <- function(dims) {
 mul_dims_promote <- function(lh_dim, rh_dim) {
   if(is.null(lh_dim) || is.null(rh_dim) || length(lh_dim) == 0 || length(rh_dim) == 0)
     stop("Multiplication by scalars is not permitted")
-  
+
   if(length(lh_dim) == 1)
     lh_dim <- c(1, lh_dim)
   if(length(rh_dim) == 1)
     rh_dim <- c(rh_dim, 1)
-  
+
   lh_mat_dim <- lh_dim[(length(lh_dim)-1):length(lh_dim)]
   rh_mat_dim <- rh_dim[(length(rh_dim)-1):length(rh_dim)]
   if(length(lh_dim) > 2)
@@ -240,7 +240,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
     rh_head <- rh_dim[1:(length(rh_dim)-2)]
   else
     rh_head <- c()
-  
+
   # if(lh_mat_dim[2] != rh_mat_dim[1] || !(length(lh_head) == length(rh_head) && all(lh_head == rh_head)))
   if(lh_mat_dim[2] != rh_mat_dim[1] || !identical(lh_head, rh_head))
     stop("Incompatible dimensions")
@@ -250,12 +250,12 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
 mul_dims <- function(lh_dim, rh_dim) {
   lh_old <- lh_dim
   rh_old <- rh_dim
-  
+
   promoted <- mul_dims_promote(lh_dim, rh_dim)
   lh_dim <- promoted[[1]]
   rh_dim <- promoted[[2]]
   dim <- promoted[[3]]
-  
+
   # if(!(length(lh_dim) == length(lh_old) && all(lh_dim == lh_old)))
   if(!identical(lh_dim, lh_old)) {
     if(length(dim) <= 1)
@@ -293,11 +293,11 @@ mul_sign <- function(lh_expr, rh_expr) {
   rh_nonneg <- is_nonneg(rh_expr)
   lh_nonpos <- is_nonpos(lh_expr)
   rh_nonpos <- is_nonpos(rh_expr)
-  
+
   lh_zero <- lh_nonneg && lh_nonpos
   rh_zero <- rh_nonneg && rh_nonpos
   is_zero <- lh_zero || rh_zero
-  
+
   is_pos <- is_zero || (lh_nonneg && rh_nonneg) || (lh_nonpos && rh_nonpos)
   is_neg <- is_zero || (lh_nonneg && rh_nonpos) || (lh_nonpos && rh_nonneg)
   c(is_pos, is_neg)
@@ -785,32 +785,59 @@ over_bound <- function(w_dyad, tree) {
 #               #
 #################
 Key <- function(row, col) {
-  if(missing(row)) row <- NULL   # Missing row/col index implies that we select all rows/cols
-  if(missing(col)) col <- NULL
-  list(row = row, col = col, class = "key")
+    if(missing(row)) row <- NULL   # Missing row/col index implies that we select all rows/cols
+    if(missing(col)) col <- NULL
+    list(row = row, col = col, class = "key")
 }
 
 ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed for consistency in handling keys.
-  nrow <- dim[1]
-  ncol <- dim[2]
-
   if(length(key) > 3)
     stop("Invalid index/slice")
   
-  if(!is.null(key$row) && !is.null(key$col))
-    key <- Key(row = key$row, col = key$col)
+  nrow <- dim[1]
+  ncol <- dim[2]
+  row <- ku_format_slice(key$row, nrow)
+  col <- ku_format_slice(key$col, ncol)
+
+  if(!is.null(row) && !is.null(col))
+    key <- Key(row = row, col = col)
   # Change single indices for vectors into double indices
-  else if(is.null(key$row) && !is.null(key$col))
-    key <- Key(row = 1:nrow, col = key$col)
-  else if(!is.null(key$row) && is.null(key$col))
-    key <- Key(row = key$row, col = 1:ncol)
+  else if(is.null(row) && !is.null(col))
+    key <- Key(row = seq_len(nrow), col = col)
+  else if(!is.null(row) && is.null(col))
+    key <- Key(row = row, col = seq_len(ncol))
   else
     stop("A key cannot be empty")
   return(key)
 }
 
+ku_format_slice <- function(key_val, dim) {
+  if(is.null(key_val))
+    return(NULL)
+  orig_key_val <- as.integer(key_val)
+  
+  # Return if all zero indices.
+  if(all(orig_key_val == 0))
+    return(orig_key_val)
+  
+  # Convert negative indices to positive indices.
+  if(all(orig_key_val >= 0))
+    key_val <- orig_key_val
+  else if(all(orig_key_val <= 0))
+    key_val <- setdiff(seq_len(dim), -orig_key_val)
+  else
+    stop("Only 0's may be mixed with negative subscripts")
+  
+  if(all(key_val >= 0 && key_val <= dim))
+    return(key_val)
+  else
+    stop("Index is out of bounds for axis with size ", dim)
+}
+
 ku_slice_mat <- function(mat, key) {
-  if(is.null(key$row) && is.null(key$col))
+  if(is.matrix(key$row) && is.null(key$col))
+    select_mat  <- matrix(mat[key$row], ncol = 1)
+  else if(is.null(key$row) && is.null(key$col))
     select_mat <- mat
   else if(is.null(key$row) && !is.null(key$col))
     select_mat <- mat[, key$col, drop = FALSE]

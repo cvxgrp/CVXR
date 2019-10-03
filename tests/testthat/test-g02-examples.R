@@ -248,12 +248,12 @@ test_that("Test examples from CVXR introduction", {
 
     ## An infeasible problem
     prob <- Problem(Minimize(x), list(x >= 1, x <= 0))
-    # TODO: result <- solve(prob)
+    # TODO_NARAS_11: result <- solve(prob)
     result <- solve(prob, solver = "ECOS")
     cat("status:", result$status)
     cat("optimal value:", result$value)
 
-    expect_equal(tolower(result$status), "infeasible")
+    expect_equal(result$status, "infeasible")
     expect_equal(result$value, Inf)
 
     ## An unbounded problem

@@ -1395,9 +1395,11 @@ setMethod("name", "Norm1", function(x) {
 #' @rdname Norm1 Returns the 1-norm of x along the given axis.
 setMethod("to_numeric", "Norm1", function(object, values) {
   if(is.na(object@axis))
-    base::norm(values[[1]], type = "O")
+    # base::norm(values[[1]], type = "O")
+    sum(abs(values[[1]]))
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "O") }, axis = object@axis, keepdims = object@keepdims)
+    # apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "O") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { sum(abs(x)) }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn Norm1 Does the atom handle complex numbers?
@@ -1455,9 +1457,11 @@ setMethod("name", "NormInf", function(x) {
 #' @describeIn NormInf Returns the infinity norm of \code{x}.
 setMethod("to_numeric", "NormInf", function(object, values) {
   if(is.na(object@axis))
-    base::norm(values[[1]], type = "I")
+    # base::norm(values[[1]], type = "I")
+    max(abs(values[[1]]))
   else
-    apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "I") }, axis = object@axis, keepdims = object@keepdims)
+    # apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "I") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { max(abs(x)) }, axis = object@axis, keepdims = object@keepdims)
 })
 
 #' @describeIn NormInf Does the atom handle complex numbers?

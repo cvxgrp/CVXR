@@ -385,10 +385,10 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   #Add variable types
   vtype <- character(n)
   for(i in seq_along(data[[BOOL_IDX]])){
-    vtype[data[[BOOL_IDX]][i]] <- 'B' #B for binary
+    vtype[data[[BOOL_IDX]][[i]]] <- 'B' #B for binary
   }
   for(i in seq_along(data[[INT_IDX]])){
-    vtype[data[[INT_IDX]][i]] <- 'I' #I for integer
+    vtype[data[[INT_IDX]][[i]]] <- 'I' #I for integer
   }
   
   for(i in 1:n) {
@@ -614,9 +614,9 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
 
   # Overwrite defaults eps_abs = eps_rel = 1e-3, max_iter = 4000.
   if(is.null(solver_opts$eps_abs))
-    solver_opts$eps_abs <- 1e-4
+    solver_opts$eps_abs <- 1e-5
   if(is.null(solver_opts$eps_rel))
-    solver_opts$eps_rel <- 1e-4
+    solver_opts$eps_rel <- 1e-5
   if(is.null(solver_opts$max_iter))
     solver_opts$max_iter <- 10000
 

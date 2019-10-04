@@ -577,7 +577,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
   
-  return(list(data, full_chain, inverse_data))
+  return(list(data = data, chain = full_chain, inverse_data = inverse_data))
 })
 
 .find_candidate_solvers <- function(object, solver = NA, gp = FALSE) {

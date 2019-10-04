@@ -1437,24 +1437,25 @@ setMethod("is_atom_log_log_convex", "SumEntries", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "SumEntries", function(object) { FALSE })
 
 SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  # TODO: Handle keepdims properly by setting a 1-D vector's dimension to c(len, NA_integer_).
   axis <- data[[1]]
   keepdims <- data[[2]]
   if(is.na(axis))
     obj <- lo.sum_entries(arg_objs[[1]], dim)
   else if(axis == 1) {
-    # if(keepdims)
-    #   const_dim <- c(arg_objs[[1]]$dim[2], 1)
-    # else
-    #   const_dim <- c(arg_objs[[1]]$dim[2], NA_integer_)
-    const_dim <- c(arg_objs[[1]]$dim[2], 1)
+    if(keepdims)
+      const_dim <- c(arg_objs[[1]]$dim[2], 1)
+    else
+      # const_dim <- c(arg_objs[[1]]$dim[2], NA_integer_)
+      const_dim <- c(arg_objs[[1]]$dim[2], 1)
     ones <- create_const(array(1, dim = const_dim), const_dim)
     obj <- lo.rmul_expr(arg_objs[[1]], ones, dim)
   } else {   # axis == 2
-    # if(keepdims)
-    #   const_dim <- c(1, arg_objs[[1]]$dim[1])
-    # else
-    #   const_dim <- c(arg_objs[[1]]$dim[1], NA_integer_)
-    const_dim <- c(1, arg_objs[[1]]$dim[1])
+    if(keepdims)
+      const_dim <- c(1, arg_objs[[1]]$dim[1])
+    else
+      # const_dim <- c(arg_objs[[1]]$dim[1], NA_integer_)
+      const_dim <- c(arg_objs[[1]]$dim[1], 1)
     ones <- create_const(array(1, dim = const_dim), const_dim)
     obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
   }

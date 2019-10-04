@@ -328,6 +328,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_
 #' @param object An \linkS4class{Atom} object.
 #' @describeIn AxisAtom The dimensions of the atom determined from its arguments.
 setMethod("dim_from_args", "AxisAtom", function(object) {
+  # TODO: Revisit this when we properly handle dimensions of scalars (NULL) and 1-D vectors (length only).
   arg_dim <- dim(object@args[[1]])
   if(object@keepdims && is.na(object@axis))   # Copy scalar to maintain original dimensions.
     arg_dim <- rep(1, length(arg_dim))
@@ -335,9 +336,13 @@ setMethod("dim_from_args", "AxisAtom", function(object) {
     collapse <- setdiff(1:length(arg_dim), object@axis)
     arg_dim[collapse] <- 1
   } else if(!object@keepdims && is.na(object@axis))   # Return a scalar.
-    arg_dim <- NULL   # TODO: Should this be NA instead?
-  else   # Drop dimensions NOT in axis and collapse atom.
-    arg_dim <- arg_dim[object@axis]
+    # arg_dim <- NULL   # TODO: Should this be NA instead?
+    arg_dim <- rep(1, length(arg_dim))
+  else {   # Drop dimensions NOT in axis and collapse atom.
+    # arg_dim <- arg_dim[object@axis]
+    collapse <- setdiff(1:length(arg_dim), object@axis)
+    arg_dim <- c(arg_dim[object@axis], rep(1, length(collapse)))
+  }
   return(arg_dim)
 })
 

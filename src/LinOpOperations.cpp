@@ -74,18 +74,30 @@ std::vector<Matrix> get_func_coeffs(LinOp& lin) {
 		coeffs = get_div_mat(lin);
 		break;
 	case SUM:
+#ifdef _R_DEBUG_
+	  Rcpp::Rcout << "SUM" << std::endl;    
+#endif  
 		coeffs = get_sum_coefficients(lin);
 		break;
 	case NEG:
+#ifdef _R_DEBUG_
+	  Rcpp::Rcout << "NEG" << std::endl;    
+#endif  
 		coeffs = get_neg_mat(lin);
 		break;
 	case INDEX:
+#ifdef _R_DEBUG_
+	  Rcpp::Rcout << "INDEX" << std::endl;    
+#endif  
 		coeffs = get_index_mat(lin);
 		break;
 	case TRANSPOSE:
 		coeffs = get_transpose_mat(lin);
 		break;
 	case SUM_ENTRIES:
+#ifdef _R_DEBUG_
+	  Rcpp::Rcout << "SUM_ENTRIES" << std::endl;    
+#endif  
 		coeffs = get_sum_entries_mat(lin);
 		break;
 	case TRACE:

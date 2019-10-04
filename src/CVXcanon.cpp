@@ -159,7 +159,13 @@ void process_constraint(LinOp & lin, std::vector<double> &V,
 	 of coefficient matrices */
 int get_total_constraint_length(std::vector< LinOp* > constraints){
 	int result = 0;
+#ifdef _R_DEBUG_
+	Rcpp::Rcout << "In get_total_constraint_length, size = " << constraints.size() << std::endl;
+#endif
 	for (unsigned i = 0; i < constraints.size(); i++){
+#ifdef _R_DEBUG_
+	  Rcpp::Rcout << "i, r, c, " << constraints[i]->size[0] << ", " << constraints[i]->size[1] << std::endl;
+#endif
 		result += constraints[i]->size[0] * constraints[i]->size[1];
 	}
 	return result;

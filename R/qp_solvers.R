@@ -128,19 +128,18 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
     opt_val <- model$obj
     
     # Get solution.
-    x <- model$xopt
     primal_vars <- list()
-    primal_vars[[names(inverse_data@id_map)[1]]] <- x
+    primal_vars[[names(inverse_data@id_map)[1]]] <- model$xopt
     
     # Only add duals if not a MIP.
-    dual_vars <- NA
+    dual_vars <- list()
     if(!inverse_data@is_mip) {
       y <- -as.matrix(model$extra$lambda) #there's a negative here, should we keep this?
       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
     }
   } else {
-    primal_vars <- NA
-    dual_vars <- NA
+    primal_vars <- list()
+    dual_vars <- list()
     opt_val <- Inf
     if(status == UNBOUNDED)
       opt_val <- -Inf
@@ -222,7 +221,6 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   } else{
     sense_vec = c(rep("E", n_eq), rep("L", n_ineq))  
   }
-  
   
   #Initializing variable types
   vtype <- rep("C", n_var)

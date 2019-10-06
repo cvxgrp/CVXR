@@ -1933,7 +1933,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   ## For integer problems, problem status determines infeasibility (no solution).
   ##  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)
   ## Using reference https://docs.mosek.com/9.0/rmosek/accessing-solution.html
-  if(inverse_data$integer_variables && problem_status == "MSK_PRO_STA_PRIM_INFEAS")
+  if(inverse_data$integer_variables && (problem_status == "MSK_PRO_STA_PRIM_INFEAS" || problem_status == "PRIMAL_INFEASIBLE"))
       status <- INFEASIBLE
 
   if(status %in% SOLUTION_PRESENT) {

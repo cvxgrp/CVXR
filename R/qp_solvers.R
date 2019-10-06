@@ -231,7 +231,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   }
   #Setting Integer variable types
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
-    vtype[data[BOOL_IDX]$int_vars_idx[i]] <- "I"
+    vtype[data[INT_IDX]$int_vars_idx[i]] <- "I"
   }
   
   #Setting verbosity off

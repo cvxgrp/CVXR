@@ -2152,96 +2152,96 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
   return(results)
 })
 
-XPRESS <- setClass("XPRESS", contains = "SCS")
-
-# Solver capabilities.
-setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
-setMethod("supported_constraints", "XPRESS", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
-
-# Map of XPRESS status to CVXR status.
-setMethod("status_map", "XPRESS", function(solver, status) {
-  if(status == 2)
-    return(OPTIMAL)
-  else if(status == 3)
-    return(INFEASIBLE)
-  else if(status == 5)
-    return(UNBOUNDED)
-  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
-    return(SOLVER_ERROR)
-  else if(status == 9)   # TODO: Could be anything. Means time expired.
-    return(OPTIMAL_INACCURATE)
-  else
-    stop("XPRESS status unrecognized: ", status)
-})
-
-setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
-setMethod("import_solver", "XPRESS", function(solver) {
-  stop("Unimplemented: XPRESS solver unavailable in R.")
-})
-
-setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
-  # TODO: Check if the matrix is stuffed.
-  if(!is_affine(problem@objective@args[[1]]))
-    return(FALSE)
-  for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
-      return(FALSE)
-    for(arg in constr@args) {
-      if(!is_affine(arg))
-        return(FALSE)
-    }
-  }
-  return(TRUE)
-})
-
-setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
-  tmp <- callNextMethod(object, problem)
-  data <- tmp[[1]]
-  inv_data <- tmp[[2]]
-  variables <- variables(problem)[[1]]
-  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
-  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
-  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  return(list(object, data, inv_data))
-})
-
-setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
-  status <- solution[[STATUS]]
-
-  if(status %in% SOLUTION_PRESENT) {
-    opt_val <- solution[[VALUE]]
-    primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
-    if(!inverse_data@is_mip)
-      dual_vars <- get_dual_values(solution[[EQ_DUAL]], extract_dual_value, inverse_data[[EQ_CONSTR]])
-  } else {
-    primal_vars <- list()
-    primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
-    if(!inverse_data@is_mip) {
-      dual_var_ids <- sapply(inverse_data[[EQ_CONSTR]], function(constr) { constr@id })
-      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-      names(dual_vars) <- dual_var_ids
-    }
-
-    if(status == INFEASIBLE)
-      opt_val <- Inf
-    else if(status == UNBOUNDED)
-      opt_val <- -Inf
-    else
-      opt_val <- NA
-  }
-
-  other <- list()
-  other[[XPRESS_IIS]] <- solution[[XPRESS_IIS]]
-  other[[XPRESS_TROW]] <- solution[[XPRESS_TROW]]
-  return(Solution(status, opt_val, primal_vars, dual_vars, other))
-})
-
-setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  solver <- XPRESS_OLD()
-  solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
-  solver_opts[[INT_IDX]] <- data[[INT_IDX]]
-  prob_data <- list()
-  prob_data[[name(object)]] <- ProblemData()
-  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
-})
+# XPRESS <- setClass("XPRESS", contains = "SCS")
+# 
+# # Solver capabilities.
+# setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
+# setMethod("supported_constraints", "XPRESS", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+# 
+# # Map of XPRESS status to CVXR status.
+# setMethod("status_map", "XPRESS", function(solver, status) {
+#   if(status == 2)
+#     return(OPTIMAL)
+#   else if(status == 3)
+#     return(INFEASIBLE)
+#   else if(status == 5)
+#     return(UNBOUNDED)
+#   else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+#     return(SOLVER_ERROR)
+#   else if(status == 9)   # TODO: Could be anything. Means time expired.
+#     return(OPTIMAL_INACCURATE)
+#   else
+#     stop("XPRESS status unrecognized: ", status)
+# })
+# 
+# setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
+# setMethod("import_solver", "XPRESS", function(solver) {
+#   stop("Unimplemented: XPRESS solver unavailable in R.")
+# })
+# 
+# setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
+#   # TODO: Check if the matrix is stuffed.
+#   if(!is_affine(problem@objective@args[[1]]))
+#     return(FALSE)
+#   for(constr in problem@constraints) {
+#     if(!class(constr) %in% supported_constraints(object))
+#       return(FALSE)
+#     for(arg in constr@args) {
+#       if(!is_affine(arg))
+#         return(FALSE)
+#     }
+#   }
+#   return(TRUE)
+# })
+# 
+# setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
+#   tmp <- callNextMethod(object, problem)
+#   data <- tmp[[1]]
+#   inv_data <- tmp[[2]]
+#   variables <- variables(problem)[[1]]
+#   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+#   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+#   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+#   return(list(object, data, inv_data))
+# })
+# 
+# setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+#   status <- solution[[STATUS]]
+# 
+#   if(status %in% SOLUTION_PRESENT) {
+#     opt_val <- solution[[VALUE]]
+#     primal_vars <- list()
+#     primal_vars[[inverse_data[[object@var_id]]]] <- solution$primal
+#     if(!inverse_data@is_mip)
+#       dual_vars <- get_dual_values(solution[[EQ_DUAL]], extract_dual_value, inverse_data[[EQ_CONSTR]])
+#   } else {
+#     primal_vars <- list()
+#     primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
+#     if(!inverse_data@is_mip) {
+#       dual_var_ids <- sapply(inverse_data[[EQ_CONSTR]], function(constr) { constr@id })
+#       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+#       names(dual_vars) <- dual_var_ids
+#     }
+# 
+#     if(status == INFEASIBLE)
+#       opt_val <- Inf
+#     else if(status == UNBOUNDED)
+#       opt_val <- -Inf
+#     else
+#       opt_val <- NA
+#   }
+# 
+#   other <- list()
+#   other[[XPRESS_IIS]] <- solution[[XPRESS_IIS]]
+#   other[[XPRESS_TROW]] <- solution[[XPRESS_TROW]]
+#   return(Solution(status, opt_val, primal_vars, dual_vars, other))
+# })
+# 
+# setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+#   solver <- XPRESS_OLD()
+#   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
+#   solver_opts[[INT_IDX]] <- data[[INT_IDX]]
+#   prob_data <- list()
+#   prob_data[[name(object)]] <- ProblemData()
+#   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+# })

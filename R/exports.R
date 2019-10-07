@@ -1697,6 +1697,36 @@ cumsum_axis <- CumSum
 setMethod("cumsum", signature(x = "Expression"), function(x) { CumSum(expr = Vec(x)) })
 
 #'
+#' Cumulative Maximum
+#'
+#' The cumulative maximum, \eqn{\max_{i=1,\ldots,k} x_i} for \eqn{k=1,\ldots,n}.
+#' When calling \code{cummax}, matrices are automatically flattened into column-major order before the max is taken.
+#'
+#' @param x,expr An \linkS4class{Expression}, vector, or matrix.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @examples
+#' val <- cbind(c(1,2), c(3,4))
+#' value(cummax(Constant(val)))
+#' value(cummax_axis(Constant(val)))
+#'
+#' x <- Variable(2,2)
+#' prob <- Problem(Minimize(cummax(x)[4]), list(x == val))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(cummax(x))
+#' @docType methods
+#' @name cummax_axis
+#' @aliases cummax_axis cummax
+#' @rdname cummax_axis
+#' @export
+cummax_axis <- CumMax
+
+#' @docType methods
+#' @rdname cummax_axis
+#' @export
+setMethod("cummax", signature(x = "Expression"), function(x) { CumMax(expr = Vec(x)) })
+
+#'
 #' Matrix Diagonal
 #'
 #' Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.

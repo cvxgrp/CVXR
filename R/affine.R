@@ -709,7 +709,13 @@ CumSum <- function(expr, axis = 2) { .CumSum(expr = expr, axis = axis) }
 #' @param values A list of arguments to the atom.
 #' @describeIn CumSum The cumulative sum of the values along the specified axis.
 setMethod("to_numeric", "CumSum", function(object, values) {
-  apply(values[[1]], object@axis, base::cumsum)
+  # apply(values[[1]], object@axis, base::cumsum)
+  if(object@axis == 1)
+    do.call(rbind, lapply(seq_len(nrow(values[[1]])), function(i) { base::cumsum(values[[1]][i,]) }))
+  else if(object@axis == 2)
+    do.call(cbind, lapply(seq_len(ncol(values[[1]])), function(j) { base::cumsum(values[[1]][,j]) }))
+  else
+    base::cumsum(values[[1]])
 })
 
 #' @describeIn CumSum The dimensions of the atom.

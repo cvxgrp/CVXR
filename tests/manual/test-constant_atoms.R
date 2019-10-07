@@ -25,10 +25,10 @@ atoms <- list(
     list(
         list(
             list(abs, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(5,2), c(3,1)))),
-            list(function(x) { cumsum(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-8,3))))),
-            list(function(x) { cumsum(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,-3), c(-3,-2))))),
-            list(function(x) { cummax(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-3,2))))),
-            list(function(x) { cummax(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1)), Constant(cbind(c(-5,2), c(-3,1))))),
+            list(function(x) { cumsum_axis(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-8,3)))),
+            list(function(x) { cumsum_axis(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,-3), c(-3,-2)))),
+            list(function(x) { cummax_axis(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,2)))),
+            list(function(x) { cummax_axis(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,1)))),
             list(diag, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-5,1))),
             list(diag, c(2,2), list(matrix(c(-5,1))), Constant(cbind(c(-5,0), c(0,1)))),
             list(exp, c(2,2), list(cbind(c(1,0), c(2,-1))), Constant(cbind(c(exp(1),1), c(exp(2), exp(-1))))),
@@ -99,7 +99,7 @@ atoms <- list(
             list(function(x) { norm(x,"2") }, c(1,1), list(cbind(c(2,0), c(0,1))),  Constant(2)),
             list(function(x) { norm(x,"2") }, c(1,1), list(cbind(3:5, 6:8, 9:11)), Constant(22.368559552680377)),
             list(function(x) { scalene(x,2,3) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(15,4), c(9,2)))),
-            list(square, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
+            list(function(x) { power(x,2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
             list(sum_entries, c(1,1), list(cbind(c(-5,2), c(-3,1))), Constant(-5)),
             list(function(x) { sum_entries(x,axis=2) }, c(1,2), list(cbind(c(-5,2), c(-3,1))), Constant(matrix(c(-3,-2), nrow = 1, ncol = 2))),
             list(function(x) { sum_entries(x,axis=1) }, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-8,3))),
@@ -182,7 +182,7 @@ check_solver <- function(prob, solver_name) {
         if(solver_name == ROBUST_CVXOPT)
             solver_name <- "CVXOPT"
         
-        CVXR:::.construct_chains(prob, solver = solver_name)   # TODO: Reveal .construct_chains function so it can be called.
+        chains <- CVXR:::.construct_chains(prob, solver = solver_name)
         return(TRUE)
     }, error = function(e) {
         return(FALSE)
@@ -196,7 +196,6 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
         print(problem@objective)
         print(problem@constraints)
         print(paste("solver", solver))
-
     }
 
     if(check_solver(problem, solver)) {
@@ -227,7 +226,7 @@ test_that("Test all constant atoms", {
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
 
-    skip_on_cran()
+    # skip_on_cran()
 
     for(a in atoms) {
         atom_list <- a[[1]]

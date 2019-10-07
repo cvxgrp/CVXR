@@ -400,21 +400,29 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' 
 #' This class represents the cumulative maximum of an expression.
 #' 
-#' @slot x An \linkS4class{Expression}.
+#' @slot expr An \linkS4class{Expression}.
 #' @name CumMax-class
 #' @aliases CumMax
 #' @rdname CumMax-class
-.CumMax <- setClass("CumMax", contains = "AxisAtom")
+.CumMax <- setClass("CumMax", prototype = prototype(axis = 2), contains = "AxisAtom")
 
-#' @param x An \linkS4class{Expression}
+#' @param expr An \linkS4class{Expression}.
 #' @param axis A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.
 #' @rdname CumMax-class
-CumMax <- function(x, axis = NA_real_) { .CumMax(expr = x, axis = axis) }
+CumMax <- function(expr, axis = 2) { .CumMax(expr = x, axis = axis) }
 
 #' @param object A \linkS4class{CumMax} object.
 #' @param values A list of arguments to the atom.
 #' @rdname CumMax-class The cumulative maximum along the axis.
-setMethod("to_numeric", "CumMax", function(object, values) { apply(values[[1]], object@axis, max) })
+setMethod("to_numeric", "CumMax", function(object, values) { 
+  # apply(values[[1]], object@axis, base::cummax)
+  if(object@axis == 1)
+    do.call(rbind, lapply(seq_len(nrow(values[[1]])), function(i) { base::cummax(values[[1]][i,]) }))
+  else if(object@axis == 2)
+    do.call(cbind, lapply(seq_len(ncol(values[[1]])), function(j) { base::cummax(values[[1]][,j]) }))
+  else
+    base::cummax(values[[1]])
+})
 
 setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, values) })
 

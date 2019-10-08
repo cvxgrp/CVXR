@@ -1230,7 +1230,7 @@ setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]]
 setMethod("is_incr", "Kron", function(object, idx) { is_nonneg(object@args[[1]]) })
 
 #' @describeIn Kron Is the right-hand expression negative?
-setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[2]]) })
+setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[1]]) })
 
 Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.kron(arg_objs[[1]], arg_objs[[2]], dim), list())
@@ -1522,7 +1522,7 @@ setMethod("validate_args", "Trace", function(object) {
 })
 
 #' @describeIn Trace The atom is a scalar.
-setMethod("dim_from_args", "Trace", function(object){ c() })
+setMethod("dim_from_args", "Trace", function(object){ c(1,1) })
 
 #' @describeIn Trace Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })

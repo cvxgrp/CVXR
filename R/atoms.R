@@ -737,7 +737,7 @@ setMethod("validate_args", "LambdaMax", function(object) {
 })
 
 #' @describeIn LambdaMax The atom is a scalar.
-setMethod("dim_from_args", "LambdaMax", function(object) { c() })
+setMethod("dim_from_args", "LambdaMax", function(object) { c(1,1) })
 
 #' @describeIn LambdaMax The sign of the atom is unknown.
 setMethod("sign_from_args", "LambdaMax", function(object) { c(FALSE, FALSE) })
@@ -856,7 +856,7 @@ setMethod("validate_args", "LogDet", function(object) {
 })
 
 #' @describeIn LogDet The atom is a scalar.
-setMethod("dim_from_args", "LogDet", function(object) { c() })
+setMethod("dim_from_args", "LogDet", function(object) { c(1,1) })
 
 #' @describeIn LogDet The atom is non-negative.
 setMethod("sign_from_args",  "LogDet", function(object) { c(TRUE, FALSE) })
@@ -902,7 +902,7 @@ setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname LogSumExp-class
-LogSumExp <- function(x, axis = NA_real_) { .LogSumExp(expr = x, axis = axis) }
+LogSumExp <- function(x, axis = NA_real_, keepdims = FALSE) { .LogSumExp(expr = x, axis = axis, keepdims = keepdims) }
 
 #' @param object A \linkS4class{LogSumExp} object.
 #' @param values A list of arguments to the atom.
@@ -911,7 +911,8 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
   if(is.na(object@axis))
     log(sum(exp(values[[1]])))
   else
-    log(apply(exp(values[[1]]), object@axis, sum))
+    # log(apply(exp(values[[1]]), object@axis, sum))
+    log(apply_with_keepdims(exp(values[[1]]), sum, axis = object@axis, keepdims = object@keepdims))
 })
 
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
@@ -1008,7 +1009,7 @@ setMethod("validate_args", "MatrixFrac", function(object) {
 })
 
 #' @describeIn MatrixFrac The atom is a scalar.
-setMethod("dim_from_args", "MatrixFrac", function(object) { c() })
+setMethod("dim_from_args", "MatrixFrac", function(object) { c(1,1) })
 
 #' @describeIn MatrixFrac The atom is positive.
 setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
@@ -1551,7 +1552,7 @@ setMethod("to_numeric", "NormNuc", function(object, values) {
 setMethod("allow_complex", "NormNuc", function(object) { TRUE })
 
 #' @describeIn NormNuc The atom is a scalar.
-setMethod("dim_from_args", "NormNuc", function(object) { c() })
+setMethod("dim_from_args", "NormNuc", function(object) { c(1,1) })
 
 #' @describeIn NormNuc The atom is positive.
 setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
@@ -1676,7 +1677,7 @@ setMethod("to_numeric", "PfEigenvalue", function(object, values) {
 })
 
 #' @describeIn PfEigenvalue The dimensions of the atom.
-setMethod("dim_from_args", "PfEigenvalue", function(object) { NULL })
+setMethod("dim_from_args", "PfEigenvalue", function(object) { c(1,1) })
 
 #' @describeIn PfEigenvalue Returns the sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "PfEigenvalue", function(object) { c(TRUE, FALSE) })
@@ -1817,10 +1818,11 @@ setMethod("sign_from_args", "QuadForm", function(object) { c(is_atom_convex(obje
 
 #' @describeIn QuadForm The dimensions of the atom.
 setMethod("dim_from_args", "QuadForm", function(object) { 
-  if(ndim(object@args[[1]]) == 0)
-    c()
-  else
-    c(1,1)
+  # if(ndim(object@args[[1]]) == 0)
+  #  c()
+  # else
+  #  c(1,1)
+  c(1,1)
 })
 
 #' @describeIn QuadForm Is the atom convex?
@@ -1986,7 +1988,7 @@ setMethod("validate_args",   "QuadOverLin", function(object) {
 })
 
 #' @describeIn QuadOverLin The atom is a scalar.
-setMethod("dim_from_args", "QuadOverLin", function(object) { c() })
+setMethod("dim_from_args", "QuadOverLin", function(object) { c(1,1) })
 
 #' @describeIn QuadOverLin The atom is positive.
 setMethod("sign_from_args",  "QuadOverLin", function(object) { c(TRUE, FALSE) })
@@ -2062,7 +2064,7 @@ setMethod("to_numeric", "SigmaMax", function(object, values) { base::norm(values
 setMethod("allow_complex", "SigmaMax", function(object) { TRUE })
 
 #' @describeIn SigmaMax The atom is a scalar.
-setMethod("dim_from_args", "SigmaMax", function(object) { c() })
+setMethod("dim_from_args", "SigmaMax", function(object) { c(1,1) })
 
 #' @describeIn SigmaMax The atom is positive.
 setMethod("sign_from_args",  "SigmaMax", function(object) { c(TRUE, FALSE) })
@@ -2131,7 +2133,7 @@ setMethod("validate_args",   "SumLargest", function(object) {
 })
 
 #' @describeIn SumLargest The atom is a scalar.
-setMethod("dim_from_args", "SumLargest", function(object) { c() })
+setMethod("dim_from_args", "SumLargest", function(object) { c(1,1) })
 
 #' @describeIn SumLargest The sign of the atom.
 setMethod("sign_from_args", "SumLargest", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })

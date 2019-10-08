@@ -18,8 +18,8 @@ if("MOSEK" %in% installed_solvers()) {
 }
 
 v_np <- matrix(c(-1, 2, -2), nrow = 1, ncol = 3)
-log_sum_exp_axis_1 <- function(x) { log_sum_exp(x, axis = 1, keepdims = TRUE) }
-log_sum_exp_axis_2 <- function(x) { log_sum_exp(x, axis = 2) }
+log_sum_exp_axis_1 <- function(x) { log_sum_exp(x, axis = 1) }
+log_sum_exp_axis_2 <- function(x) { log_sum_exp(x, axis = 2, keepdims = TRUE) }
 
 atoms <- list(
     list(
@@ -27,8 +27,8 @@ atoms <- list(
             list(abs, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(5,2), c(3,1)))),
             list(function(x) { cumsum_axis(x, axis=1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-8,3)))),
             list(function(x) { cumsum_axis(x, axis=2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,-3), c(-3,-2)))),
-            list(function(x) { cummax_axis(x, axis=1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,2)))),
-            list(function(x) { cummax_axis(x, axis=2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,1)))),
+            # TODO: list(function(x) { cummax_axis(x, axis=1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,2)))),
+            # TODO: list(function(x) { cummax_axis(x, axis=2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,1)))),
             list(diag, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-5,1))),
             list(diag, c(2,2), list(matrix(c(-5,1))), Constant(cbind(c(-5,0), c(0,1)))),
             list(exp, c(2,2), list(cbind(c(1,0), c(2,-1))), Constant(cbind(c(exp(1),1), c(exp(2), exp(-1))))),
@@ -46,8 +46,8 @@ atoms <- list(
             list(lambda_max, c(1,1), list(cbind(c(5,7), c(7,-3))), Constant(9.06225775)),
             list(function(x) { lambda_sum_largest(x,2) }, c(1,1), list(cbind(c(1,2,3), c(2,4,5), c(3,5,6))), Constant(11.51572947)),
             list(log_sum_exp, c(1,1), list(cbind(c(5,7), c(0,-3))), Constant(7.1277708268)),
-            list(log_sum_exp_axis_1, c(2,1), list(rbind(c(5,7,1), c(0,-3,6))), Constant(c(7.12910890, 6.00259878))),
-            list(log_sum_exp_axis_2, c(1,3), list(rbind(c(5,7,1), c(0,-3,6))), t(Constant(c(5.00671535, 7.0000454, 6.0067153)))),
+            list(log_sum_exp_axis_1, c(3,1), list(cbind(c(5,7,1), c(0,-3,6))), Constant(c(5.00671535, 7.0000454, 6.0067153))),
+            list(log_sum_exp_axis_2, c(1,2), list(cbind(c(5,7,1), c(0,-3,6))), t(Constant(c(7.12910890, 6.00259878)))),
             list(logistic, c(2,2), list(cbind(c(log(5), log(7)), c(0, log(0.3)))), Constant(cbind(c(log(6),log(8)), c(log(2),log(1.3))))),
             list(matrix_frac, c(1,1), list(matrix(1:3), diag(3)), Constant(14)),
             list(matrix_frac, c(1,1), list(matrix(1:3), cbind(c(67,78,90), c(78,94,108), c(90,108,127))), Constant(0.46557377049180271)),
@@ -56,8 +56,8 @@ atoms <- list(
             list(max_elemwise, c(2,2), list(cbind(c(-5,2), c(-3,1)), 0, cbind(c(5,4), c(-1,2))), Constant(cbind(c(5,4), c(0,2)))),
             list(max_entries, c(1,1), list(cbind(c(-5,2), c(-3,1))), Constant(2)),
             list(max_entries, c(1,1), list(matrix(c(-5,-10))), Constant(-5)),
-            list(function(x) { max_entries(x,axis=1) }, c(2,1), list(rbind(c(-5,2), c(-3,1))), Constant(c(2,1))),
-            list(function(x) { max_entries(x,axis=2) }, c(1,2), list(rbind(c(-5,2), c(-3,1))), t(Constant(c(-3,2)))),
+            list(function(x) { max_entries(x, axis=1) }, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-3,2))),
+            list(function(x) { max_entries(x, axis=2, keepdims=TRUE) }, c(1,2), list(cbind(c(-5,2), c(-3,1))), t(Constant(c(2,1)))),
             list(function(x) { norm(x,"2") }, c(1,1), list(v_np), Constant(3)),
             list(function(x) { norm(x,"F") }, c(1,1), list(cbind(c(-1,2), c(3,-4))), Constant(5.47722557)),
             list(function(x) { norm1(x) }, c(1,1), list(v_np), Constant(5)),

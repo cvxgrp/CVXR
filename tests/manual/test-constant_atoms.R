@@ -25,10 +25,10 @@ atoms <- list(
     list(
         list(
             list(abs, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(5,2), c(3,1)))),
-            list(function(x) { cumsum_axis(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-8,3)))),
-            list(function(x) { cumsum_axis(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,-3), c(-3,-2)))),
-            list(function(x) { cummax_axis(x, axis = 1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,2)))),
-            list(function(x) { cummax_axis(x, axis = 2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,1)))),
+            list(function(x) { cumsum_axis(x, axis=1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-8,3)))),
+            list(function(x) { cumsum_axis(x, axis=2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,-3), c(-3,-2)))),
+            list(function(x) { cummax_axis(x, axis=1) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,2)))),
+            list(function(x) { cummax_axis(x, axis=2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(-5,2), c(-3,1)))),
             list(diag, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-5,1))),
             list(diag, c(2,2), list(matrix(c(-5,1))), Constant(cbind(c(-5,0), c(0,1)))),
             list(exp, c(2,2), list(cbind(c(1,0), c(2,-1))), Constant(cbind(c(exp(1),1), c(exp(2), exp(-1))))),
@@ -210,12 +210,12 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 
             obj_diff <- (result$value - obj_val)/(1+abs(obj_val))
             expect_true(abs(obj_diff) <= tolerance)
-
-            ## if(abs(diff) > tolerance) {
-            ##  sink("test_constant_atoms_out.txt", append = TRUE)
-            ##  print(atom)
-            ##  cat(result$value, "\t", obj_val, "\n")
-            ##  sink()
+            
+            ## if(abs(obj_diff) > tolerance) {
+            ##   sink("test_constant_atoms_out.txt", append = TRUE)
+            ##   print(atom)
+            ##   cat(result$value, "\t", obj_val, "\n")
+            ##   sink()
             ## }
         } else
             stop("Problem status is sub-optimal: ", result$status)
@@ -233,11 +233,11 @@ test_that("Test all constant atoms", {
         objective_type <- a[[2]]
         for(al in atom_list) {
             atom <- al[[1]]
-            size <- al[[2]]
+            dims <- al[[2]]
             args <- al[[3]]
             obj_val <- al[[4]]
-            for(row in 1:size[1]) {
-                for(col in 1:size[2]) {
+            for(row in 1:dims[1]) {
+                for(col in 1:dims[2]) {
                     for(solver in SOLVERS_TO_TRY) {
                         ## Atoms with Constant arguments
                         const_args <- lapply(args, Constant)

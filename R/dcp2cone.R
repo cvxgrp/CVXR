@@ -62,21 +62,6 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
 })
 
 # Atom canonicalizers.
-Dcp2Cone.cumsum_canon <- function(expr, args) {
-  X <- args[[1]]
-  axis <- expr@axis
-
-  # Implicit O(n) definition:
-  # X = Y[1,:] - Y[2:nrow(Y),:]
-  # Y <- Variable(dim(expr))
-  Y <- new("Variable", dim = dim(expr))
-  if(axis == 1)   # Cumulative sum on each column
-    constr <- list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),], Y[1,] == X[1,])   # TODO: Check corner cases
-  else   # Cumulative sum on each row
-    constr <- list(X[,2:ncol(X)] == Y[,2:ncol(Y)] - Y[,1:(ncol(Y)-1)], Y[,1] == X[,1])
-  return(list(Y, constr))
-}
-
 Dcp2Cone.entr_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -522,7 +507,8 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
 }
 
 # TODO: Remove pwl canonicalize methods and use EliminatePwl reduction instead.
-Dcp2Cone.CANON_METHODS <- list(CumSum = Dcp2Cone.cumsum_canon,
+Dcp2Cone.CANON_METHODS <- list(CumMax = EliminatePwl.CANON_METHODS$CumMax,
+                               CumSum = EliminatePwl.CANON_METHODS$CumSum,
                                GeoMean = Dcp2Cone.geo_mean_canon,
                                LambdaMax = Dcp2Cone.lambda_max_canon,
                                LambdaSumLargest = Dcp2Cone.lambda_sum_largest_canon,

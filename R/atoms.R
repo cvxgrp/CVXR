@@ -429,14 +429,22 @@ setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, value
 setMethod(".column_grad", "CumMax", function(object, value) {
   # Grad: 1 for a largest index.
   value <- as.vector(value)
-  idx <- (value == max(value))
+  maxes <- base::cummax(value)
   D <- matrix(0, nrow = length(value), ncol = 1)
-  D[idx,1] <- 1
+  D[1,1] <- 1
+  if(length(value) > 1)
+    D[2:nrow(D),] <- maxes[2:length(maxes)] > maxes[1:(length(maxes)-1)]
   return(D)
 })
 
+#' @describeIn CumMax The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "CumMax", function(object) { dim(object@args[[1]]) })
+
 #' @describeIn CumMax The (is positive, is negative) sign of the atom.
 setMethod("sign_from_args", "CumMax", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
+
+#' @describeIn CumMax Returns the axis along which the cumulative max is taken.
+setMethod("get_data", "CumMax", function(object) { list(object@axis) })
 
 #' @describeIn CumMax Is the atom convex?
 setMethod("is_atom_convex", "CumMax", function(object) { TRUE })
@@ -778,7 +786,7 @@ setMethod("allow_complex", "LambdaSumLargest", function(object) { TRUE })
 
 #' @param object A \linkS4class{LambdaSumLargest} object.
 #' @param values A list of arguments to the atom.
-#' @rdname LambdaSumLargest Returns the largest eigenvalue of \code{A}, which must be symmetric.
+#' @describeIn LambdaSumLargest Returns the largest eigenvalue of \code{A}, which must be symmetric.
 setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
   # if(any(t(values[[1]]) != values[[1]]))
   #  stop("LambdaSumLargest called on a non-symmetric matrix")
@@ -786,7 +794,7 @@ setMethod("to_numeric", "LambdaSumLargest", function(object, values) {
   value(SumLargest(eigs, object@k))
 })
 
-#' @rdname LambdaSumLargest Verify that the argument \code{A} is square.
+#' @describeIn LambdaSumLargest Verify that the argument \code{A} is square.
 setMethod("validate_args", "LambdaSumLargest", function(object) {
   A <- object@args[[1]]
   if(ndim(A) != 2 || nrow(A) != ncol(A))
@@ -795,7 +803,7 @@ setMethod("validate_args", "LambdaSumLargest", function(object) {
     stop("Second argument must be a positive integer.")
 })
 
-#' @rdname LambdaSumLargest Returns the parameter \code{k}.
+#' @describeIn LambdaSumLargest Returns the parameter \code{k}.
 setMethod("get_data", "LambdaSumLargest", function(object) { list(object@k) })
 setMethod(".grad", "LambdaSumLargest", function(object, values) { stop("Unimplemented") })
 

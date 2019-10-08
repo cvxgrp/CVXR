@@ -32,6 +32,45 @@ EliminatePwl.abs_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+EliminatePwl.cummax_canon <- function(expr, args) {
+  X <- args[[1]]
+  axis <- expr@axis
+  
+  # Implicit O(n) definition:
+  # Y_{k} = maximum(Y_{k-1}, X_k)
+  # Y <- Variable(dim(expr))
+  Y <- new("Variable", dim = dim(expr))
+  constr <- list(X <= Y)
+  if(axis == 2) {
+    if(nrow(Y) > 1)
+      constr <- c(constr, list(Y[1:(nrow(Y)-1),] <= Y[2:nrow(Y),]))
+  } else {
+    if(ncol(Y) > 1)
+      constr <- c(constr, list(Y[,1:(ncol(Y)-1)] <= Y[,2:ncol(Y)]))
+  }
+  return(list(Y, constr))
+}
+
+EliminatePwl.cumsum_canon <- function(expr, args) {
+  X <- args[[1]]
+  axis <- expr@axis
+  
+  # Implicit O(n) definition:
+  # X = Y[1,:] - Y[2:nrow(Y),:]
+  # Y <- Variable(dim(expr))
+  Y <- new("Variable", dim = dim(expr))
+  if(axis == 2) {  # Cumulative sum on each column
+    constr <- list(Y[1,] == X[1,])
+    if(nrow(Y) > 1)
+      constr <- c(constr, list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),]))
+  } else {   # Cumulative sum on each row
+    constr <- list(Y[,1] == X[,1])
+    if(ncol(Y) > 1)
+      constr <- c(constr, list(X[,2:ncol(X)] == Y[,2:ncol(Y)] - Y[,1:(ncol(Y)-1)]))
+  }
+  return(list(Y, constr))
+}
+
 EliminatePwl.max_entries_canon <- function(expr, args) {
   x <- args[[1]]
   axis <- expr@axis
@@ -120,6 +159,8 @@ EliminatePwl.sum_largest_canon <- function(expr, args) {
 }
 
 EliminatePwl.CANON_METHODS <- list(Abs = EliminatePwl.abs_canon,
+                                   CumMax = EliminatePwl.cummax_canon,
+                                   CumSum = EliminatePwl.cumsum_canon,
                                    MaxElemwise = EliminatePwl.max_elemwise_canon,
                                    MaxEntries = EliminatePwl.max_entries_canon,
                                    MinElemwise = EliminatePwl.min_elemwise_canon,

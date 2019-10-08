@@ -721,6 +721,9 @@ setMethod("to_numeric", "CumSum", function(object, values) {
 #' @describeIn CumSum The dimensions of the atom.
 setMethod("dim_from_args", "CumSum", function(object) { dim(object@args[[1]]) })
 
+#' @describeIn CumSum Returns the axis along which the cumulative sum is taken.
+setMethod("get_data", "CumSum", function(object) { list(object@axis) })
+
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
   val_dim <- dim(values[[1]])
@@ -738,18 +741,15 @@ setMethod(".grad", "CumSum", function(object, values) {
   list(grad)
 })
 
-#' @describeIn CumSum Returns the axis being summed.
-setMethod("get_data", "CumSum", function(object) { list(object@axis) })
-
 CumSum.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Implicit O(n) definition:
   # X = Y[:1,:] - Y[1:,:]
   Y <- create_var(dim)
   axis <- data[[1]]
   collapse <- setdiff(1:length(dim), axis)
-  dim <- dim[collapse]
-  diff_mat <- get_diff_mat(dim, axis)
-  diff_mat <- create_const(diff_mat, c(dim, dim), sparse = TRUE)
+  new_dim <- dim[collapse]
+  diff_mat <- get_diff_mat(new_dim, axis)
+  diff_mat <- create_const(diff_mat, c(new_dim, new_dim), sparse = TRUE)
 
   if(axis == 2)
     diff <- lo.mul_expr(diff_mat, Y)

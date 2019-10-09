@@ -239,7 +239,13 @@ log_sum_exp <- LogSumExp
 #' @name matrix_frac
 #' @rdname matrix_frac
 #' @export
-matrix_frac <- MatrixFrac
+matrix_frac <- function(X, P) {
+  if(is.matrix(P) && (is.vector(X) || ncol(X) == 1)) {
+    invP <- as.matrix(base::solve(P))
+    return(QuadForm(x = X, P = (invP + t(Conj(invP))) / 2.0))
+  } else
+    return(MatrixFrac(X = X, P = P))
+}
 
 #'
 #' Maximum

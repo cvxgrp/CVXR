@@ -152,8 +152,11 @@ SolveResult <- list(SolveResult = list("opt_value", "status", "primal_values", "
 apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
   if(is.na(axis))
     result <- fun(x)
-  else
+  else {
+    if(is.vector(x))
+      x <- matrix(x, ncol = 1)
     result <- apply(x, axis, fun)
+  }
 
   if(keepdims) {
     new_dim <- dim(x)

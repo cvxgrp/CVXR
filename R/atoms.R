@@ -955,22 +955,8 @@ setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 #' @param X An \linkS4class{Expression} or numeric matrix.
 #' @param P An \linkS4class{Expression} or numeric matrix.
 #' @rdname MatrixFrac-class
-MatrixFrac <- function(X, P) {
-  if(is.array(P) || is.matrix(P)) {
-    invP <- as.matrix(base::solve(P))
-    .QuadForm(x = X, P = (invP + t(Conj(invP))) / 2.0)
-  } else
-    .MatrixFrac(X = X, P = P)
-}
-
-matrix_frac <- function(X, P) {
-  if(is.array(P)) {
-    invP <- base::solve(P)
-    return(QuadForm(X, (invP + t(Conj(invP)))/2.0))
-  } else
-    return(MatrixFrac(X, P))
-}
-
+MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
+  
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
   .Object@P <- P
@@ -1363,7 +1349,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
   Norm(vecnorms, q)
 }
 
-Norm <- function(x, p = 2, axis = NA_real_) {
+Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
   
   # Matrix norms take precedence.
@@ -1383,11 +1369,11 @@ Norm <- function(x, p = 2, axis = NA_real_) {
       stop("Unsupported matrix norm.")
   } else {
     if(p == 1 || is_scalar(x))
-      Norm1(x, axis = axis)
+      Norm1(x, axis = axis, keepdims = keepdims)
     else if(p %in% c(Inf, "inf", "Inf"))
-      NormInf(x, axis)
+      NormInf(x, axis = axis, keepdims = keepdims)
     else
-      Pnorm(x, p, axis)
+      Pnorm(x, p, axis = axis, keepdims = keepdims)
   }
 }
 

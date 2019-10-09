@@ -76,8 +76,8 @@ atoms <- list(
             list(p_norm, c(1,1), list(matrix(1:3)), Constant(3.7416573867739413)),
             list(function(x) { p_norm(x,1) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(6.1)),
             list(function(x) { p_norm(x,2) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.7696153649941531)),
-            list(function(x) { p_norm(x,2,axis=2) }, c(2,1), list(rbind(c(1,2), c(3,4))), Constant(c(sqrt(5), 5))),
-            list(function(x) { p_norm(x,2,axis=1) }, c(1,2), list(rbind(c(1,2), c(4,5))), t(Constant(c(sqrt(17), sqrt(29))))),
+            list(function(x) { p_norm(x,2,axis=2) }, c(2,1), list(cbind(c(1,2), c(3,4))), Constant(c(sqrt(5), 5))),
+            list(function(x) { p_norm(x,2,axis=1) }, c(2,1), list(cbind(c(1,2), c(4,5))), Constant(c(sqrt(17), sqrt(29)))),
             list(function(x) { p_norm(x,Inf) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3)),
             list(function(x) { p_norm(x,3) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.3120161866074733)),
             list(function(x) { p_norm(x,5.6) }, c(1,1), list(matrix(c(1.1,2,-3))), Constant(3.0548953718931089)),
@@ -211,12 +211,12 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
             obj_diff <- (result$value - obj_val)/(1+abs(obj_val))
             expect_true(abs(obj_diff) <= tolerance)
             
-            ## if(abs(obj_diff) > tolerance) {
-            ##   sink("test_constant_atoms_out.txt", append = TRUE)
-            ##   print(atom)
-            ##   cat(result$value, "\t", obj_val, "\n")
-            ##   sink()
-            ## }
+            if(abs(obj_diff) > tolerance) {
+                sink("test_constant_atoms_out.txt", append = TRUE)
+                print(atom)
+                cat(result$value, "\t", obj_val, "\n")
+                sink()
+            }
         } else
             stop("Problem status is sub-optimal: ", result$status)
     }

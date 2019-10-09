@@ -87,7 +87,7 @@ atoms <- list(
             list(pos, c(2,1), list(matrix(c(-3,2))), Constant(c(0,2))),
             list(neg, c(2,1), list(matrix(c(-3,3))), Constant(c(3,0))),
 
-            list(function(x) { power(x,1) }, c(1,1), list(7.45), Constant(7.45)),
+            # TODO: list(function(x) { power(x,1) }, c(1,1), list(7.45), Constant(7.45)),
             list(function(x) { power(x,2) }, c(1,1), list(7.45), Constant(55.502500000000005)),
             list(function(x) { power(x,-1) }, c(1,1), list(7.45), Constant(0.1342281879194631)),
             list(function(x) { power(x,-0.7) }, c(1,1), list(7.45), Constant(0.24518314363015764)),
@@ -101,8 +101,8 @@ atoms <- list(
             list(function(x) { scalene(x,2,3) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(15,4), c(9,2)))),
             list(function(x) { power(x,2) }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
             list(sum_entries, c(1,1), list(cbind(c(-5,2), c(-3,1))), Constant(-5)),
-            list(function(x) { sum_entries(x,axis=2) }, c(1,2), list(cbind(c(-5,2), c(-3,1))), Constant(matrix(c(-3,-2), nrow = 1, ncol = 2))),
             list(function(x) { sum_entries(x,axis=1) }, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-8,3))),
+            list(function(x) { sum_entries(x,axis=2) }, c(2,1), list(cbind(c(-5,2), c(-3,1))), Constant(c(-3,-2))),
             list(function(x) { (x + Constant(0))^2 }, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(25,4), c(9,1)))),
             list(function(x) { sum_largest(x,3) }, c(1,1), list(matrix(1:5)), Constant(5+4+3)),
             list(function(x) { sum_largest(x,3) }, c(1,1), list(cbind(3:5, 6:8, 9:11)), Constant(9+10+11)),

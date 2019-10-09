@@ -1511,13 +1511,13 @@ setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplement
 #'
 #' The nuclear norm, i.e. sum of the singular values of a matrix.
 #'
-#' @slot A An \linkS4class{Expression} representing a matrix.
+#' @slot A An \linkS4class{Expression} or numeric matrix.
 #' @name NormNuc-class
 #' @aliases NormNuc
 #' @rdname NormNuc-class
-.NormNuc <- setClass("NormNuc", representation(A = "Expression"), contains = "Atom")
+.NormNuc <- setClass("NormNuc", representation(A = "ConstValORExpr"), contains = "Atom")
 
-#' @param A An \linkS4class{Expression} representing a matrix.
+#' @param A An \linkS4class{Expression} or numeric matrix.
 #' @rdname NormNuc-class
 NormNuc <- function(A) { .NormNuc(A = A) }
 
@@ -2160,11 +2160,13 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
-  if(ndim(value) == 0)
+  if(ndim(value) == 0 || (nrow(value) == 1 && ncol(value) == 1))
     stop("TotalVariation cannot take a scalar argument")
-  else if(ndim(value) == 1)   # L1 norm for vectors
-    Norm(value[-1] - value[1:(nrow(value)-1)], 1)
-  else {   # L2 norm for matrices
+  else if(ndim(value) == 1 || nrow(value) == 1 || ncol(value) == 1) {  # L1 norm for vectors
+    if(nrow(value) == 1)
+      value <- t(value)
+    Norm(value[2:nrow(value),1] - value[1:(nrow(value)-1),1], 1)
+  } else {   # L2 norm for matrices
     val_dim <- dim(value)
     rows <- val_dim[1]
     cols <- val_dim[2]
@@ -2173,8 +2175,13 @@ TotalVariation <- function(value, ...) {
     
     diffs <- list()
     for(mat in values) {
-      diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
-                             mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
+      if(rows > 1 && cols > 1) {
+        diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
+                               mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
+      } else {
+        diffs <- c(diffs, list(matrix(0, nrow = rows-1, ncol = cols-1),
+                               matrix(0, nrow = rows-1, ncol = cols-1)))
+      }
     }
     len <- nrow(diffs[[1]]) * ncol(diffs[[2]])
     stacked <- .VStack(atom_args = lapply(diffs, function(diff) { Reshape(diff, c(1, len)) }))

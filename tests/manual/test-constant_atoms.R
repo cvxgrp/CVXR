@@ -142,14 +142,14 @@ atoms <- list(
             list(harmonic_mean, c(1,1), list(matrix(c(2.5,2.5,2.5,2.5))), Constant(2.5)),
             list(harmonic_mean, c(1,1), list(matrix(c(0,1,2))), Constant(0)),
 
-            list(function(x) { diff(x, differences = 0) }, c(3,1), list(matrix(c(1,2,3)), Constant(c(1,2,3)))),
+            list(function(x) { diff(x, differences = 0) }, c(3,1), list(matrix(c(1,2,3))), Constant(c(1,2,3))),
             list(diff, c(2,1), list(matrix(c(1,2,3))), Constant(c(1,1))),
             list(diff, c(1,1), list(matrix(c(1.1,2.3))), Constant(1.2)),
             list(function(x) { diff(x, differences = 2) }, c(1,1), list(matrix(c(1,2,3))), Constant(0)),
             list(diff, c(3,1), list(matrix(c(2.1,1,4.5,-0.1))), Constant(c(-1.1,3.5,-4.6))),
             list(function(x) { diff(x, differences = 2) }, c(2,1), list(matrix(c(2.1,1,4.5,-0.1))), Constant(c(4.6,-8.1))),
-            list(function(x) { diff(x, differences = 1, axis = 2) }, c(1,2), list(cbind(c(-5,-3), c(2,1)), Constant(matrix(c(7,4), nrow = 1)))),
-            list(function(x) { diff(x, differences = 1, axis = 1) }, c(2,1), list(cbind(c(-5,-3), c(2,1)), Constant(c(2,-1)))),
+            list(function(x) { diff(x, differences = 1, axis = 1) }, c(2,1), list(cbind(c(-5,-3), c(2,1))), Constant(c(7,4))),
+            list(function(x) { diff(x, differences = 1, axis = 2) }, c(1,2), list(cbind(c(-5,-3), c(2,1))), Constant(matrix(c(2,-1), nrow = 1))),
 
             list(function(x) { p_norm(x,0.5) }, c(1,1), list(matrix(c(1.1,2,0.1))), Constant(7.724231543909264)),
             list(function(x) { p_norm(x,-0.4) }, c(1,1), list(matrix(c(1.1,2,0.1))), Constant(0.02713620334)),

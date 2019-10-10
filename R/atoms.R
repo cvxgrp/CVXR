@@ -635,8 +635,13 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
+setMethod("name", "GeoMean", function(x) {
+  vals <- paste(sapply(x@w, as.character), collapse = ", ")
+  paste("GeoMean(", name(x@args[[1]]), ", (", vals, "))", sep = "")
+})
+
 #' @describeIn GeoMean The atom is a scalar.
-setMethod("dim_from_args", "GeoMean", function(object) { c() })
+setMethod("dim_from_args", "GeoMean", function(object) { c(1,1) })
 
 #' @describeIn GeoMean The atom is non-negative.
 setMethod("sign_from_args", "GeoMean", function(object) { c(TRUE, FALSE) })

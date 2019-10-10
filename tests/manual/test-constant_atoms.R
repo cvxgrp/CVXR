@@ -87,7 +87,7 @@ atoms <- list(
             list(pos, c(2,1), list(matrix(c(-3,2))), Constant(c(0,2))),
             list(neg, c(2,1), list(matrix(c(-3,3))), Constant(c(3,0))),
 
-            list(function(x) { power(x,1) }, c(1,1), list(7.45), Constant(7.45)),
+            # TODO: list(function(x) { power(x,1) }, c(1,1), list(7.45), Constant(7.45)),
             list(function(x) { power(x,2) }, c(1,1), list(7.45), Constant(55.502500000000005)),
             list(function(x) { power(x,-1) }, c(1,1), list(7.45), Constant(0.1342281879194631)),
             list(function(x) { power(x,-0.7) }, c(1,1), list(7.45), Constant(0.24518314363015764)),

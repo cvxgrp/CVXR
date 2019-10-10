@@ -460,9 +460,10 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 })
 
 setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  # Returns the result of the call to the solver.
   requireNamespace("scs", quietly = TRUE)
-  args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
+  
+  # Cast A to dense because scs R package cannot handle sparse matrices.
+  args <- list(A = as.matrix(data[[A_KEY]]), b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     args$x <- solver_cache[[name(object)]]$x
     args$y <- solver_cache[[name(object)]]$y
@@ -476,6 +477,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   if(!missing(verbose))
     solver_opts$verbose <- verbose
 
+  # Returns the result of the call to the solver.
   results <- scs::scs(A = args$A, b = args$b, obj = args$c, cone = cones, control = solver_opts)
   if(!is.null(solver_cache) && length(solver_cache) > 0)
     solver_cache[[name(object)]] <- results

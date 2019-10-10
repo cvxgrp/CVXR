@@ -409,7 +409,7 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' @param expr An \linkS4class{Expression}.
 #' @param axis A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.
 #' @rdname CumMax-class
-CumMax <- function(expr, axis = 2) { .CumMax(expr = x, axis = axis) }
+CumMax <- function(expr, axis = 2) { .CumMax(expr = expr, axis = axis) }
 
 #' @param object A \linkS4class{CumMax} object.
 #' @param values A list of arguments to the atom.

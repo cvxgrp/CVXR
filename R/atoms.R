@@ -35,6 +35,7 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
 })
 
+#' @describeIn Returns the string representtation of the function call
 setMethod("name", "Atom", function(x) {
   if(is.null(get_data(x)))
     data <- list()
@@ -51,6 +52,7 @@ setMethod("validate_args", "Atom", function(object) {
 })
 
 #' @rdname dim_from_args
+#' @describeIn Returns the shape of the expression
 setMethod("dim_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
@@ -66,6 +68,7 @@ setMethod("ncol", "Atom", function(x) { dim(x)[2] })
 setMethod("allow_complex", "Atom", function(object) { FALSE })
 
 #' @rdname sign_from_args
+#' @describeIn Atom Returns sign (is positive, is negative) of the expression
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom A logical value indicating whether the atom is nonnegative.
@@ -81,27 +84,37 @@ setMethod("is_imag", "Atom", function(object) { FALSE })
 setMethod("is_complex", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is convex
 setMethod("is_atom_convex", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is concave
 setMethod("is_atom_concave", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is convex
 setMethod("is_atom_affine", "Atom", function(object) { is_atom_concave(object) && is_atom_convex(object) })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is log-log convex
 setMethod("is_atom_log_log_convex", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is log-log concave
 setMethod("is_atom_log_log_concave", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
+#' @describeIn Atom A logical value indiciating whether the atom is log-log affine
 setMethod("is_atom_log_log_affine", "Atom", function(object) { is_atom_log_log_concave(object) && is_atom_log_log_convex(object) })
 
 #' @rdname curvature-comp
+#' @param idx An index into the atom.
+#' @describeIn Atom A logical value indiciating whether the composition is non-decreasing in argument idx
 setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @rdname curvature-comp
+#' @param idx The index desired of the atom
+#' @describeIn Atom A logical value indiciating whether the composition is decreasing in argument idx
 setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @describeIn Atom A logical value indicating whether the atom is convex.
@@ -205,6 +218,7 @@ setMethod("canonicalize", "Atom", function(object) {
 setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data = NA_real_) { stop("Unimplemented") })
 
 # .value_impl.Atom <- function(object) {
+#' @describeIn Atom Returns the value of each of the componets in an Atom. Returns an empty matrix if it's an empty atom
 setMethod("value_impl", "Atom", function(object) {
   obj_dim <- dim(object)
   # dims with 0's dropped in presolve.
@@ -229,7 +243,7 @@ setMethod("value_impl", "Atom", function(object) {
   return(result)
 })
 
-#' @describeIn Atom The value of the atom.
+#' @describeIn Atom Returns the value of the atom.
 setMethod("value", "Atom", function(object) {
   if(any(sapply(parameters(object), function(p) { is.na(value(p)) })))
     return(NA_real_)
@@ -297,6 +311,7 @@ setMethod("domain", "Atom", function(object) {
 
 setMethod(".domain", "Atom", function(object) { list() })
 
+#' @describeIn Atom Returns a list of the atom types present amongst this atom's arguments
 setMethod("atoms", "Atom", function(object) {
   atom_list <- list()
   for(arg in object@args)
@@ -356,6 +371,8 @@ setMethod("validate_args", "AxisAtom", function(object) {
   callNextMethod()
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".axis_grad", "AxisAtom", function(object, values) {
   if(is.na(object@axis) || ndim(object@args[[1]]) < 2) {
     value <- matrix(values[[1]], nrow = size(object@args[[1]]), ncol = 1)
@@ -393,6 +410,8 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   list(D)
 })
 
+#' @param values A list of numeric values for the arguments
+#' @param AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 #'
@@ -424,8 +443,12 @@ setMethod("to_numeric", "CumMax", function(object, values) {
     base::cummax(values[[1]])
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn CumMax Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, values) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn CumMax Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "CumMax", function(object, value) {
   # Grad: 1 for a largest index.
   value <- as.vector(value)
@@ -496,6 +519,7 @@ setMethod("to_numeric", "EyeMinusInv", function(object, values) {
 })
 
 #' @param x,object An \linkS4class{EyeMinusInv} object.
+#' @describeIn EyeMinusInv The name and arguments of the atom.
 setMethod("name", "EyeMinusInv", function(x) { paste(class(x), x@args[[1]]) })
 
 #' @describeIn EyeMinusInv The dimensions of the atom determined from its arguments.
@@ -524,6 +548,8 @@ setMethod("is_incr", "EyeMinusInv", function(object, idx) { FALSE })
 #' @describeIn EyeMinusInv Is the atom weakly decreasing in the index?
 setMethod("is_decr", "EyeMinusInv", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn EyeMinusInv Gives EyeMinusInv the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "EyeMinusInv", function(object, values) { NA_real_ })
 
 # The resolvent of a positive matrix, (sI - X)^(-1).
@@ -620,8 +646,11 @@ setMethod("to_numeric", "GeoMean", function(object, values) {
   return(gmp::asNumeric(val))   # TODO: Handle mpfr objects in the backend later
 })
 
+#' @describeIn GeoMean Returns constraints describing the domain of the node
 setMethod(".domain", "GeoMean", function(object) { list(object@args[[1]][object@w > 0] >= 0) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn GeoMean Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "GeoMean", function(object, values) {
   x <- as.matrix(values[[1]])
   # No special case when only one non-zero weight
@@ -635,6 +664,8 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
+#' @param x,object A \linkS4class{GeoMean} object.
+#' @describeIn GeoMean The name and arguments of the atom.
 setMethod("name", "GeoMean", function(x) {
   vals <- paste(sapply(x@w, as.character), collapse = ", ")
   paste("GeoMean(", name(x@args[[1]]), ", (", vals, "))", sep = "")
@@ -668,6 +699,8 @@ setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 #' @describeIn GeoMean Returns \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
+#' @param args An optional list that contains the arguments to reconstruct the atom. Default is to use current arguments of the aotm
+#' @describeIn GeoMean Returns a shallow copy of the GeoMean atom
 setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
     args <- object@args
@@ -685,6 +718,8 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
   copy
 })
 
+#' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries
+#' @return The marmonic mean of 'x'
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   size(x) * Pnorm(x = x, p = -1)
@@ -760,6 +795,8 @@ setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 #' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
+#' @param A A matrix
+#' @return Returns the minimum eigenvalue of a matrix
 LambdaMin <- function(A) {
   A <- as.Constant(A)
   -LambdaMax(-A)
@@ -810,8 +847,14 @@ setMethod("validate_args", "LambdaSumLargest", function(object) {
 
 #' @describeIn LambdaSumLargest Returns the parameter \code{k}.
 setMethod("get_data", "LambdaSumLargest", function(object) { list(object@k) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn LambdaSumLargest Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "LambdaSumLargest", function(object, values) { stop("Unimplemented") })
 
+#' @param A A matrix
+#' @param k Number of eigenvalues to sum from
+#' @return Returns the sum of the k smallest eigenvalues of a matrix
 LambdaSumSmallest <- function(A, k) {
   A <- as.Constant(A)
   -LambdaSumLargest(-A, k)
@@ -879,6 +922,8 @@ setMethod("is_incr", "LogDet", function(object, idx) { FALSE })
 #' @describeIn LogDet The atom is not monotonic in any argument.
 setMethod("is_decr", "LogDet", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn LogDet Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "LogDet", function(object, values) {
   X <- as.matrix(values[[1]])
   eigen_val <- eigen(X, only.values = TRUE)$values
@@ -890,6 +935,7 @@ setMethod(".grad", "LogDet", function(object, values) {
     return(list(NA_real_))
 })
 
+#' @describeIn Logdet Returns constraints describing the domain of the node
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
 
 #'
@@ -920,8 +966,12 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
     log(apply_with_keepdims(exp(values[[1]]), sum, axis = object@axis, keepdims = object@keepdims))
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn LogSumExp Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn LogSumExp Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "LogSumExp", function(object, value) {
   denom <- sum(exp(value))
   nom <- exp(value)
@@ -942,6 +992,7 @@ setMethod("is_atom_concave", "LogSumExp", function(object) { FALSE })
 #' @describeIn LogSumExp The atom is weakly increasing in the index.
 setMethod("is_incr", "LogSumExp", function(object, idx) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn LogSumExp The atom is not weakly decreasing in the index.
 setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 
@@ -1024,8 +1075,11 @@ setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args
 #' @describeIn MatrixFrac True if x is piecewise linear and P is constant.
 setMethod("is_qpwa", "MatrixFrac", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
 
+#' @describeIn MatrixFrac Returns constraints describing the domain of the node
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MatrixFrac Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MatrixFrac", function(object, values) {
   X <- as.matrix(values[[1]])
   P <- as.matrix(values[[2]])
@@ -1095,14 +1149,19 @@ setMethod("is_atom_log_log_concave", "MaxEntries", function(object) { FALSE })
 #' @describeIn MaxEntries The atom is weakly increasing in every argument.
 setMethod("is_incr", "MaxEntries", function(object, idx) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn MaxEntries The atom is not weakly decreasing in any argument.
 setMethod("is_decr", "MaxEntries", function(object, idx) { FALSE })
 
 #' @describeIn MaxEntries Is \code{x} piecewise linear?
 setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MaxEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MaxEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
   value <- as.vector(value)
@@ -1155,14 +1214,19 @@ setMethod("is_atom_log_log_concave", "MinEntries", function(object) { TRUE })
 #' @describeIn MinEntries The atom is weakly increasing in every argument.
 setMethod("is_incr", "MinEntries", function(object, idx) { TRUE })
 
+#' @param idx An index into the atom.
 #' @describeIn MinEntries The atom is not weakly decreasing in any argument.
 setMethod("is_decr", "MinEntries", function(object, idx) { FALSE })
 
 #' @describeIn MinEntries Is \code{x} piecewise linear?
 setMethod("is_pwl", "MinEntries", function(object) { is_pwl(object@args[[1]]) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MinEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MinEntries", function(object, values) { .axis_grad(object, values) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MinEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "MinEntries", function(object, value) {
   # Grad: 1 for a largest index
   value <- as.vector(value)
@@ -1235,6 +1299,9 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
 })
 
 # Internal method for calculating the p-norm
+#' @param x A matrix
+#' @param p A number grater than or equal to 1, or equal to positive infinity
+#' @return Returns the specified norm of matrix x
 .p_norm <- function(x, p) {
   if(p == Inf)
     max(abs(x))
@@ -1296,6 +1363,7 @@ setMethod("is_atom_log_log_concave", "Pnorm", function(object) { FALSE })
 #' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
 setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p > 1 && is_nonneg(object@args[[1]])) })
 
+#' @param idx An index into the atom.
 #' @describeIn Pnorm The atom is weakly decreasing if \eqn{p > 1} and \code{x} is negative.
 setMethod("is_decr", "Pnorm", function(object, idx) { object@p > 1 && is_nonpos(object@args[[1]]) })
 
@@ -1305,11 +1373,13 @@ setMethod("is_pwl", "Pnorm", function(object) { FALSE })
 #' @describeIn Pnorm Returns \code{list(p, axis)}.
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
+#' @param x,object A \linkS4class{Pnorm} object.
 #' @describeIn Pnorm The name and arguments of the atom.
 setMethod("name", "Pnorm", function(x) {
   sprintf("%s(%s, %s)", class(x), name(x@args[[1]]), x@p)
 })
 
+#' @describeIn Pnorm Returns constraints describing the domain of the node
 setMethod(".domain", "Pnorm", function(object) {
   if(object@p < 1 && object@p != 0)
     list(object@args[[1]] >= 0)
@@ -1317,8 +1387,12 @@ setMethod(".domain", "Pnorm", function(object) {
     list()
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- size(object@args[[1]])
   value <- as.matrix(value)
@@ -1344,6 +1418,10 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
 })
 
+#' @param X The matrix to take the l_{p,q} norm of
+#' @param p The type of inner norm
+#' @param q The type of outer norm
+#' @return Returns the mixed norm of X with specified parameters p and q
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
   
@@ -1354,6 +1432,11 @@ MixedNorm <- function(X, p = 2, q = 1) {
   Norm(vecnorms, q)
 }
 
+#' @param X The matrix to take the norm of
+#' @param p The type of norm. Valid options include any positive integer, 'fro' (for frobenius), 
+#' 'nuc' (sum of singular values), np.inf or 'inf' (infinity norm).
+#' @param axis The axis along which to apply the norm. If any
+#' @return Returns the specified norm of matrix X
 Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
   
@@ -1382,6 +1465,8 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   }
 }
 
+#' @param X The matrix to take the norm of
+#' @return Returns the two norm of matrix X
 Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
   Pnorm(x, p = 2, axis = axis, keepdims = keepdims, max_denom = max_denom)
 }
@@ -1400,6 +1485,7 @@ Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
 Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(expr = x, axis = axis, keepdims = keepdims) }
 
 #' @param x,object A \linkS4class{Norm1} object.
+#' @describeIn Norm1 The name and arguments of the atom.
 setMethod("name", "Norm1", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
 })
@@ -1427,9 +1513,11 @@ setMethod("is_atom_convex", "Norm1", function(object) { TRUE })
 #' @rdname Norm1 The atom is not concave.
 setMethod("is_atom_concave", "Norm1", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @rdname Norm1 Is the composition weakly increasing in argument \code{idx}?
 setMethod("is_incr", "Norm1", function(object, idx) { is_nonneg(object@args[[1]]) })
 
+#' @param idx An index into the atom.
 #' @rdname Norm1 Is the composition weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "Norm1", function(object, idx) { is_nonpos(object@args[[1]]) })
 
@@ -1441,8 +1529,15 @@ setMethod("is_pwl", "Norm1", function(object) {
 #' @rdname Norm1 Returns the axis.
 setMethod("get_data", "Norm1", function(object) { list(object@axis) })
 
+#' @describeIn Norm1 Returns constraints describing the domain of the node
 setMethod(".domain", "Norm1", function(object) { list() })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Norm1", function(object, values) { .axis_grad(object, values) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "Norm1", function(object, value) {
   rows <- size(object@args[[1]])
   D_null <- Matrix(0, nrow = rows, ncol = 1, sparse = TRUE)
@@ -1463,6 +1558,8 @@ setMethod(".column_grad", "Norm1", function(object, value) {
 
 NormInf <- function(x, axis = NA_real_, keepdims = FALSE) { .NormInf(expr = x, axis = axis, keepdims = keepdims) }
 
+#' @param x,object A \linkS4class{NormInf} object.
+#' @describeIn NormInf The name and arguments of the atom.
 setMethod("name", "NormInf", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
 })
@@ -1495,9 +1592,11 @@ setMethod("is_atom_log_log_convex", "NormInf", function(object) { TRUE })
 #' @describeIn NormInf Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "NormInf", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn NormInf Is the composition weakly increasing in argument \code{idx}?
 setMethod("is_incr", "NormInf", function(object, idx) { is_nonneg(object@args[[1]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn NormInf Is the composition weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "NormInf", function(object, idx) { is_nonpos(object@args[[1]]) })
 
@@ -1507,8 +1606,15 @@ setMethod("is_pwl", "NormInf", function(object) { is_pwl(object@args[[1]]) })
 #' @describeIn NormInf Returns the axis.
 setMethod("get_data", "NormInf", function(object) { list(object@axis) })
 
+#' @describeIn NormInf Returns constraints describing the domain of the node
 setMethod(".domain", "NormInf", function(object) { list() })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "NormInf", function(object, values) { .axis_grad(object, values) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented") })   # TODO: Implement this! })
 
 #'
@@ -1558,9 +1664,12 @@ setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
 #' @describeIn NormNuc The atom is not monotonic in any argument.
 setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn NormNuc The atom is not monotonic in any argument.
 setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn NormNuc Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "NormNuc", function(object, values) {
   # Grad: UV^T
   s <- svd(values[[1]])
@@ -1592,6 +1701,7 @@ setMethod("initialize", "OneMinusPos", function(.Object, ..., x) {
 })
 
 #' @param x,object A \linkS4class{OneMinusPos} object.
+#' @describeIn OneMinusPos The name and arguments of the atom.
 setMethod("name", "OneMinusPos", function(x) { paste(class(x), x@args[[1]]) })
 
 #' @param values A list of arguments to the atom.
@@ -1620,12 +1730,17 @@ setMethod("is_atom_log_log_concave", "OneMinusPos", function(object) { TRUE })
 #' @describeIn OneMinusPos Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "OneMinusPos", function(object, idx) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn OneMinusPos Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "OneMinusPos", function(object, idx) { TRUE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn OneMinusPos Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "OneMinusPos", function(object, values) { Matrix(-object@.ones, sparse = TRUE) })
 
-# The difference x - y with domain {x,y: x > y > 0}.
+#' @param x An \linkS4class{Expression}
+#' @param y An \linkS4class{Expression}
+#' @return The difference x - y with domain {x,y: x > y > 0}.
 DiffPos <- function(x, y) {
   x * OneMinusPos(y/x)
 }
@@ -1658,6 +1773,7 @@ setMethod("initialize", "PfEigenvalue", function(.Object, ..., X = X) {
 })
 
 #' @param x,object A \linkS4class{PfEigenvalue} object.
+#' @describeIn PfEigenvalue The name and arguments of the atom.
 setMethod("name", "PfEigenvalue", function(x) { paste(class(x), x@args[[1]]) })
 
 #' @param values A list of arguments to the atom.
@@ -1690,9 +1806,12 @@ setMethod("is_atom_log_log_concave", "PfEigenvalue", function(object) { FALSE })
 #' @describeIn PfEigenvalue Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "PfEigenvalue", function(object, idx) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn PfEigenvalue Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "PfEigenvalue", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn PfEigenvalue Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "PfEigenvalue", function(object, values) { NA_real_ })
 
 #'
@@ -1749,10 +1868,16 @@ setMethod("is_atom_log_log_concave", "ProdEntries", function(object) { TRUE })
 #' @describeIn ProdEntries Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "ProdEntries", function(object, idx) { is_nonneg(object@args[[1]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn ProdEntries Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "ProdEntries", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn ProdEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "ProdEntries", function(object, value) { prod(value)/value })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn ProdEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, values) })
 
 #'
@@ -1778,6 +1903,8 @@ setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
   callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@P))
 })
 
+#' @param x,object A \linkS4class{QuadForm} object.
+#' @describeIn QuadForm The name and arguments of the atom.
 setMethod("name", "QuadForm", function(x) {
   paste(class(x), "(", x@args[[1]], ", ", x@args[[2]], ")", sep = "")
 })
@@ -1785,6 +1912,7 @@ setMethod("name", "QuadForm", function(x) {
 #' @describeIn QuadForm Does the atom handle complex numbers?
 setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 
+#' @param values A list of numeric values for the arguments
 #' @describeIn QuadForm Returns the quadratic form.
 setMethod("to_numeric", "QuadForm", function(object, values) {
   prod <- values[[2]] %*% values[[1]]
@@ -1828,12 +1956,14 @@ setMethod("is_atom_log_log_convex", "QuadForm", function(object) { TRUE })
 #' @describeIn QuadForm Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "QuadForm", function(object) { FALSE })
 
+#' @param idx An index into the atom.
 #' @describeIn QuadForm Is the atom weakly increasing in the argument \code{idx}?
 setMethod("is_incr", "QuadForm", function(object, idx) {
   (is_nonneg(object@args[[1]]) && is_nonneg(object@args[[2]])) ||
     (is_nonpos(object@args[[1]]) && is_nonneg(object@args[[2]]))
 })
 
+#' @param idx An index into the atom.
 #' @describeIn QuadForm Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "QuadForm", function(object, idx) {
   (is_nonneg(object@args[[1]]) && is_nonpos(object@args[[2]])) ||
@@ -1846,6 +1976,8 @@ setMethod("is_quadratic", "QuadForm", function(object) { TRUE })
 #' @describeIn QuadForm Is the atom piecewise linear?
 setMethod("is_pwl", "QuadForm", function(object) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn QuadForm Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "QuadForm", function(object, values) {
   x <- values[[1]]
   P <- values[[2]]
@@ -1903,8 +2035,14 @@ setMethod("is_decr", "SymbolicQuadForm", function(object, idx) { is_decr(object@
 #' @rdname SymbolicQuadForm The atom is quadratic.
 setMethod("is_quadratic", "SymbolicQuadForm", function(object) { TRUE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn SymbolicQuadForm Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplemented") })
 
+#' @param P A real symmetric positive or negative (semi)definite input matrix
+#' @param cond Cutoff for small eigenvalues. Singular values smaller than rcond * largest_eigenvalue are considered negligible.
+#' @param rcond Cutoff for small eigenvalues. Singular values smaller than rcond * largest_eigenvalue are considered negligible.
+#' @return A list consisting of induced matrix 2-norm of P and a rectangular matrix such that P = scale * (dot(M1, M1.T) - dot(M2, M2.T))
 .decomp_quad <- function(P, cond = NA, rcond = NA) {
   eig <- eigen(P, only.values = FALSE)
   w <- eig$values
@@ -2009,8 +2147,11 @@ setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@arg
 #' @describeIn QuadOverLin Quadratic of piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
 setMethod("is_qpwa", "QuadOverLin", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
 
+#' @describeIn QuadOverLin Returns constraints describing the domain of the node
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn QuadOverLin Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "QuadOverLin", function(object, values) {
   X <- values[[1]]
   y <- as.vector(values[[2]])
@@ -2073,6 +2214,8 @@ setMethod("is_incr", "SigmaMax", function(object, idx) { FALSE })
 #' @describeIn SigmaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "SigmaMax", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn SigmaMax Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "SigmaMax", function(object, values) {
   # Grad: U diag(e_1) t(V)
   s <- svd(values[[1]])
@@ -2145,6 +2288,8 @@ setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
 #' @describeIn SumLargest A list containing \code{k}.
 setMethod("get_data", "SumLargest", function(object) { list(object@k) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn SumLargest Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "SumLargest", function(object, values) {
   # Grad: 1 for each of the k largest indices
   value <- as.vector(t(values[[1]]))
@@ -2156,13 +2301,22 @@ setMethod(".grad", "SumLargest", function(object, values) {
   list(Matrix(D, sparse = TRUE))
 })
 
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param k The number of smallest values to sum over.
+#' @return Sum of the smlalest k values
 SumSmallest <- function(x, k) {
   x <- as.Constant(x)
   -SumLargest(x = -x, k = k)
 }
 
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param k The number of smallest values to sum over.
+#' @return Sum of the squares of the entries
 SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
+#' @param value An \linkS4class{Expression} representing the value to take the total variation of
+#' @param ... Additional matrices extending the third dimension of value
+#' @return An expression representing the total variation
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
   if(ndim(value) == 0 || (nrow(value) == 1 && ncol(value) == 1))

@@ -1,4 +1,10 @@
 # Solver utility functions.
+
+#' 
+#' Organize the constraints into a dictionary keyed by constraint names.
+#' 
+#' @param constraints a list of constraints.
+#' @return A list of constraint types where constr_map[[cone_type]] maps to a list.
 group_constraints <- function(constraints) {
   constr_map <- list()
   for(c in constraints)
@@ -6,6 +12,13 @@ group_constraints <- function(constraints) {
   return(constr_map)
 }
 
+#' 
+#' Gets a specified value of a dual variable.
+#' 
+#' @param result_vec A vector containing the dual variable values.
+#' @param offset An offset to get correct index of dual values.
+#' @param constraint A list of the constraints in the problem.
+#' @return A list of a dual variable value and its offset.
 extract_dual_value <- function(result_vec, offset, constraint) {
   value <- result_vec[seq(offset + 1, length.out = size(constraint))]
   if(size(constraint) == 1)
@@ -14,6 +27,13 @@ extract_dual_value <- function(result_vec, offset, constraint) {
   return(list(value, offset))
 }
 
+#' 
+#' Gets the values of the dual variables.
+#' 
+#' @param result_vec A vector containing the dual variable values.
+#' @param offset An offset to get correct index of dual values.
+#' @param constraint A list of the constraints in the problem.
+#' @return A map of constrain id to dual variable value.
 get_dual_values <- function(result_vec, parse_func, constraints) {
   dual_vars <- list()
   offset <- 0
@@ -36,14 +56,23 @@ setClass("ReductionSolver", representation(var_id = "character", eq_constr = "ch
 # Solver capabilities.
 setMethod("mip_capable", "ReductionSolver", function(solver) { FALSE })
 
+#' @describeIn ReductionSolver Returns the name of the solver
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
+#' @describeIn ReductionSolver Imports the solver
 setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
+#' @describeIn ReductionSolver Is the solver installed?
 setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(solver) })
 
+#' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   stop("Unimplemented")
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param warm_start An option for warm_start.
+#' @param verbose A boolean to give more output from the solver if true.
+#' @param solver_opts A list of solver options.
+#' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
   object <- ret[[1]]
@@ -53,27 +82,51 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
   return(invert(object, solution, inverse_data))
 })
 
+#'
+#' The ConstantSolver class.
+#'
 ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")
+
+#' @describeIn ConstantSolver Is the solver mip capable?
 setMethod("mip_capable", "ConstantSolver", function(solver) { TRUE })
+#' @describeIn ConstantSolver Is the solver accepted?
 setMethod("accepts", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
   return(length(variables(problem)) == 0)
 })
 
+#' @describeIn ConstantSolver Returns a list of the ConstantSolver, Problem, and an empty list.
 setMethod("perform", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
   return(list(object, problem, list()))
 })
 
+#' @describeIn ConstantSolver Returns the solution.
 setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   return(solution)
 })
 
+#' @describeIn ConstantSolver Returns the name of the solver.
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
+#' @describeIn ConstantSolver Imports the solver.
 setMethod("import_solver", "ConstantSolver", function(solver) { })
+#' @describeIn ConstantSolver Is the solver installed?
 setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
+
+
+#' @param data Data for the solver.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   return(reduction_solve(object, data, warm_start, verbose, solver_opts))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @describeIn ConstantSolver Solve the problem and return a \linkS4class{Solution} object.
 setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_start, verbose, solver_opts) {
   if(all(sapply(problem@constraints, function(c) { !is.na(value(c)) })))
     return(Solution(OPTIMAL, value(problem@objective), list(), list(), list()))
@@ -81,6 +134,13 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
     return(Solution(INFEASIBLE, NA, list(), list(), list()))
 })
 
+
+#'
+#' Build a reduction chain from a problem to an installed solver.
+#' 
+#' @param problem The problem for which to build a chain.
+#' @param dict A list of candidate solvers divided in qp_solvers.
+#' @return A SolvingChain that can be used to solve the problem.
 construct_solving_chain <- function(problem, candidates) {
   reductions <- list()
   if(length(parameters(problem)) > 0)
@@ -163,10 +223,17 @@ setMethod("initialize", "SolvingChain", function(.Object, ...) {
 })
 
 # Create and return a new SolvingChain by concatenating chain with this instance.
+#' @describeIn SolvingChain Create and return a new SolvingChain by concatenating chain with this instance.
 setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), function(object, chain) {
   SolvingChain(reductions = c(chain@reductions, object@reductions))
 })
 
+#' @param problem The problem to solve.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @describeIn SolvingChain Applies each reduction in the chain to the problem, solves it,
+#' and then inverts the chain to return a solution of the supplied problem.
 setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
   tmp <- perform(object, problem)
   object <- tmp[[1]]
@@ -176,11 +243,20 @@ setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Probl
   return(invert(object, solution, inverse_data))
 })
 
+#' @param problem The problem to solve.
+#' @param data Data for the solver.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @describeIn SolvingChain Solves the problem using the data output by the an apply invocation.
 setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
 })
 
 # Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+#' @param problem The problem for which to build a chain
+#' @param candidates A list of candidate solvers divided in qp_solvers
+#' @return A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.
 setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE) {
   reductions <- list()
   if(length(variables(problem)) == 0)

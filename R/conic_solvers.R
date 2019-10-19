@@ -1,3 +1,7 @@
+
+#'
+#' @param constraint A \linkS4class{Constraint} object.
+#' @return Is the constraint a stuffed-cone constraint?
 is_stuffed_cone_constraint <- function(constraint) {
   # Conic solvers require constraints to be stuffed in the following way.
   if(length(variables(constraint)) != 1)
@@ -21,6 +25,9 @@ is_stuffed_cone_constraint <- function(constraint) {
   return(TRUE)
 }
 
+#'
+#' @param objective An \linkS4class{Objective} object.
+#' @return Is the objective a stuffed-cone objective?
 is_stuffed_cone_objective <- function(objective) {
   # Conic solvers require objectives to be stuffed in the following way.
   expr <- expr(objective)
@@ -77,6 +84,7 @@ setMethod("supported_constraints", "ConicSolver", function(solver) { c("ZeroCons
 # For such solvers, requires_constr should return TRUE.
 setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 
+#' @describeIn ConicSolver Can the problem be solved with a conic solver?
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
     && length(convex_attributes(variables(problem))) == 0 && (length(problem@constraints) > 0 || !requires_constr(object))
@@ -84,6 +92,8 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
     && all(sapply(problem@constraints, is_stuffed_cone_constraint)))
 })
 
+#' @param expr An \linkS4class{Expression} object.
+#' @return The coefficient and offset in A %*% x + b.
 ConicSolver.get_coeff_offset <- function(expr) {
   # Return the coefficient and offset in A %*% x + b.
   if(class(expr) == "Reshape")   # May be a Reshape as root.
@@ -103,6 +113,10 @@ ConicSolver.get_coeff_offset <- function(expr) {
   return(list(coeff, offset))
 }
 
+#' @param dim A vector outlining the dimensions of the matrix.
+#' @param spacing An int of the number of rows between the start of each non-zero block.
+#' @param offset An int of the number of zeros at the beginning of the matrix.
+#' @return A sparse matrix that spaces out an expression
 ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   # Returns a sparse matrix that spaces out an expression.
   val_arr <- c()
@@ -127,6 +141,16 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   return(mat)
 }
 
+#' @param problem A \linkS4class{Problem} object
+#' @param constr A \linkS4class{Constraint} object
+#' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
+#' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
+#' will yield the coefficient "A" and offset "b" for the respective constraints: 
+#' Linear Equations: A %*% x == b,
+#' Linear inequalities: A %*% x <= b,
+#' Second order cone: A %*% x <=_{SOC} b,
+#' Exponential cone: A %*% x <=_{EXP} b,
+#' Semidefinite cone: A %*% x <=_{SOP} b.
 setMethod("reduction_format_constr", "ConicSolver", function(object, problem, constr, exp_cone_order) {
   coeffs <- list()
   offsets <- list()
@@ -175,6 +199,10 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     stop("Unsupported constraint type.")
 })
 
+#' @param problem A \linkS4class{Problem} object
+#' @param constr A \linkS4class{Constraint} object
+#' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
+#' @describeIn ConicSolver Combine the constraints into a single matrix, offset.
 setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constraints, exp_cone_order) {
   # Combine the constraints into a single matrix, offset.
   if(is.na(constraints) || is.null(constraints) || length(constraints) == 0)
@@ -191,6 +219,7 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
   return(list(coeff, offset))
 })
 
+#' @describeIn ConicSolver Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- solution$status
@@ -218,6 +247,9 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
+#'
+#' An interface for the ECOS solver
+#'
 ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                  prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
 
@@ -237,6 +269,7 @@ setMethod("supported_constraints", "ECOS", function(solver) { c(supported_constr
 # ECOS_FATAL    (-7)  Unknown problem in solver
 
 # Map of ECOS status to CVXR status.
+#' @describeIn ECOS Converts status returned by the ECOS solver to its respective CVXPY status.
 setMethod("status_map", "ECOS", function(solver, status) {
   if(status == 0)
     return(OPTIMAL)
@@ -256,9 +289,13 @@ setMethod("status_map", "ECOS", function(solver, status) {
     stop("ECOS status unrecognized: ", status)
 })
 
+#' @describeIn ECOS Imports the solver
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
 
+#' @describeIn ECOS Returns the name of the solver
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
+
+#' @describeIn ECOS Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list()
@@ -286,6 +323,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   return(list(object, data, inv_data))
 })
 
+#' @describeIn ECOS Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- status_map(object, solution$retcodes[["exitFlag"]])
 
@@ -312,6 +350,13 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
@@ -322,6 +367,9 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
   return(solution)
 })
 
+#'
+#' An interface for the SCS solver
+#'
 SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                 prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
 
@@ -331,6 +379,7 @@ setMethod("requires_constr", "SCS", function(solver) { TRUE })
 setMethod("supported_constraints", "SCS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of SCS status to CVXR status.
+#' @describeIn SCS Converts status returned by SCS solver to its respective CVXPY status.
 setMethod("status_map", "SCS", function(solver, status) {
   if(status == "Solved")
     return(OPTIMAL)
@@ -350,9 +399,12 @@ setMethod("status_map", "SCS", function(solver, status) {
     stop("SCS status unrecognized: ", status)
 })
 
+#' @describeIn SCS Returns the name of the solver
 setMethod("name", "SCS", function(x) { SCS_NAME })
+#' @describeIn SCS Imports the solver
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs", quietly = TRUE) })
 
+#' @describeIn SCS Return a linear operator to multiply by PSD constraint coefficients. 
 setMethod("reduction_format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
   # Extract coefficient and offset vector from constraint.
   # Special cases PSD constraints, as SCS expects constraints to be
@@ -376,6 +428,7 @@ setMethod("reduction_format_constr", "SCS", function(object, problem, constr, ex
     callNextMethod(object, problem, constr, exp_cone_order)
 })
 
+#' @describeIn SCS Returns a new problem and data for inverting the new solution
 setMethod("perform", signature(object = "SCS", problem = "Problem"), function(object, problem) {
   # Returns a new problem and data for inverting the new solution.
   data <- list()
@@ -415,6 +468,10 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   return(list(object, data, inv_data))
 })
 
+#' @param offset The starting point of the vector to extract from.
+#' @param result_vec The vector to extract dual values from.
+#' @param constraint A \linkS4class{Constraint} object.
+#' @describeIn SCS Extracts the dual value for constraint starting at offset.
 SCS.extract_dual_value <- function(result_vec, offset, constraint) {
   # Extracts the dual value for constraint starting at offset.
   # Special cases PSD constraints, as per the SCS specification.
@@ -429,6 +486,7 @@ SCS.extract_dual_value <- function(result_vec, offset, constraint) {
     return(extract_dual_value(result_vec, offset, constraint))
 }
 
+#' @describeIn SCS Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   status <- status_map(object, solution$info$status)
@@ -459,6 +517,13 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     return(failure_solution(status))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn SCS Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("scs", quietly = TRUE)
   
@@ -484,12 +549,15 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   return(results)
 })
 
+#'
+#' An interface to the CBC solver
+#'
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
 # Solver capabilities.
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
-#DK: CBC_Conic to CVXR status. Check these are correct
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status.
 setMethod("status_map", "CBC_CONIC", function(solver, status) {
   if(status$is_proven_optimal)
     OPTIMAL
@@ -500,6 +568,7 @@ setMethod("status_map", "CBC_CONIC", function(solver, status) {
 })
 
 # Map of CBC_CONIC MIP/LP status to CVXR status.
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status for mixed integer problems.
 setMethod("status_map_mip", "CBC_CONIC", function(solver, status) {
   if(status == "solution")
     OPTIMAL
@@ -511,6 +580,7 @@ setMethod("status_map_mip", "CBC_CONIC", function(solver, status) {
     stop("CBC_CONIC MIP status unrecognized: ", status)
 })
 
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status for linear problems.
 setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
   if(status == "optimal")
     OPTIMAL
@@ -522,7 +592,9 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
     stop("CBC_CONIC LP status unrecognized: ", status)
 })
 
+#' @describeIn CBC_CONIC Returns the name of the solver
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
+#' @describeIn CBC_CONIC Imports the solver
 setMethod("import_solver", "CBC_CONIC", function(solver) {
   installed <- requireNamespace("rcbc", quietly = TRUE)
   if(!installed)
@@ -530,6 +602,7 @@ setMethod("import_solver", "CBC_CONIC", function(solver) {
   return(installed)
 })
 
+#' @describeIn CBC_CONIC Can CBC_CONIC solve the problem?
 setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
   # Can CBC_CONIC solve the problem?
   # TODO: Check if the matrix is stuffed.
@@ -546,6 +619,7 @@ setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), funct
   return(TRUE)
 })
 
+#' @describeIn CBC_CONIC Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
   tmp <- callNextMethod(object, problem)
   object <- tmp[[1]]
@@ -558,10 +632,8 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
   return(list(object, data, inv_data))
 })
 
-#DK: Changed solution class from "Solution" to rcbc_milp_result. Same with CBC_Conic  to
-#setMethod("invert", "CBC_CONIC",  function(object, solution, inverse_data) {
+#' @describeIn CBC_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_data = "list"),  function(object, solution, inverse_data) {
-  # Returns the solution to the original problem given the inverse_data.
   solution <- solution[[1]]
   status <- status_map(object, solution)
 
@@ -582,6 +654,13 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("rcbc", quietly = TRUE)
 
@@ -638,22 +717,22 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
     max = FALSE
   )
 
-  # solver <- 'blah'
-  # solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
-  # solver_opts[[INT_IDX]] <- data[[INT_IDX]]
-  # prob_data <- list()
-  # prob_data[[name(object)]] <- ProblemData()
-  # return(solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts))
-
   return(list(result))
 })
 
+#'
+#' An interface for the CPLEX solver
+#'
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
 
 setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "CPLEX_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+#' @describeIn CPLEX_CONIC Returns the name of the solver.
 setMethod("name", "CPLEX_CONIC", function(x) { CPLEX_NAME })
+#' @describeIn CPLEX_CONIC Imports the solver.
 setMethod("import_solver", "CPLEX_CONIC", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
+
+#' @describeIn CPLEX_CONIC Can CPLEX solve the problem?
 setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
   # Can CPLEX solve the problem?
   # TODO: Check if the matrix is stuffed.
@@ -672,6 +751,7 @@ setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 
 # Map of CPLEX status to CVXR status.
 # TODO: Add more!
+#' @describeIn CPLEX_CONIC Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
   if(status %in% c(1, 101)){
     OPTIMAL
@@ -685,6 +765,7 @@ setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
     stop("CPLEX status unrecognized: ", status)
 })
 
+#' @describeIn CPLEX_CONIC Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
   #COPIED OVER FROM SCS CONIC, which is what CVXPY does (except they superclass it to a class w the same method)
   
@@ -727,6 +808,7 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   return(list(object, data, inv_data))
 })
 
+#' @describeIn CPLEX_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   model <- solution$model
@@ -771,6 +853,13 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CPLEX_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   cvar <- data[[C_KEY]]
   bvec <- data[[B_KEY]]
@@ -895,13 +984,15 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
     soc_start <- soc_start + dims@soc[[i]] + 1
   }
   results_dict$y <- -y
-  #results_dict$eq_dual <- y[1:dims@zero]
-  #results_dict$ineq_dual <- y[-(1:dims@zero)]
   results_dict$model <- model
   
   return(results_dict)
 
 })
+
+#'
+#' An interface for the CVXOPT solver.
+#'
 
 setClass("CVXOPT", contains = "ECOS")
 CVXOPT <- function() { new("CVXOPT") }
@@ -911,6 +1002,7 @@ setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
 setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of CVXOPT status to CVXR status.
+#' @describeIn CVXOPT Converts status returned by the CVXOPT solver to its respective CVXPY status.
 setMethod("status_map", "CVXOPT", function(solver, status) {
   if(status == "optimal")
     OPTIMAL
@@ -924,9 +1016,12 @@ setMethod("status_map", "CVXOPT", function(solver, status) {
     stop("CVXOPT status unrecognized: ", status)
 })
 
+#' @describeIn CVXOPT Returns the name of the solver.
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
+#' @describeIn CVXOPT Imports the solver.
 setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
 
+#' @describeIn CVXOPT Can CVXOPT solve the problem?
 setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   # Can CVXOPT solver the problem?
   # TODO: Check if the matrix is stuffed.
@@ -943,6 +1038,7 @@ setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function
   return(TRUE)
 })
 
+#' @describeIn CVXOPT Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list()
@@ -975,6 +1071,13 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   return(list(object, data, inv_data))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CVXOPT Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   solver <- CVXOPT_OLD()
   prob_data <- list()
@@ -982,10 +1085,16 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
+#'
+#' An interface for the ECOS BB solver.
+#'
+
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
+#' @describeIn ECOS_BB Returns the name of the solver.
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
+#' @describeIn ECOS_BB Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
   res <- callNextMethod(object, problem)
   object <- res[[1]]
@@ -1000,6 +1109,13 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
   return(list(object, data, inv_data))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
@@ -1020,11 +1136,15 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
   return(cones)
 }
 
+#'
+#' An interface for the GLPK solver.
+#'
+
 GLPK <- setClass("GLPK", contains = "CVXOPT")
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
-# Map of GLPK_MI status to CVXR status.
+#' @describeIn GLPK Converts status returned by the GLPK solver to its respective CVXPY status.
 setMethod("status_map", "GLPK", function(solver, status) {
   if(status == 5)
     OPTIMAL
@@ -1038,9 +1158,12 @@ setMethod("status_map", "GLPK", function(solver, status) {
     stop("GLPK status unrecognized: ", status)
 })
 
+#' @describeIn GLPK Returns the name of the solver.
 setMethod("name", "GLPK", function(x) { GLPK_NAME })
+#' @describeIn GLPK Imports the solver.
 setMethod("import_solver", "GLPK", function(solver) { requireNamespace("Rglpk", quietly = TRUE) })
 
+#' @describeIn GLPK Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
   primal_vars <- list()
@@ -1054,6 +1177,13 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn GLPK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   if(verbose)
     solver_opts$verbose <- verbose
@@ -1113,11 +1243,15 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   return(solution)
 })
 
+#'
+#' An interface for the GLPK MI solver.
+#'
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 
 # Map of GLPK_MI status to CVXR status.
+#' @describeIn GLPK_MI Converts status returned by the GLPK_MI solver to its respective CVXPY status.
 setMethod("status_map", "GLPK_MI", function(solver, status) {
   if(status == 5)
     OPTIMAL
@@ -1131,7 +1265,16 @@ setMethod("status_map", "GLPK_MI", function(solver, status) {
     stop("GLPK_MI status unrecognized: ", status)
 })
 
+#' @describeIn GLPK_MI Returns the name of the solver.
 setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
+
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn GLPK_MI Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   if(verbose)
     solver_opts$verbose <- verbose
@@ -1191,32 +1334,41 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   solution
 })
 
+#'
+#' An interface for the GUROBI conic solver.
+#'
 GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
 
 # Solver capabilities.
 setMethod("mip_capable", "GUROBI_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
-# Map of Gurobi status to CVXR status.
-setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
-  if(status == 2)
-    return(OPTIMAL)
-  else if(status == 3)
-    return(INFEASIBLE)
-  else if(status == 5)
-    return(UNBOUNDED)
-  else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
-    return(SOLVER_ERROR)
-  else if(status == 9)   # TODO: Could be anything. Means time expired.
-    return(OPTIMAL_INACCURATE)
-  else
-    stop("GUROBI status unrecognized: ", status)
-})
 
+# Is this one that's used? Should we delete?
+# Map of Gurobi status to CVXR status.
+# # @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
+# setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
+#   if(status == 2)
+#     return(OPTIMAL)
+#   else if(status == 3)
+#     return(INFEASIBLE)
+#   else if(status == 5)
+#     return(UNBOUNDED)
+#   else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
+#     return(SOLVER_ERROR)
+#   else if(status == 9)   # TODO: Could be anything. Means time expired.
+#     return(OPTIMAL_INACCURATE)
+#   else
+#     stop("GUROBI status unrecognized: ", status)
+# })
+
+#' @describeIn GUROBI_CONIC Returns the name of the solver.
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
+#' @describeIn GUROBI_CONIC Imports the solver.
 setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 # Map of GUROBI status to CVXR status.
+#' @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
   if(status == 2 || status == "OPTIMAL")
     OPTIMAL
@@ -1234,7 +1386,7 @@ setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
-
+#' @describeIn GUROBI_CONIC Can GUROBI_CONIC solve the problem?
 setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
   if(!is_affine(problem@objective@args[[1]]))
@@ -1250,6 +1402,7 @@ setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
   return(TRUE)
 })
 
+#' @describeIn GUROBI_CONIC Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   tmp <- callNextMethod(object, problem)
   object <- tmp[[1]]
@@ -1262,6 +1415,7 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
   return(list(object, data, inv_data))
 })
 
+#' @describeIn GUROBI_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   
   status <- solution$status
@@ -1302,6 +1456,13 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("gurobi", quietly = TRUE)
   
@@ -1417,9 +1578,18 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   
 })
 
+#'
+#' An interface for the MOSEK solver.
+#'
+
 MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
                            prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
+#'
+#' @param v A list of length (dim * (dim + 1) / 2).
+#' @param dim The number of rows (equivalently, columns) in the output array.
+#' @return Return the symmetric 2D array defined by taking "v" to specify its
+#' lower triangular matrix.
 vectorized_lower_tri_to_mat <- function(v, dim) {
   v <- unlist(v)
   rows <- c()
@@ -1438,9 +1608,11 @@ vectorized_lower_tri_to_mat <- function(v, dim) {
   return(A)
 }
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param c A vector of coefficients.
+#' @return Returns an array G and vector h such that the given constraint is
+#' equivalent to G*z <=_{PSD} h.
 psd_coeff_offset <- function(problem, c) {
-  # Returns an array G and vector h such that the given constraint is
-  # equivalent to G*z <=_{PSD} h.
   extractor <- CoeffExtractor(InverseData(problem))
   tmp <- affine(extractor, expr(c))
   A_vec <- tmp[[1]]
@@ -1454,12 +1626,15 @@ psd_coeff_offset <- function(problem, c) {
 setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
 setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
+#' @describeIn MOSEK Imports the solver.
 setMethod("import_solver", "MOSEK", function(solver) {
   requireNamespace("Rmosek", quietly = TRUE)
   # TODO: Add exponential cone support.
 })
 
+#' @describeIn MOSEK Returns the name of the solver.
 setMethod("name", "MOSEK", function(x) { MOSEK_NAME })
+#' @describeIn MOSEK Can MOSEK solve the problem?
 setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
   import_solver(object)
@@ -1476,6 +1651,16 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
   return(TRUE)
 })
 
+#' @param problem A \linkS4class{Problem} object that we are preparing for MOSEK.
+#' @param constraints A list of \linkS4class{Constraint} objects for which coefficient
+#' andd offset data ("G", "h" respectively) is needed
+#' @param exp_cone_order A parameter that is only used when a \linkS4class{Constraint} object
+#' describes membership in the exponential cone.
+#' @describeIn MOSEK Returns a large matrix "coeff" and a vector of constants "offset" such
+#' that every \linkS4class{Constraint} in "constraints" holds at z in R^n iff
+#' "coeff" * z <=_K offset", where K is a product of cones supported by MOSEK
+#' and CVXR (zero cone, nonnegative orthant, second order cone, exponential cone). The
+#' nature of K is inferred later by accessing the data in "lengths" and "ids".
 setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_cone_order = NA) {
   if(length(constraints) == 0 || is.null(constraints) || is.na(constraints))
     return(list(NULL, NULL))
@@ -1497,6 +1682,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
   return(list(coeff, offsets, lengths, ids))
 })
 
+#' @describeIn MOSEK Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   data <- list()
   inv_data <- list(suc_slacks = list(), y_slacks = list(), snx_slacks = list(), psd_dims = list())
@@ -1622,7 +1808,13 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   return(list(object, data, inv_data))
 })
 
-# TODO: Finish MOSEK class implementation.
+#' @param problem A \linkS4class{Problem} object.
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn MOSEK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
     ##requireNamespace("Rmosek", quietly = TRUE)
   #env <- Rmosek::Env() remove these as Rmosek doesn't need environments
@@ -1886,6 +2078,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 ##  return(sol)
 })
 
+#' @describeIn MOSEK Returns the solution to the original problem given the inverse_data.
 setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   ## REMOVE LATER
   ## results  <- solution
@@ -1953,7 +2146,7 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
       } else
-        dual_vars <- MOSEK.recover_dual_variables(task, sol, inverse_data)
+        dual_vars <- MOSEK.recover_dual_variables(sol, inverse_data)
 
   } else {
       if(status == INFEASIBLE)
@@ -1981,7 +2174,11 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
+#' @param sol List of the solutions returned by the MOSEK solver.
+#' @param inverse_data A list of the data returned by the perform function.
+#' @return A list containing the mapping of CVXR's \linkS4class{Constraint} 
+#' object's id to its corresponding dual variables in the current solution.
+MOSEK.recover_dual_variables <- function(sol, inverse_data) {
   dual_vars <- list()
 
   ## Dual variables for the inequality constraints.
@@ -2020,6 +2217,12 @@ MOSEK.recover_dual_variables <- function(task, sol, inverse_data) {
   return(dual_vars)
 }
 
+#' @param dual_var List of the dual variables returned by the MOSEK solution.
+#' @param constr_id_to_constr_dim A list that contains the mapping of entry "id"
+#' that is the index of the CVXR \linkS4class{Constraint} object to which the
+#' next "dim" entries of the dual variable belong.
+#' @return A list with the mapping of the CVXR \linkS4class{Constraint} object
+#' indices with the corresponding dual values.
 MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {
   dual_vars <- list()
   running_idx <- 1
@@ -2086,6 +2289,8 @@ SCS.dims_to_solver_dict <- function(cone_dims) {
 }
 
 # Utility methods for special handling of semidefinite constraints.
+#' @param matrix The matrix to get the lower triangular matrix for
+#' @return The lower triangular part of the matrix, stacked in column-major order
 scaled_lower_tri <- function(matrix) {
   # Returns an expression representing the lower triangular entries.
   # Scales the strictly lower triangular entries by sqrt(2), as
@@ -2109,6 +2314,10 @@ scaled_lower_tri <- function(matrix) {
   return(coeff %*% vectorized_matrix)
 }
 
+#' @param lower_tri A matrix representing the lower triangular part of the matrix,
+#' stacked in column-major order
+#' @param n The number of rows (columns) in the full square matrix.
+#' @return A matrix that is the scaled expansion of the lower triangular matrix.
 tri_to_full <- function(lower_tri, n) {
   # Expands n*floor((n+1)/2) lower triangular to full matrix.
   # Scales off-diagonal by 1/sqrt(2), as per the SCS specification.
@@ -2133,6 +2342,12 @@ setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })
 
+#' @param data Data generated via an apply call.
+#' @param warm_start An option for warm start.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn SuperSCS Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {

@@ -12,10 +12,12 @@ setMethod("initialize", "Dcp2Cone", function(.Object, ...) {
   callNextMethod(.Object, ..., canon_methods = Dcp2Cone.CANON_METHODS)
 })
 
+#' @describeIn Dcp2Cone A problem is accepted if it is a minimization and is DCP.
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   class(problem@objective) == "Minimize" && is_dcp(problem)
 })
 
+#' @describeIn Dcp2Cone Converts a DCP problem to a conic form.
 setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to cone program")
@@ -36,6 +38,7 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 #' @rdname ConeMatrixStuffing-class
 ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
+#' @describeIn ConeMatrixStuffing Is the solver accepted?
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
  return(class(problem@objective) == "Minimize" &&
         is_affine(expr(problem@objective)) &&
@@ -43,6 +46,7 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints))
 })
 
+#' @describeIn ConeMatrixStuffing Returns a list of the stuffed matrices
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r
   CR <- affine(extractor, expr(problem@objective))
@@ -62,6 +66,10 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
 })
 
 # Atom canonicalizers.
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from an entropy atom where 
+#' the objective function is just the variable t with an ExpCone constraint.
 Dcp2Cone.entr_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -78,6 +86,10 @@ Dcp2Cone.entr_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from an exponential atom 
+#' where the objective function is the variable t with an ExpCone constraint.
 Dcp2Cone.exp_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
@@ -91,6 +103,10 @@ Dcp2Cone.exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a geometric mean atom 
+#' where the objective function is the variable t with geometric mean constraints
 Dcp2Cone.geo_mean_canon <- function(expr, args) {
   x <- args[[1]]
   w <- expr@w
@@ -106,6 +122,10 @@ Dcp2Cone.geo_mean_canon <- function(expr, args) {
   return(list(t, gm_constrs(t, x_list, w)))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a huber atom where the objective 
+#' function is the variable t with square and absolute constraints
 Dcp2Cone.huber_canon <- function(expr, args) {
   M <- expr@M
   x <- args[[1]]
@@ -136,10 +156,19 @@ Dcp2Cone.huber_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from an indicator atom and
+#' where 0 is the objective function with the given constraints
+#' in the function.
 Dcp2Cone.indicator_canon <- function(expr, args) {
   return(list(0, args))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a KL divergence atom
+#' where t is the objective function with the ExpCone constraints.
 Dcp2Cone.kl_div_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   x <- promote(args[[1]], expr_dim)
@@ -151,6 +180,11 @@ Dcp2Cone.kl_div_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a lambda maximization atom
+#' where t is the objective function and a PSD constraint and a
+#' constraint requiring I*t to be symmetric.
 Dcp2Cone.lambda_max_canon <- function(expr, args) {
   A <- args[[1]]
   n <- nrow(A)
@@ -162,6 +196,13 @@ Dcp2Cone.lambda_max_canon <- function(expr, args) {
   return(list(t, constr))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a lambda sum of the k
+#' largest elements atom where k*t + trace(Z) is the objective function.
+#' t denotes the variable subject to constraints and Z is a PSD matrix variable
+#' whose dimensions consist of the length of the vector at hand. The constraints
+#' require the the diagonal matrix of the vector to be symmetric and PSD.
 Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   # S_k(X) denotes lambda_sum_largest(X, k)
   # t >= k S_k(X - Z) + trace(Z), Z is PSD
@@ -190,10 +231,20 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   return(list(obj, constr))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a log 1p atom where
+#' t is the objective function and the constraints consist of
+#' ExpCone constraints + 1.
 Dcp2Cone.log1p_canon <- function(expr, args) {
   return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a log atom where
+#' t is the objective function and the constraints consist of
+#' ExpCone constraints
 Dcp2Cone.log_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -208,6 +259,14 @@ Dcp2Cone.log_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a log determinant atom where
+#' the objective function is the sum of the log of the vector D
+#' and the constraints consist of requiring the matrix Z to be
+#' diagonal and the diagonal Z to equal D, Z to be upper triangular
+#' and DZ; t(Z)A to be positive semidefinite, where A is a n by n
+#' matrix.
 Dcp2Cone.log_det_canon <- function(expr, args) {
   # Reduces the atom to an affine expression and list of constraints.
   #
@@ -272,6 +331,12 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   return(list(sum(obj), constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the log sum
+#' of the exp atom where the objective is the t variable
+#' and the constraints consist of the ExpCone constraints and
+#' requiring t to be less than a matrix of ones of the same size.
 Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   x <- args[[1]]
   x_dim <- dim(x)
@@ -300,6 +365,11 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the logistic atom
+#' where the objective function is given by t0 and the 
+#' constraints consist of the ExpCone constraints.
 Dcp2Cone.logistic_canon <- function(expr, args) {
   x <- args[[1]]
   expr_dim <- dim(expr)
@@ -322,6 +392,13 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   return(list(t0, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the matrix fraction
+#' atom, where the objective function is the trace of Tvar, a 
+#' m by m matrix where the constraints consist of the matrix of
+#' the Schur complement of Tvar to consist of P, an n by n, given
+#' matrix, X, an n by m given matrix, and Tvar.
 Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   X <- args[[1]]   # n by m matrix
   P <- args[[2]]   # n by n matrix
@@ -348,6 +425,12 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   return(list(matrix_trace(Tvar), constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a nuclear norm atom,
+#' where the objective function consists of .5 times the trace of
+#' a matrix X of size m+n by m+n where the constraint consist of
+#' the top right corner of the matrix being the original matrix.
 Dcp2Cone.normNuc_canon <- function(expr, args) {
   A <- args[[1]]
   A_dim <- dim(A)
@@ -369,6 +452,12 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   return(list(trace_value, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a pnorm atom, where
+#' the objective is a variable t of dimension of the original
+#' vector in the problem and the constraints consist of geometric
+#' mean constraints.
 Dcp2Cone.pnorm_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
@@ -416,6 +505,12 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a power atom, where
+#' the objective function consists of the variable t which is
+#' of the dimension of the original vector from the power atom
+#' and the constraints consists of geometric mean constraints.
 Dcp2Cone.power_canon <- function(expr, args) {
   x <- args[[1]]
   p <- expr@p
@@ -446,6 +541,12 @@ Dcp2Cone.power_canon <- function(expr, args) {
   }
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a quadratic form atom,
+#' where the objective function consists of the scaled objective function
+#' from the quadratic over linear canonicalization and same with the
+#' constraints.
 Dcp2Cone.quad_form_canon <- function(expr, args) {
   decomp <- .decomp_quad(value(args[[2]]))
   scale <- decomp[[1]]
@@ -464,6 +565,11 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   return(list(scale * obj, constr))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a quadratic over linear
+#' term atom where the objective function consists of a one
+#' dimensional variable t with SOC constraints.
 Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   # quad_over_lin := sum_{ij} X^2_{ij} / y
   x <- args[[1]]
@@ -481,6 +587,12 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a sigma max atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
 Dcp2Cone.sigma_max_canon <- function(expr, args) {
   A <- args[[1]]
   A_dim <- dim(A)

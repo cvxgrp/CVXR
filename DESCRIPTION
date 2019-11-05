@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 0.99-6
+Version: 0.99-7
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -41,8 +41,8 @@ Imports:
     gmp,
     Rmpfr,
     R.utils,
-    ECOSolveR (>= 0.5.1),
-    scs (>= 1.2.3),
+    ECOSolveR (>= 0.5.3),
+    scs (>= 1.3),
     stats
 Suggests:
     knitr,

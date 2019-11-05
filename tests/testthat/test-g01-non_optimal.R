@@ -31,7 +31,8 @@ test_that("Test vector LP problems", {
 test_that("Test the optimal inaccurate status", {
   x <- Variable(5)
   prob <- Problem(Maximize(sum(sqrt(x))), list(x <= 0))
-  result <- solve(prob, solver = "SCS")
+  ## USE CVXPY param settings for SCS!
+  result <- solve(prob, solver = "SCS", eps = 1e-4, acceleration_lookback = 10L, verbose = TRUE)
   expect_equal(tolower(result$status), "optimal")
   expect_false(is.na(result$value))
 })

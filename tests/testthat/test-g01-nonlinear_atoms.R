@@ -49,7 +49,7 @@ test_that("Test a problem with KL-divergence", {
   kSeed <- 10
 
   # Generate a random reference distribution
-  # set.seed(kSeed)
+  set.seed(kSeed)
   npSPriors <- matrix(stats::runif(kK), nrow = kK, ncol = 1)
   npSPriors <- npSPriors/sum(npSPriors)
 
@@ -110,7 +110,8 @@ test_that("Test a problem with log", {
     p <- Problem(obj, list(sum(x) == 1))
     result <- solve(p, solver = "ECOS", verbose = TRUE)
     expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = TOL)
-    result <- solve(p, solver = "SCS", verbose = TRUE)
+    ## USE CVXPY param settings for SCS!
+    result <- solve(p, solver = "SCS", eps = 1e-4, acceleration_lookback = 10L, verbose = TRUE)
     expect_equal(result$getValue(x), matrix(rep(1.0/n, n)), tolerance = 1e-2)
   }
 })

@@ -28,8 +28,8 @@ Authors@R: c(
            )
 Author: Anqi Fu and Balasubramanian Narasimhan
 Maintainer: Anqi Fu <anqif@stanford.edu>
-URL: https://cvxr.rbind.io, https://anqif.github.io/CVXR
-BugReports: https://github.com/anqif/CVXR/issues
+URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
+BugReports: https://github.com/cvxgrp/CVXR/issues
 Description: An object-oriented modeling language for disciplined convex
     programming (DCP). It allows the user to formulate convex optimization problems
     in a natural way following mathematical convention and DCP rules. The system
@@ -46,8 +46,8 @@ Imports:
     gmp,
     Rmpfr,
     R.utils,
-    ECOSolveR (>= 0.4),
-    scs,
+    ECOSolveR (>= 0.5.3),
+    scs (>= 1.3),
     stats
 Suggests:
     knitr,

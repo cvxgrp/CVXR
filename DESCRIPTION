@@ -23,8 +23,8 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://cvxr.rbind.io, https://anqif.github.io/CVXR
-BugReports: https://github.com/anqif/CVXR/issues
+URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
+BugReports: https://www.cvxgrp.org/CVXR/issues
 Description: An object-oriented modeling language for disciplined convex
     programming (DCP). It allows the user to formulate convex optimization problems
     in a natural way following mathematical convention and DCP rules. The system

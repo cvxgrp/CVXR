@@ -7,7 +7,7 @@
 Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.org/anqif/CVXR)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![Coverage
-Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
+Status](https://img.shields.io/codecov/c/github/cvxgrp/CVXR/master.svg)](https://codecov.io/github/cvxgrp/CVXR?branch=master)
 [![](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 
 CVXR provides an object-oriented modeling language for convex

@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disciplined Convex Optimization in R • CVXR</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Disciplined Convex Optimization in R">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.7</span>
       </span>
     </div>
 
@@ -38,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -70,13 +71,14 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Disciplined Convex Optimization in R</h1>
                         <h4 class="author">Anqi Fu, Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 class="date">2019-06-05</h4>
+            <h4 class="date">2019-11-06</h4>
       
       
       <div class="hidden name"><code>cvxr_intro.Rmd</code></div>
@@ -103,20 +105,20 @@
 <p>We generate some synthetic data where we know the model completely, that is</p>
 <p><span class="math display">\[ Y = X\beta + \epsilon \]</span></p>
 <p>where <span class="math inline">\(Y\)</span> is a <span class="math inline">\(100\times 1\)</span> vector, <span class="math inline">\(X\)</span> is a <span class="math inline">\(100\times 10\)</span> matrix, <span class="math inline">\(\beta = [-4,\ldots ,-1, 0, 1, \ldots, 5]\)</span> is a <span class="math inline">\(10\times 1\)</span> vector, and <span class="math inline">\(\epsilon \sim N(0, 1)\)</span>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Random">set.seed</a></span>(<span class="dv">123</span>)</a>
-<a class="sourceLine" id="cb1-2" title="2"></a>
-<a class="sourceLine" id="cb1-3" title="3">n &lt;-<span class="st"> </span><span class="dv">100</span></a>
-<a class="sourceLine" id="cb1-4" title="4">p &lt;-<span class="st"> </span><span class="dv">10</span></a>
-<a class="sourceLine" id="cb1-5" title="5">beta &lt;-<span class="st"> </span><span class="dv">-4</span><span class="op">:</span><span class="dv">5</span>   <span class="co"># beta is just -4 through 5.</span></a>
-<a class="sourceLine" id="cb1-6" title="6"></a>
-<a class="sourceLine" id="cb1-7" title="7">X &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(n <span class="op">*</span><span class="st"> </span>p), <span class="dt">nrow=</span>n)</a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(X) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"beta_"</span>, beta)</a>
-<a class="sourceLine" id="cb1-9" title="9">Y &lt;-<span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>beta <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(n)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">123</span>)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">n &lt;-<span class="st"> </span><span class="dv">100</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">p &lt;-<span class="st"> </span><span class="dv">10</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">beta &lt;-<span class="st"> </span><span class="dv">-4</span><span class="op">:</span><span class="dv">5</span>   <span class="co"># beta is just -4 through 5.</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">X &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n <span class="op">*</span><span class="st"> </span>p), <span class="dt">nrow=</span>n)</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(X) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"beta_"</span>, beta)</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">Y &lt;-<span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>beta <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n)</a></code></pre></div>
 <p>Given the data <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, we can estimate the <span class="math inline">\(\beta\)</span> vector using <code>lm</code> function in R that fits a standard regression model.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">ls.model &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(Y <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>X)   <span class="co"># There is no intercept in our model above</span></a>
-<a class="sourceLine" id="cb2-2" title="2">m &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">ls.est =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(ls.model))</a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb2-4" title="4">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">ls.model &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span>(Y <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>X)   <span class="co"># There is no intercept in our model above</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">m &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">ls.est =</span> <span class="kw"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(ls.model))</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(m)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -179,36 +181,33 @@
 <ul>
 <li>Step 0. Load the <code>CVXR</code> library</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/warning">suppressWarnings</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(CVXR, <span class="dt">warn.conflicts=</span><span class="ot">FALSE</span>))</a></code></pre></div>
-<pre><code>## Registered S3 method overwritten by 'R.oo':
-##   method        from       
-##   throw.default R.methodsS3</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(CVXR, <span class="dt">warn.conflicts=</span><span class="ot">FALSE</span>))</a></code></pre></div>
 <ul>
 <li>Step 1. Define the variable to be estimated</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">betaHat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Variable-class.html">Variable</a></span>(p)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">betaHat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Variable-class.html">Variable</a></span>(p)</a></code></pre></div>
 <ul>
 <li>Step 2. Define the objective to be optimized</li>
 </ul>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">objective &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Minimize-class.html">Minimize</a></span>(<span class="kw"><a href="../reference/sum_entries.html">sum</a></span>((Y <span class="op">-</span><span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>betaHat)<span class="op">^</span><span class="dv">2</span>))</a></code></pre></div>
-<p>Notice how the objective is specified using functions such as <code>sum</code>, <code>*%*</code> and <code>^</code>, that are familiar to R users despite that fact that <code>betaHat</code> is no ordinary R expression but a <code>CVXR</code> expression.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">objective &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Minimize-class.html">Minimize</a></span>(<span class="kw"><a href="../reference/sum_entries.html">sum</a></span>((Y <span class="op">-</span><span class="st"> </span>X <span class="op">%*%</span><span class="st"> </span>betaHat)<span class="op">^</span><span class="dv">2</span>))</a></code></pre></div>
+<p>Notice how the objective is specified using functions such as <code>sum</code>, <code>*%*</code> and <code><a href="../reference/power.html">^</a></code>, that are familiar to R users despite that fact that <code>betaHat</code> is no ordinary R expression but a <code>CVXR</code> expression.</p>
 <ul>
 <li>Step 3. Create a problem to solve</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective)</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective)</a></code></pre></div>
 <ul>
 <li>Step 4. Solve it!</li>
 </ul>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a></code></pre></div>
 <ul>
 <li>Step 5. Extract solution and objective value</li>
 </ul>
 <pre><code>## Objective value: 97.847586</code></pre>
 <p>We can indeed satisfy ourselves that the results we get matches that from <code>lm</code>.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">cbind</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(ls.model), result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
-<a class="sourceLine" id="cb10-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"lm est."</span>, <span class="st">"CVXR est."</span>)</a>
-<a class="sourceLine" id="cb10-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb10-4" title="4">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(ls.model), result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"lm est."</span>, <span class="st">"CVXR est."</span>)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(m)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -275,11 +274,11 @@
 <p>On the surface, it appears that we have replaced one call to <code>lm</code> with at least five or six lines of new R code. On top of that, the code actually runs slower, and so it is not clear what was really achieved.</p>
 <p>So suppose we knew for a fact that the <span class="math inline">\(\beta\)</span>s were nonnegative and we wish to take this fact into account. This is <a href="https://en.wikipedia.org/wiki/Non-negative_least_squares">nonnegative least squares regression</a> and <code>lm</code> would no longer do the job.</p>
 <p>In <code>CVXR</code>, the modified problem merely requires the addition of a constraint to the problem definition.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective, <span class="dt">constraints =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(betaHat <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>))</a>
-<a class="sourceLine" id="cb11-2" title="2">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a>
-<a class="sourceLine" id="cb11-3" title="3">m &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">CVXR.est =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
-<a class="sourceLine" id="cb11-4" title="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb11-5" title="5">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective, <span class="dt">constraints =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(betaHat <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>))</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">m &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">CVXR.est =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(m)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -329,15 +328,15 @@
 </tbody>
 </table>
 <p>We can verify once again that these values are comparable to those obtained from another R package, say <a href="https://CRAN.R-project.org/package=nnls">nnls</a>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="cf">if</span> (<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/ns-load">requireNamespace</a></span>(<span class="st">"nnls"</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)) {</a>
-<a class="sourceLine" id="cb12-2" title="2">    nnls.fit &lt;-<span class="st"> </span>nnls<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/nnls/topics/nnls">nnls</a></span>(X, Y)<span class="op">$</span>x</a>
-<a class="sourceLine" id="cb12-3" title="3">} <span class="cf">else</span> {</a>
-<a class="sourceLine" id="cb12-4" title="4">    nnls.fit &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="ot">NA</span>, p)</a>
-<a class="sourceLine" id="cb12-5" title="5">}</a></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">cbind</a></span>(result<span class="op">$</span><span class="kw">getValue</span>(betaHat), nnls.fit)</a>
-<a class="sourceLine" id="cb13-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"CVXR est."</span>, <span class="st">"nnls est."</span>)</a>
-<a class="sourceLine" id="cb13-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb13-4" title="4">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="cf">if</span> (<span class="kw"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span>(<span class="st">"nnls"</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)) {</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">    nnls.fit &lt;-<span class="st"> </span>nnls<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/nnls/man/nnls.html">nnls</a></span>(X, Y)<span class="op">$</span>x</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">} <span class="cf">else</span> {</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">    nnls.fit &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="ot">NA</span>, p)</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">}</a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(result<span class="op">$</span><span class="kw">getValue</span>(betaHat), nnls.fit)</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"CVXR est."</span>, <span class="st">"nnls est."</span>)</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(m)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -405,9 +404,9 @@
 <p>So now suppose that we know, for some extraneous reason, that the sum of <span class="math inline">\(\beta_2\)</span> and <span class="math inline">\(\beta_3\)</span> is negative and but all other <span class="math inline">\(\beta\)</span>s are positive.</p>
 <p>It is clear that this problem would not fit into any standard package. But in <code>CVXR</code>, this is easily done by adding a few constraints.</p>
 <p>To express the fact that <span class="math inline">\(\beta_2 + \beta_3\)</span> is negative, we construct a row matrix with zeros everywhere, except in positions 2 and 3 (for <span class="math inline">\(\beta_2\)</span> and <span class="math inline">\(\beta_3\)</span> respectively).</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">A &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="dv">0</span>, <span class="dv">7</span>)), <span class="dt">nrow =</span> <span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb14-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(A) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb14-3" title="3">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(A)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">A &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">0</span>, <span class="dv">7</span>)), <span class="dt">nrow =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(A) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(A)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="right"><span class="math inline">\(\beta_{1}\)</span></th>
@@ -438,14 +437,14 @@
 A\beta &lt; 0
 \]</span></p>
 <p>which we express in R as</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">constraint1 &lt;-<span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>betaHat <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">constraint1 &lt;-<span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>betaHat <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
 <p><em>NOTE</em>: The above constraint can also be expressed simply as</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">constraint1 &lt;-<span class="st"> </span>betaHat[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>betaHat[<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">constraint1 &lt;-<span class="st"> </span>betaHat[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>betaHat[<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
 <p>but it is easier working with matrices in general with <code>CVXR</code>.</p>
 <p>For the positivity for rest of the variables, we construct a <span class="math inline">\(10\times 10\)</span> matrix <span class="math inline">\(A\)</span> to have 1’s along the diagonal everywhere except rows 2 and 3 and zeros everywhere.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1">B &lt;-<span class="st"> </span><span class="kw"><a href="../reference/diag.html">diag</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="dv">1</span>, <span class="dv">7</span>)))</a>
-<a class="sourceLine" id="cb17-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(B) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(B) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb17-3" title="3">    knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(B)</a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1">B &lt;-<span class="st"> </span><span class="kw"><a href="../reference/diag.html">diag</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span>, <span class="dv">7</span>)))</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(B) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(B) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">    knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(B)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -597,14 +596,14 @@ A\beta &lt; 0
 B\beta &gt; 0
 \]</span></p>
 <p>which we express in R as</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1">constraint2 &lt;-<span class="st"> </span>B <span class="op">%*%</span><span class="st"> </span>betaHat <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">constraint2 &lt;-<span class="st"> </span>B <span class="op">%*%</span><span class="st"> </span>betaHat <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span></a></code></pre></div>
 <p>Now we are ready to solve the problem just as before.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective, <span class="dt">constraints =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(constraint1, constraint2))</a>
-<a class="sourceLine" id="cb19-2" title="2">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">problem &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Problem-class.html">Problem</a></span>(objective, <span class="dt">constraints =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(constraint1, constraint2))</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/psolve.html">solve</a></span>(problem)</a></code></pre></div>
 <p>And we can get the estimates of <span class="math inline">\(\beta\)</span>.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" title="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">CVXR.soln =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
-<a class="sourceLine" id="cb20-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
-<a class="sourceLine" id="cb20-3" title="3">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">kable</a></span>(m)</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1">m &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">CVXR.soln =</span> result<span class="op">$</span><span class="kw">getValue</span>(betaHat))</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(m) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">beta_{"</span>, <span class="dv">1</span><span class="op">:</span>p, <span class="st">"}$"</span>)</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">knitr<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span>(m)</a></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -660,13 +659,14 @@ B\beta &gt; 0
 <a href="#references" class="anchor"></a>References</h2>
 <div id="refs" class="references">
 <div id="ref-fu:naras:boyd:2017">
-<p>Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017. “CVXR: An R Package for Disciplined Convex Optimization.” <a href="https://web.stanford.edu/~boyd/papers/cvxr_paper.html">https://web.stanford.edu/~boyd/papers/cvxr_paper.html</a>.</p>
+<p>Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017. “CVXR: An R Package for Disciplined Convex Optimization.” Working Paper. <a href="https://web.stanford.edu/~boyd/papers/cvxr_paper.html" class="uri">https://web.stanford.edu/~boyd/papers/cvxr_paper.html</a>.</p>
 </div>
 </div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -685,17 +685,20 @@ B\beta &gt; 0
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by <a href="https://web.stanford.edu/~anqif/">Anqi Fu</a>, <a href="https://statistics.stanford.edu/people/balasubramanian-narasimhan">Balasubramanian Narasimhan</a>, <a href="https://web.stanford.edu/~stevend2/">Steven Diamond</a>, <a href="https://people.eecs.berkeley.edu/~miller_john/">John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

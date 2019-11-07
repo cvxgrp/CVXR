@@ -513,6 +513,9 @@ setMethod("Solver.solve", "SCS", function(solver, objective, constraints, cached
   # Set the options to be VERBOSE plus any user-specific options
   solver_opts <- list(...)
   solver_opts$verbose <- verbose
+  ## Fix for acceleration_loopback parameter set to 20 by default in SCS
+  if (is.null(solver_opts$acceleration_lookback)) solver_opts$acceleration_lookback  <- 10L
+
   scs_args <- list(A = data[[A_KEY]], b = data[[B_KEY]], obj = data[[C_KEY]], cone = data[[DIMS]])
 
   # If warm starting, add old primal and dual variables

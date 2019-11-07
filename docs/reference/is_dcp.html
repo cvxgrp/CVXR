@@ -131,7 +131,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>A <a href='Problem-class.html'>Problem</a> or <a href='Expression-class.html'>Expression</a> object.</p></td>
+      <td><p>A Problem or Expression object.</p></td>
     </tr>
     </table>
 
@@ -140,9 +140,9 @@
     <p>A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>^<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dcp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; $status
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='no'>x</span>^<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
+<span class='fu'>is_dcp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; $status
 #&gt; [1] "optimal"
 #&gt; 
 #&gt; $value
@@ -158,10 +158,10 @@
 #&gt; [1] "ECOS"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 2.5785e-05
+#&gt; [1] 2.6069e-05
 #&gt; 
 #&gt; $setup_time
-#&gt; [1] 1.9725e-05
+#&gt; [1] 2.2576e-05
 #&gt; 
 #&gt; $num_iters
 #&gt; [1] 8
@@ -199,8 +199,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7fed27e68c10&gt;
-#&gt; &lt;environment: 0x7fed2c13f3c8&gt;
+#&gt; &lt;bytecode: 0x7ff135eedc10&gt;
+#&gt; &lt;environment: 0x7ff11c403818&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -210,8 +210,8 @@
 #&gt;     }
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7fed27e6a078&gt;
-#&gt; &lt;environment: 0x7fed2c13f3c8&gt;
+#&gt; &lt;bytecode: 0x7ff135eef078&gt;
+#&gt; &lt;environment: 0x7ff11c403818&gt;
 #&gt; </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

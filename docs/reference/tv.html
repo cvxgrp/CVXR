@@ -131,17 +131,17 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>value</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
+      <td><p>An Expression, vector, or matrix.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>(Optional) <a href='Expression-class.html'>Expression</a> objects or numeric constants that extend the third dimension of value.</p></td>
+      <td><p>(Optional) Expression objects or numeric constants that extend the third dimension of value.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the total variation of the input.</p>
+    <p>An Expression representing the total variation of the input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>rows</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>
@@ -159,11 +159,11 @@
 <span class='no'>Ucorr</span> <span class='kw'>&lt;-</span> <span class='no'>Known</span> <span class='kw'>%*%</span> <span class='no'>Uorig</span>
 
 <span class='co'># Recover the original image using total variation in-painting</span>
-<span class='no'>U</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>rows</span>, <span class='no'>cols</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>tv</span>(<span class='no'>U</span>))
+<span class='no'>U</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='no'>rows</span>, <span class='no'>cols</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Minimize</span>(<span class='fu'>tv</span>(<span class='no'>U</span>))
 <span class='no'>constraints</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>Known</span> * <span class='no'>U</span> <span class='kw'>==</span> <span class='no'>Known</span> * <span class='no'>Ucorr</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"SCS"</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"SCS"</span>)
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>U</span>)</div><div class='output co'>#&gt;           [,1]     [,2]     [,3]     [,4]     [,5]     [,6]     [,7]     [,8]
 #&gt;  [1,] 349.0000 349.0001 338.2889 307.6827 215.9995 244.6305 201.9996 309.9995
 #&gt;  [2,] 348.9998 358.4576 345.3494 310.0004 310.0004 310.0005 310.0003 310.0002

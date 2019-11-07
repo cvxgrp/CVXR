@@ -124,26 +124,26 @@
     <p>The string representation of a variable, parameter, or expression.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>name</span>(<span class='no'>object</span>)</pre>
+    <pre class="usage"><span class='fu'><a href='https://rdrr.io/r/base/name.html'>name</a></span>(<span class='no'>object</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>A <a href='Variable-class.html'>Variable</a>, <a href='Parameter-class.html'>Parameter</a>, or <a href='Expression-class.html'>Expression</a> object.</p></td>
+      <td><p>A Variable, Parameter, or Expression object.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>For <a href='Variable-class.html'>Variable</a> or <a href='Parameter-class.html'>Parameter</a> objects, the value in the name slot. For <a href='Expression-class.html'>Expression</a> objects, a string indicating the nested atoms and their respective arguments.</p>
+    <p>For Variable or Parameter objects, the value in the name slot. For Expression objects, a string indicating the nested atoms and their respective arguments.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
-<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>3</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"yVar"</span>)
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
+<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>3</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"yVar"</span>)
 
-<span class='fu'>name</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] "var693"</div><div class='input'><span class='fu'>name</span>(<span class='no'>y</span>)</div><div class='output co'>#&gt; [1] "yVar"</div></pre>
+<span class='fu'><a href='https://rdrr.io/r/base/name.html'>name</a></span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] "var693"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/name.html'>name</a></span>(<span class='no'>y</span>)</div><div class='output co'>#&gt; [1] "yVar"</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

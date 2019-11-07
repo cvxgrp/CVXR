@@ -127,60 +127,60 @@
     <pre class="usage"><span class='fu'>Problem</span>(<span class='no'>objective</span>, <span class='kw'>constraints</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='problem-parts.html'>objective</a></span>(<span class='no'>object</span>)
+<span class='fu'>objective</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='problem-parts.html'>objective</a></span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
+<span class='fu'>objective</span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='problem-parts.html'>constraints</a></span>(<span class='no'>object</span>)
+<span class='fu'>constraints</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='problem-parts.html'>constraints</a></span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
+<span class='fu'>constraints</span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>object</span>)
+<span class='fu'>value</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
+<span class='fu'>value</span>(<span class='no'>object</span>) <span class='kw'>&lt;-</span> <span class='no'>value</span>
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='is_dcp.html'>is_dcp</a></span>(<span class='no'>object</span>)
+<span class='fu'>is_dcp</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='is_qp.html'>is_qp</a></span>(<span class='no'>object</span>)
+<span class='fu'>is_qp</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='canonicalize.html'>canonicalize</a></span>(<span class='no'>object</span>)
+<span class='fu'>canonicalize</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='expression-parts.html'>variables</a></span>(<span class='no'>object</span>)
+<span class='fu'>variables</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='expression-parts.html'>parameters</a></span>(<span class='no'>object</span>)
+<span class='fu'>parameters</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='expression-parts.html'>constants</a></span>(<span class='no'>object</span>)
+<span class='fu'>constants</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='problem-parts.html'>size_metrics</a></span>(<span class='no'>object</span>)
+<span class='fu'>size_metrics</span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Problem,character</span>
-<span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span>(<span class='no'>object</span>, <span class='no'>solver</span>)
+<span class='fu'>get_problem_data</span>(<span class='no'>object</span>, <span class='no'>solver</span>)
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'><a href='unpack_results.html'>unpack_results</a></span>(<span class='no'>object</span>, <span class='no'>solver</span>, <span class='no'>results_dict</span>)</pre>
+<span class='fu'>unpack_results</span>(<span class='no'>object</span>, <span class='no'>solver</span>, <span class='no'>results_dict</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>objective</th>
-      <td><p>A <a href='Minimize-class.html'>Minimize</a> or <a href='Maximize-class.html'>Maximize</a> object representing the optimization objective.</p></td>
+      <td><p>A Minimize or Maximize object representing the optimization objective.</p></td>
     </tr>
     <tr>
       <th>constraints</th>
-      <td><p>(Optional) A list of <a href='Constraint-class.html'>Constraint</a> objects representing constraints on the optimization variables.</p></td>
+      <td><p>(Optional) A list of Constraint objects representing constraints on the optimization variables.</p></td>
     </tr>
     <tr>
       <th>object</th>
@@ -188,11 +188,11 @@
     </tr>
     <tr>
       <th>value</th>
-      <td><p>A <a href='Minimize-class.html'>Minimize</a> or <a href='Maximize-class.html'>Maximize</a> object (objective), list of <a href='Constraint-class.html'>Constraint</a> objects (constraints), or numeric scalar (value).</p></td>
+      <td><p>A Minimize or Maximize object (objective), list of Constraint objects (constraints), or numeric scalar (value).</p></td>
     </tr>
     <tr>
       <th>solver</th>
-      <td><p>A string indicating the solver that the problem data is for. Call <code><a href='installed_solvers.html'>installed_solvers()</a></code> to see all available.</p></td>
+      <td><p>A string indicating the solver that the problem data is for. Call <code>installed_solvers()</code> to see all available.</p></td>
     </tr>
     <tr>
       <th>results_dict</th>
@@ -213,9 +213,9 @@
 <li><p><code>is_dcp</code>: A logical value indicating whether the problem statisfies DCP rules.</p></li>
 <li><p><code>is_qp</code>: A logical value indicating whether the problem is a quadratic program.</p></li>
 <li><p><code>canonicalize</code>: The graph implementation of the problem.</p></li>
-<li><p><code>variables</code>: List of <a href='Variable-class.html'>Variable</a> objects in the problem.</p></li>
-<li><p><code>parameters</code>: List of <a href='Parameter-class.html'>Parameter</a> objects in the problem.</p></li>
-<li><p><code>constants</code>: List of <a href='Constant-class.html'>Constant</a> objects in the problem.</p></li>
+<li><p><code>variables</code>: List of Variable objects in the problem.</p></li>
+<li><p><code>parameters</code>: List of Parameter objects in the problem.</p></li>
+<li><p><code>constants</code>: List of Constant objects in the problem.</p></li>
 <li><p><code>size_metrics</code>: Information about the size of the problem.</p></li>
 <li><p><code>get_problem_data</code>: Get the problem data passed to the specified solver.</p></li>
 <li><p><code>unpack_results</code>: Parses the output from a solver and updates the problem state, including the status,
@@ -227,7 +227,7 @@ Assumes the results are from the given solver.</p></li>
     
 
 <dl class='dl-horizontal'>
-<dt><code>objective</code></dt><dd><p>A <a href='Minimize-class.html'>Minimize</a> or <a href='Maximize-class.html'>Maximize</a> object representing the optimization objective.</p></dd>
+<dt><code>objective</code></dt><dd><p>A Minimize or Maximize object representing the optimization objective.</p></dd>
 
 <dt><code>constraints</code></dt><dd><p>(Optional) A list of constraints on the optimization variables.</p></dd>
 
@@ -246,12 +246,12 @@ Assumes the results are from the given solver.</p></li>
 </dl>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
-<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>x</span>, <span class='fl'>2</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
-<span class='fu'><a href='is_dcp.html'>is_dcp</a></span>(<span class='no'>p</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>)
+<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>p_norm</span>(<span class='no'>x</span>, <span class='fl'>2</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
+<span class='fu'>is_dcp</span>(<span class='no'>p</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>)
 <span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,-<span class='fl'>1</span>,-<span class='fl'>1</span>, <span class='fl'>1</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='fl'>2</span>)
-<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='quad_form.html'>quad_form</a></span>(<span class='no'>x</span>, <span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
-<span class='fu'><a href='is_qp.html'>is_qp</a></span>(<span class='no'>p</span>)</div><div class='output co'>#&gt; [1] TRUE</div></pre>
+<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>quad_form</span>(<span class='no'>x</span>, <span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
+<span class='fu'>is_qp</span>(<span class='no'>p</span>)</div><div class='output co'>#&gt; [1] TRUE</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

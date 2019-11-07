@@ -123,7 +123,7 @@ If expr is a CVXR expression, then expr^p is equivalent to power(expr,p)." />
 
     <div class="ref-description">
     <p>Raises each element of the input to the power \(p\).
-If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalent to <code>power(expr,p)</code>.</p>
+If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalent to <code><a href='https://rdrr.io/r/stats/power.html'>power(expr,p)</a></code>.</p>
     </div>
 
     <pre class="usage"># S4 method for Expression,numeric
@@ -136,7 +136,7 @@ power(x, p, max_denom = 1024)</pre>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>e1</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a> object to exponentiate.</p></td>
+      <td><p>An Expression object to exponentiate.</p></td>
     </tr>
     <tr>
       <th>e2</th>
@@ -144,7 +144,7 @@ power(x, p, max_denom = 1024)</pre>
     </tr>
     <tr>
       <th>x</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
+      <td><p>An Expression, vector, or matrix.</p></td>
     </tr>
     <tr>
       <th>p</th>
@@ -176,9 +176,9 @@ For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>power</span>(<span class='no'>x</span>,<span class='fl'>1.7</span>) + <span class='fu'>power</span>(<span class='no'>x</span>,-<span class='fl'>2.3</span>) - <span class='fu'>power</span>(<span class='no'>x</span>,<span class='fl'>0.45</span>)))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'><a href='https://rdrr.io/r/stats/power.html'>power</a></span>(<span class='no'>x</span>,<span class='fl'>1.7</span>) + <span class='fu'><a href='https://rdrr.io/r/stats/power.html'>power</a></span>(<span class='no'>x</span>,-<span class='fl'>2.3</span>) - <span class='fu'><a href='https://rdrr.io/r/stats/power.html'>power</a></span>(<span class='no'>x</span>,<span class='fl'>0.45</span>)))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)
 }</div></pre>

@@ -132,14 +132,14 @@
   <span class='kw'>warm_start</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)
 
 <span class='co'># S3 method for Problem</span>
-<span class='fu'>solve</span>(<span class='no'>a</span>, <span class='no'>b</span>, <span class='no'>...</span>)</pre>
+<span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>a</span>, <span class='no'>b</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object, a</th>
-      <td><p>A <a href='Problem-class.html'>Problem</a> object.</p></td>
+      <td><p>A Problem object.</p></td>
     </tr>
     <tr>
       <th>solver, b</th>
@@ -176,17 +176,17 @@
    <dt><code>solve_time</code></dt><dd><p>The time (in seconds) it took for the solver to solve the problem.</p></dd>
    <dt><code>setup_time</code></dt><dd><p>The time (in seconds) it took for the solver to set up the problem.</p></dd>
    <dt><code>num_iters</code></dt><dd><p>The number of iterations the solver had to go through to find a solution.</p></dd>
-   <dt><code>getValue</code></dt><dd><p>A function that takes a <a href='Variable-class.html'>Variable</a> object and retrieves its primal value.</p></dd>
-   <dt><code>getDualValue</code></dt><dd><p>A function that takes a <a href='Constraint-class.html'>Constraint</a> object and retrieves its dual value(s).</p></dd>
+   <dt><code>getValue</code></dt><dd><p>A function that takes a Variable object and retrieves its primal value.</p></dd>
+   <dt><code>getDualValue</code></dt><dd><p>A function that takes a Constraint object and retrieves its dual value(s).</p></dd>
 
 </dl>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"a"</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='norm_inf.html'>norm_inf</a></span>(<span class='no'>a</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>a</span> <span class='kw'>&gt;=</span> <span class='fl'>2</span>))
+    <pre class="examples"><div class='input'><span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"a"</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>norm_inf</span>(<span class='no'>a</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>a</span> <span class='kw'>&gt;=</span> <span class='fl'>2</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>psolve</span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"ECOS"</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>result</span>$<span class='no'>status</span></div><div class='output co'>#&gt; [1] "optimal"</div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>a</span>)</div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getDualValue</span>(<span class='fu'><a href='problem-parts.html'>constraints</a></span>(<span class='no'>prob</span>)<span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt; [1] 1</div></pre>
+<span class='no'>result</span>$<span class='no'>status</span></div><div class='output co'>#&gt; [1] "optimal"</div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>a</span>)</div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getDualValue</span>(<span class='fu'>constraints</span>(<span class='no'>prob</span>)<span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt; [1] 1</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

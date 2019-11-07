@@ -131,7 +131,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a> object.</p></td>
+      <td><p>An Expression object.</p></td>
     </tr>
     </table>
 
@@ -140,10 +140,10 @@
     <p>A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
-<span class='no'>c</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='fl'>5</span>)
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
+<span class='no'>c</span> <span class='kw'>&lt;-</span> <span class='fu'>Constant</span>(<span class='fl'>5</span>)
 
-<span class='fu'>curvature</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] "CONSTANT"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] "AFFINE"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] "CONVEX"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "CONCAVE"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='log.html'>log</a></span>(<span class='no'>x</span>^<span class='fl'>3</span>) + <span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "UNKNOWN"</div></pre>
+<span class='fu'>curvature</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] "CONSTANT"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] "AFFINE"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] "CONVEX"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "CONCAVE"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log</a></span>(<span class='no'>x</span>^<span class='fl'>3</span>) + <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "UNKNOWN"</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

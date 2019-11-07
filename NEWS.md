@@ -1,3 +1,9 @@
+# CVXR 0.99-7
+
+* Update CVXR to require version 0.5.3 of ECOSolveR
+* Update CVXR to require version 1.3-1 of scs
+* Fix URLs to point to [cvxgrp addresses](https://www.cvxgrp.org)
+
 # CVXR 0.99-6
 
 * Mosek Glue modifications for MOSEK 8+, [issue 49](https://github.com/anqif/CVXR/issues/49).

@@ -34,6 +34,9 @@ special_index_canon <- function(expr, args) {
   list(lowered, list())
 }
 
+#' 
+#' Are the arguments affine?
+#' 
 #' @param constraints A \linkS4class{Constraint} object.
 #' @return All the affine arguments in given constraints.
 are_args_affine <- function(constraints) {
@@ -96,7 +99,7 @@ setMethod("reduce", "Reduction", function(object) {
 
 #' @param object A \linkS4class{Reduction} object.
 #' @param solution A \linkS4class{Solution} object.
-#' #' @describeIn Reduction Retrieves a solution to the owned problem.
+#' @describeIn Reduction Retrieves a solution to the owned problem.
 setMethod("retrieve", signature(object = "Reduction", solution = "Solution"), function(object, solution) {
   if(is.null(object@.retrieval_data))
     stop("reduce must be called before retrieve")

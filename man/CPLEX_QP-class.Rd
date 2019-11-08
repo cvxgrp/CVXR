@@ -4,7 +4,49 @@
 \name{CPLEX_QP-class}
 \alias{CPLEX_QP-class}
 \alias{CPLEX_QP}
+\alias{status_map,CPLEX_QP-method}
+\alias{name,CPLEX_QP-method}
+\alias{import_solver,CPLEX_QP-method}
+\alias{invert,CPLEX_QP,list,InverseData-method}
+\alias{solve_via_data,CPLEX_QP-method}
 \title{An interface for the CPLEX solver.}
+\usage{
+\S4method{status_map}{CPLEX_QP}(solver, status)
+
+\S4method{name}{CPLEX_QP}(x)
+
+\S4method{import_solver}{CPLEX_QP}(solver)
+
+\S4method{invert}{CPLEX_QP,list,InverseData}(object, solution,
+  inverse_data)
+
+\S4method{solve_via_data}{CPLEX_QP}(object, data, warm_start, verbose,
+  solver_opts, solver_cache = list())
+}
+\arguments{
+\item{data}{Data generated via an apply call.}
+
+\item{warm_start}{A boolean of whether to warm start the solver.}
+
+\item{verbose}{A boolean of whether to enable solver verbosity.}
+
+\item{solver_opts}{A list of Solver specific options}
+
+\item{solver_cache}{Cache for the solver.}
+}
 \description{
 An interface for the CPLEX solver.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{status_map}: Converts status returned by the CPLEX solver to its respective CVXPY status.
+
+\item \code{name}: Returns the name of the solver.
+
+\item \code{import_solver}: Imports the solver.
+
+\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+
+\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+}}
+

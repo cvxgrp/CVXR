@@ -4,12 +4,15 @@
 \name{BinaryOperator-class}
 \alias{BinaryOperator-class}
 \alias{BinaryOperator}
+\alias{name,BinaryOperator-method}
 \alias{to_numeric,BinaryOperator-method}
 \alias{sign_from_args,BinaryOperator-method}
 \alias{is_imag,BinaryOperator-method}
 \alias{is_complex,BinaryOperator-method}
 \title{The BinaryOperator class.}
 \usage{
+\S4method{name}{BinaryOperator}(x)
+
 \S4method{to_numeric}{BinaryOperator}(object, values)
 
 \S4method{sign_from_args}{BinaryOperator}(object)
@@ -19,6 +22,8 @@
 \S4method{is_complex}{BinaryOperator}(object)
 }
 \arguments{
+\item{x, object}{A \linkS4class{BinaryOperator} object.}
+
 \item{values}{A list of arguments to the atom.}
 }
 \description{
@@ -26,6 +31,8 @@ This base class represents expressions involving binary operators.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{name}: Returns the name of the BinaryOperator object.
+
 \item \code{to_numeric}: Apply the binary operator to the values.
 
 \item \code{sign_from_args}: Default to rule for multiplication.

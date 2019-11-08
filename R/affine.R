@@ -270,7 +270,6 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, di
   NegExpression.graph_implementation(arg_objs, dim, data)
 })
 
-#'
 #' The BinaryOperator class.
 #'
 #' This base class represents expressions involving binary operators.
@@ -292,6 +291,7 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp)
 setMethod("op_name", "BinaryOperator", function(object) { "BINARY_OP" })
 
 #' @param x,object A \linkS4class{BinaryOperator} object.
+#' @describeIn BinaryOperator Returns the name of the BinaryOperator object.
 setMethod("name", "BinaryOperator", function(x) {
   pretty_args <- list()
   for(a in x@args) {
@@ -883,6 +883,9 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, dat
   DiagMat.graph_implementation(arg_objs, dim, data)
 })
 
+#' 
+#' Turns an expression into a DiagVec object
+#' 
 #' @param expr An \linkS4class{Expression} that represents a vector or square matrix
 #' @return An \linkS4class{Expression} representing the diagonal vector/matrix
 Diag <- function(expr) {
@@ -895,6 +898,9 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix.")
 }
 
+#' 
+#' Takes the k-th order differences
+#' 
 #' @param lag The degree of lag between differences
 #' @param k The integer value of the order of differences
 #' @param x An \linkS4class{Expression} that represents a vector

@@ -92,6 +92,10 @@ setMethod("canonicalize", "ZeroConstraint", function(object) {
   return(list(NA, c(constraints, list(dual_holder))))
 })
 
+#' 
+#' The EqConstraint class
+#' 
+#' @rdname EqConstraint-class
 .EqConstraint <- setClass("EqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
 EqConstraint <- function(lhs, rhs, id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, id = id) }
 
@@ -156,6 +160,10 @@ setMethod("residual", "NonPosConstraint", function(object) {
   return(pmax(val, 0))
 })
 
+#'
+#' The IneqConstraint class
+#'
+#' @rdname IneqConstraint-class
 .IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
 
 IneqConstraint <- function(lhs, rhs, id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, id = id) }

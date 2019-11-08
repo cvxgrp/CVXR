@@ -514,7 +514,10 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 #' @rdname project-methods
 NULL
 
-#' @rdname project-methods
+#'
+#' Project a value onto the attribute set of a \linkS4class{Leaf}.
+#'
+#'  @rdname project-methods
 #' @export
 setGeneric("project", function(object, value) { standardGeneric("project") })
 
@@ -801,6 +804,9 @@ setGeneric("cone_sizes", function(object) { standardGeneric("cone_sizes") })
 #' @rdname dual_value-methods
 NULL
 
+#' 
+#' Get and set the value of the dual variable in a constraint.
+#' 
 #' @rdname dual_value-methods
 #' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })

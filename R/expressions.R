@@ -357,6 +357,9 @@ setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) {
 #' @rdname NegExpression-class
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
 
+#' 
+#' Elementwise multiplication operator
+#' 
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to multiply elementwise.
 #' @docType methods
 #' @rdname mul_elemwise

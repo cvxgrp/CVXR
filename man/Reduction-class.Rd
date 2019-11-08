@@ -5,6 +5,7 @@
 \alias{Reduction-class}
 \alias{accepts,Reduction,Problem-method}
 \alias{reduce,Reduction-method}
+\alias{retrieve,Reduction,Solution-method}
 \alias{perform,Reduction,Problem-method}
 \alias{invert,Reduction,Solution,list-method}
 \title{The Reduction class.}
@@ -12,6 +13,8 @@
 \S4method{accepts}{Reduction,Problem}(object, problem)
 
 \S4method{reduce}{Reduction}(object)
+
+\S4method{retrieve}{Reduction,Solution}(object, solution)
 
 \S4method{perform}{Reduction,Problem}(object, problem)
 
@@ -22,15 +25,19 @@
 
 \item{problem}{A \linkS4class{Problem} object.}
 
-\item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
+\item{solution}{A \linkS4class{Solution} object.}
 
 \item{inverse_data}{The data encoding the original problem.}
+
+\item{object}{A \linkS4class{Reduction} object.}
 
 \item{object}{A \linkS4class{Reduction} object.}
 
 \item{problem}{A \linkS4class{Problem} object.}
 
 \item{object}{A \linkS4class{Reduction} object.}
+
+\item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 }
 \description{
 This virtual class represents a reduction, an actor that transforms a problem
@@ -51,6 +58,8 @@ of provenance.
 \item \code{accepts}: States whether the reduction accepts a problem.
 
 \item \code{reduce}: Reduces the owned problem to an equivalent problem.
+
+\item \code{retrieve}: Retrieves a solution to the owned problem.
 
 \item \code{perform}: Performs the reduction on a problem and returns an equivalent problem.
 

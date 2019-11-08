@@ -753,8 +753,14 @@ setMethod(".grad", "MinElemwise", function(object, values) {
   }
   grad_list
 })
+#' 
+#' An alias for -MinElemwise(x, 0)
+#' 
 #' @return An alias for -MinElemwise(x, 0)
 Neg <- function(x) { -MinElemwise(x, 0) }
+#' 
+#' An alias for MaxElemwise(x, 0)
+#' 
 #' @return An alias for MaxElemwise(x, 0)
 Pos <- function(x) { MaxElemwise(x, 0) }
 

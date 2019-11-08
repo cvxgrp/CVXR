@@ -16,8 +16,8 @@
 #
 # setMethod("is_convex", "Indicator", function(object) { TRUE })
 # setMethod("is_concave", "Indicator", function(object) { FALSE })
-# setMethod("is_positive", "Indicator", function(object) { TRUE })
-# setMethod("is_negative", "Indicator", function(object) { FALSE })
+# setMethod("is_nonneg", "Indicator", function(object) { TRUE })
+# setMethod("is_nonpos", "Indicator", function(object) { FALSE })
 # setMethod("get_data", "Indicator", function(object) { list(object@err_tol) })
 # setMethod("size", "Indicator", function(object) { c(1,1) })
 # setMethod("name", "Indicator", function(object) { cat("Indicator(", object@args, ")") })
@@ -248,7 +248,7 @@ linearize <- function(expr) {
 #
 #   for(i in 1:num_objs) {
 #     obj <- objectives[[i]]
-#     sign <- ifelse(is_positive(Constant(priorities[[i]])), 1, -1)
+#     sign <- ifelse(is_nonneg(Constant(priorities[[i]])), 1, -1)
 #     off_target <- sign * off_target
 #     if(class(obj) == "Minimize") {
 #       expr <- (priorities[[i]] - off_target)*Pos(obj@args[[1]] - targets[[i]])

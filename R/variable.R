@@ -24,8 +24,8 @@
 #' y <- Variable(3, 3, name = "y0") # Matrix variable
 #' as.character(y)
 #' id(y)
-#' is_positive(x)
-#' is_negative(x)
+#' is_nonneg(x)
+#' is_nonpos(x)
 #' size(y)
 #' name(y)
 #' value(y) <- matrix(1:9, nrow = 3)

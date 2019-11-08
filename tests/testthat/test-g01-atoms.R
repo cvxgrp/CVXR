@@ -23,7 +23,8 @@ test_that("test the norm_inf function", {
   exp <- x + y
   atom <- norm_inf(exp)
 
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_true(is_convex(atom))
   expect_true(is_concave(-atom))
@@ -35,7 +36,8 @@ test_that("test the norm1 function", {
   exp <- x + y
   atom <- norm1(exp)
 
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_equal(curvature(norm1(atom)), CONVEX)
   expect_equal(curvature(norm1(-atom)), CONVEX)
@@ -82,14 +84,15 @@ test_that("test the power function", {
 
 test_that("test the geo_mean function", {
   atom <- geo_mean(x)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 })
 
 test_that("test the harmonic_mean function", {
   atom <- harmonic_mean(x)
-  # TODO: expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
   expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
@@ -97,47 +100,56 @@ test_that("test the harmonic_mean function", {
 
 test_that("test the p_norm function", {
   atom <- p_norm(x, p = 1.5)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = 1)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = 2)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = Inf)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = 0.5)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = 0.7)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = -0.1)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = -1)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 
   atom <- p_norm(x, p = -1.3)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONCAVE)
   expect_equal(sign(atom), NONNEG)
 })
@@ -146,7 +158,8 @@ test_that("test matrix norms", {
   for(p in c("1", "2", "I", "F", "M")) {
     for(var in c(A, C)) {
       atom <- norm(var, p)
-      expect_equal(dim(atom), NULL)
+      # expect_equal(dim(atom), NULL)
+      expect_equal(dim(atom), c(1,1))
       expect_equal(curvature(atom), CONVEX)
       expect_equal(sign(atom), NONNEG)
       
@@ -180,7 +193,8 @@ test_that("test the arg count for max_elemwise and min_elemwise", {
 
 test_that("test the matrix_frac function", {
   atom <- matrix_frac(x, A)
-  expect_equal(dim(atom), NULL)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
 
   # Test matrix_frac dim validation
@@ -197,11 +211,11 @@ test_that("test the sign for max_entries", {
   expect_equal(sign(max_entries(0)), ZERO)
 
   # Test with axis argument
-  expect_equal(dim(max_entries(Variable(2), axis = 1)), 2)
+  expect_equal(dim(max_entries(Variable(2), axis = 1)), c(2, 1))
   expect_equal(dim(max_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
   # expect_equal(dim(max_entries(Variable(c(2, 3)), axis = 1)), 2)
   # expect_equal(dim(max_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
-  expect_equal(dim(max_entries(Variable(2, 3), axis = 1)), 2)
+  expect_equal(dim(max_entries(Variable(2, 3), axis = 1)), c(2, 1))
   expect_equal(dim(max_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
 
   # Invalid axis
@@ -216,11 +230,11 @@ test_that("test the sign for min_entries", {
   expect_equal(sign(min_entries(0)), ZERO)
 
   # Test with axis argument
-  expect_equal(dim(min_entries(Variable(2), axis = 1)), 2)
+  expect_equal(dim(min_entries(Variable(2), axis = 1)), c(2, 1))
   expect_equal(dim(min_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
   # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 1)), 2)
   # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
-  expect_equal(dim(min_entries(Variable(2, 3), axis = 1)), 2)
+  expect_equal(dim(min_entries(Variable(2, 3), axis = 1)), c(2, 1))
   expect_equal(dim(min_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
   
   # Invalid axis
@@ -279,7 +293,8 @@ test_that("test the sum_entries function", {
   expect_equal(sign(sum_entries(c(1, -1))), UNKNOWN)
   expect_equal(curvature(sum_entries(c(1, -1))), CONSTANT)
   expect_equal(sign(sum_entries(Variable(2))), UNKNOWN)
-  expect_equal(dim(sum_entries(Variable(2))), NULL)
+  # expect_equal(dim(sum_entries(Variable(2))), NULL)
+  expect_equal(dim(sum_entries(Variable(2))), c(1, 1))
   expect_equal(curvature(sum_entries(Variable(2))), AFFINE)
   # expect_equal(dim(sum_entries(Variable(c(2, 1)), keepdims = TRUE)), c(1, 1))
   expect_equal(dim(sum_entries(Variable(2, 1), keepdims = TRUE)), c(1, 1))
@@ -289,15 +304,15 @@ test_that("test the sum_entries function", {
   expect_equal(curvature(sum_entries( mat %*% Variable(2)^2 )), UNKNOWN)
 
   # Test with axis argument
-  expect_equal(dim(sum_entries(Variable(2), axis = 1)), 2)
-  # TODO: expect_equal(dim(sum_entries(Variable(2), axis = 2)), NULL)
-  expect_equal(dim(sum_entries(Variable(2), axis = 2)), 1)
+  expect_equal(dim(sum_entries(Variable(2), axis = 1)), c(2, 1))
+  # expect_equal(dim(sum_entries(Variable(2), axis = 2)), NULL)
+  expect_equal(dim(sum_entries(Variable(2), axis = 2)), c(1, 1))
   # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 1)), 2)
   # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
   # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 2, keepdims = FALSE)), 3)
-  expect_equal(dim(sum_entries(Variable(2, 3), axis = 1)), 2)
+  expect_equal(dim(sum_entries(Variable(2, 3), axis = 1)), c(2, 1))
   expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
-  expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = FALSE)), 3)
+  expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = FALSE)), c(3, 1))
 
   # Invalid axis
   expect_error(sum_entries(x, axis = 4),
@@ -411,7 +426,8 @@ test_that("test the matrix_trace function", {
   expr <- matrix_trace(A)
   expect_equal(sign(expr), UNKNOWN)
   expect_equal(curvature(expr), AFFINE)
-  expect_equal(dim(expr), NULL)
+  # expect_equal(dim(expr), NULL)
+  expect_equal(dim(expr), c(1, 1))
 
   expect_error(matrix_trace(C), 
                "Argument to Trace must be a square matrix", fixed = TRUE)

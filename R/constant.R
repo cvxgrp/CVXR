@@ -20,7 +20,7 @@
 #' y <- Constant(diag(3))
 #' get_data(y)
 #' value(y)
-#' is_positive(y)
+#' is_nonneg(y)
 #' size(y)
 #' as.Constant(y)
 #' @export
@@ -249,8 +249,8 @@ as.Constant <- function(expr) {
 #' @rdname Parameter-class
 #' @examples
 #' x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
-#' is_positive(x)
-#' is_negative(x)
+#' is_nonneg(x)
+#' is_nonpos(x)
 #' size(x)
 #' @export
 # Parameter <- function(dim = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = dim, name = name, value = value, ...) }

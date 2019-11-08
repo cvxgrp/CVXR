@@ -1,4 +1,7 @@
 # QPSolver requires objectives to be stuffed in the following way.
+#' 
+#' Is the QP objective stuffed?
+#' 
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @return Is the objective a stuffed QP?
 is_stuffed_qp_objective <- function(objective) {
@@ -103,7 +106,7 @@ setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 
 
 # TODO: Add more!
-#' @describeIn CPLEX Converts status returned by the CPLEX solver to its respective CVXPY status.
+#' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_QP", function(solver, status) {
   if(status %in% c(1, 101))
     OPTIMAL
@@ -117,12 +120,12 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
     stop("CPLEX status unrecognized: ", status)
 })
 
-#' @describeIn CPLEX Returns the name of the solver.
+#' @describeIn CPLEX_QP Returns the name of the solver.
 setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
-#' @describeIn CPLEX Imports the solver.
+#' @describeIn CPLEX_QP Imports the solver.
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 
-#' @describeIn CPLEX Returns the solution to the original problem given the inverse_data.
+#' @describeIn CPLEX_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
   attr <- list()
@@ -208,7 +211,7 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
 #' @param verbose A boolean of whether to enable solver verbosity.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
-#' @describeIn CPLEX Solve a problem represented by data returned from apply.
+#' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("Rcplex", quietly = TRUE)
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)

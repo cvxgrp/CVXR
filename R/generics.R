@@ -510,14 +510,13 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 #' @param object A \linkS4class{Leaf} object.
 #' @param val The assigned value.
 #' @return The value rounded to the attribute type.
-#' @docType methods
-#' @rdname project-methods
+#' @name project-methods
 NULL
 
 #'
 #' Project a value onto the attribute set of a \linkS4class{Leaf}.
 #'
-#'  @rdname project-methods
+#' @rdname project-methods
 #' @export
 setGeneric("project", function(object, value) { standardGeneric("project") })
 
@@ -803,8 +802,7 @@ setGeneric("cone_sizes", function(object) { standardGeneric("cone_sizes") })
 #'
 #' @param object A \linkS4class{Constraint} object.
 #' @param value A numeric scalar, vector, or matrix to assign to the object.
-#' @return The numeric value of the dual variable. Defaults to \code{NA} if unknown.
-#' @rdname dual_value-methods
+#' @name dual_value-methods
 NULL
 
 #' 

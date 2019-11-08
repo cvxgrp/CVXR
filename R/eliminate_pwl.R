@@ -25,6 +25,9 @@ setMethod("perform", signature(object = "EliminatePwl", problem = "Problem"), fu
 })
 
 # Atom canonicalizers.
+#' 
+#' EliminatePwl canonicalizer for the absolute atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the picewise-lienar atom
@@ -41,6 +44,9 @@ EliminatePwl.abs_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the cumulative max atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -67,6 +73,9 @@ EliminatePwl.cummax_canon <- function(expr, args) {
   return(list(Y, constr))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the cumulative sum atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -93,6 +102,9 @@ EliminatePwl.cumsum_canon <- function(expr, args) {
   return(list(Y, constr))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the max entries atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -118,6 +130,9 @@ EliminatePwl.max_entries_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the elementwise maximum atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -133,6 +148,9 @@ EliminatePwl.max_elemwise_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the minimum entries atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -149,6 +167,9 @@ EliminatePwl.min_entries_canon <- function(expr, args) {
   return(list(-canon[[1]], canon[[2]]))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the elementwise minimum atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -163,6 +184,9 @@ EliminatePwl.min_elemwise_canon <- function(expr, args) {
   return(list(-canon[[1]], canon[[2]]))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the 1 norm atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -186,6 +210,9 @@ EliminatePwl.norm1_canon <- function(expr, args) {
   return(list(SumEntries(abs_x, axis = axis), constraints))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the infinite norm atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom
@@ -210,6 +237,9 @@ EliminatePwl.norm_inf_canon <- function(expr, args) {
   return(list(t, list(x <= promoted_t, x + promoted_t >= 0)))
 }
 
+#' 
+#' EliminatePwl canonicalizer for the largest sum atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A canonicalization of the piecewise-lienar atom

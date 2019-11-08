@@ -521,6 +521,9 @@ NULL
 #' @export
 setGeneric("project", function(object, value) { standardGeneric("project") })
 
+#' 
+#' Projects and assigns a value onto the attribute set of a \linkS4class{Leaf}.
+#' 
 #' @rdname project-methods
 #' @export
 setGeneric("project_and_assign", function(object, value) { standardGeneric("project_and_assign") })

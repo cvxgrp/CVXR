@@ -4,10 +4,11 @@
 # CVXR
 
 [![Travis-CI Build
-Status](https://travis-ci.org/anqif/CVXR.svg?branch=master)](https://travis-ci.org/anqif/CVXR)
+Status](https://travis-ci.org/cvxgrp/CVXR.svg?branch=master)](https://travis-ci.org/cvxgrp/CVXR)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![Coverage
-Status](https://img.shields.io/codecov/c/github/anqif/CVXR/master.svg)](https://codecov.io/github/anqif/CVXR?branch=master)
+Status](https://img.shields.io/codecov/c/github/cvxgrp/CVXR/master.svg)](https://codecov.io/github/cvxgrp/CVXR?branch=master)
+[![](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 
 CVXR provides an object-oriented modeling language for convex
 optimization, similar to `CVX`, `CVXPY`, `YALMIP`, and `Convex.jl`. It
@@ -36,7 +37,7 @@ higher. (`CVXR` is known to work with earlier versions of R too, but we
 don’t check our releases against older versions of R.)
 
 ``` r
-install.packages('CVXR', repos = "https://cloud.r-project.org")
+install.packages('CVXR', repos = "https://CRAN.R-project.org")
 ```
 
 Development versions can be installed from the Github repository
@@ -45,7 +46,7 @@ compilers etc. Execute:
 
 ``` r
 library(devtools)
-install_github("anqif/CVXR")
+install_github("cvxgrp/CVXR")
 ```
 
 ## Tutorial

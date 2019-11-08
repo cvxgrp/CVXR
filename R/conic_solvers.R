@@ -534,7 +534,7 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 #' @describeIn SCS Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("scs", quietly = TRUE)
-  
+
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
@@ -547,6 +547,14 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   # Default to eps = 1e-4 instead of 1e-3.
   if(is.null(solver_opts$eps))
     solver_opts$eps <- 1e-4
+  if(!missing(verbose))
+    solver_opts$verbose <- verbose
+
+  # Default to acceleration_lookback = 10L instead of (Naras' mistake) 20L!
+  # REMOVE when scs R package goes back to correct default
+  if(is.null(solver_opts$acceleration_lookback))
+    solver_opts$acceleration_lookback <- 10L
+
   if(!missing(verbose))
     solver_opts$verbose <- verbose
 
@@ -774,24 +782,24 @@ setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
 #' @describeIn CPLEX_CONIC Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
   #COPIED OVER FROM SCS CONIC, which is what CVXPY does (except they superclass it to a class w the same method)
-  
+
   # Returns a new problem and data for inverting the new solution.
   data <- list()
   inv_data <- list()
   inv_data[[object@var_id]] <- id(variables(problem)[[1]])
-  
+
   # Parse the coefficient vector from the objective.
   offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   data[[C_KEY]] <- offsets[[1]]
   data[[OFFSET]] <- offsets[[2]]
   data[[C_KEY]] <- as.vector(data[[C_KEY]])
   inv_data[[OFFSET]] <- data[[OFFSET]][1]
-  
+
   # Order and group nonlinear constraints.
   constr_map <- group_constraints(problem@constraints)
   data[[ConicSolver()@dims]] <- ConeDims(constr_map)
   inv_data[[ConicSolver()@dims]] <- data[[ConicSolver()@dims]]
-  
+
   # SCS requires constraints to be specified in the following order:
   # 1) Zero cone.
   # 2) Non-negative orthant.
@@ -803,7 +811,7 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   inv_data[[object@eq_constr]] <- zero_constr
   inv_data[[object@neq_constr]] <- neq_constr
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  
+
   # Obtain A, b such that Ax + s = b, s \in cones.
   # Note that SCS mandates that the cones MUST be ordered with
   # zero cones first, then non-negative orthant, then SOC, then
@@ -818,26 +826,26 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
   model <- solution$model
-  
+
   status <- status_map(object, model$status)
 
   if(status %in% SOLUTION_PRESENT) {
     #Get objective value
     opt_val <- model$obj + inverse_data[[OFFSET]]
-    
+
     #Get solution
     primal_vars <- list()
     primal_vars[[as.character(inverse_data[[object@var_id]])]] <- model$xopt
-    
+
     #Only add duals if not a MIP
     if(!inverse_data[["is_mip"]]) {
       #eq and leq constraints all returned at once by CPLEX
       #eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
       #leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
       #eq_dual <- utils::modifyList(eq_dual, leq_dual)
-      dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@neq_constr]]) 
+      dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@neq_constr]])
       #dual_vars <- eq_dual
-    
+
     } else {
       primal_vars <- list()
       primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
@@ -871,14 +879,14 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   bvec <- data[[B_KEY]]
   Amat <- data[[A_KEY]]
   dims <- data[[DIMS]]
-  
+
   total_soc <- sum(unlist(dims@soc))
   n_var <- length(cvar)
   cvar <- c(cvar, rep(0, total_soc))
-  
+
   #Initializing variable types
   vtype <- rep("C", n_var + total_soc)
-  
+
   #Setting Boolean variable types
   for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
     vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
@@ -887,25 +895,25 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
     vtype[data[BOOL_IDX]$int_vars_idx[i]] <- "I"
   }
-  
+
   #Setting sense of the A matrix
   sense_vec <- rep("E", nrow(Amat))
-  
+
   #Add inequalities
   leq_start <- dims@zero
-  
+
   for(j in 1:dims@nonpos){
     sense_vec[leq_start + j] <- "L"
   }
-  
+
   #Setting Lower bounds of variables
   lb <- rep(-Inf, n_var + total_soc)
-  
+
   qc <- list()
-  
+
   soc_start <- leq_start + dims@nonpos
   current_var <- n_var
-  
+
   for(i in seq_along(dims@soc)){
     for(j in 1:dims@soc[[i]]){
       sense_vec[soc_start + j] <- "E"
@@ -913,13 +921,13 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
         lb[current_var + j] <- 0 #The first variable of every SOC has a 0 lower bound
       }
     }
-    
+
     #Add SOC vars to linear constraints
     n_soc <- dims@soc[[i]]
     Asub <- matrix(0, nrow = nrow(Amat), ncol = n_soc)
     Asub[(soc_start+1):(soc_start + n_soc),] <- diag(rep(1, n_soc))
     Amat <- cbind(Amat, Asub)
-    
+
     #Add quadratic constraints
     qc_mat <- matrix(0, nrow = n_var + total_soc, ncol = n_var + total_soc)
     qc_mat[current_var + 1, current_var + 1] <- -1
@@ -927,20 +935,20 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
       qc_mat[current_var + 1 + k, current_var + 1 + k] <- 1
     }
     qc[[i]] <- qc_mat
-    
+
     soc_start <- soc_start + n_soc
     current_var <- current_var + n_soc
   }
-  
+
   QC <- list(QC = list(Q = qc), dir = rep("L", length(dims@soc)) , b = rep(0.0, length(dims@soc)))
-  
+
   #Setting verbosity off
   if(!verbose){
     control <- list(trace=0)
   } else{
     control <- list(trace=1)
   }
-  
+
   #David: not sure what to do with this part
   # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
   # and the code is duplicated here. This should be refactored.
@@ -957,31 +965,31 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
       }
       kwargs$cplex_params <- NULL
     }
-    
+
     if("cplex_filename" %in% kwargs) {
       filename <- solver_opts$cplex_filename
       if(!is.na(filename) && !is.null(filename))
         write(model, filename)
       kwargs$cplex_filename <- NULL
     }
-    
+
     if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
       stop("Invalid keyword argument ", kwargs[[1]])
   }
-  
+
   # Solve problem.
   results_dict <- list()
-  
+
   tryCatch({
     # Define CPLEX problem and solve
-    model <- Rcplex::Rcplex_solve_QCP(cvec=cvar, Amat=Amat, bvec=bvec, QC=QC, lb=lb, ub=Inf, 
+    model <- Rcplex::Rcplex_solve_QCP(cvec=cvar, Amat=Amat, bvec=bvec, QC=QC, lb=lb, ub=Inf,
                             sense=sense_vec, objsense="min", vtype=vtype, control=control)
     #control parameter would be used to set specific solver arguments. See cran Rcplex documentation
   }, error = function(e) {
     results_dict$status <- SOLVER_ERROR
   }
   )
-  
+
   #Changing dualvar to include SOC
   y <- model$extra$lambda
   soc_start <- leq_start + dims@nonpos
@@ -991,7 +999,7 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   }
   results_dict$y <- -y
   results_dict$model <- model
-  
+
   return(results_dict)
 
 })
@@ -1418,7 +1426,7 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
 
 #' @describeIn GUROBI_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
-  
+
   status <- solution$status
   dual_vars <- list()
 
@@ -1426,7 +1434,7 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
   #attr <- list()
   #attr[[SOLVE_TIME]] <- solution$runtime
   #attr[[NUM_ITERS]] <- solution$baritercount
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$value + inverse_data[[OFFSET]]
     primal_vars <- list()
@@ -1466,18 +1474,18 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 #' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("gurobi", quietly = TRUE)
-  
+
   cvar <- data[[C_KEY]]
   b <- data[[B_KEY]]
   A <- data[[A_KEY]]
   dims <- data[[DIMS]]
-  
+
   n <- length(cvar)
-  
+
   #Create a new model and add objective term
   model <- list()
   model$obj <- c(cvar, rep(0, sum(unlist(dims@soc))))
-  
+
   #Add variable types
   vtype <- character(n)
   for(i in seq_along(data[[BOOL_IDX]])){
@@ -1486,7 +1494,7 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   for(i in seq_along(data[[INT_IDX]])){
     vtype[data[[INT_IDX]][[i]]] <- 'I' #I for integer
   }
-  
+
   for(i in 1:n) {
     if(vtype[i] == ""){
       vtype[i] <- 'C' #C for continuous
@@ -1495,32 +1503,32 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   model$vtype <- vtype #put in variable types
   model$lb <- rep(-Inf, n)
   model$ub <- rep(Inf, n)
-  
+
   # Add equality constraints: iterate over the rows of A,
   # adding each row into the model.
   model$A <- A
   model$rhs <- b
   model$sense <- c(rep('=', dims@zero), rep('<',  dims@nonpos), rep('=', sum(unlist(dims@soc))))
-  
+
   total_soc <- sum(unlist(dims@soc))
   current_vars <- n
   current_rows <- dims@zero + dims@nonpos + 1
-  
+
   # Add SOC variables
   # Sort of strange. A good example of how it works can be seen in
   # https://www.gurobi.com/documentation/8.1/examples/qcp_r.html#subsubsection:qcp.R
   for(i in seq_along(dims@soc)){
     n_soc <- dims@soc[[i]]
-    
+
     model$vtype <- c(model$vtype, rep('C', n_soc))
     model$lb <- c(model$lb, 0, rep(-Inf, n_soc - 1))
     model$ub <- c(model$ub, rep(Inf, n_soc))
     Asub <- matrix(0, nrow = nrow(A), ncol = n_soc)
     Asub[current_rows:(current_rows + n_soc - 1),] <- diag(rep(1, n_soc))
     model$A <- cbind(model$A, Asub)
-    
+
     # To create quadratic constraints, first create a 0 square matrix with dimension of
-    # the total number of variables (normal + SOC). Then fill the diagonals of the 
+    # the total number of variables (normal + SOC). Then fill the diagonals of the
     # SOC part with the first being negative and the rest being positive
     qc <- list()
     qc$Qc <- matrix(0, nrow = n + total_soc, ncol = n + total_soc)
@@ -1529,54 +1537,54 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
       qc$Qc[current_vars + 1 + j, current_vars + 1 + j] <- 1
     }
     qc$rhs <- 0.0
-    
+
     model$quadcon[[i]] <- qc
-  
+
     current_vars <- current_vars + n_soc
     current_rows = current_rows + n_soc
-    
+
   }
-  
+
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
   params$QCPDual <- 1 #equivalent to TRUE
   for(i in seq_along(solver_opts)){
-    params[[ names(solver_opts)[i] ]] <- solver_opts[i] 
+    params[[ names(solver_opts)[i] ]] <- solver_opts[i]
   }
-  
+
   solution <- list()
   tryCatch({
     result <- gurobi::gurobi(model, params)   # Solve.
     solution[["value"]] <- result$objval
     solution[["primal"]] <- result$x
-    
+
     #Only add duals if it's not a MIP
     if(sum(unlist(data[[BOOL_IDX]])) + sum(unlist(data[[INT_IDX]])) == 0){
       solution[["y"]] <- -append(result$pi, result$qcpi, dims@zero + dims@nonpos)
-      
+
       if(dims@zero == 0){
         solution[["eq_dual"]] <- c()
         solution[["ineq_dual"]] <- solution[["y"]]
       } else {
         solution[["eq_dual"]] <- solution[["y"]][1:dims@zero]
-        solution[["ineq_dual"]] <- solution[["y"]][-(1:dims@zero)]  
+        solution[["ineq_dual"]] <- solution[["y"]][-(1:dims@zero)]
       }
     }
-    
+
   }, error = function(e) {   # Error in the solution.
   })
-  
+
   solution[[SOLVE_TIME]] <- result$runtime
   solution[["status"]] <- status_map(object, result$status)
   solution[["num_iters"]] <- result$baritercount
-  
+
   # Is there a better way to check if there is a solution?
   # if(solution[["status"]] == SOLVER_ERROR && !is.na(result$x)){
   #  solution[["status"]] <- OPTIMAL_INACCURATE
   # }
-  
+
   return(solution)
-  
+
 })
 
 #' An interface for the MOSEK solver.
@@ -2389,11 +2397,11 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 })
 
 # XPRESS <- setClass("XPRESS", contains = "SCS")
-# 
+#
 # # Solver capabilities.
 # setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
 # setMethod("supported_constraints", "XPRESS", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
-# 
+#
 # # Map of XPRESS status to CVXR status.
 # setMethod("status_map", "XPRESS", function(solver, status) {
 #   if(status == 2)
@@ -2409,12 +2417,12 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 #   else
 #     stop("XPRESS status unrecognized: ", status)
 # })
-# 
+#
 # setMethod("name", "XPRESS", function(x) { XPRESS_NAME })
 # setMethod("import_solver", "XPRESS", function(solver) {
 #   stop("Unimplemented: XPRESS solver unavailable in R.")
 # })
-# 
+#
 # setMethod("accepts", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
 #   # TODO: Check if the matrix is stuffed.
 #   if(!is_affine(problem@objective@args[[1]]))
@@ -2429,7 +2437,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 #   }
 #   return(TRUE)
 # })
-# 
+#
 # setMethod("perform", signature(object = "XPRESS", problem = "Problem"), function(object, problem) {
 #   tmp <- callNextMethod(object, problem)
 #   data <- tmp[[1]]
@@ -2440,10 +2448,10 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 #   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
 #   return(list(object, data, inv_data))
 # })
-# 
+#
 # setMethod("invert", signature(object = "XPRESS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
 #   status <- solution[[STATUS]]
-# 
+#
 #   if(status %in% SOLUTION_PRESENT) {
 #     opt_val <- solution[[VALUE]]
 #     primal_vars <- list()
@@ -2458,7 +2466,7 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 #       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
 #       names(dual_vars) <- dual_var_ids
 #     }
-# 
+#
 #     if(status == INFEASIBLE)
 #       opt_val <- Inf
 #     else if(status == UNBOUNDED)
@@ -2466,13 +2474,13 @@ setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbo
 #     else
 #       opt_val <- NA
 #   }
-# 
+#
 #   other <- list()
 #   other[[XPRESS_IIS]] <- solution[[XPRESS_IIS]]
 #   other[[XPRESS_TROW]] <- solution[[XPRESS_TROW]]
 #   return(Solution(status, opt_val, primal_vars, dual_vars, other))
 # })
-# 
+#
 # setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
 #   solver <- XPRESS_OLD()
 #   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]

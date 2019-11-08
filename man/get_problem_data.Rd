@@ -4,7 +4,7 @@
 \alias{get_problem_data}
 \title{Get Problem Data}
 \usage{
-get_problem_data(object, solver)
+get_problem_data(object, solver, gp)
 }
 \arguments{
 \item{object}{A \linkS4class{Problem} object.}

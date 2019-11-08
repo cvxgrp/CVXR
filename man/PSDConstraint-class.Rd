@@ -13,8 +13,8 @@
 \alias{PSDConstraint-class}
 \alias{.PSDConstraint}
 \alias{PSDConstraint}
-\alias{PSDConstraint}
 \alias{is_dcp,PSDConstraint-method}
+\alias{is_dgp,PSDConstraint-method}
 \alias{residual,PSDConstraint-method}
 \alias{canonicalize,PSDConstraint-method}
 \title{The PSDConstraint class.}
@@ -35,9 +35,11 @@ e1 \%<<\% e2
 
 \S4method{\%<<\%}{ConstVal,Expression}(e1, e2)
 
-PSDConstraint(lh_exp, rh_exp)
+PSDConstraint(expr, id = NA_integer_)
 
 \S4method{is_dcp}{PSDConstraint}(object)
+
+\S4method{is_dgp}{PSDConstraint}(object)
 
 \S4method{residual}{PSDConstraint}(object)
 
@@ -46,11 +48,11 @@ PSDConstraint(lh_exp, rh_exp)
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to compare.}
 
+\item{object}{A \linkS4class{PSDConstraint} object.}
+
 \item{lh_exp}{An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.}
 
 \item{rh_exp}{An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.}
-
-\item{object}{A \linkS4class{PSDConstraint} object.}
 }
 \description{
 This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i.e. \eqn{z^T(X - Y)z \geq 0} for all \eqn{z}.
@@ -58,6 +60,8 @@ This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i
 \section{Methods (by generic)}{
 \itemize{
 \item \code{is_dcp}: The constraint is DCP if the left-hand and right-hand expressions are affine.
+
+\item \code{is_dgp}: Is the constraint DGP?
 
 \item \code{residual}: A \linkS4class{Expression} representing the residual of the constraint.
 
@@ -67,15 +71,13 @@ This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i
 \section{Slots}{
 
 \describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
-
 \item{\code{lh_exp}}{An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.}
 
 \item{\code{rh_exp}}{An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.}
 
 \item{\code{args}}{(Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.}
 
-\item{\code{.expr}}{(Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.}
+\item{\code{expr}}{(Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.}
 
 \item{\code{dual_variable}}{(Internal) A \linkS4class{Variable} representing the dual variable associated with the constraint.}
 }}

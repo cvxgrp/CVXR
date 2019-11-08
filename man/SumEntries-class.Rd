@@ -5,16 +5,21 @@
 \alias{SumEntries-class}
 \alias{.SumEntries}
 \alias{SumEntries}
-\alias{SumEntries}
 \alias{to_numeric,SumEntries-method}
+\alias{is_atom_log_log_convex,SumEntries-method}
+\alias{is_atom_log_log_concave,SumEntries-method}
 \alias{graph_implementation,SumEntries-method}
 \title{The SumEntries class.}
 \usage{
-SumEntries(expr, axis = NA_real_)
+SumEntries(expr, axis = NA_real_, keepdims = FALSE)
 
 \S4method{to_numeric}{SumEntries}(object, values)
 
-\S4method{graph_implementation}{SumEntries}(object, arg_objs, size,
+\S4method{is_atom_log_log_convex}{SumEntries}(object)
+
+\S4method{is_atom_log_log_concave}{SumEntries}(object)
+
+\S4method{graph_implementation}{SumEntries}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -28,7 +33,7 @@ SumEntries(expr, axis = NA_real_)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -38,6 +43,10 @@ This class represents the sum of all entries in a vector or matrix.
 \section{Methods (by generic)}{
 \itemize{
 \item \code{to_numeric}: Sum the entries along the specified axis.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

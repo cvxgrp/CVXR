@@ -3,17 +3,33 @@
 \docType{class}
 \name{Transpose-class}
 \alias{Transpose-class}
+\alias{.Transpose}
 \alias{Transpose}
 \alias{to_numeric,Transpose-method}
-\alias{size_from_args,Transpose-method}
+\alias{is_symmetric,Transpose-method}
+\alias{is_hermitian,Transpose-method}
+\alias{dim_from_args,Transpose-method}
+\alias{is_atom_log_log_convex,Transpose-method}
+\alias{is_atom_log_log_concave,Transpose-method}
+\alias{get_data,Transpose-method}
 \alias{graph_implementation,Transpose-method}
 \title{The Transpose class.}
 \usage{
 \S4method{to_numeric}{Transpose}(object, values)
 
-\S4method{size_from_args}{Transpose}(object)
+\S4method{is_symmetric}{Transpose}(object)
 
-\S4method{graph_implementation}{Transpose}(object, arg_objs, size,
+\S4method{is_hermitian}{Transpose}(object)
+
+\S4method{dim_from_args}{Transpose}(object)
+
+\S4method{is_atom_log_log_convex}{Transpose}(object)
+
+\S4method{is_atom_log_log_concave}{Transpose}(object)
+
+\S4method{get_data}{Transpose}(object)
+
+\S4method{graph_implementation}{Transpose}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -23,7 +39,7 @@
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -34,7 +50,17 @@ This class represents the matrix transpose.
 \itemize{
 \item \code{to_numeric}: The transpose of the given value.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{is_symmetric}: Is the expression symmetric?
+
+\item \code{is_hermitian}: Is the expression hermitian?
+
+\item \code{dim_from_args}: The dimensions of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
+\item \code{get_data}: Returns the axes for transposition.
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

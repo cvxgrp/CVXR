@@ -5,14 +5,16 @@
 \alias{Log-class}
 \alias{.Log}
 \alias{Log}
-\alias{Log}
 \alias{to_numeric,Log-method}
 \alias{sign_from_args,Log-method}
 \alias{is_atom_convex,Log-method}
 \alias{is_atom_concave,Log-method}
+\alias{is_atom_log_log_convex,Log-method}
+\alias{is_atom_log_log_concave,Log-method}
 \alias{is_incr,Log-method}
 \alias{is_decr,Log-method}
-\alias{graph_implementation,Log-method}
+\alias{.grad,Log-method}
+\alias{.domain,Log-method}
 \title{The Log class.}
 \usage{
 Log(x)
@@ -25,11 +27,17 @@ Log(x)
 
 \S4method{is_atom_concave}{Log}(object)
 
+\S4method{is_atom_log_log_convex}{Log}(object)
+
+\S4method{is_atom_log_log_concave}{Log}(object)
+
 \S4method{is_incr}{Log}(object, idx)
 
 \S4method{is_decr}{Log}(object, idx)
 
-\S4method{graph_implementation}{Log}(object, arg_objs, size, data = NA_real_)
+\S4method{.grad}{Log}(object, values)
+
+\S4method{.domain}{Log}(object)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}
@@ -40,11 +48,7 @@ Log(x)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise natural logarithm \eqn{\log(x)}.
@@ -59,11 +63,17 @@ This class represents the elementwise natural logarithm \eqn{\log(x)}.
 
 \item \code{is_atom_concave}: The atom is concave.
 
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
 \item \code{is_incr}: The atom is weakly increasing.
 
 \item \code{is_decr}: The atom is not weakly decreasing.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints describng the domain of the node
 }}
 
 \section{Slots}{

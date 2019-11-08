@@ -5,9 +5,12 @@
 \alias{DiagVec-class}
 \alias{.DiagVec}
 \alias{DiagVec}
-\alias{DiagVec}
 \alias{to_numeric,DiagVec-method}
-\alias{size_from_args,DiagVec-method}
+\alias{dim_from_args,DiagVec-method}
+\alias{is_atom_log_log_convex,DiagVec-method}
+\alias{is_atom_log_log_concave,DiagVec-method}
+\alias{is_symmetric,DiagVec-method}
+\alias{is_hermitian,DiagVec-method}
 \alias{graph_implementation,DiagVec-method}
 \title{The DiagVec class.}
 \usage{
@@ -15,9 +18,17 @@ DiagVec(expr)
 
 \S4method{to_numeric}{DiagVec}(object, values)
 
-\S4method{size_from_args}{DiagVec}(object)
+\S4method{dim_from_args}{DiagVec}(object)
 
-\S4method{graph_implementation}{DiagVec}(object, arg_objs, size,
+\S4method{is_atom_log_log_convex}{DiagVec}(object)
+
+\S4method{is_atom_log_log_concave}{DiagVec}(object)
+
+\S4method{is_symmetric}{DiagVec}(object)
+
+\S4method{is_hermitian}{DiagVec}(object)
+
+\S4method{graph_implementation}{DiagVec}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -29,7 +40,7 @@ DiagVec(expr)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -40,7 +51,15 @@ This class represents the conversion of a vector into a diagonal matrix.
 \itemize{
 \item \code{to_numeric}: Convert the vector constant into a diagonal matrix.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{dim_from_args}: The dimensions of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
+\item \code{is_symmetric}: Is the expression symmetric?
+
+\item \code{is_hermitian}: Is the expression hermitian?
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

@@ -5,26 +5,31 @@
 \alias{HStack-class}
 \alias{.HStack}
 \alias{HStack}
-\alias{HStack}
-\alias{validate_args,HStack-method}
 \alias{to_numeric,HStack-method}
-\alias{size_from_args,HStack-method}
+\alias{dim_from_args,HStack-method}
+\alias{is_atom_log_log_convex,HStack-method}
+\alias{is_atom_log_log_concave,HStack-method}
+\alias{validate_args,HStack-method}
 \alias{graph_implementation,HStack-method}
 \title{The HStack class.}
 \usage{
 HStack(...)
 
-\S4method{validate_args}{HStack}(object)
-
 \S4method{to_numeric}{HStack}(object, values)
 
-\S4method{size_from_args}{HStack}(object)
+\S4method{dim_from_args}{HStack}(object)
 
-\S4method{graph_implementation}{HStack}(object, arg_objs, size,
+\S4method{is_atom_log_log_convex}{HStack}(object)
+
+\S4method{is_atom_log_log_concave}{HStack}(object)
+
+\S4method{validate_args}{HStack}(object)
+
+\S4method{graph_implementation}{HStack}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
-\item{...}{\linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.}
+\item{...}{\linkS4class{Expression} objects or matrices. All arguments must have the same dimensions except for axis 2 (columns).}
 
 \item{object}{A \linkS4class{HStack} object.}
 
@@ -32,7 +37,7 @@ HStack(...)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -41,11 +46,15 @@ Horizontal concatenation of values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check all arguments have the same height.
-
 \item \code{to_numeric}: Horizontally concatenate the values using \code{cbind}.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{dim_from_args}: The dimensions of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
+\item \code{validate_args}: Check all arguments have the same height.
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}
@@ -53,6 +62,6 @@ Horizontal concatenation of values.
 \section{Slots}{
 
 \describe{
-\item{\code{...}}{\linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.}
+\item{\code{...}}{\linkS4class{Expression} objects or matrices. All arguments must have the same dimensions except for axis 2 (columns).}
 }}
 

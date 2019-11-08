@@ -11,7 +11,7 @@
 \item{x}{An \linkS4class{Expression} object.}
 }
 \value{
-A string indicating the sign of the expression, either "ZERO", "POSITIVE", "NEGATIVE", or "UNKNOWN".
+A string indicating the sign of the expression, either "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 }
 \description{
 The sign of an expression.

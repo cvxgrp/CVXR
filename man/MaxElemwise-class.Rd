@@ -5,15 +5,16 @@
 \alias{MaxElemwise-class}
 \alias{.MaxElemwise}
 \alias{MaxElemwise}
-\alias{MaxElemwise}
 \alias{to_numeric,MaxElemwise-method}
 \alias{sign_from_args,MaxElemwise-method}
 \alias{is_atom_convex,MaxElemwise-method}
 \alias{is_atom_concave,MaxElemwise-method}
+\alias{is_atom_log_log_convex,MaxElemwise-method}
+\alias{is_atom_log_log_concave,MaxElemwise-method}
 \alias{is_incr,MaxElemwise-method}
 \alias{is_decr,MaxElemwise-method}
 \alias{is_pwl,MaxElemwise-method}
-\alias{graph_implementation,MaxElemwise-method}
+\alias{.grad,MaxElemwise-method}
 \title{The MaxElemwise class.}
 \usage{
 MaxElemwise(arg1, arg2, ...)
@@ -26,14 +27,17 @@ MaxElemwise(arg1, arg2, ...)
 
 \S4method{is_atom_concave}{MaxElemwise}(object)
 
+\S4method{is_atom_log_log_convex}{MaxElemwise}(object)
+
+\S4method{is_atom_log_log_concave}{MaxElemwise}(object)
+
 \S4method{is_incr}{MaxElemwise}(object, idx)
 
 \S4method{is_decr}{MaxElemwise}(object, idx)
 
 \S4method{is_pwl}{MaxElemwise}(object)
 
-\S4method{graph_implementation}{MaxElemwise}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{.grad}{MaxElemwise}(object, values)
 }
 \arguments{
 \item{arg1}{The first \linkS4class{Expression} in the maximum operation.}
@@ -48,11 +52,7 @@ MaxElemwise(arg1, arg2, ...)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise maximum.
@@ -67,13 +67,17 @@ This class represents the elementwise maximum.
 
 \item \code{is_atom_concave}: The atom is not concave.
 
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
 \item \code{is_incr}: The atom is weakly increasing.
 
 \item \code{is_decr}: The atom is not weakly decreasing.
 
 \item \code{is_pwl}: Are all the arguments piecewise linear?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 }}
 
 \section{Slots}{

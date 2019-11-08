@@ -7,7 +7,7 @@
 \alias{max.Expression}
 \title{Maximum}
 \usage{
-max_entries(x, axis = NA_real_)
+max_entries(x, axis = NA_real_, keepdims = FALSE)
 
 \method{max}{Expression}(..., na.rm = FALSE)
 }
@@ -27,6 +27,17 @@ An \linkS4class{Expression} representing the maximum of the input.
 The maximum of an expression.
 }
 \examples{
+x <- Variable(2)
+val <- matrix(c(-5,-10))
+prob <- Problem(Minimize(max_entries(x)), list(x == val))
+result <- solve(prob)
+result$value
+
+A <- Variable(2,2)
+val <- rbind(c(-5,2), c(-3,1))
+prob <- Problem(Minimize(max_entries(A, axis = 1)[2,1]), list(A == val))
+result <- solve(prob)
+result$value
 x <- Variable(2)
 val <- matrix(c(-5,-10))
 prob <- Problem(Minimize(max_entries(x)), list(x == val))

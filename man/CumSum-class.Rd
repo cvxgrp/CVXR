@@ -5,10 +5,10 @@
 \alias{CumSum-class}
 \alias{.CumSum}
 \alias{CumSum}
-\alias{CumSum}
 \alias{to_numeric,CumSum-method}
-\alias{size_from_args,CumSum-method}
-\alias{validate_args,CumSum-method}
+\alias{dim_from_args,CumSum-method}
+\alias{get_data,CumSum-method}
+\alias{.grad,CumSum-method}
 \alias{graph_implementation,CumSum-method}
 \title{The CumSum class.}
 \usage{
@@ -16,11 +16,13 @@ CumSum(expr, axis = 2)
 
 \S4method{to_numeric}{CumSum}(object, values)
 
-\S4method{size_from_args}{CumSum}(object)
+\S4method{dim_from_args}{CumSum}(object)
 
-\S4method{validate_args}{CumSum}(object)
+\S4method{get_data}{CumSum}(object)
 
-\S4method{graph_implementation}{CumSum}(object, arg_objs, size,
+\S4method{.grad}{CumSum}(object, values)
+
+\S4method{graph_implementation}{CumSum}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -34,9 +36,11 @@ CumSum(expr, axis = 2)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the cumulative sum.
@@ -45,9 +49,11 @@ This class represents the cumulative sum.
 \itemize{
 \item \code{to_numeric}: The cumulative sum of the values along the specified axis.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{dim_from_args}: The dimensions of the atom.
 
-\item \code{validate_args}: Check that axis is either 1 or 2.
+\item \code{get_data}: Returns the axis along which the cumulative sum is taken.
+
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

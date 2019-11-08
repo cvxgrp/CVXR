@@ -5,40 +5,21 @@
 \alias{Variable-class}
 \alias{.Variable}
 \alias{Variable}
-\alias{Variable}
 \alias{as.character,Variable-method}
-\alias{id,Variable-method}
-\alias{is_positive,Variable-method}
-\alias{is_negative,Variable-method}
-\alias{size,Variable-method}
-\alias{get_data,Variable-method}
 \alias{name,Variable-method}
 \alias{value,Variable-method}
-\alias{value<-,Variable-method}
 \alias{grad,Variable-method}
 \alias{variables,Variable-method}
 \alias{canonicalize,Variable-method}
 \title{The Variable class.}
 \usage{
-Variable(rows = 1, cols = 1, name = NA_character_)
+Variable(rows = NULL, cols = NULL, name = NA_character_, ...)
 
 \S4method{as.character}{Variable}(x)
 
-\S4method{id}{Variable}(object)
-
-\S4method{is_positive}{Variable}(object)
-
-\S4method{is_negative}{Variable}(object)
-
-\S4method{size}{Variable}(object)
-
-\S4method{get_data}{Variable}(object)
-
-\S4method{name}{Variable}(object)
+\S4method{name}{Variable}(x)
 
 \S4method{value}{Variable}(object)
-
-\S4method{value}{Variable}(object) <- value
 
 \S4method{grad}{Variable}(object)
 
@@ -47,36 +28,20 @@ Variable(rows = 1, cols = 1, name = NA_character_)
 \S4method{canonicalize}{Variable}(object)
 }
 \arguments{
-\item{rows}{The number of rows in the variable.}
-
-\item{cols}{The number of columns in the variable.}
-
 \item{name}{(Optional) A character string representing the name of the variable.}
 
 \item{x, object}{A \linkS4class{Variable} object.}
 
-\item{value}{The value to assign to the primal variable.}
+\item{dim}{The dimensions of the variable.}
 }
 \description{
 This class represents an optimization variable.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{id}: The unique ID of the variable.
-
-\item \code{is_positive}: A logical value indicating whether the variable is positive.
-
-\item \code{is_negative}: A logical value indicating whether the variable is negative.
-
-\item \code{size}: The \code{c(row, col)} dimensions of the variable.
-
-\item \code{get_data}: Returns \code{list(rows, cols, name)}.
-
 \item \code{name}: The name of the variable.
 
-\item \code{value}: The value of the variable.
-
-\item \code{value<-}: Set the value of the primal variable.
+\item \code{value}: Get the value of the variable.
 
 \item \code{grad}: The sub/super-gradient of the variable represented as a sparse matrix.
 
@@ -88,15 +53,9 @@ This class represents an optimization variable.
 \section{Slots}{
 
 \describe{
-\item{\code{id}}{(Internal) A unique identification number used internally.}
-
-\item{\code{rows}}{The number of rows in the variable.}
-
-\item{\code{cols}}{The number of columns in the variable.}
+\item{\code{dim}}{The dimensions of the variable.}
 
 \item{\code{name}}{(Optional) A character string representing the name of the variable.}
-
-\item{\code{primal_value}}{(Internal) The primal value of the variable stored internally.}
 }}
 
 \examples{

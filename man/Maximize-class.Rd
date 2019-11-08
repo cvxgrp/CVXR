@@ -5,10 +5,9 @@
 \alias{Maximize-class}
 \alias{.Maximize}
 \alias{Maximize}
-\alias{Maximize}
 \alias{canonicalize,Maximize-method}
 \alias{is_dcp,Maximize-method}
-\alias{is_quadratic,Maximize-method}
+\alias{is_dgp,Maximize-method}
 \title{The Maximize class.}
 \usage{
 Maximize(expr)
@@ -17,7 +16,7 @@ Maximize(expr)
 
 \S4method{is_dcp}{Maximize}(object)
 
-\S4method{is_quadratic}{Maximize}(object)
+\S4method{is_dgp}{Maximize}(object)
 }
 \arguments{
 \item{expr}{A scalar \linkS4class{Expression} to maximize.}
@@ -33,7 +32,7 @@ This class represents an optimization objective for maximization.
 
 \item \code{is_dcp}: A logical value indicating whether the objective is concave.
 
-\item \code{is_quadratic}: A logical value indicating whether the objective is quadratic.
+\item \code{is_dgp}: A logical value indicating whether the objective is log-log concave.
 }}
 
 \section{Slots}{

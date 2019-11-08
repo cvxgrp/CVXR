@@ -6,11 +6,17 @@
 \alias{\%*\%,Expression,ConstVal-method}
 \alias{\%*\%,ConstVal,Expression-method}
 \alias{MulExpression-class}
+\alias{.MulExpression}
 \alias{MulExpression}
-\alias{validate_args,MulExpression-method}
-\alias{size_from_args,MulExpression-method}
+\alias{to_numeric,MulExpression-method}
+\alias{dim_from_args,MulExpression-method}
+\alias{is_atom_convex,MulExpression-method}
+\alias{is_atom_concave,MulExpression-method}
+\alias{is_atom_log_log_convex,MulExpression-method}
+\alias{is_atom_log_log_concave,MulExpression-method}
 \alias{is_incr,MulExpression-method}
 \alias{is_decr,MulExpression-method}
+\alias{.grad,MulExpression-method}
 \alias{graph_implementation,MulExpression-method}
 \title{The MulExpression class.}
 \usage{
@@ -20,15 +26,25 @@
 
 \S4method{\%*\%}{ConstVal,Expression}(x, y)
 
-\S4method{validate_args}{MulExpression}(object)
+\S4method{to_numeric}{MulExpression}(object, values)
 
-\S4method{size_from_args}{MulExpression}(object)
+\S4method{dim_from_args}{MulExpression}(object)
+
+\S4method{is_atom_convex}{MulExpression}(object)
+
+\S4method{is_atom_concave}{MulExpression}(object)
+
+\S4method{is_atom_log_log_convex}{MulExpression}(object)
+
+\S4method{is_atom_log_log_concave}{MulExpression}(object)
 
 \S4method{is_incr}{MulExpression}(object, idx)
 
 \S4method{is_decr}{MulExpression}(object, idx)
 
-\S4method{graph_implementation}{MulExpression}(object, arg_objs, size,
+\S4method{.grad}{MulExpression}(object, values)
+
+\S4method{graph_implementation}{MulExpression}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -36,31 +52,45 @@
 
 \item{object}{A \linkS4class{MulExpression} object.}
 
+\item{values}{A list of arguments to the atom.}
+
 \item{idx}{An index into the atom.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the matrix product of two linear expressions.
-See \linkS4class{MulElemwise} for the elementwise product.
+See \linkS4class{Multiply} for the elementwise product.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check the dimensions.
+\item \code{to_numeric}: Matrix multiplication.
 
-\item \code{size_from_args}: The size of the expression.
+\item \code{dim_from_args}: The (row, col) dimensions of the expression.
+
+\item \code{is_atom_convex}: Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
+
+\item \code{is_atom_concave}: If the multiplication atom is convex, then it is affine.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{is_incr}: Is the left-hand expression positive?
 
 \item \code{is_decr}: Is the left-hand expression negative?
 
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 \item \code{graph_implementation}: The graph implementation of the expression.
 }}
 
 \seealso{
-\linkS4class{MulElemwise}
+\linkS4class{Multiply}
 }

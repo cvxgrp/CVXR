@@ -5,9 +5,10 @@
 \alias{DiagMat-class}
 \alias{.DiagMat}
 \alias{DiagMat}
-\alias{DiagMat}
 \alias{to_numeric,DiagMat-method}
-\alias{size_from_args,DiagMat-method}
+\alias{dim_from_args,DiagMat-method}
+\alias{is_atom_log_log_convex,DiagMat-method}
+\alias{is_atom_log_log_concave,DiagMat-method}
 \alias{graph_implementation,DiagMat-method}
 \title{The DiagMat class.}
 \usage{
@@ -15,9 +16,13 @@ DiagMat(expr)
 
 \S4method{to_numeric}{DiagMat}(object, values)
 
-\S4method{size_from_args}{DiagMat}(object)
+\S4method{dim_from_args}{DiagMat}(object)
 
-\S4method{graph_implementation}{DiagMat}(object, arg_objs, size,
+\S4method{is_atom_log_log_convex}{DiagMat}(object)
+
+\S4method{is_atom_log_log_concave}{DiagMat}(object)
+
+\S4method{graph_implementation}{DiagMat}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -29,7 +34,7 @@ DiagMat(expr)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -40,7 +45,11 @@ This class represents the extraction of the diagonal from a square matrix.
 \itemize{
 \item \code{to_numeric}: Extract the diagonal from a square matrix constant.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{dim_from_args}: The size of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

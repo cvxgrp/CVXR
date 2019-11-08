@@ -5,24 +5,36 @@
 \alias{SOC-class}
 \alias{.SOC}
 \alias{SOC}
-\alias{SOC}
 \alias{as.character,SOC-method}
+\alias{get_data,SOC-method}
 \alias{format_constr,SOC-method}
+\alias{num_cones,SOC-method}
 \alias{size,SOC-method}
+\alias{cone_sizes,SOC-method}
+\alias{is_dcp,SOC-method}
+\alias{is_dgp,SOC-method}
 \title{The SOC class.}
 \usage{
-SOC(t, x_elems)
+SOC(t, X, axis = 2, id = NA_integer_)
 
 \S4method{as.character}{SOC}(x)
 
+\S4method{get_data}{SOC}(object)
+
 \S4method{format_constr}{SOC}(object, eq_constr, leq_constr, dims, solver)
 
+\S4method{num_cones}{SOC}(object)
+
 \S4method{size}{SOC}(object)
+
+\S4method{cone_sizes}{SOC}(object)
+
+\S4method{is_dcp}{SOC}(object)
+
+\S4method{is_dgp}{SOC}(object)
 }
 \arguments{
 \item{t}{The scalar part of the second-order constraint.}
-
-\item{x_elems}{A list containing the elements of the vector part of the constraint.}
 
 \item{x, object}{A \linkS4class{SOC} object.}
 
@@ -33,22 +45,32 @@ SOC(t, x_elems)
 \item{dims}{A list with the dimensions of the conic constraints.}
 
 \item{solver}{A string representing the solver to be called.}
+
+\item{x_elems}{A list containing the elements of the vector part of the constraint.}
 }
 \description{
 This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{get_data}: Information needed to reconstruct the object aside from the args.
+
 \item \code{format_constr}: Format SOC constraints as inequalities for the solver.
 
-\item \code{size}: The dimensions of the second-order cone.
+\item \code{num_cones}: The number of elementwise cones.
+
+\item \code{size}: The number of entries in the combined cones.
+
+\item \code{cone_sizes}: The dimensions of the second-order cones.
+
+\item \code{is_dcp}: An SOC constraint is DCP if each of its arguments is affine.
+
+\item \code{is_dgp}: Is the constraint DGP?
 }}
 
 \section{Slots}{
 
 \describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
-
 \item{\code{t}}{The scalar part of the second-order constraint.}
 
 \item{\code{x_elems}}{A list containing the elements of the vector part of the constraint.}

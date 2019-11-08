@@ -7,9 +7,15 @@
 \alias{+,Expression,ConstVal-method}
 \alias{+,ConstVal,Expression-method}
 \alias{AddExpression-class}
+\alias{.AddExpression}
 \alias{AddExpression}
+\alias{dim_from_args,AddExpression-method}
 \alias{to_numeric,AddExpression-method}
-\alias{size_from_args,AddExpression-method}
+\alias{is_atom_log_log_convex,AddExpression-method}
+\alias{is_atom_log_log_concave,AddExpression-method}
+\alias{is_symmetric,AddExpression-method}
+\alias{is_hermitian,AddExpression-method}
+\alias{copy,AddExpression-method}
 \alias{graph_implementation,AddExpression-method}
 \title{The AddExpression class.}
 \usage{
@@ -21,34 +27,57 @@
 
 \S4method{+}{ConstVal,Expression}(e1, e2)
 
+\S4method{dim_from_args}{AddExpression}(object)
+
 \S4method{to_numeric}{AddExpression}(object, values)
 
-\S4method{size_from_args}{AddExpression}(object)
+\S4method{is_atom_log_log_convex}{AddExpression}(object)
 
-\S4method{graph_implementation}{AddExpression}(object, arg_objs, size,
+\S4method{is_atom_log_log_concave}{AddExpression}(object)
+
+\S4method{is_symmetric}{AddExpression}(object)
+
+\S4method{is_hermitian}{AddExpression}(object)
+
+\S4method{copy}{AddExpression}(object, args = NULL,
+  id_objects = list())
+
+\S4method{graph_implementation}{AddExpression}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to add.}
 
-\item{object}{An \linkS4class{AddExpression} object.}
-
 \item{values}{A list of arguments to the atom.}
+
+\item{args}{An optional list of arguments to reconstruct the atom. Default is to use current args of the atom}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{x, object}{An \linkS4class{AddExpression} object.}
 }
 \description{
 This class represents the sum of any number of expressions.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{dim_from_args}: The dimensions of the expression.
+
 \item \code{to_numeric}: Sum all the values.
 
-\item \code{size_from_args}: The size of the expression.
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log convex?
+
+\item \code{is_symmetric}: Is the atom symmetric?
+
+\item \code{is_hermitian}: Is the atom hermitian?
+
+\item \code{copy}: Returns a shallow copy of the AddExpression atom
 
 \item \code{graph_implementation}: The graph implementation of the expression.
 }}

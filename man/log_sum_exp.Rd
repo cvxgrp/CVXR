@@ -5,7 +5,7 @@
 \alias{log_sum_exp}
 \title{Log-Sum-Exponential}
 \usage{
-log_sum_exp(x, axis = NA_real_)
+log_sum_exp(x, axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}

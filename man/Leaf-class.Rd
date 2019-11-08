@@ -4,38 +4,90 @@
 \name{Leaf-class}
 \alias{Leaf-class}
 \alias{Leaf}
+\alias{dim,Leaf-method}
 \alias{variables,Leaf-method}
 \alias{parameters,Leaf-method}
 \alias{constants,Leaf-method}
+\alias{atoms,Leaf-method}
 \alias{is_convex,Leaf-method}
 \alias{is_concave,Leaf-method}
+\alias{is_log_log_convex,Leaf-method}
+\alias{is_log_log_concave,Leaf-method}
+\alias{is_nonneg,Leaf-method}
+\alias{is_nonpos,Leaf-method}
+\alias{is_pos,Leaf-method}
+\alias{is_neg,Leaf-method}
+\alias{is_hermitian,Leaf-method}
+\alias{is_symmetric,Leaf-method}
+\alias{is_imag,Leaf-method}
+\alias{is_complex,Leaf-method}
+\alias{domain,Leaf-method}
+\alias{project,Leaf-method}
+\alias{project_and_assign,Leaf-method}
+\alias{value,Leaf-method}
+\alias{value<-,Leaf-method}
+\alias{validate_val,Leaf-method}
+\alias{is_psd,Leaf-method}
+\alias{is_nsd,Leaf-method}
 \alias{is_quadratic,Leaf-method}
 \alias{is_pwl,Leaf-method}
-\alias{domain,Leaf-method}
-\alias{validate_val,Leaf-method}
 \title{The Leaf class.}
 \usage{
+\S4method{dim}{Leaf}(x)
+
 \S4method{variables}{Leaf}(object)
 
 \S4method{parameters}{Leaf}(object)
 
 \S4method{constants}{Leaf}(object)
 
+\S4method{atoms}{Leaf}(object)
+
 \S4method{is_convex}{Leaf}(object)
 
 \S4method{is_concave}{Leaf}(object)
 
-\S4method{is_quadratic}{Leaf}(object)
+\S4method{is_log_log_convex}{Leaf}(object)
 
-\S4method{is_pwl}{Leaf}(object)
+\S4method{is_log_log_concave}{Leaf}(object)
+
+\S4method{is_nonneg}{Leaf}(object)
+
+\S4method{is_nonpos}{Leaf}(object)
+
+\S4method{is_pos}{Leaf}(object)
+
+\S4method{is_neg}{Leaf}(object)
+
+\S4method{is_hermitian}{Leaf}(object)
+
+\S4method{is_symmetric}{Leaf}(object)
+
+\S4method{is_imag}{Leaf}(object)
+
+\S4method{is_complex}{Leaf}(object)
 
 \S4method{domain}{Leaf}(object)
 
+\S4method{project}{Leaf}(object, value)
+
+\S4method{project_and_assign}{Leaf}(object, value)
+
+\S4method{value}{Leaf}(object)
+
+\S4method{value}{Leaf}(object) <- value
+
 \S4method{validate_val}{Leaf}(object, val)
+
+\S4method{is_psd}{Leaf}(object)
+
+\S4method{is_nsd}{Leaf}(object)
+
+\S4method{is_quadratic}{Leaf}(object)
+
+\S4method{is_pwl}{Leaf}(object)
 }
 \arguments{
-\item{object}{A \linkS4class{Leaf} object.}
-
 \item{val}{The assigned value.}
 }
 \description{
@@ -43,28 +95,66 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{dim}: The dimensions of the leaf node.
+
 \item \code{variables}: List of \linkS4class{Variable} objects in the leaf node.
 
 \item \code{parameters}: List of \linkS4class{Parameter} objects in the leaf node.
 
 \item \code{constants}: List of \linkS4class{Constant} objects in the leaf node.
 
+\item \code{atoms}: List of \linkS4class{Atom} objects in the leaf node.
+
 \item \code{is_convex}: A logical value indicating whether the leaf node is convex.
 
 \item \code{is_concave}: A logical value indicating whether the leaf node is concave.
 
-\item \code{is_quadratic}: A logical value indicating whether the leaf node is quadratic.
+\item \code{is_log_log_convex}: Is the expression log-log convex?
 
-\item \code{is_pwl}: A logical value indicating whether the leaf node is piecewise linear.
+\item \code{is_log_log_concave}: Is the expression log-log concave?
+
+\item \code{is_nonneg}: A logical value indicating whether the leaf node is nonnegative.
+
+\item \code{is_nonpos}: A logical value indicating whether the leaf node is nonpositive.
+
+\item \code{is_pos}: Is the expression positive?
+
+\item \code{is_neg}: Is the expression negative?
+
+\item \code{is_hermitian}: A logical value indicating whether the leaf node is hermitian.
+
+\item \code{is_symmetric}: A logical value indicating whether the leaf node is symmetric.
+
+\item \code{is_imag}: A logical value indicating whether the leaf node is imaginary.
+
+\item \code{is_complex}: A logical value indicating whether the leaf node is complex.
 
 \item \code{domain}: A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 
+\item \code{project}: Project value onto the attribute set of the leaf.
+
+\item \code{project_and_assign}: Project and assign a value to the leaf.
+
+\item \code{value}: Get the value of the leaf.
+
+\item \code{value<-}: Set the value of the leaf.
+
 \item \code{validate_val}: Check that \code{val} satisfies symbolic attributes of leaf.
+
+\item \code{is_psd}: A logical value indicating whether the leaf node is a positive semidefinite matrix.
+
+\item \code{is_nsd}: A logical value indicating whether the leaf node is a negative semidefinite matrix.
+
+\item \code{is_quadratic}: Leaf nodes are always quadratic.
+
+\item \code{is_pwl}: Leaf nodes are always piecewise linear.
 }}
 
 \section{Slots}{
 
 \describe{
+\item{\code{id}}{(Internal) A unique integer identification number used internally.}
+
 \item{\code{args}}{A list containing the arguments.}
 }}
 

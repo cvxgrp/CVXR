@@ -9,18 +9,34 @@
 \alias{domain,Expression-method}
 \alias{as.character,Expression-method}
 \alias{name,Expression-method}
-\alias{curvature,Expression-method}
+\alias{expr,Expression-method}
 \alias{is_constant,Expression-method}
 \alias{is_affine,Expression-method}
 \alias{is_convex,Expression-method}
 \alias{is_concave,Expression-method}
 \alias{is_dcp,Expression-method}
+\alias{is_log_log_constant,Expression-method}
+\alias{is_log_log_affine,Expression-method}
+\alias{is_log_log_convex,Expression-method}
+\alias{is_log_log_concave,Expression-method}
+\alias{is_dgp,Expression-method}
+\alias{is_hermitian,Expression-method}
+\alias{is_psd,Expression-method}
+\alias{is_nsd,Expression-method}
 \alias{is_quadratic,Expression-method}
+\alias{is_symmetric,Expression-method}
 \alias{is_pwl,Expression-method}
+\alias{is_qpwa,Expression-method}
 \alias{is_zero,Expression-method}
-\alias{is_positive,Expression-method}
-\alias{is_negative,Expression-method}
+\alias{is_nonneg,Expression-method}
+\alias{is_nonpos,Expression-method}
+\alias{dim,Expression-method}
+\alias{is_real,Expression-method}
+\alias{is_imag,Expression-method}
+\alias{is_complex,Expression-method}
 \alias{size,Expression-method}
+\alias{ndim,Expression-method}
+\alias{flatten,Expression-method}
 \alias{is_scalar,Expression-method}
 \alias{is_vector,Expression-method}
 \alias{is_matrix,Expression-method}
@@ -36,9 +52,9 @@
 
 \S4method{as.character}{Expression}(x)
 
-\S4method{name}{Expression}(object)
+\S4method{name}{Expression}(x)
 
-\S4method{curvature}{Expression}(object)
+\S4method{expr}{Expression}(object)
 
 \S4method{is_constant}{Expression}(object)
 
@@ -50,17 +66,49 @@
 
 \S4method{is_dcp}{Expression}(object)
 
+\S4method{is_log_log_constant}{Expression}(object)
+
+\S4method{is_log_log_affine}{Expression}(object)
+
+\S4method{is_log_log_convex}{Expression}(object)
+
+\S4method{is_log_log_concave}{Expression}(object)
+
+\S4method{is_dgp}{Expression}(object)
+
+\S4method{is_hermitian}{Expression}(object)
+
+\S4method{is_psd}{Expression}(object)
+
+\S4method{is_nsd}{Expression}(object)
+
 \S4method{is_quadratic}{Expression}(object)
+
+\S4method{is_symmetric}{Expression}(object)
 
 \S4method{is_pwl}{Expression}(object)
 
+\S4method{is_qpwa}{Expression}(object)
+
 \S4method{is_zero}{Expression}(object)
 
-\S4method{is_positive}{Expression}(object)
+\S4method{is_nonneg}{Expression}(object)
 
-\S4method{is_negative}{Expression}(object)
+\S4method{is_nonpos}{Expression}(object)
+
+\S4method{dim}{Expression}(x)
+
+\S4method{is_real}{Expression}(object)
+
+\S4method{is_imag}{Expression}(object)
+
+\S4method{is_complex}{Expression}(object)
 
 \S4method{size}{Expression}(object)
+
+\S4method{ndim}{Expression}(object)
+
+\S4method{flatten}{Expression}(object)
 
 \S4method{is_scalar}{Expression}(object)
 
@@ -88,7 +136,7 @@ This class represents a mathematical expression.
 
 \item \code{name}: The string representation of the expression.
 
-\item \code{curvature}: The curvature of the expression.
+\item \code{expr}: The expression itself.
 
 \item \code{is_constant}: The expression is constant if it contains no variables or is identically zero.
 
@@ -100,23 +148,55 @@ This class represents a mathematical expression.
 
 \item \code{is_dcp}: The expression is DCP if it is convex or concave.
 
+\item \code{is_log_log_constant}: Is the expression log-log constant, i.e., elementwise positive?
+
+\item \code{is_log_log_affine}: Is the expression log-log affine?
+
+\item \code{is_log_log_convex}: Is the expression log-log convex?
+
+\item \code{is_log_log_concave}: Is the expression log-log concave?
+
+\item \code{is_dgp}: The expression is DGP if it is log-log DCP.
+
+\item \code{is_hermitian}: A logical value indicating whether the expression is a Hermitian matrix.
+
+\item \code{is_psd}: A logical value indicating whether the expression is a positive semidefinite matrix.
+
+\item \code{is_nsd}: A logical value indicating whether the expression is a negative semidefinite matrix.
+
 \item \code{is_quadratic}: A logical value indicating whether the expression is quadratic.
+
+\item \code{is_symmetric}: A logical value indicating whether the expression is symmetric.
 
 \item \code{is_pwl}: A logical value indicating whether the expression is piecewise linear.
 
-\item \code{is_zero}: The expression is zero if it is both positive and negative.
+\item \code{is_qpwa}: A logical value indicating whether the expression is quadratic of piecewise affine.
 
-\item \code{is_positive}: A logical value indicating whether the expression is positive.
+\item \code{is_zero}: The expression is zero if it is both nonnegative and nonpositive.
 
-\item \code{is_negative}: A logical value indicating whether the expression is negative.
+\item \code{is_nonneg}: A logical value indicating whether the expression is nonnegative.
 
-\item \code{size}: The \code{c(row, col)} dimensions of the expression.
+\item \code{is_nonpos}: A logical value indicating whether the expression is nonpositive.
 
-\item \code{is_scalar}: The expression is scalar if rows = cols = 1.
+\item \code{dim}: The \code{c(row, col)} dimensions of the expression.
 
-\item \code{is_vector}: The expression is a vector if min(rows, cols) = 1.
+\item \code{is_real}: A logical value indicating whether the expression is real.
 
-\item \code{is_matrix}: The expression is a matrix if rows > 1 and cols > 1.
+\item \code{is_imag}: A logical value indicating whether the expression is imaginary.
+
+\item \code{is_complex}: A logical value indicating whether the expression is complex.
+
+\item \code{size}: The number of entries in the expression.
+
+\item \code{ndim}: The number of dimensions of the expression.
+
+\item \code{flatten}: Vectorizes the expression.
+
+\item \code{is_scalar}: A logical value indicating whether the expression is a scalar.
+
+\item \code{is_vector}: A logical value indicating whether the expression is a row or column vector.
+
+\item \code{is_matrix}: A logical value indicating whether the expression is a matrix.
 
 \item \code{nrow}: Number of rows in the expression.
 

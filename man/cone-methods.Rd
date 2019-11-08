@@ -4,12 +4,12 @@
 \name{cone-methods}
 \alias{cone-methods}
 \alias{num_cones}
-\alias{cone_size}
+\alias{cone_sizes}
 \title{Second-Order Cone Methods}
 \usage{
 num_cones(object)
 
-cone_size(object)
+cone_sizes(object)
 }
 \arguments{
 \item{object}{An \linkS4class{SOCAxis} object.}
@@ -18,5 +18,5 @@ cone_size(object)
 The number of cones, or the size of a cone.
 }
 \description{
-The number of elementwise cones or the size of a single cone in a second-order cone constraint.
+The number of elementwise cones or a list of the sizes of the elementwise cones.
 }

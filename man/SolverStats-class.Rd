@@ -5,7 +5,6 @@
 \alias{SolverStats-class}
 \alias{.SolverStats}
 \alias{SolverStats}
-\alias{SolverStats}
 \title{The SolverStats class.}
 \usage{
 SolverStats(results_dict = list(), solver_name = NA_character_)

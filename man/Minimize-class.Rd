@@ -5,28 +5,18 @@
 \alias{Minimize-class}
 \alias{.Minimize}
 \alias{Minimize}
-\alias{Minimize}
 \alias{canonicalize,Minimize-method}
-\alias{variables,Minimize-method}
-\alias{parameters,Minimize-method}
-\alias{constants,Minimize-method}
 \alias{is_dcp,Minimize-method}
-\alias{value,Minimize-method}
+\alias{is_dgp,Minimize-method}
 \title{The Minimize class.}
 \usage{
 Minimize(expr)
 
 \S4method{canonicalize}{Minimize}(object)
 
-\S4method{variables}{Minimize}(object)
-
-\S4method{parameters}{Minimize}(object)
-
-\S4method{constants}{Minimize}(object)
-
 \S4method{is_dcp}{Minimize}(object)
 
-\S4method{value}{Minimize}(object)
+\S4method{is_dgp}{Minimize}(object)
 }
 \arguments{
 \item{expr}{A scalar \linkS4class{Expression} to minimize.}
@@ -40,15 +30,9 @@ This class represents an optimization objective for minimization.
 \itemize{
 \item \code{canonicalize}: Pass on the target expression's objective and constraints.
 
-\item \code{variables}: List of \linkS4class{Variable} objects in the objective.
-
-\item \code{parameters}: List of \linkS4class{Parameter} objects in the objective.
-
-\item \code{constants}: List of \linkS4class{Constant} objects in the objective.
-
 \item \code{is_dcp}: A logical value indicating whether the objective is convex.
 
-\item \code{value}: The value of the objective expression.
+\item \code{is_dgp}: A logical value indicating whether the objective is log-log convex.
 }}
 
 \section{Slots}{

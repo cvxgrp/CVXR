@@ -5,16 +5,17 @@
 \alias{psolve}
 \alias{solve}
 \alias{psolve,Problem-method}
-\alias{solve.Problem}
+\alias{solve,Problem,ANY-method}
 \title{Solve a DCP Problem}
 \usage{
-psolve(object, solver, ignore_dcp = FALSE, warm_start = FALSE,
-  verbose = FALSE, parallel = FALSE, ...)
+psolve(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE,
+  verbose = FALSE, parallel = FALSE, gp = FALSE, ...)
 
-\S4method{psolve}{Problem}(object, solver, ignore_dcp = FALSE,
-  warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...)
+\S4method{psolve}{Problem}(object, solver = NA, ignore_dcp = FALSE,
+  warm_start = FALSE, verbose = FALSE, parallel = FALSE,
+  gp = FALSE, ...)
 
-\method{solve}{Problem}(a, b, ...)
+\S4method{solve}{Problem,ANY}(a, b = NA, ...)
 }
 \arguments{
 \item{object, a}{A \linkS4class{Problem} object.}

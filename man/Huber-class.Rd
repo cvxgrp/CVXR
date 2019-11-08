@@ -5,21 +5,19 @@
 \alias{Huber-class}
 \alias{.Huber}
 \alias{Huber}
-\alias{Huber}
-\alias{validate_args,Huber-method}
 \alias{to_numeric,Huber-method}
 \alias{sign_from_args,Huber-method}
 \alias{is_atom_convex,Huber-method}
 \alias{is_atom_concave,Huber-method}
 \alias{is_incr,Huber-method}
 \alias{is_decr,Huber-method}
+\alias{is_quadratic,Huber-method}
 \alias{get_data,Huber-method}
-\alias{graph_implementation,Huber-method}
+\alias{validate_args,Huber-method}
+\alias{.grad,Huber-method}
 \title{The Huber class.}
 \usage{
 Huber(x, M = 1)
-
-\S4method{validate_args}{Huber}(object)
 
 \S4method{to_numeric}{Huber}(object, values)
 
@@ -33,10 +31,13 @@ Huber(x, M = 1)
 
 \S4method{is_decr}{Huber}(object, idx)
 
+\S4method{is_quadratic}{Huber}(object)
+
 \S4method{get_data}{Huber}(object)
 
-\S4method{graph_implementation}{Huber}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{validate_args}{Huber}(object)
+
+\S4method{.grad}{Huber}(object, values)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}
@@ -49,11 +50,7 @@ Huber(x, M = 1)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
@@ -64,8 +61,6 @@ This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check that \code{M} is a non-negative constant.
-
 \item \code{to_numeric}: The Huber function evaluted elementwise on the input value.
 
 \item \code{sign_from_args}: The atom is positive.
@@ -78,9 +73,13 @@ This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
 
 \item \code{is_decr}: A logical value indicating whether the atom is weakly decreasing.
 
+\item \code{is_quadratic}: The atom is quadratic if \code{x} is affine.
+
 \item \code{get_data}: A list containing the parameter \code{M}.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{validate_args}: Check that \code{M} is a non-negative constant.
+
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 }}
 
 \section{Slots}{

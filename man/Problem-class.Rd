@@ -5,21 +5,23 @@
 \alias{Problem-class}
 \alias{.Problem}
 \alias{Problem}
-\alias{Problem}
 \alias{objective,Problem-method}
 \alias{objective<-,Problem-method}
 \alias{constraints,Problem-method}
 \alias{constraints<-,Problem-method}
 \alias{value,Problem-method}
 \alias{value<-,Problem-method}
+\alias{status,Problem-method}
 \alias{is_dcp,Problem-method}
+\alias{is_dgp,Problem-method}
 \alias{is_qp,Problem-method}
 \alias{canonicalize,Problem-method}
 \alias{variables,Problem-method}
 \alias{parameters,Problem-method}
 \alias{constants,Problem-method}
+\alias{atoms,Problem-method}
 \alias{size_metrics,Problem-method}
-\alias{get_problem_data,Problem,character-method}
+\alias{get_problem_data,Problem,character,logical-method}
 \alias{unpack_results,Problem-method}
 \title{The Problem class.}
 \usage{
@@ -37,7 +39,11 @@ Problem(objective, constraints = list())
 
 \S4method{value}{Problem}(object) <- value
 
+\S4method{status}{Problem}(object)
+
 \S4method{is_dcp}{Problem}(object)
+
+\S4method{is_dgp}{Problem}(object)
 
 \S4method{is_qp}{Problem}(object)
 
@@ -49,11 +55,13 @@ Problem(objective, constraints = list())
 
 \S4method{constants}{Problem}(object)
 
+\S4method{atoms}{Problem}(object)
+
 \S4method{size_metrics}{Problem}(object)
 
-\S4method{get_problem_data}{Problem,character}(object, solver)
+\S4method{get_problem_data}{Problem,character,logical}(object, solver, gp)
 
-\S4method{unpack_results}{Problem}(object, solver, results_dict)
+\S4method{unpack_results}{Problem}(object, solution, chain, inverse_data)
 }
 \arguments{
 \item{objective}{A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.}
@@ -81,11 +89,15 @@ This class represents a convex optimization problem.
 
 \item \code{constraints<-}: Set the value of the problem constraints.
 
-\item \code{value}: The value from the last time the problem was solved.
+\item \code{value}: The value from the last time the problem was solved (or NA if not solved).
 
 \item \code{value<-}: Set the value of the optimal objective.
 
+\item \code{status}: The status from the last time the problem was solved.
+
 \item \code{is_dcp}: A logical value indicating whether the problem statisfies DCP rules.
+
+\item \code{is_dgp}: A logical value indicating whether the problem statisfies DGP rules.
 
 \item \code{is_qp}: A logical value indicating whether the problem is a quadratic program.
 
@@ -96,6 +108,8 @@ This class represents a convex optimization problem.
 \item \code{parameters}: List of \linkS4class{Parameter} objects in the problem.
 
 \item \code{constants}: List of \linkS4class{Constant} objects in the problem.
+
+\item \code{atoms}: List of \linkS4class{Atom} objects in the problem.
 
 \item \code{size_metrics}: Information about the size of the problem.
 

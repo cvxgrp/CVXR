@@ -5,10 +5,9 @@
 \alias{Conv-class}
 \alias{.Conv}
 \alias{Conv}
-\alias{Conv}
-\alias{validate_args,Conv-method}
 \alias{to_numeric,Conv-method}
-\alias{size_from_args,Conv-method}
+\alias{validate_args,Conv-method}
+\alias{dim_from_args,Conv-method}
 \alias{sign_from_args,Conv-method}
 \alias{is_incr,Conv-method}
 \alias{is_decr,Conv-method}
@@ -17,11 +16,11 @@
 \usage{
 Conv(lh_exp, rh_exp)
 
-\S4method{validate_args}{Conv}(object)
-
 \S4method{to_numeric}{Conv}(object, values)
 
-\S4method{size_from_args}{Conv}(object)
+\S4method{validate_args}{Conv}(object)
+
+\S4method{dim_from_args}{Conv}(object)
 
 \S4method{sign_from_args}{Conv}(object)
 
@@ -29,7 +28,8 @@ Conv(lh_exp, rh_exp)
 
 \S4method{is_decr}{Conv}(object, idx)
 
-\S4method{graph_implementation}{Conv}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Conv}(object, arg_objs, dim,
+  data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or R numeric data representing the left-hand vector.}
@@ -44,20 +44,22 @@ Conv(lh_exp, rh_exp)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{idx}{An index into the atom.}
 }
 \description{
 This class represents the 1-D discrete convolution of two vectors.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check both arguments are vectors and the first is a constant.
-
 \item \code{to_numeric}: The convolution of the two values.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{validate_args}: Check both arguments are vectors and the first is a constant.
+
+\item \code{dim_from_args}: The dimensions of the atom.
 
 \item \code{sign_from_args}: The sign of the atom.
 

@@ -4,10 +4,24 @@
 \name{UnaryOperator-class}
 \alias{UnaryOperator-class}
 \alias{UnaryOperator}
+\alias{to_numeric,UnaryOperator-method}
 \title{The UnaryOperator class.}
+\usage{
+\S4method{to_numeric}{UnaryOperator}(object, values)
+}
+\arguments{
+\item{object}{A \linkS4class{UnaryOperator} object.}
+
+\item{values}{A list of arguments to the atom.}
+}
 \description{
 This base class represents expressions involving unary operators.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{to_numeric}: Applies the unary operator to the value.
+}}
+
 \section{Slots}{
 
 \describe{

@@ -5,39 +5,42 @@
 \alias{ExpCone-class}
 \alias{.ExpCone}
 \alias{ExpCone}
-\alias{ExpCone}
-\alias{size,ExpCone-method}
 \alias{as.character,ExpCone-method}
-\alias{variables,ExpCone-method}
-\alias{format_constr,ExpCone-method}
+\alias{residual,ExpCone-method}
+\alias{size,ExpCone-method}
+\alias{num_cones,ExpCone-method}
+\alias{cone_sizes,ExpCone-method}
+\alias{is_dcp,ExpCone-method}
+\alias{is_dgp,ExpCone-method}
+\alias{canonicalize,ExpCone-method}
 \title{The ExpCone class.}
 \usage{
-ExpCone(a, b, c)
-
-\S4method{size}{ExpCone}(object)
+ExpCone(x, y, z, id = NA_integer_)
 
 \S4method{as.character}{ExpCone}(x)
 
-\S4method{variables}{ExpCone}(object)
+\S4method{residual}{ExpCone}(object)
 
-\S4method{format_constr}{ExpCone}(object, eq_constr, leq_constr, dims, solver)
+\S4method{size}{ExpCone}(object)
+
+\S4method{num_cones}{ExpCone}(object)
+
+\S4method{cone_sizes}{ExpCone}(object)
+
+\S4method{is_dcp}{ExpCone}(object)
+
+\S4method{is_dgp}{ExpCone}(object)
+
+\S4method{canonicalize}{ExpCone}(object)
 }
 \arguments{
-\item{a}{The variable \eqn{a} in the exponential cone.}
+\item{x}{The variable \eqn{x} in the exponential cone.}
 
-\item{b}{The variable \eqn{b} in the exponential cone.}
+\item{y}{The variable \eqn{y} in the exponential cone.}
 
-\item{c}{The variable \eqn{c} in the exponential cone.}
+\item{z}{The variable \eqn{z} in the exponential cone.}
 
 \item{x, object}{A \linkS4class{ExpCone} object.}
-
-\item{eq_constr}{A list of the equality constraints in the canonical problem.}
-
-\item{leq_constr}{A list of the inequality constraints in the canonical problem.}
-
-\item{dims}{A list with the dimensions of the conic constraints.}
-
-\item{solver}{A string representing the solver to be called.}
 }
 \description{
 This class represents a reformulated exponential cone constraint operating elementwise on \eqn{a, b, c}.
@@ -45,31 +48,37 @@ This class represents a reformulated exponential cone constraint operating eleme
 \details{
 Original cone:
 \deqn{
-K = \{(a,b,c) | b > 0, be^{a/b} \leq c\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
+K = \{(x,y,z) | y > 0, ye^{x/y} \leq z\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 }
 Reformulated cone:
 \deqn{
-K = \{(a,b,c) | b, c > 0, b\log(b) + a \leq b\log(c)\} \cup \{(a,b,c) | a \leq 0, b = 0, c \geq 0\}
+K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0, y = 0, z \geq 0\}
 }
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{size}: The size of the \code{x} argument.
+\item \code{residual}: The size of the \code{x} argument.
 
-\item \code{variables}: List of \linkS4class{Variable} objects in the exponential cone.
+\item \code{size}: The number of entries in the combined cones.
 
-\item \code{format_constr}: Format exponential cone constraints for the solver.
+\item \code{num_cones}: The number of elementwise cones.
+
+\item \code{cone_sizes}: The dimensions of the exponential cones.
+
+\item \code{is_dcp}: An exponential constraint is DCP if each argument is affine.
+
+\item \code{is_dgp}: Is the constraint DGP?
+
+\item \code{canonicalize}: Canonicalizes by converting expressions to LinOps.
 }}
 
 \section{Slots}{
 
 \describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
+\item{\code{x}}{The variable \eqn{x} in the exponential cone.}
 
-\item{\code{a}}{The variable \eqn{a} in the exponential cone.}
+\item{\code{y}}{The variable \eqn{y} in the exponential cone.}
 
-\item{\code{b}}{The variable \eqn{b} in the exponential cone.}
-
-\item{\code{c}}{The variable \eqn{c} in the exponential cone.}
+\item{\code{z}}{The variable \eqn{z} in the exponential cone.}
 }}
 

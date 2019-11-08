@@ -5,7 +5,7 @@
 \alias{norm1}
 \title{1-Norm}
 \usage{
-norm1(x, axis = NA_real_)
+norm1(x, axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}

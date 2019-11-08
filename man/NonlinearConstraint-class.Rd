@@ -5,38 +5,25 @@
 \alias{NonlinearConstraint-class}
 \alias{.NonlinearConstraint}
 \alias{NonlinearConstraint}
-\alias{NonlinearConstraint}
-\alias{variables,NonlinearConstraint-method}
 \title{The NonlinearConstraint class.}
 \usage{
-NonlinearConstraint(f, vars_)
-
-\S4method{variables}{NonlinearConstraint}(object)
+NonlinearConstraint(f, vars_, id = NA_integer_)
 }
 \arguments{
 \item{f}{A nonlinear function.}
 
 \item{vars_}{A list of variables involved in the function.}
-
-\item{object}{A \linkS4class{NonlinearConstraint} object.}
 }
 \description{
 This class represents a nonlinear inequality constraint, \eqn{f(x) \leq 0} where \eqn{f} is twice-differentiable.
 }
-\section{Methods (by generic)}{
-\itemize{
-\item \code{variables}: The variables involved in the function in order, i.e. \code{f(vars_) = f(vstack(variables))}.
-}}
-
 \section{Slots}{
 
 \describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
-
 \item{\code{f}}{A nonlinear function.}
 
 \item{\code{vars_}}{A list of variables involved in the function.}
 
-\item{\code{.x_size}}{(Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.}
+\item{\code{.x_dim}}{(Internal) The dimensions of a column vector with number of elements equal to the total elements in all the variables.}
 }}
 

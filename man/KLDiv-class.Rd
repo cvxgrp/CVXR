@@ -5,14 +5,14 @@
 \alias{KLDiv-class}
 \alias{.KLDiv}
 \alias{KLDiv}
-\alias{KLDiv}
 \alias{to_numeric,KLDiv-method}
 \alias{sign_from_args,KLDiv-method}
 \alias{is_atom_convex,KLDiv-method}
 \alias{is_atom_concave,KLDiv-method}
 \alias{is_incr,KLDiv-method}
 \alias{is_decr,KLDiv-method}
-\alias{graph_implementation,KLDiv-method}
+\alias{.grad,KLDiv-method}
+\alias{.domain,KLDiv-method}
 \title{The KLDiv class.}
 \usage{
 KLDiv(x, y)
@@ -29,8 +29,9 @@ KLDiv(x, y)
 
 \S4method{is_decr}{KLDiv}(object, idx)
 
-\S4method{graph_implementation}{KLDiv}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{.grad}{KLDiv}(object, values)
+
+\S4method{.domain}{KLDiv}(object)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}
@@ -43,11 +44,7 @@ KLDiv(x, y)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 The elementwise KL-divergence \eqn{x\log(x/y) - x + y}.
@@ -66,7 +63,9 @@ The elementwise KL-divergence \eqn{x\log(x/y) - x + y}.
 
 \item \code{is_decr}: The atom is not monotonic in any argument.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints describng the domain of the node
 }}
 
 \section{Slots}{

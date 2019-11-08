@@ -6,14 +6,12 @@
 \alias{reshape}
 \title{Reshape an Expression}
 \usage{
-reshape_expr(expr, rows, cols)
+reshape_expr(expr, new_dim)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression}, vector, or matrix.}
 
-\item{rows}{The new number of rows.}
-
-\item{cols}{The new number of columns.}
+\item{new_dim}{The new dimensions.}
 }
 \value{
 An \linkS4class{Expression} representing the reshaped input.
@@ -25,7 +23,7 @@ This function vectorizes an expression, then unvectorizes it into a new shape. E
 x <- Variable(4)
 mat <- cbind(c(1,-1), c(2,-2))
 vec <- matrix(1:4)
-expr <- reshape_expr(x,2,2)
+expr <- reshape_expr(x,c(2,2))
 obj <- Minimize(sum(mat \%*\% expr))
 prob <- Problem(obj, list(x == vec))
 result <- solve(prob)
@@ -33,17 +31,17 @@ result$value
 
 A <- Variable(2,2)
 c <- 1:4
-expr <- reshape_expr(A,4,1)
+expr <- reshape_expr(A,c(4,1))
 obj <- Minimize(t(expr) \%*\% c)
 constraints <- list(A == cbind(c(-1,-2), c(3,4)))
 prob <- Problem(obj, constraints)
 result <- solve(prob)
 result$value
 result$getValue(expr)
-result$getValue(reshape_expr(expr,2,2))
+result$getValue(reshape_expr(expr,c(2,2)))
 
 C <- Variable(3,2)
-expr <- reshape_expr(C,2,3)
+expr <- reshape_expr(C,c(2,3))
 mat <- rbind(c(1,-1), c(2,-2))
 C_mat <- rbind(c(1,4), c(2,5), c(3,6))
 obj <- Minimize(sum(mat \%*\% expr))
@@ -54,14 +52,14 @@ result$getValue(expr)
 
 a <- Variable()
 c <- cbind(c(1,-1), c(2,-2))
-expr <- reshape_expr(c * a,1,4)
+expr <- reshape_expr(c * a,c(1,4))
 obj <- Minimize(expr \%*\% (1:4))
 prob <- Problem(obj, list(a == 2))
 result <- solve(prob)
 result$value
 result$getValue(expr)
 
-expr <- reshape_expr(c * a,4,1)
+expr <- reshape_expr(c * a,c(4,1))
 obj <- Minimize(t(expr) \%*\% (1:4))
 prob <- Problem(obj, list(a == 2))
 result <- solve(prob)

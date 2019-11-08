@@ -8,6 +8,7 @@
 \alias{is_concave}
 \alias{is_quadratic}
 \alias{is_pwl}
+\alias{is_qpwa}
 \title{Curvature Properties}
 \usage{
 is_constant(object)
@@ -21,6 +22,8 @@ is_concave(object)
 is_quadratic(object)
 
 is_pwl(object)
+
+is_qpwa(object)
 }
 \arguments{
 \item{object}{An \linkS4class{Expression} object.}
@@ -29,7 +32,7 @@ is_pwl(object)
 A logical value.
 }
 \description{
-Determine if an expression is constant, affine, convex, concave, quadratic, or piecewise linear (pwl).
+Determine if an expression is constant, affine, convex, concave, quadratic, piecewise linear (pwl), or quadratic/piecewise affine (qpwa).
 }
 \examples{
 x <- Variable()

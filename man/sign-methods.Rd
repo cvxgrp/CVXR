@@ -3,15 +3,15 @@
 \name{sign-methods}
 \alias{sign-methods}
 \alias{is_zero}
-\alias{is_positive}
-\alias{is_negative}
+\alias{is_nonneg}
+\alias{is_nonpos}
 \title{Sign Properties}
 \usage{
 is_zero(object)
 
-is_positive(object)
+is_nonneg(object)
 
-is_negative(object)
+is_nonpos(object)
 }
 \arguments{
 \item{object}{An \linkS4class{Expression} object.}
@@ -33,13 +33,13 @@ is_zero(-zero)
 is_zero(unknown)
 is_zero(pos + neg)
 
-is_positive(pos + zero)
-is_positive(pos * neg)
-is_positive(pos - neg)
-is_positive(unknown)
+is_nonneg(pos + zero)
+is_nonneg(pos * neg)
+is_nonneg(pos - neg)
+is_nonneg(unknown)
 
-is_negative(-pos)
-is_negative(pos + neg)
-is_negative(neg * zero)
-is_negative(neg - pos)
+is_nonpos(-pos)
+is_nonpos(pos + neg)
+is_nonpos(neg * zero)
+is_nonpos(neg - pos)
 }

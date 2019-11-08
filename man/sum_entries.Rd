@@ -7,7 +7,7 @@
 \alias{sum.Expression}
 \title{Sum of Entries}
 \usage{
-sum_entries(expr, axis = NA_real_)
+sum_entries(expr, axis = NA_real_, keepdims = FALSE)
 
 \method{sum}{Expression}(..., na.rm = FALSE)
 }
@@ -27,6 +27,17 @@ An \linkS4class{Expression} representing the sum of the entries of the input.
 The sum of entries in a vector or matrix.
 }
 \examples{
+x <- Variable(2)
+prob <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
+result <- solve(prob)
+result$value
+result$getValue(x)
+
+C <- Variable(3,2)
+prob <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
+result <- solve(prob)
+result$value
+result$getValue(C)
 x <- Variable(2)
 prob <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
 result <- solve(prob)

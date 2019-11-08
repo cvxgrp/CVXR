@@ -6,9 +6,16 @@
 \alias{/,Expression,ConstVal-method}
 \alias{/,ConstVal,Expression-method}
 \alias{DivExpression-class}
+\alias{.DivExpression}
 \alias{DivExpression}
+\alias{to_numeric,DivExpression-method}
 \alias{is_quadratic,DivExpression-method}
-\alias{size_from_args,DivExpression-method}
+\alias{is_qpwa,DivExpression-method}
+\alias{dim_from_args,DivExpression-method}
+\alias{is_atom_convex,DivExpression-method}
+\alias{is_atom_concave,DivExpression-method}
+\alias{is_atom_log_log_convex,DivExpression-method}
+\alias{is_atom_log_log_concave,DivExpression-method}
 \alias{is_incr,DivExpression-method}
 \alias{is_decr,DivExpression-method}
 \alias{graph_implementation,DivExpression-method}
@@ -20,15 +27,27 @@
 
 \S4method{/}{ConstVal,Expression}(e1, e2)
 
+\S4method{to_numeric}{DivExpression}(object, values)
+
 \S4method{is_quadratic}{DivExpression}(object)
 
-\S4method{size_from_args}{DivExpression}(object)
+\S4method{is_qpwa}{DivExpression}(object)
+
+\S4method{dim_from_args}{DivExpression}(object)
+
+\S4method{is_atom_convex}{DivExpression}(object)
+
+\S4method{is_atom_concave}{DivExpression}(object)
+
+\S4method{is_atom_log_log_convex}{DivExpression}(object)
+
+\S4method{is_atom_log_log_concave}{DivExpression}(object)
 
 \S4method{is_incr}{DivExpression}(object, idx)
 
 \S4method{is_decr}{DivExpression}(object, idx)
 
-\S4method{graph_implementation}{DivExpression}(object, arg_objs, size,
+\S4method{graph_implementation}{DivExpression}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -36,22 +55,38 @@
 
 \item{object}{A \linkS4class{DivExpression} object.}
 
+\item{values}{A list of arguments to the atom.}
+
 \item{idx}{An index into the atom.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{object}{A \linkS4class{DivExpression} object.}
 }
 \description{
 This class represents one expression divided by another expression.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{to_numeric}: Matrix division by a scalar.
+
 \item \code{is_quadratic}: Is the left-hand expression quadratic and the right-hand expression constant?
 
-\item \code{size_from_args}: The size of the left-hand expression.
+\item \code{is_qpwa}: Is the expression quadratic of piecewise affine?
+
+\item \code{dim_from_args}: The (row, col) dimensions of the left-hand expression.
+
+\item \code{is_atom_convex}: Division is convex (affine) in its arguments only if the denominator is constant.
+
+\item \code{is_atom_concave}: Division is concave (affine) in its arguments only if the denominator is constant.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{is_incr}: Is the right-hand expression positive?
 

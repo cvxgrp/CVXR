@@ -62,6 +62,8 @@ setMethod("is_nsd", "AffAtom", function(object) {
   return(TRUE)
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn AffAtom Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "AffAtom", function(object, values) {
   # TODO: Should be a simple function in CVXcore for this.
   # Make a fake LinOp tree for the function
@@ -149,21 +151,27 @@ setMethod("to_numeric", "AddExpression", function(object, values) {
   Reduce("+", values)
 })
 
+#' @describeIn AddExpression Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "AddExpression", function(object) { TRUE })
 
+#' @describeIn AddExpression Is the atom log-log convex?
 setMethod("is_atom_log_log_concave", "AddExpression", function(object) { FALSE })
 
+#' @describeIn AddExpression Is the atom symmetric?
 setMethod("is_symmetric", "AddExpression", function(object) {
   symm_args <- all(sapply(object@args, is_symmetric))
   return(dim(object)[1] == dim(object)[2] && symm_args)
 })
 
+#' @describeIn AddExpression Is the atom hermitian?
 setMethod("is_hermitian", "AddExpression", function(object) {
   herm_args <- all(sapply(object@args, is_hermitian))
   return(dim(object)[1] == dim(object)[2] && herm_args)
 })
 
 # As initialize takes in the arg_groups instead of args, we need a special copy function.
+#' @param args An optional list of arguments to reconstruct the atom. Default is to use current args of the atom
+#' @describeIn AddExpression Returns a shallow copy of the AddExpression atom
 setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
     args <- object@arg_groups
@@ -262,7 +270,6 @@ setMethod("graph_implementation", "NegExpression", function(object, arg_objs, di
   NegExpression.graph_implementation(arg_objs, dim, data)
 })
 
-#'
 #' The BinaryOperator class.
 #'
 #' This base class represents expressions involving binary operators.
@@ -284,6 +291,7 @@ setMethod("initialize", "BinaryOperator", function(.Object, ..., lh_exp, rh_exp)
 setMethod("op_name", "BinaryOperator", function(object) { "BINARY_OP" })
 
 #' @param x,object A \linkS4class{BinaryOperator} object.
+#' @describeIn BinaryOperator Returns the name of the BinaryOperator object.
 setMethod("name", "BinaryOperator", function(x) {
   pretty_args <- list()
   for(a in x@args) {
@@ -364,6 +372,8 @@ setMethod("is_incr", "MulExpression", function(object, idx) { is_nonneg(object@a
 #' @describeIn MulExpression Is the left-hand expression negative?
 setMethod("is_decr", "MulExpression", function(object, idx) { is_nonpos(object@args[[3-idx]]) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MulExpression Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MulExpression", function(object, values) {
   if(is_constant(object@args[[1]]) || is_constant(object@args[[2]]))
     return(callNextMethod(object, values))
@@ -640,6 +650,7 @@ setMethod("sign_from_args", "Conv", function(object) { mul_sign(object@args[[1]]
 #' @describeIn Conv Is the left-hand expression positive?
 setMethod("is_incr", "Conv", function(object, idx) { is_nonneg(object@args[[1]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn Conv Is the left-hand expression negative?
 setMethod("is_decr", "Conv", function(object, idx) { is_nonpos(object@args[[1]]) })
 
@@ -724,6 +735,8 @@ setMethod("dim_from_args", "CumSum", function(object) { dim(object@args[[1]]) })
 #' @describeIn CumSum Returns the axis along which the cumulative sum is taken.
 setMethod("get_data", "CumSum", function(object) { list(object@axis) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn CumSum Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "CumSum", function(object, values) {
   # TODO: This is inefficient
   val_dim <- dim(values[[1]])
@@ -870,6 +883,11 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, dat
   DiagMat.graph_implementation(arg_objs, dim, data)
 })
 
+#' 
+#' Turns an expression into a DiagVec object
+#' 
+#' @param expr An \linkS4class{Expression} that represents a vector or square matrix
+#' @return An \linkS4class{Expression} representing the diagonal vector/matrix
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr))
@@ -880,6 +898,13 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix.")
 }
 
+#' 
+#' Takes the k-th order differences
+#' 
+#' @param lag The degree of lag between differences
+#' @param k The integer value of the order of differences
+#' @param x An \linkS4class{Expression} that represents a vector
+#' @return Takes in a vector of length n and returns a vector of length n-k of the kth order differences
 Diff <- function(x, lag = 1, k = 1, axis = 2) {
   x <- as.Constant(x)
   if((axis == 2 && ndim(x) < 2) || ndim(x) == 0)
@@ -1157,6 +1182,7 @@ setMethod("is_atom_log_log_concave", "SpecialIndex", function(object) { TRUE })
 #' @describeIn SpecialIndex A list containing \code{key}.
 setMethod("get_data", "SpecialIndex", function(object) { list(object@key) })
 
+#' @describeIn SpecialIndex Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "SpecialIndex", function(object) {
   select_mat <- object@.select_mat
   

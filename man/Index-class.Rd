@@ -3,53 +3,50 @@
 \docType{methods}
 \name{[,Expression,missing,missing,ANY-method}
 \alias{[,Expression,missing,missing,ANY-method}
-\alias{[,Expression,index,missing,ANY-method}
-\alias{[,Expression,missing,index,ANY-method}
-\alias{[,Expression,index,index,ANY-method}
-\alias{[,Expression,matrix,index,ANY-method}
-\alias{[,Expression,index,matrix,ANY-method}
-\alias{[,Expression,matrix,matrix,ANY-method}
-\alias{[,Expression,matrix,missing,ANY-method}
+\alias{[,Expression,numeric,missing,ANY-method}
+\alias{[,Expression,missing,numeric,ANY-method}
+\alias{[,Expression,numeric,numeric,ANY-method}
 \alias{Index-class}
 \alias{.Index}
 \alias{Index}
-\alias{Index}
 \alias{to_numeric,Index-method}
-\alias{size_from_args,Index-method}
+\alias{dim_from_args,Index-method}
+\alias{is_atom_log_log_convex,Index-method}
+\alias{is_atom_log_log_concave,Index-method}
 \alias{get_data,Index-method}
 \alias{graph_implementation,Index-method}
+\alias{to_numeric,SpecialIndex-method}
+\alias{dim_from_args,SpecialIndex-method}
 \title{The Index class.}
 \usage{
 \S4method{[}{Expression,missing,missing,ANY}(x, i, j, ..., drop = TRUE)
 
-\S4method{[}{Expression,index,missing,ANY}(x, i, j, ..., drop = TRUE)
+\S4method{[}{Expression,numeric,missing,ANY}(x, i, j, ..., drop = TRUE)
 
-\S4method{[}{Expression,missing,index,ANY}(x, i, j, ..., drop = TRUE)
+\S4method{[}{Expression,missing,numeric,ANY}(x, i, j, ..., drop = TRUE)
 
-\S4method{[}{Expression,index,index,ANY}(x, i, j, ..., drop = TRUE)
-
-\S4method{[}{Expression,matrix,index,ANY}(x, i, j, ..., drop = TRUE)
-
-\S4method{[}{Expression,index,matrix,ANY}(x, i, j, ..., drop = TRUE)
-
-\S4method{[}{Expression,matrix,matrix,ANY}(x, i, j, ..., drop = TRUE)
-
-\S4method{[}{Expression,matrix,missing,ANY}(x, i, j, ..., drop = TRUE)
+\S4method{[}{Expression,numeric,numeric,ANY}(x, i, j, ..., drop = TRUE)
 
 Index(expr, key)
 
 \S4method{to_numeric}{Index}(object, values)
 
-\S4method{size_from_args}{Index}(object)
+\S4method{dim_from_args}{Index}(object)
+
+\S4method{is_atom_log_log_convex}{Index}(object)
+
+\S4method{is_atom_log_log_concave}{Index}(object)
 
 \S4method{get_data}{Index}(object)
 
-\S4method{graph_implementation}{Index}(object, arg_objs, size,
+\S4method{graph_implementation}{Index}(object, arg_objs, dim,
   data = NA_real_)
+
+\S4method{to_numeric}{SpecialIndex}(object, values)
+
+\S4method{dim_from_args}{SpecialIndex}(object)
 }
 \arguments{
-\item{x, object}{An \linkS4class{Index} object.}
-
 \item{i, j}{The row and column indices of the slice.}
 
 \item{...}{(Unimplemented) Optional arguments.}
@@ -60,13 +57,19 @@ Index(expr, key)
 
 \item{key}{A list containing the start index, end index, and step size of the slice.}
 
+\item{object}{An \linkS4class{Index} object.}
+
 \item{values}{A list of arguments to the atom.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
+
+\item{object}{An \linkS4class{Index} object.}
+
+\item{values}{A list of arguments to the atom.}
 }
 \description{
 This class represents indexing or slicing into a matrix.
@@ -75,11 +78,19 @@ This class represents indexing or slicing into a matrix.
 \itemize{
 \item \code{to_numeric}: The index/slice into the given value.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{dim_from_args}: The dimensions of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{get_data}: A list containing \code{key}.
 
 \item \code{graph_implementation}: The graph implementation of the atom.
+
+\item \code{to_numeric}: The index/slice into the given value.
+
+\item \code{dim_from_args}: The dimensions of the atom.
 }}
 
 \section{Slots}{

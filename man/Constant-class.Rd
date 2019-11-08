@@ -5,38 +5,55 @@
 \alias{Constant-class}
 \alias{.Constant}
 \alias{Constant}
-\alias{Constant}
-\alias{as.character,Constant-method}
+\alias{show,Constant-method}
+\alias{name,Constant-method}
 \alias{constants,Constant-method}
-\alias{get_data,Constant-method}
 \alias{value,Constant-method}
 \alias{grad,Constant-method}
-\alias{size,Constant-method}
-\alias{is_positive,Constant-method}
-\alias{is_negative,Constant-method}
+\alias{dim,Constant-method}
 \alias{canonicalize,Constant-method}
+\alias{is_nonneg,Constant-method}
+\alias{is_nonpos,Constant-method}
+\alias{is_imag,Constant-method}
+\alias{is_complex,Constant-method}
+\alias{is_symmetric,Constant-method}
+\alias{is_hermitian,Constant-method}
+\alias{is_psd,Constant-method}
+\alias{is_nsd,Constant-method}
 \alias{as.Constant}
 \title{The Constant class.}
 \usage{
 Constant(value)
 
-\S4method{as.character}{Constant}(x)
+\S4method{show}{Constant}(object)
+
+\S4method{name}{Constant}(x)
 
 \S4method{constants}{Constant}(object)
-
-\S4method{get_data}{Constant}(object)
 
 \S4method{value}{Constant}(object)
 
 \S4method{grad}{Constant}(object)
 
-\S4method{size}{Constant}(object)
-
-\S4method{is_positive}{Constant}(object)
-
-\S4method{is_negative}{Constant}(object)
+\S4method{dim}{Constant}(x)
 
 \S4method{canonicalize}{Constant}(object)
+
+\S4method{is_nonneg}{Constant}(object)
+
+\S4method{is_nonpos}{Constant}(object)
+
+\S4method{is_imag}{Constant}(object)
+
+\S4method{is_complex}{Constant}(object)
+
+\S4method{is_symmetric}{Constant}(object)
+
+\S4method{is_hermitian}{Constant}(object)
+
+\S4method{is_psd}{Constant}(object)
+
+\S4method{is_nsd}{Constant}(object)
 
 as.Constant(expr)
 }
@@ -57,21 +74,33 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{constants}: Returns itself as a constant.
+\item \code{name}: The name of the constant.
 
-\item \code{get_data}: A list with the value of the constant.
+\item \code{constants}: Returns itself as a constant.
 
 \item \code{value}: The value of the constant.
 
 \item \code{grad}: An empty list since the gradient of a constant is zero.
 
-\item \code{size}: The \code{c(row, col)} dimensions of the constant.
-
-\item \code{is_positive}: A logical value indicating whether all elemenets of the constant are non-negative.
-
-\item \code{is_negative}: A logical value indicating whether all elemenets of the constant are non-positive.
+\item \code{dim}: The \code{c(row, col)} dimensions of the constant.
 
 \item \code{canonicalize}: The canonical form of the constant.
+
+\item \code{is_nonneg}: A logical value indicating whether all elements of the constant are non-negative.
+
+\item \code{is_nonpos}: A logical value indicating whether all elements of the constant are non-positive.
+
+\item \code{is_imag}: A logical value indicating whether the constant is imaginary.
+
+\item \code{is_complex}: A logical value indicating whether the constant is complex-valued.
+
+\item \code{is_symmetric}: A logical value indicating whether the constant is symmetric.
+
+\item \code{is_hermitian}: A logical value indicating whether the constant is a Hermitian matrix.
+
+\item \code{is_psd}: A logical value indicating whether the constant is a positive semidefinite matrix.
+
+\item \code{is_nsd}: A logical value indicating whether the constant is a negative semidefinite matrix.
 }}
 
 \section{Slots}{
@@ -79,11 +108,7 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 \describe{
 \item{\code{value}}{A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.}
 
-\item{\code{is_1D_array}}{(Internal) A logical value indicating whether the value is a vector or 1-D matrix.}
-
 \item{\code{sparse}}{(Internal) A logical value indicating whether the value is a sparse matrix.}
-
-\item{\code{size}}{(Internal) A vector of containing the number of rows and columns.}
 
 \item{\code{is_pos}}{(Internal) A logical value indicating whether all elements are non-negative.}
 

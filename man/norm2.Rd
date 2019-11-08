@@ -5,7 +5,7 @@
 \alias{norm2}
 \title{Euclidean Norm}
 \usage{
-norm2(x, axis = NA_real_)
+norm2(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}

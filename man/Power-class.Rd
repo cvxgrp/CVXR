@@ -5,25 +5,24 @@
 \alias{Power-class}
 \alias{.Power}
 \alias{Power}
-\alias{Power}
-\alias{validate_args,Power-method}
-\alias{get_data,Power-method}
 \alias{to_numeric,Power-method}
 \alias{sign_from_args,Power-method}
 \alias{is_atom_convex,Power-method}
 \alias{is_atom_concave,Power-method}
+\alias{is_atom_log_log_convex,Power-method}
+\alias{is_atom_log_log_concave,Power-method}
 \alias{is_constant,Power-method}
 \alias{is_incr,Power-method}
 \alias{is_decr,Power-method}
 \alias{is_quadratic,Power-method}
-\alias{graph_implementation,Power-method}
+\alias{is_qpwa,Power-method}
+\alias{.grad,Power-method}
+\alias{.domain,Power-method}
+\alias{get_data,Power-method}
+\alias{copy,Power-method}
 \title{The Power class.}
 \usage{
 Power(x, p, max_denom = 1024)
-
-\S4method{validate_args}{Power}(object)
-
-\S4method{get_data}{Power}(object)
 
 \S4method{to_numeric}{Power}(object, values)
 
@@ -33,6 +32,10 @@ Power(x, p, max_denom = 1024)
 
 \S4method{is_atom_concave}{Power}(object)
 
+\S4method{is_atom_log_log_convex}{Power}(object)
+
+\S4method{is_atom_log_log_concave}{Power}(object)
+
 \S4method{is_constant}{Power}(object)
 
 \S4method{is_incr}{Power}(object, idx)
@@ -41,8 +44,15 @@ Power(x, p, max_denom = 1024)
 
 \S4method{is_quadratic}{Power}(object)
 
-\S4method{graph_implementation}{Power}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{is_qpwa}{Power}(object)
+
+\S4method{.grad}{Power}(object, values)
+
+\S4method{.domain}{Power}(object)
+
+\S4method{get_data}{Power}(object)
+
+\S4method{copy}{Power}(object, args = NULL, id_objects = list())
 }
 \arguments{
 \item{x}{The \linkS4class{Expression} to be raised to a power.}
@@ -57,11 +67,9 @@ Power(x, p, max_denom = 1024)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
+\item{args}{A list of arguments to reconstruct the atom. If args=NULL, use the current args of the atom}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise power function \eqn{f(x) = x^p}.
@@ -89,10 +97,6 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Verification of arguments happens during initialization.
-
-\item \code{get_data}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
-
 \item \code{to_numeric}: Throw an error if the power is negative and cannot be handled.
 
 \item \code{sign_from_args}: The sign of the atom.
@@ -100,6 +104,10 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 \item \code{is_atom_convex}: Is \eqn{p \leq 0} or \eqn{p \geq 1}?
 
 \item \code{is_atom_concave}: Is \eqn{p \geq 0} or \eqn{p \leq 1}?
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{is_constant}: A logical value indicating whether the atom is constant.
 
@@ -109,7 +117,15 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 
 \item \code{is_quadratic}: A logical value indicating whether the atom is quadratic.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{is_qpwa}: A logical value indicating whether the atom is quadratic of piecewise affine.
+
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints describng the domain of the node
+
+\item \code{get_data}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
+
+\item \code{copy}: Returns a shallow  copy of the power atom
 }}
 
 \section{Slots}{

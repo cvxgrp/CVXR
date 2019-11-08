@@ -8,9 +8,3 @@
 \description{
 This virtual class represents a mathematical constraint.
 }
-\section{Slots}{
-
-\describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
-}}
-

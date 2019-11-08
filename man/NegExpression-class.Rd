@@ -7,12 +7,14 @@
 \alias{-,Expression,ConstVal-method}
 \alias{-,ConstVal,Expression-method}
 \alias{NegExpression-class}
+\alias{.NegExpression}
 \alias{NegExpression}
-\alias{to_numeric,NegExpression-method}
-\alias{size_from_args,NegExpression-method}
+\alias{dim_from_args,NegExpression-method}
 \alias{sign_from_args,NegExpression-method}
 \alias{is_incr,NegExpression-method}
 \alias{is_decr,NegExpression-method}
+\alias{is_symmetric,NegExpression-method}
+\alias{is_hermitian,NegExpression-method}
 \alias{graph_implementation,NegExpression-method}
 \title{The NegExpression class.}
 \usage{
@@ -24,9 +26,7 @@
 
 \S4method{-}{ConstVal,Expression}(e1, e2)
 
-\S4method{to_numeric}{NegExpression}(object, values)
-
-\S4method{size_from_args}{NegExpression}(object)
+\S4method{dim_from_args}{NegExpression}(object)
 
 \S4method{sign_from_args}{NegExpression}(object)
 
@@ -34,21 +34,21 @@
 
 \S4method{is_decr}{NegExpression}(object, idx)
 
-\S4method{graph_implementation}{NegExpression}(object, arg_objs, size,
+\S4method{is_symmetric}{NegExpression}(object)
+
+\S4method{is_hermitian}{NegExpression}(object)
+
+\S4method{graph_implementation}{NegExpression}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to subtract.}
 
-\item{object}{A \linkS4class{NegExpression} object.}
-
-\item{values}{A list of arguments to the atom.}
-
 \item{idx}{An index into the atom.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -57,15 +57,17 @@ This class represents the negation of an affine expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Negate the value.
+\item \code{dim_from_args}: The (row, col) dimensions of the expression.
 
-\item \code{size_from_args}: The size of the expression.
-
-\item \code{sign_from_args}: The sign of the expression.
+\item \code{sign_from_args}: The (is positive, is negative) sign of the expression.
 
 \item \code{is_incr}: The expression is not weakly increasing in any argument.
 
 \item \code{is_decr}: The expression is weakly decreasing in every argument.
+
+\item \code{is_symmetric}: Is the expression symmetric?
+
+\item \code{is_hermitian}: Is the expression Hermitian?
 
 \item \code{graph_implementation}: The graph implementation of the expression.
 }}

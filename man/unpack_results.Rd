@@ -5,7 +5,7 @@
 \alias{unpack_results}
 \title{Parse output from a solver and updates problem state}
 \usage{
-unpack_results(object, solver, results_dict)
+unpack_results(object, solution, chain, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{Problem} object.}

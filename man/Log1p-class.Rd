@@ -5,10 +5,10 @@
 \alias{Log1p-class}
 \alias{.Log1p}
 \alias{Log1p}
-\alias{Log1p}
 \alias{to_numeric,Log1p-method}
 \alias{sign_from_args,Log1p-method}
-\alias{graph_implementation,Log1p-method}
+\alias{.grad,Log1p-method}
+\alias{.domain,Log1p-method}
 \title{The Log1p class.}
 \usage{
 Log1p(x)
@@ -17,8 +17,9 @@ Log1p(x)
 
 \S4method{sign_from_args}{Log1p}(object)
 
-\S4method{graph_implementation}{Log1p}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{.grad}{Log1p}(object, values)
+
+\S4method{.domain}{Log1p}(object)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}
@@ -27,11 +28,7 @@ Log1p(x)
 
 \item{values}{A list of arguments to the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise operation \eqn{\log(1 + x)}.
@@ -42,7 +39,9 @@ This class represents the elementwise operation \eqn{\log(1 + x)}.
 
 \item \code{sign_from_args}: The sign of the atom.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints describng the domain of the node
 }}
 
 \section{Slots}{

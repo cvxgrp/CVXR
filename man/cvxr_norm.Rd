@@ -5,7 +5,7 @@
 \alias{cvxr_norm}
 \title{Matrix Norm (Alternative)}
 \usage{
-cvxr_norm(x, p = 2, axis = NA_real_)
+cvxr_norm(x, p = 2, axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant representing a vector or matrix.}

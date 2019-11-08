@@ -5,10 +5,9 @@
 \alias{Kron-class}
 \alias{.Kron}
 \alias{Kron}
-\alias{Kron}
-\alias{validate_args,Kron-method}
 \alias{to_numeric,Kron-method}
-\alias{size_from_args,Kron-method}
+\alias{validate_args,Kron-method}
+\alias{dim_from_args,Kron-method}
 \alias{sign_from_args,Kron-method}
 \alias{is_incr,Kron-method}
 \alias{is_decr,Kron-method}
@@ -17,11 +16,11 @@
 \usage{
 Kron(lh_exp, rh_exp)
 
-\S4method{validate_args}{Kron}(object)
-
 \S4method{to_numeric}{Kron}(object, values)
 
-\S4method{size_from_args}{Kron}(object)
+\S4method{validate_args}{Kron}(object)
+
+\S4method{dim_from_args}{Kron}(object)
 
 \S4method{sign_from_args}{Kron}(object)
 
@@ -29,7 +28,8 @@ Kron(lh_exp, rh_exp)
 
 \S4method{is_decr}{Kron}(object, idx)
 
-\S4method{graph_implementation}{Kron}(object, arg_objs, size, data = NA_real_)
+\S4method{graph_implementation}{Kron}(object, arg_objs, dim,
+  data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or numeric constant representing the left-hand matrix.}
@@ -44,7 +44,7 @@ Kron(lh_exp, rh_exp)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector with two elements representing the size of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -53,11 +53,11 @@ This class represents the kronecker product.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check both arguments are vectors and the first is a constant.
-
 \item \code{to_numeric}: The kronecker product of the two values.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{validate_args}: Check both arguments are vectors and the first is a constant.
+
+\item \code{dim_from_args}: The dimensions of the atom.
 
 \item \code{sign_from_args}: The sign of the atom.
 

@@ -5,7 +5,7 @@
 \alias{norm_inf}
 \title{Infinity-Norm}
 \usage{
-norm_inf(x, axis = NA_real_)
+norm_inf(x, axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}

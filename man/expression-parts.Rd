@@ -5,22 +5,25 @@
 \alias{variables}
 \alias{parameters}
 \alias{constants}
-\title{Parts of an Expression}
+\alias{atoms}
+\title{Parts of an Expression Leaf}
 \usage{
 variables(object)
 
 parameters(object)
 
 constants(object)
+
+atoms(object)
 }
 \arguments{
-\item{object}{A \linkS4class{Canonical} expression.}
+\item{object}{A \linkS4class{Leaf} object.}
 }
 \value{
-A list of \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Constant} objects.
+A list of \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Constant}, or \linkS4class{Atom} objects.
 }
 \description{
-List the variables, parameters, or constants in a canonical expression.
+List the variables, parameters, constants, or atoms in a canonical expression.
 }
 \examples{
 m <- 50

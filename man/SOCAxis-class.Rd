@@ -5,23 +5,23 @@
 \alias{SOCAxis-class}
 \alias{.SOCAxis}
 \alias{SOCAxis}
-\alias{SOCAxis}
 \alias{as.character,SOCAxis-method}
 \alias{format_constr,SOCAxis-method}
 \alias{num_cones,SOCAxis-method}
-\alias{cone_size,SOCAxis-method}
+\alias{cone_sizes,SOCAxis-method}
 \alias{size,SOCAxis-method}
 \title{The SOCAxis class.}
 \usage{
-SOCAxis(t, X, axis)
+SOCAxis(t, X, axis, id = NA_integer_)
 
 \S4method{as.character}{SOCAxis}(x)
 
-\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims, solver)
+\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims,
+  solver)
 
 \S4method{num_cones}{SOCAxis}(object)
 
-\S4method{cone_size}{SOCAxis}(object)
+\S4method{cone_sizes}{SOCAxis}(object)
 
 \S4method{size}{SOCAxis}(object)
 }
@@ -52,7 +52,7 @@ It Assumes \eqn{t} is a vector the same length as \eqn{X}'s rows (columns) for a
 
 \item \code{num_cones}: The number of elementwise cones.
 
-\item \code{cone_size}: The dimensions of a single cone.
+\item \code{cone_sizes}: The dimensions of a single cone.
 
 \item \code{size}: The dimensions of the (elementwise) second-order cones.
 }}
@@ -60,8 +60,6 @@ It Assumes \eqn{t} is a vector the same length as \eqn{X}'s rows (columns) for a
 \section{Slots}{
 
 \describe{
-\item{\code{constr_id}}{(Internal) A unique integer identification number used internally.}
-
 \item{\code{t}}{The scalar part of the second-order constraint.}
 
 \item{\code{x_elems}}{A list containing \code{X}, a matrix whose rows/columns are each a cone.}

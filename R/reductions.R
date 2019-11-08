@@ -34,6 +34,11 @@ special_index_canon <- function(expr, args) {
   list(lowered, list())
 }
 
+#' 
+#' Are the arguments affine?
+#' 
+#' @param constraints A \linkS4class{Constraint} object.
+#' @return All the affine arguments in given constraints.
 are_args_affine <- function(constraints) {
   all(sapply(constraints, function(constr) {
     all(sapply(constr@args, function(arg) { is_affine(arg) }))
@@ -92,15 +97,21 @@ setMethod("reduce", "Reduction", function(object) {
   return(list(object, object@.emitted_problem))
 })
 
+#' @param object A \linkS4class{Reduction} object.
+#' @param solution A \linkS4class{Solution} object.
+#' @describeIn Reduction Retrieves a solution to the owned problem.
 setMethod("retrieve", signature(object = "Reduction", solution = "Solution"), function(object, solution) {
   if(is.null(object@.retrieval_data))
     stop("reduce must be called before retrieve")
   return(invert(object, solution, object@.retrieval_data))
 })
 
+#' @param object A \linkS4class{Reduction} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn Reduction Performs the reduction on a problem and returns an equivalent problem.
 setMethod("perform", signature(object = "Reduction", problem = "Problem"), function(object, problem) { stop("Unimplemented") })
 
+#' @param object A \linkS4class{Reduction} object.
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn Reduction Returns a solution to the original problem given the inverse data.
@@ -116,6 +127,9 @@ setMethod("invert", signature(object = "Reduction", solution = "Solution", inver
 
 Canonicalization <- function(problem, canon_methods) { .Canonicalization(problem = problem, canon_methods = canon_methods) }
 
+#' @param object A \linkS4class{Canonicalization} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn Canonicalization Recursively canonicalize the objective and every constraint.
 setMethod("perform", signature(object = "Canonicalization", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
@@ -136,6 +150,10 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
   return(list(object, new_problem, inverse_data))
 })
 
+#' @param object A \linkS4class{Canonicalization} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The data encoding the original problem.
+#' @describeIn Canonicalization Performs the reduction on a problem and returns an equivalent problem.
 setMethod("invert", signature(object = "Canonicalization", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   pvars <- list()
   for(vid in names(inverse_data@id_map)) {
@@ -152,6 +170,8 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
 })
 
+#' @param expr An \linkS4class{Expression} object.
+#' @describeIn Canonicalization Recursively canonicalize an Expression.
 setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   # TODO: Don't copy affine expressions?
   if(class(expr) == "PartialProblem") {
@@ -182,6 +202,9 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   return(list(canon_expr, constrs))
 })
 
+#' @param expr An \linkS4class{Expression} object.
+#' @param args List of arguments to canonicalize the expression.
+#' @describeIn Canonicalization Canonicalize an expression, w.r.t. canonicalized arguments.
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
@@ -203,6 +226,11 @@ Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = proble
 
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
+
+#' @param object A \linkS4class{Chain} object.
+#' @param problem A \linkS4class{Problem} object to check.
+#' @describeIn Chain A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
+#' reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
 setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   for(i in seq_along(object@reductions)) {
     r <- object@reductions[[i]]
@@ -216,6 +244,9 @@ setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(
   return(TRUE)
 })
 
+#' @param object A \linkS4class{Chain} object.
+#' @param problem A \linkS4class{Problem} object to check.
+#' @describeIn Chain Applies the chain to a problem and returns an equivalent problem.
 setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   inverse_data <- list()
   for(i in seq_along(object@reductions)) {
@@ -230,6 +261,10 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
   return(list(object, problem, inverse_data))
 })
 
+#' @param object A \linkS4class{Chain} object.
+#' @param solution A \linkS4class{SolutionORList} to a problem that generated the inverse data.
+#' @param inverse_data The data encoding the original problem.
+#' @describeIn Chain Performs the reduction on a problem and returns an equivalent problem.
 setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inverse_data = "list"), function(object, solution, inverse_data) {
   m <- min(length(object@reductions), length(inverse_data))
   for(i in rev(seq_len(m))) {
@@ -271,6 +306,9 @@ CvxAttr2Constr <- setClass("CvxAttr2Constr", contains = "Reduction")
 
 setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) { TRUE })
 
+#' @param object A \linkS4class{CvxAttr2Constr} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn CvxAttr2Constr Expand convex variable attributes to constraints.
 setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
   if(length(convex_attributes(variables(problem))) == 0)
     return(list(object, problem, list()))
@@ -339,6 +377,10 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   return(list(object, Problem(obj, constr), inverse_data))
 })
 
+#' @param object A \linkS4class{CvxAttr2Constr} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The inverse data returned by an invocation to apply.
+#' @describeIn CvxAttr2Constr Performs the reduction on a problem and returns an equivalent problem.
 setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   if(is.null(inverse_data) || length(inverse_data) == 0)
     return(solution)
@@ -404,6 +446,10 @@ EvalParams.replace_params_with_consts <- function(expr) {
 }
 
 setMethod("accepts", signature(object = "EvalParams", problem = "Problem"), function(object, problem) { TRUE })
+
+#' @param object A \linkS4class{EvalParams} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn EvalParams Replace parameters with constant values.
 setMethod("perform", signature(object = "EvalParams", problem = "Problem"), function(object, problem) {
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
@@ -436,6 +482,10 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
   return(list(object, Problem(objective, constraints), list()))
 })
 
+#' @param object A \linkS4class{EvalParams} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The inverse data returned by an invocation to apply.
+#' @describeIn EvalParams Returns a solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "EvalParams", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { solution })
 
 #'
@@ -448,6 +498,10 @@ setMethod("invert", signature(object = "EvalParams", solution = "Solution", inve
 FlipObjective <- setClass("FlipObjective", contains = "Reduction")
 
 setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
+
+#' @param object A \linkS4class{FlipObjective} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn FlipObjective Flip a minimization objective to a maximization and vice versa.
 setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
   if(class(problem@objective) == "Maximize")
     objective <- Minimize
@@ -457,6 +511,10 @@ setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), f
   return(list(object, problem, list()))
 })
 
+#' @param object A \linkS4class{FlipObjective} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The inverse data returned by an invocation to apply.
+#' @describeIn FlipObjective Map the solution of the flipped problem to that of the original.
 setMethod("invert", signature(object = "FlipObjective", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   if(!is.null(solution@opt_val))
     solution@opt_val <- -solution@opt_val
@@ -469,6 +527,10 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
 #' @rdname MatrixStuffing-class
 MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
 
+#' @param object A \linkS4class{MatrixStuffing} object.
+#' @param problem A \linkS4class{Problem} object to stuff; the arguments of every constraint must be affine.
+#' @describeIn MatrixStuffing Returns a stuffed problem. The returned problem is a minimization problem in which every
+#' constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
 setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
 
@@ -523,6 +585,10 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   return(list(object, new_prob, inverse_data))
 })
 
+#' @param object A \linkS4class{MatrixStuffing} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The data encoding the original problem.
+#' @describeIn MatrixStuffing Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
     var_map <- inverse_data@var_offsets
   con_map <- inverse_data@cons_id_map
@@ -573,8 +639,12 @@ setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "P
   stop("Unimplemented")
 })
 
+#'
+#' Coalesces bool, int indices for variables.
+#'
+#' @return Coalesces bool, int indices for variables. The indexing scheme assumes that the variables will be coalesced into
+#' a single one-dimensional variable, with each variable being reshaped in Fortran order.
 extract_mip_idx <- function(variables) {
-  # Coalesces bool, int indices for variables.
   # The indexing scheme assumes that the variables will be coalesced into a single
   # one-dimensional variable with each variable being reshaped in Fortran order.
 

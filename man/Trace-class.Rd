@@ -5,22 +5,27 @@
 \alias{Trace-class}
 \alias{.Trace}
 \alias{Trace}
-\alias{Trace}
-\alias{validate_args,Trace-method}
 \alias{to_numeric,Trace-method}
-\alias{size_from_args,Trace-method}
+\alias{validate_args,Trace-method}
+\alias{dim_from_args,Trace-method}
+\alias{is_atom_log_log_convex,Trace-method}
+\alias{is_atom_log_log_concave,Trace-method}
 \alias{graph_implementation,Trace-method}
 \title{The Trace class.}
 \usage{
 Trace(expr)
 
-\S4method{validate_args}{Trace}(object)
-
 \S4method{to_numeric}{Trace}(object, values)
 
-\S4method{size_from_args}{Trace}(object)
+\S4method{validate_args}{Trace}(object)
 
-\S4method{graph_implementation}{Trace}(object, arg_objs, size,
+\S4method{dim_from_args}{Trace}(object)
+
+\S4method{is_atom_log_log_convex}{Trace}(object)
+
+\S4method{is_atom_log_log_concave}{Trace}(object)
+
+\S4method{graph_implementation}{Trace}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -32,7 +37,7 @@ Trace(expr)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -41,11 +46,15 @@ This class represents the sum of the diagonal entries in a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check the argument is a square matrix.
-
 \item \code{to_numeric}: Sum the diagonal entries.
 
-\item \code{size_from_args}: The atom is a scalar.
+\item \code{validate_args}: Check the argument is a square matrix.
+
+\item \code{dim_from_args}: The atom is a scalar.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

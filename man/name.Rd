@@ -5,7 +5,7 @@
 \alias{name}
 \title{Variable, Parameter, or Expression Name}
 \usage{
-name(object)
+name(x)
 }
 \arguments{
 \item{object}{A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.}

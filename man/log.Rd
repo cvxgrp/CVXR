@@ -12,7 +12,7 @@
 \alias{log1p,Expression-method}
 \title{Logarithms}
 \usage{
-\S4method{log}{Expression}(x, base = exp(1))
+\S4method{log}{Expression}(x, base = base::exp(1))
 
 \S4method{log10}{Expression}(x)
 

@@ -7,7 +7,7 @@
 \alias{min.Expression}
 \title{Minimum}
 \usage{
-min_entries(x, axis = NA_real_)
+min_entries(x, axis = NA_real_, keepdims = FALSE)
 
 \method{min}{Expression}(..., na.rm = FALSE)
 }
@@ -27,6 +27,11 @@ An \linkS4class{Expression} representing the minimum of the input.
 The minimum of an expression.
 }
 \examples{
+A <- Variable(2,2)
+val <- cbind(c(-5,2), c(-3,1))
+prob <- Problem(Maximize(min_entries(A)), list(A == val))
+result <- solve(prob)
+result$value
 A <- Variable(2,2)
 val <- cbind(c(-5,2), c(-3,1))
 prob <- Problem(Maximize(min_entries(A)), list(A == val))

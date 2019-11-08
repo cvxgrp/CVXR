@@ -95,6 +95,7 @@ setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 #' @describeIn Abs A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Abs", function(object, idx) { is_nonneg(object@args[[idx]]) })
 
+#' @param idx An index into the atom.
 #' @describeIn Abs A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Abs", function(object, idx) { is_nonpos(object@args[[idx]]) })
 
@@ -169,6 +170,8 @@ setMethod("is_incr", "Entr", function(object, idx) { FALSE })
 #' @describeIn Entr The atom is weakly decreasing.
 setMethod("is_decr", "Entr", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Entr Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Entr", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -182,6 +185,7 @@ setMethod(".grad", "Entr", function(object, values) {
   }
 })
 
+#' @describeIn Entr Returns constraints descrbing the domain of the node
 setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
 
 #'
@@ -231,6 +235,8 @@ setMethod("is_incr", "Exp", function(object, idx) { TRUE })
 #' @describeIn Exp The atom is not weakly decreasing.
 setMethod("is_decr", "Exp", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Exp Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Exp", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -321,6 +327,8 @@ setMethod("validate_args", "Huber", function(object) {
   callNextMethod()
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Huber Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Huber", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -391,6 +399,8 @@ setMethod("is_incr", "KLDiv", function(object, idx) { FALSE })
 #' @describeIn KLDiv The atom is not monotonic in any argument.
 setMethod("is_decr", "KLDiv", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn KLDiv Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "KLDiv", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
     return(list(NA_real_, NA_real_))   # Non-differentiable
@@ -407,6 +417,7 @@ setMethod(".grad", "KLDiv", function(object, values) {
   }
 })
 
+#' @describeIn KLDiv Returns constraints describng the domain of the node
 setMethod(".domain", "KLDiv", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
 
 #'
@@ -456,6 +467,8 @@ setMethod("is_incr", "Log", function(object, idx) { TRUE })
 #' @describeIn Log The atom is not weakly decreasing.
 setMethod("is_decr", "Log", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Log Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Log", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -469,6 +482,7 @@ setMethod(".grad", "Log", function(object, values) {
   }
 })
 
+#' @describeIn Log Returns constraints describng the domain of the node
 setMethod(".domain", "Log", function(object) { list(object@args[[1]] >= 0) })
 
 #'
@@ -494,6 +508,8 @@ setMethod("to_numeric", "Log1p", function(object, values) { log(1 + values[[1]])
 #' @describeIn Log1p The sign of the atom.
 setMethod("sign_from_args", "Log1p", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Log1p Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Log1p", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -507,6 +523,7 @@ setMethod(".grad", "Log1p", function(object, values) {
   }
 })
 
+#' @describeIn Log1p Returns constraints describng the domain of the node
 setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
 #'
@@ -552,6 +569,8 @@ setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
 #' @describeIn Logistic The atom is not weakly decreasing.
 setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Logistic Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Logistic", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -627,6 +646,8 @@ setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
 #' @describeIn MaxElemwise Are all the arguments piecewise linear?
 setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, is_pwl)) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MaxElemwise Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MaxElemwise", function(object, values) {
   max_vals <- to_numeric(object, values)
   vals_dim <- dim(max_vals)
@@ -709,6 +730,8 @@ setMethod("is_decr", "MinElemwise", function(object, idx) { FALSE })
 #' @describeIn MinElemwise Are all the arguments piecewise linear?
 setMethod("is_pwl", "MinElemwise", function(object) { all(sapply(object@args, is_pwl)) })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn MinElemwise Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MinElemwise", function(object, values) {
   min_vals <- to_numeric(object, values)
   vals_dim <- dim(min_vals)
@@ -730,8 +753,15 @@ setMethod(".grad", "MinElemwise", function(object, values) {
   }
   grad_list
 })
-
+#' 
+#' An alias for -MinElemwise(x, 0)
+#' 
+#' @return An alias for -MinElemwise(x, 0)
 Neg <- function(x) { -MinElemwise(x, 0) }
+#' 
+#' An alias for MaxElemwise(x, 0)
+#' 
+#' @return An alias for MaxElemwise(x, 0)
 Pos <- function(x) { MaxElemwise(x, 0) }
 
 #'
@@ -903,6 +933,8 @@ setMethod("is_qpwa", "Power", function(object) {
     return(is_constant(object@args[[1]]))
 })
 
+#' @param values A list of numeric values for the arguments
+#' @describeIn Power Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Power", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
@@ -922,6 +954,7 @@ setMethod(".grad", "Power", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
+#' @describeIn Power Returns constraints describng the domain of the node
 setMethod(".domain", "Power", function(object) {
   if((object@p < 1 && object@p != 0) || (object@p > 1 && !is_power2(object@p)))
     list(object@args[[1]] >= 0)
@@ -932,6 +965,8 @@ setMethod(".domain", "Power", function(object) {
 #' @describeIn Power A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
+#' @param args A list of arguments to reconstruct the atom. If args=NULL, use the current args of the atom
+#' @describeIn Power Returns a shallow  copy of the power atom
 setMethod("copy", "Power", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
     args <- object@args

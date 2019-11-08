@@ -4,16 +4,29 @@
 \name{AffAtom-class}
 \alias{AffAtom-class}
 \alias{AffAtom}
+\alias{allow_complex,AffAtom-method}
 \alias{sign_from_args,AffAtom-method}
+\alias{is_imag,AffAtom-method}
+\alias{is_complex,AffAtom-method}
 \alias{is_atom_convex,AffAtom-method}
 \alias{is_atom_concave,AffAtom-method}
 \alias{is_incr,AffAtom-method}
 \alias{is_decr,AffAtom-method}
 \alias{is_quadratic,AffAtom-method}
+\alias{is_qpwa,AffAtom-method}
 \alias{is_pwl,AffAtom-method}
+\alias{is_psd,AffAtom-method}
+\alias{is_nsd,AffAtom-method}
+\alias{.grad,AffAtom-method}
 \title{The AffAtom class.}
 \usage{
+\S4method{allow_complex}{AffAtom}(object)
+
 \S4method{sign_from_args}{AffAtom}(object)
+
+\S4method{is_imag}{AffAtom}(object)
+
+\S4method{is_complex}{AffAtom}(object)
 
 \S4method{is_atom_convex}{AffAtom}(object)
 
@@ -25,19 +38,33 @@
 
 \S4method{is_quadratic}{AffAtom}(object)
 
+\S4method{is_qpwa}{AffAtom}(object)
+
 \S4method{is_pwl}{AffAtom}(object)
+
+\S4method{is_psd}{AffAtom}(object)
+
+\S4method{is_nsd}{AffAtom}(object)
+
+\S4method{.grad}{AffAtom}(object, values)
 }
 \arguments{
-\item{object}{An \linkS4class{AffAtom} object.}
-
 \item{idx}{An index into the atom.}
+
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This virtual class represents an affine atomic expression.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{allow_complex}: Does the atom handle complex numbers?
+
 \item \code{sign_from_args}: The sign of the atom.
+
+\item \code{is_imag}: Is the atom imaginary?
+
+\item \code{is_complex}: Is the atom complex valued?
 
 \item \code{is_atom_convex}: The atom is convex.
 
@@ -49,6 +76,14 @@ This virtual class represents an affine atomic expression.
 
 \item \code{is_quadratic}: Is every argument quadratic?
 
+\item \code{is_qpwa}: Is every argument quadratic of piecewise affine?
+
 \item \code{is_pwl}: Is every argument piecewise linear?
+
+\item \code{is_psd}: Is the atom a positive semidefinite matrix?
+
+\item \code{is_nsd}: Is the atom a negative semidefinite matrix?
+
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 }}
 

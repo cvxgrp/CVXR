@@ -5,33 +5,36 @@
 \alias{Reshape-class}
 \alias{.Reshape}
 \alias{Reshape}
-\alias{Reshape}
-\alias{validate_args,Reshape-method}
 \alias{to_numeric,Reshape-method}
-\alias{size_from_args,Reshape-method}
+\alias{validate_args,Reshape-method}
+\alias{dim_from_args,Reshape-method}
+\alias{is_atom_log_log_convex,Reshape-method}
+\alias{is_atom_log_log_concave,Reshape-method}
 \alias{get_data,Reshape-method}
 \alias{graph_implementation,Reshape-method}
 \title{The Reshape class.}
 \usage{
-Reshape(expr, rows, cols)
-
-\S4method{validate_args}{Reshape}(object)
+Reshape(expr, new_dim)
 
 \S4method{to_numeric}{Reshape}(object, values)
 
-\S4method{size_from_args}{Reshape}(object)
+\S4method{validate_args}{Reshape}(object)
+
+\S4method{dim_from_args}{Reshape}(object)
+
+\S4method{is_atom_log_log_convex}{Reshape}(object)
+
+\S4method{is_atom_log_log_concave}{Reshape}(object)
 
 \S4method{get_data}{Reshape}(object)
 
-\S4method{graph_implementation}{Reshape}(object, arg_objs, size,
+\S4method{graph_implementation}{Reshape}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} or numeric matrix.}
 
-\item{rows}{The new number of rows.}
-
-\item{cols}{The new number of columns.}
+\item{new_dim}{The new dimensions.}
 
 \item{object}{A \linkS4class{Reshape} object.}
 
@@ -39,23 +42,27 @@ Reshape(expr, rows, cols)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
 \description{
 This class represents the reshaping of an expression. The operator vectorizes the expression,
-then unvectorizes it into the new shape. Entries are stored in column-major order.
+then unvectorizes it into the new dimensions. Entries are stored in column-major order.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check the new shape has the same number of entries as the old.
-
 \item \code{to_numeric}: Reshape the value into the specified dimensions.
 
-\item \code{size_from_args}: The \code{c(rows, cols)} of the new expression.
+\item \code{validate_args}: Check the new shape has the same number of entries as the old.
 
-\item \code{get_data}: Returns \code{list(rows, cols)}.
+\item \code{dim_from_args}: The \code{c(rows, cols)} dimensions of the new expression.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
+\item \code{get_data}: Returns a list containing the new shape.
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}
@@ -65,8 +72,6 @@ then unvectorizes it into the new shape. Entries are stored in column-major orde
 \describe{
 \item{\code{expr}}{An \linkS4class{Expression} or numeric matrix.}
 
-\item{\code{rows}}{The new number of rows.}
-
-\item{\code{cols}}{The new number of columns.}
+\item{\code{new_dim}}{The new dimensions.}
 }}
 

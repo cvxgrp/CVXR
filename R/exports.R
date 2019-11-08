@@ -11,6 +11,12 @@
 #' 
 #' @param X An \linkS4class{Expression} or positive square matrix.
 #' @return An \linkS4class{Expression} representing the unity resolvent of the input.
+#' @examples
+#' A <- Variable(2,2, pos = TRUE)
+#' prob <- Problem(Minimize(matrix_trace(A)), list(eye_minus_inv(A) <=1))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(A)
 #' @docType methods
 #' @name eye_minus_inv
 #' @rdname eye_minus_inv
@@ -463,6 +469,15 @@ norm_nuc <- NormNuc
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing one minus the input restricted to \eqn{(0,1)}.
+#' @examples 
+#' x <- Variable(pos = TRUE)
+#' y <- Variable(pos = TRUE)
+#' prob <- Problem(Maximize(one_minus_pos(x*y)), list(x <= 2 * y^2, y >= .2))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(x)
+#' result$getValue(y)
+#' 
 #' @docType methods
 #' @name one_minus_pos
 #' @rdname one_minus_pos
@@ -480,6 +495,21 @@ one_minus_pos <- OneMinusPos
 #' This atom is log-log convex.
 #' @param X An \linkS4class{Expression} or positive square matrix.
 #' @return An \linkS4class{Expression} representing the largest eigenvalue of the input.
+#' @examples 
+#' n <- 3
+#' X <- Variable(n, n, pos=TRUE)
+#' objective_fn <- pf_eigenvalue(X)
+#' constraints <- list( X[1,1]== 1.0,  
+#'                      X[1,3] == 1.9,
+#'                      X[2,2] == .8,
+#'                      X[3,1] == 3.2,
+#'                      X[3,2] == 5.9,
+#'                      X[1, 2] * X[2, 1] * X[2,3] * X[3,3] == 1)
+#' problem <- Problem(Minimize(objective_fn), constraints)
+#' result <- solve(problem, gp=TRUE)
+#' result$value
+#' result$getValue(X)
+#' 
 #' @docType methods
 #' @name pf_eigenvalue
 #' @rdname pf_eigenvalue
@@ -543,6 +573,17 @@ p_norm <- Pnorm
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the product of the entries of the input.
+#' @examples 
+#' 
+#' n <- 2
+#' X <- Variable(n, n, pos=TRUE)
+#' obj <- sum(X)
+#' constraints <- list(prod_entries(X) == 4)
+#' prob <- Problem(Minimize(obj), constraints)
+#' result <- solve(prob, gp=TRUE)
+#' result$value
+#' result$getValue(X)
+#' 
 #' @docType methods
 #' @name prod_entries
 #' @aliases prod
@@ -787,6 +828,18 @@ tv <- TotalVariation
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @examples 
+#' x <- Variable(2)
+#' val <- matrix(c(-5,-10))
+#' prob <- Problem(Minimize(max_entries(x)), list(x == val))
+#' result <- solve(prob)
+#' result$value
+#' 
+#' A <- Variable(2,2)
+#' val <- rbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Minimize(max_entries(A, axis = 1)[2,1]), list(A == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname max_entries
 #' @method max Expression
@@ -807,6 +860,12 @@ max.Expression <- function(..., na.rm = FALSE) {
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @examples 
+#' A <- Variable(2,2)
+#' val <- cbind(c(-5,2), c(-3,1))
+#' prob <- Problem(Maximize(min_entries(A)), list(A == val))
+#' result <- solve(prob)
+#' result$value
 #' @docType methods
 #' @rdname min_entries
 #' @method min Expression
@@ -890,6 +949,18 @@ cvxr_norm <- Norm
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @examples 
+#' x <- Variable(2)
+#' prob <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(x)
+#' 
+#' C <- Variable(3,2)
+#' prob <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
+#' result <- solve(prob)
+#' result$value
+#' result$getValue(C)
 #' @docType methods
 #' @rdname sum_entries
 #' @method sum Expression
@@ -911,6 +982,14 @@ sum.Expression <- function(..., na.rm = FALSE) {
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
+#' @examples
+#' n <- 2
+#' X <- Variable(n, n, pos=TRUE)
+#' obj <- sum(X)
+#' constraints <- list(prod_entries(X) == 4)
+#' prob <- Problem(Minimize(obj), constraints)
+#' result <- solve(prob, gp=TRUE)
+#' result$value
 #' @docType methods
 #' @rdname prod_entries
 #' @method prod Expression

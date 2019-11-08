@@ -5,14 +5,15 @@
 \alias{Exp-class}
 \alias{.Exp}
 \alias{Exp}
-\alias{Exp}
 \alias{to_numeric,Exp-method}
 \alias{sign_from_args,Exp-method}
 \alias{is_atom_convex,Exp-method}
 \alias{is_atom_concave,Exp-method}
+\alias{is_atom_log_log_convex,Exp-method}
+\alias{is_atom_log_log_concave,Exp-method}
 \alias{is_incr,Exp-method}
 \alias{is_decr,Exp-method}
-\alias{graph_implementation,Exp-method}
+\alias{.grad,Exp-method}
 \title{The Exp class.}
 \usage{
 Exp(x)
@@ -25,11 +26,15 @@ Exp(x)
 
 \S4method{is_atom_concave}{Exp}(object)
 
+\S4method{is_atom_log_log_convex}{Exp}(object)
+
+\S4method{is_atom_log_log_concave}{Exp}(object)
+
 \S4method{is_incr}{Exp}(object, idx)
 
 \S4method{is_decr}{Exp}(object, idx)
 
-\S4method{graph_implementation}{Exp}(object, arg_objs, size, data = NA_real_)
+\S4method{.grad}{Exp}(object, values)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}
@@ -40,11 +45,7 @@ Exp(x)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise natural exponential \eqn{e^x}.
@@ -59,11 +60,15 @@ This class represents the elementwise natural exponential \eqn{e^x}.
 
 \item \code{is_atom_concave}: The atom is not concave.
 
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+
 \item \code{is_incr}: The atom is weakly increasing.
 
 \item \code{is_decr}: The atom is not weakly decreasing.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 }}
 
 \section{Slots}{

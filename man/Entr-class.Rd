@@ -5,14 +5,14 @@
 \alias{Entr-class}
 \alias{.Entr}
 \alias{Entr}
-\alias{Entr}
 \alias{to_numeric,Entr-method}
 \alias{sign_from_args,Entr-method}
 \alias{is_atom_convex,Entr-method}
 \alias{is_atom_concave,Entr-method}
 \alias{is_incr,Entr-method}
 \alias{is_decr,Entr-method}
-\alias{graph_implementation,Entr-method}
+\alias{.grad,Entr-method}
+\alias{.domain,Entr-method}
 \title{The Entr class.}
 \usage{
 Entr(x)
@@ -29,7 +29,9 @@ Entr(x)
 
 \S4method{is_decr}{Entr}(object, idx)
 
-\S4method{graph_implementation}{Entr}(object, arg_objs, size, data = NA_real_)
+\S4method{.grad}{Entr}(object, values)
+
+\S4method{.domain}{Entr}(object)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}
@@ -40,11 +42,7 @@ Entr(x)
 
 \item{idx}{An index into the atom.}
 
-\item{arg_objs}{A list of linear expressions for each argument.}
-
-\item{size}{A vector with two elements representing the size of the resulting expression.}
-
-\item{data}{A list of additional data required by the atom.}
+\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise operation \eqn{-xlog(x)}.
@@ -63,7 +61,9 @@ This class represents the elementwise operation \eqn{-xlog(x)}.
 
 \item \code{is_decr}: The atom is weakly decreasing.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints descrbing the domain of the node
 }}
 
 \section{Slots}{

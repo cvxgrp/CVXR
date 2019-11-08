@@ -5,22 +5,27 @@
 \alias{VStack-class}
 \alias{.VStack}
 \alias{VStack}
-\alias{VStack}
-\alias{validate_args,VStack-method}
 \alias{to_numeric,VStack-method}
-\alias{size_from_args,VStack-method}
+\alias{validate_args,VStack-method}
+\alias{dim_from_args,VStack-method}
+\alias{is_atom_log_log_convex,VStack-method}
+\alias{is_atom_log_log_concave,VStack-method}
 \alias{graph_implementation,VStack-method}
 \title{The VStack class.}
 \usage{
 VStack(...)
 
-\S4method{validate_args}{VStack}(object)
-
 \S4method{to_numeric}{VStack}(object, values)
 
-\S4method{size_from_args}{VStack}(object)
+\S4method{validate_args}{VStack}(object)
 
-\S4method{graph_implementation}{VStack}(object, arg_objs, size,
+\S4method{dim_from_args}{VStack}(object)
+
+\S4method{is_atom_log_log_convex}{VStack}(object)
+
+\S4method{is_atom_log_log_concave}{VStack}(object)
+
+\S4method{graph_implementation}{VStack}(object, arg_objs, dim,
   data = NA_real_)
 }
 \arguments{
@@ -32,7 +37,7 @@ VStack(...)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
 }
@@ -41,11 +46,15 @@ Vertical concatenation of values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{validate_args}: Check all arguments have the same width.
-
 \item \code{to_numeric}: Vertically concatenate the values using \code{rbind}.
 
-\item \code{size_from_args}: The size of the atom.
+\item \code{validate_args}: Check all arguments have the same width.
+
+\item \code{dim_from_args}: The dimensions of the atom.
+
+\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+
+\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
 
 \item \code{graph_implementation}: The graph implementation of the atom.
 }}

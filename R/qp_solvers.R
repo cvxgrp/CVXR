@@ -1,17 +1,26 @@
 # QPSolver requires objectives to be stuffed in the following way.
+#' 
+#' Is the QP objective stuffed?
+#' 
+#' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
+#' @return Is the objective a stuffed QP?
 is_stuffed_qp_objective <- function(objective) {
   expr <- expr(objective)
   return(class(expr) == "AddExpression" && length(expr@args) == 2 && class(expr@args[[1]]) == "QuadForm" && class(expr@args[[2]]) == "MulExpression" && is_affine(expr@args[[2]]))
 }
 
-# A QP solver interface.
+#'
+#'  A QP solver interface.
+#'  
 setClass("QpSolver", contains = "ReductionSolver")
 
+#' @describeIn QpSolver Is this a QP problem?
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
            all(sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" || class(c) == "NonPosConstraint" })))
 })
 
+#' @describeIn QpSolver Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   # Construct QP problem data stored in a dictionary.
   # The QP has the following form
@@ -88,13 +97,16 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   return(list(object, data, inverse_data))
 })
 
-# QP interface for the CPLEX solver.
+#'
+#' An interface for the CPLEX solver.
+#'
 CPLEX_QP <- setClass("CPLEX_QP", contains = "QpSolver")
 
 setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 
-# Map of CPLEX status to CVXR status.
+
 # TODO: Add more!
+#' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_QP", function(solver, status) {
   if(status %in% c(1, 101))
     OPTIMAL
@@ -108,10 +120,12 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
     stop("CPLEX status unrecognized: ", status)
 })
 
+#' @describeIn CPLEX_QP Returns the name of the solver.
 setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
+#' @describeIn CPLEX_QP Imports the solver.
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 
-#DK: Writing new invert function because not sure how to get alt_invert to work
+#' @describeIn CPLEX_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
   attr <- list()
@@ -148,6 +162,7 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
+# Do we need this function?
 setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   model <- results$model
   attr <- list()
@@ -191,6 +206,12 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("Rcplex", quietly = TRUE)
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
@@ -289,12 +310,15 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   return(results_dict)
 })
 
-# QP interface for the GUROBI solver.
+#'
+#' An interface for the GUROBI_QP solver.
+#'
+
 GUROBI_QP <- setClass("GUROBI_QP", contains = "QpSolver")
 
 setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 
-# Map of GUROBI status to CVXR status.
+#' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
   if(status == 2 || status == "OPTIMAL")
     OPTIMAL
@@ -312,7 +336,9 @@ setMethod("status_map", "GUROBI_QP", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
+#' @describeIn GUROBI_QP Returns the name of the solver.
 setMethod("name", "GUROBI_QP", function(x) { GUROBI_NAME })
+#' @describeIn GUROBI_QP Imports the solver.
 setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 ##DK: IS THIS FUNCTION NECESSARY ANYMORE WITH invert?
@@ -363,6 +389,12 @@ setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
@@ -496,6 +528,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
 })
 
 #DK WRITTEN FUNCTION
+#' @describeIn GUROBI_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
   solution <- solution$solution
@@ -543,10 +576,13 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-# QP interface for the OSQP solver.
+#'
+#' An interface for the OSQP solver.
+#'
+
 OSQP <- setClass("OSQP", contains = "QpSolver")
 
-# Map of OSQP status to CVXPY status.
+#' @describeIn OSQP Converts status returned by the OSQP solver to its respective CVXPY status.
 setMethod("status_map", "OSQP", function(solver, status) {
   if(status == 1)
     OPTIMAL
@@ -566,14 +602,12 @@ setMethod("status_map", "OSQP", function(solver, status) {
     stop("OSQP status unrecognized: ", status)
 })
 
+#' @describeIn OSQP Returns the name of the solver.
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
+#' @describeIn OSQP Imports the solver.
 setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
 
-## DWK CHANGE
-## solution = "Solution" before. CVXPY has osqp.OSQP.results class
-## In R, OSQP returns a list, so I changed the solution signature into a list
-## setMethod("invert", signature(object = "OSQP", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-## DWK CHANGE END
+#' @describeIn OSQP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   attr <- list()
   ## DWK CHANGES Below
@@ -599,6 +633,12 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn OSQP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   requireNamespace("osqp", quietly = TRUE)
   P <- data[[P_KEY]]
@@ -675,12 +715,9 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
 
   }
 
-  ## DWK CHANGE
-  ## results <- solve(solver)
   results <- solver$Solve()
-  ## if(!is.null(solver_cache))
   if(identical(solver_cache, list()) || !is.null(solver_cache))   # solver_cache is a list() object, so it throws an error here
       solver_cache[[name(object)]] <- list(solver, data, results)
-  ## DWK CHANGE END
+  
   return(results)
 })

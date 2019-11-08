@@ -4,7 +4,7 @@
 \alias{Solver-capable}
 \alias{lp_capable}
 \alias{socp_capable}
-\alias{sdp_capable}
+\alias{psd_capable}
 \alias{exp_capable}
 \alias{mip_capable}
 \title{Solver Capabilities}
@@ -13,7 +13,7 @@ lp_capable(solver)
 
 socp_capable(solver)
 
-sdp_capable(solver)
+psd_capable(solver)
 
 exp_capable(solver)
 
@@ -26,12 +26,12 @@ mip_capable(solver)
 A logical value.
 }
 \description{
-Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), semidefinite program (SDP), exponential cone program (EXP), or mixed-integer program (MIP).
+Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), positive semidefinite program (PSD), exponential cone program (EXP), or mixed-integer program (MIP).
 }
 \examples{
 lp_capable(ECOS())
 socp_capable(ECOS())
-sdp_capable(ECOS())
+psd_capable(ECOS())
 exp_capable(ECOS())
 mip_capable(ECOS())
 }

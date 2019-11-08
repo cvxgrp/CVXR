@@ -66,6 +66,9 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
 })
 
 # Atom canonicalizers.
+#' 
+#' Dcp2Cone canonicalizer for the entropy atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from an entropy atom where 
@@ -86,6 +89,9 @@ Dcp2Cone.entr_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the exponential atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from an exponential atom 
@@ -103,6 +109,9 @@ Dcp2Cone.exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the geometric mean atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a geometric mean atom 
@@ -122,6 +131,9 @@ Dcp2Cone.geo_mean_canon <- function(expr, args) {
   return(list(t, gm_constrs(t, x_list, w)))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the huber atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a huber atom where the objective 
@@ -156,6 +168,9 @@ Dcp2Cone.huber_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the indicator atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from an indicator atom and
@@ -165,6 +180,9 @@ Dcp2Cone.indicator_canon <- function(expr, args) {
   return(list(0, args))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the KL Divergence atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a KL divergence atom
@@ -180,6 +198,9 @@ Dcp2Cone.kl_div_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the lambda maximization atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a lambda maximization atom
@@ -196,6 +217,9 @@ Dcp2Cone.lambda_max_canon <- function(expr, args) {
   return(list(t, constr))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the largest lambda sum atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a lambda sum of the k
@@ -231,6 +255,9 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   return(list(obj, constr))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the log 1p atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log 1p atom where
@@ -240,6 +267,9 @@ Dcp2Cone.log1p_canon <- function(expr, args) {
   return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the log atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log atom where
@@ -259,6 +289,9 @@ Dcp2Cone.log_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the log determinant atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log determinant atom where
@@ -331,6 +364,9 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   return(list(sum(obj), constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the log sum of the exp atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the log sum
@@ -365,6 +401,9 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the logistic function atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the logistic atom
@@ -392,6 +431,9 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   return(list(t0, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the matrix fraction atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the matrix fraction
@@ -425,6 +467,9 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   return(list(matrix_trace(Tvar), constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the nuclear norm atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a nuclear norm atom,
@@ -452,6 +497,9 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   return(list(trace_value, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the p norm atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a pnorm atom, where
@@ -505,6 +553,9 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the power atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a power atom, where
@@ -541,6 +592,9 @@ Dcp2Cone.power_canon <- function(expr, args) {
   }
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the quadratic form atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a quadratic form atom,
@@ -565,6 +619,9 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   return(list(scale * obj, constr))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the quadratic over linear term atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a quadratic over linear
@@ -587,6 +644,9 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the sigma max atom
+#' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a sigma max atom

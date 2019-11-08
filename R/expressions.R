@@ -325,7 +325,7 @@ setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "
   SpecialIndex(x, Key(i, NULL))
 })
 
-# #' @rdname Index-class
+#  @rdname Index-class
 # setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
 #  stop("Invalid or unimplemented Expression slice operation")
 # })
@@ -402,7 +402,6 @@ setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
 
 # Matrix operators
-#'
 #' Matrix Transpose
 #'
 #' The transpose of a matrix.
@@ -631,8 +630,8 @@ setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
   return(object)   # Leaves are not deep copied.
 })
 
-#' @param object A \linkS4class{Leaf} object.
-#' @describeIn Leaf Leaves are not copied.
+### @param object A \linkS4class{Leaf} object.
+### @describeIn Leaf Leaves are not copied.
 setMethod("get_data", "Leaf", function(object) { })
 
 #' @describeIn Leaf The dimensions of the leaf node.

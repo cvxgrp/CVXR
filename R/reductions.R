@@ -636,10 +636,12 @@ setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "P
   stop("Unimplemented")
 })
 
+#'
+#' Coalesces bool, int indices for variables.
+#'
 #' @return Coalesces bool, int indices for variables. The indexing scheme assumes that the variables will be coalesced into
 #' a single one-dimensional variable, with each variable being reshaped in Fortran order.
 extract_mip_idx <- function(variables) {
-  # Coalesces bool, int indices for variables.
   # The indexing scheme assumes that the variables will be coalesced into a single
   # one-dimensional variable with each variable being reshaped in Fortran order.
 

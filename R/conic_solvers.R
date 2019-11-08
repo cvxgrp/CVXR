@@ -1,5 +1,6 @@
-
-#'
+#' 
+#' Is the constraint a stuffed cone constraint?
+#' 
 #' @param constraint A \linkS4class{Constraint} object.
 #' @return Is the constraint a stuffed-cone constraint?
 is_stuffed_cone_constraint <- function(constraint) {
@@ -25,7 +26,9 @@ is_stuffed_cone_constraint <- function(constraint) {
   return(TRUE)
 }
 
-#'
+#' 
+#' Is the objective a stuffed cone objective?
+#' 
 #' @param objective An \linkS4class{Objective} object.
 #' @return Is the objective a stuffed-cone objective?
 is_stuffed_cone_objective <- function(objective) {
@@ -35,7 +38,6 @@ is_stuffed_cone_objective <- function(objective) {
                          && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && class(expr@args[[2]]) == "Constant")
 }
 
-#'
 #' Summary of cone dimensions present in constraints.
 #'
 #'    Constraints must be formatted as dictionary that maps from
@@ -68,7 +70,7 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real
   return(.Object)
 })
 
-#'
+
 #' The ConicSolver class.
 #'
 #' Conic solver class with reduction semantics.
@@ -92,10 +94,12 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
     && all(sapply(problem@constraints, is_stuffed_cone_constraint)))
 })
 
+#' 
+#' Return the coefficient and offset in A %*% x + b.
+#' 
 #' @param expr An \linkS4class{Expression} object.
 #' @return The coefficient and offset in A %*% x + b.
 ConicSolver.get_coeff_offset <- function(expr) {
-  # Return the coefficient and offset in A %*% x + b.
   if(class(expr) == "Reshape")   # May be a Reshape as root.
     expr <- expr@args[[1]]
   if(length(expr@args[[1]]@args) == 0) {   # Convert data to float64.
@@ -113,12 +117,14 @@ ConicSolver.get_coeff_offset <- function(expr) {
   return(list(coeff, offset))
 }
 
+#' 
+#' Returns a sparse matrix that spaces out an expression.
+#' 
 #' @param dim A vector outlining the dimensions of the matrix.
 #' @param spacing An int of the number of rows between the start of each non-zero block.
 #' @param offset An int of the number of zeros at the beginning of the matrix.
 #' @return A sparse matrix that spaces out an expression
 ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
-  # Returns a sparse matrix that spaces out an expression.
   val_arr <- c()
   row_arr <- c()
   col_arr <- c()
@@ -247,7 +253,7 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-#'
+
 #' An interface for the ECOS solver
 #'
 ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
@@ -367,7 +373,6 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
   return(solution)
 })
 
-#'
 #' An interface for the SCS solver
 #'
 SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
@@ -468,13 +473,16 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   return(list(object, data, inv_data))
 })
 
+#' 
+#' Extracts the dual value for constraint starting at offset.
+#' 
+#' Special cases PSD constraints, as per the SCS specification.
+#' 
 #' @param offset The starting point of the vector to extract from.
 #' @param result_vec The vector to extract dual values from.
 #' @param constraint A \linkS4class{Constraint} object.
-#' @describeIn SCS Extracts the dual value for constraint starting at offset.
+#' @return The dual values for the corresponding PSD constraints
 SCS.extract_dual_value <- function(result_vec, offset, constraint) {
-  # Extracts the dual value for constraint starting at offset.
-  # Special cases PSD constraints, as per the SCS specification.
   if(is(constraint, "PSDConstraint")) {
     dim <- nrow(constraint)
     lower_tri_dim <- floor(dim*(dim+1)/2)
@@ -549,7 +557,6 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
   return(results)
 })
 
-#'
 #' An interface to the CBC solver
 #'
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
@@ -720,7 +727,6 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   return(list(result))
 })
 
-#'
 #' An interface for the CPLEX solver
 #'
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
@@ -990,10 +996,8 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
 
 })
 
-#'
 #' An interface for the CVXOPT solver.
 #'
-
 setClass("CVXOPT", contains = "ECOS")
 CVXOPT <- function() { new("CVXOPT") }
 
@@ -1085,10 +1089,8 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
   solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
-#'
 #' An interface for the ECOS BB solver.
 #'
-
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
@@ -1127,8 +1129,11 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
   return(solution)
 })
 
-# Utility method for formatting a ConeDims instance into a dictionary
-# that can be supplied to ECOS.
+#'
+#' Utility method for formatting a ConeDims instance into a dictionary
+#' that can be supplied to ECOS.
+#' @param cone_dims A \linkS4class{ConeDims} instance.
+#' @return A dictionary of cone dimensions
 ECOS.dims_to_solver_dict <- function(cone_dims) {
   cones <- list(l = as.integer(cone_dims@nonpos),
                 q = lapply(cone_dims@soc, function(v) { as.integer(v) }),
@@ -1136,10 +1141,8 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
   return(cones)
 }
 
-#'
 #' An interface for the GLPK solver.
 #'
-
 GLPK <- setClass("GLPK", contains = "CVXOPT")
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
@@ -1243,7 +1246,6 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   return(solution)
 })
 
-#'
 #' An interface for the GLPK MI solver.
 #'
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
@@ -1334,7 +1336,6 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   solution
 })
 
-#'
 #' An interface for the GUROBI conic solver.
 #'
 GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
@@ -1578,14 +1579,14 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   
 })
 
-#'
 #' An interface for the MOSEK solver.
 #'
-
 MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
                            prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
-#'
+#' 
+#' Turns symmetric 2D array into a lower triangular matrix
+#' 
 #' @param v A list of length (dim * (dim + 1) / 2).
 #' @param dim The number of rows (equivalently, columns) in the output array.
 #' @return Return the symmetric 2D array defined by taking "v" to specify its
@@ -1608,6 +1609,9 @@ vectorized_lower_tri_to_mat <- function(v, dim) {
   return(A)
 }
 
+#' 
+#' Given a problem returns a PSD constrain
+#' 
 #' @param problem A \linkS4class{Problem} object.
 #' @param c A vector of coefficients.
 #' @return Returns an array G and vector h such that the given constraint is
@@ -2174,6 +2178,9 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
+#' 
+#' Recovers MOSEK solutions dual variables
+#' 
 #' @param sol List of the solutions returned by the MOSEK solver.
 #' @param inverse_data A list of the data returned by the perform function.
 #' @return A list containing the mapping of CVXR's \linkS4class{Constraint} 
@@ -2217,6 +2224,9 @@ MOSEK.recover_dual_variables <- function(sol, inverse_data) {
   return(dual_vars)
 }
 
+#' 
+#' Parses MOSEK dual variables into corresponding CVXR constraints and dual values
+#' 
 #' @param dual_var List of the dual variables returned by the MOSEK solution.
 #' @param constr_id_to_constr_dim A list that contains the mapping of entry "id"
 #' that is the index of the CVXR \linkS4class{Constraint} object to which the
@@ -2277,8 +2287,10 @@ MOSEK._handle_mosek_params <- function(task, params) {
   }
 }
 
-# Utility method for formatting a ConeDims instance into a dictionary
-# that can be supplied to SCS.
+#' Utility method for formatting a ConeDims instance into a dictionary
+#' that can be supplied to SCS. 
+#' @param cone_dims A \linkS4class{ConeDims} instance.
+#' @return The dimensions of the cones.
 SCS.dims_to_solver_dict <- function(cone_dims) {
   cones <- list(f = as.integer(cone_dims@zero),
                 l = as.integer(cone_dims@nonpos),
@@ -2288,7 +2300,9 @@ SCS.dims_to_solver_dict <- function(cone_dims) {
   return(cones)
 }
 
-# Utility methods for special handling of semidefinite constraints.
+#'
+#' Utility methods for special handling of semidefinite constraints.
+#' 
 #' @param matrix The matrix to get the lower triangular matrix for
 #' @return The lower triangular part of the matrix, stacked in column-major order
 scaled_lower_tri <- function(matrix) {
@@ -2314,6 +2328,9 @@ scaled_lower_tri <- function(matrix) {
   return(coeff %*% vectorized_matrix)
 }
 
+#' 
+#' Expands lower triangular to full matrix.
+#' 
 #' @param lower_tri A matrix representing the lower triangular part of the matrix,
 #' stacked in column-major order
 #' @param n The number of rows (columns) in the full square matrix.
@@ -2336,7 +2353,9 @@ SuperSCS <- setClass("SuperSCS", contains = "SCS")
 SuperSCS.default_settings <- function(object) {
   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
 }
-
+#' 
+#' The SuperSCS class
+#' @rdname SuperSCS-class
 setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
 setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")

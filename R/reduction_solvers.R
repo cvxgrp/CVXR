@@ -69,9 +69,9 @@ setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start
 })
 
 #' @param problem A \linkS4class{Problem} object.
-#' @param warm_start An option for warm_start.
-#' @param verbose A boolean to give more output from the solver if true.
-#' @param solver_opts A list of solver options.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
@@ -106,7 +106,7 @@ setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", 
 
 #' @describeIn ConstantSolver Returns the name of the solver.
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
-#' @describeIn ConstantSolver Imports the solver.
+### @describeIn ConstantSolver Imports the solver.
 setMethod("import_solver", "ConstantSolver", function(solver) { })
 #' @describeIn ConstantSolver Is the solver installed?
 setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
@@ -253,7 +253,9 @@ setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, 
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
 })
 
-# Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+#'
+#' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+#' 
 #' @param problem The problem for which to build a chain
 #' @param candidates A list of candidate solvers divided in qp_solvers
 #' @return A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.

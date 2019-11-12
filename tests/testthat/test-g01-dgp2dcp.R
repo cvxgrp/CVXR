@@ -7,6 +7,7 @@ reduce <- CVXR:::reduce
 invert <- CVXR:::invert
 retrieve <- CVXR:::retrieve
 unpack <- CVXR:::unpack
+cvxr_expr <- CVXR:::expr
 
 Dgp2Dcp <- function(problem = NULL) { new("Dgp2Dcp", problem = problem) }
 Dgp2Dcp.add_canon <- CVXR:::Dgp2Dcp.add_canon
@@ -38,10 +39,10 @@ test_that("test unconstrained monomial", {
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
 
-  expect_equal(class(CVXR::expr(dcp@objective))[1], "AddExpression")
-  expect_equal(length(CVXR::expr(dcp@objective)@args), 2)
-  expect_equal(class(CVXR::expr(dcp@objective)@args[[1]])[1], "Variable")
-  expect_equal(class(CVXR::expr(dcp@objective)@args[[2]])[1], "Variable")
+  expect_equal(class(cvxr_expr(dcp@objective))[1], "AddExpression")
+  expect_equal(length(cvxr_expr(dcp@objective)@args), 2)
+  expect_equal(class(cvxr_expr(dcp@objective)@args[[1]])[1], "Variable")
+  expect_equal(class(cvxr_expr(dcp@objective)@args[[2]])[1], "Variable")
   opt <- solve(dcp)
 
   # dcp is solved in log-space, so it is unbounded below
@@ -399,8 +400,8 @@ test_that("test matmul_canon", {
   expect_equal(dim(canon_matrix), c(2,1))
   first_entry <- log(exp(2.0) + exp(4.0) + exp(6.0))
   second_entry <- log(exp(5.0) + exp(7.0) + exp(9.0))
-  expect_equal(first_entry, value(canon_matrix)[1,1], tolerance = TOL)
-  expect_equal(second_entry, value(canon_matrix)[2,1], tolerance = TOL)
+  expect_equal(first_entry, as.numeric(value(canon_matrix[1,1])), tolerance = TOL)
+  expect_equal(second_entry, as.numeric(value(canon_matrix[2,1])), tolerance = TOL)
 })
 
 test_that("test trace_canon", {

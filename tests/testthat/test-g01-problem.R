@@ -1080,7 +1080,7 @@ test_that("Tests problems with vec", {
 test_that("Test a problem with diag", {
   C <- Variable(3,3)
   obj <- Maximize(C[1,3])
-  constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Semidef(3))
+  constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Variable(3, 3, PSD = TRUE))
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$value, 0.583151, tolerance = 1e-2)
@@ -1160,7 +1160,7 @@ test_that("Test positive definite constraints", {
   result <- solve(prob)
   expect_equal(result$status, "infeasible")
 
-  C <- Symmetric(2,"2")
+  C <- Variable(2, 2, symmetric = TRUE)
   obj <- Minimize(C[1,1])
   constraints <- list(C %<<% cbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
@@ -1169,7 +1169,8 @@ test_that("Test positive definite constraints", {
 })
 
 test_that("Test the duals of PSD constraints", {
-  C <- Symmetric(2,"2")
+  # Test dual values with SCS
+  C <- Variable(2, 2, symmetric = TRUE, name = "C")
   obj <- Maximize(C[1,1])
   constraints <- list(C %<<% cbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
@@ -1177,8 +1178,8 @@ test_that("Test the duals of PSD constraints", {
   expect_equal(result$value, 2, tolerance = 1e-4)
 
   psd_constr_dual <- result$getDualValue(constraints[[1]])
-  C <- Symmetric(2,"2")
-  X <- Semidef(2)
+  C <- Variable(2, 2, symmetric = TRUE, name = "C")
+  X <- Variable(2, 2, PSD = TRUE)
   obj <- Maximize(C[1,1])
   constraints <- list(X == cbind(c(2,0), c(0,2)) - C)
   prob <- Problem(obj, constraints)
@@ -1186,7 +1187,7 @@ test_that("Test the duals of PSD constraints", {
   expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
 
   # Test dual values with SCS that have off-diagonal entries
-  C <- Symmetric(2,"2")
+  C <- Variable(2, 2, symmetric = TRUE)
   obj <- Maximize(C[1,2] + C[2,1])
   constraints <- list(C %<<% cbind(c(2,0), c(0,2)), C >= 0)
   prob <- Problem(obj, constraints)
@@ -1194,8 +1195,8 @@ test_that("Test the duals of PSD constraints", {
   expect_equal(result$value, 4, tolerance = 1e-3)
 
   psd_constr_dual <- result$getDualValue(constraints[[1]])
-  C <- Symmetric(2,"2")
-  X <- Semidef(2)
+  C <- Variable(2, 2, symmetric = TRUE)
+  X <- Variable(2, 2, PSD = TRUE)
   obj <- Maximize(C[1,2] + C[2,1])
   constraints <- list(X == cbind(c(2,0), c(0,2)) - C, C >= 0)
   prob <- Problem(obj, constraints)

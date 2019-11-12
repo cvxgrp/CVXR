@@ -963,7 +963,12 @@ HStack <- function(...) {
 #' @param object A \linkS4class{HStack} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn HStack Horizontally concatenate the values using \code{cbind}.
-setMethod("to_numeric", "HStack", function(object, values) { Reduce("cbind", values) })
+setMethod("to_numeric", "HStack", function(object, values) {
+  # do.call("cbind", values)   # Doesn't work on some objects like xts.
+  mat <- Reduce("cbind", values)
+  colnames(mat) <- NULL   # Get rid of init column name.
+  return(mat)
+})
 
 #' @describeIn HStack The dimensions of the atom.
 setMethod("dim_from_args", "HStack", function(object) {
@@ -1725,7 +1730,12 @@ VStack <- function(...) { .VStack(atom_args = list(...)) }
 #' @param object A \linkS4class{VStack} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn VStack Vertically concatenate the values using \code{rbind}.
-setMethod("to_numeric", "VStack", function(object, values) { Reduce("rbind", values) })
+setMethod("to_numeric", "VStack", function(object, values) {
+  # do.call("rbind", values)   # Doesn't work on some objects like xts.
+  mat <- Reduce("rbind", values)
+  rownames(mat) <- NULL   # Get rid of init row name
+  return(mat)
+})
 
 #' @describeIn VStack Check all arguments have the same width.
 setMethod("validate_args", "VStack", function(object) {

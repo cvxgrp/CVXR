@@ -260,7 +260,7 @@ test_that("test the Parameter class on bad inputs",{
   expect_error(p <- Parameter(2, 2, diag = TRUE, value = matrix(c(1, 1, 1, -1), nrow = 2)),
                'Value must be diagonal', fixed = TRUE)
   
-  #Symmetric
+  # Symmetric
   expect_error(p <- Parameter(2, 2, symmetric = TRUE, value = matrix(c(1, 1, -1, -1), nrow = 2)),
                'Value must be symmetric', fixed = TRUE)
   

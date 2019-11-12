@@ -13,9 +13,6 @@ A <- Variable(2, 2, name = "A")
 B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
-# solvers <- c(ECOS(), GUROBI(), MOSEK(), SCS(), CVXOPT(), GLPK())
-solvers <- c(ECOS())
-
 accepts <- CVXR:::accepts
 perform <- CVXR:::perform
 invert <- CVXR:::invert
@@ -25,6 +22,9 @@ CvxAttr2Constr <- CVXR:::CvxAttr2Constr
 FlipObjective <- CVXR:::FlipObjective
 ExpCone <- CVXR:::ExpCone
 SOC <- CVXR:::SOC
+
+# solvers <- c(CVXR:::ECOS(), CVXR:::GUROBI(), CVXR:::MOSEK(), CVXR:::SCS(), CVXR:::CVXOPT(), CVXR:::GLPK())
+solvers <- c(CVXR:::ECOS())
 
 test_that("test scalar LP problems", {
   for(solver in solvers) {

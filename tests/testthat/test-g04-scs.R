@@ -47,7 +47,7 @@ test_that("Test sigma_max", {
 test_that("Test sdp variable", {
     skip_on_cran()
     const <- Constant(rbind(c(1,2,3), c(4,5,6), c(7,8,9)))
-    X <- Semidef(3)
+    X <- Variable(3, 3, PSD = TRUE)
     prob <- Problem(Minimize(0), list(X == const))
     result <- solve(prob, verbose = TRUE, solver = "SCS")
     expect_equal(tolower(result$status), "infeasible")

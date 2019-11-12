@@ -516,8 +516,10 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
 
   if(p == 2) {
     if(is.na(axis)) {
-      if(!is.null(expr_dim))
-        stop("Dimensions should be NULL")
+      # if(!is.null(expr_dim))
+      #  stop("Dimensions should be NULL")
+      if(!all(expr_dim == c(1,1)))
+        stop("Dimensions should be c(1,1)")
       return(list(t, list(SOC(t, vec(x)))))
     } else
       return(list(t, list(SOC(vec(t), x, axis))))

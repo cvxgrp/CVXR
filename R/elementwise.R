@@ -95,7 +95,6 @@ setMethod("is_atom_concave", "Abs", function(object) { FALSE })
 #' @describeIn Abs A logical value indicating whether the atom is weakly increasing.
 setMethod("is_incr", "Abs", function(object, idx) { is_nonneg(object@args[[idx]]) })
 
-#' @param idx An index into the atom.
 #' @describeIn Abs A logical value indicating whether the atom is weakly decreasing.
 setMethod("is_decr", "Abs", function(object, idx) { is_nonpos(object@args[[idx]]) })
 

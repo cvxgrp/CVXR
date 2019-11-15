@@ -8,6 +8,7 @@
 #' @rdname AffAtom-class
 AffAtom <- setClass("AffAtom", contains = c("VIRTUAL", "Atom"))
 
+#' @param object An \linkS4class{AffAtom} object.
 #' @describeIn AffAtom Does the atom handle complex numbers?
 setMethod("allow_complex", "AffAtom", function(object) { TRUE })
 

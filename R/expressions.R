@@ -633,8 +633,8 @@ setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
   return(object)   # Leaves are not deep copied.
 })
 
-### @param object A \linkS4class{Leaf} object.
-### @describeIn Leaf Leaves are not copied.
+#' @param object A \linkS4class{Leaf} object.
+#' @describeIn Leaf Leaves are not copied.
 setMethod("get_data", "Leaf", function(object) { list() })
 
 #' @describeIn Leaf The dimensions of the leaf node.

@@ -25,7 +25,6 @@ setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim 
   .Object
 })
 
-#' @param x,object An \linkS4class{Atom} object.
 setMethod("show", "Atom", function(object) {
   if(is.null(get_data(object)))
     data <- list()
@@ -35,6 +34,7 @@ setMethod("show", "Atom", function(object) {
   cat(class(object), "(", paste(c(arg_names, data), collapse = ", "), ")", sep = "")
 })
 
+#' @param x,object An \linkS4class{Atom} object.
 #' @describeIn Returns the string representtation of the function call
 setMethod("name", "Atom", function(x) {
   if(is.null(get_data(x)))
@@ -212,7 +212,7 @@ setMethod("canonicalize", "Atom", function(object) {
 })
 
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param dim A vector with two elements representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @describeIn Atom The graph implementation of the atom.
 setMethod("graph_implementation", "Atom", function(object, arg_objs, dim, data = NA_real_) { stop("Unimplemented") })
@@ -1750,7 +1750,7 @@ DiffPos <- function(x, y) {
 #'
 #' This class represents the Perron-Frobenius eigenvalue of a positive matrix.
 #' 
-#' @slot x An \linkS4class{Expression} or numeric matrix.
+#' @slot X An \linkS4class{Expression} or numeric matrix.
 #' @name PfEigenvalue-class
 #' @aliases PfEigenvalue
 #' @rdname PfEigenvalue-class
@@ -1761,7 +1761,7 @@ DiffPos <- function(x, y) {
                             return(TRUE)
                           }, contains = "Atom")
 
-#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param X An \linkS4class{Expression} or numeric matrix.
 #' @rdname PfEigenvalue-class
 PfEigenvalue <- function(X) { .PfEigenvalue(X = X) }
 
@@ -1826,7 +1826,7 @@ setMethod(".grad", "PfEigenvalue", function(object, values) { NA_real_ })
 #' @rdname ProdEntries-class
 .ProdEntries <- setClass("ProdEntries", contains = "AxisAtom")
 
-#' @param ... \linkS4class{Expression} objects or matrices.
+#' @param ... \linkS4class{Expression} objects, vectors, or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @rdname ProdEntries-class
 ProdEntries <- function(..., axis = NA_real_, keepdims = FALSE) {

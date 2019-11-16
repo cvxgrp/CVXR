@@ -1969,7 +1969,7 @@ setMethod("Conj", "Expression", function(z) { if(is_real(z)) z else Conjugate(z)
 #'
 #' The product of entries in a vector or matrix.
 #'
-#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param ... \linkS4class{Expression} objects, vectors, or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @return An \linkS4class{Expression} representing the product of the entries of the input.
 #' @examples

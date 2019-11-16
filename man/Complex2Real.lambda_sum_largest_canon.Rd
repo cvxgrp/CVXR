@@ -4,8 +4,7 @@
 \alias{Complex2Real.lambda_sum_largest_canon}
 \title{Complex canonicalizer for the largest sum atom}
 \usage{
-Complex2Real.lambda_sum_largest_canon(expr, real_args, imag_args,
-  real2imag)
+Complex2Real.lambda_sum_largest_canon(expr, real_args, imag_args, real2imag)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} object}

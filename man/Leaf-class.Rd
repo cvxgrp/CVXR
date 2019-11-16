@@ -4,6 +4,7 @@
 \name{Leaf-class}
 \alias{Leaf-class}
 \alias{Leaf}
+\alias{get_data,Leaf-method}
 \alias{dim,Leaf-method}
 \alias{variables,Leaf-method}
 \alias{parameters,Leaf-method}
@@ -33,6 +34,8 @@
 \alias{is_pwl,Leaf-method}
 \title{The Leaf class.}
 \usage{
+\S4method{get_data}{Leaf}(object)
+
 \S4method{dim}{Leaf}(x)
 
 \S4method{variables}{Leaf}(object)
@@ -88,6 +91,8 @@
 \S4method{is_pwl}{Leaf}(object)
 }
 \arguments{
+\item{object}{A \linkS4class{Leaf} object.}
+
 \item{val}{The assigned value.}
 }
 \description{
@@ -95,6 +100,8 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{get_data}: Leaves are not copied.
+
 \item \code{dim}: The dimensions of the leaf node.
 
 \item \code{variables}: List of \linkS4class{Variable} objects in the leaf node.

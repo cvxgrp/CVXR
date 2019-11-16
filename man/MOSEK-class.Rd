@@ -19,18 +19,23 @@
 
 \S4method{accepts}{MOSEK,Problem}(object, problem)
 
-\S4method{block_format}{MOSEK}(object, problem, constraints,
-  exp_cone_order = NA)
+\S4method{block_format}{MOSEK}(object, problem, constraints, exp_cone_order = NA)
 
 \S4method{perform}{MOSEK,Problem}(object, problem)
 
-\S4method{solve_via_data}{MOSEK}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = NA)
+\S4method{solve_via_data}{MOSEK}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = NA
+)
 
 \S4method{invert}{MOSEK,ANY,ANY}(object, solution, inverse_data)
 }
 \arguments{
-\item{problem}{A \linkS4class{Problem} object that we are preparing for MOSEK.}
+\item{problem}{A \linkS4class{Problem} object.}
 
 \item{constraints}{A list of \linkS4class{Constraint} objects for which coefficient
 andd offset data ("G", "h" respectively) is needed}
@@ -47,8 +52,6 @@ describes membership in the exponential cone.}
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
-
-\item{problem}{A \linkS4class{Problem} object.}
 }
 \description{
 An interface for the MOSEK solver.

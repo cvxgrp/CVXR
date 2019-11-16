@@ -19,15 +19,20 @@
 
 \S4method{import_solver}{SCS}(solver)
 
-\S4method{reduction_format_constr}{SCS}(object, problem, constr,
-  exp_cone_order)
+\S4method{reduction_format_constr}{SCS}(object, problem, constr, exp_cone_order)
 
 \S4method{perform}{SCS,Problem}(object, problem)
 
 \S4method{invert}{SCS,list,list}(object, solution, inverse_data)
 
-\S4method{solve_via_data}{SCS}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{SCS}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{problem}{A \linkS4class{Problem} object.}

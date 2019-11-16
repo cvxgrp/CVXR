@@ -12,22 +12,13 @@
 \usage{
 \S4method{accepts}{ConicSolver,Problem}(object, problem)
 
-\S4method{reduction_format_constr}{ConicSolver}(object, problem, constr,
-  exp_cone_order)
+\S4method{reduction_format_constr}{ConicSolver}(object, problem, constr, exp_cone_order)
 
-\S4method{group_coeff_offset}{ConicSolver}(object, problem, constraints,
-  exp_cone_order)
+\S4method{group_coeff_offset}{ConicSolver}(object, problem, constraints, exp_cone_order)
 
-\S4method{invert}{ConicSolver,Solution,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{ConicSolver,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
-\item{problem}{A \linkS4class{Problem} object}
-
-\item{constr}{A \linkS4class{Constraint} object}
-
-\item{exp_cone_order}{A list indicating how the exponential cone arguments are ordered.}
-
 \item{problem}{A \linkS4class{Problem} object}
 
 \item{constr}{A \linkS4class{Constraint} object}

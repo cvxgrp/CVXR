@@ -44,11 +44,9 @@ Log(x)
 
 \item{object}{A \linkS4class{Log} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise natural logarithm \eqn{\log(x)}.

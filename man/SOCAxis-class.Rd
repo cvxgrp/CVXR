@@ -16,8 +16,7 @@ SOCAxis(t, X, axis, id = NA_integer_)
 
 \S4method{as.character}{SOCAxis}(x)
 
-\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims,
-  solver)
+\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims, solver)
 
 \S4method{num_cones}{SOCAxis}(object)
 

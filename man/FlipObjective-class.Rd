@@ -10,8 +10,7 @@
 \usage{
 \S4method{perform}{FlipObjective,Problem}(object, problem)
 
-\S4method{invert}{FlipObjective,Solution,list}(object, solution,
-  inverse_data)
+\S4method{invert}{FlipObjective,Solution,list}(object, solution, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{FlipObjective} object.}
@@ -21,8 +20,6 @@
 \item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The inverse data returned by an invocation to apply.}
-
-\item{object}{A \linkS4class{FlipObjective} object.}
 }
 \description{
 This class represents a reduction that flips a minimization objective to a

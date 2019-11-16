@@ -49,6 +49,8 @@
 \S4method{.grad}{AffAtom}(object, values)
 }
 \arguments{
+\item{object}{An \linkS4class{AffAtom} object.}
+
 \item{idx}{An index into the atom.}
 
 \item{values}{A list of numeric values for the arguments}

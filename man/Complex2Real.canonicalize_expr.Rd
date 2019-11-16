@@ -4,8 +4,7 @@
 \alias{Complex2Real.canonicalize_expr}
 \title{Canonicalizes a complex Expression}
 \usage{
-Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag,
-  leaf_map)
+Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} object}

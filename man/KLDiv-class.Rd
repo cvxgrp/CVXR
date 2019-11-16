@@ -40,11 +40,9 @@ KLDiv(x, y)
 
 \item{object}{A \linkS4class{KLDiv} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 The elementwise KL-divergence \eqn{x\log(x/y) - x + y}.

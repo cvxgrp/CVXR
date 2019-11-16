@@ -10,9 +10,7 @@
 \usage{
 \S4method{accepts}{ConeMatrixStuffing,Problem}(object, problem)
 
-
-  \S4method{stuffed_objective}{ConeMatrixStuffing,Problem,CoeffExtractor}(object,
-  problem, extractor)
+\S4method{stuffed_objective}{ConeMatrixStuffing,Problem,CoeffExtractor}(object, problem, extractor)
 }
 \description{
 Linear cone problems are assumed to have a linear objective and cone constraints,

@@ -25,8 +25,7 @@ HStack(...)
 
 \S4method{validate_args}{HStack}(object)
 
-\S4method{graph_implementation}{HStack}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{HStack}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{...}{\linkS4class{Expression} objects or matrices. All arguments must have the same dimensions except for axis 2 (columns).}

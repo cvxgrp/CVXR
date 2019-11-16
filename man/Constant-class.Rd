@@ -120,7 +120,7 @@ x <- Constant(5)
 y <- Constant(diag(3))
 get_data(y)
 value(y)
-is_positive(y)
+is_nonneg(y)
 size(y)
 as.Constant(y)
 }

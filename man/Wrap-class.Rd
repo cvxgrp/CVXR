@@ -19,8 +19,7 @@
 
 \S4method{is_atom_log_log_concave}{Wrap}(object)
 
-\S4method{graph_implementation}{Wrap}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Wrap}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{object}{A \linkS4class{Wrap} object.}

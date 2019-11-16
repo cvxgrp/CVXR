@@ -63,13 +63,11 @@ Power(x, p, max_denom = 1024)
 
 \item{object}{A \linkS4class{Power} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
 
 \item{args}{A list of arguments to reconstruct the atom. If args=NULL, use the current args of the atom}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise power function \eqn{f(x) = x^p}.

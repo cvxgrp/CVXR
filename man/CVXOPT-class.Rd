@@ -21,8 +21,14 @@
 
 \S4method{perform}{CVXOPT,Problem}(object, problem)
 
-\S4method{solve_via_data}{CVXOPT}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{CVXOPT}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{problem}{A \linkS4class{Problem} object.}

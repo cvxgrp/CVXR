@@ -17,14 +17,25 @@
 
 \S4method{is_installed}{ReductionSolver}(solver)
 
-\S4method{solve_via_data}{ReductionSolver}(object, data, warm_start,
-  verbose, solver_opts, solver_cache = list())
+\S4method{solve_via_data}{ReductionSolver}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 
-\S4method{reduction_solve}{ReductionSolver,ANY}(object, problem,
-  warm_start, verbose, solver_opts)
+\S4method{reduction_solve}{ReductionSolver,ANY}(object, problem, warm_start, verbose, solver_opts)
 
-\S4method{solve_via_data}{ECOS}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{ECOS}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{data}{Data generated via an apply call.}
@@ -38,14 +49,6 @@
 \item{solver_cache}{Cache for the solver.}
 
 \item{problem}{A \linkS4class{Problem} object.}
-
-\item{problem}{A \linkS4class{Problem} object.}
-
-\item{warm_start}{A boolean of whether to warm start the solver.}
-
-\item{verbose}{A boolean of whether to enable solver verbosity.}
-
-\item{solver_opts}{A list of Solver specific options}
 }
 \description{
 The ReductionSolver class.

@@ -41,11 +41,9 @@ Exp(x)
 
 \item{object}{An \linkS4class{Exp} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise natural exponential \eqn{e^x}.

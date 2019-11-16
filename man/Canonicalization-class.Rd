@@ -12,8 +12,7 @@
 \usage{
 \S4method{perform}{Canonicalization,Problem}(object, problem)
 
-\S4method{invert}{Canonicalization,Solution,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{Canonicalization,Solution,InverseData}(object, solution, inverse_data)
 
 \S4method{canonicalize_tree}{Canonicalization}(object, expr)
 
@@ -31,10 +30,6 @@
 \item{expr}{An \linkS4class{Expression} object.}
 
 \item{args}{List of arguments to canonicalize the expression.}
-
-\item{object}{A \linkS4class{Canonicalization} object.}
-
-\item{expr}{An \linkS4class{Expression} object.}
 }
 \description{
 This class represents a canonicalization reduction.

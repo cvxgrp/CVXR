@@ -28,8 +28,7 @@ Multiply(lh_exp, rh_exp)
 
 \S4method{is_nsd}{Multiply}(object)
 
-\S4method{graph_implementation}{Multiply}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Multiply}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or R numeric data.}

@@ -11,11 +11,16 @@
 \usage{
 \S4method{prepend}{SolvingChain,Chain}(object, chain)
 
-\S4method{reduction_solve}{SolvingChain,Problem}(object, problem,
-  warm_start, verbose, solver_opts)
+\S4method{reduction_solve}{SolvingChain,Problem}(object, problem, warm_start, verbose, solver_opts)
 
-\S4method{reduction_solve_via_data}{SolvingChain}(object, problem, data,
-  warm_start, verbose, solver_opts)
+\S4method{reduction_solve_via_data}{SolvingChain}(
+  object,
+  problem,
+  data,
+  warm_start,
+  verbose,
+  solver_opts
+)
 }
 \arguments{
 \item{problem}{The problem to solve.}
@@ -27,14 +32,6 @@
 \item{solver_opts}{A list of Solver specific options}
 
 \item{data}{Data for the solver.}
-
-\item{problem}{The problem to solve.}
-
-\item{warm_start}{A boolean of whether to warm start the solver.}
-
-\item{verbose}{A boolean of whether to enable solver verbosity.}
-
-\item{solver_opts}{A list of Solver specific options}
 }
 \description{
 This class represents a reduction chain that ends with a solver.

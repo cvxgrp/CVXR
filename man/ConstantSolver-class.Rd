@@ -20,18 +20,22 @@
 
 \S4method{perform}{ConstantSolver,Problem}(object, problem)
 
-\S4method{invert}{ConstantSolver,Solution,list}(object, solution,
-  inverse_data)
+\S4method{invert}{ConstantSolver,Solution,list}(object, solution, inverse_data)
 
 \S4method{name}{ConstantSolver}(x)
 
 \S4method{is_installed}{ConstantSolver}(solver)
 
-\S4method{solve_via_data}{ConstantSolver}(object, data, warm_start,
-  verbose, solver_opts, solver_cache = list())
+\S4method{solve_via_data}{ConstantSolver}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 
-\S4method{reduction_solve}{ConstantSolver,ANY}(object, problem, warm_start,
-  verbose, solver_opts)
+\S4method{reduction_solve}{ConstantSolver,ANY}(object, problem, warm_start, verbose, solver_opts)
 }
 \arguments{
 \item{problem}{A \linkS4class{Problem} object.}
@@ -45,12 +49,6 @@
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
-
-\item{warm_start}{A boolean of whether to warm start the solver.}
-
-\item{verbose}{A boolean of whether to enable solver verbosity.}
-
-\item{solver_opts}{A list of Solver specific options}
 }
 \description{
 The ConstantSolver class.

@@ -28,8 +28,7 @@ Promote(expr, promoted_dim)
 
 \S4method{get_data}{Promote}(object)
 
-\S4method{graph_implementation}{Promote}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Promote}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} or numeric constant.}

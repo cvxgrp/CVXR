@@ -14,8 +14,13 @@
 \alias{canonicalize,Parameter-method}
 \title{The Parameter class.}
 \usage{
-Parameter(rows = NULL, cols = NULL, name = NA_character_,
-  value = NA_real_, ...)
+Parameter(
+  rows = NULL,
+  cols = NULL,
+  name = NA_character_,
+  value = NA_real_,
+  ...
+)
 
 \S4method{get_data}{Parameter}(object)
 
@@ -78,7 +83,7 @@ This class represents a parameter, either scalar or a matrix.
 
 \examples{
 x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
-is_positive(x)
-is_negative(x)
+is_nonneg(x)
+is_nonpos(x)
 size(x)
 }

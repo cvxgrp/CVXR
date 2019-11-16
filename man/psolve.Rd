@@ -8,12 +8,27 @@
 \alias{solve,Problem,ANY-method}
 \title{Solve a DCP Problem}
 \usage{
-psolve(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE,
-  verbose = FALSE, parallel = FALSE, gp = FALSE, ...)
+psolve(
+  object,
+  solver = NA,
+  ignore_dcp = FALSE,
+  warm_start = FALSE,
+  verbose = FALSE,
+  parallel = FALSE,
+  gp = FALSE,
+  ...
+)
 
-\S4method{psolve}{Problem}(object, solver = NA, ignore_dcp = FALSE,
-  warm_start = FALSE, verbose = FALSE, parallel = FALSE,
-  gp = FALSE, ...)
+\S4method{psolve}{Problem}(
+  object,
+  solver = NA,
+  ignore_dcp = FALSE,
+  warm_start = FALSE,
+  verbose = FALSE,
+  parallel = FALSE,
+  gp = FALSE,
+  ...
+)
 
 \S4method{solve}{Problem,ANY}(a, b = NA, ...)
 }

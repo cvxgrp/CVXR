@@ -17,11 +17,16 @@
 
 \S4method{import_solver}{GUROBI_QP}(solver)
 
-\S4method{solve_via_data}{GUROBI_QP}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{GUROBI_QP}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 
-\S4method{invert}{GUROBI_QP,list,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{GUROBI_QP,list,InverseData}(object, solution, inverse_data)
 }
 \arguments{
 \item{data}{Data generated via an apply call.}

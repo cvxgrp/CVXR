@@ -17,11 +17,16 @@
 
 \S4method{import_solver}{CPLEX_QP}(solver)
 
-\S4method{invert}{CPLEX_QP,list,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{CPLEX_QP,list,InverseData}(object, solution, inverse_data)
 
-\S4method{solve_via_data}{CPLEX_QP}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{CPLEX_QP}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{data}{Data generated via an apply call.}

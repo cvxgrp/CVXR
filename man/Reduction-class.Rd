@@ -25,19 +25,9 @@
 
 \item{problem}{A \linkS4class{Problem} object.}
 
-\item{solution}{A \linkS4class{Solution} object.}
+\item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The data encoding the original problem.}
-
-\item{object}{A \linkS4class{Reduction} object.}
-
-\item{object}{A \linkS4class{Reduction} object.}
-
-\item{problem}{A \linkS4class{Problem} object.}
-
-\item{object}{A \linkS4class{Reduction} object.}
-
-\item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 }
 \description{
 This virtual class represents a reduction, an actor that transforms a problem

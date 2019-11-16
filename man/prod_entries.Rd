@@ -21,10 +21,6 @@ prod_entries(..., axis = NA_real_, keepdims = FALSE)
 \item{na.rm}{(Unimplemented) A logical value indicating whether missing values should be removed.}
 
 \item{expr}{An \linkS4class{Expression}, vector, or matrix.}
-
-\item{expr}{An \linkS4class{Expression}, vector, or matrix.}
-
-\item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 }
 \value{
 An \linkS4class{Expression} representing the product of the entries of the input.

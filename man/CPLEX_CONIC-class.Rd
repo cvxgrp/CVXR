@@ -25,8 +25,14 @@
 
 \S4method{invert}{CPLEX_CONIC,list,list}(object, solution, inverse_data)
 
-\S4method{solve_via_data}{CPLEX_CONIC}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{CPLEX_CONIC}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{problem}{A \linkS4class{Problem} object.}

@@ -25,8 +25,7 @@ UpperTri(expr)
 
 \S4method{is_atom_log_log_concave}{UpperTri}(object)
 
-\S4method{graph_implementation}{UpperTri}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{UpperTri}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} or numeric matrix.}

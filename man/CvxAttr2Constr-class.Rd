@@ -10,8 +10,7 @@
 \usage{
 \S4method{perform}{CvxAttr2Constr,Problem}(object, problem)
 
-\S4method{invert}{CvxAttr2Constr,Solution,list}(object, solution,
-  inverse_data)
+\S4method{invert}{CvxAttr2Constr,Solution,list}(object, solution, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{CvxAttr2Constr} object.}
@@ -21,8 +20,6 @@
 \item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The inverse data returned by an invocation to apply.}
-
-\item{object}{A \linkS4class{CvxAttr2Constr} object.}
 }
 \description{
 This class represents a reduction that expands convex variable attributes into constraints.

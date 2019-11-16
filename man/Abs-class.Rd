@@ -41,8 +41,6 @@ Abs(x)
 \item{values}{A list of arguments to the atom.}
 
 \item{idx}{An index into the atom.}
-
-\item{idx}{An index into the atom.}
 }
 \description{
 This class represents the elementwise absolute value.

@@ -28,8 +28,7 @@ Conv(lh_exp, rh_exp)
 
 \S4method{is_decr}{Conv}(object, idx)
 
-\S4method{graph_implementation}{Conv}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Conv}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or R numeric data representing the left-hand vector.}
@@ -47,8 +46,6 @@ Conv(lh_exp, rh_exp)
 \item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
-
-\item{idx}{An index into the atom.}
 }
 \description{
 This class represents the 1-D discrete convolution of two vectors.

@@ -19,8 +19,7 @@ SumEntries(expr, axis = NA_real_, keepdims = FALSE)
 
 \S4method{is_atom_log_log_concave}{SumEntries}(object)
 
-\S4method{graph_implementation}{SumEntries}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{SumEntries}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing a vector or matrix.}

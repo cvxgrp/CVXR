@@ -13,8 +13,14 @@
 
 \S4method{name}{GLPK_MI}(x)
 
-\S4method{solve_via_data}{GLPK_MI}(object, data, warm_start, verbose,
-  solver_opts, solver_cache = list())
+\S4method{solve_via_data}{GLPK_MI}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  solver_opts,
+  solver_cache = list()
+)
 }
 \arguments{
 \item{data}{Data generated via an apply call.}

@@ -25,8 +25,7 @@ Trace(expr)
 
 \S4method{is_atom_log_log_concave}{Trace}(object)
 
-\S4method{graph_implementation}{Trace}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Trace}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing a matrix.}

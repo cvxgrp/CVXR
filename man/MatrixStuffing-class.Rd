@@ -10,8 +10,7 @@
 \usage{
 \S4method{perform}{MatrixStuffing,Problem}(object, problem)
 
-\S4method{invert}{MatrixStuffing,Solution,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{MatrixStuffing,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{MatrixStuffing} object.}
@@ -21,8 +20,6 @@
 \item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The data encoding the original problem.}
-
-\item{object}{A \linkS4class{MatrixStuffing} object.}
 }
 \description{
 The MatrixStuffing class.

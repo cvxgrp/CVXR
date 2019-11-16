@@ -38,11 +38,9 @@ Entr(x)
 
 \item{object}{An \linkS4class{Entr} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise operation \eqn{-xlog(x)}.

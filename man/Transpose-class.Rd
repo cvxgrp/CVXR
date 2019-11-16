@@ -29,8 +29,7 @@
 
 \S4method{get_data}{Transpose}(object)
 
-\S4method{graph_implementation}{Transpose}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{Transpose}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{object}{A \linkS4class{Transpose} object.}

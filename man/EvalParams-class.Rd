@@ -20,8 +20,6 @@
 \item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The inverse data returned by an invocation to apply.}
-
-\item{object}{A \linkS4class{EvalParams} object.}
 }
 \description{
 This class represents a reduction that replaces symbolic parameters with

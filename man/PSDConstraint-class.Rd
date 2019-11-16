@@ -23,17 +23,17 @@ e1 \%>>\% e2
 
 e1 \%<<\% e2
 
-\S4method{\%>>\%}{Expression,Expression}(e1, e2)
+\S4method{\\\%>>\\\%}{Expression,Expression}(e1, e2)
 
-\S4method{\%>>\%}{Expression,ConstVal}(e1, e2)
+\S4method{\\\%>>\\\%}{Expression,ConstVal}(e1, e2)
 
-\S4method{\%>>\%}{ConstVal,Expression}(e1, e2)
+\S4method{\\\%>>\\\%}{ConstVal,Expression}(e1, e2)
 
-\S4method{\%<<\%}{Expression,Expression}(e1, e2)
+\S4method{\\\%<<\\\%}{Expression,Expression}(e1, e2)
 
-\S4method{\%<<\%}{Expression,ConstVal}(e1, e2)
+\S4method{\\\%<<\\\%}{Expression,ConstVal}(e1, e2)
 
-\S4method{\%<<\%}{ConstVal,Expression}(e1, e2)
+\S4method{\\\%<<\\\%}{ConstVal,Expression}(e1, e2)
 
 PSDConstraint(expr, id = NA_integer_)
 

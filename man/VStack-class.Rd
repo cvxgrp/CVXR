@@ -25,8 +25,7 @@ VStack(...)
 
 \S4method{is_atom_log_log_concave}{VStack}(object)
 
-\S4method{graph_implementation}{VStack}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{VStack}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{...}{\linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.}

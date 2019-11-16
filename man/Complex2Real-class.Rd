@@ -13,8 +13,7 @@
 
 \S4method{perform}{Complex2Real,Problem}(object, problem)
 
-\S4method{invert}{Complex2Real,Solution,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{Complex2Real,Solution,InverseData}(object, solution, inverse_data)
 }
 \description{
 This reduction takes in a complex problem and returns

@@ -22,8 +22,7 @@ DiagMat(expr)
 
 \S4method{is_atom_log_log_concave}{DiagMat}(object)
 
-\S4method{graph_implementation}{DiagMat}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{DiagMat}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.}

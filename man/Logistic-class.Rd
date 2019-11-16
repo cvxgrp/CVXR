@@ -35,11 +35,9 @@ Logistic(x)
 
 \item{object}{A \linkS4class{Logistic} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the elementwise operation \eqn{\log(1 + e^x)}.

@@ -22,8 +22,7 @@ CumSum(expr, axis = 2)
 
 \S4method{.grad}{CumSum}(object, values)
 
-\S4method{graph_implementation}{CumSum}(object, arg_objs, dim,
-  data = NA_real_)
+\S4method{graph_implementation}{CumSum}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} to be summed.}
@@ -32,15 +31,13 @@ CumSum(expr, axis = 2)
 
 \item{object}{A \linkS4class{CumSum} object.}
 
-\item{values}{A list of arguments to the atom.}
+\item{values}{A list of numeric values for the arguments}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
 \item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
-
-\item{values}{A list of numeric values for the arguments}
 }
 \description{
 This class represents the cumulative sum.

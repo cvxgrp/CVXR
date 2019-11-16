@@ -5,8 +5,7 @@
 \alias{p_norm}
 \title{P-Norm}
 \usage{
-p_norm(x, p = 2, axis = NA_real_, keepdims = FALSE,
-  max_denom = 1024)
+p_norm(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}

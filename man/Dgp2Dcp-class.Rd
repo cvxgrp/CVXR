@@ -16,8 +16,7 @@
 
 \S4method{canonicalize_expr}{Dgp2Dcp}(object, expr, args)
 
-\S4method{invert}{Dgp2Dcp,Solution,InverseData}(object, solution,
-  inverse_data)
+\S4method{invert}{Dgp2Dcp,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} object corresponding to the DGP problem.}

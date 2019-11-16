@@ -26,8 +26,6 @@ Log1p(x)
 
 \item{object}{A \linkS4class{Log1p} object.}
 
-\item{values}{A list of arguments to the atom.}
-
 \item{values}{A list of numeric values for the arguments}
 }
 \description{

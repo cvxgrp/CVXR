@@ -13,8 +13,7 @@
 
 \S4method{perform}{Chain,Problem}(object, problem)
 
-\S4method{invert}{Chain,SolutionORList,list}(object, solution,
-  inverse_data)
+\S4method{invert}{Chain,SolutionORList,list}(object, solution, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{Chain} object.}
@@ -24,12 +23,6 @@
 \item{solution}{A \linkS4class{SolutionORList} to a problem that generated the inverse data.}
 
 \item{inverse_data}{The data encoding the original problem.}
-
-\item{object}{A \linkS4class{Chain} object.}
-
-\item{problem}{A \linkS4class{Problem} object to check.}
-
-\item{object}{A \linkS4class{Chain} object.}
 }
 \description{
 This class represents a reduction that replaces symbolic parameters with

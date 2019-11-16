@@ -14,6 +14,8 @@ is_stuffed_qp_objective <- function(objective) {
 #'  
 setClass("QpSolver", contains = "ReductionSolver")
 
+#' @param object A \linkS4class{QpSolver} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn QpSolver Is this a QP problem?
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
@@ -102,10 +104,12 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 #'
 CPLEX_QP <- setClass("CPLEX_QP", contains = "QpSolver")
 
+#' @param x,object,solver A \linkS4class{CPLEX_QP} object.
+#' @describeIn CPLEX_QP Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 
-
 # TODO: Add more!
+#' @param status A status code returned by the solver.
 #' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_QP", function(solver, status) {
   if(status %in% c(1, 101))
@@ -122,6 +126,7 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
 
 #' @describeIn CPLEX_QP Returns the name of the solver.
 setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
+
 #' @describeIn CPLEX_QP Imports the solver.
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 

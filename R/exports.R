@@ -1231,7 +1231,7 @@ min_elemwise <- MinElemwise
 #'
 #' The elementwise product of two expressions. The first expression must be constant.
 #'
-#' @param lh_const A constant \linkS4class{Expression}, vector, or matrix representing the left-hand value.
+#' @param lh_exp An \linkS4class{Expression}, vector, or matrix representing the left-hand value.
 #' @param rh_exp An \linkS4class{Expression}, vector, or matrix representing the right-hand value.
 #' @return An \linkS4class{Expression} representing the elementwise product of the inputs.
 #' @examples

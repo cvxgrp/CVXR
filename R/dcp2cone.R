@@ -12,6 +12,8 @@ setMethod("initialize", "Dcp2Cone", function(.Object, ...) {
   callNextMethod(.Object, ..., canon_methods = Dcp2Cone.CANON_METHODS)
 })
 
+#' @param object A \linkS4class{Dcp2Cone} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn Dcp2Cone A problem is accepted if it is a minimization and is DCP.
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   class(problem@objective) == "Minimize" && is_dcp(problem)
@@ -38,6 +40,8 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
 #' @rdname ConeMatrixStuffing-class
 ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
 
+#' @param object A \linkS4class{ConeMatrixStuffing} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConeMatrixStuffing Is the solver accepted?
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
  return(class(problem@objective) == "Minimize" &&
@@ -46,6 +50,7 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints))
 })
 
+#' @param extractor A \linkS4class{CoeffExtractor} object used to extract the affine coefficients of the objective.
 #' @describeIn ConeMatrixStuffing Returns a list of the stuffed matrices
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r

@@ -11,7 +11,9 @@ setMethod("initialize", "EliminatePwl", function(.Object, ...) {
   callNextMethod(.Object, ..., canon_methods = EliminatePwl.CANON_METHODS)
 })
 
-#' @describeIn EliminatePwl Is this a PWL atom?
+#' @param object An \linkS4class{EliminatePwl} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn EliminatePwl Does this problem contain piecewise linear atoms?
 setMethod("accepts", signature(object = "EliminatePwl", problem = "Problem"), function(object, problem) {
   atom_types <- sapply(atoms(problem), function(atom) { class(atom) })
   pwl_types <- c("Abs", "MaxElemwise", "SumLargest", "MaxEntries", "Norm1", "NormInf")

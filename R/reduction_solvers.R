@@ -87,9 +87,12 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
 #'
 ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")
 
-#' @describeIn ConstantSolver Is the solver mip capable?
+#' @param solver,object,x A \linkS4class{ConstantSolver} object.
+#' @describeIn ConstantSolver Is the solver capable of solving mixed-integer programs?
 setMethod("mip_capable", "ConstantSolver", function(solver) { TRUE })
-#' @describeIn ConstantSolver Is the solver accepted?
+
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn ConstantSolver Is the solver capable of solving the problem?
 setMethod("accepts", signature(object = "ConstantSolver", problem = "Problem"), function(object, problem) {
   return(length(variables(problem)) == 0)
 })
@@ -99,6 +102,8 @@ setMethod("perform", signature(object = "ConstantSolver", problem = "Problem"), 
   return(list(object, problem, list()))
 })
 
+#' @param solution A \linkS4class{Solution} object to invert.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn ConstantSolver Returns the solution.
 setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
   return(solution)
@@ -106,8 +111,10 @@ setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", 
 
 #' @describeIn ConstantSolver Returns the name of the solver.
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
+
 ### @describeIn ConstantSolver Imports the solver.
 setMethod("import_solver", "ConstantSolver", function(solver) { TRUE })
+
 #' @describeIn ConstantSolver Is the solver installed?
 setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 

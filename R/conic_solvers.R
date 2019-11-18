@@ -86,6 +86,8 @@ setMethod("supported_constraints", "ConicSolver", function(solver) { c("ZeroCons
 # For such solvers, requires_constr should return TRUE.
 setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 
+#' @param A \linkS4class{ConicSolver} object.
+#' @param A \linkS4class{Problem} object.
 #' @describeIn ConicSolver Can the problem be solved with a conic solver?
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
@@ -147,8 +149,7 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
   return(mat)
 }
 
-#' @param problem A \linkS4class{Problem} object
-#' @param constr A \linkS4class{Constraint} object
+#' @param constr A \linkS4class{Constraint} to format.
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
 #' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
 #' will yield the coefficient "A" and offset "b" for the respective constraints: 
@@ -205,9 +206,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     stop("Unsupported constraint type.")
 })
 
-#' @param problem A \linkS4class{Problem} object
-#' @param constr A \linkS4class{Constraint} object
-#' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
+#' @param constraints A list of \linkS4class{Constraint} objects.
 #' @describeIn ConicSolver Combine the constraints into a single matrix, offset.
 setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constraints, exp_cone_order) {
   # Combine the constraints into a single matrix, offset.
@@ -225,6 +224,8 @@ setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constra
   return(list(coeff, offset))
 })
 
+#' @param solution A \linkS4class{Solution} object to invert.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn ConicSolver Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.

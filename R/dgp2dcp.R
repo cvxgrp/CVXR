@@ -12,6 +12,8 @@ setMethod("accepts", signature(object = "Dgp2Dcp", problem = "Problem"), functio
   return(is_dgp(problem))
 })
 
+#' @param object A \linkS4class{Dgp2Dcp} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn Dgp2Dcp Converts the DGP problem to a DCP problem.
 setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
@@ -35,6 +37,8 @@ setMethod("canonicalize_expr", "Dgp2Dcp", function(object, expr, args) {
     return(list(copy(expr, args), list()))
 })
 
+#' @param solution A \linkS4class{Solution} object to invert.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn Dgp2Dcp Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   solution <- callNextMethod(object, solution, inverse_data)
@@ -479,12 +483,14 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
 .DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list"), prototype(.variables = list()), contains = "list")
 DgpCanonMethods <- function(...) { .DgpCanonMethods(...) }
 
+#' @param x A \linkS4class{DgpCanonMethods} object.
 #' @describeIn DgpCanonMethods Returns the name of all the canonicalization methods
 setMethod("names", signature(x = "DgpCanonMethods"), function(x) { names(Dgp2Dcp.CANON_METHODS) })
 
 # TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
 '[[.DgpCanonMethods' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
 
+#' @param name The name of the atom or expression to canonicalize.
 #' @describeIn DgpCanonMethods Returns either a canonicalized variable or 
 #'  a corresponding Dgp2Dcp canonicalization method 
 setMethod("$", signature(x = "DgpCanonMethods"), function(x, name) {

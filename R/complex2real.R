@@ -101,10 +101,11 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
 })
 
 #' 
-#' Recursively canonicalizes a complex Expression.
+#' Recursively Canonicalizes a Complex Expression.
 #' 
-#' @param expr An \linkS4class{Expression} object
-#' @param leaf_map A map that consists of a tree representation of the expression
+#' @param expr An \linkS4class{Expression} object.
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
+#' @param leaf_map A map that consists of a tree representation of the expression.
 #' @return A list of the parsed out real and imaginary components of the
 #' expression that was constructed by performing the canonicalization of each leaf
 #' in the tree.
@@ -126,11 +127,12 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
 }
 
 #' 
-#' Canonicalizes a complex Expression
+#' Canonicalizes a Complex Expression
 #' 
-#' @param expr An \linkS4class{Expression} object
-#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
-#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param expr An \linkS4class{Expression} object.
+#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression.
+#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression.
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @param leaf_map A map that consists of a tree representation of the overall expression
 #' @return A list of the parsed out real and imaginary components of the expression at hand.
 Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
@@ -157,6 +159,7 @@ Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of the absolute value atom of a complex expression, where the returned
 #' variables are its real and imaginary components parsed out.
 Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -180,6 +183,7 @@ Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a separable atom, where the returned
 #' variables are its real and imaginary components parsed out.
 Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -207,6 +211,7 @@ Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) 
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a real atom, where the returned
 #' variables are the real component and NULL for the imaginary component.
 Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -223,6 +228,7 @@ Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of an imaginary atom, where the returned
 #' variables are the imaginary component and NULL for the real component.
 Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -239,6 +245,7 @@ Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a conjugate atom, where the returned
 #' variables are the real components and negative of the imaginary component.
 Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -291,6 +298,7 @@ Complex2Real.add <- function(lh_arg, rh_arg, neg = FALSE) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a binary atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.binary_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -310,6 +318,7 @@ Complex2Real.binary_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a constant atom, where the returned
 #' variables are the real component and the imaginary component in the \linkS4class{Constant}
 #' atom.
@@ -334,9 +343,9 @@ Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a hermitian matrix atom, where the returned
 #' variables are the real component and the imaginary component.
-
 Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
   # Canonicalize functions that take a Hermitian matrix.
   if(is.null(imag_args[[1]]))
@@ -356,6 +365,7 @@ Complex2Real.hermitian_canon <- function(expr, real_args, imag_args, real2imag) 
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a nuclear norm matrix atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -375,6 +385,7 @@ Complex2Real.norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of the largest sum atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -408,6 +419,7 @@ Complex2Real.at_least_2D <- function(expr) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a quadratic atom, where the returned
 #' variables are the real component and the imaginary component as NULL.
 Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -440,6 +452,7 @@ Complex2Real.quad_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a quadratic over a linear term atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.quad_over_lin_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -455,6 +468,7 @@ Complex2Real.quad_over_lin_canon <- function(expr, real_args, imag_args, real2im
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a matrix atom, where the returned
 #' variables are converted to real variables.
 Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -481,6 +495,7 @@ Complex2Real.matrix_frac_canon <- function(expr, real_args, imag_args, real2imag
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a non positive atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.nonpos_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -500,6 +515,7 @@ Complex2Real.nonpos_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a parameter matrix atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -521,6 +537,7 @@ Complex2Real.param_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a pnorm atom, where the returned
 #' variables are the real component and the NULL imaginary component.
 Complex2Real.pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -535,6 +552,7 @@ Complex2Real.pnorm_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a positive semidefinite atom, where the returned
 #' variables are the real component and the NULL imaginary component.
 Complex2Real.psd_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -556,6 +574,7 @@ Complex2Real.psd_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a SOC atom, where the returned
 #' variables are the real component and the NULL imaginary component.
 Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -582,6 +601,7 @@ Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a variable atom, where the returned
 #' variables are the real component and the NULL imaginary component.
 Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -606,6 +626,7 @@ Complex2Real.variable_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param expr An \linkS4class{Expression} object
 #' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
 #' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
 #' @return A canonicalization of a zero atom, where the returned
 #' variables are the real component and the imaginary component.
 Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {

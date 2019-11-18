@@ -26,6 +26,7 @@ setMethod("initialize", "Objective", function(.Object, ..., expr) {
   return(.Object)
 })
 
+#' @param object An \linkS4class{Objective} object.
 #' @describeIn Objective The value of the objective expression.
 setMethod("value", "Objective", function(object) { 
   v <- value(object@args[[1]])

@@ -12,6 +12,8 @@ Complex2Real.accepts <- function(problem) {
   any(sapply(leaves, function(l) { is_complex(l) }))
 }
 
+#' @param object A \linkS4class{Complex2Real} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn Complex2Real Checks whether or not the problem involves any complex numbers.
 setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
   Complex2Real.accepts(problem)
@@ -46,6 +48,8 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
   return(list(object, new_problem, inverse_data))
 })
 
+#' @param solution A \linkS4class{Solution} object to invert.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn Complex2Real Returns a solution to the original problem given the inverse data.
 setMethod("invert", signature(object = "Complex2Real", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   pvars <- list()

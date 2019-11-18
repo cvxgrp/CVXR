@@ -440,6 +440,8 @@ setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
   callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
 })
 
+#' @param object A \linkS4class{Multiply} object.
+#' @param values A list of arguments to the atom.
 #' @describeIn Multiply Multiplies the values elementwise.
 setMethod("to_numeric", "Multiply", function(object, values) { values[[1]] * values[[2]] })
 

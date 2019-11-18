@@ -508,7 +508,7 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 #' A sensible idiom is \code{value(leaf) = project(leaf, val)}.
 #' 
 #' @param object A \linkS4class{Leaf} object.
-#' @param val The assigned value.
+#' @param value The assigned value.
 #' @return The value rounded to the attribute type.
 #' @name project-methods
 NULL

@@ -254,7 +254,7 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-
+#'
 #' An interface for the ECOS solver
 #'
 ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
@@ -276,6 +276,8 @@ setMethod("supported_constraints", "ECOS", function(solver) { c(supported_constr
 # ECOS_FATAL    (-7)  Unknown problem in solver
 
 # Map of ECOS status to CVXR status.
+#' @param solver,object,x A \linkS4class{ECOS} object.
+#' @param status A status code returned by the solver.
 #' @describeIn ECOS Converts status returned by the ECOS solver to its respective CVXPY status.
 setMethod("status_map", "ECOS", function(solver, status) {
   if(status == 0)
@@ -302,6 +304,7 @@ setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolve
 #' @describeIn ECOS Returns the name of the solver
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
 
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn ECOS Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(object, problem) {
   data <- list()
@@ -330,6 +333,8 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   return(list(object, data, inv_data))
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn ECOS Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- status_map(object, solution$retcodes[["exitFlag"]])
@@ -357,7 +362,6 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -385,6 +389,8 @@ setMethod("requires_constr", "SCS", function(solver) { TRUE })
 setMethod("supported_constraints", "SCS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of SCS status to CVXR status.
+#' @param solver,object,x A \linkS4class{SCS} object.
+#' @param status A status code returned by the solver.
 #' @describeIn SCS Converts status returned by SCS solver to its respective CVXPY status.
 setMethod("status_map", "SCS", function(solver, status) {
   if(status == "Solved")
@@ -407,9 +413,13 @@ setMethod("status_map", "SCS", function(solver, status) {
 
 #' @describeIn SCS Returns the name of the solver
 setMethod("name", "SCS", function(x) { SCS_NAME })
+
 #' @describeIn SCS Imports the solver
 setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs", quietly = TRUE) })
 
+#' @param problem A \linkS4class{Problem} object.
+#' @param constr A \linkS4class{Constraint} to format.
+#' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
 #' @describeIn SCS Return a linear operator to multiply by PSD constraint coefficients. 
 setMethod("reduction_format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
   # Extract coefficient and offset vector from constraint.
@@ -479,8 +489,8 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
 #' 
 #' Special cases PSD constraints, as per the SCS specification.
 #' 
-#' @param offset The starting point of the vector to extract from.
 #' @param result_vec The vector to extract dual values from.
+#' @param offset The starting point of the vector to extract from.
 #' @param constraint A \linkS4class{Constraint} object.
 #' @return The dual values for the corresponding PSD constraints
 SCS.extract_dual_value <- function(result_vec, offset, constraint) {
@@ -495,6 +505,8 @@ SCS.extract_dual_value <- function(result_vec, offset, constraint) {
     return(extract_dual_value(result_vec, offset, constraint))
 }
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn SCS Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
@@ -526,7 +538,6 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
     return(failure_solution(status))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1106,8 +1117,12 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
+
+#' @param object,x A \linkS4class{ECOS_BB} object.
 #' @describeIn ECOS_BB Returns the name of the solver.
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
+
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn ECOS_BB Returns a new problem and data for inverting the new solution.
 setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), function(object, problem) {
   res <- callNextMethod(object, problem)
@@ -1123,7 +1138,6 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
   return(list(object, data, inv_data))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1144,6 +1158,7 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
 #'
 #' Utility method for formatting a ConeDims instance into a dictionary
 #' that can be supplied to ECOS.
+#' 
 #' @param cone_dims A \linkS4class{ConeDims} instance.
 #' @return A dictionary of cone dimensions
 ECOS.dims_to_solver_dict <- function(cone_dims) {

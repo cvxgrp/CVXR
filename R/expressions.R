@@ -633,7 +633,7 @@ setMethod("copy", "Leaf", function(object, args = NULL, id_objects = list()) {
   return(object)   # Leaves are not deep copied.
 })
 
-#' @param object A \linkS4class{Leaf} object.
+#' @param object,x A \linkS4class{Leaf} object.
 #' @describeIn Leaf Leaves are not copied.
 setMethod("get_data", "Leaf", function(object) { list() })
 
@@ -708,6 +708,7 @@ setMethod("domain", "Leaf", function(object) {
   return(domain)
 })
 
+#' @param value A numeric scalar, vector, or matrix.
 #' @describeIn Leaf Project value onto the attribute set of the leaf.
 setMethod("project", "Leaf", function(object, value) {
   if(!is_complex(object))
@@ -766,7 +767,6 @@ setMethod("project_and_assign", "Leaf", function(object, value) {
   return(object)
 })
 
-#' @param val The assigned value.
 #' @describeIn Leaf Get the value of the leaf.
 setMethod("value", "Leaf", function(object) { object@value })
 
@@ -776,6 +776,7 @@ setReplaceMethod("value", "Leaf", function(object, value) {
   return(object)
 })
 
+#' @param val The assigned value.
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(!any(is.na(val))) {

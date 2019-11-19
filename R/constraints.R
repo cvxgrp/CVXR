@@ -224,6 +224,7 @@ setMethod("residual", "IneqConstraint", function(object) {
 
 #' @param f A nonlinear function.
 #' @param vars_ A list of variables involved in the function.
+#' @param id (Optional) An integer representing the unique ID of the contraint.
 #' @rdname NonlinearConstraint-class
 NonlinearConstraint <- function(f, vars_, id = NA_integer_) { .NonlinearConstraint(f = f, vars_ = vars_, id = id) }
 
@@ -339,12 +340,11 @@ setMethod("show", "ExpCone", function(object) {
   print(paste("ExpCone(", as.character(object@x), ", ", as.character(object@y), ", ", as.character(object@z), ")", sep = ""))
 })
 
-#' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })
 
-#' @param x,object A \linkS4class{ExpCone} object.
+#' @param object A \linkS4class{ExpCone} object.
 #' @describeIn ExpCone The size of the \code{x} argument.
 setMethod("residual", "ExpCone", function(object) {
   # TODO: The projection should be implemented directly.

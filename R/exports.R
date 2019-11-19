@@ -196,6 +196,7 @@ log_det <- LogDet
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the log-sum-exponential of the input.
 #' @examples
 #' A <- Variable(2,2)
@@ -260,6 +261,7 @@ matrix_frac <- function(X, P) {
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the maximum of the input.
 #' @examples
 #' x <- Variable(2)
@@ -287,6 +289,7 @@ max_entries <- MaxEntries
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the minimum of the input.
 #' @examples
 #' A <- Variable(2,2)
@@ -336,6 +339,7 @@ mixed_norm <- MixedNorm
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the 1-norm of the input.
 #' @examples
 #' a <- Variable()
@@ -368,6 +372,7 @@ norm1 <- Norm1
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the Euclidean norm of the input.
 #' @examples
 #' a <- Variable()
@@ -407,6 +412,7 @@ norm2 <- Norm2
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the infinity-norm of the input.
 #' @examples
 #' a <- Variable()
@@ -532,8 +538,9 @@ pf_eigenvalue <- PfEigenvalue
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
-#' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @param max_denom (Optional) The maximum denominator considered in forming a rational approximation for \eqn{p}. The default is 1024.
 #' @return An \linkS4class{Expression} representing the p-norm of the input.
 #' @examples
 #' x <- Variable(3)
@@ -570,8 +577,9 @@ p_norm <- Pnorm
 #' 
 #' This atom is log-log affine, but it is neither convex nor concave.
 #'
-#' @param expr An \linkS4class{Expression}, vector, or matrix.
+#' @param ... \linkS4class{Expression} objects, vectors, or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the product of the entries of the input.
 #' @examples 
 #' 
@@ -939,6 +947,7 @@ setMethod("norm", signature(x = "Expression", type = "character"), function(x, t
 #' @param x An \linkS4class{Expression} or numeric constant representing a vector or matrix.
 #' @param p The type of norm. May be a number (p-norm), "inf" (infinity-norm), "nuc" (nuclear norm), or "fro" (Frobenius norm). The default is \code{p = 2}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the norm.
 #' @seealso \link[CVXR]{norm}
 #' @docType methods

@@ -511,14 +511,13 @@ setMethod("initialize", "EyeMinusInv", function(.Object, ..., X) {
   .Object
 })
 
-#' @param object A \linkS4class{EyeMinusInv} object.
+#' @param object,x An \linkS4class{EyeMinusInv} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn EyeMinusInv The unity resolvent of the matrix.
 setMethod("to_numeric", "EyeMinusInv", function(object, values) {
   base::solve(diag(nrow(object@args[[1]])) - values[[1]])
 })
 
-#' @param x,object An \linkS4class{EyeMinusInv} object.
 #' @describeIn EyeMinusInv The name and arguments of the atom.
 setMethod("name", "EyeMinusInv", function(x) { paste(class(x), x@args[[1]]) })
 
@@ -664,7 +663,6 @@ setMethod(".grad", "GeoMean", function(object, values) {
   }
 })
 
-#' @param x,object A \linkS4class{GeoMean} object.
 #' @describeIn GeoMean The name and arguments of the atom.
 setMethod("name", "GeoMean", function(x) {
   vals <- paste(sapply(x@w, as.character), collapse = ", ")
@@ -699,7 +697,8 @@ setMethod("is_decr", "GeoMean", function(object, idx) { FALSE })
 #' @describeIn GeoMean Returns \code{list(w, dyadic completion, tree of dyads)}.
 setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad, object@tree) })
 
-#' @param args An optional list that contains the arguments to reconstruct the atom. Default is to use current arguments of the aotm
+#' @param args An optional list that contains the arguments to reconstruct the atom. Default is to use current arguments of the atom.
+#' @param id_objects Currently unused.
 #' @describeIn GeoMean Returns a shallow copy of the GeoMean atom
 setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
@@ -945,6 +944,7 @@ setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) 
 #'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @name LogSumExp-class
 #' @aliases LogSumExp
 #' @rdname LogSumExp-class
@@ -952,6 +952,7 @@ setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) 
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @rdname LogSumExp-class
 LogSumExp <- function(x, axis = NA_real_, keepdims = FALSE) { .LogSumExp(expr = x, axis = axis, keepdims = keepdims) }
 
@@ -966,12 +967,12 @@ setMethod("to_numeric", "LogSumExp", function(object, values) {
     log(apply_with_keepdims(exp(values[[1]]), sum, axis = object@axis, keepdims = object@keepdims))
 })
 
-#' @param values A list of numeric values for the arguments
+#' @param values A list of numeric values.
 #' @describeIn LogSumExp Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "LogSumExp", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
-#' @describeIn LogSumExp Gives the (sub/super)gradient of the atom w.r.t. each column variable
+#' @param value A numeric value.
+#' @describeIn LogSumExp Gives the (sub/super)gradient of the atom w.r.t. each column variable.
 setMethod(".column_grad", "LogSumExp", function(object, value) {
   denom <- sum(exp(value))
   nom <- exp(value)
@@ -1113,6 +1114,7 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
 #'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @name MaxEntries-class
 #' @aliases MaxEntries
 #' @rdname MaxEntries-class
@@ -1120,6 +1122,7 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @rdname MaxEntries-class
 MaxEntries <- function(x, axis = NA_real_, keepdims = FALSE) { .MaxEntries(expr = x, axis = axis, keepdims = keepdims) }
 
@@ -1160,7 +1163,7 @@ setMethod("is_pwl", "MaxEntries", function(object) { is_pwl(object@args[[1]]) })
 #' @describeIn MaxEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MaxEntries", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value
 #' @describeIn MaxEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "MaxEntries", function(object, value) {
   # Grad: 1 for a largest index
@@ -1178,6 +1181,7 @@ setMethod(".column_grad", "MaxEntries", function(object, value) {
 #'
 #' @slot x An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @name MinEntries-class
 #' @aliases MinEntries
 #' @rdname MinEntries-class
@@ -1185,6 +1189,7 @@ setMethod(".column_grad", "MaxEntries", function(object, value) {
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @rdname MinEntries-class
 MinEntries <- function(x, axis = NA_real_, keepdims = FALSE) { .MinEntries(expr = x, axis = axis, keepdims = keepdims) }
 
@@ -1225,7 +1230,7 @@ setMethod("is_pwl", "MinEntries", function(object) { is_pwl(object@args[[1]]) })
 #' @describeIn MinEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MinEntries", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value
 #' @describeIn MinEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "MinEntries", function(object, value) {
   # Grad: 1 for a largest index
@@ -1256,7 +1261,9 @@ setMethod(".column_grad", "MinEntries", function(object, value) {
 #' @slot p A number greater than or equal to 1, or equal to positive infinity.
 #' @slot max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @slot .approx_error (Internal) The absolute difference between \eqn{p} and its rational approximation.
+#' @slot .original_p (Internal) The original input \eqn{p}.
 #' @name Pnorm-class
 #' @aliases Pnorm
 #' @rdname Pnorm-class
@@ -1265,8 +1272,9 @@ setMethod(".column_grad", "MinEntries", function(object, value) {
 
 #' @param x An \linkS4class{Expression} representing a vector or matrix.
 #' @param p A number greater than or equal to 1, or equal to positive infinity.
-#' @param max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @param max_denom (Optional) The maximum denominator considered in forming a rational approximation for \eqn{p}. The default is 1024.
 #' @rdname Pnorm-class
 Pnorm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
   if(p == 1)
@@ -1391,7 +1399,7 @@ setMethod(".domain", "Pnorm", function(object) {
 #' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value
 #' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "Pnorm", function(object, value) {
   rows <- size(object@args[[1]])
@@ -1435,7 +1443,8 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' @param X The matrix to take the norm of
 #' @param p The type of norm. Valid options include any positive integer, 'fro' (for frobenius), 
 #' 'nuc' (sum of singular values), np.inf or 'inf' (infinity norm).
-#' @param axis The axis along which to apply the norm. If any
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return Returns the specified norm of matrix X
 Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
@@ -1466,9 +1475,11 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
 }
 
 #' @param X The matrix to take the norm of
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return Returns the two norm of matrix X
-Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
-  Pnorm(x, p = 2, axis = axis, keepdims = keepdims, max_denom = max_denom)
+Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
+  Pnorm(x, p = 2, axis = axis, keepdims = keepdims)
 }
 
 #'
@@ -1482,9 +1493,13 @@ Norm2 <- function(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
 #' @rdname Norm1-class
 .Norm1 <- setClass("Norm1", contains = "AxisAtom")
 
+#' @param x An \linkS4class{Expression} object.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @rdname Norm1-class
 Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(expr = x, axis = axis, keepdims = keepdims) }
 
-#' @param x,object A \linkS4class{Norm1} object.
+#' @param object A \linkS4class{Norm1} object.
 #' @describeIn Norm1 The name and arguments of the atom.
 setMethod("name", "Norm1", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
@@ -1536,7 +1551,7 @@ setMethod(".domain", "Norm1", function(object) { list() })
 #' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "Norm1", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value
 #' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "Norm1", function(object, value) {
   rows <- size(object@args[[1]])
@@ -1613,7 +1628,7 @@ setMethod(".domain", "NormInf", function(object) { list() })
 #' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "NormInf", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value
 #' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented") })   # TODO: Implement this! })
 
@@ -1700,10 +1715,10 @@ setMethod("initialize", "OneMinusPos", function(.Object, ..., x) {
   .Object
 })
 
-#' @param x,object A \linkS4class{OneMinusPos} object.
 #' @describeIn OneMinusPos The name and arguments of the atom.
 setMethod("name", "OneMinusPos", function(x) { paste(class(x), x@args[[1]]) })
 
+#' @param object A \linkS4class{OneMinusPos} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn OneMinusPos Returns one minus the value.
 setMethod("to_numeric", "OneMinusPos", function(object, values) { object@.ones - values[[1]] })
@@ -1828,6 +1843,7 @@ setMethod(".grad", "PfEigenvalue", function(object, values) { NA_real_ })
 
 #' @param ... \linkS4class{Expression} objects, vectors, or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @rdname ProdEntries-class
 ProdEntries <- function(..., axis = NA_real_, keepdims = FALSE) {
   exprs <- list(...)

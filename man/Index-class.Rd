@@ -46,6 +46,8 @@ Index(expr, key)
 \S4method{dim_from_args}{SpecialIndex}(object)
 }
 \arguments{
+\item{x}{A \linkS4class{Expression} object.}
+
 \item{i, j}{The row and column indices of the slice.}
 
 \item{...}{(Unimplemented) Optional arguments.}

@@ -134,7 +134,9 @@ This class represents a mathematical expression.
 
 \item \code{domain}: A list of constraints describing the closure of the region where the expression is finite.
 
-\item \code{name}: The string representation of the expression.
+\item \code{as.character}: The string representation of the expression.
+
+\item \code{name}: The name of the expression.
 
 \item \code{expr}: The expression itself.
 

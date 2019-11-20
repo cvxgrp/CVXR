@@ -8,7 +8,7 @@
 import_solver(solver)
 }
 \arguments{
-\item{solver}{A \linkS4class{Solver} object.}
+\item{solver}{A \linkS4class{ReductionSolver} object.}
 }
 \description{
 Import the R library that interfaces with the specified solver.

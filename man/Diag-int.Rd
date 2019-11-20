@@ -7,10 +7,10 @@
 Diag(expr)
 }
 \arguments{
-\item{expr}{An \linkS4class{Expression} that represents a vector or square matrix}
+\item{expr}{An \linkS4class{Expression} that represents a vector or square matrix.}
 }
 \value{
-An \linkS4class{Expression} representing the diagonal vector/matrix
+An \linkS4class{Expression} representing the diagonal vector/matrix.
 }
 \description{
 Turns an expression into a DiagVec object

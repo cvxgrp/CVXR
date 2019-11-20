@@ -17,7 +17,7 @@
 
 \item{problem}{A \linkS4class{Problem} object.}
 
-\item{extractor}{A \linkS4class{CoeffExtractor} object used to extract the affine coefficients of the objective.}
+\item{extractor}{Used to extract the affine coefficients of the objective.}
 }
 \description{
 Linear cone problems are assumed to have a linear objective and cone constraints,

@@ -97,10 +97,10 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
 })
 
 #' 
-#' Return the coefficient and offset in A %*% x + b.
+#' Return the coefficient and offset in \eqn{Ax + b}.
 #' 
 #' @param expr An \linkS4class{Expression} object.
-#' @return The coefficient and offset in A %*% x + b.
+#' @return The coefficient and offset in \eqn{Ax + b}.
 ConicSolver.get_coeff_offset <- function(expr) {
   if(class(expr) == "Reshape")   # May be a Reshape as root.
     expr <- expr@args[[1]]

@@ -19,7 +19,7 @@ is_decr(object, idx)
 \arguments{
 \item{object}{A \linkS4class{Atom} object.}
 
-\item{idx}{The index desired of the atom}
+\item{idx}{An index into the atom.}
 }
 \value{
 A logical value.

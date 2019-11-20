@@ -20,7 +20,7 @@ exp_capable(solver)
 mip_capable(solver)
 }
 \arguments{
-\item{solver}{A \linkS4class{Solver} object.}
+\item{solver}{A \linkS4class{ReductionSolver} object.}
 }
 \value{
 A logical value.

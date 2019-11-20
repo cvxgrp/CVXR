@@ -248,7 +248,7 @@ as.Constant <- function(expr) {
 #' @param ... Additional attribute arguments. See \linkS4class{Leaf} for details.
 #' @rdname Parameter-class
 #' @examples
-#' x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
+#' x <- Parameter(3, name = "x0", nonpos = TRUE) ## 3-vec negative
 #' is_nonneg(x)
 #' is_nonpos(x)
 #' size(x)
@@ -344,7 +344,8 @@ setMethod("show", "Parameter", function(object) {
 #' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)
-#' y <- CallbackParam(value(x), dim(x), nonneg = TRUE)
+#' fun <- function() { value(x) }
+#' y <- CallbackParam(fun, dim(x), nonneg = TRUE)
 #' get_data(y)
 #' @export
 CallbackParam <- function(callback, dim = NULL, ...) {

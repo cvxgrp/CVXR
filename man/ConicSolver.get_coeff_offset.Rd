@@ -2,7 +2,7 @@
 % Please edit documentation in R/conic_solvers.R
 \name{ConicSolver.get_coeff_offset}
 \alias{ConicSolver.get_coeff_offset}
-\title{Return the coefficient and offset in A %*% x + b.}
+\title{Return the coefficient and offset in \eqn{Ax + b}.}
 \usage{
 ConicSolver.get_coeff_offset(expr)
 }
@@ -10,8 +10,8 @@ ConicSolver.get_coeff_offset(expr)
 \item{expr}{An \linkS4class{Expression} object.}
 }
 \value{
-The coefficient and offset in A %*% x + b.
+The coefficient and offset in \eqn{Ax + b}.
 }
 \description{
-Return the coefficient and offset in A %*% x + b.
+Return the coefficient and offset in \eqn{Ax + b}.
 }

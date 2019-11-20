@@ -46,7 +46,7 @@ setMethod("flatten", "numeric", function(object) { matrix(object, ncol = 1) })
 # .value_impl.Expression <- function(object) { object@value }
 setMethod("value_impl", "Expression", function(object) { object@value })
 
-#' @param object An \linkS4class{Expression} object.
+#' @param x,object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
@@ -60,13 +60,13 @@ setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
-#' @slot x An \linkS4class{Expression} object.
-#' @rdname Expression-class
+#' @describeIn Expression The string representation of the expression.
+#' @export
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", paste(dim(x), collapse = ", "), ")", sep = "")
 })
 
-#' @describeIn Expression The string representation of the expression.
+#' @describeIn Expression The name of the expression.
 #' @export
 setMethod("name", "Expression", function(x) { stop("Unimplemented") })
 
@@ -252,6 +252,7 @@ setMethod("nrow", "Expression", function(x) { dim(x)[1] })
 setMethod("ncol", "Expression", function(x) { dim(x)[2] })
 
 # Slice operators
+#' @param x A \linkS4class{Expression} object.
 #' @param i,j The row and column indices of the slice.
 #' @param ... (Unimplemented) Optional arguments.
 #' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.

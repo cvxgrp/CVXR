@@ -52,7 +52,6 @@ setMethod("validate_args", "Atom", function(object) {
 })
 
 #' @rdname dim_from_args
-#' @describeIn Returns the shape of the expression
 setMethod("dim_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom The \code{c(row, col)} dimensions of the atom.
@@ -68,7 +67,6 @@ setMethod("ncol", "Atom", function(x) { dim(x)[2] })
 setMethod("allow_complex", "Atom", function(object) { FALSE })
 
 #' @rdname sign_from_args
-#' @describeIn Atom Returns sign (is positive, is negative) of the expression
 setMethod("sign_from_args", "Atom", function(object) { stop("Unimplemented") })
 
 #' @describeIn Atom A logical value indicating whether the atom is nonnegative.
@@ -84,37 +82,27 @@ setMethod("is_imag", "Atom", function(object) { FALSE })
 setMethod("is_complex", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is convex
 setMethod("is_atom_convex", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is concave
 setMethod("is_atom_concave", "Atom", function(object) { stop("Unimplemented") })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is convex
 setMethod("is_atom_affine", "Atom", function(object) { is_atom_concave(object) && is_atom_convex(object) })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is log-log convex
 setMethod("is_atom_log_log_convex", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is log-log concave
 setMethod("is_atom_log_log_concave", "Atom", function(object) { FALSE })
 
 #' @rdname curvature-atom
-#' @describeIn Atom A logical value indiciating whether the atom is log-log affine
 setMethod("is_atom_log_log_affine", "Atom", function(object) { is_atom_log_log_concave(object) && is_atom_log_log_convex(object) })
 
 #' @rdname curvature-comp
-#' @param idx An index into the atom.
-#' @describeIn Atom A logical value indiciating whether the composition is non-decreasing in argument idx
 setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @rdname curvature-comp
-#' @param idx The index desired of the atom
-#' @describeIn Atom A logical value indiciating whether the composition is decreasing in argument idx
 setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 
 #' @describeIn Atom A logical value indicating whether the atom is convex.

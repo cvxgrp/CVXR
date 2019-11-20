@@ -82,7 +82,7 @@ This class represents a parameter, either scalar or a matrix.
 }}
 
 \examples{
-x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
+x <- Parameter(3, name = "x0", nonpos = TRUE) ## 3-vec negative
 is_nonneg(x)
 is_nonpos(x)
 size(x)

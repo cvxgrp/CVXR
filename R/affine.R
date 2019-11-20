@@ -894,8 +894,9 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, dat
 #' 
 #' Turns an expression into a DiagVec object
 #' 
-#' @param expr An \linkS4class{Expression} that represents a vector or square matrix
-#' @return An \linkS4class{Expression} representing the diagonal vector/matrix
+#' @param expr An \linkS4class{Expression} that represents a vector or square matrix.
+#' @return An \linkS4class{Expression} representing the diagonal vector/matrix.
+#' @rdname Diag-int
 Diag <- function(expr) {
   expr <- as.Constant(expr)
   if(is_vector(expr))
@@ -914,6 +915,7 @@ Diag <- function(expr) {
 #' @param x An \linkS4class{Expression} that represents a vector
 #' @param axis The axis along which to apply the function. For a 2D matrix, \code{1} indicates rows and \code{2} indicates columns.
 #' @return Takes in a vector of length n and returns a vector of length n-k of the kth order differences
+#' @rdname Diff-int
 Diff <- function(x, lag = 1, k = 1, axis = 2) {
   x <- as.Constant(x)
   if((axis == 2 && ndim(x) < 2) || ndim(x) == 0)

@@ -34,6 +34,7 @@ This class represents a parameter whose value is obtained by evaluating a functi
 
 \examples{
 x <- Variable(2)
-y <- CallbackParam(value(x), dim(x), nonneg = TRUE)
+fun <- function() { value(x) }
+y <- CallbackParam(fun, dim(x), nonneg = TRUE)
 get_data(y)
 }

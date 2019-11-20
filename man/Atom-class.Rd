@@ -4,6 +4,7 @@
 \name{Atom-class}
 \alias{Atom-class}
 \alias{Atom}
+\alias{name,Atom-method}
 \alias{validate_args,Atom-method}
 \alias{dim,Atom-method}
 \alias{nrow,Atom-method}
@@ -26,6 +27,8 @@
 \alias{atoms,Atom-method}
 \title{The Atom class.}
 \usage{
+\S4method{name}{Atom}(x)
+
 \S4method{validate_args}{Atom}(object)
 
 \S4method{dim}{Atom}(x)
@@ -67,17 +70,21 @@
 \S4method{atoms}{Atom}(object)
 }
 \arguments{
+\item{x, object}{An \linkS4class{Atom} object.}
+
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{data}{A list of additional data required by the atom.}
+\item{dim}{A vector with two elements representing the dimensions of the resulting expression.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{data}{A list of additional data required by the atom.}
 }
 \description{
 This virtual class represents atomic expressions in CVXR.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{name}: Returns the string representtation of the function call
+
 \item \code{validate_args}: Raises an error if the arguments are invalid.
 
 \item \code{dim}: The \code{c(row, col)} dimensions of the atom.

@@ -20,6 +20,7 @@
 \alias{.domain,Power-method}
 \alias{get_data,Power-method}
 \alias{copy,Power-method}
+\alias{name,Power-method}
 \title{The Power class.}
 \usage{
 Power(x, p, max_denom = 1024)
@@ -53,6 +54,8 @@ Power(x, p, max_denom = 1024)
 \S4method{get_data}{Power}(object)
 
 \S4method{copy}{Power}(object, args = NULL, id_objects = list())
+
+\S4method{name}{Power}(x)
 }
 \arguments{
 \item{x}{The \linkS4class{Expression} to be raised to a power.}
@@ -68,6 +71,8 @@ Power(x, p, max_denom = 1024)
 \item{idx}{An index into the atom.}
 
 \item{args}{A list of arguments to reconstruct the atom. If args=NULL, use the current args of the atom}
+
+\item{id_objects}{Currently unused.}
 }
 \description{
 This class represents the elementwise power function \eqn{f(x) = x^p}.
@@ -124,6 +129,8 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 \item \code{get_data}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 
 \item \code{copy}: Returns a shallow  copy of the power atom
+
+\item \code{name}: Returns the expression in string form.
 }}
 
 \section{Slots}{

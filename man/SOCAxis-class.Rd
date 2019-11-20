@@ -31,6 +31,8 @@ SOCAxis(t, X, axis, id = NA_integer_)
 
 \item{axis}{The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.}
 
+\item{id}{(Optional) A numeric value representing the constraint ID.}
+
 \item{x, object}{A \linkS4class{SOCAxis} object.}
 
 \item{eq_constr}{A list of the equality constraints in the canonical problem.}

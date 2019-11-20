@@ -45,11 +45,9 @@ EyeMinusInv(X)
 \arguments{
 \item{X}{An \linkS4class{Expression} or numeric matrix.}
 
-\item{object}{A \linkS4class{EyeMinusInv} object.}
+\item{object, x}{An \linkS4class{EyeMinusInv} object.}
 
 \item{values}{A list of numeric values for the arguments}
-
-\item{x, object}{An \linkS4class{EyeMinusInv} object.}
 
 \item{idx}{An index into the atom.}
 }

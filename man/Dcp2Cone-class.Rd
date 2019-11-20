@@ -12,6 +12,11 @@
 
 \S4method{perform}{Dcp2Cone,Problem}(object, problem)
 }
+\arguments{
+\item{object}{A \linkS4class{Dcp2Cone} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+}
 \description{
 This reduction takes as input (minimization) DCP problems and converts them into problems
 with affine objectives and conic constraints whose arguments are affine.

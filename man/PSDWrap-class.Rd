@@ -14,6 +14,8 @@ PSDWrap(arg)
 }
 \arguments{
 \item{arg}{A \linkS4class{Expression} object or matrix.}
+
+\item{object}{A \linkS4class{PSDWrap} object.}
 }
 \description{
 A no-op wrapper to assert the input argument is positive semidefinite.

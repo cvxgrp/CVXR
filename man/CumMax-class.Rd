@@ -43,6 +43,8 @@ CumMax(expr, axis = 2)
 
 \item{values}{A list of numeric values for the arguments}
 
+\item{value}{A numeric value.}
+
 \item{idx}{An index into the atom.}
 }
 \description{

@@ -6,6 +6,7 @@
 \alias{.SOC}
 \alias{SOC}
 \alias{as.character,SOC-method}
+\alias{residual,SOC-method}
 \alias{get_data,SOC-method}
 \alias{format_constr,SOC-method}
 \alias{num_cones,SOC-method}
@@ -13,11 +14,14 @@
 \alias{cone_sizes,SOC-method}
 \alias{is_dcp,SOC-method}
 \alias{is_dgp,SOC-method}
+\alias{canonicalize,SOC-method}
 \title{The SOC class.}
 \usage{
 SOC(t, X, axis = 2, id = NA_integer_)
 
 \S4method{as.character}{SOC}(x)
+
+\S4method{residual}{SOC}(object)
 
 \S4method{get_data}{SOC}(object)
 
@@ -32,9 +36,17 @@ SOC(t, X, axis = 2, id = NA_integer_)
 \S4method{is_dcp}{SOC}(object)
 
 \S4method{is_dgp}{SOC}(object)
+
+\S4method{canonicalize}{SOC}(object)
 }
 \arguments{
 \item{t}{The scalar part of the second-order constraint.}
+
+\item{X}{A matrix whose rows/columns are each a cone.}
+
+\item{axis}{The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.}
+
+\item{id}{(Optional) A numeric value representing the constraint ID.}
 
 \item{x, object}{A \linkS4class{SOC} object.}
 
@@ -45,14 +57,14 @@ SOC(t, X, axis = 2, id = NA_integer_)
 \item{dims}{A list with the dimensions of the conic constraints.}
 
 \item{solver}{A string representing the solver to be called.}
-
-\item{x_elems}{A list containing the elements of the vector part of the constraint.}
 }
 \description{
 This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{residual}: The residual of the second-order constraint.
+
 \item \code{get_data}: Information needed to reconstruct the object aside from the args.
 
 \item \code{format_constr}: Format SOC constraints as inequalities for the solver.
@@ -66,6 +78,8 @@ This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 \item \code{is_dcp}: An SOC constraint is DCP if each of its arguments is affine.
 
 \item \code{is_dgp}: Is the constraint DGP?
+
+\item \code{canonicalize}: The canonicalization of the constraint.
 }}
 
 \section{Slots}{
@@ -73,6 +87,8 @@ This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 \describe{
 \item{\code{t}}{The scalar part of the second-order constraint.}
 
-\item{\code{x_elems}}{A list containing the elements of the vector part of the constraint.}
+\item{\code{X}}{A matrix whose rows/columns are each a cone.}
+
+\item{\code{axis}}{The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.}
 }}
 

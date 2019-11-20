@@ -7,9 +7,11 @@
 \S4method{construct_intermediate_chain}{Problem,list}(problem, candidates, gp = FALSE)
 }
 \arguments{
-\item{problem}{The problem for which to build a chain}
+\item{problem}{The problem for which to build a chain.}
 
-\item{candidates}{A list of candidate solvers divided in qp_solvers}
+\item{candidates}{A list of candidate solvers.}
+
+\item{gp}{A logical value indicating whether the problem is a geometric program.}
 }
 \value{
 A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.

@@ -9,11 +9,16 @@
 \usage{
 \S4method{accepts}{EliminatePwl,Problem}(object, problem)
 }
+\arguments{
+\item{object}{An \linkS4class{EliminatePwl} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+}
 \description{
 This class eliminates piecewise linear atoms.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Is this a PWL atom?
+\item \code{accepts}: Does this problem contain piecewise linear atoms?
 }}
 

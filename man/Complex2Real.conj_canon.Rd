@@ -12,6 +12,8 @@ Complex2Real.conj_canon(expr, real_args, imag_args, real2imag)
 \item{real_args}{A list of \linkS4class{Constraint} objects for the real part of the expression}
 
 \item{imag_args}{A list of \linkS4class{Constraint} objects for the imaginary part of the expression}
+
+\item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
 }
 \value{
 A canonicalization of a conjugate atom, where the returned

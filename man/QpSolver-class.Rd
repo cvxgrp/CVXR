@@ -11,6 +11,11 @@
 
 \S4method{perform}{QpSolver,Problem}(object, problem)
 }
+\arguments{
+\item{object}{A \linkS4class{QpSolver} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+}
 \description{
 A QP solver interface.
 }

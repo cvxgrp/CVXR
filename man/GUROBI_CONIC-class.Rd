@@ -4,6 +4,7 @@
 \name{GUROBI_CONIC-class}
 \alias{GUROBI_CONIC-class}
 \alias{GUROBI_CONIC}
+\alias{mip_capable,GUROBI_CONIC-method}
 \alias{name,GUROBI_CONIC-method}
 \alias{import_solver,GUROBI_CONIC-method}
 \alias{status_map,GUROBI_CONIC-method}
@@ -13,6 +14,8 @@
 \alias{solve_via_data,GUROBI_CONIC-method}
 \title{An interface for the GUROBI conic solver.}
 \usage{
+\S4method{mip_capable}{GUROBI_CONIC}(solver)
+
 \S4method{name}{GUROBI_CONIC}(x)
 
 \S4method{import_solver}{GUROBI_CONIC}(solver)
@@ -35,7 +38,15 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{GUROBI_CONIC} object.}
+
+\item{status}{A status code returned by the solver.}
+
 \item{problem}{A \linkS4class{Problem} object.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
 
 \item{data}{Data generated via an apply call.}
 
@@ -52,6 +63,8 @@ An interface for the GUROBI conic solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{name}: Returns the name of the solver.
 
 \item \code{import_solver}: Imports the solver.

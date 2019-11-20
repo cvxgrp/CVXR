@@ -10,6 +10,7 @@
 \alias{.AddExpression}
 \alias{AddExpression}
 \alias{dim_from_args,AddExpression-method}
+\alias{name,AddExpression-method}
 \alias{to_numeric,AddExpression-method}
 \alias{is_atom_log_log_convex,AddExpression-method}
 \alias{is_atom_log_log_concave,AddExpression-method}
@@ -29,6 +30,8 @@
 
 \S4method{dim_from_args}{AddExpression}(object)
 
+\S4method{name}{AddExpression}(x)
+
 \S4method{to_numeric}{AddExpression}(object, values)
 
 \S4method{is_atom_log_log_convex}{AddExpression}(object)
@@ -46,6 +49,8 @@
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to add.}
 
+\item{x, object}{An \linkS4class{AddExpression} object.}
+
 \item{values}{A list of arguments to the atom.}
 
 \item{args}{An optional list of arguments to reconstruct the atom. Default is to use current args of the atom}
@@ -55,8 +60,6 @@
 \item{dim}{A vector representing the dimensions of the resulting expression.}
 
 \item{data}{A list of additional data required by the atom.}
-
-\item{x, object}{An \linkS4class{AddExpression} object.}
 }
 \description{
 This class represents the sum of any number of expressions.
@@ -64,6 +67,8 @@ This class represents the sum of any number of expressions.
 \section{Methods (by generic)}{
 \itemize{
 \item \code{dim_from_args}: The dimensions of the expression.
+
+\item \code{name}: The string form of the expression.
 
 \item \code{to_numeric}: Sum all the values.
 

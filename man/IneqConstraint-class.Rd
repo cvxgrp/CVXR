@@ -16,6 +16,7 @@
 \alias{>,ConstVal,Expression-method}
 \alias{IneqConstraint-class}
 \alias{.IneqConstraint}
+\alias{name,IneqConstraint-method}
 \alias{dim,IneqConstraint-method}
 \alias{size,IneqConstraint-method}
 \alias{expr,IneqConstraint-method}
@@ -48,6 +49,8 @@
 
 \S4method{>}{ConstVal,Expression}(e1, e2)
 
+\S4method{name}{IneqConstraint}(x)
+
 \S4method{dim}{IneqConstraint}(x)
 
 \S4method{size}{IneqConstraint}(object)
@@ -68,6 +71,8 @@ The IneqConstraint class
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{name}: The string representation of the constraint.
+
 \item \code{dim}: The dimensions of the constrained expression.
 
 \item \code{size}: The size of the constrained expression.

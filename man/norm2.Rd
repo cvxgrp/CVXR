@@ -5,12 +5,14 @@
 \alias{norm2}
 \title{Euclidean Norm}
 \usage{
-norm2(x, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
+norm2(x, axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression}, vector, or matrix.}
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
+
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
 }
 \value{
 An \linkS4class{Expression} representing the Euclidean norm of the input.

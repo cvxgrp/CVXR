@@ -9,12 +9,12 @@ get_dual_values(result_vec, parse_func, constraints)
 \arguments{
 \item{result_vec}{A vector containing the dual variable values.}
 
-\item{offset}{An offset to get correct index of dual values.}
+\item{parse_func}{Function handle for the parser.}
 
-\item{constraint}{A list of the constraints in the problem.}
+\item{constraints}{A list of the constraints in the problem.}
 }
 \value{
-A map of constrain id to dual variable value.
+A map of constraint ID to dual variable value.
 }
 \description{
 Gets the values of the dual variables.

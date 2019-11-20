@@ -12,6 +12,13 @@
 
 \S4method{stuffed_objective}{ConeMatrixStuffing,Problem,CoeffExtractor}(object, problem, extractor)
 }
+\arguments{
+\item{object}{A \linkS4class{ConeMatrixStuffing} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+
+\item{extractor}{A \linkS4class{CoeffExtractor} object used to extract the affine coefficients of the objective.}
+}
 \description{
 Linear cone problems are assumed to have a linear objective and cone constraints,
 which may have zero or more arguments, all of which must be affine.

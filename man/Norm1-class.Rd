@@ -6,15 +6,41 @@
 \alias{.Norm1}
 \alias{Norm1}
 \alias{name,Norm1-method}
+\alias{to_numeric,Norm1-method}
 \alias{allow_complex,Norm1-method}
+\alias{sign_from_args,Norm1-method}
+\alias{is_atom_convex,Norm1-method}
+\alias{is_atom_concave,Norm1-method}
+\alias{is_incr,Norm1-method}
+\alias{is_decr,Norm1-method}
+\alias{is_pwl,Norm1-method}
+\alias{get_data,Norm1-method}
 \alias{.domain,Norm1-method}
 \alias{.grad,Norm1-method}
 \alias{.column_grad,Norm1-method}
 \title{The Norm1 class.}
 \usage{
+Norm1(x, axis = NA_real_, keepdims = FALSE)
+
 \S4method{name}{Norm1}(x)
 
+\S4method{to_numeric}{Norm1}(object, values)
+
 \S4method{allow_complex}{Norm1}(object)
+
+\S4method{sign_from_args}{Norm1}(object)
+
+\S4method{is_atom_convex}{Norm1}(object)
+
+\S4method{is_atom_concave}{Norm1}(object)
+
+\S4method{is_incr}{Norm1}(object, idx)
+
+\S4method{is_decr}{Norm1}(object, idx)
+
+\S4method{is_pwl}{Norm1}(object)
+
+\S4method{get_data}{Norm1}(object)
 
 \S4method{.domain}{Norm1}(object)
 
@@ -23,9 +49,19 @@
 \S4method{.column_grad}{Norm1}(object, value)
 }
 \arguments{
-\item{x, object}{A \linkS4class{Norm1} object.}
+\item{x}{An \linkS4class{Expression} object.}
+
+\item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
+
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
+\item{object}{A \linkS4class{Norm1} object.}
 
 \item{values}{A list of numeric values for the arguments}
+
+\item{idx}{An index into the atom.}
+
+\item{value}{A numeric value}
 }
 \description{
 This class represents the 1-norm of an expression.
@@ -34,7 +70,23 @@ This class represents the 1-norm of an expression.
 \itemize{
 \item \code{name}: The name and arguments of the atom.
 
+\item \code{to_numeric}: Returns the 1-norm of x along the given axis.
+
 \item \code{allow_complex}: Does the atom handle complex numbers?
+
+\item \code{sign_from_args}: The atom is always positive.
+
+\item \code{is_atom_convex}: The atom is convex.
+
+\item \code{is_atom_concave}: The atom is not concave.
+
+\item \code{is_incr}: Is the composition weakly increasing in argument \code{idx}?
+
+\item \code{is_decr}: Is the composition weakly decreasing in argument \code{idx}?
+
+\item \code{is_pwl}: Is the atom piecewise linear?
+
+\item \code{get_data}: Returns the axis.
 
 \item \code{.domain}: Returns constraints describing the domain of the node
 

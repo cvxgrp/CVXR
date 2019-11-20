@@ -12,6 +12,7 @@
 \alias{SpecialIndex-class}
 \alias{.SpecialIndex}
 \alias{SpecialIndex}
+\alias{name,SpecialIndex-method}
 \alias{is_atom_log_log_convex,SpecialIndex-method}
 \alias{is_atom_log_log_concave,SpecialIndex-method}
 \alias{get_data,SpecialIndex-method}
@@ -34,6 +35,8 @@
 
 SpecialIndex(expr, key)
 
+\S4method{name}{SpecialIndex}(x)
+
 \S4method{is_atom_log_log_convex}{SpecialIndex}(object)
 
 \S4method{is_atom_log_log_concave}{SpecialIndex}(object)
@@ -52,6 +55,8 @@ This class represents indexing using logical indexing or a list of indices into 
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{name}: Returns the index in string form.
+
 \item \code{is_atom_log_log_convex}: Is the atom log-log convex?
 
 \item \code{is_atom_log_log_concave}: Is the atom log-log concave?

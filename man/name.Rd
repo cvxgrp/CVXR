@@ -8,7 +8,7 @@
 name(x)
 }
 \arguments{
-\item{object}{A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.}
+\item{x}{A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.}
 }
 \value{
 For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.

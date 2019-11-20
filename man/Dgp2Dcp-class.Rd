@@ -19,9 +19,17 @@
 \S4method{invert}{Dgp2Dcp,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
+\item{object}{A \linkS4class{Dgp2Dcp} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+
 \item{expr}{An \linkS4class{Expression} object corresponding to the DGP problem.}
 
 \item{args}{A list of values corresponding to the DGP expression}
+
+\item{solution}{A \linkS4class{Solution} object to invert.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
 }
 \description{
 This reduction takes as input a DGP problem and returns an equivalent DCP

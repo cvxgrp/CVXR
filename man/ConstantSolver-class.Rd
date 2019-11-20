@@ -9,6 +9,7 @@
 \alias{perform,ConstantSolver,Problem-method}
 \alias{invert,ConstantSolver,Solution,list-method}
 \alias{name,ConstantSolver-method}
+\alias{import_solver,ConstantSolver-method}
 \alias{is_installed,ConstantSolver-method}
 \alias{solve_via_data,ConstantSolver-method}
 \alias{reduction_solve,ConstantSolver,ANY-method}
@@ -24,6 +25,8 @@
 
 \S4method{name}{ConstantSolver}(x)
 
+\S4method{import_solver}{ConstantSolver}(solver)
+
 \S4method{is_installed}{ConstantSolver}(solver)
 
 \S4method{solve_via_data}{ConstantSolver}(
@@ -38,7 +41,13 @@
 \S4method{reduction_solve}{ConstantSolver,ANY}(object, problem, warm_start, verbose, solver_opts)
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{ConstantSolver} object.}
+
 \item{problem}{A \linkS4class{Problem} object.}
+
+\item{solution}{A \linkS4class{Solution} object to invert.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
 
 \item{data}{Data for the solver.}
 
@@ -55,15 +64,17 @@ The ConstantSolver class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Is the solver mip capable?
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
 
-\item \code{accepts}: Is the solver accepted?
+\item \code{accepts}: Is the solver capable of solving the problem?
 
 \item \code{perform}: Returns a list of the ConstantSolver, Problem, and an empty list.
 
 \item \code{invert}: Returns the solution.
 
 \item \code{name}: Returns the name of the solver.
+
+\item \code{import_solver}: Imports the solver.
 
 \item \code{is_installed}: Is the solver installed?
 

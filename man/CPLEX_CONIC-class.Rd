@@ -4,6 +4,7 @@
 \name{CPLEX_CONIC-class}
 \alias{CPLEX_CONIC-class}
 \alias{CPLEX_CONIC}
+\alias{mip_capable,CPLEX_CONIC-method}
 \alias{name,CPLEX_CONIC-method}
 \alias{import_solver,CPLEX_CONIC-method}
 \alias{accepts,CPLEX_CONIC,Problem-method}
@@ -13,6 +14,8 @@
 \alias{solve_via_data,CPLEX_CONIC-method}
 \title{An interface for the CPLEX solver}
 \usage{
+\S4method{mip_capable}{CPLEX_CONIC}(solver)
+
 \S4method{name}{CPLEX_CONIC}(x)
 
 \S4method{import_solver}{CPLEX_CONIC}(solver)
@@ -35,7 +38,15 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{CPLEX_CONIC} object.}
+
 \item{problem}{A \linkS4class{Problem} object.}
+
+\item{status}{A status code returned by the solver.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
 
 \item{data}{Data generated via an apply call.}
 
@@ -52,6 +63,8 @@ An interface for the CPLEX solver
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{name}: Returns the name of the solver.
 
 \item \code{import_solver}: Imports the solver.

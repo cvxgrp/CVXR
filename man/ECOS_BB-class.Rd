@@ -4,11 +4,14 @@
 \name{ECOS_BB-class}
 \alias{ECOS_BB-class}
 \alias{ECOS_BB}
+\alias{mip_capable,ECOS_BB-method}
 \alias{name,ECOS_BB-method}
 \alias{perform,ECOS_BB,Problem-method}
 \alias{solve_via_data,ECOS_BB-method}
 \title{An interface for the ECOS BB solver.}
 \usage{
+\S4method{mip_capable}{ECOS_BB}(solver)
+
 \S4method{name}{ECOS_BB}(x)
 
 \S4method{perform}{ECOS_BB,Problem}(object, problem)
@@ -23,6 +26,8 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{ECOS_BB} object.}
+
 \item{problem}{A \linkS4class{Problem} object.}
 
 \item{data}{Data generated via an apply call.}
@@ -40,6 +45,8 @@ An interface for the ECOS BB solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{name}: Returns the name of the solver.
 
 \item \code{perform}: Returns a new problem and data for inverting the new solution.

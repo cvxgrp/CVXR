@@ -2,16 +2,18 @@
 % Please edit documentation in R/complex2real.R
 \name{Complex2Real.canonicalize_expr}
 \alias{Complex2Real.canonicalize_expr}
-\title{Canonicalizes a complex Expression}
+\title{Canonicalizes a Complex Expression}
 \usage{
 Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
 }
 \arguments{
-\item{expr}{An \linkS4class{Expression} object}
+\item{expr}{An \linkS4class{Expression} object.}
 
-\item{real_args}{A list of \linkS4class{Constraint} objects for the real part of the expression}
+\item{real_args}{A list of \linkS4class{Constraint} objects for the real part of the expression.}
 
-\item{imag_args}{A list of \linkS4class{Constraint} objects for the imaginary part of the expression}
+\item{imag_args}{A list of \linkS4class{Constraint} objects for the imaginary part of the expression.}
+
+\item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
 
 \item{leaf_map}{A map that consists of a tree representation of the overall expression}
 }
@@ -19,5 +21,5 @@ Complex2Real.canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
 A list of the parsed out real and imaginary components of the expression at hand.
 }
 \description{
-Canonicalizes a complex Expression
+Canonicalizes a Complex Expression
 }

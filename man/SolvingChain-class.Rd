@@ -23,6 +23,10 @@
 )
 }
 \arguments{
+\item{object}{A \linkS4class{SolvingChain} object.}
+
+\item{chain}{A \linkS4class{Chain} to prepend.}
+
 \item{problem}{The problem to solve.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}

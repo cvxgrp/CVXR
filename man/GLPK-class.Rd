@@ -4,6 +4,7 @@
 \name{GLPK-class}
 \alias{GLPK-class}
 \alias{GLPK}
+\alias{mip_capable,GLPK-method}
 \alias{status_map,GLPK-method}
 \alias{name,GLPK-method}
 \alias{import_solver,GLPK-method}
@@ -11,6 +12,8 @@
 \alias{solve_via_data,GLPK-method}
 \title{An interface for the GLPK solver.}
 \usage{
+\S4method{mip_capable}{GLPK}(solver)
+
 \S4method{status_map}{GLPK}(solver, status)
 
 \S4method{name}{GLPK}(x)
@@ -29,6 +32,14 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{GLPK} object.}
+
+\item{status}{A status code returned by the solver.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
@@ -38,14 +49,14 @@
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
-
-\item{problem}{A \linkS4class{Problem} object.}
 }
 \description{
 An interface for the GLPK solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{status_map}: Converts status returned by the GLPK solver to its respective CVXPY status.
 
 \item \code{name}: Returns the name of the solver.

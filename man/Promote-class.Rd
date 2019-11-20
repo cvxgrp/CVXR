@@ -35,6 +35,10 @@ Promote(expr, promoted_dim)
 
 \item{promoted_dim}{The desired dimensions.}
 
+\item{object}{A \linkS4class{Promote} object.}
+
+\item{values}{A list containing the value to promote.}
+
 \item{arg_objs}{A list of linear expressions for each argument.}
 
 \item{dim}{A vector representing the dimensions of the resulting expression.}

@@ -17,11 +17,9 @@ CallbackParam(callback, dim = NULL, ...)
 
 \item{dim}{The dimensions of the parameter.}
 
+\item{...}{Additional attribute arguments. See \linkS4class{Leaf} for details.}
+
 \item{object}{A \linkS4class{CallbackParam} object.}
-
-\item{name}{(Optional) A character string representing the name of the parameter.}
-
-\item{sign}{A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".}
 }
 \description{
 This class represents a parameter whose value is obtained by evaluating a function.
@@ -30,10 +28,12 @@ This class represents a parameter whose value is obtained by evaluating a functi
 
 \describe{
 \item{\code{callback}}{A numeric element, vector, matrix, or data.frame.}
+
+\item{\code{dim}}{The dimensions of the parameter.}
 }}
 
 \examples{
 x <- Variable(2)
-y <- CallbackParam(value(x), dim(x), sign = "NONNEGATIVE")
+y <- CallbackParam(value(x), dim(x), nonneg = TRUE)
 get_data(y)
 }

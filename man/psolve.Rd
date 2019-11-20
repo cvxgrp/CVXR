@@ -45,6 +45,8 @@ psolve(
 
 \item{parallel}{(Optional) A logical value indicating whether to solve in parallel if the problem is separable.}
 
+\item{gp}{(Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.}
+
 \item{...}{Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.}
 }
 \value{

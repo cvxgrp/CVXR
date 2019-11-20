@@ -40,9 +40,13 @@ ProdEntries(..., axis = NA_real_, keepdims = FALSE)
 \S4method{.grad}{ProdEntries}(object, values)
 }
 \arguments{
-\item{...}{\linkS4class{Expression} objects or matrices.}
+\item{...}{\linkS4class{Expression} objects, vectors, or matrices.}
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
+
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
+\item{object}{A \linkS4class{ProdEntries} object.}
 
 \item{values}{A list of numeric values for the arguments}
 

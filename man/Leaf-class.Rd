@@ -91,7 +91,9 @@
 \S4method{is_pwl}{Leaf}(object)
 }
 \arguments{
-\item{object}{A \linkS4class{Leaf} object.}
+\item{object, x}{A \linkS4class{Leaf} object.}
+
+\item{value}{A numeric scalar, vector, or matrix.}
 
 \item{val}{The assigned value.}
 }
@@ -162,6 +164,37 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 \describe{
 \item{\code{id}}{(Internal) A unique integer identification number used internally.}
 
-\item{\code{args}}{A list containing the arguments.}
+\item{\code{dim}}{The dimensions of the leaf.}
+
+\item{\code{value}}{The numeric value of the leaf.}
+
+\item{\code{nonneg}}{Is the leaf nonnegative?}
+
+\item{\code{nonpos}}{Is the leaf nonpositive?}
+
+\item{\code{complex}}{Is the leaf a complex number?}
+
+\item{\code{imag}}{Is the leaf imaginary?}
+
+\item{\code{symmetric}}{Is the leaf a symmetric matrix?}
+
+\item{\code{diag}}{Is the leaf a diagonal matrix?}
+
+\item{\code{PSD}}{Is the leaf positive semidefinite?}
+
+\item{\code{NSD}}{Is the leaf negative semidefinite?}
+
+\item{\code{hermitian}}{Is the leaf hermitian?}
+
+\item{\code{boolean}}{Is the leaf boolean? Is the variable boolean? May be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
+indices which should be constrained as boolean, where each index is a vector of length exactly equal to the length of \code{dim}.}
+
+\item{\code{integer}}{Is the leaf integer? The semantics are the same as the \code{boolean} argument.}
+
+\item{\code{sparsity}}{A matrix representing the fixed sparsity pattern of the leaf.}
+
+\item{\code{pos}}{Is the leaf strictly positive?}
+
+\item{\code{neg}}{Is the leaf strictly negative?}
 }}
 

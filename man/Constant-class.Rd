@@ -9,6 +9,7 @@
 \alias{name,Constant-method}
 \alias{constants,Constant-method}
 \alias{value,Constant-method}
+\alias{is_pos,Constant-method}
 \alias{grad,Constant-method}
 \alias{dim,Constant-method}
 \alias{canonicalize,Constant-method}
@@ -32,6 +33,8 @@ Constant(value)
 \S4method{constants}{Constant}(object)
 
 \S4method{value}{Constant}(object)
+
+\S4method{is_pos}{Constant}(object)
 
 \S4method{grad}{Constant}(object)
 
@@ -79,6 +82,8 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 \item \code{constants}: Returns itself as a constant.
 
 \item \code{value}: The value of the constant.
+
+\item \code{is_pos}: A logical value indicating whether all elements of the constant are positive.
 
 \item \code{grad}: An empty list since the gradient of a constant is zero.
 

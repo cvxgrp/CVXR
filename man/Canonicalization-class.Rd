@@ -25,7 +25,7 @@
 
 \item{solution}{A \linkS4class{Solution} to a problem that generated the inverse data.}
 
-\item{inverse_data}{The data encoding the original problem.}
+\item{inverse_data}{An \linkS4class{InverseData} object that contains the data encoding the original problem.}
 
 \item{expr}{An \linkS4class{Expression} object.}
 

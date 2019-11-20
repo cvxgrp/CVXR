@@ -64,9 +64,9 @@ GeoMean(x, p = NA_real_, max_denom = 1024)
 
 \item{idx}{An index into the atom.}
 
-\item{args}{An optional list that contains the arguments to reconstruct the atom. Default is to use current arguments of the aotm}
+\item{args}{An optional list that contains the arguments to reconstruct the atom. Default is to use current arguments of the atom.}
 
-\item{x, object}{A \linkS4class{GeoMean} object.}
+\item{id_objects}{Currently unused.}
 }
 \description{
 This class represents the (weighted) geometric mean of vector \eqn{x} with optional powers given by \eqn{p}.

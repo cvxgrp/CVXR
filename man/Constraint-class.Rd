@@ -4,7 +4,91 @@
 \name{Constraint-class}
 \alias{Constraint-class}
 \alias{Constraint}
+\alias{as.character,Constraint-method}
+\alias{dim,Constraint-method}
+\alias{size,Constraint-method}
+\alias{is_real,Constraint-method}
+\alias{is_imag,Constraint-method}
+\alias{is_complex,Constraint-method}
+\alias{is_dcp,Constraint-method}
+\alias{is_dgp,Constraint-method}
+\alias{residual,Constraint-method}
+\alias{violation,Constraint-method}
+\alias{constr_value,Constraint-method}
+\alias{get_data,Constraint-method}
+\alias{dual_value,Constraint-method}
+\alias{dual_value<-,Constraint-method}
+\alias{size,ZeroConstraint-method}
 \title{The Constraint class.}
+\usage{
+\S4method{as.character}{Constraint}(x)
+
+\S4method{dim}{Constraint}(x)
+
+\S4method{size}{Constraint}(object)
+
+\S4method{is_real}{Constraint}(object)
+
+\S4method{is_imag}{Constraint}(object)
+
+\S4method{is_complex}{Constraint}(object)
+
+\S4method{is_dcp}{Constraint}(object)
+
+\S4method{is_dgp}{Constraint}(object)
+
+\S4method{residual}{Constraint}(object)
+
+\S4method{violation}{Constraint}(object)
+
+\S4method{constr_value}{Constraint}(object, tolerance = 1e-08)
+
+\S4method{get_data}{Constraint}(object)
+
+\S4method{dual_value}{Constraint}(object)
+
+\S4method{dual_value}{Constraint}(object) <- value
+
+\S4method{size}{ZeroConstraint}(object)
+}
+\arguments{
+\item{x, object}{A \linkS4class{Constraint} object.}
+
+\item{tolerance}{The tolerance for checking if the constraint is violated.}
+
+\item{value}{A numeric scalar, vector, or matrix.}
+}
 \description{
 This virtual class represents a mathematical constraint.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{dim}: The dimensions of the constrained expression.
+
+\item \code{size}: The size of the constrained expression.
+
+\item \code{is_real}: Is the constraint real?
+
+\item \code{is_imag}: Is the constraint imaginary?
+
+\item \code{is_complex}: Is the constraint complex?
+
+\item \code{is_dcp}: Is the constraint DCP?
+
+\item \code{is_dgp}: Is the constraint DGP?
+
+\item \code{residual}: The residual of a constraint
+
+\item \code{violation}: The violation of a constraint.
+
+\item \code{constr_value}: The value of a constraint.
+
+\item \code{get_data}: Information needed to reconstruct the object aside from the args.
+
+\item \code{dual_value}: The dual values of a constraint.
+
+\item \code{dual_value<-}: Replaces the dual values of a constraint..
+
+\item \code{size}: The size of the constrained expression.
+}}
+

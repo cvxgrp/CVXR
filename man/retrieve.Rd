@@ -9,6 +9,8 @@ retrieve(object, solution)
 }
 \arguments{
 \item{object}{A \linkS4class{Reduction} object.}
+
+\item{solution}{A \linkS4class{Solution} object.}
 }
 \value{
 A \linkS4class{Solution} to the problem emitted by \code{\link{reduce}}.

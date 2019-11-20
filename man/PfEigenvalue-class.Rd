@@ -43,13 +43,13 @@ PfEigenvalue(X)
 \S4method{.grad}{PfEigenvalue}(object, values)
 }
 \arguments{
-\item{x}{An \linkS4class{Expression} or numeric matrix.}
+\item{X}{An \linkS4class{Expression} or numeric matrix.}
+
+\item{x, object}{A \linkS4class{PfEigenvalue} object.}
 
 \item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{x, object}{A \linkS4class{PfEigenvalue} object.}
 }
 \description{
 This class represents the Perron-Frobenius eigenvalue of a positive matrix.
@@ -82,6 +82,6 @@ This class represents the Perron-Frobenius eigenvalue of a positive matrix.
 \section{Slots}{
 
 \describe{
-\item{\code{x}}{An \linkS4class{Expression} or numeric matrix.}
+\item{\code{X}}{An \linkS4class{Expression} or numeric matrix.}
 }}
 

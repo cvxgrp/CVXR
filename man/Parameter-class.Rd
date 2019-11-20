@@ -45,7 +45,9 @@ Parameter(
 
 \item{value}{(Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.}
 
-\item{sign}{(Optional) A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN". Defaults to "UNKNOWN".}
+\item{...}{Additional attribute arguments. See \linkS4class{Leaf} for details.}
+
+\item{object, x}{A \linkS4class{Parameter} object.}
 }
 \description{
 This class represents a parameter, either scalar or a matrix.
@@ -75,8 +77,6 @@ This class represents a parameter, either scalar or a matrix.
 \item{\code{cols}}{The number of columns in the parameter.}
 
 \item{\code{name}}{(Optional) A character string representing the name of the parameter.}
-
-\item{\code{sign_str}}{A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".}
 
 \item{\code{value}}{(Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.}
 }}

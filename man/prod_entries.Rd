@@ -14,13 +14,13 @@ prod_entries(..., axis = NA_real_, keepdims = FALSE)
 prod_entries(..., axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
-\item{...}{Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.}
+\item{...}{\linkS4class{Expression} objects, vectors, or matrices.}
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
-\item{na.rm}{(Unimplemented) A logical value indicating whether missing values should be removed.}
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
 
-\item{expr}{An \linkS4class{Expression}, vector, or matrix.}
+\item{na.rm}{(Unimplemented) A logical value indicating whether missing values should be removed.}
 }
 \value{
 An \linkS4class{Expression} representing the product of the entries of the input.

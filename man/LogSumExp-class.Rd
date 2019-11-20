@@ -38,9 +38,13 @@ LogSumExp(x, axis = NA_real_, keepdims = FALSE)
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
 \item{object}{A \linkS4class{LogSumExp} object.}
 
-\item{values}{A list of numeric values for the arguments}
+\item{values}{A list of numeric values.}
+
+\item{value}{A numeric value.}
 
 \item{idx}{An index into the atom.}
 }
@@ -53,7 +57,7 @@ The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{
 
 \item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable.
 
 \item \code{sign_from_args}: Returns sign (is positive, is negative) of the atom.
 
@@ -72,5 +76,7 @@ The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{
 \item{\code{x}}{An \linkS4class{Expression} representing a vector or matrix.}
 
 \item{\code{axis}}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
+
+\item{\code{keepdims}}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
 }}
 

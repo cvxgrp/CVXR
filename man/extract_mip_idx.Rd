@@ -6,6 +6,9 @@
 \usage{
 extract_mip_idx(variables)
 }
+\arguments{
+\item{variables}{A list of \linkS4class{Variable} objects.}
+}
 \value{
 Coalesces bool, int indices for variables. The indexing scheme assumes that the variables will be coalesced into
 a single one-dimensional variable, with each variable being reshaped in Fortran order.

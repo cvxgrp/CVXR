@@ -14,7 +14,9 @@ p_norm(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
-\item{max_denom}{The maximum denominator considered in forming a rational approximation for \eqn{p}.}
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
+\item{max_denom}{(Optional) The maximum denominator considered in forming a rational approximation for \eqn{p}. The default is 1024.}
 }
 \value{
 An \linkS4class{Expression} representing the p-norm of the input.

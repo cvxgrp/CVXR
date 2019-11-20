@@ -28,11 +28,15 @@ Variable(rows = NULL, cols = NULL, name = NA_character_, ...)
 \S4method{canonicalize}{Variable}(object)
 }
 \arguments{
+\item{rows}{The number of rows in the variable.}
+
+\item{cols}{The number of columns in the variable.}
+
 \item{name}{(Optional) A character string representing the name of the variable.}
 
-\item{x, object}{A \linkS4class{Variable} object.}
+\item{...}{(Optional) Additional attribute arguments. See \linkS4class{Leaf} for details.}
 
-\item{dim}{The dimensions of the variable.}
+\item{x, object}{A \linkS4class{Variable} object.}
 }
 \description{
 This class represents an optimization variable.

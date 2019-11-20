@@ -64,7 +64,9 @@ Pnorm(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
-\item{max_denom}{The maximum denominator considered in forming a rational approximation for \eqn{p}.}
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
+\item{max_denom}{(Optional) The maximum denominator considered in forming a rational approximation for \eqn{p}. The default is 1024.}
 
 \item{object}{A \linkS4class{Pnorm} object.}
 
@@ -72,7 +74,7 @@ Pnorm(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024)
 
 \item{idx}{An index into the atom.}
 
-\item{x, object}{A \linkS4class{Pnorm} object.}
+\item{value}{A numeric value}
 }
 \description{
 This class represents the vector p-norm.
@@ -135,6 +137,10 @@ For \eqn{p < 1, p\neq 0}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1
 
 \item{\code{axis}}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
+\item{\code{keepdims}}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
 \item{\code{.approx_error}}{(Internal) The absolute difference between \eqn{p} and its rational approximation.}
+
+\item{\code{.original_p}}{(Internal) The original input \eqn{p}.}
 }}
 

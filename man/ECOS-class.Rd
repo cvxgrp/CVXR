@@ -4,6 +4,7 @@
 \name{ECOS-class}
 \alias{ECOS-class}
 \alias{ECOS}
+\alias{mip_capable,ECOS-method}
 \alias{status_map,ECOS-method}
 \alias{import_solver,ECOS-method}
 \alias{name,ECOS-method}
@@ -11,6 +12,8 @@
 \alias{invert,ECOS,list,list-method}
 \title{An interface for the ECOS solver}
 \usage{
+\S4method{mip_capable}{ECOS}(solver)
+
 \S4method{status_map}{ECOS}(solver, status)
 
 \S4method{import_solver}{ECOS}(solver)
@@ -21,11 +24,24 @@
 
 \S4method{invert}{ECOS,list,list}(object, solution, inverse_data)
 }
+\arguments{
+\item{solver, object, x}{A \linkS4class{ECOS} object.}
+
+\item{status}{A status code returned by the solver.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
+}
 \description{
 An interface for the ECOS solver
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{status_map}: Converts status returned by the ECOS solver to its respective CVXPY status.
 
 \item \code{import_solver}: Imports the solver

@@ -9,10 +9,10 @@ construct_solving_chain(problem, candidates)
 \arguments{
 \item{problem}{The problem for which to build a chain.}
 
-\item{dict}{A list of candidate solvers divided in qp_solvers.}
+\item{candidates}{A list of candidate solvers.}
 }
 \value{
-A SolvingChain that can be used to solve the problem.
+A \linkS4class{SolvingChain} that can be used to solve the problem.
 }
 \description{
 Build a reduction chain from a problem to an installed solver.

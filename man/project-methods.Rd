@@ -13,7 +13,7 @@ project_and_assign(object, value)
 \arguments{
 \item{object}{A \linkS4class{Leaf} object.}
 
-\item{val}{The assigned value.}
+\item{value}{The assigned value.}
 }
 \value{
 The value rounded to the attribute type.

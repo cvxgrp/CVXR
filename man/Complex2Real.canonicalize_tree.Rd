@@ -2,14 +2,16 @@
 % Please edit documentation in R/complex2real.R
 \name{Complex2Real.canonicalize_tree}
 \alias{Complex2Real.canonicalize_tree}
-\title{Recursively canonicalizes a complex Expression.}
+\title{Recursively Canonicalizes a Complex Expression.}
 \usage{
 Complex2Real.canonicalize_tree(expr, real2imag, leaf_map)
 }
 \arguments{
-\item{expr}{An \linkS4class{Expression} object}
+\item{expr}{An \linkS4class{Expression} object.}
 
-\item{leaf_map}{A map that consists of a tree representation of the expression}
+\item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
+
+\item{leaf_map}{A map that consists of a tree representation of the expression.}
 }
 \value{
 A list of the parsed out real and imaginary components of the
@@ -17,5 +19,5 @@ expression that was constructed by performing the canonicalization of each leaf
 in the tree.
 }
 \description{
-Recursively canonicalizes a complex Expression.
+Recursively Canonicalizes a Complex Expression.
 }

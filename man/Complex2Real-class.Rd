@@ -15,6 +15,15 @@
 
 \S4method{invert}{Complex2Real,Solution,InverseData}(object, solution, inverse_data)
 }
+\arguments{
+\item{object}{A \linkS4class{Complex2Real} object.}
+
+\item{problem}{A \linkS4class{Problem} object.}
+
+\item{solution}{A \linkS4class{Solution} object to invert.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
+}
 \description{
 This reduction takes in a complex problem and returns
 an equivalent real problem.

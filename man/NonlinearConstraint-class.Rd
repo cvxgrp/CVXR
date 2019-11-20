@@ -13,6 +13,8 @@ NonlinearConstraint(f, vars_, id = NA_integer_)
 \item{f}{A nonlinear function.}
 
 \item{vars_}{A list of variables involved in the function.}
+
+\item{id}{(Optional) An integer representing the unique ID of the contraint.}
 }
 \description{
 This class represents a nonlinear inequality constraint, \eqn{f(x) \leq 0} where \eqn{f} is twice-differentiable.

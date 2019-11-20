@@ -12,6 +12,11 @@
 
 \S4method{$}{DgpCanonMethods}(x, name)
 }
+\arguments{
+\item{x}{A \linkS4class{DgpCanonMethods} object.}
+
+\item{name}{The name of the atom or expression to canonicalize.}
+}
 \description{
 Canonicalization of DGPs is a stateful procedure, hence the need for a class.
 }

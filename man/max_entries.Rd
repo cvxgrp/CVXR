@@ -16,6 +16,8 @@ max_entries(x, axis = NA_real_, keepdims = FALSE)
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
+\item{keepdims}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
+
 \item{...}{Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.}
 
 \item{na.rm}{(Unimplemented) A logical value indicating whether missing values should be removed.}

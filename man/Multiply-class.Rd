@@ -35,6 +35,10 @@ Multiply(lh_exp, rh_exp)
 
 \item{rh_exp}{An \linkS4class{Expression} or R numeric data.}
 
+\item{object}{A \linkS4class{Multiply} object.}
+
+\item{values}{A list of arguments to the atom.}
+
 \item{arg_objs}{A list of linear expressions for each argument.}
 
 \item{dim}{A vector representing the dimensions of the resulting expression.}

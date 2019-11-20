@@ -29,6 +29,14 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{OSQP} object.}
+
+\item{status}{A status code returned by the solver.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}

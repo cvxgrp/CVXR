@@ -19,11 +19,19 @@
 \S4method{invert}{ConicSolver,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
-\item{problem}{A \linkS4class{Problem} object}
+\item{object}{A \linkS4class{ConicSolver} object.}
 
-\item{constr}{A \linkS4class{Constraint} object}
+\item{problem}{A \linkS4class{Problem} object.}
+
+\item{constr}{A \linkS4class{Constraint} to format.}
 
 \item{exp_cone_order}{A list indicating how the exponential cone arguments are ordered.}
+
+\item{constraints}{A list of \linkS4class{Constraint} objects.}
+
+\item{solution}{A \linkS4class{Solution} object to invert.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
 }
 \description{
 Conic solver class with reduction semantics.

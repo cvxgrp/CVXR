@@ -4,6 +4,7 @@
 \name{MOSEK-class}
 \alias{MOSEK-class}
 \alias{MOSEK}
+\alias{mip_capable,MOSEK-method}
 \alias{import_solver,MOSEK-method}
 \alias{name,MOSEK-method}
 \alias{accepts,MOSEK,Problem-method}
@@ -13,6 +14,8 @@
 \alias{invert,MOSEK,ANY,ANY-method}
 \title{An interface for the MOSEK solver.}
 \usage{
+\S4method{mip_capable}{MOSEK}(solver)
+
 \S4method{import_solver}{MOSEK}(solver)
 
 \S4method{name}{MOSEK}(x)
@@ -35,6 +38,8 @@
 \S4method{invert}{MOSEK,ANY,ANY}(object, solution, inverse_data)
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{MOSEK} object.}
+
 \item{problem}{A \linkS4class{Problem} object.}
 
 \item{constraints}{A list of \linkS4class{Constraint} objects for which coefficient
@@ -52,12 +57,18 @@ describes membership in the exponential cone.}
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
 }
 \description{
 An interface for the MOSEK solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{import_solver}: Imports the solver.
 
 \item \code{name}: Returns the name of the solver.

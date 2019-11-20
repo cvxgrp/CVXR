@@ -10,6 +10,8 @@ get_problem_data(object, solver, gp)
 \item{object}{A \linkS4class{Problem} object.}
 
 \item{solver}{A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.}
+
+\item{gp}{A logical value indicating whether the problem is a geometric program.}
 }
 \value{
 A list of arguments for the solver.

@@ -7,6 +7,13 @@
 \alias{==,ConstVal,Expression-method}
 \alias{EqConstraint-class}
 \alias{.EqConstraint}
+\alias{name,EqConstraint-method}
+\alias{dim,EqConstraint-method}
+\alias{size,EqConstraint-method}
+\alias{expr,EqConstraint-method}
+\alias{is_dcp,EqConstraint-method}
+\alias{is_dgp,EqConstraint-method}
+\alias{residual,EqConstraint-method}
 \title{The EqConstraint class}
 \usage{
 \S4method{==}{Expression,Expression}(e1, e2)
@@ -14,6 +21,20 @@
 \S4method{==}{Expression,ConstVal}(e1, e2)
 
 \S4method{==}{ConstVal,Expression}(e1, e2)
+
+\S4method{name}{EqConstraint}(x)
+
+\S4method{dim}{EqConstraint}(x)
+
+\S4method{size}{EqConstraint}(object)
+
+\S4method{expr}{EqConstraint}(object)
+
+\S4method{is_dcp}{EqConstraint}(object)
+
+\S4method{is_dgp}{EqConstraint}(object)
+
+\S4method{residual}{EqConstraint}(object)
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to compare.}
@@ -21,3 +42,20 @@
 \description{
 The EqConstraint class
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{name}: The string representation of the constraint.
+
+\item \code{dim}: The dimensions of the constrained expression.
+
+\item \code{size}: The size of the constrained expression.
+
+\item \code{expr}: The expression to constrain.
+
+\item \code{is_dcp}: Is the constraint DCP?
+
+\item \code{is_dgp}: Is the constraint DGP?
+
+\item \code{residual}: The residual of the constraint..
+}}
+

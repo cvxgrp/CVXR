@@ -58,6 +58,8 @@
 \item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
+
+\item{value}{A numeric value}
 }
 \description{
 This class represents the infinity-norm.

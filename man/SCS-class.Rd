@@ -4,6 +4,7 @@
 \name{SCS-class}
 \alias{SCS-class}
 \alias{SCS}
+\alias{mip_capable,SCS-method}
 \alias{status_map,SCS-method}
 \alias{name,SCS-method}
 \alias{import_solver,SCS-method}
@@ -13,6 +14,8 @@
 \alias{solve_via_data,SCS-method}
 \title{An interface for the SCS solver}
 \usage{
+\S4method{mip_capable}{SCS}(solver)
+
 \S4method{status_map}{SCS}(solver, status)
 
 \S4method{name}{SCS}(x)
@@ -35,7 +38,19 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{SCS} object.}
+
+\item{status}{A status code returned by the solver.}
+
 \item{problem}{A \linkS4class{Problem} object.}
+
+\item{constr}{A \linkS4class{Constraint} to format.}
+
+\item{exp_cone_order}{A list indicating how the exponential cone arguments are ordered.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
 
 \item{data}{Data generated via an apply call.}
 
@@ -52,6 +67,8 @@ An interface for the SCS solver
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{status_map}: Converts status returned by SCS solver to its respective CVXPY status.
 
 \item \code{name}: Returns the name of the solver

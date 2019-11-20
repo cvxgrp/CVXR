@@ -4,6 +4,7 @@
 \name{GUROBI_QP-class}
 \alias{GUROBI_QP-class}
 \alias{GUROBI_QP}
+\alias{mip_capable,GUROBI_QP-method}
 \alias{status_map,GUROBI_QP-method}
 \alias{name,GUROBI_QP-method}
 \alias{import_solver,GUROBI_QP-method}
@@ -11,6 +12,8 @@
 \alias{invert,GUROBI_QP,list,InverseData-method}
 \title{An interface for the GUROBI_QP solver.}
 \usage{
+\S4method{mip_capable}{GUROBI_QP}(solver)
+
 \S4method{status_map}{GUROBI_QP}(solver, status)
 
 \S4method{name}{GUROBI_QP}(x)
@@ -29,6 +32,10 @@
 \S4method{invert}{GUROBI_QP,list,InverseData}(object, solution, inverse_data)
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{GUROBI_QP} object.}
+
+\item{status}{A status code returned by the solver.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
@@ -38,12 +45,18 @@
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
 }
 \description{
 An interface for the GUROBI_QP solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{status_map}: Converts status returned by the GUROBI solver to its respective CVXPY status.
 
 \item \code{name}: Returns the name of the solver.

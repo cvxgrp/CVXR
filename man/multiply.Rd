@@ -9,9 +9,9 @@
 multiply(lh_exp, rh_exp)
 }
 \arguments{
-\item{rh_exp}{An \linkS4class{Expression}, vector, or matrix representing the right-hand value.}
+\item{lh_exp}{An \linkS4class{Expression}, vector, or matrix representing the left-hand value.}
 
-\item{lh_const}{A constant \linkS4class{Expression}, vector, or matrix representing the left-hand value.}
+\item{rh_exp}{An \linkS4class{Expression}, vector, or matrix representing the right-hand value.}
 }
 \value{
 An \linkS4class{Expression} representing the elementwise product of the inputs.

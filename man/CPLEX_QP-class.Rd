@@ -4,6 +4,7 @@
 \name{CPLEX_QP-class}
 \alias{CPLEX_QP-class}
 \alias{CPLEX_QP}
+\alias{mip_capable,CPLEX_QP-method}
 \alias{status_map,CPLEX_QP-method}
 \alias{name,CPLEX_QP-method}
 \alias{import_solver,CPLEX_QP-method}
@@ -11,6 +12,8 @@
 \alias{solve_via_data,CPLEX_QP-method}
 \title{An interface for the CPLEX solver.}
 \usage{
+\S4method{mip_capable}{CPLEX_QP}(solver)
+
 \S4method{status_map}{CPLEX_QP}(solver, status)
 
 \S4method{name}{CPLEX_QP}(x)
@@ -29,6 +32,14 @@
 )
 }
 \arguments{
+\item{status}{A status code returned by the solver.}
+
+\item{x, object, solver}{A \linkS4class{CPLEX_QP} object.}
+
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
@@ -44,6 +55,8 @@ An interface for the CPLEX solver.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{status_map}: Converts status returned by the CPLEX solver to its respective CVXPY status.
 
 \item \code{name}: Returns the name of the solver.

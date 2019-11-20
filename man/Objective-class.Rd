@@ -20,6 +20,8 @@ Objective(expr)
 }
 \arguments{
 \item{expr}{A scalar \linkS4class{Expression} to optimize.}
+
+\item{object}{An \linkS4class{Objective} object.}
 }
 \description{
 This class represents an optimization objective.

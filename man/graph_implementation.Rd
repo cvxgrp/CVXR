@@ -12,9 +12,9 @@ graph_implementation(object, arg_objs, dim, data)
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 
-\item{data}{A list of additional data required by the atom.}
+\item{dim}{A vector representing the dimensions of the resulting expression.}
 
-\item{size}{A vector with two elements representing the size of the resulting expression.}
+\item{data}{A list of additional data required by the atom.}
 }
 \value{
 A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.

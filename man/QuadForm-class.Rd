@@ -59,11 +59,11 @@ QuadForm(x, P)
 
 \item{P}{An \linkS4class{Expression}, numeric matrix, or vector.}
 
+\item{object}{A \linkS4class{QuadForm} object.}
+
 \item{values}{A list of numeric values for the arguments}
 
 \item{idx}{An index into the atom.}
-
-\item{x, object}{A \linkS4class{QuadForm} object.}
 }
 \description{
 This class represents the quadratic form \eqn{x^T P x}

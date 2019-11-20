@@ -4,11 +4,14 @@
 \name{Chain-class}
 \alias{Chain-class}
 \alias{.Chain}
+\alias{as.character,Chain-method}
 \alias{accepts,Chain,Problem-method}
 \alias{perform,Chain,Problem-method}
 \alias{invert,Chain,SolutionORList,list-method}
 \title{The Chain class.}
 \usage{
+\S4method{as.character}{Chain}(x)
+
 \S4method{accepts}{Chain,Problem}(object, problem)
 
 \S4method{perform}{Chain,Problem}(object, problem)
@@ -16,13 +19,13 @@
 \S4method{invert}{Chain,SolutionORList,list}(object, solution, inverse_data)
 }
 \arguments{
-\item{object}{A \linkS4class{Chain} object.}
+\item{x, object}{A \linkS4class{Chain} object.}
 
 \item{problem}{A \linkS4class{Problem} object to check.}
 
-\item{solution}{A \linkS4class{SolutionORList} to a problem that generated the inverse data.}
+\item{solution}{A \linkS4class{Solution} or list.}
 
-\item{inverse_data}{The data encoding the original problem.}
+\item{inverse_data}{A list that contains the data encoding the original problem.}
 }
 \description{
 This class represents a reduction that replaces symbolic parameters with

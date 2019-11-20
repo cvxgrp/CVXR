@@ -4,7 +4,14 @@
 \name{Solution-class}
 \alias{Solution-class}
 \alias{.Solution}
+\alias{as.character,Solution-method}
 \title{The Solution class.}
+\usage{
+\S4method{as.character}{Solution}(x)
+}
+\arguments{
+\item{x}{A \linkS4class{Solution} object.}
+}
 \description{
 This class represents a solution to an optimization problem.
 }

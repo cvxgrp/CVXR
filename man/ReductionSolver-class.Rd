@@ -3,6 +3,7 @@
 \docType{class}
 \name{ReductionSolver-class}
 \alias{ReductionSolver-class}
+\alias{mip_capable,ReductionSolver-method}
 \alias{name,ReductionSolver-method}
 \alias{import_solver,ReductionSolver-method}
 \alias{is_installed,ReductionSolver-method}
@@ -11,6 +12,8 @@
 \alias{solve_via_data,ECOS-method}
 \title{The ReductionSolver class.}
 \usage{
+\S4method{mip_capable}{ReductionSolver}(solver)
+
 \S4method{name}{ReductionSolver}(x)
 
 \S4method{import_solver}{ReductionSolver}(solver)
@@ -38,6 +41,8 @@
 )
 }
 \arguments{
+\item{solver, object, x}{A \linkS4class{ReductionSolver} object.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
@@ -55,6 +60,8 @@ The ReductionSolver class.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+
 \item \code{name}: Returns the name of the solver
 
 \item \code{import_solver}: Imports the solver

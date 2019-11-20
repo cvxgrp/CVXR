@@ -40,7 +40,9 @@ ExpCone(x, y, z, id = NA_integer_)
 
 \item{z}{The variable \eqn{z} in the exponential cone.}
 
-\item{x, object}{A \linkS4class{ExpCone} object.}
+\item{id}{(Optional) A numeric value representing the constraint ID.}
+
+\item{object}{A \linkS4class{ExpCone} object.}
 }
 \description{
 This class represents a reformulated exponential cone constraint operating elementwise on \eqn{a, b, c}.

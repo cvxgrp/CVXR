@@ -320,7 +320,7 @@ setMethod("show", "Solution", function(object) {
 # TODO: Get rid of this and just skip calling copy on Solution objects.
 setMethod("copy", "Solution", function(object, args = NULL, id_objects = list()) { return(object) })
 
-#' @param x,object A \linkS4class{Solution} object.
+#' @param x A \linkS4class{Solution} object.
 #' @rdname Solution-class
 setMethod("as.character", "Solution", function(x) {
   paste("Solution(", x@status, ", (",

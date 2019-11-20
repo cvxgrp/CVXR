@@ -2408,7 +2408,9 @@ tri_to_full <- function(lower_tri, n) {
 }
 
 #'
-#' The SuperSCS class. Not Implemented
+#' The SuperSCS class.
+#' 
+#' Not Implemented.
 #' 
 #' @name SuperSCS-class
 #' @rdname SuperSCS-class
@@ -2417,16 +2419,15 @@ SuperSCS.default_settings <- function(object) {
   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
 }
 
+#' @param solver,object,x A \linkS4class{SuperSCS} object.
 #' @describeIn SuperSCS Returns the name of the SuperSCS solver
 setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
 
-#' 
 #' @describeIn SuperSCS imports the SuperSCS solver.
 setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })
 
-#' @param object A \linkS4class{SuperSCS} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start An option for warm start.
 #' @param verbose A boolean of whether to enable solver verbosity.

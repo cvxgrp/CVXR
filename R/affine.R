@@ -217,12 +217,12 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr) {
 setMethod("op_name", "UnaryOperator", function(object) { stop("Unimplemented") })
 setMethod("op_func", "UnaryOperator", function(object) { stop("Unimplemented") })
 
+#' @param x,object A \linkS4class{UnaryOperator} object.
 #' @describeIn UnaryOperator Returns the expression in string form.
 setMethod("name", "UnaryOperator", function(x) {
   paste(op_name(x), name(x@args[[1]]), sep = "")
 })
 
-#' @param object A \linkS4class{UnaryOperator} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn UnaryOperator Applies the unary operator to the value.
 setMethod("to_numeric", "UnaryOperator", function(object, values) {

@@ -2017,7 +2017,7 @@ setMethod(".grad", "QuadForm", function(object, values) {
 
 #' @param x An \linkS4class{Expression} or numeric vector.
 #' @param P An \linkS4class{Expression}, numeric matrix, or vector.
-#' @param original_expression The original \linkS4class{Expression}.
+#' @param expr The original \linkS4class{Expression}.
 #' @rdname SymbolicQuadForm-class
 SymbolicQuadForm <- function(x, P, expr) { .SymbolicQuadForm(x = x, P = P, original_expression = expr) }
 
@@ -2030,28 +2030,30 @@ setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, origina
   .Object
 })
 
-#' @describeIn  SymbolicQuadForm The dimensions of the atom.
+#' @param object A \linkS4class{SymbolicQuadForm} object.
+#' @describeIn SymbolicQuadForm The dimensions of the atom.
 setMethod("dim_from_args", "SymbolicQuadForm", function(object) { dim_from_args(object@original_expression) })
 
-#' @describeIn  SymbolicQuadForm The sign (is positive, is negative) of the atom.
+#' @describeIn SymbolicQuadForm The sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "SymbolicQuadForm", function(object) { sign_from_args(object@original_expression) })
 
-#' @describeIn  SymbolicQuadForm The original expression.
+#' @describeIn SymbolicQuadForm The original expression.
 setMethod("get_data", "SymbolicQuadForm", function(object) { list(object@original_expression) })
 
-#' @describeIn  SymbolicQuadForm Is the original expression convex?
+#' @describeIn SymbolicQuadForm Is the original expression convex?
 setMethod("is_atom_convex", "SymbolicQuadForm", function(object) { is_atom_convex(object@original_expression) })
 
-#' @describeIn  SymbolicQuadForm Is the original expression concave?
+#' @describeIn SymbolicQuadForm Is the original expression concave?
 setMethod("is_atom_concave", "SymbolicQuadForm", function(object) { is_atom_concave(object@original_expression) })
 
-#' @describeIn  SymbolicQuadForm Is the original expression weakly increasing in argument \code{idx}?
+#' @param idx An index into the atom.
+#' @describeIn SymbolicQuadForm Is the original expression weakly increasing in argument \code{idx}?
 setMethod("is_incr", "SymbolicQuadForm", function(object, idx) { is_incr(object@original_expression, idx) })
 
-#' @describeIn  SymbolicQuadForm Is the original expression weakly decreasing in argument \code{idx}?
+#' @describeIn SymbolicQuadForm Is the original expression weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "SymbolicQuadForm", function(object, idx) { is_decr(object@original_expression, idx) })
 
-#' @describeIn  SymbolicQuadForm The atom is quadratic.
+#' @describeIn SymbolicQuadForm The atom is quadratic.
 setMethod("is_quadratic", "SymbolicQuadForm", function(object) { TRUE })
 
 #' @param values A list of numeric values for the arguments

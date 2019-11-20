@@ -31,9 +31,9 @@ extract_dual_value <- function(result_vec, offset, constraint) {
 #' Gets the values of the dual variables.
 #' 
 #' @param result_vec A vector containing the dual variable values.
-#' @param offset An offset to get correct index of dual values.
-#' @param constraint A list of the constraints in the problem.
-#' @return A map of constrain id to dual variable value.
+#' @param parse_func Function handle for the parser.
+#' @param constraints A list of the constraints in the problem.
+#' @return A map of constraint ID to dual variable value.
 get_dual_values <- function(result_vec, parse_func, constraints) {
   dual_vars <- list()
   offset <- 0
@@ -153,7 +153,7 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
 #' 
 #' @param problem The problem for which to build a chain.
 #' @param candidates A list of candidate solvers.
-#' @return A SolvingChain that can be used to solve the problem.
+#' @return A \linkS4class{SolvingChain} that can be used to solve the problem.
 construct_solving_chain <- function(problem, candidates) {
   reductions <- list()
   if(length(parameters(problem)) > 0)
@@ -236,6 +236,8 @@ setMethod("initialize", "SolvingChain", function(.Object, ...) {
 })
 
 # Create and return a new SolvingChain by concatenating chain with this instance.
+#' @param object A \linkS4class{SolvingChain} object.
+#' @param chain A \linkS4class{Chain} to prepend.
 #' @describeIn SolvingChain Create and return a new SolvingChain by concatenating chain with this instance.
 setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), function(object, chain) {
   SolvingChain(reductions = c(chain@reductions, object@reductions))
@@ -256,11 +258,7 @@ setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Probl
   return(invert(object, solution, inverse_data))
 })
 
-#' @param problem The problem to solve.
 #' @param data Data for the solver.
-#' @param warm_start A boolean of whether to warm start the solver.
-#' @param verbose A boolean of whether to enable solver verbosity.
-#' @param solver_opts A list of Solver specific options
 #' @describeIn SolvingChain Solves the problem using the data output by the an apply invocation.
 setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
   return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))

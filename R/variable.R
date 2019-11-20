@@ -16,8 +16,10 @@
                                     return(TRUE)
                                   }, contains = "Leaf")
 
-#' @param dim The dimensions of the variable.
+#' @param rows The number of rows in the variable.
+#' @param cols The number of columns in the variable.
 #' @param name (Optional) A character string representing the name of the variable.
+#' @param ... (Optional) Additional attribute arguments. See \linkS4class{Leaf} for details.
 #' @rdname Variable-class
 #' @examples
 #' x <- Variable(3, name = "x0") ## 3-int variable

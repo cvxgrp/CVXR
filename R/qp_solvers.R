@@ -102,6 +102,10 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 #'
 #' An interface for the CPLEX solver.
 #'
+#' @name CPLEX_QP-class
+#' @aliases CPLEX_QP
+#' @rdname CPLEX_QP-class
+#' @export
 CPLEX_QP <- setClass("CPLEX_QP", contains = "QpSolver")
 
 #' @param x,object,solver A \linkS4class{CPLEX_QP} object.
@@ -320,7 +324,10 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
 #'
 #' An interface for the GUROBI_QP solver.
 #'
-
+#' @name GUROBI_QP-class
+#' @aliases GUROBI_QP
+#' @rdname GUROBI_QP-class
+#' @export
 GUROBI_QP <- setClass("GUROBI_QP", contains = "QpSolver")
 
 #' @param solver,object,x A \linkS4class{GUROBI_QP} object.
@@ -592,7 +599,10 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
 #'
 #' An interface for the OSQP solver.
 #'
-
+#' @name OSQP-class
+#' @aliases OSQP
+#' @rdname OSQP-class
+#' @export
 OSQP <- setClass("OSQP", contains = "QpSolver")
 
 #' @param solver,object,x A \linkS4class{OSQP} object.
@@ -729,8 +739,6 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
       solver <- osqp::osqp(P, q, A, lA, uA, solver_opts)
       ## setup(solver, P, q, A, lA, uA, verbose = verbose, solver_opts)
       ## DWK CHANGE END
-
-
   }
 
   results <- solver$Solve()

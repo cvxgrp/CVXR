@@ -274,7 +274,7 @@ linearize <- function(expr) {
 #
 # Scalarize.max <- function(objectives, weights) {
 #   num_objs <- length(objectives)
-#   expr <- MaxElemwise(lapply(1:num_objs, function(i) { objectives[[i]]*weights[[i]] }))
+#   expr <- .MaxElemwise(atom_args = lapply(1:num_objs, function(i) { objectives[[i]]*weights[[i]] }))
 #   Minimize(expr)
 # }
 #

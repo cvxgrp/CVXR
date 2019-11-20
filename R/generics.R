@@ -1067,36 +1067,14 @@ setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 #'
 #' Solver Capabilities
 #'
-#' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), positive semidefinite program (PSD), exponential cone program (EXP), or mixed-integer program (MIP).
+#' Determine if a solver is capable of solving a mixed-integer program (MIP).
 #'
 #' @param solver A \linkS4class{ReductionSolver} object.
 #' @return A logical value.
 #' @examples
-#' lp_capable(ECOS())
-#' socp_capable(ECOS())
-#' psd_capable(ECOS())
-#' exp_capable(ECOS())
 #' mip_capable(ECOS())
-#' @name Solver-capable
-NULL
-
-#' @rdname Solver-capable
-#' @export
-setGeneric("lp_capable", function(solver) { standardGeneric("lp_capable") })
-
-#' @rdname Solver-capable
-#' @export
-setGeneric("socp_capable", function(solver) { standardGeneric("socp_capable") })
-
-#' @rdname Solver-capable
-#' @export
-setGeneric("psd_capable", function(solver) { standardGeneric("psd_capable") })
-
-#' @rdname Solver-capable
-#' @export
-setGeneric("exp_capable", function(solver) { standardGeneric("exp_capable") })
-
-#' @rdname Solver-capable
+#' @rdname mip_capable
+#' @docType methods
 #' @export
 setGeneric("mip_capable", function(solver) { standardGeneric("mip_capable") })
 

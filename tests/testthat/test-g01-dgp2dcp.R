@@ -6,7 +6,7 @@ perform <- CVXR:::perform
 reduce <- CVXR:::reduce
 invert <- CVXR:::invert
 retrieve <- CVXR:::retrieve
-unpack <- CVXR:::unpack
+unpack_problem <- CVXR:::unpack_problem
 cvxr_expr <- CVXR:::expr
 
 Dgp2Dcp <- function(problem = NULL) { new("Dgp2Dcp", problem = problem) }
@@ -51,7 +51,7 @@ test_that("test unconstrained monomial", {
   expect_equal(opt$status, "unbounded")
 
   solution <- form_solution(dcp, opt)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
   opt <- solve(dgp, gp = TRUE)
@@ -68,7 +68,7 @@ test_that("test unconstrained monomial", {
   expect_equal(opt$status, "unbounded")
 
   solution <- form_solution(dcp, opt)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, Inf)
   expect_equal(dgp_unpack$status, "unbounded")
   opt <- solve(dgp, gp = TRUE)
@@ -91,7 +91,7 @@ test_that("test basic equality constraint", {
   expect_equal(opt$getValue(variables(dcp)[[1]]), 0.0, tolerance = TOL)
 
   solution <- form_solution(dcp, opt)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 1.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(x), 1.0, tolerance = TOL)
   result <- solve(dgp, gp = TRUE)
@@ -126,7 +126,7 @@ test_that("test max_elemwise", {
   dcp <- tmp[[2]]
   opt <- solve(dcp)
   solution <- form_solution(dcp, opt)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 6.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(x), 1.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(y), 4.0, tolerance = TOL)
@@ -192,7 +192,7 @@ test_that("test max_entries", {
   dcp <- tmp[[2]]
   opt <- solve(dcp)
   solution <- form_solution(dcp, opt)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 6.0)
   expect_equal(dgp_unpack$getValue(x), 1.0)
   expect_equal(dgp_unpack$getValue(y), 4.0)
@@ -248,7 +248,7 @@ test_that("test min_entries", {
 #   dgp2dcp <- tmp[[1]]
 #   dcp <- tmp[[2]]
 #   result <- solve(dcp)
-#   dgp <- unpack(dgp, retrieve(dgp2dcp, result$solution))
+#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, result$solution))
 #   opt <- 6.0
 #   expect_equal(dgp@value, opt, tolerance = TOL)
 #   expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
@@ -269,7 +269,7 @@ test_that("test min_entries", {
 #   dcp <- tmp[[2]]
 #   opt <- solve(dcp)
 #   expect_equal(dcp@value, -Inf)
-#   dgp <- unpack(dgp, retrieve(dgp2dcp, opt$solution))
+#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, opt$solution))
 #   expect_equal(dgp@value, 0.0, tolerance = TOL)
 #   expect_equal(dgp@status, "unbounded")
 #   dgp <- clear_solution(dgp)
@@ -287,7 +287,7 @@ test_that("test min_entries", {
 #   dcp <- tmp[[2]]
 #   opt <- solve(dcp)
 #   expect_equal(result$value, -Inf)
-#   dgp <- unpack(dgp, retrieve(dgp2dcp, opt$solution))
+#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, opt$solution))
 #   expect_equal(dgp@value, 0.0, tolerance = TOL)
 #   expect_equal(dgp@status, "unbounded")
 #   dgp <- clear_solution(dgp)
@@ -303,7 +303,7 @@ test_that("test min_entries", {
 #   dgp2dcp <- Dgp2Dcp(dgp)
 #   dcp <- reduce(dgp2dcp)
 #   result <- solve(dcp)
-#   dgp <- unpack(dgp, retrieve(dgp2dcp, result$solution))
+#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, result$solution))
 #
 #   # opt = 3 * sqrt(4) * sqrt(4) + (4 * 4 + 0.5 * 4 * epsilon) = 28
 #   opt <- 28.0
@@ -340,7 +340,7 @@ test_that("test geo_mean", {
   expect_equal(result$value, -Inf)
 
   solution <- form_solution(dcp, result)
-  dgp_unpack <- unpack(dgp, retrieve(dgp2dcp, solution))
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
   result <- solve(dgp, gp = TRUE)

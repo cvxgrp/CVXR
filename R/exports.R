@@ -864,7 +864,7 @@ max.Expression <- function(..., na.rm = FALSE) {
     max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
     max_args <- c(max_args, max_num)
   }
-  .MaxElemwise(args = max_args)
+  .MaxElemwise(atom_args = max_args)
 }
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
@@ -891,7 +891,7 @@ min.Expression <- function(..., na.rm = FALSE) {
     min_args <- c(min_args, min_num)
   }
   min_args <- lapply(min_args, function(arg) { -as.Constant(arg) })
-  -.MaxElemwise(args = min_args)
+  -.MaxElemwise(atom_args = min_args)
 }
 
 #'

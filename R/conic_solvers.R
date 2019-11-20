@@ -257,6 +257,10 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
 #'
 #' An interface for the ECOS solver
 #'
+#' @name ECOS-class
+#' @aliases ECOS
+#' @rdname ECOS-class
+#' @export
 ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                  prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
 
@@ -381,6 +385,10 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
 
 #' An interface for the SCS solver
 #'
+#' @name SCS-class
+#' @aliases SCS
+#' @rdname SCS-class
+#' @export
 SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                 prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
 
@@ -581,6 +589,10 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
 
 #' An interface to the CBC solver
 #'
+#' @name CBC_CONIC-class
+#' @aliases CBC_CONIC
+#' @rdname CBC_CONIC-class
+#' @export
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
 # Solver capabilities.
@@ -752,6 +764,10 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
 
 #' An interface for the CPLEX solver
 #'
+#' @name CPLEX_CONIC-class
+#' @aliases CPLEX_CONIC
+#' @rdname CPLEX_CONIC-class
+#' @export
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
 
 #' @describeIn CPLEX_CONIC Can the solver handle mixed-integer programs?
@@ -1128,6 +1144,10 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 
 #' An interface for the ECOS BB solver.
 #'
+#' @name ECOS_BB-class
+#' @aliases ECOS_BB
+#' @rdname ECOS_BB-class
+#' @export
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
 #' @param solver,object,x A \linkS4class{ECOS_BB} object.
@@ -1185,7 +1205,12 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 
 #' An interface for the GLPK solver.
 #'
+#' @name GLPK-class
+#' @aliases GLPK
+#' @rdname GLPK-class
+#' @export
 GLPK <- setClass("GLPK", contains = "CVXOPT")
+
 #' @describeIn GLPK Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
@@ -1295,7 +1320,12 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 
 #' An interface for the GLPK MI solver.
 #'
+#' @name GLPK_MI-class
+#' @aliases GLPK_MI
+#' @rdname GLPK_MI-class
+#' @export
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
+
 #' @describeIn GLPK_MI Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
@@ -1387,6 +1417,10 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 
 #' An interface for the GUROBI conic solver.
 #'
+#' @name GUROBI_CONIC-class
+#' @aliases GUROBI_CONIC
+#' @rdname GUROBI_CONIC-class
+#' @export
 GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
 
 # Solver capabilities.
@@ -1635,6 +1669,10 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
 
 #' An interface for the MOSEK solver.
 #'
+#' @name MOSEK-class
+#' @aliases MOSEK
+#' @rdname MOSEK-class
+#' @export
 MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
                            prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
 
@@ -2407,53 +2445,46 @@ tri_to_full <- function(lower_tri, n) {
   matrix(full, nrow = n*n, byrow = FALSE)
 }
 
-#'
-#' The SuperSCS class.
-#' 
-#' Not Implemented.
-#' 
-#' @name SuperSCS-class
-#' @rdname SuperSCS-class
-SuperSCS <- setClass("SuperSCS", contains = "SCS")
-SuperSCS.default_settings <- function(object) {
-  list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
-}
-
-#' @param solver,object,x A \linkS4class{SuperSCS} object.
-#' @describeIn SuperSCS Returns the name of the SuperSCS solver
-setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
-
-#' @describeIn SuperSCS imports the SuperSCS solver.
-setMethod("import_solver", "SuperSCS", function(solver) {
-  stop("Unimplemented: SuperSCS is currently unavailable in R.")
-})
-
-#' @param data Data generated via an apply call.
-#' @param warm_start An option for warm start.
-#' @param verbose A boolean of whether to enable solver verbosity.
-#' @param solver_opts A list of Solver specific options
-#' @param solver_cache Cache for the solver.
-#' @describeIn SuperSCS Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
-  if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
-    args$x <- solver_cache[[name(object)]]$x
-    args$y <- solver_cache[[name(object)]]$y
-    args$s <- solver_cache[[name(object)]]$s
-  }
-  cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
-
-  # Settings.
-  user_opts <- names(solver_opts)
-  for(k in names(SuperSCS.default_settings)) {
-    if(!k %in% user_opts)
-      solver_opts[[k]] <- SuperSCS.default_settings[[k]]
-  }
-  results <- SuperSCS::solve(args, cones, verbose = verbose, solver_opts)
-  if(!is.null(solver_cache) && length(solver_cache) > 0)
-    solver_cache[[name(object)]] <- results
-  return(results)
-})
+# SuperSCS <- setClass("SuperSCS", contains = "SCS")
+# SuperSCS.default_settings <- function(object) {
+#   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
+# }
+# 
+# #' @param solver,object,x A \linkS4class{SuperSCS} object.
+# #' @describeIn SuperSCS Returns the name of the SuperSCS solver
+# setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
+# 
+# #' @describeIn SuperSCS imports the SuperSCS solver.
+# setMethod("import_solver", "SuperSCS", function(solver) {
+#   stop("Unimplemented: SuperSCS is currently unavailable in R.")
+# })
+# 
+# #' @param data Data generated via an apply call.
+# #' @param warm_start An option for warm start.
+# #' @param verbose A boolean of whether to enable solver verbosity.
+# #' @param solver_opts A list of Solver specific options
+# #' @param solver_cache Cache for the solver.
+# #' @describeIn SuperSCS Solve a problem represented by data returned from apply.
+# setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+#   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
+#   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
+#     args$x <- solver_cache[[name(object)]]$x
+#     args$y <- solver_cache[[name(object)]]$y
+#     args$s <- solver_cache[[name(object)]]$s
+#   }
+#   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
+# 
+#   # Settings.
+#   user_opts <- names(solver_opts)
+#   for(k in names(SuperSCS.default_settings)) {
+#     if(!k %in% user_opts)
+#       solver_opts[[k]] <- SuperSCS.default_settings[[k]]
+#   }
+#   results <- SuperSCS::solve(args, cones, verbose = verbose, solver_opts)
+#   if(!is.null(solver_cache) && length(solver_cache) > 0)
+#     solver_cache[[name(object)]] <- results
+#   return(results)
+# })
 
 # XPRESS <- setClass("XPRESS", contains = "SCS")
 #

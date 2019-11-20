@@ -233,7 +233,6 @@ as.Constant <- function(expr) {
 #' @slot rows The number of rows in the parameter.
 #' @slot cols The number of columns in the parameter.
 #' @slot name (Optional) A character string representing the name of the parameter.
-#' @slot sign_str A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
 #' @slot value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @name Parameter-class
 #' @aliases Parameter
@@ -244,7 +243,6 @@ as.Constant <- function(expr) {
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
 #' @param name (Optional) A character string representing the name of the parameter.
-#' @param sign (Optional) A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN". Defaults to "UNKNOWN".
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
 #' @rdname Parameter-class
 #' @examples
@@ -282,6 +280,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = N
   callNextMethod(.Object, ..., dim = dim, value = value)
 })
 
+#' @param object,x A \linkS4class{Parameter} object.
 #' @describeIn Parameter Returns \code{list(dim, name, value, attributes)}.
 setMethod("get_data", "Parameter", function(object) {
   list(dim = dim(object), name = object@name, value = value(object), attributes = attributes(object))

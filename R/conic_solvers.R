@@ -584,6 +584,8 @@ CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 # Solver capabilities.
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
+#' @param solver,object,x A \linkS4class{CBC_CONIC} object.
+#' @param status A status code returned by the solver.
 #' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status.
 setMethod("status_map", "CBC_CONIC", function(solver, status) {
   if(status$is_proven_optimal)
@@ -621,6 +623,7 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
 
 #' @describeIn CBC_CONIC Returns the name of the solver
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
+
 #' @describeIn CBC_CONIC Imports the solver
 setMethod("import_solver", "CBC_CONIC", function(solver) {
   installed <- requireNamespace("rcbc", quietly = TRUE)
@@ -629,6 +632,7 @@ setMethod("import_solver", "CBC_CONIC", function(solver) {
   return(installed)
 })
 
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn CBC_CONIC Can CBC_CONIC solve the problem?
 setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
   # Can CBC_CONIC solve the problem?
@@ -659,6 +663,8 @@ setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), funct
   return(list(object, data, inv_data))
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn CBC_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_data = "list"),  function(object, solution, inverse_data) {
   solution <- solution[[1]]
@@ -681,7 +687,6 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -753,11 +758,15 @@ CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
 
 setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "CPLEX_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+
+#' @param solver,object,x A \linkS4class{CPLEX_CONIC} object.
 #' @describeIn CPLEX_CONIC Returns the name of the solver.
 setMethod("name", "CPLEX_CONIC", function(x) { CPLEX_NAME })
+
 #' @describeIn CPLEX_CONIC Imports the solver.
 setMethod("import_solver", "CPLEX_CONIC", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn CPLEX_CONIC Can CPLEX solve the problem?
 setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
   # Can CPLEX solve the problem?
@@ -777,6 +786,7 @@ setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 
 # Map of CPLEX status to CVXR status.
 # TODO: Add more!
+#' @param status A status code returned by the solver.
 #' @describeIn CPLEX_CONIC Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
   if(status %in% c(1, 101)){
@@ -834,6 +844,8 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   return(list(object, data, inv_data))
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn CPLEX_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
@@ -880,7 +892,6 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1029,6 +1040,8 @@ setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
 setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
 # Map of CVXOPT status to CVXR status.
+#' @param solver,object,x A \linkS4class{CVXOPT} object.
+#' @param status A status code returned by the solver.
 #' @describeIn CVXOPT Converts status returned by the CVXOPT solver to its respective CVXPY status.
 setMethod("status_map", "CVXOPT", function(solver, status) {
   if(status == "optimal")
@@ -1045,9 +1058,11 @@ setMethod("status_map", "CVXOPT", function(solver, status) {
 
 #' @describeIn CVXOPT Returns the name of the solver.
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
+
 #' @describeIn CVXOPT Imports the solver.
 setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
 
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn CVXOPT Can CVXOPT solve the problem?
 setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   # Can CVXOPT solver the problem?
@@ -1098,7 +1113,6 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   return(list(object, data, inv_data))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1174,6 +1188,8 @@ GLPK <- setClass("GLPK", contains = "CVXOPT")
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
+#' @param solver,object,x A \linkS4class{GLPK} object.
+#' @param status A status code returned by the solver.
 #' @describeIn GLPK Converts status returned by the GLPK solver to its respective CVXPY status.
 setMethod("status_map", "GLPK", function(solver, status) {
   if(status == 5)
@@ -1190,9 +1206,12 @@ setMethod("status_map", "GLPK", function(solver, status) {
 
 #' @describeIn GLPK Returns the name of the solver.
 setMethod("name", "GLPK", function(x) { GLPK_NAME })
+
 #' @describeIn GLPK Imports the solver.
 setMethod("import_solver", "GLPK", function(solver) { requireNamespace("Rglpk", quietly = TRUE) })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn GLPK Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   status <- solution$status
@@ -1207,7 +1226,6 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
     return(failure_solution(status))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1280,6 +1298,8 @@ setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 
 # Map of GLPK_MI status to CVXR status.
+#' @param solver,object,x A \linkS4class{GLPK_MI} object.
+#' @param status A status code returned by the solver.
 #' @describeIn GLPK_MI Converts status returned by the GLPK_MI solver to its respective CVXPY status.
 setMethod("status_map", "GLPK_MI", function(solver, status) {
   if(status == 5)
@@ -1297,7 +1317,6 @@ setMethod("status_map", "GLPK_MI", function(solver, status) {
 #' @describeIn GLPK_MI Returns the name of the solver.
 setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1368,9 +1387,10 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
 
 # Solver capabilities.
+#' @param solver,object,x A \linkS4class{GUROBI_CONIC} object.
+#' @describeIn GUROBI_CONIC Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GUROBI_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
-
 
 # Is this one that's used? Should we delete?
 # Map of Gurobi status to CVXR status.
@@ -1392,10 +1412,12 @@ setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supporte
 
 #' @describeIn GUROBI_CONIC Returns the name of the solver.
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
+
 #' @describeIn GUROBI_CONIC Imports the solver.
 setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 # Map of GUROBI status to CVXR status.
+#' @param status A status code returned by the solver.
 #' @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
   if(status == 2 || status == "OPTIMAL")
@@ -1414,6 +1436,7 @@ setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
     stop("GUROBI status unrecognized: ", status)
 })
 
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn GUROBI_CONIC Can GUROBI_CONIC solve the problem?
 setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
@@ -1443,6 +1466,8 @@ setMethod("perform", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
   return(list(object, data, inv_data))
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn GUROBI_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
 
@@ -1484,7 +1509,6 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -1654,6 +1678,8 @@ psd_coeff_offset <- function(problem, c) {
   return(list(G, h, dim))
 }
 
+#' @param solver,object,x A \linkS4class{MOSEK} object.
+#' @describeIn MOSEK Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
 setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
@@ -1665,6 +1691,8 @@ setMethod("import_solver", "MOSEK", function(solver) {
 
 #' @describeIn MOSEK Returns the name of the solver.
 setMethod("name", "MOSEK", function(x) { MOSEK_NAME })
+
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn MOSEK Can MOSEK solve the problem?
 setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(object, problem) {
   # TODO: Check if the matrix is stuffed.
@@ -1682,7 +1710,6 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
   return(TRUE)
 })
 
-#' @param problem A \linkS4class{Problem} object that we are preparing for MOSEK.
 #' @param constraints A list of \linkS4class{Constraint} objects for which coefficient
 #' andd offset data ("G", "h" respectively) is needed
 #' @param exp_cone_order A parameter that is only used when a \linkS4class{Constraint} object
@@ -1839,7 +1866,6 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   return(list(object, data, inv_data))
 })
 
-#' @param problem A \linkS4class{Problem} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
@@ -2109,6 +2135,8 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 ##  return(sol)
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
 #' @describeIn MOSEK Returns the solution to the original problem given the inverse_data.
 setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   ## REMOVE LATER
@@ -2388,6 +2416,7 @@ setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })
 
+#' @param object A \linkS4class{SuperSCS} object.
 #' @param data Data generated via an apply call.
 #' @param warm_start An option for warm start.
 #' @param verbose A boolean of whether to enable solver verbosity.

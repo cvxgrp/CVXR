@@ -54,24 +54,30 @@ setClass("ReductionSolver", representation(var_id = "character", eq_constr = "ch
                             prototype(var_id = "var_id", eq_constr = "eq_constr", neq_constr = "other_constr"), contains = "Reduction")
 
 # Solver capabilities.
+#' @param solver,object,x A \linkS4class{ReductionSolver} object.
+#' @describeIn ReductionSolver Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "ReductionSolver", function(solver) { FALSE })
 
 #' @describeIn ReductionSolver Returns the name of the solver
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
+
 #' @describeIn ReductionSolver Imports the solver
 setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
+
 #' @describeIn ReductionSolver Is the solver installed?
 setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(solver) })
 
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
   stop("Unimplemented")
 })
 
 #' @param problem A \linkS4class{Problem} object.
-#' @param warm_start A boolean of whether to warm start the solver.
-#' @param verbose A boolean of whether to enable solver verbosity.
-#' @param solver_opts A list of Solver specific options
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
   ret <- perform(object, problem)
@@ -88,7 +94,7 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
 ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")
 
 #' @param solver,object,x A \linkS4class{ConstantSolver} object.
-#' @describeIn ConstantSolver Is the solver capable of solving mixed-integer programs?
+#' @describeIn ConstantSolver Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "ConstantSolver", function(solver) { TRUE })
 
 #' @param problem A \linkS4class{Problem} object.

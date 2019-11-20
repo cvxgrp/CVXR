@@ -1456,6 +1456,7 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, dim, dat
 #'
 #' @slot expr An \linkS4class{Expression} representing a vector or matrix.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @name SumEntries-class
 #' @aliases SumEntries
 #' @rdname SumEntries-class
@@ -1463,6 +1464,7 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, dim, dat
 
 #' @param expr An \linkS4class{Expression} representing a vector or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @rdname SumEntries-class
 SumEntries <- function(expr, axis = NA_real_, keepdims = FALSE) { .SumEntries(expr = expr, axis = axis, keepdims = keepdims) }
 

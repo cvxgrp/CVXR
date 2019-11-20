@@ -130,6 +130,8 @@ setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
 #' @describeIn CPLEX_QP Imports the solver.
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn CPLEX_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
@@ -321,8 +323,11 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
 
 GUROBI_QP <- setClass("GUROBI_QP", contains = "QpSolver")
 
+#' @param solver,object,x A \linkS4class{GUROBI_QP} object.
+#' @describeIn GUROBI_QP Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 
+#' @param status A status code returned by the solver.
 #' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
   if(status == 2 || status == "OPTIMAL")
@@ -343,6 +348,7 @@ setMethod("status_map", "GUROBI_QP", function(solver, status) {
 
 #' @describeIn GUROBI_QP Returns the name of the solver.
 setMethod("name", "GUROBI_QP", function(x) { GUROBI_NAME })
+
 #' @describeIn GUROBI_QP Imports the solver.
 setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
@@ -533,6 +539,8 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
 })
 
 #DK WRITTEN FUNCTION
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn GUROBI_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
@@ -587,6 +595,8 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
 
 OSQP <- setClass("OSQP", contains = "QpSolver")
 
+#' @param solver,object,x A \linkS4class{OSQP} object.
+#' @param status A status code returned by the solver.
 #' @describeIn OSQP Converts status returned by the OSQP solver to its respective CVXPY status.
 setMethod("status_map", "OSQP", function(solver, status) {
   if(status == 1)
@@ -609,9 +619,12 @@ setMethod("status_map", "OSQP", function(solver, status) {
 
 #' @describeIn OSQP Returns the name of the solver.
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
+
 #' @describeIn OSQP Imports the solver.
 setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn OSQP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   attr <- list()

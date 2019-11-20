@@ -152,7 +152,7 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
 #' Build a reduction chain from a problem to an installed solver.
 #' 
 #' @param problem The problem for which to build a chain.
-#' @param dict A list of candidate solvers divided in qp_solvers.
+#' @param candidates A list of candidate solvers.
 #' @return A SolvingChain that can be used to solve the problem.
 construct_solving_chain <- function(problem, candidates) {
   reductions <- list()
@@ -269,8 +269,9 @@ setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, 
 #'
 #' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
 #' 
-#' @param problem The problem for which to build a chain
-#' @param candidates A list of candidate solvers divided in qp_solvers
+#' @param problem The problem for which to build a chain.
+#' @param candidates A list of candidate solvers.
+#' @param gp A logical value indicating whether the problem is a geometric program.
 #' @return A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.
 setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE) {
   reductions <- list()

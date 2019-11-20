@@ -447,7 +447,7 @@ setMethod("to_numeric", "CumMax", function(object, values) {
 #' @describeIn CumMax Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "CumMax", function(object, values) { .axis_grad(object, values) })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value.
 #' @describeIn CumMax Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "CumMax", function(object, value) {
   # Grad: 1 for a largest index.
@@ -1306,7 +1306,9 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   callNextMethod(.Object, ...)
 })
 
-# Internal method for calculating the p-norm
+#'
+#' Internal method for calculating the p-norm
+#'
 #' @param x A matrix
 #' @param p A number grater than or equal to 1, or equal to positive infinity
 #' @return Returns the specified norm of matrix x
@@ -1381,7 +1383,6 @@ setMethod("is_pwl", "Pnorm", function(object) { FALSE })
 #' @describeIn Pnorm Returns \code{list(p, axis)}.
 setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
 
-#' @param x,object A \linkS4class{Pnorm} object.
 #' @describeIn Pnorm The name and arguments of the atom.
 setMethod("name", "Pnorm", function(x) {
   sprintf("%s(%s, %s)", class(x), name(x@args[[1]]), x@p)
@@ -1855,6 +1856,8 @@ ProdEntries <- function(..., axis = NA_real_, keepdims = FALSE) {
     .ProdEntries(expr = do.call("HStack", exprs))
 }
 
+#' @param object A \linkS4class{ProdEntries} object.
+#' @param values A list of values to take the product of.
 #' @describeIn ProdEntries The product of all the entries.
 setMethod("to_numeric", "ProdEntries", function(object, values) {
   apply_with_keepdims(values[[1]], prod, axis = object@axis, keepdims = object@keepdims)
@@ -1919,12 +1922,12 @@ setMethod("initialize", "QuadForm", function(.Object, ..., x, P) {
   callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@P))
 })
 
-#' @param x,object A \linkS4class{QuadForm} object.
 #' @describeIn QuadForm The name and arguments of the atom.
 setMethod("name", "QuadForm", function(x) {
   paste(class(x), "(", x@args[[1]], ", ", x@args[[2]], ")", sep = "")
 })
 
+#' @param object A \linkS4class{QuadForm} object.
 #' @describeIn QuadForm Does the atom handle complex numbers?
 setMethod("allow_complex", "QuadForm", function(object) { TRUE })
 

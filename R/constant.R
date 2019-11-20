@@ -344,7 +344,7 @@ setMethod("show", "Parameter", function(object) {
 #' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)
-#' y <- CallbackParam(value(x), dim(x), sign = "NONNEGATIVE")
+#' y <- CallbackParam(value(x), dim(x), nonneg = TRUE)
 #' get_data(y)
 #' @export
 CallbackParam <- function(callback, dim = NULL, ...) {

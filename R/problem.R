@@ -833,7 +833,7 @@ valuesById <- function(object, results_dict, sym_data, solver) {
 #   return(object)
 # }
 
-setMethod("unpack", signature(object = "Problem", solution = "Solution"), function(object, solution) {
+setMethod("unpack_problem", signature(object = "Problem", solution = "Solution"), function(object, solution) {
   # if(solution@status %in% SOLUTION_PRESENT) {
   #   for(v in variables(object))
   #     object <- save_value(v, solution@primal_vars[id(v)])
@@ -948,10 +948,10 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
   solution <- invert(chain, solution, inverse_data)
-  # object <- unpack(object, solution)
+  # object <- unpack_problem(object, solution)
   # object@.solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
   # return(object)
-  results <- unpack(object, solution)
+  results <- unpack_problem(object, solution)
   solver_stats <- SolverStats(solution@attr, name(chain@solver))
   return(c(results, solver_stats))
 })

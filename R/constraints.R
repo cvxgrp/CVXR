@@ -47,6 +47,7 @@ setMethod("violation", "Constraint", function(object) {
   return(resid)
 })
 
+#' @param tolerance The tolerance for checking if the constraint is violated.
 #' @describeIn Constraint The value of a constraint.
 setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
   resid <- residual(object)
@@ -78,6 +79,7 @@ setMethod("id", "ListORConstr", function(object) {
 setMethod("get_data", "Constraint", function(object) { list(id(object)) })
 #' @describeIn Constraint The dual values of a constraint.
 setMethod("dual_value", "Constraint", function(object) { value(object@dual_variables[[1]]) })
+#' @param value A numeric scalar, vector, or matrix.
 #' @describeIn Constraint Replaces the dual values of a constraint..
 setReplaceMethod("dual_value", "Constraint", function(object, value) {
   object@dual_variables[[1]] <- value
@@ -96,6 +98,7 @@ setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @param x,object A \linkS4class{ZeroConstraint} object.
 #' @describeIn ZeroConstraint The string representation of the constraint.
 setMethod("name", "ZeroConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "== 0")
@@ -183,6 +186,7 @@ setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @param x,object A \linkS4class{NonPosConstraint} object.
 #' @describeIn NonPosConstraint The string representation of the constraint.
 setMethod("name", "NonPosConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "<= 0")
@@ -376,6 +380,7 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @param x The variable \eqn{x} in the exponential cone.
 #' @param y The variable \eqn{y} in the exponential cone.
 #' @param z The variable \eqn{z} in the exponential cone.
+#' @param id (Optional) A numeric value representing the constraint ID.
 #' @rdname ExpCone-class
 ## #' @export
 ExpCone <- function(x, y, z, id = NA_integer_) { .ExpCone(x = x, y = y, z = z, id = id) }
@@ -391,7 +396,6 @@ setMethod("show", "ExpCone", function(object) {
   print(paste("ExpCone(", as.character(object@x), ", ", as.character(object@y), ", ", as.character(object@z), ")", sep = ""))
 })
 
-#' @param x,object An \linkS4class{ExpCone} object.
 #' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
@@ -456,13 +460,9 @@ setMethod("canonicalize", "ExpCone", function(object) {
 #'
 #' The PSDConstraint class.
 #'
-#' This class represents the positive semidefinite constraint, \eqn{X \succeq Y}, i.e. \eqn{z^T(X - Y)z \geq 0} for all \eqn{z}.
+#' This class represents the positive semidefinite constraint, \eqn{\frac{1}{2}(X + X^T) \succeq 0}, i.e. \eqn{z^T(X + X^T)z \geq 0} for all \eqn{z}.
 #'
-#' @slot lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
-#' @slot rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
-#' @slot args (Internal) A list that holds \code{lh_exp} and \code{rh_exp} for internal use.
-#' @slot expr (Internal) An \linkS4class{Expression} representing \code{lh_exp - rh_exp} for internal use.
-#' @slot dual_variable (Internal) A \linkS4class{Variable} representing the dual variable associated with the constraint.
+#' @slot expr An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{X}.
 #' @name PSDConstraint-class
 #' @aliases PSDConstraint
 #' @rdname PSDConstraint-class
@@ -474,8 +474,8 @@ setMethod("canonicalize", "ExpCone", function(object) {
                              return(TRUE)
                            }, contains = "Constraint")
 
-#' @param lh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the left-hand side of the inequality.
-#' @param rh_exp An \linkS4class{Expression}, numeric element, vector, or matrix representing the right-hand side of the inequality.
+#' @param expr An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{X}.
+#' @param id (Optional) A numeric value representing the constraint ID.
 #' @rdname PSDConstraint-class
 PSDConstraint <- function(expr, id = NA_integer_) { .PSDConstraint(expr = expr, id = id) }
 
@@ -484,13 +484,13 @@ setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @param x,object A \linkS4class{PSDConstraint} object.
 #' @describeIn PSDConstraint The string representation of the constraint.
 setMethod("name", "PSDConstraint", function(x) {
   # paste(as.character(x@args[[1]]), ">> 0")
   paste(name(x@args[[1]]), ">> 0")
 })
 
-#' @param object A \linkS4class{PSDConstraint} object.
 #' @describeIn PSDConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
 setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@args[[1]]) })
 
@@ -535,7 +535,8 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
 #' This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 #'
 #' @slot t The scalar part of the second-order constraint.
-#' @slot x_elems A list containing the elements of the vector part of the constraint.
+#' @slot X A matrix whose rows/columns are each a cone.
+#' @slot axis The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
 #' @name SOC-class
 #' @aliases SOC
 #' @rdname SOC-class
@@ -543,7 +544,9 @@ setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_cons
                         prototype(t = NA_real_, X = NA_real_, axis = 2), contains = "Constraint")
 
 #' @param t The scalar part of the second-order constraint.
-#' @param x_elems A list containing the elements of the vector part of the constraint.
+#' @param X A matrix whose rows/columns are each a cone.
+#' @param axis The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @param id (Optional) A numeric value representing the constraint ID.
 #' @rdname SOC-class
 ## #' @export
 SOC <- function(t, X, axis = 2, id = NA_integer_) { .SOC(t = t, X = X, axis = axis, id = id) }
@@ -566,8 +569,7 @@ setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(x@t), ", ", as.character(x@X), ")", sep = "")
 })
 
-#' @param object A \linkS4class{SOC} object.
-#' @rdname SOC-class
+#' @describeIn SOC The residual of the second-order constraint.
 setMethod("residual", "SOC", function(object) {
   t <- value(object@args[[1]])
   X <- value(object@args[[2]])
@@ -671,6 +673,7 @@ setMethod("canonicalize", "SOC", function(object) {
 #' @param t The scalar part of the second-order constraint.
 #' @param X A matrix whose rows/columns are each a cone.
 #' @param axis The dimension across which to take the slice: \code{1} indicates rows, and \code{2} indicates columns.
+#' @param id (Optional) A numeric value representing the constraint ID.
 #' @rdname SOCAxis-class
 ## #' @export
 SOCAxis <- function(t, X, axis, id = NA_integer_) { .SOCAxis(t = t, X = X, axis = axis, id = id) }

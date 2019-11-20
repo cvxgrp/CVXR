@@ -910,6 +910,7 @@ Diag <- function(expr) {
 #' @param lag The degree of lag between differences
 #' @param k The integer value of the order of differences
 #' @param x An \linkS4class{Expression} that represents a vector
+#' @param axis The axis along which to apply the function. For a 2D matrix, \code{1} indicates rows and \code{2} indicates columns.
 #' @return Takes in a vector of length n and returns a vector of length n-k of the kth order differences
 Diff <- function(x, lag = 1, k = 1, axis = 2) {
   x <- as.Constant(x)
@@ -1318,6 +1319,8 @@ setMethod("initialize", "Promote", function(.Object, ..., expr, promoted_dim) {
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
+#' @param object A \linkS4class{Promote} object.
+#' @param values A list containing the value to promote.
 #' @describeIn Promote Promotes the value to the new dimensions.
 setMethod("to_numeric", "Promote", function(object, values) {
   array(1, dim = object@promoted_dim) * as.vector(values[[1]])[1]
@@ -1845,6 +1848,7 @@ setMethod("graph_implementation", "Wrap", function(object, arg_objs, dim, data =
 #' @rdname PSDWrap-class
 PSDWrap <- function(arg) { .PSDWrap(atom_args = list(arg)) }
 
+#' @param object A \linkS4class{PSDWrap} object.
 #' @describeIn PSDWrap Is the atom positive semidefinite?
 setMethod("is_psd", "PSDWrap", function(object) { TRUE })
 

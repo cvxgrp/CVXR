@@ -674,6 +674,7 @@ quad_over_lin <- QuadOverLin
 #'
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the sum of the entries of the input.
 #' @examples
 #' x <- Variable(2)

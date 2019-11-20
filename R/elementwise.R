@@ -755,11 +755,13 @@ setMethod(".grad", "MinElemwise", function(object, values) {
 #' 
 #' An alias for -MinElemwise(x, 0)
 #' 
+#' @param x An R numeric value or \linkS4class{Expression}.
 #' @return An alias for -MinElemwise(x, 0)
 Neg <- function(x) { -MinElemwise(x, 0) }
 #' 
 #' An alias for MaxElemwise(x, 0)
-#' 
+#'
+#' @param x An R numeric value or \linkS4class{Expression}.
 #' @return An alias for MaxElemwise(x, 0)
 Pos <- function(x) { MaxElemwise(x, 0) }
 
@@ -965,6 +967,7 @@ setMethod(".domain", "Power", function(object) {
 setMethod("get_data", "Power", function(object) { list(object@p, object@w) })
 
 #' @param args A list of arguments to reconstruct the atom. If args=NULL, use the current args of the atom
+#' @param id_objects Currently unused.
 #' @describeIn Power Returns a shallow  copy of the power atom
 setMethod("copy", "Power", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))

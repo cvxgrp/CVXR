@@ -86,8 +86,8 @@ setMethod("supported_constraints", "ConicSolver", function(solver) { c("ZeroCons
 # For such solvers, requires_constr should return TRUE.
 setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 
-#' @param A \linkS4class{ConicSolver} object.
-#' @param A \linkS4class{Problem} object.
+#' @param object A \linkS4class{ConicSolver} object.
+#' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConicSolver Can the problem be solved with a conic solver?
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
   return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
@@ -1130,10 +1130,10 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 #'
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
+#' @param solver,object,x A \linkS4class{ECOS_BB} object.
 #' @describeIn ECOS_BB Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 
-#' @param object,x A \linkS4class{ECOS_BB} object.
 #' @describeIn ECOS_BB Returns the name of the solver.
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
 

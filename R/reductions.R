@@ -150,9 +150,8 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
   return(list(object, new_problem, inverse_data))
 })
 
-#' @param object A \linkS4class{Canonicalization} object.
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
-#' @param inverse_data The data encoding the original problem.
+#' @param inverse_data An \linkS4class{InverseData} object that contains the data encoding the original problem.
 #' @describeIn Canonicalization Performs the reduction on a problem and returns an equivalent problem.
 setMethod("invert", signature(object = "Canonicalization", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   pvars <- list()
@@ -202,7 +201,6 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   return(list(canon_expr, constrs))
 })
 
-#' @param expr An \linkS4class{Expression} object.
 #' @param args List of arguments to canonicalize the expression.
 #' @describeIn Canonicalization Canonicalize an expression, w.r.t. canonicalized arguments.
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
@@ -229,7 +227,6 @@ Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = proble
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
 
-#' @param object A \linkS4class{Chain} object.
 #' @param problem A \linkS4class{Problem} object to check.
 #' @describeIn Chain A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
 #' reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
@@ -246,8 +243,6 @@ setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(
   return(TRUE)
 })
 
-#' @param object A \linkS4class{Chain} object.
-#' @param problem A \linkS4class{Problem} object to check.
 #' @describeIn Chain Applies the chain to a problem and returns an equivalent problem.
 setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem) {
   inverse_data <- list()
@@ -263,9 +258,8 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
   return(list(object, problem, inverse_data))
 })
 
-#' @param object A \linkS4class{Chain} object.
-#' @param solution A \linkS4class{SolutionORList} to a problem that generated the inverse data.
-#' @param inverse_data The data encoding the original problem.
+#' @param solution A \linkS4class{Solution} or list.
+#' @param inverse_data A list that contains the data encoding the original problem.
 #' @describeIn Chain Performs the reduction on a problem and returns an equivalent problem.
 setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inverse_data = "list"), function(object, solution, inverse_data) {
   m <- min(length(object@reductions), length(inverse_data))

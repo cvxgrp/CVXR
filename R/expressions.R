@@ -539,7 +539,23 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 #'
 #' @slot id (Internal) A unique integer identification number used internally.
-#' @slot args A list containing the arguments.
+#' @slot dim The dimensions of the leaf.
+#' @slot value The numeric value of the leaf.
+#' @slot nonneg Is the leaf nonnegative?
+#' @slot nonpos Is the leaf nonpositive?
+#' @slot complex Is the leaf a complex number?
+#' @slot imag Is the leaf imaginary?
+#' @slot symmetric Is the leaf a symmetric matrix?
+#' @slot diag Is the leaf a diagonal matrix?
+#' @slot PSD Is the leaf positive semidefinite?
+#' @slot NSD Is the leaf negative semidefinite?
+#' @slot hermitian Is the leaf hermitian?
+#' @slot boolean Is the leaf boolean? Is the variable boolean? May be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
+#' indices which should be constrained as boolean, where each index is a vector of length exactly equal to the length of \code{dim}.
+#' @slot integer Is the leaf integer? The semantics are the same as the \code{boolean} argument.
+#' @slot sparsity A matrix representing the fixed sparsity pattern of the leaf.
+#' @slot pos Is the leaf strictly positive?
+#' @slot neg Is the leaf strictly negative?
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class

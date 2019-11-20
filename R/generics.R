@@ -733,7 +733,7 @@ setGeneric("is_decr", function(object, idx) { standardGeneric("is_decr") })
 #'
 #' @param object An \linkS4class{Expression} object.
 #' @param arg_objs A list of linear expressions for each argument.
-#' @param size A vector with two elements representing the size of the resulting expression.
+#' @param dim A vector representing the dimensions of the resulting expression.
 #' @param data A list of additional data required by the atom.
 #' @return A list of \code{list(LinOp for objective, list of constraints)}, where LinOp is a list representing the linear operator.
 #' @docType methods
@@ -896,6 +896,7 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #'
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
+#' @param gp A logical value indicating whether the problem is a geometric program.
 #' @return A list of arguments for the solver.
 #' @examples
 #' a <- Variable(name = "a")
@@ -1189,7 +1190,7 @@ setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
 setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
-setGeneric("unpack", function(object, solution) { standardGeneric("unpack") })
+setGeneric("unpack_problem", function(object, solution) { standardGeneric("unpack_problem") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })
 setGeneric(".construct_dual_variables", function(object, args) { standardGeneric(".construct_dual_variables") })
 setGeneric("reduction_solve", function(object, problem, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve") })

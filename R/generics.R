@@ -368,7 +368,7 @@ setGeneric("get_data", function(object) { standardGeneric("get_data") })
 #'
 #' The string representation of a variable, parameter, or expression.
 #'
-#' @param object A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.
+#' @param x A \linkS4class{Variable}, \linkS4class{Parameter}, or \linkS4class{Expression} object.
 #' @return For \linkS4class{Variable} or \linkS4class{Parameter} objects, the value in the name slot. For \linkS4class{Expression} objects, a string indicating the nested atoms and their respective arguments.
 #' @docType methods
 #' @rdname name
@@ -925,6 +925,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
 #' @param verbose (Optional) A logical value indicating whether to print additional solver output.
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
+#' @param gp (Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @return A list containing the solution to the problem:
 #' \describe{
@@ -1133,6 +1134,7 @@ setGeneric("reduce", function(object) { standardGeneric("reduce") })
 #' Retrieves a solution to the owned problem.
 #' 
 #' @param object A \linkS4class{Reduction} object.
+#' @param solution A \linkS4class{Solution} object.
 #' @return A \linkS4class{Solution} to the problem emitted by \code{\link{reduce}}.
 #' @docType methods
 #' @rdname retrieve

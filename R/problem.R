@@ -571,7 +571,7 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 #' 
 #' @param object A \linkS4class{Problem} class.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
-#' @param gp Is the problem a geometric problem?
+#' @param gp A logical value indicating whether the problem is a geometric program.
 #' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
   object <- .construct_chains(object, solver = solver, gp = gp)
@@ -942,7 +942,9 @@ setMethod("unpack", signature(object = "Problem", solution = "Solution"), functi
 #' Parses the output from a solver and updates the problem state, including the status,
 #' objective value, and values of the primal and dual variables.
 #' Assumes the results are from the given solver.
-#' @param results_dict A list containing the solver output.
+#' @param solution A \linkS4class{Solution} object.
+#' @param chain The corresponding solution \linkS4class{Chain}.
+#' @param inverse_data A \linkS4class{InverseData} object or list containing data necessary for the inversion.
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
   solution <- invert(chain, solution, inverse_data)

@@ -245,6 +245,7 @@ as.Constant <- function(expr) {
 #' @param cols The number of columns in the parameter.
 #' @param name (Optional) A character string representing the name of the parameter.
 #' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
+#' @param ... Additional attribute arguments. See \linkS4class{Leaf} for details.
 #' @rdname Parameter-class
 #' @examples
 #' x <- Parameter(3, name = "x0", sign="NONPOSITIVE") ## 3-vec negative
@@ -330,6 +331,7 @@ setMethod("show", "Parameter", function(object) {
 #' This class represents a parameter whose value is obtained by evaluating a function.
 #'
 #' @slot callback A numeric element, vector, matrix, or data.frame.
+#' @slot dim The dimensions of the parameter.
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
@@ -338,8 +340,7 @@ setMethod("show", "Parameter", function(object) {
 
 #' @param callback A callback function that generates the parameter value.
 #' @param dim The dimensions of the parameter.
-#' @param name (Optional) A character string representing the name of the parameter.
-#' @param sign A character string indicating the sign of the parameter. Must be "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
+#' @param ... Additional attribute arguments. See \linkS4class{Leaf} for details.
 #' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)

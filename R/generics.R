@@ -983,8 +983,9 @@ setGeneric("is_mixed_integer", function(object) { standardGeneric("is_mixed_inte
 #' Updates problem status, problem value, and primal and dual variable values
 #'
 #' @param object A \linkS4class{Problem} object.
-#' @param solver A character string specifying the solver such as "ECOS", "SCS" etc.
-#' @param results_dict the solver output
+#' @param solution A \linkS4class{Solution} object.
+#' @param chain The corresponding solving \linkS4class{Chain}.
+#' @param inverse_data A \linkS4class{InverseData} object or list containing data necessary for the inversion.
 #' @return A list containing the solution to the problem:
 #' \describe{
 #'    \item{\code{status}}{The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".}
@@ -1053,7 +1054,7 @@ setGeneric("get_nonlin_constr", function(object) { standardGeneric("get_nonlin_c
 #'
 #' Import the R library that interfaces with the specified solver.
 #'
-#' @param solver A \linkS4class{Solver} object.
+#' @param solver A \linkS4class{ReductionSolver} object.
 #' @examples
 #' import_solver(ECOS())
 #' import_solver(SCS())
@@ -1068,7 +1069,7 @@ setGeneric("is_installed", function(solver) { standardGeneric("is_installed") })
 #'
 #' Determine if a solver is capable of solving a linear program (LP), second-order cone program (SOCP), positive semidefinite program (PSD), exponential cone program (EXP), or mixed-integer program (MIP).
 #'
-#' @param solver A \linkS4class{Solver} object.
+#' @param solver A \linkS4class{ReductionSolver} object.
 #' @return A logical value.
 #' @examples
 #' lp_capable(ECOS())

@@ -46,7 +46,7 @@ setMethod("flatten", "numeric", function(object) { matrix(object, ncol = 1) })
 # .value_impl.Expression <- function(object) { object@value }
 setMethod("value_impl", "Expression", function(object) { object@value })
 
-#' @param x,object An \linkS4class{Expression} object.
+#' @param object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
 
@@ -60,6 +60,7 @@ setMethod("show", "Expression", function(object) {
   cat("Expression(", curvature(object), ", ", sign(object), ", ", paste(dim(object), collapse = ", "), ")", sep = "")
 })
 
+#' @slot x An \linkS4class{Expression} object.
 #' @rdname Expression-class
 setMethod("as.character", "Expression", function(x) {
   paste("Expression(", curvature(x), ", ", sign(x), ", ", paste(dim(x), collapse = ", "), ")", sep = "")
@@ -77,7 +78,7 @@ setMethod("expr", "Expression", function(object) { object })
 #'
 #' The curvature of an expression.
 #'
-#' @param x An \linkS4class{Expression} object.
+#' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX", "CONCAVE", or "UNKNOWN".
 #' @docType methods
 #' @rdname curvature
@@ -101,7 +102,7 @@ setMethod("curvature", "Expression", function(object) {
 #' 
 #' The log-log curvature of an expression.
 #' 
-#' @param x An \linkS4class{Expression} object.
+#' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX", "LOG_LOG_CONCAVE", or "UNKNOWN".
 #' @docType methods
 #' @rdname log_log_curvature
@@ -279,6 +280,9 @@ setMethod("[", signature(x = "Expression", i = "numeric", j = "numeric", drop = 
   Index(x, Key(i, j))
 })
 
+#' @param i,j The row and column indices of the slice.
+#' @param ... (Unimplemented) Optional arguments.
+#' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.
 #' @rdname SpecialIndex-class
 #' @export
 setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {

@@ -148,6 +148,7 @@ setMethod(".construct_dual_variables", "EqConstraint", function(object, args) {
   callNextMethod(object, list(object@expr))
 })
 
+#' @param x,object A \linkS4class{EqConstraint} object.
 #' @describeIn EqConstraint The string representation of the constraint.
 setMethod("name", "EqConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
@@ -231,6 +232,7 @@ setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr 
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
 
+#' @param x,object A \linkS4class{IneqConstraint} object.
 #' @describeIn IneqConstraint The string representation of the constraint.
 setMethod("name", "IneqConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))

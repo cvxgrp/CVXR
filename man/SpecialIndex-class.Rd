@@ -46,6 +46,14 @@ SpecialIndex(expr, key)
 \S4method{.grad}{SpecialIndex}(object)
 }
 \arguments{
+\item{x, object}{An \linkS4class{Index} object.}
+
+\item{i, j}{The row and column indices of the slice.}
+
+\item{...}{(Unimplemented) Optional arguments.}
+
+\item{drop}{(Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.}
+
 \item{expr}{An \linkS4class{Expression} representing a vector or matrix.}
 
 \item{key}{A list containing the start index, end index, and step size of the slice.}

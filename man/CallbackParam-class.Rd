@@ -27,7 +27,7 @@ This class represents a parameter whose value is obtained by evaluating a functi
 \section{Slots}{
 
 \describe{
-\item{\code{callback}}{A numeric element, vector, matrix, or data.frame.}
+\item{\code{callback}}{A callback function that generates the parameter value.}
 
 \item{\code{dim}}{The dimensions of the parameter.}
 }}

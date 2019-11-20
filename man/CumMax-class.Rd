@@ -5,6 +5,7 @@
 \alias{CumMax-class}
 \alias{.CumMax}
 \alias{CumMax}
+\alias{to_numeric,CumMax-method}
 \alias{.grad,CumMax-method}
 \alias{.column_grad,CumMax-method}
 \alias{dim_from_args,CumMax-method}
@@ -17,6 +18,8 @@
 \title{The CumMax class.}
 \usage{
 CumMax(expr, axis = 2)
+
+\S4method{to_numeric}{CumMax}(object, values)
 
 \S4method{.grad}{CumMax}(object, values)
 
@@ -41,6 +44,8 @@ CumMax(expr, axis = 2)
 
 \item{axis}{A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.}
 
+\item{object}{A \linkS4class{CumMax} object.}
+
 \item{values}{A list of numeric values for the arguments}
 
 \item{value}{A numeric value.}
@@ -52,6 +57,8 @@ This class represents the cumulative maximum of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{to_numeric}: The cumulative maximum along the axis.
+
 \item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
 \item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
@@ -75,5 +82,7 @@ This class represents the cumulative maximum of an expression.
 
 \describe{
 \item{\code{expr}}{An \linkS4class{Expression}.}
+
+\item{\code{axis}}{A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.}
 }}
 

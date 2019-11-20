@@ -53,7 +53,9 @@
 
 \item{values}{A list of arguments to the atom.}
 
-\item{args}{An optional list of arguments to reconstruct the atom. Default is to use current args of the atom}
+\item{args}{An optional list of arguments to reconstruct the atom. Default is to use current args of the atom.}
+
+\item{id_objects}{Currently unused.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}
 

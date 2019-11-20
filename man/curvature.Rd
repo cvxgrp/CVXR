@@ -12,8 +12,6 @@ curvature(object)
 }
 \arguments{
 \item{object}{An \linkS4class{Expression} object.}
-
-\item{x}{An \linkS4class{Expression} object.}
 }
 \value{
 A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX, "CONCAVE", or "UNKNOWN".

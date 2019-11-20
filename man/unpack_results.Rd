@@ -10,9 +10,11 @@ unpack_results(object, solution, chain, inverse_data)
 \arguments{
 \item{object}{A \linkS4class{Problem} object.}
 
-\item{solver}{A character string specifying the solver such as "ECOS", "SCS" etc.}
+\item{solution}{A \linkS4class{Solution} object.}
 
-\item{results_dict}{the solver output}
+\item{chain}{The corresponding solving \linkS4class{Chain}.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object or list containing data necessary for the inversion.}
 }
 \value{
 A list containing the solution to the problem:

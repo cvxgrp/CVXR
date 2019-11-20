@@ -50,7 +50,7 @@ setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem
         are_args_affine(problem@constraints))
 })
 
-#' @param extractor A \linkS4class{CoeffExtractor} object used to extract the affine coefficients of the objective.
+#' @param extractor Used to extract the affine coefficients of the objective.
 #' @describeIn ConeMatrixStuffing Returns a list of the stuffed matrices
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
   # Extract to t(c) %*% x, store in r

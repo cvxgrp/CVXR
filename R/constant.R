@@ -330,7 +330,7 @@ setMethod("show", "Parameter", function(object) {
 #'
 #' This class represents a parameter whose value is obtained by evaluating a function.
 #'
-#' @slot callback A numeric element, vector, matrix, or data.frame.
+#' @slot callback A callback function that generates the parameter value.
 #' @slot dim The dimensions of the parameter.
 #' @name CallbackParam-class
 #' @aliases CallbackParam

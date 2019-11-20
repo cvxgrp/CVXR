@@ -327,6 +327,7 @@ setMethod("atoms", "Atom", function(object) {
 #'
 #' @slot expr A numeric element, data.frame, matrix, vector, or Expression.
 #' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @name AxisAtom-class
 #' @aliases AxisAtom
 #' @rdname AxisAtom-class
@@ -420,6 +421,7 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 #' This class represents the cumulative maximum of an expression.
 #' 
 #' @slot expr An \linkS4class{Expression}.
+#' @slot axis A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.
 #' @name CumMax-class
 #' @aliases CumMax
 #' @rdname CumMax-class
@@ -432,7 +434,7 @@ CumMax <- function(expr, axis = 2) { .CumMax(expr = expr, axis = axis) }
 
 #' @param object A \linkS4class{CumMax} object.
 #' @param values A list of arguments to the atom.
-#' @rdname CumMax-class The cumulative maximum along the axis.
+#' @describeIn CumMax The cumulative maximum along the axis.
 setMethod("to_numeric", "CumMax", function(object, values) { 
   # apply(values[[1]], object@axis, base::cummax)
   if(object@axis == 1)
@@ -1891,7 +1893,7 @@ setMethod("is_incr", "ProdEntries", function(object, idx) { is_nonneg(object@arg
 #' @describeIn ProdEntries Is the atom weakly decreasing in the argument \code{idx}?
 setMethod("is_decr", "ProdEntries", function(object, idx) { FALSE })
 
-#' @param values A list of numeric values for the arguments
+#' @param value A numeric value.
 #' @describeIn ProdEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "ProdEntries", function(object, value) { prod(value)/value })
 

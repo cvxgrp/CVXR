@@ -43,5 +43,7 @@ This virtual class represents atomic expressions that can be applied along an ax
 \item{\code{expr}}{A numeric element, data.frame, matrix, vector, or Expression.}
 
 \item{\code{axis}}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
+
+\item{\code{keepdims}}{(Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.}
 }}
 

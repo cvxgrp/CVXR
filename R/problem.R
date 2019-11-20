@@ -943,7 +943,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
 #' objective value, and values of the primal and dual variables.
 #' Assumes the results are from the given solver.
 #' @param solution A \linkS4class{Solution} object.
-#' @param chain The corresponding solution \linkS4class{Chain}.
+#' @param chain The corresponding solving \linkS4class{Chain}.
 #' @param inverse_data A \linkS4class{InverseData} object or list containing data necessary for the inversion.
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {

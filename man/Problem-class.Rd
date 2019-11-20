@@ -90,7 +90,7 @@ Problem(objective, constraints = list())
 
 \item{solution}{A \linkS4class{Solution} object.}
 
-\item{chain}{The corresponding solution \linkS4class{Chain}.}
+\item{chain}{The corresponding solving \linkS4class{Chain}.}
 
 \item{inverse_data}{A \linkS4class{InverseData} object or list containing data necessary for the inversion.}
 }

@@ -12,8 +12,6 @@ log_log_curvature(object)
 }
 \arguments{
 \item{object}{An \linkS4class{Expression} object.}
-
-\item{x}{An \linkS4class{Expression} object.}
 }
 \value{
 A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX, "LOG_LOG_CONCAVE", or "UNKNOWN".

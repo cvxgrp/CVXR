@@ -65,6 +65,8 @@
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to compare.}
+
+\item{x, object}{A \linkS4class{IneqConstraint} object.}
 }
 \description{
 The IneqConstraint class

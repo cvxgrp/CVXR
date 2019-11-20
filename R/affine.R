@@ -172,7 +172,8 @@ setMethod("is_hermitian", "AddExpression", function(object) {
 })
 
 # As initialize takes in the arg_groups instead of args, we need a special copy function.
-#' @param args An optional list of arguments to reconstruct the atom. Default is to use current args of the atom
+#' @param args An optional list of arguments to reconstruct the atom. Default is to use current args of the atom.
+#' @param id_objects Currently unused.
 #' @describeIn AddExpression Returns a shallow copy of the AddExpression atom
 setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
@@ -243,6 +244,7 @@ NegExpression <- function(expr) { .NegExpression(expr = expr) }
 setMethod("op_name", "NegExpression", function(object) { "-" })
 setMethod("op_func", "NegExpression", function(object) { function(x) { -x } })
 
+#' @param object A \linkS4class{NegExpression} object.
 #' @describeIn NegExpression The (row, col) dimensions of the expression.
 setMethod("dim_from_args", "NegExpression", function(object) { dim(object@args[[1]]) })
 
@@ -1173,10 +1175,10 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
+#' @param x,object An \linkS4class{Index} object.
 #' @describeIn SpecialIndex Returns the index in string form.
 setMethod("name", "SpecialIndex", function(x) { paste(name(x@args[[1]]), as.character(x@key)) })
 
-#' @param object An \linkS4class{Index} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn Index The index/slice into the given value.
 setMethod("to_numeric", "SpecialIndex", function(object, values) {

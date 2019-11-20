@@ -43,6 +43,8 @@
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to subtract.}
 
+\item{object}{A \linkS4class{NegExpression} object.}
+
 \item{idx}{An index into the atom.}
 
 \item{arg_objs}{A list of linear expressions for each argument.}

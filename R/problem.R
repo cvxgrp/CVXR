@@ -320,6 +320,8 @@ setMethod("show", "Solution", function(object) {
 # TODO: Get rid of this and just skip calling copy on Solution objects.
 setMethod("copy", "Solution", function(object, args = NULL, id_objects = list()) { return(object) })
 
+#' @param x,object A \linkS4class{Solution} object.
+#' @rdname Solution-class
 setMethod("as.character", "Solution", function(x) {
   paste("Solution(", x@status, ", (",
         paste(x@primal_vars, collapse = ", "), "), (",
@@ -506,6 +508,7 @@ setMethod("canonicalize", "Problem", function(object) {
   list(obj_canon[[1]], canon_constr)
 })
 
+#' @describeIn Problem logical value indicating whether the problem is a mixed integer program.
 setMethod("is_mixed_integer", "Problem", function(object) {
   any(sapply(variables(object), function(v) { v@attributes$boolean || v@attributes$integer }))
 })
@@ -543,10 +546,10 @@ setMethod("atoms", "Problem", function(object) {
 #' @describeIn Problem Information about the size of the problem.
 setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
 
-# Additional information returned by the solver.
+#' @describeIn Problem Additional information returned by the solver.
 setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
 
-# Set the additional information returned by the solver in the problem.
+#' @describeIn Problem Set the additional information returned by the solver in the problem.
 setMethod("solver_stats<-", "Problem", function(object, value) {
     object@.solver_stats <- value
     object
@@ -565,7 +568,10 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
+#' 
+#' @param object A \linkS4class{Problem} class.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
+#' @param gp Is the problem a geometric problem?
 #' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
   object <- .construct_chains(object, solver = solver, gp = gp)
@@ -585,7 +591,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   candidates <- list(qp_solvers = list(), conic_solvers = list())
   
   if(!is.na(solver)) {
-    if(!(solver %in% INSTALLED_SOLVERS))
+    if(!(solver %in% INSTALLED_SOLVERS)) 
       stop("The solver ", solver, " is not installed")
     if(solver %in% CONIC_SOLVERS)
       candidates$conic_solvers <- c(candidates$conic_solvers, solver)
@@ -621,6 +627,11 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   return(candidates)
 }
 
+#' 
+#' @param object A \linkS4class{Problem} class.
+#' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
+#' @param gp Is the problem a geometric problem?
+#' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "missing"), function(object, solver, gp) {
   get_problem_data(object, solver, gp = FALSE)
 })

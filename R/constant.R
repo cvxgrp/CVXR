@@ -65,6 +65,7 @@ setMethod("value", "Constant", function(object) {
   return(object@value)
 })
 
+#' @describeIn Constant A logical value indicating whether all elements of the constant are positive.
 setMethod("is_pos", "Constant", function(object) {
   if(is.na(object@.cached_is_pos))
     object@.cached_is_pos <- all(object@value > 0)

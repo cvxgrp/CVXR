@@ -224,6 +224,8 @@ setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) 
 .Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
 Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = problem, reductions = reductions) }
 
+#' @param x,object A \linkS4class{Chain} object.
+#' @rdname Chain-class
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
 

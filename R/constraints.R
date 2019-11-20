@@ -15,20 +15,31 @@ setMethod("initialize", "Constraint", function(.Object, ..., dual_variables = li
   return(.Object)
 })
 
+#' @param x,object A \linkS4class{Constraint} object.
+#' @rdname Constraint-class
 setMethod("as.character", "Constraint", function(x) { name(x) })
 setMethod("show", "Constraint", function(object) {
   print(paste(class(object), "(", as.character(object@args[[1]]), ")", sep = ""))
 })
 
+#' @describeIn Constraint The dimensions of the constrained expression.
 setMethod("dim", "Constraint", function(x) { dim(x@args[[1]]) })
+#' @describeIn Constraint The size of the constrained expression.
 setMethod("size", "Constraint", function(object) { size(object@args[[1]]) })
+#' @describeIn Constraint Is the constraint real?
 setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
+#' @describeIn Constraint Is the constraint imaginary?
 setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
+#' @describeIn Constraint Is the constraint complex?
 setMethod("is_complex", "Constraint", function(object) { any(sapply(object@args, is_complex)) })
+#' @describeIn Constraint Is the constraint DCP?
 setMethod("is_dcp", "Constraint", function(object) { stop("Unimplemented") })
+#' @describeIn Constraint Is the constraint DGP?
 setMethod("is_dgp", "Constraint", function(object) { stop("Unimplemented") })
+#' @describeIn Constraint The residual of a constraint
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
+#' @describeIn Constraint The violation of a constraint.
 setMethod("violation", "Constraint", function(object) {
   resid <- residual(object)
   if(any(is.na(resid)))
@@ -36,6 +47,7 @@ setMethod("violation", "Constraint", function(object) {
   return(resid)
 })
 
+#' @describeIn Constraint The value of a constraint.
 setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
   resid <- residual(object)
   if(any(is.na(resid)))
@@ -43,9 +55,18 @@ setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
   return(all(resid <= tolerance))
 })
 
+
+#' 
+#' A Class Union of List and Constraint
+#' 
+#' @name ListORConstr-class
+#' @rdname ListORConstr-class
 setClassUnion("ListORConstr", c("list", "Constraint"))
 
 # Helper function since syntax is different for LinOp (list) vs. Constraint object
+
+#' 
+#' @rdname ListORConstr-class Returns the id of the list or constraint.
 setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id
@@ -53,13 +74,20 @@ setMethod("id", "ListORConstr", function(object) {
     object@id
 })
 
+#' @describeIn Constraint Information needed to reconstruct the object aside from the args.
 setMethod("get_data", "Constraint", function(object) { list(id(object)) })
+#' @describeIn Constraint The dual values of a constraint.
 setMethod("dual_value", "Constraint", function(object) { value(object@dual_variables[[1]]) })
+#' @describeIn Constraint Replaces the dual values of a constraint..
 setReplaceMethod("dual_value", "Constraint", function(object, value) {
   object@dual_variables[[1]] <- value
   object
 })
 
+#' 
+#' The ZeroConstraint class
+#' 
+#' @rdname ZeroConstraint-class
 .ZeroConstraint <- setClass("ZeroConstraint", representation(expr = "Expression"), contains = "Constraint")
 ZeroConstraint <- function(expr, id = NA_integer_) { .ZeroConstraint(expr = expr, id = id) }
 
@@ -68,15 +96,21 @@ setMethod("initialize", "ZeroConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @describeIn ZeroConstraint The string representation of the constraint.
 setMethod("name", "ZeroConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "== 0")
   paste(name(x@args[[1]]), "== 0")
 })
 
+#' @describeIn ZeroConstraint The dimensions of the constrained expression.
 setMethod("dim", "ZeroConstraint", function(x) { dim(x@args[[1]]) })
+#' @describeIn Constraint The size of the constrained expression.
 setMethod("size", "ZeroConstraint", function(object) { size(object@args[[1]]) })
+#' @describeIn ZeroConstraint Is the constraint DCP?
 setMethod("is_dcp", "ZeroConstraint", function(object) { is_affine(object@args[[1]]) })
+#' @describeIn ZeroConstraint Is the constraint DGP?
 setMethod("is_dgp", "ZeroConstraint", function(object) { FALSE })
+#' @describeIn ZeroConstraint The residual of a constraint
 setMethod("residual", "ZeroConstraint", function(object) {
   val <- value(expr(object))
   if(any(is.na(val)))
@@ -84,6 +118,7 @@ setMethod("residual", "ZeroConstraint", function(object) {
   return(abs(val))
 })
 
+#' @describeIn ZeroConstraint The graph implementation of the object. 
 setMethod("canonicalize", "ZeroConstraint", function(object) {
   canon <- canonical_form(object@args[[1]])
   obj <- canon[[1]]
@@ -110,26 +145,36 @@ setMethod(".construct_dual_variables", "EqConstraint", function(object, args) {
   callNextMethod(object, list(object@expr))
 })
 
+#' @describeIn EqConstraint The string representation of the constraint.
 setMethod("name", "EqConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
   paste(name(x@args[[1]]), "==", name(x@args[[2]]))
 })
 
+#' @describeIn EqConstraint The dimensions of the constrained expression.
 setMethod("dim", "EqConstraint", function(x) { dim(x@expr) })
+#' @describeIn EqConstraint The size of the constrained expression.
 setMethod("size", "EqConstraint", function(object) { size(object@expr) })
+#' @describeIn EqConstraint The expression to constrain.
 setMethod("expr", "EqConstraint", function(object) { object@expr })
+#' @describeIn EqConstraint Is the constraint DCP?
 setMethod("is_dcp", "EqConstraint", function(object) { is_affine(object@expr) })
+#' @describeIn EqConstraint Is the constraint DGP?
 setMethod("is_dgp", "EqConstraint", function(object) {
   is_log_log_affine(object@args[[1]]) && is_log_log_affine(object@args[[2]])
 })
 
+#' @describeIn EqConstraint The residual of the constraint..
 setMethod("residual", "EqConstraint", function(object) {
   val <- value(object@expr)
   if(any(is.na(val)))
     return(NA_real_)
   return(abs(val))
 })
-
+#' 
+#' The NonPosConstraint class
+#' 
+#' @rdname NonPosConstraint-class
 .NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"), contains = "Constraint")
 NonPosConstraint <- function(expr, id = NA_integer_) { .NonPosConstraint(expr = expr, id = id) }
 
@@ -138,13 +183,17 @@ setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @describeIn NonPosConstraint The string representation of the constraint.
 setMethod("name", "NonPosConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "<= 0")
   paste(name(x@args[[1]]), "<= 0")
 })
 
+#' @describeIn NonPosConstraint Is the constraint DCP?
 setMethod("is_dcp", "NonPosConstraint", function(object) { is_convex(object@args[[1]]) })
+#' @describeIn NonPosConstraint Is the constraint DGP?
 setMethod("is_dgp", "NonPosConstraint", function(object) { FALSE })
+#' @describeIn NonPosConstraint The graph implementation of the object.
 setMethod("canonicalize", "NonPosConstraint", function(object) {
   canon <- canonical_form(object@args[[1]])
   obj <- canon[[1]]
@@ -153,6 +202,7 @@ setMethod("canonicalize", "NonPosConstraint", function(object) {
   return(list(NA, c(constraints, list(dual_holder))))
 })
 
+#' @describeIn NonPosConstraint The residual of the constraint.
 setMethod("residual", "NonPosConstraint", function(object) {
   val <- value(expr(object))
   if(any(is.na(val)))
@@ -177,6 +227,7 @@ setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr 
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
 
+#' @describeIn IneqConstraint The string representation of the constraint.
 setMethod("name", "IneqConstraint", function(x) {
   # paste(as.character(x@args[[1]]), "<=", as.character(x@args[[2]]))
   paste(name(x@args[[1]]), "<=", name(x@args[[2]]))
@@ -340,6 +391,8 @@ setMethod("show", "ExpCone", function(object) {
   print(paste("ExpCone(", as.character(object@x), ", ", as.character(object@y), ", ", as.character(object@z), ")", sep = ""))
 })
 
+#' @param x,object An \linkS4class{ExpCone} object.
+#' @rdname ExpCone-class
 setMethod("as.character", "ExpCone", function(x) {
   paste("ExpCone(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ")", sep = "")
 })
@@ -431,6 +484,7 @@ setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
   callNextMethod(.Object, ..., args = list(expr))
 })
 
+#' @describeIn PSDConstraint The string representation of the constraint.
 setMethod("name", "PSDConstraint", function(x) {
   # paste(as.character(x@args[[1]]), ">> 0")
   paste(name(x@args[[1]]), ">> 0")
@@ -512,6 +566,8 @@ setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(x@t), ", ", as.character(x@X), ")", sep = "")
 })
 
+#' @param object A \linkS4class{SOC} object.
+#' @rdname SOC-class
 setMethod("residual", "SOC", function(object) {
   t <- value(object@args[[1]])
   X <- value(object@args[[2]])
@@ -583,6 +639,7 @@ setMethod("is_dcp", "SOC", function(object) {
 setMethod("is_dgp", "SOC", function(object) { FALSE })
 
 # TODO: Hack.
+#' @describeIn SOC The canonicalization of the constraint.
 setMethod("canonicalize", "SOC", function(object) {
   canon_t <- canonical_form(object@args[[1]])
   t <- canon_t[[1]]

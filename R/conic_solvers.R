@@ -261,6 +261,7 @@ ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order o
                  prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
 
 # Solver capabilities.
+#' @describeIn ECOS Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "ECOS", function(solver) { FALSE })
 setMethod("supported_constraints", "ECOS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone") })
 
@@ -384,6 +385,7 @@ SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of 
                 prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
 
 # Solver capabilities.
+#' @describeIn SCS Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "SCS", function(solver) { FALSE })
 setMethod("requires_constr", "SCS", function(solver) { TRUE })
 setMethod("supported_constraints", "SCS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
@@ -582,6 +584,7 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
 CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
 
 # Solver capabilities.
+#' @describeIn CBC_CONIC Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
 #' @param solver,object,x A \linkS4class{CBC_CONIC} object.
@@ -625,12 +628,7 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
 
 #' @describeIn CBC_CONIC Imports the solver
-setMethod("import_solver", "CBC_CONIC", function(solver) {
-  installed <- requireNamespace("rcbc", quietly = TRUE)
-  if(!installed)
-    stop("Required R package rcbc not found. Please install from https://github.com/dirkschumacher/rcbc")
-  return(installed)
-})
+setMethod("import_solver", "CBC_CONIC", function(solver) {requireNamespace("rcbc", quietly = TRUE)})
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CBC_CONIC Can CBC_CONIC solve the problem?
@@ -756,6 +754,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
 #'
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
 
+#' @describeIn CPLEX_CONIC Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "CPLEX_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
@@ -1036,6 +1035,7 @@ setClass("CVXOPT", contains = "ECOS")
 CVXOPT <- function() { new("CVXOPT") }
 
 # Solver capabilities.
+#' @describeIn CVXOPT Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
 setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
 
@@ -1130,6 +1130,7 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 #'
 ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
 
+#' @describeIn ECOS_BB Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
 
 #' @param object,x A \linkS4class{ECOS_BB} object.
@@ -1185,6 +1186,7 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 #' An interface for the GLPK solver.
 #'
 GLPK <- setClass("GLPK", contains = "CVXOPT")
+#' @describeIn GLPK Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
 setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
@@ -1294,6 +1296,7 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 #' An interface for the GLPK MI solver.
 #'
 GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
+#' @describeIn GLPK_MI Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
 setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 
@@ -2404,14 +2407,21 @@ tri_to_full <- function(lower_tri, n) {
   matrix(full, nrow = n*n, byrow = FALSE)
 }
 
+#'
+#' The SuperSCS class. Not Implemented
+#' 
+#' @name SuperSCS-class
+#' @rdname SuperSCS-class
 SuperSCS <- setClass("SuperSCS", contains = "SCS")
 SuperSCS.default_settings <- function(object) {
   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
 }
-#' 
-#' The SuperSCS class
-#' @rdname SuperSCS-class
+
+#' @describeIn SuperSCS Returns the name of the SuperSCS solver
 setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
+
+#' 
+#' @describeIn SuperSCS imports the SuperSCS solver.
 setMethod("import_solver", "SuperSCS", function(solver) {
   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 })

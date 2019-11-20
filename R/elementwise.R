@@ -977,6 +977,7 @@ setMethod("copy", "Power", function(object, args = NULL, id_objects = list()) {
   copy
 })
 
+#' @describeIn Power Returns the expression in string form.
 setMethod("name", "Power", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ", ", x@p, ")", sep = "")
 })

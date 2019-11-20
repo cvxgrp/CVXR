@@ -35,7 +35,7 @@ setMethod("show", "Atom", function(object) {
 })
 
 #' @param x,object An \linkS4class{Atom} object.
-#' @describeIn Returns the string representtation of the function call
+#' @describeIn Atom Returns the string representtation of the function call
 setMethod("name", "Atom", function(x) {
   if(is.null(get_data(x)))
     data <- list()
@@ -1506,7 +1506,7 @@ setMethod("name", "Norm1", function(x) {
 })
 
 #' @param values A list of arguments to the atom.
-#' @rdname Norm1 Returns the 1-norm of x along the given axis.
+#' @describeIn Norm1 Returns the 1-norm of x along the given axis.
 setMethod("to_numeric", "Norm1", function(object, values) {
   if(is.na(object@axis))
     # base::norm(values[[1]], type = "O")
@@ -1519,29 +1519,29 @@ setMethod("to_numeric", "Norm1", function(object, values) {
 #' @describeIn Norm1 Does the atom handle complex numbers?
 setMethod("allow_complex", "Norm1", function(object) { TRUE })
 
-#' @rdname Norm1 The atom is always positive.
+#' @describeIn Norm1 The atom is always positive.
 setMethod("sign_from_args", "Norm1", function(object) { c(TRUE, FALSE) })
 
-#' @rdname Norm1 The atom is convex.
+#' @describeIn Norm1 The atom is convex.
 setMethod("is_atom_convex", "Norm1", function(object) { TRUE })
 
-#' @rdname Norm1 The atom is not concave.
+#' @describeIn Norm1 The atom is not concave.
 setMethod("is_atom_concave", "Norm1", function(object) { FALSE })
 
 #' @param idx An index into the atom.
-#' @rdname Norm1 Is the composition weakly increasing in argument \code{idx}?
+#' @describeIn Norm1 Is the composition weakly increasing in argument \code{idx}?
 setMethod("is_incr", "Norm1", function(object, idx) { is_nonneg(object@args[[1]]) })
 
 #' @param idx An index into the atom.
-#' @rdname Norm1 Is the composition weakly decreasing in argument \code{idx}?
+#' @describeIn Norm1 Is the composition weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "Norm1", function(object, idx) { is_nonpos(object@args[[1]]) })
 
-#' @rdname Norm1 Is the atom piecewise linear?
+#' @describeIn Norm1 Is the atom piecewise linear?
 setMethod("is_pwl", "Norm1", function(object) {
   is_pwl(object@args[[1]]) && (is_real(object@args[[1]]) || is_imag(object@args[[1]]))
 })
 
-#' @rdname Norm1 Returns the axis.
+#' @describeIn Norm1 Returns the axis.
 setMethod("get_data", "Norm1", function(object) { list(object@axis) })
 
 #' @describeIn Norm1 Returns constraints describing the domain of the node
@@ -2027,28 +2027,28 @@ setMethod("initialize", "SymbolicQuadForm", function(.Object, ..., x, P, origina
   .Object
 })
 
-#' @rdname SymbolicQuadForm The dimensions of the atom.
+#' @describeIn  SymbolicQuadForm The dimensions of the atom.
 setMethod("dim_from_args", "SymbolicQuadForm", function(object) { dim_from_args(object@original_expression) })
 
-#' @rdname SymbolicQuadForm The sign (is positive, is negative) of the atom.
+#' @describeIn  SymbolicQuadForm The sign (is positive, is negative) of the atom.
 setMethod("sign_from_args", "SymbolicQuadForm", function(object) { sign_from_args(object@original_expression) })
 
-#' @rdname SymbolicQuadForm The original expression.
+#' @describeIn  SymbolicQuadForm The original expression.
 setMethod("get_data", "SymbolicQuadForm", function(object) { list(object@original_expression) })
 
-#' @rdname SymbolicQuadForm Is the original expression convex?
+#' @describeIn  SymbolicQuadForm Is the original expression convex?
 setMethod("is_atom_convex", "SymbolicQuadForm", function(object) { is_atom_convex(object@original_expression) })
 
-#' @rdname SymbolicQuadForm Is the original expression concave?
+#' @describeIn  SymbolicQuadForm Is the original expression concave?
 setMethod("is_atom_concave", "SymbolicQuadForm", function(object) { is_atom_concave(object@original_expression) })
 
-#' @rdname SymbolicQuadForm Is the original expression weakly increasing in argument \code{idx}?
+#' @describeIn  SymbolicQuadForm Is the original expression weakly increasing in argument \code{idx}?
 setMethod("is_incr", "SymbolicQuadForm", function(object, idx) { is_incr(object@original_expression, idx) })
 
-#' @rdname SymbolicQuadForm Is the original expression weakly decreasing in argument \code{idx}?
+#' @describeIn  SymbolicQuadForm Is the original expression weakly decreasing in argument \code{idx}?
 setMethod("is_decr", "SymbolicQuadForm", function(object, idx) { is_decr(object@original_expression, idx) })
 
-#' @rdname SymbolicQuadForm The atom is quadratic.
+#' @describeIn  SymbolicQuadForm The atom is quadratic.
 setMethod("is_quadratic", "SymbolicQuadForm", function(object) { TRUE })
 
 #' @param values A list of numeric values for the arguments

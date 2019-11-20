@@ -141,6 +141,7 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 #' @describeIn AddExpression The dimensions of the expression.
 setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
 
+#' @describeIn AddExpression The string form of the expression.
 setMethod("name", "AddExpression", function(x) {
   paste(sapply(x@args, name), collapse = " + ")
 })
@@ -215,6 +216,8 @@ setMethod("initialize", "UnaryOperator", function(.Object, ..., expr) {
 
 setMethod("op_name", "UnaryOperator", function(object) { stop("Unimplemented") })
 setMethod("op_func", "UnaryOperator", function(object) { stop("Unimplemented") })
+
+#' @describeIn UnaryOperator Returns the expression in string form.
 setMethod("name", "UnaryOperator", function(x) {
   paste(op_name(x), name(x@args[[1]]), sep = "")
 })
@@ -1169,6 +1172,7 @@ setMethod("initialize", "SpecialIndex", function(.Object, ..., expr, key) {
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
+#' @describeIn SpecialIndex Returns the index in string form.
 setMethod("name", "SpecialIndex", function(x) { paste(name(x@args[[1]]), as.character(x@key)) })
 
 #' @param object An \linkS4class{Index} object.

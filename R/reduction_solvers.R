@@ -118,7 +118,7 @@ setMethod("invert", signature(object = "ConstantSolver", solution = "Solution", 
 #' @describeIn ConstantSolver Returns the name of the solver.
 setMethod("name", "ConstantSolver", function(x) { return("CONSTANT_SOLVER") })
 
-### @describeIn ConstantSolver Imports the solver.
+#' @describeIn ConstantSolver Imports the solver.
 setMethod("import_solver", "ConstantSolver", function(solver) { TRUE })
 
 #' @describeIn ConstantSolver Is the solver installed?

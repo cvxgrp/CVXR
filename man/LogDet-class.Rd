@@ -14,6 +14,7 @@
 \alias{is_incr,LogDet-method}
 \alias{is_decr,LogDet-method}
 \alias{.grad,LogDet-method}
+\alias{.domain,LogDet-method}
 \title{The LogDet class.}
 \usage{
 LogDet(A)
@@ -35,6 +36,8 @@ LogDet(A)
 \S4method{is_decr}{LogDet}(object, idx)
 
 \S4method{.grad}{LogDet}(object, values)
+
+\S4method{.domain}{LogDet}(object)
 }
 \arguments{
 \item{A}{An \linkS4class{Expression} or numeric matrix.}
@@ -67,6 +70,8 @@ The natural logarithm of the determinant of a matrix, \eqn{\log\det(A)}.
 \item \code{is_decr}: The atom is not monotonic in any argument.
 
 \item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.domain}: Returns constraints describing the domain of the node
 }}
 
 \section{Slots}{

@@ -858,12 +858,20 @@ max.Expression <- function(..., na.rm = FALSE) {
     warning("na.rm is unimplemented for Expression objects")
 
   vals <- list(...)
+  if(length(vals) == 0) {
+    warning("no non-missing arguments to max; returning -Inf")
+    return(-Inf)
+  }
+  
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
   if(!all(is_expr)) {
     max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
     max_args <- c(max_args, max_num)
   }
+  
+  if(length(max_args) == 1)
+    return(max_args[[1]])
   .MaxElemwise(atom_args = max_args)
 }
 
@@ -884,6 +892,11 @@ min.Expression <- function(..., na.rm = FALSE) {
     warning("na.rm is unimplemented for Expression objects")
 
   vals <- list(...)
+  if(length(vals) == 0) {
+    warning("no non-missing arguments to min; returning Inf")
+    return(Inf)
+  }
+  
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
   if(!all(is_expr)) {
@@ -891,6 +904,9 @@ min.Expression <- function(..., na.rm = FALSE) {
     min_args <- c(min_args, min_num)
   }
   min_args <- lapply(min_args, function(arg) { -as.Constant(arg) })
+  
+  if(length(min_args) == 1)
+    return(-min_args[[1]])
   -.MaxElemwise(atom_args = min_args)
 }
 
@@ -1832,7 +1848,7 @@ setMethod("cummax", signature(x = "Expression"), function(x) { CumMax(expr = Vec
 #' @examples
 #' C <- Variable(3,3)
 #' obj <- Maximize(C[1,3])
-#' constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Semidef(3))
+#' constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Variable(3,3, PSD = TRUE))
 #' prob <- Problem(obj, constraints)
 #' result <- solve(prob)
 #' result$value

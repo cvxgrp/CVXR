@@ -22,7 +22,7 @@ Extracts the diagonal from a matrix or makes a vector into a diagonal matrix.
 \examples{
 C <- Variable(3,3)
 obj <- Maximize(C[1,3])
-constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Semidef(3))
+constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Variable(3,3, PSD = TRUE))
 prob <- Problem(obj, constraints)
 result <- solve(prob)
 result$value

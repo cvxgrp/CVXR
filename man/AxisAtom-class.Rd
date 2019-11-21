@@ -8,6 +8,7 @@
 \alias{get_data,AxisAtom-method}
 \alias{validate_args,AxisAtom-method}
 \alias{.axis_grad,AxisAtom-method}
+\alias{.column_grad,AxisAtom-method}
 \title{The AxisAtom class.}
 \usage{
 \S4method{dim_from_args}{AxisAtom}(object)
@@ -17,11 +18,15 @@
 \S4method{validate_args}{AxisAtom}(object)
 
 \S4method{.axis_grad}{AxisAtom}(object, values)
+
+\S4method{.column_grad}{AxisAtom}(object, value)
 }
 \arguments{
 \item{object}{An \linkS4class{Atom} object.}
 
 \item{values}{A list of numeric values for the arguments}
+
+\item{value}{A numeric value}
 }
 \description{
 This virtual class represents atomic expressions that can be applied along an axis in CVXR.
@@ -35,6 +40,8 @@ This virtual class represents atomic expressions that can be applied along an ax
 \item \code{validate_args}: Check that the new dimensions have the same number of entries as the old.
 
 \item \code{.axis_grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
+\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
 }}
 
 \section{Slots}{

@@ -3,7 +3,19 @@
 \docType{class}
 \name{ListORConstr-class}
 \alias{ListORConstr-class}
+\alias{id,ListORConstr-method}
 \title{A Class Union of List and Constraint}
+\usage{
+\S4method{id}{ListORConstr}(object)
+}
+\arguments{
+\item{object}{A list or \linkS4class{Constraint} object.}
+}
 \description{
 A Class Union of List and Constraint
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{id}: Returns the ID associated with the list or constraint.
+}}
+

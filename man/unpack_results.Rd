@@ -53,7 +53,7 @@ ecos_output <- ECOSolveR::ECOS_csolve(
 res1 <- unpack_results(prob1, "ECOS", ecos_output)
 # Without DCP validation (so be sure of your math), above is equivalent to:
 # res1 <- solve(prob1, solver = "ECOS")
-X <- Semidef(2)
+X <- Variable(2,2, PSD = TRUE)
 Fmat <- rbind(c(1,0), c(0,-1))
 obj <- Minimize(sum_squares(X - Fmat))
 prob2 <- Problem(obj)

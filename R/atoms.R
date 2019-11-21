@@ -399,8 +399,8 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   list(D)
 })
 
-#' @param values A list of numeric values for the arguments
-#' @param AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
+#' @param value A numeric value
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
 setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 #'
@@ -707,8 +707,13 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
   copy
 })
 
-#' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries
-#' @return The marmonic mean of 'x'
+#'
+#' The HarmonicMean atom.
+#' 
+#' The harmonic mean of x, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where n is the length of x.
+#'
+#' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries.
+#' @return The harmonic mean of \code{x}.
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   size(x) * Pnorm(x = x, p = -1)
@@ -743,10 +748,10 @@ setMethod("to_numeric", "LambdaMax", function(object, values) {
   max(eigen(values[[1]], only.values = TRUE)$values)
 })
 
-#' @rdname LambdaMax Returns the constraints describing the domain of the atom.
+#' @describeIn LambdaMax Returns the constraints describing the domain of the atom.
 setMethod(".domain", "LambdaMax", function(object) { list(Conj(t(object@args[[1]])) == object@args[[1]]) })
 
-#' @rdname LambdaMax Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
+#' @describeIn LambdaMax Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
 setMethod(".grad", "LambdaMax", function(object, values) {
   r <- base::eigen(values[[1]], only.values = FALSE)   # Eigenvalues returned in decreasing order.
   v <- r$vectors  # eigenvectors
@@ -784,8 +789,13 @@ setMethod("is_incr", "LambdaMax", function(object, idx) { FALSE })
 #' @describeIn LambdaMax The atom is not monotonic in any argument.
 setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 
-#' @param A A matrix
-#' @return Returns the minimum eigenvalue of a matrix
+#'
+#' The LambdaMin atom.
+#'
+#' The minimum eigenvalue of a matrix, \eqn{\lambda_{\min}(A)}.
+#' 
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @return Returns the minimum eigenvalue of a matrix.
 LambdaMin <- function(A) {
   A <- as.Constant(A)
   -LambdaMax(-A)
@@ -841,9 +851,14 @@ setMethod("get_data", "LambdaSumLargest", function(object) { list(object@k) })
 #' @describeIn LambdaSumLargest Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "LambdaSumLargest", function(object, values) { stop("Unimplemented") })
 
-#' @param A A matrix
-#' @param k Number of eigenvalues to sum from
-#' @return Returns the sum of the k smallest eigenvalues of a matrix
+#'
+#' The LambdaSumSmallest atom.
+#'
+#' This class represents the sum of the \code{k} smallest eigenvalues of a matrix.
+#'
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @param k A positive integer.
+#' @return Returns the sum of the k smallest eigenvalues of a matrix.
 LambdaSumSmallest <- function(A, k) {
   A <- as.Constant(A)
   -LambdaSumLargest(-A, k)
@@ -924,7 +939,7 @@ setMethod(".grad", "LogDet", function(object, values) {
     return(list(NA_real_))
 })
 
-#' @describeIn Logdet Returns constraints describing the domain of the node
+#' @describeIn LogDet Returns constraints describing the domain of the node
 setMethod(".domain", "LogDet", function(object) { list(object@args[[1]] %>>% 0) })
 
 #'
@@ -1417,7 +1432,12 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   }
 })
 
-#' @param X The matrix to take the l_{p,q} norm of
+#'
+#' The MixedNorm atom.
+#' 
+#' The \eqn{l_{p,q}} norm of X, \eqn{(\sum_k (\sum_l ||X_{k,l}||^p)^{q/p})^{1/q}}.
+#'
+#' @param X The matrix to take the \eqn{l_{p,q}} norm of
 #' @param p The type of inner norm
 #' @param q The type of outer norm
 #' @return Returns the mixed norm of X with specified parameters p and q
@@ -1431,12 +1451,17 @@ MixedNorm <- function(X, p = 2, q = 1) {
   Norm(vecnorms, q)
 }
 
-#' @param X The matrix to take the norm of
+#'
+#' The Norm atom.
+#' 
+#' Wrapper around the different norm atoms.
+#'
+#' @param x The matrix to take the norm of
 #' @param p The type of norm. Valid options include any positive integer, 'fro' (for frobenius), 
 #' 'nuc' (sum of singular values), np.inf or 'inf' (infinity norm).
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
-#' @return Returns the specified norm of matrix X
+#' @return Returns the specified norm of x.
 Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
   
@@ -1465,10 +1490,15 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   }
 }
 
-#' @param X The matrix to take the norm of
+#'
+#' The Norm2 atom.
+#' 
+#' The 2-norm of an expression.
+#'
+#' @param x An \linkS4class{Expression} object.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
-#' @return Returns the two norm of matrix X
+#' @return Returns the 2-norm of x.
 Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
   Pnorm(x, p = 2, axis = axis, keepdims = keepdims)
 }
@@ -1744,6 +1774,11 @@ setMethod("is_decr", "OneMinusPos", function(object, idx) { TRUE })
 #' @describeIn OneMinusPos Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "OneMinusPos", function(object, values) { Matrix(-object@.ones, sparse = TRUE) })
 
+#'
+#' The DiffPos atom.
+#' 
+#' The difference between expressions, \eqn{x - y}, where \eqn{x > y > 0}.
+#'
 #' @param x An \linkS4class{Expression}
 #' @param y An \linkS4class{Expression}
 #' @return The difference x - y with domain {x,y: x > y > 0}.
@@ -2050,10 +2085,15 @@ setMethod("is_quadratic", "SymbolicQuadForm", function(object) { TRUE })
 #' @describeIn SymbolicQuadForm Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplemented") })
 
+#'
+#' Compute a Matrix Decomposition.
+#' 
+#' Compute sgn, scale, M such that \eqn{P = sgn * scale * dot(M, t(M))}.
+#'
 #' @param P A real symmetric positive or negative (semi)definite input matrix
 #' @param cond Cutoff for small eigenvalues. Singular values smaller than rcond * largest_eigenvalue are considered negligible.
 #' @param rcond Cutoff for small eigenvalues. Singular values smaller than rcond * largest_eigenvalue are considered negligible.
-#' @return A list consisting of induced matrix 2-norm of P and a rectangular matrix such that P = scale * (dot(M1, M1.T) - dot(M2, M2.T))
+#' @return A list consisting of induced matrix 2-norm of P and a rectangular matrix such that P = scale * (dot(M1, t(M1)) - dot(M2, t(M2)))
 .decomp_quad <- function(P, cond = NA, rcond = NA) {
   eig <- eigen(P, only.values = FALSE)
   w <- eig$values
@@ -2312,6 +2352,11 @@ setMethod(".grad", "SumLargest", function(object, values) {
   list(Matrix(D, sparse = TRUE))
 })
 
+#'
+#' The SumSmallest atom.
+#' 
+#' The sum of the smallest k values of a matrix.
+#'
 #' @param x An \linkS4class{Expression} or numeric matrix.
 #' @param k The number of smallest values to sum over.
 #' @return Sum of the smlalest k values
@@ -2320,14 +2365,24 @@ SumSmallest <- function(x, k) {
   -SumLargest(x = -x, k = k)
 }
 
-#' @param x An \linkS4class{Expression} or numeric matrix.
-#' @param k The number of smallest values to sum over.
-#' @return Sum of the squares of the entries
+#'
+#' The SumSquares atom.
+#' 
+#' The sum of the squares of the entries.
+#'
+#' @param expr An \linkS4class{Expression} or numeric matrix.
+#' @return Sum of the squares of the entries in the expression.
 SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
-#' @param value An \linkS4class{Expression} representing the value to take the total variation of
-#' @param ... Additional matrices extending the third dimension of value
-#' @return An expression representing the total variation
+#'
+#' The TotalVariation atom.
+#' 
+#' The total variation of a vector, matrix, or list of matrices.
+#' Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
+#'
+#' @param value An \linkS4class{Expression} representing the value to take the total variation of.
+#' @param ... Additional matrices extending the third dimension of value.
+#' @return An expression representing the total variation.
 TotalVariation <- function(value, ...) {
   value <- as.Constant(value)
   if(ndim(value) == 0 || (nrow(value) == 1 && ncol(value) == 1))

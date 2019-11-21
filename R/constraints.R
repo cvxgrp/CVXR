@@ -65,9 +65,8 @@ setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
 setClassUnion("ListORConstr", c("list", "Constraint"))
 
 # Helper function since syntax is different for LinOp (list) vs. Constraint object
-
-#' 
-#' @rdname ListORConstr-class Returns the id of the list or constraint.
+#' @param object A list or \linkS4class{Constraint} object.
+#' @describeIn ListORConstr Returns the ID associated with the list or constraint.
 setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id

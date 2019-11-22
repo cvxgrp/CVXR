@@ -14,6 +14,8 @@
 \alias{solve_via_data,GUROBI_CONIC-method}
 \title{An interface for the GUROBI conic solver.}
 \usage{
+GUROBI_CONIC()
+
 \S4method{mip_capable}{GUROBI_CONIC}(solver)
 
 \S4method{name}{GUROBI_CONIC}(x)

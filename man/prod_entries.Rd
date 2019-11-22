@@ -10,11 +10,9 @@
 prod_entries(..., axis = NA_real_, keepdims = FALSE)
 
 \method{prod}{Expression}(..., na.rm = FALSE)
-
-prod_entries(..., axis = NA_real_, keepdims = FALSE)
 }
 \arguments{
-\item{...}{\linkS4class{Expression} objects, vectors, or matrices.}
+\item{...}{Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.}
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}
 
@@ -24,12 +22,8 @@ prod_entries(..., axis = NA_real_, keepdims = FALSE)
 }
 \value{
 An \linkS4class{Expression} representing the product of the entries of the input.
-
-An \linkS4class{Expression} representing the product of the entries of the input.
 }
 \description{
-The product of entries in a vector or matrix.
-
 The product of entries in a vector or matrix.
 }
 \details{
@@ -49,19 +43,8 @@ result$getValue(X)
 n <- 2
 X <- Variable(n, n, pos=TRUE)
 obj <- sum(X)
-constraints <- list(prod_entries(X) == 4)
+constraints <- list(prod(X) == 4)
 prob <- Problem(Minimize(obj), constraints)
 result <- solve(prob, gp=TRUE)
 result$value
-x <- Variable(2)
-prob <- Problem(Minimize(prod_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
-result <- solve(prob, gp = TRUE)
-result$value
-result$getValue(x)
-
-C <- Variable(3,2)
-prob <- Problem(Maximize(prod_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
-result <- solve(prob, gp = TRUE)
-result$value
-result$getValue(C)
 }

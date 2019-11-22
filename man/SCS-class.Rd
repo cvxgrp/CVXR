@@ -14,6 +14,8 @@
 \alias{solve_via_data,SCS-method}
 \title{An interface for the SCS solver}
 \usage{
+SCS()
+
 \S4method{mip_capable}{SCS}(solver)
 
 \S4method{status_map}{SCS}(solver, status)

@@ -11,23 +11,23 @@ get_problem_data(object, solver, gp)
 
 \item{solver}{A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.}
 
-\item{gp}{A logical value indicating whether the problem is a geometric program.}
+\item{gp}{(Optional) A logical value indicating whether the problem is a geometric program.}
 }
 \value{
-A list of arguments for the solver.
+A list containing the data for the solver, the solving chain for the problem, and the inverse data needed to invert the solution.
 }
 \description{
 Get the problem data used in the call to the solver.
 }
 \examples{
 a <- Variable(name = "a")
-data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
+data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")[[1]]
 data[["dims"]]
 data[["c"]]
 data[["A"]]
 
 x <- Variable(2, name = "x")
-data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")
+data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")[[1]]
 data[["dims"]]
 data[["c"]]
 data[["A"]]

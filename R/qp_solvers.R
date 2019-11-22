@@ -10,8 +10,8 @@ is_stuffed_qp_objective <- function(objective) {
 }
 
 #'
-#'  A QP solver interface.
-#'  
+#' A QP solver interface.
+#' 
 setClass("QpSolver", contains = "ReductionSolver")
 
 #' @param object A \linkS4class{QpSolver} object.
@@ -106,7 +106,11 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 #' @aliases CPLEX_QP
 #' @rdname CPLEX_QP-class
 #' @export
-CPLEX_QP <- setClass("CPLEX_QP", contains = "QpSolver")
+setClass("CPLEX_QP", contains = "QpSolver")
+
+#' @rdname CPLEX_QP-class
+#' @export
+CPLEX_QP <- function() { new("CPLEX_QP") }
 
 #' @param x,object,solver A \linkS4class{CPLEX_QP} object.
 #' @describeIn CPLEX_QP Can the solver handle mixed-integer programs?
@@ -328,7 +332,11 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
 #' @aliases GUROBI_QP
 #' @rdname GUROBI_QP-class
 #' @export
-GUROBI_QP <- setClass("GUROBI_QP", contains = "QpSolver")
+setClass("GUROBI_QP", contains = "QpSolver")
+
+#' @rdname GUROBI_QP-class
+#' @export
+GUROBI_QP <- function() { new("GUROBI_QP") }
 
 #' @param solver,object,x A \linkS4class{GUROBI_QP} object.
 #' @describeIn GUROBI_QP Can the solver handle mixed-integer programs?
@@ -603,7 +611,11 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
 #' @aliases OSQP
 #' @rdname OSQP-class
 #' @export
-OSQP <- setClass("OSQP", contains = "QpSolver")
+setClass("OSQP", contains = "QpSolver")
+
+#' @rdname OSQP-class
+#' @export
+OSQP <- function() { new("OSQP") }
 
 #' @param solver,object,x A \linkS4class{OSQP} object.
 #' @param status A status code returned by the solver.

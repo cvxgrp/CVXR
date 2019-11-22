@@ -16,6 +16,8 @@
 \alias{solve_via_data,CBC_CONIC-method}
 \title{An interface to the CBC solver}
 \usage{
+CBC_CONIC()
+
 \S4method{mip_capable}{CBC_CONIC}(solver)
 
 \S4method{status_map}{CBC_CONIC}(solver, status)

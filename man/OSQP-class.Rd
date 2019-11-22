@@ -11,6 +11,8 @@
 \alias{solve_via_data,OSQP-method}
 \title{An interface for the OSQP solver.}
 \usage{
+OSQP()
+
 \S4method{status_map}{OSQP}(solver, status)
 
 \S4method{name}{OSQP}(x)

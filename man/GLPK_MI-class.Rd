@@ -10,6 +10,8 @@
 \alias{solve_via_data,GLPK_MI-method}
 \title{An interface for the GLPK MI solver.}
 \usage{
+GLPK_MI()
+
 \S4method{mip_capable}{GLPK_MI}(solver)
 
 \S4method{status_map}{GLPK_MI}(solver, status)

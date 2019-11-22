@@ -261,8 +261,12 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
 #' @aliases ECOS
 #' @rdname ECOS-class
 #' @export
-ECOS <- setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
+setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                  prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
+
+#' @rdname ECOS-class
+#' @export
+ECOS <- function() { new("ECOS") }
 
 # Solver capabilities.
 #' @describeIn ECOS Can the solver handle mixed-integer programs?
@@ -389,8 +393,12 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
 #' @aliases SCS
 #' @rdname SCS-class
 #' @export
-SCS <- setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
+setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
                 prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
+
+#' @rdname SCS-class
+#' @export
+SCS <- function() { new("SCS") }
 
 # Solver capabilities.
 #' @describeIn SCS Can the solver handle mixed-integer programs?
@@ -593,7 +601,11 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, s
 #' @aliases CBC_CONIC
 #' @rdname CBC_CONIC-class
 #' @export
-CBC_CONIC <- setClass("CBC_CONIC", contains = "SCS")
+setClass("CBC_CONIC", contains = "SCS")
+
+#' @rdname CBC_CONIC-class
+#' @export
+CBC_CONIC <- function() { new("CBC_CONIC") }
 
 # Solver capabilities.
 #' @describeIn CBC_CONIC Can the solver handle mixed-integer programs?
@@ -769,6 +781,10 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
 #' @rdname CPLEX_CONIC-class
 #' @export
 CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
+
+#' @rdname CPLEX_CONIC-class
+#' @export
+CPLEX_CONIC <- function() { new("CPLEX_CONIC") }
 
 #' @describeIn CPLEX_CONIC Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
@@ -1048,6 +1064,7 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
 #' An interface for the CVXOPT solver.
 #'
 setClass("CVXOPT", contains = "ECOS")
+
 CVXOPT <- function() { new("CVXOPT") }
 
 # Solver capabilities.
@@ -1148,7 +1165,11 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 #' @aliases ECOS_BB
 #' @rdname ECOS_BB-class
 #' @export
-ECOS_BB <- setClass("ECOS_BB", contains = "ECOS")
+setClass("ECOS_BB", contains = "ECOS")
+
+#' @rdname ECOS_BB-class
+#' @export
+ECOS_BB <- function() { new("ECOS_BB") }
 
 #' @param solver,object,x A \linkS4class{ECOS_BB} object.
 #' @describeIn ECOS_BB Can the solver handle mixed-integer programs?
@@ -1209,7 +1230,11 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 #' @aliases GLPK
 #' @rdname GLPK-class
 #' @export
-GLPK <- setClass("GLPK", contains = "CVXOPT")
+setClass("GLPK", contains = "CVXOPT")
+
+#' @rdname GLPK-class
+#' @export
+GLPK <- function() { new("GLPK") }
 
 #' @describeIn GLPK Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK", function(solver) { FALSE })
@@ -1324,7 +1349,11 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 #' @aliases GLPK_MI
 #' @rdname GLPK_MI-class
 #' @export
-GLPK_MI <- setClass("GLPK_MI", contains = "GLPK")
+setClass("GLPK_MI", contains = "GLPK")
+
+#' @rdname GLPK_MI-class
+#' @export
+GLPK_MI <- function() { new("GLPK_MI") }
 
 #' @describeIn GLPK_MI Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
@@ -1421,7 +1450,11 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 #' @aliases GUROBI_CONIC
 #' @rdname GUROBI_CONIC-class
 #' @export
-GUROBI_CONIC <- setClass("GUROBI_CONIC", contains = "SCS")
+setClass("GUROBI_CONIC", contains = "SCS")
+
+#' @rdname GUROBI_CONIC-class
+#' @export
+GUROBI_CONIC <- function() { new("GUROBI_CONIC") }
 
 # Solver capabilities.
 #' @param solver,object,x A \linkS4class{GUROBI_CONIC} object.
@@ -1673,8 +1706,12 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
 #' @aliases MOSEK
 #' @rdname MOSEK-class
 #' @export
-MOSEK <- setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
-                           prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
+setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
+                  prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
+
+#' @rdname MOSEK-class
+#' @export
+MOSEK <- function() { new("MOSEK") }
 
 #' 
 #' Turns symmetric 2D array into a lower triangular matrix
@@ -2083,8 +2120,11 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
     # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-    A_holder <- sparseMatrix(row, col, x = vals)
-    prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
+    A_holder <- sparseMatrix(i = row, j = col, x = vals)
+    row_seq <- as.numeric(seq_len(nrow(A_holder)))
+    col_seq <- as.numeric(seq_len(ncol(A_holder)))
+    prob$A[row_seq, col_seq] <- A_holder
+    # prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
   }
 
   if(total_soc_exp_slacks > 0) {

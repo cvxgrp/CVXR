@@ -1462,6 +1462,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return Returns the specified norm of x.
+#' @rdname Norm-atom
 Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
   
@@ -1499,6 +1500,7 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return Returns the 2-norm of x.
+#' @rdname Norm2-atom
 Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
   Pnorm(x, p = 2, axis = axis, keepdims = keepdims)
 }

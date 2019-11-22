@@ -17,9 +17,9 @@ A logical value indicating whether the problem or expression is DCP compliant, i
 Determine if a problem or expression complies with the disciplined geometric programming rules.
 }
 \examples{
-x <- Variable()
-y <- Variable()
-prob <- Problem(Minimize(x*y), list(x <= 5, y >= -5))
+x <- Variable(pos = TRUE)
+y <- Variable(pos = TRUE)
+prob <- Problem(Minimize(x*y), list(x <= 5, y >= 5))
 is_dgp(prob)
-solve(prob)
+solve(prob, gp = TRUE)
 }

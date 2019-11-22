@@ -210,11 +210,11 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
 #' @examples 
-#' x <- Variable()
-#' y <- Variable()
-#' prob <- Problem(Minimize(x*y), list(x <= 5, y >= -5))
+#' x <- Variable(pos = TRUE)
+#' y <- Variable(pos = TRUE)
+#' prob <- Problem(Minimize(x*y), list(x <= 5, y >= 5))
 #' is_dgp(prob)
-#' solve(prob)
+#' solve(prob, gp = TRUE)
 #' @docType methods
 #' @rdname is_dgp
 #' @export
@@ -896,17 +896,17 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #'
 #' @param object A \linkS4class{Problem} object.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
-#' @param gp A logical value indicating whether the problem is a geometric program.
-#' @return A list of arguments for the solver.
+#' @param gp (Optional) A logical value indicating whether the problem is a geometric program.
+#' @return A list containing the data for the solver, the solving chain for the problem, and the inverse data needed to invert the solution.
 #' @examples
 #' a <- Variable(name = "a")
-#' data <- get_problem_data(Problem(Maximize(exp(a) + 2)), "SCS")
+#' data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")[[1]]
 #' data[["dims"]]
 #' data[["c"]]
 #' data[["A"]]
 #'
 #' x <- Variable(2, name = "x")
-#' data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")
+#' data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")[[1]]
 #' data[["dims"]]
 #' data[["c"]]
 #' data[["A"]]

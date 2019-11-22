@@ -12,6 +12,8 @@
 \alias{invert,ECOS,list,list-method}
 \title{An interface for the ECOS solver}
 \usage{
+ECOS()
+
 \S4method{mip_capable}{ECOS}(solver)
 
 \S4method{status_map}{ECOS}(solver, status)

@@ -14,6 +14,8 @@
 \alias{invert,MOSEK,ANY,ANY-method}
 \title{An interface for the MOSEK solver.}
 \usage{
+MOSEK()
+
 \S4method{mip_capable}{MOSEK}(solver)
 
 \S4method{import_solver}{MOSEK}(solver)

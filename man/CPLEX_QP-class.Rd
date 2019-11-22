@@ -12,6 +12,8 @@
 \alias{solve_via_data,CPLEX_QP-method}
 \title{An interface for the CPLEX solver.}
 \usage{
+CPLEX_QP()
+
 \S4method{mip_capable}{CPLEX_QP}(solver)
 
 \S4method{status_map}{CPLEX_QP}(solver, status)

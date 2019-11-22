@@ -10,6 +10,8 @@
 \alias{solve_via_data,ECOS_BB-method}
 \title{An interface for the ECOS BB solver.}
 \usage{
+ECOS_BB()
+
 \S4method{mip_capable}{ECOS_BB}(solver)
 
 \S4method{name}{ECOS_BB}(x)

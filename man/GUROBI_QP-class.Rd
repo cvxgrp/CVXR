@@ -12,6 +12,8 @@
 \alias{invert,GUROBI_QP,list,InverseData-method}
 \title{An interface for the GUROBI_QP solver.}
 \usage{
+GUROBI_QP()
+
 \S4method{mip_capable}{GUROBI_QP}(solver)
 
 \S4method{status_map}{GUROBI_QP}(solver, status)

@@ -212,7 +212,7 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' @examples 
 #' x <- Variable(pos = TRUE)
 #' y <- Variable(pos = TRUE)
-#' prob <- Problem(Minimize(x*y), list(x <= 5, y >= 5))
+#' prob <- Problem(Minimize(x*y), list(x >= 5, y >= 5))
 #' is_dgp(prob)
 #' solve(prob, gp = TRUE)
 #' @docType methods

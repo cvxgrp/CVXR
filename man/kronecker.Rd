@@ -5,17 +5,11 @@
 \alias{kronecker}
 \alias{\%x\%}
 \alias{kronecker,ANY,Expression-method}
-\alias{\%x\%,Expression,ANY-method}
-\alias{\%x\%,ANY,Expression-method}
 \title{Kronecker Product}
 \usage{
 \S4method{kronecker}{Expression,ANY}(X, Y, FUN = "*", make.dimnames = FALSE, ...)
 
 \S4method{kronecker}{ANY,Expression}(X, Y, FUN = "*", make.dimnames = FALSE, ...)
-
-\S4method{\\\%x\\\%}{Expression,ANY}(X, Y)
-
-\S4method{\\\%x\\\%}{ANY,Expression}(X, Y)
 }
 \arguments{
 \item{X}{An \linkS4class{Expression} or matrix.}

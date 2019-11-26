@@ -1955,13 +1955,13 @@ setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FU
   Kron(X, Y)
 })
 
-#' @rdname kronecker
-#' @export
-setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
+## #' @rdname kronecker
+## #' @export
+## setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 
-#' @rdname kronecker
-#' @export
-setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
+## #' @rdname kronecker
+## #' @export
+## setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 
 
 #'

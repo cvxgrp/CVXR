@@ -3,12 +3,12 @@
 # =========================
 #'
 #' Unity Resolvent
-#' 
+#'
 #' The unity resolvent of a positive matrix. For an elementwise positive matrix \eqn{X}, this atom represents \eqn{(I - X)^{-1}},
 #' and it enforces the constraint that the spectral radius of \eqn{X} is at most 1.
-#' 
+#'
 #' This atom is log-log convex.
-#' 
+#'
 #' @param X An \linkS4class{Expression} or positive square matrix.
 #' @return An \linkS4class{Expression} representing the unity resolvent of the input.
 #' @examples
@@ -468,14 +468,14 @@ norm_nuc <- NormNuc
 
 #'
 #' Difference on Restricted Domain
-#' 
+#'
 #' The difference \eqn{1 - x} with domain \eqn{\{x : 0 < x < 1\}}.
 #'
 #' This atom is log-log concave.
 #'
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing one minus the input restricted to \eqn{(0,1)}.
-#' @examples 
+#' @examples
 #' x <- Variable(pos = TRUE)
 #' y <- Variable(pos = TRUE)
 #' prob <- Problem(Maximize(one_minus_pos(x*y)), list(x <= 2 * y^2, y >= .2))
@@ -483,7 +483,7 @@ norm_nuc <- NormNuc
 #' result$value
 #' result$getValue(x)
 #' result$getValue(y)
-#' 
+#'
 #' @docType methods
 #' @name one_minus_pos
 #' @rdname one_minus_pos
@@ -492,20 +492,20 @@ one_minus_pos <- OneMinusPos
 
 #'
 #' Perron-Frobenius Eigenvalue
-#' 
+#'
 #' The Perron-Frobenius eigenvalue of a positive matrix.
-#' 
+#'
 #' For an elementwise positive matrix \eqn{X}, this atom represents its spectral radius, i.e., the magnitude of its largest eigenvalue.
 #' Because \eqn{X} is positive, the spectral radius equals its largest eigenvalue, which is guaranteed to be positive.
-#' 
+#'
 #' This atom is log-log convex.
 #' @param X An \linkS4class{Expression} or positive square matrix.
 #' @return An \linkS4class{Expression} representing the largest eigenvalue of the input.
-#' @examples 
+#' @examples
 #' n <- 3
 #' X <- Variable(n, n, pos=TRUE)
 #' objective_fn <- pf_eigenvalue(X)
-#' constraints <- list( X[1,1]== 1.0,  
+#' constraints <- list( X[1,1]== 1.0,
 #'                      X[1,3] == 1.9,
 #'                      X[2,2] == .8,
 #'                      X[3,1] == 3.2,
@@ -515,7 +515,7 @@ one_minus_pos <- OneMinusPos
 #' result <- solve(problem, gp=TRUE)
 #' result$value
 #' result$getValue(X)
-#' 
+#'
 #' @docType methods
 #' @name pf_eigenvalue
 #' @rdname pf_eigenvalue
@@ -574,15 +574,15 @@ p_norm <- Pnorm
 #' Product of Entries
 #'
 #' The product of entries in a vector or matrix.
-#' 
+#'
 #' This atom is log-log affine, but it is neither convex nor concave.
 #'
 #' @param ... \linkS4class{Expression} objects, vectors, or matrices.
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
 #' @return An \linkS4class{Expression} representing the product of the entries of the input.
-#' @examples 
-#' 
+#' @examples
+#'
 #' n <- 2
 #' X <- Variable(n, n, pos=TRUE)
 #' obj <- sum(X)
@@ -591,7 +591,7 @@ p_norm <- Pnorm
 #' result <- solve(prob, gp=TRUE)
 #' result$value
 #' result$getValue(X)
-#' 
+#'
 #' @docType methods
 #' @name prod_entries
 #' @aliases prod
@@ -629,12 +629,12 @@ quad_form <- function(x, P) {
   # x^T P x
   x <- as.Constant(x)
   P <- as.Constant(P)
-  
+
   # Check dimensions.
   P_dim <- dim(P)
   if(ndim(P) != 2 || P_dim[1] != P_dim[2] || max(nrow(x), 1) != P_dim[1])
     stop("Invalid dimensions for arguments.")
-  
+
   # P cannot be a parameter.
   if(is_constant(x))
     Conj(t(x)) %*% P %*% x
@@ -837,13 +837,13 @@ tv <- TotalVariation
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
-#' @examples 
+#' @examples
 #' x <- Variable(2)
 #' val <- matrix(c(-5,-10))
 #' prob <- Problem(Minimize(max_entries(x)), list(x == val))
 #' result <- solve(prob)
 #' result$value
-#' 
+#'
 #' A <- Variable(2,2)
 #' val <- rbind(c(-5,2), c(-3,1))
 #' prob <- Problem(Minimize(max_entries(A, axis = 1)[2,1]), list(A == val))
@@ -862,14 +862,14 @@ max.Expression <- function(..., na.rm = FALSE) {
     warning("no non-missing arguments to max; returning -Inf")
     return(-Inf)
   }
-  
+
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   max_args <- lapply(vals[is_expr], function(expr) { MaxEntries(expr) })
   if(!all(is_expr)) {
     max_num <- max(sapply(vals[!is_expr], function(v) { max(v, na.rm = na.rm) }))
     max_args <- c(max_args, max_num)
   }
-  
+
   if(length(max_args) == 1)
     return(max_args[[1]])
   .MaxElemwise(atom_args = max_args)
@@ -877,7 +877,7 @@ max.Expression <- function(..., na.rm = FALSE) {
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
-#' @examples 
+#' @examples
 #' A <- Variable(2,2)
 #' val <- cbind(c(-5,2), c(-3,1))
 #' prob <- Problem(Maximize(min_entries(A)), list(A == val))
@@ -896,7 +896,7 @@ min.Expression <- function(..., na.rm = FALSE) {
     warning("no non-missing arguments to min; returning Inf")
     return(Inf)
   }
-  
+
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   min_args <- lapply(vals[is_expr], function(expr) { MinEntries(expr) })
   if(!all(is_expr)) {
@@ -904,7 +904,7 @@ min.Expression <- function(..., na.rm = FALSE) {
     min_args <- c(min_args, min_num)
   }
   min_args <- lapply(min_args, function(arg) { -as.Constant(arg) })
-  
+
   if(length(min_args) == 1)
     return(-min_args[[1]])
   -.MaxElemwise(atom_args = min_args)
@@ -975,13 +975,13 @@ cvxr_norm <- Norm
 
 #' @param ... Numeric scalar, vector, matrix, or \linkS4class{Expression} objects.
 #' @param na.rm (Unimplemented) A logical value indicating whether missing values should be removed.
-#' @examples 
+#' @examples
 #' x <- Variable(2)
 #' prob <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(x)
-#' 
+#'
 #' C <- Variable(3,2)
 #' prob <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
 #' result <- solve(prob)
@@ -1023,7 +1023,7 @@ sum.Expression <- function(..., na.rm = FALSE) {
 prod.Expression <- function(..., na.rm = FALSE) {
   if(na.rm)
     warning("na.rm is unimplemented for Expression objects")
-  
+
   vals <- list(...)
   is_expr <- sapply(vals, function(v) { is(v, "Expression") })
   sum_expr <- lapply(vals[is_expr], function(expr) { ProdEntries(expr = expr) })
@@ -1938,7 +1938,6 @@ setMethod("diff", "Expression", function(x, lag = 1, differences = 1, ...) { Dif
 #' result <- solve(prob)
 #' result$value
 #' result$getValue(kronecker(X,Y))
-#' @docType methods
 #' @aliases kronecker %x%
 #' @rdname kronecker
 #' @export
@@ -1948,7 +1947,6 @@ setMethod("kronecker", signature(X = "Expression", Y = "ANY"), function(X, Y, FU
   Kron(X, Y)
 })
 
-#' @docType methods
 #' @rdname kronecker
 #' @export
 setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FUN = "*", make.dimnames = FALSE, ...) {
@@ -1957,12 +1955,10 @@ setMethod("kronecker", signature(X = "ANY", Y = "Expression"), function(X, Y, FU
   Kron(X, Y)
 })
 
-#' @docType methods
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "Expression", Y = "ANY"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
 
-#' @docType methods
 #' @rdname kronecker
 #' @export
 setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(lh_exp = X, rh_exp = Y) })
@@ -1972,7 +1968,7 @@ setMethod("%x%", signature(X = "ANY", Y = "Expression"), function(X, Y) { Kron(l
 #' Complex Numbers
 #'
 #' Basic atoms that support complex arithmetic.
-#' 
+#'
 #' @param z An \linkS4class{Expression} object.
 #' @return An \linkS4class{Expression} object that represents the real, imaginary, or complex conjugate.
 #' @name complex-atoms

@@ -100,44 +100,6 @@ get_np <- function() {
     np
 }
 
-#'
-#' Get our mosekglue handle
-#'
-#' Get the mosekglue handle or fail if not available
-#'
-#' @return the mosekglue handle
-#' @export
-#' @examples
-#' \dontrun{
-#'    get_mosekglue
-#' }
-get_mosekglue <- function() {
-    mosekglue <- .CVXR.options$mosekglue
-    if (is.null(mosekglue)) {
-        stop("CVXR python mosekglue not available")
-    }
-    mosekglue
-}
-
-#'
-#' Get our gurobiglue handle
-#'
-#' Get the gurobiglue handle or fail if not available
-#'
-#' @return the gurobiglue handle
-#' @export
-#' @examples
-#' \dontrun{
-#'    get_gurobiglue
-#' }
-get_gurobiglue <- function() {
-    gurobiglue <- .CVXR.options$gurobiglue
-    if (is.null(gurobiglue)) {
-        stop("CVXR python gurobiglue not available")
-    }
-    gurobiglue
-}
-
 flatten_list <- function(x) {
   y <- list()
   rapply(x, function(x) y <<- c(y,x))
@@ -256,7 +218,7 @@ setMethod("[", signature(x = "Rdictdefault"), function(x, i, j, ..., drop = TRUE
         return(x@values[[k]])
     }
   }
-  
+
   # TODO: Can't update in place. If key doesn't exist, want to create it with default function value.
   stop("Unimplemented: For now, user must manually create key and set its value to default(key)")
   x@keys <- c(x@keys, list(i))

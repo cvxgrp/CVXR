@@ -19,7 +19,7 @@ Determine if a problem or expression complies with the disciplined geometric pro
 \examples{
 x <- Variable(pos = TRUE)
 y <- Variable(pos = TRUE)
-prob <- Problem(Minimize(x*y), list(x <= 5, y >= 5))
+prob <- Problem(Minimize(x*y), list(x >= 5, y >= 5))
 is_dgp(prob)
 solve(prob, gp = TRUE)
 }

@@ -1,6 +1,6 @@
-#' 
+#'
 #' Is the constraint a stuffed cone constraint?
-#' 
+#'
 #' @param constraint A \linkS4class{Constraint} object.
 #' @return Is the constraint a stuffed-cone constraint?
 is_stuffed_cone_constraint <- function(constraint) {
@@ -26,9 +26,9 @@ is_stuffed_cone_constraint <- function(constraint) {
   return(TRUE)
 }
 
-#' 
+#'
 #' Is the objective a stuffed cone objective?
-#' 
+#'
 #' @param objective An \linkS4class{Objective} object.
 #' @return Is the objective a stuffed-cone objective?
 is_stuffed_cone_objective <- function(objective) {
@@ -96,9 +96,9 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
     && all(sapply(problem@constraints, is_stuffed_cone_constraint)))
 })
 
-#' 
+#'
 #' Return the coefficient and offset in \eqn{Ax + b}.
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object.
 #' @return The coefficient and offset in \eqn{Ax + b}.
 ConicSolver.get_coeff_offset <- function(expr) {
@@ -119,9 +119,9 @@ ConicSolver.get_coeff_offset <- function(expr) {
   return(list(coeff, offset))
 }
 
-#' 
+#'
 #' Returns a sparse matrix that spaces out an expression.
-#' 
+#'
 #' @param dim A vector outlining the dimensions of the matrix.
 #' @param spacing An int of the number of rows between the start of each non-zero block.
 #' @param offset An int of the number of zeros at the beginning of the matrix.
@@ -152,7 +152,7 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
 #' @param constr A \linkS4class{Constraint} to format.
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
 #' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
-#' will yield the coefficient "A" and offset "b" for the respective constraints: 
+#' will yield the coefficient "A" and offset "b" for the respective constraints:
 #' Linear Equations: A %*% x == b,
 #' Linear inequalities: A %*% x <= b,
 #' Second order cone: A %*% x <=_{SOC} b,
@@ -308,7 +308,9 @@ setMethod("status_map", "ECOS", function(solver, status) {
 })
 
 #' @describeIn ECOS Imports the solver
-setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
+##setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
+## Since ECOS is required, this is always TRUE
+setMethod("import_solver", "ECOS", function(solver) { TRUE })
 
 #' @describeIn ECOS Returns the name of the solver
 setMethod("name", "ECOS", function(x) { ECOS_NAME })
@@ -378,7 +380,6 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("ECOSolveR", quietly = TRUE)
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control()
   ecos_opts$VERBOSE <- as.integer(verbose)
@@ -433,12 +434,14 @@ setMethod("status_map", "SCS", function(solver, status) {
 setMethod("name", "SCS", function(x) { SCS_NAME })
 
 #' @describeIn SCS Imports the solver
-setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs", quietly = TRUE) })
+##setMethod("import_solver", "SCS", function(solver) { requireNamespace("scs", quietly = TRUE) })
+## Since scs is required, this is always TRUE
+setMethod("import_solver", "SCS", function(solver) { TRUE })
 
 #' @param problem A \linkS4class{Problem} object.
 #' @param constr A \linkS4class{Constraint} to format.
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
-#' @describeIn SCS Return a linear operator to multiply by PSD constraint coefficients. 
+#' @describeIn SCS Return a linear operator to multiply by PSD constraint coefficients.
 setMethod("reduction_format_constr", "SCS", function(object, problem, constr, exp_cone_order) {
   # Extract coefficient and offset vector from constraint.
   # Special cases PSD constraints, as SCS expects constraints to be
@@ -502,11 +505,11 @@ setMethod("perform", signature(object = "SCS", problem = "Problem"), function(ob
   return(list(object, data, inv_data))
 })
 
-#' 
+#'
 #' Extracts the dual value for constraint starting at offset.
-#' 
+#'
 #' Special cases PSD constraints, as per the SCS specification.
-#' 
+#'
 #' @param result_vec The vector to extract dual values from.
 #' @param offset The starting point of the vector to extract from.
 #' @param constraint A \linkS4class{Constraint} object.
@@ -563,7 +566,6 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 #' @param solver_cache Cache for the solver.
 #' @describeIn SCS Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("scs", quietly = TRUE)
 
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
@@ -716,7 +718,6 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
 #' @param solver_cache Cache for the solver.
 #' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("rcbc", quietly = TRUE)
 
   cvar <- data$c
   b <- data$b
@@ -880,19 +881,19 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 #' @describeIn CPLEX_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
-  
+
   model <- solution$model
-  
+
   status <- status_map(object, model$status)
-  
+
   if(status %in% SOLUTION_PRESENT) {
     #Get objective value
     opt_val <- model$obj + inverse_data[[OFFSET]]
-    
+
     #Get solution
     primal_vars <- list()
     primal_vars[[as.character(inverse_data[[object@var_id]])]] <- model$xopt
-    
+
     #Only add duals if not a MIP
     if(!inverse_data[["is_mip"]]) {
       #eq and leq constraints all returned at once by CPLEX
@@ -901,7 +902,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
       eq_dual <- utils::modifyList(eq_dual, leq_dual)
       #dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@neq_constr]])
       dual_vars <- eq_dual
-      
+
     } else {
       primal_vars <- list()
       primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
@@ -910,7 +911,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
       }
-      
+
       if(status == INFEASIBLE)
         opt_val <- Inf
       else if(status == UNBOUNDED)
@@ -919,7 +920,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
         opt_val <- NA_real_
     }
   }
-  
+
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
 })
 
@@ -934,14 +935,14 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   bvec <- data[[B_KEY]]
   Amat <- data[[A_KEY]]
   dims <- data[[DIMS]]
-  
+
   total_soc <- sum(unlist(dims@soc))
   n_var <- length(cvar)
   cvar <- c(cvar, rep(0, total_soc))
-  
+
   #Initializing variable types
   vtype <- rep("C", n_var + total_soc)
-  
+
   #Setting Boolean variable types
   for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
     vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
@@ -950,26 +951,26 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
     vtype[data[BOOL_IDX]$int_vars_idx[i]] <- "I"
   }
-  
+
   #Setting sense of the A matrix
   sense_vec <- rep("E", nrow(Amat))
-  
+
   #Add inequalities
   leq_start <- dims@zero
   leq_end <- dims@zero + dims@nonpos
-  
+
   for(j in leq_start:leq_end){
     sense_vec[j + 1] <- "L"
   }
-  
+
   #Setting Lower bounds of variables
   lb <- rep(-Inf, n_var + total_soc)
-  
+
   qc <- list()
-  
+
   soc_start <- leq_start + dims@nonpos
   current_var <- n_var
-  
+
   for(i in seq_along(dims@soc)){
     for(j in 1:dims@soc[[i]]){
       sense_vec[soc_start + dims@soc[[i]][j]] <- "E"
@@ -977,13 +978,13 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
         lb[current_var + j] <- 0 #The first variable of every SOC has a 0 lower bound
       }
     }
-    
+
     #Add SOC vars to linear constraints
     n_soc <- dims@soc[[i]]
     Asub <- matrix(0, nrow = nrow(Amat), ncol = n_soc)
     Asub[(soc_start+1):(soc_start + n_soc),] <- diag(rep(1, n_soc))
     Amat <- cbind(Amat, Asub)
-    
+
     #Add quadratic constraints
     qc_mat <- matrix(0, nrow = n_var + total_soc, ncol = n_var + total_soc)
     qc_mat[current_var + 1, current_var + 1] <- -1
@@ -991,20 +992,20 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
       qc_mat[current_var + 1 + k, current_var + 1 + k] <- 1
     }
     qc[[i]] <- qc_mat
-    
+
     soc_start <- soc_start + n_soc
     current_var <- current_var + n_soc
   }
-  
+
   QC <- list(QC = list(Q = qc), dir = rep("L", length(dims@soc)) , b = rep(0.0, length(dims@soc)))
-  
+
   #Setting verbosity off
   if(!verbose){
     control <- list(trace=0)
   } else{
     control <- list(trace=1)
   }
-  
+
   #David: not sure what to do with this part
   # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
   # and the code is duplicated here. This should be refactored.
@@ -1021,21 +1022,21 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
       }
       kwargs$cplex_params <- NULL
     }
-    
+
     if("cplex_filename" %in% kwargs) {
       filename <- solver_opts$cplex_filename
       if(!is.na(filename) && !is.null(filename))
         write(model, filename)
       kwargs$cplex_filename <- NULL
     }
-    
+
     if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
       stop("Invalid keyword argument ", kwargs[[1]])
   }
-  
+
   # Solve problem.
   results_dict <- list()
-  
+
   tryCatch({
     # Define CPLEX problem and solve
     model <- Rcplex::Rcplex_solve_QCP(cvec=cvar, Amat=Amat, bvec=bvec, QC=QC, lb=lb, ub=Inf,
@@ -1044,7 +1045,7 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   }, error = function(e) {
     results_dict$status <- SOLVER_ERROR
   })
-  
+
   #Changing dualvar to include SOC
   y <- model$extra$lambda
   soc_start <- leq_start + dims@nonpos
@@ -1056,9 +1057,9 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   results_dict$model <- model
   results_dict$eq_dual <- results_dict$y[1:dims@zero]
   results_dict$ineq_dual <- results_dict$y[-(1:dims@zero)]
-  
+
   return(results_dict)
-  
+
 })
 
 #' An interface for the CVXOPT solver.
@@ -1093,7 +1094,10 @@ setMethod("status_map", "CVXOPT", function(solver, status) {
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
 
 #' @describeIn CVXOPT Imports the solver.
-setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
+##setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
+##setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccp", quietly = TRUE) })
+## CVXOPT is not implemented as there is no R package equivalent to cccopt. We should check out cccp, though
+setMethod("import_solver", "CVXOPT", function(solver) { FALSE })
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CVXOPT Can CVXOPT solve the problem?
@@ -1153,10 +1157,11 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
 #' @param solver_cache Cache for the solver.
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  solver <- CVXOPT_OLD()
-  prob_data <- list()
-  prob_data[[name(object)]] <- ProblemData()
-  solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+    stop("Unimplemented!")
+  ## solver <- CVXOPT_OLD()
+  ## prob_data <- list()
+  ## prob_data[[name(object)]] <- ProblemData()
+  ## solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
 })
 
 #' An interface for the ECOS BB solver.
@@ -1201,7 +1206,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @param solver_cache Cache for the solver.
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("ECOSolveR", quietly = TRUE)
+
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control()
   ecos_opts$VERBOSE <- as.integer(verbose)
@@ -1214,7 +1219,7 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
 #'
 #' Utility method for formatting a ConeDims instance into a dictionary
 #' that can be supplied to ECOS.
-#' 
+#'
 #' @param cone_dims A \linkS4class{ConeDims} instance.
 #' @return A dictionary of cone dimensions
 ECOS.dims_to_solver_dict <- function(cone_dims) {
@@ -1586,7 +1591,6 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("gurobi", quietly = TRUE)
 
   cvar <- data[[C_KEY]]
   b <- data[[B_KEY]]
@@ -1713,9 +1717,9 @@ setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of expon
 #' @export
 MOSEK <- function() { new("MOSEK") }
 
-#' 
+#'
 #' Turns symmetric 2D array into a lower triangular matrix
-#' 
+#'
 #' @param v A list of length (dim * (dim + 1) / 2).
 #' @param dim The number of rows (equivalently, columns) in the output array.
 #' @return Return the symmetric 2D array defined by taking "v" to specify its
@@ -1738,9 +1742,9 @@ vectorized_lower_tri_to_mat <- function(v, dim) {
   return(A)
 }
 
-#' 
+#'
 #' Given a problem returns a PSD constrain
-#' 
+#'
 #' @param problem A \linkS4class{Problem} object.
 #' @param c A vector of coefficients.
 #' @return Returns an array G and vector h such that the given constraint is
@@ -1951,44 +1955,22 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, solver_opts, solver_cache = NA) {
-    ##requireNamespace("Rmosek", quietly = TRUE)
-  #env <- Rmosek::Env() remove these as Rmosek doesn't need environments
-  #task <- env.Task(0,0)
-  #instead defines prob
-  prob <- list(sense="min")
 
-  # TODO: Handle logging for verbose.
+    ## Check if the CVXR standard form has zero variables. If so,
+    ## return a trivial solution. This is necessary because MOSEK
+    ## will crash if handed a problem with zero variables.
 
-  # Parse all user-specified parameters (override default logging
-  # parameters if applicable).
-  kwargs <- sort(names(solver_opts))
-  save_file <- NA_character_
-  if("mosek_params" %in% kwargs) {
-      MOSEK._handle_mosek_params(task, solver_opts$mosek_params)
-    kwargs$mosek_params <- NULL
-  }
-  if("save_file" %in% kwargs) {
-    save_file <- solver_opts$save_file
-    kwargs$save_file <- NULL
-  }
-  if("bfs" %in% kwargs)
-    kwargs$bfs <- NULL
-  if(!(is.null(kwargs) || length(kwargs) == 0))
-    stop("Invalid keyword-argument ", kwargs[[1]])
+    c <- data[[C_KEY]]
 
-  # Check if the CVXR standard form has zero variables. If so,
-  # return a trivial solution. This is necessary because MOSEK
-  # will crash if handed a problem with zero variables.
-  if(length(data[[C_KEY]]) == 0) {
-    res <- list()
-    res[[STATUS]] <- OPTIMAL
-    res[[PRIMAL]] <- list()
-    res[[VALUE]] <- data[[OFFSET]]
-    res[[EQ_DUAL]] <- list()
-    res[[INEQ_DUAL]] <- list()
-    return(res)
-  }
-
+    if (length(c) == 0) {
+        res <- list()
+        res[[STATUS]] <- OPTIMAL
+        res[[PRIMAL]] <- list()
+        res[[VALUE]] <- data[[OFFSET]]
+        res[[EQ_DUAL]] <- list()
+        res[[INEQ_DUAL]] <- list()
+        return(res)
+    }
   # The following lines recover problem parameters, and define helper constants.
   #
   #   The problem's objective is "min c.T * z".
@@ -2009,16 +1991,15 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #   consistent with MOSEK documentation, subsequent comments
   #   refer to this variable as "x".
 
-  c <- data[[C_KEY]]
-  G <- data[[G_KEY]]
-  h <- data[[H_KEY]]
-  dims <- data[[DIMS]]
-  n0 <- length(c)
-  n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
-  psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
-  m <- length(h)
-  num_bool <- length(data[[BOOL_IDX]])
-  num_int <- length(data[[INT_IDX]])
+    G <- data[[G_KEY]]
+    h <- data[[H_KEY]]
+    dims <- data[[DIMS]]
+    n0 <- length(c)
+    n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
+    psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
+    m <- length(h)
+    num_bool <- length(data[[BOOL_IDX]])
+    num_int <- length(data[[INT_IDX]])
 
   # Define variables, cone constraints, and integrality constraints.
   #
@@ -2034,6 +2015,25 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #   Note that the API call for PSD variables contains the word "bar".
   #   MOSEK documentation consistently uses "bar" as a sort of flag,
   #   indicating that a function deals with PSD variables.
+
+
+
+    ##env <- Rmosek::Env() remove these as Rmosek doesn't need environments
+    ##task <- env.Task(0,0)
+    ##instead defines prob
+    prob <- list(sense="min")
+
+    ## TODO: Handle logging for verbose.
+
+    ## Parse all user-specified parameters (override default logging
+    ## parameters if applicable).
+    ## Rmosek expects a list of lists
+    ## prob$dparam <- list(...); prob$iparam <- list(...); prob$sparam <- list(...)
+    if (!is.null(solver_opts)) {
+        prob$dparam  <-  solver_opts$dparam
+        prob$iparam  <-  solver_opts$iparam
+        prob$sparam  <-  solver_opts$sparam
+    }
 
 
   #task.appendvars(n), no task for Rmosek, but declares the number of variables in the model. Need to expand prob$c as well to match this dimension
@@ -2213,7 +2213,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     ##sol <- r$sol
   }
   r
-##  return(sol)
+    ##  return(sol)
 })
 
 #' @param solution The raw solution returned by the solver.
@@ -2314,12 +2314,12 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
 
-#' 
+#'
 #' Recovers MOSEK solutions dual variables
-#' 
+#'
 #' @param sol List of the solutions returned by the MOSEK solver.
 #' @param inverse_data A list of the data returned by the perform function.
-#' @return A list containing the mapping of CVXR's \linkS4class{Constraint} 
+#' @return A list containing the mapping of CVXR's \linkS4class{Constraint}
 #' object's id to its corresponding dual variables in the current solution.
 MOSEK.recover_dual_variables <- function(sol, inverse_data) {
   dual_vars <- list()
@@ -2360,9 +2360,9 @@ MOSEK.recover_dual_variables <- function(sol, inverse_data) {
   return(dual_vars)
 }
 
-#' 
+#'
 #' Parses MOSEK dual variables into corresponding CVXR constraints and dual values
-#' 
+#'
 #' @param dual_var List of the dual variables returned by the MOSEK solution.
 #' @param constr_id_to_constr_dim A list that contains the mapping of entry "id"
 #' that is the index of the CVXR \linkS4class{Constraint} object to which the
@@ -2385,46 +2385,46 @@ MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {
   return(dual_vars)
 }
 
-MOSEK._handle_mosek_params <- function(task, params) {
-  if(is.na(params))
-    return()
+## MOSEK._handle_mosek_params <- function(task, params) {
+##     if(is.na(params))
+##         return()
 
-  ##requireNamespace("Rmosek", quietly = TRUE)
+##   ##requireNamespace("Rmosek", quietly = TRUE)
 
-  handle_str_param <- function(param, value) {
-    if(startsWith(param, "MSK_DPAR_"))
-      task.putnadourparam(param, value)
-    else if(startsWith(param, "MSK_IPAR_"))
-      task.putnaintparam(param, value)
-    else if(startsWith(param, "MSK_SPAR_"))
-      task.putnastrparam(param, value)
-    else
-      stop("Invalid MOSEK parameter ", param)
-  }
+##   handle_str_param <- function(param, value) {
+##     if(startsWith(param, "MSK_DPAR_"))
+##       task.putnadourparam(param, value)
+##     else if(startsWith(param, "MSK_IPAR_"))
+##       task.putnaintparam(param, value)
+##     else if(startsWith(param, "MSK_SPAR_"))
+##       task.putnastrparam(param, value)
+##     else
+##       stop("Invalid MOSEK parameter ", param)
+##   }
 
-  handle_enum_param <- function(param, value) {
-    if(is(param, "dparam"))
-      task.putdouparam(param, value)
-    else if(is(param, "iparam"))
-      task.putintparam(param, value)
-    else if(is(param, "sparam"))
-      task.putstrparam(param, value)
-    else
-      stop("Invalid MOSEK parameter ", param)
-  }
+##   handle_enum_param <- function(param, value) {
+##     if(is(param, "dparam"))
+##       task.putdouparam(param, value)
+##     else if(is(param, "iparam"))
+##       task.putintparam(param, value)
+##     else if(is(param, "sparam"))
+##       task.putstrparam(param, value)
+##     else
+##       stop("Invalid MOSEK parameter ", param)
+##   }
 
-  for(p in params) {
-    param <- p[[1]]
-    value <- p[[2]]
-    if(is(param, "character"))
-      handle_str_param(param, value)
-    else
-      handle_enum_param(param, value)
-  }
-}
+##   for(p in params) {
+##     param <- p[[1]]
+##     value <- p[[2]]
+##     if(is(param, "character"))
+##       handle_str_param(param, value)
+##     else
+##       handle_enum_param(param, value)
+##   }
+## }
 
 #' Utility method for formatting a ConeDims instance into a dictionary
-#' that can be supplied to SCS. 
+#' that can be supplied to SCS.
 #' @param cone_dims A \linkS4class{ConeDims} instance.
 #' @return The dimensions of the cones.
 SCS.dims_to_solver_dict <- function(cone_dims) {
@@ -2438,7 +2438,7 @@ SCS.dims_to_solver_dict <- function(cone_dims) {
 
 #'
 #' Utility methods for special handling of semidefinite constraints.
-#' 
+#'
 #' @param matrix The matrix to get the lower triangular matrix for
 #' @return The lower triangular part of the matrix, stacked in column-major order
 scaled_lower_tri <- function(matrix) {
@@ -2464,9 +2464,9 @@ scaled_lower_tri <- function(matrix) {
   return(coeff %*% vectorized_matrix)
 }
 
-#' 
+#'
 #' Expands lower triangular to full matrix.
-#' 
+#'
 #' @param lower_tri A matrix representing the lower triangular part of the matrix,
 #' stacked in column-major order
 #' @param n The number of rows (columns) in the full square matrix.
@@ -2489,16 +2489,16 @@ tri_to_full <- function(lower_tri, n) {
 # SuperSCS.default_settings <- function(object) {
 #   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)
 # }
-# 
+#
 # #' @param solver,object,x A \linkS4class{SuperSCS} object.
 # #' @describeIn SuperSCS Returns the name of the SuperSCS solver
 # setMethod("name", "SuperSCS", function(x) { SUPER_SCS_NAME })
-# 
+#
 # #' @describeIn SuperSCS imports the SuperSCS solver.
 # setMethod("import_solver", "SuperSCS", function(solver) {
 #   stop("Unimplemented: SuperSCS is currently unavailable in R.")
 # })
-# 
+#
 # #' @param data Data generated via an apply call.
 # #' @param warm_start An option for warm start.
 # #' @param verbose A boolean of whether to enable solver verbosity.
@@ -2513,7 +2513,7 @@ tri_to_full <- function(lower_tri, n) {
 #     args$s <- solver_cache[[name(object)]]$s
 #   }
 #   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
-# 
+#
 #   # Settings.
 #   user_opts <- names(solver_opts)
 #   for(k in names(SuperSCS.default_settings)) {

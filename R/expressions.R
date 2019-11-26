@@ -99,9 +99,9 @@ setMethod("curvature", "Expression", function(object) {
 
 #'
 #' Log-Log Curvature of Expression
-#' 
+#'
 #' The log-log curvature of an expression.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX", "LOG_LOG_CONCAVE", or "UNKNOWN".
 #' @docType methods
@@ -140,7 +140,7 @@ setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_con
 setMethod("is_log_log_constant", "Expression", function(object) {
   if(!is_constant(object))
     return(FALSE)
-  
+
   if(is(object, "Constant") || is(object, "Parameter"))
     return(is_pos(object))
   else
@@ -362,18 +362,18 @@ setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) {
 #' @rdname NegExpression-class
 setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
 
-#' 
+#'
 #' Elementwise multiplication operator
-#' 
+#'
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to multiply elementwise.
 #' @docType methods
 #' @rdname mul_elemwise
 setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
   e1_dim <- dim(e1)
   e2_dim <- dim(e2)
-  
+
   # if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
-  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] || e1_dim[1] != e2_dim[length(e2_dim)] 
+  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] || e1_dim[1] != e2_dim[length(e2_dim)]
                                             && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
     Multiply(lh_exp = e1, rh_exp = e2)
   else
@@ -436,7 +436,7 @@ setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x els
 setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
   x_dim <- dim(x)
   y_dim <- dim(y)
-  
+
   # if(is.null(x_dim) || is.null(y_dim))
   #  stop("Scalar operands are not allowed,  use '*' instead")
   # else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
@@ -564,15 +564,15 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
-Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical", 
-                                        complex = "logical", imag = "logical", symmetric = "logical", diag = "logical", 
-                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "NumORLogical", integer = "NumORLogical", 
-                                        sparsity = "matrix", pos = "logical", neg = "logical", 
+Leaf <- setClass("Leaf", representation(dim = "NumORNULL", value = "ConstVal", nonneg = "logical", nonpos = "logical",
+                                        complex = "logical", imag = "logical", symmetric = "logical", diag = "logical",
+                                        PSD = "logical", NSD = "logical", hermitian = "logical", boolean = "NumORLogical", integer = "NumORLogical",
+                                        sparsity = "matrix", pos = "logical", neg = "logical",
                                         attributes = "list", boolean_idx = "matrix", integer_idx = "matrix"),
-                         prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE, 
-                                   complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, 
-                                   PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, 
-                                   sparsity = matrix(0, nrow = 0, ncol = 1), pos = FALSE, neg = FALSE, 
+                         prototype(value = NA_real_, nonneg = FALSE, nonpos = FALSE,
+                                   complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE,
+                                   PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE,
+                                   sparsity = matrix(0, nrow = 0, ncol = 1), pos = FALSE, neg = FALSE,
                                    attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)), contains = "Expression")
 
 setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, nonneg = FALSE, nonpos = FALSE, complex = FALSE, imag = FALSE, symmetric = FALSE, diag = FALSE, PSD = FALSE, NSD = FALSE, hermitian = FALSE, boolean = FALSE, integer = FALSE, sparsity = matrix(0, nrow = 0, ncol = 1), pos = FALSE, neg = FALSE, attributes = list(), boolean_idx = matrix(0, nrow = 0, ncol = 1), integer_idx = matrix(0, nrow = 0, ncol = 1)) {
@@ -599,7 +599,7 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
     .Object@boolean_idx <- boolean
     bool_attr <- (nrow(boolean) > 0)
   }
-  
+
   if(is.logical(integer)) {
     if(integer)
       .Object@integer_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
@@ -610,17 +610,17 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
     .Object@integer_idx <- integer
     int_attr <- (nrow(integer) > 0)
   }
-  
+
   # Process attributes.
   .Object@attributes <- list(nonneg = nonneg, nonpos = nonpos, pos = pos, neg = neg, complex = complex, imag = imag,
                              symmetric = symmetric, diag = diag, PSD = PSD, NSD = NSD, hermitian = hermitian,
                              boolean = bool_attr, integer = int_attr, sparsity = sparsity)
-  
+
   # Only one attribute can be TRUE (except boolean and integer).
   attrs <- .Object@attributes
   attrs$sparsity <- prod(dim(attrs$sparsity)) != 0
   true_attr <- sum(unlist(attrs))
-  
+
   if(bool_attr && int_attr)
     true_attr <- true_attr - 1
   if(true_attr > 1)

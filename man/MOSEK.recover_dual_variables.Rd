@@ -12,7 +12,7 @@ MOSEK.recover_dual_variables(sol, inverse_data)
 \item{inverse_data}{A list of the data returned by the perform function.}
 }
 \value{
-A list containing the mapping of CVXR's \linkS4class{Constraint} 
+A list containing the mapping of CVXR's \linkS4class{Constraint}
 object's id to its corresponding dual variables in the current solution.
 }
 \description{

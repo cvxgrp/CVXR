@@ -26,7 +26,7 @@ This atom is log-log convex.
 n <- 3
 X <- Variable(n, n, pos=TRUE)
 objective_fn <- pf_eigenvalue(X)
-constraints <- list( X[1,1]== 1.0,  
+constraints <- list( X[1,1]== 1.0,
                      X[1,3] == 1.9,
                      X[2,2] == .8,
                      X[3,1] == 3.2,

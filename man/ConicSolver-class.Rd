@@ -41,7 +41,7 @@ Conic solver class with reduction semantics.
 \item \code{accepts}: Can the problem be solved with a conic solver?
 
 \item \code{reduction_format_constr}: Return a list representing a cone program whose problem data tensors
-will yield the coefficient "A" and offset "b" for the respective constraints: 
+will yield the coefficient "A" and offset "b" for the respective constraints:
 Linear Equations: A %*% x == b,
 Linear inequalities: A %*% x <= b,
 Second order cone: A %*% x <=_{SOC} b,

@@ -42,9 +42,9 @@ setGeneric("is_nonpos", function(object) { standardGeneric("is_nonpos") })
 
 #'
 #' Complex Properties
-#' 
+#'
 #' Determine if an expression is real, imaginary, or complex.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
 #' @name complex-methods
@@ -204,12 +204,12 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 
 #'
 #' DGP Compliance
-#' 
+#'
 #' Determine if a problem or expression complies with the disciplined geometric programming rules.
-#' 
+#'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
-#' @examples 
+#' @examples
 #' x <- Variable(pos = TRUE)
 #' y <- Variable(pos = TRUE)
 #' prob <- Problem(Minimize(x*y), list(x >= 5, y >= 5))
@@ -285,7 +285,7 @@ setGeneric("is_matrix", function(object) { standardGeneric("is_matrix") })
 #' Matrix Properties
 #'
 #' Determine if an expression is positive semidefinite, negative semidefinite, hermitian, and/or symmetric.
-#' 
+#'
 #' @param object An \linkS4class{Expression} object.
 #' @return A logical value.
 #' @name matrix_prop-methods
@@ -422,9 +422,9 @@ setGeneric("atoms", function(object) { standardGeneric("atoms") })
 
 #'
 #' Attributes of an Expression Leaf
-#' 
+#'
 #' Determine if an expression is positive or negative.
-#' 
+#'
 #' @param object A \linkS4class{Leaf} object.
 #' @return A logical value.
 #' @name leaf-attr
@@ -503,10 +503,10 @@ setGeneric("domain", function(object) { standardGeneric("domain") })
 
 #'
 #' Project Value
-#' 
+#'
 #' Project a value onto the attribute set of a \linkS4class{Leaf}.
 #' A sensible idiom is \code{value(leaf) = project(leaf, val)}.
-#' 
+#'
 #' @param object A \linkS4class{Leaf} object.
 #' @param value The assigned value.
 #' @return The value rounded to the attribute type.
@@ -520,9 +520,9 @@ NULL
 #' @export
 setGeneric("project", function(object, value) { standardGeneric("project") })
 
-#' 
+#'
 #' Projects and assigns a value onto the attribute set of a \linkS4class{Leaf}.
-#' 
+#'
 #' @rdname project-methods
 #' @export
 setGeneric("project_and_assign", function(object, value) { standardGeneric("project_and_assign") })
@@ -805,9 +805,9 @@ setGeneric("cone_sizes", function(object) { standardGeneric("cone_sizes") })
 #' @name dual_value-methods
 NULL
 
-#' 
+#'
 #' Get and set the value of the dual variable in a constraint.
-#' 
+#'
 #' @rdname dual_value-methods
 #' @export
 setGeneric("dual_value", function(object) { standardGeneric("dual_value") })
@@ -967,9 +967,9 @@ setGeneric("is_qp", function(object) { standardGeneric("is_qp") })
 
 #'
 #' Is Problem Mixed Integer?
-#' 
+#'
 #' Determine if a problem is a mixed-integer program.
-#' 
+#'
 #' @param object A \linkS4class{Problem} object.
 #' @return A logical value indicating whether the problem is a mixed-integer program
 #' @docType methods
@@ -1087,9 +1087,9 @@ setGeneric("status_map_lp", function(solver, status) { standardGeneric("status_m
 
 #'
 #' Reduction Acceptance
-#' 
+#'
 #' Determine whether the reduction accepts a problem.
-#' 
+#'
 #' @param object A \linkS4class{Reduction} object.
 #' @param problem A \linkS4class{Problem} to check.
 #' @return A logical value indicating whether the reduction can be applied.
@@ -1101,7 +1101,7 @@ setGeneric("accepts", function(object, problem) { standardGeneric("accepts") })
 #' Reduce a Problem
 #'
 #' Reduces the owned problem to an equivalent problem.
-#' 
+#'
 #' @param object A \linkS4class{Reduction} object.
 #' @return An equivalent problem, encoded either as a \linkS4class{Problem} object or a list.
 #' @docType methods
@@ -1110,9 +1110,9 @@ setGeneric("reduce", function(object) { standardGeneric("reduce") })
 
 #'
 #' Retrieve Solution
-#' 
+#'
 #' Retrieves a solution to the owned problem.
-#' 
+#'
 #' @param object A \linkS4class{Reduction} object.
 #' @param solution A \linkS4class{Solution} object.
 #' @return A \linkS4class{Solution} to the problem emitted by \code{\link{reduce}}.
@@ -1122,9 +1122,9 @@ setGeneric("retrieve", function(object, solution) { standardGeneric("retrieve") 
 
 #'
 #' Perform Reduction
-#' 
+#'
 #' Performs the reduction on a problem and returns an equivalent problem.
-#' 
+#'
 #' @param object A \linkS4class{Reduction} object.
 #' @param problem A \linkS4class{Problem} on which the reduction will be performed.
 #' @return A list containing
@@ -1138,9 +1138,9 @@ setGeneric("perform", function(object, problem) { standardGeneric("perform") })
 
 #'
 #' Return Original Solution
-#' 
+#'
 #' Returns a solution to the original problem given the inverse data.
-#' 
+#'
 #' @param object A \linkS4class{Reduction} object.
 #' @param solution A \linkS4class{Solution} to a problem that generated \code{inverse_data}.
 #' @param inverse_data A \linkS4class{InverseData} object encoding the original problem.
@@ -1148,7 +1148,7 @@ setGeneric("perform", function(object, problem) { standardGeneric("perform") })
 #' @docType methods
 #' @rdname invert
 setGeneric("invert", function(object, solution, inverse_data) { standardGeneric("invert") })
-setGeneric("alt_invert", function(object, results, inverse_data) { standardGeneric("alt_invert") })
+##setGeneric("alt_invert", function(object, results, inverse_data) { standardGeneric("alt_invert") })
 
 ## Version 1.0 edits
 setGeneric("square", function(x) { standardGeneric("square") })

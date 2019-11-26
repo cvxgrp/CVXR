@@ -25,8 +25,8 @@ test_that("Test that all the ECOS solver options work", {
   EPS <- 1e-4
   prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
   for(i in 1:2) {
-    result <- solve(prob, solver = "ECOS", feastol = EPS, abstol = EPS, reltol = EPS, 
-                    feastol_inacc = EPS, abstol_inacc = EPS, reltol_inacc = EPS, 
+    result <- solve(prob, solver = "ECOS", feastol = EPS, abstol = EPS, reltol = EPS,
+                    feastol_inacc = EPS, abstol_inacc = EPS, reltol_inacc = EPS,
                     max_iters = 20, verbose = TRUE, warm_start = TRUE)
   }
   expect_equal(result$value, 1.0, tolerance = TOL)
@@ -82,11 +82,11 @@ test_that("Test a basic LP with GLPK", {
     result <- solve(prob, solver = "GLPK")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
-    constraints <- list(2*x[1] + x[2] <= 3, 
+    constraints <- list(2*x[1] + x[2] <= 3,
                         x[1] + 2*x[2] <= 3,
                         x[1] >= 0,
                         x[2] >= 0)
@@ -110,7 +110,7 @@ test_that("Test a basic MILP with GLPK", {
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -138,7 +138,7 @@ test_that("Test a basic LP with CPLEX", {
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -147,7 +147,7 @@ test_that("Test a basic LP with CPLEX", {
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # CPLEX's default lower bound for a decision variable is zero
     # This quick test ensures that the cvxpy interface for CPLEX does *not* have that bound
     objective <- Minimize(x[1])
@@ -155,7 +155,7 @@ test_that("Test a basic LP with CPLEX", {
     prob <- Problem(objective, constraints)
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$getValue(x), as.matrix(c(-100, 1)), tolerance = TOL)
-    
+
     # Boolean and integer version.
     bool_var <- Variable(boolean = TRUE)
     int_var <- Variable(integer = TRUE)
@@ -164,7 +164,7 @@ test_that("Test a basic LP with CPLEX", {
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -187,7 +187,7 @@ test_that("Test a basic SOCP with CPLEX", {
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -196,7 +196,7 @@ test_that("Test a basic SOCP with CPLEX", {
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # CPLEX's default lower bound for a decision variable is zero
     # This quick test ensures that the CVXR interface for CPLEX does *not* have that bound
     objective <- Minimize(x[1])
@@ -204,7 +204,7 @@ test_that("Test a basic SOCP with CPLEX", {
     prob <- Problem(objective, constraints)
     result <- solve(prob, solver = "CPLEX")
     expect_equal(result$getValue(x), as.matrix(c(-100, 1)), tolerance = TOL)
-    
+
     # Boolean and integer version.
     bool_var <- Variable(boolean = TRUE)
     int_var <- Variable(integer = TRUE)
@@ -213,7 +213,7 @@ test_that("Test a basic SOCP with CPLEX", {
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -240,7 +240,7 @@ test_that("Make sure CPLEX's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_gurobi[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -266,12 +266,12 @@ test_that("Test CPLEX warm start", {
     b <- Parameter(2)
     h <- Parameter(2)
     c <- Parameter(2)
-    
+
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(2,2)
     value(c) <- c(1,1)
-    
+
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
                         x[2] <= h[2],
@@ -280,13 +280,13 @@ test_that("Test CPLEX warm start", {
     result <- solve(prob, solver = "CPLEX", warm_start = TRUE)
     expect_equal(result$value, 3)
     expect_equal(result$getValue(x), matrix(c(1, 2)), tolerance = TOL)
-    
+
     # Change A and b from the original values.
     value(A) <- rbind(c(0,0), c(0,1))   # <----- Changed.
     value(b) <- c(0,1)   # <----- Changed.
     value(h) <- c(2,2)
     value(c) <- c(1,1)
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -296,13 +296,13 @@ test_that("Test CPLEX warm start", {
     result <- solve(prob, solver = "CPLEX", warm_start = TRUE)
     expect_equal(result$value, 3)
     expect_equal(result$getValue(x), matrix(c(2, 1)), tolerance = TOL)
-    
+
     # Change h from the original values.
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(1,1)   # <----- Changed.
     value(c) <- c(1,1)
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -312,13 +312,13 @@ test_that("Test CPLEX warm start", {
     result <- solve(prob, solver = "CPLEX", warm_start = TRUE)
     expect_equal(result$value, 2)
     expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
-    
+
     # Change c from the original values.
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(2,2)
     value(c) <- c(2,1)   # <----- Changed.
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -334,37 +334,41 @@ test_that("Test CPLEX warm start", {
   }
 })
 
-test_that("Test CPLEX parameters", {
-  if("CPLEX" %in% installed_solvers()) {
-    n <- 10
-    m <- 4
-    A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-    x <- matrix(rnorm(n), nrow = n, ncol = 1)
-    y <- A %*% x
-    
-    # Solve a simple basis pursuit problem for testing purposes.
-    z <- Variable(n)
-    objective <- Minimize(norm1(z))
-    constraints <- list(A %*% z == y)
-    problem <- Problem(objective, constraints)
-    expect_error(result <- solve(problem, solver = "CPLEX", bogus = "foo"))
-    expect_error(result <- solve(problem, solver = "CPLEX", invalid_kwarg = NA))
-    # solve(problem, solver = "CPLEX", advance = 0, simplex.limits.iterations = 1000, timelimit = 1000.0, workdir = "mydir")
-  } else {
-    n <- 10
-    m <- 4
-    A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-    x <- matrix(rnorm(n), nrow = n, ncol = 1)
-    y <- A %*% x
-    
-    # Solve a simple basis pursuit problem for testing purposes.
-    z <- Variable(n)
-    objective <- Minimize(norm1(z))
-    constraints <- list(A %*% z == y)
-    problem <- Problem(objective, constraints)
-    expect_error(result <- solve(problem, solver = "CPLEX"), "The solver CPLEX is not installed")
-  }
-})
+## We need a unified interface for solver parameters before doing these checks
+## So commenting them out for now
+
+## test_that("Test CPLEX parameters", {
+##   if("CPLEX" %in% installed_solvers()) {
+##     n <- 10
+##     m <- 4
+##     A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+##     x <- matrix(rnorm(n), nrow = n, ncol = 1)
+##     y <- A %*% x
+
+##     # Solve a simple basis pursuit problem for testing purposes.
+##     z <- Variable(n)
+##     objective <- Minimize(norm1(z))
+##     constraints <- list(A %*% z == y)
+##     problem <- Problem(objective, constraints)
+##     ## Until we do a careful check of solver arguments, this check should be commented out
+##     ##expect_error(result <- solve(problem, solver = "CPLEX", bogus = "foo"))
+##     ##expect_error(result <- solve(problem, solver = "CPLEX", invalid_kwarg = NA))
+##     # solve(problem, solver = "CPLEX", advance = 0, simplex.limits.iterations = 1000, timelimit = 1000.0, workdir = "mydir")
+##   } else {
+##     n <- 10
+##     m <- 4
+##     A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+##     x <- matrix(rnorm(n), nrow = n, ncol = 1)
+##     y <- A %*% x
+
+##     # Solve a simple basis pursuit problem for testing purposes.
+##     z <- Variable(n)
+##     objective <- Minimize(norm1(z))
+##     constraints <- list(A %*% z == y)
+##     problem <- Problem(objective, constraints)
+##     expect_error(result <- solve(problem, solver = "CPLEX"), "The solver CPLEX is not installed")
+##   }
+## })
 
 test_that("Make sure CVXOPT's dual result matches other solvers", {
   if("CVXOPT" %in% installed_solvers()) {
@@ -376,7 +380,7 @@ test_that("Make sure CVXOPT's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_gurobi[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -400,7 +404,7 @@ test_that("Test a basic LP with GUROBI", {
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -409,7 +413,7 @@ test_that("Test a basic LP with GUROBI", {
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # GUROBI's default lower bound for a decision variable is zero
     # This quick test ensures that the cvxpy interface for GUROBI does *not* have that bound
     objective <- Minimize(x[1])
@@ -417,7 +421,7 @@ test_that("Test a basic LP with GUROBI", {
     prob <- Problem(objective, constraints)
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$getValue(x), as.matrix(c(-100, 1)), tolerance = TOL)
-    
+
     # Boolean and integer version.
     bool_var <- Variable(boolean = TRUE)
     int_var <- Variable(integer = TRUE)
@@ -426,7 +430,7 @@ test_that("Test a basic LP with GUROBI", {
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -449,7 +453,7 @@ test_that("Test a basic SOCP with GUROBI", {
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -458,7 +462,7 @@ test_that("Test a basic SOCP with GUROBI", {
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # GUROBI's default lower bound for a decision variable is zero
     # This quick test ensures that the CVXR interface for GUROBI does *not* have that bound
     objective <- Minimize(x[1])
@@ -466,7 +470,7 @@ test_that("Test a basic SOCP with GUROBI", {
     prob <- Problem(objective, constraints)
     result <- solve(prob, solver = "GUROBI")
     expect_equal(result$getValue(x), as.matrix(c(-100, 1)), tolerance = TOL)
-    
+
     # Boolean and integer version.
     bool_var <- Variable(boolean = TRUE)
     int_var <- Variable(integer = TRUE)
@@ -475,7 +479,7 @@ test_that("Test a basic SOCP with GUROBI", {
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -502,7 +506,7 @@ test_that("Make sure GUROBI's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_gurobi[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -526,7 +530,7 @@ test_that("Test a basic LP with MOSEK", {
     result <- solve(prob, solver = "MOSEK")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -535,7 +539,7 @@ test_that("Test a basic LP with MOSEK", {
     result <- solve(prob, solver = "MOSEK")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # MOSEK's default lower bound for a decision variable is zero
     # This quick test ensures that the cvxpy interface for MOSEK does *not* have that bound
     objective <- Minimize(x[1])
@@ -555,7 +559,7 @@ test_that("Test a basic SOCP with MOSEK", {
     result <- solve(prob, solver = "MOSEK")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -564,7 +568,7 @@ test_that("Test a basic SOCP with MOSEK", {
     result <- solve(prob, solver = "MOSEK")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     objective <- Minimize(x[1])
     constraints <- list(x[1] >= -100, x[1] <= -10, x[2] == 1)
     prob <- Problem(objective, constraints)
@@ -586,7 +590,7 @@ test_that("Make sure MOSEK's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_mosek[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -610,7 +614,7 @@ test_that("Test a basic SDP with MOSEK", {
     # Test optimality gap for equilibration.
     n <- 3
     Art <- matrix(rnorm(n*n), nrow = n, ncol = n)
-    
+
     t <- Variable()
     d <- Variable(n)
     D <- diag(d)
@@ -625,37 +629,42 @@ test_that("Test a basic SDP with MOSEK", {
   }
 })
 
-test_that("Test MOSEK parameters", {
-  if("MOSEK" %in% installed_solvers()) {
-    n <- 10
-    m <- 4
-    A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-    x <- matrix(rnorm(n), nrow = n, ncol = 1)
-    y <- A %*% x
-    
-    # Solve a simple basis pursuit problem for testing purposes.
-    z <- Variable(n)
-    objective <- Minimize(norm1(z))
-    constraints <- list(A %*% z == y)
-    problem <- Problem(objective, constraints)
-    expect_error(result <- solve(problem, solver = "MOSEK", dparam.basis_tol_x = "1e-8"))
-    expect_error(result <- solve(problem, solver = "MOSEK", invalid_kwarg = NA))
-    # solve(problem, solver = "MOSEK", mosek.dparam.basis_tol_x = 1e-8, MSK_IPAR_INTPNT_MAX_ITERATIONS = 20)
-  } else {
-    n <- 10
-    m <- 4
-    A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-    x <- matrix(rnorm(n), nrow = n, ncol = 1)
-    y <- A %*% x
-    
-    # Solve a simple basis pursuit problem for testing purposes.
-    z <- Variable(n)
-    objective <- Minimize(norm1(z))
-    constraints <- list(A %*% z == y)
-    problem <- Problem(objective, constraints)
-    expect_error(result <- solve(problem, solver = "MOSEK"), "The solver MOSEK is not installed")
-  }
-})
+## We ignore these test of Mosek parameters since the R mosek interface does not check them.
+
+## test_that("Test MOSEK parameters", {
+##   if("MOSEK" %in% installed_solvers()) {
+##     n <- 1000
+##     m <- 400
+##     A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+##     x <- matrix(rnorm(n), nrow = n, ncol = 1)
+##     y <- A %*% x
+
+##     # Solve a simple basis pursuit problem for testing purposes.
+##     z <- Variable(n)
+##     objective <- Minimize(norm1(z))
+##     constraints <- list(A %*% z == y)
+##     problem <- Problem(objective, constraints)
+##     ## These tests are currently not useful because the Rmosek interface doesn't check them.
+##     ## We have to manually check later
+##     ##expect_error(result <- solve(problem, solver = "MOSEK", list(dparam = list(BASIS_TOL_X = "1e-8")))
+##     ## expect_error(result <- solve(problem, solver = "MOSEK", list(dparam = list(invalid_kwarg = NA))))
+##     solve(problem, solver = "MOSEK",
+##           list(dparam = list(BASIS_TOL_X = 1e-1), iparam = list(INTPNT_MAX_ITERATIONS = 20)))
+##   } else {
+##     n <- 10
+##     m <- 4
+##     A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+##     x <- matrix(rnorm(n), nrow = n, ncol = 1)
+##     y <- A %*% x
+
+##     # Solve a simple basis pursuit problem for testing purposes.
+##     z <- Variable(n)
+##     objective <- Minimize(norm1(z))
+##     constraints <- list(A %*% z == y)
+##     problem <- Problem(objective, constraints)
+##     expect_error(result <- solve(problem, solver = "MOSEK"), "The solver MOSEK is not installed")
+##   }
+## })
 
 test_that("Test GUROBI warm start", {
   # Make sure that warm starting GUROBI behaves as expected.
@@ -665,12 +674,12 @@ test_that("Test GUROBI warm start", {
     b <- Parameter(2)
     h <- Parameter(2)
     c <- Parameter(2)
-    
+
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(2,2)
     value(c) <- c(1,1)
-    
+
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
                         x[2] <= h[2],
@@ -679,13 +688,13 @@ test_that("Test GUROBI warm start", {
     result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
     expect_equal(result$value, 3)
     expect_equal(result$getValue(x), matrix(c(1, 2)), tolerance = TOL)
-    
+
     # Change A and b from the original values.
     value(A) <- rbind(c(0,0), c(0,1))   # <----- Changed.
     value(b) <- c(0,1)   # <----- Changed.
     value(h) <- c(2,2)
     value(c) <- c(1,1)
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -695,13 +704,13 @@ test_that("Test GUROBI warm start", {
     result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
     expect_equal(result$value, 3)
     expect_equal(result$getValue(x), matrix(c(2, 1)), tolerance = TOL)
-    
+
     # Change h from the original values.
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(1,1)   # <----- Changed.
     value(c) <- c(1,1)
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -711,13 +720,13 @@ test_that("Test GUROBI warm start", {
     result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
     expect_equal(result$value, 2)
     expect_equal(result$getValue(x), matrix(c(1, 1)), tolerance = TOL)
-    
+
     # Change c from the original values.
     value(A) <- rbind(c(1,0), c(0,0))
     value(b) <- c(1,0)
     value(h) <- c(2,2)
     value(c) <- c(2,1)   # <----- Changed.
-    
+
     # Without setting update_eq_constrs = FALSE, the results should change to the correct answer.
     objective <- Maximize(c[1]*x[1] + c[2]*x[2])
     constraints <- list(x[1] <= h[1],
@@ -739,7 +748,7 @@ test_that("Test a basic LP with XPRESS", {
     result <- solve(prob, solver = "XPRESS")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -748,7 +757,7 @@ test_that("Test a basic LP with XPRESS", {
     result <- solve(prob, solver = "XPRESS")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # XPRESS's default lower bound for a decision variable is zero
     # This quick test ensures that the cvxpy interface for XPRESS does *not* have that bound
     objective <- Minimize(x[1])
@@ -768,7 +777,7 @@ test_that("Test a basic SOCP with XPRESS", {
     result <- solve(prob, solver = "XPRESS")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -777,7 +786,7 @@ test_that("Test a basic SOCP with XPRESS", {
     result <- solve(prob, solver = "XPRESS")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     objective <- Minimize(x[1])
     constraints <- list(x[1] >= -100, x[1] <= -10, x[2] == 1)
     prob <- Problem(objective, constraints)
@@ -799,7 +808,7 @@ test_that("Make sure XPRESS's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_mosek[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -823,7 +832,7 @@ test_that("Test a basic LP with NAG", {
     result <- solve(prob, solver = "NAG")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -832,7 +841,7 @@ test_that("Test a basic LP with NAG", {
     result <- solve(prob, solver = "NAG")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     # NAG's default lower bound for a decision variable is zero
     # This quick test ensures that the cvxpy interface for NAG does *not* have that bound
     objective <- Minimize(x[1])
@@ -852,7 +861,7 @@ test_that("Test a basic SOCP with NAG", {
     result <- solve(prob, solver = "NAG")
     expect_equal(result$value, 1.0, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -861,7 +870,7 @@ test_that("Test a basic SOCP with NAG", {
     result <- solve(prob, solver = "NAG")
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
-    
+
     objective <- Minimize(x[1])
     constraints <- list(x[1] >= -100, x[1] <= -10, x[2] == 1)
     prob <- Problem(objective, constraints)
@@ -883,7 +892,7 @@ test_that("Make sure NAG's dual result matches other solvers", {
     duals_ecos <- lapply(constraints, function(c) { result$getDualValue(c) })
     for(i in seq_along(constraints))
       expect_equal(duals_mosek[[i]], duals_ecos[[i]], tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -911,7 +920,7 @@ test_that("Test the list of installed solvers", {
     } else
       expect_error(result <- solve(prob, solver = solver), paste("The solver", solver, "is not installed"))
   }
-  
+
   for(solver in names(SOLVER_MAP_QP)) {
     if(solver %in% INSTALLED_SOLVERS) {
       result <- solve(prob, solver = solver)

@@ -1,7 +1,7 @@
 # QPSolver requires objectives to be stuffed in the following way.
-#' 
+#'
 #' Is the QP objective stuffed?
-#' 
+#'
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @return Is the objective a stuffed QP?
 is_stuffed_qp_objective <- function(objective) {
@@ -11,7 +11,7 @@ is_stuffed_qp_objective <- function(objective) {
 
 #'
 #' A QP solver interface.
-#' 
+#'
 setClass("QpSolver", contains = "ReductionSolver")
 
 #' @param object A \linkS4class{QpSolver} object.
@@ -144,22 +144,22 @@ setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcpl
 setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
   attr <- list()
-  
+
   #Can't seem to find a way to increase verbosity of cplex. Can't get cputime
   #if("cputime" %in% names(solution))
   #  attr[SOLVE_TIME] <- results$cputime
   #attr[NUM_ITERS] <- as.integer(get_num_barrier_iterations(model@solution@progress))
-  
+
   status <- status_map(object, solution$model$status)
-  
+
   if(status %in% SOLUTION_PRESENT) {
     # Get objective value.
     opt_val <- model$obj
-    
+
     # Get solution.
     primal_vars <- list()
     primal_vars[[names(inverse_data@id_map)[1]]] <- model$xopt
-    
+
     # Only add duals if not a MIP.
     dual_vars <- list()
     if(!inverse_data@is_mip) {
@@ -173,53 +173,54 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
     if(status == UNBOUNDED)
       opt_val <- -Inf
   }
-  
-  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
-})
-
-# Do we need this function?
-setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
-  model <- results$model
-  attr <- list()
-  if("cputime" %in% names(results))
-    attr[[SOLVE_TIME]] <- results$cputime
-  attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model@solution@progress))
-
-  status <- status_map(object, get_status(model@solution))
-
-  if(status %in% SOLUTION_PRESENT) {
-    # Get objective value.
-    opt_val <- get_objective_value(model@solution)
-
-    # Get solution.
-    x <- as.matrix(get_values(model@solution))
-    primal_vars <- list()
-    primal_vars[names(inverse_data@id_map)[1]] <- x
-
-    # Only add duals if not a MIP.
-    dual_vars <- list()
-    if(!inverse_data@is_mip) {
-      y <- -as.matrix(get_dual_values(model@solution))
-      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
-    }
-  } else {
-    primal_vars <- list()
-    primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
-    
-    dual_vars <- list()
-    if(!inverse_data@is_mip) {
-      dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
-      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-      names(dual_vars) <- dual_var_ids
-    }
-    
-    opt_val <- Inf
-    if(status == UNBOUNDED)
-      opt_val <- -Inf
-  }
 
   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
 })
+
+## Do we need this function?
+## @DK: no, we don't (BN)
+## setMethod("invert", "CPLEX_QP", function(object, solution, inverse_data) {
+##   model <- solution$model
+##   attr <- list()
+##   if("cputime" %in% names(solution))
+##     attr[[SOLVE_TIME]] <- solution$cputime
+##   attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model@solution@progress))
+
+##   status <- status_map(object, get_status(model@solution))
+
+##   if(status %in% SOLUTION_PRESENT) {
+##     # Get objective value.
+##     opt_val <- get_objective_value(model@solution)
+
+##     # Get solution.
+##     x <- as.matrix(get_values(model@solution))
+##     primal_vars <- list()
+##     primal_vars[names(inverse_data@id_map)[1]] <- x
+
+##     # Only add duals if not a MIP.
+##     dual_vars <- list()
+##     if(!inverse_data@is_mip) {
+##       y <- -as.matrix(get_dual_values(model@solution))
+##       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+##     }
+##   } else {
+##     primal_vars <- list()
+##     primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
+
+##     dual_vars <- list()
+##     if(!inverse_data@is_mip) {
+##       dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
+##       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+##       names(dual_vars) <- dual_var_ids
+##     }
+
+##     opt_val <- Inf
+##     if(status == UNBOUNDED)
+##       opt_val <- -Inf
+##   }
+
+##   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+## })
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
@@ -228,7 +229,7 @@ setMethod("alt_invert", "CPLEX_QP", function(object, results, inverse_data) {
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("Rcplex", quietly = TRUE)
+
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
@@ -255,12 +256,12 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
     #If both number of equalities and inequalities are 0, then constraints dont matter so set equal
     sense_vec <- c(rep("E", n_var))
   } else{
-    sense_vec = c(rep("E", n_eq), rep("L", n_ineq))  
+    sense_vec = c(rep("E", n_eq), rep("L", n_ineq))
   }
-  
+
   #Initializing variable types
   vtype <- rep("C", n_var)
-  
+
   #Setting Boolean variable types
   for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
     vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
@@ -269,7 +270,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
     vtype[data[INT_IDX]$int_vars_idx[i]] <- "I"
   }
-  
+
   #Setting verbosity off
   if(!verbose){
     control <- list(trace=0)
@@ -293,28 +294,28 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
       }
       kwargs$cplex_params <- NULL
     }
-  
+
     if("cplex_filename" %in% kwargs) {
       filename <- solver_opts$cplex_filename
       if(!is.na(filename) && !is.null(filename))
         write(model, filename)
       kwargs$cplex_filename <- NULL
     }
-  
+
     if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
       stop("Invalid keyword argument ", kwargs[[1]])
   }
   # Solve problem.
   results_dict <- list()
-  
+
   #In case A matrix is empty
   if(0 %in% dim(Amat)){
     Amat <- matrix(0, nrow = length(q), ncol = length(q))
   }
-  
+
   tryCatch({
     # Define CPLEX problem and solve
-    model <- Rcplex::Rcplex(cvec=q, Amat=Amat, bvec=bvec, Qmat=P, lb=-Inf, ub=Inf, 
+    model <- Rcplex::Rcplex(cvec=q, Amat=Amat, bvec=bvec, Qmat=P, lb=-Inf, ub=Inf,
                             control=control, objsense="min", sense=sense_vec, vtype=vtype)
     #control parameter would be used to set specific solver arguments. See cran Rcplex documentation
     }, error = function(e) {
@@ -368,52 +369,53 @@ setMethod("name", "GUROBI_QP", function(x) { GUROBI_NAME })
 setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gurobi", quietly = TRUE) })
 
 ##DK: IS THIS FUNCTION NECESSARY ANYMORE WITH invert?
-setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
-  model <- results$model
-  x_grb <- getVars(model)
-  n <- length(x_grb)
-  constraints_grb <- getConstrs(model)
-  m <- length(constraints_grb)
+## @DK:  No, not necessary (BN)
+## setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
+##   model <- results$model
+##   x_grb <- getVars(model)
+##   n <- length(x_grb)
+##   constraints_grb <- getConstrs(model)
+##   m <- length(constraints_grb)
 
-  # Start populating attribute dictionary.
-  attr <- list()
-  attr[[SOLVE_TIME]] <- model@Runtime
-  attr[[NUM_ITERS]] <- model@BarIterCount
+##   # Start populating attribute dictionary.
+##   attr <- list()
+##   attr[[SOLVE_TIME]] <- model@Runtime
+##   attr[[NUM_ITERS]] <- model@BarIterCount
 
-  # Map GUROBI statuses back to CVXR statuses.
-  status <- status_map(object, model@Status)
+##   # Map GUROBI statuses back to CVXR statuses.
+##   status <- status_map(object, model@Status)
 
-  if(status %in% SOLUTION_PRESENT) {
-    opt_val <- model@objVal
-    x <- as.matrix(sapply(1:n, function(i) { x_grb[i]@X }))
+##   if(status %in% SOLUTION_PRESENT) {
+##     opt_val <- model@objVal
+##     x <- as.matrix(sapply(1:n, function(i) { x_grb[i]@X }))
 
-    primal_vars <- list()
-    primal_vars[names(inverse_data@id_map)[1]] <- x
+##     primal_vars <- list()
+##     primal_vars[names(inverse_data@id_map)[1]] <- x
 
-    # Only add duals if not a MIP.
-    dual_vars <- list()
-    if(!inverse_data@is_mip) {
-      y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]@Pi }))
-      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
-    } else {
-      primal_vars <- list()
-      primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
-      
-      dual_vars <- list()
-      if(!inverse_data@is_mip) {
-        dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
-        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-        names(dual_vars) <- dual_var_ids
-      }
-      
-      opt_val <- Inf
-      if(status == UNBOUNDED)
-        opt_val <- -Inf
-    }
-  }
+##     # Only add duals if not a MIP.
+##     dual_vars <- list()
+##     if(!inverse_data@is_mip) {
+##       y <- -as.matrix(sapply(1:m, function(i) { constraints_grb[i]@Pi }))
+##       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+##     } else {
+##       primal_vars <- list()
+##       primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
 
-  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
-})
+##       dual_vars <- list()
+##       if(!inverse_data@is_mip) {
+##         dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
+##         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+##         names(dual_vars) <- dual_var_ids
+##       }
+
+##       opt_val <- Inf
+##       if(status == UNBOUNDED)
+##         opt_val <- -Inf
+##     }
+##   }
+
+##   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+## })
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
@@ -422,7 +424,6 @@ setMethod("alt_invert", "GUROBI_QP", function(object, results, inverse_data) {
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("gurobi", quietly = TRUE)
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
   q <- data[[Q_KEY]]
@@ -437,7 +438,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
 
   #Doesn't seem like adding variables exists in the R version, but setting var type is
   # Add variables.
-  
+
   #Add variable types
   vtype <- character(n)
   for(i in seq_along(data[[BOOL_IDX]])){
@@ -446,7 +447,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   for(i in seq_along(data[[INT_IDX]])){
     vtype[data[[INT_IDX]][[i]]] <- 'I' #I for integer
   }
-  
+
   for(i in 1:n) {
     if(vtype[i] == ""){
       vtype[i] <- 'C' #C for continuous
@@ -456,7 +457,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   model$vtype <- vtype #put in variable types
   model$lb <- rep(-Inf, n)
   model$ub <- rep(Inf, n)
-  
+
   #update(model): doesn't exist in R
   #x <- getVars(model)
 
@@ -465,7 +466,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   model$A <- rbind(A, Fmat)
   model$rhs <- c(b, g)
   model$sense <- c(rep('=', dim(A)[1]), rep('<', dim(Fmat)[1])) #in their documentation they just have < than not <=?
-  
+
   # if(!is.null(model$v811_addMConstrs)) {
   #   # @e can pass all of A == b at once.
   #   sense <- rep(GRB.EQUAL, nrow(A))
@@ -503,13 +504,13 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   #update(model) Not in R
 
   # Define objective.
-  
-  
+
+
   ####CHECK MATH####
   #Conjecture P is Q matrix and q is c, which is obj for gurobi
   model$Q <- P*.5
-  model$obj <- q 
-  
+  model$obj <- q
+
   # obj <- gurobi::QuadExpr()
   # if(!is.null(model$v811_setMObjective))
   #   model <- model$v811_setMObjective(0.5*P, q)
@@ -534,9 +535,9 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   # for(key in names(solver_opts))
   #   setParam(model, key, solver_opts[key])
   for(i in seq_along(solver_opts)){
-    params[[ names(solver_opts)[i] ]] <- solver_opts[i] 
+    params[[ names(solver_opts)[i] ]] <- solver_opts[i]
   }
-  
+
   # Update model. Not a thing in R
   #update(model)
 
@@ -549,7 +550,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
     results_dict$status <- 'SOLVER_ERROR'
   })
   results_dict$model <- model
-  
+
   return(results_dict)
 })
 
@@ -564,20 +565,20 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
   n <- length(x_grb)
   constraints_grb <- model$rhs
   m = length(constraints_grb)
-  
+
   attr <- list()
   attr[[SOLVE_TIME]] <- solution$runtime
   attr[[NUM_ITERS]] <- solution$baritercount
-  
+
   status <- status_map(object, solution$status)
-  
+
   if(status %in% SOLUTION_PRESENT) {
     opt_val <- solution$objval
     x <- solution$x
-    
+
     primal_vars <- list()
     primal_vars[[names(inverse_data@id_map)[1]]] <- x
-    
+
     #Only add duals if not a MIP
     dual_vars <- list()
     if(!inverse_data@is_mip) {
@@ -585,18 +586,18 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
         y <- -solution$pi
         dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
       }
-    } 
+    }
   } else {
       primal_vars <- list()
       primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
-      
+
       dual_vars <- list()
       if(!inverse_data@is_mip) {
         dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
         dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
         names(dual_vars) <- dual_var_ids
       }
-      
+
       opt_val <- Inf
       if(status == UNBOUNDED)
         opt_val <- -Inf
@@ -643,7 +644,9 @@ setMethod("status_map", "OSQP", function(solver, status) {
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
 
 #' @describeIn OSQP Imports the solver.
-setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
+##setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
+## Since OSQP is a requirement, this is always TRUE
+setMethod("import_solver", "OSQP", function(solver) { TRUE })
 
 #' @param solution The raw solution returned by the solver.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
@@ -680,7 +683,6 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  requireNamespace("osqp", quietly = TRUE)
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
   A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
@@ -705,43 +707,50 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     old_data <- cache[[2]]
     results <- cache[[3]]
 
-    same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) && all(P@p == old_data[[P_KEY]]@p) && all(P@i == old_data[[P_KEY]]@i) &&
-                    all(dim(A) == dim(old_data$full_A)) && all(A@p == old_data$full_A@p) && all(A@i == old_data$full_A@i)
+      same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) &&
+          all(P@p == old_data[[P_KEY]]@p) &&
+          all(P@i == old_data[[P_KEY]]@i) &&
+          all(dim(A) == dim(old_data$full_A)) &&
+          all(A@p == old_data$full_A@p) &&
+          all(A@i == old_data$full_A@i)
   } else
-    same_pattern <- FALSE
+      same_pattern <- FALSE
 
   # TODO: Check syntax for setting up R's OSQP solver.
   # If sparsity pattern differs, need to do setup.
   if(warm_start && same_pattern) {
-    new_args <- list()
-    for(key in c("q", "l", "u")) {
-      if(any(data[[key]] != old_data[[key]]))
-        new_args[[key]] <- data[[key]]
-    }
-    factorizing <- FALSE
+      new_args <- list()
+      for(key in c("q", "l", "u")) {
+          if(any(data[[key]] != old_data[[key]]))
+              new_args[[key]] <- data[[key]]
+      }
+      factorizing <- FALSE
 
-    if(any(P@x != old_data[[P_KEY]]@x)) {
-      P_triu <- triu(P)
-      new_args$Px <- P_triu@x
-      factorizing <- TRUE
-    }
-    if(any(A@x != old_data$full_A@x)) {
-      new_args$Ax <- A@x
-      factorizing <- TRUE
-    }
+      if(any(P@x != old_data[[P_KEY]]@x)) {
+          P_triu <- triu(P)
+          new_args$Px <- P_triu@x
+          factorizing <- TRUE
+      }
+      if(any(A@x != old_data$full_A@x)) {
+          new_args$Ax <- A@x
+          factorizing <- TRUE
+      }
 
-    if(length(new_args) > 0)
-      update(solver, new_args)
+      if(length(new_args) > 0)
+          update(solver, new_args)
 
-    # Map OSQP statuses back to CVXR statuses.
-    status <- status_map(object, results@info@status_val)
-    if(status == OPTIMAL)
-      warm_start(solver, results@x, results@y)
+      ## Map OSQP statuses back to CVXR statuses.
+      status <- status_map(object, results@info@status_val)
+      if(status == OPTIMAL)
+          warm_start(solver, results@x, results@y)
 
-    # Polish if factorizing.
-    if(is.null(solver_opts$polish))
-      solver_opts$polish <- factorizing
-    update_settings(solver, verbose = verbose, solver_opts)
+      ## Polish if factorizing.
+      if(is.null(solver_opts$polish))
+          solver_opts$polish <- factorizing
+      ## this update_settings is nowhere to be found, but basically
+      ## it just updates the settings. So we do it manually
+      ## update_settings(solver, verbose = verbose, solver_opts)
+      do.call(osqp::osqpSettings, c(list(verbose = verbose), solver_opts))
   } else {
     # Initialize and solve problem.
     if(is.null(solver_opts$polish))
@@ -756,6 +765,6 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   results <- solver$Solve()
   if(identical(solver_cache, list()) || !is.null(solver_cache))   # solver_cache is a list() object, so it throws an error here
       solver_cache[[name(object)]] <- list(solver, data, results)
-  
+
   return(results)
 })

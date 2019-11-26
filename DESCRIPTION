@@ -48,7 +48,8 @@ Imports:
     R.utils,
     ECOSolveR (>= 0.5.3),
     scs (>= 1.3),
-    stats
+    stats,
+    osqp
 Suggests:
     knitr,
     rmarkdown,
@@ -58,7 +59,9 @@ Suggests:
     lpSolveAPI,
     Rglpk,
     slam,
-    Rmosek
+    Rmosek,
+    gurobi,
+    Rcplex
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true

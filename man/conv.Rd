@@ -19,6 +19,7 @@ An \linkS4class{Expression} representing the convolution of the input.
 The 1-D discrete convolution of two vectors.
 }
 \examples{
+set.seed(129)
 x <- Variable(5)
 h <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
 prob <- Problem(Minimize(sum(conv(h, x))))

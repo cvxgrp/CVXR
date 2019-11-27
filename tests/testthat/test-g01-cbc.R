@@ -20,7 +20,7 @@ test_that("Test basic LPs", {
     # result <- solve(prob, verbose = FALSE, solver = "CBC")
     # expect_equal(result$value, 0, tolerance = TOL)
     # expect_equal(result$getValue(x), matrix(c(2,2)), tolerance = TOL)
-    
+
     prob <- Problem(Minimize(-a), list(a <= 1))
     result <- solve(prob, verbose = FALSE, solver = "CBC")
     expect_equal(result$value, -1, tolerance = TOL)
@@ -34,7 +34,7 @@ test_that("Test a basic LP", {
     result <- solve(prob, verbose = FALSE, solver = "CBC")
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(x), matrix(c(0,0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -62,7 +62,7 @@ test_that("Test a basic MILP", {
     expect_equal(result$value, 0, tolerance = TOL)
     expect_equal(result$getValue(bool_var), 0, tolerance = TOL)
     expect_equal(result$getValue(x), matrix(c(0,0)), tolerance = TOL)
-    
+
     # Example from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp
     objective <- Minimize(-4*x[1] - 5*x[2])
@@ -85,8 +85,7 @@ test_that("Test a basic MILP", {
 })
 
 test_that("Test a hard knapsack problem", {
-  if("CBC" %in% installed_solvers()) {
-    # Instance "knapPI_1_50_1000_1" from "http://www.diku.dk/~pisinger/genhard.c"
+    ## Instance "knapPI_1_50_1000_1" from "http://www.diku.dk/~pisinger/genhard.c"
     n <- 50
     c <- 995
     z <- 8373
@@ -107,24 +106,23 @@ test_that("Test a hard knapsack problem", {
                     c(43,  81, 972, 0), c(44, 943, 895, 0), c(45,  58, 213, 0),
                     c(46, 303, 748, 0), c(47, 764, 487, 0), c(48, 536, 923, 0),
                     c(49, 724,  29, 1), c(50, 789, 674, 0))  # index, p / w / x
-    
+
     X <- Variable(n, boolean = TRUE)
     prob <- Problem(Maximize(sum(multiply(coeffs[,2], X))),
                     list(sum(multiply(coeffs[,3], X)) <= c))
-    result <- solve(prob, verbose = FALSE, solver = "CBC")
-    expect_equal(result$value, z, tolerance = TOL)   # objective
+  if("CBC" %in% installed_solvers()) {
+      result <- solve(prob, verbose = FALSE, solver = "CBC")
+      expect_equal(result$value, z, tolerance = TOL)   # objective
   } else {
-    prob <- Problem(Maximize(sum(multiply(coeffs[,2], X))),
-                    list(sum(multiply(coeffs[,3], X)) <= c))
-    expect_error(solve(prob, verbose = FALSE, solver = "CBC"))
+      expect_error(solve(prob, verbose = FALSE, solver = "CBC"))
   }
 })
 
 test_that("Test that all CBC solver options work", {
-  if("CBC" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x, 1)),
                     list(x == Variable(2, boolean = TRUE)))
-    for(i in 1:2)
+  if("CBC" %in% installed_solvers()) {
+      for(i in 1:2)
       # Some cut-generators seem to be buggy for now -> set to false
       # result <- solve(prob, verbose = TRUE, solver = "CBC", GomoryCuts = TRUE, MIRCuts = TRUE,
       #            MIRCuts2 = TRUE, TwoMIRCuts = TRUE, ResidualCapacityCuts = TRUE,
@@ -135,8 +133,6 @@ test_that("Test that all CBC solver options work", {
       result <- solve(prob, verbose = TRUE, solver = "CBC", maximumSeconds = 100)
     expect_equal(result$getValue(x), matrix(c(0,0)), tolerance = TOL)
   } else {
-    prob <- Problem(Minimize(p_norm(x, 1)), 
-                    list(x == Variable(2, boolean = TRUE)))
     expect_error(solve(prob, solver = "CBC"))
   }
 })

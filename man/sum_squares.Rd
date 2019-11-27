@@ -17,6 +17,7 @@ An \linkS4class{Expression} representing the sum of squares of the input.
 The sum of the squared entries in a vector or matrix.
 }
 \examples{
+set.seed(212)
 m <- 30
 n <- 20
 A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)

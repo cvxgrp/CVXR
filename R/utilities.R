@@ -796,7 +796,7 @@ Key <- function(row, col) {
 ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed for consistency in handling keys.
   if(length(key) > 3)
     stop("Invalid index/slice")
-  
+
   nrow <- dim[1]
   ncol <- dim[2]
   row <- ku_format_slice(key$row, nrow)
@@ -818,11 +818,11 @@ ku_format_slice <- function(key_val, dim) {
   if(is.null(key_val))
     return(NULL)
   orig_key_val <- as.integer(key_val)
-  
+
   # Return if all zero indices.
   if(all(orig_key_val == 0))
     return(orig_key_val)
-  
+
   # Convert negative indices to positive indices.
   if(all(orig_key_val >= 0))
     key_val <- orig_key_val
@@ -830,8 +830,8 @@ ku_format_slice <- function(key_val, dim) {
     key_val <- setdiff(seq_len(dim), -orig_key_val)
   else
     stop("Only 0's may be mixed with negative subscripts")
-  
-  if(all(key_val >= 0 && key_val <= dim))
+
+  if(all(key_val >= 0 & key_val <= dim))
     return(key_val)
   else
     stop("Index is out of bounds for axis with size ", dim)
@@ -840,7 +840,7 @@ ku_format_slice <- function(key_val, dim) {
 ku_slice_mat <- function(mat, key) {
   if(is.vector(mat))
     mat <- matrix(mat, ncol = 1)
-  
+
   if(is.matrix(key$row) && is.null(key$col))
     select_mat  <- matrix(mat[key$row], ncol = 1)
   else if(is.null(key$row) && is.null(key$col))

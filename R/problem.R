@@ -17,7 +17,7 @@ setMethod("initialize", "Objective", function(.Object, ..., expr) {
   .Object@expr <- expr
   .Object@args <- list(as.Constant(expr))
   # .Object <- callNextMethod(.Object, ..., args = list(as.Constant(expr)))
-  
+
   # Validate that the objective resolves to a scalar.
   if(!is_scalar(.Object@args[[1]]))
     stop("The objective must resolve to a scalar")
@@ -28,7 +28,7 @@ setMethod("initialize", "Objective", function(.Object, ..., expr) {
 
 #' @param object An \linkS4class{Objective} object.
 #' @describeIn Objective The value of the objective expression.
-setMethod("value", "Objective", function(object) { 
+setMethod("value", "Objective", function(object) {
   v <- value(object@args[[1]])
   if(is.na(v))
     return(NA_real_)
@@ -224,7 +224,7 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
         setup_time <- results_dict[[SETUP_TIME]]
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
-    
+
     solver_stats <- list(solver_name, solve_time, setup_time, num_iters)
     names(solver_stats) <- c(SOLVER_NAME, SOLVE_TIME, SETUP_TIME, NUM_ITERS)
     return(solver_stats)
@@ -399,10 +399,10 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@value <- value
   .Object@status <- status
   .Object@solution <- solution
-  
+
   .Object@.intermediate_problem <- .intermediate_problem
   .Object@.intermediate_inverse_data <- .intermediate_inverse_data
-  
+
   # The intermediate and solving chains to canonicalize and solve the problem.
   .Object@.intermediate_chain <- .intermediate_chain
   .Object@.solving_chain <- .solving_chain
@@ -417,7 +417,7 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   # Benchmarks reported by the solver.
   .Object@.solver_stats <- .solver_stats
   .Object@args <- list(.Object@objective, .Object@constraints)
-  
+
   # Cache for warm start.
   .Object@.solver_cache <- list()
   .Object
@@ -443,7 +443,7 @@ setReplaceMethod("constraints", "Problem", function(object, value) {
 })
 
 #' @describeIn Problem The value from the last time the problem was solved (or NA if not solved).
-setMethod("value", "Problem", function(object) { 
+setMethod("value", "Problem", function(object) {
   if(is.na(object@value))
     return(NA_real_)
   else
@@ -568,30 +568,33 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 #  Problem.REGISTERED_SOLVE_METHODS[name] <- func
 # }
 
-#' 
+#'
 #' @param object A \linkS4class{Problem} class.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @param gp A logical value indicating whether the problem is a geometric program.
 #' @describeIn Problem Get the problem data passed to the specified solver.
 setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
   object <- .construct_chains(object, solver = solver, gp = gp)
-  
+
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   object@.solving_chain <- tmp[[1]]
   data <- tmp[[2]]
   solving_inverse_data <- tmp[[3]]
-  
+
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
-  
+
   return(list(data = data, chain = full_chain, inverse_data = inverse_data))
 })
 
 .find_candidate_solvers <- function(object, solver = NA, gp = FALSE) {
   candidates <- list(qp_solvers = list(), conic_solvers = list())
-  
+
+  INSTALLED_SOLVERS <- installed_solvers()
+  INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
+
   if(!is.na(solver)) {
-    if(!(solver %in% INSTALLED_SOLVERS)) 
+    if(!(solver %in% INSTALLED_SOLVERS))
       stop("The solver ", solver, " is not installed")
     if(solver %in% CONIC_SOLVERS)
       candidates$conic_solvers <- c(candidates$conic_solvers, solver)
@@ -601,7 +604,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
     candidates$qp_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% QP_SOLVERS]
     candidates$conic_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
   }
-  
+
   # If gp, we must have only conic solvers.
   if(gp) {
     if(!is.na(solver) && !(solver %in% CONIC_SOLVERS))
@@ -609,25 +612,25 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
     else if(is.na(solver))
       candidates$qp_solvers <- list()   # No QP solvers allowed.
   }
-  
+
   if(is_mixed_integer(object)) {
     if(length(candidates$qp_solvers) > 0) {
       qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
       candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
     }
-    
+
     if(length(candidates$conic_solvers) > 0) {
       conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
       candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
     }
-    
+
     if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
       stop("Problem is mixed-integer, but candidate QP/Conic solvers are not MIP-capable")
   }
   return(candidates)
 }
 
-#' 
+#'
 #' @param object A \linkS4class{Problem} class.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @param gp Is the problem a geometric problem?
@@ -638,7 +641,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 
 .construct_chains <- function(object, solver = NA, gp = FALSE) {
   chain_key <- list(solver, gp)
-  
+
   if(!identical(chain_key, object@.cached_chain_key)) {
     candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
     object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
@@ -646,7 +649,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
     object@.intermediate_chain <- tmp[[1]]
     object@.intermediate_problem <- tmp[[2]]
     object@.intermediate_inverse_data <- tmp[[3]]
-    
+
     object@.solving_chain <- construct_solving_chain(object@.intermediate_problem, candidate_solvers)
     object@.cached_chain_key <- chain_key
   }
@@ -665,7 +668,7 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   data <- tmp[[2]]
   solving_inverse_data <- tmp[[3]]
   solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, verbose, list(...))
-  
+
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
   # object <- unpack_results(object, solution, full_chain, inverse_data)
@@ -792,7 +795,7 @@ valuesById <- function(object, results_dict, sym_data, solver) {
                        ## result[[as.character(id(arg))]]
                        getValue(arg)
                      }
-          
+
           if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
             return(NA)
           else {
@@ -802,21 +805,21 @@ valuesById <- function(object, results_dict, sym_data, solver) {
         }
         valResult <- to_numeric(objet, arg_values)
       }
-      
+
       ## Reduce to scalar if possible
       if(all(intf_dim(valResult) == c(1, 1)))
         intf_scalar_value(valResult)
       else
         valResult
     }
-    
+
     getDualValue <- function(objet) {
       if(!is(objet, "Constraint")) {
         stop("getDualValue: argument should be a Constraint!")
       }
       getValue(objet)
     }
-    
+
     result$getValue <- getValue
     result$getDualValue <- getDualValue
     result
@@ -852,7 +855,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
   # object@status <- solution@status
   # object@solution <- solution
   # return(object)
-  
+
   result <- list()
   if(solution@status %in% SOLUTION_PRESENT) {
     for(v in variables(object)) {
@@ -884,11 +887,11 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
     return(result)
   } else
     stop("Cannot unpack invalid solution")
-  
+
   result$value <- solution@opt_val
   result$status <- solution@status
   # result$solution <- solution
-  
+
   # Helper functions.
   getValue <- function(objet) {
     ## We go French!
@@ -909,7 +912,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
           ## result[[as.character(id(arg))]]
           getValue(arg)
         }
-        
+
         if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
           return(NA)
         else {
@@ -919,20 +922,20 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
       }
       valResult <- to_numeric(objet, arg_values)
     }
-    
+
     ## Reduce to scalar if possible
     if(all(intf_dim(valResult) == c(1, 1)))
       intf_scalar_value(valResult)
     else
       valResult
   }
-  
+
   getDualValue <- function(objet) {
     if(!is(objet, "Constraint"))
       stop("getDualValue: argument should be a Constraint!")
     getValue(objet)
   }
-  
+
   result$getValue <- getValue
   result$getDualValue <- getDualValue
   return(result)
@@ -1012,7 +1015,7 @@ saveValuesById <- function(variables, offset_map, result_vec) {
             ## The variable was multiplied by zero
             value <- matrix(0, nrow = rows, ncol = cols)
         }
-        
+
         ## Convert matrix back to scalar/vector when appropriate.
         # if(var@.is_vector)
         #  value <- as.vector(value)

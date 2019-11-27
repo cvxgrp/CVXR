@@ -19,6 +19,7 @@ An \linkS4class{Expression} representing the sum of the largest \code{k} values 
 The sum of the largest \eqn{k} values of a vector or matrix.
 }
 \examples{
+set.seed(122)
 m <- 300
 n <- 9
 X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)

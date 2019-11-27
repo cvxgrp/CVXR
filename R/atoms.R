@@ -11,12 +11,12 @@ Atom <- setClass("Atom", representation(atom_args = "list", .dim = "NumORNULL"),
 setMethod("initialize", "Atom", function(.Object, ..., atom_args = list(), .dim = NULL, validate = TRUE) {
   # .Object@id <- ifelse(is.na(id), get_id(), id)
   .Object <- callNextMethod(.Object, ..., validate = FALSE)
-  
+
   if(length(atom_args) == 0)
     stop("No arguments given to ", class(.Object), ".")
   .Object@args <- lapply(atom_args, as.Constant)
   validate_args(.Object)
-  
+
   .Object@.dim <- dim_from_args(.Object)
   if(length(.Object@.dim) > 2)
     stop("Atoms must be at most 2D.")
@@ -46,7 +46,7 @@ setMethod("name", "Atom", function(x) {
 })
 
 #' @describeIn Atom Raises an error if the arguments are invalid.
-setMethod("validate_args", "Atom", function(object) { 
+setMethod("validate_args", "Atom", function(object) {
   if(!allow_complex(object) && any(sapply(object@args, is_complex)))
     stop("Arguments to ", class(object), " cannot be complex.")
 })
@@ -319,7 +319,7 @@ setMethod("atoms", "Atom", function(object) {
 #' @name AxisAtom-class
 #' @aliases AxisAtom
 #' @rdname AxisAtom-class
-AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY", keepdims = "logical"), 
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY", keepdims = "logical"),
                                  prototype(axis = NA_real_, keepdims = FALSE), contains = c("VIRTUAL", "Atom"))
 
 setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_, keepdims = FALSE) {
@@ -405,9 +405,9 @@ setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemen
 
 #'
 #' The CumMax class.
-#' 
+#'
 #' This class represents the cumulative maximum of an expression.
-#' 
+#'
 #' @slot expr An \linkS4class{Expression}.
 #' @slot axis A numeric vector indicating the axes along which to apply the function. For a 2D matrix, \code{1} indicates rows, \code{2} indicates columns, and \code{c(1,2)} indicates rows and columns.
 #' @name CumMax-class
@@ -423,7 +423,7 @@ CumMax <- function(expr, axis = 2) { .CumMax(expr = expr, axis = axis) }
 #' @param object A \linkS4class{CumMax} object.
 #' @param values A list of arguments to the atom.
 #' @describeIn CumMax The cumulative maximum along the axis.
-setMethod("to_numeric", "CumMax", function(object, values) { 
+setMethod("to_numeric", "CumMax", function(object, values) {
   # apply(values[[1]], object@axis, base::cummax)
   if(object@axis == 1)
     do.call(rbind, lapply(seq_len(nrow(values[[1]])), function(i) { base::cummax(values[[1]][i,]) }))
@@ -478,12 +478,12 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 #' This class represents the unity resolvent of an elementwise positive matrix \eqn{X}, i.e., \eqn{(I - X)^{-1}},
 #' and it enforces the constraint that the spectral radius of \eqn{X} is at most 1.
 #' This atom is log-log convex.
-#' 
+#'
 #' @slot X An \linkS4class{Expression} or numeric matrix.
 #' @name EyeMinusInv-class
 #' @aliases EyeMinusInv
 #' @rdname EyeMinusInv-class
-.EyeMinusInv <- setClass("EyeMinusInv", representation(X = "ConstValORExpr"), 
+.EyeMinusInv <- setClass("EyeMinusInv", representation(X = "ConstValORExpr"),
                          validity = function(object) {
                            if(length(dim(object@X)) != 2 || nrow(object@X) != ncol(object@X))
                              stop("[EyeMinusInv: X] The argument X must be a square matrix.")
@@ -591,11 +591,11 @@ setMethod("initialize", "GeoMean", function(.Object, ..., x, p = NA_real_, max_d
     n <- ifelse(ndim(x) == 0, 1, max(dim(x)))
   else
     stop("x must be a row or column vector.")
-  
+
   if(any(is.na(p)))
     p <- rep(1, n)
   .Object@p <- p
-  
+
   if(length(.Object@p) != n)
     stop("x and p must have the same number of elements.")
 
@@ -693,13 +693,13 @@ setMethod("get_data", "GeoMean", function(object) { list(object@w, object@w_dyad
 setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) {
   if(is.null(args))
     args <- object@args
-  
+
   copy <- do.call(class(object), args)
   data <- get_data(object)
   copy@w <- data[[1]]
   copy@w_dyad <- data[[2]]
   copy@tree <- data[[3]]
-  
+
   copy@approx_error <- object@approx_error
   copy@cone_lb <- object@cone_lb
   copy@cone_num_over <- object@cone_num_over
@@ -709,7 +709,7 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
 
 #'
 #' The HarmonicMean atom.
-#' 
+#'
 #' The harmonic mean of x, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where n is the length of x.
 #'
 #' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries.
@@ -756,7 +756,7 @@ setMethod(".grad", "LambdaMax", function(object, values) {
   r <- base::eigen(values[[1]], only.values = FALSE)   # Eigenvalues returned in decreasing order.
   v <- r$vectors  # eigenvectors
   w <- r$values   # eigenvalues
-  
+
   d <- rep(0, length(w))
   d[1] <- 1
   d <- diag(d)
@@ -793,7 +793,7 @@ setMethod("is_decr", "LambdaMax", function(object, idx) { FALSE })
 #' The LambdaMin atom.
 #'
 #' The minimum eigenvalue of a matrix, \eqn{\lambda_{\min}(A)}.
-#' 
+#'
 #' @param A An \linkS4class{Expression} or numeric matrix.
 #' @return Returns the minimum eigenvalue of a matrix.
 LambdaMin <- function(A) {
@@ -1018,7 +1018,7 @@ setMethod("is_decr", "LogSumExp", function(object, idx) { FALSE })
 #' @param P An \linkS4class{Expression} or numeric matrix.
 #' @rdname MatrixFrac-class
 MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
-  
+
 setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
   .Object@X <- X
   .Object@P <- P
@@ -1039,7 +1039,7 @@ setMethod("to_numeric", "MatrixFrac", function(object, values) {
     product <- t(Conj(X)) %*% base::solve(P) %*% X
   else
     product <- t(X) %*% base::solve(P) %*% X
-  
+
   if(length(dim(product)) == 2)
     return(sum(diag(product)))
   else
@@ -1092,11 +1092,14 @@ setMethod(".grad", "MatrixFrac", function(object, values) {
   P_inv <- tryCatch({
     base::solve(P)
   }, error = function(e) {
-    return(list(NA_real_, NA_real_))
+      list(NA_real_, NA_real_)
   })
 
-  if(is.null(dim(P_inv)) && is.na(P_inv))
-    return(list(NA_real_, NA_real_))
+  ## if(is.null(dim(P_inv)) && is.na(P_inv))
+  ##   return(list(NA_real_, NA_real_))
+
+  if(is.null(dim(P_inv)))
+      return(list(NA_real_, NA_real_))
 
   # partial_X = (P^-1+P^-T)X
   # partial_P = (P^-1 * X * X^T * P^-1)^T
@@ -1304,7 +1307,7 @@ setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024,
   # else
   #  stop("Invalid value of p.")
   .Object@p <- p
-  
+
   .Object@max_denom <- max_denom
   .Object@.approx_error <- abs(.Object@p - p)
   .Object@.original_p <- p
@@ -1341,12 +1344,12 @@ setMethod("to_numeric", "Pnorm", function(object, values) {
     values <- as.vector(values[[1]])
   else
     values <- as.matrix(values[[1]])
-  
+
   if(object@p < 1 && any(values < 0))
     return(-Inf)
   if(object@p < 0 && any(values == 0))
     return(0)
-  
+
   apply_with_keepdims(values, function(x) { .p_norm(x, object@p) }, axis = object@axis, keepdims = object@keepdims)
 })
 
@@ -1414,7 +1417,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
   # Outside domain
   if(object@p < 1 && any(value <= 0))
     return(NA_real_)
-  
+
   D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
   denominator <- .p_norm(value, object@p)
   denominator <- denominator^(object@p - 1)
@@ -1434,7 +1437,7 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
 
 #'
 #' The MixedNorm atom.
-#' 
+#'
 #' The \eqn{l_{p,q}} norm of X, \eqn{(\sum_k (\sum_l ||X_{k,l}||^p)^{q/p})^{1/q}}.
 #'
 #' @param X The matrix to take the \eqn{l_{p,q}} norm of
@@ -1443,21 +1446,21 @@ setMethod(".column_grad", "Pnorm", function(object, value) {
 #' @return Returns the mixed norm of X with specified parameters p and q
 MixedNorm <- function(X, p = 2, q = 1) {
   X <- as.Constant(X)
-  
+
   # Inner norms
   vecnorms <- Norm(X, p, axis = 1)
-  
+
   # Outer norms
   Norm(vecnorms, q)
 }
 
 #'
 #' The Norm atom.
-#' 
+#'
 #' Wrapper around the different norm atoms.
 #'
 #' @param x The matrix to take the norm of
-#' @param p The type of norm. Valid options include any positive integer, 'fro' (for frobenius), 
+#' @param p The type of norm. Valid options include any positive integer, 'fro' (for frobenius),
 #' 'nuc' (sum of singular values), np.inf or 'inf' (infinity norm).
 #' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
 #' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
@@ -1465,7 +1468,7 @@ MixedNorm <- function(X, p = 2, q = 1) {
 #' @rdname Norm-atom
 Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
   x <- as.Constant(x)
-  
+
   # Matrix norms take precedence.
   num_nontrivial_idxs <- sum(dim(x) > 1)
   if(is.na(axis) && ndim(x) == 2) {
@@ -1493,7 +1496,7 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
 
 #'
 #' The Norm2 atom.
-#' 
+#'
 #' The 2-norm of an expression.
 #'
 #' @param x An \linkS4class{Expression} object.
@@ -1507,7 +1510,7 @@ Norm2 <- function(x, axis = NA_real_, keepdims = FALSE) {
 
 #'
 #' The Norm1 class.
-#' 
+#'
 #' This class represents the 1-norm of an expression.
 #'
 #' @slot x An \linkS4class{Expression} object.
@@ -1719,7 +1722,7 @@ setMethod(".grad", "NormNuc", function(object, values) {
 #' The OneMinusPos class.
 #'
 #' This class represents the difference \eqn{1 - x} with domain \eqn{\{x : 0 < x < 1}\}
-#' 
+#'
 #' @slot x An \linkS4class{Expression} or numeric matrix.
 #' @name OneMinusPos-class
 #' @aliases OneMinusPos
@@ -1778,7 +1781,7 @@ setMethod(".grad", "OneMinusPos", function(object, values) { Matrix(-object@.one
 
 #'
 #' The DiffPos atom.
-#' 
+#'
 #' The difference between expressions, \eqn{x - y}, where \eqn{x > y > 0}.
 #'
 #' @param x An \linkS4class{Expression}
@@ -1792,12 +1795,12 @@ DiffPos <- function(x, y) {
 #' The PfEigenvalue class.
 #'
 #' This class represents the Perron-Frobenius eigenvalue of a positive matrix.
-#' 
+#'
 #' @slot X An \linkS4class{Expression} or numeric matrix.
 #' @name PfEigenvalue-class
 #' @aliases PfEigenvalue
 #' @rdname PfEigenvalue-class
-.PfEigenvalue <- setClass("PfEigenvalue", representation(X = "ConstValORExpr"), 
+.PfEigenvalue <- setClass("PfEigenvalue", representation(X = "ConstValORExpr"),
                           validity = function(object) {
                             if(length(dim(object@X)) != 2 || nrow(object@X) != ncol(object@X))
                               stop("[PfEigenvalue: X] The argument X must be a square matrix")
@@ -1891,7 +1894,7 @@ setMethod("to_numeric", "ProdEntries", function(object, values) {
 })
 
 #' @describeIn ProdEntries Returns the sign (is positive, is negative) of the atom.
-setMethod("sign_from_args", "ProdEntries", function(object) { 
+setMethod("sign_from_args", "ProdEntries", function(object) {
   if(is_nonneg(object@args[[1]]))
     c(TRUE, FALSE)
   else
@@ -1930,7 +1933,7 @@ setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, 
 #' The QuadForm class.
 #'
 #' This class represents the quadratic form \eqn{x^T P x}
-#' 
+#'
 #' @slot x An \linkS4class{Expression} or numeric vector.
 #' @slot P An \linkS4class{Expression}, numeric matrix, or vector.
 #' @name QuadForm-class
@@ -1982,7 +1985,7 @@ setMethod("validate_args", "QuadForm", function(object) {
 setMethod("sign_from_args", "QuadForm", function(object) { c(is_atom_convex(object), is_atom_concave(object)) })
 
 #' @describeIn QuadForm The dimensions of the atom.
-setMethod("dim_from_args", "QuadForm", function(object) { 
+setMethod("dim_from_args", "QuadForm", function(object) {
   # if(ndim(object@args[[1]]) == 0)
   #  c()
   # else
@@ -2089,7 +2092,7 @@ setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplem
 
 #'
 #' Compute a Matrix Decomposition.
-#' 
+#'
 #' Compute sgn, scale, M such that \eqn{P = sgn * scale * dot(M, t(M))}.
 #'
 #' @param P A real symmetric positive or negative (semi)definite input matrix
@@ -2100,28 +2103,28 @@ setMethod(".grad", "SymbolicQuadForm", function(object, values) { stop("Unimplem
   eig <- eigen(P, only.values = FALSE)
   w <- eig$values
   V <- eig$vectors
-  
+
   if(!is.na(rcond))
     cond <- rcond
   if(cond == -1 || is.na(cond))
     cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
-  
+
   scale <- max(abs(w))
   if(scale < cond)
     return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
   w_scaled <- w / scale
   maskp <- w_scaled > cond
   maskn <- w_scaled < -cond
-  
+
   # TODO: Allow indefinite QuadForm
   if(any(maskp) && any(maskn))
     warning("Forming a non-convex expression QuadForm(x, indefinite)")
-  
+
   if(sum(maskp) <= 1)
     M1 <- as.matrix(V[,maskp] * sqrt(w_scaled[maskp]))
   else
     M1 <- V[,maskp] %*% diag(sqrt(w_scaled[maskp]))
-  
+
   if(sum(maskn) <= 1)
     M2 <- as.matrix(V[,maskn]) * sqrt(-w_scaled[maskn])
   else
@@ -2356,7 +2359,7 @@ setMethod(".grad", "SumLargest", function(object, values) {
 
 #'
 #' The SumSmallest atom.
-#' 
+#'
 #' The sum of the smallest k values of a matrix.
 #'
 #' @param x An \linkS4class{Expression} or numeric matrix.
@@ -2369,7 +2372,7 @@ SumSmallest <- function(x, k) {
 
 #'
 #' The SumSquares atom.
-#' 
+#'
 #' The sum of the squares of the entries.
 #'
 #' @param expr An \linkS4class{Expression} or numeric matrix.
@@ -2378,7 +2381,7 @@ SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
 
 #'
 #' The TotalVariation atom.
-#' 
+#'
 #' The total variation of a vector, matrix, or list of matrices.
 #' Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
 #'
@@ -2399,7 +2402,7 @@ TotalVariation <- function(value, ...) {
     cols <- val_dim[2]
     args <- lapply(list(...), as.Constant)
     values <- c(list(value), args)
-    
+
     diffs <- list()
     for(mat in values) {
       if(rows > 1 && cols > 1) {

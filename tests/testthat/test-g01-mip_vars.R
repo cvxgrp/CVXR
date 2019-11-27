@@ -14,7 +14,7 @@ test_that("Test that MIP problems are deterministic", {
     p <- Problem(obj, list(A_bool == 0, x_bool == B_int))
     data_recs <- c(data_recs, list(get_problem_data(p, "ECOS_BB")))
   }
-  
+
   # Check that problem data and result is always the same
   for(i in 1:5) {
     for(key in c("c", "A", "b", "G", "h", "bool_vars_idx", "int_vars_idx")) {
@@ -36,7 +36,7 @@ test_that("Test Boolean problems", {
   result <- solve(p)
   expect_equal(result$value, 0.04, tolerance = TOL)
   expect_equal(result$getValue(x_bool), 0, tolerance = TOL)
-  
+
   # Bool in constraint
   t <- Variable()
   obj <- Minimize(t)
@@ -44,7 +44,7 @@ test_that("Test Boolean problems", {
   result <- solve(p)
   expect_equal(result$value, 0, tolerance = TOL)
   expect_equal(result$getValue(x_bool), 0, tolerance = 1e-4)
-  
+
   # Matrix Bool in objective
   C <- cbind(c(0,1,0), c(1,1,1))
   obj <- Minimize(sum_squares(A_bool - C))
@@ -52,7 +52,7 @@ test_that("Test Boolean problems", {
   result <- solve(p)
   expect_equal(result$value, 0, tolerance = TOL)
   expect_equal(result$getValue(A_bool), C, tolerance = 1e-4)
-  
+
   # Matrix Bool in constraint
   t <- Variable()
   obj <- Minimize(t)
@@ -69,12 +69,12 @@ test_that("Test Integer problems", {
   result <- solve(p)
   expect_equal(result$value, 0.04, tolerance = TOL)
   expect_equal(result$getValue(y_int), 0, tolerance = TOL)
-  
+
   # Infeasible integer problem
   obj <- Minimize(0)
   p <- Problem(obj, list(y_int == 0.5))
-  # result <- solve(p)   # TODO_NARAS_10: Returns solver_error (MOSEK) or freezes (ECOS_BB).
-  result <- solve(p, solver = "CBC")
+  result <- solve(p)   # TODO_NARAS_10: Returns solver_error (MOSEK) or freezes (ECOS_BB). DONE by Naras
+  ##result <- solve(p, solver = "CBC")
   expect_equal(result$status, "infeasible")
 })
 

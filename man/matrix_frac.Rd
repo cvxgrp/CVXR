@@ -20,6 +20,7 @@ An \linkS4class{Expression} representing the matrix fraction evaluated at the in
 }
 \examples{
 \dontrun{
+set.seed(192)
 m <- 100
 n <- 80
 r <- 70

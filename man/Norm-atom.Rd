@@ -9,7 +9,7 @@ Norm(x, p = 2, axis = NA_real_, keepdims = FALSE)
 \arguments{
 \item{x}{The matrix to take the norm of}
 
-\item{p}{The type of norm. Valid options include any positive integer, 'fro' (for frobenius), 
+\item{p}{The type of norm. Valid options include any positive integer, 'fro' (for frobenius),
 'nuc' (sum of singular values), np.inf or 'inf' (infinity norm).}
 
 \item{axis}{(Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.}

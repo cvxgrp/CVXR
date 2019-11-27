@@ -23,6 +23,7 @@ The elementwise Huber function, \eqn{Huber(x, M) = }
  }
 }
 \examples{
+set.seed(11)
 n <- 10
 m <- 450
 p <- 0.1    # Fraction of responses with sign flipped

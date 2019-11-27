@@ -699,6 +699,7 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     solver_opts$eps_rel <- 1e-5
   if(is.null(solver_opts$max_iter))
     solver_opts$max_iter <- 10000
+  solver_opts$verbose <- verbose
 
   if(!is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     # Use cached data.
@@ -750,7 +751,8 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
       ## this update_settings is nowhere to be found, but basically
       ## it just updates the settings. So we do it manually
       ## update_settings(solver, verbose = verbose, solver_opts)
-      do.call(osqp::osqpSettings, c(list(verbose = verbose), solver_opts))
+      ##do.call(osqp::osqpSettings, c(list(verbose = verbose), solver_opts))
+      do.call(osqp::osqpSettings, solver_opts)
   } else {
     # Initialize and solve problem.
     if(is.null(solver_opts$polish))

@@ -6,6 +6,9 @@ r:
   - release
   - devel
 
+env:
+  - _R_CHECK_FORCE_SUGGESTS_=0
+  
 cache: packages
 
 r_packages:

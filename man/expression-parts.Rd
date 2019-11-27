@@ -26,6 +26,7 @@ A list of \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Constant
 List the variables, parameters, constants, or atoms in a canonical expression.
 }
 \examples{
+set.seed(67)
 m <- 50
 n <- 10
 beta <- Variable(n)

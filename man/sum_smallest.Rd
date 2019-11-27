@@ -19,6 +19,7 @@ An \linkS4class{Expression} representing the sum of the smallest k values of the
 The sum of the smallest k values of a vector or matrix.
 }
 \examples{
+set.seed(1323)
 m <- 300
 n <- 9
 X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)

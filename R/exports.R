@@ -220,6 +220,7 @@ log_sum_exp <- LogSumExp
 #' @return An \linkS4class{Expression} representing the matrix fraction evaluated at the input.
 #' @examples
 #' \dontrun{
+#' set.seed(192)
 #' m <- 100
 #' n <- 80
 #' r <- 70
@@ -704,6 +705,7 @@ sum_entries <- SumEntries
 #' @param k The number of largest values to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the largest \code{k} values of the input.
 #' @examples
+#' set.seed(122)
 #' m <- 300
 #' n <- 9
 #' X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -731,6 +733,7 @@ sum_largest <- SumLargest
 #' @param k The number of smallest values to sum over.
 #' @return An \linkS4class{Expression} representing the sum of the smallest k values of the input.
 #' @examples
+#' set.seed(1323)
 #' m <- 300
 #' n <- 9
 #' X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -758,6 +761,7 @@ sum_smallest <- SumSmallest
 #' @param expr An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the sum of squares of the input.
 #' @examples
+#' set.seed(212)
 #' m <- 30
 #' n <- 20
 #' A <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -1099,6 +1103,7 @@ entr <- Entr
 #' @param M (Optional) A positive scalar value representing the threshold. Defaults to 1.
 #' @return An \linkS4class{Expression} representing the Huber function evaluated at the input.
 #' @examples
+#' set.seed(11)
 #' n <- 10
 #' m <- 450
 #' p <- 0.1    # Fraction of responses with sign flipped
@@ -1185,6 +1190,7 @@ kl_div <- KLDiv
 #' @param x An \linkS4class{Expression}, vector, or matrix.
 #' @return An \linkS4class{Expression} representing the logistic function evaluated at the input.
 #' @examples
+#' set.seed(92)
 #' n <- 20
 #' m <- 1000
 #' sigma <- 45
@@ -1557,6 +1563,7 @@ bmat <- Bmat
 #' @param rh_exp An \linkS4class{Expression} or vector representing the right-hand value.
 #' @return An \linkS4class{Expression} representing the convolution of the input.
 #' @examples
+#' set.seed(129)
 #' x <- Variable(5)
 #' h <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
 #' prob <- Problem(Minimize(sum(conv(h, x))))

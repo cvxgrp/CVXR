@@ -1,0 +1,37 @@
+---
+title: Version 1.0
+author: Anqi Fu, David W. Kang, Balasubramanian Narasimhan and Stephen Boyd
+bibliography: bibtex/cvxr_refs.bib
+date: '`r Sys.Date()`'
+output:
+  html_document:
+  fig_caption: yes
+  theme: cerulean
+  toc: yes
+  toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{version1}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+## What is new?
+
+Version 1.0 is a major upgrade. The improvements include:
+
+- A new reduction framework that automatically chooses the most
+  appropriate solver for a problem
+- A large number of solvers are now available and they all use native
+  `R` interfaces and do not rely on python glue using `reticulate`
+- The default QP solver is `OSQP`, which means that some results will
+  differ in precision from previous runs. However, ECOS can be
+  explicitly specified if exact results are desired
+- Strict inequalities are not allowed in constraints
+- Facilities for geometric programming
+
+All this while maintaining almost all compatibility with previous
+code!
+
+
+
+

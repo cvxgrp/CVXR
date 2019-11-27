@@ -389,6 +389,7 @@ setGeneric("name", function(x) { standardGeneric("name") })
 #' @param object A \linkS4class{Leaf} object.
 #' @return A list of \linkS4class{Variable}, \linkS4class{Parameter}, \linkS4class{Constant}, or \linkS4class{Atom} objects.
 #' @examples
+#' set.seed(67)
 #' m <- 50
 #' n <- 10
 #' beta <- Variable(n)

@@ -210,7 +210,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
 #' @describeIn ConicSolver Combine the constraints into a single matrix, offset.
 setMethod("group_coeff_offset", "ConicSolver", function(object, problem, constraints, exp_cone_order) {
   # Combine the constraints into a single matrix, offset.
-  if(is.na(constraints) || is.null(constraints) || length(constraints) == 0)
+  if(is.null(constraints) || length(constraints) == 0 || any(is.na(constraints)))
     return(list(Matrix(0, nrow = 0, ncol = 0), numeric(0)))
 
   matrices <- list()
@@ -654,7 +654,9 @@ setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
 setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
 
 #' @describeIn CBC_CONIC Imports the solver
-setMethod("import_solver", "CBC_CONIC", function(solver) {requireNamespace("rcbc", quietly = TRUE)})
+setMethod("import_solver", "CBC_CONIC", function(solver) {
+    requireNamespace("rcbc", quietly = TRUE)
+})
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CBC_CONIC Can CBC_CONIC solve the problem?
@@ -1802,7 +1804,7 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
 #' and CVXR (zero cone, nonnegative orthant, second order cone, exponential cone). The
 #' nature of K is inferred later by accessing the data in "lengths" and "ids".
 setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_cone_order = NA) {
-  if(length(constraints) == 0 || is.null(constraints) || is.na(constraints))
+  if(length(constraints) == 0 || is.null(constraints) || any(is.na(constraints)))
     return(list(NULL, NULL))
   matrices <- list()
   offsets <- c()

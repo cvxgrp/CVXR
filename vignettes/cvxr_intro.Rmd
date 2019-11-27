@@ -1,0 +1,280 @@
+---
+title: Disciplined Convex Optimization in R
+author: Anqi Fu, Balasubramanian Narasimhan and Stephen Boyd
+bibliography: bibtex/cvxr_refs.bib
+date: '`r Sys.Date()`'
+output:
+  html_document:
+  fig_caption: yes
+  theme: cerulean
+  toc: yes
+  toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Disciplined Convex Optimization}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+## What is `CVXR`?
+
+`CVXR` is an R package that provides an object-oriented modeling
+language for convex optimization, similar to `CVX`, `CVXPY`, `YALMIP`,
+and `Convex.jl`. It allows the user to formulate convex optimization
+problems in a natural mathematical syntax rather than the restrictive
+standard form required by most solvers. The user specifies an
+objective and set of constraints by combining constants, variables,
+and parameters using a library of functions with known mathematical
+properties. `CVXR` then applies
+signed [disciplined convex programming (DCP)](https://cvxr.rbind.io)
+to verify the problem’s convexity. Once verified, the problem is
+converted into standard conic form using graph implementations and
+passed to a cone solver such
+as [ECOS](https://github.com/embotech/ecos)
+or [SCS](https://github.com/cvxgrp/scs).
+
+## Where can I learn more? 
+
+The paper by @fu:naras:boyd:2017 is the main reference. Further
+documentation, along with a number of tutorial examples, is also
+available on the [CVXR website](https://cvxr.rbind.io).
+
+Below we provide a simple example to get you started. 
+
+## A Simple Example
+
+Consider a simple linear regression problem where it is desired to
+estimate a set of parameters using a least squares criterion. 
+
+We generate some synthetic data where we know the model completely,
+that is
+
+$$ Y = X\beta + \epsilon $$ 
+
+where $Y$ is a $100\times 1$ vector, $X$ is a $100\times 10$ matrix,
+$\beta = [-4,\ldots ,-1, 0, 1, \ldots, 5]$ is a $10\times 1$ vector, and
+$\epsilon \sim N(0, 1)$.
+
+
+```{r}
+set.seed(123)
+
+n <- 100
+p <- 10
+beta <- -4:5   # beta is just -4 through 5.
+
+X <- matrix(rnorm(n * p), nrow=n)
+colnames(X) <- paste0("beta_", beta)
+Y <- X %*% beta + rnorm(n)
+```
+
+Given the data $X$ and $Y$, we can estimate the $\beta$ vector using
+`lm` function in R that fits a standard regression model.
+
+```{r}
+ls.model <- lm(Y ~ 0 + X)   # There is no intercept in our model above
+m <- data.frame(ls.est = coef(ls.model))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+```	
+
+These are the least-squares estimates and can be seen to be reasonably
+close to the original $\beta$ values -4 through 5.
+
+## The `CVXR` formulation
+
+The `CVXR` formulation states the above as an optimization problem:
+
+$$
+  \begin{array}{ll}
+    \underset{\beta}{\mbox{minimize}} & \|y - X\beta\|_2^2,
+  \end{array}
+$$
+which directly translates into a problem that `CVXR` can solve as shown
+in the steps below.
+
+- Step 0. Load the `CVXR` library
+
+```{r}
+suppressWarnings(library(CVXR, warn.conflicts=FALSE))
+```
+
+- Step 1. Define the variable to be estimated
+
+```{r}
+betaHat <- Variable(p)
+```
+
+- Step 2. Define the objective to be optimized
+
+```{r}
+objective <- Minimize(sum((Y - X %*% betaHat)^2))
+```
+Notice how the objective is specified using functions such as `sum`,
+`*%*` and `^`, that are familiar to R users despite that fact that
+`betaHat` is no ordinary R expression but a `CVXR` expression.
+
+- Step 3. Create a problem to solve
+
+```{r}
+problem <- Problem(objective)
+```
+
+- Step 4. Solve it!
+
+```{r}
+result <- solve(problem)
+```
+
+- Step 5. Extract solution and objective value
+
+```{r, echo = FALSE}
+solution <- result$getValue(betaHat)
+cat(sprintf("Objective value: %f\n", result$value))
+```
+
+We can indeed satisfy ourselves that the results we get matches that
+from `lm`.
+
+```{r}
+m <- cbind(coef(ls.model), result$getValue(betaHat))
+colnames(m) <- c("lm est.", "CVXR est.")
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+```
+
+## Wait a minute! What have we gained?
+
+On the surface, it appears that we have replaced one call to `lm` with
+at least five or six lines of new R code. On top of that, the code
+actually runs slower, and so it is not clear what was really achieved.
+
+So suppose we knew for a fact that the $\beta$s were nonnegative and
+we wish to take this fact into account. This
+is
+[nonnegative least squares regression](https://en.wikipedia.org/wiki/Non-negative_least_squares) and
+`lm` would no longer do the job. 
+
+In `CVXR`, the modified problem merely requires the addition of a constraint to the
+problem definition.
+
+```{r}
+problem <- Problem(objective, constraints = list(betaHat >= 0))
+result <- solve(problem)
+m <- data.frame(CVXR.est = result$getValue(betaHat))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+```
+
+We can verify once again that these values are comparable to those
+obtained from another R package,
+say [nnls](https://CRAN.R-project.org/package=nnls). 
+
+```{r}
+if (requireNamespace("nnls", quietly = TRUE)) {
+    nnls.fit <- nnls::nnls(X, Y)$x
+} else {
+    nnls.fit <- rep(NA, p)
+}
+```
+
+```{r}
+m <- cbind(result$getValue(betaHat), nnls.fit)
+colnames(m) <- c("CVXR est.", "nnls est.")
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+```
+
+## Okay that was cool, but...
+
+As you no doubt noticed, we have done nothing that other R packages
+could not do.
+
+So now suppose that we know, for some extraneous reason, that the sum
+of 
+$\beta_2$ and $\beta_3$ is nonpositive and but all other $\beta$s are
+nonnegative.
+
+It is clear that this problem would not fit into any standard
+package. But in `CVXR`, this is easily done by adding a few
+constraints. 
+
+To express the fact that $\beta_2 + \beta_3$ is nonpositive, we
+construct a row matrix with zeros everywhere, except in positions 2
+and 3 (for $\beta_2$ and $\beta_3$ respectively).
+
+```{r}
+A <- matrix(c(0, 1, 1, rep(0, 7)), nrow = 1)
+colnames(A) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(A)
+```
+
+The sum constraint is nothing but 
+$$
+A\beta <= 0
+$$
+
+which we express in R as
+
+```{r}
+constraint1 <- A %*% betaHat <= 0
+```
+
+_NOTE_: The above constraint can also be expressed simply as
+
+```{r, eval = FALSE}
+constraint1 <- betaHat[2] + betaHat[3] <= 0
+```
+but it is easier working with matrices in general with `CVXR`. 
+
+
+For the nonnegativity for rest of the variables, we construct a $10\times
+10$ matrix $A$ to have 1's along the diagonal everywhere except rows 2
+and 3 and zeros everywhere.
+
+```{r}
+B <- diag(c(1, 0, 0, rep(1, 7)))
+colnames(B) <- rownames(B) <- paste0("$\\beta_{", 1:p, "}$")
+    knitr::kable(B)
+```
+
+The constraint for positivity is 
+$$
+B\beta > 0
+$$
+
+which we express in R as 
+
+```{r}
+constraint2 <- B %*% betaHat >= 0
+```
+Now we are ready to solve the problem just as before. 
+
+```{r}
+problem <- Problem(objective, constraints = list(constraint1, constraint2))
+result <- solve(problem)
+```
+
+And we can get the estimates of $\beta$.
+
+```{r}
+m <- data.frame(CVXR.soln = result$getValue(betaHat))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+```
+
+This demonstrates the chief advantage of `CVXR`: flexibility. Users
+can quickly modify and re-solve a problem, making our package ideal
+for prototyping new statistical methods. Its syntax is simple and
+mathematically intuitive. Furthermore, `CVXR` combines seamlessly with
+native R code as well as several popular packages, allowing it to be
+incorporated easily into a larger analytical framework. The user is
+free to construct statistical estimators that are solutions to a
+convex optimization problem where there may not be a closed form
+solution or even an implementation. Such solutions can then be
+combined with resampling techniques like the bootstrap to estimate
+variability.
+
+
+## References
+
+

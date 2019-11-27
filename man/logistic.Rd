@@ -18,6 +18,7 @@ The elementwise logistic function, \eqn{\log(1 + e^x)}.
 This is a special case of log(sum(exp)) that evaluates to a vector rather than to a scalar, which is useful for logistic regression.
 }
 \examples{
+set.seed(92)
 n <- 20
 m <- 1000
 sigma <- 45

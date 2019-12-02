@@ -33,7 +33,7 @@ def mosek_intf(A, b, G, h, c, dims, offset, solver_opts, verbose = False):
         with env.Task(0, 0) as task:
             kwargs = sorted(solver_opts.keys())
             if "mosek_params" in kwargs:
-                self._handle_mosek_params(task, solver_opts["mosek_params"])
+                _handle_mosek_params(task, solver_opts["mosek_params"])
                 kwargs.remove("mosek_params")
             if kwargs:
                 raise ValueError("Invalid keyword-argument '%s'" % kwargs[0])
@@ -247,34 +247,22 @@ def format_results(task, data):
         
     return result_dict
 
+# Sets MOSEK parameters
+#
+# Examples of correct settings (with psolve)
+#
+# psolve(problem, solver = "MOSEK", mosek_params = list("MSK_IPAR_OPTIMIZER" = 1))
+# psolve(problem, solver = "MOSEK", mosek_params = list("MSK_IPAR_OPTIMIZER" = "MSK_OPTIMIZER_CONIC"))
+# psolve(problem, solver = "MOSEK", mosek_params = list("MSK_IPAR_OPTIMIZER" = "1"))
+# psolve(problem, solver = "MOSEK", mosek_params = list("MSK_DPAR_INTPNT_CO_TOL_REL_GAP" = 1e-5))
 def _handle_mosek_params(task, params):
     if params is None:
         return
     
-    import mosek
-    
-    def _handle_str_param(param, value):
-        if param.startswith("MSK_DPAR_"):
-            task.putnadouparam(param, value)
-        elif param.startswith("MSK_IPAR_"):
-            task.putnaintparam(param, value)
-        elif param.startswith("MSK_SPAR_"):
-            task.putnastrparam(param, value)
-        else:
-            raise ValueError("Invalid MOSEK parameter '%s'." % param)
-        
-    def _handle_enum_param(param, value):
-        if isinstance(param, mosek.dparam):
-            task.putdouparam(param, value)
-        elif isinstance(param, mosek.iparam):
-            task.putintparam(param, value)
-        elif isinstance(param, mosek.sparam):
-            task.putstrparam(param, value)
-        else:
-            raise ValueError("Invalid MOSEK parameter '%s'." % param)
-
     for param, value in params.items():
-        if isinstance(param, str):
-            _handle_str_param(param.strip(), value)
+        # This is just to handle the case of integers being floats in R
+        # Otherwise 1 may be formatted as 1.0 and the generic call will fail
+        if '_IPAR_' in param and not '_' in str(value):
+            task.putnaintparam(param, int(value))
         else:
-            _handle_enum_param(param, value)
+            task.putparam(param, str(value))

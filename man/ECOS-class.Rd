@@ -31,8 +31,15 @@ ECOS()
 
 \S4method{import_solver}{ECOS}(solver)
 
-\S4method{Solver.solve}{ECOS}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{ECOS}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 
 \S4method{format_results}{ECOS}(solver, results_dict, data, cached_data)
 }

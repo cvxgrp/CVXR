@@ -34,8 +34,7 @@ LambdaMax(A)
 
 \S4method{is_decr}{LambdaMax}(object, idx)
 
-\S4method{graph_implementation}{LambdaMax}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{LambdaMax}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{A}{An \linkS4class{Expression} or numeric matrix.}

@@ -34,8 +34,7 @@ Huber(x, M = 1)
 
 \S4method{get_data}{Huber}(object)
 
-\S4method{graph_implementation}{Huber}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Huber}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}

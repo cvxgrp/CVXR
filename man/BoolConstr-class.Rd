@@ -11,8 +11,7 @@
 \usage{
 BoolConstr(lin_op)
 
-\S4method{format_constr}{BoolConstr}(object, eq_constr, leq_constr, dims,
-  solver)
+\S4method{format_constr}{BoolConstr}(object, eq_constr, leq_constr, dims, solver)
 
 \S4method{size}{BoolConstr}(object)
 }

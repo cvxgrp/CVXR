@@ -19,8 +19,7 @@ UpperTri(expr)
 
 \S4method{size_from_args}{UpperTri}(object)
 
-\S4method{graph_implementation}{UpperTri}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{UpperTri}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} or numeric matrix.}

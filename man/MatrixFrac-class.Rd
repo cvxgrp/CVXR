@@ -37,8 +37,7 @@ MatrixFrac(X, P)
 
 \S4method{is_quadratic}{MatrixFrac}(object)
 
-\S4method{graph_implementation}{MatrixFrac}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{MatrixFrac}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{X}{An \linkS4class{Expression} or numeric matrix.}

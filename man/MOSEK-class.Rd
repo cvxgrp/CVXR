@@ -30,8 +30,15 @@ MOSEK()
 
 \S4method{import_solver}{MOSEK}(solver)
 
-\S4method{Solver.solve}{MOSEK}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{MOSEK}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{MOSEK} object.}

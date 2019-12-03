@@ -19,8 +19,7 @@ HStack(...)
 
 \S4method{size_from_args}{HStack}(object)
 
-\S4method{graph_implementation}{HStack}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{HStack}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{...}{\linkS4class{Expression} objects or matrices. All arguments must have the same number of rows.}

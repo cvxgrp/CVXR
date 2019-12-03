@@ -14,8 +14,15 @@
 
 \S4method{nonlin_constr}{Solver}(solver)
 
-\S4method{Solver.solve}{Solver}(solver, objective, constraints,
-  cached_data, warm_start, verbose, ...)
+\S4method{Solver.solve}{Solver}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 
 \S4method{format_results}{Solver}(solver, results_dict, data, cached_data)
 }

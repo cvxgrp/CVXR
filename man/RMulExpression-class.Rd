@@ -13,8 +13,7 @@
 
 \S4method{is_decr}{RMulExpression}(object, idx)
 
-\S4method{graph_implementation}{RMulExpression}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{RMulExpression}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{object}{A \linkS4class{RMulExpression} object.}

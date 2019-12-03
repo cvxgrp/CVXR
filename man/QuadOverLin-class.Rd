@@ -37,8 +37,7 @@ QuadOverLin(x, y)
 
 \S4method{is_quadratic}{QuadOverLin}(object)
 
-\S4method{graph_implementation}{QuadOverLin}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{QuadOverLin}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric matrix.}

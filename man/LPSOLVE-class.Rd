@@ -31,8 +31,15 @@ LPSOLVE()
 
 \S4method{import_solver}{LPSOLVE}(solver)
 
-\S4method{Solver.solve}{LPSOLVE}(solver, objective, constraints,
-  cached_data, warm_start, verbose, ...)
+\S4method{Solver.solve}{LPSOLVE}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 
 \S4method{format_results}{LPSOLVE}(solver, results_dict, data, cached_data)
 }

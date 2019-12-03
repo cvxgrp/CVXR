@@ -34,8 +34,7 @@ LogDet(A)
 
 \S4method{is_decr}{LogDet}(object, idx)
 
-\S4method{graph_implementation}{LogDet}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{LogDet}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{A}{An \linkS4class{Expression} or numeric matrix.}

@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.8</span>
       </span>
     </div>
 
@@ -125,10 +125,10 @@
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Atom</span>
-<span class='fu'>validate_args</span>(<span class='no'>object</span>)
+<span class='fu'><a href='validate_args.html'>validate_args</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>size</span>(<span class='no'>object</span>)
+<span class='fu'><a href='size.html'>size</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
 <span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>x</span>)
@@ -140,41 +140,40 @@
 <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>x</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>is_positive</span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign-methods.html'>is_positive</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>is_negative</span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign-methods.html'>is_negative</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>is_convex</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_convex</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>is_concave</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_concave</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>canonicalize</span>(<span class='no'>object</span>)
+<span class='fu'><a href='canonicalize.html'>canonicalize</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>graph_implementation</span>(<span class='no'>object</span>, <span class='no'>arg_objs</span>, <span class='no'>size</span>,
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='fl'>NA_real_</span>)
+<span class='fu'><a href='graph_implementation.html'>graph_implementation</a></span>(<span class='no'>object</span>, <span class='no'>arg_objs</span>, <span class='no'>size</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='fl'>NA_real_</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>variables</span>(<span class='no'>object</span>)
+<span class='fu'><a href='expression-parts.html'>variables</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>parameters</span>(<span class='no'>object</span>)
+<span class='fu'><a href='expression-parts.html'>parameters</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>constants</span>(<span class='no'>object</span>)
+<span class='fu'><a href='expression-parts.html'>constants</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>value</span>(<span class='no'>object</span>)
+<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>grad</span>(<span class='no'>object</span>)
+<span class='fu'><a href='grad.html'>grad</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for Atom</span>
-<span class='fu'>domain</span>(<span class='no'>object</span>)</pre>
+<span class='fu'><a href='domain.html'>domain</a></span>(<span class='no'>object</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -212,9 +211,9 @@
 <li><p><code>is_concave</code>: A logical value indicating whether the atom is concave.</p></li>
 <li><p><code>canonicalize</code>: Represent the atom as an affine objective and conic constraints.</p></li>
 <li><p><code>graph_implementation</code>: The graph implementation of the atom.</p></li>
-<li><p><code>variables</code>: List of Variable objects in the atom.</p></li>
-<li><p><code>parameters</code>: List of Parameter objects in the atom.</p></li>
-<li><p><code>constants</code>: List of Constant objects in the atom.</p></li>
+<li><p><code>variables</code>: List of <a href='Variable-class.html'>Variable</a> objects in the atom.</p></li>
+<li><p><code>parameters</code>: List of <a href='Parameter-class.html'>Parameter</a> objects in the atom.</p></li>
+<li><p><code>constants</code>: List of <a href='Constant-class.html'>Constant</a> objects in the atom.</p></li>
 <li><p><code>value</code>: The value of the atom.</p></li>
 <li><p><code>grad</code>: The (sub/super)-gradient of the atom with respect to each variable.</p></li>
 <li><p><code>domain</code>: A list of constraints describing the closure of the region where the expression is finite.</p></li>

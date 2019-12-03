@@ -9,8 +9,13 @@
 \alias{get_data,CallbackParam-method}
 \title{The CallbackParam class.}
 \usage{
-CallbackParam(callback, rows = 1, cols = 1, name = NA_character_,
-  sign = UNKNOWN)
+CallbackParam(
+  callback,
+  rows = 1,
+  cols = 1,
+  name = NA_character_,
+  sign = UNKNOWN
+)
 
 \S4method{value}{CallbackParam}(object)
 

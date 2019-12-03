@@ -16,8 +16,7 @@ SOCAxis(t, X, axis)
 
 \S4method{as.character}{SOCAxis}(x)
 
-\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims,
-  solver)
+\S4method{format_constr}{SOCAxis}(object, eq_constr, leq_constr, dims, solver)
 
 \S4method{num_cones}{SOCAxis}(object)
 

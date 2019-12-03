@@ -28,8 +28,7 @@ Log(x)
 
 \S4method{is_decr}{Log}(object, idx)
 
-\S4method{graph_implementation}{Log}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Log}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

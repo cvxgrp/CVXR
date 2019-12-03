@@ -5,8 +5,15 @@
 \alias{Solver.solve}
 \title{Call to Solver}
 \usage{
-Solver.solve(solver, objective, constraints, cached_data, warm_start,
-  verbose, ...)
+Solver.solve(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 }
 \arguments{
 \item{solver}{A \linkS4class{Solver} object.}

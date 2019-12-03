@@ -19,8 +19,7 @@ CumSum(expr, axis = 2)
 
 \S4method{validate_args}{CumSum}(object)
 
-\S4method{graph_implementation}{CumSum}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{CumSum}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} to be summed.}

@@ -19,8 +19,7 @@ Trace(expr)
 
 \S4method{size_from_args}{Trace}(object)
 
-\S4method{graph_implementation}{Trace}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Trace}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing a matrix.}

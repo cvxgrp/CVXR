@@ -40,8 +40,7 @@ Power(x, p, max_denom = 1024)
 
 \S4method{is_quadratic}{Power}(object)
 
-\S4method{graph_implementation}{Power}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Power}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{The \linkS4class{Expression} to be raised to a power.}

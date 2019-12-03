@@ -22,8 +22,7 @@ Reshape(expr, rows, cols)
 
 \S4method{get_data}{Reshape}(object)
 
-\S4method{graph_implementation}{Reshape}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Reshape}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} or numeric matrix.}

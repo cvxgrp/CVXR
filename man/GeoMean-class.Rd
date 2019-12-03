@@ -37,8 +37,7 @@ GeoMean(x, p = NA_real_, max_denom = 1024)
 
 \S4method{get_data}{GeoMean}(object)
 
-\S4method{graph_implementation}{GeoMean}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{GeoMean}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric vector.}

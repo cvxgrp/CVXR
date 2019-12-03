@@ -40,8 +40,7 @@ Pnorm(x, p = 2, axis = NA_real_, max_denom = 1024)
 
 \S4method{get_data}{Pnorm}(object)
 
-\S4method{graph_implementation}{Pnorm}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Pnorm}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} representing a vector or matrix.}

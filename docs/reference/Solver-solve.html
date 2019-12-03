@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.8</span>
       </span>
     </div>
 
@@ -124,15 +124,22 @@
     <p>Returns the result of the call to the solver.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Solver.solve</span>(<span class='no'>solver</span>, <span class='no'>objective</span>, <span class='no'>constraints</span>, <span class='no'>cached_data</span>, <span class='no'>warm_start</span>,
-  <span class='no'>verbose</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>Solver.solve</span>(
+  <span class='no'>solver</span>,
+  <span class='no'>objective</span>,
+  <span class='no'>constraints</span>,
+  <span class='no'>cached_data</span>,
+  <span class='no'>warm_start</span>,
+  <span class='no'>verbose</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>solver</th>
-      <td><p>A Solver object.</p></td>
+      <td><p>A <a href='Solver-class.html'>Solver</a> object.</p></td>
     </tr>
     <tr>
       <th>objective</th>

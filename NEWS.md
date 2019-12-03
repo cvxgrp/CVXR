@@ -1,3 +1,9 @@
+# CVXR 0.99-8
+
+* Fix to `mosekglue.py` from
+  [aszekMosek](https://github.com/aszekMosek) addressing [SO
+  issue](https://stackoverflow.com/questions/59040539/parameter-to-create-mosek-feasibility-report-with-cvxr)
+
 # CVXR 0.99-7
 
 * Update CVXR to require version 0.5.3 of ECOSolveR

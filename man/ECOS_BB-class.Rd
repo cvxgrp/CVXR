@@ -27,8 +27,15 @@ ECOS_BB()
 
 \S4method{name}{ECOS_BB}(object)
 
-\S4method{Solver.solve}{ECOS_BB}(solver, objective, constraints,
-  cached_data, warm_start, verbose, ...)
+\S4method{Solver.solve}{ECOS_BB}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{ECOS_BB} object.}

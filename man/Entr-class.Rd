@@ -28,8 +28,7 @@ Entr(x)
 
 \S4method{is_decr}{Entr}(object, idx)
 
-\S4method{graph_implementation}{Entr}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Entr}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

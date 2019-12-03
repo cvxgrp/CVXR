@@ -13,8 +13,7 @@
 
 \S4method{size_from_args}{Transpose}(object)
 
-\S4method{graph_implementation}{Transpose}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Transpose}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{object}{A \linkS4class{Transpose} object.}

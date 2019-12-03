@@ -31,8 +31,7 @@ MaxEntries(x, axis = NA_real_)
 
 \S4method{is_pwl}{MaxEntries}(object)
 
-\S4method{graph_implementation}{MaxEntries}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{MaxEntries}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} representing a vector or matrix.}

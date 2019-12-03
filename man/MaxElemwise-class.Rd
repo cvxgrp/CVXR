@@ -31,8 +31,7 @@ MaxElemwise(arg1, arg2, ...)
 
 \S4method{is_pwl}{MaxElemwise}(object)
 
-\S4method{graph_implementation}{MaxElemwise}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{MaxElemwise}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{arg1}{The first \linkS4class{Expression} in the maximum operation.}

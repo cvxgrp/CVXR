@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.8</span>
       </span>
     </div>
 
@@ -125,14 +125,14 @@
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Expression,character</span>
-<span class='fu'><a href='https://rdrr.io/r/base/norm.html'>norm</a></span>(<span class='no'>x</span>, <span class='no'>type</span>)</pre>
+<span class='fu'>norm</span>(<span class='no'>x</span>, <span class='no'>type</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An Expression.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a>.</p></td>
     </tr>
     <tr>
       <th>type</th>
@@ -148,16 +148,16 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the norm of the input.</p>
+    <p>An <a href='Expression-class.html'>Expression</a> representing the norm of the input.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>The <code>p_norm</code> function calculates the vector p-norm.</p></div>
+    <div class='dont-index'><p>The <code><a href='p_norm.html'>p_norm</a></code> function calculates the vector p-norm.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>C</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>3</span>,<span class='fl'>2</span>)
-<span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'>Constant</span>(<span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>4</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>5</span>,<span class='fl'>6</span>)))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'><a href='https://rdrr.io/r/base/norm.html'>norm</a></span>(<span class='no'>C</span>, <span class='st'>"F"</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"SCS"</span>)
+    <pre class="examples"><div class='input'><span class='no'>C</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>3</span>,<span class='fl'>2</span>)
+<span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>4</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>5</span>,<span class='fl'>6</span>)))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>norm</span>(<span class='no'>C</span>, <span class='st'>"F"</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"SCS"</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 9.539392</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

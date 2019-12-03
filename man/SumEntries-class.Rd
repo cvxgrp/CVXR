@@ -13,8 +13,7 @@ SumEntries(expr, axis = NA_real_)
 
 \S4method{to_numeric}{SumEntries}(object, values)
 
-\S4method{graph_implementation}{SumEntries}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{SumEntries}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing a vector or matrix.}

@@ -28,8 +28,7 @@ Logistic(x)
 
 \S4method{is_decr}{Logistic}(object, idx)
 
-\S4method{graph_implementation}{Logistic}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Logistic}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

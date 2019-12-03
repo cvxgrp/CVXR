@@ -18,8 +18,13 @@
 \alias{canonicalize,Parameter-method}
 \title{The Parameter class.}
 \usage{
-Parameter(rows = 1, cols = 1, name = NA_character_, sign = UNKNOWN,
-  value = NA_real_)
+Parameter(
+  rows = 1,
+  cols = 1,
+  name = NA_character_,
+  sign = UNKNOWN,
+  value = NA_real_
+)
 
 \S4method{as.character}{Parameter}(x)
 

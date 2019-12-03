@@ -31,8 +31,7 @@ MulElemwise(lh_const, rh_exp)
 
 \S4method{is_quadratic}{MulElemwise}(object)
 
-\S4method{graph_implementation}{MulElemwise}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{MulElemwise}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{lh_const}{A constant \linkS4class{Expression} or numeric value.}

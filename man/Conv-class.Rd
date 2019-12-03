@@ -28,8 +28,7 @@ Conv(lh_exp, rh_exp)
 
 \S4method{is_decr}{Conv}(object, idx)
 
-\S4method{graph_implementation}{Conv}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Conv}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{lh_exp}{An \linkS4class{Expression} or R numeric data representing the left-hand vector.}

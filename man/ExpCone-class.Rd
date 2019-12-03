@@ -19,8 +19,7 @@ ExpCone(a, b, c)
 
 \S4method{variables}{ExpCone}(object)
 
-\S4method{format_constr}{ExpCone}(object, eq_constr, leq_constr, dims,
-  solver)
+\S4method{format_constr}{ExpCone}(object, eq_constr, leq_constr, dims, solver)
 }
 \arguments{
 \item{a}{The variable \eqn{a} in the exponential cone.}

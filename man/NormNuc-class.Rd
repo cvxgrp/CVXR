@@ -31,8 +31,7 @@ NormNuc(A)
 
 \S4method{is_decr}{NormNuc}(object, idx)
 
-\S4method{graph_implementation}{NormNuc}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{NormNuc}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{A}{An \linkS4class{Expression} representing a matrix.}

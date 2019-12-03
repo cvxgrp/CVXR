@@ -31,8 +31,7 @@ SigmaMax(A = A)
 
 \S4method{is_decr}{SigmaMax}(object, idx)
 
-\S4method{graph_implementation}{SigmaMax}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{SigmaMax}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{A}{An \linkS4class{Expression} or matrix.}

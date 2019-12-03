@@ -10,11 +10,9 @@
 \alias{\%x\%,ANY,Expression-method}
 \title{Kronecker Product}
 \usage{
-\S4method{kronecker}{Expression,ANY}(X, Y, FUN = "*",
-  make.dimnames = FALSE, ...)
+\S4method{kronecker}{Expression,ANY}(X, Y, FUN = "*", make.dimnames = FALSE, ...)
 
-\S4method{kronecker}{ANY,Expression}(X, Y, FUN = "*",
-  make.dimnames = FALSE, ...)
+\S4method{kronecker}{ANY,Expression}(X, Y, FUN = "*", make.dimnames = FALSE, ...)
 
 \S4method{\%x\%}{Expression,ANY}(X, Y)
 

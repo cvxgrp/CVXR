@@ -30,8 +30,15 @@ GUROBI()
 
 \S4method{import_solver}{GUROBI}(solver)
 
-\S4method{Solver.solve}{GUROBI}(solver, objective, constraints,
-  cached_data, warm_start, verbose, ...)
+\S4method{Solver.solve}{GUROBI}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 }
 \arguments{
 \item{object, solver}{A \linkS4class{GUROBI} object.}

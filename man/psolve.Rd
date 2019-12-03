@@ -8,11 +8,25 @@
 \alias{solve.Problem}
 \title{Solve a DCP Problem}
 \usage{
-psolve(object, solver, ignore_dcp = FALSE, warm_start = FALSE,
-  verbose = FALSE, parallel = FALSE, ...)
+psolve(
+  object,
+  solver,
+  ignore_dcp = FALSE,
+  warm_start = FALSE,
+  verbose = FALSE,
+  parallel = FALSE,
+  ...
+)
 
-\S4method{psolve}{Problem}(object, solver, ignore_dcp = FALSE,
-  warm_start = FALSE, verbose = FALSE, parallel = FALSE, ...)
+\S4method{psolve}{Problem}(
+  object,
+  solver,
+  ignore_dcp = FALSE,
+  warm_start = FALSE,
+  verbose = FALSE,
+  parallel = FALSE,
+  ...
+)
 
 \method{solve}{Problem}(a, b, ...)
 }

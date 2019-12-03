@@ -37,8 +37,7 @@ Square(x)
 
 \S4method{is_quadratic}{Square}(object)
 
-\S4method{graph_implementation}{Square}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Square}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} object.}

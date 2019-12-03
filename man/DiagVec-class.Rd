@@ -16,8 +16,7 @@ DiagVec(expr)
 
 \S4method{size_from_args}{DiagVec}(object)
 
-\S4method{graph_implementation}{DiagVec}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{DiagVec}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing the vector to convert.}

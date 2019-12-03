@@ -31,8 +31,15 @@ GLPK()
 
 \S4method{import_solver}{GLPK}(solver)
 
-\S4method{Solver.solve}{GLPK}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{GLPK}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 
 \S4method{format_results}{GLPK}(solver, results_dict, data, cached_data)
 }

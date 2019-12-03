@@ -31,8 +31,15 @@ SCS()
 
 \S4method{import_solver}{SCS}(solver)
 
-\S4method{Solver.solve}{SCS}(solver, objective, constraints, cached_data,
-  warm_start, verbose, ...)
+\S4method{Solver.solve}{SCS}(
+  solver,
+  objective,
+  constraints,
+  cached_data,
+  warm_start,
+  verbose,
+  ...
+)
 
 \S4method{format_results}{SCS}(solver, results_dict, data, cached_data)
 }

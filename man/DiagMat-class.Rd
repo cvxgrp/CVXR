@@ -16,8 +16,7 @@ DiagMat(expr)
 
 \S4method{size_from_args}{DiagMat}(object)
 
-\S4method{graph_implementation}{DiagMat}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{DiagMat}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression} representing the matrix whose diagonal we are interested in.}

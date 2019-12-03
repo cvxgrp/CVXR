@@ -16,8 +16,7 @@ Log1p(x)
 
 \S4method{sign_from_args}{Log1p}(object)
 
-\S4method{graph_implementation}{Log1p}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{Log1p}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric constant.}

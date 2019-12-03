@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.8</span>
       </span>
     </div>
 
@@ -133,7 +133,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>A Variable, Parameter, Expression, or Problem object.</p></td>
+      <td><p>A <a href='Variable-class.html'>Variable</a>, <a href='Parameter-class.html'>Parameter</a>, <a href='Expression-class.html'>Expression</a>, or <a href='Problem-class.html'>Problem</a> object.</p></td>
     </tr>
     <tr>
       <th>value</th>
@@ -146,7 +146,7 @@
     <p>The numeric value of the variable, parameter, or expression. If any part of the mathematical object is unknown, return <code>NA</code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>lambda</span> <span class='kw'>&lt;-</span> <span class='fu'>Parameter</span>()
+    <pre class="examples"><div class='input'><span class='no'>lambda</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Parameter-class.html'>Parameter</a></span>()
 <span class='fu'>value</span>(<span class='no'>lambda</span>)</div><div class='output co'>#&gt; [1] NA</div><div class='input'>
 <span class='fu'>value</span>(<span class='no'>lambda</span>) <span class='kw'>&lt;-</span> <span class='fl'>5</span>
 <span class='fu'>value</span>(<span class='no'>lambda</span>)</div><div class='output co'>#&gt; [1] 5</div></pre>

@@ -37,8 +37,7 @@ SumLargest(x, k)
 
 \S4method{get_data}{SumLargest}(object)
 
-\S4method{graph_implementation}{SumLargest}(object, arg_objs, size,
-  data = NA_real_)
+\S4method{graph_implementation}{SumLargest}(object, arg_objs, size, data = NA_real_)
 }
 \arguments{
 \item{x}{An \linkS4class{Expression} or numeric matrix.}

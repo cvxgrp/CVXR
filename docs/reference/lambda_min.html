@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -146,10 +146,77 @@
     <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>5</span>,<span class='fl'>7</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>7</span>,-<span class='fl'>3</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>lambda_min</span>(<span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -7.062259</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;          [,1]      [,2]
-#&gt; [1,] 5.000001  7.000001
-#&gt; [2,] 7.000001 -3.000001</div></pre>
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : CONIC (conic optimization problem)
+#&gt;   Constraints            : 12              
+#&gt;   Cones                  : 0               
+#&gt;   Scalar variables       : 5               
+#&gt;   Matrix variables       : 1               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer started.
+#&gt; Presolve started.
+#&gt; Linear dependency checker started.
+#&gt; Linear dependency checker terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator - tries                  : 1                 time                   : 0.00            
+#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
+#&gt; Lin. dep.  - number                 : 0               
+#&gt; Presolve terminated. Time: 0.00    
+#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : CONIC (conic optimization problem)
+#&gt;   Constraints            : 12              
+#&gt;   Cones                  : 0               
+#&gt;   Scalar variables       : 5               
+#&gt;   Matrix variables       : 1               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer  - threads                : 8               
+#&gt; Optimizer  - solved problem         : the primal      
+#&gt; Optimizer  - Constraints            : 4
+#&gt; Optimizer  - Cones                  : 2
+#&gt; Optimizer  - Scalar variables       : 5                 conic                  : 5               
+#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
+#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
+#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
+#&gt; Factor     - nonzeros before factor : 10                after factor           : 10              
+#&gt; Factor     - dense dim.             : 0                 flops                  : 7.80e+01        
+#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+#&gt; 0   7.0e+00  1.0e+00  1.0e+00  0.00e+00   0.000000000e+00   0.000000000e+00   1.0e+00  0.00  
+#&gt; 1   9.1e-01  1.3e-01  3.4e-01  -9.71e-01  3.120397002e+00   8.961966199e+00   1.3e-01  0.00  
+#&gt; 2   1.5e-01  2.2e-02  1.6e-02  -2.39e-02  6.540909523e+00   6.878109191e+00   2.2e-02  0.00  
+#&gt; 3   3.0e-03  4.3e-04  3.1e-05  8.68e-01   7.064882827e+00   7.066480723e+00   4.3e-04  0.00  
+#&gt; 4   4.7e-08  6.8e-09  1.4e-12  1.00e+00   7.062257820e+00   7.062257804e+00   6.8e-09  0.00  
+#&gt; 5   1.4e-15  7.5e-14  2.5e-20  1.00e+00   7.062257748e+00   7.062257748e+00   2.3e-16  0.00  
+#&gt; Optimizer terminated. Time: 0.00    
+#&gt; 
+#&gt; 
+#&gt; Interior-point solution summary
+#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+#&gt;   Solution status : OPTIMAL
+#&gt;   Primal.  obj: 7.0622577483e+00    nrm: 1e+01    Viol.  con: 1e-14    var: 0e+00    barvar: 0e+00  
+#&gt;   Dual.    obj: 7.0622577483e+00    nrm: 7e-01    Viol.  con: 0e+00    var: 2e-16    barvar: 6e-13  
+#&gt; Optimizer summary
+#&gt;   Optimizer                 -                        time: 0.00    
+#&gt;     Interior-point          - iterations : 5         time: 0.00    
+#&gt;       Basis identification  -                        time: 0.00    
+#&gt;         Primal              - iterations : 0         time: 0.00    
+#&gt;         Dual                - iterations : 0         time: 0.00    
+#&gt;         Clean primal        - iterations : 0         time: 0.00    
+#&gt;         Clean dual          - iterations : 0         time: 0.00    
+#&gt;     Simplex                 -                        time: 0.00    
+#&gt;       Primal simplex        - iterations : 0         time: 0.00    
+#&gt;       Dual simplex          - iterations : 0         time: 0.00    
+#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
+#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -7.062258</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1] [,2]
+#&gt; [1,]    5    7
+#&gt; [2,]    7   -3</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

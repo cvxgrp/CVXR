@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -155,8 +155,51 @@
 <span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"A"</span>)
 <span class='no'>dom</span> <span class='kw'>&lt;-</span> <span class='fu'>domain</span>(<span class='fu'><a href='lambda_max.html'>lambda_max</a></span>(<span class='no'>A</span>))
 <span class='no'>A0</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>4</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='norm2.html'>norm2</a></span>(<span class='no'>A</span> - <span class='no'>A0</span>)), <span class='no'>dom</span>))
-<span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1] [,2]
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='norm2.html'>norm2</a></span>(<span class='no'>A</span> - <span class='no'>A0</span>)), <span class='no'>dom</span>))</div><div class='output co'>#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : CONIC (conic optimization problem)
+#&gt;   Constraints            : 9               
+#&gt;   Cones                  : 1               
+#&gt;   Scalar variables       : 10              
+#&gt;   Matrix variables       : 0               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer started.
+#&gt; Presolve started.
+#&gt; Linear dependency checker started.
+#&gt; Linear dependency checker terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
+#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
+#&gt; Lin. dep.  - number                 : 1               
+#&gt; Presolve terminated. Time: 0.00    
+#&gt; Optimizer terminated. Time: 0.00    
+#&gt; 
+#&gt; 
+#&gt; Interior-point solution summary
+#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+#&gt;   Solution status : OPTIMAL
+#&gt;   Primal.  obj: 7.0710678119e-01    nrm: 4e+00    Viol.  con: 0e+00    var: 0e+00    cones: 0e+00  
+#&gt;   Dual.    obj: 7.0710678119e-01    nrm: 1e+00    Viol.  con: 0e+00    var: 1e-16    cones: 0e+00  
+#&gt; Optimizer summary
+#&gt;   Optimizer                 -                        time: 0.00    
+#&gt;     Interior-point          - iterations : 0         time: 0.00    
+#&gt;       Basis identification  -                        time: 0.00    
+#&gt;         Primal              - iterations : 0         time: 0.00    
+#&gt;         Dual                - iterations : 0         time: 0.00    
+#&gt;         Clean primal        - iterations : 0         time: 0.00    
+#&gt;         Clean dual          - iterations : 0         time: 0.00    
+#&gt;     Simplex                 -                        time: 0.00    
+#&gt;       Primal simplex        - iterations : 0         time: 0.00    
+#&gt;       Dual simplex          - iterations : 0         time: 0.00    
+#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
+#&gt; </div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1] [,2]
 #&gt; [1,]  1.0  2.5
 #&gt; [2,]  2.5  4.0</div><div class='input'>
 <span class='no'>dom</span> <span class='kw'>&lt;-</span> <span class='fu'>domain</span>(<span class='fu'><a href='log_det.html'>log_det</a></span>(<span class='no'>A</span> + <span class='fu'><a href='diag.html'>diag</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>))))

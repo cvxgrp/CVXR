@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -145,10 +145,10 @@
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>^<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dcp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; $`3947`
+<span class='fu'>is_dcp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; $`3938`
 #&gt; [1] 5
 #&gt; 
-#&gt; $`3952`
+#&gt; $`3943`
 #&gt; [1] 10
 #&gt; 
 #&gt; $value
@@ -188,8 +188,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7fba8997e510&gt;
-#&gt; &lt;environment: 0x7fba8996e740&gt;
+#&gt; &lt;bytecode: 0x7f856480d5e8&gt;
+#&gt; &lt;environment: 0x7f85650cf7e0&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -198,14 +198,14 @@
 #&gt;         stop("getDualValue: argument should be a Constraint!")
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7fba899839d8&gt;
-#&gt; &lt;environment: 0x7fba8996e740&gt;
+#&gt; &lt;bytecode: 0x7f856480eba0&gt;
+#&gt; &lt;environment: 0x7f85650cf7e0&gt;
 #&gt; 
 #&gt; $solver
 #&gt; [1] "OSQP"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 4.0154e-05
+#&gt; [1] 7.0061e-05
 #&gt; 
 #&gt; $setup_time
 #&gt; [1] NA

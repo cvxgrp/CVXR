@@ -21,16 +21,26 @@ Version 1.0 is a major upgrade. The improvements include:
 
 - A new reduction framework that automatically chooses the most
   appropriate solver for a problem
-- A large number of solvers are now available and they all use native
-  `R` interfaces and do not rely on python glue using `reticulate`
-- The default QP solver is `OSQP`, which means that some results will
-  differ in precision from previous runs. However, ECOS can be
-  explicitly specified if exact results are desired
-- Strict inequalities are not allowed in constraints
+- Addition of a large number of solvers using native `R` interfaces
 - Facilities for geometric programming
+- Improvements in speed
 
-All this while maintaining almost all compatibility with previous
-code!
+## What has changed?
+
+Implementation changes include: 
+
+- Default QP solver: now, `OSQP`, which means that some results will
+  differ slightly from previous runs. However, ECOS can be explicitly
+  specified if exact replication of old results are desired
+- Strict inequalities are not allowed in constraints
+
+Syntax changes (to match `cvxpy` 1.x) include:
+
+- `Int(1)` is now `Variable(1, integer = TRUE)`
+- `Bool(1)` is now `Variable(1, boolean = TRUE)`
+- `Semidef(n, n)` is now `Variable(n, n, PSD = TRUE)`
+
+and so on.
 
 
 

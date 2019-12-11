@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -146,16 +146,64 @@
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>*<span class='no'>y</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>, <span class='no'>y</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; $`3978`
+<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : LO (linear optimization problem)
+#&gt;   Constraints            : 2               
+#&gt;   Cones                  : 0               
+#&gt;   Scalar variables       : 2               
+#&gt;   Matrix variables       : 0               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer started.
+#&gt; Presolve started.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
+#&gt; Lin. dep.  - tries                  : 0                 time                   : 0.00            
+#&gt; Lin. dep.  - number                 : 0               
+#&gt; Presolve terminated. Time: 0.00    
+#&gt; Optimizer terminated. Time: 0.00    
+#&gt; 
+#&gt; 
+#&gt; Interior-point solution summary
+#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+#&gt;   Solution status : OPTIMAL
+#&gt;   Primal.  obj: 3.2188758249e+00    nrm: 2e+00    Viol.  con: 0e+00    var: 0e+00  
+#&gt;   Dual.    obj: 3.2188758249e+00    nrm: 1e+00    Viol.  con: 0e+00    var: 0e+00  
+#&gt; 
+#&gt; Basic solution summary
+#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+#&gt;   Solution status : OPTIMAL
+#&gt;   Primal.  obj: 3.2188758249e+00    nrm: 2e+00    Viol.  con: 0e+00    var: 0e+00  
+#&gt;   Dual.    obj: 3.2188758249e+00    nrm: 1e+00    Viol.  con: 0e+00    var: 0e+00  
+#&gt; Optimizer summary
+#&gt;   Optimizer                 -                        time: 0.00    
+#&gt;     Interior-point          - iterations : 0         time: 0.00    
+#&gt;       Basis identification  -                        time: 0.00    
+#&gt;         Primal              - iterations : 0         time: 0.00    
+#&gt;         Dual                - iterations : 0         time: 0.00    
+#&gt;         Clean primal        - iterations : 0         time: 0.00    
+#&gt;         Clean dual          - iterations : 0         time: 0.00    
+#&gt;     Simplex                 -                        time: 0.00    
+#&gt;       Primal simplex        - iterations : 0         time: 0.00    
+#&gt;       Dual simplex          - iterations : 0         time: 0.00    
+#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
+#&gt; </div><div class='output co'>#&gt; $`3969`
 #&gt; [1] 5
 #&gt; 
-#&gt; $`3979`
+#&gt; $`3970`
 #&gt; [1] 5
 #&gt; 
-#&gt; $`3984`
+#&gt; $`3975`
 #&gt; [1] 1
 #&gt; 
-#&gt; $`3990`
+#&gt; $`3981`
 #&gt; [1] 1
 #&gt; 
 #&gt; $value
@@ -195,8 +243,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7fba8997e510&gt;
-#&gt; &lt;environment: 0x7fba70cdb098&gt;
+#&gt; &lt;bytecode: 0x7f856480d5e8&gt;
+#&gt; &lt;environment: 0x7f854fe91cb8&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -205,20 +253,20 @@
 #&gt;         stop("getDualValue: argument should be a Constraint!")
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7fba899839d8&gt;
-#&gt; &lt;environment: 0x7fba70cdb098&gt;
+#&gt; &lt;bytecode: 0x7f856480eba0&gt;
+#&gt; &lt;environment: 0x7f854fe91cb8&gt;
 #&gt; 
 #&gt; $solver
-#&gt; [1] "ECOS"
+#&gt; [1] "MOSEK"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 1.1818e-05
+#&gt; [1] 0.002624989
 #&gt; 
 #&gt; $setup_time
-#&gt; [1] 1.6843e-05
+#&gt; [1] NA
 #&gt; 
 #&gt; $num_iters
-#&gt; [1] 4
+#&gt; [1] NA
 #&gt; </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

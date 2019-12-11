@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -158,18 +158,97 @@
 <span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>+<span class='fl'>1</span>)
 <span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>sum_largest</span>((<span class='no'>y</span> - <span class='no'>X</span> <span class='kw'>%*%</span> <span class='no'>beta</span>)^<span class='fl'>2</span>, <span class='fl'>100</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>obj</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>beta</span>)</div><div class='output co'>#&gt;                [,1]
-#&gt;  [1,] -0.0343459092
-#&gt;  [2,]  0.8606400249
-#&gt;  [3,] -0.0007470675
-#&gt;  [4,]  1.0303678992
-#&gt;  [5,]  0.3066417170
-#&gt;  [6,] -0.0749039819
-#&gt;  [7,]  0.4531071818
-#&gt;  [8,]  1.0492876935
-#&gt;  [9,]  0.0295555086
-#&gt; [10,]  0.7136919720</div></pre>
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : CONIC (conic optimization problem)
+#&gt;   Constraints            : 1500            
+#&gt;   Cones                  : 300             
+#&gt;   Scalar variables       : 1511            
+#&gt;   Matrix variables       : 0               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer started.
+#&gt; Presolve started.
+#&gt; Linear dependency checker started.
+#&gt; Linear dependency checker terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator started.
+#&gt; Freed constraints in eliminator : 0
+#&gt; Eliminator terminated.
+#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
+#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
+#&gt; Lin. dep.  - number                 : 0               
+#&gt; Presolve terminated. Time: 0.00    
+#&gt; Problem
+#&gt;   Name                   :                 
+#&gt;   Objective sense        : min             
+#&gt;   Type                   : CONIC (conic optimization problem)
+#&gt;   Constraints            : 1500            
+#&gt;   Cones                  : 300             
+#&gt;   Scalar variables       : 1511            
+#&gt;   Matrix variables       : 0               
+#&gt;   Integer variables      : 0               
+#&gt; 
+#&gt; Optimizer  - threads                : 8               
+#&gt; Optimizer  - solved problem         : the primal      
+#&gt; Optimizer  - Constraints            : 900
+#&gt; Optimizer  - Cones                  : 301
+#&gt; Optimizer  - Scalar variables       : 1512              conic                  : 912             
+#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
+#&gt; Factor     - setup time             : 0.01              dense det. time        : 0.00            
+#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
+#&gt; Factor     - nonzeros before factor : 5100              after factor           : 8700            
+#&gt; Factor     - dense dim.             : 13                flops                  : 1.09e+05        
+#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+#&gt; 0   2.5e+00  1.0e+02  1.0e+00  0.00e+00   0.000000000e+00   0.000000000e+00   1.0e+00  0.01  
+#&gt; 1   9.8e-01  3.9e+01  3.0e-01  -2.05e-01  1.634682620e+02   1.635640503e+02   3.9e-01  0.01  
+#&gt; 2   5.4e-01  2.1e+01  1.2e-01  7.43e-01   1.594175713e+02   1.594363027e+02   2.1e-01  0.01  
+#&gt; 3   1.8e-01  7.2e+00  2.2e-02  1.00e+00   1.586520249e+02   1.586510145e+02   7.2e-02  0.01  
+#&gt; 4   9.3e-02  3.7e+00  8.0e-03  1.01e+00   1.636722488e+02   1.636732119e+02   3.7e-02  0.02  
+#&gt; 5   4.5e-02  1.8e+00  2.8e-03  1.01e+00   1.664314424e+02   1.664324781e+02   1.8e-02  0.02  
+#&gt; 6   2.4e-02  9.5e-01  1.1e-03  1.00e+00   1.679208705e+02   1.679217927e+02   9.5e-03  0.02  
+#&gt; 7   8.9e-03  3.5e-01  2.5e-04  1.00e+00   1.689670711e+02   1.689675626e+02   3.5e-03  0.02  
+#&gt; 8   2.6e-03  1.0e-01  4.0e-05  1.00e+00   1.693827149e+02   1.693828895e+02   1.0e-03  0.02  
+#&gt; 9   3.5e-04  1.4e-02  2.0e-06  1.00e+00   1.695412490e+02   1.695412795e+02   1.4e-04  0.02  
+#&gt; 10  4.1e-05  1.6e-03  8.0e-08  1.00e+00   1.695625864e+02   1.695625901e+02   1.6e-05  0.02  
+#&gt; 11  4.0e-06  1.6e-04  2.5e-09  1.00e+00   1.695650783e+02   1.695650788e+02   1.6e-06  0.02  
+#&gt; 12  5.4e-07  2.1e-05  1.2e-10  1.00e+00   1.695653115e+02   1.695653115e+02   2.1e-07  0.02  
+#&gt; 13  9.5e-08  1.1e-06  1.4e-12  1.00e+00   1.695653449e+02   1.695653449e+02   1.1e-08  0.03  
+#&gt; 14  3.7e-09  4.2e-08  1.1e-14  1.00e+00   1.695653466e+02   1.695653466e+02   4.2e-10  0.03  
+#&gt; Optimizer terminated. Time: 0.03    
+#&gt; 
+#&gt; 
+#&gt; Interior-point solution summary
+#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+#&gt;   Solution status : OPTIMAL
+#&gt;   Primal.  obj: 1.6956534663e+02    nrm: 1e+01    Viol.  con: 8e-09    var: 0e+00    cones: 0e+00  
+#&gt;   Dual.    obj: 1.6956534663e+02    nrm: 4e+00    Viol.  con: 4e-10    var: 5e-08    cones: 0e+00  
+#&gt; Optimizer summary
+#&gt;   Optimizer                 -                        time: 0.03    
+#&gt;     Interior-point          - iterations : 14        time: 0.03    
+#&gt;       Basis identification  -                        time: 0.00    
+#&gt;         Primal              - iterations : 0         time: 0.00    
+#&gt;         Dual                - iterations : 0         time: 0.00    
+#&gt;         Clean primal        - iterations : 0         time: 0.00    
+#&gt;         Clean dual          - iterations : 0         time: 0.00    
+#&gt;     Simplex                 -                        time: 0.00    
+#&gt;       Primal simplex        - iterations : 0         time: 0.00    
+#&gt;       Dual simplex          - iterations : 0         time: 0.00    
+#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
+#&gt; </div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>beta</span>)</div><div class='output co'>#&gt;                [,1]
+#&gt;  [1,] -0.0343461443
+#&gt;  [2,]  0.8606400152
+#&gt;  [3,] -0.0007471474
+#&gt;  [4,]  1.0303675537
+#&gt;  [5,]  0.3066423315
+#&gt;  [6,] -0.0749035312
+#&gt;  [7,]  0.4531070455
+#&gt;  [8,]  1.0492884686
+#&gt;  [9,]  0.0295552578
+#&gt; [10,]  0.7136916224</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.995</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@
       <h1>Version 1.0</h1>
                         <h4 class="author">Anqi Fu, David W. Kang, Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 class="date">2019-11-26</h4>
+            <h4 class="date">2019-12-11</h4>
       
       
       <div class="hidden name"><code>version1.Rmd</code></div>
@@ -96,13 +96,32 @@
 <p>Version 1.0 is a major upgrade. The improvements include:</p>
 <ul>
 <li>A new reduction framework that automatically chooses the most appropriate solver for a problem</li>
-<li>A large number of solvers are now available and they all use native <code>R</code> interfaces and do not rely on python glue using <code>reticulate</code>
-</li>
-<li>The default QP solver is <code>OSQP</code>, which means that some results will differ in precision from previous runs. However, ECOS can be explicitly specified if exact results are desired</li>
-<li>Strict inequalities are not allowed in constraints</li>
+<li>Addition of a large number of solvers using native <code>R</code> interfaces</li>
 <li>Facilities for geometric programming</li>
+<li>Improvements in speed</li>
 </ul>
-<p>All this while maintaining almost all compatibility with previous code!</p>
+</div>
+<div id="what-has-changed" class="section level2">
+<h2 class="hasAnchor">
+<a href="#what-has-changed" class="anchor"></a>What has changed?</h2>
+<p>Implementation changes include:</p>
+<ul>
+<li>Default QP solver: now, <code>OSQP</code>, which means that some results will differ slightly from previous runs. However, ECOS can be explicitly specified if exact replication of old results are desired</li>
+<li>Strict inequalities are not allowed in constraints</li>
+</ul>
+<p>Syntax changes (to match <code>cvxpy</code> 1.x) include:</p>
+<ul>
+<li>
+<code>Int(1)</code> is now <code><a href="../reference/Variable-class.html">Variable(1, integer = TRUE)</a></code>
+</li>
+<li>
+<code>Bool(1)</code> is now <code><a href="../reference/Variable-class.html">Variable(1, boolean = TRUE)</a></code>
+</li>
+<li>
+<code>Semidef(n, n)</code> is now <code><a href="../reference/Variable-class.html">Variable(n, n, PSD = TRUE)</a></code>
+</li>
+</ul>
+<p>and so on.</p>
 </div>
   </div>
 
@@ -113,6 +132,7 @@
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#what-is-new">What is new?</a></li>
+      <li><a href="#what-has-changed">What has changed?</a></li>
       </ul>
 </div>
       </div>

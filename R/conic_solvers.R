@@ -1769,9 +1769,11 @@ setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
 setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
 #' @describeIn MOSEK Imports the solver.
+#' @importFrom utils packageDescription
 setMethod("import_solver", "MOSEK", function(solver) {
-  requireNamespace("Rmosek", quietly = TRUE)
-  # TODO: Add exponential cone support.
+    requireNamespace("Rmosek", quietly = TRUE) &&
+        (!is.null(utils::packageDescription("Rmosek")$Configured.MSK_VERSION))
+    ## TODO: Add exponential cone support.
 })
 
 #' @describeIn MOSEK Returns the name of the solver.

@@ -2184,12 +2184,10 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #  task.writedata(save_file)
   #task.optimize
 
-  if(verbose){
-    r <- Rmosek::mosek(prob, list(verbose = 1, soldetail = 3, getinfo = TRUE))
-    ##sol <- r$sol
+  if(verbose > 0){
+    r <- Rmosek::mosek(prob, list(verbose = verbose, soldetail = solver_opts$soldetail, getinfo = solver_opts$getinfo))
   } else {
     r <- Rmosek::mosek(prob, list(soldetail = 3, getinfo = TRUE))
-    ##sol <- r$sol
   }
   r
     ##  return(sol)

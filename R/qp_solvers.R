@@ -277,34 +277,10 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   } else{
     control <- list(trace=1)
   }
+  
+  #Setting rest of the parameters
+  control[names(solver_opts)] <- solver_opts
 
-  #David: not sure what to do with this part
-  # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
-  # and the code is duplicated here. This should be refactored.
-  if(length(solver_opts) > 0){
-    kwargs <- sort(names(solver_opts))
-    if("cplex_params" %in% kwargs) {
-      for(param in names(solver_opts$cplex_params)) {
-        value <- solver_opts$cplex_params[param]
-        tryCatch({
-            eval(paste("set(model@parameters@", param, ", value)", sep = ""))
-          }, error = function(e) {
-           stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")")
-        })
-      }
-      kwargs$cplex_params <- NULL
-    }
-
-    if("cplex_filename" %in% kwargs) {
-      filename <- solver_opts$cplex_filename
-      if(!is.na(filename) && !is.null(filename))
-        write(model, filename)
-      kwargs$cplex_filename <- NULL
-    }
-
-    if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
-      stop("Invalid keyword argument ", kwargs[[1]])
-  }
   # Solve problem.
   results_dict <- list()
 
@@ -527,16 +503,14 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
 
   # Set verbosity and other parameters.
   params <- list()
-  #setParam(model, "OutputFlag", verbose)
   params$OutputFlag <- as.numeric(verbose)
   # TODO: User option to not compute duals.
   params$QCPDual <- 1 #equivalent to TRUE
 
-  # for(key in names(solver_opts))
-  #   setParam(model, key, solver_opts[key])
-  for(i in seq_along(solver_opts)){
-    params[[ names(solver_opts)[i] ]] <- solver_opts[i]
-  }
+  #for(i in seq_along(solver_opts)){
+  #  params[[ names(solver_opts)[i] ]] <- solver_opts[i]
+  #}
+  params[names(solver_opts)] <- solver_opts
 
   # Update model. Not a thing in R
   #update(model)
@@ -554,7 +528,6 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   return(results_dict)
 })
 
-#DK WRITTEN FUNCTION
 #' @param solution The raw solution returned by the solver.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn GUROBI_QP Returns the solution to the original problem given the inverse_data.
@@ -757,11 +730,9 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     # Initialize and solve problem.
     if(is.null(solver_opts$polish))
         solver_opts$polish <- TRUE
-      ## DWK CHANGE
-      ## solver <- osqp::OSQP()
-      solver <- osqp::osqp(P, q, A, lA, uA, solver_opts)
-      ## setup(solver, P, q, A, lA, uA, verbose = verbose, solver_opts)
-      ## DWK CHANGE END
+    #Set parameters
+    solver_opts[names(solver_opts)] <- solver_opts
+    solver <- osqp::osqp(P, q, A, lA, uA, solver_opts)
   }
 
   results <- solver$Solve()

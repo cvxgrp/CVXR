@@ -375,7 +375,7 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
-#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param verbose An integer number indicating level of solver verbosity.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
@@ -771,7 +771,8 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
     col_lb = var_lb,
     col_ub = var_ub,
     is_integer = is_integer,
-    max = FALSE
+    max = FALSE,
+    cbc_args = solver_opts
   )
 
   return(list(result))
@@ -1008,34 +1009,9 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
     control <- list(trace=1)
   }
 
-  #David: not sure what to do with this part
-  # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
-  # and the code is duplicated here. This should be refactored.
-  if(length(solver_opts) > 0){
-    kwargs <- sort(names(solver_opts))
-    if("cplex_params" %in% kwargs) {
-      for(param in names(solver_opts$cplex_params)) {
-        value <- solver_opts$cplex_params[param]
-        tryCatch({
-          eval(paste("set(model@parameters@", param, ", value)", sep = ""))
-        }, error = function(e) {
-          stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")")
-        })
-      }
-      kwargs$cplex_params <- NULL
-    }
-
-    if("cplex_filename" %in% kwargs) {
-      filename <- solver_opts$cplex_filename
-      if(!is.na(filename) && !is.null(filename))
-        write(model, filename)
-      kwargs$cplex_filename <- NULL
-    }
-
-    if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
-      stop("Invalid keyword argument ", kwargs[[1]])
-  }
-
+  #Setting rest of the parameters
+  control[names(solver_opts)] <- solver_opts
+  
   # Solve problem.
   results_dict <- list()
 
@@ -1043,7 +1019,6 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
     # Define CPLEX problem and solve
     model <- Rcplex::Rcplex_solve_QCP(cvec=cvar, Amat=Amat, bvec=bvec, QC=QC, lb=lb, ub=Inf,
                                       sense=sense_vec, objsense="min", vtype=vtype, control=control)
-    #control parameter would be used to set specific solver arguments. See cran Rcplex documentation
   }, error = function(e) {
     results_dict$status <- SOLVER_ERROR
   })
@@ -1668,9 +1643,10 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
   params$QCPDual <- 1 #equivalent to TRUE
-  for(i in seq_along(solver_opts)){
-    params[[ names(solver_opts)[i] ]] <- solver_opts[i]
-  }
+  #for(i in seq_along(solver_opts)){
+  #  params[[ names(solver_opts)[i] ]] <- solver_opts[i]
+  #}
+  params[names(solver_opts)] <- solver_opts
 
   solution <- list()
   tryCatch({

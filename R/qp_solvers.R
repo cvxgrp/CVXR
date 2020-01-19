@@ -748,8 +748,14 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     if(is.null(solver_opts$polish))
         solver_opts$polish <- TRUE
     #Set parameters
-    control = osqpSettings(max_iter = num_iter, eps_abs = abstol, eps_rel = reltol, eps_prim_inf = feastol, eps_dual_inf = feastol, verbose = verbose)
-    contrl[names(solver_opts)] <- solver_opts
+    control <- osqp::osqpSettings()
+    control$max_iter = num_iter
+    control$eps_abs <- abstol
+    control$eps_rel = reltol
+    control$eps_prim_inf = feastol
+    control$eps_dual_inf = feastol
+    control$verbose = verbose
+    control[names(solver_opts)] <- solver_opts
     solver <- osqp::osqp(P, q, A, lA, uA, control)
   }
 

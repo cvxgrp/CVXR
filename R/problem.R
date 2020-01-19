@@ -659,7 +659,8 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 #' @docType methods
 #' @rdname psolve
 #' @export
-setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) {
+setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, 
+                                        parallel = FALSE, gp = FALSE, feastol = 1e-5, reltol = 1e-5, abstol=1e-5, num_iter = 1e6,  ...) {
   if(parallel)
     stop("Unimplemented")
   object <- .construct_chains(object, solver = solver, gp = gp)
@@ -667,7 +668,8 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
   object@.solving_chain <- tmp[[1]]
   data <- tmp[[2]]
   solving_inverse_data <- tmp[[3]]
-  solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, verbose, list(...))
+  solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start, 
+                                       verbose, feastol, reltol, abstol, num_iter, list(...))
 
   full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
   inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)

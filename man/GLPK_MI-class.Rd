@@ -23,6 +23,10 @@ GLPK_MI()
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )

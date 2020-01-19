@@ -25,17 +25,35 @@
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )
 
-\S4method{reduction_solve}{ReductionSolver,ANY}(object, problem, warm_start, verbose, solver_opts)
+\S4method{reduction_solve}{ReductionSolver,ANY}(
+  object,
+  problem,
+  warm_start,
+  verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
+  solver_opts
+)
 
 \S4method{solve_via_data}{ECOS}(
   object,
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )
@@ -47,13 +65,21 @@
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
 
-\item{verbose}{A boolean of whether to enable solver verbosity.}
+\item{verbose}{An integer number indicating level of solver verbosity.}
+
+\item{feastol}{The feasible tolerance on the primal and dual residual.}
+
+\item{reltol}{The relative tolerance on the duality gap.}
+
+\item{abstol}{The absolute tolerance on the duality gap.}
 
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
 
 \item{problem}{A \linkS4class{Problem} object.}
+
+\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 The ReductionSolver class.

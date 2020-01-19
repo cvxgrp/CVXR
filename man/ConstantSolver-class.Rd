@@ -34,6 +34,10 @@
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )
@@ -55,9 +59,17 @@
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
 
+\item{feastol}{The feasible tolerance.}
+
+\item{reltol}{The relative tolerance.}
+
+\item{abstol}{The absolute tolerance.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
+
+\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 The ConstantSolver class.

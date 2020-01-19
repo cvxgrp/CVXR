@@ -31,14 +31,14 @@ G <- matrix(stats::rnorm(r*n), nrow = r, ncol = n)
 h <- matrix(stats::rnorm(r), nrow = r, ncol = 1)
 
 # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
-P <- t(A) \%*\% A
-q <- -2 * t(A) \%*\% b
-r <- t(b) \%*\% b
+P <- t(A) %*% A
+q <- -2 * t(A) %*% b
+r <- t(b) %*% b
 Pinv <- base::solve(P)
 
 x <- Variable(n)
-obj <- matrix_frac(x, Pinv) + t(q) \%*\% x + r
-constr <- list(G \%*\% x == h)
+obj <- matrix_frac(x, Pinv) + t(q) %*% x + r
+constr <- list(G %*% x == h)
 prob <- Problem(Minimize(obj), constr)
 result <- solve(prob)
 result$value

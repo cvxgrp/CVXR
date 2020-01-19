@@ -36,6 +36,10 @@ CPLEX_CONIC()
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )
@@ -57,9 +61,17 @@ CPLEX_CONIC()
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
 
+\item{feastol}{The feasible tolerance on the primal and dual residual.}
+
+\item{reltol}{The relative tolerance on the duality gap.}
+
+\item{abstol}{The absolute tolerance on the duality gap.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
+
+\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 An interface for the CPLEX solver

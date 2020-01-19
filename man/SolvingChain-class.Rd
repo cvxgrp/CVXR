@@ -11,7 +11,17 @@
 \usage{
 \S4method{prepend}{SolvingChain,Chain}(object, chain)
 
-\S4method{reduction_solve}{SolvingChain,Problem}(object, problem, warm_start, verbose, solver_opts)
+\S4method{reduction_solve}{SolvingChain,Problem}(
+  object,
+  problem,
+  warm_start,
+  verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
+  solver_opts
+)
 
 \S4method{reduction_solve_via_data}{SolvingChain}(
   object,
@@ -19,6 +29,10 @@
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts
 )
 }
@@ -33,9 +47,17 @@
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
 
+\item{feastol}{The feasible tolerance.}
+
+\item{reltol}{The relative tolerance.}
+
+\item{abstol}{The absolute tolerance.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{data}{Data for the solver.}
+
+\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 This class represents a reduction chain that ends with a solver.

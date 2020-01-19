@@ -16,6 +16,10 @@ psolve(
   verbose = FALSE,
   parallel = FALSE,
   gp = FALSE,
+  feastol = 1e-05,
+  reltol = 1e-05,
+  abstol = 1e-05,
+  num_iter = 1e+06,
   ...
 )
 
@@ -27,6 +31,10 @@ psolve(
   verbose = FALSE,
   parallel = FALSE,
   gp = FALSE,
+  feastol = 1e-05,
+  reltol = 1e-05,
+  abstol = 1e-05,
+  num_iter = 1e+06,
   ...
 )
 

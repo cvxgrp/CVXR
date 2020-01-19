@@ -952,7 +952,8 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) { standardGeneric("psolve") })
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
+                              gp = FALSE, feastol = 1e-5, reltol = 1e-5, abstol = 1e-5, num_iter = 1e6, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?
@@ -1169,12 +1170,12 @@ setGeneric("stuffed_objective", function(object, problem, extractor) { standardG
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
 setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
-setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
+setGeneric("solve_via_data", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack_problem", function(object, solution) { standardGeneric("unpack_problem") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })
 setGeneric(".construct_dual_variables", function(object, args) { standardGeneric(".construct_dual_variables") })
-setGeneric("reduction_solve", function(object, problem, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve") })
-setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve_via_data") })
+setGeneric("reduction_solve", function(object, problem, warm_start, verbose,  feastol, reltol, abstol, num_iter, solver_opts) { standardGeneric("reduction_solve") })
+setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts) { standardGeneric("reduction_solve_via_data") })
 setGeneric("reduction_format_constr", function(object, problem, constr, exp_cone_order) { standardGeneric("reduction_format_constr") })
 setGeneric("block_format", function(object, problem, constraints, exp_cone_order) { standardGeneric("block_format") })
 setGeneric("suitable", function(solver, problem) { standardGeneric("suitable") })

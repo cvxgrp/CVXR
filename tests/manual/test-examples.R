@@ -498,7 +498,7 @@ test_that("Test examples from CVXR introduction", {
     print("Optimal var:")
     print(result$getValue(x))
     
-    expect_equal(result$value, 4.14133859146, tolerance = TOL)
+    expect_equal(result$value, 7.24427715882, tolerance = TOL)
     
     ########################################
     
@@ -560,10 +560,10 @@ test_that("Test examples from CVXR introduction", {
     X <- Variable(5,4)
     A <- matrix(1, nrow = 3, ncol = 5)
     
-    # Use dim(expr) to get the dimensions.
-    print(paste("dimensions of X:", dim(X)))
-    print(paste("dimensions of sum(X):", dim(sum(X))))
-    print(paste("dimensions of A %*% X:", dim(A %*% X)))
+    # Use size(expr) to get the total number of elements.
+    print(paste("size of X:", size(X)))
+    print(paste("size of sum(X):", size(sum(X))))
+    print(paste("size of A %*% X:", size(A %*% X)))
     
     # ValueError raised for invalid dimensions.
     tryCatch({

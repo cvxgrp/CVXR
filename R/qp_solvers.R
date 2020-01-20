@@ -228,7 +228,7 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param feastol The feasible tolerance on the primal and dual residual.
 #' @param reltol The relative tolerance on the duality gap.
 #' @param abstol The absolute tolerance on the duality gap.
-#' @param num_iters The maximum number of iterations.
+#' num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
@@ -276,13 +276,13 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   }
   
   # Throw parameter warnings
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
 
@@ -410,7 +410,7 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
@@ -521,14 +521,14 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   params$OutputFlag <- as.numeric(verbose)
   # TODO: User option to not compute duals.
   params$QCPDual <- 1 #equivalent to TRUE
-  params$ItereationLimit = num_iters
+  params$IterationLimit = num_iter
   params$FeasibilityTol = feastol
   params$OptimalityTol = feastol
   
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
 
@@ -677,7 +677,7 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.

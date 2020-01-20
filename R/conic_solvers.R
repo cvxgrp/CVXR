@@ -379,14 +379,14 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 #' @param feastol The feasible tolerance on the primal and dual residual.
 #' @param reltol The relative tolerance on the duality gap.
 #' @param abstol The absolute tolerance on the duality gap.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol, 
                                              abstol, num_iter, solver_opts, solver_cache = list()) {
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
-  ecos_opts <- ECOSolveR::ecos.control(maxit = num_iter, feastol = feastol, reltol = reltol, abstol = abstol, verbose = verbose)
+  ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]], control = ecos_opts)
   return(solution)
@@ -569,7 +569,7 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 #' @param feastol The feasible tolerance on the primal and dual residual.
 #' @param reltol The relative tolerance on the duality gap.
 #' @param abstol The absolute tolerance on the duality gap.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn SCS Solve a problem represented by data returned from apply.
@@ -587,18 +587,18 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   
   # Default to acceleration_lookback = 10L instead of (Naras' mistake) 20L!
   # REMOVE when scs R package goes back to correct default
-  control =  scs_control(max_iters = num_iter, verbose = verbose, eps = 1e-4, acceleration_lookback = 10L)
+  control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps = 1e-4, acceleration_lookback = 10L)
 
   #Fill in parameter values
   control[names(solver_opts)] <- solver_opts
     
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
 
@@ -728,10 +728,14 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
 
   cvar <- data$c
   b <- data$b
@@ -776,13 +780,13 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   }
   
   #Warnigs for including parameters
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(num_iter != 1e6){
@@ -959,7 +963,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
 #' @param feastol The feasible tolerance on the primal and dual residual.
 #' @param reltol The relative tolerance on the duality gap.
 #' @param abstol The absolute tolerance on the duality gap.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_CONIC Solve a problem represented by data returned from apply.
@@ -1033,13 +1037,13 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   QC <- list(QC = list(Q = qc), dir = rep("L", length(dims@soc)) , b = rep(0.0, length(dims@soc)))
 
   # Throw parameter warnings
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
@@ -1219,14 +1223,14 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
 
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
-  ecos_opts <- ECOSolveR::ecos.control(maxit = num_iter, feastol = feastol, reltol = reltol, abstol = abstol, verbose = verbose)
+  ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]],
                                      bool_vars = data[[BOOL_IDX]], int_vars = data[[INT_IDX]], control = ecos_opts)
@@ -1307,7 +1311,7 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK Solve a problem represented by data returned from apply.
@@ -1317,13 +1321,13 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   solver_opts$canonicalize_status <- FALSE
 
   #Throw warnings if non-default values have been put in
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(num_iter != 1e6){
@@ -1430,13 +1434,13 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
-  if(feastol != 1e-5){
+  if(feastol != 1e-8){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(num_iter != 1e6){
@@ -1638,7 +1642,7 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
@@ -1717,14 +1721,14 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
   params$QCPDual <- 1 #equivalent to TRUE
-  params$ItereationLimit = num_iters
+  params$IterationLimit = num_iter
   params$FeasibilityTol = feastol
   params$OptimalityTol = feastol
   
-  if(reltol != 1e-5){
+  if(reltol != 1e-8){
     warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-5){
+  if(abstol != 1e-8){
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
@@ -2015,7 +2019,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
@@ -2100,13 +2104,13 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
         prob$sparam  <-  solver_opts$sparam
     }
     
-    if(feastol != 1e-5){
+    if(feastol != 1e-8){
       warning("A value has been set for feastol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
     }
-    if(reltol != 1e-5){
+    if(reltol != 1e-8){
       warning("A value has been set for reltol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
     }
-    if(abstol != 1e-5){
+    if(abstol != 1e-8){
       warning("A value has been set for abstol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
     }
     if(num_iter != 1e6){
@@ -2282,11 +2286,25 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #if(!is.na(save_file)) Don't think there's a save equivalent in R
   #  task.writedata(save_file)
   #task.optimize
-  if(verbose){
+  if(is.logical(verbose) && verbose ){
     verbose <- 10
   } else if(!verbose){
     verbose <- 0
   }
+  
+  if(is.null(solver_opts$soldetail)){
+    solver_opts$soldetail <- 3
+  } else {
+    warning("Solver might not output correct answer depending on the input of the soldetail variable. Default is 3")
+  }
+  
+  if(is.null(solver_opts$getinfo)){
+    solver_opts$getinfo <- TRUE
+  } else {
+    warning("Solver might not output correct answer depending on the input of the getinfo variable. Default is TRUE")
+  }
+  
+  
   r <- Rmosek::mosek(prob, list(verbose = verbose, soldetail = solver_opts$soldetail, getinfo = solver_opts$getinfo))
   
   return(r)

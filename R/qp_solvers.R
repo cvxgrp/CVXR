@@ -290,7 +290,6 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   control <- list(trace = verbose, itlim = num_iter)
   
   #Setting rest of the parameters
-  solver_opts <- solver_opts$...
   control[names(solver_opts)] <- solver_opts
 
   # Solve problem.
@@ -532,7 +531,6 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   if(abstol != 1e-8){
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  solver_opts <- solver_opts$...
   params[names(solver_opts)] <- solver_opts
 
   # Update model. Not a thing in R
@@ -756,7 +754,6 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     control$eps_prim_inf = feastol
     control$eps_dual_inf = feastol
     control$verbose = verbose
-    solver_opts <- solver_opts$...
     control[names(solver_opts)] <- solver_opts
     solver <- osqp::osqp(P, q, A, lA, uA, control)
   }

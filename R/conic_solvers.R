@@ -387,7 +387,6 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
                                              abstol, num_iter, solver_opts, solver_cache = list()) {
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
-  solver_opts <- solver_opts$...
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]], control = ecos_opts)
   return(solution)
@@ -793,7 +792,6 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if(num_iter != 1e6){
     warning("A value has been set for num_iter, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  solver_opts <- solver_opts$...
   
   result <- rcbc::cbc_solve(
     obj = cvar,
@@ -1053,7 +1051,6 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   control <- list(trace = verbose, itlim = num_iter)
   
   #Setting rest of the parameters
-  solver_opts <- solver_opts$...
   control[names(solver_opts)] <- solver_opts
   
   # Solve problem.
@@ -1234,7 +1231,6 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
 
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
-  solver_opts <- solver_opts$...
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]],
                                      bool_vars = data[[BOOL_IDX]], int_vars = data[[INT_IDX]], control = ecos_opts)
@@ -1320,7 +1316,6 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
-  solver_opts <- solver_opts$...
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1436,7 +1431,6 @@ setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK_MI Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
-  solver_opts <- solver_opts$...
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1738,7 +1732,6 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
-  solver_opts <- solver_opts$...
   params[names(solver_opts)] <- solver_opts
 
   solution <- list()
@@ -2031,7 +2024,6 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = NA) {
-  solver_opts <- solver_opts$...
   ## Check if the CVXR standard form has zero variables. If so,
   ## return a trivial solution. This is necessary because MOSEK
   ## will crash if handed a problem with zero variables.
@@ -2292,6 +2284,8 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     verbose <- 10
   } else if(!verbose){
     verbose <- 0
+  } else if(!is.null(solver_opts$verbose)){
+    verbose <- solver_opts$verbose
   }
   
   if(is.null(solver_opts$soldetail)){
@@ -2306,7 +2300,10 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     warning("Solver might not output correct answer depending on the input of the getinfo variable. Default is TRUE")
   }
   
-  r <- Rmosek::mosek(prob, list(verbose = verbose, soldetail = solver_opts$soldetail, getinfo = solver_opts$getinfo))
+  r <- Rmosek::mosek(prob, list(verbose = verbose, usesol = solver_opts$usesol,
+                                useparam = solver_opts$useparam, soldetail = solver_opts$soldetail, 
+                                getinfo = solver_opts$getinfo, writebefore = solver_opts$writebefore,
+                                writeafter = solver_opts$writeafter))
   
   return(r)
 })

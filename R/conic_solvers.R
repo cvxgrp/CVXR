@@ -387,6 +387,7 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, 
                                              abstol, num_iter, solver_opts, solver_cache = list()) {
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
+  solver_opts <- solver_opts$...
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]], control = ecos_opts)
   return(solution)
@@ -792,6 +793,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if(num_iter != 1e6){
     warning("A value has been set for num_iter, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
+  solver_opts <- solver_opts$...
   
   result <- rcbc::cbc_solve(
     obj = cvar,
@@ -1051,6 +1053,7 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   control <- list(trace = verbose, itlim = num_iter)
   
   #Setting rest of the parameters
+  solver_opts <- solver_opts$...
   control[names(solver_opts)] <- solver_opts
   
   # Solve problem.
@@ -1231,6 +1234,7 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
 
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
+  solver_opts <- solver_opts$...
   ecos_opts[names(solver_opts)] <- solver_opts
   solution <- ECOSolveR::ECOS_csolve(c = data[[C_KEY]], G = data[[G_KEY]], h = data[[H_KEY]], dims = cones, A = data[[A_KEY]], b = data[[B_KEY]],
                                      bool_vars = data[[BOOL_IDX]], int_vars = data[[INT_IDX]], control = ecos_opts)
@@ -1316,10 +1320,11 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+  solver_opts <- solver_opts$...
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
-
+  
   #Throw warnings if non-default values have been put in
   if(feastol != 1e-8){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
@@ -1431,6 +1436,7 @@ setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK_MI Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+  solver_opts <- solver_opts$...
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1732,6 +1738,7 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
+  solver_opts <- solver_opts$...
   params[names(solver_opts)] <- solver_opts
 
   solution <- list()
@@ -2024,22 +2031,22 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = NA) {
+  solver_opts <- solver_opts$...
+  ## Check if the CVXR standard form has zero variables. If so,
+  ## return a trivial solution. This is necessary because MOSEK
+  ## will crash if handed a problem with zero variables.
 
-    ## Check if the CVXR standard form has zero variables. If so,
-    ## return a trivial solution. This is necessary because MOSEK
-    ## will crash if handed a problem with zero variables.
+  c <- data[[C_KEY]]
 
-    c <- data[[C_KEY]]
-
-    if (length(c) == 0) {
-        res <- list()
-        res[[STATUS]] <- OPTIMAL
-        res[[PRIMAL]] <- list()
-        res[[VALUE]] <- data[[OFFSET]]
-        res[[EQ_DUAL]] <- list()
-        res[[INEQ_DUAL]] <- list()
-        return(res)
-    }
+  if (length(c) == 0) {
+      res <- list()
+      res[[STATUS]] <- OPTIMAL
+      res[[PRIMAL]] <- list()
+      res[[VALUE]] <- data[[OFFSET]]
+      res[[EQ_DUAL]] <- list()
+      res[[INEQ_DUAL]] <- list()
+      return(res)
+  }
   # The following lines recover problem parameters, and define helper constants.
   #
   #   The problem's objective is "min c.T * z".
@@ -2060,15 +2067,15 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   #   consistent with MOSEK documentation, subsequent comments
   #   refer to this variable as "x".
 
-    G <- data[[G_KEY]]
-    h <- data[[H_KEY]]
-    dims <- data[[DIMS]]
-    n0 <- length(c)
-    n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
-    psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
-    m <- length(h)
-    num_bool <- length(data[[BOOL_IDX]])
-    num_int <- length(data[[INT_IDX]])
+  G <- data[[G_KEY]]
+  h <- data[[H_KEY]]
+  dims <- data[[DIMS]]
+  n0 <- length(c)
+  n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
+  psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
+  m <- length(h)
+  num_bool <- length(data[[BOOL_IDX]])
+  num_int <- length(data[[INT_IDX]])
 
   # Define variables, cone constraints, and integrality constraints.
   #
@@ -2087,35 +2094,35 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
 
 
-    ##env <- Rmosek::Env() remove these as Rmosek doesn't need environments
-    ##task <- env.Task(0,0)
-    ##instead defines prob
-    prob <- list(sense="min")
+  ##env <- Rmosek::Env() remove these as Rmosek doesn't need environments
+  ##task <- env.Task(0,0)
+  ##instead defines prob
+  prob <- list(sense="min")
 
-    ## TODO: Handle logging for verbose.
+  ## TODO: Handle logging for verbose.
 
-    ## Parse all user-specified parameters (override default logging
-    ## parameters if applicable).
-    ## Rmosek expects a list of lists
-    ## prob$dparam <- list(...); prob$iparam <- list(...); prob$sparam <- list(...)
-    if (!is.null(solver_opts)) {
-        prob$dparam  <-  solver_opts$dparam
-        prob$iparam  <-  solver_opts$iparam
-        prob$sparam  <-  solver_opts$sparam
-    }
-    
-    if(feastol != 1e-8){
-      warning("A value has been set for feastol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-    }
-    if(reltol != 1e-8){
-      warning("A value has been set for reltol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-    }
-    if(abstol != 1e-8){
-      warning("A value has been set for abstol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-    }
-    if(num_iter != 1e6){
-      warning("A value has been set for num_iter, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-    }
+  ## Parse all user-specified parameters (override default logging
+  ## parameters if applicable).
+  ## Rmosek expects a list of lists
+  ## prob$dparam <- list(...); prob$iparam <- list(...); prob$sparam <- list(...)
+  if (!is.null(solver_opts)) {
+      prob$dparam  <-  solver_opts$dparam
+      prob$iparam  <-  solver_opts$iparam
+      prob$sparam  <-  solver_opts$sparam
+  }
+  
+  if(feastol != 1e-8){
+    warning("A value has been set for feastol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(reltol != 1e-8){
+    warning("A value has been set for reltol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(abstol != 1e-8){
+    warning("A value has been set for abstol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(num_iter != 1e6){
+    warning("A value has been set for num_iter, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
 
 
   #task.appendvars(n), no task for Rmosek, but declares the number of variables in the model. Need to expand prob$c as well to match this dimension
@@ -2275,17 +2282,12 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
                    buc = hu_holder)
 
   # Define the objective and optimize the MOSEK task.
-  #task.putclist(1:length(c), c)
   #initialize coefficients of objective with the same number of variables declared (dim of x)
   c_holder <- rep(0, n)
   c_holder[1:length(c)] <- c
 
   prob$c <- c_holder
-  #task.putobjsense(mosek.objsense.minimize) Rmosek does this at the beginning of the problem instead of the end like python
-
-  #if(!is.na(save_file)) Don't think there's a save equivalent in R
-  #  task.writedata(save_file)
-  #task.optimize
+  
   if(is.logical(verbose) && verbose ){
     verbose <- 10
   } else if(!verbose){
@@ -2303,7 +2305,6 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   } else {
     warning("Solver might not output correct answer depending on the input of the getinfo variable. Default is TRUE")
   }
-  
   
   r <- Rmosek::mosek(prob, list(verbose = verbose, soldetail = solver_opts$soldetail, getinfo = solver_opts$getinfo))
   

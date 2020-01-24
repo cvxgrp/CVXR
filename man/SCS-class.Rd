@@ -70,11 +70,11 @@ SCS()
 
 \item{abstol}{The absolute tolerance on the duality gap.}
 
+\item{num_iter}{The maximum number of iterations.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 An interface for the SCS solver

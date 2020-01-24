@@ -52,7 +52,8 @@ GUROBI_QP()
 
 \item{reltol}{The relative tolerance.}
 
-\item{abstol}{The absolute tolerance.}
+\item{abstol}{The absolute tolerance.
+num_iter The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 
@@ -61,8 +62,6 @@ GUROBI_QP()
 \item{solution}{The raw solution returned by the solver.}
 
 \item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 An interface for the GUROBI_QP solver.

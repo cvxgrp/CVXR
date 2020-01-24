@@ -31,9 +31,9 @@ psolve(
   verbose = FALSE,
   parallel = FALSE,
   gp = FALSE,
-  feastol = 1e-05,
-  reltol = 1e-05,
-  abstol = 1e-05,
+  feastol = 1e-08,
+  reltol = 1e-08,
+  abstol = 1e-08,
   num_iter = 1e+06,
   ...
 )

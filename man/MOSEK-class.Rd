@@ -66,6 +66,8 @@ describes membership in the exponential cone.}
 
 \item{abstol}{The absolute tolerance.}
 
+\item{num_iter}{The maximum number of iterations.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
@@ -73,8 +75,6 @@ describes membership in the exponential cone.}
 \item{solution}{The raw solution returned by the solver.}
 
 \item{inverse_data}{A list containing data necessary for the inversion.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 An interface for the MOSEK solver.

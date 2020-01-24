@@ -953,7 +953,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @rdname psolve
 #' @export
 setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
-                              gp = FALSE, feastol = 1e-5, reltol = 1e-5, abstol = 1e-5, num_iter = 1e6, ...) { standardGeneric("psolve") })
+                              gp = FALSE, feastol = 1e-8, reltol = 1e-8, abstol = 1e-8, num_iter = 1e6, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?

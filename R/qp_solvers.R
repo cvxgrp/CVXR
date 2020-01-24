@@ -228,7 +228,7 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param feastol The feasible tolerance on the primal and dual residual.
 #' @param reltol The relative tolerance on the duality gap.
 #' @param abstol The absolute tolerance on the duality gap.
-#' num_iter The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
@@ -276,14 +276,17 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   }
   
   # Throw parameter warnings
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter = 1e8
   }
 
   #Setting verbosity off
@@ -410,7 +413,7 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' num_iter The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
@@ -515,7 +518,17 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   #   setObjective(model, obj)   # Set objective.
   # }
   # update(model)
-
+  
+  if(!is.null(reltol)){
+    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(!is.null(abstol)){
+    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter <- 1e8
+  }
+  
   # Set verbosity and other parameters.
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
@@ -524,13 +537,6 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   params$IterationLimit = num_iter
   params$FeasibilityTol = feastol
   params$OptimalityTol = feastol
-  
-  if(reltol != 1e-8){
-    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(abstol != 1e-8){
-    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
   params[names(solver_opts)] <- solver_opts
 
   # Update model. Not a thing in R
@@ -676,7 +682,7 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' num_iter The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.

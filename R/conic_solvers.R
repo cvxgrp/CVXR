@@ -385,6 +385,18 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol, 
                                              abstol, num_iter, solver_opts, solver_cache = list()) {
+  if(is.null(num_iter)){
+    num_iter <- 100L
+  }
+  if(is.null(feastol)){
+    feastol <- 1e-8
+  }
+  if(is.null(reltol)){
+    reltol <- 1e-8
+  }
+  if(is.null(abstol)){
+    abstol <- 1e-8
+  }
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
   ecos_opts[names(solver_opts)] <- solver_opts
@@ -592,13 +604,13 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   #Fill in parameter values
   control[names(solver_opts)] <- solver_opts
     
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
 
@@ -780,16 +792,16 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   }
   
   #Warnigs for including parameters
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(num_iter != 1e6){
+  if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
@@ -1037,14 +1049,17 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   QC <- list(QC = list(Q = qc), dir = rep("L", length(dims@soc)) , b = rep(0.0, length(dims@soc)))
 
   # Throw parameter warnings
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter = 1e8
   }
   
   #Setting verbosity off
@@ -1228,7 +1243,18 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @param solver_cache Cache for the solver.
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
-
+  if(is.null(num_iter)){
+    num_iter <- 100
+  }
+  if(is.null(feastol)){
+    feastol <- 1e-8
+  }
+  if(is.null(reltol)){
+    reltol <- 1e-8
+  }
+  if(is.null(abstol)){
+    abstol <- 1e-8
+  }
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
   ecos_opts[names(solver_opts)] <- solver_opts
@@ -1321,16 +1347,16 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   solver_opts$canonicalize_status <- FALSE
   
   #Throw warnings if non-default values have been put in
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(num_iter != 1e6){
+  if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
@@ -1438,16 +1464,16 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(num_iter != 1e6){
+  if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   
@@ -1721,20 +1747,23 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     current_rows = current_rows + n_soc
 
   }
-
+  
+  if(!is.null(reltol)){
+    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(!is.null(abstol)){
+    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter <- 1e8
+  }
+  
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
   params$QCPDual <- 1 #equivalent to TRUE
   params$IterationLimit = num_iter
   params$FeasibilityTol = feastol
   params$OptimalityTol = feastol
-  
-  if(reltol != 1e-8){
-    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(abstol != 1e-8){
-    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
   
   params[names(solver_opts)] <- solver_opts
 
@@ -2107,19 +2136,18 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
       prob$sparam  <-  solver_opts$sparam
   }
   
-  if(feastol != 1e-8){
+  if(!is.null(feastol)){
     warning("A value has been set for feastol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(reltol != 1e-8){
+  if(!is.null(reltol)){
     warning("A value has been set for reltol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(abstol != 1e-8){
+  if(!is.null(abstol)){
     warning("A value has been set for abstol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  if(num_iter != 1e6){
+  if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-
 
   #task.appendvars(n), no task for Rmosek, but declares the number of variables in the model. Need to expand prob$c as well to match this dimension
   #task.putvarboundlist(1:n, rep(mosek.boundkey.fr, n), matrix(0, nrow = n, ncol = 1), matrix(0, nrow = n, ncol = 1))

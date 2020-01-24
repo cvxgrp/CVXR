@@ -660,7 +660,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 #' @rdname psolve
 #' @export
 setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, 
-                                        parallel = FALSE, gp = FALSE, feastol = 1e-8, reltol = 1e-8, abstol = 1e-8, num_iter = 1e6,  ...) {
+                                        parallel = FALSE, gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL,  ...) {
   if(parallel)
     stop("Unimplemented")
   object <- .construct_chains(object, solver = solver, gp = gp)

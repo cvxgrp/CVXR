@@ -80,8 +80,6 @@
 \item{solver_cache}{Cache for the solver.}
 
 \item{problem}{A \linkS4class{Problem} object.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 The ReductionSolver class.

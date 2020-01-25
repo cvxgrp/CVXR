@@ -73,7 +73,7 @@ setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(so
 #' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
@@ -135,7 +135,7 @@ setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 #' @param feastol The feasible tolerance. 
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
@@ -257,7 +257,7 @@ setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), functi
 #' @param feastol The feasible tolerance. 
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
-#' @param num_iters The maximum number of iterations.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @describeIn SolvingChain Applies each reduction in the chain to the problem, solves it,
 #' and then inverts the chain to return a solution of the supplied problem.

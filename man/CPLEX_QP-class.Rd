@@ -56,8 +56,9 @@ CPLEX_QP()
 
 \item{reltol}{The relative tolerance on the duality gap.}
 
-\item{abstol}{The absolute tolerance on the duality gap.
-num_iter The maximum number of iterations.}
+\item{abstol}{The absolute tolerance on the duality gap.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 

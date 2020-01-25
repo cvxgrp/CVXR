@@ -65,11 +65,11 @@
 
 \item{abstol}{The absolute tolerance.}
 
+\item{num_iter}{The maximum number of iterations.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{solver_cache}{Cache for the solver.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 The ConstantSolver class.

@@ -53,8 +53,9 @@ OSQP()
 
 \item{reltol}{The relative tolerance.}
 
-\item{abstol}{The absolute tolerance.
-num_iter The maximum number of iterations.}
+\item{abstol}{The absolute tolerance.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 

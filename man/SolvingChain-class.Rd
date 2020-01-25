@@ -53,11 +53,11 @@
 
 \item{abstol}{The absolute tolerance.}
 
+\item{num_iter}{The maximum number of iterations.}
+
 \item{solver_opts}{A list of Solver specific options}
 
 \item{data}{Data for the solver.}
-
-\item{num_iters}{The maximum number of iterations.}
 }
 \description{
 This class represents a reduction chain that ends with a solver.

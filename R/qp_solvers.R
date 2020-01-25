@@ -752,7 +752,17 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     # Initialize and solve problem.
     if(is.null(solver_opts$polish))
         solver_opts$polish <- TRUE
-    #Set parameters
+    #Set parameters. Override defaults to match CVXPY
+    if(is.null(abstol)){
+      abstol <- 1e-5
+    }
+    if(is.null(reltol)){
+      reltol <- 1e-5
+    }
+    if(is.null(num_iter)){
+      num_iter <- 10000
+    }
+    
     control <- osqp::osqpSettings()
     control$max_iter = num_iter
     control$eps_abs <- abstol

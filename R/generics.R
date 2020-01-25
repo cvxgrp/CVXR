@@ -926,6 +926,10 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
 #' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
 #' @param verbose (Optional) A logical value indicating whether to print additional solver output.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
 #' @param gp (Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.

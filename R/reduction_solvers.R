@@ -70,21 +70,25 @@ setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(so
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
   stop("Unimplemented")
 })
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts) {
   ret <- perform(object, problem)
   object <- ret[[1]]
   data <- ret[[2]]
   inverse_data <- ret[[3]]
-  solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
+  solution <- solve_via_data(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts)
   return(invert(object, solution, inverse_data))
 })
 
@@ -128,11 +132,15 @@ setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 #' @param data Data for the solver.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance. 
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
-  return(reduction_solve(object, data, warm_start, verbose, solver_opts))
+setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+  return(reduction_solve(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts))
 })
 
 #' @param problem A \linkS4class{Problem} object.
@@ -246,22 +254,28 @@ setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), functi
 #' @param problem The problem to solve.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance. 
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @describeIn SolvingChain Applies each reduction in the chain to the problem, solves it,
 #' and then inverts the chain to return a solution of the supplied problem.
-setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, solver_opts) {
+setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Problem"), function(object, problem, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts) {
   tmp <- perform(object, problem)
   object <- tmp[[1]]
   data <- tmp[[2]]
   inverse_data <- tmp[[3]]
-  solution <- solve_via_data(object@solver, data, warm_start, verbose, solver_opts)
+  solution <- solve_via_data(object@solver, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts)
   return(invert(object, solution, inverse_data))
 })
 
 #' @param data Data for the solver.
 #' @describeIn SolvingChain Solves the problem using the data output by the an apply invocation.
-setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, solver_opts) {
-  return(solve_via_data(object@solver, data, warm_start, verbose, solver_opts, problem@.solver_cache))
+setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, 
+                                                               feastol, reltol, abstol, num_iter, solver_opts) {
+  return(solve_via_data(object@solver, data, warm_start, verbose, 
+                        feastol, reltol, abstol, num_iter, solver_opts, problem@.solver_cache))
 })
 
 #'

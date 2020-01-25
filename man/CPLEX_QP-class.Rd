@@ -29,6 +29,10 @@ CPLEX_QP()
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = list()
 )
@@ -47,6 +51,14 @@ CPLEX_QP()
 \item{warm_start}{A boolean of whether to warm start the solver.}
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
+
+\item{feastol}{The feasible tolerance on the primal and dual residual.}
+
+\item{reltol}{The relative tolerance on the duality gap.}
+
+\item{abstol}{The absolute tolerance on the duality gap.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 

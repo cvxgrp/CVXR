@@ -33,6 +33,10 @@ MOSEK()
   data,
   warm_start,
   verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
   solver_opts,
   solver_cache = NA
 )
@@ -55,6 +59,14 @@ describes membership in the exponential cone.}
 \item{warm_start}{A boolean of whether to warm start the solver.}
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
+
+\item{feastol}{The feasible tolerance.}
+
+\item{reltol}{The relative tolerance.}
+
+\item{abstol}{The absolute tolerance.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 

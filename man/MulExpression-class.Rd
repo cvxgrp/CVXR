@@ -20,11 +20,11 @@
 \alias{graph_implementation,MulExpression-method}
 \title{The MulExpression class.}
 \usage{
-\S4method{\%*\%}{Expression,Expression}(x, y)
+\S4method{\\\%*\\\%}{Expression,Expression}(x, y)
 
-\S4method{\%*\%}{Expression,ConstVal}(x, y)
+\S4method{\\\%*\\\%}{Expression,ConstVal}(x, y)
 
-\S4method{\%*\%}{ConstVal,Expression}(x, y)
+\S4method{\\\%*\\\%}{ConstVal,Expression}(x, y)
 
 \S4method{to_numeric}{MulExpression}(object, values)
 

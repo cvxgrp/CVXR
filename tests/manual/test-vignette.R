@@ -3,7 +3,7 @@ context("test-vignettes")
 test_that("Test non-negative least squares", {
     require(MASS)
     print("LS")
-    
+
     ## Generate problem data
     s <- 1
     m <- 10
@@ -59,9 +59,9 @@ test_that("Test censored regression", {
   M <- 50
   K <- 200
   set.seed(n*M*K)
-  
+
   print("CENSORED")
-  
+
   X <- matrix(stats::rnorm(K*n), nrow = K, ncol = n)
   beta_true <- matrix(stats::rnorm(n), nrow = n, ncol = 1)
   y <- X %*% beta_true + 0.3*sqrt(n)*stats::rnorm(K)
@@ -113,7 +113,7 @@ test_that("Test censored regression", {
 test_that("Test Elastic-net regression", {
   set.seed(1)
   print("ELASTIC")
-  
+
   # Problem data
   n = 20
   m = 1000
@@ -169,7 +169,7 @@ test_that("Test Huber regression", {
   p <- 0.1    ## Fraction of responses with sign flipped
 
   print("HUBER")
-  
+
   ## Generate problem data
   beta_true <- 5*matrix(stats::rnorm(n), nrow = n)
   X <- matrix(stats::rnorm(m*n), nrow = m, ncol = n)
@@ -222,9 +222,9 @@ test_that("Test logistic regression", {
   offset <- 0
   sigma <- 45
   DENSITY <- 0.2
-  
+
   print("LOGISTIC")
-  
+
   beta_true <- stats::rnorm(n)
   idxs <- sample(n, size = floor((1-DENSITY)*n), replace = FALSE)
   beta_true[idxs] <- 0
@@ -247,7 +247,7 @@ test_that("Test logistic regression", {
 test_that("Test saturating hinges problem", {
   require(ElemStatLearn)
   print("SAT HINGES")
-  
+
   ## Import and sort data
   data(bone)
   X <- bone[bone$gender == "female",]$age
@@ -333,7 +333,7 @@ test_that("Test saturating hinges problem", {
 test_that("Test log-concave distribution estimation", {
   set.seed(1)
   print("LOG CONCAVE")
-  
+
   ## Calculate a piecewise linear function
   pwl_fun <- function(x, knots) {
     n <- nrow(knots)
@@ -397,9 +397,9 @@ test_that("Test channel capacity problem", {
   m <- 2
   P <- rbind(c(0.75, 0.25),    ## Channel transition matrix
              c(0.25, 0.75))
-  
+
   print("CHANNEL")
-  
+
   ## Form problem
   x <- Variable(n)   ## Probability distribution of input signal x(t)
   y <- P %*% x       ## Probability distribution of output signal y(t)
@@ -410,7 +410,7 @@ test_that("Test channel capacity problem", {
   prob <- Problem(obj, constraints)
   result <- solve(prob)
   expect_equal(result$status, "optimal")
-  
+
   ## Optimal channel capacity and input signal.
   result$value
   result$getValue(x)
@@ -423,9 +423,9 @@ test_that("Test optimal allocation in a Gaussian broadcast channel", {
   beta <- seq(10, n-1+10)/n
   P_tot <- 0.5
   W_tot <- 1.0
-  
+
   print("OPTIMAL ALLOCATION")
-  
+
   ## Form problem
   P <- Variable(n)   ## Power
   W <- Variable(n)   ## Bandwidth
@@ -506,7 +506,7 @@ test_that("Test catenary problem", {
 
 test_that("Test direct standardization problem", {
   print("DIRECT")
-  
+
   skew_sample <- function(data, bias) {
   if(missing(bias))
     bias <- rep(1.0, ncol(data))
@@ -568,7 +568,7 @@ test_that("Test direct standardization problem", {
 
 test_that("Test risk-return tradeoff in portfolio optimization", {
   print("PORTFOLIO")
-  
+
   ## Problem data
   set.seed(10)
   n <- 10
@@ -624,7 +624,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
 
 test_that("Test Kelly gambling optimal bets", {
   print("KELLY")
-  
+
   set.seed(1)
   n <- 20      ## Total bets
   K <- 100     ## Number of possible returns
@@ -681,7 +681,7 @@ test_that("Test Kelly gambling optimal bets", {
 
 test_that("Test worst-case covariance", {
   print("WORST CASE")
-  
+
   ## Problem data
   w <- matrix(c(0.1, 0.2, -0.05, 0.1))
   ## Constraint matrix:
@@ -691,7 +691,7 @@ test_that("Test worst-case covariance", {
   ##  [+-,  -,   +,  0.1]]
 
   ## Form problem
-  Sigma <- Semidef(4)
+  Sigma <- Variable(4, 4, PSD = TRUE)
   obj <- Maximize(t(w) %*% Sigma %*% w)
   constraints <- list(Sigma[1,1] == 0.2, Sigma[2,2] == 0.1, Sigma[3,3] == 0.3, Sigma[4,4] == 0.1,
                       Sigma[1,2] >= 0, Sigma[1,3] >= 0, Sigma[2,3] <= 0, Sigma[2,4] <= 0, Sigma[3,4] >= 0)
@@ -700,10 +700,19 @@ test_that("Test worst-case covariance", {
   expect_equal(result$status, "optimal")
   print(result$getValue(Sigma))
 
-  Sigma_true <- rbind(c(0.2,    0.0978, 0,     0.0741),
-                      c(0.0978, 0.1,   -0.101, 0),
-                      c(0,     -0.101,  0.3,   0),
-                      c(0.0741, 0,      0,     0.1))
+  ## Sigma_true <- rbind(c(0.2,    0.0978, 0,     0.0741),
+  ##                     c(0.0978, 0.1,   -0.101, 0),
+  ##                     c(0,     -0.101,  0.3,   0),
+  ##                     c(0.0741, 0,      0,     0.1))
+
+  ## The new SCS solver gives slightly different results from the above
+  ## So the values below have been obtained from cvxpy 1.25.
+
+  Sigma_true <- rbind(c(0.2,    0.09674, 0,     0.0762),
+                      c(0.09674, 0.1,   -0.103, 0),
+                      c(0,     -0.103,  0.3,   0.0041),
+                      c(0.0762, 0,      .0041,     0.1))
+
   expect_equal(sqrt(result$value), 0.1232, tolerance = 1e-3)
   expect_equal(result$getValue(Sigma), Sigma_true, tolerance = 1e-3)
 
@@ -721,7 +730,7 @@ test_that("Test worst-case covariance", {
   U <- Sigma_nom + Delta
   L <- Sigma_nom - Delta
 
-  Sigma <- Semidef(n)
+  Sigma <- Variable(n, n, PSD = TRUE)
   obj <- quad_form(w, Sigma)
   constr <- list(L <= Sigma, Sigma <= U, Sigma == t(Sigma))
   prob <- Problem(Maximize(obj), constr)
@@ -734,7 +743,7 @@ test_that("Test sparse inverse covariance estimation", {
   require(Matrix)
   require(expm)
   print("SPARSE INV")
-  
+
   set.seed(1)
   n <- 10      ## Dimension of matrix
   m <- 1000    ## Number of samples
@@ -753,7 +762,7 @@ test_that("Test sparse inverse covariance estimation", {
   x_sample <- matrix(stats::rnorm(n*m), nrow = m, ncol = n) %*% t(expm::sqrtm(R))
   Q <- cov(x_sample)    ## Sample covariance matrix
 
-  S <- Semidef(n)    ## Variable constrained to positive semidefinite cone
+  S <- Variable(n, n, PSD = TRUE) ## Variable constrained to positive semidefinite cone
   obj <- Maximize(log_det(S) - matrix_trace(S %*% Q))
   for(alpha in alphas) {
     constraints <- list(sum(abs(S)) <= alpha)
@@ -774,7 +783,7 @@ test_that("Test sparse inverse covariance estimation", {
 
 test_that("Test fastest mixing Markov chain (FMMC)", {
   print("MCMC")
-  
+
   ## Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
   ## Form the complementary graph
   antiadjacency <- function(g) {

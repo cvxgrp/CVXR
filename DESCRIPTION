@@ -43,7 +43,6 @@ Imports:
     bit64,
     gmp,
     Rmpfr,
-    R.utils,
     ECOSolveR (>= 0.5.3),
     scs (>= 1.3),
     stats,
@@ -101,5 +100,5 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 7.0.1
+RoxygenNote: 7.0.2
 Encoding: UTF-8

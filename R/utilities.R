@@ -644,6 +644,8 @@ approx_error <- function(a_orig, w_approx) {
 next_pow2 <- function(n) {
   if(n <= 0) return(1)
 
+  ## NOTE: With CVXR 1.0, R.utils is no longer imported since log2 will work on both gmp integers
+  ## and 64-bit integers
   # len <- nchar(R.utils::intToBin(n))
   # n2 <- bitwShiftL(1, len)
   # if(bitwShiftR(n2, 1) == n)
@@ -764,13 +766,15 @@ lower_bound <- function(w_dyad) {
   md <- get_max_denom(w_dyad)
 
   if(is(md, "bigq") || is(md, "bigz")) {
-    md_int <- bit64::as.integer64(gmp::asNumeric(md))
-    bstr <- sub("^[0]+", "", bit64::as.bitstring(md_int))   # Get rid of leading zeros
-    lb1 <- nchar(bstr)
-    # TODO: Should use formatBin in mpfr, but running into problems with precision
-  } else
-    lb1 <- nchar(R.utils::intToBin(md))-1
-
+    ## md_int <- bit64::as.integer64(gmp::asNumeric(md))
+    ## bstr <- sub("^[0]+", "", bit64::as.bitstring(md_int))   # Get rid of leading zeros
+    ## lb1 <- nchar(bstr)
+      ## # TODO: Should use formatBin in mpfr, but running into problems with precision
+      lb1  <- log2(bit64::as.integer64(gmp::asNumeric(md)))
+  } else {
+      ##lb1 <- nchar(R.utils::intToBin(md))-1
+      lb1  <- log2(md)
+  }
   # don't include zero entries
   lb2 <- sum(w_dyad != 0) - 1
   max(lb1, lb2)

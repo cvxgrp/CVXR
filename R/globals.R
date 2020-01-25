@@ -1,5 +1,4 @@
 #' @importFrom utils assignInMyNamespace
-#' @importFrom R.utils intToBin
 #' @importFrom Rmpfr mpfr getPrec
 #' @importFrom gmp as.bigq as.bigz is.bigq is.bigz is.whole numerator denominator asNumeric
 #' @importFrom bit64 as.integer64 as.bitstring

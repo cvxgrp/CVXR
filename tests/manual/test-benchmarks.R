@@ -11,18 +11,18 @@ test_that("test diffcp SDP example", {
     A <- matrix(rnorm(n*n), nrow = n, ncol = n)
     return((A + t(A))/2)
   }
-  
+
   randn_psd <- function(n) {
     A <- 1.0 / (10 * matrix(rnorm(n*n), nrow = n, ncol = n))
     return(A %*% t(A))
   }
-  
+
   n <- 100
   p <- 100
   C <- randn_psd(n)
   As <- lapply(1:p, function(i) { randn_symm(n) })
   Bs <- matrix(rnorm(p), nrow = p)
-  
+
   diffcp_sdp <- function() {
     X <- Variable(n, n, PSD = TRUE)
     objective <- matrix_trace(C %*% X)
@@ -34,11 +34,15 @@ test_that("test diffcp SDP example", {
 })
 
 test_that("test TV inpainting", {
-  rows <- 512
-  cols <- 512
-  colors <- 3
-  
-  Uorig <- array(rnorm(512*512*3), dim = c(rows, cols, colors))
+    ## 512 is too big!
+    ## rows <- 512
+    ## cols <- 512
+    ##
+    rows <- 64
+    cols <- 64
+    colors <- 3
+
+  Uorig <- array(rnorm(rows*cols*colors), dim = c(rows, cols, colors))
   known <- array(0, dim = c(rows, cols, colors))
   for(i in seq_len(rows)) {
     for(j in seq_len(cols)) {
@@ -48,12 +52,12 @@ test_that("test TV inpainting", {
       }
     }
   }
-  
+
   tv_inpainting <- function() {
     Ucorr <- known*Uorig
     variables <- list()
     constraints <- list()
-    
+
     for(i in seq_len(colors)) {
       U <- Variable(rows, cols)
       variables <- c(variables, U)
@@ -71,7 +75,7 @@ test_that("test least squares", {
   n <- 15
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), nrow = m)
-  
+
   least_squares <- function() {
     x <- Variable(n)
     cost <- sum_squares(A %*% x - b)
@@ -91,7 +95,7 @@ test_that("test qp", {
   h <- G %*% matrix(rnorm(n), nrow = n)
   A <- matrix(rnorm(p*n), nrow = p, ncol = n)
   b <- matrix(rnorm(p), nrow = p)
-  
+
   qp <- function() {
     x <- Variable(n)
     get_problem_data(Problem(Minimize((1/2)*quad_form(x, P) + t(q) %*% x),
@@ -106,18 +110,18 @@ test_that("test stuffing perf with many constraints", {
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   C <- matrix(runif(floor(m/2)), nrow = floor(m/2))
   b <- matrix(rnorm(m), nrow = m)
-  
+
   x <- Variable(n)
   cost <- sum(A %*% x)
-  
+
   constraints <- lapply(1:floor(m/2), function(i) { C[i] * x[i] <= b[i] })
   constraints <- c(constraints, lapply(1:floor(m/2), function(i) { C[i] * x[floor(m/2) + i] == b[floor(m/2) + i] }))
-  
+
   p <- Problem(Minimize(cost), constraints)
-  
+
   stuff <- function(mat) {
     perform(ConeMatrixStuffing(), mat)
   }
-  
+
   microbenchmark(stuff(p), times = 1L)
 })

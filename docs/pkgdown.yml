@@ -4,4 +4,7 @@ pkgdown_sha: ~
 articles:
   cvxr_intro: cvxr_intro.html
   version1: version1.html
+urls:
+  reference: https://www.cvxgrp.org/CVXR/reference
+  article: https://www.cvxgrp.org/CVXR/articles
 

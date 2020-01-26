@@ -926,6 +926,10 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @param ignore_dcp (Optional) A logical value indicating whether to override the DCP check for a problem.
 #' @param warm_start (Optional) A logical value indicating whether the previous solver result should be used to warm start.
 #' @param verbose (Optional) A logical value indicating whether to print additional solver output.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
 #' @param parallel (Optional) A logical value indicating whether to solve in parallel if the problem is separable.
 #' @param gp (Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.
 #' @param ... Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
@@ -952,7 +956,8 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, gp = FALSE, ...) { standardGeneric("psolve") })
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
+                              gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?
@@ -1169,12 +1174,12 @@ setGeneric("stuffed_objective", function(object, problem, extractor) { standardG
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
 setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
-setGeneric("solve_via_data", function(object, data, warm_start, verbose, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
+setGeneric("solve_via_data", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack_problem", function(object, solution) { standardGeneric("unpack_problem") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })
 setGeneric(".construct_dual_variables", function(object, args) { standardGeneric(".construct_dual_variables") })
-setGeneric("reduction_solve", function(object, problem, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve") })
-setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, solver_opts) { standardGeneric("reduction_solve_via_data") })
+setGeneric("reduction_solve", function(object, problem, warm_start, verbose,  feastol, reltol, abstol, num_iter, solver_opts) { standardGeneric("reduction_solve") })
+setGeneric("reduction_solve_via_data", function(object, problem, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts) { standardGeneric("reduction_solve_via_data") })
 setGeneric("reduction_format_constr", function(object, problem, constr, exp_cone_order) { standardGeneric("reduction_format_constr") })
 setGeneric("block_format", function(object, problem, constraints, exp_cone_order) { standardGeneric("block_format") })
 setGeneric("suitable", function(solver, problem) { standardGeneric("suitable") })

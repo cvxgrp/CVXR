@@ -16,6 +16,10 @@ psolve(
   verbose = FALSE,
   parallel = FALSE,
   gp = FALSE,
+  feastol = NULL,
+  reltol = NULL,
+  abstol = NULL,
+  num_iter = NULL,
   ...
 )
 
@@ -27,6 +31,10 @@ psolve(
   verbose = FALSE,
   parallel = FALSE,
   gp = FALSE,
+  feastol = NULL,
+  reltol = NULL,
+  abstol = NULL,
+  num_iter = NULL,
   ...
 )
 
@@ -46,6 +54,14 @@ psolve(
 \item{parallel}{(Optional) A logical value indicating whether to solve in parallel if the problem is separable.}
 
 \item{gp}{(Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.}
+
+\item{feastol}{The feasible tolerance on the primal and dual residual.}
+
+\item{reltol}{The relative tolerance on the duality gap.}
+
+\item{abstol}{The absolute tolerance on the duality gap.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{...}{Additional options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.}
 }

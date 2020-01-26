@@ -8,6 +8,13 @@
 
 <title>Sum of Largest Eigenvalues — lambda_sum_largest • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="Sum of Largest Eigenvalues — lambda_sum_largest" />
 <meta property="og:description" content="The sum of the largest \(k\) eigenvalues of a matrix." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -150,79 +158,8 @@
     <pre class="examples"><div class='input'><span class='no'>C</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>3</span>,<span class='fl'>3</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>,<span class='fl'>3</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>4</span>,<span class='fl'>5</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>5</span>,<span class='fl'>6</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>lambda_sum_largest</span>(<span class='no'>C</span>,<span class='fl'>2</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 36              
-#&gt;   Cones                  : 0               
-#&gt;   Scalar variables       : 16              
-#&gt;   Matrix variables       : 2               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 36              
-#&gt;   Cones                  : 0               
-#&gt;   Scalar variables       : 16              
-#&gt;   Matrix variables       : 2               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 18
-#&gt; Optimizer  - Cones                  : 1
-#&gt; Optimizer  - Scalar variables       : 8                 conic                  : 8               
-#&gt; Optimizer  - Semi-definite variables: 2                 scalarized             : 12              
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 171               after factor           : 171             
-#&gt; Factor     - dense dim.             : 0                 flops                  : 3.13e+03        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   7.0e+00  2.0e+00  1.0e+00  0.00e+00   0.000000000e+00   0.000000000e+00   1.0e+00  0.00  
-#&gt; 1   1.0e+00  2.9e-01  3.0e-01  -9.35e-01  1.164781878e+01   1.521092188e+01   1.4e-01  0.00  
-#&gt; 2   5.8e-01  1.6e-01  1.2e-01  9.00e-01   9.805702801e+00   1.148176603e+01   8.2e-02  0.00  
-#&gt; 3   8.6e-02  2.5e-02  3.7e-03  1.14e+00   1.125132165e+01   1.129091692e+01   1.2e-02  0.00  
-#&gt; 4   6.3e-03  1.8e-03  8.2e-05  1.04e+00   1.149222660e+01   1.149711302e+01   9.0e-04  0.00  
-#&gt; 5   3.6e-06  1.0e-06  1.2e-09  1.00e+00   1.151572095e+01   1.151572408e+01   5.1e-07  0.00  
-#&gt; 6   1.6e-08  4.5e-09  3.4e-13  1.00e+00   1.151572942e+01   1.151572943e+01   2.3e-09  0.00  
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 1.1515729417e+01    nrm: 6e+00    Viol.  con: 6e-08    var: 0e+00    barvar: 0e+00  
-#&gt;   Dual.    obj: 1.1515729431e+01    nrm: 9e-01    Viol.  con: 0e+00    var: 2e-08    barvar: 9e-09  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 6         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 11.51573</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>C</span>)</div><div class='output co'>#&gt;      [,1] [,2] [,3]
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 11.51573</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>C</span>)</div><div class='output co'>#&gt;      [,1] [,2] [,3]
 #&gt; [1,]    1    2    3
 #&gt; [2,]    2    4    5
 #&gt; [3,]    3    5    6</div></pre>
@@ -241,7 +178,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

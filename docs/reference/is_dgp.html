@@ -8,6 +8,13 @@
 
 <title>DGP Compliance — is_dgp • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="DGP Compliance — is_dgp" />
 <meta property="og:description" content="Determine if a problem or expression complies with the disciplined geometric programming rules." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -146,55 +154,7 @@
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>*<span class='no'>y</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>, <span class='no'>y</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : LO (linear optimization problem)
-#&gt;   Constraints            : 2               
-#&gt;   Cones                  : 0               
-#&gt;   Scalar variables       : 2               
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 0                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 3.2188758249e+00    nrm: 2e+00    Viol.  con: 0e+00    var: 0e+00  
-#&gt;   Dual.    obj: 3.2188758249e+00    nrm: 1e+00    Viol.  con: 0e+00    var: 0e+00  
-#&gt; 
-#&gt; Basic solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 3.2188758249e+00    nrm: 2e+00    Viol.  con: 0e+00    var: 0e+00  
-#&gt;   Dual.    obj: 3.2188758249e+00    nrm: 1e+00    Viol.  con: 0e+00    var: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 0         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='output co'>#&gt; $`3969`
+<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; $`3969`
 #&gt; [1] 5
 #&gt; 
 #&gt; $`3970`
@@ -243,8 +203,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7ff619859d70&gt;
-#&gt; &lt;environment: 0x7ff61fe26a00&gt;
+#&gt; &lt;bytecode: 0x7fac966015a8&gt;
+#&gt; &lt;environment: 0x7fac8568d0a0&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -253,14 +213,14 @@
 #&gt;         stop("getDualValue: argument should be a Constraint!")
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7ff61985db28&gt;
-#&gt; &lt;environment: 0x7ff61fe26a00&gt;
+#&gt; &lt;bytecode: 0x7fac96606a70&gt;
+#&gt; &lt;environment: 0x7fac8568d0a0&gt;
 #&gt; 
 #&gt; $solver
 #&gt; [1] "MOSEK"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 0.0001170635
+#&gt; [1] 9.703636e-05
 #&gt; 
 #&gt; $setup_time
 #&gt; [1] NA
@@ -283,7 +243,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

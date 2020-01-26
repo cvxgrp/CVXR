@@ -225,10 +225,14 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
 
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   P <- data[[P_KEY]]
@@ -270,41 +274,27 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
     vtype[data[INT_IDX]$int_vars_idx[i]] <- "I"
   }
+  
+  # Throw parameter warnings
+  if(!is.null(feastol)){
+    warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(!is.null(reltol)){
+    warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(!is.null(abstol)){
+    warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter = 1e8
+  }
 
   #Setting verbosity off
-  if(!verbose){
-    control <- list(trace=0)
-  } else{
-    control <- list(trace=1)
-  }
+  control <- list(trace = verbose, itlim = num_iter)
+  
+  #Setting rest of the parameters
+  control[names(solver_opts)] <- solver_opts
 
-  #David: not sure what to do with this part
-  # TODO: The code in CVXR/problems/solvers.R sets CPLEX parameters in the same way,
-  # and the code is duplicated here. This should be refactored.
-  if(length(solver_opts) > 0){
-    kwargs <- sort(names(solver_opts))
-    if("cplex_params" %in% kwargs) {
-      for(param in names(solver_opts$cplex_params)) {
-        value <- solver_opts$cplex_params[param]
-        tryCatch({
-            eval(paste("set(model@parameters@", param, ", value)", sep = ""))
-          }, error = function(e) {
-           stop("Invalid CPLEX parameter, value pair (", param, ", ", value, ")")
-        })
-      }
-      kwargs$cplex_params <- NULL
-    }
-
-    if("cplex_filename" %in% kwargs) {
-      filename <- solver_opts$cplex_filename
-      if(!is.na(filename) && !is.null(filename))
-        write(model, filename)
-      kwargs$cplex_filename <- NULL
-    }
-
-    if(length(is.null(kwargs))<=0 || length(is.na(kwargs))<=0)
-      stop("Invalid keyword argument ", kwargs[[1]])
-  }
   # Solve problem.
   results_dict <- list()
 
@@ -420,10 +410,14 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
   q <- data[[Q_KEY]]
@@ -524,19 +518,26 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   #   setObjective(model, obj)   # Set objective.
   # }
   # update(model)
-
+  
+  if(!is.null(reltol)){
+    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(!is.null(abstol)){
+    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  }
+  if(is.null(num_iter)){
+    num_iter <- 1e8
+  }
+  
   # Set verbosity and other parameters.
   params <- list()
-  #setParam(model, "OutputFlag", verbose)
   params$OutputFlag <- as.numeric(verbose)
   # TODO: User option to not compute duals.
   params$QCPDual <- 1 #equivalent to TRUE
-
-  # for(key in names(solver_opts))
-  #   setParam(model, key, solver_opts[key])
-  for(i in seq_along(solver_opts)){
-    params[[ names(solver_opts)[i] ]] <- solver_opts[i]
-  }
+  params$IterationLimit = num_iter
+  params$FeasibilityTol = feastol
+  params$OptimalityTol = feastol
+  params[names(solver_opts)] <- solver_opts
 
   # Update model. Not a thing in R
   #update(model)
@@ -554,7 +555,6 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   return(results_dict)
 })
 
-#DK WRITTEN FUNCTION
 #' @param solution The raw solution returned by the solver.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn GUROBI_QP Returns the solution to the original problem given the inverse_data.
@@ -679,10 +679,14 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
   A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
@@ -691,16 +695,7 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   data$u <- uA
   lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
-
-  # Overwrite defaults eps_abs = eps_rel = 1e-3, max_iter = 4000.
-  if(is.null(solver_opts$eps_abs))
-    solver_opts$eps_abs <- 1e-5
-  if(is.null(solver_opts$eps_rel))
-    solver_opts$eps_rel <- 1e-5
-  if(is.null(solver_opts$max_iter))
-    solver_opts$max_iter <- 10000
-  solver_opts$verbose <- verbose
-
+  
   if(!is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
     # Use cached data.
     cache <- solver_cache[[name(object)]]
@@ -757,11 +752,26 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
     # Initialize and solve problem.
     if(is.null(solver_opts$polish))
         solver_opts$polish <- TRUE
-      ## DWK CHANGE
-      ## solver <- osqp::OSQP()
-      solver <- osqp::osqp(P, q, A, lA, uA, solver_opts)
-      ## setup(solver, P, q, A, lA, uA, verbose = verbose, solver_opts)
-      ## DWK CHANGE END
+    #Set parameters. Override defaults to match CVXPY
+    if(is.null(abstol)){
+      abstol <- 1e-5
+    }
+    if(is.null(reltol)){
+      reltol <- 1e-5
+    }
+    if(is.null(num_iter)){
+      num_iter <- 10000
+    }
+    
+    control <- osqp::osqpSettings()
+    control$max_iter = num_iter
+    control$eps_abs <- abstol
+    control$eps_rel = reltol
+    control$eps_prim_inf = feastol
+    control$eps_dual_inf = feastol
+    control$verbose = verbose
+    control[names(solver_opts)] <- solver_opts
+    solver <- osqp::osqp(P, q, A, lA, uA, control)
   }
 
   results <- solver$Solve()

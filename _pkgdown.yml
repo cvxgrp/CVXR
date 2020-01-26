@@ -1,13 +1,19 @@
+url: https://www.cvxgrp.org/CVXR
+
+home:
+  links:
+  - text: Learn more
+    href: https://cvxr.rbind.io
+
 authors:
   Anqi Fu:
     href: https://web.stanford.edu/~anqif/
 
   Balasubramanian Narasimhan:
-    href: https://statistics.stanford.edu/people/balasubramanian-narasimhan
+    href: https://web.stanford.edu/~naras
 
   Steven Diamond:
     href: https://web.stanford.edu/~stevend2/
 
   John Miller:
     href: https://people.eecs.berkeley.edu/~miller_john/
-    

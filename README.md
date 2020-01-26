@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from the source: README.Rmd -->
 
-# CVXR
+# CVXR <img src="man/figures/cvxr_logo.png" align="right" />
 
 [![Travis-CI Build
 Status](https://travis-ci.org/cvxgrp/CVXR.svg?branch=master)](https://travis-ci.org/cvxgrp/CVXR)

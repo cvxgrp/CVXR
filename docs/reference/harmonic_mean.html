@@ -8,6 +8,13 @@
 
 <title>Harmonic Mean — harmonic_mean • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="Harmonic Mean — harmonic_mean" />
 <meta property="og:description" content="The harmonic mean, \(\left(\frac{1}{n} \sum_{i=1}^n x_i^{-1}\right)^{-1}\). For a matrix, the function is applied over all entries." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -145,78 +153,8 @@
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>harmonic_mean</span>(<span class='no'>x</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>, <span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fl'>5</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 6               
-#&gt;   Cones                  : 1               
-#&gt;   Scalar variables       : 6               
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 1
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 6               
-#&gt;   Cones                  : 1               
-#&gt;   Scalar variables       : 6               
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 2
-#&gt; Optimizer  - Cones                  : 1
-#&gt; Optimizer  - Scalar variables       : 4                 conic                  : 3               
-#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 3                 after factor           : 3               
-#&gt; Factor     - dense dim.             : 0                 flops                  : 2.90e+01        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   4.0e+00  1.0e+00  1.0e+00  0.00e+00   0.000000000e+00   0.000000000e+00   1.0e+00  0.00  
-#&gt; 1   7.5e-01  1.9e-01  1.8e-01  -2.89e-01  -5.757073360e-01  1.895599516e-02   1.9e-01  0.00  
-#&gt; 2   2.7e-01  6.8e-02  7.2e-02  1.31e-01   -3.520530680e+00  -2.650758113e+00  6.8e-02  0.00  
-#&gt; 3   2.6e-02  6.5e-03  2.7e-03  6.42e-01   -4.863143061e+00  -4.723267253e+00  6.5e-03  0.00  
-#&gt; 4   2.6e-05  6.6e-06  9.2e-08  9.68e-01   -4.999880971e+00  -4.999714697e+00  6.6e-06  0.00  
-#&gt; 5   8.1e-10  2.0e-10  2.8e-12  1.00e+00   -4.999999997e+00  -4.999999990e+00  2.0e-10  0.00  
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: -4.9999999972e+00   nrm: 1e+01    Viol.  con: 9e-10    var: 0e+00    cones: 0e+00  
-#&gt;   Dual.    obj: -4.9999999899e+00   nrm: 1e+00    Viol.  con: 5e-10    var: 1e-15    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 5         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 5</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] 5</div></pre>
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 5</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] 5</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -232,7 +170,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

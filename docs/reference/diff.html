@@ -8,6 +8,13 @@
 
 <title>Lagged and Iterated Differences — diff,Expression-method • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -41,6 +48,7 @@ If x is length n, this function returns a length \(n-k\) vector of the \(k\)th o
 diff(x) returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
 diff(x,1,2) is the second-order differences vector, equivalently diff(diff(x)). diff(x,1,0) returns the vector x unchanged.
 diff(x,2) returns the vector of differences [x[3] - x[1], x[4] - x[2], ...], equivalent to x[(1+lag):n] - x[1:(n-lag)]." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -177,89 +185,8 @@ If <code>x</code> is length <code>n</code>, this function returns a length \(n-k
 
 <span class='co'>## Solve the catenary problem</span>
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>obj</span>), <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 704             
-#&gt;   Cones                  : 200             
-#&gt;   Scalar variables       : 1002            
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 194
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 704             
-#&gt;   Cones                  : 200             
-#&gt;   Scalar variables       : 1002            
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 302
-#&gt; Optimizer  - Cones                  : 200
-#&gt; Optimizer  - Scalar variables       : 700               conic                  : 600             
-#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 902               after factor           : 904             
-#&gt; Factor     - dense dim.             : 0                 flops                  : 8.51e+03        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   2.0e+00  4.8e+01  1.0e+00  0.00e+00   1.010000000e+02   1.010000000e+02   1.0e+00  0.00  
-#&gt; 1   4.0e-01  9.7e+00  4.3e-01  -9.81e-01  -6.100654343e+02  -6.064605723e+02  2.0e-01  0.00  
-#&gt; 2   8.4e-02  2.0e+00  1.1e-01  -5.81e-01  -1.090607132e+03  -1.084274859e+03  4.2e-02  0.00  
-#&gt; 3   1.6e-02  3.9e-01  1.8e-02  7.41e-02   -8.445363673e+02  -8.396975530e+02  8.0e-03  0.00  
-#&gt; 4   3.5e-03  8.4e-02  3.4e-03  1.94e-01   -4.941557141e+02  -4.903862780e+02  1.7e-03  0.00  
-#&gt; 5   1.1e-03  2.8e-02  9.7e-04  2.58e-01   -3.088449812e+02  -3.060156330e+02  5.7e-04  0.00  
-#&gt; 6   3.3e-04  8.0e-03  2.1e-04  4.31e-01   -1.711675209e+02  -1.695798876e+02  1.7e-04  0.00  
-#&gt; 7   1.5e-04  3.6e-03  8.4e-05  3.52e-01   -1.077351878e+02  -1.064830507e+02  7.5e-05  0.00  
-#&gt; 8   3.5e-05  8.5e-04  1.4e-05  4.18e-01   -3.157319914e+01  -3.090721808e+01  1.8e-05  0.00  
-#&gt; 9   1.2e-05  3.0e-04  4.2e-06  3.60e-01   4.818589011e+00   5.293311872e+00   6.1e-06  0.00  
-#&gt; 10  3.2e-06  7.8e-05  7.4e-07  5.52e-01   3.244801230e+01   3.265856391e+01   1.6e-06  0.01  
-#&gt; 11  1.3e-06  3.2e-05  2.4e-07  5.47e-01   4.350329774e+01   4.362984250e+01   6.7e-07  0.01  
-#&gt; 12  2.5e-07  6.2e-06  2.3e-08  7.52e-01   5.259417457e+01   5.262562447e+01   1.3e-07  0.01  
-#&gt; 13  5.1e-08  1.2e-06  2.1e-09  8.93e-01   5.485985503e+01   5.486643320e+01   2.6e-08  0.01  
-#&gt; 14  8.8e-10  2.1e-08  4.8e-12  9.79e-01   5.543098999e+01   5.543110701e+01   4.4e-10  0.01  
-#&gt; 15  4.7e-12  1.1e-10  2.1e-15  9.99e-01   5.544114330e+01   5.544114395e+01   2.3e-12  0.01  
-#&gt; 16  1.4e-12  1.5e-10  2.9e-17  1.00e+00   5.544119998e+01   5.544119999e+01   4.8e-14  0.01  
-#&gt; Optimizer terminated. Time: 0.01    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 5.5441199980e+01    nrm: 1e+00    Viol.  con: 7e-10    var: 0e+00    cones: 0e+00  
-#&gt;   Dual.    obj: 5.5441199994e+01    nrm: 1e+03    Viol.  con: 7e-13    var: 7e-08    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.01    
-#&gt;     Interior-point          - iterations : 16        time: 0.01    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'>
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+
 <span class='co'>## Plot and compare with ideal catenary</span>
 <span class='no'>xs</span> <span class='kw'>&lt;-</span> <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)
 <span class='no'>ys</span> <span class='kw'>&lt;-</span> <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>y</span>)
@@ -279,7 +206,7 @@ If <code>x</code> is length <code>n</code>, this function returns a length \(n-k
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -8,6 +8,13 @@
 
 <title>Reciprocal Function — inv_pos • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="Reciprocal Function — inv_pos" />
 <meta property="og:description" content="The elementwise reciprocal function, \(\frac{1}{x}\)" />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -146,79 +154,8 @@
     <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>4</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>inv_pos</span>(<span class='no'>A</span>)[<span class='fl'>1</span>,<span class='fl'>2</span>]), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 16              
-#&gt;   Cones                  : 4               
-#&gt;   Scalar variables       : 20              
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 16              
-#&gt;   Cones                  : 4               
-#&gt;   Scalar variables       : 20              
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 4
-#&gt; Optimizer  - Cones                  : 4
-#&gt; Optimizer  - Scalar variables       : 12                conic                  : 12              
-#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 4                 after factor           : 4               
-#&gt; Factor     - dense dim.             : 0                 flops                  : 3.60e+01        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   7.0e+00  1.0e+00  2.0e+00  0.00e+00   -2.000000000e+00  -3.000000000e+00  1.0e+00  0.00  
-#&gt; 1   1.2e+00  1.7e-01  5.1e-01  -7.03e-01  -1.693321418e-02  1.288442545e+00   1.7e-01  0.00  
-#&gt; 2   8.1e-02  1.2e-02  8.8e-03  5.14e-01   2.808880565e-01   3.389130001e-01   1.2e-02  0.00  
-#&gt; 3   3.7e-05  5.4e-06  1.0e-07  9.54e-01   3.333220088e-01   3.333679770e-01   5.4e-06  0.00  
-#&gt; 4   3.1e-06  4.4e-07  2.3e-09  1.00e+00   3.333304951e-01   3.333342376e-01   4.4e-07  0.00  
-#&gt; 5   2.2e-07  3.1e-08  4.5e-11  1.00e+00   3.333330579e-01   3.333333253e-01   3.1e-08  0.00  
-#&gt; 6   6.2e-09  8.9e-10  2.1e-13  1.00e+00   3.333333245e-01   3.333333320e-01   8.9e-10  0.00  
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 3.3333332445e-01    nrm: 6e+00    Viol.  con: 2e-08    var: 0e+00    cones: 2e-09  
-#&gt;   Dual.    obj: 3.3333333204e-01    nrm: 6e-01    Viol.  con: 0e+00    var: 2e-12    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 6         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0.3333333</div></pre>
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0.3333333</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -234,7 +171,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

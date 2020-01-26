@@ -8,6 +8,13 @@
 
 <title>Solve a DCP Problem — psolve • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="Solve a DCP Problem — psolve" />
 <meta property="og:description" content="Solve a DCP compliant optimization problem." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -135,6 +143,10 @@
   <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>feastol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>reltol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>abstol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_iter</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>...</span>
 )
 
@@ -147,6 +159,10 @@
   <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>feastol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>reltol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>abstol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_iter</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>...</span>
 )
 
@@ -183,6 +199,22 @@
     <tr>
       <th>gp</th>
       <td><p>(Optional) A logical value indicating whether the problem is a geometric program. Defaults to <code>FALSE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>feastol</th>
+      <td><p>The feasible tolerance on the primal and dual residual.</p></td>
+    </tr>
+    <tr>
+      <th>reltol</th>
+      <td><p>The relative tolerance on the duality gap.</p></td>
+    </tr>
+    <tr>
+      <th>abstol</th>
+      <td><p>The absolute tolerance on the duality gap.</p></td>
+    </tr>
+    <tr>
+      <th>num_iter</th>
+      <td><p>The maximum number of iterations.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -225,7 +257,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -8,6 +8,13 @@
 
 <title>P-Norm — p_norm • CVXR</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -37,6 +44,7 @@
 
 <meta property="og:title" content="P-Norm — p_norm" />
 <meta property="og:description" content="The vector p-norm. If given a matrix variable, p_norm will treat it as a vector and compute the p-norm of the concatenated columns." />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -171,49 +179,8 @@ For \(p &lt; 1, p \neq 0\), the p-norm is given by $$\|x\|_p = \left(\sum_{i=1}^
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>3</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>p_norm</span>(<span class='no'>x</span>,<span class='fl'>2</span>)))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 4               
-#&gt;   Cones                  : 1               
-#&gt;   Scalar variables       : 8               
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 0                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 0.0000000000e+00    nrm: 0e+00    Viol.  con: 0e+00    var: 0e+00    cones: 0e+00  
-#&gt;   Dual.    obj: 0.0000000000e+00    nrm: 1e+00    Viol.  con: 0e+00    var: 0e+00    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 0         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;      [,1]
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    0
 #&gt; [2,]    0
 #&gt; [3,]    0</div><div class='input'>
@@ -225,156 +192,14 @@ For \(p &lt; 1, p \neq 0\), the p-norm is given by $$\|x\|_p = \left(\sum_{i=1}^
 #&gt; [3,]  0.000000e+00</div><div class='input'>
 <span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1.0</span>, <span class='fl'>2</span>, <span class='fl'>3</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>p_norm</span>(<span class='no'>x</span>,<span class='fl'>1.6</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'><a href='transpose.html'>t</a></span>(<span class='no'>x</span>) <span class='kw'>%*%</span> <span class='no'>a</span> <span class='kw'>&gt;=</span> <span class='fl'>1</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 476             
-#&gt;   Cones                  : 156             
-#&gt;   Scalar variables       : 631             
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 6
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 476             
-#&gt;   Cones                  : 156             
-#&gt;   Scalar variables       : 631             
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 311
-#&gt; Optimizer  - Cones                  : 157
-#&gt; Optimizer  - Scalar variables       : 471               conic                  : 470             
-#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 1.73e+04          after factor           : 2.21e+04        
-#&gt; Factor     - dense dim.             : 0                 flops                  : 2.00e+06        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   3.0e+00  1.0e+00  1.0e+00  0.00e+00   0.000000000e+00   0.000000000e+00   1.0e+00  0.00  
-#&gt; 1   7.6e-01  2.5e-01  5.0e-02  1.72e+00   1.939900787e-01   1.168975544e-01   2.5e-01  0.00  
-#&gt; 2   8.0e-02  2.7e-02  3.6e-03  1.65e+00   3.765836668e-01   3.832238457e-01   2.7e-02  0.00  
-#&gt; 3   2.1e-02  7.1e-03  3.8e-04  1.58e+00   3.035311772e-01   3.039497835e-01   7.1e-03  0.01  
-#&gt; 4   3.4e-03  1.1e-03  1.5e-05  1.11e+00   2.956190469e-01   2.954341428e-01   1.1e-03  0.01  
-#&gt; 5   6.8e-04  2.3e-04  1.2e-06  9.99e-01   2.946629593e-01   2.946171318e-01   2.3e-04  0.01  
-#&gt; 6   8.8e-05  2.9e-05  5.3e-08  9.80e-01   2.944625759e-01   2.944561960e-01   2.9e-05  0.01  
-#&gt; 7   2.0e-05  6.8e-06  6.0e-09  9.75e-01   2.944194028e-01   2.944178989e-01   6.8e-06  0.01  
-#&gt; 8   1.7e-06  5.7e-07  1.5e-10  9.77e-01   2.944068359e-01   2.944067093e-01   5.7e-07  0.01  
-#&gt; 9   2.9e-07  9.6e-08  1.0e-11  9.60e-01   2.944050436e-01   2.944050216e-01   9.6e-08  0.01  
-#&gt; 10  2.3e-08  5.9e-09  1.4e-13  9.84e-01   2.944048264e-01   2.944048250e-01   5.8e-09  0.01  
-#&gt; Optimizer terminated. Time: 0.01    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: 2.9440482644e-01    nrm: 1e+00    Viol.  con: 8e-09    var: 0e+00    cones: 0e+00  
-#&gt;   Dual.    obj: 2.9440482499e-01    nrm: 9e-01    Viol.  con: 8e-10    var: 8e-10    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.01    
-#&gt;     Interior-point          - iterations : 10        time: 0.01    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0.2944048</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;            [,1]
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0.2944048</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;            [,1]
 #&gt; [1,] 0.03835778
 #&gt; [2,] 0.12177801
 #&gt; [3,] 0.23936207</div><div class='input'>
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'><a href='abs.html'>abs</a></span>(<span class='no'>x</span> - <span class='no'>a</span>))), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'>p_norm</span>(<span class='no'>x</span>,-<span class='fl'>1</span>) <span class='kw'>&gt;=</span> <span class='fl'>0</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 17              
-#&gt;   Cones                  : 3               
-#&gt;   Scalar variables       : 19              
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer started.
-#&gt; Presolve started.
-#&gt; Linear dependency checker started.
-#&gt; Linear dependency checker terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 9
-#&gt; Eliminator terminated.
-#&gt; Eliminator started.
-#&gt; Freed constraints in eliminator : 0
-#&gt; Eliminator terminated.
-#&gt; Eliminator - tries                  : 2                 time                   : 0.00            
-#&gt; Lin. dep.  - tries                  : 1                 time                   : 0.00            
-#&gt; Lin. dep.  - number                 : 0               
-#&gt; Presolve terminated. Time: 0.00    
-#&gt; Problem
-#&gt;   Name                   :                 
-#&gt;   Objective sense        : min             
-#&gt;   Type                   : CONIC (conic optimization problem)
-#&gt;   Constraints            : 17              
-#&gt;   Cones                  : 3               
-#&gt;   Scalar variables       : 19              
-#&gt;   Matrix variables       : 0               
-#&gt;   Integer variables      : 0               
-#&gt; 
-#&gt; Optimizer  - threads                : 8               
-#&gt; Optimizer  - solved problem         : the primal      
-#&gt; Optimizer  - Constraints            : 6
-#&gt; Optimizer  - Cones                  : 3
-#&gt; Optimizer  - Scalar variables       : 15                conic                  : 9               
-#&gt; Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
-#&gt; Factor     - setup time             : 0.00              dense det. time        : 0.00            
-#&gt; Factor     - ML order time          : 0.00              GP order time          : 0.00            
-#&gt; Factor     - nonzeros before factor : 16                after factor           : 16              
-#&gt; Factor     - dense dim.             : 0                 flops                  : 1.88e+02        
-#&gt; ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-#&gt; 0   3.0e+00  1.0e+00  2.5e+00  0.00e+00   1.500000000e+00   0.000000000e+00   1.0e+00  0.00  
-#&gt; 1   9.3e-01  3.1e-01  5.5e-01  -1.52e-01  2.177204806e+00   1.640277273e+00   3.1e-01  0.00  
-#&gt; 2   3.2e-01  1.1e-01  8.4e-02  1.22e+00   2.964547180e-01   1.022975930e-01   1.1e-01  0.00  
-#&gt; 3   2.3e-02  7.7e-03  1.2e-03  1.13e+00   8.830034873e-03   -6.678534467e-03  7.7e-03  0.00  
-#&gt; 4   4.7e-05  1.6e-05  9.3e-08  1.05e+00   -2.993614358e-07  -3.325307641e-05  1.6e-05  0.00  
-#&gt; 5   1.9e-13  6.6e-14  2.9e-20  1.00e+00   -7.086981226e-14  -1.996394403e-13  7.0e-14  0.00  
-#&gt; Optimizer terminated. Time: 0.00    
-#&gt; 
-#&gt; 
-#&gt; Interior-point solution summary
-#&gt;   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
-#&gt;   Solution status : OPTIMAL
-#&gt;   Primal.  obj: -6.9833028249e-14   nrm: 3e+00    Viol.  con: 2e-13    var: 0e+00    cones: 0e+00  
-#&gt;   Dual.    obj: -1.9939605522e-13   nrm: 5e-01    Viol.  con: 8e-14    var: 3e-14    cones: 0e+00  
-#&gt; Optimizer summary
-#&gt;   Optimizer                 -                        time: 0.00    
-#&gt;     Interior-point          - iterations : 5         time: 0.00    
-#&gt;       Basis identification  -                        time: 0.00    
-#&gt;         Primal              - iterations : 0         time: 0.00    
-#&gt;         Dual                - iterations : 0         time: 0.00    
-#&gt;         Clean primal        - iterations : 0         time: 0.00    
-#&gt;         Clean dual          - iterations : 0         time: 0.00    
-#&gt;     Simplex                 -                        time: 0.00    
-#&gt;       Primal simplex        - iterations : 0         time: 0.00    
-#&gt;       Dual simplex          - iterations : 0         time: 0.00    
-#&gt;     Mixed integer           - relaxations: 0         time: 0.00    
-#&gt; </div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -6.983303e-14</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;      [,1]
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -6.983303e-14</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    1
 #&gt; [2,]    2
 #&gt; [3,]    3</div></pre>
@@ -394,7 +219,7 @@ For \(p &lt; 1, p \neq 0\), the p-norm is given by $$\|x\|_p = \left(\sum_{i=1}^
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://statistics.stanford.edu/people/balasubramanian-narasimhan'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
+  <p>Developed by <a href='https://web.stanford.edu/~anqif/'>Anqi Fu</a>, <a href='https://web.stanford.edu/~naras'>Balasubramanian Narasimhan</a>, David W Kang, <a href='https://web.stanford.edu/~stevend2/'>Steven Diamond</a>, <a href='https://people.eecs.berkeley.edu/~miller_john/'>John Miller</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -3,7 +3,7 @@ They should be run routinely to ensure sanity of CVXR, even if
 not on CRAN.
 
 
-library(testthat)
-library(CVXR)
-Sys.setenv(NOT_CRAN = TRUE)
-for (f in list.files(".", pattern = ".R$")) test_file(f)
+##library(testthat)
+##library(CVXR)
+##Sys.setenv(NOT_CRAN = TRUE)
+##for (f in list.files(".", pattern = ".R$")) test_file(f)

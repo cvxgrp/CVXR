@@ -30,6 +30,10 @@ xef <- Variable(80, name = "xef")
 
 # Check for all installed QP solvers
 solvers <- installed_solvers()
+## On CRAN skip CPLEX, since it is not clear if we have a false failure!
+if(!identical(Sys.getenv("NOT_CRAN"), "true")) {
+    solvers  <-  setdiff(solvers, "CPLEX")
+}
 solvers <- solvers[solvers %in% CVXR:::QP_SOLVERS]
 if("MOSEK" %in% installed_solvers())
   solvers <- c(solvers, "MOSEK")
@@ -43,7 +47,7 @@ test_quad_over_lin <- function(solver) {
   result <- solve_QP(p, solver)
   for(var in variables(p))
     expect_equal(result$getValue(var), matrix(c(-1, -1)), tolerance = 1e-4)
-  
+
   for(con in constraints(p))
     expect_equal(result$getDualValue(con), matrix(c(2, 2)), tolerance = 1e-4)
 }
@@ -78,7 +82,7 @@ test_square_affine <- function(solver) {
   b <- matrix(rnorm(10), nrow = 10, ncol = 1)
   p <- Problem(Minimize(sum_squares(A %*% x - b)))
   result <- solve_QP(p, solver)
-  
+
   x_star <- base::solve(qr(A),b)
   for(var in variables(p))
     expect_equal(result$getValue(var), x_star, tolerance = 0.1)
@@ -122,7 +126,7 @@ test_norm_2 <- function(solver) {
   b <- matrix(rnorm(10), nrow = 10)
   p <- Problem(Minimize(p_norm(A %*% w - b, 2)))
   result <- solve_QP(p, solver)
-  
+
   x_star <- base::solve(qr(A),b)
   for(var in variables(p))
     expect_equal(result$getValue(var), x_star, tolerance = 0.1)
@@ -133,7 +137,7 @@ test_mat_norm_2 <- function(solver) {
   B <- matrix(rnorm(5*2), nrow = 5, ncol = 2)
   p <- Problem(Minimize(p_norm(A %*% C - B, 2)))
   result <- solve_QP(p, solver)
-  
+
   C_star <- base::solve(qr(A),B)
   for(var in variables(p))
     expect_equal(result$getValue(var), C_star, tolerance = 0.1)
@@ -165,21 +169,21 @@ test_quad_form_bound <- function(solver) {
 test_regression_1 <- function(solver) {
   # Number of examples to use
   n <- 100
-  
+
   # Specify the true value of the variable
   true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
-  
+
   # Generate data
   x_data <- 5*rnorm(n)
   x_data_expanded <- sapply(1:3, function(i) { x_data^i })
   y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
-  
+
   line <- offset + slope*x_data
   residuals <- line - y_data
   fit_error <- sum_squares(residuals)
   p <- Problem(Minimize(fit_error), list())
   result <- solve_QP(p, solver)
-  
+
   model <- lm(y_data ~ x_data)
   expect_equal(sum((model$residuals)^2), result$value, tolerance = 1e-4)
   expect_equal(as.numeric(model$coefficients[1]), result$getValue(offset), tolerance = 1e-4)
@@ -189,21 +193,21 @@ test_regression_1 <- function(solver) {
 test_regression_2 <- function(solver) {
   # Number of examples to use
   n <- 100
-  
+
   # Specify the true value of the variable
   true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
-  
+
   # Generate data
   x_data <- 5*rnorm(n)
   x_data_expanded <- sapply(1:3, function(i) { x_data^i })
   y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
-  
+
   quadratic <- offset + slope*x_data + quadratic_coeff*x_data^2
   residuals <- quadratic - y_data
   fit_error <- sum_squares(residuals)
   p <- Problem(Minimize(fit_error), list())
   result <- solve_QP(p, solver)
-  
+
   x_data_sq <- x_data^2
   model <- lm(y_data ~ x_data + x_data_sq)
   expect_equal(sum((model$residuals)^2), result$value, tolerance = 1e-4)
@@ -217,13 +221,13 @@ test_control <- function(solver) {
   # The object should start from the origin, and end at rest
   initial_velocity <- c(-20, 100)
   final_position <- c(100, 100)
-  
+
   Tlen <- 100  # The number of timesteps
   h <- 0.1  # The time between time intervals
   mass <- 1  # Mass of object
   drag <- 0.1  # Drag on object
   g <- c(0, -9.8)  # Gravity on object
-  
+
   # Create a problem instance
   constraints = list()
 
@@ -237,7 +241,7 @@ test_control <- function(solver) {
   # Add position constraints
   constraints <- c(constraints, position[,1] == 0)
   constraints <- c(constraints, position[,ncol(position)] == final_position)
-  
+
   # Add velocity constraints
   constraints <- c(constraints, velocity[,1] == initial_velocity)
   constraints <- c(constraints, velocity[,ncol(velocity)] == 0)
@@ -252,7 +256,7 @@ test_sparse_system <- function(solver) {
   library(Matrix)
   m <- 100
   n <- 80
-  
+
   density <- 0.4
   A <- rsparsematrix(m, n, density)
   b <- rnorm(m)
@@ -261,7 +265,7 @@ test_sparse_system <- function(solver) {
   result <- solve_QP(p, solver)
   expect_equal(sum(b^2), result$value, tolerance = 1e-4)
 }
-  
+
 test_smooth_ridge <- function(solver) {
   n <- 200
   k <- 50
@@ -289,11 +293,11 @@ test_huber_small <- function(solver) {
 
 test_huber <- function(solver) {
   library(Matrix)
-  
+
   # Generate problem data
   n <- 3
   m <- 5
-  
+
   set.seed(1)
   A <- rsparsematrix(m, n, density=0.8)
   x_true <- matrix(rnorm(n), ncol = 1)/sqrt(n)
@@ -315,7 +319,7 @@ test_equivalent_forms_1 <- function(solver) {
   m <- 100
   n <- 80
   r <- 70
-  
+
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), ncol = 1)
@@ -334,21 +338,21 @@ test_equivalent_forms_2 <- function(solver) {
   m <- 100
   n <- 80
   r <- 70
-  
+
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), ncol = 1)
   G <- matrix(rnorm(r*n), nrow = r, ncol = n)
   h <- matrix(rnorm(r), ncol = 1)
-  
+
   # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
   P <- t(A) %*% A
   q <- -2*t(A) %*% b
   r <- t(b) %*% b
-  
+
   obj2 <- 0.1*(quad_form(xef, P) + t(q) %*% xef + r)
   cons <- list(G %*% xef == h)
-  
+
   p2 <- Problem(Minimize(obj2), cons)
   result <- solve_QP(p2, solver)
   expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
@@ -358,7 +362,7 @@ test_equivalent_forms_3 <- function(solver) {
   m <- 100
   n <- 80
   r <- 70
-  
+
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- matrix(rnorm(m), ncol = 1)
@@ -389,16 +393,16 @@ test_that("test all solvers", {
     test_affine_problem(solver)
     test_maximize_problem(solver)
     test_abs(solver)
-    
+
     # Do we need the following functionality?
     # test_norm_2(solver)
     # test_mat_norm_2(solver)
-    
+
     test_quad_form_coeff(solver)
     test_quad_form_bound(solver)
     test_regression_1(solver)
     test_regression_2(solver)
-    
+
     # Slow tests:
     test_control(solver)
     test_sparse_system(solver)
@@ -414,19 +418,19 @@ test_that("test all solvers", {
 test_that("Test warm start", {
   m <- 200
   n <- 100
-  
+
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- Parameter(m)
-  
+
   # Construct the problem.
   x <- Variable(n)
-   
+
   value(b) <- rnorm(m)
   prob <- Problem(Minimize(sum_squares(A %*% x - b)))
   result <- solve(prob, warm_start=FALSE)
   result2 <- solve(prob, warm_start=TRUE)
   expect_equal(result$value, result2$value)
-  
+
   value(b) <- rnorm(m)
   prob <- Problem(Minimize(sum_squares(A %*% x - b)))
   result <- solve(prob, warm_start=TRUE)
@@ -439,7 +443,7 @@ test_that("Test solve parametric vs. full problem", {
   a <- 10
   # b_vec <- c(-10, -2., 2., 3., 10.)
   b_vec <- c(-10, -2.)
-  
+
   for(solver in solvers) {
     # Solve from scratch with no parameters
     x_full <- list()
@@ -452,7 +456,7 @@ test_that("Test solve parametric vs. full problem", {
       x_full <- c(x_full, list(result$getValue(x)))
       obj_full <- c(obj_full, result$value)
     }
-    
+
     # Solve parametric
     x_param <- list()
     obj_param <- c()
@@ -465,7 +469,7 @@ test_that("Test solve parametric vs. full problem", {
       x_param <- c(x_param, list(result$getValue(x)))
       obj_param <- c(obj_param, result$value)
     }
-    
+
     print(x_full)
     print(x_param)
     for(i in seq_along(b_vec)) {

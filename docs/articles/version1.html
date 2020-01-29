@@ -88,7 +88,7 @@
       <h1>Version 1.0</h1>
                         <h4 class="author">Anqi Fu, David W. Kang, Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 class="date">2020-01-25</h4>
+            <h4 class="date">2020-01-28</h4>
       
       
       <div class="hidden name"><code>version1.Rmd</code></div>
@@ -105,7 +105,7 @@
 <li>A new reduction framework that automatically chooses the most appropriate solver for a problem</li>
 <li>Addition of a large number of solvers using native <code>R</code> interfaces</li>
 <li>Facilities for geometric programming</li>
-<li>Improvements in speed</li>
+<li>Improvements in speed.</li>
 </ul>
 </div>
 <div id="what-has-changed" class="section level2">
@@ -114,21 +114,21 @@
 <p>Implementation changes include:</p>
 <ul>
 <li>Default QP solver: now, <code>OSQP</code>, which means that some results will differ slightly from previous runs. However, ECOS can be explicitly specified if exact replication of old results are desired</li>
-<li>Strict inequalities are not allowed in constraints</li>
+<li>Strict inequalities are not allowed in constraints.</li>
 </ul>
 <p>Syntax changes (to match <code>cvxpy</code> 1.x) include:</p>
 <ul>
 <li>
-<code>Int(1)</code> is now <code><a href="../reference/Variable-class.html">Variable(1, integer = TRUE)</a></code>
+<code>Int(m, n)</code> is now <code><a href="../reference/Variable-class.html">Variable(m, n, integer = TRUE)</a></code>
 </li>
 <li>
-<code>Bool(1)</code> is now <code><a href="../reference/Variable-class.html">Variable(1, boolean = TRUE)</a></code>
+<code>Bool(m, n)</code> is now <code><a href="../reference/Variable-class.html">Variable(m, n, boolean = TRUE)</a></code>
 </li>
 <li>
 <code>Semidef(n, n)</code> is now <code><a href="../reference/Variable-class.html">Variable(n, n, PSD = TRUE)</a></code>
 </li>
 </ul>
-<p>and so on.</p>
+<p>and so on. Details may be found on the <a href="https://cvxr.rbind.io">CVXR Website</a>.</p>
 </div>
   </div>
 

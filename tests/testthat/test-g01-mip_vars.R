@@ -75,7 +75,7 @@ test_that("Test Integer problems", {
   p <- Problem(obj, list(y_int == 0.5))
   result <- solve(p)   # TODO_NARAS_10: Returns solver_error (MOSEK) or freezes (ECOS_BB). DONE by Naras
   ##result <- solve(p, solver = "CBC")
-  expect_equal(result$status, "infeasible")
+  expect_true(grepl("infeasible", result$status))
 })
 
 test_that("Test SOCP problems", {

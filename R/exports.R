@@ -46,12 +46,14 @@ eye_minus_inv <- EyeMinusInv
 #' result$value
 #' result$getValue(x)
 #'
-#' x <- Variable(5)
-#' p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
-#' prob <- Problem(Maximize(geo_mean(x,p)), list(p_norm(x) <= 1))
-#' result <- solve(prob)
-#' result$value
-#' result$getValue(x)
+#' \dontrun{
+#'   x <- Variable(5)
+#'   p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
+#'   prob <- Problem(Maximize(geo_mean(x,p)), list(p_norm(x) <= 1))
+#'   result <- solve(prob)
+#'   result$value
+#'   result$getValue(x)
+#' }
 #' @docType methods
 #' @name geo_mean
 #' @rdname geo_mean
@@ -555,16 +557,18 @@ pf_eigenvalue <- PfEigenvalue
 #' result$value
 #' result$getValue(x)
 #'
-#' a <- c(1.0, 2, 3)
-#' prob <- Problem(Minimize(p_norm(x,1.6)), list(t(x) %*% a >= 1))
-#' result <- solve(prob)
-#' result$value
-#' result$getValue(x)
+#' \dontrun{
+#'   a <- c(1.0, 2, 3)
+#'   prob <- Problem(Minimize(p_norm(x,1.6)), list(t(x) %*% a >= 1))
+#'   result <- solve(prob)
+#'   result$value
+#'   result$getValue(x)
 #'
-#' prob <- Problem(Minimize(sum(abs(x - a))), list(p_norm(x,-1) >= 0))
-#' result <- solve(prob)
-#' result$value
-#' result$getValue(x)
+#'   prob <- Problem(Minimize(sum(abs(x - a))), list(p_norm(x,-1) >= 0))
+#'   result <- solve(prob)
+#'   result$value
+#'   result$getValue(x)
+#' }
 #' @docType methods
 #' @name p_norm
 #' @rdname p_norm

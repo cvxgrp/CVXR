@@ -133,6 +133,7 @@ test_that("Test a basic MILP with GLPK", {
 })
 
 test_that("Test a basic LP with CPLEX", {
+  skip_on_cran()
   if("CPLEX" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "CPLEX")
@@ -182,6 +183,7 @@ test_that("Test a basic LP with CPLEX", {
 })
 
 test_that("Test a basic SOCP with CPLEX", {
+  skip_on_cran()
   if("CPLEX" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "CPLEX")
@@ -231,6 +233,7 @@ test_that("Test a basic SOCP with CPLEX", {
 })
 
 test_that("Make sure CPLEX's dual result matches other solvers", {
+  skip_on_cran()
   if("CPLEX" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -259,8 +262,9 @@ test_that("Make sure CPLEX's dual result matches other solvers", {
 })
 
 test_that("Test CPLEX warm start", {
-  # Make sure that warm starting CPLEX behaves as expected.
-  # Note: This only checks output, not whether or not CPLEX is warm starting internally.
+  ## Make sure that warm starting CPLEX behaves as expected.
+  ## Note: This only checks output, not whether or not CPLEX is warm starting internally.
+  skip_on_cran()
   if("CPLEX" %in% installed_solvers()) {
     A <- Parameter(2, 2)
     b <- Parameter(2)

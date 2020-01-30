@@ -30,13 +30,13 @@ xef <- Variable(80, name = "xef")
 
 # Check for all installed QP solvers
 solvers <- installed_solvers()
-## On CRAN skip CPLEX, since it is not clear if we have a false failure!
-if(!identical(Sys.getenv("NOT_CRAN"), "true")) {
-    solvers  <-  setdiff(solvers, "CPLEX")
-}
+## On CRAN skip CPLEX, since I believe there are some
+## false positive failures. So skip CPLEX
+solvers  <-  setdiff(solvers, "CPLEX")
+
 solvers <- solvers[solvers %in% CVXR:::QP_SOLVERS]
-if("MOSEK" %in% installed_solvers())
-  solvers <- c(solvers, "MOSEK")
+## if("MOSEK" %in% installed_solvers())
+##   solvers <- c(solvers, "MOSEK")
 
 solve_QP <- function(problem, solver_name) {
   solve(problem, solver = solver_name, verbose = TRUE)

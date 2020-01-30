@@ -169,7 +169,7 @@
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>4</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>5</span>,<span class='fl'>6</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>mixed_norm</span>(<span class='no'>A</span>,<span class='fl'>1</span>,<span class='fl'>Inf</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 9.999731</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1] [,2]
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 10.00011</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1] [,2]
 #&gt; [1,]    1    5
 #&gt; [2,]    4    6</div></pre>
   </div>

@@ -35,10 +35,12 @@ result <- solve(prob)
 result$value
 result$getValue(x)
 
-x <- Variable(5)
-p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
-prob <- Problem(Maximize(geo_mean(x,p)), list(p_norm(x) <= 1))
-result <- solve(prob)
-result$value
-result$getValue(x)
+\dontrun{
+  x <- Variable(5)
+  p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
+  prob <- Problem(Maximize(geo_mean(x,p)), list(p_norm(x) <= 1))
+  result <- solve(prob)
+  result$value
+  result$getValue(x)
+}
 }

@@ -46,14 +46,16 @@ result <- solve(prob)
 result$value
 result$getValue(x)
 
-a <- c(1.0, 2, 3)
-prob <- Problem(Minimize(p_norm(x,1.6)), list(t(x) \%*\% a >= 1))
-result <- solve(prob)
-result$value
-result$getValue(x)
+\dontrun{
+  a <- c(1.0, 2, 3)
+  prob <- Problem(Minimize(p_norm(x,1.6)), list(t(x) \%*\% a >= 1))
+  result <- solve(prob)
+  result$value
+  result$getValue(x)
 
-prob <- Problem(Minimize(sum(abs(x - a))), list(p_norm(x,-1) >= 0))
-result <- solve(prob)
-result$value
-result$getValue(x)
+  prob <- Problem(Minimize(sum(abs(x - a))), list(p_norm(x,-1) >= 0))
+  result <- solve(prob)
+  result$value
+  result$getValue(x)
+}
 }

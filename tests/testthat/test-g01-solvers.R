@@ -16,6 +16,8 @@ C <- Variable(3, 2, name = "C")
 SOLVER_MAP_CONIC <- CVXR:::SOLVER_MAP_CONIC
 SOLVER_MAP_QP <- CVXR:::SOLVER_MAP_QP
 INSTALLED_SOLVERS <- installed_solvers()
+## For CRAN drop CPLEX
+INSTALLED_SOLVERS <- setdiff(INSTALLED_SOLVERS, "CPLEX")
 
 test_that("Test that all the ECOS solver options work", {
   # Test ecos

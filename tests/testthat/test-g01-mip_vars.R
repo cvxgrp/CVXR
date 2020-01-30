@@ -66,14 +66,14 @@ test_that("Test Integer problems", {
   # Int in objective
   obj <- Minimize((y_int - 0.2)^2)
   p <- Problem(obj, list())
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS_BB")
   expect_equal(result$value, 0.04, tolerance = TOL)
   expect_equal(result$getValue(y_int), 0, tolerance = TOL)
 
   # Infeasible integer problem
   obj <- Minimize(0)
   p <- Problem(obj, list(y_int == 0.5))
-  result <- solve(p)   # TODO_NARAS_10: Returns solver_error (MOSEK) or freezes (ECOS_BB). DONE by Naras
+  result <- solve(p, solver = "ECOS_BB")   # TODO_NARAS_10: Returns solver_error (MOSEK) or freezes (ECOS_BB). DONE by Naras
   ##result <- solve(p, solver = "CBC")
   expect_true(grepl("infeasible", result$status))
 })
@@ -83,7 +83,7 @@ test_that("Test SOCP problems", {
   t <- Variable()
   obj <- Minimize(t)
   p <- Problem(obj, list((y_int - 0.2)^2 <= t))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS_BB")
   expect_equal(result$value, 0.04, tolerance = TOL)
   expect_equal(result$getValue(y_int), 0, tolerance = TOL)
 })
@@ -93,7 +93,7 @@ test_that("Test Boolean SOCP problems", {
   t <- Variable()
   obj <- Minimize(t)
   p <- Problem(obj, list((x_bool - 0.2)^2 <= t))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS_BB")
   expect_equal(result$value, 0.04, tolerance = TOL)
   expect_equal(result$getValue(x_bool), 0, tolerance = TOL)
 })

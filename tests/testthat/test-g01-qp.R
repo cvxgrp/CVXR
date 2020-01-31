@@ -43,6 +43,7 @@ solve_QP <- function(problem, solver_name) {
 }
 
 test_quad_over_lin <- function(solver) {
+    skip_on_cran()
   p <- Problem(Minimize(0.5 * quad_over_lin(abs(x-1), 1)), list(x <= -1))
   result <- solve_QP(p, solver)
   for(var in variables(p))
@@ -53,6 +54,7 @@ test_quad_over_lin <- function(solver) {
 }
 
 test_abs <- function(solver) {
+    skip_on_cran()
   u <- Variable(2)
   constr <- list()
   constr <- c(constr, abs(u[2] - u[1]) <= 100)
@@ -64,6 +66,7 @@ test_abs <- function(solver) {
 }
 
 test_power <- function(solver) {
+    skip_on_cran()
   p <- Problem(Minimize(sum(power(x, 2))), list())
   result <- solve_QP(p, solver)
   for(var in variables(p))
@@ -71,6 +74,7 @@ test_power <- function(solver) {
 }
 
 test_power_matrix <- function(solver) {
+    skip_on_cran()
   p <- Problem(Minimize(sum(power(A - 3, 2))), list())
   result <- solve_QP(p, solver)
   for(var in variables(p))
@@ -78,6 +82,7 @@ test_power_matrix <- function(solver) {
 }
 
 test_square_affine <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(10*2), nrow = 10, ncol = 2)
   b <- matrix(rnorm(10), nrow = 10, ncol = 1)
   p <- Problem(Minimize(sum_squares(A %*% x - b)))
@@ -89,6 +94,7 @@ test_square_affine <- function(solver) {
 }
 
 test_quad_form <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(5*5), nrow = 5, ncol = 5)
   z <- matrix(rnorm(5), nrow = 5, ncol = 1)
   P <- t(A) %*% A
@@ -100,6 +106,7 @@ test_quad_form <- function(solver) {
 }
 
 test_affine_problem <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(5*2), nrow = 5, ncol = 2)
   A <- pmax(A, 0)
   b <- matrix(rnorm(5), nrow = 5, ncol = 1)
@@ -111,6 +118,7 @@ test_affine_problem <- function(solver) {
 }
 
 test_maximize_problem <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(5*2), nrow = 5, ncol = 2)
   A <- pmax(A, 0)
   b <- matrix(rnorm(5), nrow = 5, ncol = 1)
@@ -122,6 +130,7 @@ test_maximize_problem <- function(solver) {
 }
 
 test_norm_2 <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(10*5), nrow = 10, ncol = 5)
   b <- matrix(rnorm(10), nrow = 10)
   p <- Problem(Minimize(p_norm(A %*% w - b, 2)))
@@ -133,6 +142,7 @@ test_norm_2 <- function(solver) {
 }
 
 test_mat_norm_2 <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(5*3), nrow = 5, ncol = 3)
   B <- matrix(rnorm(5*2), nrow = 5, ncol = 2)
   p <- Problem(Minimize(p_norm(A %*% C - B, 2)))
@@ -144,6 +154,7 @@ test_mat_norm_2 <- function(solver) {
 }
 
 test_quad_form_coeff <- function(solver) {
+    skip_on_cran()
   A <- matrix(rnorm(5*5), nrow = 5, ncol = 5)
   z <- matrix(rnorm(5), nrow = 5, ncol = 1)
   P <- t(A) %*% A
@@ -155,6 +166,7 @@ test_quad_form_coeff <- function(solver) {
 }
 
 test_quad_form_bound <- function(solver) {
+    skip_on_cran()
   P <- rbind(c(13, 12, -2), c(12, 17, 6), c(-2, 6, 12))
   q <- matrix(c(-22, -14.5, 13))
   r <- 1
@@ -167,6 +179,7 @@ test_quad_form_bound <- function(solver) {
 }
 
 test_regression_1 <- function(solver) {
+    skip_on_cran()
   # Number of examples to use
   n <- 100
 
@@ -191,6 +204,7 @@ test_regression_1 <- function(solver) {
 }
 
 test_regression_2 <- function(solver) {
+    skip_on_cran()
   # Number of examples to use
   n <- 100
 
@@ -217,6 +231,7 @@ test_regression_2 <- function(solver) {
 }
 
 test_control <- function(solver) {
+    skip_on_cran()
   # Some constraints on our motion
   # The object should start from the origin, and end at rest
   initial_velocity <- c(-20, 100)
@@ -253,6 +268,7 @@ test_control <- function(solver) {
 }
 
 test_sparse_system <- function(solver) {
+    skip_on_cran()
   library(Matrix)
   m <- 100
   n <- 80
@@ -267,6 +283,7 @@ test_sparse_system <- function(solver) {
 }
 
 test_smooth_ridge <- function(solver) {
+    skip_on_cran()
   n <- 200
   k <- 50
   eta <- 1
@@ -280,6 +297,7 @@ test_smooth_ridge <- function(solver) {
 }
 
 test_huber_small <- function(solver) {
+    skip_on_cran()
   # Solve the Huber regression problem
     x <- Variable(3)
   objective <- sum(huber(x))
@@ -292,6 +310,7 @@ test_huber_small <- function(solver) {
 }
 
 test_huber <- function(solver) {
+    skip_on_cran()
   library(Matrix)
 
   # Generate problem data
@@ -316,6 +335,7 @@ test_huber <- function(solver) {
 }
 
 test_equivalent_forms_1 <- function(solver) {
+    skip_on_cran()
   m <- 100
   n <- 80
   r <- 70
@@ -335,6 +355,7 @@ test_equivalent_forms_1 <- function(solver) {
 }
 
 test_equivalent_forms_2 <- function(solver) {
+    skip_on_cran()
   m <- 100
   n <- 80
   r <- 70
@@ -359,6 +380,7 @@ test_equivalent_forms_2 <- function(solver) {
 }
 
 test_equivalent_forms_3 <- function(solver) {
+    skip_on_cran()
   m <- 100
   n <- 80
   r <- 70
@@ -384,6 +406,7 @@ test_equivalent_forms_3 <- function(solver) {
 }
 
 test_that("test all solvers", {
+    skip_on_cran()
   for(solver in solvers) {
     test_quad_over_lin(solver)
     test_power(solver)
@@ -416,6 +439,7 @@ test_that("test all solvers", {
 })
 
 test_that("Test warm start", {
+    skip_on_cran()
   m <- 200
   n <- 100
 
@@ -439,6 +463,7 @@ test_that("Test warm start", {
 })
 
 test_that("Test solve parametric vs. full problem", {
+    skip_on_cran()
   x <- Variable()
   a <- 10
   # b_vec <- c(-10, -2., 2., 3., 10.)
@@ -480,6 +505,7 @@ test_that("Test solve parametric vs. full problem", {
 })
 
 test_that("Test issue arising with square plus parameter", {
+    skip_on_cran()
     a <- Parameter(value=1)
     b <- Variable()
 

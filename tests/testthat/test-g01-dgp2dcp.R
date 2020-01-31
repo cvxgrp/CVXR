@@ -29,6 +29,7 @@ form_solution <- function(prob, result) {
 }
 
 test_that("test unconstrained monomial", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   prod <- x*y
@@ -77,6 +78,7 @@ test_that("test unconstrained monomial", {
 })
 
 test_that("test basic equality constraint", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   dgp <- Problem(Minimize(x), list(x == 1.0))
   dgp2dcp <- Dgp2Dcp(dgp)
@@ -100,6 +102,7 @@ test_that("test basic equality constraint", {
 })
 
 test_that("test basic GP", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -110,6 +113,7 @@ test_that("test basic GP", {
 })
 
 test_that("test max_elemwise", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -137,6 +141,7 @@ test_that("test max_elemwise", {
 
 # TODO_NARAS_5: Test keepdims. Need to edit test to match CVXPY.
 test_that("test prod_entries", {
+    skip_on_cran()
   X <- matrix(0:11, nrow = 4, ncol = 3)
   expect_equal(prod(X), value(prod_entries(X)))
   expect_equal(apply(X, 1, prod), value(prod_entries(X, axis = 1)))
@@ -176,6 +181,7 @@ test_that("test prod_entries", {
 })
 
 test_that("test max_entries", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -202,6 +208,7 @@ test_that("test max_entries", {
 })
 
 test_that("test min_elemwise", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -220,6 +227,7 @@ test_that("test min_elemwise", {
 })
 
 test_that("test min_entries", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -318,6 +326,7 @@ test_that("test min_entries", {
 # })
 
 test_that("test div", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   p <- Problem(Minimize(x*y), list(y/3 <= x, y >= 1))
@@ -328,6 +337,7 @@ test_that("test div", {
 })
 
 test_that("test geo_mean", {
+    skip_on_cran()
   x <- Variable(3, pos = TRUE)
   p <- c(1, 2, 0.5)
   expr <- geo_mean(x, p)
@@ -349,6 +359,7 @@ test_that("test geo_mean", {
 })
 
 test_that("test solving non-dgp problem raises error", {
+    skip_on_cran()
   problem <- Problem(Minimize(-1.0*Variable()))
   expect_error(solve(problem, gp = TRUE))
   result <- solve(problem)
@@ -357,6 +368,7 @@ test_that("test solving non-dgp problem raises error", {
 })
 
 test_that("test solving non-dcp problem raises error", {
+    skip_on_cran()
   problem <- Problem(Minimize(Variable(pos = TRUE) * Variable(pos = TRUE)))
   expect_error(solve(problem))
   result <- solve(problem, gp = TRUE)
@@ -365,6 +377,7 @@ test_that("test solving non-dcp problem raises error", {
 })
 
 test_that("test add_canon", {
+    skip_on_cran()
   X <- Constant(rbind(1:3, 4:6))
   Y <- Constant(rbind(2:4, 5:7))
   Z <- X + Y
@@ -390,6 +403,7 @@ test_that("test add_canon", {
 })
 
 test_that("test matmul_canon", {
+    skip_on_cran()
   X <- Constant(rbind(1:3, 4:6))
   Y <- Constant(matrix(1:3, nrow = 3))
   Z <- X %*% Y
@@ -405,6 +419,7 @@ test_that("test matmul_canon", {
 })
 
 test_that("test trace_canon", {
+    skip_on_cran()
   X <- Constant(rbind(c(1.0, 5.0), c(9.0, 14.0)))
   Y <- matrix_trace(X)
   canon <- Dgp2Dcp.trace_canon(Y, Y@args)
@@ -417,6 +432,7 @@ test_that("test trace_canon", {
 })
 
 test_that("test one_minus_pos", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   obj <- Maximize(x)
   constr <- list(one_minus_pos(x) >= 0.4)
@@ -427,6 +443,7 @@ test_that("test one_minus_pos", {
 })
 
 test_that("test qp solver not allowed", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   problem <- Problem(Minimize(x))
   expect_error(solve(problem, solver = "OSQP", gp = TRUE))
@@ -446,6 +463,7 @@ test_that("test qp solver not allowed", {
 # })
 
 test_that("test paper example one_minus_pos", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   obj <- Minimize(x*y)
@@ -455,6 +473,7 @@ test_that("test paper example one_minus_pos", {
 })
 
 test_that("test paper example eye_minus_inv", {
+    skip_on_cran()
   X <- Variable(2,2, pos = TRUE)
   obj <- Minimize(matrix_trace(eye_minus_inv(X)))
   constr <- list(geo_mean(diag(X)) == 0.1)
@@ -463,6 +482,7 @@ test_that("test paper example eye_minus_inv", {
 })
 
 test_that("test paper example exp_log", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   obj <- Minimize(x*y)
@@ -472,6 +492,7 @@ test_that("test paper example exp_log", {
 })
 
 test_that("test pf matrix completion", {
+    skip_on_cran()
   X <- Variable(3,3, pos = TRUE)
   obj <- Minimize(pf_eigenvalue(X))
   known_indices <- cbind(c(1,1,2,3,3), c(1,3,2,1,2))
@@ -482,6 +503,7 @@ test_that("test pf matrix completion", {
 })
 
 test_that("test rank one nmf", {
+    skip_on_cran()
   X <- Variable(3,3, pos = TRUE)
   x <- Variable(3, pos = TRUE)
   y <- Variable(3, pos = TRUE)
@@ -496,6 +518,7 @@ test_that("test rank one nmf", {
 })
 
 test_that("test documentation problem", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -507,6 +530,7 @@ test_that("test documentation problem", {
 })
 
 test_that("test solver error", {
+    skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   prod <- x*y

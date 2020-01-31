@@ -1,6 +1,7 @@
 context("test-g01-non_optimal")
 
 test_that("Test scalar LP problems", {
+    skip_on_cran()
   x1 <- Variable()
   x2 <- Variable()
   obj <- Minimize(-x1-x2)
@@ -17,6 +18,7 @@ test_that("Test scalar LP problems", {
 })
 
 test_that("Test vector LP problems", {
+    skip_on_cran()
   # Infeasible and unbounded problems
   x <- Variable(5)
   p_inf <- Problem(Minimize(sum(x)), list(x >= 1, x <= 0))

@@ -2,6 +2,7 @@ context("test-g01-quad_form")
 TOL <- 1e-6
 
 test_that("Test quadratic form with a singular matrix", {
+    skip_on_cran()
     ## Solve a quadratic program
     for(n in c(3,4,5)) {
         for(i in 0:4) {
@@ -47,25 +48,26 @@ test_that("Test quadratic form with a singular matrix", {
 })
 
 test_that("Test quadratic form with a sparse matrix", {
+    skip_on_cran()
     Q <- Matrix::sparseMatrix(i = 1:2, j = 1:2, x = rep(1, 2))
     x <- Variable(2)
     cost <- quad_form(x, Q)
     prob <- Problem(Minimize(cost), list(x == c(1, 2)))
     result <- solve(prob)
     expect_equal(result$value, 5, tolerance = TOL)
-    
+
     # Here are our QP factors
     A <- Constant(Matrix::sparseMatrix(i = 1:4, j = 1:4, x = rep(1, 4)))
     c <- matrix(1, nrow = 1, ncol = 4)
-    
+
     # Here is our optimization variable
     x <- Variable(4)
-    
+
     # And the QP problem setup
     fun <- quad_form(x, A) - c %*% x
     objective <- Minimize(fun)
     problem <- Problem(objective)
-    
+
     result <- solve(problem)
     expect_equal(length(result$getValue(fun)), 1)
 })
@@ -82,6 +84,7 @@ test_that("Test quadratic form with a sparse matrix", {
 # })
 
 test_that("Test when P is constant and not symmetric", {
+    skip_on_cran()
   P <- rbind(c(2, 2), c(3, 4))
   x <- Variable(2)
   cost <- quad_form(x, P)
@@ -90,6 +93,7 @@ test_that("Test when P is constant and not symmetric", {
 })
 
 test_that("Test error when P is symmetric but not definite", {
+    skip_on_cran()
   P <- rbind(c(1, 0), c(0, -1))
   x <- Variable(2)
 
@@ -101,6 +105,7 @@ test_that("Test error when P is symmetric but not definite", {
 })
 
 test_that("Test case where objective evaluation differs from result", {
+    skip_on_cran()
   x <- Variable(2,1)
   A <- matrix(1, nrow = 1, ncol = 1)
   B <- matrix(1, nrow = 2, ncol = 1)
@@ -112,6 +117,7 @@ test_that("Test case where objective evaluation differs from result", {
 })
 
 test_that("Test a quadratic form multiplied by zero", {
+    skip_on_cran()
   data_norm <- runif(5)
   M <- matrix(runif(5*2), nrow = 5, ncol = 2)
   c <- Variable(ncol(M))

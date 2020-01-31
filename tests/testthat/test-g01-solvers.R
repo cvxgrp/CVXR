@@ -22,6 +22,7 @@ SOLVER_MAP_QP$CPLEX  <- NULL
 INSTALLED_SOLVERS <- setdiff(INSTALLED_SOLVERS, "CPLEX")
 
 test_that("Test that all the ECOS solver options work", {
+    skip_on_cran()
   # Test ecos
   # feastol, abstol, reltol, feastol_inacc,
   # abstol_inacc, and reltol_inacc for tolerance values
@@ -38,6 +39,7 @@ test_that("Test that all the ECOS solver options work", {
 })
 
 test_that("Test that all the ECOS BB solver options work", {
+    skip_on_cran()
   # 'mi_maxiter'
   # maximum number of branch and bound iterations (default: 1000)
   # 'mi_abs_eps'
@@ -53,6 +55,7 @@ test_that("Test that all the ECOS BB solver options work", {
 })
 
 test_that("Test that all the SCS solver options work", {
+    skip_on_cran()
   # Test SCS
   # MAX_ITERS, EPS, ALPHA, UNDET_TOL, VERBOSE, and NORMALIZE.
   # If opts is missing, then the algorithm uses default settings.
@@ -80,6 +83,7 @@ test_that("Test that all the SCS solver options work", {
 # })
 
 test_that("Test a basic LP with GLPK", {
+    skip_on_cran()
   # Either the problem is solved or GLPK is not installed.
   if("GLPK" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
@@ -105,6 +109,7 @@ test_that("Test a basic LP with GLPK", {
 })
 
 test_that("Test a basic MILP with GLPK", {
+    skip_on_cran()
   # Either the problem is solved or GLPK is not installed.
   if("GLPK_MI" %in% installed_solvers()) {
     bool_var <- Variable(boolean = TRUE)
@@ -379,6 +384,7 @@ test_that("Test CPLEX warm start", {
 ## })
 
 test_that("Make sure CVXOPT's dual result matches other solvers", {
+    skip_on_cran()
   if("CVXOPT" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -407,6 +413,7 @@ test_that("Make sure CVXOPT's dual result matches other solvers", {
 })
 
 test_that("Test a basic LP with GUROBI", {
+    skip_on_cran()
   if("GUROBI" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "GUROBI")
@@ -456,6 +463,7 @@ test_that("Test a basic LP with GUROBI", {
 })
 
 test_that("Test a basic SOCP with GUROBI", {
+    skip_on_cran()
   if("GUROBI" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "GUROBI")
@@ -505,6 +513,7 @@ test_that("Test a basic SOCP with GUROBI", {
 })
 
 test_that("Make sure GUROBI's dual result matches other solvers", {
+    skip_on_cran()
   if("GUROBI" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -533,6 +542,7 @@ test_that("Make sure GUROBI's dual result matches other solvers", {
 })
 
 test_that("Test a basic LP with MOSEK", {
+    skip_on_cran()
   if("MOSEK" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "MOSEK")
@@ -562,6 +572,7 @@ test_that("Test a basic LP with MOSEK", {
 })
 
 test_that("Test a basic SOCP with MOSEK", {
+    skip_on_cran()
   if("MOSEK" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "MOSEK")
@@ -589,6 +600,7 @@ test_that("Test a basic SOCP with MOSEK", {
 })
 
 test_that("Make sure MOSEK's dual result matches other solvers", {
+    skip_on_cran()
   if("MOSEK" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -617,6 +629,7 @@ test_that("Make sure MOSEK's dual result matches other solvers", {
 })
 
 test_that("Test a basic SDP with MOSEK", {
+    skip_on_cran()
   # TODO: Should work with PSD (>>, <<).
   if("MOSEK" %in% installed_solvers()) {
     # Test optimality gap for equilibration.
@@ -675,6 +688,7 @@ test_that("Test a basic SDP with MOSEK", {
 ## })
 
 test_that("Test GUROBI warm start", {
+    skip_on_cran()
   # Make sure that warm starting GUROBI behaves as expected.
   # Note: This only checks output, not whether or not GUROBI is warm starting internally.
   if("GUROBI" %in% installed_solvers()) {
@@ -751,6 +765,7 @@ test_that("Test GUROBI warm start", {
 })
 
 test_that("Test a basic LP with XPRESS", {
+    skip_on_cran()
   if("XPRESS" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "XPRESS")
@@ -807,6 +822,7 @@ test_that("Test a basic SOCP with XPRESS", {
 })
 
 test_that("Make sure XPRESS's dual result matches other solvers", {
+    skip_on_cran()
   if("XPRESS" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -835,6 +851,7 @@ test_that("Make sure XPRESS's dual result matches other solvers", {
 })
 
 test_that("Test a basic LP with NAG", {
+    skip_on_cran()
   if("NAG" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
     result <- solve(prob, solver = "NAG")
@@ -864,6 +881,7 @@ test_that("Test a basic LP with NAG", {
 })
 
 test_that("Test a basic SOCP with NAG", {
+    skip_on_cran()
   if("NAG" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x,2) + 1.0), list(x == 0))
     result <- solve(prob, solver = "NAG")
@@ -891,6 +909,7 @@ test_that("Test a basic SOCP with NAG", {
 })
 
 test_that("Make sure NAG's dual result matches other solvers", {
+    skip_on_cran()
   if("NAG" %in% installed_solvers()) {
     constraints <- list(x == 0)
     prob <- Problem(Minimize(p_norm(x,1)))
@@ -919,6 +938,7 @@ test_that("Make sure NAG's dual result matches other solvers", {
 })
 
 test_that("Test the list of installed solvers", {
+    skip_on_cran()
   prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
   for(solver in names(SOLVER_MAP_CONIC)) {
     if(solver %in% INSTALLED_SOLVERS) {

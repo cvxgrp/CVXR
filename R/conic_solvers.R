@@ -383,8 +383,8 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol, 
-                                             abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol,
+                                             abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(is.null(num_iter)){
     num_iter <- 100L
   }
@@ -585,7 +585,7 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn SCS Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   ## Fix until scs::scs can handle sparse symmetric matrices
@@ -600,14 +600,14 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   }
   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 
-  
+
   # Default to acceleration_lookback = 10L instead of (Naras' mistake) 20L!
   # REMOVE when scs R package goes back to correct default
   control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps = 1e-4, acceleration_lookback = 10L)
 
   #Fill in parameter values
   control[names(solver_opts)] <- solver_opts
-    
+
   if(!is.null(feastol)){
     warning("A value has been set for feastol, but the SCS solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
@@ -751,7 +751,7 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 
   cvar <- data$c
   b <- data$b
@@ -794,7 +794,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if(length(data$int_vars_idx) > 0) {
     is_integer[unlist(data$int_vars_idx)] <- TRUE
   }
-  
+
   #Warnigs for including parameters
   if(!is.null(feastol)){
     warning("A value has been set for feastol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
@@ -808,7 +808,7 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  
+
   result <- rcbc::cbc_solve(
     obj = cvar,
     mat = A,
@@ -983,7 +983,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   cvar <- data[[C_KEY]]
   bvec <- data[[B_KEY]]
   Amat <- data[[A_KEY]]
@@ -1065,13 +1065,13 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
   if(is.null(num_iter)){
     num_iter = 1e8
   }
-  
+
   #Setting verbosity off
   control <- list(trace = verbose, itlim = num_iter)
-  
+
   #Setting rest of the parameters
   control[names(solver_opts)] <- solver_opts
-  
+
   # Solve problem.
   results_dict <- list()
 
@@ -1193,7 +1193,7 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
     stop("Unimplemented!")
   ## solver <- CVXOPT_OLD()
   ## prob_data <- list()
@@ -1246,7 +1246,7 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(is.null(num_iter)){
     num_iter <- 100
   }
@@ -1345,11 +1345,11 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
-  
+
   #Throw warnings if non-default values have been put in
   if(!is.null(feastol)){
     warning("A value has been set for feastol, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
@@ -1363,7 +1363,7 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
   if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  
+
   # Construct problem data.
   c <- data[[C_KEY]]
   dims <- data[[ConicSolver()@dims]]
@@ -1464,7 +1464,7 @@ setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK_MI Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1480,7 +1480,7 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
   if(!is.null(num_iter)){
     warning("A value has been set for num_iter, but the GLPK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
-  
+
   # Construct problem data.
   c <- data[[C_KEY]]
   dims <- data[[ConicSolver()@dims]]
@@ -1680,7 +1680,7 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 
   cvar <- data[[C_KEY]]
   b <- data[[B_KEY]]
@@ -1751,7 +1751,7 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     current_rows = current_rows + n_soc
 
   }
-  
+
   if(!is.null(reltol)){
     warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
@@ -1761,14 +1761,14 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   if(is.null(num_iter)){
     num_iter <- 1e8
   }
-  
+
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
   params$QCPDual <- 1 #equivalent to TRUE
   params$IterationLimit = num_iter
   params$FeasibilityTol = feastol
   params$OptimalityTol = feastol
-  
+
   params[names(solver_opts)] <- solver_opts
 
   solution <- list()
@@ -2062,7 +2062,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = NA) {
+setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   ## Check if the CVXR standard form has zero variables. If so,
   ## return a trivial solution. This is necessary because MOSEK
   ## will crash if handed a problem with zero variables.
@@ -2141,7 +2141,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
       prob$iparam  <-  solver_opts$iparam
       prob$sparam  <-  solver_opts$sparam
   }
-  
+
   if(!is.null(feastol)){
     warning("A value has been set for feastol, but the MOSEK solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
@@ -2317,7 +2317,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   c_holder[1:length(c)] <- c
 
   prob$c <- c_holder
-  
+
   if(is.logical(verbose) && verbose ){
     verbose <- 10
   } else if(!verbose){
@@ -2325,24 +2325,24 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   } else if(!is.null(solver_opts$verbose)){
     verbose <- solver_opts$verbose
   }
-  
+
   if(is.null(solver_opts$soldetail)){
     solver_opts$soldetail <- 3
   } else {
     warning("Solver might not output correct answer depending on the input of the soldetail variable. Default is 3")
   }
-  
+
   if(is.null(solver_opts$getinfo)){
     solver_opts$getinfo <- TRUE
   } else {
     warning("Solver might not output correct answer depending on the input of the getinfo variable. Default is TRUE")
   }
-  
+
   r <- Rmosek::mosek(prob, list(verbose = verbose, usesol = solver_opts$usesol,
-                                useparam = solver_opts$useparam, soldetail = solver_opts$soldetail, 
+                                useparam = solver_opts$useparam, soldetail = solver_opts$soldetail,
                                 getinfo = solver_opts$getinfo, writebefore = solver_opts$writebefore,
                                 writeafter = solver_opts$writeafter))
-  
+
   return(r)
 })
 
@@ -2635,7 +2635,7 @@ tri_to_full <- function(lower_tri, n) {
 # #' @param solver_opts A list of Solver specific options
 # #' @param solver_cache Cache for the solver.
 # #' @describeIn SuperSCS Solve a problem represented by data returned from apply.
-# setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+# setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 #   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
 #   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
 #     args$x <- solver_cache[[name(object)]]$x
@@ -2741,7 +2741,7 @@ tri_to_full <- function(lower_tri, n) {
 #   return(Solution(status, opt_val, primal_vars, dual_vars, other))
 # })
 #
-# setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = list()) {
+# setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 #   solver <- XPRESS_OLD()
 #   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
 #   solver_opts[[INT_IDX]] <- data[[INT_IDX]]

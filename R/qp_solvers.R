@@ -232,7 +232,7 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
 
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   P <- data[[P_KEY]]
@@ -274,7 +274,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
     vtype[data[INT_IDX]$int_vars_idx[i]] <- "I"
   }
-  
+
   # Throw parameter warnings
   if(!is.null(feastol)){
     warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
@@ -291,7 +291,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
 
   #Setting verbosity off
   control <- list(trace = verbose, itlim = num_iter)
-  
+
   #Setting rest of the parameters
   control[names(solver_opts)] <- solver_opts
 
@@ -417,7 +417,7 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
   q <- data[[Q_KEY]]
@@ -518,7 +518,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   #   setObjective(model, obj)   # Set objective.
   # }
   # update(model)
-  
+
   if(!is.null(reltol)){
     warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
@@ -528,7 +528,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   if(is.null(num_iter)){
     num_iter <- 1e8
   }
-  
+
   # Set verbosity and other parameters.
   params <- list()
   params$OutputFlag <- as.numeric(verbose)
@@ -686,7 +686,7 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
   A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
@@ -695,24 +695,43 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   data$u <- uA
   lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
-  
-  if(!is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
+
+ #Set parameters. Override defaults to match CVXPY
+  if(is.null(abstol)){
+    abstol <- 1e-5
+  }
+  if(is.null(reltol)){
+    reltol <- 1e-5
+  }
+  if(is.null(num_iter)){
+    num_iter <- 10000
+  }
+
+  control <- osqp::osqpSettings()
+  control$max_iter = num_iter
+  control$eps_abs <- abstol
+  control$eps_rel = reltol
+  control$eps_prim_inf = feastol
+  control$eps_dual_inf = feastol
+  control$verbose = verbose
+  control[names(solver_opts)] <- solver_opts
+
+  if(length(solver_cache$cache) > 0 && name(object) %in% names(solver_cache$cache)) {
     # Use cached data.
-    cache <- solver_cache[[name(object)]]
+    cache <- solver_cache$cache[[name(object)]]
     solver <- cache[[1]]
     old_data <- cache[[2]]
     results <- cache[[3]]
 
-      same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) &&
-          all(P@p == old_data[[P_KEY]]@p) &&
-          all(P@i == old_data[[P_KEY]]@i) &&
-          all(dim(A) == dim(old_data$full_A)) &&
-          all(A@p == old_data$full_A@p) &&
-          all(A@i == old_data$full_A@i)
+    same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) &&
+        all(P@p == old_data[[P_KEY]]@p) &&
+        all(P@i == old_data[[P_KEY]]@i) &&
+        all(dim(A) == dim(old_data$full_A)) &&
+        all(A@p == old_data$full_A@p) &&
+        all(A@i == old_data$full_A@i)
   } else
       same_pattern <- FALSE
 
-  # TODO: Check syntax for setting up R's OSQP solver.
   # If sparsity pattern differs, need to do setup.
   if(warm_start && same_pattern) {
       new_args <- list()
@@ -733,50 +752,33 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
       }
 
       if(length(new_args) > 0)
-          update(solver, new_args)
+          do.call(solver$Update, new_args)
 
       ## Map OSQP statuses back to CVXR statuses.
-      status <- status_map(object, results@info@status_val)
-      if(status == OPTIMAL)
-          warm_start(solver, results@x, results@y)
+      #status <- status_map(object, results@info@status_val)
+      #if(status == OPTIMAL)
+      #    warm_start(solver, results@x, results@y)
 
       ## Polish if factorizing.
-      if(is.null(solver_opts$polish))
-          solver_opts$polish <- factorizing
-      ## this update_settings is nowhere to be found, but basically
-      ## it just updates the settings. So we do it manually
-      ## update_settings(solver, verbose = verbose, solver_opts)
-      ##do.call(osqp::osqpSettings, c(list(verbose = verbose), solver_opts))
-      do.call(osqp::osqpSettings, solver_opts)
+      if(is.null(control$polish)){
+        control$polish <- factorizing
+      }
+
+      #Update Parameters
+      solver$UpdateSettings(control)
+
   } else {
+    if(is.null(control$polish))
+      control$polish <- TRUE
+
     # Initialize and solve problem.
-    if(is.null(solver_opts$polish))
-        solver_opts$polish <- TRUE
-    #Set parameters. Override defaults to match CVXPY
-    if(is.null(abstol)){
-      abstol <- 1e-5
-    }
-    if(is.null(reltol)){
-      reltol <- 1e-5
-    }
-    if(is.null(num_iter)){
-      num_iter <- 10000
-    }
-    
-    control <- osqp::osqpSettings()
-    control$max_iter = num_iter
-    control$eps_abs <- abstol
-    control$eps_rel = reltol
-    control$eps_prim_inf = feastol
-    control$eps_dual_inf = feastol
-    control$verbose = verbose
-    control[names(solver_opts)] <- solver_opts
     solver <- osqp::osqp(P, q, A, lA, uA, control)
   }
 
   results <- solver$Solve()
-  if(identical(solver_cache, list()) || !is.null(solver_cache))   # solver_cache is a list() object, so it throws an error here
-      solver_cache[[name(object)]] <- list(solver, data, results)
+  if (length(solver_cache) == 0L) {
+      solver_cache$cache[[name(object)]] <- list(solver, data, results)
+  }
 
   return(results)
 })

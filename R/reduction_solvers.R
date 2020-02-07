@@ -1,8 +1,8 @@
 # Solver utility functions.
 
-#' 
+#'
 #' Organize the constraints into a dictionary keyed by constraint names.
-#' 
+#'
 #' @param constraints a list of constraints.
 #' @return A list of constraint types where constr_map[[cone_type]] maps to a list.
 group_constraints <- function(constraints) {
@@ -12,9 +12,9 @@ group_constraints <- function(constraints) {
   return(constr_map)
 }
 
-#' 
+#'
 #' Gets a specified value of a dual variable.
-#' 
+#'
 #' @param result_vec A vector containing the dual variable values.
 #' @param offset An offset to get correct index of dual values.
 #' @param constraint A list of the constraints in the problem.
@@ -27,9 +27,9 @@ extract_dual_value <- function(result_vec, offset, constraint) {
   return(list(value, offset))
 }
 
-#' 
+#'
 #' Gets the values of the dual variables.
-#' 
+#'
 #' @param result_vec A vector containing the dual variable values.
 #' @param parse_func Function handle for the parser.
 #' @param constraints A list of the constraints in the problem.
@@ -77,7 +77,7 @@ setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(so
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   stop("Unimplemented")
 })
 
@@ -132,14 +132,14 @@ setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 #' @param data Data for the solver.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
-#' @param feastol The feasible tolerance. 
+#' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
 #' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = list()) {
+setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   return(reduction_solve(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts))
 })
 
@@ -158,7 +158,7 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
 
 #'
 #' Build a reduction chain from a problem to an installed solver.
-#' 
+#'
 #' @param problem The problem for which to build a chain.
 #' @param candidates A list of candidate solvers.
 #' @return A \linkS4class{SolvingChain} that can be used to solve the problem.
@@ -170,11 +170,11 @@ construct_solving_chain <- function(problem, candidates) {
     reductions <- c(reductions, ConstantSolver())
     return(SolvingChain(reductions = reductions))
   }
-  
+
   # Conclude the chain with one of the following:
   #   1) QpMatrixStuffing -> [a QpSolver]
   #   2) ConeMatrixStuffing -> [a ConicSolver]
-  
+
   # First, attempt to canonicalize the problem to a linearly constrained QP.
   if(length(candidates$qp_solvers) > 0 && accepts(QpMatrixStuffing(), problem)) {
     idx <- sapply(candidates$qp_solvers, function(s) { min(which(QP_SOLVERS == s)) })
@@ -184,11 +184,11 @@ construct_solving_chain <- function(problem, candidates) {
     reductions <- c(reductions, list(QpMatrixStuffing(), solver_instance))
     return(SolvingChain(reductions = reductions))
   }
-  
+
   if(length(candidates$conic_solvers) == 0)
-    stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (", 
+    stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (",
                paste(unlist(candidates), collapse = ","), ")", sep = ""))
-  
+
   # Our choice of solver depends upon which atoms are present in the problem.
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
@@ -200,11 +200,11 @@ construct_solving_chain <- function(problem, candidates) {
   if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, class) == "PSDConstraint")
                                || any(sapply(variables(problem), function(v) { is_psd(v) || is_nsd(v) })))
     cones <- c(cones, "PSDConstraint")
-  
+
   # Here, we make use of the observation that canonicalization only
   # increases the number of constraints in our problem.
   has_constr <- length(cones) > 0 || length(problem@constraints) > 0
-  
+
   idx <- sapply(candidates$conic_solvers, function(s) { min(which(CONIC_SOLVERS == s)) })
   sorted_candidates <- candidates$conic_solvers[order(idx)]
   for(solver in sorted_candidates) {
@@ -214,8 +214,8 @@ construct_solving_chain <- function(problem, candidates) {
       return(SolvingChain(reductions = reductions))
     }
   }
-  
-  stop(paste("Either candidate conic solvers (", 
+
+  stop(paste("Either candidate conic solvers (",
        paste(candidates$conic_solvers, sep = " ", collapse = ","), ") do not support the cones output by the problem (",
        paste(cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
 }
@@ -235,7 +235,7 @@ setMethod("initialize", "SolvingChain", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)
   if(length(.Object@reductions) == 0)
     stop("Solving chains must terminate with a ReductionSolver")
-  
+
   last <- .Object@reductions[[length(.Object@reductions)]]
   if(!is(last, "ReductionSolver"))
     stop("Solving chains must terminate with a ReductionSolver.")
@@ -254,7 +254,7 @@ setMethod("prepend", signature(object = "SolvingChain", chain = "Chain"), functi
 #' @param problem The problem to solve.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
-#' @param feastol The feasible tolerance. 
+#' @param feastol The feasible tolerance.
 #' @param reltol The relative tolerance.
 #' @param abstol The absolute tolerance.
 #' @param num_iter The maximum number of iterations.
@@ -272,15 +272,15 @@ setMethod("reduction_solve", signature(object = "SolvingChain", problem = "Probl
 
 #' @param data Data for the solver.
 #' @describeIn SolvingChain Solves the problem using the data output by the an apply invocation.
-setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose, 
+setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, data, warm_start, verbose,
                                                                feastol, reltol, abstol, num_iter, solver_opts) {
-  return(solve_via_data(object@solver, data, warm_start, verbose, 
+  return(solve_via_data(object@solver, data, warm_start, verbose,
                         feastol, reltol, abstol, num_iter, solver_opts, problem@.solver_cache))
 })
 
 #'
 #' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
-#' 
+#'
 #' @param problem The problem for which to build a chain.
 #' @param candidates A list of candidate solvers.
 #' @param gp A logical value indicating whether the problem is a geometric program.
@@ -289,28 +289,28 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
-  
+
   # TODO: Handle boolean constraints.
   if(Complex2Real.accepts(problem))
     reductions <- c(reductions, Complex2Real())
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
-  
+
   if(!gp && !is_dcp(problem))
     stop("Problem does not follow DCP rules. However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
   else if(gp && !is_dgp(problem))
     stop("Problem does not follow DGP rules. However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
-  
+
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
   if(class(problem@objective) == "Maximize")
     reductions <- c(reductions, FlipObjective())
-  
+
   # First, attempt to canonicalize the problem to a linearly constrained QP.
   if(length(candidates$qp_solvers) > 0 && Qp2SymbolicQp.accepts(problem)) {
     reductions <- c(reductions, list(CvxAttr2Constr(), Qp2SymbolicQp()))
     return(Chain(reductions = reductions))
   }
-  
+
   # Canonicalize it to conic problem.
   if(length(candidates$conic_solvers) == 0)
     stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")

@@ -2252,8 +2252,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     rows <- (i:(i + total_soc_exp_slacks-1))+1
     cols <- (j:(j + total_soc_exp_slacks-1))+1
     #task.putaijlist(rows, cols, rep(1, total_soc_exp_slacks))
-    for(iter in 1:length(rows))
-      prob$A[rows[iter],cols[iter]] <- 1
+    prob$A[rows, cols] <- diag(1, nrow = length(rows), ncol = length(cols))
+    # for(iter in 1:length(rows))
+    #   prob$A[rows[iter],cols[iter]] <- 1
   }
 
   # Constraint index: start of LMIs.

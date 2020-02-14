@@ -2221,6 +2221,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   ##G is already sparse
   G_sparse  <- G
   G_sum <- summary(G_sparse)
+  nrow_G_sparse <- nrow(G_sparse)
+  ncol_G_sparse <- ncol(G_sparse)
+  
   row <- G_sum$i
   col <- G_sum$j
   vals <- G_sum$x
@@ -2228,22 +2231,14 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
 
   # initializing A matrix
-  if(nrow(G_sparse) == 0 || (ncol(G_sparse) + total_soc_exp_slacks) == 0)
+  if(ncol_G_sparse == 0 || (ncol_G_sparse + total_soc_exp_slacks) == 0)
     ## prob$A <- sparseMatrix(i = c(), j = c(), dims = c(0, 0))
     ## G is already sparse
     prob$A  <- G
   else {
-    prob$A <- sparseMatrix(i = rep(1:nrow(G_sparse), ncol(G_sparse) + total_soc_exp_slacks),
-                           j = rep(1:(ncol(G_sparse) + total_soc_exp_slacks), nrow(G_sparse)),
-                           x = rep(0, nrow(G_sparse)*(ncol(G_sparse) + total_soc_exp_slacks)))
-
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
     # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-    A_holder <- sparseMatrix(i = row, j = col, x = vals)
-    row_seq <- as.numeric(seq_len(nrow(A_holder)))
-    col_seq <- as.numeric(seq_len(ncol(A_holder)))
-    prob$A[row_seq, col_seq] <- A_holder
-    # prob$A[1:nrow(A_holder), 1:ncol(A_holder)] <- A_holder
+    prob$A <- sparseMatrix(i = row, j = col, x = vals, dims = c(nrow_G_sparse, ncol_G_sparse + total_soc_exp_slacks))
   }
 
   if(total_soc_exp_slacks > 0) {

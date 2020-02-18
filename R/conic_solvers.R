@@ -2101,12 +2101,24 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   G <- data[[G_KEY]]
   h <- data[[H_KEY]]
   dims <- data[[DIMS]]
+  dims_SOC_DIM <- dims[[SOC_DIM]]
+  dims_EXP_DIM <- dims[[EXP_DIM]]
+  dims_PSD_DIM <- dims[[PSD_DIM]]
+  data_BOOL_IDX <- data[[BOOL_IDX]]
+  data_INT_IDX <- data[[INT_IDX]]
+  num_bool <- length(data_BOOL_IDX)
+  num_int <- length(data_INT_IDX)
+  length_dims_SOC_DIM <- length(dims_SOC_DIM)
+  unlist_dims_EXP_DIM <- unlist(dims_EXP_DIM)
+  unlist_dims_SOC_DIM <- unlist(dims_SOC_DIM)
+  dims_LEQ_DIM <- dims[[LEQ_DIM]]
+  
   n0 <- length(c)
-  n <- n0 + sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
-  psd_total_dims <- sum(unlist(dims[[PSD_DIM]])^2, na.rm = TRUE)
+  n <- n0 + sum(unlist_dims_SOC_DIM, na.rm = TRUE) + sum(unlist_dims_EXP_DIM, na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
+  psd_total_dims <- sum(unlist(dims_PSD_DIM)^2, na.rm = TRUE)
   m <- length(h)
-  num_bool <- length(data[[BOOL_IDX]])
-  num_int <- length(data[[INT_IDX]])
+  
+  
 
   # Define variables, cone constraints, and integrality constraints.
   #
@@ -2164,31 +2176,32 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
                    bux = rep(Inf, n))
 
   #Initialize the cone. Not 100% sure about this bit
-  NUMCONES <- length(dims[[SOC_DIM]]) + floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)
+  NUMCONES <- length_dims_SOC_DIM + floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3)
   prob$cones <- matrix(list(), nrow = 2, ncol = NUMCONES)
 
   if(psd_total_dims > 0)
-    prob$bardim <- unlist(dims[[PSD_DIM]])
+    prob$bardim <- unlist(dims_PSD_DIM)
   running_idx <- n0
-  for(i in seq_along(unlist(dims[[SOC_DIM]]))) {
-    prob$cones[,i] <- list("QUAD", as.numeric((running_idx + 1):(running_idx + unlist(dims[[SOC_DIM]])[[i]]))) # latter term is size_cone
-    running_idx <- running_idx + unlist(dims[[SOC_DIM]])[[i]]
+  for(i in seq_along(unlist_dims_SOC_DIM)) {
+    prob$cones[,i] <- list("QUAD", as.numeric((running_idx + 1):(running_idx + unlist_dims_SOC_DIM[[i]]))) # latter term is size_cone
+    running_idx <- running_idx + unlist_dims_SOC_DIM[[i]]
   }
-  if(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3) != 0){ # check this, feels sketchy
-    for(k in 1:(floor(sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)/3)+1) ) {
-      prob$cones[,(length(dims[[SOC_DIM]])+k)] <- list("PEXP", as.numeric((running_idx+1):(running_idx + 3)) )
+  if(floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3) != 0){ # check this, feels sketchy
+    for(k in 1:(floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3)+1) ) {
+      prob$cones[,(length_dims_SOC_DIM+k)] <- list("PEXP", as.numeric((running_idx+1):(running_idx + 3)) )
       running_idx <- running_idx + 3
     }
   }
   if(num_bool + num_int > 0) {
     if(num_bool > 0) {
-      prob$intsub <- unlist(data[[BOOL_IDX]])
+      unlist_data_BOOL_IDX <- unlist(data_BOOL_IDX)
+      prob$intsub <- unlist_data_BOOL_IDX
       #since the variable constraints are already declared, we are resetting them so they can only be 0 or 1
-      prob$bx[, unlist(data[[BOOL_IDX]])] <- rbind( rep(0, length(unlist(data[[BOOL_IDX]]))), rep(1, length(unlist(data[[BOOL_IDX]]))) )
+      prob$bx[, unlist_data_BOOL_IDX] <- rbind( rep(0, length(unlist_data_BOOL_IDX)), rep(1, length(unlist_data_BOOL_IDX)) )
 
     }
     if(num_int > 0)
-      prob$intsub <- unlist(data[[INT_IDX]])
+      prob$intsub <- unlist(data_INT_IDX)
   }
 
   # Define linear inequality and equality constraints.
@@ -2219,16 +2232,15 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
   ##G_sparse <- as(as.matrix(G), "sparseMatrix")
   ##G is already sparse
-  G_sparse  <- G
-  G_sum <- summary(G_sparse)
-  nrow_G_sparse <- nrow(G_sparse)
-  ncol_G_sparse <- ncol(G_sparse)
+  G_sum <- summary(G)
+  nrow_G_sparse <- nrow(G)
+  ncol_G_sparse <- ncol(G)
   
   row <- G_sum$i
   col <- G_sum$j
   vals <- G_sum$x
 
-  total_soc_exp_slacks <- sum(unlist(dims[[SOC_DIM]]), na.rm = TRUE) + sum(unlist(dims[[EXP_DIM]]), na.rm = TRUE)
+  total_soc_exp_slacks <- sum(unlist_dims_SOC_DIM, na.rm = TRUE) + sum(unlist_dims_EXP_DIM, na.rm = TRUE)
 
   # initializing A matrix
   if(ncol_G_sparse == 0 || (ncol_G_sparse + total_soc_exp_slacks) == 0)
@@ -2253,8 +2265,8 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   }
 
   # Constraint index: start of LMIs.
-  i <- dims[[LEQ_DIM]] + dims[[EQ_DIM]] + total_soc_exp_slacks + 1
-  dim_exist_PSD <- length(dims[[PSD_DIM]]) #indicates whether or not we have any LMIs
+  i <- dims_LEQ_DIM + dims[[EQ_DIM]] + total_soc_exp_slacks + 1
+  dim_exist_PSD <- length(dims_PSD_DIM) #indicates whether or not we have any LMIs
 
   if(dim_exist_PSD > 0){
     #A bit hacky here too, specifying the lower triangular part of symmetric coefficient matrix barA
@@ -2264,9 +2276,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     barAl <- c() #Specifies column index within the block matrix specified above
     barAv <- c() #Values for all the matrices
 
-    for(j in 1:length(dims[[PSD_DIM]])) {   #For each PSD matrix
-      for(row_idx in 1:dims[[PSD_DIM]][[j]]) {
-        for(col_idx in 1:dims[[PSD_DIM]][[j]]) {
+    for(j in 1:length(dims_PSD_DIM)) {   #For each PSD matrix
+      for(row_idx in 1:dims_PSD_DIM[[j]]) {
+        for(col_idx in 1:dims_PSD_DIM[[j]]) {
           val <- ifelse(row_idx == col_idx, 1, 0.5)
           row <- max(row_idx, col_idx)
           col <- min(row_idx, col_idx)
@@ -2293,7 +2305,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     prob$barA$v <- barAv
   }
 
-  num_eq <- length(h) - dims[[LEQ_DIM]]
+  num_eq <- length(h) - dims_LEQ_DIM
 
   #CVXPY has the first dims[[LEQ_DIM]] variables as upper bounded
   #type_constraint <- rep(mosek.boundkey.up, dims[[LEQ_DIM]]) + rep(mosek.boundkey.fx, num_eq)
@@ -2302,7 +2314,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   hu_holder <- as.numeric(h)
 
   #upper constraints for the LEQ_DIM number of variables, so set lower bound to -Inf
-  hl_holder[seq_len(dims[[LEQ_DIM]])] <- rep(-Inf, dims[[LEQ_DIM]])
+  hl_holder[seq_len(dims_LEQ_DIM)] <- rep(-Inf, dims_LEQ_DIM)
 
   prob$bc <- rbind(blc = hl_holder,
                    buc = hu_holder)

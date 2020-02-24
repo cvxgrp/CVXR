@@ -223,6 +223,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 }
 
 test_that("Test all constant atoms", {
+    skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
 

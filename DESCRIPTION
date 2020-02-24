@@ -57,7 +57,8 @@ Suggests:
     Rmosek,
     gurobi,
     Rcplex,
-    rcbc
+    rcbc,
+    covr
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true

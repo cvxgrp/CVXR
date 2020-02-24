@@ -1,6 +1,8 @@
 context("test-vignettes")
 
+
 test_that("Test non-negative least squares", {
+    skip_on_cran()
     require(MASS)
     print("LS")
 
@@ -54,6 +56,7 @@ test_that("Test non-negative least squares", {
 })
 
 test_that("Test censored regression", {
+  skip_on_cran()
   ## Problem data
   n <- 30
   M <- 50
@@ -111,6 +114,7 @@ test_that("Test censored regression", {
 })
 
 test_that("Test Elastic-net regression", {
+  skip_on_cran()
   set.seed(1)
   print("ELASTIC")
 
@@ -163,6 +167,7 @@ test_that("Test Elastic-net regression", {
 })
 
 test_that("Test Huber regression", {
+  skip_on_cran()
   n <- 1
   m <- 450
   M <- 1      ## Huber threshold
@@ -217,6 +222,7 @@ test_that("Test Huber regression", {
 })
 
 test_that("Test logistic regression", {
+  skip_on_cran()
   n <- 20
   m <- 1000
   offset <- 0
@@ -245,6 +251,7 @@ test_that("Test logistic regression", {
 
 
 test_that("Test saturating hinges problem", {
+  skip_on_cran()
   require(ElemStatLearn)
   print("SAT HINGES")
 
@@ -331,6 +338,7 @@ test_that("Test saturating hinges problem", {
 })
 
 test_that("Test log-concave distribution estimation", {
+  skip_on_cran()
   set.seed(1)
   print("LOG CONCAVE")
 
@@ -392,6 +400,7 @@ test_that("Test log-concave distribution estimation", {
 })
 
 test_that("Test channel capacity problem", {
+  skip_on_cran()
   ## Problem data
   n <- 2
   m <- 2
@@ -417,6 +426,7 @@ test_that("Test channel capacity problem", {
 })
 
 test_that("Test optimal allocation in a Gaussian broadcast channel", {
+  skip_on_cran()
   ## Problem data
   n <- 5
   alpha <- seq(10, n-1+10)/n
@@ -443,6 +453,7 @@ test_that("Test optimal allocation in a Gaussian broadcast channel", {
 })
 
 test_that("Test catenary problem", {
+  skip_on_cran()
   ## Problem data
   m <- 101
   L <- 2
@@ -505,6 +516,7 @@ test_that("Test catenary problem", {
 })
 
 test_that("Test direct standardization problem", {
+  skip_on_cran()
   print("DIRECT")
 
   skew_sample <- function(data, bias) {
@@ -567,6 +579,7 @@ test_that("Test direct standardization problem", {
 })
 
 test_that("Test risk-return tradeoff in portfolio optimization", {
+  skip_on_cran()
   print("PORTFOLIO")
 
   ## Problem data
@@ -623,6 +636,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
 })
 
 test_that("Test Kelly gambling optimal bets", {
+  skip_on_cran()
   print("KELLY")
 
   set.seed(1)
@@ -680,6 +694,7 @@ test_that("Test Kelly gambling optimal bets", {
 })
 
 test_that("Test worst-case covariance", {
+  skip_on_cran()
   print("WORST CASE")
 
   ## Problem data
@@ -740,6 +755,7 @@ test_that("Test worst-case covariance", {
 })
 
 test_that("Test sparse inverse covariance estimation", {
+  skip_on_cran()
   require(Matrix)
   require(expm)
   print("SPARSE INV")
@@ -782,6 +798,7 @@ test_that("Test sparse inverse covariance estimation", {
 })
 
 test_that("Test fastest mixing Markov chain (FMMC)", {
+  skip_on_cran()
   print("MCMC")
 
   ## Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672

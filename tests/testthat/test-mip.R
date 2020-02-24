@@ -5,6 +5,7 @@
 ## installing everything ourselves.
 
 test_that("Test Boolean problems", {
+  skip_on_cran()
   # Bool in objective
   obj <- Minimize((x_bool - 0.2)^2)
   p <- Problem(obj, list())

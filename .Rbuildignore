@@ -10,3 +10,4 @@
 ^LICENSE\.md$
 ^CRAN-RELEASE$
 ^inst/issues/*
+^\.github/workflows/R-CMD-check\.yaml$

@@ -26,7 +26,7 @@ Authors@R: c(
                   role=c("ctb"),
                   email = "prosenfield@farmersbusinessnetwork.com")
            )
-URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
+URL: https://github.com/cvxgrp/CVXR, https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
 BugReports: https://github.com/cvxgrp/CVXR/issues
 Description: An object-oriented modeling language for disciplined convex
     programming (DCP). It allows the user to formulate convex optimization problems

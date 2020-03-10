@@ -7,7 +7,6 @@ perform <- CVXR:::perform
 ConeMatrixStuffing <- CVXR:::ConeMatrixStuffing
 
 test_that("test diffcp SDP example", {
-  skip_on_cran()
   randn_symm <- function(n) {
     A <- matrix(rnorm(n*n), nrow = n, ncol = n)
     return((A + t(A))/2)
@@ -72,7 +71,6 @@ test_that("test TV inpainting", {
 })
 
 test_that("test least squares", {
-  skip_on_cran()
   m <- 20
   n <- 15
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
@@ -87,7 +85,6 @@ test_that("test least squares", {
 })
 
 test_that("test qp", {
-  skip_on_cran()
   m <- 15
   n <- 10
   p <- 5
@@ -108,7 +105,6 @@ test_that("test qp", {
 })
 
 test_that("test stuffing perf with many constraints", {
-  skip_on_cran()
   m <- 2000
   n <- 2000
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)

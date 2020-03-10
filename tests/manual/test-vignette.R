@@ -3,7 +3,7 @@ context("test-vignettes")
 
 test_that("Test non-negative least squares", {
     skip_on_cran()
-    require(MASS)
+    library(MASS)
     print("LS")
 
     ## Generate problem data
@@ -252,7 +252,7 @@ test_that("Test logistic regression", {
 
 test_that("Test saturating hinges problem", {
   skip_on_cran()
-  require(ElemStatLearn)
+  library(ElemStatLearn)
   print("SAT HINGES")
 
   ## Import and sort data
@@ -629,10 +629,7 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
   ## Plot weights for a few gamma
   w_plot <- t(w_data[markers_on,])
   colnames(w_plot) <- sprintf("%.2f", gammas[markers_on])
-  if (require("colorspace")) {
-    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget", col = sequential_hcl(n))
-  } else
-    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
+  barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
 })
 
 test_that("Test Kelly gambling optimal bets", {
@@ -756,8 +753,8 @@ test_that("Test worst-case covariance", {
 
 test_that("Test sparse inverse covariance estimation", {
   skip_on_cran()
-  require(Matrix)
-  require(expm)
+  library(Matrix)
+  library(expm)
   print("SPARSE INV")
 
   set.seed(1)
@@ -840,16 +837,10 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
   }
 
   disp_result <- function(states, P, tol = 1e-3) {
-    if(require("markovchain")) {
-      P[P < tol] <- 0
-      P <- P/apply(P, 1, sum)   ## Normalize so rows sum to exactly 1
-      mc <- new("markovchain", states = states, transitionMatrix = P)
-      plot(mc)
-    } else {
       rownames(P) <- states
       colnames(P) <- states
       print(P)
-    }
+
   }
 
   ## SIAM Rev. 46 examples pg. 674: Figure 1 and Table 1

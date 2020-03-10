@@ -191,7 +191,7 @@ check_solver <- function(prob, solver_name) {
 
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     expect_true(is_dcp(problem))
-    print(problem)
+    ##print(problem)
     if(verbose) {
         print(problem@objective)
         print(problem@constraints)

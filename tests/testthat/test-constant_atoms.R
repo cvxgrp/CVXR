@@ -181,7 +181,7 @@ check_solver <- function(prob, solver_name) {
     tryCatch({
         if(solver_name == ROBUST_CVXOPT)
             solver_name <- "CVXOPT"
-        
+
         chains <- CVXR:::.construct_chains(prob, solver = solver_name)
         return(TRUE)
     }, error = function(e) {
@@ -210,7 +210,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 
             obj_diff <- (result$value - obj_val)/(1+abs(obj_val))
             expect_true(abs(obj_diff) <= tolerance)
-            
+
             if(abs(obj_diff) > tolerance) {
                 sink("test_constant_atoms_out.txt", append = TRUE)
                 print(atom)
@@ -226,8 +226,6 @@ test_that("Test all constant atoms", {
     skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
-
-    # skip_on_cran()
 
     for(a in atoms) {
         atom_list <- a[[1]]
@@ -257,13 +255,17 @@ test_that("Test all constant atoms", {
                         ## print(atom)
                         ## print(value(obj_val[row, col]))
                         run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
-
-                        ## Atoms with Parameter arguments
+                        ## cat("Index is", ind, "\n")
+                        ## print("ATOM is")
+                        ## print(atom)
+                        ## print("Args is")
+                        ## print(args)
+                        ## ##Atoms with Parameter arguments
                         ## parameters <- list()
                         ## for(expr in args) {
-                        ##  expr_dim <- intf_dim(expr)
-                        ##  parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
-                        ##  value(parameters[[length(parameters)]]) <- as.matrix(expr)
+                        ##     expr_dim <- dim(expr)
+                        ##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
+                        ##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
                         ## }
                         ## objective <- objective_type(do.call(atom, parameters)[row, col])
                         ## run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)

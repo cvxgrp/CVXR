@@ -286,7 +286,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(is.null(num_iter)){
-    num_iter = 1e8
+    num_iter = default_params$CPLEX$num_iter
   }
 
   #Setting verbosity off
@@ -526,7 +526,7 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(is.null(num_iter)){
-    num_iter <- 1e8
+    num_iter <- default_params$MOSEK$num_iter
   }
 
   # Set verbosity and other parameters.
@@ -698,13 +698,13 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
 
  #Set parameters. Override defaults to match CVXPY
   if(is.null(abstol)){
-    abstol <- 1e-5
+    abstol <- default_params$OSQP$eps_abs
   }
   if(is.null(reltol)){
-    reltol <- 1e-5
+    reltol <- default_params$OSQP$eps_rel
   }
   if(is.null(num_iter)){
-    num_iter <- 10000
+    num_iter <- default_params$OSQP$max_iter
   }
 
   control <- osqp::osqpSettings()

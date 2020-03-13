@@ -386,16 +386,16 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol,
                                              abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(is.null(num_iter)){
-    num_iter <- 100L
+    num_iter <- default_params$ECOS$max_iters
   }
   if(is.null(feastol)){
-    feastol <- 1e-8
+    feastol <- default_params$ECOS$feastol
   }
   if(is.null(reltol)){
-    reltol <- 1e-8
+    reltol <- default_params$ECOS$reltol
   }
   if(is.null(abstol)){
-    abstol <- 1e-8
+    abstol <- default_params$ECOS$abstol
   }
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
@@ -1063,7 +1063,7 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
     warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(is.null(num_iter)){
-    num_iter = 1e8
+    num_iter = default_params$CPLEX$num_iter
   }
 
   #Setting verbosity off
@@ -1248,16 +1248,16 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
   if(is.null(num_iter)){
-    num_iter <- 100
+    num_iter <- default_params$ECOS_BB$max_iters
   }
   if(is.null(feastol)){
-    feastol <- 1e-8
+    feastol <- default_params$ECOS_BB$feastol
   }
   if(is.null(reltol)){
-    reltol <- 1e-8
+    reltol <- default_params$ECOS_BB$reltol
   }
   if(is.null(abstol)){
-    abstol <- 1e-8
+    abstol <- default_params$ECOS_BB$abstol
   }
   cones <- ECOS.dims_to_solver_dict(data[[ConicSolver()@dims]])
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter), feastol = feastol, reltol = reltol, abstol = abstol, verbose = as.integer(verbose))
@@ -1759,7 +1759,7 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
     warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
   }
   if(is.null(num_iter)){
-    num_iter <- 1e8
+    num_iter <- default_params$GUROBI$num_iter
   }
 
   params <- list()

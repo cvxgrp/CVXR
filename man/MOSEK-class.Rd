@@ -38,7 +38,7 @@ MOSEK()
   abstol,
   num_iter,
   solver_opts,
-  solver_cache = NA
+  solver_cache
 )
 
 \S4method{invert}{MOSEK,ANY,ANY}(object, solution, inverse_data)

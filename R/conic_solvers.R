@@ -384,7 +384,10 @@ setMethod("invert", signature(object = "ECOS", solution = "list", inverse_data =
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose, feastol, reltol,
-                                             abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+                                             abstol, num_iter, solver_opts, solver_cache) {
+
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
+
   if(is.null(num_iter)){
     num_iter <- default_params$ECOS$max_iters
   }
@@ -585,8 +588,8 @@ setMethod("invert", signature(object = "SCS", solution = "list", inverse_data = 
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn SCS Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
-
+setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   ## Fix until scs::scs can handle sparse symmetric matrices
   A  <- data[[A_KEY]]
@@ -751,8 +754,8 @@ setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_d
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
-
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   cvar <- data$c
   b <- data$b
   A <- data$A
@@ -983,7 +986,8 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   cvar <- data[[C_KEY]]
   bvec <- data[[B_KEY]]
   Amat <- data[[A_KEY]]
@@ -1193,8 +1197,9 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache) {
     stop("Unimplemented!")
+  ## if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   ## solver <- CVXOPT_OLD()
   ## prob_data <- list()
   ## prob_data[[name(object)]] <- ProblemData()
@@ -1246,7 +1251,8 @@ setMethod("perform", signature(object = "ECOS_BB", problem = "Problem"), functio
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ECOS_BB Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   if(is.null(num_iter)){
     num_iter <- default_params$ECOS_BB$max_iters
   }
@@ -1345,7 +1351,8 @@ setMethod("invert", signature(object = "GLPK", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1464,7 +1471,8 @@ setMethod("name", "GLPK_MI", function(x) { GLPK_MI_NAME })
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GLPK_MI Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   if(verbose)
     solver_opts$verbose <- verbose
   solver_opts$canonicalize_status <- FALSE
@@ -1680,8 +1688,8 @@ setMethod("invert", signature(object = "GUROBI_CONIC", solution = "list", invers
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_CONIC Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
-
+setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   cvar <- data[[C_KEY]]
   b <- data[[B_KEY]]
   A <- data[[A_KEY]]
@@ -2062,7 +2070,9 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn MOSEK Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   ## Check if the CVXR standard form has zero variables. If so,
   ## return a trivial solution. This is necessary because MOSEK
   ## will crash if handed a problem with zero variables.
@@ -2112,13 +2122,13 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   unlist_dims_EXP_DIM <- unlist(dims_EXP_DIM)
   unlist_dims_SOC_DIM <- unlist(dims_SOC_DIM)
   dims_LEQ_DIM <- dims[[LEQ_DIM]]
-  
+
   n0 <- length(c)
   n <- n0 + sum(unlist_dims_SOC_DIM, na.rm = TRUE) + sum(unlist_dims_EXP_DIM, na.rm = TRUE) # unlisted dims to make sure sum function works and na.rm to handle empty lists
   psd_total_dims <- sum(unlist(dims_PSD_DIM)^2, na.rm = TRUE)
   m <- length(h)
-  
-  
+
+
 
   # Define variables, cone constraints, and integrality constraints.
   #
@@ -2235,7 +2245,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   G_sum <- summary(G)
   nrow_G_sparse <- nrow(G)
   ncol_G_sparse <- ncol(G)
-  
+
   row <- G_sum$i
   col <- G_sum$j
   vals <- G_sum$x
@@ -2643,7 +2653,8 @@ tri_to_full <- function(lower_tri, n) {
 # #' @param solver_opts A list of Solver specific options
 # #' @param solver_cache Cache for the solver.
 # #' @describeIn SuperSCS Solve a problem represented by data returned from apply.
-# setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+# setMethod("solve_via_data", "SuperSCS", function(object, data, warm_start, verbose, solver_opts, solver_cache) {
+#   if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
 #   args <- list(A = data[[A_KEY]], b = data[[B_KEY]], c = data[[C_KEY]])
 #   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
 #     args$x <- solver_cache[[name(object)]]$x
@@ -2749,7 +2760,8 @@ tri_to_full <- function(lower_tri, n) {
 #   return(Solution(status, opt_val, primal_vars, dual_vars, other))
 # })
 #
-# setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+# setMethod("solve_via_data", "XPRESS", function(object, data, warm_start, verbose, solver_opts, solver_cache) {
+#   if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
 #   solver <- XPRESS_OLD()
 #   solver_opts[[BOOL_IDX]] <- data[[BOOL_IDX]]
 #   solver_opts[[INT_IDX]] <- data[[INT_IDX]]

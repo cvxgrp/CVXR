@@ -77,7 +77,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -112,7 +112,12 @@
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/cvxgrp/CVXR">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -127,7 +132,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Log-Sum-Exponential</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/cvxgrp/CVXR/blob/master/R/exports.R'><code>R/exports.R</code></a></small>
     <div class="hidden name"><code>log_sum_exp.Rd</code></div>
     </div>
 
@@ -163,9 +168,9 @@
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>5</span>,<span class='fl'>7</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,-<span class='fl'>3</span>))
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>log_sum_exp</span>(<span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;      [,1]          [,2]
-#&gt; [1,]    5  1.444884e-13
-#&gt; [2,]    7 -3.000000e+00</div></pre>
+<span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt;          [,1]          [,2]
+#&gt; [1,] 5.000000  7.146139e-13
+#&gt; [2,] 6.999999 -3.000000e+00</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

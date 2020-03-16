@@ -42,7 +42,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -76,7 +76,14 @@
   <a href="news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/cvxgrp/CVXR">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -88,9 +95,9 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="cvxr-" class="section level1">
+<div id="cvxr" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#cvxr-" class="anchor"></a>CVXR <img src="reference/figures/logo.png" width="100" align="right">
+<a href="#cvxr" class="anchor"></a>CVXR <img src="reference/figures/logo.png" width="100" align="right">
 </h1></div>
 
 <p>CVXR provides an object-oriented modeling language for convex optimization, similar to <code>CVX</code>, <code>CVXPY</code>, <code>YALMIP</code>, and <code>Convex.jl</code>. It allows the user to formulate convex optimization problems in a natural mathematical syntax rather than the restrictive standard form required by most solvers. The user specifies an objective and set of constraints by combining constants, variables, and parameters using a library of functions with known mathematical properties. <code>CVXR</code> then applies signed <a href="https://web.stanford.edu/~boyd/papers/pdf/disc_cvx_prog.pdf">disciplined convex programming (DCP)</a> to verify the problem’s convexity. Once verified, the problem is converted into standard conic form using graph implementations and passed to a cone solver such as <a href="https://github.com/embotech/ecos">ECOS</a> or <a href="https://github.com/cvxgrp/scs">SCS</a>.</p>
@@ -99,10 +106,10 @@
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>This package is now released on CRAN, so you can install the current released version as you would any other package for R, version 3.4 and higher. (<code>CVXR</code> is known to work with earlier versions of R too, but we don’t check our releases against older versions of R.)</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'CVXR'</span>, <span class="dt">repos =</span> <span class="st">"https://CRAN.R-project.org"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'CVXR'</span>, <span class="dt">repos =</span> <span class="st">"https://CRAN.R-project.org"</span>)</a></code></pre></div>
 <p>Development versions can be installed from the Github repository assuming you have the development tools for R available, including the C compilers etc. Execute:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(devtools)</a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"cvxgrp/CVXR"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(devtools)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"cvxgrp/CVXR"</span>)</a></code></pre></div>
 </div>
 <div id="tutorial" class="section level2">
 <h2 class="hasAnchor">
@@ -117,6 +124,8 @@
 <h2>Links</h2>
 <ul class="list-unstyled">
 <li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=CVXR">https://​cloud.r-project.org/​package=CVXR</a>
+</li>
+<li>Browse source code at <br><a href="https://github.com/cvxgrp/CVXR">https://​github.com/​cvxgrp/​CVXR</a>
 </li>
 <li>Report a bug at <br><a href="https://github.com/cvxgrp/CVXR/issues">https://​github.com/​cvxgrp/​CVXR/​issues</a>
 </li>

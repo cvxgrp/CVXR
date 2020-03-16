@@ -30,7 +30,7 @@
   abstol,
   num_iter,
   solver_opts,
-  solver_cache = list()
+  solver_cache
 )
 
 \S4method{reduction_solve}{ReductionSolver,ANY}(
@@ -55,7 +55,7 @@
   abstol,
   num_iter,
   solver_opts,
-  solver_cache = list()
+  solver_cache
 )
 }
 \arguments{

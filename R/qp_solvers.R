@@ -232,8 +232,8 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
-
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
@@ -417,7 +417,8 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
   q <- data[[Q_KEY]]
@@ -686,7 +687,8 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
   A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)

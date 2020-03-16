@@ -77,7 +77,8 @@ setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(so
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  ##if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   stop("Unimplemented")
 })
 
@@ -139,7 +140,8 @@ setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache = new.env(parent=emptyenv())) {
+setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  ## if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   return(reduction_solve(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts))
 })
 

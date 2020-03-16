@@ -349,6 +349,11 @@ setClassUnion("SolutionORList", c("Solution", "list"))
 #' @rdname Problem-class
 .Problem <- setClass("Problem", representation(objective = "Objective", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", .intermediate_chain = "ANY", .solving_chain = "ANY", .cached_chain_key = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNULL", .solver_stats = "list", args = "list", .solver_cache = "environment", .intermediate_problem = "ANY", .intermediate_inverse_data = "ANY"),
                     prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = new.env(parent=emptyenv()), .intermediate_problem = NULL, .intermediate_inverse_data = NULL),
+                    ## CLEANUP NOTE: The prototype should probably be
+                    ## removed in future versions since we never use
+                    ## it In particular, initializing the solver_cache
+                    ## environment at argument level poses problems in
+                    ## R 3.6 at least
                     validity = function(object) {
                       if(!(class(object@objective) %in% c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be Minimize or Maximize")
@@ -392,7 +397,7 @@ Problem <- function(objective, constraints = list()) {
 # Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
 SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
 
-setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache = new.env(parent=emptyenv()), .intermediate_problem = NULL, .intermediate_inverse_data = NULL) {
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache, .intermediate_problem = NULL, .intermediate_inverse_data = NULL) {
   .Object@objective <- objective
   .Object@constraints <- constraints
   .Object@variables <- Problem.build_variables(.Object)

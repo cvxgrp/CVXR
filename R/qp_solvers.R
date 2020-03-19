@@ -232,7 +232,9 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol,
+                                                 num_iter,
+                                                 solver_opts, solver_cache) {
   if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   P <- data[[P_KEY]]
@@ -276,19 +278,13 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   }
 
   # Throw parameter warnings
-  if(!is.null(feastol)){
-    warning("A value has been set for feastol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(reltol)){
-    warning("A value has been set for reltol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(abstol)){
-    warning("A value has been set for abstol, but the CPLEX solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(is.null(num_iter)){
-    num_iter = default_params$CPLEX$num_iter
+  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
+      warning("Ignoring inapplicable parameters feastol/reltol/abstol for CPLEX.")
   }
 
+  if (is.null(num_iter)) {
+      num_iter <- SOLVER_DEFAULT_PARAM$CPLEX$itlim
+  }
   #Setting verbosity off
   control <- list(trace = verbose, itlim = num_iter)
 
@@ -417,7 +413,9 @@ setMethod("import_solver", "GUROBI_QP", function(solver) { requireNamespace("gur
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn GUROBI_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol,
+                                                  num_iter,
+                                                  solver_opts, solver_cache) {
   if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   # N.B. Here we assume that the matrices in data are in CSC format.
   P <- data[[P_KEY]]   # TODO: Convert P matrix to COO format?
@@ -520,29 +518,32 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   # }
   # update(model)
 
-  if(!is.null(reltol)){
-    warning("A value has been set for reltol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(abstol)){
-    warning("A value has been set for abstol, but the GUROBI solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(is.null(num_iter)){
-    num_iter <- default_params$MOSEK$num_iter
+  # Throw parameter warnings
+  if(!all(c(is.null(reltol), is.null(abstol)))) {
+      warning("Ignoring inapplicable parameters reltol/abstol for GUROBI.")
   }
 
-  # Set verbosity and other parameters.
-  params <- list()
-  params$OutputFlag <- as.numeric(verbose)
-  # TODO: User option to not compute duals.
-  params$QCPDual <- 1 #equivalent to TRUE
-  params$IterationLimit = num_iter
-  params$FeasibilityTol = feastol
-  params$OptimalityTol = feastol
+  if (is.null(num_iter)) {
+      num_iter <- SOLVER_DEFAULT_PARAM$GUROBI$num_iter
+  }
+
+  if (is.null(feastol)) {
+      feastol <- SOLVER_DEFAULT_PARAM$GUROBI$FeasibilityTol
+  }
+
+  ## Set verbosity and other parameters.
+  params <- list(
+      OutputFlag = as.numeric(verbose),
+      ## TODO: User option to not compute duals.
+      QCPDual = 1, #equivalent to TRUE
+      IterationLimit = num_iter,
+      FeasibilityTol = feastol,
+      OptimalityTol = feastol
+  )
   params[names(solver_opts)] <- solver_opts
 
   # Update model. Not a thing in R
   #update(model)
-
   # Solve problem.
   #results_dict <- gurobi(model, params)
   results_dict <- list()
@@ -687,7 +688,11 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol,
+                                             reltol,
+                                             abstol,
+                                             num_iter,
+                                             solver_opts, solver_cache) {
   if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
@@ -698,24 +703,28 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
 
- #Set parameters. Override defaults to match CVXPY
-  if(is.null(abstol)){
-    abstol <- default_params$OSQP$eps_abs
+  if(is.null(feastol)) {
+      feastol <- SOLVER_DEFAULT_PARAM$OSQP$eps_prim_inf
   }
-  if(is.null(reltol)){
-    reltol <- default_params$OSQP$eps_rel
+  if(is.null(reltol)) {
+      reltol <- SOLVER_DEFAULT_PARAM$OSQP$eps_rel
   }
-  if(is.null(num_iter)){
-    num_iter <- default_params$OSQP$max_iter
+  if(is.null(abstol)) {
+      abstol <- SOLVER_DEFAULT_PARAM$OSQP$eps_abs
+  }
+  if(is.null(num_iter)) {
+      num_iter <- SOLVER_DEFAULT_PARAM$OSQP$max_iter
+  } else {
+      num_iter <- as.integer(num_iter)
   }
 
-  control <- osqp::osqpSettings()
-  control$max_iter = num_iter
-  control$eps_abs <- abstol
-  control$eps_rel = reltol
-  control$eps_prim_inf = feastol
-  control$eps_dual_inf = feastol
-  control$verbose = verbose
+  control <- list(max_iter = num_iter,
+                  eps_abs = abstol,
+                  eps_rel = reltol,
+                  eps_prim_inf = feastol,
+                  eps_dual_inf = feastol,
+                  verbose = verbose)
+
   control[names(solver_opts)] <- solver_opts
 
   if(length(solver_cache$cache) > 0 && name(object) %in% names(solver_cache$cache)) {

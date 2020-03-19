@@ -65,13 +65,16 @@ XPRESS_NAME = "XPRESS"
 # SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME, LPSOLVE_NAME, GLPK_NAME, MOSEK_NAME, GUROBI_NAME)   # TODO: Add more when we implement other solvers
 
 # Solver option defaults
-default_params <- list(OSQP=list(max_iter=10000, eps_abs=1e-5, eps_rel=1e-5),
-                       ECOS=list(max_iters=100, abstol=1e-7, reltol=1e-6, feastol=1e-7),
-                       ECOS_BB = list(max_iters=1000, abstol=1e-6, reltol=1e-3, feastol=1e-6),
-                       SCS=list(max_iters=2500, eps=1e-4, alpha=1.8, scale=5),
-                       CPLEX=list(num_iter=10000),
-                       MOSEK=list(num_iter=10000),
-                       GUROBI=list(num_iter=10000))
+SOLVER_DEFAULT_PARAM <- list(
+    OSQP = list(max_iter = 10000, eps_abs = 1e-5, eps_rel = 1e-5, eps_prim_inf = 1e-4),
+    ECOS = list(maxit = 100, abstol = 1e-7, reltol = 1e-6, feastol = 1e-7),
+    ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
+    ##CVX_OPT = list(max_iters = 100, abstol = 1e-7, reltol = 1e-6, feastol = 1e-7, refinement = 1L, kktsolver = "chol"),
+    SCS = list(max_iters = 2500, eps = 1e-4, alpha = 1.8, scale = 5.0),
+    CPLEX = list(itlim = 10000),
+    MOSEK = list(num_iter = 10000),
+    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
+)
 
 # Xpress-specific items.
 XPRESS_IIS = "XPRESS_IIS"
@@ -80,7 +83,7 @@ XPRESS_TROW = "XPRESS_TROW"
 # Parallel (meta) solver
 PARALLEL = "parallel"
 
-# Robust CVXOPT LDL KKT solver
+# Robust CVXOPT LDL KKT solverg
 ROBUST_KKTSOLVER = "robust"
 
 # Map of constraint types

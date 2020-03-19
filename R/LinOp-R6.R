@@ -94,7 +94,6 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                       ## Create a new LinOp on the C side
                                       private$ptr <- .Call("_CVXR_LinOp__new", PACKAGE = "CVXR")
                                       ## Associate args on R side with the args on the C side.
-                                      ##browser()
                                       if (!is.null(type)) {
                                           self$type <- type
                                       }

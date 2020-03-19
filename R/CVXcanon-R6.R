@@ -39,7 +39,6 @@ CVXcanon <- R6::R6Class("CVXcanon",
                                                     PACKAGE = 'CVXR')
                                 }
                                 ##cat("Instantiating ProblemData-R6", "\n")
-                                ##browser()
                                 CVXcanon.ProblemData$new(objPtr)
                             }
                         ))

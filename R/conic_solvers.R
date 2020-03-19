@@ -875,7 +875,7 @@ setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 #' @param status A status code returned by the solver.
 #' @describeIn CPLEX_CONIC Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
-  if(status %in% c(1, 101)){
+  if(status %in% c(1, 101, 102)){
     OPTIMAL
   } else if(status %in% c(3, 22, 4, 103)){
     INFEASIBLE
@@ -927,6 +927,13 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), object@exp_cone_order)
   data[[A_KEY]] <- offsets[[1]]
   data[[B_KEY]] <- offsets[[2]]
+  
+  # Include Boolean and Integer indices
+  variables <- variables(problem)[[1]]
+  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+  
   return(list(object, data, inv_data))
 })
 
@@ -935,17 +942,17 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
 #' @describeIn CPLEX_CONIC Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
   # Returns the solution to the original problem given the inverse_data.
-
   model <- solution$model
 
   status <- status_map(object, model$status)
+  primal_vars <- list()
+  dual_vars <- list()
 
   if(status %in% SOLUTION_PRESENT) {
     #Get objective value
     opt_val <- model$obj + inverse_data[[OFFSET]]
 
     #Get solution
-    primal_vars <- list()
     primal_vars[[as.character(inverse_data[[object@var_id]])]] <- model$xopt
 
     #Only add duals if not a MIP
@@ -957,22 +964,22 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
       #dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@neq_constr]])
       dual_vars <- eq_dual
 
-    } else {
-      primal_vars <- list()
-      primal_vars[[inverse_data[[object@var_id]]]] <- NA_real_
-      if(!inverse_data[["is_mip"]]) {
-        dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
-        dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-        names(dual_vars) <- dual_var_ids
-      }
-
-      if(status == INFEASIBLE)
-        opt_val <- Inf
-      else if(status == UNBOUNDED)
-        opt_val <- -Inf
-      else
-        opt_val <- NA_real_
     }
+  } else {
+    primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
+    if(!inverse_data[["is_mip"]]) {
+      dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+    }
+
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA_real_
+    
   }
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
@@ -1006,11 +1013,11 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
 
   #Setting Boolean variable types
   for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
-    vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
+    vtype[data[BOOL_IDX]$bool_vars_idx[[i]]] <- "B"
   }
   #Setting Integer variable types
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
-    vtype[data[BOOL_IDX]$int_vars_idx[i]] <- "I"
+    vtype[data[BOOL_IDX]$int_vars_idx[[i]]] <- "I"
   }
 
   #Setting sense of the A matrix

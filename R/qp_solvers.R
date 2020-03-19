@@ -120,7 +120,7 @@ setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 #' @param status A status code returned by the solver.
 #' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
 setMethod("status_map", "CPLEX_QP", function(solver, status) {
-  if(status %in% c(1, 101))
+  if(status %in% c(1, 101, 102))
     OPTIMAL
   else if(status %in% c(3, 22, 4, 103))
     INFEASIBLE
@@ -270,11 +270,11 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
 
   #Setting Boolean variable types
   for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
-    vtype[data[BOOL_IDX]$bool_vars_idx[i]] <- "B"
+    vtype[data[BOOL_IDX]$bool_vars_idx[[i]]] <- "B"
   }
   #Setting Integer variable types
   for(i in seq_along(data[INT_IDX]$int_vars_idx)){
-    vtype[data[INT_IDX]$int_vars_idx[i]] <- "I"
+    vtype[data[INT_IDX]$int_vars_idx[[i]]] <- "I"
   }
 
   # Throw parameter warnings

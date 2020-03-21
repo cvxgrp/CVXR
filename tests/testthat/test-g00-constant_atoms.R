@@ -257,7 +257,7 @@ test_that("Test all constant atoms", {
                         objective <- objective_type(do.call(atom, variables)[row, col])
                         ## print(atom)
                         ## print(value(obj_val[row, col]))
-                        run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
+                        run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver, verbose = TRUE)
                         ## cat("Index is", ind, "\n")
                         ## print("ATOM is")
                         ## print(atom)

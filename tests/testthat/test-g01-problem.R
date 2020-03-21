@@ -635,8 +635,8 @@ test_that("Test problems with norm2", {
   p <- Problem(Minimize(norm2(t(x - z)) + 5), list(x >= c(2,3), z <= c(-1,-4)))
   result <- solve(p)
   expect_equal(result$value, 12.61577, tolerance = TOL)
-  expect_equal(result$getValue(x), matrix(c(2,3)))
-  expect_equal(result$getValue(z), matrix(c(-1,-4)))
+  expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
+  expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
 })
 
 test_that("Test problems with abs", {
@@ -672,8 +672,8 @@ test_that("Test combining atoms", {
   p <- Problem(Minimize(norm2(5 + p_norm(z,1) + p_norm(x,1) + norm_inf(x - z))), list(x >= c(2,3), z <= c(-1,-4), p_norm(x + z,2) <= 2))
   result <- solve(p)
   expect_equal(result$value, 22, tolerance = TOL)
-  expect_equal(result$getValue(x), matrix(c(2,3)))
-  expect_equal(result$getValue(z), matrix(c(-1,-4)))
+  expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
+  expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
 })
 
 test_that("Test multiplying by constant atoms", {
@@ -773,7 +773,7 @@ test_that("Test problems with slicing", {
   p <- Problem(Minimize(norm2((C[1:2,] + A)[,1])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
   result <- solve(p)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = 1e-4)
   expect_equal(result$getValue(A), cbind(c(2,2), c(1,1)), tolerance = TOL)
 
   # Transpose of slice
@@ -947,8 +947,8 @@ test_that("Test getting values for expressions", {
   p <- Problem(Minimize(obj), list(x >= c(2,3), z <= c(-1,-4), constr_exp <= 2))
   result <- solve(p)
   expect_equal(result$value, 22, tolerance = TOL)
-  expect_equal(result$getValue(x), matrix(c(2,3)))
-  expect_equal(result$getValue(z), matrix(c(-1,-4)))
+  expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
+  expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
 
   # Expression values
   xs <- result$getValue(x)
@@ -1213,7 +1213,7 @@ test_that("Test geo_mean function", {
 
     prob <- Problem(Maximize(cost), list(sum(x) <= 1))
     result <- solve(prob)
-    expect_equal(result$getValue(x), matrix(c(0.5,0.5)))
+    expect_equal(result$getValue(x), matrix(c(0.5,0.5)), tolerance = TOL)
 
     x <- Variable(3,3)
     expect_error(geo_mean(x))

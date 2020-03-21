@@ -2,7 +2,7 @@ context("test-constant_atoms")
 
 ROBUST_CVXOPT <- "robust_cvxopt"
 SOLVERS_TO_TRY <- c("ECOS", "SCS", "OSQP")
-SOLVERS_TO_TOL <- list(ECOS = 1e-6, SCS = 1e-2, OSQP = 1e-1)
+SOLVERS_TO_TOL <- list(ECOS = 1e-7, SCS = 1e-2, OSQP = 1e-1)
 
 # Test CVXOPT if installed.
 if("CVXOPT" %in% installed_solvers()) {
@@ -213,6 +213,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 
             if(abs(obj_diff) > tolerance) {
                 sink("test_constant_atoms_out.txt", append = TRUE)
+                print(solver)
                 print(atom)
                 cat(result$value, "\t", obj_val, "\n")
                 sink()
@@ -226,11 +227,13 @@ test_that("Test all constant atoms", {
     skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
-
+    counter  <- 0 ## list item counter
     for(a in atoms) {
         atom_list <- a[[1]]
         objective_type <- a[[2]]
         for(al in atom_list) {
+            counter  <- counter + 1 ## list item counter
+            cat(sprintf("Item No: %d\n", counter))
             atom <- al[[1]]
             dims <- al[[2]]
             args <- al[[3]]

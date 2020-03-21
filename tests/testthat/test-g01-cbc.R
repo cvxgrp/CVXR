@@ -14,7 +14,7 @@ B <- Variable(2, 2, name='B')
 C <- Variable(3, 2, name='C')
 
 test_that("Test basic LPs", {
-    skip_on_cran()
+  skip_on_cran()
   if("CBC" %in% installed_solvers()) {
     # TODO: This is a bug in the rcbc library.
     # prob <- Problem(Minimize(0), list(x == 2))
@@ -30,7 +30,7 @@ test_that("Test basic LPs", {
 })
 
 test_that("Test a basic LP", {
-    skip_on_cran()
+  skip_on_cran()
   if("CBC" %in% installed_solvers()) {
     prob <- Problem(Minimize(p_norm(x, 1)), list(x == 0))
     result <- solve(prob, verbose = FALSE, solver = "CBC")
@@ -55,7 +55,7 @@ test_that("Test a basic LP", {
 })
 
 test_that("Test a basic MILP", {
-    skip_on_cran()
+  skip_on_cran()
   if("CBC" %in% installed_solvers()) {
     bool_var <- Variable(boolean = TRUE)
     int_var <- Variable(integer = TRUE)
@@ -88,7 +88,7 @@ test_that("Test a basic MILP", {
 })
 
 test_that("Test a hard knapsack problem", {
-    skip_on_cran()
+  skip_on_cran()
     ## Instance "knapPI_1_50_1000_1" from "http://www.diku.dk/~pisinger/genhard.c"
     n <- 50
     c <- 995
@@ -123,7 +123,7 @@ test_that("Test a hard knapsack problem", {
 })
 
 test_that("Test that all CBC solver options work", {
-    skip_on_cran()
+  skip_on_cran()
     prob <- Problem(Minimize(p_norm(x, 1)),
                     list(x == Variable(2, boolean = TRUE)))
   if("CBC" %in% installed_solvers()) {

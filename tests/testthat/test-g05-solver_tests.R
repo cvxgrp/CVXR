@@ -188,22 +188,25 @@ test_that("Test a mixed-integer quadratic program",{
   
 })
 
-# test_that("Test a simple geometric program", {
-#   skip_on_cran()
-#   # Example from
-#   # https://www.cvxpy.org/examples/dgp/dgp_fundamentals.html
-#   x <- Variable(pos=TRUE)
-#   y <- Variable(pos=TRUE)
-#   z <- Variable(pos=TRUE)
-#   
-#   obj <- x * y * z
-#   constraints <- list(4*x*y*z + 2*x*z <= 10,
-#                       x <= 2*y,
-#                       y <= 2*x,
-#                       z >=1)
-#   prob <- Problem(Minimize(obj), constraints)
-#   result <- solve(prob, solver="MOSEK", gp=TRUE)
-#   print(result$value)
-#   print(result$getValue(x))
-#   
-# })
+test_that("Test a simple geometric program", {
+  skip_on_cran()
+  # Example from
+  # https://www.cvxpy.org/examples/dgp/dgp_fundamentals.html
+  x <- Variable(pos=TRUE)
+  y <- Variable(pos=TRUE)
+  z <- Variable(pos=TRUE)
+
+  obj <- x * y * z
+  constraints <- list(4*x*y*z + 2*x*z <= 10,
+                      x <= 2*y,
+                      y <= 2*x,
+                      z >=1)
+  prob <- Problem(Maximize(obj), constraints)
+  for(solver in c("ECOS", "SCS")){
+    result <- solve(prob, solver=solver, gp=TRUE)  
+    expect_equal(result$value, 2, tolerance=TOL)
+    expect_equal(result$getValue(x), 1, tolerance=TOL)
+    expect_equal(result$getValue(y), 2, tolerance=TOL)
+    expect_equal(result$getValue(z), 1, tolerance=TOL)
+  }
+})

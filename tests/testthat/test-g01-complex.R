@@ -2,7 +2,7 @@ context("test-g01-complex")
 TOL <- 1e-6
 
 test_that("test the Variable class", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(2, complex = FALSE)
   y <- Variable(2, complex = TRUE)
   z <- Variable(2, imag = TRUE)
@@ -23,7 +23,7 @@ test_that("test the Variable class", {
 })
 
 test_that("test the Parameter class", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Parameter(2, complex = FALSE)
   y <- Parameter(2, complex = TRUE)
   z <- Parameter(2, imag = TRUE)
@@ -44,7 +44,7 @@ test_that("test the Parameter class", {
 })
 
 test_that("test the Constant class", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Constant(2)
   y <- Constant(2i + 1)
   z <- Constant(2i)
@@ -58,14 +58,14 @@ test_that("test the Constant class", {
 })
 
 test_that("test objectives", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(complex = TRUE)
   expect_error(Minimize(x))
   expect_error(Maximize(x))
 })
 
 test_that("test basic arithmetic expressions", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(complex = TRUE)
   y <- Variable(imag = TRUE)
   z <- Variable()
@@ -101,7 +101,7 @@ test_that("test basic arithmetic expressions", {
 })
 
 test_that("test real function", {
-    skip_on_cran()
+  skip_on_cran()
   A <- matrix(1, nrow = 2, ncol = 2)
   expr <- Constant(A) + 1i*Constant(A)
   expr <- Re(expr)
@@ -116,7 +116,7 @@ test_that("test real function", {
 })
 
 test_that("test imag function", {
-    skip_on_cran()
+  skip_on_cran()
   A <- matrix(1, nrow = 2, ncol = 2)
   expr <- Constant(A) + 2i*Constant(A)
   expr <- Im(expr)
@@ -127,7 +127,7 @@ test_that("test imag function", {
 })
 
 test_that("test conj function", {
-    skip_on_cran()
+  skip_on_cran()
   A <- matrix(1, nrow = 2, ncol = 2)
   expr <- Constant(A) + 1i*Constant(A)
   expr <- Conj(expr)
@@ -138,7 +138,7 @@ test_that("test conj function", {
 })
 
 test_that("test canonicalization for affine atoms", {
-    skip_on_cran()
+  skip_on_cran()
   # Scalar.
   x <- Variable()
   expr <- Im(x + 1i*x)
@@ -188,7 +188,7 @@ test_that("test canonicalization for affine atoms", {
 # })
 
 test_that("test with absolute value", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(2, complex = TRUE)
   prob <- Problem(Maximize(sum(Im(x) + Re(x))), list(abs(x) <= 2))
   result <- solve(prob)
@@ -198,7 +198,7 @@ test_that("test with absolute value", {
 })
 
 test_that("test with p-norm", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(1, 2, complex = TRUE)
   prob <- Problem(Maximize(sum(Im(x) + Re(x))), list(norm1(x) <= 2))
   result <- solve(prob)
@@ -215,7 +215,7 @@ test_that("test with p-norm", {
 })
 
 test_that("test matrix norms", {
-    skip_on_cran()
+  skip_on_cran()
   P <- 0:7 - 2i*(0:7)
   P <- matrix(P, nrow = 2, ncol = 4, byrow = TRUE)
   sigma_max <- base:::norm(P, type = "2")
@@ -232,7 +232,7 @@ test_that("test matrix norms", {
 })
 
 test_that("test log-determinant", {
-    skip_on_cran()
+  skip_on_cran()
   P <- (0:8) - 2i*(0:8)
   P <- matrix(P, nrow = 3, ncol = 3)
   P <- Conj(t(P)) %*% P/100 + diag(0.1, 3)
@@ -244,7 +244,7 @@ test_that("test log-determinant", {
 })
 
 test_that("test eigenvalue atoms", {
-    skip_on_cran()
+  skip_on_cran()
   P <- (0:8) - 2i*(0:8)
   P <- matrix(P, nrow = 3, ncol = 3)
   P1 <- Conj(t(P)) %*% P/10 + diag(0.1, 3)
@@ -276,7 +276,7 @@ test_that("test eigenvalue atoms", {
 })
 
 test_that("test quad_form atom", {
-    skip_on_cran()
+  skip_on_cran()
   # Create a random positive definite Hermitian matrix for all tests.
   set.seed(42)
   P <- matrix(rnorm(9), nrow = 3, ncol = 3) - 1i*matrix(rnorm(9), nrow = 3, ncol = 3)
@@ -311,7 +311,7 @@ test_that("test quad_form atom", {
 })
 
 test_that("test matrix_frac atom", {
-    skip_on_cran()
+  skip_on_cran()
   P <- rbind(c(10, 1i), c(-1i, 10))
   Y <- Variable(2, 2, complex = TRUE)
   b <- 0:1
@@ -340,7 +340,7 @@ test_that("test matrix_frac atom", {
 })
 
 test_that("test Hermitian variables", {
-    skip_on_cran()
+  skip_on_cran()
   X <- Variable(2, 2, hermitian = TRUE)
   prob <- Problem(Minimize(Im(X[2,1])), list(X[1,1] == 2, X[2,2] == 3, X[1,2] == 1+1i))
   result <- solve(prob)
@@ -348,7 +348,7 @@ test_that("test Hermitian variables", {
 })
 
 test_that("test positive semidefinite variables", {
-    skip_on_cran()
+  skip_on_cran()
   X <- Variable(2, 2, hermitian = TRUE)
   prob <- Problem(Minimize(Im(X[2,1])), list(X %>>% 0, X[1,1] == -1))
   result <- solve(prob)
@@ -356,7 +356,7 @@ test_that("test positive semidefinite variables", {
 })
 
 test_that("test promotion of complex variables", {
-    skip_on_cran()
+  skip_on_cran()
   v <- Variable(complex = TRUE)
   obj <- Maximize(Re(sum(v * matrix(1, nrow = 2, ncol = 2))))
   con <- list(cvxr_norm(v) <= 1)
@@ -393,7 +393,7 @@ test_that("test promotion of complex variables", {
 # })
 
 test_that("test with special index", {
-    skip_on_cran()
+  skip_on_cran()
   c <- c(0, 1)
   n <- length(c)
 
@@ -418,7 +418,7 @@ test_that("test with special index", {
 })
 
 test_that("test that complex arguments are rejected", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(complex = TRUE)
   expect_error(x >= 0, "Inequality constraints cannot be complex.")
   expect_error(quad_over_lin(x, x), "The second argument to QuadOverLin cannot be complex.")

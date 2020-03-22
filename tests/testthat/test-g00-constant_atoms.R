@@ -212,17 +212,19 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
             expect_true(abs(obj_diff) <= tolerance)
 
             if(abs(obj_diff) > tolerance) {
+                ecnt  <- ecnt + 1
                 sink("test_constant_atoms_out.txt", append = TRUE)
-                print(solver)
+                cat(sprintf("Solver: %s\n", solver))
                 print(atom)
-                cat(result$value, "\t", obj_val, "\n")
+                cat(sprintf("Result: %.10f \t Expected: %.10f \t Obj_diff: %.10f\n", result$value, obj_val, obj_diff))
                 sink()
+                saveRDS(list(problem  = problem, solver = "solver"), file = sprintf("error-%02d.RDS", ecnt))
             }
         } else
             stop("Problem status is sub-optimal: ", result$status)
     }
 }
-
+ecnt  <- 0
 test_that("Test all constant atoms", {
     skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))

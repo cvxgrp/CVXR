@@ -2,7 +2,7 @@ context("test-g01-dgp")
 TOL <- 1e-6
 
 test_that("test product", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   prod <- x*y
@@ -27,7 +27,7 @@ test_that("test product", {
 })
 
 test_that("test product with unconstrained variables is not DGP", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable()
   y <- Variable()
   prod <- x*y
@@ -43,7 +43,7 @@ test_that("test product with unconstrained variables is not DGP", {
 })
 
 test_that("test division", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   div <- x/y
@@ -63,7 +63,7 @@ test_that("test division", {
 })
 
 test_that("test add", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   expr <- x + y
@@ -77,7 +77,7 @@ test_that("test add", {
 })
 
 test_that("test add with unconstrained variables is not DGP", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable()
   y <- Variable(pos = TRUE)
   expr <- x + y
@@ -92,7 +92,7 @@ test_that("test add with unconstrained variables is not DGP", {
 })
 
 test_that("test monomials", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -108,7 +108,7 @@ test_that("test monomials", {
 })
 
 test_that("test elementwise maximum", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -131,7 +131,7 @@ test_that("test elementwise maximum", {
 })
 
 test_that("test elementwise minimum", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   z <- Variable(pos = TRUE)
@@ -155,14 +155,14 @@ test_that("test elementwise minimum", {
 })
 
 test_that("test constant", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Constant(1.0)
   expect_true(is_dgp(x))
   expect_false(is_dgp(-1.0*x))
 })
 
 test_that("test geometric mean", {
-    skip_on_cran()
+  skip_on_cran()
   x <- Variable(3, pos = TRUE)
   p <- c(1, 2, 0.5)
   expr <- geo_mean(x, p)

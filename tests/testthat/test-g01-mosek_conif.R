@@ -2,7 +2,7 @@ context("test-g01-mosek_conif")
 TOL <- 1e-6
 
 test_that("test MOSEK SOCP", {
-    skip_on_cran()
+  skip_on_cran()
   # Formulate the following SOCP with CVXR
   #    min 3 * x[1] + 2 * x[2] + x[3]
   #       s.t. p_norm(x,2) <= y[1]
@@ -36,7 +36,7 @@ test_that("test MOSEK SOCP", {
 })
 
 test_that("test MOSEK SDP", {
-    skip_on_cran()
+  skip_on_cran()
   # Solve "Example 8.3" from Convex Optimization by Boyd & Vandenberghe.
   # Verify (1) optimal objective values, (2) that the dual variable to the PSD constraint
   # belongs to the correct cone (i.e. the dual variable is itself PSD), and (3) that
@@ -120,7 +120,7 @@ test_that("test MOSEK SDP", {
 # })
 
 test_that("test MOSEK MI SOCP", {
-    skip_on_cran()
+  skip_on_cran()
   # Formulate the following mixed-integer SOCP with CVXR
   #   min 3 * x[1] + 2 * x[2] + x[3] + y[1] + 2 * y[2]
   #     s.t. p_norm(x,2) <= y[1]
@@ -144,7 +144,7 @@ test_that("test MOSEK MI SOCP", {
 })
 
 test_that("test MOSEK LP solution selection", {
-    skip_on_cran()
+  skip_on_cran()
   if("MOSEK" %in% installed_solvers()) {
     # Problem from
     # http://cvxopt.org/userguide/coneprog.html?highlight=solvers.lp#cvxopt.solvers.lp

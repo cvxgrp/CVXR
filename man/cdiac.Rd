@@ -5,7 +5,8 @@
 \alias{cdiac}
 \title{Global Monthly and Annual Temperature Anomalies (degrees C), 1850-2015
 (Relative to the 1961-1990 Mean) (May 2016)}
-\format{A data frame with 166 rows and 14 variables:
+\format{
+A data frame with 166 rows and 14 variables:
 \describe{
   \item{year}{Year}
   \item{jan}{Anomaly for month of January}
@@ -21,7 +22,8 @@
   \item{nov}{Anomaly for month of November}
   \item{dec}{Anomaly for month of December}
   \item{annual}{Annual anomaly for the year}
-}}
+}
+}
 \source{
 \url{https://ess-dive.lbl.gov/}
 }

@@ -101,5 +101,5 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Encoding: UTF-8

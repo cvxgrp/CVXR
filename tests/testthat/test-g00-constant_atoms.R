@@ -189,6 +189,7 @@ check_solver <- function(prob, solver_name) {
     })
 }
 
+ecnt  <- 0
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     expect_true(is_dcp(problem))
     ##print(problem)
@@ -212,6 +213,7 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
             expect_true(abs(obj_diff) <= tolerance)
 
             if(abs(obj_diff) > tolerance) {
+                ecnt  <- ecnt + 1
                 sink("test_constant_atoms_out.txt", append = TRUE)
                 cat(sprintf("Solver: %s\n", solver))
                 print(atom)

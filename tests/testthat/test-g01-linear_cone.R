@@ -50,8 +50,8 @@ test_that("test scalar LP problems", {
     expect_equal(sltn@opt_val, result$value, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[3]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
-    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a))
-    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a), tolerance = TOL)
+    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b), tolerance = TOL)
 
     # With a constant in the objective.
     p <- Problem(Minimize(3*a - b + 100), list(a >= 2, b + 5*c - 2 == a, b <= 5 + c))

@@ -68,6 +68,10 @@ test_that("Test a basic QP with all solvers", {
 
   ##CBC, ECOS_BB, GLPK_MI, GLPK don't support QPs
   applicable_solvers  <- setdiff(INSTALLED_SOLVERS, list("CBC", "ECOS_BB", "GLPK_MI", "GLPK"))
+  ## SCS is known to cause problems
+  ## Works sometimes if we set rho_x = 1e-2, but too problematic
+  applicable_solvers  <- setdiff(applicable_solvers, "SCS")
+
   for(solver in applicable_solvers) {
     result <- solve(p, solver)
     print(sprintf("Solver: %s status: %s\n", solver, result$status))
@@ -83,8 +87,6 @@ test_that("Test a basic QP with all solvers", {
   p <- Problem(Minimize(fit_error), list())
   x_data_sq <- x_data^2
   model <- lm(y_data ~ x_data + x_data_sq)
-  ## SCS is known to fail unless we set rho_x = 1e-2, for example, so ignore
-  applicable_solvers  <- setdiff(applicable_solvers, "SCS")
   for(solver in applicable_solvers) {
     ##cat(sprintf("Doing %s\n", solver))
     result <- solve(p, solver)

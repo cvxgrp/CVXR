@@ -89,7 +89,7 @@ test_that("Test SOCP problems", {
   p <- Problem(obj, list((y_int - 0.2)^2 <= t))
   result <- solve(p, solver = "ECOS_BB")
   expect_equal(result$value, 0.04, tolerance = TOL)
-  expect_equal(result$getValue(y_int), 0, tolerance = 2 * TOL)
+  expect_equal(result$getValue(y_int), 0, tolerance = TOL)
 })
 
 test_that("Test Boolean SOCP problems", {

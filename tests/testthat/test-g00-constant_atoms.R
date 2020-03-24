@@ -2,7 +2,7 @@ context("test-constant_atoms")
 
 ROBUST_CVXOPT <- "robust_cvxopt"
 SOLVERS_TO_TRY <- c("ECOS", "SCS", "OSQP")
-SOLVERS_TO_TOL <- list(ECOS = 2e-6, SCS = 1e-2, OSQP = 1e-1) ##ECOS = 1e-7 like cvxpy fails a few tests.
+SOLVERS_TO_TOL <- list(ECOS = 1e-7, SCS = 1e-2, OSQP = 1e-1)
 
 # Test CVXOPT if installed.
 if("CVXOPT" %in% installed_solvers()) {

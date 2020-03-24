@@ -70,6 +70,7 @@ test_that("Test a basic QP with all solvers", {
   applicable_solvers  <- setdiff(INSTALLED_SOLVERS, list("CBC", "ECOS_BB", "GLPK_MI", "GLPK"))
   for(solver in applicable_solvers) {
     result <- solve(p, solver)
+    print(sprintf("Solver: %s status: %S\n", solver, result$status))
     expect_equal(sum((model$residuals)^2), result$value, tolerance = TOL)
     expect_equal(as.numeric(model$coefficients[1]), result$getValue(offset), tolerance = TOL)
     expect_equal(as.numeric(model$coefficients[2]), result$getValue(slope), tolerance = TOL)

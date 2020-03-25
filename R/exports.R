@@ -1996,3 +1996,27 @@ setMethod("Im", "Expression", function(z) { Imag(z) })
 #' @rdname complex-atoms
 #' @export
 setMethod("Conj", "Expression", function(z) { if(is_real(z)) z else Conjugate(z) })
+
+# =========================
+# Probability functions
+# =========================
+#'
+#' Gumbel Distribution
+#'
+#' The probability density function of the standard Gumbel distribution,
+#' \eqn{f(x) = \exp(-(x + e^{-x}))}
+#'
+#' @param x An \linkS4class{Expression}.
+#' @return An \linkS4class{Expression} representing the Gumbel pdf evaluated at the input.
+#' @examples
+#' x <- Variable(pos = TRUE)
+#' obj <- Minimize(dgumbel(x))
+#' prob <- Problem(obj, list(x >= 1))
+#' result <- solve(prob, gp = TRUE)
+#' result$value
+#' result$getValue(x)
+#' @docType methods
+#' @name dgumbel
+#' @rdname dgumbel
+#' @export
+dgumbel <- DGumbel

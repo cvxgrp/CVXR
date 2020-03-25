@@ -309,7 +309,7 @@ test_that("test MOSEK simple conic quadratic problem", {
   # To deal with rotated cone constraint, reference
   # https://github.com/cvxgrp/cvxpy/issues/737
   constraints <- list( xvar[1] + xvar[2] + 2*xvar[3] == 1,
-                       norm2(xvar[1:2]) <= xvar[4],
+                       CVXR:::SOC(xvar[4],xvar[1:2]),
                        CVXR:::PSDConstraint(rbind(cbind(2*xvar[5], xvar[3]), cbind(xvar[3], xvar[6])))
                        )
   prob <- Problem(obj, constraints)

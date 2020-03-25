@@ -446,6 +446,29 @@ Dgp2Dcp.zero_constr_canon <- function(expr, args) {
   return(list(ZeroConstraint(args[[1]] - args[[2]], id = id(expr)), list()))
 }
 
+#'
+#' Dgp2Dcp canonicalizer for the Gumbel pdf atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the zero constraint atom of a DGP expression, 
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.dgumbel_canon <- function(expr, args) {
+  x <- args[[1]]
+  shape <- dim(expr)
+  
+  t <- Variable(shape)
+  v <- Variable(shape)
+  w <- Variable(shape)
+  
+  # Log-log transformation: log(f(e^x)) = -(e^x + exp(-e^x))
+  # By introducing new variables, we can write sup(t | log(f(e^x)) >= t) as
+  #    sup(t | v + e^{-v} + t <= 0, v = e^x)
+  #    sup(t | v + w + t <= 0, e^x <= v, e^{-v} <= w)
+  constr <- list(v + w + t <= 0, Exp(x) <= v, Exp(-v) <= w)
+  return(list(t, constr))
+}
+
 Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
                               Constant = Dgp2Dcp.constant_canon,
                               DivExpression = Dgp2Dcp.div_canon,
@@ -468,6 +491,8 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
                               Trace = Dgp2Dcp.trace_canon,
                               SumEntries = Dgp2Dcp.sum_canon,
                               Variable = NULL,
+                              
+                              DGumbel = Dgp2Dcp.dgumbel_canon,
                               
                               MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
                               MinEntries = EliminatePwl.CANON_METHODS$MinEntries,

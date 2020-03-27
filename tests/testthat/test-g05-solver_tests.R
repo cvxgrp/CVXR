@@ -1,4 +1,4 @@
-INSTALLED_SOLVERS = CVXR::installed_solvers()
+INSTALLED_SOLVERS <- installed_solvers()
 TOL <- 1e-4
 x <- Variable(2, name = "x")
 slope <- Variable(1, name = "slope")

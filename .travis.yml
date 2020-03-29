@@ -8,6 +8,7 @@ r:
 
 env:
   - _R_CHECK_FORCE_SUGGESTS_=0
+  - NOT_CRAN=1
   
 cache: packages
 

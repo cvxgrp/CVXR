@@ -1,8 +1,9 @@
 context("test-g01-mosek_conif")
-library("Rmosek")
-TOL <- 1e-6
 
 MOSEK_AVAILABLE  <- "MOSEK" %in% installed_solvers()
+TOL <- 1e-6
+
+if (MOSEK_AVAILABLE) library("Rmosek")
 
 test_that("test MOSEK SOCP", {
   skip_on_cran()

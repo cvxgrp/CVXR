@@ -127,27 +127,34 @@ ConicSolver.get_coeff_offset <- function(expr) {
 #' @param offset An int of the number of zeros at the beginning of the matrix.
 #' @return A sparse matrix that spaces out an expression
 ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
-  val_arr <- c()
-  row_arr <- c()
-  col_arr <- c()
-
-  # Selects from each column.
-  for(var_row in 1:dim[2]) {
-    val_arr <- c(val_arr, 1.0)
-    row_arr <- c(row_arr, spacing*(var_row - 1) + offset + 1)
-    col_arr <- c(col_arr, var_row)
-  }
-
-  # Pad out number of rows with zeroes.
-  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr)
-  if(dim[1] > nrow(mat)) {
-    pad <- sparseMatrix(i = c(), j = c(), dims = c(dim[1] - nrow(mat), ncol(mat)))
-    mat <- rbind(mat, pad)
-  }
-  if(!all(dim(mat) == dim))
-    stop("Dimension mismatch")
-  return(mat)
+    ncol  <- dim[2L]
+    i  <- seq.int(from = 1 + offset, by = spacing, length.out = ncol)
+    if (i[ncol] > dim[1L]) stop("Dimension mismatch")
+    j  <- seq_len(ncol)
+    Matrix::sparseMatrix(i = i[j], j = j, x = rep(1, ncol), dims = dim)
 }
+## ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
+##   val_arr <- c()
+##   row_arr <- c()
+##   col_arr <- c()
+
+##   # Selects from each column.
+##   for(var_row in 1:dim[2]) {
+##     val_arr <- c(val_arr, 1.0)
+##     row_arr <- c(row_arr, spacing*(var_row - 1) + offset + 1)
+##     col_arr <- c(col_arr, var_row)
+##   }
+
+##   # Pad out number of rows with zeroes.
+##   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr)
+##   if(dim[1] > nrow(mat)) {
+##     pad <- sparseMatrix(i = c(), j = c(), dims = c(dim[1] - nrow(mat), ncol(mat)))
+##     mat <- rbind(mat, pad)
+##   }
+##   if(!all(dim(mat) == dim))
+##     stop("Dimension mismatch")
+##   return(mat)
+## }
 
 #' @param constr A \linkS4class{Constraint} to format.
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
@@ -801,17 +808,8 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   }
 
   #Warnigs for including parameters
-  if(!is.null(feastol)){
-    warning("A value has been set for feastol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(reltol)){
-    warning("A value has been set for reltol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(abstol)){
-    warning("A value has been set for abstol, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
-  }
-  if(!is.null(num_iter)){
-    warning("A value has been set for num_iter, but the CBC solver does not accept this parameter. Solver will run without taking this parameter into consideration.")
+  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol), is.null(num_iter)))) {
+    warning("Ignoring inapplicable parameter feastol/reltol/abstol for CBC.")
   }
 
   result <- rcbc::cbc_solve(
@@ -927,13 +925,13 @@ setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), object@exp_cone_order)
   data[[A_KEY]] <- offsets[[1]]
   data[[B_KEY]] <- offsets[[2]]
-  
+
   # Include Boolean and Integer indices
   variables <- variables(problem)[[1]]
   data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
   data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
   inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-  
+
   return(list(object, data, inv_data))
 })
 
@@ -979,7 +977,7 @@ setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse
       opt_val <- -Inf
     else
       opt_val <- NA_real_
-    
+
   }
 
   return(Solution(status, opt_val, primal_vars, dual_vars, list()))
@@ -2272,12 +2270,12 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
       j <- length(c)   # Index of the first slack variable in the block vector "x".
       rows <- (i:(i + total_soc_exp_slacks-1))+1
       cols <- (j:(j + total_soc_exp_slacks-1))+1
-      
+
       row <- c(row, rows)
       col <- c(col, cols)
       vals <- c(vals, rep(1, length(rows)))
     }
-    prob$A <- sparseMatrix(i = row, j = col, x = vals, dims = c(nrow_G_sparse, ncol_G_sparse + total_soc_exp_slacks))  
+    prob$A <- sparseMatrix(i = row, j = col, x = vals, dims = c(nrow_G_sparse, ncol_G_sparse + total_soc_exp_slacks))
   }
 
   # Constraint index: start of LMIs.

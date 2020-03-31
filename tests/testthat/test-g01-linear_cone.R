@@ -27,7 +27,7 @@ SOC <- CVXR:::SOC
 solvers <- c(CVXR:::ECOS())
 
 test_that("test scalar LP problems", {
-    skip_on_cran()
+  skip_on_cran()
   for(solver in solvers) {
     p <- Problem(Minimize(3*a), list(a >= 2))
     expect_true(accepts(ConeMatrixStuffing(), p))
@@ -50,8 +50,8 @@ test_that("test scalar LP problems", {
     expect_equal(sltn@opt_val, result$value, tolerance = TOL)
     inv_sltn <- invert(ConeMatrixStuffing(), sltn, p_new[[3]])
     expect_equal(inv_sltn@opt_val, result$value, tolerance = TOL)
-    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a))
-    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b))
+    expect_equal(inv_sltn@primal_vars[[as.character(id(a))]][1], result$getValue(a), tolerance = TOL)
+    expect_equal(inv_sltn@primal_vars[[as.character(id(b))]][1], result$getValue(b), tolerance = TOL)
 
     # With a constant in the objective.
     p <- Problem(Minimize(3*a - b + 100), list(a >= 2, b + 5*c - 2 == a, b <= 5 + c))
@@ -99,7 +99,7 @@ test_that("test scalar LP problems", {
 })
 
 test_that("test vector LP problems", {
-    skip_on_cran()
+  skip_on_cran()
   for(solver in solvers) {
     c <- Constant(matrix(1:2))
     p <- Problem(Minimize(t(c) %*% x), list(x >= c))
@@ -141,7 +141,7 @@ test_that("test vector LP problems", {
 })
 
 test_that("test matrix LP problems", {
-        skip_on_cran()
+      skip_on_cran()
   for(solver in solvers) {
     Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 2)))
     p <- Problem(Minimize(1 + a), list(A == Tmat + a, a >= 0))
@@ -170,7 +170,7 @@ test_that("test matrix LP problems", {
 })
 
 test_that("test SOCP problems", {
-    skip_on_cran()
+  skip_on_cran()
   for(solver in solvers) {
     # Basic.
     p <- Problem(Minimize(b), list(p_norm(x, p = 2) <= b))
@@ -203,7 +203,7 @@ test_that("test SOCP problems", {
 })
 
 test_that("test exponential cone problems", {
-    skip_on_cran()
+  skip_on_cran()
   for(solver in solvers) {
     # Basic.
     p <- Problem(Minimize(b), list(exp(a) <= b, a >= 1))
@@ -239,7 +239,7 @@ test_that("test exponential cone problems", {
 })
 
 test_that("test positive semidefinite constraints", {
-    skip_on_cran()
+  skip_on_cran()
   C <- Variable(3,3)
   obj <- Maximize(C[1,3])
   constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == t(C), C %>>% 0)

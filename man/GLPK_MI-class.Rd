@@ -28,7 +28,7 @@ GLPK_MI()
   abstol,
   num_iter,
   solver_opts,
-  solver_cache = list()
+  solver_cache
 )
 }
 \arguments{

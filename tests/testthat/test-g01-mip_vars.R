@@ -7,7 +7,7 @@ A_bool <- Variable(3, 2, boolean = TRUE)
 B_int <- Variable(2, 3, integer = TRUE)
 
 test_that("Test that MIP problems are deterministic", {
-    skip_on_cran()
+  skip_on_cran()
   data_recs <- list()
   result_recs <- list()
   for(i in 1:5) {
@@ -31,7 +31,7 @@ test_that("Test that MIP problems are deterministic", {
 })
 
 test_that("Test Boolean problems", {
-    skip_on_cran()
+  skip_on_cran()
   # Bool in objective
   obj <- Minimize((x_bool - 0.2)^2)
   p <- Problem(obj, list())
@@ -65,7 +65,7 @@ test_that("Test Boolean problems", {
 })
 
 test_that("Test Integer problems", {
-    skip_on_cran()
+  skip_on_cran()
   # Int in objective
   obj <- Minimize((y_int - 0.2)^2)
   p <- Problem(obj, list())
@@ -82,18 +82,18 @@ test_that("Test Integer problems", {
 })
 
 test_that("Test SOCP problems", {
-    skip_on_cran()
+  skip_on_cran()
   # Int in objective
   t <- Variable()
   obj <- Minimize(t)
   p <- Problem(obj, list((y_int - 0.2)^2 <= t))
   result <- solve(p, solver = "ECOS_BB")
   expect_equal(result$value, 0.04, tolerance = TOL)
-  expect_equal(result$getValue(y_int), 0, tolerance = TOL)
+  expect_equal(result$getValue(y_int), 0, tolerance = 2 * TOL)
 })
 
 test_that("Test Boolean SOCP problems", {
-    skip_on_cran()
+  skip_on_cran()
   # Int in objective
   t <- Variable()
   obj <- Minimize(t)

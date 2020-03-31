@@ -39,7 +39,7 @@
   abstol,
   num_iter,
   solver_opts,
-  solver_cache = list()
+  solver_cache
 )
 
 \S4method{reduction_solve}{ConstantSolver,ANY}(object, problem, warm_start, verbose, solver_opts)

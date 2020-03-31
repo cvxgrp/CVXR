@@ -77,7 +77,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -112,7 +112,12 @@
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/cvxgrp/CVXR">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -127,7 +132,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>DGP Compliance</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/cvxgrp/CVXR/blob/master/R/generics.R'><code>R/generics.R</code></a></small>
     <div class="hidden name"><code>is_dgp.Rd</code></div>
     </div>
 
@@ -154,16 +159,16 @@
     <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>*<span class='no'>y</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>, <span class='no'>y</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; $`2073`
+<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; $`2064`
 #&gt; [1] 5
 #&gt; 
-#&gt; $`2074`
+#&gt; $`2065`
 #&gt; [1] 5
 #&gt; 
-#&gt; $`2079`
+#&gt; $`2070`
 #&gt; [1] 1
 #&gt; 
-#&gt; $`2085`
+#&gt; $`2076`
 #&gt; [1] 1
 #&gt; 
 #&gt; $value
@@ -203,8 +208,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7fac1fdb2168&gt;
-#&gt; &lt;environment: 0x7fac09128c48&gt;
+#&gt; &lt;bytecode: 0x7fe8792ffa50&gt;
+#&gt; &lt;environment: 0x7fe865d54378&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -213,20 +218,20 @@
 #&gt;         stop("getDualValue: argument should be a Constraint!")
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7fac1fdb3720&gt;
-#&gt; &lt;environment: 0x7fac09128c48&gt;
+#&gt; &lt;bytecode: 0x7fe8792fa898&gt;
+#&gt; &lt;environment: 0x7fe865d54378&gt;
 #&gt; 
 #&gt; $solver
-#&gt; [1] "ECOS"
+#&gt; [1] "MOSEK"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 1.1808e-05
+#&gt; [1] 9.584427e-05
 #&gt; 
 #&gt; $setup_time
-#&gt; [1] 1.6026e-05
+#&gt; [1] NA
 #&gt; 
 #&gt; $num_iters
-#&gt; [1] 4
+#&gt; [1] NA
 #&gt; </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

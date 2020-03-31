@@ -74,12 +74,12 @@ test_that("test the power function", {
         expect_equal(sign(atom), NONNEG)
     }
   }
-  expect_error(value(power(-1, 3)), 
+  expect_error(value(power(-1, 3)),
                "Power cannot be applied to negative values", fixed = TRUE)
-  
-  expect_error(value(power(0, -1)), 
+
+  expect_error(value(power(0, -1)),
                "Power cannot be applied to negative or zero values", fixed = TRUE)
-  
+
 })
 
 test_that("test the geo_mean function", {
@@ -162,7 +162,7 @@ test_that("test matrix norms", {
       expect_equal(dim(atom), c(1,1))
       expect_equal(curvature(atom), CONVEX)
       expect_equal(sign(atom), NONNEG)
-      
+
       value(var) <- matrix(rnorm(size(var)), nrow = nrow(var), ncol = ncol(var))
       expect_equal(value(norm(var, p)), base:::norm(value(var), type = p))
     }
@@ -236,7 +236,7 @@ test_that("test the sign for min_entries", {
   # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
   expect_equal(dim(min_entries(Variable(2, 3), axis = 1)), c(2, 1))
   expect_equal(dim(min_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
-  
+
   # Invalid axis
   expect_error(min_entries(x, axis = 4),
                "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
@@ -317,13 +317,13 @@ test_that("test the sum_entries function", {
   # Invalid axis
   expect_error(sum_entries(x, axis = 4),
                "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
-  
+
   A <- diag(3)
   expect_equal(value(CVXR::sum_entries(A)), 3)
-  
+
   A <- diag(3)
   expect_equal(value(CVXR::sum_entries(A, axis = 1)), c(1, 1, 1))
-  
+
 })
 
 test_that("test the multiply function", {
@@ -342,7 +342,7 @@ test_that("test the multiply function", {
   expect_equal(dim(multiply(c(1, -1), 1)), c(2, 1))
   expect_equal(dim(multiply(1, C)), dim(C))
   # expect_error(multiply(x, c(1, -1)))
-  
+
   expect_equal(sign(multiply(x, c(1, -1))), UNKNOWN)
   expect_equal(curvature(multiply(x, c(1, -1))), AFFINE)
   expect_equal(dim(multiply(x, c(1, -1))), c(2,1))
@@ -429,7 +429,7 @@ test_that("test the matrix_trace function", {
   # expect_equal(dim(expr), NULL)
   expect_equal(dim(expr), c(1, 1))
 
-  expect_error(matrix_trace(C), 
+  expect_error(matrix_trace(C),
                "Argument to Trace must be a square matrix", fixed = TRUE)
 })
 
@@ -458,7 +458,7 @@ test_that("test the huber function", {
   M <- Parameter(nonneg = TRUE)
   # Valid
   huber(x, M)
-  M@value <- 1
+  value(M) <- 1
   expect_equal(value(huber(2, M)), 3, tolerance = TOL)
   # Invalid
   M <- Parameter(nonpos = TRUE)
@@ -478,7 +478,7 @@ test_that("test the sum_largest function", {
 test_that("test the sum_smallest function", {
   expect_error(sum_smallest(x, -1),
                "[SumLargest: validation] k must be a positive integer", fixed = TRUE)
-  expect_error(lambda_sum_smallest(Variable(2, 2), 2.4), 
+  expect_error(lambda_sum_smallest(Variable(2, 2), 2.4),
                "Second argument must be a positive integer.", fixed = TRUE)
 })
 
@@ -529,17 +529,17 @@ test_that("test the kronecker function", {
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
 #   g <- partial_optimize(p2, list(t), list(x))
 #   expect_equal(curvature(g), CONVEX)
-# 
+#
 #   p2 <- Problem(Maximize(sum_entries(t)), list(-t <= x, x <= t))
 #   g <- partial_optimize(p2, list(t), list(x))
 #   expect_equal(curvature(g), CONCAVE)
-# 
+#
 #   p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
 #   g <- partial_optimize(p2, list(t), list(x))
 #   expect_false(is_convex(g))
 #   expect_false(is_concave(g))
 # })
-# 
+#
 # test_that("test the partial_optimize eval 1-norm", {
 #   # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
 #   dims <- 3
@@ -548,57 +548,57 @@ test_that("test the kronecker function", {
 #   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
 #   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= xval, xval <= t))
 #   result1 <- solve(p1)
-# 
+#
 #   # Minimize the 1-norm via partial_optimize
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
 #   # g <- partial_optimize(p2, list(t), list(x))
 #   # p3 <- Problem(Minimize(g), list(x == xval))
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, -result3$value)
-# 
+#
 #   # Try leaving out args
-# 
+#
 #   # Minimize the 1-norm via partial_optimize
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
 #   # g <- partial_optimize(p2, opt_vars = list(t))
 #   # p3 <- Problem(Minimize(g), list(x == xval))
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
-# 
+#
 #   # Minimize the 1-norm via partial_optimize
 #   # g <- partial_optimize(p2, dont_opt_vars = list(x))
 #   # p3 <- Problem(Minimize(g), list(x == xval))
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
-# 
+#
 #   # expect_error(partial_optimize(p2))
 #   # expect_error(partial_optimize(p2, list(), list(x)))
 # })
-# 
+#
 # test_that("test partial_optimize min 1-norm", {
 #   # Minimize the 1-norm in the usual way
 #   dims <- 3
 #   x <- Variable(dims)
 #   t <- Variable(dims)
 #   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-# 
+#
 #   # Minimize the 1-norm via partial_optimize
 #   # g <- partial_optimize(p1, list(t), list(x))
 #   # p2 <- Problem(Minimize(g))
 #   # result2 <- solve(p2)
-# 
+#
 #   result1 <- solve(p1)
 #   # expect_equal(result1$value, result2$value)
 # })
-# 
+#
 # test_that("test partial_optimize simple problem", {
 #   x <- Variable(1)
 #   y <- Variable(1)
-# 
+#
 #   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
 #   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
 #   result1 <- solve(p1)
-# 
+#
 #   # Solve the two-stage problem via partial_optimize
 #   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
 #   # g <- partial_optimize(p2, list(y), list(x))
@@ -606,15 +606,15 @@ test_that("test the kronecker function", {
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
 # })
-# 
+#
 # test_that("test partial_optimize special var", {
 #   x <- Bool(1)
 #   y <- Int(1)
-# 
+#
 #   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
 #   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
 #   # result1 <- solve(p1)
-# 
+#
 #   # Solve the two-stage problem via partial_optimize
 #   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
 #   # g <- partial_optimize(p2, list(y), list(x))
@@ -622,15 +622,15 @@ test_that("test the kronecker function", {
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
 # })
-# 
+#
 # test_that("test partial_optimize special constr", {
 #   x <- Variable(1)
 #   y <- Variable(1)
-# 
+#
 #   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
 #   p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
 #   result1 <- solve(p1)
-# 
+#
 #   # Solve the two-stage problem via partial_optimize
 #   p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
 #   # g <- partial_optimize(p2, list(y), list(x))
@@ -638,17 +638,17 @@ test_that("test the kronecker function", {
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
 # })
-# 
+#
 # test_that("test partial_optimize with parameters", {
 #   x <- Variable(1)
 #   y <- Variable(1)
 #   gamma <- Parameter()
-# 
+#
 #   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
 #   p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
 #   gamma@value <- 3
 #   # result1 <- solve(p1)
-# 
+#
 #   # Solve the two-stage problem via partial_optimize
 #   p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
 #   # g <- partial_optimize(p2, list(y), list(x))
@@ -656,16 +656,16 @@ test_that("test the kronecker function", {
 #   # result3 <- solve(p3)
 #   # expect_equal(result1$value, result3$value)
 # })
-# 
+#
 # test_that("test partial_optimize numeric function", {
 #   x <- Variable(1)
 #   y <- Variable(1)
 #   xval <- 4
-# 
+#
 #   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
 #   p1 <- Problem(Minimize(y), list(xval+y >= 3))
 #   result1 <- solve(p1)
-# 
+#
 #   # Solve the two-stage problem via partial_optimize
 #   constr <- list(y >= -100)
 #   p2 <- Problem(Minimize(y), c(x+y >= 3, constr))
@@ -677,7 +677,7 @@ test_that("test the kronecker function", {
 #   # expect_equal(result, result1$value)
 #   # expect_equal(y@value, 42)
 #   # expect_equal(constr[1]@dual_value, 42)
-# 
+#
 #   # No variables optimized over
 #   p2 <- Problem(Minimize(y), list(x+y >= 3))
 #   # g <- partial_optimize(p2, list(), list(x,y))
@@ -689,20 +689,20 @@ test_that("test the kronecker function", {
 #   # expect_equal(y@value, 42)
 #   # expect_equal(p2@constraints[1]@dual_value, 42)
 # })
-# 
+#
 # test_that("test partial_optimize stacked", {
 #   # Minimize the 1-norm in the usual way
 #   dims <- 3
 #   x <- Variable(dims)
 #   t <- Variable(dims)
 #   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-# 
+#
 #   # Minimize the 1-norm via partial_optimize
 #   # g <- partial_optimize(p1, list(t), list(x))
 #   # g2 <- partial_optimize(Problem(Minimize(g)), list(x))
 #   # p2 <- Problem(Minimize(g2))
 #   # result2 <- solve(p2)
-# 
+#
 #   result1 <- solve(p1)
 #   # expect_equal(result1$value, result2$value)
 # })
@@ -730,7 +730,7 @@ test_that("test mixed_norm", {
 #   expr <- t(c) %*% x^2
 #   expect_equal(value(expr), 3, tolerance = TOL)
 #   expect_true(is_dcp(expr))
-# 
+#
 #   c[1] <- -1
 #   expect_equal(value(expr), 3, tolerance = TOL)
 #   expect_true(is_dcp(expr))
@@ -745,7 +745,7 @@ test_that("test that norm1 and normInf match definition for matrices", {
   result <- solve(prob)
   print(result$value)
   expect_equal(result$value, value(norm1(A)), TOL)
-  
+
   obj <- Minimize(norm_inf(X))
   prob <- Problem(obj, list(X == A))
   result <- solve(prob)
@@ -762,5 +762,5 @@ test_that("test that norm1 and normInf match definition for matrices", {
 #   expect_equal(value(expr), 0.0)
 #   x@value <- 2
 #   expect_equal(value(expr), Inf)
-#   
+#
 # })

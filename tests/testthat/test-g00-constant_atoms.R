@@ -2,7 +2,7 @@ context("test-constant_atoms")
 
 ROBUST_CVXOPT <- "robust_cvxopt"
 SOLVERS_TO_TRY <- c("ECOS", "SCS", "OSQP")
-SOLVERS_TO_TOL <- list(ECOS = 1e-6, SCS = 1e-2, OSQP = 1e-1)
+SOLVERS_TO_TOL <- list(ECOS = 5e-7, SCS = 1e-2, OSQP = 1e-1) ## ECOS = 1e-7 fails one or two tests!
 
 # Test CVXOPT if installed.
 if("CVXOPT" %in% installed_solvers()) {
@@ -181,7 +181,7 @@ check_solver <- function(prob, solver_name) {
     tryCatch({
         if(solver_name == ROBUST_CVXOPT)
             solver_name <- "CVXOPT"
-        
+
         chains <- CVXR:::.construct_chains(prob, solver = solver_name)
         return(TRUE)
     }, error = function(e) {
@@ -189,9 +189,10 @@ check_solver <- function(prob, solver_name) {
     })
 }
 
+ecnt  <- 0
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     expect_true(is_dcp(problem))
-    print(problem)
+    ##print(problem)
     if(verbose) {
         print(problem@objective)
         print(problem@constraints)
@@ -210,12 +211,15 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 
             obj_diff <- (result$value - obj_val)/(1+abs(obj_val))
             expect_true(abs(obj_diff) <= tolerance)
-            
+
             if(abs(obj_diff) > tolerance) {
+                ecnt  <- ecnt + 1
                 sink("test_constant_atoms_out.txt", append = TRUE)
+                cat(sprintf("Solver: %s\n", solver))
                 print(atom)
-                cat(result$value, "\t", obj_val, "\n")
+                cat(sprintf("Result: %.10f \t Expected: %.10f \t Obj_diff: %.10f\n", result$value, obj_val, obj_diff))
                 sink()
+                saveRDS(list(problem  = problem, solver = "solver"), file = sprintf("error-%02d.RDS", ecnt))
             }
         } else
             stop("Problem status is sub-optimal: ", result$status)
@@ -223,15 +227,16 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
 }
 
 test_that("Test all constant atoms", {
+    skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
-
-    # skip_on_cran()
-
+    ##counter  <- 0 ## list item counter
     for(a in atoms) {
         atom_list <- a[[1]]
         objective_type <- a[[2]]
         for(al in atom_list) {
+            ##counter  <- counter + 1 ## list item counter
+            ##cat(sprintf("Item No: %d\n", counter))
             atom <- al[[1]]
             dims <- al[[2]]
             args <- al[[3]]
@@ -256,13 +261,17 @@ test_that("Test all constant atoms", {
                         ## print(atom)
                         ## print(value(obj_val[row, col]))
                         run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
-
-                        ## Atoms with Parameter arguments
+                        ## cat("Index is", ind, "\n")
+                        ## print("ATOM is")
+                        ## print(atom)
+                        ## print("Args is")
+                        ## print(args)
+                        ## ##Atoms with Parameter arguments
                         ## parameters <- list()
                         ## for(expr in args) {
-                        ##  expr_dim <- intf_dim(expr)
-                        ##  parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
-                        ##  value(parameters[[length(parameters)]]) <- as.matrix(expr)
+                        ##     expr_dim <- dim(expr)
+                        ##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
+                        ##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
                         ## }
                         ## objective <- objective_type(do.call(atom, parameters)[row, col])
                         ## run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)

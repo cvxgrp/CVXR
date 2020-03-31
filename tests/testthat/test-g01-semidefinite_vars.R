@@ -6,7 +6,7 @@ Y <- Variable(2, 2)
 Fmat <- rbind(c(1,0), c(0,-1))
 
 test_that("test that results are symmetric", {
-    skip_on_cran()
+  skip_on_cran()
   M <- Variable(3, 3, PSD = TRUE)
   C1 <- rbind(c(0, 0, 1/2), c(0, 0, 0), c(1/2, 0, 1))
   C2 <- rbind(c(0, 0, 0), c(0, 0, 1/2), c(0, 1/2, 1))
@@ -22,7 +22,7 @@ test_that("test that results are symmetric", {
 })
 
 test_that("SDP in objective and constraint", {
-    skip_on_cran()
+  skip_on_cran()
   # PSD in objective.
   obj <- Minimize(sum((X - Fmat)^2))
   p <- Problem(obj, list())

@@ -1,7 +1,9 @@
 context("test-vignettes")
 
+
 test_that("Test non-negative least squares", {
-    require(MASS)
+    skip_on_cran()
+    library(MASS)
     print("LS")
 
     ## Generate problem data
@@ -54,6 +56,7 @@ test_that("Test non-negative least squares", {
 })
 
 test_that("Test censored regression", {
+  skip_on_cran()
   ## Problem data
   n <- 30
   M <- 50
@@ -111,6 +114,7 @@ test_that("Test censored regression", {
 })
 
 test_that("Test Elastic-net regression", {
+  skip_on_cran()
   set.seed(1)
   print("ELASTIC")
 
@@ -163,6 +167,7 @@ test_that("Test Elastic-net regression", {
 })
 
 test_that("Test Huber regression", {
+  skip_on_cran()
   n <- 1
   m <- 450
   M <- 1      ## Huber threshold
@@ -217,6 +222,7 @@ test_that("Test Huber regression", {
 })
 
 test_that("Test logistic regression", {
+  skip_on_cran()
   n <- 20
   m <- 1000
   offset <- 0
@@ -245,7 +251,8 @@ test_that("Test logistic regression", {
 
 
 test_that("Test saturating hinges problem", {
-  require(ElemStatLearn)
+  skip_on_cran()
+  library(ElemStatLearn)
   print("SAT HINGES")
 
   ## Import and sort data
@@ -331,6 +338,7 @@ test_that("Test saturating hinges problem", {
 })
 
 test_that("Test log-concave distribution estimation", {
+  skip_on_cran()
   set.seed(1)
   print("LOG CONCAVE")
 
@@ -392,6 +400,7 @@ test_that("Test log-concave distribution estimation", {
 })
 
 test_that("Test channel capacity problem", {
+  skip_on_cran()
   ## Problem data
   n <- 2
   m <- 2
@@ -417,6 +426,7 @@ test_that("Test channel capacity problem", {
 })
 
 test_that("Test optimal allocation in a Gaussian broadcast channel", {
+  skip_on_cran()
   ## Problem data
   n <- 5
   alpha <- seq(10, n-1+10)/n
@@ -443,6 +453,7 @@ test_that("Test optimal allocation in a Gaussian broadcast channel", {
 })
 
 test_that("Test catenary problem", {
+  skip_on_cran()
   ## Problem data
   m <- 101
   L <- 2
@@ -505,6 +516,7 @@ test_that("Test catenary problem", {
 })
 
 test_that("Test direct standardization problem", {
+  skip_on_cran()
   print("DIRECT")
 
   skew_sample <- function(data, bias) {
@@ -567,6 +579,7 @@ test_that("Test direct standardization problem", {
 })
 
 test_that("Test risk-return tradeoff in portfolio optimization", {
+  skip_on_cran()
   print("PORTFOLIO")
 
   ## Problem data
@@ -616,13 +629,11 @@ test_that("Test risk-return tradeoff in portfolio optimization", {
   ## Plot weights for a few gamma
   w_plot <- t(w_data[markers_on,])
   colnames(w_plot) <- sprintf("%.2f", gammas[markers_on])
-  if (require("colorspace")) {
-    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget", col = sequential_hcl(n))
-  } else
-    barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
+  barplot(w_plot, xlab = expression(paste("Risk Aversion (", gamma, ")", sep = "")), ylab = "Fraction of Budget")
 })
 
 test_that("Test Kelly gambling optimal bets", {
+  skip_on_cran()
   print("KELLY")
 
   set.seed(1)
@@ -680,6 +691,7 @@ test_that("Test Kelly gambling optimal bets", {
 })
 
 test_that("Test worst-case covariance", {
+  skip_on_cran()
   print("WORST CASE")
 
   ## Problem data
@@ -740,8 +752,9 @@ test_that("Test worst-case covariance", {
 })
 
 test_that("Test sparse inverse covariance estimation", {
-  require(Matrix)
-  require(expm)
+  skip_on_cran()
+  library(Matrix)
+  library(expm)
   print("SPARSE INV")
 
   set.seed(1)
@@ -782,6 +795,7 @@ test_that("Test sparse inverse covariance estimation", {
 })
 
 test_that("Test fastest mixing Markov chain (FMMC)", {
+  skip_on_cran()
   print("MCMC")
 
   ## Boyd, Diaconis, and Xiao. SIAM Rev. 46 (2004) pgs. 667-689 at pg. 672
@@ -823,16 +837,10 @@ test_that("Test fastest mixing Markov chain (FMMC)", {
   }
 
   disp_result <- function(states, P, tol = 1e-3) {
-    if(require("markovchain")) {
-      P[P < tol] <- 0
-      P <- P/apply(P, 1, sum)   ## Normalize so rows sum to exactly 1
-      mc <- new("markovchain", states = states, transitionMatrix = P)
-      plot(mc)
-    } else {
       rownames(P) <- states
       colnames(P) <- states
       print(P)
-    }
+
   }
 
   ## SIAM Rev. 46 examples pg. 674: Figure 1 and Table 1

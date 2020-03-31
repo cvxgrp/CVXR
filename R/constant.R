@@ -85,7 +85,7 @@ setMethod("canonicalize", "Constant", function(object) {
 })
 
 #' @describeIn Constant A logical value indicating whether all elements of the constant are non-negative.
-setMethod("is_nonneg", "Constant", function(object) { 
+setMethod("is_nonneg", "Constant", function(object) {
   if(is.na(object@nonneg))
     object <- .compute_attr(object)
   object@nonneg
@@ -138,7 +138,7 @@ setMethod("is_hermitian", "Constant", function(object) {
   res <- intf_is_complex(value(object))
   is_real <- res[[1]]
   is_imag <- res[[2]]
-  
+
   if(is_complex(object)) {
     is_nonneg <- FALSE
     is_nonpos <- FALSE
@@ -147,7 +147,7 @@ setMethod("is_hermitian", "Constant", function(object) {
     is_nonneg <- sign[[1]]
     is_nonpos <- sign[[2]]
   }
-  
+
   object@imag <- is_imag && !is_real
   object@nonpos <- is_nonpos
   object@nonneg <- is_nonneg
@@ -182,7 +182,7 @@ setMethod("is_psd", "Constant", function(object) {
     return(FALSE)
   else if(!is_hermitian(object))
     return(FALSE)
-  
+
   # Compute eigenvalues if absent.
   if(is.na(object@eigvals))
     object <- .compute_eigvals(object)
@@ -202,7 +202,7 @@ setMethod("is_nsd", "Constant", function(object) {
     return(FALSE)
   else if(!is_hermitian(object))
     return(FALSE)
-  
+
   # Compute eigenvalues if absent.
   if(is.na(object@eigvals))
     object <- .compute_eigvals(object)
@@ -238,8 +238,9 @@ as.Constant <- function(expr) {
 #' @name Parameter-class
 #' @aliases Parameter
 #' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", value = "ConstVal", .is_vector = "logical"),
-                                    prototype(dim = NULL, name = NA_character_, value = NA_real_, .is_vector = NA), contains = "Leaf")
+.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", venv = "environment", .is_vector = "logical"),
+                       ##prototype(dim = NULL, name = NA_character_, .is_vector = NA),
+                       contains = "Leaf")
 
 #' @param rows The number of rows in the parameter.
 #' @param cols The number of columns in the parameter.
@@ -258,27 +259,30 @@ as.Constant <- function(expr) {
 Parameter <- function(rows = NULL, cols = NULL, name = NA_character_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, value = value, ...) }
 
 setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_, .is_vector = NA) {
-  # .Object@id <- get_id()
+    .Object@name <- name
+    .Object@.is_vector <- .is_vector
+    ## .Object@id <- get_id()
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
   else
     .Object@name <- name
-  
-  if(length(dim) == 0 || is.null(dim)) {  # Force constants to default to c(1,1).
-    dim <- c(1,1)
-    .Object@.is_vector <- TRUE
-  } else if(length(dim) == 1) {  # Treat as a column vector.
-    dim <- c(dim,1)
-    .Object@.is_vector <- TRUE
-  } else if(length(dim) == 2)
-    .Object@.is_vector <- FALSE
-  else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
-    stop("Unimplemented")
 
+    if(length(dim) == 0 || is.null(dim)) {  # Force constants to default to c(1,1).
+        dim <- c(1,1)
+        .Object@.is_vector <- TRUE
+    } else if(length(dim) == 1) {  # Treat as a column vector.
+        dim <- c(dim,1)
+        .Object@.is_vector <- TRUE
+    } else if(length(dim) == 2)
+        .Object@.is_vector <- FALSE
+    else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
+        stop("Unimplemented")
+    .Object@dim <- dim
   # Initialize with value if provided
   # .Object@value <- value
   # callNextMethod(.Object, ..., id = .Object@id, dim = dim, value = value)
-  .Object@value <- NA_real_
+    .Object@venv <- e <- new.env(parent=emptyenv())
+    e$value <- value
   callNextMethod(.Object, ..., dim = dim, value = value)
 })
 
@@ -292,16 +296,23 @@ setMethod("get_data", "Parameter", function(object) {
 #' @export
 setMethod("name", "Parameter", function(x) { x@name })
 
+## # We also need a value_impl
+setMethod("value_impl", "Parameter", function(object) {
+    object@venv$value
+})
+
 #' @describeIn Parameter The value of the parameter.
 setMethod("value", "Parameter", function(object) {
   # if(object@.is_vector)
   #  return(as.vector(object@value))
-  return(object@value)
+    ## return(object@value)
+ return(object@venv$value)
 })
 
 #' @describeIn Parameter Set the value of the parameter.
 setReplaceMethod("value", "Parameter", function(object, value) {
-  object@value <- validate_val(object, value)
+    ## object@value <- validate_val(object, value)
+    object@venv$value <- validate_val(object, value)
   object
 })
 
@@ -335,7 +346,7 @@ setMethod("show", "Parameter", function(object) {
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
-.CallbackParam <- setClass("CallbackParam", representation(callback = "function", dim = "numeric"), 
+.CallbackParam <- setClass("CallbackParam", representation(callback = "function", dim = "numeric"),
                                             prototype(dim = NULL), contains = "Parameter")
 
 #' @param callback A callback function that generates the parameter value.

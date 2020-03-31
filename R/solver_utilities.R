@@ -20,12 +20,18 @@ CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, SUPER_SCS_NAME, SCS_NAME,
                    GLPK_MI_NAME, CBC_NAME, CVXOPT_NAME, ECOS_BB_NAME)
 QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
 
+## Global variable for changing behavior
+.CVXR_options <- new.env(parent = emptyenv())
+.CVXR_options$blacklisted_solvers  <- character(0)
+
+
 #'
-#' Installed Solvers
+#' List installed solvers
 #'
-#' @return The names of all the installed solvers.
-#' @docType methods
-#' @rdname installed_solvers
+#' List available solvers, taking currently blacklisted solvers into
+#' account.
+#'
+#' @return The names of all the installed solvers as a character vector.
 #' @export
 installed_solvers <- function() {
     ## Check conic solvers.
@@ -34,8 +40,37 @@ installed_solvers <- function() {
     ## Check QP solvers.
     installed_qp <- names(SOLVER_MAP_QP[sapply(SOLVER_MAP_QP, is_installed)])
 
-    unique(c(installed_conic, installed_qp))
+    setdiff(c(installed_conic, installed_qp), .CVXR_options$blacklisted_solvers)
 }
 
-## INSTALLED_SOLVERS <- installed_solvers()
-## INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
+#'
+#' @param solvers a character vector of solver names, default \code{character(0)}
+#' @return The current blacklist (character vector), invisibly.
+#' @describeIn installed_solvers Add to solver blacklist, useful for temporarily disabling a solver
+#' @export
+add_to_solver_blacklist <- function(solvers) {
+    stopifnot(is.character(solvers))
+    result <- unique(c(.CVXR_options$blacklisted_solvers, solvers))
+    .CVXR_options$blacklisted_solvers  <- result
+    invisible(result)
+}
+
+#'
+#' @describeIn installed_solvers Remove solvers from blacklist
+#' @export
+remove_from_solver_blacklist <- function(solvers) {
+    stopifnot(is.character(solvers))
+    result <- setdiff(.CVXR_options$blacklisted_solvers, solvers)
+    .CVXR_options$blacklisted_solvers  <- result
+    invisible(result)
+}
+
+#'
+#' @describeIn installed_solvers Set solver blacklist to a value
+#' @export
+set_solver_blacklist <- function(solvers) {
+    stopifnot(is.character(solvers))
+    .CVXR_options$blacklisted_solvers  <- solvers
+    invisible(solvers)
+}
+

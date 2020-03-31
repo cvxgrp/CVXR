@@ -4,11 +4,11 @@ context("test-examples")
 TOL <- 1e-6
 
 test_that("Test Chebyshev center", {
+    skip_on_cran()
     # Find the largest Euclidean ball in the polyhedron.
     # Goal is to find the largest Euclidean ball (i.e. its center and radius)
     # that lies in a polyhedron described by linear inequalities in this fashion:
     # P = {x : a_i'*x <= b_i, i=1,...,m} where x is in R^2.
-    ##skip_on_cran()
 
     # Generate the input data.
     a1 <- matrix(c(2,1))
@@ -36,7 +36,7 @@ test_that("Test Chebyshev center", {
 })
 
 test_that("Test issue with scalars", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     n <- 6
     eps <- 1e-6
@@ -96,7 +96,7 @@ test_that("Test issue with scalars", {
 })
 
 test_that("Test examples from the README", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     ## Problem data
     m <- 30
@@ -249,7 +249,7 @@ test_that("Test examples from the README", {
 })
 
 test_that("Test advanced tutorial 1", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     # Solving a problem with different solvers.
     x <- Variable(2)
@@ -316,7 +316,7 @@ test_that("Test advanced tutorial 1", {
 })
 
 test_that("Test log-determinant", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     # Generate data
     x <- cbind(c(0.55, 0.0),
@@ -339,7 +339,7 @@ test_that("Test log-determinant", {
 })
 
 test_that("Test portfolio problem that caused DCPAttr errors", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     library(Matrix)
     set.seed(5)
@@ -362,7 +362,7 @@ test_that("Test portfolio problem that caused DCPAttr errors", {
 })
 
 test_that("Test examples from CVXR introduction", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     m <- 30
     n <- 20
@@ -574,7 +574,7 @@ test_that("Test examples from CVXR introduction", {
 })
 
 test_that("Test image in-painting", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     set.seed(1)
     rows <- 100
@@ -607,7 +607,7 @@ test_that("Test image in-painting", {
 })
 
 test_that("Test advanced tutorial 2", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     x <- Variable()
     prob <- Problem(Minimize(x^2), list(x == 2))
@@ -654,7 +654,7 @@ test_that("Test advanced tutorial 2", {
 })
 
 test_that("Test the log_sum_exp function", {
-    ##skip_on_cran()
+    skip_on_cran()
 
     set.seed(1)
     m <- 5

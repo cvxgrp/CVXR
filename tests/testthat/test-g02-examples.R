@@ -11,7 +11,7 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
     a3 <- matrix(c(-1,2), nrow = 2, ncol = 1)
     a4 <- matrix(c(-1,-2), nrow = 2, ncol = 1)
     b <- rep(1,4)
-
+    
     ## Create and solve the model
     r <- Variable(name = "r")
     x_c <- Variable(2, name = "x_c")
@@ -22,7 +22,7 @@ test_that("Find the largest Euclidean ball in the polyhedron", {
         t(a3) %*% x_c + norm(a3,"F")*r <= b[3],
         t(a4) %*% x_c + norm(a4,"F")*r <= b[4]
     )
-
+    
     p <- Problem(obj, constraints)
     result <- solve(p)
     expect_equal(result$value, 0.447214, tolerance = TOL)
@@ -38,26 +38,26 @@ test_that("Test issue with scalars", {
     P0 <- matrix(rnorm(n*n), nrow = n, ncol = n)
     eye <- diag(n)
     P0 <- t(P0) %*% P0 + eps*eye
-
+    
     print(P0)
-
+    
     P1 <- matrix(rnorm(n*n), nrow = n, ncol = n)
     P1 <- t(P1) %*% P1
     P2 <- matrix(rnorm(n*n), nrow = n, ncol = n)
     P2 <- t(P2) %*% P2
     P3 <- matrix(rnorm(n*n), nrow = n, ncol = n)
     P3 <- t(P3) %*% P3
-
+    
     q0 <- matrix(rnorm(n), nrow = n)
     q1 <- matrix(rnorm(n), nrow = n)
     q2 <- matrix(rnorm(n), nrow = n)
     q3 <- matrix(rnorm(n), nrow = n)
-
+    
     r0 <- matrix(rnorm(1))
     r1 <- matrix(rnorm(1))
     r2 <- matrix(rnorm(1))
     r3 <- matrix(rnorm(1))
-
+    
     slack <- Variable()
     # Form the problem
     x <- Variable(n)
@@ -65,11 +65,11 @@ test_that("Test issue with scalars", {
     constraints <- list(0.5*quad_form(x, P1) + t(q1) %*% x + r1 <= slack,
                         0.5*quad_form(x, P2) + t(q2) %*% x + r2 <= slack,
                         0.5*quad_form(x, P3) + t(q3) %*% x + r3 <= slack)
-
+    
     # We now find the primal result and compare it to the dual result to check if strong duality holds, i.e., the duality gap is effectively zero
     p <- Problem(objective, constraints)
     result <- solve(p)
-
+    
     # Note that since our data is random, we may need to run this program multiple times to get a feasible primal.
     # When feasible, we can print out the following values.
     print(result$getValue(x))   # Solution
@@ -77,7 +77,7 @@ test_that("Test issue with scalars", {
     lam2 <- result$getDualValue(constraints[[2]])
     lam3 <- result$getDualValue(constraints[[3]])
     print(class(lam1))
-
+    
     P_lam <- P0 + lam1*P1 + lam2*P2 + lam3*P3
     q_lam <- q0 + lam1*q1 + lam2*q2 + lam3*q3
     r_lam <- r0 + lam1*r1 + lam2*r2 + lam3*r3

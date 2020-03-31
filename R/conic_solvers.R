@@ -2267,18 +2267,17 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   else {
     # this is a bit hacky, probably should fix later. Filling out part of the A matrix from G
     # Equivalent to task.putaijlist(as.list(row), as.list(col), as.list(vals))
-    prob$A <- sparseMatrix(i = row, j = col, x = vals, dims = c(nrow_G_sparse, ncol_G_sparse + total_soc_exp_slacks))
-  }
-
-  if(total_soc_exp_slacks > 0) {
-    i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
-    j <- length(c)   # Index of the first slack variable in the block vector "x".
-    rows <- (i:(i + total_soc_exp_slacks-1))+1
-    cols <- (j:(j + total_soc_exp_slacks-1))+1
-    #task.putaijlist(rows, cols, rep(1, total_soc_exp_slacks))
-    prob$A[rows, cols] <- diag(1, nrow = length(rows), ncol = length(cols))
-    # for(iter in 1:length(rows))
-    #   prob$A[rows[iter],cols[iter]] <- 1
+    if(total_soc_exp_slacks > 0) {
+      i <- unlist(dims[[LEQ_DIM]]) + unlist(dims[[EQ_DIM]])   # Constraint index in (1, ..., m)
+      j <- length(c)   # Index of the first slack variable in the block vector "x".
+      rows <- (i:(i + total_soc_exp_slacks-1))+1
+      cols <- (j:(j + total_soc_exp_slacks-1))+1
+      
+      row <- c(row, rows)
+      col <- c(col, cols)
+      vals <- c(vals, rep(1, length(rows)))
+    }
+    prob$A <- sparseMatrix(i = row, j = col, x = vals, dims = c(nrow_G_sparse, ncol_G_sparse + total_soc_exp_slacks))  
   }
 
   # Constraint index: start of LMIs.

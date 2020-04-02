@@ -17,23 +17,27 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
 <!-- headroom.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -43,8 +47,7 @@
 
 
 <meta property="og:title" content="Function reference" />
-<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.png" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:image" content="https://www.cvxgrp.org/CVXR/logo.svg" />
 
 
 
@@ -62,7 +65,7 @@
 
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-index">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -76,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
       </span>
     </div>
 
@@ -112,7 +115,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/cvxgrp/CVXR">
+  <a href="https://github.com/cvxgrp/CVXR/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -148,6 +151,11 @@
           <p class="section-desc"></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -445,7 +453,7 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="Constraint-class.html">as.character(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">dim(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">size(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_real(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_imag(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_complex(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_dcp(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_dgp(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">residual(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">violation(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">constr_value(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">get_data(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">dual_value(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">`dual_value<-`(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">size(<i>&lt;ZeroConstraint&gt;</i>)</a></code> </p>
+          <p><code><a href="Constraint-class.html">as.character(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">dim(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">size(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_real(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_imag(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_complex(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_dcp(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">is_dgp(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">residual(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">violation(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">constr_value(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">get_data(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">dual_value(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">`dual_value&lt;-`(<i>&lt;Constraint&gt;</i>)</a></code> <code><a href="Constraint-class.html">size(<i>&lt;ZeroConstraint&gt;</i>)</a></code> </p>
         </td>
         <td><p>The Constraint class.</p></td>
       </tr><tr>
@@ -986,7 +994,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="IneqConstraint-class.html">`<=`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`<=`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`<=`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`<`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`<`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`<`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>=`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>=`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>=`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`>`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">name(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">dim(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">size(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">expr(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">is_dcp(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">is_dgp(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">residual(<i>&lt;IneqConstraint&gt;</i>)</a></code> </p>
+          <p><code><a href="IneqConstraint-class.html">`&lt;=`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&lt;=`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&lt;=`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&lt;`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&lt;`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&lt;`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;=`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;=`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;=`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;`(<i>&lt;Expression&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;`(<i>&lt;Expression&gt;</i>,<i>&lt;ConstVal&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">`&gt;`(<i>&lt;ConstVal&gt;</i>,<i>&lt;Expression&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">name(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">dim(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">size(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">expr(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">is_dcp(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">is_dgp(<i>&lt;IneqConstraint&gt;</i>)</a></code> <code><a href="IneqConstraint-class.html">residual(<i>&lt;IneqConstraint&gt;</i>)</a></code> </p>
         </td>
         <td><p>The IneqConstraint class</p></td>
       </tr><tr>
@@ -1034,7 +1042,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Leaf-class.html">get_data(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">dim(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">variables(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">parameters(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">constants(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">atoms(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_convex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_concave(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_log_log_convex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_log_log_concave(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nonneg(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nonpos(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_pos(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_neg(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_hermitian(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_symmetric(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_imag(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_complex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">domain(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">project(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">project_and_assign(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">value(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">`value<-`(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">validate_val(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_psd(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nsd(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_quadratic(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_pwl(<i>&lt;Leaf&gt;</i>)</a></code> </p>
+          <p><code><a href="Leaf-class.html">get_data(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">dim(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">variables(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">parameters(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">constants(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">atoms(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_convex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_concave(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_log_log_convex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_log_log_concave(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nonneg(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nonpos(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_pos(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_neg(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_hermitian(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_symmetric(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_imag(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_complex(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">domain(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">project(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">project_and_assign(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">value(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">`value&lt;-`(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">validate_val(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_psd(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_nsd(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_quadratic(<i>&lt;Leaf&gt;</i>)</a></code> <code><a href="Leaf-class.html">is_pwl(<i>&lt;Leaf&gt;</i>)</a></code> </p>
         </td>
         <td><p>The Leaf class.</p></td>
       </tr><tr>
@@ -1238,7 +1246,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="PSDConstraint-class.html">`%>>%`</a></code> <code><a href="PSDConstraint-class.html">`%<<%`</a></code> <code><a href="PSDConstraint-class.html">PSDConstraint()</a></code> <code><a href="PSDConstraint-class.html">name(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">is_dcp(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">is_dgp(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">residual(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">canonicalize(<i>&lt;PSDConstraint&gt;</i>)</a></code> </p>
+          <p><code><a href="PSDConstraint-class.html">`%&gt;&gt;%`</a></code> <code><a href="PSDConstraint-class.html">`%&lt;&lt;%`</a></code> <code><a href="PSDConstraint-class.html">PSDConstraint()</a></code> <code><a href="PSDConstraint-class.html">name(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">is_dcp(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">is_dgp(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">residual(<i>&lt;PSDConstraint&gt;</i>)</a></code> <code><a href="PSDConstraint-class.html">canonicalize(<i>&lt;PSDConstraint&gt;</i>)</a></code> </p>
         </td>
         <td><p>The PSDConstraint class.</p></td>
       </tr><tr>
@@ -1250,7 +1258,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Parameter-class.html">Parameter()</a></code> <code><a href="Parameter-class.html">get_data(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">name(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">value(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">`value<-`(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">grad(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">parameters(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">canonicalize(<i>&lt;Parameter&gt;</i>)</a></code> </p>
+          <p><code><a href="Parameter-class.html">Parameter()</a></code> <code><a href="Parameter-class.html">get_data(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">name(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">value(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">`value&lt;-`(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">grad(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">parameters(<i>&lt;Parameter&gt;</i>)</a></code> <code><a href="Parameter-class.html">canonicalize(<i>&lt;Parameter&gt;</i>)</a></code> </p>
         </td>
         <td><p>The Parameter class.</p></td>
       </tr><tr>
@@ -1286,7 +1294,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Problem-class.html">Problem()</a></code> <code><a href="Problem-class.html">objective(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`objective<-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">constraints(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`constraints<-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">value(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`value<-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">status(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_dcp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_dgp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_qp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">canonicalize(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_mixed_integer(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">variables(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">parameters(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">constants(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">atoms(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">size_metrics(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">solver_stats(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`solver_stats<-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">get_problem_data(<i>&lt;Problem&gt;</i>,<i>&lt;character&gt;</i>,<i>&lt;logical&gt;</i>)</a></code> <code><a href="Problem-class.html">get_problem_data(<i>&lt;Problem&gt;</i>,<i>&lt;character&gt;</i>,<i>&lt;missing&gt;</i>)</a></code> <code><a href="Problem-class.html">unpack_results(<i>&lt;Problem&gt;</i>)</a></code> </p>
+          <p><code><a href="Problem-class.html">Problem()</a></code> <code><a href="Problem-class.html">objective(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`objective&lt;-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">constraints(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`constraints&lt;-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">value(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`value&lt;-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">status(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_dcp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_dgp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_qp(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">canonicalize(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">is_mixed_integer(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">variables(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">parameters(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">constants(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">atoms(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">size_metrics(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">solver_stats(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">`solver_stats&lt;-`(<i>&lt;Problem&gt;</i>)</a></code> <code><a href="Problem-class.html">get_problem_data(<i>&lt;Problem&gt;</i>,<i>&lt;character&gt;</i>,<i>&lt;logical&gt;</i>)</a></code> <code><a href="Problem-class.html">get_problem_data(<i>&lt;Problem&gt;</i>,<i>&lt;character&gt;</i>,<i>&lt;missing&gt;</i>)</a></code> <code><a href="Problem-class.html">unpack_results(<i>&lt;Problem&gt;</i>)</a></code> </p>
         </td>
         <td><p>The Problem class.</p></td>
       </tr><tr>
@@ -1334,7 +1342,7 @@ that can be supplied to ECOS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Rdict-class.html">Rdict()</a></code> <code><a href="Rdict-class.html">`$`(<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">length(<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">is.element(<i>&lt;ANY&gt;</i>,<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">`[`(<i>&lt;Rdict&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> <code><a href="Rdict-class.html">`[<-`(<i>&lt;Rdict&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> </p>
+          <p><code><a href="Rdict-class.html">Rdict()</a></code> <code><a href="Rdict-class.html">`$`(<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">length(<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">is.element(<i>&lt;ANY&gt;</i>,<i>&lt;Rdict&gt;</i>)</a></code> <code><a href="Rdict-class.html">`[`(<i>&lt;Rdict&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> <code><a href="Rdict-class.html">`[&lt;-`(<i>&lt;Rdict&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> </p>
         </td>
         <td><p>The Rdict class.</p></td>
       </tr><tr>
@@ -1900,7 +1908,7 @@ that can be supplied to SCS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="dual_value-methods.html">dual_value()</a></code> <code><a href="dual_value-methods.html">`dual_value<-`()</a></code> </p>
+          <p><code><a href="dual_value-methods.html">dual_value()</a></code> <code><a href="dual_value-methods.html">`dual_value&lt;-`()</a></code> </p>
         </td>
         <td><p>Get and Set Dual Value</p></td>
       </tr><tr>
@@ -2338,7 +2346,7 @@ that can be supplied to SCS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="problem-parts.html">objective()</a></code> <code><a href="problem-parts.html">`objective<-`()</a></code> <code><a href="problem-parts.html">constraints()</a></code> <code><a href="problem-parts.html">`constraints<-`()</a></code> <code><a href="problem-parts.html">size_metrics()</a></code> </p>
+          <p><code><a href="problem-parts.html">objective()</a></code> <code><a href="problem-parts.html">`objective&lt;-`()</a></code> <code><a href="problem-parts.html">constraints()</a></code> <code><a href="problem-parts.html">`constraints&lt;-`()</a></code> <code><a href="problem-parts.html">size_metrics()</a></code> </p>
         </td>
         <td><p>Parts of a Problem</p></td>
       </tr><tr>
@@ -2548,7 +2556,7 @@ that can be supplied to SCS.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="value-methods.html">value()</a></code> <code><a href="value-methods.html">`value<-`()</a></code> </p>
+          <p><code><a href="value-methods.html">value()</a></code> <code><a href="value-methods.html">`value&lt;-`()</a></code> </p>
         </td>
         <td><p>Get or Set Value</p></td>
       </tr><tr>
@@ -2574,11 +2582,10 @@ that can be supplied to SCS.</p></td>
     </table>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
-    </ul>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 
@@ -2589,7 +2596,7 @@ that can be supplied to SCS.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
 </div>
 
       </footer>

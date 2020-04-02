@@ -1,3 +1,11 @@
+# CVXR 1.0-1
+
+* Many small fixes to solver interfaces
+* Reference semantics for `Parameter`
+* Warm start for `OSQP` and updates to solver cache
+* Solver parameter defaults explicit now
+* New tests added for solver combinations
+
 # CVXR 1.0
 
 * Major release implementing reductions, many new solvers.

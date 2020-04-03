@@ -1884,7 +1884,7 @@ psd_coeff_offset <- function(problem, c) {
 #' @param solver,object,x A \linkS4class{MOSEK} object.
 #' @describeIn MOSEK Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
-setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
+setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint", "ExpCone") })
 
 #' @describeIn MOSEK Imports the solver.
 #' @importFrom utils packageDescription
@@ -1938,7 +1938,7 @@ setMethod("block_format", "MOSEK", function(object, problem, constraints, exp_co
     offset <- coeff_offs[[2]]
     matrices <- c(matrices, list(coeff))
     offsets <- c(offsets, offset)
-    lengths <- c(lengths, prod(dim(offset)))
+    lengths <- c(lengths, prod(dim(as.matrix(offset))))
     ids <- c(ids, id(con))
   }
   coeff <- Matrix(do.call(rbind, matrices), sparse = TRUE)
@@ -2089,7 +2089,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   ## Check if the CVXR standard form has zero variables. If so,
   ## return a trivial solution. This is necessary because MOSEK
   ## will crash if handed a problem with zero variables.
-
+  
   c <- data[[C_KEY]]
 
   if (length(c) == 0) {
@@ -2202,7 +2202,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
     running_idx <- running_idx + unlist_dims_SOC_DIM[[i]]
   }
   if(floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3) != 0){ # check this, feels sketchy
-    for(k in 1:(floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3)+1) ) {
+    for(k in 1:floor(sum(unlist_dims_EXP_DIM, na.rm = TRUE)/3) ) {
       prob$cones[,(length_dims_SOC_DIM+k)] <- list("PEXP", as.numeric((running_idx+1):(running_idx + 3)) )
       running_idx <- running_idx + 3
     }

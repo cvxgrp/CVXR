@@ -1,3 +1,8 @@
+# CVXR 1.0-2
+
+* Added exponential cone support for `MOSEK` and uncommented
+  associated test.
+
 # CVXR 1.0-1
 
 * Many small fixes to solver interfaces

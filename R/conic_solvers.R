@@ -208,6 +208,9 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     coeff_sum <- Reduce("+", coeffs)
     offset_sum <- Reduce("+", offsets)
     return(list(coeff_sum, as.vector(offset_sum)))
+  } else if(class(constr) == "PSDConstraint") {
+    ## Sign flipped relative fo NonPos, Zero.
+    return(list(-coeffs[[1L]], offsets[[1L]]))
   } else
     # subclasses must handle PSD constraints.
     stop("Unsupported constraint type.")
@@ -1116,7 +1119,7 @@ CVXOPT <- function() { new("CVXOPT") }
 # Solver capabilities.
 #' @describeIn CVXOPT Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
-setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
+setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
 # Map of CVXOPT status to CVXR status.
 #' @param solver,object,x A \linkS4class{CVXOPT} object.
@@ -1125,11 +1128,13 @@ setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_cons
 setMethod("status_map", "CVXOPT", function(solver, status) {
   if(status == "optimal")
     OPTIMAL
-  else if(status == "infeasible")
+  else if(status %in% c("infeasible", "primal infeasible",
+                        "LP relaxation is primal infeasible"))
     INFEASIBLE
-  else if(status == "unbounded")
+  else if(status %in% c("unbounded", "LP relaxation is dual infeasible",
+                        "dual infeasible"))
     UNBOUNDED
-  else if(status == "solver_error")
+  else if(status %in% c("solver_error", "unknown", "undefined"))
     SOLVER_ERROR
   else
     stop("CVXOPT status unrecognized: ", status)
@@ -1139,16 +1144,16 @@ setMethod("status_map", "CVXOPT", function(solver, status) {
 setMethod("name", "CVXOPT", function(x) { CVXOPT_NAME })
 
 #' @describeIn CVXOPT Imports the solver.
-##setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccopt", quietly = TRUE) })
-##setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccp", quietly = TRUE) })
+
 ## CVXOPT is not implemented as there is no R package equivalent to cccopt. We should check out cccp, though
-setMethod("import_solver", "CVXOPT", function(solver) { FALSE })
+setMethod("import_solver", "CVXOPT", function(solver) { requireNamespace("cccp", quietly = TRUE) })
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CVXOPT Can CVXOPT solve the problem?
 setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function(object, problem) {
   # Can CVXOPT solver the problem?
   # TODO: Check if the matrix is stuffed.
+  import_solver(object)
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
@@ -1195,20 +1200,125 @@ setMethod("perform", signature(object = "CVXOPT", problem = "Problem"), function
   return(list(object, data, inv_data))
 })
 
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
+#' @describeIn CVXOPT Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "CVXOPT", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+  status <- solution$status
+  primal_vars <- list()
+  dual_vars <- list()
+  if(status %in% SOLUTION_PRESENT){
+    opt_val <- solution$value + inverse_data[[OFFSET]]
+    primal_vars[[as.character(inverse_data[[object@var_id]])]] <- solution$primal
+    eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
+    leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
+    eq_dual <- utils::modifyList(eq_dual, leq_dual)
+    dual_vars <- eq_dual
+    return(Solution(status, opt_val, primal_vars, dual_vars, list()))
+  } else {
+    return(failure_solution(status))
+  }
+})
+
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, solver_opts, solver_cache) {
-    stop("Unimplemented!")
-  ## if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
-  ## solver <- CVXOPT_OLD()
-  ## prob_data <- list()
-  ## prob_data[[name(object)]] <- ProblemData()
-  ## solve(solver, data$objective, data$constraints, prob_data, warm_start, verbose, solver_opts)
+setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, feastol, reltol, abstol,
+                                               num_iter, solver_opts, solver_cache) {
+  #Tweak paramters
+  if(is.null(feastol)) {
+    feastol <- SOLVER_DEFAULT_PARAM$CVXOPT$feastol
+  }
+  if(is.null(reltol)) {
+    reltol <- SOLVER_DEFAULT_PARAM$CVXOPT$reltol
+  }
+  if(is.null(abstol)) {
+    abstol <- SOLVER_DEFAULT_PARAM$CVXOPT$abstol
+  }
+  if(is.null(num_iter)) {
+    num_iter <- SOLVER_DEFAULT_PARAM$CVXOPT$max_iters
+  }
+  param <- cccp::ctrl(maxiters=as.integer(num_iter), abstol=abstol, reltol=reltol,
+                      feastol=feastol, trace=as.logical(verbose))
+  param$params[names(solver_opts)] <- solver_opts
+
+  G <- as.matrix(data[[G_KEY]])
+  h <- as.matrix(data[[H_KEY]])
+  nvar <- dim(G)[2]
+  dims <- data[[DIMS]]
+  zero_dims <- dims@zero
+  nonpos_dims <- dims@nonpos
+  soc_dims <- dims@soc
+  psd_dims <- dims@psd
+  clistLength <- (nonpos_dims > 0) + length(soc_dims) + length(psd_dims)
+
+  # For all the constraints except the zero constraint
+  clist <- vector(mode="list", length = clistLength)
+  clistCounter <- 1
+  ghCounter <- 1
+
+  # Deal with non positive constraints
+  if(nonpos_dims > 0){
+    ## clist[[clistCounter]] <- cccp::nnoc(G = G[ghCounter:(ghCounter+nonpos_dims-1),],
+    ##                                     h=h[ghCounter:(ghCounter+nonpos_dims-1),])
+    clist[[clistCounter]]  <- list(conType = "NNOC",
+                                   G = as.matrix(G[ghCounter:(ghCounter+nonpos_dims-1),]),
+                                   h = as.matrix(h[ghCounter:(ghCounter+nonpos_dims-1),]),
+                                   dims = as.integer(nonpos_dims)
+                                   )
+      clistCounter <- clistCounter + 1
+      ghCounter <- ghCounter + nonpos_dims
+  }
+
+  # Deal with SOC constraints
+  for(i in soc_dims){
+    clist[[clistCounter]] <- cccp::socc(F=-G[(ghCounter+1):(ghCounter+i-1),],
+                                  g=h[(ghCounter+1):(ghCounter+i-1),],
+                                  d=-G[ghCounter,],
+                                  f=h[ghCounter,])
+    clistCounter <- clistCounter + 1
+    ghCounter <- ghCounter + i
+  }
+
+  # Deal with PSD constraints
+  for(i in psd_dims){
+    Flist <- vector(mode="list", length = nvar+1)
+    currG <- G[ghCounter:(ghCounter + i^2-1),]
+    currh <- h[ghCounter:(ghCounter + i^2-1),]
+    Flist[[1]] <- matrix(currh, nrow = i)
+    for(j in 1:nvar){
+      Flist[[j+1]] <- matrix(currG[,j], nrow = i)
+    }
+    clist[[clistCounter]] <- cccp::psdc(Flist = Flist[-1], F0 = Flist[[1]])
+    clistCounter <- clistCounter + 1
+    ghCounter <- ghCounter + i
+  }
+
+  if(zero_dims > 0){
+    results <- cccp::cccp(q=data[[C_KEY]],
+                    A=as.matrix(data[[A_KEY]]),
+                    b=as.matrix(data[[B_KEY]]),
+                    cList=clist,
+                    optctrl=param)
+  } else {
+    results <- cccp::cccp(q=data[[C_KEY]],
+                    cList=clist,
+                    optctrl=param)
+  }
+  solution <- list()
+  solution$status <- status_map(object, results$status)
+  solution$value <- (results$state[1] + data[[OFFSET]])[[1]]
+  solution$primal <- cccp::getx(results)
+  solution$eq_dual <- cccp::gety(results)
+  solution$ineq_dual <- unlist(cccp::getz(results))
+  #solution$ineq_dual <- as.matrix(c(temp[[1]], temp[[2]], temp[[3]], temp[[4]][abs(temp[[4]]) > 1e-8])[1:nrow(G)])
+
+  return(solution)
 })
+
 
 #' An interface for the ECOS BB solver.
 #'
@@ -2089,7 +2199,7 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   ## Check if the CVXR standard form has zero variables. If so,
   ## return a trivial solution. This is necessary because MOSEK
   ## will crash if handed a problem with zero variables.
-  
+
   c <- data[[C_KEY]]
 
   if (length(c) == 0) {

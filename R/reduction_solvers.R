@@ -298,10 +298,23 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
 
-  if(!gp && !is_dcp(problem))
-    stop("Problem does not follow DCP rules. However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
-  else if(gp && !is_dgp(problem))
-    stop("Problem does not follow DGP rules. However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
+  if(!gp) {
+      if (!is_dcp(problem)) {
+          err_msg  <- "Problem does not follow DCP rules."
+          if (is_dgp(problem)) {
+              err_msg  <- paste(err_msg, "However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
+          }
+          stop(err_msg)
+      }
+  } else {
+      if(!is_dgp(problem)) {
+          err_msg  <- "Problem does not follow DGP rules."
+          if (is_dcp(problem)) {
+              err_msg  <- paste(err_msg, "However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
+          }
+          stop(err_msg)
+      }
+  }
 
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
   if(class(problem@objective) == "Maximize")

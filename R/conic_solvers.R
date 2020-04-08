@@ -1262,23 +1262,23 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 
   # Deal with non positive constraints
   if(nonpos_dims > 0){
-    ## clist[[clistCounter]] <- cccp::nnoc(G = G[ghCounter:(ghCounter+nonpos_dims-1),],
-    ##                                     h=h[ghCounter:(ghCounter+nonpos_dims-1),])
-    clist[[clistCounter]]  <- list(conType = "NNOC",
-                                   G = as.matrix(G[ghCounter:(ghCounter+nonpos_dims-1),]),
-                                   h = as.matrix(h[ghCounter:(ghCounter+nonpos_dims-1),]),
-                                   dims = as.integer(nonpos_dims)
-                                   )
+    clist[[clistCounter]] <- cccp::nnoc(G = G[ghCounter:(ghCounter+nonpos_dims-1), , drop = FALSE],
+                                        h=h[ghCounter:(ghCounter+nonpos_dims-1), , drop = FALSE])
+    ## clist[[clistCounter]]  <- list(conType = "NNOC",
+    ##                                G = as.matrix(G[ghCounter:(ghCounter+nonpos_dims-1),]),
+    ##                                h = as.matrix(h[ghCounter:(ghCounter+nonpos_dims-1),]),
+    ##                                dims = as.integer(nonpos_dims)
+    ##                                )
       clistCounter <- clistCounter + 1
       ghCounter <- ghCounter + nonpos_dims
   }
 
   # Deal with SOC constraints
   for(i in soc_dims){
-    clist[[clistCounter]] <- cccp::socc(F=-G[(ghCounter+1):(ghCounter+i-1),],
-                                  g=h[(ghCounter+1):(ghCounter+i-1),],
-                                  d=-G[ghCounter,],
-                                  f=h[ghCounter,])
+    clist[[clistCounter]] <- cccp::socc(F=-G[(ghCounter+1):(ghCounter+i-1), , drop = FALSE],
+                                  g=h[(ghCounter+1):(ghCounter+i-1), , drop = FALSE],
+                                  d=-G[ghCounter, , drop = FALSE],
+                                  f=h[ghCounter, , drop = FALSE])
     clistCounter <- clistCounter + 1
     ghCounter <- ghCounter + i
   }
@@ -1286,11 +1286,11 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
   # Deal with PSD constraints
   for(i in psd_dims){
     Flist <- vector(mode="list", length = nvar+1)
-    currG <- G[ghCounter:(ghCounter + i^2-1),]
-    currh <- h[ghCounter:(ghCounter + i^2-1),]
+    currG <- G[ghCounter:(ghCounter + i^2-1), , drop = FALSE]
+    currh <- h[ghCounter:(ghCounter + i^2-1), , drop = FALSE]
     Flist[[1]] <- matrix(currh, nrow = i)
     for(j in 1:nvar){
-      Flist[[j+1]] <- matrix(currG[,j], nrow = i)
+      Flist[[j+1]] <- matrix(currG[, j, drop = FALSE], nrow = i)
     }
     clist[[clistCounter]] <- cccp::psdc(Flist = Flist[-1], F0 = Flist[[1]])
     clistCounter <- clistCounter + 1

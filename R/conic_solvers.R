@@ -1228,7 +1228,7 @@ setMethod("invert", signature(object = "CVXOPT", solution = "list", inverse_data
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose, feastol, reltol, abstol,
                                                num_iter, solver_opts, solver_cache) {
-  #Tweak paramters
+  #Tweak parameters
   if(is.null(feastol)) {
     feastol <- SOLVER_DEFAULT_PARAM$CVXOPT$feastol
   }
@@ -1257,44 +1257,42 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 
   # For all the constraints except the zero constraint
   clist <- vector(mode="list", length = clistLength)
-  clistCounter <- 1
-  ghCounter <- 1
+  clistCounter <- 0
+  ghCounter <- 0
 
   # Deal with non positive constraints
-  if(nonpos_dims > 0){
-    clist[[clistCounter]] <- cccp::nnoc(G = G[ghCounter:(ghCounter+nonpos_dims-1), , drop = FALSE],
-                                        h=h[ghCounter:(ghCounter+nonpos_dims-1), , drop = FALSE])
-    ## clist[[clistCounter]]  <- list(conType = "NNOC",
-    ##                                G = as.matrix(G[ghCounter:(ghCounter+nonpos_dims-1),]),
-    ##                                h = as.matrix(h[ghCounter:(ghCounter+nonpos_dims-1),]),
-    ##                                dims = as.integer(nonpos_dims)
-    ##                                )
-      clistCounter <- clistCounter + 1
-      ghCounter <- ghCounter + nonpos_dims
-  }
+    if(nonpos_dims > 0){
+        clistCounter <- clistCounter + 1
+        indices  <- seq.int(from = ghCounter + 1, length.out = nonpos_dims)
+        clist[[clistCounter]] <- cccp::nnoc(G = G[indices, , drop = FALSE],
+                                            h = h[indices, , drop = FALSE])
+        ghCounter <- ghCounter + nonpos_dims
+    }
 
   # Deal with SOC constraints
-  for(i in soc_dims){
-    clist[[clistCounter]] <- cccp::socc(F=-G[(ghCounter+1):(ghCounter+i-1), , drop = FALSE],
-                                  g=h[(ghCounter+1):(ghCounter+i-1), , drop = FALSE],
-                                  d=-G[ghCounter, , drop = FALSE],
-                                  f=h[ghCounter, , drop = FALSE])
-    clistCounter <- clistCounter + 1
-    ghCounter <- ghCounter + i
-  }
+    for(i in soc_dims){
+        clistCounter <- clistCounter + 1
+        indices  <- seq.int(from = ghCounter + 2, length.out = i - 1)
+        clist[[clistCounter]] <- cccp::socc(F = -G[indices, , drop = FALSE],
+                                            g = h[indices, , drop = FALSE],
+                                            d = -G[ghCounter + 1, , drop = FALSE],
+                                            f = h[ghCounter + 1, , drop = FALSE])
+        ghCounter <- ghCounter + i
+    }
 
   # Deal with PSD constraints
   for(i in psd_dims){
-    Flist <- vector(mode="list", length = nvar+1)
-    currG <- G[ghCounter:(ghCounter + i^2-1), , drop = FALSE]
-    currh <- h[ghCounter:(ghCounter + i^2-1), , drop = FALSE]
-    Flist[[1]] <- matrix(currh, nrow = i)
-    for(j in 1:nvar){
-      Flist[[j+1]] <- matrix(currG[, j, drop = FALSE], nrow = i)
-    }
-    clist[[clistCounter]] <- cccp::psdc(Flist = Flist[-1], F0 = Flist[[1]])
-    clistCounter <- clistCounter + 1
-    ghCounter <- ghCounter + i
+      Flist <- vector(mode="list", length = nvar+1)
+      indices  <- seq.int(from = ghCounter + 1, length.out = i^2)
+      currG <- G[indices, , drop = FALSE]
+      currh <- h[indices, , drop = FALSE]
+      Flist[[1]] <- matrix(currh, nrow = i)
+      for(j in seq_len(nvar)){
+          Flist[[j+1]] <- matrix(currG[, j, drop = FALSE], nrow = i)
+      }
+      clistCounter <- clistCounter + 1
+      clist[[clistCounter]] <- cccp::psdc(Flist = Flist[-1], F0 = Flist[[1]])
+      ghCounter <- ghCounter + i
   }
 
   if(zero_dims > 0){

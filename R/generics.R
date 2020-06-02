@@ -914,7 +914,7 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' data[["G"]]
 #' @rdname get_problem_data
 #' @export
-setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("get_problem_data") })
+setGeneric("get_problem_data", function(object, solver, gp, ignore_dcp = FALSE) { standardGeneric("get_problem_data") })
 
 #'
 #' Solve a DCP Problem
@@ -956,7 +956,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE,
                               gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, ...) { standardGeneric("psolve") })
 
 #'
@@ -1173,7 +1173,7 @@ setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("
 setGeneric("stuffed_objective", function(object, problem, extractor) { standardGeneric("stuffed_objective") })
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
-setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
+setGeneric("construct_intermediate_chain", function(problem, candidates, gp, ignore_dcp) { standardGeneric("construct_intermediate_chain") })
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack_problem", function(object, solution) { standardGeneric("unpack_problem") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })

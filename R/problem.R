@@ -578,8 +578,8 @@ setMethod("solver_stats<-", "Problem", function(object, value) {
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
 #' @param gp A logical value indicating whether the problem is a geometric program.
 #' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
-  object <- .construct_chains(object, solver = solver, gp = gp)
+setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp, ignore_dcp = FALSE) {
+  object <- .construct_chains(object, solver = solver, gp = gp, ignore_dcp = ignore_dcp)
 
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   object@.solving_chain <- tmp[[1]]
@@ -607,7 +607,7 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
       candidates$qp_solvers <- c(candidates$qp_solvers, solver)
   } else {
     candidates$qp_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% QP_SOLVERS]
-    candidates$conic_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
+    candidates$conic_solvers <- INSTALLED_CONIC_SOLVERS
   }
 
   # If gp, we must have only conic solvers.
@@ -644,12 +644,12 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
   get_problem_data(object, solver, gp = FALSE)
 })
 
-.construct_chains <- function(object, solver = NA, gp = FALSE) {
+.construct_chains <- function(object, solver = NA, gp = FALSE, ignore_dcp) {
   chain_key <- list(solver, gp)
 
   if(!identical(chain_key, object@.cached_chain_key)) {
     candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
-    object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
+    object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp, ignore_dcp)
     tmp <- perform(object@.intermediate_chain, object)
     object@.intermediate_chain <- tmp[[1]]
     object@.intermediate_problem <- tmp[[2]]
@@ -668,7 +668,7 @@ setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE,
                                         parallel = FALSE, gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL,  ...) {
   if(parallel)
     stop("Unimplemented")
-  object <- .construct_chains(object, solver = solver, gp = gp)
+  object <- .construct_chains(object, solver = solver, gp = gp, ignore_dcp = ignore_dcp)
   tmp <- perform(object@.solving_chain, object@.intermediate_problem)
   object@.solving_chain <- tmp[[1]]
   data <- tmp[[2]]

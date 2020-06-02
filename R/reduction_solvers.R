@@ -286,8 +286,9 @@ setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, 
 #' @param problem The problem for which to build a chain.
 #' @param candidates A list of candidate solvers.
 #' @param gp A logical value indicating whether the problem is a geometric program.
+#' @param ignore_dcp a logical value indicating if dcp checks should be ignored
 #' @return A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.
-setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE) {
+setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE, ignore_dcp) {
   reductions <- list()
   if(length(variables(problem)) == 0)
     return(Chain(reductions = reductions))
@@ -298,21 +299,23 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
 
-  if(!gp) {
-      if (!is_dcp(problem)) {
-          err_msg  <- "Problem does not follow DCP rules."
-          if (is_dgp(problem)) {
-              err_msg  <- paste(err_msg, "However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
+  if (!ignore_dcp) {
+      if(!gp) {
+          if (!is_dcp(problem)) {
+              err_msg  <- "Problem does not follow DCP rules."
+              if (is_dgp(problem)) {
+                  err_msg  <- paste(err_msg, "However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
+              }
+              stop(err_msg)
           }
-          stop(err_msg)
-      }
-  } else {
-      if(!is_dgp(problem)) {
-          err_msg  <- "Problem does not follow DGP rules."
-          if (is_dcp(problem)) {
-              err_msg  <- paste(err_msg, "However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
+      } else {
+          if(!is_dgp(problem)) {
+              err_msg  <- "Problem does not follow DGP rules."
+              if (is_dcp(problem)) {
+                  err_msg  <- paste(err_msg, "However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
+              }
+              stop(err_msg)
           }
-          stop(err_msg)
       }
   }
 

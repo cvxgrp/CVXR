@@ -1,0 +1,21 @@
+bibentry(bibtype = "Article",
+  title        = "{CVXR}: An {R} Package for Disciplined Convex Optimization",
+  author       = c(person(given = "Anqi",
+                          family = "Fu",
+                          email = "anqif@stanford.edu"),
+                   person(given = "Balasubramanian",
+                          family = "Narasimhan",
+                          email = "naras@stanford.edu"),
+                   person(given = "Stephen",
+                          family = "Boyd",
+                          email = "boyd@stanford.edu")),
+  journal      = "Journal of Statistical Software",
+  year         = "2020",
+  volume       = "94",
+  number       = "14",
+  pages        = "1--34",
+  doi          = "10.18637/jss.v094.i14",
+
+  header       = "To cite CVXR in publications use:"
+)
+

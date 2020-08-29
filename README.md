@@ -1,6 +1,4 @@
 
-<!-- README.md is generated from the source: README.Rmd -->
-
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />
 
 [![Travis-CI Build
@@ -25,9 +23,16 @@ cone solver such as [ECOS](https://github.com/embotech/ecos) or
 [SCS](https://github.com/cvxgrp/scs).
 
 CVXR includes several open source solvers in addition to the default
-ECOS and SCS. Recent versions (0.97+) also include support for
-commercial solvers such as [MOSEK](https://www.mosek.com) and
-[GUROBI](https://www.gurobi.com).
+OSQP, ECOS and SCS. Recent (1.x+) versions also include support for
+commercial solvers such as [MOSEK](https://www.mosek.com),
+[GUROBI](https://www.gurobi.com) and
+[CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+
+For details and examples, we refer you to [Fu, Narasimhan,
+Boyd](https://dx.doi.org/10.18637/jss.v094.i14) (2020). If you use
+CVXR in your work, please cite this reference. (The R command
+`citation("CVXR", bibtex = TRUE)` will also give you a
+bibtex-formatted entry.)
 
 ## Installation
 
@@ -52,4 +57,6 @@ install_github("cvxgrp/CVXR")
 ## Tutorial
 
 A number of tutorial examples are available on the [CVXR
-website](https://cvxr.rbind.io).
+website](https://cvxr.rbind.io) along with links to our useR! 2019
+short-course.
+

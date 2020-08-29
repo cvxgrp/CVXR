@@ -70,7 +70,7 @@ test_that("Test a basic QP with all solvers", {
   applicable_solvers  <- setdiff(INSTALLED_SOLVERS, list("CBC", "ECOS_BB", "GLPK_MI", "GLPK"))
   ## SCS is known to cause problems
   ## Works sometimes if we set rho_x = 1e-2, but too problematic
-  applicable_solvers  <- setdiff(applicable_solvers, "SCS")
+  applicable_solvers  <- setdiff(applicable_solvers, c("SCS", "CVXOPT"))
 
   for(solver in applicable_solvers) {
     result <- solve(p, solver)
@@ -108,6 +108,7 @@ test_that("Test a basic SOCP with solvers", {
   prob <- Problem(objective, constraints)
   for(solver in applicable_solvers) {
     result <- solve(prob, solver = solver)
+    print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, -9, tolerance = TOL)
     expect_equal(result$getValue(x), as.matrix(c(1, 1)), tolerance = TOL)
   }
@@ -140,6 +141,7 @@ test_that("Test a basic SOCP with solvers", {
   prob <- Problem(Minimize(t(f)%*%x_var), soc_constraints)
   for(solver in applicable_solvers) {
     result <- solve(prob, solver=solver)
+    print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, -10.13341, tolerance=TOL)
   }
 
@@ -167,13 +169,13 @@ test_that("Test a basic SDP with all solvers", {
   check_matrix <- matrix(c(.3771707, -.5692205, .1166577, -.5692205,
                            .8590441, -.1760618, .11665767,
                            -.17606183, .03608155), nrow = n)
-  # SCS and MOSEK are the only two solvers that support SDPs
-  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK"))) {
+  # SCS and MOSEK and CVXOPT are the only three solvers that support SDPs
+  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT"))) {
     result <- solve(prob, solver = solver)
+    print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 1.395479, tolerance=TOL)
     expect_equal(result$getValue(X), check_matrix, tolerance=TOL)
   }
-
 })
 
 test_that("Test a mixed-integer quadratic program",{
@@ -193,7 +195,6 @@ test_that("Test a mixed-integer quadratic program",{
     result <- solve(prob, solver=solver)
     expect_equal(result$value, 13.34086, tolerance=TOL)
   }
-
 })
 
 test_that("Test a simple geometric program", {

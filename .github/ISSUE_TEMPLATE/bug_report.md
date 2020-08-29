@@ -26,4 +26,6 @@ If you use [reprex](https://reprex.tidyverse.org), include the session info via 
 Add any other context about the problem here.
 
 **Lastly**
+
 Don't forget to preview your report using the `Preview` tab. Unless we can see things clearly marked up, your report will most likely percolate down to the bottom of the pile.
+

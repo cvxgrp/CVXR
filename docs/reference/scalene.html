@@ -81,7 +81,7 @@ This is equivalent to alpha*pos(x) + beta*neg(x)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
       </span>
     </div>
 
@@ -152,7 +152,7 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix.</p></td>
+      <td><p>An Expression, vector, or matrix.</p></td>
     </tr>
     <tr>
       <th>alpha</th>
@@ -166,14 +166,14 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the scalene function evaluated at the input.</p>
+    <p>An Expression representing the scalene function evaluated at the input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
+<span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>5</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>3</span>,<span class='fl'>1</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>scalene</span>(<span class='no'>A</span>,<span class='fl'>2</span>,<span class='fl'>3</span>)[<span class='fl'>1</span>,<span class='fl'>1</span>]), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>,<span class='fl'>2</span>,<span class='fl'>3</span>)[<span class='fl'>1</span>,<span class='fl'>1</span>]), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='no'>val</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span>
 <span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>scalene</span>(<span class='no'>A</span>, <span class='fl'>0.7</span>, <span class='fl'>0.3</span>))
 }</div></pre>
@@ -192,7 +192,7 @@ This is equivalent to <code>alpha*pos(x) + beta*neg(x)</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

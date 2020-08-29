@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
       </span>
     </div>
 
@@ -150,25 +150,25 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>lh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix representing the left-hand value.</p></td>
+      <td><p>An Expression, vector, or matrix representing the left-hand value.</p></td>
     </tr>
     <tr>
       <th>rh_exp</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>, vector, or matrix representing the right-hand value.</p></td>
+      <td><p>An Expression, vector, or matrix representing the right-hand value.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the elementwise product of the inputs.</p>
+    <p>An Expression representing the elementwise product of the inputs.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
+    <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
 <span class='no'>c</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,-<span class='fl'>1</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>2</span>,-<span class='fl'>2</span>))
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'>multiply</span>(<span class='no'>c</span>, <span class='no'>A</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='norm_inf.html'>norm_inf</a></span>(<span class='no'>expr</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='fl'>5</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Minimize</span>(<span class='fu'>norm_inf</span>(<span class='no'>expr</span>))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>A</span> <span class='kw'>==</span> <span class='fl'>5</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 10</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt;      [,1] [,2]
 #&gt; [1,]    5   10
 #&gt; [2,]   -5  -10</div></pre>
@@ -187,7 +187,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

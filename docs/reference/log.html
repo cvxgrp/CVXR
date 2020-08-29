@@ -82,7 +82,7 @@ log1p computes elementwise the function \(\log(1+x)\)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
       </span>
     </div>
 
@@ -143,28 +143,28 @@ log1p computes elementwise the function \(\log(1+x)\)." />
 
     <div class="ref-description">
     <p>The elementwise logarithm.
-<code>log</code> computes the logarithm, by default the natural logarithm, <code>log10</code> computes the common (i.e., base 10) logarithm, and <code>log2</code> computes the binary (i.e., base 2) logarithms. The general form <code>log(x, base)</code> computes logarithms with base <code>base</code>.
+<code>log</code> computes the logarithm, by default the natural logarithm, <code>log10</code> computes the common (i.e., base 10) logarithm, and <code>log2</code> computes the binary (i.e., base 2) logarithms. The general form <code><a href='https://rdrr.io/r/base/Log.html'>log(x, base)</a></code> computes logarithms with base <code>base</code>.
 <code>log1p</code> computes elementwise the function \(\log(1+x)\).</p>
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Expression</span>
-<span class='fu'>log</span>(<span class='no'>x</span>, <span class='kw'>base</span> <span class='kw'>=</span> <span class='kw pkg'>base</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span>(<span class='fl'>1</span>))
+<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log</a></span>(<span class='no'>x</span>, <span class='kw'>base</span> <span class='kw'>=</span> <span class='kw pkg'>base</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span>(<span class='fl'>1</span>))
 
 <span class='co'># S4 method for Expression</span>
-<span class='fu'>log10</span>(<span class='no'>x</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log10</a></span>(<span class='no'>x</span>)
 
 <span class='co'># S4 method for Expression</span>
-<span class='fu'>log2</span>(<span class='no'>x</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span>(<span class='no'>x</span>)
 
 <span class='co'># S4 method for Expression</span>
-<span class='fu'>log1p</span>(<span class='no'>x</span>)</pre>
+<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log1p</a></span>(<span class='no'>x</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An <a href='Expression-class.html'>Expression</a>.</p></td>
+      <td><p>An Expression.</p></td>
     </tr>
     <tr>
       <th>base</th>
@@ -174,37 +174,37 @@ log1p computes elementwise the function \(\log(1+x)\)." />
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <a href='Expression-class.html'>Expression</a> representing the exponentiated input.</p>
+    <p>An Expression representing the exponentiated input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Log in objective</span>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='fu'>log</span>(<span class='no'>x</span>)))
-<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='exp.html'>exp</a></span>(<span class='fl'>1</span>))))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Maximize</span>(<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log</a></span>(<span class='no'>x</span>)))
+<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span>(<span class='fl'>1</span>))))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 1</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;          [,1]
 #&gt; [1,] 1.000000
 #&gt; [2,] 2.718282</div><div class='input'>
 <span class='co'># Log in constraint</span>
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='no'>x</span>))
-<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'>log2</span>(<span class='no'>x</span>) <span class='kw'>&gt;=</span> <span class='fl'>0</span>, <span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>)))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Minimize</span>(<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>x</span>))
+<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span>(<span class='no'>x</span>) <span class='kw'>&gt;=</span> <span class='fl'>0</span>, <span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>)))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    1
 #&gt; [2,]    1</div><div class='input'>
 <span class='co'># Index into log</span>
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>log10</span>(<span class='no'>x</span>)[<span class='fl'>2</span>])
-<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='exp.html'>exp</a></span>(<span class='fl'>1</span>))))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Maximize</span>(<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log10</a></span>(<span class='no'>x</span>)[<span class='fl'>2</span>])
+<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span>(<span class='fl'>1</span>))))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0.4342945</div><div class='input'>
 <span class='co'># Scalar log</span>
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Maximize-class.html'>Maximize</a></span>(<span class='fu'>log1p</span>(<span class='no'>x</span>[<span class='fl'>2</span>]))
-<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='exp.html'>exp</a></span>(<span class='fl'>1</span>))))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'>Maximize</span>(<span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log1p</a></span>(<span class='no'>x</span>[<span class='fl'>2</span>]))
+<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&lt;=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span>(<span class='fl'>1</span>))))
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 1.313262</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -221,7 +221,7 @@ log1p computes elementwise the function \(\log(1+x)\)." />
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

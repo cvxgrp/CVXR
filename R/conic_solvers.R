@@ -1223,6 +1223,10 @@ setMethod("invert", signature(object = "CVXOPT", solution = "list", inverse_data
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CVXOPT Solve a problem represented by data returned from apply.

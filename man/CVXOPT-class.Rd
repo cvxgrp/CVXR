@@ -9,6 +9,7 @@
 \alias{import_solver,CVXOPT-method}
 \alias{accepts,CVXOPT,Problem-method}
 \alias{perform,CVXOPT,Problem-method}
+\alias{invert,CVXOPT,list,list-method}
 \alias{solve_via_data,CVXOPT-method}
 \title{An interface for the CVXOPT solver.}
 \usage{
@@ -24,7 +25,20 @@
 
 \S4method{perform}{CVXOPT,Problem}(object, problem)
 
-\S4method{solve_via_data}{CVXOPT}(object, data, warm_start, verbose, solver_opts, solver_cache)
+\S4method{invert}{CVXOPT,list,list}(object, solution, inverse_data)
+
+\S4method{solve_via_data}{CVXOPT}(
+  object,
+  data,
+  warm_start,
+  verbose,
+  feastol,
+  reltol,
+  abstol,
+  num_iter,
+  solver_opts,
+  solver_cache
+)
 }
 \arguments{
 \item{solver, object, x}{A \linkS4class{CVXOPT} object.}
@@ -33,11 +47,23 @@
 
 \item{problem}{A \linkS4class{Problem} object.}
 
+\item{solution}{The raw solution returned by the solver.}
+
+\item{inverse_data}{A list containing data necessary for the inversion.}
+
 \item{data}{Data generated via an apply call.}
 
 \item{warm_start}{A boolean of whether to warm start the solver.}
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
+
+\item{feastol}{The feasible tolerance on the primal and dual residual.}
+
+\item{reltol}{The relative tolerance on the duality gap.}
+
+\item{abstol}{The absolute tolerance on the duality gap.}
+
+\item{num_iter}{The maximum number of iterations.}
 
 \item{solver_opts}{A list of Solver specific options}
 
@@ -59,6 +85,8 @@ An interface for the CVXOPT solver.
 \item \code{accepts}: Can CVXOPT solve the problem?
 
 \item \code{perform}: Returns a new problem and data for inverting the new solution.
+
+\item \code{invert}: Returns the solution to the original problem given the inverse_data.
 
 \item \code{solve_via_data}: Solve a problem represented by data returned from apply.
 }}

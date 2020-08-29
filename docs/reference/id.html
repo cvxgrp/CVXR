@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
       </span>
     </div>
 
@@ -150,7 +150,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>A <a href='Variable-class.html'>Variable</a> or <a href='Constraint-class.html'>Constraint</a> object.</p></td>
+      <td><p>A Variable or Constraint object.</p></td>
     </tr>
     </table>
 
@@ -159,12 +159,12 @@
     <p>A non-negative integer identifier.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='get_id.html'>get_id</a></code> <code><a href='setIdCounter.html'>setIdCounter</a></code></p></div>
+    <div class='dont-index'><p><code>get_id</code> <code>setIdCounter</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>()
 <span class='no'>constr</span> <span class='kw'>&lt;-</span> (<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>)
-<span class='fu'>id</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] 1966</div><div class='input'><span class='fu'>id</span>(<span class='no'>constr</span>)</div><div class='output co'>#&gt; [1] 1970</div></pre>
+<span class='fu'>id</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] 1975</div><div class='input'><span class='fu'>id</span>(<span class='no'>constr</span>)</div><div class='output co'>#&gt; [1] 1979</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -180,7 +180,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

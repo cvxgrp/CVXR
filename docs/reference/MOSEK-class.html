@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
       </span>
     </div>
 
@@ -146,22 +146,22 @@
     <pre class="usage"><span class='fu'>MOSEK</span>()
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'><a href='mip_capable.html'>mip_capable</a></span>(<span class='no'>solver</span>)
+<span class='fu'>mip_capable</span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'><a href='import_solver.html'>import_solver</a></span>(<span class='no'>solver</span>)
+<span class='fu'>import_solver</span>(<span class='no'>solver</span>)
 
 <span class='co'># S4 method for MOSEK</span>
-<span class='fu'><a href='name.html'>name</a></span>(<span class='no'>x</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/name.html'>name</a></span>(<span class='no'>x</span>)
 
 <span class='co'># S4 method for MOSEK,Problem</span>
-<span class='fu'><a href='accepts.html'>accepts</a></span>(<span class='no'>object</span>, <span class='no'>problem</span>)
+<span class='fu'>accepts</span>(<span class='no'>object</span>, <span class='no'>problem</span>)
 
 <span class='co'># S4 method for MOSEK</span>
 <span class='fu'>block_format</span>(<span class='no'>object</span>, <span class='no'>problem</span>, <span class='no'>constraints</span>, <span class='kw'>exp_cone_order</span> <span class='kw'>=</span> <span class='fl'>NA</span>)
 
 <span class='co'># S4 method for MOSEK,Problem</span>
-<span class='fu'><a href='perform.html'>perform</a></span>(<span class='no'>object</span>, <span class='no'>problem</span>)
+<span class='fu'>perform</span>(<span class='no'>object</span>, <span class='no'>problem</span>)
 
 <span class='co'># S4 method for MOSEK</span>
 <span class='fu'>solve_via_data</span>(
@@ -178,7 +178,7 @@
 )
 
 <span class='co'># S4 method for MOSEK,ANY,ANY</span>
-<span class='fu'><a href='invert.html'>invert</a></span>(<span class='no'>object</span>, <span class='no'>solution</span>, <span class='no'>inverse_data</span>)</pre>
+<span class='fu'>invert</span>(<span class='no'>object</span>, <span class='no'>solution</span>, <span class='no'>inverse_data</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -189,16 +189,16 @@
     </tr>
     <tr>
       <th>problem</th>
-      <td><p>A <a href='Problem-class.html'>Problem</a> object.</p></td>
+      <td><p>A Problem object.</p></td>
     </tr>
     <tr>
       <th>constraints</th>
-      <td><p>A list of <a href='Constraint-class.html'>Constraint</a> objects for which coefficient
+      <td><p>A list of Constraint objects for which coefficient
 andd offset data ("G", "h" respectively) is needed</p></td>
     </tr>
     <tr>
       <th>exp_cone_order</th>
-      <td><p>A parameter that is only used when a <a href='Constraint-class.html'>Constraint</a> object
+      <td><p>A parameter that is only used when a Constraint object
 describes membership in the exponential cone.</p></td>
     </tr>
     <tr>
@@ -256,7 +256,7 @@ describes membership in the exponential cone.</p></td>
 <li><p><code>name</code>: Returns the name of the solver.</p></li>
 <li><p><code>accepts</code>: Can MOSEK solve the problem?</p></li>
 <li><p><code>block_format</code>: Returns a large matrix "coeff" and a vector of constants "offset" such
-that every <a href='Constraint-class.html'>Constraint</a> in "constraints" holds at z in R^n iff
+that every Constraint in "constraints" holds at z in R^n iff
 "coeff" * z &lt;=_K offset", where K is a product of cones supported by MOSEK
 and CVXR (zero cone, nonnegative orthant, second order cone, exponential cone). The
 nature of K is inferred later by accessing the data in "lengths" and "ids".</p></li>
@@ -280,7 +280,7 @@ nature of K is inferred later by accessing the data in "lengths" and "ids".</p><
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

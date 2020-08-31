@@ -44,7 +44,7 @@ programming, MOSEK and GUROBI examples.
 * Added `GLPK` via [`Rglpk`](https://cran.r-project.org/package=Rglpk)
 * Added `MOSEK` 
 * Added `GUROBI`
-* Bug fix: [issue #25](https://github.com/anqif/CVXR/issues/25). 
+* Bug fix: [issue #25](https://github.com/cvxgrp/CVXR/issues/25). 
   All CVXR expressions retain dimensions. Culprit was `drop =
   FALSE` (in function `Index.get_special_slice`) as suspected.  
   
@@ -52,12 +52,12 @@ programming, MOSEK and GUROBI examples.
 
 * Added a note that CVXR can probably be compiled from source for
   earlier versions of R. This is [issue
-  #24](https://github.com/anqif/CVXR/issues/24)
+  #24](https://github.com/cvxgrp/CVXR/issues/24)
 
 * Using [pkgdown](https://pkgdown.r-lib.org). This also addresses
-  [issue #23](https://github.com/anqif/CVXR/issues/23)
+  [issue #23](https://github.com/cvxgrp/CVXR/issues/23)
 
-* Bug fix: [issue #28](https://github.com/anqif/CVXR/issues/28)
+* Bug fix: [issue #28](https://github.com/cvxgrp/CVXR/issues/28)
   Function `intf_sign` (`interface.R`) was unnecessarily using a
   tolerance parameter, now eliminated.
   

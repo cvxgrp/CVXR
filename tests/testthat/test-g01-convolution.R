@@ -2,6 +2,7 @@ context("test-g01-convolution")
 TOL <- 1e-6
 
 test_that("test 1D convolution", {
+  skip_on_cran()
   n <- 3
   x <- Variable(n)
   f <- c(1, 2, 3)
@@ -25,6 +26,7 @@ test_that("test 1D convolution", {
 })
 
 test_that("test a problem with convolution", {
+  skip_on_cran()
   N <- 5
   y <- matrix(stats::rnorm(N), nrow = N, ncol = 1)
   h <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)

@@ -20,6 +20,7 @@ lo.sum_expr <- CVXR:::lo.sum_expr
 lo.sum_entries <- CVXR:::lo.sum_entries
 
 test_that("Test creating a variable", {
+  skip_on_cran()
   var <- create_var(c(5, 4), var_id = 1)
   expect_equal(var$dim, c(5, 4))
   expect_equal(var$data, 1)
@@ -28,6 +29,7 @@ test_that("Test creating a variable", {
 })
 
 test_that("Test creating a parameter", {
+  skip_on_cran()
   A <- Parameter(5, 4)
   var <- create_param(A, c(5, 4))
   expect_equal(var$dim, c(5, 4))
@@ -36,6 +38,7 @@ test_that("Test creating a parameter", {
 })
 
 test_that("Test creating a constant", {
+  skip_on_cran()
   # Scalar constant
   dim <- c(1, 1)
   mat <- create_const(1.0, dim)
@@ -62,6 +65,7 @@ test_that("Test creating a constant", {
 })
 
 test_that("Test adding lin expr", {
+  skip_on_cran()
   dim <- c(5, 4)
   x <- create_var(dim)
   y <- create_var(dim)
@@ -73,6 +77,7 @@ test_that("Test adding lin expr", {
 })
 
 test_that("Test getting vars from an expression", {
+  skip_on_cran()
   dim <- c(5, 4)
   x <- create_var(dim)
   y <- create_var(dim)
@@ -86,6 +91,7 @@ test_that("Test getting vars from an expression", {
 })
 
 test_that("Test negating an expression", {
+  skip_on_cran()
   dim <- c(5, 4)
   var <- create_var(dim)
   expr <- lo.neg_expr(var)
@@ -95,6 +101,7 @@ test_that("Test negating an expression", {
 })
 
 test_that("Test creating an equality constraint", {
+  skip_on_cran()
   dim <- c(5, 5)
   x <- create_var(dim)
   y <- create_var(dim)
@@ -109,6 +116,7 @@ test_that("Test creating an equality constraint", {
 })
 
 test_that("Test creating a less than or equal constraint", {
+  skip_on_cran()
   dim <- c(5, 5)
   x <- create_var(dim)
   y <- create_var(dim)
@@ -123,6 +131,7 @@ test_that("Test creating a less than or equal constraint", {
 })
 
 test_that("Test sum entries op", {
+  skip_on_cran()
   dim <- c(5, 5)
   x <- create_var(dim)
   expr <- lo.sum_entries(x, c(1, 1))

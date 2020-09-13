@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -146,7 +146,7 @@
     <pre class="usage"><span class='fu'>GeoMean</span>(<span class='no'>x</span>, <span class='kw'>p</span> <span class='kw'>=</span> <span class='fl'>NA_real_</span>, <span class='kw'>max_denom</span> <span class='kw'>=</span> <span class='fl'>1024</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>to_numeric</span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'><a href='to_numeric.html'>to_numeric</a></span>(<span class='no'>object</span>, <span class='no'>values</span>)
 
 <span class='co'># S4 method for GeoMean</span>
 <span class='fu'>.domain</span>(<span class='no'>object</span>)
@@ -155,34 +155,34 @@
 <span class='fu'>.grad</span>(<span class='no'>object</span>, <span class='no'>values</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'><a href='https://rdrr.io/r/base/name.html'>name</a></span>(<span class='no'>x</span>)
+<span class='fu'><a href='name.html'>name</a></span>(<span class='no'>x</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>dim_from_args</span>(<span class='no'>object</span>)
+<span class='fu'><a href='dim_from_args.html'>dim_from_args</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>sign_from_args</span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_atom_convex</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_atom_concave</span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_atom_log_log_convex</span>(<span class='no'>object</span>)
+<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_convex</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_atom_log_log_concave</span>(<span class='no'>object</span>)
+<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_concave</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_incr</span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_incr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>is_decr</span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_decr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
 
 <span class='co'># S4 method for GeoMean</span>
-<span class='fu'>get_data</span>(<span class='no'>object</span>)
+<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>object</span>)
 
 <span class='co'># S4 method for GeoMean</span>
 <span class='fu'>copy</span>(<span class='no'>object</span>, <span class='kw'>args</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>id_objects</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())</pre>
@@ -192,7 +192,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An Expression or numeric vector.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a> or numeric vector.</p></td>
     </tr>
     <tr>
       <th>p</th>
@@ -254,7 +254,7 @@ A specific case of this is when \(x \in \mathbf{R}^1\).</p>
     
 
 <dl'>
-<dt><code>x</code></dt><dd><p>An Expression or numeric vector.</p></dd>
+<dt><code>x</code></dt><dd><p>An <a href='Expression-class.html'>Expression</a> or numeric vector.</p></dd>
 
 <dt><code>p</code></dt><dd><p>(Optional) A vector of weights for the weighted geometric mean. The default is a vector of ones, giving the <strong>unweighted</strong> geometric mean \(x_1^{1/n} \cdots x_n^{1/n}\).</p></dd>
 

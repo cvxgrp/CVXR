@@ -1,7 +1,13 @@
+# CVXR 1.0-8 to 1.0-3
+
+* Conforming to CRAN suggestions on non-CRAN packages, but no actual
+  changes.
+
 # CVXR 1.0-2
 
 * Added exponential cone support for `MOSEK` and uncommented
   associated test.
+* Added JSS publication DOI.
 
 # CVXR 1.0-1
 

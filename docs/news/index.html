@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -137,12 +137,21 @@
       <small>Source: <a href='https://github.com/cvxgrp/CVXR/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cvxr-10-6-10-3" class="section level1">
+<h1 class="page-header" data-toc-text="1.0-6-1.0-3">
+<a href="#cvxr-10-6-10-3" class="anchor"></a>CVXR 1.0-6-1.0-3<small> Unreleased </small>
+</h1>
+<ul>
+<li>Conforming to CRAN suggestions on non-CRAN packages, but no actual changes.</li>
+</ul>
+</div>
     <div id="cvxr-10-2" class="section level1">
 <h1 class="page-header" data-toc-text="1.0-2">
 <a href="#cvxr-10-2" class="anchor"></a>CVXR 1.0-2<small> Unreleased </small>
 </h1>
 <ul>
 <li>Added exponential cone support for <code>MOSEK</code> and uncommented associated test.</li>
+<li>Added JSS publication DOI.</li>
 </ul>
 </div>
     <div id="cvxr-10-1" class="section level1">
@@ -214,7 +223,7 @@
 </li>
 <li>Added <code>GUROBI</code>
 </li>
-<li>Bug fix: <a href="https://github.com/anqif/CVXR/issues/25">issue <a href='https://github.com/cvxgrp/CVXR/issues/25'>#25</a></a>. All CVXR expressions retain dimensions. Culprit was <code>drop =   FALSE</code> (in function <code>Index.get_special_slice</code>) as suspected.</li>
+<li>Bug fix: <a href="https://github.com/cvxgrp/CVXR/issues/25">issue <a href='https://github.com/cvxgrp/CVXR/issues/25'>#25</a></a>. All CVXR expressions retain dimensions. Culprit was <code>drop =   FALSE</code> (in function <code>Index.get_special_slice</code>) as suspected.</li>
 </ul>
 </div>
     <div id="cvxr-096" class="section level1">
@@ -224,10 +233,10 @@
 <ul>
 <li>
 <p>Added a note that CVXR can probably be compiled from source for earlier versions of R. This is [issue</p>
-<p><a href='https://github.com/cvxgrp/CVXR/issues/24'>#24</a>](<a href="https://github.com/anqif/CVXR/issues/24" class="uri">https://github.com/anqif/CVXR/issues/24</a>)</p>
+<p><a href='https://github.com/cvxgrp/CVXR/issues/24'>#24</a>](<a href="https://github.com/cvxgrp/CVXR/issues/24" class="uri">https://github.com/cvxgrp/CVXR/issues/24</a>)</p>
 </li>
-<li><p>Using <a href="https://pkgdown.r-lib.org">pkgdown</a>. This also addresses <a href="https://github.com/anqif/CVXR/issues/23">issue <a href='https://github.com/cvxgrp/CVXR/issues/23'>#23</a></a></p></li>
-<li><p>Bug fix: <a href="https://github.com/anqif/CVXR/issues/28">issue <a href='https://github.com/cvxgrp/CVXR/issues/28'>#28</a></a> Function <code>intf_sign</code> (<code>interface.R</code>) was unnecessarily using a tolerance parameter, now eliminated.</p></li>
+<li><p>Using <a href="https://pkgdown.r-lib.org">pkgdown</a>. This also addresses <a href="https://github.com/cvxgrp/CVXR/issues/23">issue <a href='https://github.com/cvxgrp/CVXR/issues/23'>#23</a></a></p></li>
+<li><p>Bug fix: <a href="https://github.com/cvxgrp/CVXR/issues/28">issue <a href='https://github.com/cvxgrp/CVXR/issues/28'>#28</a></a> Function <code>intf_sign</code> (<code>interface.R</code>) was unnecessarily using a tolerance parameter, now eliminated.</p></li>
 </ul>
 </div>
     <div id="cvxr-095" class="section level1">

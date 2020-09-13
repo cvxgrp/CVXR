@@ -12,6 +12,7 @@ zero <- Constant(0)
 unknown_sign <- Parameter()
 
 test_that("test curvature addition", {
+  skip_on_cran()
   expect_equal(curvature(const + cvx), curvature(cvx))
   expect_equal(curvature(unknown_curv + ccv), curvature(unknown_curv))
   expect_equal(curvature(cvx + ccv), curvature(unknown_curv))
@@ -20,6 +21,7 @@ test_that("test curvature addition", {
 })
 
 test_that("test curvature subtraction", {
+  skip_on_cran()
   expect_equal(curvature(const - cvx), curvature(ccv))
   expect_equal(curvature(unknown_curv - ccv), curvature(unknown_curv))
   expect_equal(curvature(cvx - ccv), curvature(cvx))
@@ -28,6 +30,7 @@ test_that("test curvature subtraction", {
 })
 
 test_that("test multiplication of sign and curvature", {
+  skip_on_cran()
   expect_equal(curvature(zero * cvx), curvature(aff))
   expect_equal(curvature(neg * cvx), curvature(ccv))
   expect_equal(curvature(neg * ccv), curvature(cvx))
@@ -39,23 +42,25 @@ test_that("test multiplication of sign and curvature", {
 })
 
 test_that("test curvature negation", {
+  skip_on_cran()
   expect_equal(curvature(-cvx), curvature(ccv))
   expect_equal(curvature(-aff), curvature(aff))
 })
 
 test_that("test if curvature is affine, convex, or concave", {
+  skip_on_cran()
   expect_true(is_affine(const))
   expect_true(is_affine(aff))
   expect_false(is_affine(cvx))
   expect_false(is_affine(ccv))
   expect_false(is_affine(unknown_curv))
-  
+
   expect_true(is_convex(const))
   expect_true(is_convex(aff))
   expect_true(is_convex(cvx))
   expect_false(is_convex(ccv))
   expect_false(is_convex(unknown_curv))
-  
+
   expect_true(is_concave(const))
   expect_true(is_concave(aff))
   expect_false(is_concave(cvx))

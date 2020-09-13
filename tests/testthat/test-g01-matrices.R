@@ -13,11 +13,13 @@ B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
 assert_expression <- function(expr, dim) {
+  skip_on_cran()
   expect_true(is(expr, "Expression") || is(expr, "Constraint"))
   expect_equal(dim(expr), dim)
 }
 
 test_that("Test R vectors", {
+  skip_on_cran()
   ## Vector
   v <- 1:2
   assert_expression(x + v, c(2, 1))
@@ -40,6 +42,7 @@ test_that("Test R vectors", {
 })
 
 test_that("Test R matrices", {
+  skip_on_cran()
   ## Vector
   v <- matrix(1:2, nrow = 2, ncol = 1)
   assert_expression(x + v, c(2, 1))
@@ -63,6 +66,7 @@ test_that("Test R matrices", {
 })
 
 test_that("Test R scalars", {
+  skip_on_cran()
   v <- 2.0
   assert_expression(x + v, c(2, 1))
   assert_expression(v + x, c(2, 1))
@@ -80,6 +84,7 @@ test_that("Test R scalars", {
 })
 
 test_that("Test sparseMatrix objects from the Matrix library", {
+  skip_on_cran()
     ##require(Matrix)
 
     ## Constants

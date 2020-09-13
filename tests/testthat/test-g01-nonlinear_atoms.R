@@ -9,6 +9,7 @@ B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
 test_that("Test log problem", {
+  skip_on_cran()
   # Log in objective
   obj <- Maximize(sum(log(x)))
   constr <- list(x <= as.matrix(c(1, exp(1))))
@@ -41,11 +42,13 @@ test_that("Test log problem", {
 })
 
 test_that("Test the entr function", {
+  skip_on_cran()
   expect_equal(value(entr(0)), 0)
   expect_warning(expect_equal(value(entr(-1)), -Inf))
 })
 
 test_that("Test a problem with KL-divergence", {
+  skip_on_cran()
   kK <- 50
   kSeed <- 10
 
@@ -78,6 +81,7 @@ test_that("Test a problem with KL-divergence", {
 })
 
 test_that("Test a problem with entr", {
+  skip_on_cran()
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
@@ -91,6 +95,7 @@ test_that("Test a problem with entr", {
 })
 
 test_that("Test a problem with exp", {
+  skip_on_cran()
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)
@@ -104,6 +109,7 @@ test_that("Test a problem with exp", {
 })
 
 test_that("Test a problem with log", {
+  skip_on_cran()
   for(n in c(5, 10, 25)) {
     print(n)
     x <- Variable(n)

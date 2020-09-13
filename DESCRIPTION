@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-6
+Version: 1.0-8
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -36,8 +36,8 @@ Description: An object-oriented modeling language for disciplined
     problem, verifies its convexity, converts it into a canonical
     form, and hands it off to an appropriate solver to obtain the
     solution. Interfaces to solvers on CRAN and elsewhere are
-    provided, for example, gurobi (<https://www.gurobi.com>) and rcbc
-    (<https://github.com/dirkschumacher/rcbc>).
+    provided, both commercial and open source.
+Additional_repositories: https://bnaras.github.io/drat
 Depends:
     R (>= 3.4.0)
 Imports:
@@ -57,14 +57,8 @@ Suggests:
     rmarkdown,
     testthat,
     nnls,
-    Rglpk,
     slam,
-    Rmosek,
-    gurobi,
-    Rcplex,
-    rcbc,
-    covr,
-    cccp
+    covr
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true
@@ -109,3 +103,10 @@ Collate:
     'canonInterface.R'
 RoxygenNote: 7.1.1
 Encoding: UTF-8
+Enhances: 
+    Rcplex,
+    gurobi,
+    rcbc,
+    cccp,
+    Rmosek,
+    Rglpk

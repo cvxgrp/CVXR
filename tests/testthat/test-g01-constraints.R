@@ -16,14 +16,15 @@ SOC <- CVXR:::SOC
 save_value <- CVXR:::save_value
 
 test_that("test the EqConstraint class", {
+  skip_on_cran()
   constr <- x == z
   expect_equal(name(constr), "x == z")
   expect_equal(dim(constr), c(2,1))
-  
+
   # Test value and dual_value
   expect_true(is.na(dual_value(constr)))
   expect_error(constr_value(constr))
-  
+
   x <- save_value(x, 2)
   z <- save_value(z, 2)
   constr <- x == z
@@ -31,28 +32,29 @@ test_that("test the EqConstraint class", {
   x <- save_value(x, 3)
   constr <- x == z
   expect_false(constr_value(constr))
-  
+
   value(x) <- c(2,1)
   value(z) <- c(2,2)
   constr <- x == z
   expect_false(constr_value(constr))
   expect_equal(violation(constr), matrix(c(0,1)), tolerance = TOL)
   expect_equal(residual(constr), matrix(c(0,1)), tolerance = TOL)
-  
+
   value(z) <- c(2,1)
   constr <- x == z
   expect_true(constr_value(constr))
   expect_equal(violation(constr), matrix(c(0,0)))
   expect_equal(residual(constr), matrix(c(0,0)))
-  
+
   expect_error(x == y)
 })
 
 test_that("test the LeqConstraint class", {
+  skip_on_cran()
   constr <- x <= z
   expect_equal(name(constr), "x <= z")
   expect_equal(dim(constr), c(2,1))
-  
+
   # Test value and dual_value
   expect_true(is.na(dual_value(constr)))
   expect_error(constr_value(constr))
@@ -63,28 +65,29 @@ test_that("test the LeqConstraint class", {
   x <- save_value(x, 3)
   constr <- x <= z
   expect_false(constr_value(constr))
-  
+
   value(x) <- c(2,1)
   value(z) <- c(2,0)
   constr <- x <= z
   expect_false(constr_value(constr))
   expect_equal(violation(constr), matrix(c(0,1)), tolerance = TOL)
   expect_equal(residual(constr), matrix(c(0,1)), tolerance = TOL)
-  
+
   value(z) <- c(2,2)
   constr <- x <= z
   expect_true(constr_value(constr))
   expect_equal(violation(constr), matrix(c(0,0)), tolerance = TOL)
   expect_equal(residual(constr), matrix(c(0,0)), tolerance = TOL)
-  
+
   expect_error(x <= y)
 })
 
 test_that("Test the PSD constraint %>>%", {
+  skip_on_cran()
   constr <- A %>>% B
   expect_equal(name(constr), "A + -B >> 0")
   expect_equal(dim(constr), c(2,2))
-  
+
   # Test value and dual_value
   expect_true(is.na(dual_value(constr)))
   expect_error(constr_value(constr))
@@ -94,21 +97,22 @@ test_that("Test the PSD constraint %>>%", {
   expect_true(constr_value(constr))
   expect_equal(violation(constr), 0, tolerance = TOL)
   expect_equal(residual(constr), 0, tolerance = TOL)
-  
+
   B <- save_value(B, rbind(c(3,0), c(0,3)))
   constr <- A %>>% B
   expect_false(constr_value(constr))
   expect_equal(violation(constr), 1, tolerance = TOL)
   expect_equal(residual(constr), 1, tolerance = TOL)
-  
+
   expect_error(x %>>% 0, "Non-square matrix in positive definite constraint.")
 })
 
 test_that("Test the PSD constraint %<<%", {
+  skip_on_cran()
   constr <- A %<<% B
   expect_equal(name(constr), "B + -A >> 0")
   expect_equal(dim(constr), c(2,2))
-  
+
   # Test value and dual_value
   expect_true(is.na(dual_value(constr)))
   expect_error(constr_value(constr))
@@ -119,11 +123,12 @@ test_that("Test the PSD constraint %<<%", {
   A <- save_value(A, rbind(c(3,0), c(0,3)))
   constr <- A %<<% B
   expect_false(constr_value(constr))
-  
+
   expect_error(x %<<% 0, "Non-square matrix in positive definite constraint.")
 })
 
 test_that("test the >= operator", {
+  skip_on_cran()
   constr <- z >= x
   expect_equal(name(constr), "x <= z")
   expect_equal(dim(constr), c(2,1))
@@ -131,6 +136,7 @@ test_that("test the >= operator", {
 })
 
 test_that("test the SOC class", {
+  skip_on_cran()
   exp <- x + z
   scalar_exp <- a + b
   constr <- SOC(scalar_exp, exp)

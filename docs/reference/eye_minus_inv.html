@@ -81,7 +81,7 @@ and it enforces the constraint that the spectral radius of \(X\) is at most 1." 
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -152,21 +152,21 @@ and it enforces the constraint that the spectral radius of \(X\) is at most 1.</
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>X</th>
-      <td><p>An Expression or positive square matrix.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a> or positive square matrix.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the unity resolvent of the input.</p>
+    <p>An <a href='Expression-class.html'>Expression</a> representing the unity resolvent of the input.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This atom is log-log convex.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>,<span class='fl'>2</span>, <span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>matrix_trace</span>(<span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'>eye_minus_inv</span>(<span class='no'>A</span>) <span class='kw'>&lt;=</span><span class='fl'>1</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+    <pre class="examples"><div class='input'><span class='no'>A</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>, <span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='matrix_trace.html'>matrix_trace</a></span>(<span class='no'>A</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fu'>eye_minus_inv</span>(<span class='no'>A</span>) <span class='kw'>&lt;=</span><span class='fl'>1</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 0</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>A</span>)</div><div class='output co'>#&gt; [1] NA</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

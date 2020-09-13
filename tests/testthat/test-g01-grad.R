@@ -9,6 +9,7 @@ B <- Variable(2, 2, name = "B")
 C <- Variable(3, 2, name = "C")
 
 test_that("Test gradient for affine_prod", {
+  skip_on_cran()
   value(C) <- rbind(c(1,-2), c(3,4), c(-1,-3))
   value(A) <- rbind(c(3,2), c(-5,1))
   expect_warning(expr <- C %*% A)
@@ -20,6 +21,7 @@ test_that("Test gradient for affine_prod", {
 })
 
 test_that("Test gradient for p_norm", {
+  skip_on_cran()
   value(x) <- c(-1,0)
   expr <- p_norm(x, 1)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(-1,0)))
@@ -62,6 +64,7 @@ test_that("Test gradient for p_norm", {
 })
 
 test_that("Test gradient for log_sum_exp", {
+  skip_on_cran()
   value(x) <- c(0,1)
   expr <- log_sum_exp(x)
   e <- exp(1)
@@ -77,6 +80,7 @@ test_that("Test gradient for log_sum_exp", {
 })
 
 test_that("Test gradient for geo_mean", {
+  skip_on_cran()
   value(x) <- c(1,2)
   expr <- geo_mean(x)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(sqrt(2)/2, 1.0/2/sqrt(2))))
@@ -96,6 +100,7 @@ test_that("Test gradient for geo_mean", {
 })
 
 test_that("Test gradient for lambda_max", {
+  skip_on_cran()
   value(A) <- cbind(c(2,0), c(0,1))
   expr <- lambda_max(A)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(1,0,0,0)))
@@ -110,6 +115,7 @@ test_that("Test gradient for lambda_max", {
 })
 
 test_that("Test gradient for matrix_frac", {
+  skip_on_cran()
   value(A) <- diag(2)
   value(B) <- diag(2)
   expr <- matrix_frac(A, B)
@@ -129,12 +135,14 @@ test_that("Test gradient for matrix_frac", {
 })
 
 test_that("Test gradient for norm_nuc", {
+  skip_on_cran()
   value(A) <- cbind(c(10,4), c(4,30))
   expr <- norm_nuc(A)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(1,0,0,1)))
 })
 
 test_that("Test gradient for log_det", {
+  skip_on_cran()
   value(A) <- 2*diag(rep(1,2))
   expr <- log_det(A)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), 1.0/2*diag(2))
@@ -155,6 +163,7 @@ test_that("Test gradient for log_det", {
 })
 
 test_that("Test gradient for quad_over_lin", {
+  skip_on_cran()
   value(x) <- c(1,2)
   value(a) <- 2
   expr <- quad_over_lin(x, a)
@@ -183,6 +192,7 @@ test_that("Test gradient for quad_over_lin", {
 })
 
 test_that("Test gradient for max_entries", {
+  skip_on_cran()
   value(x) <- c(2,1)
   expr <- max_entries(x)
   expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(1,0)))
@@ -201,6 +211,7 @@ test_that("Test gradient for max_entries", {
 })
 
 test_that("Test sigma_max", {
+  skip_on_cran()
   value(A) <- cbind(c(1,0), c(0,2))
   expr <- sigma_max(A)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(0,0,0,1)))
@@ -211,6 +222,7 @@ test_that("Test sigma_max", {
 })
 
 test_that("Test sum_largest", {
+  skip_on_cran()
   value(A) <- cbind(c(4,3), c(2,1))
   expr <- sum_largest(A, 2)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(1,0,1,0)))
@@ -221,6 +233,7 @@ test_that("Test sum_largest", {
 })
 
 test_that("Test abs", {
+  skip_on_cran()
   value(A) <- cbind(c(1,2), c(-1,0))
   expr <- abs(A)
   val <- diag(c(1,1,-1,0))
@@ -228,6 +241,7 @@ test_that("Test abs", {
 })
 
 test_that("Test linearize method", {
+  skip_on_cran()
   # Affine
   value(x) <- c(1,2)
   expr <- (2*x - 5)[1]
@@ -274,6 +288,7 @@ test_that("Test linearize method", {
 })
 
 test_that("Test gradient for log", {
+  skip_on_cran()
   value(a) <- 2
   expr <- log(a)
   expect_equal(grad(expr)[[as.character(a@id)]], 1.0/2)
@@ -302,6 +317,7 @@ test_that("Test gradient for log", {
 })
 
 test_that("Test domain for log1p", {
+  skip_on_cran()
   value(a) <- 2
   expr <- log1p(a)
   expect_equal(grad(expr)[[as.character(a@id)]], 1.0/3)
@@ -330,6 +346,7 @@ test_that("Test domain for log1p", {
 })
 
 test_that("Test domain for entr", {
+  skip_on_cran()
   value(a) <- 2
   expr <- entr(a)
   expect_equal(grad(expr)[[as.character(a@id)]], -log(2)-1)
@@ -358,6 +375,7 @@ test_that("Test domain for entr", {
 })
 
 test_that("Test domain for exp", {
+  skip_on_cran()
   value(a) <- 2
   expr <- exp(a)
   expect_equal(grad(expr)[[as.character(a@id)]], exp(2))
@@ -387,6 +405,7 @@ test_that("Test domain for exp", {
 })
 
 test_that("Test domain for logistic", {
+  skip_on_cran()
   value(a) <- 2
   expr <- logistic(a)
   expect_equal(grad(expr)[[as.character(a@id)]], exp(2)/(1+exp(2)))
@@ -416,6 +435,7 @@ test_that("Test domain for logistic", {
 })
 
 test_that("Test domain for huber", {
+  skip_on_cran()
   value(a) <- 2
   expr <- CVXR::huber(a)
   expect_equal(grad(expr)[[as.character(a@id)]], 2)
@@ -445,6 +465,7 @@ test_that("Test domain for huber", {
 })
 
 test_that("Test domain for kl_div", {
+  skip_on_cran()
   b <- Variable()
   value(a) <- 2
   value(b) <- 4
@@ -490,6 +511,7 @@ test_that("Test domain for kl_div", {
 })
 
 test_that("Test domain for max_elemwise", {
+  skip_on_cran()
   b <- Variable()
   value(a) <- 2
   value(b) <- 4
@@ -537,6 +559,7 @@ test_that("Test domain for max_elemwise", {
 })
 
 test_that("Test domain for min_elemwise", {
+  skip_on_cran()
   b <- Variable()
   value(a) <- 2
   value(b) <- 4
@@ -584,6 +607,7 @@ test_that("Test domain for min_elemwise", {
 })
 
 test_that("Test domain for power", {
+  skip_on_cran()
   value(a) <- 2
   expr <- sqrt(a)
   expect_equal(grad(expr)[[as.character(a@id)]], 0.5/sqrt(2))
@@ -665,6 +689,7 @@ test_that("Test domain for power", {
 # })
 
 test_that("Test grad for affine atoms", {
+  skip_on_cran()
   value(a) <- 2
   expr <- -a
   expect_equal(grad(expr)[[as.character(a@id)]], -1)

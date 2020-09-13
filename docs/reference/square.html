@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -151,13 +151,13 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An Expression.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the square of the input.
+    <p>An <a href='Expression-class.html'>Expression</a> representing the square of the input.
 A &lt;- Variable(2,2)
 val &lt;- cbind(c(2,4), c(16,1))
 prob &lt;- Problem(Minimize(square(A)[1,2]), list(A == val))

@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -150,7 +150,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>A</th>
-      <td><p>An Expression or matrix.</p></td>
+      <td><p>An <a href='Expression-class.html'>Expression</a> or matrix.</p></td>
     </tr>
     <tr>
       <th>k</th>
@@ -160,13 +160,13 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An Expression representing the sum of the largest <code>k</code> eigenvalues of the input.</p>
+    <p>An <a href='Expression-class.html'>Expression</a> representing the sum of the largest <code>k</code> eigenvalues of the input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>C</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>3</span>,<span class='fl'>3</span>)
+    <pre class="examples"><div class='input'><span class='no'>C</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>3</span>,<span class='fl'>3</span>)
 <span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>,<span class='fl'>3</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>4</span>,<span class='fl'>5</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>5</span>,<span class='fl'>6</span>))
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'>Problem</span>(<span class='fu'>Minimize</span>(<span class='fu'>lambda_sum_largest</span>(<span class='no'>C</span>,<span class='fl'>2</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/solve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>lambda_sum_largest</span>(<span class='no'>C</span>,<span class='fl'>2</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>C</span> <span class='kw'>==</span> <span class='no'>val</span>))
+<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
 <span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 11.51573</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>C</span>)</div><div class='output co'>#&gt;          [,1]     [,2]     [,3]
 #&gt; [1,] 1.000001 2.000000 3.000000
 #&gt; [2,] 2.000000 4.000001 5.000000

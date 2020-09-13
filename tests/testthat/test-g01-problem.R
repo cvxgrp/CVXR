@@ -20,6 +20,7 @@ ECOS.dims_to_solver_dict <- CVXR:::ECOS.dims_to_solver_dict
 .p_norm <- CVXR:::.p_norm
 
 test_that("test the variables method", {
+  skip_on_cran()
   p <- Problem(Minimize(a), list(a <= x, b <= A + 2))
   vars_ <- variables(p)
   ref <- list(a, x, b, A)
@@ -27,6 +28,7 @@ test_that("test the variables method", {
 })
 
 test_that("test the parameters method", {
+  skip_on_cran()
   p1 <- Parameter()
   p2 <- Parameter(3, nonpos = TRUE)
   p3 <- Parameter(4, 4, nonneg = TRUE)
@@ -37,6 +39,7 @@ test_that("test the parameters method", {
 })
 
 test_that("test the constants method", {
+  skip_on_cran()
   c1 <- matrix(stats::rnorm(2), nrow = 1, ncol = 2)
   c2 <- matrix(stats::rnorm(2), nrow = 2, ncol = 1)
   p <- Problem(Minimize(c1 %*% x), list(x >= c2))
@@ -60,6 +63,7 @@ test_that("test the constants method", {
 })
 
 test_that("Test the size_metrics method", {
+  skip_on_cran()
   p1 <- Parameter()
   p2 <- Parameter(3, nonpos = TRUE)
   p3 <- Parameter(4, 4, nonneg = TRUE)
@@ -97,6 +101,7 @@ test_that("Test the size_metrics method", {
 })
 
 test_that("Test the solver_stats method", {
+  skip_on_cran()
   prob <- Problem(Minimize(p_norm(x)), list(x == 0))
   result <- solve(prob, solver = "ECOS")
   expect_true(result$solve_time > 0)
@@ -105,6 +110,7 @@ test_that("Test the solver_stats method", {
 })
 
 test_that("Test the get_problem_data method", {
+  skip_on_cran()
   data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")[[1]]
   dims <- data[[ConicSolver()@dims]]
   expect_equal(dims@exp, 1)
@@ -127,6 +133,7 @@ test_that("Test the get_problem_data method", {
 })
 
 test_that("Test unpack results method", {
+  skip_on_cran()
   prob <- Problem(Minimize(exp(a)), list(a == 0))
   tmp <- get_problem_data(prob, solver = "SCS")
   args <- tmp[[1]]
@@ -254,6 +261,7 @@ test_that("Test unpack results method", {
 # })
 
 test_that("test the is_dcp method", {
+  skip_on_cran()
   p <- Problem(Minimize(norm_inf(a)))
   expect_true(is_dcp(p))
 
@@ -263,6 +271,7 @@ test_that("test the is_dcp method", {
 })
 
 test_that("test the is_qp method", {
+  skip_on_cran()
   A <- matrix(rnorm(4*3), nrow = 4, ncol = 3)
   b <- matrix(rnorm(4), nrow = 4)
   Aeq <- matrix(rnorm(2*3), nrow = 2, ncol = 3)
@@ -299,6 +308,7 @@ test_that("test the is_qp method", {
 })
 
 test_that("test problems involving variables with the same name", {
+  skip_on_cran()
   var <- Variable(name = "a")
   p <- Problem(Maximize(a + var), list(var == 2 + a, var <= 3))
   result <- solve(p)
@@ -308,6 +318,7 @@ test_that("test problems involving variables with the same name", {
 })
 
 test_that("test adding problems", {
+  skip_on_cran()
   prob1 <- Problem(Minimize(a), list(a >= b))
   prob2 <- Problem(Minimize(2*b), list(a >= 1, b >= 2))
   prob_minimize <- prob1 + prob2
@@ -336,6 +347,7 @@ test_that("test adding problems", {
 })
 
 test_that("test problem multiplication by scalar", {
+  skip_on_cran()
   prob1 <- Problem(Minimize(a^2), list(a >= 2))
   answer <- solve(prob1)$value
   factors <- c(0, 1, 2.3, -4.321)
@@ -346,6 +358,7 @@ test_that("test problem multiplication by scalar", {
 })
 
 test_that("test problem linear combinations", {
+  skip_on_cran()
   prob1 <- Problem(Minimize(a), list(a >= b))
   prob2 <- Problem(Minimize(2*b), list(a >= 1, b >= 2))
   prob3 <- Problem(Maximize(-(b + a)^2), list(b >= 3))
@@ -401,6 +414,7 @@ test_that("test problem linear combinations", {
 # })
 
 test_that("Test scalar LP problems", {
+  skip_on_cran()
   p <- Problem(Minimize(3*a), list(a >= 2))
   result <- solve(p)
   expect_equal(result$value, 6, tolerance = TOL)
@@ -464,6 +478,7 @@ test_that("Test scalar LP problems", {
 })
 
 test_that("Test vector LP problems", {
+  skip_on_cran()
   c <- Constant(matrix(c(1, 2), nrow = 2, ncol = 1))@value
   p <- Problem(Minimize(t(c) %*% x), list(x >= c))
   result <- solve(p)
@@ -482,6 +497,7 @@ test_that("Test vector LP problems", {
 })
 
 test_that("Test ECOS with no inequality constraints", {
+  skip_on_cran()
   Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 2)))
   p <- Problem(Minimize(1), list(A == Tmat))
   result <- solve(p, solver = "ECOS")
@@ -490,6 +506,7 @@ test_that("Test ECOS with no inequality constraints", {
 })
 
 test_that("Test matrix LP problems", {
+  skip_on_cran()
   Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 2)))
   p <- Problem(Minimize(1), list(A == Tmat))
   result <- solve(p)
@@ -509,6 +526,7 @@ test_that("Test matrix LP problems", {
 })
 
 test_that("Test variable promotion", {
+  skip_on_cran()
   p <- Problem(Minimize(a), list(x <= a, x == c(1, 2)))
   result <- solve(p)
   expect_equal(result$value, 2, tolerance = TOL)
@@ -526,6 +544,7 @@ test_that("Test variable promotion", {
 })
 
 test_that("Test parameter promotion", {
+  skip_on_cran()
   a <- Parameter()
   value(a) <- 2
   exp <- cbind(c(1,2), c(3,4))*a
@@ -533,6 +552,7 @@ test_that("Test parameter promotion", {
 })
 
 test_that("test problems with parameters", {
+  skip_on_cran()
   p1 <- Parameter()
   p2 <- Parameter(3, nonpos = TRUE)
   p3 <- Parameter(4, 4, nonneg = TRUE)
@@ -551,6 +571,7 @@ test_that("test problems with parameters", {
 })
 
 test_that("test problems with norm_inf", {
+  skip_on_cran()
   # Constant argument
   p <- Problem(Minimize(norm_inf(-2)))
   result <- solve(p)
@@ -582,6 +603,7 @@ test_that("test problems with norm_inf", {
 })
 
 test_that("Test problems with norm1", {
+  skip_on_cran()
   # Constant argument
   p <- Problem(Minimize(norm1(-2)))
   result <- solve(p)
@@ -607,6 +629,7 @@ test_that("Test problems with norm1", {
 })
 
 test_that("Test problems with norm2", {
+  skip_on_cran()
   # Constant argument
   p <- Problem(Minimize(norm2(-2)))
   result <- solve(p)
@@ -640,6 +663,7 @@ test_that("Test problems with norm2", {
 })
 
 test_that("Test problems with abs", {
+  skip_on_cran()
   p <- Problem(Minimize(sum_entries(abs(A))), list(-2 >= A))
   result <- solve(p)
   expect_equal(result$value, 8, tolerance = TOL)
@@ -647,6 +671,7 @@ test_that("Test problems with abs", {
 })
 
 test_that("Test problems with quad_form", {
+  skip_on_cran()
   expect_error(solve(Problem(Minimize(quad_form(x, A)))), "At least one argument to QuadForm must be constant.")
   expect_error(solve(Problem(Minimize(quad_form(1, A)))), "Invalid dimensions for arguments.")
   expect_error(solve(Problem(Minimize(quad_form(x, rbind(c(-1,0), c(0,9)))))))              # Error: Problem does not follow DCP rules
@@ -669,6 +694,7 @@ test_that("Test problems with quad_form", {
 })
 
 test_that("Test combining atoms", {
+  skip_on_cran()
   p <- Problem(Minimize(norm2(5 + p_norm(z,1) + p_norm(x,1) + norm_inf(x - z))), list(x >= c(2,3), z <= c(-1,-4), p_norm(x + z,2) <= 2))
   result <- solve(p)
   expect_equal(result$value, 22, tolerance = TOL)
@@ -677,6 +703,7 @@ test_that("Test combining atoms", {
 })
 
 test_that("Test multiplying by constant atoms", {
+  skip_on_cran()
   p <- Problem(Minimize(norm2(c(3,4)) * a), list(a >= 2))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
@@ -684,6 +711,7 @@ test_that("Test multiplying by constant atoms", {
 })
 
 test_that("Test recovery of dual variables", {
+  skip_on_cran()
   for(solver in c("ECOS", "SCS", "CVXOPT")) {
     if(solver %in% INSTALLED_SOLVERS) {
       if(solver == "SCS")
@@ -715,6 +743,7 @@ test_that("Test recovery of dual variables", {
 })
 
 test_that("Test problems with indexing", {
+  skip_on_cran()
   # Vector variables
   p <- Problem(Maximize(x[1,1]), list(x[1,1] <= 2, x[2,1] == 3))
   result <- solve(p)
@@ -745,6 +774,7 @@ test_that("Test problems with indexing", {
 })
 
 test_that("Test problems with slicing", {
+  skip_on_cran()
   p <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
   result <- solve(p)
   expect_equal(result$value, 10, tolerance = TOL)
@@ -784,6 +814,7 @@ test_that("Test problems with slicing", {
 })
 
 test_that("Test the vstack function", {
+  skip_on_cran()
   c <- matrix(1, nrow = 1, ncol = 5)
   p <- Problem(Minimize(c %*% vstack(x, y)), list(x == c(1,2), y == c(3,4,5)))
   result <- solve(p)
@@ -810,6 +841,7 @@ test_that("Test the vstack function", {
 })
 
 test_that("Test the hstack function", {
+  skip_on_cran()
   c <- matrix(1, nrow = 1, ncol = 5)
   p <- Problem(Minimize(c %*% t(hstack(t(x), t(y)))), list(x == c(1,2), y == c(3,4,5)))
   result <- solve(p)
@@ -837,10 +869,12 @@ test_that("Test the hstack function", {
 })
 
 test_that("Test using a CVXR expression as an objective", {
+  skip_on_cran()
   expect_error(Problem(x+2))
 })
 
 test_that("Test variable transpose", {
+  skip_on_cran()
   p <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
   result <- solve(p)
   expect_equal(result$value, 3, tolerance = TOL)
@@ -888,6 +922,7 @@ test_that("Test variable transpose", {
 })
 
 test_that("Test multiplication on the left by a non-constant", {
+  skip_on_cran()
   c <- matrix(c(1,2), nrow = 2, ncol = 1)
   p <- Problem(Minimize(t(c) %*% A %*% c), list(A >= 2))
   result <- solve(p)
@@ -907,6 +942,7 @@ test_that("Test multiplication on the left by a non-constant", {
 })
 
 test_that("Test redundant constraints", {
+  skip_on_cran()
   obj <- Minimize(sum_entries(x))
   constraints <- list(x == 2, x == 2, t(x) == 2, x[1] == 2)
   p <- Problem(obj, constraints)
@@ -921,6 +957,7 @@ test_that("Test redundant constraints", {
 })
 
 test_that("Test that symmetry is enforced", {
+  skip_on_cran()
   p <- Problem(Minimize(lambda_max(A)), list(A >= 2))
   result <- solve(p)
   expect_equal(result$getValue(A), t(result$getValue(A)), tolerance = 1e-3)
@@ -931,6 +968,7 @@ test_that("Test that symmetry is enforced", {
 })
 
 test_that("Test SDP", {
+  skip_on_cran()
   # Ensure SDP constraints enforce transpose
   obj <- Maximize(A[2,1] - A[1,2])
   p <- Problem(obj, list(lambda_max(A) <= 100, A[1,1] == 2, A[2,2] == 2, A[2,1] == 2))
@@ -939,6 +977,7 @@ test_that("Test SDP", {
 })
 
 test_that("Test getting values for expressions", {
+  skip_on_cran()
   diff_exp <- x - z
   inf_exp <- norm_inf(diff_exp)
   sum_entries_exp <- 5 + p_norm(z,1) + p_norm(x,1) + inf_exp
@@ -961,6 +1000,7 @@ test_that("Test getting values for expressions", {
 })
 
 test_that("Test multiplication by zero", {
+  skip_on_cran()
   exp <- 0*a
   expect_equal(value(exp), matrix(0))
   obj <- Minimize(exp)
@@ -971,6 +1011,7 @@ test_that("Test multiplication by zero", {
 })
 
 test_that("Tests a problem with division", {
+  skip_on_cran()
   obj <- Minimize(norm_inf(A/5))
   p <- Problem(obj, list(A >= 5))
   result <- solve(p)
@@ -978,7 +1019,7 @@ test_that("Tests a problem with division", {
 })
 
 test_that("Tests problems with multiply", {
-  require(Matrix)
+  skip_on_cran()
   c <- cbind(c(1,-1), c(2,-2))
   expr <- multiply(c, A)
   obj <- Minimize(norm_inf(expr))
@@ -988,7 +1029,7 @@ test_that("Tests problems with multiply", {
   expect_equal(result$getValue(expr), cbind(c(5,-5), c(10,-10)), tolerance = TOL)
 
   # Test with a sparse matrix
-  c <- sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
+  c <- Matrix::sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
   expr <- multiply(c, x)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(x == 5))
@@ -1007,12 +1048,14 @@ test_that("Tests problems with multiply", {
 })
 
 test_that("Tests that errors occur when you use an invalid solver", {
+  skip_on_cran()
   expect_error(solve(Problem(Minimize(Bool())), solver = "ECOS"))
   expect_error(solve(Problem(Minimize(lambda_max(a))), solver = "ECOS"))
   expect_error(solve(Problem(Minimize(a)), solver = "SCS"))
 })
 
 test_that("Tests problems with reshape_expr", {
+  skip_on_cran()
   # Test on scalars
   expect_equal(value(reshape_expr(1,c(1,1))), matrix(1))
 
@@ -1067,6 +1110,7 @@ test_that("Tests problems with reshape_expr", {
 })
 
 test_that("Tests problems with vec", {
+  skip_on_cran()
   c <- 1:4
   expr <- vec(A)
   obj <- Minimize(t(expr) %*% c)
@@ -1078,6 +1122,7 @@ test_that("Tests problems with vec", {
 })
 
 test_that("Test a problem with diag", {
+  skip_on_cran()
   C <- Variable(3,3)
   obj <- Maximize(C[1,3])
   constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Variable(3, 3, PSD = TRUE))
@@ -1136,6 +1181,7 @@ test_that("Test a problem with diag", {
 # })
 
 test_that("Test interaction of caching with changing constraints", {
+  skip_on_cran()
   prob <- Problem(Minimize(a), list(a == 2, a >= 1))
   result <- solve(prob)
   expect_equal(result$value, 2, tolerance = TOL)
@@ -1146,6 +1192,7 @@ test_that("Test interaction of caching with changing constraints", {
 })
 
 test_that("Test positive definite constraints", {
+  skip_on_cran()
   C <- Variable(3,3)
   obj <- Maximize(C[1,3])
   constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == t(C), C %>>% 0)
@@ -1169,6 +1216,7 @@ test_that("Test positive definite constraints", {
 })
 
 test_that("Test the duals of PSD constraints", {
+  skip_on_cran()
   # Test dual values with SCS
   C <- Variable(2, 2, symmetric = TRUE, name = "C")
   obj <- Maximize(C[1,1])
@@ -1205,6 +1253,7 @@ test_that("Test the duals of PSD constraints", {
 })
 
 test_that("Test geo_mean function", {
+  skip_on_cran()
     x <- Variable(2)
     cost <- geo_mean(x)
     prob <- Problem(Maximize(cost), list(x <= 1))
@@ -1282,6 +1331,7 @@ test_that("Test geo_mean function", {
 })
 
 test_that("Test p_norm function", {
+  skip_on_cran()
     x <- Variable(3, name = "x")
     avec <- c(1.0, 2, 3)
 
@@ -1308,6 +1358,7 @@ test_that("Test p_norm function", {
 })
 
 test_that("Test p_norm concave", {
+  skip_on_cran()
   x <- Variable(3, name = "x")
 
   # Test positivity constraints
@@ -1327,6 +1378,7 @@ test_that("Test p_norm concave", {
 })
 
 test_that("Test power function", {
+  skip_on_cran()
   x <- Variable()
   prob <- Problem(Minimize(power(x, 1.7) + power(x, -2.3) - power(x, 0.45)))
   result <- solve(prob)
@@ -1335,6 +1387,7 @@ test_that("Test power function", {
 })
 
 test_that("Test a problem with multiply by a scalar", {
+  skip_on_cran()
   Tnum <- 10
   Jnum <- 20
   rvec <- matrix(stats::rnorm(Tnum*Jnum), nrow = Tnum, ncol = Jnum)

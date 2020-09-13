@@ -141,7 +141,7 @@ test_that("test vector LP problems", {
 })
 
 test_that("test matrix LP problems", {
-      skip_on_cran()
+  skip_on_cran()
   for(solver in solvers) {
     Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 2)))
     p <- Problem(Minimize(1 + a), list(A == Tmat + a, a >= 0))

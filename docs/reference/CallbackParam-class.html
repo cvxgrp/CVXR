@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
       </span>
     </div>
 
@@ -146,7 +146,7 @@
     <pre class="usage"><span class='fu'>CallbackParam</span>(<span class='no'>callback</span>, <span class='kw'>dim</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
 
 <span class='co'># S4 method for CallbackParam</span>
-<span class='fu'>value</span>(<span class='no'>object</span>)</pre>
+<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>object</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -161,7 +161,7 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional attribute arguments. See Leaf for details.</p></td>
+      <td><p>Additional attribute arguments. See <a href='Leaf-class.html'>Leaf</a> for details.</p></td>
     </tr>
     <tr>
       <th>object</th>
@@ -181,10 +181,10 @@
 </dl>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>Variable</span>(<span class='fl'>2</span>)
-<span class='no'>fun</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>() { <span class='fu'>value</span>(<span class='no'>x</span>) }
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
+<span class='no'>fun</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>() { <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>x</span>) }
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>CallbackParam</span>(<span class='no'>fun</span>, <span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>x</span>), <span class='kw'>nonneg</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>get_data</span>(<span class='no'>y</span>)</div><div class='output co'>#&gt; $dim
+<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>y</span>)</div><div class='output co'>#&gt; $dim
 #&gt; [1] 2 1
 #&gt; 
 #&gt; $name
@@ -199,13 +199,13 @@
 #&gt; 
 #&gt; $attributes$callback
 #&gt; function() { value(x) }
-#&gt; &lt;environment: 0x7fa61b300870&gt;
+#&gt; &lt;environment: 0x7ff49c94d0e0&gt;
 #&gt; 
 #&gt; $attributes$name
 #&gt; [1] "paramNA"
 #&gt; 
 #&gt; $attributes$venv
-#&gt; &lt;environment: 0x7fa5fec285f8&gt;
+#&gt; &lt;environment: 0x7ff49c7691b0&gt;
 #&gt; 
 #&gt; $attributes$.is_vector
 #&gt; [1] FALSE

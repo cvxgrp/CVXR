@@ -81,7 +81,7 @@ Matrix expressions are vectorized, so the gradient is a matrix. NA indicates var
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
       </span>
     </div>
 
@@ -166,7 +166,7 @@ Matrix expressions are vectorized, so the gradient is a matrix. <code>NA</code> 
 
 <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>x</span>) <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>3</span>,<span class='fl'>4</span>)
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>x</span>, <span class='fl'>2</span>)
-<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1539`
+<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1530`
 #&gt; 2 x 1 sparse Matrix of class "dgCMatrix"
 #&gt;          
 #&gt; [1,] -0.6
@@ -174,12 +174,12 @@ Matrix expressions are vectorized, so the gradient is a matrix. <code>NA</code> 
 #&gt; </div><div class='input'>
 <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>A</span>) <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,-<span class='fl'>4</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>4</span>,<span class='fl'>3</span>))
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>A</span>, <span class='fl'>0.5</span>)
-<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1540`
+<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1531`
 #&gt; [1] NA
 #&gt; </div><div class='input'>
 <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>A</span>) <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>1</span>,<span class='fl'>0</span>))
 <span class='no'>expr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='abs.html'>abs</a></span>(<span class='no'>A</span>)
-<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1540`
+<span class='fu'>grad</span>(<span class='no'>expr</span>)</div><div class='output co'>#&gt; $`1531`
 #&gt; 4 x 4 sparse Matrix of class "dgCMatrix"
 #&gt;              
 #&gt; [1,] 1 .  . .

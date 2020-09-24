@@ -81,7 +81,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
       </span>
     </div>
 
@@ -234,21 +234,17 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>#' For \(p = 0\), \(f(x) = 1\), constant, positive.
-For \(p = 1\), \(f(x) = x\), affine, increasing, same sign as \(x\).
-For \(p = 2,4,8,...\), \(f(x) = |x|^p\), convex, signed monotonicity, positive.
-For \(p &lt; 0\) and \(f(x) = \)</p><ul>
-<li><p>\(x^p\) for \(x &gt; 0\)</p></li>
-<li><p>\(+\infty\)\(x \leq 0\)</p></li>
-</ul><p>, this function is convex, decreasing, and positive.
-For \(0 &lt; p &lt; 1\) and \(f(x) =\)</p><ul>
-<li><p>\(x^p\) for \(x \geq 0\)</p></li>
-<li><p>\(-\infty\)\(x &lt; 0\)</p></li>
-</ul><p>, this function is concave, increasing, and positive.
-For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul>
-<li><p>\(x^p\) for \(x \geq 0\)</p></li>
-<li><p>\(+\infty\)\(x &lt; 0\)</p></li>
-</ul><p>, this function is convex, increasing, and positive.</p>
+    
+<dl'>
+<dt>For \(p = 0\)</dt><dd><p>\(f(x) = 1\), constant, positive</p></dd>
+<dt>For \(p = 1\)</dt><dd><p>\(f(x) = x\), affine, increasing, same sign as \(x\)</p></dd>
+<dt>For \(p = 2,4,8,...\)</dt><dd><p>\(f(x) = |x|^p\), convex, signed monotonicity, positive</p></dd>
+<dt>For \(p &lt; 0\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x &gt; 0$} \\ +\infty &amp; \text{ for $x \leq 0$} \end{cases}\), this function is convex, decreasing, and positive</p></dd>
+<dt>For \(0 &lt; p &lt; 1\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x \geq 0$} \\ -\infty &amp; \text{ for $x &lt; 0$} \end{cases}\), this function is concave, increasing, and positive</p></dd>
+<dt>For \(p &gt; 1, p \neq 2,4,8,\ldots\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x \geq 0$} \\ +\infty &amp; \text{for $x &lt; 0$} \end{cases}\), this function is convex, increasing, and positive.</p></dd>
+
+</dl>
+
     <h2 class="hasAnchor" id="methods-by-generic-"><a class="anchor" href="#methods-by-generic-"></a>Methods (by generic)</h2>
 
     

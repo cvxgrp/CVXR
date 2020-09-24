@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
       </span>
     </div>
 
@@ -170,7 +170,7 @@
 <span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span>(<span class='fl'>1</span>:<span class='no'>m</span>, <span class='kw'>function</span>(<span class='no'>i</span>) { <span class='fu'><a href='p_norm.html'>p_norm</a></span>(<span class='no'>A</span> <span class='kw'>%*%</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>as.matrix</a></span>(<span class='no'>x</span>[,<span class='no'>i</span>]) + <span class='no'>b</span>) <span class='kw'>&lt;=</span> <span class='fl'>1</span> })
 <span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constr</span>)
 <span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 1.974604</div></pre>
+<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 1.974606</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

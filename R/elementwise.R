@@ -99,7 +99,7 @@ setMethod("is_incr", "Abs", function(object, idx) { is_nonneg(object@args[[idx]]
 setMethod("is_decr", "Abs", function(object, idx) { is_nonpos(object@args[[idx]]) })
 
 #' @describeIn Abs Is \code{x} piecewise linear?
-setMethod("is_pwl", "Abs", function(object) { 
+setMethod("is_pwl", "Abs", function(object) {
   is_pwl(object@args[[1]]) && (is_real(object@args[[1]]) || is_imag(object@args[[1]]))
 })
 
@@ -291,7 +291,7 @@ setMethod("to_numeric", "Huber", function(object, values) {
     result <- 2*sapply(val, function(v) { huber_loss(M_val, v) })
   else
     result <- 2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
-  
+
   if(all(dim(result) == 1))
     result <- as.vector(result)
   return(result)
@@ -744,7 +744,7 @@ setMethod(".grad", "MinElemwise", function(object, values) {
     rows <- size(object@args[[idx]])
     cols <- size(object)
     grad_vals <- (value == min_vals) & unused
-    
+
     # Remove all the min_vals that were used
     unused[value == min_vals] <- FALSE
     grad_list <- c(grad_list, list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
@@ -752,14 +752,14 @@ setMethod(".grad", "MinElemwise", function(object, values) {
   }
   grad_list
 })
-#' 
+#'
 #' An alias for -MinElemwise(x, 0)
-#' 
+#'
 #' @param x An R numeric value or \linkS4class{Expression}.
 #' @return An alias for -MinElemwise(x, 0)
 #' @rdname Neg-int
 Neg <- function(x) { -MinElemwise(x, 0) }
-#' 
+#'
 #' An alias for MaxElemwise(x, 0)
 #'
 #' @param x An R numeric value or \linkS4class{Expression}.
@@ -773,24 +773,14 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' This class represents the elementwise power function \eqn{f(x) = x^p}.
 #' If \code{expr} is a CVXR expression, then \code{expr^p} is equivalent to \code{Power(expr, p)}.
 #'
-#' #' For \eqn{p = 0}, \eqn{f(x) = 1}, constant, positive.
-#' For \eqn{p = 1}, \eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}.
-#' For \eqn{p = 2,4,8,...}, \eqn{f(x) = |x|^p}, convex, signed monotonicity, positive.
-#' For \eqn{p < 0} and \eqn{f(x) = }
-#' \itemize{
-#'   \item{\eqn{x^p}}{ for \eqn{x > 0}}
-#'   \item{\eqn{+\infty}}{\eqn{x \leq 0}}
-#' }, this function is convex, decreasing, and positive.
-#' For \eqn{0 < p < 1} and \eqn{f(x) =}
-#' \itemize{
-#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
-#'   \item{\eqn{-\infty}}{\eqn{x < 0}}
-#' }, this function is concave, increasing, and positive.
-#' For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
-#' \itemize{
-#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
-#'   \item{\eqn{+\infty}}{\eqn{x < 0}}
-#' }, this function is convex, increasing, and positive.
+#' \describe{
+#' \item{For \eqn{p = 0}}{\eqn{f(x) = 1}, constant, positive}
+#' \item{For \eqn{p = 1}}{\eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}}
+#' \item{For \eqn{p = 2,4,8,...}}{\eqn{f(x) = |x|^p}, convex, signed monotonicity, positive}
+#' \item{For \eqn{p < 0}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x > 0$} \\ +\infty & \text{ for $x \leq 0$} \end{cases}}, this function is convex, decreasing, and positive}
+#' \item{For \eqn{0 < p < 1}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x \geq 0$} \\ -\infty & \text{ for $x < 0$} \end{cases}}, this function is concave, increasing, and positive}
+#' \item{For \eqn{p > 1, p \neq 2,4,8,\ldots}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x \geq 0$} \\ +\infty & \text{for $x < 0$} \end{cases}}, this function is convex, increasing, and positive.}
+#' }
 #'
 #' @slot x The \linkS4class{Expression} to be raised to a power.
 #' @slot p A numeric value indicating the scalar power.
@@ -865,15 +855,15 @@ setMethod("sign_from_args", "Power", function(object) {
 })
 
 #' @describeIn Power Is \eqn{p \leq 0} or \eqn{p \geq 1}?
-setMethod("is_atom_convex", "Power", function(object) { 
+setMethod("is_atom_convex", "Power", function(object) {
   # p == 0 is affine here.
-  object@p <= 0 || object@p >= 1 
+  object@p <= 0 || object@p >= 1
 })
 
 #' @describeIn Power Is \eqn{p \geq 0} or \eqn{p \leq 1}?
 setMethod("is_atom_concave", "Power", function(object) {
   # p == 0 is affine here.
-  object@p >= 0 && object@p <= 1 
+  object@p >= 0 && object@p <= 1
 })
 
 #' @describeIn Power Is the atom log-log convex?

@@ -777,9 +777,9 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' \item{For \eqn{p = 0}}{\eqn{f(x) = 1}, constant, positive}
 #' \item{For \eqn{p = 1}}{\eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}}
 #' \item{For \eqn{p = 2,4,8,...}}{\eqn{f(x) = |x|^p}, convex, signed monotonicity, positive}
-#' \item{For \eqn{p < 0}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x > 0$} \\ +\infty & \text{ for $x \leq 0$} \end{cases}}, this function is convex, decreasing, and positive}
-#' \item{For \eqn{0 < p < 1}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x \geq 0$} \\ -\infty & \text{ for $x < 0$} \end{cases}}, this function is concave, increasing, and positive}
-#' \item{For \eqn{p > 1, p \neq 2,4,8,\ldots}}{\eqn{f(x) = \begin{cases} x^p & \text{for $x \geq 0$} \\ +\infty & \text{for $x < 0$} \end{cases}}, this function is convex, increasing, and positive.}
+#' \item{For \eqn{p < 0}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x > 0$} \\ +\infty & \mbox{ for $x \leq 0$} \end{array}}, this function is convex, decreasing, and positive}
+#' \item{For \eqn{0 < p < 1}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x \geq 0$} \\ -\infty & \mbox{ for $x < 0$} \end{array}}, this function is concave, increasing, and positive}
+#' \item{For \eqn{p > 1, p \neq 2,4,8,\ldots}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x \geq 0$} \\ +\infty & \mbox{for $x < 0$} \end{array}}, this function is convex, increasing, and positive.}
 #' }
 #'
 #' @slot x The \linkS4class{Expression} to be raised to a power.

@@ -3,6 +3,7 @@ output: github_document
 ---
 <!-- badges: start -->
 [![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
+[![R-CMD-check](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
 <!-- badges: end -->
 
 <!-- README.md is generated from the source: README.Rmd -->

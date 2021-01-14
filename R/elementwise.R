@@ -773,14 +773,29 @@ Pos <- function(x) { MaxElemwise(x, 0) }
 #' This class represents the elementwise power function \eqn{f(x) = x^p}.
 #' If \code{expr} is a CVXR expression, then \code{expr^p} is equivalent to \code{Power(expr, p)}.
 #'
-#' \describe{
-#' \item{For \eqn{p = 0}}{\eqn{f(x) = 1}, constant, positive}
-#' \item{For \eqn{p = 1}}{\eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}}
-#' \item{For \eqn{p = 2,4,8,...}}{\eqn{f(x) = |x|^p}, convex, signed monotonicity, positive}
-#' \item{For \eqn{p < 0}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x > 0$} \\ +\infty & \mbox{ for $x \leq 0$} \end{array}}, this function is convex, decreasing, and positive}
-#' \item{For \eqn{0 < p < 1}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x \geq 0$} \\ -\infty & \mbox{ for $x < 0$} \end{array}}, this function is concave, increasing, and positive}
-#' \item{For \eqn{p > 1, p \neq 2,4,8,\ldots}}{\deqn{f(x) = \begin{array} x^p & \mbox{for $x \geq 0$} \\ +\infty & \mbox{for $x < 0$} \end{array}}, this function is convex, increasing, and positive.}
-#' }
+#' For \eqn{p = 0}, \eqn{f(x) = 1}, constant, positive.
+#'
+#' For \eqn{p = 1}, \eqn{f(x) = x}, affine, increasing, same sign as \eqn{x}.
+#'
+#' For \eqn{p = 2,4,8,...}, \eqn{f(x) = |x|^p}, convex, signed monotonicity, positive.
+#'
+#' For \eqn{p < 0} and \eqn{f(x) = }
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x > 0}}
+#'   \item{\eqn{+\infty}}{\eqn{x \leq 0}}
+#' }, this function is convex, decreasing, and positive.
+#'
+#' For \eqn{0 < p < 1} and \eqn{f(x) =}
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
+#'   \item{\eqn{-\infty}}{\eqn{x < 0}}
+#' }, this function is concave, increasing, and positive.
+#'
+#' For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
+#' \itemize{
+#'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
+#'   \item{\eqn{+\infty}}{\eqn{x < 0}}
+#' }, this function is convex, increasing, and positive.
 #'
 #' @slot x The \linkS4class{Expression} to be raised to a power.
 #' @slot p A numeric value indicating the scalar power.

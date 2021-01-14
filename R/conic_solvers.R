@@ -610,7 +610,9 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   ## Fix until scs::scs can handle sparse symmetric matrices
   A  <- data[[A_KEY]]
-  if (inherits(A, "dsCMatrix")) A  <- as(A, "dgCMatrix")
+  ## Fix for Matrix version 1.3
+  ## if (inherits(A, "dsCMatrix")) A <- as(A, "dgCMatrix")
+  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
 
   args <- list(A = A, b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
@@ -770,7 +772,8 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   cvar <- data$c
   b <- data$b
-  A <- data$A
+  ## Conversion below forced by changes in Matrix package version 1.3.x
+  A <- as(as(data$A, "CsparseMatrix"), "dgTMatrix")
   dims <- SCS.dims_to_solver_dict(data$dims)
 
   if(is.null(dim(data$c))){
@@ -2357,8 +2360,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   # task.appendcons(m) is equivalent to prob$bc
 
 
-  ##G_sparse <- as(as.matrix(G), "sparseMatrix")
-  ##G is already sparse
+  ##G should already be sparse but Matrix 1.3.x causes problems.
+  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+
   G_sum <- summary(G)
   nrow_G_sparse <- nrow(G)
   ncol_G_sparse <- ncol(G)

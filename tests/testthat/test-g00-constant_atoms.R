@@ -226,17 +226,58 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     }
 }
 
+## To isolate a problem with a particular atom, run the test below
+## after setting uncommenting lines lablled "DEBUG AID"
+## From that you will get atom part i, item number j and solver.
+## Run this function with the same atoms and those args to isolate it
+## run_brat  <- function(atoms, i, j, solver) {
+##   atom_el  <- atoms[[i]]
+##   objective_type  <- atom_el[[2]]
+##   al  <- atom_el[[1]][[j]]
+##   atom <- al[[1]]
+##   dims <- al[[2]]
+##   args <- al[[3]]
+##   obj_val <- al[[4]]
+##   row  <- dims[1]
+##   col  <- dims[2]
+##   const_args <- lapply(args, Constant)
+##   problem1  <- Problem(objective_type(do.call(atom, const_args)[row, col]))
+##   result <- solve(problem1, solver = solver, verbose = TRUE)
+##   ## Atoms with Variable arguments
+##   variables <- list()
+##   constraints <- list()
+##   for(expr in args) {
+##     expr_dim <- CVXR:::intf_dim(expr)
+##     variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
+##     constraints <- c(constraints, variables[[length(variables)]] == expr)
+##   }
+##   objective <- objective_type(do.call(atom, variables)[row, col])
+##   problem2  <- Problem(objective, constraints)
+##   result <- solve(problem2, solver = solver, verbose = TRUE)
+##   ## Atoms with Parameter arguments
+##   parameters <- list()
+##   for(expr in args) {
+##     expr_dim <- dim(expr)
+##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
+##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
+##   }
+##   objective <- objective_type(do.call(atom, parameters)[row, col])
+##   run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
+## }
+
+
+
 test_that("Test all constant atoms", {
     skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
     ##  file.remove("test_constant_atoms_out.txt")
-    ##counter  <- 0 ## list item counter
+    ## atom_part  <- 0 ## counter for atom part (DEBUG AID)
     for(a in atoms) {
         atom_list <- a[[1]]
         objective_type <- a[[2]]
+        ## counter  <- 0 ## list item counter (DEBUG AID)
         for(al in atom_list) {
-            ##counter  <- counter + 1 ## list item counter
-            ##cat(sprintf("Item No: %d\n", counter))
+            ##counter  <- counter + 1 ## list item counter (DEBUG AID)
             atom <- al[[1]]
             dims <- al[[2]]
             args <- al[[3]]
@@ -244,6 +285,7 @@ test_that("Test all constant atoms", {
             for(row in 1:dims[1]) {
                 for(col in 1:dims[2]) {
                     for(solver in SOLVERS_TO_TRY) {
+                        ## cat(sprintf("i: %d j: %d solver: %S \n", atom_part, counter, solver)) ## (DEBUG AID)
                         ## Atoms with Constant arguments
                         const_args <- lapply(args, Constant)
                         run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
@@ -261,12 +303,8 @@ test_that("Test all constant atoms", {
                         ## print(atom)
                         ## print(value(obj_val[row, col]))
                         run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
-                        ## cat("Index is", ind, "\n")
-                        ## print("ATOM is")
-                        ## print(atom)
-                        ## print("Args is")
-                        ## print(args)
-                        ## ##Atoms with Parameter arguments
+
+                        ## Atoms with Parameter arguments
                         ## parameters <- list()
                         ## for(expr in args) {
                         ##     expr_dim <- dim(expr)

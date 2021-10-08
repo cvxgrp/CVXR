@@ -226,47 +226,6 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     }
 }
 
-## To isolate a problem with a particular atom, run the test below
-## after setting uncommenting lines lablled "DEBUG AID"
-## From that you will get atom part i, item number j and solver.
-## Run this function with the same atoms and those args to isolate it
-## run_brat  <- function(atoms, i, j, solver) {
-##   atom_el  <- atoms[[i]]
-##   objective_type  <- atom_el[[2]]
-##   al  <- atom_el[[1]][[j]]
-##   atom <- al[[1]]
-##   dims <- al[[2]]
-##   args <- al[[3]]
-##   obj_val <- al[[4]]
-##   row  <- dims[1]
-##   col  <- dims[2]
-##   const_args <- lapply(args, Constant)
-##   problem1  <- Problem(objective_type(do.call(atom, const_args)[row, col]))
-##   result <- solve(problem1, solver = solver, verbose = TRUE)
-##   ## Atoms with Variable arguments
-##   variables <- list()
-##   constraints <- list()
-##   for(expr in args) {
-##     expr_dim <- CVXR:::intf_dim(expr)
-##     variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
-##     constraints <- c(constraints, variables[[length(variables)]] == expr)
-##   }
-##   objective <- objective_type(do.call(atom, variables)[row, col])
-##   problem2  <- Problem(objective, constraints)
-##   result <- solve(problem2, solver = solver, verbose = TRUE)
-##   ## Atoms with Parameter arguments
-##   parameters <- list()
-##   for(expr in args) {
-##     expr_dim <- dim(expr)
-##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
-##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
-##   }
-##   objective <- objective_type(do.call(atom, parameters)[row, col])
-##   run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
-## }
-
-
-
 test_that("Test all constant atoms", {
     skip_on_cran()
     ## if(file.exists("test_constant_atoms_out.txt"))
@@ -319,3 +278,47 @@ test_that("Test all constant atoms", {
         }
     }
 })
+
+## To isolate a problem with a particular atom, run the test below
+## after setting uncommenting lines lablled "DEBUG AID"
+## From that you will get atom part i, item number j and solver.
+## Run this function with the same atoms and those args to isolate it
+## run_brat  <- function(atoms, i, j, solver) {
+##   atom_el  <- atoms[[i]]
+##   objective_type  <- atom_el[[2]]
+##   al  <- atom_el[[1]][[j]]
+##   atom <- al[[1]]
+##   dims <- al[[2]]
+##   args <- al[[3]]
+##   obj_val <- al[[4]]
+##   row  <- dims[1]
+##   col  <- dims[2]
+##   const_args <- lapply(args, Constant)
+##   problem1  <- Problem(objective_type(do.call(atom, const_args)[row, col]))
+##   result <- solve(problem1, solver = solver, verbose = TRUE)
+##   ## Atoms with Variable arguments
+##   variables <- list()
+##   constraints <- list()
+##   for(expr in args) {
+##     expr_dim <- CVXR:::intf_dim(expr)
+##     variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
+##     constraints <- c(constraints, variables[[length(variables)]] == expr)
+##   }
+##   objective <- objective_type(do.call(atom, variables)[row, col])
+##   problem2  <- Problem(objective, constraints)
+##   result <- solve(problem2, solver = solver, verbose = TRUE)
+##   ## Atoms with Parameter arguments
+##   parameters <- list()
+##   for(expr in args) {
+##     expr_dim <- dim(expr)
+##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
+##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
+##   }
+##   objective <- objective_type(do.call(atom, parameters)[row, col])
+##   run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
+## }
+
+
+
+
+

@@ -1,4 +1,9 @@
 context("test-g01-solvers")
+
+##NOTE added By BN while making SCS3.0 update.
+##Many of the tests of options seem incorrect. They only pass because the default
+##options are in effect. Fix this!
+
 TOL <- 1e-6
 
 a <- Variable(name = "a")
@@ -64,15 +69,15 @@ test_that("Test that all the ECOS BB solver options work", {
 
 test_that("Test that all the SCS solver options work", {
   skip_on_cran()
-  # Test SCS
-  # MAX_ITERS, EPS, ALPHA, UNDET_TOL, VERBOSE, and NORMALIZE.
+  # Test SCS 3.0
+  # MAX_ITERS, EPS_REL, EPS_ABS, ALPHA, UNDET_TOL, VERBOSE, and NORMALIZE.
   # If opts is missing, then the algorithm uses default settings.
   # USE_INDIRECT = True
   EPS <- 1e-4
   prob <- Problem(Minimize(p_norm(x,1) + 1.0), list(x == 0))
   for(i in 1:2) {
-    result <- solve(prob, solver = "SCS", max_iters = 50, eps = EPS, alpha = EPS,
-                    verbose = TRUE, normalize = TRUE, use_indirect = FALSE)
+    result <- solve(prob, solver = "SCS", num_iter = 50, eps_rel = EPS, eps_tol = EPS, alpha = 1.2,
+                    verbose = TRUE, normalize = TRUE)
   }
   expect_equal(result$value, 1.0, tolerance = 1e-2)
   expect_equal(result$getValue(x), as.matrix(c(0, 0)), tolerance = 1e-2)
@@ -839,7 +844,8 @@ test_that("Test the list of installed solvers", {
   prob <- Problem(Minimize(p_norm(x, 1) + 1.0), list(x == 0))
   for(solver in names(SOLVER_MAP_CONIC)) {
     if(solver %in% INSTALLED_SOLVERS) {
-      result <- solve(prob, solver = solver)
+      print(solver);
+      result <- solve(prob, solver = solver, abstol = TOL, reltol = TOL, verbose = TRUE)
       expect_equal(result$value, 1.0, tolerance = TOL)
       expect_equal(result$getValue(x), matrix(c(0, 0)), tolerance = TOL)
     } else

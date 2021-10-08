@@ -447,19 +447,19 @@ setMethod("supported_constraints", "SCS", function(solver) { c(supported_constra
 #' @param status A status code returned by the solver.
 #' @describeIn SCS Converts status returned by SCS solver to its respective CVXPY status.
 setMethod("status_map", "SCS", function(solver, status) {
-  if(status == "Solved")
+  if(status == "solved")
     return(OPTIMAL)
-  else if(status == "Solved/Inaccurate")
+  else if(grepl("solved.*inaccurate", status))
     return(OPTIMAL_INACCURATE)
-  else if(status == "Unbounded")
+  else if(status == "unbounded")
     return(UNBOUNDED)
-  else if(status == "Unbounded/Inaccurate")
+  else if(grepl("unbounded.*inaccurate", status))
     return(UNBOUNDED_INACCURATE)
-  else if(status == "Infeasible")
+  else if(status == "infeasible")
     return(INFEASIBLE)
-  else if(status == "Infeasible/Inaccurate")
+  else if(grepl("infeasible.*inaccurate", status))
     return(INFEASIBLE_INACCURATE)
-  else if(status %in% c("Failure", "Indeterminate", "Interrupted"))
+  else if(status %in% c("failure", "indeterminate", "interrupted"))
     return(SOLVER_ERROR)
   else
     stop("SCS status unrecognized: ", status)
@@ -622,15 +622,25 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   }
   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 
-  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
-    warning("Ignoring inapplicable parameter feastol/reltol/abstol for SCS.")
-  }
+  ## if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
+  ##   warning("Ignoring inapplicable parameter feastol/reltol/abstol for SCS.")
+  ## }
+  solver_defaults  <- SOLVER_DEFAULT_PARAM$SCS
 
   if(is.null(num_iter)) {
-      num_iter <- SOLVER_DEFAULT_PARAM$SCS$max_iters
+    num_iter <- solver_defaults$max_iters
+  }
+  if (is.null(reltol)) {
+    reltol <- solver_defaults$eps_rel
+  }
+  if (is.null(abstol)) {
+    abstol  <- solver_defaults$eps_abs
+  }
+  if (is.null(feastol)) {
+    feastol  <- solver_defaults$eps_infeas
   }
 
-  control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps = 1e-4)
+  control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps_rel = reltol, eps_abs = abstol, eps_infeas = feastol)
 
   #Fill in parameter values
   control[names(solver_opts)] <- solver_opts
@@ -2696,7 +2706,7 @@ MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {
 #' @param cone_dims A \linkS4class{ConeDims} instance.
 #' @return The dimensions of the cones.
 SCS.dims_to_solver_dict <- function(cone_dims) {
-  cones <- list(f = as.integer(cone_dims@zero),
+  cones <- list(z = as.integer(cone_dims@zero),
                 l = as.integer(cone_dims@nonpos),
                 q = sapply(cone_dims@soc, as.integer),
                 ep = as.integer(cone_dims@exp),

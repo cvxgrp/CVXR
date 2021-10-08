@@ -361,7 +361,7 @@ test_that("test promotion of complex variables", {
   obj <- Maximize(Re(sum(v * matrix(1, nrow = 2, ncol = 2))))
   con <- list(cvxr_norm(v) <= 1)
   prob <- Problem(obj, con)
-  result <- solve(prob)
+  result <- solve(prob, reltol = 1e-6, abstol = 1e-6)
   expect_equal(result$value, 4.0, tolerance = TOL)
 })
 

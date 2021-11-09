@@ -447,19 +447,19 @@ setMethod("supported_constraints", "SCS", function(solver) { c(supported_constra
 #' @param status A status code returned by the solver.
 #' @describeIn SCS Converts status returned by SCS solver to its respective CVXPY status.
 setMethod("status_map", "SCS", function(solver, status) {
-  if(status == "Solved")
+  if(status == "solved")
     return(OPTIMAL)
-  else if(status == "Solved/Inaccurate")
+  else if(grepl("solved.*inaccurate", status))
     return(OPTIMAL_INACCURATE)
-  else if(status == "Unbounded")
+  else if(status == "unbounded")
     return(UNBOUNDED)
-  else if(status == "Unbounded/Inaccurate")
+  else if(grepl("unbounded.*inaccurate", status))
     return(UNBOUNDED_INACCURATE)
-  else if(status == "Infeasible")
+  else if(status == "infeasible")
     return(INFEASIBLE)
-  else if(status == "Infeasible/Inaccurate")
+  else if(grepl("infeasible.*inaccurate", status))
     return(INFEASIBLE_INACCURATE)
-  else if(status %in% c("Failure", "Indeterminate", "Interrupted"))
+  else if(status %in% c("failure", "indeterminate", "interrupted"))
     return(SOLVER_ERROR)
   else
     stop("SCS status unrecognized: ", status)
@@ -610,7 +610,9 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   # TODO: Cast A to dense because scs R package rejects sparse matrices?
   ## Fix until scs::scs can handle sparse symmetric matrices
   A  <- data[[A_KEY]]
-  if (inherits(A, "dsCMatrix")) A  <- as(A, "dgCMatrix")
+  ## Fix for Matrix version 1.3
+  ## if (inherits(A, "dsCMatrix")) A <- as(A, "dgCMatrix")
+  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
 
   args <- list(A = A, b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
@@ -620,15 +622,25 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   }
   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 
-  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
-    warning("Ignoring inapplicable parameter feastol/reltol/abstol for SCS.")
-  }
+  ## if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
+  ##   warning("Ignoring inapplicable parameter feastol/reltol/abstol for SCS.")
+  ## }
+  solver_defaults  <- SOLVER_DEFAULT_PARAM$SCS
 
   if(is.null(num_iter)) {
-      num_iter <- SOLVER_DEFAULT_PARAM$SCS$max_iters
+    num_iter <- solver_defaults$max_iters
+  }
+  if (is.null(reltol)) {
+    reltol <- solver_defaults$eps_rel
+  }
+  if (is.null(abstol)) {
+    abstol  <- solver_defaults$eps_abs
+  }
+  if (is.null(feastol)) {
+    feastol  <- solver_defaults$eps_infeas
   }
 
-  control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps = 1e-4)
+  control =  scs::scs_control(max_iters = num_iter, verbose = verbose, eps_rel = reltol, eps_abs = abstol, eps_infeas = feastol)
 
   #Fill in parameter values
   control[names(solver_opts)] <- solver_opts
@@ -770,7 +782,8 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
   if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   cvar <- data$c
   b <- data$b
-  A <- data$A
+  ## Conversion below forced by changes in Matrix package version 1.3.x
+  A <- as(as(data$A, "CsparseMatrix"), "dgTMatrix")
   dims <- SCS.dims_to_solver_dict(data$dims)
 
   if(is.null(dim(data$c))){
@@ -2357,8 +2370,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
   # task.appendcons(m) is equivalent to prob$bc
 
 
-  ##G_sparse <- as(as.matrix(G), "sparseMatrix")
-  ##G is already sparse
+  ##G should already be sparse but Matrix 1.3.x causes problems.
+  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+
   G_sum <- summary(G)
   nrow_G_sparse <- nrow(G)
   ncol_G_sparse <- ncol(G)
@@ -2692,7 +2706,7 @@ MOSEK.parse_dual_vars <- function(dual_var, constr_id_to_constr_dim) {
 #' @param cone_dims A \linkS4class{ConeDims} instance.
 #' @return The dimensions of the cones.
 SCS.dims_to_solver_dict <- function(cone_dims) {
-  cones <- list(f = as.integer(cone_dims@zero),
+  cones <- list(z = as.integer(cone_dims@zero),
                 l = as.integer(cone_dims@nonpos),
                 q = sapply(cone_dims@soc, as.integer),
                 ep = as.integer(cone_dims@exp),

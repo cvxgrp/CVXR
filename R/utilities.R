@@ -71,7 +71,7 @@ SOLVER_DEFAULT_PARAM <- list(
     ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
     ## Until cccp fixes the bug I reported, we set the tolerances as below
     CVXOPT = list(max_iters = 100, abstol = 1e-6, reltol = 1e-6, feastol = 1e-6, refinement = 1L, kktsolver = "chol"),
-    SCS = list(max_iters = 2500, eps = 1e-4, alpha = 1.8, scale = 5.0),
+    SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
     CPLEX = list(itlim = 10000),
     MOSEK = list(num_iter = 10000),
     GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
@@ -98,7 +98,9 @@ BOOL_MAP = "7"
 INT_MAP = "8"
 
 # Keys in the dictionary of cone dimensions.
-EQ_DIM = "f"
+##SCS3.0 changes this to "z"
+##EQ_DIM = "f"
+EQ_DIM = "z"
 LEQ_DIM = "l"
 SOC_DIM = "q"
 PSD_DIM = "s"

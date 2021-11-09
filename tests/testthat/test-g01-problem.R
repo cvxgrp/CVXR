@@ -141,7 +141,7 @@ test_that("Test unpack results method", {
   inv <- tmp[[3]]
   data <- list(c = args[["c"]], A = args[["A"]], b = args[["b"]])
   cones <- SCS.dims_to_solver_dict(args[[ConicSolver()@dims]])
-  solution <- scs::scs(data$A, data$b, data$c, cones)
+  solution <- scs::scs(A = data$A, b = data$b, obj = data$c, cone = cones)
   prob <- Problem(Minimize(exp(a)), list(a == 0))
   result <- unpack_results(prob, solution, chain, inv)
   expect_equal(result$getValue(a), 0, tolerance = 1e-3)

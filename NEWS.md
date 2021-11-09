@@ -1,6 +1,12 @@
+# CVXR 1.0-10
+
+* Now requiring the updated scs 3.0 as an import
+
 # CVXR 1.0-9
 
-* Better typesetting for Power class documentation (Issue #86)
+* Now importing ECOSolveR version 0.5.4 and higher
+* Added fixes for Matrix 1.3 update
+* Somewhat better typesetting for Power class documentation (Issue #86)
 
 # CVXR 1.0-8 to 1.0-3
 

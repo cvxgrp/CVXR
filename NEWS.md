@@ -1,3 +1,7 @@
+# CVXR 1.0-10
+
+* Now requiring the updated scs 3.0 as an import
+
 # CVXR 1.0-9
 
 * Now importing ECOSolveR version 0.5.4 and higher

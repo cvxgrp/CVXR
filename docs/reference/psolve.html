@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,39 +143,39 @@
     <p>Solve a DCP compliant optimization problem.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>psolve</span>(
-  <span class='no'>object</span>,
-  <span class='kw'>solver</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>ignore_dcp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>warm_start</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>feastol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>reltol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>abstol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>num_iter</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>
-)
+    <pre class="usage"><span class='fu'>psolve</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  solver <span class='op'>=</span> <span class='cn'>NA</span>,
+  ignore_dcp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  warm_start <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  parallel <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  gp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  feastol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  reltol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  abstol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  num_iter <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
 <span class='co'># S4 method for Problem</span>
-<span class='fu'>psolve</span>(
-  <span class='no'>object</span>,
-  <span class='kw'>solver</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>ignore_dcp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>warm_start</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>feastol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>reltol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>abstol</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>num_iter</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>
-)
+<span class='fu'>psolve</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  solver <span class='op'>=</span> <span class='cn'>NA</span>,
+  ignore_dcp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  warm_start <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  parallel <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  gp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  feastol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  reltol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  abstol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  num_iter <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
 <span class='co'># S4 method for Problem,ANY</span>
-<span class='fu'>solve</span>(<span class='no'>a</span>, <span class='kw'>b</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>solve</span><span class='op'>(</span><span class='va'>a</span>, b <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -232,7 +232,7 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list containing the solution to the problem:</p><dl'>
+    <p>A list containing the solution to the problem:</p><dl>
    <dt><code>status</code></dt><dd><p>The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".</p></dd>
    <dt><code>value</code></dt><dd><p>The optimal value of the objective function.</p></dd>
    <dt><code>solver</code></dt><dd><p>The name of the solver.</p></dd>
@@ -246,10 +246,14 @@
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"a"</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='norm_inf.html'>norm_inf</a></span>(<span class='no'>a</span>)), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>a</span> <span class='kw'>&gt;=</span> <span class='fl'>2</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>psolve</span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"ECOS"</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>result</span>$<span class='no'>status</span></div><div class='output co'>#&gt; [1] "optimal"</div><div class='input'><span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>a</span>)</div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='no'>result</span>$<span class='fu'>getDualValue</span>(<span class='fu'><a href='problem-parts.html'>constraints</a></span>(<span class='no'>prob</span>)<span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt; [1] 1</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>a</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span>name <span class='op'>=</span> <span class='st'>"a"</span><span class='op'>)</span>
+<span class='va'>prob</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='fu'><a href='norm_inf.html'>norm_inf</a></span><span class='op'>(</span><span class='va'>a</span><span class='op'>)</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>a</span> <span class='op'>&gt;=</span> <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>result</span> <span class='op'>&lt;-</span> <span class='fu'>psolve</span><span class='op'>(</span><span class='va'>prob</span>, solver <span class='op'>=</span> <span class='st'>"ECOS"</span>, verbose <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='va'>result</span><span class='op'>$</span><span class='va'>status</span>
+</div><div class='output co'>#&gt; [1] "optimal"</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='va'>value</span>
+</div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='fu'>getValue</span><span class='op'>(</span><span class='va'>a</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 2</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='fu'>getDualValue</span><span class='op'>(</span><span class='fu'><a href='problem-parts.html'>constraints</a></span><span class='op'>(</span><span class='va'>prob</span><span class='op'>)</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 1</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -265,7 +269,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

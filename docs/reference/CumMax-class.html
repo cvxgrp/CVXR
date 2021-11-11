@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,37 +143,37 @@
     <p>This class represents the cumulative maximum of an expression.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>CumMax</span>(<span class='no'>expr</span>, <span class='kw'>axis</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+    <pre class="usage"><span class='fu'>CumMax</span><span class='op'>(</span><span class='va'>expr</span>, axis <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='to_numeric.html'>to_numeric</a></span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'><a href='to_numeric.html'>to_numeric</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>values</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'>.grad</span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'>.grad</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>values</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'>.column_grad</span>(<span class='no'>object</span>, <span class='no'>value</span>)
+<span class='fu'>.column_grad</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>value</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='dim_from_args.html'>dim_from_args</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='dim_from_args.html'>dim_from_args</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='get_data.html'>get_data</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='curvature-comp.html'>is_incr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_incr</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>idx</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CumMax</span>
-<span class='fu'><a href='curvature-comp.html'>is_decr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)</pre>
+<span class='fu'><a href='curvature-comp.html'>is_decr</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>idx</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -223,7 +223,7 @@
 
     
 
-<dl'>
+<dl>
 <dt><code>expr</code></dt><dd><p>An <a href='Expression-class.html'>Expression</a>.</p></dd>
 
 <dt><code>axis</code></dt><dd><p>A numeric vector indicating the axes along which to apply the function. For a 2D matrix, <code>1</code> indicates rows, <code>2</code> indicates columns, and <code><a href='https://rdrr.io/r/base/c.html'>c(1,2)</a></code> indicates rows and columns.</p></dd>
@@ -245,7 +245,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

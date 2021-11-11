@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,7 +143,7 @@
     <p>Determine if a problem or expression complies with the disciplined geometric programming rules.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>is_dgp</span>(<span class='no'>object</span>)</pre>
+    <pre class="usage"><span class='fu'>is_dgp</span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -159,10 +159,12 @@
     <p>A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>*<span class='no'>y</span>), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>, <span class='no'>y</span> <span class='kw'>&gt;=</span> <span class='fl'>5</span>))
-<span class='fu'>is_dgp</span>(<span class='no'>prob</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>gp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; $`2064`
+    <pre class="examples"><div class='input'><span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span>pos <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span>pos <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='va'>prob</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>*</span><span class='va'>y</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>x</span> <span class='op'>&gt;=</span> <span class='fl'>5</span>, <span class='va'>y</span> <span class='op'>&gt;=</span> <span class='fl'>5</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'>is_dgp</span><span class='op'>(</span><span class='va'>prob</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'><a href='psolve.html'>solve</a></span><span class='op'>(</span><span class='va'>prob</span>, gp <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $`2064`
 #&gt; [1] 5
 #&gt; 
 #&gt; $`2065`
@@ -211,8 +213,8 @@
 #&gt;         intf_scalar_value(valResult)
 #&gt;     else valResult
 #&gt; }
-#&gt; &lt;bytecode: 0x7fc5d9d29f20&gt;
-#&gt; &lt;environment: 0x7fc5ea0d4790&gt;
+#&gt; &lt;bytecode: 0x7fb718ac7170&gt;
+#&gt; &lt;environment: 0x7fb71edb8328&gt;
 #&gt; 
 #&gt; $getDualValue
 #&gt; function (objet) 
@@ -221,14 +223,14 @@
 #&gt;         stop("getDualValue: argument should be a Constraint!")
 #&gt;     getValue(objet)
 #&gt; }
-#&gt; &lt;bytecode: 0x7fc5d9d2af98&gt;
-#&gt; &lt;environment: 0x7fc5ea0d4790&gt;
+#&gt; &lt;bytecode: 0x7fb718ac8f28&gt;
+#&gt; &lt;environment: 0x7fb71edb8328&gt;
 #&gt; 
 #&gt; $solver
 #&gt; [1] "MOSEK"
 #&gt; 
 #&gt; $solve_time
-#&gt; [1] 9.512901e-05
+#&gt; [1] 8.916855e-05
 #&gt; 
 #&gt; $setup_time
 #&gt; [1] NA
@@ -251,7 +253,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

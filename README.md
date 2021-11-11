@@ -1,8 +1,8 @@
 
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />
 
-[![Travis-CI Build
-Status](https://travis-ci.org/cvxgrp/CVXR.svg?branch=master)](https://travis-ci.org/cvxgrp/CVXR)
+
+[![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions?workflow=R-CMD-check)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/cvxgrp/CVXR/master.svg)](https://codecov.io/github/cvxgrp/CVXR?branch=master)

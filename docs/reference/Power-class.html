@@ -81,7 +81,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -145,55 +145,55 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)." />
 If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalent to <code>Power(expr, p)</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Power</span>(<span class='no'>x</span>, <span class='no'>p</span>, <span class='kw'>max_denom</span> <span class='kw'>=</span> <span class='fl'>1024</span>)
+    <pre class="usage"><span class='fu'>Power</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>p</span>, max_denom <span class='op'>=</span> <span class='fl'>1024</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='to_numeric.html'>to_numeric</a></span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'><a href='to_numeric.html'>to_numeric</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>values</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='sign_from_args.html'>sign_from_args</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_convex</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-atom.html'>is_atom_concave</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_convex</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_convex</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_concave</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='log_log_curvature-atom.html'>is_atom_log_log_concave</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-methods.html'>is_constant</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_constant</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-comp.html'>is_incr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_incr</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>idx</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-comp.html'>is_decr</a></span>(<span class='no'>object</span>, <span class='no'>idx</span>)
+<span class='fu'><a href='curvature-comp.html'>is_decr</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>idx</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-methods.html'>is_quadratic</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_quadratic</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='curvature-methods.html'>is_qpwa</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='curvature-methods.html'>is_qpwa</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>.grad</span>(<span class='no'>object</span>, <span class='no'>values</span>)
+<span class='fu'>.grad</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>values</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>.domain</span>(<span class='no'>object</span>)
+<span class='fu'>.domain</span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>object</span>)
+<span class='fu'><a href='get_data.html'>get_data</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'>copy</span>(<span class='no'>object</span>, <span class='kw'>args</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>id_objects</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
+<span class='fu'>copy</span><span class='op'>(</span><span class='va'>object</span>, args <span class='op'>=</span> <span class='cn'>NULL</span>, id_objects <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Power</span>
-<span class='fu'><a href='name.html'>name</a></span>(<span class='no'>x</span>)</pre>
+<span class='fu'><a href='name.html'>name</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -234,17 +234,21 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    
-<dl'>
-<dt>For \(p = 0\)</dt><dd><p>\(f(x) = 1\), constant, positive</p></dd>
-<dt>For \(p = 1\)</dt><dd><p>\(f(x) = x\), affine, increasing, same sign as \(x\)</p></dd>
-<dt>For \(p = 2,4,8,...\)</dt><dd><p>\(f(x) = |x|^p\), convex, signed monotonicity, positive</p></dd>
-<dt>For \(p &lt; 0\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x &gt; 0$} \\ +\infty &amp; \text{ for $x \leq 0$} \end{cases}\), this function is convex, decreasing, and positive</p></dd>
-<dt>For \(0 &lt; p &lt; 1\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x \geq 0$} \\ -\infty &amp; \text{ for $x &lt; 0$} \end{cases}\), this function is concave, increasing, and positive</p></dd>
-<dt>For \(p &gt; 1, p \neq 2,4,8,\ldots\)</dt><dd><p>\(f(x) = \begin{cases} x^p &amp; \text{for $x \geq 0$} \\ +\infty &amp; \text{for $x &lt; 0$} \end{cases}\), this function is convex, increasing, and positive.</p></dd>
-
-</dl>
-
+    <p>For \(p = 0\), \(f(x) = 1\), constant, positive.</p>
+<p>For \(p = 1\), \(f(x) = x\), affine, increasing, same sign as \(x\).</p>
+<p>For \(p = 2,4,8,...\), \(f(x) = |x|^p\), convex, signed monotonicity, positive.</p>
+<p>For \(p &lt; 0\) and \(f(x) = \)</p><ul>
+<li><p>\(x^p\) for \(x &gt; 0\)</p></li>
+<li><p>\(+\infty\)\(x \leq 0\)</p></li>
+</ul><p>, this function is convex, decreasing, and positive.</p>
+<p>For \(0 &lt; p &lt; 1\) and \(f(x) =\)</p><ul>
+<li><p>\(x^p\) for \(x \geq 0\)</p></li>
+<li><p>\(-\infty\)\(x &lt; 0\)</p></li>
+</ul><p>, this function is concave, increasing, and positive.</p>
+<p>For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul>
+<li><p>\(x^p\) for \(x \geq 0\)</p></li>
+<li><p>\(+\infty\)\(x &lt; 0\)</p></li>
+</ul><p>, this function is convex, increasing, and positive.</p>
     <h2 class="hasAnchor" id="methods-by-generic-"><a class="anchor" href="#methods-by-generic-"></a>Methods (by generic)</h2>
 
     
@@ -270,7 +274,7 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
 
     
 
-<dl'>
+<dl>
 <dt><code>x</code></dt><dd><p>The <a href='Expression-class.html'>Expression</a> to be raised to a power.</p></dd>
 
 <dt><code>p</code></dt><dd><p>A numeric value indicating the scalar power.</p></dd>
@@ -294,7 +298,7 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

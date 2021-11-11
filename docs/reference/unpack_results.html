@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,7 +143,7 @@
     <p>Updates problem status, problem value, and primal and dual variable values</p>
     </div>
 
-    <pre class="usage"><span class='fu'>unpack_results</span>(<span class='no'>object</span>, <span class='no'>solution</span>, <span class='no'>chain</span>, <span class='no'>inverse_data</span>)</pre>
+    <pre class="usage"><span class='fu'>unpack_results</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>solution</span>, <span class='va'>chain</span>, <span class='va'>inverse_data</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -168,7 +168,7 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list containing the solution to the problem:</p><dl'>
+    <p>A list containing the solution to the problem:</p><dl>
    <dt><code>status</code></dt><dd><p>The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".</p></dd>
    <dt><code>value</code></dt><dd><p>The optimal value of the objective function.</p></dd>
    <dt><code>solver</code></dt><dd><p>The name of the solver.</p></dd>
@@ -182,41 +182,42 @@
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>x</span>[<span class='fl'>1</span>] + <span class='fu'><a href='cvxr_norm.html'>cvxr_norm</a></span>(<span class='no'>x</span>, <span class='fl'>1</span>))
-<span class='no'>constraints</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>&gt;=</span> <span class='fl'>2</span>)
-<span class='no'>prob1</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>obj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>+</span> <span class='fu'><a href='cvxr_norm.html'>cvxr_norm</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>constraints</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>x</span> <span class='op'>&gt;=</span> <span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>prob1</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='va'>obj</span>, <span class='va'>constraints</span><span class='op'>)</span>
 <span class='co'># Solve with ECOS.</span>
-<span class='no'>ecos_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span>(<span class='no'>prob1</span>, <span class='st'>"ECOS"</span>)
+<span class='va'>ecos_data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span><span class='op'>(</span><span class='va'>prob1</span>, <span class='st'>"ECOS"</span><span class='op'>)</span>
 <span class='co'># Call ECOS solver interface directly</span>
-<span class='no'>ecos_output</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>ECOSolveR</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ECOSolveR/man/ECOS_csolve.html'>ECOS_csolve</a></span>(
-                           <span class='kw'>c</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"c"</span>]],
-                           <span class='kw'>G</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"G"</span>]],
-                           <span class='kw'>h</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"h"</span>]],
-                           <span class='kw'>dims</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"dims"</span>]],
-                           <span class='kw'>A</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"A"</span>]],
-                           <span class='kw'>b</span> <span class='kw'>=</span> <span class='no'>ecos_data</span><span class='kw'>[[</span><span class='st'>"b"</span>]]
-                         )
+<span class='va'>ecos_output</span> <span class='op'>&lt;-</span> <span class='fu'>ECOSolveR</span><span class='fu'>::</span><span class='fu'><a href='https://bnaras.github.io/ECOSolveR/reference/ECOS_csolve.html'>ECOS_csolve</a></span><span class='op'>(</span>
+                           c <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"c"</span><span class='op'>]</span><span class='op'>]</span>,
+                           G <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"G"</span><span class='op'>]</span><span class='op'>]</span>,
+                           h <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"h"</span><span class='op'>]</span><span class='op'>]</span>,
+                           dims <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"dims"</span><span class='op'>]</span><span class='op'>]</span>,
+                           A <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"A"</span><span class='op'>]</span><span class='op'>]</span>,
+                           b <span class='op'>=</span> <span class='va'>ecos_data</span><span class='op'>[[</span><span class='st'>"b"</span><span class='op'>]</span><span class='op'>]</span>
+                         <span class='op'>)</span>
 <span class='co'># Unpack raw solver output.</span>
-<span class='no'>res1</span> <span class='kw'>&lt;-</span> <span class='fu'>unpack_results</span>(<span class='no'>prob1</span>, <span class='st'>"ECOS"</span>, <span class='no'>ecos_output</span>)
+<span class='va'>res1</span> <span class='op'>&lt;-</span> <span class='fu'>unpack_results</span><span class='op'>(</span><span class='va'>prob1</span>, <span class='st'>"ECOS"</span>, <span class='va'>ecos_output</span><span class='op'>)</span>
 <span class='co'># Without DCP validation (so be sure of your math), above is equivalent to:</span>
 <span class='co'># res1 &lt;- solve(prob1, solver = "ECOS")</span>
-<span class='no'>X</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>, <span class='kw'>PSD</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='no'>Fmat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>0</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,-<span class='fl'>1</span>))
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'><a href='sum_squares.html'>sum_squares</a></span>(<span class='no'>X</span> - <span class='no'>Fmat</span>))
-<span class='no'>prob2</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>)
-<span class='no'>scs_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span>(<span class='no'>prob2</span>, <span class='st'>"SCS"</span>)
-<span class='no'>scs_output</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>scs</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/scs/man/scs.html'>scs</a></span>(
-                      <span class='kw'>A</span> <span class='kw'>=</span> <span class='no'>scs_data</span><span class='kw'>[[</span><span class='st'>'A'</span>]],
-                      <span class='kw'>b</span> <span class='kw'>=</span> <span class='no'>scs_data</span><span class='kw'>[[</span><span class='st'>'b'</span>]],
-                      <span class='kw'>obj</span> <span class='kw'>=</span> <span class='no'>scs_data</span><span class='kw'>[[</span><span class='st'>'c'</span>]],
-                      <span class='kw'>cone</span> <span class='kw'>=</span> <span class='no'>scs_data</span><span class='kw'>[[</span><span class='st'>'dims'</span>]]
-                  )
-<span class='no'>res2</span> <span class='kw'>&lt;-</span> <span class='fu'>unpack_results</span>(<span class='no'>prob2</span>, <span class='st'>"SCS"</span>, <span class='no'>scs_output</span>)
+<span class='va'>X</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='fl'>2</span>,<span class='fl'>2</span>, PSD <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='va'>Fmat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>rbind</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>0</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>obj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='fu'><a href='sum_squares.html'>sum_squares</a></span><span class='op'>(</span><span class='va'>X</span> <span class='op'>-</span> <span class='va'>Fmat</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>prob2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='va'>obj</span><span class='op'>)</span>
+<span class='va'>scs_data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_problem_data.html'>get_problem_data</a></span><span class='op'>(</span><span class='va'>prob2</span>, <span class='st'>"SCS"</span><span class='op'>)</span>
+<span class='va'>scs_output</span> <span class='op'>&lt;-</span> <span class='fu'>scs</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/scs/man/scs.html'>scs</a></span><span class='op'>(</span>
+                      A <span class='op'>=</span> <span class='va'>scs_data</span><span class='op'>[[</span><span class='st'>'A'</span><span class='op'>]</span><span class='op'>]</span>,
+                      b <span class='op'>=</span> <span class='va'>scs_data</span><span class='op'>[[</span><span class='st'>'b'</span><span class='op'>]</span><span class='op'>]</span>,
+                      obj <span class='op'>=</span> <span class='va'>scs_data</span><span class='op'>[[</span><span class='st'>'c'</span><span class='op'>]</span><span class='op'>]</span>,
+                      cone <span class='op'>=</span> <span class='va'>scs_data</span><span class='op'>[[</span><span class='st'>'dims'</span><span class='op'>]</span><span class='op'>]</span>
+                  <span class='op'>)</span>
+<span class='va'>res2</span> <span class='op'>&lt;-</span> <span class='fu'>unpack_results</span><span class='op'>(</span><span class='va'>prob2</span>, <span class='st'>"SCS"</span>, <span class='va'>scs_output</span><span class='op'>)</span>
 <span class='co'># Without DCP validation (so be sure of your math), above is equivalent to:</span>
 <span class='co'># res2 &lt;- solve(prob2, solver = "SCS")</span>
-}</div></pre>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -232,7 +233,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

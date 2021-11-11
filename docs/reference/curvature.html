@@ -81,7 +81,7 @@ The curvature of an expression." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ The curvature of an expression." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ The curvature of an expression." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -145,10 +145,10 @@ The curvature of an expression." />
 <p>The curvature of an expression.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>curvature</span>(<span class='no'>object</span>)
+    <pre class="usage"><span class='fu'>curvature</span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Expression</span>
-<span class='fu'>curvature</span>(<span class='no'>object</span>)</pre>
+<span class='fu'>curvature</span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -165,10 +165,15 @@ The curvature of an expression." />
 <p>A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX", "CONCAVE", or "UNKNOWN".</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>()
-<span class='no'>c</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='fl'>5</span>)
+    <pre class="examples"><div class='input'><span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>c</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Constant-class.html'>Constant</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span>
 
-<span class='fu'>curvature</span>(<span class='no'>c</span>)</div><div class='output co'>#&gt; [1] "CONSTANT"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; [1] "AFFINE"</div><div class='input'><span class='fu'>curvature</span>(<span class='no'>x</span>^<span class='fl'>2</span>)</div><div class='output co'>#&gt; [1] "CONVEX"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "CONCAVE"</div><div class='input'><span class='fu'>curvature</span>(<span class='fu'><a href='log.html'>log</a></span>(<span class='no'>x</span>^<span class='fl'>3</span>) + <span class='fu'><a href='sqrt.html'>sqrt</a></span>(<span class='no'>x</span>))</div><div class='output co'>#&gt; [1] "UNKNOWN"</div></pre>
+<span class='fu'>curvature</span><span class='op'>(</span><span class='va'>c</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "CONSTANT"</div><div class='input'><span class='fu'>curvature</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "AFFINE"</div><div class='input'><span class='fu'>curvature</span><span class='op'>(</span><span class='va'>x</span><span class='op'>^</span><span class='fl'>2</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "CONVEX"</div><div class='input'><span class='fu'>curvature</span><span class='op'>(</span><span class='fu'><a href='sqrt,Expression-method.html'>sqrt</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "CONCAVE"</div><div class='input'><span class='fu'>curvature</span><span class='op'>(</span><span class='fu'><a href='log,Expression-method.html'>log</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>^</span><span class='fl'>3</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='sqrt,Expression-method.html'>sqrt</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "UNKNOWN"</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -184,7 +189,7 @@ The curvature of an expression." />
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

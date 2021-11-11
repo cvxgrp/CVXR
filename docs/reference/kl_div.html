@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,7 +143,7 @@
     <p>The elementwise Kullback-Leibler divergence, \(x\log(x/y) - x + y\).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>kl_div</span>(<span class='no'>x</span>, <span class='no'>y</span>)</pre>
+    <pre class="usage"><span class='fu'>kl_div</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -163,30 +163,33 @@
     <p>An <a href='Expression-class.html'>Expression</a> representing the KL-divergence of the input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>n</span> <span class='kw'>&lt;-</span> <span class='fl'>5</span>
-<span class='no'>alpha</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>10</span>, <span class='no'>n</span>-<span class='fl'>1</span>+<span class='fl'>10</span>)/<span class='no'>n</span>
-<span class='no'>beta</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>10</span>, <span class='no'>n</span>-<span class='fl'>1</span>+<span class='fl'>10</span>)/<span class='no'>n</span>
-<span class='no'>P_tot</span> <span class='kw'>&lt;-</span> <span class='fl'>0.5</span>
-<span class='no'>W_tot</span> <span class='kw'>&lt;-</span> <span class='fl'>1.0</span>
+    <pre class="examples"><div class='input'><span class='va'>n</span> <span class='op'>&lt;-</span> <span class='fl'>5</span>
+<span class='va'>alpha</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='va'>n</span><span class='op'>-</span><span class='fl'>1</span><span class='op'>+</span><span class='fl'>10</span><span class='op'>)</span><span class='op'>/</span><span class='va'>n</span>
+<span class='va'>beta</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='va'>n</span><span class='op'>-</span><span class='fl'>1</span><span class='op'>+</span><span class='fl'>10</span><span class='op'>)</span><span class='op'>/</span><span class='va'>n</span>
+<span class='va'>P_tot</span> <span class='op'>&lt;-</span> <span class='fl'>0.5</span>
+<span class='va'>W_tot</span> <span class='op'>&lt;-</span> <span class='fl'>1.0</span>
 
-<span class='no'>P</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
-<span class='no'>W</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>n</span>)
-<span class='no'>R</span> <span class='kw'>&lt;-</span> <span class='fu'>kl_div</span>(<span class='no'>alpha</span>*<span class='no'>W</span>, <span class='no'>alpha</span>*(<span class='no'>W</span> + <span class='no'>beta</span>*<span class='no'>P</span>)) - <span class='no'>alpha</span>*<span class='no'>beta</span>*<span class='no'>P</span>
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='no'>R</span>)
-<span class='no'>constr</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>P</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>, <span class='no'>W</span> <span class='kw'>&gt;=</span> <span class='fl'>0</span>, <span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='no'>P</span>) <span class='kw'>==</span> <span class='no'>P_tot</span>, <span class='fu'><a href='sum_entries.html'>sum</a></span>(<span class='no'>W</span>) <span class='kw'>==</span> <span class='no'>W_tot</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='no'>obj</span>), <span class='no'>constr</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
+<span class='va'>P</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='va'>n</span><span class='op'>)</span>
+<span class='va'>W</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='va'>n</span><span class='op'>)</span>
+<span class='va'>R</span> <span class='op'>&lt;-</span> <span class='fu'>kl_div</span><span class='op'>(</span><span class='va'>alpha</span><span class='op'>*</span><span class='va'>W</span>, <span class='va'>alpha</span><span class='op'>*</span><span class='op'>(</span><span class='va'>W</span> <span class='op'>+</span> <span class='va'>beta</span><span class='op'>*</span><span class='va'>P</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>-</span> <span class='va'>alpha</span><span class='op'>*</span><span class='va'>beta</span><span class='op'>*</span><span class='va'>P</span>
+<span class='va'>obj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='sum_entries.html'>sum</a></span><span class='op'>(</span><span class='va'>R</span><span class='op'>)</span>
+<span class='va'>constr</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>P</span> <span class='op'>&gt;=</span> <span class='fl'>0</span>, <span class='va'>W</span> <span class='op'>&gt;=</span> <span class='fl'>0</span>, <span class='fu'><a href='sum_entries.html'>sum</a></span><span class='op'>(</span><span class='va'>P</span><span class='op'>)</span> <span class='op'>==</span> <span class='va'>P_tot</span>, <span class='fu'><a href='sum_entries.html'>sum</a></span><span class='op'>(</span><span class='va'>W</span><span class='op'>)</span> <span class='op'>==</span> <span class='va'>W_tot</span><span class='op'>)</span>
+<span class='va'>prob</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='va'>obj</span><span class='op'>)</span>, <span class='va'>constr</span><span class='op'>)</span>
+<span class='va'>result</span> <span class='op'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span><span class='op'>(</span><span class='va'>prob</span><span class='op'>)</span>
 
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] -2.451312</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>P</span>)</div><div class='output co'>#&gt;              [,1]
-#&gt; [1,] 2.079365e-09
-#&gt; [2,] 2.459583e-09
-#&gt; [3,] 3.966925e-09
-#&gt; [4,] 2.405688e-08
-#&gt; [5,] 5.000000e-01</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>W</span>)</div><div class='output co'>#&gt;              [,1]
-#&gt; [1,] 1.039945e-08
-#&gt; [2,] 1.084874e-08
-#&gt; [3,] 1.424359e-08
-#&gt; [4,] 5.216975e-08
+<span class='va'>result</span><span class='op'>$</span><span class='va'>value</span>
+</div><div class='output co'>#&gt; [1] -2.451312</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='fu'>getValue</span><span class='op'>(</span><span class='va'>P</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;              [,1]
+#&gt; [1,] 2.079217e-09
+#&gt; [2,] 2.458922e-09
+#&gt; [3,] 3.964855e-09
+#&gt; [4,] 2.403638e-08
+#&gt; [5,] 5.000000e-01</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='fu'>getValue</span><span class='op'>(</span><span class='va'>W</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;              [,1]
+#&gt; [1,] 1.039049e-08
+#&gt; [2,] 1.083964e-08
+#&gt; [3,] 1.423176e-08
+#&gt; [4,] 5.212329e-08
 #&gt; [5,] 9.999999e-01</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -203,7 +206,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

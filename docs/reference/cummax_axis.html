@@ -81,7 +81,7 @@ When calling cummax, matrices are automatically flattened into column-major orde
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ When calling cummax, matrices are automatically flattened into column-major orde
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ When calling cummax, matrices are automatically flattened into column-major orde
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -145,10 +145,10 @@ When calling cummax, matrices are automatically flattened into column-major orde
 When calling <code>cummax</code>, matrices are automatically flattened into column-major order before the max is taken.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>cummax_axis</span>(<span class='no'>expr</span>, <span class='kw'>axis</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+    <pre class="usage"><span class='fu'>cummax_axis</span><span class='op'>(</span><span class='va'>expr</span>, axis <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span>
 
 <span class='co'># S4 method for Expression</span>
-<span class='fu'>cummax</span>(<span class='no'>x</span>)</pre>
+<span class='fu'>cummax</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -165,18 +165,22 @@ When calling <code>cummax</code>, matrices are automatically flattened into colu
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>val</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>2</span>), <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>,<span class='fl'>4</span>))
-<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cummax</span>(<span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1]
+    <pre class="examples"><div class='input'><span class='va'>val</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>2</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>,<span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='value-methods.html'>value</a></span><span class='op'>(</span><span class='fu'>cummax</span><span class='op'>(</span><span class='fu'><a href='Constant-class.html'>Constant</a></span><span class='op'>(</span><span class='va'>val</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    1
 #&gt; [2,]    2
 #&gt; [3,]    3
-#&gt; [4,]    4</div><div class='input'><span class='fu'><a href='value-methods.html'>value</a></span>(<span class='fu'>cummax_axis</span>(<span class='fu'><a href='Constant-class.html'>Constant</a></span>(<span class='no'>val</span>)))</div><div class='output co'>#&gt;      [,1] [,2]
+#&gt; [4,]    4</div><div class='input'><span class='fu'><a href='value-methods.html'>value</a></span><span class='op'>(</span><span class='fu'>cummax_axis</span><span class='op'>(</span><span class='fu'><a href='Constant-class.html'>Constant</a></span><span class='op'>(</span><span class='va'>val</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;      [,1] [,2]
 #&gt; [1,]    1    3
 #&gt; [2,]    2    4</div><div class='input'>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>,<span class='fl'>2</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>cummax</span>(<span class='no'>x</span>)[<span class='fl'>4</span>]), <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>x</span> <span class='kw'>==</span> <span class='no'>val</span>))
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>)
-<span class='no'>result</span>$<span class='no'>value</span></div><div class='output co'>#&gt; [1] 4</div><div class='input'><span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='fu'>cummax</span>(<span class='no'>x</span>))</div><div class='output co'>#&gt;      [,1]
+<span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='fl'>2</span>,<span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>prob</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='fu'>cummax</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>[</span><span class='fl'>4</span><span class='op'>]</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>x</span> <span class='op'>==</span> <span class='va'>val</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>result</span> <span class='op'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span><span class='op'>(</span><span class='va'>prob</span><span class='op'>)</span>
+<span class='va'>result</span><span class='op'>$</span><span class='va'>value</span>
+</div><div class='output co'>#&gt; [1] 4</div><div class='input'><span class='va'>result</span><span class='op'>$</span><span class='fu'>getValue</span><span class='op'>(</span><span class='fu'>cummax</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;      [,1]
 #&gt; [1,]    1
 #&gt; [2,]    2
 #&gt; [3,]    3
@@ -196,7 +200,7 @@ When calling <code>cummax</code>, matrices are automatically flattened into colu
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

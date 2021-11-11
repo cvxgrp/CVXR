@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,10 +143,10 @@
     <p>This class represents a parameter whose value is obtained by evaluating a function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>CallbackParam</span>(<span class='no'>callback</span>, <span class='kw'>dim</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>CallbackParam</span><span class='op'>(</span><span class='va'>callback</span>, dim <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S4 method for CallbackParam</span>
-<span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>object</span>)</pre>
+<span class='fu'><a href='value-methods.html'>value</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -173,7 +173,7 @@
 
     
 
-<dl'>
+<dl>
 <dt><code>callback</code></dt><dd><p>A callback function that generates the parameter value.</p></dd>
 
 <dt><code>dim</code></dt><dd><p>The dimensions of the parameter.</p></dd>
@@ -181,10 +181,11 @@
 </dl>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='fl'>2</span>)
-<span class='no'>fun</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>() { <span class='fu'><a href='value-methods.html'>value</a></span>(<span class='no'>x</span>) }
-<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>CallbackParam</span>(<span class='no'>fun</span>, <span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>x</span>), <span class='kw'>nonneg</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'><a href='get_data.html'>get_data</a></span>(<span class='no'>y</span>)</div><div class='output co'>#&gt; $dim
+    <pre class="examples"><div class='input'><span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>fun</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>{</span> <span class='fu'><a href='value-methods.html'>value</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>}</span>
+<span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'>CallbackParam</span><span class='op'>(</span><span class='va'>fun</span>, <span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>, nonneg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='fu'><a href='get_data.html'>get_data</a></span><span class='op'>(</span><span class='va'>y</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $dim
 #&gt; [1] 2 1
 #&gt; 
 #&gt; $name
@@ -199,13 +200,13 @@
 #&gt; 
 #&gt; $attributes$callback
 #&gt; function() { value(x) }
-#&gt; &lt;environment: 0x7fc5d9cb0cc0&gt;
+#&gt; &lt;environment: 0x7fb6fd814390&gt;
 #&gt; 
 #&gt; $attributes$name
 #&gt; [1] "paramNA"
 #&gt; 
 #&gt; $attributes$venv
-#&gt; &lt;environment: 0x7fc5da279b28&gt;
+#&gt; &lt;environment: 0x7fb70ddb1770&gt;
 #&gt; 
 #&gt; $attributes$.is_vector
 #&gt; [1] FALSE
@@ -335,7 +336,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

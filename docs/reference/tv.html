@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0-10</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/cvxgrp/CVXR/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,7 +143,7 @@
     <p>The total variation of a vector, matrix, or list of matrices. Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>tv</span>(<span class='no'>value</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>tv</span><span class='op'>(</span><span class='va'>value</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -163,48 +163,49 @@
     <p>An <a href='Expression-class.html'>Expression</a> representing the total variation of the input.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>rows</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>
-<span class='no'>cols</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>
-<span class='no'>Uorig</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>0</span>:<span class='fl'>255</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='no'>rows</span> * <span class='no'>cols</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>), <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='no'>rows</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='no'>cols</span>)
+    <pre class="examples"><div class='input'><span class='va'>rows</span> <span class='op'>&lt;-</span> <span class='fl'>10</span>
+<span class='va'>cols</span> <span class='op'>&lt;-</span> <span class='fl'>10</span>
+<span class='va'>Uorig</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>:</span><span class='fl'>255</span>, size <span class='op'>=</span> <span class='va'>rows</span> <span class='op'>*</span> <span class='va'>cols</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>, nrow <span class='op'>=</span> <span class='va'>rows</span>, ncol <span class='op'>=</span> <span class='va'>cols</span><span class='op'>)</span>
 
 <span class='co'># Known is 1 if the pixel is known, 0 if the pixel was corrupted</span>
-<span class='no'>Known</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fl'>0</span>, <span class='kw'>nrow</span> <span class='kw'>=</span> <span class='no'>rows</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='no'>cols</span>)
-<span class='kw'>for</span>(<span class='no'>i</span> <span class='kw'>in</span> <span class='fl'>1</span>:<span class='no'>rows</span>) {
-   <span class='kw'>for</span>(<span class='no'>j</span> <span class='kw'>in</span> <span class='fl'>1</span>:<span class='no'>cols</span>) {
-      <span class='kw'>if</span>(<span class='kw pkg'>stats</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>1</span>) <span class='kw'>&gt;</span> <span class='fl'>0.7</span>)
-         <span class='no'>Known</span>[<span class='no'>i</span>,<span class='no'>j</span>] <span class='kw'>&lt;-</span> <span class='fl'>1</span>
-   }
-}
-<span class='no'>Ucorr</span> <span class='kw'>&lt;-</span> <span class='no'>Known</span> <span class='kw'>%*%</span> <span class='no'>Uorig</span>
+<span class='va'>Known</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fl'>0</span>, nrow <span class='op'>=</span> <span class='va'>rows</span>, ncol <span class='op'>=</span> <span class='va'>cols</span><span class='op'>)</span>
+<span class='kw'>for</span><span class='op'>(</span><span class='va'>i</span> <span class='kw'>in</span> <span class='fl'>1</span><span class='op'>:</span><span class='va'>rows</span><span class='op'>)</span> <span class='op'>{</span>
+   <span class='kw'>for</span><span class='op'>(</span><span class='va'>j</span> <span class='kw'>in</span> <span class='fl'>1</span><span class='op'>:</span><span class='va'>cols</span><span class='op'>)</span> <span class='op'>{</span>
+      <span class='kw'>if</span><span class='op'>(</span><span class='fu'>stats</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span> <span class='op'>&gt;</span> <span class='fl'>0.7</span><span class='op'>)</span>
+         <span class='va'>Known</span><span class='op'>[</span><span class='va'>i</span>,<span class='va'>j</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='fl'>1</span>
+   <span class='op'>}</span>
+<span class='op'>}</span>
+<span class='va'>Ucorr</span> <span class='op'>&lt;-</span> <span class='va'>Known</span> <span class='op'>%*%</span> <span class='va'>Uorig</span>
 
 <span class='co'># Recover the original image using total variation in-painting</span>
-<span class='no'>U</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span>(<span class='no'>rows</span>, <span class='no'>cols</span>)
-<span class='no'>obj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span>(<span class='fu'>tv</span>(<span class='no'>U</span>))
-<span class='no'>constraints</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>Known</span> * <span class='no'>U</span> <span class='kw'>==</span> <span class='no'>Known</span> * <span class='no'>Ucorr</span>)
-<span class='no'>prob</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span>(<span class='no'>obj</span>, <span class='no'>constraints</span>)
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span>(<span class='no'>prob</span>, <span class='kw'>solver</span> <span class='kw'>=</span> <span class='st'>"SCS"</span>)
-<span class='no'>result</span>$<span class='fu'>getValue</span>(<span class='no'>U</span>)</div><div class='output co'>#&gt;           [,1]     [,2]     [,3]     [,4]     [,5]      [,6]     [,7]     [,8]
-#&gt;  [1,] 235.0023 313.3835 312.9038 310.0134 297.5986 281.64583 281.6513 281.6540
-#&gt;  [2,] 414.9980 314.2648 314.2647 311.1513 297.6639  70.99913 281.6468 282.0377
-#&gt;  [3,] 227.0009 314.2640 318.0004 316.6442 314.7455 308.75439 298.2537 284.4687
-#&gt;  [4,] 341.3561 323.1179 320.5049 318.2943 316.4975 316.49640 316.4957 290.0053
-#&gt;  [5,] 437.0025 333.8092 327.3088 321.3052 316.4971 316.49573 464.9983 320.1532
-#&gt;  [6,] 345.9262 342.7631 337.6632 329.5140 316.4984 173.00129 243.9991 320.1525
-#&gt;  [7,] 346.9002 346.9011 346.9026 346.9055 345.9962 345.99706 345.1263 342.9988
-#&gt;  [8,] 346.9003 346.9007 346.9017 348.7420 345.9972 348.82392 349.8819 342.9976
-#&gt;  [9,] 346.9000 346.8996 424.9984 384.0009 384.2357 384.30792 472.9999 342.9979
-#&gt; [10,] 346.9000 346.8996 424.9984 458.0007 550.0009 384.30792 641.9983 342.9978
+<span class='va'>U</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Variable-class.html'>Variable</a></span><span class='op'>(</span><span class='va'>rows</span>, <span class='va'>cols</span><span class='op'>)</span>
+<span class='va'>obj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Minimize-class.html'>Minimize</a></span><span class='op'>(</span><span class='fu'>tv</span><span class='op'>(</span><span class='va'>U</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>constraints</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>Known</span> <span class='op'>*</span> <span class='va'>U</span> <span class='op'>==</span> <span class='va'>Known</span> <span class='op'>*</span> <span class='va'>Ucorr</span><span class='op'>)</span>
+<span class='va'>prob</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Problem-class.html'>Problem</a></span><span class='op'>(</span><span class='va'>obj</span>, <span class='va'>constraints</span><span class='op'>)</span>
+<span class='va'>result</span> <span class='op'>&lt;-</span> <span class='fu'><a href='psolve.html'>solve</a></span><span class='op'>(</span><span class='va'>prob</span>, solver <span class='op'>=</span> <span class='st'>"SCS"</span><span class='op'>)</span>
+<span class='va'>result</span><span class='op'>$</span><span class='fu'>getValue</span><span class='op'>(</span><span class='va'>U</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;           [,1]     [,2]     [,3]     [,4]     [,5]      [,6]     [,7]     [,8]
+#&gt;  [1,] 234.9997 313.3989 312.9316 310.0624 297.7206 281.67540 281.6372 281.6420
+#&gt;  [2,] 415.0004 314.2509 314.2820 311.1917 297.7849  71.00007 281.6380 282.0223
+#&gt;  [3,] 227.0000 314.2164 318.0012 316.6359 314.7365 308.74584 298.2521 284.4686
+#&gt;  [4,] 341.3546 323.1293 320.5015 318.2862 316.4877 316.48709 316.4871 290.0075
+#&gt;  [5,] 436.9990 333.8274 327.3164 321.3042 316.4896 316.48879 464.9997 320.1619
+#&gt;  [6,] 345.9533 342.7881 337.6808 329.5230 316.4942 172.99978 244.0002 320.1616
+#&gt;  [7,] 346.9282 346.9284 346.9265 346.9249 346.0133 346.02251 345.1421 342.9900
+#&gt;  [8,] 346.9297 346.9293 346.9260 348.7559 346.0025 348.86537 349.9338 342.9909
+#&gt;  [9,] 346.9315 346.9333 424.9979 383.9993 384.2449 384.33258 472.9997 342.9932
+#&gt; [10,] 346.9315 346.9333 424.9979 458.0003 549.9994 384.33258 642.0010 342.9932
 #&gt;           [,9]    [,10]
-#&gt;  [1,] 280.9991 280.9991
-#&gt;  [2,] 280.9987 280.9985
-#&gt;  [3,] 281.0001 281.0000
-#&gt;  [4,] 280.9999 286.9998
-#&gt;  [5,] 320.1539 320.1539
-#&gt;  [6,] 320.1538 320.1538
-#&gt;  [7,] 342.9982 342.9982
-#&gt;  [8,] 342.9969 361.0025
-#&gt;  [9,] 342.9979 342.9978
-#&gt; [10,] 342.9989   0.0000</div></pre>
+#&gt;  [1,] 280.9993 280.9993
+#&gt;  [2,] 280.9914 280.9914
+#&gt;  [3,] 280.9968 280.9968
+#&gt;  [4,] 280.9999 286.9999
+#&gt;  [5,] 320.1628 320.1628
+#&gt;  [6,] 320.1629 320.1629
+#&gt;  [7,] 342.9909 342.9909
+#&gt;  [8,] 342.9911 360.9999
+#&gt;  [9,] 342.9964 342.9964
+#&gt; [10,] 342.9995   0.0000</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -220,7 +221,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

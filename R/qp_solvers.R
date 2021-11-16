@@ -340,10 +340,10 @@ setMethod("status_map", "GUROBI_QP", function(solver, status) {
     UNBOUNDED
   else if(status == 4 | status == "INF_OR_UNBD")
     INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
+  else if(status %in% c(11,12) || status %in% c("INTERRUPTED", "NUMERIC"))
     SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
+  else if(status %in% c(7,8,9,10,13) || status %in% c("ITERATION_LIMIT", "NODE_LIMIT", "TIME_LIMIT", "SOLUTION_LIMIT", "SUBOPTIMAL"))
+    OPTIMAL_INACCURATE   # user limit exceeded (but suboptimal solution may still exist) or known to be suboptimal
   else
     stop("GUROBI status unrecognized: ", status)
 })

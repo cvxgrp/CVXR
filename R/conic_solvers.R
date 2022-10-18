@@ -612,7 +612,9 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   A  <- data[[A_KEY]]
   ## Fix for Matrix version 1.3
   ## if (inherits(A, "dsCMatrix")) A <- as(A, "dgCMatrix")
-  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
+  ## if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
+  ## Matrix 1.5 change!
+  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "generalMatrix")
 
   args <- list(A = A, b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
@@ -2371,7 +2373,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
 
   ##G should already be sparse but Matrix 1.3.x causes problems.
-  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+  ## if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+  ## Matrix 1.5 change
+  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "generalMatrix")
 
   G_sum <- summary(G)
   nrow_G_sparse <- nrow(G)

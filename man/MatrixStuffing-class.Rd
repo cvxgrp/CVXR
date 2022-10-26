@@ -26,9 +26,13 @@ The MatrixStuffing class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{perform}: Returns a stuffed problem. The returned problem is a minimization problem in which every
+\item \code{perform(object = MatrixStuffing, problem = Problem)}: Returns a stuffed problem. The returned problem is a minimization problem in which every
 constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
-}}
+\item \code{invert(
+  object = MatrixStuffing,
+  solution = Solution,
+  inverse_data = InverseData
+)}: Returns the solution to the original problem given the inverse_data.
 
+}}

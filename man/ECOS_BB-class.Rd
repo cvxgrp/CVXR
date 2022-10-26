@@ -59,12 +59,12 @@ An interface for the ECOS BB solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(ECOS_BB)}: Can the solver handle mixed-integer programs?
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(ECOS_BB)}: Returns the name of the solver.
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = ECOS_BB, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(ECOS_BB)}: Solve a problem represented by data returned from apply.
+
 }}
-

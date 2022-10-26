@@ -22,6 +22,6 @@ A no-op wrapper to assert the input argument is positive semidefinite.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{is_psd}: Is the atom positive semidefinite?
-}}
+\item \code{is_psd(PSDWrap)}: Is the atom positive semidefinite?
 
+}}

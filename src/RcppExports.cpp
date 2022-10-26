@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // build_matrix_0
 SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v);
 RcppExport SEXP _CVXR_build_matrix_0(SEXP xpSEXP, SEXP vSEXP) {

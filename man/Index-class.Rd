@@ -73,23 +73,23 @@ This class represents indexing or slicing into a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The index/slice into the given value.
+\item \code{to_numeric(Index)}: The index/slice into the given value.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(Index)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Index)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Index)}: Is the atom log-log concave?
 
-\item \code{get_data}: A list containing \code{key}.
+\item \code{get_data(Index)}: A list containing \code{key}.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Index)}: The graph implementation of the atom.
 
-\item \code{to_numeric}: The index/slice into the given value.
+\item \code{to_numeric(SpecialIndex)}: The index/slice into the given value.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(SpecialIndex)}: The dimensions of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -77,20 +77,20 @@ An interface for the GUROBI conic solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(GUROBI_CONIC)}: Can the solver handle mixed-integer programs?
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(GUROBI_CONIC)}: Returns the name of the solver.
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(GUROBI_CONIC)}: Imports the solver.
 
-\item \code{status_map}: Converts status returned by the GUROBI solver to its respective CVXPY status.
+\item \code{status_map(GUROBI_CONIC)}: Converts status returned by the GUROBI solver to its respective CVXPY status.
 
-\item \code{accepts}: Can GUROBI_CONIC solve the problem?
+\item \code{accepts(object = GUROBI_CONIC, problem = Problem)}: Can GUROBI_CONIC solve the problem?
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = GUROBI_CONIC, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = GUROBI_CONIC, solution = list, inverse_data = list)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(GUROBI_CONIC)}: Solve a problem represented by data returned from apply.
+
 }}
-

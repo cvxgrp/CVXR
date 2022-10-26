@@ -49,23 +49,23 @@ The elementwise KL-divergence \eqn{x\log(x/y) - x + y}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The KL-divergence evaluted elementwise on the input value.
+\item \code{to_numeric(KLDiv)}: The KL-divergence evaluted elementwise on the input value.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(KLDiv)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(KLDiv)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(KLDiv)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(KLDiv)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(KLDiv)}: The atom is not monotonic in any argument.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(KLDiv)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints describng the domain of the node
+\item \code{.domain(KLDiv)}: Returns constraints describng the domain of the node
+
 }}
-
 \section{Slots}{
 
 \describe{

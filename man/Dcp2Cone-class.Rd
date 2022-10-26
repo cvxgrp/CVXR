@@ -23,8 +23,8 @@ with affine objectives and conic constraints whose arguments are affine.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: A problem is accepted if it is a minimization and is DCP.
+\item \code{accepts(object = Dcp2Cone, problem = Problem)}: A problem is accepted if it is a minimization and is DCP.
 
-\item \code{perform}: Converts a DCP problem to a conic form.
+\item \code{perform(object = Dcp2Cone, problem = Problem)}: Converts a DCP problem to a conic form.
+
 }}
-

@@ -21,8 +21,8 @@ A QP solver interface.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Is this a QP problem?
+\item \code{accepts(object = QpSolver, problem = Problem)}: Is this a QP problem?
 
-\item \code{perform}: Constructs a QP problem data stored in a list
+\item \code{perform(object = QpSolver, problem = Problem)}: Constructs a QP problem data stored in a list
+
 }}
-

@@ -37,14 +37,14 @@ This virtual class represents a no-op wrapper to assert properties.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Returns the input value.
+\item \code{to_numeric(Wrap)}: Returns the input value.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(Wrap)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Wrap)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Wrap)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Wrap)}: The graph implementation of the atom.
+
 }}
-

@@ -62,29 +62,29 @@ The maximum of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The largest entry in \code{x}.
+\item \code{to_numeric(MaxEntries)}: The largest entry in \code{x}.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(MaxEntries)}: The sign of the atom.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(MaxEntries)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(MaxEntries)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex.
+\item \code{is_atom_log_log_convex(MaxEntries)}: Is the atom log-log convex.
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave.
+\item \code{is_atom_log_log_concave(MaxEntries)}: Is the atom log-log concave.
 
-\item \code{is_incr}: The atom is weakly increasing in every argument.
+\item \code{is_incr(MaxEntries)}: The atom is weakly increasing in every argument.
 
-\item \code{is_decr}: The atom is not weakly decreasing in any argument.
+\item \code{is_decr(MaxEntries)}: The atom is not weakly decreasing in any argument.
 
-\item \code{is_pwl}: Is \code{x} piecewise linear?
+\item \code{is_pwl(MaxEntries)}: Is \code{x} piecewise linear?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MaxEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(MaxEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-
 \section{Slots}{
 
 \describe{

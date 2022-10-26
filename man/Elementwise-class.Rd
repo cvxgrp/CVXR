@@ -23,10 +23,10 @@ This virtual class represents an elementwise atom.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim_from_args}: Dimensions is the same as the sum of the arguments' dimensions.
+\item \code{dim_from_args(Elementwise)}: Dimensions is the same as the sum of the arguments' dimensions.
 
-\item \code{validate_args}: Verify that all the dimensions are the same or can be promoted.
+\item \code{validate_args(Elementwise)}: Verify that all the dimensions are the same or can be promoted.
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(Elementwise)}: Is the expression symmetric?
+
 }}
-

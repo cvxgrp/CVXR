@@ -63,17 +63,17 @@ This class represents indexing using logical indexing or a list of indices into 
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: Returns the index in string form.
+\item \code{name(SpecialIndex)}: Returns the index in string form.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(SpecialIndex)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(SpecialIndex)}: Is the atom log-log concave?
 
-\item \code{get_data}: A list containing \code{key}.
+\item \code{get_data(SpecialIndex)}: A list containing \code{key}.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(SpecialIndex)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

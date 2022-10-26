@@ -83,46 +83,46 @@ This virtual class represents atomic expressions in CVXR.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: Returns the string representtation of the function call
+\item \code{name(Atom)}: Returns the string representtation of the function call
 
-\item \code{validate_args}: Raises an error if the arguments are invalid.
+\item \code{validate_args(Atom)}: Raises an error if the arguments are invalid.
 
-\item \code{dim}: The \code{c(row, col)} dimensions of the atom.
+\item \code{dim(Atom)}: The \code{c(row, col)} dimensions of the atom.
 
-\item \code{nrow}: The number of rows in the atom.
+\item \code{nrow(Atom)}: The number of rows in the atom.
 
-\item \code{ncol}: The number of columns in the atom.
+\item \code{ncol(Atom)}: The number of columns in the atom.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(Atom)}: Does the atom handle complex numbers?
 
-\item \code{is_nonneg}: A logical value indicating whether the atom is nonnegative.
+\item \code{is_nonneg(Atom)}: A logical value indicating whether the atom is nonnegative.
 
-\item \code{is_nonpos}: A logical value indicating whether the atom is nonpositive.
+\item \code{is_nonpos(Atom)}: A logical value indicating whether the atom is nonpositive.
 
-\item \code{is_imag}: A logical value indicating whether the atom is imaginary.
+\item \code{is_imag(Atom)}: A logical value indicating whether the atom is imaginary.
 
-\item \code{is_complex}: A logical value indicating whether the atom is complex valued.
+\item \code{is_complex(Atom)}: A logical value indicating whether the atom is complex valued.
 
-\item \code{is_convex}: A logical value indicating whether the atom is convex.
+\item \code{is_convex(Atom)}: A logical value indicating whether the atom is convex.
 
-\item \code{is_concave}: A logical value indicating whether the atom is concave.
+\item \code{is_concave(Atom)}: A logical value indicating whether the atom is concave.
 
-\item \code{is_log_log_convex}: A logical value indicating whether the atom is log-log convex.
+\item \code{is_log_log_convex(Atom)}: A logical value indicating whether the atom is log-log convex.
 
-\item \code{is_log_log_concave}: A logical value indicating whether the atom is log-log concave.
+\item \code{is_log_log_concave(Atom)}: A logical value indicating whether the atom is log-log concave.
 
-\item \code{canonicalize}: Represent the atom as an affine objective and conic constraints.
+\item \code{canonicalize(Atom)}: Represent the atom as an affine objective and conic constraints.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Atom)}: The graph implementation of the atom.
 
-\item \code{value_impl}: Returns the value of each of the componets in an Atom. Returns an empty matrix if it's an empty atom
+\item \code{value_impl(Atom)}: Returns the value of each of the componets in an Atom. Returns an empty matrix if it's an empty atom
 
-\item \code{value}: Returns the value of the atom.
+\item \code{value(Atom)}: Returns the value of the atom.
 
-\item \code{grad}: The (sub/super)-gradient of the atom with respect to each variable.
+\item \code{grad(Atom)}: The (sub/super)-gradient of the atom with respect to each variable.
 
-\item \code{domain}: A list of constraints describing the closure of the region where the expression is finite.
+\item \code{domain(Atom)}: A list of constraints describing the closure of the region where the expression is finite.
 
-\item \code{atoms}: Returns a list of the atom types present amongst this atom's arguments
+\item \code{atoms(Atom)}: Returns a list of the atom types present amongst this atom's arguments
+
 }}
-

@@ -70,37 +70,37 @@ This class represents the sum of squared entries in X divided by a scalar y, \eq
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(QuadOverLin)}: Does the atom handle complex numbers?
 
-\item \code{to_numeric}: The sum of the entries of \code{x} squared over \code{y}.
+\item \code{to_numeric(QuadOverLin)}: The sum of the entries of \code{x} squared over \code{y}.
 
-\item \code{validate_args}: Check the dimensions of the arguments.
+\item \code{validate_args(QuadOverLin)}: Check the dimensions of the arguments.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(QuadOverLin)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(QuadOverLin)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(QuadOverLin)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(QuadOverLin)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(QuadOverLin)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(QuadOverLin)}: Is the atom log-log concave?
 
-\item \code{is_incr}: A logical value indicating whether the atom is weakly increasing in argument \code{idx}.
+\item \code{is_incr(QuadOverLin)}: A logical value indicating whether the atom is weakly increasing in argument \code{idx}.
 
-\item \code{is_decr}: A logical value indicating whether the atom is weakly decreasing in argument \code{idx}.
+\item \code{is_decr(QuadOverLin)}: A logical value indicating whether the atom is weakly decreasing in argument \code{idx}.
 
-\item \code{is_quadratic}: Quadratic if \code{x} is affine and \code{y} is constant.
+\item \code{is_quadratic(QuadOverLin)}: Quadratic if \code{x} is affine and \code{y} is constant.
 
-\item \code{is_qpwa}: Quadratic of piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
+\item \code{is_qpwa(QuadOverLin)}: Quadratic of piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(QuadOverLin)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(QuadOverLin)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -59,12 +59,12 @@ An interface for the GLPK MI solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(GLPK_MI)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by the GLPK_MI solver to its respective CVXPY status.
+\item \code{status_map(GLPK_MI)}: Converts status returned by the GLPK_MI solver to its respective CVXPY status.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(GLPK_MI)}: Returns the name of the solver.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(GLPK_MI)}: Solve a problem represented by data returned from apply.
+
 }}
-

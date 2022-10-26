@@ -73,18 +73,18 @@ The IneqConstraint class
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The string representation of the constraint.
+\item \code{name(IneqConstraint)}: The string representation of the constraint.
 
-\item \code{dim}: The dimensions of the constrained expression.
+\item \code{dim(IneqConstraint)}: The dimensions of the constrained expression.
 
-\item \code{size}: The size of the constrained expression.
+\item \code{size(IneqConstraint)}: The size of the constrained expression.
 
-\item \code{expr}: The expression to constrain.
+\item \code{expr(IneqConstraint)}: The expression to constrain.
 
-\item \code{is_dcp}: A non-positive constraint is DCP if its argument is convex.
+\item \code{is_dcp(IneqConstraint)}: A non-positive constraint is DCP if its argument is convex.
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(IneqConstraint)}: Is the constraint DGP?
 
-\item \code{residual}: The residual of the constraint.
+\item \code{residual(IneqConstraint)}: The residual of the constraint.
+
 }}
-

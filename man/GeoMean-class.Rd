@@ -80,35 +80,35 @@ A specific case of this is when \eqn{x \in \mathbf{R}^1}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The (weighted) geometric mean of the elements of \code{x}.
+\item \code{to_numeric(GeoMean)}: The (weighted) geometric mean of the elements of \code{x}.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(GeoMean)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(GeoMean)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(GeoMean)}: The name and arguments of the atom.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(GeoMean)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is non-negative.
+\item \code{sign_from_args(GeoMean)}: The atom is non-negative.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(GeoMean)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(GeoMean)}: The atom is concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(GeoMean)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(GeoMean)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing in every argument.
+\item \code{is_incr(GeoMean)}: The atom is weakly increasing in every argument.
 
-\item \code{is_decr}: The atom is not weakly decreasing in any argument.
+\item \code{is_decr(GeoMean)}: The atom is not weakly decreasing in any argument.
 
-\item \code{get_data}: Returns \code{list(w, dyadic completion, tree of dyads)}.
+\item \code{get_data(GeoMean)}: Returns \code{list(w, dyadic completion, tree of dyads)}.
 
-\item \code{copy}: Returns a shallow copy of the GeoMean atom
+\item \code{copy(GeoMean)}: Returns a shallow copy of the GeoMean atom
+
 }}
-
 \section{Slots}{
 
 \describe{

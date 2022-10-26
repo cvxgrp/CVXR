@@ -55,27 +55,27 @@ The sum of the largest k values of a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The sum of the \code{k} largest entries of the vector or matrix.
+\item \code{to_numeric(SumLargest)}: The sum of the \code{k} largest entries of the vector or matrix.
 
-\item \code{validate_args}: Check that \code{k} is a positive integer.
+\item \code{validate_args(SumLargest)}: Check that \code{k} is a positive integer.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(SumLargest)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(SumLargest)}: The sign of the atom.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(SumLargest)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(SumLargest)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is weakly increasing in every argument.
+\item \code{is_incr(SumLargest)}: The atom is weakly increasing in every argument.
 
-\item \code{is_decr}: The atom is not weakly decreasing in any argument.
+\item \code{is_decr(SumLargest)}: The atom is not weakly decreasing in any argument.
 
-\item \code{get_data}: A list containing \code{k}.
+\item \code{get_data(SumLargest)}: A list containing \code{k}.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(SumLargest)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

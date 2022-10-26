@@ -16,6 +16,6 @@ A Class Union of List and Constraint
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{id}: Returns the ID associated with the list or constraint.
-}}
+\item \code{id(ListORConstr)}: Returns the ID associated with the list or constraint.
 
+}}

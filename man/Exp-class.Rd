@@ -50,25 +50,25 @@ This class represents the elementwise natural exponential \eqn{e^x}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The matrix with each element exponentiated.
+\item \code{to_numeric(Exp)}: The matrix with each element exponentiated.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(Exp)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(Exp)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(Exp)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Exp)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Exp)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(Exp)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is not weakly decreasing.
+\item \code{is_decr(Exp)}: The atom is not weakly decreasing.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Exp)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

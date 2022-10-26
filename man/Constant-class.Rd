@@ -77,37 +77,37 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name of the constant.
+\item \code{name(Constant)}: The name of the constant.
 
-\item \code{constants}: Returns itself as a constant.
+\item \code{constants(Constant)}: Returns itself as a constant.
 
-\item \code{value}: The value of the constant.
+\item \code{value(Constant)}: The value of the constant.
 
-\item \code{is_pos}: A logical value indicating whether all elements of the constant are positive.
+\item \code{is_pos(Constant)}: A logical value indicating whether all elements of the constant are positive.
 
-\item \code{grad}: An empty list since the gradient of a constant is zero.
+\item \code{grad(Constant)}: An empty list since the gradient of a constant is zero.
 
-\item \code{dim}: The \code{c(row, col)} dimensions of the constant.
+\item \code{dim(Constant)}: The \code{c(row, col)} dimensions of the constant.
 
-\item \code{canonicalize}: The canonical form of the constant.
+\item \code{canonicalize(Constant)}: The canonical form of the constant.
 
-\item \code{is_nonneg}: A logical value indicating whether all elements of the constant are non-negative.
+\item \code{is_nonneg(Constant)}: A logical value indicating whether all elements of the constant are non-negative.
 
-\item \code{is_nonpos}: A logical value indicating whether all elements of the constant are non-positive.
+\item \code{is_nonpos(Constant)}: A logical value indicating whether all elements of the constant are non-positive.
 
-\item \code{is_imag}: A logical value indicating whether the constant is imaginary.
+\item \code{is_imag(Constant)}: A logical value indicating whether the constant is imaginary.
 
-\item \code{is_complex}: A logical value indicating whether the constant is complex-valued.
+\item \code{is_complex(Constant)}: A logical value indicating whether the constant is complex-valued.
 
-\item \code{is_symmetric}: A logical value indicating whether the constant is symmetric.
+\item \code{is_symmetric(Constant)}: A logical value indicating whether the constant is symmetric.
 
-\item \code{is_hermitian}: A logical value indicating whether the constant is a Hermitian matrix.
+\item \code{is_hermitian(Constant)}: A logical value indicating whether the constant is a Hermitian matrix.
 
-\item \code{is_psd}: A logical value indicating whether the constant is a positive semidefinite matrix.
+\item \code{is_psd(Constant)}: A logical value indicating whether the constant is a positive semidefinite matrix.
 
-\item \code{is_nsd}: A logical value indicating whether the constant is a negative semidefinite matrix.
+\item \code{is_nsd(Constant)}: A logical value indicating whether the constant is a negative semidefinite matrix.
+
 }}
-
 \section{Slots}{
 
 \describe{

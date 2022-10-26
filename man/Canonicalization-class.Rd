@@ -36,12 +36,16 @@ This class represents a canonicalization reduction.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{perform}: Recursively canonicalize the objective and every constraint.
+\item \code{perform(object = Canonicalization, problem = Problem)}: Recursively canonicalize the objective and every constraint.
 
-\item \code{invert}: Performs the reduction on a problem and returns an equivalent problem.
+\item \code{invert(
+  object = Canonicalization,
+  solution = Solution,
+  inverse_data = InverseData
+)}: Performs the reduction on a problem and returns an equivalent problem.
 
-\item \code{canonicalize_tree}: Recursively canonicalize an Expression.
+\item \code{canonicalize_tree(Canonicalization)}: Recursively canonicalize an Expression.
 
-\item \code{canonicalize_expr}: Canonicalize an expression, w.r.t. canonicalized arguments.
+\item \code{canonicalize_expr(Canonicalization)}: Canonicalize an expression, w.r.t. canonicalized arguments.
+
 }}
-

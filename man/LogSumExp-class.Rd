@@ -53,23 +53,23 @@ The natural logarithm of the sum of the elementwise exponential, \eqn{\log\sum_{
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
+\item \code{to_numeric(LogSumExp)}: Evaluates \eqn{e^x} elementwise, sums, and takes the natural log.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(LogSumExp)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable.
+\item \code{.column_grad(LogSumExp)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable.
 
-\item \code{sign_from_args}: Returns sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(LogSumExp)}: Returns sign (is positive, is negative) of the atom.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(LogSumExp)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(LogSumExp)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is weakly increasing in the index.
+\item \code{is_incr(LogSumExp)}: The atom is weakly increasing in the index.
 
-\item \code{is_decr}: The atom is not weakly decreasing in the index.
+\item \code{is_decr(LogSumExp)}: The atom is not weakly decreasing in the index.
+
 }}
-
 \section{Slots}{
 
 \describe{

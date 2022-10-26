@@ -38,17 +38,17 @@ This class represents the sum of the \code{k} largest eigenvalues of a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(LambdaSumLargest)}: Does the atom handle complex numbers?
 
-\item \code{to_numeric}: Returns the largest eigenvalue of \code{A}, which must be symmetric.
+\item \code{to_numeric(LambdaSumLargest)}: Returns the largest eigenvalue of \code{A}, which must be symmetric.
 
-\item \code{validate_args}: Verify that the argument \code{A} is square.
+\item \code{validate_args(LambdaSumLargest)}: Verify that the argument \code{A} is square.
 
-\item \code{get_data}: Returns the parameter \code{k}.
+\item \code{get_data(LambdaSumLargest)}: Returns the parameter \code{k}.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(LambdaSumLargest)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

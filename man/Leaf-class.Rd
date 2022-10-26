@@ -102,63 +102,63 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{get_data}: Leaves are not copied.
+\item \code{get_data(Leaf)}: Leaves are not copied.
 
-\item \code{dim}: The dimensions of the leaf node.
+\item \code{dim(Leaf)}: The dimensions of the leaf node.
 
-\item \code{variables}: List of \linkS4class{Variable} objects in the leaf node.
+\item \code{variables(Leaf)}: List of \linkS4class{Variable} objects in the leaf node.
 
-\item \code{parameters}: List of \linkS4class{Parameter} objects in the leaf node.
+\item \code{parameters(Leaf)}: List of \linkS4class{Parameter} objects in the leaf node.
 
-\item \code{constants}: List of \linkS4class{Constant} objects in the leaf node.
+\item \code{constants(Leaf)}: List of \linkS4class{Constant} objects in the leaf node.
 
-\item \code{atoms}: List of \linkS4class{Atom} objects in the leaf node.
+\item \code{atoms(Leaf)}: List of \linkS4class{Atom} objects in the leaf node.
 
-\item \code{is_convex}: A logical value indicating whether the leaf node is convex.
+\item \code{is_convex(Leaf)}: A logical value indicating whether the leaf node is convex.
 
-\item \code{is_concave}: A logical value indicating whether the leaf node is concave.
+\item \code{is_concave(Leaf)}: A logical value indicating whether the leaf node is concave.
 
-\item \code{is_log_log_convex}: Is the expression log-log convex?
+\item \code{is_log_log_convex(Leaf)}: Is the expression log-log convex?
 
-\item \code{is_log_log_concave}: Is the expression log-log concave?
+\item \code{is_log_log_concave(Leaf)}: Is the expression log-log concave?
 
-\item \code{is_nonneg}: A logical value indicating whether the leaf node is nonnegative.
+\item \code{is_nonneg(Leaf)}: A logical value indicating whether the leaf node is nonnegative.
 
-\item \code{is_nonpos}: A logical value indicating whether the leaf node is nonpositive.
+\item \code{is_nonpos(Leaf)}: A logical value indicating whether the leaf node is nonpositive.
 
-\item \code{is_pos}: Is the expression positive?
+\item \code{is_pos(Leaf)}: Is the expression positive?
 
-\item \code{is_neg}: Is the expression negative?
+\item \code{is_neg(Leaf)}: Is the expression negative?
 
-\item \code{is_hermitian}: A logical value indicating whether the leaf node is hermitian.
+\item \code{is_hermitian(Leaf)}: A logical value indicating whether the leaf node is hermitian.
 
-\item \code{is_symmetric}: A logical value indicating whether the leaf node is symmetric.
+\item \code{is_symmetric(Leaf)}: A logical value indicating whether the leaf node is symmetric.
 
-\item \code{is_imag}: A logical value indicating whether the leaf node is imaginary.
+\item \code{is_imag(Leaf)}: A logical value indicating whether the leaf node is imaginary.
 
-\item \code{is_complex}: A logical value indicating whether the leaf node is complex.
+\item \code{is_complex(Leaf)}: A logical value indicating whether the leaf node is complex.
 
-\item \code{domain}: A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
+\item \code{domain(Leaf)}: A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 
-\item \code{project}: Project value onto the attribute set of the leaf.
+\item \code{project(Leaf)}: Project value onto the attribute set of the leaf.
 
-\item \code{project_and_assign}: Project and assign a value to the leaf.
+\item \code{project_and_assign(Leaf)}: Project and assign a value to the leaf.
 
-\item \code{value}: Get the value of the leaf.
+\item \code{value(Leaf)}: Get the value of the leaf.
 
-\item \code{value<-}: Set the value of the leaf.
+\item \code{value(Leaf) <- value}: Set the value of the leaf.
 
-\item \code{validate_val}: Check that \code{val} satisfies symbolic attributes of leaf.
+\item \code{validate_val(Leaf)}: Check that \code{val} satisfies symbolic attributes of leaf.
 
-\item \code{is_psd}: A logical value indicating whether the leaf node is a positive semidefinite matrix.
+\item \code{is_psd(Leaf)}: A logical value indicating whether the leaf node is a positive semidefinite matrix.
 
-\item \code{is_nsd}: A logical value indicating whether the leaf node is a negative semidefinite matrix.
+\item \code{is_nsd(Leaf)}: A logical value indicating whether the leaf node is a negative semidefinite matrix.
 
-\item \code{is_quadratic}: Leaf nodes are always quadratic.
+\item \code{is_quadratic(Leaf)}: Leaf nodes are always quadratic.
 
-\item \code{is_pwl}: Leaf nodes are always piecewise linear.
+\item \code{is_pwl(Leaf)}: Leaf nodes are always piecewise linear.
+
 }}
-
 \section{Slots}{
 
 \describe{

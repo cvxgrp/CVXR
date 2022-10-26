@@ -64,11 +64,11 @@ This class represents a reduction chain that ends with a solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{prepend}: Create and return a new SolvingChain by concatenating chain with this instance.
+\item \code{prepend(object = SolvingChain, chain = Chain)}: Create and return a new SolvingChain by concatenating chain with this instance.
 
-\item \code{reduction_solve}: Applies each reduction in the chain to the problem, solves it,
+\item \code{reduction_solve(object = SolvingChain, problem = Problem)}: Applies each reduction in the chain to the problem, solves it,
 and then inverts the chain to return a solution of the supplied problem.
 
-\item \code{reduction_solve_via_data}: Solves the problem using the data output by the an apply invocation.
-}}
+\item \code{reduction_solve_via_data(SolvingChain)}: Solves the problem using the data output by the an apply invocation.
 
+}}

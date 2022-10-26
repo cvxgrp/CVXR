@@ -59,27 +59,27 @@ This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The Huber function evaluted elementwise on the input value.
+\item \code{to_numeric(Huber)}: The Huber function evaluted elementwise on the input value.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(Huber)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(Huber)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(Huber)}: The atom is not concave.
 
-\item \code{is_incr}: A logical value indicating whether the atom is weakly increasing.
+\item \code{is_incr(Huber)}: A logical value indicating whether the atom is weakly increasing.
 
-\item \code{is_decr}: A logical value indicating whether the atom is weakly decreasing.
+\item \code{is_decr(Huber)}: A logical value indicating whether the atom is weakly decreasing.
 
-\item \code{is_quadratic}: The atom is quadratic if \code{x} is affine.
+\item \code{is_quadratic(Huber)}: The atom is quadratic if \code{x} is affine.
 
-\item \code{get_data}: A list containing the parameter \code{M}.
+\item \code{get_data(Huber)}: A list containing the parameter \code{M}.
 
-\item \code{validate_args}: Check that \code{M} is a non-negative constant.
+\item \code{validate_args(Huber)}: Check that \code{M} is a non-negative constant.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Huber)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

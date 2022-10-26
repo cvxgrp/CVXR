@@ -56,29 +56,29 @@ This class represents the Perron-Frobenius eigenvalue of a positive matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(PfEigenvalue)}: The name and arguments of the atom.
 
-\item \code{to_numeric}: Returns the Perron-Frobenius eigenvalue of \code{X}.
+\item \code{to_numeric(PfEigenvalue)}: Returns the Perron-Frobenius eigenvalue of \code{X}.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(PfEigenvalue)}: The dimensions of the atom.
 
-\item \code{sign_from_args}: Returns the sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(PfEigenvalue)}: Returns the sign (is positive, is negative) of the atom.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(PfEigenvalue)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(PfEigenvalue)}: Is the atom concave?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(PfEigenvalue)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(PfEigenvalue)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the argument \code{idx}?
+\item \code{is_incr(PfEigenvalue)}: Is the atom weakly increasing in the argument \code{idx}?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the argument \code{idx}?
+\item \code{is_decr(PfEigenvalue)}: Is the atom weakly decreasing in the argument \code{idx}?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(PfEigenvalue)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

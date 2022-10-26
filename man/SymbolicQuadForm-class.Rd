@@ -54,25 +54,25 @@ The SymbolicQuadForm class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(SymbolicQuadForm)}: The dimensions of the atom.
 
-\item \code{sign_from_args}: The sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(SymbolicQuadForm)}: The sign (is positive, is negative) of the atom.
 
-\item \code{get_data}: The original expression.
+\item \code{get_data(SymbolicQuadForm)}: The original expression.
 
-\item \code{is_atom_convex}: Is the original expression convex?
+\item \code{is_atom_convex(SymbolicQuadForm)}: Is the original expression convex?
 
-\item \code{is_atom_concave}: Is the original expression concave?
+\item \code{is_atom_concave(SymbolicQuadForm)}: Is the original expression concave?
 
-\item \code{is_incr}: Is the original expression weakly increasing in argument \code{idx}?
+\item \code{is_incr(SymbolicQuadForm)}: Is the original expression weakly increasing in argument \code{idx}?
 
-\item \code{is_decr}: Is the original expression weakly decreasing in argument \code{idx}?
+\item \code{is_decr(SymbolicQuadForm)}: Is the original expression weakly decreasing in argument \code{idx}?
 
-\item \code{is_quadratic}: The atom is quadratic.
+\item \code{is_quadratic(SymbolicQuadForm)}: The atom is quadratic.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(SymbolicQuadForm)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

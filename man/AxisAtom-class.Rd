@@ -33,17 +33,17 @@ This virtual class represents atomic expressions that can be applied along an ax
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim_from_args}: The dimensions of the atom determined from its arguments.
+\item \code{dim_from_args(AxisAtom)}: The dimensions of the atom determined from its arguments.
 
-\item \code{get_data}: A list containing \code{axis} and \code{keepdims}.
+\item \code{get_data(AxisAtom)}: A list containing \code{axis} and \code{keepdims}.
 
-\item \code{validate_args}: Check that the new dimensions have the same number of entries as the old.
+\item \code{validate_args(AxisAtom)}: Check that the new dimensions have the same number of entries as the old.
 
-\item \code{.axis_grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.axis_grad(AxisAtom)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(AxisAtom)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-
 \section{Slots}{
 
 \describe{

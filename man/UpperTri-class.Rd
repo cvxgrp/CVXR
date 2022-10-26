@@ -45,19 +45,19 @@ The vectorized strictly upper triagonal entries of a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Vectorize the upper triagonal entries.
+\item \code{to_numeric(UpperTri)}: Vectorize the upper triagonal entries.
 
-\item \code{validate_args}: Check the argument is a square matrix.
+\item \code{validate_args(UpperTri)}: Check the argument is a square matrix.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(UpperTri)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(UpperTri)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(UpperTri)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(UpperTri)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

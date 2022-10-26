@@ -128,80 +128,80 @@ This class represents a mathematical expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{value}: The value of the expression.
+\item \code{value(Expression)}: The value of the expression.
 
-\item \code{grad}: The (sub/super)-gradient of the expression with respect to each variable.
+\item \code{grad(Expression)}: The (sub/super)-gradient of the expression with respect to each variable.
 
-\item \code{domain}: A list of constraints describing the closure of the region where the expression is finite.
+\item \code{domain(Expression)}: A list of constraints describing the closure of the region where the expression is finite.
 
-\item \code{as.character}: The string representation of the expression.
+\item \code{as.character(Expression)}: The string representation of the expression.
 
-\item \code{name}: The name of the expression.
+\item \code{name(Expression)}: The name of the expression.
 
-\item \code{expr}: The expression itself.
+\item \code{expr(Expression)}: The expression itself.
 
-\item \code{is_constant}: The expression is constant if it contains no variables or is identically zero.
+\item \code{is_constant(Expression)}: The expression is constant if it contains no variables or is identically zero.
 
-\item \code{is_affine}: The expression is affine if it is constant or both convex and concave.
+\item \code{is_affine(Expression)}: The expression is affine if it is constant or both convex and concave.
 
-\item \code{is_convex}: A logical value indicating whether the expression is convex.
+\item \code{is_convex(Expression)}: A logical value indicating whether the expression is convex.
 
-\item \code{is_concave}: A logical value indicating whether the expression is concave.
+\item \code{is_concave(Expression)}: A logical value indicating whether the expression is concave.
 
-\item \code{is_dcp}: The expression is DCP if it is convex or concave.
+\item \code{is_dcp(Expression)}: The expression is DCP if it is convex or concave.
 
-\item \code{is_log_log_constant}: Is the expression log-log constant, i.e., elementwise positive?
+\item \code{is_log_log_constant(Expression)}: Is the expression log-log constant, i.e., elementwise positive?
 
-\item \code{is_log_log_affine}: Is the expression log-log affine?
+\item \code{is_log_log_affine(Expression)}: Is the expression log-log affine?
 
-\item \code{is_log_log_convex}: Is the expression log-log convex?
+\item \code{is_log_log_convex(Expression)}: Is the expression log-log convex?
 
-\item \code{is_log_log_concave}: Is the expression log-log concave?
+\item \code{is_log_log_concave(Expression)}: Is the expression log-log concave?
 
-\item \code{is_dgp}: The expression is DGP if it is log-log DCP.
+\item \code{is_dgp(Expression)}: The expression is DGP if it is log-log DCP.
 
-\item \code{is_hermitian}: A logical value indicating whether the expression is a Hermitian matrix.
+\item \code{is_hermitian(Expression)}: A logical value indicating whether the expression is a Hermitian matrix.
 
-\item \code{is_psd}: A logical value indicating whether the expression is a positive semidefinite matrix.
+\item \code{is_psd(Expression)}: A logical value indicating whether the expression is a positive semidefinite matrix.
 
-\item \code{is_nsd}: A logical value indicating whether the expression is a negative semidefinite matrix.
+\item \code{is_nsd(Expression)}: A logical value indicating whether the expression is a negative semidefinite matrix.
 
-\item \code{is_quadratic}: A logical value indicating whether the expression is quadratic.
+\item \code{is_quadratic(Expression)}: A logical value indicating whether the expression is quadratic.
 
-\item \code{is_symmetric}: A logical value indicating whether the expression is symmetric.
+\item \code{is_symmetric(Expression)}: A logical value indicating whether the expression is symmetric.
 
-\item \code{is_pwl}: A logical value indicating whether the expression is piecewise linear.
+\item \code{is_pwl(Expression)}: A logical value indicating whether the expression is piecewise linear.
 
-\item \code{is_qpwa}: A logical value indicating whether the expression is quadratic of piecewise affine.
+\item \code{is_qpwa(Expression)}: A logical value indicating whether the expression is quadratic of piecewise affine.
 
-\item \code{is_zero}: The expression is zero if it is both nonnegative and nonpositive.
+\item \code{is_zero(Expression)}: The expression is zero if it is both nonnegative and nonpositive.
 
-\item \code{is_nonneg}: A logical value indicating whether the expression is nonnegative.
+\item \code{is_nonneg(Expression)}: A logical value indicating whether the expression is nonnegative.
 
-\item \code{is_nonpos}: A logical value indicating whether the expression is nonpositive.
+\item \code{is_nonpos(Expression)}: A logical value indicating whether the expression is nonpositive.
 
-\item \code{dim}: The \code{c(row, col)} dimensions of the expression.
+\item \code{dim(Expression)}: The \code{c(row, col)} dimensions of the expression.
 
-\item \code{is_real}: A logical value indicating whether the expression is real.
+\item \code{is_real(Expression)}: A logical value indicating whether the expression is real.
 
-\item \code{is_imag}: A logical value indicating whether the expression is imaginary.
+\item \code{is_imag(Expression)}: A logical value indicating whether the expression is imaginary.
 
-\item \code{is_complex}: A logical value indicating whether the expression is complex.
+\item \code{is_complex(Expression)}: A logical value indicating whether the expression is complex.
 
-\item \code{size}: The number of entries in the expression.
+\item \code{size(Expression)}: The number of entries in the expression.
 
-\item \code{ndim}: The number of dimensions of the expression.
+\item \code{ndim(Expression)}: The number of dimensions of the expression.
 
-\item \code{flatten}: Vectorizes the expression.
+\item \code{flatten(Expression)}: Vectorizes the expression.
 
-\item \code{is_scalar}: A logical value indicating whether the expression is a scalar.
+\item \code{is_scalar(Expression)}: A logical value indicating whether the expression is a scalar.
 
-\item \code{is_vector}: A logical value indicating whether the expression is a row or column vector.
+\item \code{is_vector(Expression)}: A logical value indicating whether the expression is a row or column vector.
 
-\item \code{is_matrix}: A logical value indicating whether the expression is a matrix.
+\item \code{is_matrix(Expression)}: A logical value indicating whether the expression is a matrix.
 
-\item \code{nrow}: Number of rows in the expression.
+\item \code{nrow(Expression)}: Number of rows in the expression.
 
-\item \code{ncol}: Number of columns in the expression.
+\item \code{ncol(Expression)}: Number of columns in the expression.
+
 }}
-

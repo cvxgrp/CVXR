@@ -27,8 +27,8 @@ maximization and vice versa.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{perform}: Flip a minimization objective to a maximization and vice versa.
+\item \code{perform(object = FlipObjective, problem = Problem)}: Flip a minimization objective to a maximization and vice versa.
 
-\item \code{invert}: Map the solution of the flipped problem to that of the original.
+\item \code{invert(object = FlipObjective, solution = Solution, inverse_data = list)}: Map the solution of the flipped problem to that of the original.
+
 }}
-

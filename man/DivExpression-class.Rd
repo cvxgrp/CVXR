@@ -69,26 +69,26 @@ This class represents one expression divided by another expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Matrix division by a scalar.
+\item \code{to_numeric(DivExpression)}: Matrix division by a scalar.
 
-\item \code{is_quadratic}: Is the left-hand expression quadratic and the right-hand expression constant?
+\item \code{is_quadratic(DivExpression)}: Is the left-hand expression quadratic and the right-hand expression constant?
 
-\item \code{is_qpwa}: Is the expression quadratic of piecewise affine?
+\item \code{is_qpwa(DivExpression)}: Is the expression quadratic of piecewise affine?
 
-\item \code{dim_from_args}: The (row, col) dimensions of the left-hand expression.
+\item \code{dim_from_args(DivExpression)}: The (row, col) dimensions of the left-hand expression.
 
-\item \code{is_atom_convex}: Division is convex (affine) in its arguments only if the denominator is constant.
+\item \code{is_atom_convex(DivExpression)}: Division is convex (affine) in its arguments only if the denominator is constant.
 
-\item \code{is_atom_concave}: Division is concave (affine) in its arguments only if the denominator is constant.
+\item \code{is_atom_concave(DivExpression)}: Division is concave (affine) in its arguments only if the denominator is constant.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(DivExpression)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(DivExpression)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the right-hand expression positive?
+\item \code{is_incr(DivExpression)}: Is the right-hand expression positive?
 
-\item \code{is_decr}: Is the right-hand expression negative?
+\item \code{is_decr(DivExpression)}: Is the right-hand expression negative?
 
-\item \code{graph_implementation}: The graph implementation of the expression.
+\item \code{graph_implementation(DivExpression)}: The graph implementation of the expression.
+
 }}
-

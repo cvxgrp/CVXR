@@ -45,19 +45,19 @@ Horizontal concatenation of values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Horizontally concatenate the values using \code{cbind}.
+\item \code{to_numeric(HStack)}: Horizontally concatenate the values using \code{cbind}.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(HStack)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(HStack)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(HStack)}: Is the atom log-log concave?
 
-\item \code{validate_args}: Check all arguments have the same height.
+\item \code{validate_args(HStack)}: Check all arguments have the same height.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(HStack)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

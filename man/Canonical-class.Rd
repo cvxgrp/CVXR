@@ -37,20 +37,20 @@ This virtual class represents a canonical expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{expr}: The expression associated with the input.
+\item \code{expr(Canonical)}: The expression associated with the input.
 
-\item \code{id}: The unique ID of the canonical expression.
+\item \code{id(Canonical)}: The unique ID of the canonical expression.
 
-\item \code{canonical_form}: The graph implementation of the input.
+\item \code{canonical_form(Canonical)}: The graph implementation of the input.
 
-\item \code{variables}: List of \linkS4class{Variable} objects in the expression.
+\item \code{variables(Canonical)}: List of \linkS4class{Variable} objects in the expression.
 
-\item \code{parameters}: List of \linkS4class{Parameter} objects in the expression.
+\item \code{parameters(Canonical)}: List of \linkS4class{Parameter} objects in the expression.
 
-\item \code{constants}: List of \linkS4class{Constant} objects in the expression.
+\item \code{constants(Canonical)}: List of \linkS4class{Constant} objects in the expression.
 
-\item \code{atoms}: List of \linkS4class{Atom} objects in the expression.
+\item \code{atoms(Canonical)}: List of \linkS4class{Atom} objects in the expression.
 
-\item \code{get_data}: Information needed to reconstruct the expression aside from its arguments.
+\item \code{get_data(Canonical)}: Information needed to reconstruct the expression aside from its arguments.
+
 }}
-

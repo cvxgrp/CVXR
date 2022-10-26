@@ -50,25 +50,25 @@ The nuclear norm, i.e. sum of the singular values of a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The nuclear norm (i.e., the sum of the singular values) of \code{A}.
+\item \code{to_numeric(NormNuc)}: The nuclear norm (i.e., the sum of the singular values) of \code{A}.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(NormNuc)}: Does the atom handle complex numbers?
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(NormNuc)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(NormNuc)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(NormNuc)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(NormNuc)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(NormNuc)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(NormNuc)}: The atom is not monotonic in any argument.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(NormNuc)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

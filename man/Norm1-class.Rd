@@ -68,33 +68,33 @@ This class represents the 1-norm of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(Norm1)}: The name and arguments of the atom.
 
-\item \code{to_numeric}: Returns the 1-norm of x along the given axis.
+\item \code{to_numeric(Norm1)}: Returns the 1-norm of x along the given axis.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(Norm1)}: Does the atom handle complex numbers?
 
-\item \code{sign_from_args}: The atom is always positive.
+\item \code{sign_from_args(Norm1)}: The atom is always positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(Norm1)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(Norm1)}: The atom is not concave.
 
-\item \code{is_incr}: Is the composition weakly increasing in argument \code{idx}?
+\item \code{is_incr(Norm1)}: Is the composition weakly increasing in argument \code{idx}?
 
-\item \code{is_decr}: Is the composition weakly decreasing in argument \code{idx}?
+\item \code{is_decr(Norm1)}: Is the composition weakly decreasing in argument \code{idx}?
 
-\item \code{is_pwl}: Is the atom piecewise linear?
+\item \code{is_pwl(Norm1)}: Is the atom piecewise linear?
 
-\item \code{get_data}: Returns the axis.
+\item \code{get_data(Norm1)}: Returns the axis.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(Norm1)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Norm1)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(Norm1)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -22,11 +22,11 @@ This base class represents expressions involving unary operators.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: Returns the expression in string form.
+\item \code{name(UnaryOperator)}: Returns the expression in string form.
 
-\item \code{to_numeric}: Applies the unary operator to the value.
+\item \code{to_numeric(UnaryOperator)}: Applies the unary operator to the value.
+
 }}
-
 \section{Slots}{
 
 \describe{

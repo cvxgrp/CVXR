@@ -38,12 +38,12 @@ this reduction can be used to convert geometric programs into convex form.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Is the problem DGP?
+\item \code{accepts(object = Dgp2Dcp, problem = Problem)}: Is the problem DGP?
 
-\item \code{perform}: Converts the DGP problem to a DCP problem.
+\item \code{perform(object = Dgp2Dcp, problem = Problem)}: Converts the DGP problem to a DCP problem.
 
-\item \code{canonicalize_expr}: Canonicalizes each atom within an Dgp2Dcp expression.
+\item \code{canonicalize_expr(Dgp2Dcp)}: Canonicalizes each atom within an Dgp2Dcp expression.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = Dgp2Dcp, solution = Solution, inverse_data = InverseData)}: Returns the solution to the original problem given the inverse_data.
+
 }}
-

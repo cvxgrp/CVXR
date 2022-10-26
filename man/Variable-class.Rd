@@ -43,17 +43,17 @@ This class represents an optimization variable.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name of the variable.
+\item \code{name(Variable)}: The name of the variable.
 
-\item \code{value}: Get the value of the variable.
+\item \code{value(Variable)}: Get the value of the variable.
 
-\item \code{grad}: The sub/super-gradient of the variable represented as a sparse matrix.
+\item \code{grad(Variable)}: The sub/super-gradient of the variable represented as a sparse matrix.
 
-\item \code{variables}: Returns itself as a variable.
+\item \code{variables(Variable)}: Returns itself as a variable.
 
-\item \code{canonicalize}: The canonical form of the variable.
+\item \code{canonicalize(Variable)}: The canonical form of the variable.
+
 }}
-
 \section{Slots}{
 
 \describe{

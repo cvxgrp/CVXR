@@ -56,29 +56,29 @@ This class represents the difference \eqn{1 - x} with domain \eqn{\{x : 0 < x < 
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(OneMinusPos)}: The name and arguments of the atom.
 
-\item \code{to_numeric}: Returns one minus the value.
+\item \code{to_numeric(OneMinusPos)}: Returns one minus the value.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(OneMinusPos)}: The dimensions of the atom.
 
-\item \code{sign_from_args}: Returns the sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(OneMinusPos)}: Returns the sign (is positive, is negative) of the atom.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(OneMinusPos)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(OneMinusPos)}: Is the atom concave?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(OneMinusPos)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(OneMinusPos)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the argument \code{idx}?
+\item \code{is_incr(OneMinusPos)}: Is the atom weakly increasing in the argument \code{idx}?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the argument \code{idx}?
+\item \code{is_decr(OneMinusPos)}: Is the atom weakly decreasing in the argument \code{idx}?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(OneMinusPos)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -47,23 +47,23 @@ This class represents the elementwise absolute value.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise absolute value of the input.
+\item \code{to_numeric(Abs)}: The elementwise absolute value of the input.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(Abs)}: Does the atom handle complex numbers?
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(Abs)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(Abs)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(Abs)}: The atom is not concave.
 
-\item \code{is_incr}: A logical value indicating whether the atom is weakly increasing.
+\item \code{is_incr(Abs)}: A logical value indicating whether the atom is weakly increasing.
 
-\item \code{is_decr}: A logical value indicating whether the atom is weakly decreasing.
+\item \code{is_decr(Abs)}: A logical value indicating whether the atom is weakly decreasing.
 
-\item \code{is_pwl}: Is \code{x} piecewise linear?
+\item \code{is_pwl(Abs)}: Is \code{x} piecewise linear?
+
 }}
-
 \section{Slots}{
 
 \describe{

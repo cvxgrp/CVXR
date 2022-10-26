@@ -31,17 +31,17 @@ This base class represents expressions involving binary operators.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: Returns the name of the BinaryOperator object.
+\item \code{name(BinaryOperator)}: Returns the name of the BinaryOperator object.
 
-\item \code{to_numeric}: Apply the binary operator to the values.
+\item \code{to_numeric(BinaryOperator)}: Apply the binary operator to the values.
 
-\item \code{sign_from_args}: Default to rule for multiplication.
+\item \code{sign_from_args(BinaryOperator)}: Default to rule for multiplication.
 
-\item \code{is_imag}: Is the expression imaginary?
+\item \code{is_imag(BinaryOperator)}: Is the expression imaginary?
 
-\item \code{is_complex}: Is the expression complex valued?
+\item \code{is_complex(BinaryOperator)}: Is the expression complex valued?
+
 }}
-
 \section{Slots}{
 
 \describe{

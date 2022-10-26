@@ -70,37 +70,37 @@ This class represents the quadratic form \eqn{x^T P x}
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(QuadForm)}: The name and arguments of the atom.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(QuadForm)}: Does the atom handle complex numbers?
 
-\item \code{to_numeric}: Returns the quadratic form.
+\item \code{to_numeric(QuadForm)}: Returns the quadratic form.
 
-\item \code{validate_args}: Checks the dimensions of the arguments.
+\item \code{validate_args(QuadForm)}: Checks the dimensions of the arguments.
 
-\item \code{sign_from_args}: Returns the sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(QuadForm)}: Returns the sign (is positive, is negative) of the atom.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(QuadForm)}: The dimensions of the atom.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(QuadForm)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(QuadForm)}: Is the atom concave?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(QuadForm)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(QuadForm)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the argument \code{idx}?
+\item \code{is_incr(QuadForm)}: Is the atom weakly increasing in the argument \code{idx}?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the argument \code{idx}?
+\item \code{is_decr(QuadForm)}: Is the atom weakly decreasing in the argument \code{idx}?
 
-\item \code{is_quadratic}: Is the atom quadratic?
+\item \code{is_quadratic(QuadForm)}: Is the atom quadratic?
 
-\item \code{is_pwl}: Is the atom piecewise linear?
+\item \code{is_pwl(QuadForm)}: Is the atom piecewise linear?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(QuadForm)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

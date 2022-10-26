@@ -42,16 +42,16 @@ An interface for the ECOS solver
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(ECOS)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by the ECOS solver to its respective CVXPY status.
+\item \code{status_map(ECOS)}: Converts status returned by the ECOS solver to its respective CVXPY status.
 
-\item \code{import_solver}: Imports the solver
+\item \code{import_solver(ECOS)}: Imports the solver
 
-\item \code{name}: Returns the name of the solver
+\item \code{name(ECOS)}: Returns the name of the solver
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = ECOS, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = ECOS, solution = list, inverse_data = list)}: Returns the solution to the original problem given the inverse_data.
+
 }}
-

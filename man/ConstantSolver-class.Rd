@@ -76,22 +76,22 @@ The ConstantSolver class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(ConstantSolver)}: Can the solver handle mixed-integer programs?
 
-\item \code{accepts}: Is the solver capable of solving the problem?
+\item \code{accepts(object = ConstantSolver, problem = Problem)}: Is the solver capable of solving the problem?
 
-\item \code{perform}: Returns a list of the ConstantSolver, Problem, and an empty list.
+\item \code{perform(object = ConstantSolver, problem = Problem)}: Returns a list of the ConstantSolver, Problem, and an empty list.
 
-\item \code{invert}: Returns the solution.
+\item \code{invert(object = ConstantSolver, solution = Solution, inverse_data = list)}: Returns the solution.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(ConstantSolver)}: Returns the name of the solver.
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(ConstantSolver)}: Imports the solver.
 
-\item \code{is_installed}: Is the solver installed?
+\item \code{is_installed(ConstantSolver)}: Is the solver installed?
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(ConstantSolver)}: Solve a problem represented by data returned from apply.
 
-\item \code{reduction_solve}: Solve the problem and return a \linkS4class{Solution} object.
+\item \code{reduction_solve(object = ConstantSolver, problem = ANY)}: Solve the problem and return a \linkS4class{Solution} object.
+
 }}
-

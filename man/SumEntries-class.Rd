@@ -43,15 +43,15 @@ This class represents the sum of all entries in a vector or matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Sum the entries along the specified axis.
+\item \code{to_numeric(SumEntries)}: Sum the entries along the specified axis.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(SumEntries)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(SumEntries)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(SumEntries)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

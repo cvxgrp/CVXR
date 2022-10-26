@@ -36,17 +36,17 @@ This class represents the imaginary part of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The imaginary part of the given value.
+\item \code{to_numeric(Imag)}: The imaginary part of the given value.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(Imag)}: The dimensions of the atom.
 
-\item \code{is_imag}: Is the atom imaginary?
+\item \code{is_imag(Imag)}: Is the atom imaginary?
 
-\item \code{is_complex}: Is the atom complex valued?
+\item \code{is_complex(Imag)}: Is the atom complex valued?
 
-\item \code{is_symmetric}: Is the atom symmetric?
+\item \code{is_symmetric(Imag)}: Is the atom symmetric?
+
 }}
-
 \section{Slots}{
 
 \describe{

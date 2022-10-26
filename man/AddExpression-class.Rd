@@ -68,25 +68,25 @@ This class represents the sum of any number of expressions.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim_from_args}: The dimensions of the expression.
+\item \code{dim_from_args(AddExpression)}: The dimensions of the expression.
 
-\item \code{name}: The string form of the expression.
+\item \code{name(AddExpression)}: The string form of the expression.
 
-\item \code{to_numeric}: Sum all the values.
+\item \code{to_numeric(AddExpression)}: Sum all the values.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(AddExpression)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log convex?
+\item \code{is_atom_log_log_concave(AddExpression)}: Is the atom log-log convex?
 
-\item \code{is_symmetric}: Is the atom symmetric?
+\item \code{is_symmetric(AddExpression)}: Is the atom symmetric?
 
-\item \code{is_hermitian}: Is the atom hermitian?
+\item \code{is_hermitian(AddExpression)}: Is the atom hermitian?
 
-\item \code{copy}: Returns a shallow copy of the AddExpression atom
+\item \code{copy(AddExpression)}: Returns a shallow copy of the AddExpression atom
 
-\item \code{graph_implementation}: The graph implementation of the expression.
+\item \code{graph_implementation(AddExpression)}: The graph implementation of the expression.
+
 }}
-
 \section{Slots}{
 
 \describe{

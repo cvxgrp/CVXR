@@ -29,10 +29,10 @@ account.
 }
 \section{Functions}{
 \itemize{
-\item \code{add_to_solver_blacklist}: Add to solver blacklist, useful for temporarily disabling a solver
+\item \code{add_to_solver_blacklist()}: Add to solver blacklist, useful for temporarily disabling a solver
 
-\item \code{remove_from_solver_blacklist}: Remove solvers from blacklist
+\item \code{remove_from_solver_blacklist()}: Remove solvers from blacklist
 
-\item \code{set_solver_blacklist}: Set solver blacklist to a value
+\item \code{set_solver_blacklist()}: Set solver blacklist to a value
+
 }}
-

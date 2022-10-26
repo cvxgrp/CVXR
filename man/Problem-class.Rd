@@ -99,53 +99,53 @@ This class represents a convex optimization problem.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{objective}: The objective of the problem.
+\item \code{objective(Problem)}: The objective of the problem.
 
-\item \code{objective<-}: Set the value of the problem objective.
+\item \code{objective(Problem) <- value}: Set the value of the problem objective.
 
-\item \code{constraints}: A list of the constraints of the problem.
+\item \code{constraints(Problem)}: A list of the constraints of the problem.
 
-\item \code{constraints<-}: Set the value of the problem constraints.
+\item \code{constraints(Problem) <- value}: Set the value of the problem constraints.
 
-\item \code{value}: The value from the last time the problem was solved (or NA if not solved).
+\item \code{value(Problem)}: The value from the last time the problem was solved (or NA if not solved).
 
-\item \code{value<-}: Set the value of the optimal objective.
+\item \code{value(Problem) <- value}: Set the value of the optimal objective.
 
-\item \code{status}: The status from the last time the problem was solved.
+\item \code{status(Problem)}: The status from the last time the problem was solved.
 
-\item \code{is_dcp}: A logical value indicating whether the problem statisfies DCP rules.
+\item \code{is_dcp(Problem)}: A logical value indicating whether the problem statisfies DCP rules.
 
-\item \code{is_dgp}: A logical value indicating whether the problem statisfies DGP rules.
+\item \code{is_dgp(Problem)}: A logical value indicating whether the problem statisfies DGP rules.
 
-\item \code{is_qp}: A logical value indicating whether the problem is a quadratic program.
+\item \code{is_qp(Problem)}: A logical value indicating whether the problem is a quadratic program.
 
-\item \code{canonicalize}: The graph implementation of the problem.
+\item \code{canonicalize(Problem)}: The graph implementation of the problem.
 
-\item \code{is_mixed_integer}: logical value indicating whether the problem is a mixed integer program.
+\item \code{is_mixed_integer(Problem)}: logical value indicating whether the problem is a mixed integer program.
 
-\item \code{variables}: List of \linkS4class{Variable} objects in the problem.
+\item \code{variables(Problem)}: List of \linkS4class{Variable} objects in the problem.
 
-\item \code{parameters}: List of \linkS4class{Parameter} objects in the problem.
+\item \code{parameters(Problem)}: List of \linkS4class{Parameter} objects in the problem.
 
-\item \code{constants}: List of \linkS4class{Constant} objects in the problem.
+\item \code{constants(Problem)}: List of \linkS4class{Constant} objects in the problem.
 
-\item \code{atoms}: List of \linkS4class{Atom} objects in the problem.
+\item \code{atoms(Problem)}: List of \linkS4class{Atom} objects in the problem.
 
-\item \code{size_metrics}: Information about the size of the problem.
+\item \code{size_metrics(Problem)}: Information about the size of the problem.
 
-\item \code{solver_stats}: Additional information returned by the solver.
+\item \code{solver_stats(Problem)}: Additional information returned by the solver.
 
-\item \code{solver_stats<-}: Set the additional information returned by the solver in the problem.
+\item \code{solver_stats(Problem) <- value}: Set the additional information returned by the solver in the problem.
 
-\item \code{get_problem_data}: Get the problem data passed to the specified solver.
+\item \code{get_problem_data(object = Problem, solver = character, gp = logical)}: Get the problem data passed to the specified solver.
 
-\item \code{get_problem_data}: Get the problem data passed to the specified solver.
+\item \code{get_problem_data(object = Problem, solver = character, gp = missing)}: Get the problem data passed to the specified solver.
 
-\item \code{unpack_results}: Parses the output from a solver and updates the problem state, including the status,
+\item \code{unpack_results(Problem)}: Parses the output from a solver and updates the problem state, including the status,
 objective value, and values of the primal and dual variables.
 Assumes the results are from the given solver.
-}}
 
+}}
 \section{Slots}{
 
 \describe{

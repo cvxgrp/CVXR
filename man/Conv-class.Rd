@@ -52,21 +52,21 @@ This class represents the 1-D discrete convolution of two vectors.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The convolution of the two values.
+\item \code{to_numeric(Conv)}: The convolution of the two values.
 
-\item \code{validate_args}: Check both arguments are vectors and the first is a constant.
+\item \code{validate_args(Conv)}: Check both arguments are vectors and the first is a constant.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(Conv)}: The dimensions of the atom.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(Conv)}: The sign of the atom.
 
-\item \code{is_incr}: Is the left-hand expression positive?
+\item \code{is_incr(Conv)}: Is the left-hand expression positive?
 
-\item \code{is_decr}: Is the left-hand expression negative?
+\item \code{is_decr(Conv)}: Is the left-hand expression negative?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Conv)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

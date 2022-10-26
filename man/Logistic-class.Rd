@@ -46,21 +46,21 @@ which is useful for logistic regression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
+\item \code{to_numeric(Logistic)}: Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(Logistic)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(Logistic)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(Logistic)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(Logistic)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is not weakly decreasing.
+\item \code{is_decr(Logistic)}: The atom is not weakly decreasing.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Logistic)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

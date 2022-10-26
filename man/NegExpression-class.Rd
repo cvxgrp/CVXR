@@ -58,18 +58,18 @@ This class represents the negation of an affine expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim_from_args}: The (row, col) dimensions of the expression.
+\item \code{dim_from_args(NegExpression)}: The (row, col) dimensions of the expression.
 
-\item \code{sign_from_args}: The (is positive, is negative) sign of the expression.
+\item \code{sign_from_args(NegExpression)}: The (is positive, is negative) sign of the expression.
 
-\item \code{is_incr}: The expression is not weakly increasing in any argument.
+\item \code{is_incr(NegExpression)}: The expression is not weakly increasing in any argument.
 
-\item \code{is_decr}: The expression is weakly decreasing in every argument.
+\item \code{is_decr(NegExpression)}: The expression is weakly decreasing in every argument.
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(NegExpression)}: Is the expression symmetric?
 
-\item \code{is_hermitian}: Is the expression Hermitian?
+\item \code{is_hermitian(NegExpression)}: Is the expression Hermitian?
 
-\item \code{graph_implementation}: The graph implementation of the expression.
+\item \code{graph_implementation(NegExpression)}: The graph implementation of the expression.
+
 }}
-

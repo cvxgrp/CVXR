@@ -59,27 +59,27 @@ The product of the entries in an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The product of all the entries.
+\item \code{to_numeric(ProdEntries)}: The product of all the entries.
 
-\item \code{sign_from_args}: Returns the sign (is positive, is negative) of the atom.
+\item \code{sign_from_args(ProdEntries)}: Returns the sign (is positive, is negative) of the atom.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(ProdEntries)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(ProdEntries)}: Is the atom concave?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(ProdEntries)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: is the atom log-log concave?
+\item \code{is_atom_log_log_concave(ProdEntries)}: is the atom log-log concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the argument \code{idx}?
+\item \code{is_incr(ProdEntries)}: Is the atom weakly increasing in the argument \code{idx}?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the argument \code{idx}?
+\item \code{is_decr(ProdEntries)}: Is the atom weakly decreasing in the argument \code{idx}?
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(ProdEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(ProdEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

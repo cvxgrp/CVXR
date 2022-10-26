@@ -50,18 +50,18 @@ This class represents the elementwise product of two expressions.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Multiplies the values elementwise.
+\item \code{to_numeric(Multiply)}: Multiplies the values elementwise.
 
-\item \code{dim_from_args}: The sum of the argument dimensions - 1.
+\item \code{dim_from_args(Multiply)}: The sum of the argument dimensions - 1.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Multiply)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Multiply)}: Is the atom log-log concave?
 
-\item \code{is_psd}: Is the expression a positive semidefinite matrix?
+\item \code{is_psd(Multiply)}: Is the expression a positive semidefinite matrix?
 
-\item \code{is_nsd}: Is the expression a negative semidefinite matrix?
+\item \code{is_nsd(Multiply)}: Is the expression a negative semidefinite matrix?
 
-\item \code{graph_implementation}: The graph implementation of the expression.
+\item \code{graph_implementation(Multiply)}: The graph implementation of the expression.
+
 }}
-

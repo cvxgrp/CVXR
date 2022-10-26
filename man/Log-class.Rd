@@ -53,27 +53,27 @@ This class represents the elementwise natural logarithm \eqn{\log(x)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise natural logarithm of the input value.
+\item \code{to_numeric(Log)}: The elementwise natural logarithm of the input value.
 
-\item \code{sign_from_args}: The sign of the atom is unknown.
+\item \code{sign_from_args(Log)}: The sign of the atom is unknown.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(Log)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(Log)}: The atom is concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Log)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Log)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(Log)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is not weakly decreasing.
+\item \code{is_decr(Log)}: The atom is not weakly decreasing.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Log)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints describng the domain of the node
+\item \code{.domain(Log)}: Returns constraints describng the domain of the node
+
 }}
-
 \section{Slots}{
 
 \describe{

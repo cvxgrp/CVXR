@@ -317,7 +317,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   }
 
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
-  if(class(problem@objective) == "Maximize")
+  if(inherits(problem@objective, "Maximize"))
     reductions <- c(reductions, FlipObjective())
 
   # First, attempt to canonicalize the problem to a linearly constrained QP.

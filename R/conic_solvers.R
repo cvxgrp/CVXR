@@ -8,17 +8,17 @@ is_stuffed_cone_constraint <- function(constraint) {
   if(length(variables(constraint)) != 1)
     return(FALSE)
   for(arg in constraint@args) {
-    if(class(arg) == "Reshape")
+    if(inherits(arg, "Reshape"))
       arg <- arg@args[[1]]
-    if(class(arg) == "AddExpression") {
+    if(inherits(arg, "AddExpression")) {
       if(!class(arg@args[[1]]) %in% c("MulExpression", "Multiply"))
         return(FALSE)
-      if(class(arg@args[[1]]@args[[1]]) != "Constant")
+      if(!inherits(arg@args[[1]]@args[[1]], "Constant"))
         return(FALSE)
-      if(class(arg@args[[2]]) != "Constant")
+      if(!inherits(arg@args[[2]], "Constant"))
         return(FALSE)
     } else if(class(arg) %in% c("MulExpression", "Multiply")) {
-      if(class(arg@args[[1]]) != "Constant")
+      if(!inherits(arg@args[[1]], "Constant"))
         return(FALSE)
     } else
       return(FALSE)
@@ -34,8 +34,8 @@ is_stuffed_cone_constraint <- function(constraint) {
 is_stuffed_cone_objective <- function(objective) {
   # Conic solvers require objectives to be stuffed in the following way.
   expr <- expr(objective)
-  return(is_affine(expr) && length(variables(expr)) == 1 && class(expr) == "AddExpression" && length(expr@args) == 2
-                         && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && class(expr@args[[2]]) == "Constant")
+  return(is_affine(expr) && length(variables(expr)) == 1 && inherits(expr, "AddExpression") && length(expr@args) == 2
+                         && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && inherits(expr@args[[2]], "Constant"))
 }
 
 #' Summary of cone dimensions present in constraints.
@@ -102,7 +102,7 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
 #' @param expr An \linkS4class{Expression} object.
 #' @return The coefficient and offset in \eqn{Ax + b}.
 ConicSolver.get_coeff_offset <- function(expr) {
-  if(class(expr) == "Reshape")   # May be a Reshape as root.
+  if(inherits(expr, "Reshape"))   # May be a Reshape as root.
     expr <- expr@args[[1]]
   if(length(expr@args[[1]]@args) == 0) {   # Convert data to float64.
     # expr is t(c) %*% x
@@ -179,7 +179,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     # Both of these constraints have but a single argument.
     # t(c) %*% x + b (<)= 0 if and only if t(c) %*% x (<)= b.
     return(list(Matrix(coeffs[[1]], sparse = TRUE), -offsets[[1]]))
-  else if(class(constr) == "SOC") {
+  else if(inherits(constr, "SOC")) {
     # Group each t row with appropriate X rows.
     if(constr@axis != 2)
       stop("SOC must be applied with axis == 2")
@@ -198,7 +198,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
     offset <- matrix(t(offset), ncol = 1)
     return(list(Matrix(stacked, sparse = TRUE), as.vector(offset)))
-  } else if(class(constr) == "ExpCone") {
+  } else if(inherits(constr, "ExpCone")) {
     for(i in 1:length(coeffs)) {
       mat <- ConicSolver.get_spacing_matrix(c(height, nrow(coeffs[[i]])), length(exp_cone_order), exp_cone_order[i])
       offsets[[i]] <- mat %*% offsets[[i]]
@@ -208,7 +208,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     coeff_sum <- Reduce("+", coeffs)
     offset_sum <- Reduce("+", offsets)
     return(list(coeff_sum, as.vector(offset_sum)))
-  } else if(class(constr) == "PSDConstraint") {
+  } else if(inherits(constr, "PSDConstraint")) {
     ## Sign flipped relative fo NonPos, Zero.
     return(list(-coeffs[[1L]], offsets[[1L]]))
   } else

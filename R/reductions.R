@@ -173,7 +173,7 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
 #' @describeIn Canonicalization Recursively canonicalize an Expression.
 setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
   # TODO: Don't copy affine expressions?
-  if(class(expr) == "PartialProblem") {
+  if(inherits(expr, "PartialProblem")) {
     canon <- canonicalize_tree(object, expr(expr@args[[1]]@objective))
     canon_expr <- canon[[1]]
     constrs <- canon[[2]]
@@ -450,7 +450,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
     obj_expr <- EvalParams.replace_params_with_consts(expr(problem@objective))
-    if(class(problem@objective) == "Maximize")
+    if(inherits(problem@objective, "Maximize"))
       objective <- Maximize(obj_expr)
     else
       objective <- Minimize(obj_expr)
@@ -499,7 +499,7 @@ setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), f
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn FlipObjective Flip a minimization objective to a maximization and vice versa.
 setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
-  if(class(problem@objective) == "Maximize")
+  if(inherits(problem@objective, "Maximize"))
     objective <- Minimize
   else
     objective <- Maximize
@@ -576,7 +576,7 @@ setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), 
   }
 
   # Map of old constraint id to new constraint id.
-  inverse_data@minimize <- class(problem@objective) == "Minimize"
+  inverse_data@minimize <- inherits(problem@objective, "Minimize")
   new_prob <- Problem(Minimize(new_obj), new_cons)
   return(list(object, new_prob, inverse_data))
 })

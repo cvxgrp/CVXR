@@ -33,7 +33,7 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
 
   constrs <- list()
   for(constraint in problem@constraints) {
-    if(class(constraint) == "EqConstraint")
+    if(inherits(constraint, "EqConstraint"))
       constraint <- lower_equality(constraint)
     constr <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
     real_constr <- constr[[1]]
@@ -111,7 +111,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
 #' in the tree.
 Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
   # TODO: Don't copy affine expressions?
-  if(class(expr) == "PartialProblem")
+  if(inherits(expr, "PartialProblem"))
     stop("Unimplemented")
   else {
     real_args <- list()

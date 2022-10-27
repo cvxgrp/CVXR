@@ -16,7 +16,7 @@ setMethod("initialize", "Dcp2Cone", function(.Object, ...) {
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn Dcp2Cone A problem is accepted if it is a minimization and is DCP.
 setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
-  class(problem@objective) == "Minimize" && is_dcp(problem)
+  inherits(problem@objective, "Minimize") && is_dcp(problem)
 })
 
 #' @describeIn Dcp2Cone Converts a DCP problem to a conic form.
@@ -44,7 +44,7 @@ ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing"
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConeMatrixStuffing Is the solver accepted?
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
- return(class(problem@objective) == "Minimize" &&
+ return(inherits(problem@objective, "Minimize") &&
         is_affine(expr(problem@objective)) &&
         length(convex_attributes(variables(problem))) == 0 &&
         are_args_affine(problem@constraints))

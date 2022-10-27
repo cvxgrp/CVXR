@@ -6,7 +6,7 @@
 #' @return Is the objective a stuffed QP?
 is_stuffed_qp_objective <- function(objective) {
   expr <- expr(objective)
-  return(class(expr) == "AddExpression" && length(expr@args) == 2 && class(expr@args[[1]]) == "QuadForm" && class(expr@args[[2]]) == "MulExpression" && is_affine(expr@args[[2]]))
+  return(inherits(expr, "AddExpression") && length(expr@args) == 2 && inherits(expr@args[[1]], "QuadForm") && inherits(expr@args[[2]], "MulExpression") && is_affine(expr@args[[2]]))
 }
 
 #'
@@ -18,9 +18,9 @@ setClass("QpSolver", contains = "ReductionSolver")
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn QpSolver Is this a QP problem?
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
-  return(class(problem@objective) == "Minimize" && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
-           all(sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" || class(c) == "NonPosConstraint" })))
-})
+  return(inherits(problem@objective, "Minimize") && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
+           all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint" ))))
+})  
 
 #' @describeIn QpSolver Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
@@ -43,8 +43,8 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
     eq_cons <- list()
     ineq_cons <- list()
   } else {
-    eq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "ZeroConstraint" })]
-    ineq_cons <- problem@constraints[sapply(problem@constraints, function(c) { class(c) == "NonPosConstraint" })]
+    eq_cons <- problem@constraints[sapply(problem@constraints, inherits, what = "ZeroConstraint" )]
+    ineq_cons <- problem@constraints[sapply(problem@constraints, inherits, what = "NonPosConstraint" )]
   }
 
   # TODO: This dependence on ConicSolver is hacky; something should change here.

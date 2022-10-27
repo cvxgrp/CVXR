@@ -206,7 +206,7 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
   if(is(expr, "Expression") && is_constant(expr)) {
     return(list(expr, list()))
-  } else if(class(expr) %in% names(object@canon_methods))
+  } else if(inherits(expr, names(object@canon_methods)))
     return(object@canon_methods[[class(expr)]](expr, args))   # TODO: Not working for DgpCanonMethods.
   else
     return(list(copy(expr, args), list()))

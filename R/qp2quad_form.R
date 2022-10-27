@@ -16,8 +16,8 @@ Qp2SymbolicQp.accepts <- function(problem) {
   is_qpwa(expr(problem@objective)) &&
   length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
   all(sapply(problem@constraints, function(c) {
-        ((class(c) == "NonPosConstraint" || class(c) == "IneqConstraint") && is_pwl(expr(c))) ||
-        ((class(c) == "ZeroConstraint" || class(c) == "EqConstraint") && are_args_affine(list(c)))
+        (inherits(c, c("NonPosConstraint", "IneqConstraint")) && is_pwl(expr(c))) ||
+        (inherits(c, c("ZeroConstraint", "EqConstraint")) && are_args_affine(list(c)))
   }))
 }
 
@@ -50,12 +50,12 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 QpMatrixStuffing <- setClass("QpMatrixStuffing", contains = "MatrixStuffing")
 
 setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem"), function(object, problem) {
-    class(problem@objective) == "Minimize" &&
+    inherits(problem@objective, "Minimize") &&
         is_quadratic(problem@objective) &&
         is_dcp(problem) &&
         length(convex_attributes(variables(problem))) == 0 &&
         are_args_affine(problem@constraints) &&
-        all(sapply(problem@constraints, function(c) { class(c) %in% c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") }))
+        all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") ))
 })
 
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {

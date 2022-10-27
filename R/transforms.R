@@ -122,16 +122,16 @@ linearize <- function(expr) {
 #
 # setMethod("get_data", "PartialProblem", function(object) { c(object@opt_vars, object@dont_opt_vars) })
 # setMethod("is_convex", "PartialProblem", function(object) {
-#   is_dcp(object@args[[1]]) && class(object@args[[1]]@objective) == "Minimize"
+#   is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Minimize")
 # })
 # setMethod("is_concave", "PartialProblem", function(object) {
-#   is_dcp(object@args[[1]]) && class(object@args[[1]]@objective) == "Maximize"
+#   is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective), "Maximize")
 # })
 # setMethod("is_log_log_convex", "PartialProblem", function(object) {
-#   is_dgp(object@args[[1]]) && class(object@args[[1]]@objective) == "Minimize"
+#   is_dgp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Minimize")
 # })
 # setMethod("is_log_log_concave", "PartialProblem", function(object) {
-#   is_dgp(object@args[[1]]) && class(object@args[[1]]@objective) == "Maximize"
+#   is_dgp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Maximize")
 # })
 # setMethod("is_nonneg", "PartialProblem", function(object) { is_nonneg(object@args[[1]]@objective@args[[1]]) })
 # setMethod("is_nonpos", "PartialProblem", function(object) { is_nonpos(object@args[[1]]@objective@args[[1]]) })
@@ -250,7 +250,7 @@ linearize <- function(expr) {
 #     obj <- objectives[[i]]
 #     sign <- ifelse(is_nonneg(Constant(priorities[[i]])), 1, -1)
 #     off_target <- sign * off_target
-#     if(class(obj) == "Minimize") {
+#     if(inherits(obj, "Minimize")) {
 #       expr <- (priorities[[i]] - off_target)*Pos(obj@args[[1]] - targets[[i]])
 #       expr <- expr + off_target*obj@args[[1]]
 #       if(length(limits) > 0)

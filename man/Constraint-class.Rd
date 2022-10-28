@@ -63,32 +63,32 @@ This virtual class represents a mathematical constraint.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{dim}: The dimensions of the constrained expression.
+\item \code{dim(Constraint)}: The dimensions of the constrained expression.
 
-\item \code{size}: The size of the constrained expression.
+\item \code{size(Constraint)}: The size of the constrained expression.
 
-\item \code{is_real}: Is the constraint real?
+\item \code{is_real(Constraint)}: Is the constraint real?
 
-\item \code{is_imag}: Is the constraint imaginary?
+\item \code{is_imag(Constraint)}: Is the constraint imaginary?
 
-\item \code{is_complex}: Is the constraint complex?
+\item \code{is_complex(Constraint)}: Is the constraint complex?
 
-\item \code{is_dcp}: Is the constraint DCP?
+\item \code{is_dcp(Constraint)}: Is the constraint DCP?
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(Constraint)}: Is the constraint DGP?
 
-\item \code{residual}: The residual of a constraint
+\item \code{residual(Constraint)}: The residual of a constraint
 
-\item \code{violation}: The violation of a constraint.
+\item \code{violation(Constraint)}: The violation of a constraint.
 
-\item \code{constr_value}: The value of a constraint.
+\item \code{constr_value(Constraint)}: The value of a constraint.
 
-\item \code{get_data}: Information needed to reconstruct the object aside from the args.
+\item \code{get_data(Constraint)}: Information needed to reconstruct the object aside from the args.
 
-\item \code{dual_value}: The dual values of a constraint.
+\item \code{dual_value(Constraint)}: The dual values of a constraint.
 
-\item \code{dual_value<-}: Replaces the dual values of a constraint..
+\item \code{dual_value(Constraint) <- value}: Replaces the dual values of a constraint..
 
-\item \code{size}: The size of the constrained expression.
+\item \code{size(ZeroConstraint)}: The size of the constrained expression.
+
 }}
-

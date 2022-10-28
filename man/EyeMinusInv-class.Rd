@@ -58,29 +58,29 @@ This atom is log-log convex.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The unity resolvent of the matrix.
+\item \code{to_numeric(EyeMinusInv)}: The unity resolvent of the matrix.
 
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(EyeMinusInv)}: The name and arguments of the atom.
 
-\item \code{dim_from_args}: The dimensions of the atom determined from its arguments.
+\item \code{dim_from_args(EyeMinusInv)}: The dimensions of the atom determined from its arguments.
 
-\item \code{sign_from_args}: The (is positive, is negative) sign of the atom.
+\item \code{sign_from_args(EyeMinusInv)}: The (is positive, is negative) sign of the atom.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(EyeMinusInv)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(EyeMinusInv)}: Is the atom concave?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(EyeMinusInv)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(EyeMinusInv)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the index?
+\item \code{is_incr(EyeMinusInv)}: Is the atom weakly increasing in the index?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the index?
+\item \code{is_decr(EyeMinusInv)}: Is the atom weakly decreasing in the index?
 
-\item \code{.grad}: Gives EyeMinusInv the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(EyeMinusInv)}: Gives EyeMinusInv the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

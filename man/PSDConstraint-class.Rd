@@ -62,17 +62,17 @@ This class represents the positive semidefinite constraint, \eqn{\frac{1}{2}(X +
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The string representation of the constraint.
+\item \code{name(PSDConstraint)}: The string representation of the constraint.
 
-\item \code{is_dcp}: The constraint is DCP if the left-hand and right-hand expressions are affine.
+\item \code{is_dcp(PSDConstraint)}: The constraint is DCP if the left-hand and right-hand expressions are affine.
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(PSDConstraint)}: Is the constraint DGP?
 
-\item \code{residual}: A \linkS4class{Expression} representing the residual of the constraint.
+\item \code{residual(PSDConstraint)}: A \linkS4class{Expression} representing the residual of the constraint.
 
-\item \code{canonicalize}: The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{PSDConstraint}.
+\item \code{canonicalize(PSDConstraint)}: The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{PSDConstraint}.
+
 }}
-
 \section{Slots}{
 
 \describe{

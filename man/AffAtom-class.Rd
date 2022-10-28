@@ -60,32 +60,32 @@ This virtual class represents an affine atomic expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(AffAtom)}: Does the atom handle complex numbers?
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(AffAtom)}: The sign of the atom.
 
-\item \code{is_imag}: Is the atom imaginary?
+\item \code{is_imag(AffAtom)}: Is the atom imaginary?
 
-\item \code{is_complex}: Is the atom complex valued?
+\item \code{is_complex(AffAtom)}: Is the atom complex valued?
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(AffAtom)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(AffAtom)}: The atom is concave.
 
-\item \code{is_incr}: The atom is weakly increasing in every argument.
+\item \code{is_incr(AffAtom)}: The atom is weakly increasing in every argument.
 
-\item \code{is_decr}: The atom is not weakly decreasing in any argument.
+\item \code{is_decr(AffAtom)}: The atom is not weakly decreasing in any argument.
 
-\item \code{is_quadratic}: Is every argument quadratic?
+\item \code{is_quadratic(AffAtom)}: Is every argument quadratic?
 
-\item \code{is_qpwa}: Is every argument quadratic of piecewise affine?
+\item \code{is_qpwa(AffAtom)}: Is every argument quadratic of piecewise affine?
 
-\item \code{is_pwl}: Is every argument piecewise linear?
+\item \code{is_pwl(AffAtom)}: Is every argument piecewise linear?
 
-\item \code{is_psd}: Is the atom a positive semidefinite matrix?
+\item \code{is_psd(AffAtom)}: Is the atom a positive semidefinite matrix?
 
-\item \code{is_nsd}: Is the atom a negative semidefinite matrix?
+\item \code{is_nsd(AffAtom)}: Is the atom a negative semidefinite matrix?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(AffAtom)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-

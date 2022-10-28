@@ -105,39 +105,39 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Throw an error if the power is negative and cannot be handled.
+\item \code{to_numeric(Power)}: Throw an error if the power is negative and cannot be handled.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(Power)}: The sign of the atom.
 
-\item \code{is_atom_convex}: Is \eqn{p \leq 0} or \eqn{p \geq 1}?
+\item \code{is_atom_convex(Power)}: Is \eqn{p \leq 0} or \eqn{p \geq 1}?
 
-\item \code{is_atom_concave}: Is \eqn{p \geq 0} or \eqn{p \leq 1}?
+\item \code{is_atom_concave(Power)}: Is \eqn{p \geq 0} or \eqn{p \leq 1}?
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Power)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Power)}: Is the atom log-log concave?
 
-\item \code{is_constant}: A logical value indicating whether the atom is constant.
+\item \code{is_constant(Power)}: A logical value indicating whether the atom is constant.
 
-\item \code{is_incr}: A logical value indicating whether the atom is weakly increasing.
+\item \code{is_incr(Power)}: A logical value indicating whether the atom is weakly increasing.
 
-\item \code{is_decr}: A logical value indicating whether the atom is weakly decreasing.
+\item \code{is_decr(Power)}: A logical value indicating whether the atom is weakly decreasing.
 
-\item \code{is_quadratic}: A logical value indicating whether the atom is quadratic.
+\item \code{is_quadratic(Power)}: A logical value indicating whether the atom is quadratic.
 
-\item \code{is_qpwa}: A logical value indicating whether the atom is quadratic of piecewise affine.
+\item \code{is_qpwa(Power)}: A logical value indicating whether the atom is quadratic of piecewise affine.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Power)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints describng the domain of the node
+\item \code{.domain(Power)}: Returns constraints describng the domain of the node
 
-\item \code{get_data}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
+\item \code{get_data(Power)}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 
-\item \code{copy}: Returns a shallow  copy of the power atom
+\item \code{copy(Power)}: Returns a shallow  copy of the power atom
 
-\item \code{name}: Returns the expression in string form.
+\item \code{name(Power)}: Returns the expression in string form.
+
 }}
-
 \section{Slots}{
 
 \describe{

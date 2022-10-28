@@ -86,18 +86,18 @@ The ReductionSolver class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(ReductionSolver)}: Can the solver handle mixed-integer programs?
 
-\item \code{name}: Returns the name of the solver
+\item \code{name(ReductionSolver)}: Returns the name of the solver
 
-\item \code{import_solver}: Imports the solver
+\item \code{import_solver(ReductionSolver)}: Imports the solver
 
-\item \code{is_installed}: Is the solver installed?
+\item \code{is_installed(ReductionSolver)}: Is the solver installed?
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(ReductionSolver)}: Solve a problem represented by data returned from apply.
 
-\item \code{reduction_solve}: Solve a problem represented by data returned from apply.
+\item \code{reduction_solve(object = ReductionSolver, problem = ANY)}: Solve a problem represented by data returned from apply.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(ECOS)}: Solve a problem represented by data returned from apply.
+
 }}
-

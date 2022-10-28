@@ -53,27 +53,27 @@ The maximum eigenvalue of a matrix, \eqn{\lambda_{\max}(A)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
+\item \code{to_numeric(LambdaMax)}: The largest eigenvalue of \code{A}. Requires that \code{A} be symmetric.
 
-\item \code{.domain}: Returns the constraints describing the domain of the atom.
+\item \code{.domain(LambdaMax)}: Returns the constraints describing the domain of the atom.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
+\item \code{.grad(LambdaMax)}: Gives the (sub/super)gradient of the atom with respect to each argument. Matrix expressions are vectorized, so the gradient is a matrix.
 
-\item \code{validate_args}: Check that \code{A} is square.
+\item \code{validate_args(LambdaMax)}: Check that \code{A} is square.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(LambdaMax)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The sign of the atom is unknown.
+\item \code{sign_from_args(LambdaMax)}: The sign of the atom is unknown.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(LambdaMax)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(LambdaMax)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(LambdaMax)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(LambdaMax)}: The atom is not monotonic in any argument.
+
 }}
-
 \section{Slots}{
 
 \describe{

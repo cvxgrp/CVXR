@@ -45,19 +45,19 @@ Vertical concatenation of values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Vertically concatenate the values using \code{rbind}.
+\item \code{to_numeric(VStack)}: Vertically concatenate the values using \code{rbind}.
 
-\item \code{validate_args}: Check all arguments have the same width.
+\item \code{validate_args(VStack)}: Check all arguments have the same width.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(VStack)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(VStack)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(VStack)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(VStack)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

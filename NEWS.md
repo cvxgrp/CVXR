@@ -1,3 +1,8 @@
+# CVXR 1.0-11
+
+* Being more careful about coercing to `dgCMatrix`
+  via `(as(as(<matrix>, "CsparseMatrix"), "generalMatrix"))`
+
 # CVXR 1.0-10
 
 * Now requiring the updated scs 3.0 as an import

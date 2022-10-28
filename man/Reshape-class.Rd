@@ -51,21 +51,21 @@ then unvectorizes it into the new dimensions. Entries are stored in column-major
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Reshape the value into the specified dimensions.
+\item \code{to_numeric(Reshape)}: Reshape the value into the specified dimensions.
 
-\item \code{validate_args}: Check the new shape has the same number of entries as the old.
+\item \code{validate_args(Reshape)}: Check the new shape has the same number of entries as the old.
 
-\item \code{dim_from_args}: The \code{c(rows, cols)} dimensions of the new expression.
+\item \code{dim_from_args(Reshape)}: The \code{c(rows, cols)} dimensions of the new expression.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Reshape)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Reshape)}: Is the atom log-log concave?
 
-\item \code{get_data}: Returns a list containing the new shape.
+\item \code{get_data(Reshape)}: Returns a list containing the new shape.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Reshape)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

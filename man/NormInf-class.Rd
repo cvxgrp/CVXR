@@ -66,34 +66,34 @@ This class represents the infinity-norm.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(NormInf)}: The name and arguments of the atom.
 
-\item \code{to_numeric}: Returns the infinity norm of \code{x}.
+\item \code{to_numeric(NormInf)}: Returns the infinity norm of \code{x}.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(NormInf)}: Does the atom handle complex numbers?
 
-\item \code{sign_from_args}: The atom is always positive.
+\item \code{sign_from_args(NormInf)}: The atom is always positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(NormInf)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(NormInf)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(NormInf)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(NormInf)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the composition weakly increasing in argument \code{idx}?
+\item \code{is_incr(NormInf)}: Is the composition weakly increasing in argument \code{idx}?
 
-\item \code{is_decr}: Is the composition weakly decreasing in argument \code{idx}?
+\item \code{is_decr(NormInf)}: Is the composition weakly decreasing in argument \code{idx}?
 
-\item \code{is_pwl}: Is the atom piecewise linear?
+\item \code{is_pwl(NormInf)}: Is the atom piecewise linear?
 
-\item \code{get_data}: Returns the axis.
+\item \code{get_data(NormInf)}: Returns the axis.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(NormInf)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(NormInf)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(NormInf)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-

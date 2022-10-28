@@ -49,15 +49,15 @@ It Assumes \eqn{t} is a vector the same length as \eqn{X}'s rows (columns) for a
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{format_constr}: Format SOC constraints as inequalities for the solver.
+\item \code{format_constr(SOCAxis)}: Format SOC constraints as inequalities for the solver.
 
-\item \code{num_cones}: The number of elementwise cones.
+\item \code{num_cones(SOCAxis)}: The number of elementwise cones.
 
-\item \code{cone_sizes}: The dimensions of a single cone.
+\item \code{cone_sizes(SOCAxis)}: The dimensions of a single cone.
 
-\item \code{size}: The dimensions of the (elementwise) second-order cones.
+\item \code{size(SOCAxis)}: The dimensions of the (elementwise) second-order cones.
+
 }}
-
 \section{Slots}{
 
 \describe{

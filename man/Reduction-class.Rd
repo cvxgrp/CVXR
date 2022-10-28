@@ -45,14 +45,14 @@ of provenance.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: States whether the reduction accepts a problem.
+\item \code{accepts(object = Reduction, problem = Problem)}: States whether the reduction accepts a problem.
 
-\item \code{reduce}: Reduces the owned problem to an equivalent problem.
+\item \code{reduce(Reduction)}: Reduces the owned problem to an equivalent problem.
 
-\item \code{retrieve}: Retrieves a solution to the owned problem.
+\item \code{retrieve(object = Reduction, solution = Solution)}: Retrieves a solution to the owned problem.
 
-\item \code{perform}: Performs the reduction on a problem and returns an equivalent problem.
+\item \code{perform(object = Reduction, problem = Problem)}: Performs the reduction on a problem and returns an equivalent problem.
 
-\item \code{invert}: Returns a solution to the original problem given the inverse data.
+\item \code{invert(object = Reduction, solution = Solution, inverse_data = list)}: Returns a solution to the original problem given the inverse data.
+
 }}
-

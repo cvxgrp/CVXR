@@ -28,13 +28,13 @@ This class represents an optimization objective.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{value}: The value of the objective expression.
+\item \code{value(Objective)}: The value of the objective expression.
 
-\item \code{is_quadratic}: Is the objective a quadratic function?
+\item \code{is_quadratic(Objective)}: Is the objective a quadratic function?
 
-\item \code{is_qpwa}: Is the objective a quadratic of piecewise affine function?
+\item \code{is_qpwa(Objective)}: Is the objective a quadratic of piecewise affine function?
+
 }}
-
 \section{Slots}{
 
 \describe{

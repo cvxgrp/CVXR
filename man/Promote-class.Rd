@@ -50,21 +50,21 @@ This class represents the promotion of a scalar expression into a vector/matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Promotes the value to the new dimensions.
+\item \code{to_numeric(Promote)}: Promotes the value to the new dimensions.
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(Promote)}: Is the expression symmetric?
 
-\item \code{dim_from_args}: Returns the (row, col) dimensions of the expression.
+\item \code{dim_from_args(Promote)}: Returns the (row, col) dimensions of the expression.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Promote)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Promote)}: Is the atom log-log concave?
 
-\item \code{get_data}: Returns information needed to reconstruct the expression besides the args.
+\item \code{get_data(Promote)}: Returns information needed to reconstruct the expression besides the args.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Promote)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

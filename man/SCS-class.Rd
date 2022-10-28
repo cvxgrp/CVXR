@@ -81,20 +81,20 @@ An interface for the SCS solver
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(SCS)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by SCS solver to its respective CVXPY status.
+\item \code{status_map(SCS)}: Converts status returned by SCS solver to its respective CVXPY status.
 
-\item \code{name}: Returns the name of the solver
+\item \code{name(SCS)}: Returns the name of the solver
 
-\item \code{import_solver}: Imports the solver
+\item \code{import_solver(SCS)}: Imports the solver
 
-\item \code{reduction_format_constr}: Return a linear operator to multiply by PSD constraint coefficients.
+\item \code{reduction_format_constr(SCS)}: Return a linear operator to multiply by PSD constraint coefficients.
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution
+\item \code{perform(object = SCS, problem = Problem)}: Returns a new problem and data for inverting the new solution
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = SCS, solution = list, inverse_data = list)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(SCS)}: Solve a problem represented by data returned from apply.
+
 }}
-

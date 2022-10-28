@@ -30,10 +30,10 @@ an equivalent real problem.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Checks whether or not the problem involves any complex numbers.
+\item \code{accepts(object = Complex2Real, problem = Problem)}: Checks whether or not the problem involves any complex numbers.
 
-\item \code{perform}: Converts a Complex problem into a Real one.
+\item \code{perform(object = Complex2Real, problem = Problem)}: Converts a Complex problem into a Real one.
 
-\item \code{invert}: Returns a solution to the original problem given the inverse data.
+\item \code{invert(object = Complex2Real, solution = Solution, inverse_data = InverseData)}: Returns a solution to the original problem given the inverse data.
+
 }}
-

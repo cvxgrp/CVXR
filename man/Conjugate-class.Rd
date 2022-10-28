@@ -41,19 +41,19 @@ This class represents the complex conjugate of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Elementwise complex conjugate of the constant.
+\item \code{to_numeric(Conjugate)}: Elementwise complex conjugate of the constant.
 
-\item \code{dim_from_args}: The (row, col) dimensions of the expression.
+\item \code{dim_from_args(Conjugate)}: The (row, col) dimensions of the expression.
 
-\item \code{is_incr}: Is the composition weakly increasing in argument idx?
+\item \code{is_incr(Conjugate)}: Is the composition weakly increasing in argument idx?
 
-\item \code{is_decr}: Is the composition weakly decreasing in argument idx?
+\item \code{is_decr(Conjugate)}: Is the composition weakly decreasing in argument idx?
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(Conjugate)}: Is the expression symmetric?
 
-\item \code{is_hermitian}: Is the expression hermitian?
+\item \code{is_hermitian(Conjugate)}: Is the expression hermitian?
+
 }}
-
 \section{Slots}{
 
 \describe{

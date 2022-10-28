@@ -67,27 +67,27 @@ See \linkS4class{Multiply} for the elementwise product.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Matrix multiplication.
+\item \code{to_numeric(MulExpression)}: Matrix multiplication.
 
-\item \code{dim_from_args}: The (row, col) dimensions of the expression.
+\item \code{dim_from_args(MulExpression)}: The (row, col) dimensions of the expression.
 
-\item \code{is_atom_convex}: Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
+\item \code{is_atom_convex(MulExpression)}: Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
 
-\item \code{is_atom_concave}: If the multiplication atom is convex, then it is affine.
+\item \code{is_atom_concave(MulExpression)}: If the multiplication atom is convex, then it is affine.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(MulExpression)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(MulExpression)}: Is the atom log-log concave?
 
-\item \code{is_incr}: Is the left-hand expression positive?
+\item \code{is_incr(MulExpression)}: Is the left-hand expression positive?
 
-\item \code{is_decr}: Is the left-hand expression negative?
+\item \code{is_decr(MulExpression)}: Is the left-hand expression negative?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MulExpression)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{graph_implementation}: The graph implementation of the expression.
+\item \code{graph_implementation(MulExpression)}: The graph implementation of the expression.
+
 }}
-
 \seealso{
 \linkS4class{Multiply}
 }

@@ -53,27 +53,27 @@ The natural logarithm of the determinant of a matrix, \eqn{\log\det(A)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
+\item \code{to_numeric(LogDet)}: The log-determinant of SDP matrix \code{A}. This is the sum of logs of the eigenvalues and is equivalent to the nuclear norm of the matrix logarithm of \code{A}.
 
-\item \code{validate_args}: Check that \code{A} is square.
+\item \code{validate_args(LogDet)}: Check that \code{A} is square.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(LogDet)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is non-negative.
+\item \code{sign_from_args(LogDet)}: The atom is non-negative.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(LogDet)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(LogDet)}: The atom is concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(LogDet)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(LogDet)}: The atom is not monotonic in any argument.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(LogDet)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(LogDet)}: Returns constraints describing the domain of the node
+
 }}
-
 \section{Slots}{
 
 \describe{

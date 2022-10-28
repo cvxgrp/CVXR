@@ -26,8 +26,8 @@ This class represents a reduction that expands convex variable attributes into c
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{perform}: Expand convex variable attributes to constraints.
+\item \code{perform(object = CvxAttr2Constr, problem = Problem)}: Expand convex variable attributes to constraints.
 
-\item \code{invert}: Performs the reduction on a problem and returns an equivalent problem.
+\item \code{invert(object = CvxAttr2Constr, solution = Solution, inverse_data = list)}: Performs the reduction on a problem and returns an equivalent problem.
+
 }}
-

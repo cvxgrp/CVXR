@@ -31,8 +31,12 @@ subject to cone_constr1(A_1*x + b_1, ...)
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Is the solver accepted?
+\item \code{accepts(object = ConeMatrixStuffing, problem = Problem)}: Is the solver accepted?
 
-\item \code{stuffed_objective}: Returns a list of the stuffed matrices
+\item \code{stuffed_objective(
+  object = ConeMatrixStuffing,
+  problem = Problem,
+  extractor = CoeffExtractor
+)}: Returns a list of the stuffed matrices
+
 }}
-

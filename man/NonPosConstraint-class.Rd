@@ -29,14 +29,14 @@ The NonPosConstraint class
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The string representation of the constraint.
+\item \code{name(NonPosConstraint)}: The string representation of the constraint.
 
-\item \code{is_dcp}: Is the constraint DCP?
+\item \code{is_dcp(NonPosConstraint)}: Is the constraint DCP?
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(NonPosConstraint)}: Is the constraint DGP?
 
-\item \code{canonicalize}: The graph implementation of the object.
+\item \code{canonicalize(NonPosConstraint)}: The graph implementation of the object.
 
-\item \code{residual}: The residual of the constraint.
+\item \code{residual(NonPosConstraint)}: The residual of the constraint.
+
 }}
-

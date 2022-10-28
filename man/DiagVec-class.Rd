@@ -48,21 +48,21 @@ This class represents the conversion of a vector into a diagonal matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Convert the vector constant into a diagonal matrix.
+\item \code{to_numeric(DiagVec)}: Convert the vector constant into a diagonal matrix.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(DiagVec)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(DiagVec)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(DiagVec)}: Is the atom log-log concave?
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(DiagVec)}: Is the expression symmetric?
 
-\item \code{is_hermitian}: Is the expression hermitian?
+\item \code{is_hermitian(DiagVec)}: Is the expression hermitian?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(DiagVec)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

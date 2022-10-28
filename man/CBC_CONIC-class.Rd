@@ -83,24 +83,24 @@ An interface to the CBC solver
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(CBC_CONIC)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by the CBC solver to its respective CVXPY status.
+\item \code{status_map(CBC_CONIC)}: Converts status returned by the CBC solver to its respective CVXPY status.
 
-\item \code{status_map_mip}: Converts status returned by the CBC solver to its respective CVXPY status for mixed integer problems.
+\item \code{status_map_mip(CBC_CONIC)}: Converts status returned by the CBC solver to its respective CVXPY status for mixed integer problems.
 
-\item \code{status_map_lp}: Converts status returned by the CBC solver to its respective CVXPY status for linear problems.
+\item \code{status_map_lp(CBC_CONIC)}: Converts status returned by the CBC solver to its respective CVXPY status for linear problems.
 
-\item \code{name}: Returns the name of the solver
+\item \code{name(CBC_CONIC)}: Returns the name of the solver
 
-\item \code{import_solver}: Imports the solver
+\item \code{import_solver(CBC_CONIC)}: Imports the solver
 
-\item \code{accepts}: Can CBC_CONIC solve the problem?
+\item \code{accepts(object = CBC_CONIC, problem = Problem)}: Can CBC_CONIC solve the problem?
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = CBC_CONIC, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = CBC_CONIC, solution = list, inverse_data = list)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(CBC_CONIC)}: Solve a problem represented by data returned from apply.
+
 }}
-

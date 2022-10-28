@@ -33,11 +33,11 @@ their constraint values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
+\item \code{accepts(object = Chain, problem = Problem)}: A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
 reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
 
-\item \code{perform}: Applies the chain to a problem and returns an equivalent problem.
+\item \code{perform(object = Chain, problem = Problem)}: Applies the chain to a problem and returns an equivalent problem.
 
-\item \code{invert}: Performs the reduction on a problem and returns an equivalent problem.
+\item \code{invert(object = Chain, solution = SolutionORList, inverse_data = list)}: Performs the reduction on a problem and returns an equivalent problem.
+
 }}
-

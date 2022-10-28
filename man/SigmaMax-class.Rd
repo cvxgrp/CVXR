@@ -50,25 +50,25 @@ The maximum singular value of a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The largest singular value of \code{A}.
+\item \code{to_numeric(SigmaMax)}: The largest singular value of \code{A}.
 
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(SigmaMax)}: Does the atom handle complex numbers?
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(SigmaMax)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(SigmaMax)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(SigmaMax)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(SigmaMax)}: The atom is concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(SigmaMax)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(SigmaMax)}: The atom is not monotonic in any argument.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(SigmaMax)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

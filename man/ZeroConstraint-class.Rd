@@ -32,16 +32,16 @@ The ZeroConstraint class
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The string representation of the constraint.
+\item \code{name(ZeroConstraint)}: The string representation of the constraint.
 
-\item \code{dim}: The dimensions of the constrained expression.
+\item \code{dim(ZeroConstraint)}: The dimensions of the constrained expression.
 
-\item \code{is_dcp}: Is the constraint DCP?
+\item \code{is_dcp(ZeroConstraint)}: Is the constraint DCP?
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(ZeroConstraint)}: Is the constraint DGP?
 
-\item \code{residual}: The residual of a constraint
+\item \code{residual(ZeroConstraint)}: The residual of a constraint
 
-\item \code{canonicalize}: The graph implementation of the object.
+\item \code{canonicalize(ZeroConstraint)}: The graph implementation of the object.
+
 }}
-

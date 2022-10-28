@@ -47,23 +47,23 @@ This class represents the elementwise operation \eqn{-xlog(x)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise entropy function evaluated at the value.
+\item \code{to_numeric(Entr)}: The elementwise entropy function evaluated at the value.
 
-\item \code{sign_from_args}: The sign of the atom is unknown.
+\item \code{sign_from_args(Entr)}: The sign of the atom is unknown.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(Entr)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(Entr)}: The atom is concave.
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(Entr)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is weakly decreasing.
+\item \code{is_decr(Entr)}: The atom is weakly decreasing.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Entr)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints descrbing the domain of the node
+\item \code{.domain(Entr)}: Returns constraints descrbing the domain of the node
+
 }}
-
 \section{Slots}{
 
 \describe{

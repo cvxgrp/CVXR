@@ -45,19 +45,19 @@ This class represents the sum of the diagonal entries in a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Sum the diagonal entries.
+\item \code{to_numeric(Trace)}: Sum the diagonal entries.
 
-\item \code{validate_args}: Check the argument is a square matrix.
+\item \code{validate_args(Trace)}: Check the argument is a square matrix.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(Trace)}: The atom is a scalar.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Trace)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Trace)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Trace)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

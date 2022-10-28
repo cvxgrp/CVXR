@@ -8,17 +8,17 @@ is_stuffed_cone_constraint <- function(constraint) {
   if(length(variables(constraint)) != 1)
     return(FALSE)
   for(arg in constraint@args) {
-    if(class(arg) == "Reshape")
+    if(inherits(arg, "Reshape"))
       arg <- arg@args[[1]]
-    if(class(arg) == "AddExpression") {
-      if(!class(arg@args[[1]]) %in% c("MulExpression", "Multiply"))
+    if(inherits(arg, "AddExpression")) {
+      if(!inherits(arg@args[[1]], c("MulExpression", "Multiply")))
         return(FALSE)
-      if(class(arg@args[[1]]@args[[1]]) != "Constant")
+      if(!inherits(arg@args[[1]]@args[[1]], "Constant"))
         return(FALSE)
-      if(class(arg@args[[2]]) != "Constant")
+      if(!inherits(arg@args[[2]], "Constant"))
         return(FALSE)
-    } else if(class(arg) %in% c("MulExpression", "Multiply")) {
-      if(class(arg@args[[1]]) != "Constant")
+    } else if(inherits(arg, c("MulExpression", "Multiply"))) {
+      if(!inherits(arg@args[[1]], "Constant"))
         return(FALSE)
     } else
       return(FALSE)
@@ -34,8 +34,8 @@ is_stuffed_cone_constraint <- function(constraint) {
 is_stuffed_cone_objective <- function(objective) {
   # Conic solvers require objectives to be stuffed in the following way.
   expr <- expr(objective)
-  return(is_affine(expr) && length(variables(expr)) == 1 && class(expr) == "AddExpression" && length(expr@args) == 2
-                         && class(expr@args[[1]]) %in% c("MulExpression", "Multiply") && class(expr@args[[2]]) == "Constant")
+  return(is_affine(expr) && length(variables(expr)) == 1 && inherits(expr, "AddExpression") && length(expr@args) == 2
+                         && inherits(expr@args[[1]], c("MulExpression", "Multiply")) && inherits(expr@args[[2]], "Constant"))
 }
 
 #' Summary of cone dimensions present in constraints.
@@ -90,9 +90,9 @@ setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConicSolver Can the problem be solved with a conic solver?
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
-  return(class(problem@objective) == "Minimize" && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
+  return(inherits(problem@objective, "Minimize") && (mip_capable(object) || !is_mixed_integer(problem)) && is_stuffed_cone_objective(problem@objective)
     && length(convex_attributes(variables(problem))) == 0 && (length(problem@constraints) > 0 || !requires_constr(object))
-    && all(sapply(problem@constraints, function(c) { class(c) %in% supported_constraints(object) }))
+    && all(sapply(problem@constraints, inherits, what = supported_constraints(object) ))
     && all(sapply(problem@constraints, is_stuffed_cone_constraint)))
 })
 
@@ -102,7 +102,7 @@ setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), fun
 #' @param expr An \linkS4class{Expression} object.
 #' @return The coefficient and offset in \eqn{Ax + b}.
 ConicSolver.get_coeff_offset <- function(expr) {
-  if(class(expr) == "Reshape")   # May be a Reshape as root.
+  if(inherits(expr, "Reshape"))   # May be a Reshape as root.
     expr <- expr@args[[1]]
   if(length(expr@args[[1]]@args) == 0) {   # Convert data to float64.
     # expr is t(c) %*% x
@@ -175,11 +175,11 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
   }
   height <- ifelse(length(coeffs) == 0, 0, sum(sapply(coeffs, function(c) { dim(c)[1] })))
 
-  if(class(constr) %in% c("NonPosConstraint", "ZeroConstraint"))
+  if(inherits(constr, c("NonPosConstraint", "ZeroConstraint")))
     # Both of these constraints have but a single argument.
     # t(c) %*% x + b (<)= 0 if and only if t(c) %*% x (<)= b.
     return(list(Matrix(coeffs[[1]], sparse = TRUE), -offsets[[1]]))
-  else if(class(constr) == "SOC") {
+  else if(inherits(constr, "SOC")) {
     # Group each t row with appropriate X rows.
     if(constr@axis != 2)
       stop("SOC must be applied with axis == 2")
@@ -198,7 +198,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
     offset <- matrix(t(offset), ncol = 1)
     return(list(Matrix(stacked, sparse = TRUE), as.vector(offset)))
-  } else if(class(constr) == "ExpCone") {
+  } else if(inherits(constr, "ExpCone")) {
     for(i in 1:length(coeffs)) {
       mat <- ConicSolver.get_spacing_matrix(c(height, nrow(coeffs[[i]])), length(exp_cone_order), exp_cone_order[i])
       offsets[[i]] <- mat %*% offsets[[i]]
@@ -208,7 +208,7 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     coeff_sum <- Reduce("+", coeffs)
     offset_sum <- Reduce("+", offsets)
     return(list(coeff_sum, as.vector(offset_sum)))
-  } else if(class(constr) == "PSDConstraint") {
+  } else if(inherits(constr, "PSDConstraint")) {
     ## Sign flipped relative fo NonPos, Zero.
     return(list(-coeffs[[1L]], offsets[[1L]]))
   } else
@@ -612,7 +612,9 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
   A  <- data[[A_KEY]]
   ## Fix for Matrix version 1.3
   ## if (inherits(A, "dsCMatrix")) A <- as(A, "dgCMatrix")
-  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
+  ## if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "dgCMatrix")
+  ## Matrix 1.5 change!
+  if (!inherits(A, "dgCMatrix")) A  <- as(as(A, "CsparseMatrix"), "generalMatrix")
 
   args <- list(A = A, b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
@@ -721,7 +723,7 @@ setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), funct
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
+    if(!inherits(constr, supported_constraints(object)))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -874,7 +876,7 @@ setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), fun
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
+    if(!inherits(constr, supported_constraints(object)))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -1170,7 +1172,7 @@ setMethod("accepts", signature(object = "CVXOPT", problem = "Problem"), function
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
+    if(!inherits(constr, supported_constraints(object)))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -1749,7 +1751,7 @@ setMethod("accepts", signature(object = "GUROBI_CONIC", problem = "Problem"), fu
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
+    if(!inherits(constr, supported_constraints(object)))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -2030,7 +2032,7 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
   if(!is_affine(problem@objective@args[[1]]))
     return(FALSE)
   for(constr in problem@constraints) {
-    if(!class(constr) %in% supported_constraints(object))
+    if(!inherits(constr, supported_constraints(object)))
       return(FALSE)
     for(arg in constr@args) {
       if(!is_affine(arg))
@@ -2109,7 +2111,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # Linear inequalities.
-  leq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "NonPosConstraint" })]
+  leq_constr <- problem@constraints[sapply(problem@constraints, inherits, what = "NonPosConstraint" )]
   if(length(leq_constr) > 0) {
     blform <- block_format(object, problem, leq_constr)   # G, h : G*z <= h.
     G <- blform[[1]]
@@ -2123,7 +2125,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # Linear equations.
-  eq_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ZeroConstraint" })]
+  eq_constr <- problem@constraints[sapply(problem@constraints, inherits, what = "ZeroConstraint")]
   if(length(eq_constr) > 0) {
     blform <- block_format(object, problem, eq_constr)   # G, h : G*z == h.
     G <- blform[[1]]
@@ -2137,7 +2139,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # Second order cone.
-  soc_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "SOC" })]
+  soc_constr <- problem@constraints[sapply(problem@constraints, inherits, what = "SOC" )]
   data[[DIMS]][[SOC_DIM]] <- list()
   for(ci in soc_constr)
     data[[DIMS]][[SOC_DIM]] <- c(data[[DIMS]][[SOC_DIM]], cone_sizes(ci))
@@ -2153,7 +2155,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # Exponential cone.
-  exp_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "ExpCone" })]
+  exp_constr <- problem@constraints[sapply(problem@constraints, inherits, what = "ExpCone" )]
   if(length(exp_constr) > 0) {
     # G*z <=_{EXP} h.
     blform <- block_format(object, problem, exp_constr, object@exp_cone_order)
@@ -2167,7 +2169,7 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   }
 
   # PSD constraints.
-  psd_constr <- problem@constraints[sapply(problem@constraints, function(ci) { class(ci) == "PSDConstraint" })]
+  psd_constr <- problem@constraints[sapply(problem@constraints, inherits, what = "PSDConstraint" )]
   if(length(psd_constr) > 0) {
     data[[DIMS]][[PSD_DIM]] <- list()
     for(c in psd_constr) {
@@ -2371,7 +2373,9 @@ setMethod("solve_via_data", "MOSEK", function(object, data, warm_start, verbose,
 
 
   ##G should already be sparse but Matrix 1.3.x causes problems.
-  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+  ## if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "dgCMatrix")
+  ## Matrix 1.5 change
+  if (!inherits(G, "dgCMatrix")) G  <- as(as(G, "CsparseMatrix"), "generalMatrix")
 
   G_sum <- summary(G)
   nrow_G_sparse <- nrow(G)
@@ -2837,7 +2841,7 @@ tri_to_full <- function(lower_tri, n) {
 #   if(!is_affine(problem@objective@args[[1]]))
 #     return(FALSE)
 #   for(constr in problem@constraints) {
-#     if(!class(constr) %in% supported_constraints(object))
+#     if(!inherits(constr, supported_constraints(object)))
 #       return(FALSE)
 #     for(arg in constr@args) {
 #       if(!is_affine(arg))

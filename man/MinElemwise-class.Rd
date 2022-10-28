@@ -57,27 +57,27 @@ This class represents the elementwise minimum.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise minimum.
+\item \code{to_numeric(MinElemwise)}: The elementwise minimum.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(MinElemwise)}: The sign of the atom.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(MinElemwise)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(MinElemwise)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(MinElemwise)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(MinElemwise)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(MinElemwise)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is not weakly decreasing.
+\item \code{is_decr(MinElemwise)}: The atom is not weakly decreasing.
 
-\item \code{is_pwl}: Are all the arguments piecewise linear?
+\item \code{is_pwl(MinElemwise)}: Are all the arguments piecewise linear?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MinElemwise)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

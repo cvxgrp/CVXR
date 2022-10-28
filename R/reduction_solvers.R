@@ -195,11 +195,11 @@ construct_solving_chain <- function(problem, candidates) {
   # The types of atoms to check for are SOC atoms, PSD atoms, and exponential atoms.
   atoms <- atoms(problem)
   cones <- c()
-  if(any(atoms %in% SOC_ATOMS) || any(sapply(problem@constraints, class) == "SOC"))
+  if(any(atoms %in% SOC_ATOMS) || any(sapply(problem@constraints, inherits, what = "SOC")))
     cones <- c(cones, "SOC")
-  if(any(atoms %in% EXP_ATOMS) || any(sapply(problem@constraints, class) == "ExpCone"))
+  if(any(atoms %in% EXP_ATOMS) || any(sapply(problem@constraints, inherits, what = "ExpCone")))
     cones <- c(cones, "ExpCone")
-  if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, class) == "PSDConstraint")
+  if(any(atoms %in% PSD_ATOMS) || any(sapply(problem@constraints, inherits, what = "PSDConstraint"))
                                || any(sapply(variables(problem), function(v) { is_psd(v) || is_nsd(v) })))
     cones <- c(cones, "PSDConstraint")
 
@@ -317,7 +317,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
   }
 
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
-  if(class(problem@objective) == "Maximize")
+  if(inherits(problem@objective, "Maximize"))
     reductions <- c(reductions, FlipObjective())
 
   # First, attempt to canonicalize the problem to a linearly constrained QP.

@@ -57,27 +57,27 @@ This class represents the elementwise maximum.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise maximum.
+\item \code{to_numeric(MaxElemwise)}: The elementwise maximum.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(MaxElemwise)}: The sign of the atom.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(MaxElemwise)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(MaxElemwise)}: The atom is not concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(MaxElemwise)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(MaxElemwise)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing.
+\item \code{is_incr(MaxElemwise)}: The atom is weakly increasing.
 
-\item \code{is_decr}: The atom is not weakly decreasing.
+\item \code{is_decr(MaxElemwise)}: The atom is not weakly decreasing.
 
-\item \code{is_pwl}: Are all the arguments piecewise linear?
+\item \code{is_pwl(MaxElemwise)}: Are all the arguments piecewise linear?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MaxElemwise)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

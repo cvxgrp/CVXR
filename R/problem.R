@@ -355,7 +355,7 @@ setClassUnion("SolutionORList", c("Solution", "list"))
                     ## environment at argument level poses problems in
                     ## R 3.6 at least
                     validity = function(object) {
-                      if(!(class(object@objective) %in% c("Minimize", "Maximize")))
+                      if(!inherits(object@objective, c("Minimize", "Maximize")))
                         stop("[Problem: objective] objective must be Minimize or Maximize")
                       if(!is.na(object@value))
                         stop("[Problem: value] value should not be set by user")
@@ -996,7 +996,7 @@ saveDualValues <- function(object, result_vec, constraints, constr_types) {
     active_constraints <- list()
     for(constr in object@constraints) {
         # Ignore constraints of the wrong type
-        if(class(constr) %in% constr_types)
+        if(inherits(constr, constr_types))
             active_constraints <- c(active_constraints, constr)
     }
     saveValuesById(active_constraints, constr_offsets, result_vec)

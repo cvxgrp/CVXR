@@ -31,7 +31,7 @@ setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), functio
 #' @param args A list of values corresponding to the DGP expression
 #' @describeIn Dgp2Dcp Canonicalizes each atom within an Dgp2Dcp expression.
 setMethod("canonicalize_expr", "Dgp2Dcp", function(object, expr, args) {
-  if(class(expr) %in% names(object@canon_methods))
+  if(inherits(expr, names(object@canon_methods)))
     return(object@canon_methods[[class(expr)]](expr, args))
   else
     return(list(copy(expr, args), list()))

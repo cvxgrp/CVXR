@@ -54,21 +54,21 @@ This class represents a parameter, either scalar or a matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{get_data}: Returns \code{list(dim, name, value, attributes)}.
+\item \code{get_data(Parameter)}: Returns \code{list(dim, name, value, attributes)}.
 
-\item \code{name}: The name of the parameter.
+\item \code{name(Parameter)}: The name of the parameter.
 
-\item \code{value}: The value of the parameter.
+\item \code{value(Parameter)}: The value of the parameter.
 
-\item \code{value<-}: Set the value of the parameter.
+\item \code{value(Parameter) <- value}: Set the value of the parameter.
 
-\item \code{grad}: An empty list since the gradient of a parameter is zero.
+\item \code{grad(Parameter)}: An empty list since the gradient of a parameter is zero.
 
-\item \code{parameters}: Returns itself as a parameter.
+\item \code{parameters(Parameter)}: Returns itself as a parameter.
 
-\item \code{canonicalize}: The canonical form of the parameter.
+\item \code{canonicalize(Parameter)}: The canonical form of the parameter.
+
 }}
-
 \section{Slots}{
 
 \describe{

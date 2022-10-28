@@ -27,8 +27,8 @@ their constaint values.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{perform}: Replace parameters with constant values.
+\item \code{perform(object = EvalParams, problem = Problem)}: Replace parameters with constant values.
 
-\item \code{invert}: Returns a solution to the original problem given the inverse_data.
+\item \code{invert(object = EvalParams, solution = Solution, inverse_data = list)}: Returns a solution to the original problem given the inverse_data.
+
 }}
-

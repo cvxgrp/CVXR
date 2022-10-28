@@ -33,7 +33,7 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
 
   constrs <- list()
   for(constraint in problem@constraints) {
-    if(class(constraint) == "EqConstraint")
+    if(inherits(constraint, "EqConstraint"))
       constraint <- lower_equality(constraint)
     constr <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
     real_constr <- constr[[1]]
@@ -111,7 +111,7 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
 #' in the tree.
 Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
   # TODO: Don't copy affine expressions?
-  if(class(expr) == "PartialProblem")
+  if(inherits(expr, "PartialProblem"))
     stop("Unimplemented")
   else {
     real_args <- list()
@@ -136,7 +136,7 @@ Complex2Real.canonicalize_tree <- function(expr, real2imag, leaf_map) {
 #' @param leaf_map A map that consists of a tree representation of the overall expression
 #' @return A list of the parsed out real and imaginary components of the expression at hand.
 Complex2Real.canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
-  if(class(expr) %in% names(Complex2Real.CANON_METHODS)) {
+  if(inherits(expr, names(Complex2Real.CANON_METHODS))) {
     expr_id <- as.character(id(expr))
     # Only canonicalize a variable/constant/parameter once.
     if(length(expr@args) == 0 && expr_id %in% names(leaf_map))

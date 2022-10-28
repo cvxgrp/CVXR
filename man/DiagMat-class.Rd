@@ -42,17 +42,17 @@ This class represents the extraction of the diagonal from a square matrix.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: Extract the diagonal from a square matrix constant.
+\item \code{to_numeric(DiagMat)}: Extract the diagonal from a square matrix constant.
 
-\item \code{dim_from_args}: The size of the atom.
+\item \code{dim_from_args(DiagMat)}: The size of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(DiagMat)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(DiagMat)}: Is the atom log-log concave?
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(DiagMat)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

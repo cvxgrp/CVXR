@@ -46,18 +46,18 @@ The EqConstraint class
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name}: The string representation of the constraint.
+\item \code{name(EqConstraint)}: The string representation of the constraint.
 
-\item \code{dim}: The dimensions of the constrained expression.
+\item \code{dim(EqConstraint)}: The dimensions of the constrained expression.
 
-\item \code{size}: The size of the constrained expression.
+\item \code{size(EqConstraint)}: The size of the constrained expression.
 
-\item \code{expr}: The expression to constrain.
+\item \code{expr(EqConstraint)}: The expression to constrain.
 
-\item \code{is_dcp}: Is the constraint DCP?
+\item \code{is_dcp(EqConstraint)}: Is the constraint DCP?
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(EqConstraint)}: Is the constraint DGP?
 
-\item \code{residual}: The residual of the constraint..
+\item \code{residual(EqConstraint)}: The residual of the constraint..
+
 }}
-

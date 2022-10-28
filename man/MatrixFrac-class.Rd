@@ -64,33 +64,33 @@ The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(MatrixFrac)}: Does the atom handle complex numbers?
 
-\item \code{to_numeric}: The trace of \eqn{X^TP^{-1}X}.
+\item \code{to_numeric(MatrixFrac)}: The trace of \eqn{X^TP^{-1}X}.
 
-\item \code{validate_args}: Check that the dimensions of \code{x} and \code{P} match.
+\item \code{validate_args(MatrixFrac)}: Check that the dimensions of \code{x} and \code{P} match.
 
-\item \code{dim_from_args}: The atom is a scalar.
+\item \code{dim_from_args(MatrixFrac)}: The atom is a scalar.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(MatrixFrac)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex.
+\item \code{is_atom_convex(MatrixFrac)}: The atom is convex.
 
-\item \code{is_atom_concave}: The atom is not concave.
+\item \code{is_atom_concave(MatrixFrac)}: The atom is not concave.
 
-\item \code{is_incr}: The atom is not monotonic in any argument.
+\item \code{is_incr(MatrixFrac)}: The atom is not monotonic in any argument.
 
-\item \code{is_decr}: The atom is not monotonic in any argument.
+\item \code{is_decr(MatrixFrac)}: The atom is not monotonic in any argument.
 
-\item \code{is_quadratic}: True if x is affine and P is constant.
+\item \code{is_quadratic(MatrixFrac)}: True if x is affine and P is constant.
 
-\item \code{is_qpwa}: True if x is piecewise linear and P is constant.
+\item \code{is_qpwa(MatrixFrac)}: True if x is piecewise linear and P is constant.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(MatrixFrac)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MatrixFrac)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+
 }}
-
 \section{Slots}{
 
 \describe{

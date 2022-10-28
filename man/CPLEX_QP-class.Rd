@@ -69,16 +69,16 @@ An interface for the CPLEX solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(CPLEX_QP)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by the CPLEX solver to its respective CVXPY status.
+\item \code{status_map(CPLEX_QP)}: Converts status returned by the CPLEX solver to its respective CVXPY status.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(CPLEX_QP)}: Returns the name of the solver.
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(CPLEX_QP)}: Imports the solver.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = CPLEX_QP, solution = list, inverse_data = InverseData)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(CPLEX_QP)}: Solve a problem represented by data returned from apply.
+
 }}
-

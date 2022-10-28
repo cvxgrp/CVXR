@@ -28,13 +28,13 @@ This class represents an optimization objective for minimization.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{canonicalize}: Pass on the target expression's objective and constraints.
+\item \code{canonicalize(Minimize)}: Pass on the target expression's objective and constraints.
 
-\item \code{is_dcp}: A logical value indicating whether the objective is convex.
+\item \code{is_dcp(Minimize)}: A logical value indicating whether the objective is convex.
 
-\item \code{is_dgp}: A logical value indicating whether the objective is log-log convex.
+\item \code{is_dgp(Minimize)}: A logical value indicating whether the objective is log-log convex.
+
 }}
-
 \section{Slots}{
 
 \describe{

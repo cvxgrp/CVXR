@@ -33,15 +33,15 @@ This class represents the elementwise operation \eqn{\log(1 + x)}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The elementwise natural logarithm of one plus the input value.
+\item \code{to_numeric(Log1p)}: The elementwise natural logarithm of one plus the input value.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(Log1p)}: The sign of the atom.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Log1p)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain}: Returns constraints describng the domain of the node
+\item \code{.domain(Log1p)}: Returns constraints describng the domain of the node
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -74,20 +74,20 @@ An interface for the CVXOPT solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(CVXOPT)}: Can the solver handle mixed-integer programs?
 
-\item \code{status_map}: Converts status returned by the CVXOPT solver to its respective CVXPY status.
+\item \code{status_map(CVXOPT)}: Converts status returned by the CVXOPT solver to its respective CVXPY status.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(CVXOPT)}: Returns the name of the solver.
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(CVXOPT)}: Imports the solver.
 
-\item \code{accepts}: Can CVXOPT solve the problem?
+\item \code{accepts(object = CVXOPT, problem = Problem)}: Can CVXOPT solve the problem?
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = CVXOPT, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = CVXOPT, solution = list, inverse_data = list)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(CVXOPT)}: Solve a problem represented by data returned from apply.
+
 }}
-

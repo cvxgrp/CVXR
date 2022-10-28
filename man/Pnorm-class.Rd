@@ -93,39 +93,39 @@ For \eqn{p < 1, p\neq 0}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{allow_complex}: Does the atom handle complex numbers?
+\item \code{allow_complex(Pnorm)}: Does the atom handle complex numbers?
 
-\item \code{to_numeric}: The p-norm of \code{x}.
+\item \code{to_numeric(Pnorm)}: The p-norm of \code{x}.
 
-\item \code{validate_args}: Check that the arguments are valid.
+\item \code{validate_args(Pnorm)}: Check that the arguments are valid.
 
-\item \code{sign_from_args}: The atom is positive.
+\item \code{sign_from_args(Pnorm)}: The atom is positive.
 
-\item \code{is_atom_convex}: The atom is convex if \eqn{p \geq 1}.
+\item \code{is_atom_convex(Pnorm)}: The atom is convex if \eqn{p \geq 1}.
 
-\item \code{is_atom_concave}: The atom is concave if \eqn{p < 1}.
+\item \code{is_atom_concave(Pnorm)}: The atom is concave if \eqn{p < 1}.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Pnorm)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Pnorm)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
+\item \code{is_incr(Pnorm)}: The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
 
-\item \code{is_decr}: The atom is weakly decreasing if \eqn{p > 1} and \code{x} is negative.
+\item \code{is_decr(Pnorm)}: The atom is weakly decreasing if \eqn{p > 1} and \code{x} is negative.
 
-\item \code{is_pwl}: The atom is not piecewise linear unless \eqn{p = 1} or \eqn{p = \infty}.
+\item \code{is_pwl(Pnorm)}: The atom is not piecewise linear unless \eqn{p = 1} or \eqn{p = \infty}.
 
-\item \code{get_data}: Returns \code{list(p, axis)}.
+\item \code{get_data(Pnorm)}: Returns \code{list(p, axis)}.
 
-\item \code{name}: The name and arguments of the atom.
+\item \code{name(Pnorm)}: The name and arguments of the atom.
 
-\item \code{.domain}: Returns constraints describing the domain of the node
+\item \code{.domain(Pnorm)}: Returns constraints describing the domain of the node
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(Pnorm)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(Pnorm)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-
 \section{Slots}{
 
 \describe{

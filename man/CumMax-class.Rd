@@ -57,27 +57,27 @@ This class represents the cumulative maximum of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The cumulative maximum along the axis.
+\item \code{to_numeric(CumMax)}: The cumulative maximum along the axis.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(CumMax)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(CumMax)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
 
-\item \code{dim_from_args}: The dimensions of the atom determined from its arguments.
+\item \code{dim_from_args(CumMax)}: The dimensions of the atom determined from its arguments.
 
-\item \code{sign_from_args}: The (is positive, is negative) sign of the atom.
+\item \code{sign_from_args(CumMax)}: The (is positive, is negative) sign of the atom.
 
-\item \code{get_data}: Returns the axis along which the cumulative max is taken.
+\item \code{get_data(CumMax)}: Returns the axis along which the cumulative max is taken.
 
-\item \code{is_atom_convex}: Is the atom convex?
+\item \code{is_atom_convex(CumMax)}: Is the atom convex?
 
-\item \code{is_atom_concave}: Is the atom concave?
+\item \code{is_atom_concave(CumMax)}: Is the atom concave?
 
-\item \code{is_incr}: Is the atom weakly increasing in the index?
+\item \code{is_incr(CumMax)}: Is the atom weakly increasing in the index?
 
-\item \code{is_decr}: Is the atom weakly decreasing in the index?
+\item \code{is_decr(CumMax)}: Is the atom weakly decreasing in the index?
+
 }}
-
 \section{Slots}{
 
 \describe{

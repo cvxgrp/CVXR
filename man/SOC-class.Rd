@@ -63,25 +63,25 @@ This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{residual}: The residual of the second-order constraint.
+\item \code{residual(SOC)}: The residual of the second-order constraint.
 
-\item \code{get_data}: Information needed to reconstruct the object aside from the args.
+\item \code{get_data(SOC)}: Information needed to reconstruct the object aside from the args.
 
-\item \code{format_constr}: Format SOC constraints as inequalities for the solver.
+\item \code{format_constr(SOC)}: Format SOC constraints as inequalities for the solver.
 
-\item \code{num_cones}: The number of elementwise cones.
+\item \code{num_cones(SOC)}: The number of elementwise cones.
 
-\item \code{size}: The number of entries in the combined cones.
+\item \code{size(SOC)}: The number of entries in the combined cones.
 
-\item \code{cone_sizes}: The dimensions of the second-order cones.
+\item \code{cone_sizes(SOC)}: The dimensions of the second-order cones.
 
-\item \code{is_dcp}: An SOC constraint is DCP if each of its arguments is affine.
+\item \code{is_dcp(SOC)}: An SOC constraint is DCP if each of its arguments is affine.
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(SOC)}: Is the constraint DGP?
 
-\item \code{canonicalize}: The canonicalization of the constraint.
+\item \code{canonicalize(SOC)}: The canonicalization of the constraint.
+
 }}
-
 \section{Slots}{
 
 \describe{

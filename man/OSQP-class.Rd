@@ -66,14 +66,14 @@ An interface for the OSQP solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{status_map}: Converts status returned by the OSQP solver to its respective CVXPY status.
+\item \code{status_map(OSQP)}: Converts status returned by the OSQP solver to its respective CVXPY status.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(OSQP)}: Returns the name of the solver.
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(OSQP)}: Imports the solver.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = OSQP, solution = list, inverse_data = InverseData)}: Returns the solution to the original problem given the inverse_data.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(OSQP)}: Solve a problem represented by data returned from apply.
+
 }}
-

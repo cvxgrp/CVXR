@@ -38,9 +38,9 @@ Conic solver class with reduction semantics.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Can the problem be solved with a conic solver?
+\item \code{accepts(object = ConicSolver, problem = Problem)}: Can the problem be solved with a conic solver?
 
-\item \code{reduction_format_constr}: Return a list representing a cone program whose problem data tensors
+\item \code{reduction_format_constr(ConicSolver)}: Return a list representing a cone program whose problem data tensors
 will yield the coefficient "A" and offset "b" for the respective constraints:
 Linear Equations: A %*% x == b,
 Linear inequalities: A %*% x <= b,
@@ -48,8 +48,8 @@ Second order cone: A %*% x <=_{SOC} b,
 Exponential cone: A %*% x <=_{EXP} b,
 Semidefinite cone: A %*% x <=_{SOP} b.
 
-\item \code{group_coeff_offset}: Combine the constraints into a single matrix, offset.
+\item \code{group_coeff_offset(ConicSolver)}: Combine the constraints into a single matrix, offset.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = ConicSolver, solution = Solution, inverse_data = InverseData)}: Returns the solution to the original problem given the inverse_data.
+
 }}
-

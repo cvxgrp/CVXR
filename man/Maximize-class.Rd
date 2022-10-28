@@ -28,13 +28,13 @@ This class represents an optimization objective for maximization.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{canonicalize}: Negates the target expression's objective.
+\item \code{canonicalize(Maximize)}: Negates the target expression's objective.
 
-\item \code{is_dcp}: A logical value indicating whether the objective is concave.
+\item \code{is_dcp(Maximize)}: A logical value indicating whether the objective is concave.
 
-\item \code{is_dgp}: A logical value indicating whether the objective is log-log concave.
+\item \code{is_dgp(Maximize)}: A logical value indicating whether the objective is log-log concave.
+
 }}
-
 \section{Slots}{
 
 \describe{

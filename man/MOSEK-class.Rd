@@ -81,24 +81,24 @@ An interface for the MOSEK solver.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable}: Can the solver handle mixed-integer programs?
+\item \code{mip_capable(MOSEK)}: Can the solver handle mixed-integer programs?
 
-\item \code{import_solver}: Imports the solver.
+\item \code{import_solver(MOSEK)}: Imports the solver.
 
-\item \code{name}: Returns the name of the solver.
+\item \code{name(MOSEK)}: Returns the name of the solver.
 
-\item \code{accepts}: Can MOSEK solve the problem?
+\item \code{accepts(object = MOSEK, problem = Problem)}: Can MOSEK solve the problem?
 
-\item \code{block_format}: Returns a large matrix "coeff" and a vector of constants "offset" such
+\item \code{block_format(MOSEK)}: Returns a large matrix "coeff" and a vector of constants "offset" such
 that every \linkS4class{Constraint} in "constraints" holds at z in R^n iff
 "coeff" * z <=_K offset", where K is a product of cones supported by MOSEK
 and CVXR (zero cone, nonnegative orthant, second order cone, exponential cone). The
 nature of K is inferred later by accessing the data in "lengths" and "ids".
 
-\item \code{perform}: Returns a new problem and data for inverting the new solution.
+\item \code{perform(object = MOSEK, problem = Problem)}: Returns a new problem and data for inverting the new solution.
 
-\item \code{solve_via_data}: Solve a problem represented by data returned from apply.
+\item \code{solve_via_data(MOSEK)}: Solve a problem represented by data returned from apply.
 
-\item \code{invert}: Returns the solution to the original problem given the inverse_data.
+\item \code{invert(object = MOSEK, solution = ANY, inverse_data = ANY)}: Returns the solution to the original problem given the inverse_data.
+
 }}
-

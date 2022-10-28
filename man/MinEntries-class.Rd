@@ -62,29 +62,29 @@ The minimum of an expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The largest entry in \code{x}.
+\item \code{to_numeric(MinEntries)}: The largest entry in \code{x}.
 
-\item \code{sign_from_args}: The sign of the atom.
+\item \code{sign_from_args(MinEntries)}: The sign of the atom.
 
-\item \code{is_atom_convex}: The atom is not convex.
+\item \code{is_atom_convex(MinEntries)}: The atom is not convex.
 
-\item \code{is_atom_concave}: The atom is concave.
+\item \code{is_atom_concave(MinEntries)}: The atom is concave.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(MinEntries)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(MinEntries)}: Is the atom log-log concave?
 
-\item \code{is_incr}: The atom is weakly increasing in every argument.
+\item \code{is_incr(MinEntries)}: The atom is weakly increasing in every argument.
 
-\item \code{is_decr}: The atom is not weakly decreasing in any argument.
+\item \code{is_decr(MinEntries)}: The atom is not weakly decreasing in any argument.
 
-\item \code{is_pwl}: Is \code{x} piecewise linear?
+\item \code{is_pwl(MinEntries)}: Is \code{x} piecewise linear?
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(MinEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.column_grad}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+\item \code{.column_grad(MinEntries)}: Gives the (sub/super)gradient of the atom w.r.t. each column variable
+
 }}
-
 \section{Slots}{
 
 \describe{

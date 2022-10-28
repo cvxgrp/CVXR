@@ -59,21 +59,21 @@ K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{residual}: The size of the \code{x} argument.
+\item \code{residual(ExpCone)}: The size of the \code{x} argument.
 
-\item \code{size}: The number of entries in the combined cones.
+\item \code{size(ExpCone)}: The number of entries in the combined cones.
 
-\item \code{num_cones}: The number of elementwise cones.
+\item \code{num_cones(ExpCone)}: The number of elementwise cones.
 
-\item \code{cone_sizes}: The dimensions of the exponential cones.
+\item \code{cone_sizes(ExpCone)}: The dimensions of the exponential cones.
 
-\item \code{is_dcp}: An exponential constraint is DCP if each argument is affine.
+\item \code{is_dcp(ExpCone)}: An exponential constraint is DCP if each argument is affine.
 
-\item \code{is_dgp}: Is the constraint DGP?
+\item \code{is_dgp(ExpCone)}: Is the constraint DGP?
 
-\item \code{canonicalize}: Canonicalizes by converting expressions to LinOps.
+\item \code{canonicalize(ExpCone)}: Canonicalizes by converting expressions to LinOps.
+
 }}
-
 \section{Slots}{
 
 \describe{

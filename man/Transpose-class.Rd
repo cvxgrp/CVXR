@@ -47,20 +47,20 @@ This class represents the matrix transpose.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The transpose of the given value.
+\item \code{to_numeric(Transpose)}: The transpose of the given value.
 
-\item \code{is_symmetric}: Is the expression symmetric?
+\item \code{is_symmetric(Transpose)}: Is the expression symmetric?
 
-\item \code{is_hermitian}: Is the expression hermitian?
+\item \code{is_hermitian(Transpose)}: Is the expression hermitian?
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(Transpose)}: The dimensions of the atom.
 
-\item \code{is_atom_log_log_convex}: Is the atom log-log convex?
+\item \code{is_atom_log_log_convex(Transpose)}: Is the atom log-log convex?
 
-\item \code{is_atom_log_log_concave}: Is the atom log-log concave?
+\item \code{is_atom_log_log_concave(Transpose)}: Is the atom log-log concave?
 
-\item \code{get_data}: Returns the axes for transposition.
+\item \code{get_data(Transpose)}: Returns the axes for transposition.
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(Transpose)}: The graph implementation of the atom.
+
 }}
-

@@ -19,6 +19,6 @@ This class eliminates piecewise linear atoms.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{accepts}: Does this problem contain piecewise linear atoms?
-}}
+\item \code{accepts(object = EliminatePwl, problem = Problem)}: Does this problem contain piecewise linear atoms?
 
+}}

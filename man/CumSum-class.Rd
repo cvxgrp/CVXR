@@ -44,17 +44,17 @@ This class represents the cumulative sum.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{to_numeric}: The cumulative sum of the values along the specified axis.
+\item \code{to_numeric(CumSum)}: The cumulative sum of the values along the specified axis.
 
-\item \code{dim_from_args}: The dimensions of the atom.
+\item \code{dim_from_args(CumSum)}: The dimensions of the atom.
 
-\item \code{get_data}: Returns the axis along which the cumulative sum is taken.
+\item \code{get_data(CumSum)}: Returns the axis along which the cumulative sum is taken.
 
-\item \code{.grad}: Gives the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(CumSum)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{graph_implementation}: The graph implementation of the atom.
+\item \code{graph_implementation(CumSum)}: The graph implementation of the atom.
+
 }}
-
 \section{Slots}{
 
 \describe{

@@ -1,7 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/404.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/articles/cvxr_intro.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/articles/index.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/articles/version1.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/authors.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/index.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/news/index.html</loc>
   </url>
   <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/Abs-class.html</loc>
@@ -946,6 +967,9 @@
     <loc>https://www.cvxgrp.org/CVXR/reference/import_solver.html</loc>
   </url>
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/index.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/installed_solvers.html</loc>
   </url>
   <url>
@@ -1211,11 +1235,5 @@
   </url>
   <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/vstack.html</loc>
-  </url>
-  <url>
-    <loc>https://www.cvxgrp.org/CVXR/articles/cvxr_intro.html</loc>
-  </url>
-  <url>
-    <loc>https://www.cvxgrp.org/CVXR/articles/version1.html</loc>
   </url>
 </urlset>

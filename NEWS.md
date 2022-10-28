@@ -2,6 +2,7 @@
 
 * Being more careful about coercing to `dgCMatrix`
   via `(as(as(<matrix>, "CsparseMatrix"), "generalMatrix"))`
+* Modify all class inheritance checks to use `inherits()`
 
 # CVXR 1.0-10
 

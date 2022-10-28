@@ -1,10 +1,10 @@
-pandoc: 2.16.1
-pkgdown: 1.6.1
+pandoc: 2.19.2
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   cvxr_intro: cvxr_intro.html
   version1: version1.html
-last_built: 2021-11-11T19:42Z
+last_built: 2022-10-28T20:26Z
 urls:
   reference: https://www.cvxgrp.org/CVXR/reference
   article: https://www.cvxgrp.org/CVXR/articles

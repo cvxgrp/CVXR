@@ -96,8 +96,3 @@ programming, MOSEK and GUROBI examples.
 # CVXR 0.94-4
 
 * First CRAN release 2017-11-20. 
-
-# CVXR pre-0.94-4
-
-* Several wrong turns and much hand-wringing. Complete rewrite in
-  preparation for release.

@@ -814,6 +814,10 @@ Power <- function(x, p, max_denom = 1024) { .Power(x = x, p = p, max_denom = max
 
 setMethod("initialize", "Power", function(.Object, ..., x, p, max_denom = 1024, w = NA_real_, approx_error = NA_real_) {
   p_old <- p
+  if(len(p) != 1)
+    stop("p must be a numeric scalar")
+  if(is.na(p) || is.null(p))
+    stop("p cannot be NA or NULL")
 
   # How we convert p to a rational depends on the branch of the function
   if(p > 1) {

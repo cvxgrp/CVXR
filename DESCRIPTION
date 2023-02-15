@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-11
+Version: 1.0-11-1
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -39,7 +39,7 @@ Description: An object-oriented modeling language for disciplined
     provided, both commercial and open source.
 Additional_repositories: https://bnaras.github.io/drat
 Depends:
-    R (>= 3.4.0)
+    R (>= 3.5.0)
 Imports:
     methods,
     R6,

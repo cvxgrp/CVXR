@@ -1700,24 +1700,6 @@ GUROBI_CONIC <- function() { new("GUROBI_CONIC") }
 setMethod("mip_capable", "GUROBI_CONIC", function(solver) { TRUE })
 setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
-# Is this one that's used? Should we delete?
-# Map of Gurobi status to CVXR status.
-# # @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
-# setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
-#   if(status == 2)
-#     return(OPTIMAL)
-#   else if(status == 3)
-#     return(INFEASIBLE)
-#   else if(status == 5)
-#     return(UNBOUNDED)
-#   else if(status %in% c(4, 6, 7, 8, 10, 11, 12, 13))
-#     return(SOLVER_ERROR)
-#   else if(status == 9)   # TODO: Could be anything. Means time expired.
-#     return(OPTIMAL_INACCURATE)
-#   else
-#     stop("GUROBI status unrecognized: ", status)
-# })
-
 #' @describeIn GUROBI_CONIC Returns the name of the solver.
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
 
@@ -1728,20 +1710,31 @@ setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
-    if(status == 2 || status == "OPTIMAL")
-    OPTIMAL
-  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
-    INFEASIBLE
-  else if(status == 5 || status == "UNBOUNDED")
-    UNBOUNDED
-  else if(status == 4 | status == "INF_OR_UNBD")
-    INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
-    SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
-  else
+  gurobi_status_codes <- get_solver_codes(GUROBI_NAME)
+  index <- match(x = status, table = gurobi_status_codes$status)
+  if (is.na(index)) {
     stop("GUROBI status unrecognized: ", status)
+  }
+  result <- gurobi_status_codes$cvxr_status[index]
+  attr(result, "gurobi_status_code") <- status
+  attr(result, "gurobi_status_desc") <- gurobi_status_codes$desc[index]
+  result
+
+  ## if(status == 2 || status == "OPTIMAL")
+  ##   OPTIMAL
+  ## else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
+  ##   INFEASIBLE
+  ## else if(status == 5 || status == "UNBOUNDED")
+  ##   UNBOUNDED
+  ## else if(status == 4 | status == "INF_OR_UNBD")
+  ##   INFEASIBLE_INACCURATE
+  ## else if(status %in% c(7,8,9,10,11,12))
+  ##   SOLVER_ERROR   # TODO: Could be anything
+  ## else if(status == 13)
+  ##   OPTIMAL_INACCURATE   # Means time expired.
+  ## else
+  ##   stop("GUROBI status unrecognized: ", status)
+
 })
 
 #' @param problem A \linkS4class{Problem} object.
@@ -1918,11 +1911,16 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
   params[names(solver_opts)] <- solver_opts
 
   solution <- list()
-  tryCatch({
-    result <- gurobi::gurobi(model, params)   # Solve.
+  result <- tryCatch(gurobi::gurobi(model, params), # Solve.
+                     error = function(e) NULL)
+  if (is.null(result)) {
+    result <- list(status = "SOLVER_ERROR") ## This ensures that status_map below will not bomb.
+  } else {
     solution[["value"]] <- result$objval
     solution[["primal"]] <- result$x
-
+    solution[[SOLVE_TIME]] <- result$runtime
+    solution[["num_iters"]] <- result$baritercount
+    
     #Only add duals if it's not a MIP
     if(sum(unlist(data[[BOOL_IDX]])) + sum(unlist(data[[INT_IDX]])) == 0){
       solution[["y"]] <- -append(result$pi, result$qcpi, dims@zero + dims@nonpos)
@@ -1935,13 +1933,10 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
         solution[["ineq_dual"]] <- solution[["y"]][-(1:dims@zero)]
       }
     }
+  }
 
-  }, error = function(e) {   # Error in the solution.
-  })
-
-  solution[[SOLVE_TIME]] <- result$runtime
   solution[["status"]] <- status_map(object, result$status)
-  solution[["num_iters"]] <- result$baritercount
+
 
   # Is there a better way to check if there is a solution?
   # if(solution[["status"]] == SOLVER_ERROR && !is.na(result$x)){

@@ -25,6 +25,8 @@ QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
 .CVXR_options <- new.env(parent = emptyenv())
 .CVXR_options$blacklisted_solvers  <- character(0)
 
+## CVXR global cache for storing solver codes etc.
+.CVXR_cache <- new.env(parent = emptyenv())
 
 #'
 #' List installed solvers
@@ -75,3 +77,19 @@ set_solver_blacklist <- function(solvers) {
     invisible(solvers)
 }
 
+#'
+#' Get solver codes from a saved file in `extdata` using solver
+#' canonical name and cache it if not already. For Internal use
+#' @param name canonical name for solver, see utilities.R
+#' @return data frame of at least four columns `status` (character),
+#'   `code` (int), `cvxr_status`, and `description` (character). In
+#'   some cases the `cvxr_status` may be `cvxr_status_qp`, or cvxr_status_conic` etc. 
+get_solver_codes <- function(name) {
+  result <- .CVXR_cache$status_codes[[name]]
+  if (is.null(result)) {
+    result <- .CVXR_cache$status_codes[[name]] <- 
+      readRDS(system.file("extdata", paste0(name, "_status_codes.RDS"), package = "CVXR"))
+  }
+  result
+}
+    

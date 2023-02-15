@@ -332,20 +332,31 @@ setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
-  if(status == 2 || status == "OPTIMAL")
-    OPTIMAL
-  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
-    INFEASIBLE
-  else if(status == 5 || status == "UNBOUNDED")
-    UNBOUNDED
-  else if(status == 4 | status == "INF_OR_UNBD")
-    INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
-    SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
-  else
+  gurobi_status_codes <- get_solver_codes(GUROBI_NAME)
+  index <- match(x = status, table = gurobi_status_codes$status)
+  if (is.na(index)) {
     stop("GUROBI status unrecognized: ", status)
+  }
+  result <- gurobi_status_codes$cvxr_status[index]
+  attr(result, "gurobi_status_code") <- status
+  attr(result, "gurobi_status_desc") <- gurobi_status_codes$desc[index]
+  result
+
+  ## if(status == 2 || status == "OPTIMAL")
+  ##   OPTIMAL
+  ## else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
+  ##   INFEASIBLE
+  ## else if(status == 5 || status == "UNBOUNDED")
+  ##   UNBOUNDED
+  ## else if(status == 4 | status == "INF_OR_UNBD")
+  ##   INFEASIBLE_INACCURATE
+  ## else if(status %in% c(7,8,9,10,11,12))
+  ##   SOLVER_ERROR   # TODO: Could be anything
+  ## else if(status == 13)
+  ##   OPTIMAL_INACCURATE   # Means time expired.
+  ## else
+  ##   stop("GUROBI status unrecognized: ", status)
+
 })
 
 #' @describeIn GUROBI_QP Returns the name of the solver.
@@ -547,11 +558,14 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
   # Solve problem.
   #results_dict <- gurobi(model, params)
   results_dict <- list()
-  tryCatch({
-    results_dict$solution <- gurobi::gurobi(model, params)   # Solve.
+  results_dict$solution <- tryCatch({
+    gurobi::gurobi(model, params)   # Solve.
   }, error = function(e) {   # Error in the solution.
-    results_dict$status <- 'SOLVER_ERROR'
+    NULL
   })
+  if (is.null(results_dict$solution)) {
+    results_dict$status <- 'SOLVER_ERROR'
+  }
   results_dict$model <- model
 
   return(results_dict)
@@ -562,19 +576,28 @@ setMethod("solve_via_data", "GUROBI_QP", function(object, data, warm_start, verb
 #' @describeIn GUROBI_QP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
   model <- solution$model
-  solution <- solution$solution
   x_grb <- model$x
   n <- length(x_grb)
   constraints_grb <- model$rhs
   m = length(constraints_grb)
 
   attr <- list()
-  attr[[SOLVE_TIME]] <- solution$runtime
-  attr[[NUM_ITERS]] <- solution$baritercount
 
+  ## if solver succeeded, we would have a non-null "solution" object
+  ## which would further have a "status" object
+  ## else it would be null and a "status" object would be available.
+  if (!is.null(solution$solution)) {
+    solution <- solution$solution
+  }
+
+  ## This will error out if the solver errored out.
   status <- status_map(object, solution$status)
 
   if(status %in% SOLUTION_PRESENT) {
+    ## solution <- solution$solution
+    attr[[SOLVE_TIME]] <- solution$runtime
+    attr[[NUM_ITERS]] <- solution$baritercount
+
     opt_val <- solution$objval
     x <- solution$x
 

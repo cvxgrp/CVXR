@@ -2542,6 +2542,9 @@ setMethod("invert", "MOSEK", function(object, solution, inverse_data) {
   else
     status <- status_map(solution_status)
 
+  attr(status, "mosek_response_code") <- solution$response$code
+  attr(status, "mosek_response_msg") <- solution$response$msg
+  
   ## For integer problems, problem status determines infeasibility (no solution).
   ##  if(sol == mosek.soltype.itg && problem_status == mosek.prosta.prim_infeas)
   ## Using reference https://docs.mosek.com/9.0/rmosek/accessing-solution.html

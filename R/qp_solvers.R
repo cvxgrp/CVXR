@@ -793,3 +793,184 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
 
   return(results)
 })
+
+
+#'
+#' An interface for the HIGHS solver.
+#'
+#' @name HIGHS_QP-class
+#' @aliases HIGHS_QP
+#' @rdname HIGHS_QP-class
+#' @export
+setClass("HIGHS_QP", contains = "QpSolver")
+
+#' @rdname HIGHS_QP-class
+#' @export
+HIGHS_QP <- function() { new("HIGHS_QP") }
+
+#' @param x,object,solver A \linkS4class{HIGHS_QP} object.
+#' @describeIn HIGHS_QP Can the solver handle mixed-integer programs?
+setMethod("mip_capable", "HIGHS_QP", function(solver) { TRUE })
+
+# TODO: Add more!
+#' @param status A status code returned by the solver.
+#' @describeIn HIGHS_QP Converts status returned by the HIGHS solver to its respective CVXPY status.
+setMethod("status_map", "HIGHS_QP", function(solver, status) {
+  if(status == 7)
+    OPTIMAL
+  else if(status %in% c(8, 9))
+    INFEASIBLE
+  else if(status == 10)
+    UNBOUNDED
+  else if(status %in% c(13, 14))
+    USER_LIMIT
+  else if(status %in% c(0:6, 11:12, 15))
+    SOLVER_ERROR
+  else 
+    stop("HIGHS status unrecognized: ", status)
+})
+
+#' @describeIn HIGHS_QP Returns the name of the solver.
+setMethod("name", "HIGHS_QP", function(x) { HIGHS_NAME })
+
+#' @describeIn HIGHS_QP Imports the solver.
+setMethod("import_solver", "HIGHS_QP", function(solver) { requireNamespace("highs", quietly = TRUE) })
+
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
+#' @describeIn HIGHS_QP Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "HIGHS_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
+  model <- solution$model
+  attr <- list()
+
+  status <- status_map(object, model$status)
+
+  if(status %in% SOLUTION_PRESENT) {
+    # Get objective value.
+    opt_val <- model$objective_value
+
+    # Get solution.
+    primal_vars <- list()
+    primal_vars[[names(inverse_data@id_map)[1]]] <- model$primal_solution
+
+    # Only add duals if not a MIP.
+    dual_vars <- list()
+    if(!inverse_data@is_mip) {
+      ##y <- -as.matrix(model$solver_msg$row_dual) #there's a negative here, should we keep this?
+      y <- -as.matrix(model$solver_msg$row_dual)
+      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+    }
+  } else {
+    primal_vars <- list()
+    dual_vars <- list()
+    opt_val <- NA
+    if(status == UNBOUNDED)
+      opt_val <- -Inf
+  }
+
+  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+})
+
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn HIGHS_QP Solve a problem represented by data returned from apply.
+setMethod("solve_via_data", "HIGHS_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol,
+                                                 num_iter,
+                                                 solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
+  #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
+  P <- data[[P_KEY]]
+  q <- data[[Q_KEY]]
+  #A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE) #Equality constraints
+  A <- data[[A_KEY]]
+  b <- data[[B_KEY]] #Equality constraint RHS
+  #Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE) #Inequality constraints
+  Fmat <- data[[F_KEY]]
+  g <- data[[G_KEY]] #inequality constraint RHS
+  n_var <- data$n_var
+  n_eq <- data$n_eq
+  n_ineq <- data$n_ineq
+
+  #In case the b and g variables are empty
+  if( (0 %in% dim(b)) & (0 %in% dim(g)) ){
+    bvec <- rep(0, n_var)
+  } else{
+    bvec <- c(b, g)
+  }
+
+  #Create one big constraint matrix with both inequalities and equalities
+  Amat <- rbind(A, Fmat)
+  if(n_eq + n_ineq == 0){
+    #If both number of equalities and inequalities are 0, then constraints dont matter so set equal
+    sense_vec <- c(rep("E", n_var))
+  } else{
+    sense_vec = c(rep("E", n_eq), rep("L", n_ineq))
+  }
+
+  #Initializing variable types
+  vtype <- rep("C", n_var)
+  lower <- rep(-Inf, n_var)
+  upper <- rep(Inf, n_var)
+  
+  #Setting Boolean variable types .. SHOULD REALLY ADD CONSTRAINT TO BE BETWEEN 0 and 1
+  for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
+    index <- data[BOOL_IDX]$bool_vars_idx[[i]]
+    vtype[index] <- "I" #"B"
+    lower[index] <- 0
+    upper[index] <- 1
+  }
+
+  #Setting Integer variable types
+  for(i in seq_along(data[INT_IDX]$int_vars_idx)){
+    vtype[data[INT_IDX]$int_vars_idx[[i]]] <- "I"
+  }
+
+  # Throw parameter warnings
+  if(!all(c(is.null(verbose), is.null(reltol), is.null(abstol)))) {
+      warning("Ignoring inapplicable parameters verbose/reltol/abstol for HIGHS.")
+  }
+
+  control <- list()
+  if (!is.null(num_iter)) {
+    control$simplex_iteration_limit <- control$ipm_iteration_limit <- num_iter
+  }
+
+  if (!is.null(feastol)) {
+    control$primal_feasibility_tolerance <- control$dual_feasibility_tolerance  <-
+      control$mip_feasibility_tolerance <- feastol
+  }
+
+  #Setting verbosity off
+
+  # Solve problem.
+  results_dict <- list()
+
+  #In case A matrix is empty
+  if(0 %in% dim(Amat)){
+    Amat <- matrix(0, nrow = length(q), ncol = length(q))
+  }
+
+  results_dict <- list()
+
+  results_dict$model <- 
+    tryCatch({
+      # Define HIGHS problem and solve
+      highs::highs_solve(Q = P, L = q, A = Amat, rhs = bvec,
+                         control = control, types = vtype, lower = lower, upper = upper)
+      #control parameter would be used to set specific solver arguments. See highs_available_solver_options()
+    }, error = function(e) {
+      NULL
+    })
+  if (is.null(results_dict$solution)) {
+    results_dict$status <- SOLVER_ERROR
+  }
+  return(results_dict)
+})
+

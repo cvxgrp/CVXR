@@ -62,6 +62,7 @@ OSQP_NAME = "OSQP"
 SCS_NAME = "SCS"
 SUPER_SCS_NAME = "SUPER_SCS"
 XPRESS_NAME = "XPRESS"
+HIGHS_NAME = "HIGHS"
 # SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME, LPSOLVE_NAME, GLPK_NAME, MOSEK_NAME, GUROBI_NAME)   # TODO: Add more when we implement other solvers
 
 # Solver option defaults
@@ -74,7 +75,12 @@ SOLVER_DEFAULT_PARAM <- list(
     SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
     CPLEX = list(itlim = 10000),
     MOSEK = list(num_iter = 10000),
-    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
+    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6),
+    HIGHS = list(simplex_iteration_limit = 0L,
+                 ipm_iteration_limit = 0L,
+                 primal_feasibility_tolerance = 1e-7,
+                 dual_feasibility_tolerance = 1e-7,
+                 mip_feasibility_tolerance = 1e-7)
 )
 
 # Xpress-specific items.

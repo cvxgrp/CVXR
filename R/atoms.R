@@ -99,6 +99,12 @@ setMethod("is_atom_log_log_concave", "Atom", function(object) { FALSE })
 #' @rdname curvature-atom
 setMethod("is_atom_log_log_affine", "Atom", function(object) { is_atom_log_log_concave(object) && is_atom_log_log_convex(object) })
 
+#' @rdname curvature-atom
+setMethod("is_atom_quasiconvex", "Atom", function(object) { is_atom_convex(object) })
+
+#' @rdname curvature-atom
+setMethod("is_atom_quasiconcave", "Atom", function(object) { is_atom_concave(object) })
+
 #' @rdname curvature-comp
 setMethod("is_incr", "Atom", function(object, idx) { stop("Unimplemented") })
 
@@ -139,6 +145,16 @@ setMethod("is_concave", "Atom", function(object) {
     return(FALSE)
 })
 
+#' @describeIn Atom A logical value indicating whether the atom is a disciplined parameterized expression.
+setMethod("is_dpp", "Atom", function(object, context = "dcp") {
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dgp(object, dpp = TRUE))
+  else:
+    stop("Unsupported context ", context)
+})
+
 #' @describeIn Atom A logical value indicating whether the atom is log-log convex.
 setMethod("is_log_log_convex", "Atom", function(object) {
   # Verifies DGP composition rule.
@@ -173,18 +189,72 @@ setMethod("is_log_log_concave", "Atom", function(object) {
     return(FALSE)
 })
 
+setMethod(".non_const_idx", "Atom", function(object) {
+  return(which(sapply(object@args, is_constant)))
+})
+
+setMethod(".is_real", "Atom", function(object) {
+  # Returns TRUE if this atom is a real function:
+  #    The atom must have exactly one argument that is not a constant.
+  #    The argument must be a scalar.
+  #    The output must be a scalar.
+  non_const <- .non_const_idx(object)
+  return(is_scalar(object) && len(non_const) == 1 && is_scalar(object@args[[non_const[1]]]))
+})
+
+#' @describeIn Atom A logical value indicating whether the atom is quasiconvex.
+setMethod("is_quasiconvex", "Atom", function(object) {
+  if(is_convex(object))
+    return(TRUE)
+  if(class(object) == "MaxElemwise" || class(object) == "MaxEntries")
+    return(all(sapply(object@args, is_quasiconvex)))
+  non_const <- .non_const_idx(object)
+  if(.is_real(object) && is_incr(object, non_const[[1]]))
+    return(is_quasiconvex(object@args[[non_const[[1]]]]))
+  if(.is_real(object) && is_decr(object, non_const[[1]]))
+    return(is_quasiconcave(object@args[[non_const[[1]]]]))
+  if(is_atom_quasiconvex(object)) {
+    idx <- 1
+	for(arg in object@args) {
+	  if(!(is_affine(arg) || (is_convex(arg) && is_incr(object, idx)) || (is_concave(arg) && is_decr(object, idx))))
+	    return(FALSE)
+	  idx <- idx + 1
+    }
+	return(TRUE)
+  }
+  return(FALSE)
+})
+
+#' @describeIn Atom A logical value indicating whether the atom is quasiconcave.
+setMethod("is_quasiconcave", "Atom", function(object) {
+  if(is_concave(object))
+    return(TRUE)
+  if(class(object) == "MinElemwise" || class(object) == "MinEntries")
+    return(all(sapply(object@args, is_quasiconcave)))
+  non_const <- .non_const_idx(object)
+  if(.is_real(object) && is_incr(object, non_const[[1]]))
+    return(is_quasiconcave(object@args[[non_const[[1]]]]))
+  if(.is_real(object) && is_decr(object, non_const[[1]]))
+    return(is_quasiconvex(object@args[[non_const[[1]]]]))
+  if(is_atom_quasiconcave(object)) {
+    idx <- 1
+	for(arg in object@args) {
+	  if(!(is_affine(arg) || (is_concave(arg) && is_incr(object, idx)) || (is_convex(arg) && is_decr(object, idx))))
+	    return(FALSE)
+	  idx <- idx + 1
+    }
+	return(TRUE)
+  }
+  return(FALSE)
+})
+
 #' @describeIn Atom Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
   # Constant atoms are treated as a leaf.
-  if(is_constant(object)) {
-    # Parameterized expressions are evaluated later.
-    if(!is.na(parameters(object)) && length(parameters(object)) > 0) {
-      param <- CallbackParam(value(object), dim(object))
-      return(canonical_form(param))
-    # Non-parameterized expressions are evaluated immediately.
-    } else
+  if(is_constant(object) && !is.na(parameters(object)) && length(parameters(object)) > 0)
+      # Non-parameterized expressions are evaluated immediately.
       return(canonical_form(Constant(value(object))))
-  } else {
+  else {
     arg_objs <- list()
     constraints <- list()
     for(arg in object@args) {
@@ -212,9 +282,6 @@ setMethod("value_impl", "Atom", function(object) {
   # dims with 0's dropped in presolve.
   if(0 %in% obj_dim)
     result <- matrix(nrow = 0, ncol = 0)
-  # Catch the case when the expression is known to be zero through DCP analysis
-  else if(is_zero(object))
-    result <- matrix(0, nrow = obj_dim[1], ncol = obj_dim[2])
   else {
     arg_values <- list()
     for(arg in object@args) {

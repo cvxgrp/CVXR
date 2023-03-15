@@ -1100,6 +1100,114 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
 })
 
 #'
+#' The GmatMul atom.
+#' 
+#' Geometric matrix multiplication: \eqn{A \mathbin{\diamond} X}.
+#' 
+#' For \eqn{A \in \mathbf{R}^{m \times n}} and \eqn{X \in \mathbf{R}^{n \times p}_{++}}, this atom represents
+#' 
+#' \deqn{\left[\begin{array}{ccc} \prod_{j=1}^n X_{j1}^{A_{1j}} & \cdots & \prod_{j=1}^n X_{pj}^{A_{1j}} \\ \vdots &  & \vdots \\ \prod_{j=1}^n X_{j1}^{A_{mj}} & \cdots & \prod_{j=1}^n X_{pj}^{A_{mj}} \end{array}\right]}
+#'
+#' This atom is log-log affine in \eqn{X}.
+#' @slot A An \linkS4class{Expression} representing a constant matrix.
+#' @slot X An \linkS4class{Expression} representing a positive matrix.
+#' @name GmatMul-class
+#' @aliases GmatMul
+#' @rdname GmatMul-class
+.GmatMul <- setClass("GmatMul", representation(A = "ConstValORExpr", X = "ConstValORExpr"), contains = "Atom")
+
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @rdname GenLambdaMax-class
+GmatMul <- function(A, X) { .GmatMul(A = A, X = X) }
+
+setMethod("initialize", "GmatMul", function(.Object, ..., A, X) {
+  .Object@A <- as.Constant(A)
+  .Object@X <- X
+  callNextMethod(.Object, ..., atom_args = list(.Object@X))
+})
+
+#' @param object A \linkS4class{GmatMul} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn GmatMul Geometric matrix multiplication.
+setMethod("to_numeric", "GmatMul", function(object, values) {
+  logX <- base::log(values[[1]])
+  return(base::exp(value(object@A) %*% logX))
+})
+
+#' @describeIn GmatMul The name and arguments of the atom.
+setMethod("name", "GmatMul", function(x) {
+  sprintf("%s(%s, %s)", class(x), name(x@A), name(x@args[[1]]))
+})
+
+#' @describeIn GmatMul Check if the arguments are valid.
+setMethod("validate_args", "GmatMul", function(object) {
+  callNextMethod()
+  if(!is_constant(object@A))
+    stop("A must be constant")
+  if(length(parameters(A)) != 0 && !is(object@A, Parameter))
+    stop("A must be of class Constant or Parameter")
+  if(!is_pos(object@args[[1]]))
+    stop("X must be positive")
+})
+
+#' @describeIn GmatMul The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "GmatMul", function(object) { mul_shapes(dim(object@A), dim(object@args[[1]])) })
+
+#' @describeIn GmatMul Returns the parameter \code{A}.
+setMethod("get_data", "GmatMul", function(object) { list(object@A) })
+
+#' @describeIn GmatMul The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "GmatMul", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn GmatMul Is the atom convex?
+setMethod("is_atom_convex", "GmatMul", function(object) { FALSE })
+
+#' @describeIn GmatMul Is the atom concave?
+setMethod("is_atom_concave", "GmatMul", function(object) { FALSE })
+
+#' @describeIn GmatMul List of \linkS4class{Parameter} objects in the atom.
+setMethod("parameters", "GmatMul", function(object) { 
+  # The exponent matrix, which is not an argument, may be parametrized.
+  c(parameters(object@args[[1]]), parameters(obje)) 
+})
+
+#' @describeIn GmatMul Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "GmatMul", function(object) { 
+  if(dpp_scope_active()) {
+    # This branch applies curvature rules for DPP.
+    #
+    # Because a DPP scope is active, parameters will be
+    # treated as affine (like variables, not constants) by curvature
+    # analysis methods.
+    #
+    # A power X^A is log-log convex (actually, affine) as long as
+    # at least one of X and P do not contain parameters.
+    #
+    # Note by construction (see A is either a Constant or a Parameter, ie, 
+    # either is(A, Constant) or is(A, Parameter)).
+    X <- object@args[[1]]
+    A <- object@A
+    return(!(length(parameters(X)) != 0 && length(parameters(A)) != 0))
+  } else
+    return(TRUE)
+})
+
+#' @describeIn GmatMul Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "GmatMul", function(object) { is_log_log_convex(object) })
+
+#' @param idx An index into the atom.
+#' @describeIn GmatMul Is the atom weakly increasing in the index?
+setMethod("is_incr", "GmatMul", function(object, idx) { is_nonneg(object@A) })
+
+#' @describeIn GmatMul Is the atom weakly decreasing in the index?
+setMethod("is_decr", "GmatMul", function(object, idx) { is_nonpos(object@A) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn GmatMul Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "GmatMul", function(object, values) { return(NA_real_) })
+
+#'
 #' The HarmonicMean atom.
 #'
 #' The harmonic mean of \eqn{x}, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where \eqn{n} is the length of \eqn{x}.
@@ -2752,6 +2860,65 @@ setMethod(".grad", "SigmaMax", function(object, values) {
 })
 
 #'
+#' The SignEntries class.
+#'
+#' The sign of an expression (-1 for x <= 0, +1 for x > 0).
+#'
+#' @slot x An \linkS4class{Expression}.
+#' @name SignEntries-class
+#' @aliases SignEntries
+#' @rdname SignEntries-class
+.SignEntries <- setClass("SignEntries", representation(x = "ConstValORExpr"), contains = "Atom")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname SignEntries-class
+SignEntries <- function(x = x) { .SignEntries(x = x) }
+
+setMethod("initialize", "SignEntries", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{SignEntries} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn SignEntries The sign of \code{x}.
+setMethod("to_numeric", "SignEntries", function(object, values) {
+  x <- values[[1]]
+  x[x > 0] <- 1.0
+  x[x <= 0] <- -1.0
+  return(x)
+})
+
+#' @describeIn SignEntries The (row, col) shape of the atom.
+setMethod("dim_from_args", "SignEntries", function(object) { c(1,1) })
+
+#' @describeIn SignEntries The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args",  "SignEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
+
+#' @describeIn SignEntries Is the atom convex?
+setMethod("is_atom_convex", "SignEntries", function(object) { FALSE })
+
+#' @describeIn SignEntries Is the atom concave?
+setMethod("is_atom_concave", "SignEntries", function(object) { FALSE })
+
+#' @describeIn SignEntries Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+
+#' @describeIn SignEntries Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn SignEntries Is the atom weakly increasing?
+setMethod("is_incr", "SignEntries", function(object, idx) { FALSE })
+
+#' @describeIn SignEntries Is the atom weakly decreasing?
+setMethod("is_decr", "SignEntries", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn SignEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "SignEntries", function(object, values) { return(NA_real_) })
+
+#'
 #' The SumLargest class.
 #'
 #' The sum of the largest k values of a matrix.
@@ -2888,3 +3055,185 @@ TotalVariation <- function(value, ...) {
     SumEntries(Norm(stacked, p = 2, axis = 2))
   }
 }
+
+#'
+#' The TrInv atom.
+#' 
+#' The trace of the inverse of a positive definite matrix \eqn{X}, \eqn{tr(X^{-1})}.
+#'
+#' @slot X An \linkS4class{Expression} representing a positive definite matrix.
+#' @name TrInv-class
+#' @aliases TrInv
+#' @rdname TrInv-class
+.TrInv <- setClass("TrInv", representation(X = "ConstValORExpr"), contains = "Atom")
+
+#' @param X An \linkS4class{Expression}
+#' @rdname TrInv-class
+TrInv <- function(X) { .TrInv(X = X) }
+
+setMethod("initialize", "TrInv", function(.Object, ..., X) {
+  .Object@X <- X
+  callNextMethod(.Object, ..., atom_args = list(.Object@X))
+})
+
+#' @param object A \linkS4class{TrInv} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn TrInv The trace of the inverse of a positive definite matrix.
+setMethod("to_numeric", "TrInv", function(object, values) {
+  # If values[[1]] isn't Hermitian, return Inf.
+  if(base::norm(values[[1]] - Conj(t(values[[1]])), "F") >= 10^-8)
+    return(Inf)
+  # Take symmetric part of the input to enhance numerical stability.
+  symm <- (values[[1]] + t(values[[1]]))/2
+  eigVal <- eigen(symm, symmetric = TRUE, only.values = TRUE)$values
+  if(min(eigVal) <= 0)
+    return(Inf)
+  return(base::sum(eigVal^-1))
+})
+
+#' @describeIn TrInv Check that the matrix is square.
+setMethod("validate_args", "TrInv", function(object) {
+  X <- object@args[[1]]
+  if(len(dim(X)) == 1 || nrow(X) != ncol(X))
+    stop("The argument to TrInv must be a square matrix")
+})
+
+#' @describeIn TrInv The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "TrInv", function(object) { c(1,1) })
+
+#' @describeIn TrInv The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "TrInv", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn TrInv Is the atom convex?
+setMethod("is_atom_convex", "TrInv", function(object) { TRUE })
+
+#' @describeIn TrInv Is the atom concave?
+setMethod("is_atom_concave", "TrInv", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn TrInv Is the atom weakly increasing in the index?
+setMethod("is_incr", "TrInv", function(object, idx) { FALSE })
+
+#' @describeIn TrInv Is the atom weakly decreasing in the index?
+setMethod("is_decr", "TrInv", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn TrInv Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "TrInv", function(object, values) { 
+  X <- values[[1]]
+  eigen_val <- eigen(X, only.values = TRUE)$values
+  if(base::min(eigen_val) > 0) {
+    # Grad: -t(X^{-2})
+    D <- t(base::solve(X))
+    D <- -D %*% D
+    return(list(t(sparseMatrix(as.vector(D)))))
+  } else   # Outside domain
+    return(list(NA_real_))
+})
+
+#' @describeIn TrInv Returns constraints describing the domain of the node.
+setMethod(".domain", "TrInv", function(object) { list(object@args[[1]] %>>% 0) })
+
+#' @describeIn TrInv Returns the value of the atom.
+setMethod("value", "TrInv", function(object) {
+  arg_val <- value(object@args[[1]])
+  if(base::abs(arg_val - Conj(t(arg_val))) > (ATOM_EVAL_TOL + ATOM_EVAL_TOL*base::abs(Conj(t(arg_val)))))
+    stop("Input matrix was not Hermitian/symmetric")
+  for(p in parameters(object)) {
+    p_val <- value(p)
+    if(is.na(p_val) || is.null(p_val))
+      return(NA_real_)
+  }
+  return(value_impl(object))
+})
+
+#'
+#' The VonNeumannEntr atom.
+#' 
+#' The von Neumann entropy of the positive definite matrix \eqn{X \in \mathbb{S}_{+}^n}, \eqn{tr(X logm(X))},
+#' where tr() is the trace and logm() is the matrix logarithm.
+#' 
+#' May alternatively be expressed as \eqn{von_neumann_entr(X) = -\sum_{i=1}^n \lambda_i \log \lambda_i},
+#' where \eqn{\lambda_i} are the eigenvalues of \eqn{X}.
+#' 
+#' This atom does not enforce \eqn{tr(X) = 1} as is expected in applications from quantum mechanics.
+#' 
+#' @slot X An \linkS4class{Expression} representing a positive semidefinite matrix.
+#' @name VonNeumannEntr-class
+#' @aliases VonNeumannEntr
+#' @rdname VonNeumannEntr-class
+.VonNeumannEntr <- setClass("VonNeumannEntr", representation(X = "ConstValORExpr", quad_approx = "numeric"), contains = "Atom")
+
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @rdname VonNeumannEntr-class
+VonNeumannEntr <- function(X, quad_approx) { .VonNeumannEntr(X = X, quad_approx = quad_approx) }
+
+setMethod("initialize", "VonNeumannEntr", function(.Object, ..., X, quad_approx) {
+  # TODO: Add a check that X is symmetric/Hermitian.
+  .Object@X <- X
+  .Object@quad_approx <- as.integer(quad_approx)
+  callNextMethod(.Object, ..., atom_args = list(.Object@X))
+})
+
+#' @param object A \linkS4class{VonNeumannEntr} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn VonNeumannEntr The von Neumann entropy of the matrix.
+setMethod("to_numeric", "VonNeumannEntr", function(object, values) {
+  X <- values[[1]]
+  w <- eigen(X, symmetric = TRUE, only.values = TRUE)$values
+  
+  # Sum of the entropy of the eigenvalues w.
+  if(any(w < 0))
+    return(-Inf)
+  else if(all(w == 0))
+    return(0)
+  else {
+    w_pos <- w[w > 0]
+    w_entr <- -w_pos*base::log(w_pos)
+    return(base::sum(w_entr))
+  }
+})
+
+#' @describeIn VonNeumannEntr Check that the matrix is positive semidefinite.
+setMethod("validate_args", "VonNeumannEntr", function(object) {
+  X <- object@args[[1]]
+  if(size(X) > 1) {
+    if(ndim(X) != 2 || nrow(X) != ncol(X))
+      stop("Argument must be a square matrix")
+  }
+})
+
+#' @describeIn VonNeumannEntr The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "VonNeumannEntr", function(object) { c(FALSE, FALSE) })
+
+#' @describeIn VonNeumannEntr The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "VonNeumannEntr", function(object) { c(1,1) })
+
+#' @describeIn VonNeumannEntr Is the atom convex?
+setMethod("is_atom_convex", "VonNeumannEntr", function(object) { FALSE })
+
+#' @describeIn VonNeumannEntr Is the atom concave?
+setMethod("is_atom_concave", "VonNeumannEntr", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn VonNeumannEntr Is the atom weakly increasing in the index?
+setMethod("is_incr", "VonNeumannEntr", function(object, idx) { FALSE })
+
+#' @describeIn VonNeumannEntr Is the atom weakly decreasing in the index?
+setMethod("is_decr", "VonNeumannEntr", function(object, idx) { FALSE })
+
+#' @describeIn VonNeumannEntr Returns the parameter \code{quad_approx}.
+setMethod("get_data", "VonNeumannEntr", function(object) { list(object@quad_approx) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn VonNeumannEntr Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "VonNeumannEntr", function(object, values) { 
+  # X <- values[[1]]
+  # L <- cholesky(X)
+  # derivative <- 2*(L + L * logm(dot(t(L), L)))
+  # TODO: Have to wrap derivative around sparse matrix (compare to LogDet atom).
+  stop("Unimplemented")
+})
+
+#' @describeIn VonNeumannEntr Returns constraints describing the domain of the node.
+setMethod(".domain", "VonNeumannEntr", function(object) { list(object@args[[1]] %>>% 0) })

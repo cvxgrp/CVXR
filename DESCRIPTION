@@ -51,7 +51,8 @@ Imports:
     ECOSolveR (>= 0.5.4),
     scs (>= 3.0),
     stats,
-    osqp
+    osqp,
+    geigen
 Suggests:
     knitr,
     rmarkdown,

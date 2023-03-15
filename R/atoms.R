@@ -397,7 +397,7 @@ setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_
   .Object@expr <- expr
   .Object@axis <- axis
   .Object@keepdims <- keepdims
-  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@expr))
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
 #' @param object An \linkS4class{Atom} object.
@@ -489,7 +489,7 @@ ConditionNumber <- function(A) { .ConditionNumber(A = A) }
 
 setMethod("initialize", "ConditionNumber", function(.Object, ..., A) {
   .Object@A <- A
-  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@A))
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
 })
 
 #' @param object A \linkS4class{ConditionNumber} object.
@@ -627,6 +627,12 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
                          return(TRUE)
                        }, contains = "Atom")
 
+#' @param x An \linkS4class{Expression}.
+#' @param a A numeric value.
+#' @param b A numeric value.
+#' @rdname DistRatio-class
+DistRatio <- function(x, a, b) { .DistRatio(x = x, a = a, b = b) }
+
 setMethod("initialize", "DistRatio", function(.Object, ..., x, a, b) {
   .Object@x <- x
   .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x, a, b))
@@ -670,6 +676,121 @@ setMethod("is_decr", "DistRatio", function(object, idx) { FALSE })
 #' @param values A list of numeric values for the arguments
 #' @describeIn DistRatio Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "DistRatio", function(object, values) { return(NA_real_) })
+
+#'
+#' The DotSort class.
+#'
+#' This class represents the value
+#' 
+#' \deqn{\langle sort\left(vec(X)\right), sort\left(vec(W)\right) \rangle},
+#' 
+#' where \eqn{X} is an expression and \eqn{W} is a constant.
+#' 
+#' Both arguments are flattened, i.e., we define \eqn{x = vec(X)} and \eqn{w = vec(W)}.
+#' If the length of \eqn{w} is less than the length of \eqn{x}, it is conceptually padded with zeroes.
+#' When the length of \eqn{w} is larger than the length of \eqn{x}, an exception is raised.
+#' 
+#' DotSort is a generalization of SumLargest and SumSmallest:
+#' SumLargest(X, 3) is equivalent to DotSort(X, c(1,1,1))
+#' SumLargest(X, 3.5) is equivalent to DotSort(X, c(1,1,1,0.5))
+#' SumSmallest(X, 3) is equivalent to -DotSort(X, c(-1,-1,-1))
+#' 
+#' When the constant argument is not a boolean vector, DotSort can be considered as a weighted sum 
+#' of \eqn{x}, where the largest weight is assigned to the largest entry in \eqn{x}, etc.
+#'
+.DotSort <- setClass("DotSort", representation(X = "ConstValORExpr", W = "ConstVal"), contains = "Atom")
+
+#' @param X An \linkS4class{Expression}.
+#' @param W A numeric matrix.
+#' @rdname DotSort-class
+DotSort <- function(X, W) { .DotSort(X = X, W = W) }
+
+setMethod("initialize", "DotSort", function(.Object, ..., X, W) {
+  .Object@X <- X
+  .Object@W <- W
+  callNextMethod(.Object, ..., atom_args = list(.Object@X, .Object@W))
+})
+
+#' @describeIn DotSort Check that the arguments are valid.
+setMethod("validate_args", "DotSort", function(object) {
+  if(!is_constant(object@args[[2]]))
+    stop("W must be constant")
+  if(size(object@args[[1]]) < size(object@args[[2]]))
+    stop("The size of W must be less than or equal to the size of X")
+  callNextMethod()
+})
+
+#' @param object A \linkS4class{DotSort} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn DotSort The inner product of the sorted values of vec(X) and the sorted (and potentially padded) values of vec(W).
+setMethod("to_numeric", "DotSort", function(object, values) {
+  args <- DotSort.get_args_from_values(values)
+  x <- args[[1]]
+  w_padded <- args[[2]]
+  return(as.numeric(sort(x) %*% sort(w_padded)))
+})
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn DotSort Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "DotSort", function(object, values) {
+  args <- DotSort.get_args_from_values(values)
+  x <- args[[1]]
+  w_padded <- args[[2]]
+  n <- length(x)
+  sorted_w <- sort(w_padded)
+  return(list(sparseMatrix(i = indices, j = rep(1, n), x = sorted_w, dims = c(n, 1))))
+})
+
+#' @describeIn DotSort The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "DotSort", function(object) { c(1,1) })
+
+#' @describeIn DotSort The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "DotSort", function(object) {
+  # Same as argument.
+  x_pos <- is_nonneg(object@args[[1]])
+  x_neg <- is_nonpos(object@args[[1]])
+  
+  w_pos <- is_nonneg(object@args[[2]])
+  w_neg <- is_nonpos(object@args[[2]])
+  
+  is_positive <- (x_pos && w_pos) || (x_neg && w_neg)
+  is_negative <- (x_neg && w_pos) || (x_pos && w_neg)
+  
+  return(c(is_positive, is_negative))
+})
+
+#' @describeIn DotSort Is the atom convex?
+setMethod("is_atom_convex", "DotSort", function(object) {
+  if(dpp_scope_active()) {   # TODO: Figure out how to save DPP status as global parameter.
+    # DotSort is convex under DPP if W is parameter affine.
+    X <- object@args[[1]]
+    W <- object@args[[2]]
+    return(is_constant(X) || is_param_affine(W))
+  } else
+    return(TRUE)
+})
+
+#' @describeIn DotSort Is the atom concave?
+setMethod("is_atom_concave", "DotSort", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn DotSort Is the atom weakly increasing in the index?
+setMethod("is_incr", "DotSort", function(object, idx) { is_nonneg(object@args[[2]]) })
+
+#' @describeIn DotSort Is the atom weakly decreasing in the index?
+setMethod("is_decr", "DotSort", function(object, idx) { is_nonpos(object@args[[2]]) })
+
+#' @describeIn DotSort Empty list because W is stored as an argument.
+setMethod("get_data", "DotSort", function(object) { list() })
+
+DotSort.get_args_from_values <- function(values) {
+  x <- as.numeric(t(values[[1]]))
+  w <- as.numeric(t(values[[2]]))
+  
+  w_padded <- rep(0, length(x))
+  w_padded[1:length(w)] <- w
+  return(list(x, w_padded))
+}
 
 #'
 #' The EyeMinusInv class.
@@ -737,7 +858,7 @@ setMethod("is_incr", "EyeMinusInv", function(object, idx) { FALSE })
 setMethod("is_decr", "EyeMinusInv", function(object, idx) { FALSE })
 
 #' @param values A list of numeric values for the arguments
-#' @describeIn EyeMinusInv Gives EyeMinusInv the (sub/super)gradient of the atom w.r.t. each variable
+#' @describeIn EyeMinusInv Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "EyeMinusInv", function(object, values) { NA_real_ })
 
 # The resolvent of a positive matrix, (sI - X)^(-1).
@@ -748,6 +869,78 @@ setMethod(".grad", "EyeMinusInv", function(object, values) { NA_real_ })
 Resolvent <- function(X, s) {
   1.0 / (s * EyeMinusInv(X / s))
 }
+
+#'
+#' The GenLambdaMax class.
+#'
+#' This class represents the maximum generalized eigenvalue  \eqn{\lambda_{\max}(A, B)},
+#' where \eqn{A} is a symmetric matrix and \eqn{B} is a positive semidefinite matrix.
+#'
+#' @slot A An \linkS4class{Expression} representing a symmetric matrix.
+#' @slot B An \linkS4class{Expression} representing a positive semidefinite matrix.
+#' @name GenLambdaMax-class
+#' @aliases GenLambdaMax
+#' @rdname GenLambdaMax-class
+.GenLambdaMax <- setClass("GenLambdaMax", representation(A = "ConstValORExpr", B = "ConstValORExpr"), contains = "Atom")
+
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @param B An \linkS4class{Expression} or numeric matrix.
+#' @rdname GenLambdaMax-class
+GenLambdaMax <- function(A, B) { .GenLambdaMax(A = A, B = B) }
+
+setMethod("initialize", "GenLambdaMax", function(.Object, ..., A, B) {
+  .Object@A <- A
+  .Object@B <- B
+  callNextMethod(.Object, ..., atom_args = list(.Object@A, .Object@B))
+})
+
+#' @param object A \linkS4class{GenLambdaMax} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn GenLambdaMax The largest generalized eigenvalue corresponding to the matrices.
+setMethod("to_numeric", "GenLambdaMax", function(object, values) {
+  eigen_res <- geigen(values[[1]], values[[2]], symmetric = TRUE, only.values = TRUE)
+  base::max(eigen_res$values)
+})
+
+#' @describeIn GenLambdaMax Returns constraints describing the domain of the node.
+setMethod(".domain", "GenLambdaMax", function(object) { list(Conj(t(object@args[[1]])) == object@args[[1]], Conj(t(object@args[[2]])) == object@args[[2]], object@args[[2]] %>>% 0) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn GenLambdaMax Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "GenLambdaMax", function(object, values) { stop("Unimplemented") })
+
+#' @describeIn GenLambdaMax Check that the matrices are square and of the same dimension.
+setMethod("validate_args", "GenLambdaMax", function(object) {
+  A_dim <- dim(object@args[[1]])
+  B_dim <- dim(object@args[[2]])
+  if(length(A_dim) != 2 || A_dim[1] != A_dim[2] || B_dim[1] != B_dim[2] || !all(A_dim == B_dim))
+    stop("The arguments to GenLambdaMax must be square and have the same dimensions")
+})
+
+#' @describeIn GenLambdaMax The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "GenLambdaMax", function(object) { c(1,1) })
+
+#' @describeIn GenLambdaMax The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "GenLambdaMax", function(object) { c(FALSE, FALSE) })
+
+#' @describeIn GenLambdaMax Is the atom convex?
+setMethod("is_atom_convex", "GenLambdaMax", function(object) { FALSE })
+
+#' @describeIn GenLambdaMax Is the atom concave?
+setMethod("is_atom_concave", "GenLambdaMax", function(object) { FALSE })
+
+#' @describeIn GenLambdaMax Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "GenLambdaMax", function(object) { TRUE })
+
+#' @describeIn GenLambdaMax Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "GenLambdaMax", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn GenLambdaMax Is the atom weakly increasing in the index?
+setMethod("is_incr", "GenLambdaMax", function(object, idx) { FALSE })
+
+#' @describeIn GenLambdaMax Is the atom weakly decreasing in the index?
+setMethod("is_decr", "GenLambdaMax", function(object, idx) { FALSE })
 
 #'
 #' The GeoMean class.
@@ -909,13 +1102,29 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
 #'
 #' The HarmonicMean atom.
 #'
-#' The harmonic mean of x, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where n is the length of x.
+#' The harmonic mean of \eqn{x}, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where \eqn{n} is the length of \eqn{x}.
 #'
 #' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries.
 #' @return The harmonic mean of \code{x}.
 HarmonicMean <- function(x) {
   x <- as.Constant(x)
   size(x) * Pnorm(x = x, p = -1)
+}
+
+#'
+#' The InvProb atom.
+#' 
+#' The reciprocal of a product of the entries of a vector \eqn{x}, \eqn{(\prod_{i=1}^n x_i)^{-1}}, where \eqn{n} is the length of \eqn{x}.
+#'
+#' @param x An expression or vector whose reciprocal product is to be computed. Must have positive entries.
+#' @return The reciprocal product of \code{x}.
+InvProb <- function(value) {
+  val_dim <- dim(value)
+  if(is.na(val_dim) || is.null(val_dim))
+    p <- 1
+  else
+    p <- as.integer(sum(val_dim))
+  Power(InvPos(GeoMean(value)), p)
 }
 
 #'
@@ -1062,6 +1271,68 @@ LambdaSumSmallest <- function(A, k) {
   A <- as.Constant(A)
   -LambdaSumLargest(-A, k)
 }
+
+#'
+#' The VecLength class.
+#'
+#' This class represents the length of a vector (index of last nonzero, ones-based).
+#'
+#' @slot x An \linkS4class{Expression} representing a vector.
+#' @name VecLength-class
+#' @aliases VecLength
+#' @rdname VecLength-class
+.VecLength <- setClass("VecLength", representation(x = "ConstValORExpr"),
+                         validity = function(object) {
+                           if(!is_vector(object@args[[1]]))
+                             stop("[VecLength: x] The argument x must be a vector.")
+                           return(TRUE)
+                         }, contains = "Atom")
+
+#' @param x An \linkS4class{Expression} representing a vector.
+#' @rdname VecLength-class
+VecLength <- function(x) { .Length(x = x) }
+
+setMethod("initialize", "VecLength", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{VecLength} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn VecLength The length of the vector.
+setMethod("to_numeric", "VecLength", function(object, values) {
+  outside_tol <- abs(values[[1]]) > ATOM_EVAL_TOL
+  return(base::max(which(outside_tol)))
+})
+
+#' @describeIn VecLength The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "VecLength", function(object) { c(1,1) })
+
+#' @describeIn VecLength The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "VecLength", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn VecLength Is the atom convex?
+setMethod("is_atom_convex", "VecLength", function(object) { FALSE })
+
+#' @describeIn VecLength Is the atom concave?
+setMethod("is_atom_concave", "VecLength", function(object) { FALSE })
+
+#' @describeIn VecLength Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "VecLength", function(object) { TRUE })
+
+#' @describeIn VecLength Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "VecLength", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn VecLength Is the atom weakly increasing in the index?
+setMethod("is_incr", "VecLength", function(object, idx) { FALSE })
+
+#' @describeIn VecLength Is the atom weakly decreasing in the index?
+setMethod("is_decr", "VecLength", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn VecLength Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "VecLength", function(object, values) { NA_real_ })
 
 #'
 #' The LogDet class.

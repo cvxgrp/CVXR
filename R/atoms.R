@@ -375,6 +375,10 @@ setMethod("atoms", "Atom", function(object) {
   return(unique(atom_list))
 })
 
+#' @param value A numeric value
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
+
 #'
 #' The AxisAtom class.
 #'
@@ -466,9 +470,71 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   list(D)
 })
 
-#' @param value A numeric value
-#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
-setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
+#'
+#' The ConditionNumber class.
+#'
+#' This class represents the condition number of a positive definite matrix \eqn{A}, i.e.,
+#'
+#' \deqn{\lambda_{\max}(A) / \lambda_{\min}(A)}
+#'
+#' @slot expr An \linkS4class{Expression} representing a positive definite matrix.
+#' @name ConditionNumber-class
+#' @aliases ConditionNumber
+#' @rdname ConditionNumber-class
+.ConditionNumber <- setClass("ConditionNumber", representation(A = "ConstValORExpr"), contains = "Atom")
+
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @rdname ConditionNumber-class
+ConditionNumber <- function(A) { .ConditionNumber(A = A) }
+
+setMethod("initialize", "ConditionNumber", function(.Object, ..., A) {
+  .Object@A <- A
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@A))
+})
+
+#' @param object A \linkS4class{ConditionNumber} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn ConditionNumber The condition number of the matrix.
+setMethod("to_numeric", "ConditionNumber", function(object, values) {
+  # eigen_vec <- base::eigen(values[[1]], only.values = TRUE)$values
+  # max_eigen <- max(eigen_vec)
+  # min_eigen <- min(eigen_vec)
+  # return(max_eigen / min_eigen)
+  base::kappa(values[[1]], exact = TRUE)
+})
+
+#' @describeIn ConditionNumber Returns constraints describing the domain of the node.
+setMethod(".domain", "ConditionNumber", function(object) { list(Conj(t(object@args[[1]])) == object@args[[1]], object@args[[1]] %>>% 0) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn ConditionNumber Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "ConditionNumber", function(object, values) { stop("Unimplemented") })
+
+#' @describeIn ConditionNumber Check that the matrix is square.
+setMethod("validate_args", "ConditionNumber", function(object) {
+  arg_dim <- dim(object@args[[1]])
+  if(length(arg_dim) != 2 || arg_dim[1] != arg_dim[2])
+    stop("The argument to ConditionNumber must be a square matrix")
+})
+
+#' @describeIn ConditionNumber The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "ConditionNumber", function(object) { c(1,1) })
+
+#' @describeIn ConditionNumber The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "ConditionNumber", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn ConditionNumber Is the atom convex?
+setMethod("is_atom_convex", "ConditionNumber", function(object) { FALSE })
+
+#' @describeIn ConditionNumber Is the atom concave?
+setMethod("is_atom_concave", "ConditionNumber", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn ConditionNumber Is the atom weakly increasing in the index?
+setMethod("is_incr", "ConditionNumber", function(object, idx) { FALSE })
+
+#' @describeIn ConditionNumber Is the atom weakly decreasing in the index?
+setMethod("is_decr", "ConditionNumber", function(object, idx) { FALSE })
 
 #'
 #' The CumMax class.
@@ -538,6 +604,72 @@ setMethod("is_incr", "CumMax", function(object, idx) { TRUE })
 
 #' @describeIn CumMax Is the atom weakly decreasing in the index?
 setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
+
+#'
+#' The DistRatio class.
+#'
+#' This class represents the ratio of the \eqn{l_2}-norm distance from \eqn{x} to two points \eqn{a} and \eqn{b}, i.e.,
+#'
+#' \deqn{||x - a||_2 / ||x - b||_2},
+#' 
+#' where \eqn{a} and \eqn{b} are constants with \eqn{norm(x - a)_2 \leq norm(x - b)}.
+#'
+#' @slot x An \linkS4class{Expression}.
+#' @name DistRatio-class
+#' @aliases DistRatio
+#' @rdname DistRatio-class
+.DistRatio <- setClass("DistRatio", representation(x = "ConstValORExpr", a = "numeric", b = "numeric"), 
+                       validity = function(object) {
+                         if(!is_constant(object@args[[2]]))
+                           stop("[DistRatio: a] The argument a must be a constant.")
+                         if(!is_constant(object@args[[3]]))
+                           stop("[DistRatio: b] The argument b must be a constant.")
+                         return(TRUE)
+                       }, contains = "Atom")
+
+setMethod("initialize", "DistRatio", function(.Object, ..., x, a, b) {
+  .Object@x <- x
+  .Object <- callNextMethod(.Object, ..., atom_args = list(.Object@x, a, b))
+  .Object@a <- value(.Object@args[[2]])
+  .Object@b <- value(.Object@args[[3]])
+  .Object
+})
+
+#' @param object A \linkS4class{DistRatio} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn DistRatio The distance ratio of the expression.
+setMethod("to_numeric", "DistRatio", function(object, values) {
+  sqrt(sum((values[[1]] - object@a)^2)) / sqrt(sum((values[[1]] - object@b)^2))
+})
+
+#' @describeIn DistRatio The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "DistRatio", function(object) { c(1,1) })
+
+#' @describeIn DistRatio The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "DistRatio", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn DistRatio Is the atom convex?
+setMethod("is_atom_convex", "DistRatio", function(object) { FALSE })
+
+#' @describeIn DistRatio Is the atom concave?
+setMethod("is_atom_concave", "DistRatio", function(object) { FALSE })
+
+#' @describeIn DistRatio Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "DistRatio", function(object) { TRUE })
+
+#' @describeIn DistRatio Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "DistRatio", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn DistRatio Is the atom weakly increasing in the index?
+setMethod("is_incr", "DistRatio", function(object, idx) { FALSE })
+
+#' @describeIn DistRatio Is the atom weakly decreasing in the index?
+setMethod("is_decr", "DistRatio", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn DistRatio Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "DistRatio", function(object, values) { return(NA_real_) })
 
 #'
 #' The EyeMinusInv class.

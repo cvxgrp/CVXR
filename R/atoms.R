@@ -2370,6 +2370,55 @@ DiffPos <- function(x, y) {
 }
 
 #'
+#' The Perspective class.
+#' 
+#' This class represents the perspective transform of a convex or concave scalar expression.
+#' It uses the fact that, given a cone form for the epigraph of \eqn{f} via
+#' 
+#' \deqn{\{(t, x) \in \mathbb{R}^{n+1} : t \geq f(x) \} = \{(t, x) : Fx + gt + e \in K\}},
+#' 
+#' the epigraph of the perspective transform of \eqn{f} can be given by
+#' 
+#' \deqn{\{(t, x, s) \in \mathbb{R}^{n+2} : t \geq sf(x/s) \} = \{ (t, x, s) : Fx + gt + se \in K \}},
+#' 
+#' (see https://web.stanford.edu/~boyd/papers/pdf/sw_aff_ctrl.pdf).
+#' Note that this is the perspective transform of a scalar expression viewed as
+#' a function of its underlying variables. The perspective atom does not return
+#' a `Callable`, so you cannot create compositions such as \eqn{p(g(x),s)}, where
+#' \eqn{p(z,s) = sf(z/s)} is the perspective transform of \eqn{f}.
+#'
+#' @slot f An \linkS4class{Expression}.
+#' @slot s A \linkS4class{Variable}.
+#' @name Perspective-class
+#' @aliases Perspective
+#' @rdname Perspective-class
+.Perspective <- setClass("Perspective", representation(f = "ConstValORExpr", s = "Variable"), contains = "Atom")
+
+#' @param f An \linkS4class{Expression}.
+#' @param s A \linkS4class{Variable}.
+#' @rdname Perspective-class
+Perspective <- function(f, s) { .Perspective(f = f, s = s) }
+
+setMethod("initialize", "Perspective", function(.Object, ..., f = f, s = s) {
+  .Object@f <- f
+  .Object@s <- s
+  callNextMethod(.Object, ..., atom_args = c(list(s), variables(f)))
+})
+
+#' @describeIn Perspective Checks the dimensions of the arguments.
+setMethod("validate_args", "Perspective", function(object) {
+  if(!(size(object@f) == 1 && size(object@args[[1]]) == 1))
+    stop("Unimplemented")   # Dealing only with scalars for now.
+  if(!is(object@args[[1]], "Variable"))
+    stop("s must be a Variable")
+  if(!is_nonneg(object@args[[1]]))
+    stop("s must be a nonnegative variable")
+  callNextMethod()
+})
+
+# TODO: FINISH ADDING PERSPECTIVE ATOM
+
+#'
 #' The PfEigenvalue class.
 #'
 #' This class represents the Perron-Frobenius eigenvalue of a positive matrix.
@@ -2611,6 +2660,8 @@ setMethod(".grad", "QuadForm", function(object, values) {
   D <- 2*P %*% t(x)
   Matrix(as.vector(t(D)), sparse = TRUE)
 })
+
+# TODO: ADD SUPPFUNC ATOM.
 
 #'
 #' The SymbolicQuadForm class.

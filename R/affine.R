@@ -1072,7 +1072,16 @@ setMethod("is_imag", "Imag", function(object) { FALSE })
 setMethod("is_complex", "Imag", function(object) { FALSE })
 
 #' @describeIn Imag Is the atom symmetric?
-setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1]]) })
+setMethod("is_symmetric", "Imag", function(object) { TRUE })
+
+#' @describeIn Imag Is the atom hermitian?
+setMethod("is_hermitian", "Imag", function(object) { TRUE })
+
+#' @describeIn Imag Is the atom positive semidefinite?
+setMethod("is_psd", "Imag", function(object) { is_nonneg(object) })
+
+#' @describeIn Imag Is the atom negative semidefinite?
+setMethod("is_nsd", "Imag", function(object) { is_nonpos(object) })
 
 #'
 #' The Index class.
@@ -1289,6 +1298,146 @@ Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
 setMethod("graph_implementation", "Kron", function(object, arg_objs, dim, data = NA_real_) {
   Kron.graph_implementation(arg_objs, dim, data)
 })
+
+#'
+#' The PartialTrace atom.
+#' 
+#' Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product 
+#' composed of \eqn{n = length(dims)} implicit subsystems. 
+#' Letting \eqn{k = axis}, this class represents the partial trace of \eqn{expr} 
+#' along its \eqn{k}-th implicit subsystem:
+#' 
+#' \deqn{tr(X_k) (X_1 \otimes \cdots \otimes X_{k-1} \otimes X_{k+1} \otimes \cdots \otimes X_n)}
+#'
+#' @param expr An \linkS4class{Expression} representing a 2D expression of which to take the partial trace.
+#' @param dims A vector of integers encoding the dimensions of each subsystem.
+#' @param axis The index of the subsystem to be traced out from the tensor product that defines \code{expr}.
+#' @return The partial trace of \code{expr}.
+PartialTrace <- function(expr, dims, axis) {
+  expr <- as.Constant(expr)
+  dims <- as.integer(dims)
+  axis <- as.integer(axis)
+  
+  if(any(dims) <= 0)
+    stop("dims must have positive integer entries")
+  if(axis <= 0)
+    stop("axis must be a positive integer")
+  if(ndim(expr) < 2 || dim(expr)[1] != dim(expr)[2])
+    stop("Only supports square matrices")
+  if(axis <= 0 || axis > length(dims))
+    stop("Invalid axis argument, should be between 1 and ", length(dims))
+  if(dim(expr)[1] != base::prod(dims))
+    stop("Dimension of system doesn't correspond to dimension of subsystems")
+  
+  term_list <- lapply(seq_len(dims[axis]), function(j) { PartialTrace.term(expr, j, dims, axis) })
+  return(AddExpression(arg_groups = term_list))
+}
+
+#
+# Helper function for PartialTrace.
+#
+# Parameters
+# -----------
+# expr: The 2D expression of which to take the partial trace.
+# j: The term in the partial trace sum.
+# dims: A vector of integers encoding the dimensions of each subsystem.
+# axis: The index of the subsystem to be traced out from the tensor product that defines expr.
+#
+# (I ⊗ <j| ⊗ I) x (I ⊗ |j> ⊗ I) for all j's
+# in the system we want to trace out.
+# This function returns the jth term in the sum, namely
+# (I ⊗ <j| ⊗ I) x (I ⊗ |j> ⊗ I).
+#
+PartialTrace.term <- function(expr, j, dims, axis) {
+  a <- Matrix(1, 1, 1, sparse = TRUE)
+  b <- Matrix(1, 1, 1, sparse = TRUE)
+  
+  ndims <- length(dims)
+  for(i_axis in seq_len(ndims)) {
+    dim <- dims[i_axis]
+    if(i_axis == axis) {
+      v <- sparseMatrix(j, 1, x = 1, dims = c(dim, 1))
+      a <- kronecker(a, t(v))
+      b <- kronecker(b, v)
+    } else {
+      eye_mat <- sparseMatrix(seq_len(dim), seq_len(dim), x = 1)
+      a <- kronecker(a, eye_mat)
+      b <- kronecker(b, eye_mat)
+    }
+  }
+  return(a %*% expr %*% b)
+}
+
+#'
+#' The PartialTranspose atom.
+#' 
+#' Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product 
+#' composed of \eqn{n = length(dims)} implicit subsystems. 
+#' Letting \eqn{k = axis}, this class represents the partial transpose of \eqn{expr}, 
+#' with the transpose applied to its \eqn{k}-th implicit subsystem:
+#' 
+#' \deqn{X_1 \otimes ...\otimes X_k^T \otimes ... \otimes X_n}.
+#'
+#' @param expr An \linkS4class{Expression} representing a 2D expression of which to take the partial transpose.
+#' @param dims A vector of integers encoding the dimensions of each subsystem.
+#' @param axis The index of the subsystem to be transposed out from the tensor product that defines \code{expr}.
+#' @return The partial trace of \code{expr}.
+PartialTrace <- function(expr, dims, axis) {
+  expr <- as.Constant(expr)
+  dims <- as.integer(dims)
+  axis <- as.integer(axis)
+  
+  if(any(dims) <= 0)
+    stop("dims must have positive integer entries")
+  if(axis <= 0)
+    stop("axis must be a positive integer")
+  if(ndim(expr) < 2 || dim(expr)[1] != dim(expr)[2])
+    stop("Only supports square matrices")
+  if(axis <= 0 || axis > length(dims))
+    stop("Invalid axis argument, should be between 1 and ", length(dims))
+  if(dim(expr)[1] != base::prod(dims))
+    stop("Dimension of system doesn't correspond to dimension of subsystems")
+  
+  term_list <- list()
+  for(i in seq_len(dims[axis])) {
+    for(j in seq_len(dims[axis]))
+      term_list <- c(term_list, PartialTranspose.term(expr, i, j, dims, axis))
+  }
+  return(AddExpression(arg_groups = term_list))
+}
+
+#
+# Helper function for PartialTranspose.
+#
+# Parameters
+# -----------
+# expr: The 2D expression of which to take the partial transpose.
+# i: The term in the partial transpose sum.
+# j: The term in the partial transpose sum.
+# dims: A vector of integers encoding the dimensions of each subsystem.
+# axis: The index of the subsystem to be transposed from the tensor product that defines expr.
+#
+# (I ⊗ |i><j| ⊗ I) x (I ⊗ |i><j| ⊗ I) for all (i,j)'s
+# in the system we want to transpose.
+# This function returns the (i,j)-th term in the sum, namely
+# (I ⊗ |i><j| ⊗ I) x (I ⊗ |i><j| ⊗ I).
+#
+PartialTranspose.term <- function(expr, i, j, dims, axis) {
+  a <- Matrix(1, 1, 1, sparse = TRUE)
+  
+  ndims <- length(dims)
+  for(i_axis in seq_len(ndims)) {
+    dim <- dims[i_axis]
+    if(i_axis == axis) {
+      v <- sparseMatrix(i, j, x = 1, dims = c(dim, dim))
+      a <- kronecker(a, v)
+    } else {
+      eye_mat <- sparseMatrix(seq_len(dim), seq_len(dim), x = 1)
+      a <- kronecker(a, eye_mat)
+    }
+  }
+  return(a %*% expr %*% a)
+}
 
 #'
 #' The Promote class.
@@ -1627,6 +1776,9 @@ setMethod("to_numeric", "Transpose", function(object, values) {
 #' @describeIn Transpose Is the expression symmetric?
 setMethod("is_symmetric", "Transpose", function(object) { is_symmetric(object@args[[1]]) })
 
+#' @describeIn Transpose Is the expression skew symmetric?
+setMethod("is_skew_symmetric", "Transpose", function(object) { is_skew_symmetric(object@args[[1]]) })
+
 #' @describeIn Transpose Is the expression hermitian?
 setMethod("is_hermitian", "Transpose", function(object) { is_hermitian(object@args[[1]]) })
 
@@ -1853,8 +2005,108 @@ setMethod("graph_implementation", "Wrap", function(object, arg_objs, dim, data =
 PSDWrap <- function(arg) { .PSDWrap(atom_args = list(arg)) }
 
 #' @param object A \linkS4class{PSDWrap} object.
+#' @describeIn PSDWrap Check the input is a square matrix.
+setMethod("validate_args", "PSDWrap", function(object) {
+  arg <- object@args[[1]]
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+})
+
 #' @describeIn PSDWrap Is the atom positive semidefinite?
 setMethod("is_psd", "PSDWrap", function(object) { TRUE })
+
+#' @describeIn PSDWrap Is the atom negative semidefinite?
+setMethod("is_nsd", "PSDWrap", function(object) { FALSE })
+
+#' @describeIn PSDWrap Is the atom Hermitian?
+setMethod("is_hermitian", "PSDWrap", function(object) { TRUE })
+
+validate_real_square <- function(arg) {
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+  else if(!is_real(arg))
+    stop("The input must be a real matrix")
+}
+
+#'
+#' The SymmetricWrap class.
+#'
+#' A no-op wrapper to assert the input argument is symmetric.
+#'
+#' @name SymmetricWrap-class
+#' @aliases SymmetricWrap
+#' @rdname SymmetricWrap-class
+.SymmetricWrap <- setClass("SymmetricWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname SymmetricWrap-class
+SymmetricWrap <- function(arg) { .SymmetricWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{SymmetricWrap} object.
+#' @describeIn SymmetricWrap Check the input is a real square matrix.
+setMethod("validate_args", "SymmetricWrap", function(object) {
+  validate_real_square(object@args[[1]])
+})
+
+#' @describeIn SymmetricWrap Is the atom symmetric?
+setMethod("is_symmetric", "SymmetricWrap", function(object) { TRUE })
+
+#' @describeIn SymmetricWrap Is the atom Hermitian?
+setMethod("is_hermitian", "SymmetricWrap", function(object) { TRUE })
+
+#'
+#' The HermitianWrap class.
+#'
+#' A no-op wrapper to assert the input argument is Hermitian.
+#'
+#' @name HermitianWrap-class
+#' @aliases HermitianWrap
+#' @rdname HermitianWrap-class
+.HermitianWrap <- setClass("HermitianWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname HermitianWrap-class
+HermitianWrap <- function(arg) { .HermitianWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{HermitianWrap} object.
+#' @describeIn HermitianWrap Check the input is a real square matrix.
+setMethod("validate_args", "HermitianWrap", function(object) {
+  arg <- object@args[[1]]
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+})
+
+#' @describeIn HermitianWrap Is the atom Hermitian?
+setMethod("is_hermitian", "HermitianWrap", function(object) { TRUE })
+
+#'
+#' The SkewSymmetricWrap class.
+#'
+#' A no-op wrapper to assert the input argument is skew symmetric.
+#'
+#' @name SkewSymmetricWrap-class
+#' @aliases SkewSymmetricWrap
+#' @rdname SkewSymmetricWrap-class
+.HermitianWrap <- setClass("SkewSymmetricWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname SkewSymmetricWrap-class
+SkewSymmetricWrap <- function(arg) { .SkewSymmetricWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{SkewSymmetricWrap} object.
+#' @describeIn SkewSymmetricWrap Check the input is a real square matrix.
+setMethod("validate_args", "SkewSymmetricWrap", function(object) {
+  validate_real_square(object@args[[1]])
+})
+
+#' @describeIn SkewSymmetricWrap Is the atom skew symmetric?
+setMethod("is_skew_symmetric", "SkewSymmetricWrap", function(object) { TRUE })
 
 setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
 setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })

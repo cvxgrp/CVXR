@@ -830,6 +830,12 @@ setMethod("is_symmetric", "DiagVec", function(object) { TRUE })
 #' @describeIn DiagVec Is the expression hermitian?
 setMethod("is_hermitian", "DiagVec", function(object) { TRUE })
 
+#' @describeIn DiagVec Is the atom positive semidefinite?
+setMethod("is_psd", "DiagVec", function(object) { is_nonneg(object) })
+
+#' @describeIn DiagVec Is the atom negative semidefinite?
+setMethod("is_nsd", "DiagVec", function(object) { is_nonpos(object) })
+
 DiagVec.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.diag_vec(arg_objs[[1]]), list())
 }
@@ -878,6 +884,11 @@ setMethod("is_atom_log_log_convex", "DiagMat", function(object) { TRUE })
 
 #' @describeIn DiagMat Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "DiagMat", function(object) { TRUE })
+
+#' @describeIn DiagMat A logical value indicating whether the atom is nonnegative.
+setMethod("is_nonneg", "DiagMat", function(object) {
+  is_nonneg(object@args[[1]]) || is_psd(object@args[[1]])
+})
 
 DiagMat.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.diag_mat(arg_objs[[1]]), list())
@@ -1277,6 +1288,22 @@ setMethod("dim_from_args", "Kron", function(object) {
   c(rows, cols)
 })
 
+#' @describeIn Kron Is the atom convex?
+setMethod("is_atom_convex", "AffAtom", function(object) {
+  if(dpp_scopy_active()) {
+    # Kron is not DPP if any parameters are present
+    x <- object@args[[1]]
+    y <- object@args[[2]]
+    return((is_constant(x) || is_constant(y)) && (is_param_free(x) && is_param_free(y)))
+  } else
+    return(is_constant(object@args[[1]]) || is_constant(object@args[[2]]))
+})
+
+#' @describeIn Kron Is the atom concave?
+setMethod("is_atom_concave", "AffAtom", function(object) {
+  return(is_atom_convex(object))
+})
+
 #' @describeIn Kron The sign of the atom.
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
@@ -1287,8 +1314,29 @@ setMethod("is_incr", "Kron", function(object, idx) { is_nonneg(object@args[[1]])
 #' @describeIn Kron Is the right-hand expression negative?
 setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[1]]) })
 
+#' @describeIn Kron Is the atom a positive semidefinite matrix?
+setMethod("is_psd", "Kron", function(object) {
+  # Check a *sufficient condition* that the expression is PSD, 
+  # by checking if both arguments are PSD or both are NSD.
+  case1 <- is_psd(object@args[[1]]) && is_psd(object@args[[2]])
+  case2 <- is_nsd(object@args[[1]]) && is_nsd(object@args[[2]])
+  return(case1 || case2)
+})
+
+#' @describeIn Kron Is the atom a negative semidefinite matrix?
+setMethod("is_nsd", "Kron", function(object) {
+  # Check a *sufficient condition* that the expression is NSD, 
+  # by checking if one argument is PSD and the other is NSD.
+  case1 <- is_psd(object@args[[1]]) && is_nsd(object@args[[2]])
+  case2 <- is_nsd(object@args[[1]]) && is_psd(object@args[[2]])
+  return(case1 || case2)
+})
+
 Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.kron(arg_objs[[1]], arg_objs[[2]], dim), list())
+  if(is_constant(object@args[[1]]))
+    list(lo.kron_r(arg_objs[[1]], arg_objs[[2]], dim), list())
+  else
+    list(lo.kron_l(arg_objs[[1]], arg_objs[[2]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

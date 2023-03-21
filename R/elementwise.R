@@ -114,6 +114,81 @@ setMethod(".grad", "Abs", function(object, values) {
 })
 
 #'
+#' The Ceil class.
+#'
+#' This class represents elementwise ceiling.
+#' 
+#' @slot x An \linkS4class{Expression}.
+#' @name Ceil-class
+#' @aliases Ceil
+#' @rdname Ceil-class
+.Ceil <- setClass("Ceil", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname Ceil-class
+Ceil <- function(x) { .Ceil(x = x) }
+
+setMethod("initialize", "Ceil", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Ceil} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Ceil The numeric value of the expression.
+setMethod("to_numeric", "Ceil", function(object, values) {
+  digits <- as.integer(abs(log10(ATOM_EVAL_TOL)))
+  
+  # Note: For rounding off a 5, see documentation for R's round function.
+  # Compare with the Python numpy implementation used in CVXPY.
+  return(ceiling(round(values[[]], digits = digits)))
+})
+
+#' @describeIn Ceil The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "Ceil", function(object) {
+  if(is_nonneg(object@args[[1]]) && is_nonpos(object@args[[1]]))
+    return(c(TRUE, TRUE))
+  else if(is_nonneg(object@args[[1]]))
+    return(c(TRUE, FALSE))
+  else if(is_nonpos(object@args[[1]]))
+    return(c(FALSE, TRUE))
+  else
+    return(c(FALSE, FALSE))
+})
+
+#' @describeIn Ceil Is the atom convex?
+setMethod("is_atom_convex", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom concave?
+setMethod("is_atom_concave", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "Ceil", function(object) { TRUE })
+
+#' @describeIn Ceil Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "Ceil", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn Ceil Is the atom weakly increasing in the index?
+setMethod("is_incr", "Ceil", function(object, idx) { TRUE })
+
+#' @describeIn Ceil Is the atom weakly decreasing in the index?
+setMethod("is_decr", "Ceil", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Ceil Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Ceil", function(object, values) {
+  arg_dim <- dim(object@values[[1]])
+  return(Matrix(0, nrow = arg_dim[1], ncol = arg_dim[2], sparse = TRUE))
+})
+
+#'
 #' The Entr class.
 #'
 #' This class represents the elementwise operation \eqn{-xlog(x)}.
@@ -241,6 +316,77 @@ setMethod(".grad", "Exp", function(object, values) {
   cols <- size(object)
   grad_vals <- exp(values[[1]])
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
+})
+
+#'
+#' The Floor class.
+#'
+#' This class represents elementwise ceiling.
+#' 
+#' @slot x An \linkS4class{Expression}.
+#' @name Floor-class
+#' @aliases Floor
+#' @rdname Floor-class
+.Floor <- setClass("Floor", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname Floor-class
+Floor <- function(x) { .Floor(x = x) }
+
+setMethod("initialize", "Floor", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Floor} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Floor The numeric value of the expression.
+setMethod("to_numeric", "Floor", function(object, values) {
+  return(floor(values[[1]]))
+})
+
+#' @describeIn Floor The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "Floor", function(object) {
+  if(is_nonneg(object@args[[1]]) && is_nonpos(object@args[[1]]))
+    return(c(TRUE, TRUE))
+  else if(is_nonneg(object@args[[1]]))
+    return(c(TRUE, FALSE))
+  else if(is_nonpos(object@args[[1]]))
+    return(c(FALSE, TRUE))
+  else
+    return(c(FALSE, FALSE))
+})
+
+#' @describeIn Floor Is the atom convex?
+setMethod("is_atom_convex", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom concave?
+setMethod("is_atom_concave", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "Floor", function(object) { TRUE })
+
+#' @describeIn Floor Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "Floor", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn Floor Is the atom weakly increasing in the index?
+setMethod("is_incr", "Floor", function(object, idx) { TRUE })
+
+#' @describeIn Floor Is the atom weakly decreasing in the index?
+setMethod("is_decr", "Floor", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Floor Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Floor", function(object, values) {
+  arg_dim <- dim(object@values[[1]])
+  return(Matrix(0, nrow = arg_dim[1], ncol = arg_dim[2], sparse = TRUE))
 })
 
 #'
@@ -526,6 +672,24 @@ setMethod(".grad", "Log1p", function(object, values) {
 setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 
 #'
+#' The LogGamma atom.
+#'
+#' The elementwise log of the gamma function.
+#' 
+#' This implementation has modest accuracy over the full range, approaching perfect
+#' accuracy as \eqn{x} approaches infinity. For details on the nature of the approximation, 
+#' return to CVXPY GitHub Issue #228 https://github.com/cvxpy/cvxpy/issues/228#issuecomment-544281906.
+#'
+#' @param x An \linkS4class{Expression} object.
+#' @return An expression representing the log-gamma of \code{x}.
+LogGamma <- function(x) {
+  MaxElemwise(2.18382 - 3.62887*x, 1.79241 - 2.4902*x, 1.21628 - 1.37035*x,
+              0.261474 - 0.28904*x, 0.577216 - 0.577216*x, -0.175517 + 0.03649*x,
+              -1.27572 + 0.621514*x, -0.845568 + 0.422784*x, -0.577216*x - Log(x),
+              0.918939 - x - Entr(x) - 0.5*Log(x))
+}
+
+#'
 #' The Logistic class.
 #'
 #' This class represents the elementwise operation \eqn{\log(1 + e^x)}.
@@ -577,6 +741,35 @@ setMethod(".grad", "Logistic", function(object, values) {
   grad_vals <- exp_val/(1 + exp_val)
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
+
+#'
+#' The LogNormCdf atom.
+#'
+#' The elementwise log of the cumulative distribution function of a standard normal random variable.
+#' 
+#' This implementation is a quadratic approximation with modest accuracy over [-4, 4].
+#' For details on the nature of the approximation, refer to CVXPY GitHub PR #1224 
+#' https://github.com/cvxpy/cvxpy/pull/1224#issue-793221374.
+#' 
+#' Note: Python SciPy's analog of LogNormCdf is called log_ndtr: 
+#' https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.log_ndtr.html
+#'
+#' @param x An \linkS4class{Expression} object.
+#' @return An expression representing the log-norm of \code{x}.
+LogNormCdf <- function(x) {
+  x <- as.Constant(x)
+  flat_x <- Reshape(x, c(1, size(x)))
+  
+  d <- sqrt(0.02301291, 0.08070214, 0.16411522, 0.09003495, 0.08200854, 
+            0.01371543, 0.04641081)
+  A <- sparseMatrix(i = seq(length(d)), j = seq(length(d)), x = d)
+  b <- matrix(c(3, 2, 1, 0,-1, -2.5, -3.5))
+  
+  y <- A %*% (b %*% matrix(1, dim(flat_x)) - matrix(1, dim(b)) $*$ flat_x)
+  out <- -SumEntries(MaxElemwise(y, 0)^2, axis = 2)
+  
+  return(Reshape(out, dim(x)))
+}
 
 #'
 #' The MaxElemwise class.
@@ -966,7 +1159,7 @@ setMethod(".grad", "Power", function(object, values) {
   list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
 })
 
-#' @describeIn Power Returns constraints describng the domain of the node
+#' @describeIn Power Returns constraints describing the domain of the node
 setMethod(".domain", "Power", function(object) {
   if((object@p < 1 && object@p != 0) || (object@p > 1 && !is_power2(object@p)))
     list(object@args[[1]] >= 0)
@@ -996,4 +1189,162 @@ setMethod("name", "Power", function(x) {
   paste(class(x), "(", name(x@args[[1]]), ", ", x@p, ")", sep = "")
 })
 
+#'
+#' The RelEntr class.
+#'
+#' This class represents elementwise \eqn{x\log(x/y)}.
+#' 
+#' For disambiguation between RelEntr and KLDiv, see https://github.com/cvxpy/cvxpy/issues/733
+#' 
+#' @slot x An \linkS4class{Expression}.
+#' @slot y An \linkS4class{Expression}.
+#' @name RelEntr-class
+#' @aliases RelEntr
+#' @rdname RelEntr-class
+.RelEntr <- setClass("RelEntr", representation(x = "ConstValORExpr", y = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @param y An \linkS4class{Expression}.
+#' @rdname RelEntr-class
+RelEntr <- function(x, y) { .RelEntr(x = x, y = y) }
+
+setMethod("initialize", "RelEntr", function(.Object, ..., x, y) {
+  .Object@x <- x
+  .Object@y <- y
+  callNextMethod(.Object, ..., atom_args = list(.Object@x, .Object@y))
+})
+
+#' @param object A \linkS4class{RelEntr} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn RelEntr The numeric value of the expression.
+setMethod("to_numeric", "RelEntr", function(object, values) {
+  x <- values[[1]]
+  y <- values[[2]]
+  rel_entr <- function(x_i, y_i) {
+    if(x_i > 0 && y_i > 0)
+      return(x_i*base::log(x_i/y_i))
+    else if(x_i == 0 && y_i >= 0)
+      return(0)
+    else
+      return(Inf)
+  }
+  return(mapply(rel_entr, x, y))
+})
+
+#' @describeIn RelEntr The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "RelEntr", function(object) { c(FALSE, FALSE) })
+
+#' @describeIn RelEntr Is the atom convex?
+setMethod("is_atom_convex", "RelEntr", function(object) { TRUE })
+
+#' @describeIn RelEntr Is the atom concave?
+setMethod("is_atom_concave", "RelEntr", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn RelEntr Is the atom weakly increasing in the index?
+setMethod("is_incr", "RelEntr", function(object, idx) { FALSE })
+
+#' @describeIn RelEntr Is the atom weakly decreasing in the index?
+setMethod("is_decr", "RelEntr", function(object, idx) {
+  if(idx == 1)
+    return(FALSE)
+  else
+    return(TRUE)
+})
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn RelEntr Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "RelEntr", function(object, values) { 
+  if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
+    # Non-differentiable.
+    return(list(NA_real_, NA_real_))
+  else {
+    div <- values[[1]]/values[[2]]
+    grad_vals <- list(base::log(div) + 1, -div)
+    grad_list <- list()
+    for(idx in seq_along(values)) {
+      rows <- size(object@args[[idx]])
+      cols <- size(object)
+      grad_list <- c(grad_list, list(Elementwise.elemwise_grad_to_diag(grad_vals[[idx]], rows, cols)))
+    }
+    return(grad_list)
+  }
+})
+
+#' @describeIn RelEntr Returns constraints describing the domain of the node
+setMethod(".domain", "RelEntr", function(object) { list(object@args[[1]] >= 0, object@args[[2]] >= 0) })
+
+#'
+#' The Scalene atom.
+#'
+#' This is an alias for \eqn{\alpha*Pos(x) + \beta*Neg(x)}.
+#'
+#' @param x An \linkS4class{Expression} object.
+#' @param alpha A numeric constant.
+#' @param beta A numeric constant.
+#' @return An expression representing the scalene.
 Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
+
+#'
+#' The XExp class.
+#'
+#' This class represents elementwise \eqn{x\exp^x}.
+#' 
+#' @slot x An \linkS4class{Expression}.
+#' @name XExp-class
+#' @aliases XExp
+#' @rdname XExp-class
+.XExp <- setClass("XExp", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname XExp-class
+XExp <- function(x) { .XExp(x = x) }
+
+setMethod("initialize", "XExp", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{XExp} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn XExp The numeric value of the expression.
+setMethod("to_numeric", "XExp", function(object, values) {
+  values[[1]]*base::exp(values[[1]])
+})
+
+#' @describeIn XExp The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "XExp", function(object) {
+  # Depends on the sign of x.
+  c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]]))
+})
+
+#' @describeIn XExp Is the atom convex?
+setMethod("is_atom_convex", "XExp", function(object) { is_nonneg(object@args[[1]]) })
+
+#' @describeIn XExp Is the atom concave?
+setMethod("is_atom_concave", "XExp", function(object) { FALSE })
+
+#' @describeIn XExp Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "XExp", function(object) { TRUE })
+
+#' @describeIn XExp Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "XExp", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn XExp Is the atom weakly increasing in the index?
+setMethod("is_incr", "XExp", function(object, idx) { TRUE })
+
+#' @describeIn XExp Is the atom weakly decreasing in the index?
+setMethod("is_decr", "XExp", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn XExp Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "XExp", function(object, values) { 
+  rows <- size(object@args[[1]])
+  cols <- size(object)
+  grad_vals <- base::exp(values[[1]])*(1 + values[[1]])
+  return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
+})
+
+#' @describeIn XExp Returns constraints describing the domain of the node
+setMethod(".domain", "XExp", function(object) { list(object@args[[1]] >= 0) })

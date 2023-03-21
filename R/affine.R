@@ -37,6 +37,9 @@ setMethod("is_decr", "AffAtom", function(object, idx) { FALSE })
 #' @describeIn AffAtom Is every argument quadratic?
 setMethod("is_quadratic", "AffAtom", function(object) { all(sapply(object@args, is_quadratic)) })
 
+#' @describeIn AffAtom Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
+setMethod("has_quadratic_term", "AffAtom", function(object) { any(sapply(object@args, has_quadratic_term)) }) 
+
 #' @describeIn AffAtom Is every argument quadratic of piecewise affine?
 setMethod("is_qpwa", "AffAtom", function(object) { all(sapply(object@args, is_qpwa)) })
 
@@ -83,17 +86,30 @@ setMethod(".grad", "AffAtom", function(object, values) {
       offset <- offset + size(arg)
     }
   }
+  var_length <- offset
   names(var_offsets) <- var_names
   graph <- graph_implementation(object, fake_args, dim(object), get_data(object))
   fake_expr <- graph[[1]]
 
   # Get the matrix representation of the function.
-  prob_mat <- get_problem_matrix(list(fake_expr), var_offsets)
-  V <- prob_mat[[1]]
-  I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
-  J <- prob_mat[[3]] + 1
-  dims <- c(offset, size(object))
-  stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = dims)
+  # prob_mat <- get_problem_matrix(list(fake_expr), var_offsets)
+  # V <- prob_mat[[1]]
+  # I <- prob_mat[[2]] + 1   # TODO: R uses 1-indexing, but get_problem_matrix returns with 0-indexing
+  # J <- prob_mat[[3]] + 1
+  # dims <- c(offset, size(object))
+  # stacked_grad <- sparseMatrix(i = J, j = I, x = V, dims = dims)
+  
+  param_to_size <- list()
+  param_to_col <- list()
+  param_to_size[[as.character(CONSTANT_ID)]] <- 1
+  param_to_col[[as.character(CONSTANT_ID)]] <- 0
+  canon_mat <- get_problem_matrix(list(fake_expr), var_length, var_offsets, param_to_size, param_to_col, size(object))
+  
+  # HACK TODO Convert tensors back to vectors.
+  dims <- c(var_length + 1, size(object))
+  stacked_grad <- matrix(t(canon_mat), nrow = dims[1], ncol = dims[2], byrow = TRUE)
+  stacked_grad <- Matrix(stacked_grad, sparse = TRUE)   # TODO: How to reshape sparse matrix with byrow = TRUE?
+  stacked_grad <- stacked_grad[-nrow(stacked_grad),]   # Remove last row.
 
   # Break up into per argument matrices.
   grad_list <- list()
@@ -140,6 +156,13 @@ setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = lis
 #' @param x,object An \linkS4class{AddExpression} object.
 #' @describeIn AddExpression The dimensions of the expression.
 setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
+
+setMethod("expand_args", "AddExpression", function(expr) { 
+  if(is(expr, "AddExpression"))
+    return(expr@args)
+  else
+    return(list(expr))
+})
 
 #' @describeIn AddExpression The string form of the expression.
 setMethod("name", "AddExpression", function(x) {
@@ -359,7 +382,22 @@ setMethod("dim_from_args", "MulExpression", function(object) { mul_dims(dim(obje
 
 #' @describeIn MulExpression Multiplication is convex (affine) in its arguments only if one of the arguments is constant.
 setMethod("is_atom_convex", "MulExpression", function(object) {
-  is_constant(object@args[[1]]) || is_constant(object@args[[2]])
+  if(dpp_scope_active()) {
+    # This branch applies curvature rules for DPP.
+    #
+    # Because a DPP scope is active, parameters will be
+    # treated as affine (like variables, not constants) by curvature
+    # analysis methods.
+    #
+    # Like under DCP, a product x * y is convex if x or y is constant.
+    # If neither x nor y is constant, then the product is DPP
+    # if one of the expressions is affine in its parameters and the
+    # other is parameter-free.
+    x <- object@args[[1]]
+    y <- object@args[[2]]
+    (is_constant(x) || is_constant(y)) || (is_param_affine(x) && is_param_free(y)) || (is_param_affine(y) && is_param_free(x))
+  } else
+    is_constant(object@args[[1]]) || is_constant(object@args[[2]])
 })
 
 #' @describeIn MulExpression If the multiplication atom is convex, then it is affine.
@@ -459,6 +497,19 @@ setMethod("is_atom_log_log_convex", "Multiply", function(object) { TRUE })
 #' @describeIn Multiply Is the atom log-log concave?
 setMethod("is_atom_log_log_concave", "Multiply", function(object) { TRUE })
 
+#' @describeIn Multiply Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "Multiply", function(object) {
+  (is_constant(object@args[[1]]) || is_constant(object@args[[2]])) ||
+    (is_nonneg(object@args[[1]]) && is_nonpos(object@args[[2]])) ||
+    (is_nonpos(object@args[[1]]) && is_nonneg(object@args[[2]]))
+})
+
+#' @describeIn Multiply Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "Multiply", function(object) {
+  is_constant(object@args[[1]]) || is_constant(object@args[[2]]) ||
+    all(sapply(object@args, is_nonneg)) || all(sapply(object@args, is_nonpos))
+})
+
 #' @describeIn Multiply Is the expression a positive semidefinite matrix?
 setMethod("is_psd", "Multiply", function(object) {
   (is_psd(object@args[[1]]) && is_psd(object@args[[2]])) || (is_nsd(object@args[[1]]) && is_nsd(object@args[[2]]))
@@ -514,6 +565,11 @@ setMethod("to_numeric", "DivExpression", function(object, values) {
 #' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
 setMethod("is_quadratic", "DivExpression", function(object) {
   is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
+})
+
+#' @describeIn DivExpression Can be a quadratic term if divisor is constant.
+setMethod("has_quadratic_term", "DivExpression", function(object) {
+  has_quadratic_term(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
 #' @describeIn DivExpression Is the expression quadratic of piecewise affine?
@@ -605,6 +661,18 @@ setMethod("is_symmetric", "Conjugate", function(object) { is_symmetric(object@ar
 
 #' @describeIn Conjugate Is the expression hermitian?
 setMethod("is_hermitian", "Conjugate", function(object) { is_hermitian(object@args[[1]]) })
+
+Conjugate.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(arg_objs[[1]], list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn Conv The graph implementation of the atom.
+setMethod("graph_implementation", "Conjugate", function(object, arg_objs, dim, data = NA_real_) {
+  Conjugate.graph_implementation(arg_objs, dim, data)
+})
 
 #'
 #' The Conv class.
@@ -903,6 +971,8 @@ setMethod("graph_implementation", "DiagMat", function(object, arg_objs, dim, dat
 })
 
 #' 
+#' The Diag atom.
+#' 
 #' Turns an expression into a DiagVec object
 #' 
 #' @param expr An \linkS4class{Expression} that represents a vector or square matrix.
@@ -918,6 +988,8 @@ Diag <- function(expr) {
     stop("Argument to Diag must be a vector or square matrix.")
 }
 
+#' 
+#' The Diff atom.
 #' 
 #' Takes the k-th order differences
 #' 
@@ -1083,16 +1155,7 @@ setMethod("is_imag", "Imag", function(object) { FALSE })
 setMethod("is_complex", "Imag", function(object) { FALSE })
 
 #' @describeIn Imag Is the atom symmetric?
-setMethod("is_symmetric", "Imag", function(object) { TRUE })
-
-#' @describeIn Imag Is the atom hermitian?
-setMethod("is_hermitian", "Imag", function(object) { TRUE })
-
-#' @describeIn Imag Is the atom positive semidefinite?
-setMethod("is_psd", "Imag", function(object) { is_nonneg(object) })
-
-#' @describeIn Imag Is the atom negative semidefinite?
-setMethod("is_nsd", "Imag", function(object) { is_nonpos(object) })
+setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1]]) })
 
 #'
 #' The Index class.
@@ -1243,6 +1306,31 @@ setMethod(".grad", "SpecialIndex", function(object) {
   return(grad(lowered))
 })
 
+SpecialIndex.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  select_mat <- object@.select_mat
+  final_dim <- dim(object@.select_mat)
+  select_vec <- matrix(select_mat, prod(dim(select_mat)), byrow = FALSE)
+  
+  # Select the chosen entries from expr.
+  arg <- arg_objs[[1]]
+  arg_size <- size(object@args[[1]])
+  id_mat <- sparseMatrix(i = seq_len(arg_size), j = seq_len(arg_size), x = rep(1, arg_size))
+  vec_arg <- lu_reshape(arg, c(arg_size, 1))
+  mul_mat <- id_mat[select_vec]
+  mul_const <- lu_create_const(mul_mat, dim(mul_mat), sparse = TRUE)
+  mul_expr <- lu_mul_expr(mul_const, vec_arg, c(nrow(mul_mat), 1))
+  obj <- lu_reshape(mul_expr, final_dim)
+  return(list(obj, list()))
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn Index The graph implementation of the atom.
+setMethod("graph_implementation", "SpecialIndex", function(object, arg_objs, dim, data = NA_real_) {
+  SpecialIndex.graph_implementation(arg_objs, dim, data)
+})
+
 #'
 #' The Kron class.
 #'
@@ -1275,7 +1363,7 @@ setMethod("to_numeric", "Kron", function(object, values) {
 
 #' @describeIn Kron Check both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Kron", function(object) {
-  if(!is_constant(object@args[[1]]))
+  if(!(is_constant(object@args[[1]]) || is_constant(object@args[[2]])))
     stop("The first argument to Kron must be constant.")
   else if(ndim(object@args[[1]]) != 2 || ndim(object@args[[2]]) != 2)
     stop("Kron requires matrix arguments.")
@@ -1285,7 +1373,7 @@ setMethod("validate_args", "Kron", function(object) {
 setMethod("dim_from_args", "Kron", function(object) {
   rows <- dim(object@args[[1]])[1] * dim(object@args[[2]])[1]
   cols <- dim(object@args[[1]])[2] * dim(object@args[[2]])[2]
-  c(rows, cols)
+  return(c(rows, cols))
 })
 
 #' @describeIn Kron Is the atom convex?
@@ -1308,11 +1396,17 @@ setMethod("is_atom_concave", "AffAtom", function(object) {
 setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]], object@args[[2]]) })
 
 #' @param idx An index into the atom.
-#' @describeIn Kron Is the left-hand expression positive?
-setMethod("is_incr", "Kron", function(object, idx) { is_nonneg(object@args[[1]]) })
+#' @describeIn Kron Is the composition non-decreasing in argument \code{idx}?
+setMethod("is_incr", "Kron", function(object, idx) {
+  cst_loc <- ifelse(is_constant(object@args[[1]]), 1, 2)
+  is_nonneg(object@args[[cst_loc]])
+})
 
-#' @describeIn Kron Is the right-hand expression negative?
-setMethod("is_decr", "Kron", function(object, idx) { is_nonpos(object@args[[1]]) })
+#' @describeIn Kron Is the composition non-increasing in argument \code{idx}?
+setMethod("is_decr", "Kron", function(object, idx) {
+  cst_loc <- ifelse(is_constant(object@args[[1]]), 1, 2)
+  is_nonpos(object@args[[1]])
+})
 
 #' @describeIn Kron Is the atom a positive semidefinite matrix?
 setMethod("is_psd", "Kron", function(object) {
@@ -1604,16 +1698,19 @@ setMethod("is_symmetric", "Real", function(object) { is_hermitian(object@args[[1
 #' @name Reshape-class
 #' @aliases Reshape
 #' @rdname Reshape-class
-.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", new_dim = "numeric"), contains = "AffAtom")
+.Reshape <- setClass("Reshape", representation(expr = "ConstValORExpr", new_dim = "numeric", byrow = "logical"), 
+                                prototype(byrow = FALSE), contains = "AffAtom")
 
 #' @param expr An \linkS4class{Expression} or numeric matrix.
 #' @param new_dim The new dimensions.
+#' @param byrow A logical value indicating whether the matrix is filled by rows. If \code{FALSE} (default), the matrix is filled by columns.
 #' @rdname Reshape-class
-Reshape <- function(expr, new_dim) { .Reshape(expr = expr, new_dim = new_dim) }
+Reshape <- function(expr, new_dim, byrow = FALSE) { .Reshape(expr = expr, new_dim = new_dim, byrow = byrow) }
 
-setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim) {
+setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim, byrow) {
   .Object@new_dim <- new_dim
   .Object@expr <- expr
+  .Object@byrow <- byrow
   callNextMethod(.Object, ..., atom_args = list(.Object@expr))
 })
 
@@ -1621,8 +1718,15 @@ setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim) {
 #' @param values A list of arguments to the atom.
 #' @describeIn Reshape Reshape the value into the specified dimensions.
 setMethod("to_numeric", "Reshape", function(object, values) {
-  dim(values[[1]]) <- object@new_dim
-  values[[1]]
+  if(object@byrow) {
+    mat <- values[[1]]
+    dim(mat) <- rev(object@new_dim)
+    return(t(mat))
+  } else {
+    dim(values[[1]]) <- object@new_dim
+    return(values[[1]])
+  }
+
 })
 
 #' @describeIn Reshape Check the new shape has the same number of entries as the old.
@@ -1643,10 +1747,20 @@ setMethod("is_atom_log_log_convex", "Reshape", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "Reshape", function(object) { TRUE })
 
 #' @describeIn Reshape Returns a list containing the new shape.
-setMethod("get_data", "Reshape", function(object) { list(object@new_dim) })
+setMethod("get_data", "Reshape", function(object) { list(object@new_dim, object@byrow) })
 
 Reshape.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.reshape(arg_objs[[1]], dim), list())
+  arg <- arg_objs[[1]]
+  if(data[2]) {   # byrow = TRUE
+    arg <- lo.transpose(arg)
+    if(length(dim) <= 1)
+      list(lo.reshape(arg, dim), list())
+    else {
+      result <- lo.reshape(arg, c(dim[2], dim[1]))
+      list(lo.transpose(result), list())
+    }
+  } else   # byrow = FALSE
+    list(lo.reshape(arg, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
@@ -1656,6 +1770,8 @@ Reshape.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
 setMethod("graph_implementation", "Reshape", function(object, arg_objs, dim, data = NA_real_) {
   Reshape.graph_implementation(arg_objs, dim, data)
 })
+
+# TODO: Implement Flatten and DeepFlatten in R.
 
 #'
 #' The SumEntries class.
@@ -2162,4 +2278,20 @@ setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) 
 Bmat <- function(block_lists) {
   row_blocks <- lapply(block_lists, function(blocks) { do.call("HStack", blocks) })
   do.call("VStack", row_blocks)
+}
+
+#' 
+#' The ScalarProduct atom.
+#' 
+#' Standard inner product or scalar product of (x,y)
+#' 
+#' @param x An \linkS4class{Expression} or numeric value. The conjugate-linear argument to the inner product.
+#' @param y An \linkS4class{Expression} or numeric value. The linear argument to the inner product.
+#' @return An \linkS4class{Expression} representing the standard inner product of (\code{x}, \code{y}), conjugate-linear in \code{x}.
+#' @rdname ScalarProduct-int
+ScalarProduct <- function(x, y) {
+  x <- DeepFlatten(x)
+  y <- DeepFlatten(y)
+  xy_prod <- Multiply(Conjugate(x), y)
+  return(SumEntries(xy_prod))
 }

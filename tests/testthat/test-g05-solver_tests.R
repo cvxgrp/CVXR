@@ -71,7 +71,7 @@ test_that("Test a basic QP with all solvers", {
   applicable_solvers  <- setdiff(INSTALLED_SOLVERS, list("CBC", "ECOS_BB", "GLPK_MI", "GLPK"))
   ## SCS is known to cause problems
   ## Works sometimes if we set rho_x = 1e-2, but too problematic
-  applicable_solvers  <- setdiff(applicable_solvers, c("SCS", "CVXOPT"))
+  applicable_solvers  <- setdiff(applicable_solvers, c("SCS", "CVXOPT", "CLARABEL"))
 
   for(solver in applicable_solvers) {
     result <- solve(p, solver)
@@ -171,7 +171,7 @@ test_that("Test a basic SDP with all solvers", {
                            .8590441, -.1760618, .11665767,
                            -.17606183, .03608155), nrow = n)
   # SCS and MOSEK and CVXOPT are the only three solvers that support SDPs
-  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT"))) {
+  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT", "CLARABEL"))) {
     result <- solve(prob, solver = solver)
     print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 1.395479, tolerance=TOL)
@@ -194,6 +194,7 @@ test_that("Test a mixed-integer quadratic program",{
   applicable_solvers <- intersect(INSTALLED_SOLVERS, c("ECOS_BB", "CPLEX", "GUROBI", "MOSEK"))
   for(solver in applicable_solvers) {
     result <- solve(prob, solver=solver)
+    print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 13.34086, tolerance=TOL)
   }
 })
@@ -212,8 +213,9 @@ test_that("Test a simple geometric program", {
                       y <= 2*x,
                       z >=1)
   prob <- Problem(Maximize(obj), constraints)
-  for(solver in c("ECOS", "SCS")){
+  for(solver in c("ECOS", "SCS", "CLARABEL")){
     result <- solve(prob, solver=solver, gp=TRUE)
+    print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 2, tolerance=TOL)
     expect_equal(result$getValue(x), 1, tolerance=TOL)
     expect_equal(result$getValue(y), 2, tolerance=TOL)

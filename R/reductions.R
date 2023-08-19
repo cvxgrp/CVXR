@@ -66,12 +66,18 @@ setClassUnion("ProblemORNULL", c("Problem", "NULL"))
 #' between solutions of either problem: if we reduce a problem \eqn{A} to another
 #' problem \eqn{B} and then proceed to find a solution to \eqn{B}, we can convert
 #' it to a solution of \eqn{A} with at most a moderate amount of effort.
+#' 
+#' A reduction that is instantiated with a non-NULL problem offers two key methods: 
+#' reduce and retrieve. The reduce method converts the problem the reduction 
+#' was instantiated with to an equivalent problem. The retrieve method takes 
+#' as an argument a Solution for the equivalent problem and returns a Solution 
+#' for the problem owned by the reduction.
 #'
-#' Every reduction supports three methods: accepts, perform, and invert. The accepts
-#' method of a particular reduction codifies the types of problems that it is applicable
-#' to, the perform method takes a problem and reduces it to a (new) equivalent form,
-#' and the invert method maps solutions from reduced-to problems to their problems
-#' of provenance.
+#' Every reduction supports three low-level methods: accepts, perform, and invert. 
+#' The accepts method of a particular reduction specifies the types of problems 
+#' that it is applicable to, the perform method takes a problem and reduces it to 
+#' an equivalent form, and the invert method maps solutions from reduced-to problems 
+#' to their problems of provenance.
 #'
 #' @rdname Reduction-class
 setClass("Reduction", representation(problem = "ProblemORNULL", .emitted_problem = "ANY", .retrieval_data = "ANY"),

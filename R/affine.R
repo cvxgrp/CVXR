@@ -1708,6 +1708,8 @@ setMethod("is_symmetric", "Real", function(object) { is_hermitian(object@args[[1
 Reshape <- function(expr, new_dim, byrow = FALSE) { .Reshape(expr = expr, new_dim = new_dim, byrow = byrow) }
 
 setMethod("initialize", "Reshape", function(.Object, ..., expr, new_dim, byrow) {
+  if(length(new_dim) > 2)
+    stop("Expressions of dimension greater than 2 are not supported")
   .Object@new_dim <- new_dim
   .Object@expr <- expr
   .Object@byrow <- byrow
@@ -1771,7 +1773,32 @@ setMethod("graph_implementation", "Reshape", function(object, arg_objs, dim, dat
   Reshape.graph_implementation(arg_objs, dim, data)
 })
 
-# TODO: Implement Flatten and DeepFlatten in R.
+Reshape.deep_flatten <- function(x)
+{
+  # Base cases
+  if(is(x, "Expression")) {
+    if(length(dim(x)) == 1 || all(dim(x) == c(1,1)))
+      return(x)
+    else
+      return(flatten(x))
+  } else if(is.numeric(x)) {
+    x <- as.Constant(x)
+    return(flatten(x))
+  }
+  
+  # Recursion
+  if(is(x, "list")) {
+    y <- list()
+    for(xo in x) {
+      x1 <- deep_flatten(x0)
+      y <- c(y, x1)
+    }
+    y <- HStack(y)
+    return(y)
+  }
+  
+  stop("The input to deep_flatten must be an Expression, numeric array or scalar, or a nested list thereof. Received input of type ", class(x))
+}
 
 #'
 #' The SumEntries class.
@@ -1886,6 +1913,21 @@ setMethod("validate_args", "Trace", function(object) {
 
 #' @describeIn Trace The atom is a scalar.
 setMethod("dim_from_args", "Trace", function(object){ c(1,1) })
+
+#' @describeIn Trace The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "Trace", function(object) {
+  is_nonneg <- is_nonneg(object@args[[1]]) || is_psd(object@args[[1]])
+  is_nonpos <- is_nonpos(object@args[[1]]) || is_nsd(object@args[[1]])
+  c(is_nonneg, is_nonpos)
+})
+
+#' @describeIn Trace A logical value indicating whether the atom is real.
+setMethod("is_real", "Trace", function(object) {
+  is_real(object@args[[1]]) || is_hermitian(object@args[[1]])
+})
+
+#' @describeIn Trace A logical value indicating whether the atom is complex.
+setMethod("is_complex", "Trace", function(object) { !is_real(object) })
 
 #' @describeIn Trace Is the atom log-log convex?
 setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })
@@ -2027,6 +2069,42 @@ setMethod("is_atom_log_log_concave", "UpperTri", function(object) { TRUE })
 
 UpperTri.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   list(lo.upper_tri(arg_objs[[1]]), list())
+}
+
+UpperTri.vec_to_upper_tri <- function(expr, strict = FALSE) {
+  expr <- as.Constant(expr)
+  ell <- dim(expr)[[1]]
+  if(strict) {
+    # n * (n-1)/2 == ell
+    n <- floor(((8*ell + 1)^0.5 + 1)/2)
+  } else {
+    # n * (n+1)/2 == ell
+    n <- floor(((8*ell + 1)^0.5 - 1)/2)
+  }
+  
+  # Form a matrix P of dimensions (n^2, ell).
+  #     the i-th block of n rows of P gives the entries of the i-th row
+  #     of the upper-triangular matrix associated with expr.
+  # Compute expr2 <- P %*% expr
+  # Compute expr3 <- t(reshape(expr2, dim = c(n,n)))
+  #     expr3 is the matrix formed by reading length-n blocks of expr 2,
+  #     and letting each block for a row of expr3.
+  P_rows <- c()
+  P_row <- 1
+  for(mat_row in seq(n)) {
+    entries_in_row <- n - mat_row + 1
+    if(strict)
+      entries_in_row <- entries_in_row - 1
+    P_row <- P_row + n - entries_in_row   # these are zeros
+    P_rows <- c(P_rows, seq(P_row, P_row + entries_in_row))
+    P_row <- P_row + entries_in_row
+  }
+  P_cols <- seq(ell)
+  P_vals <- rep(1, ell)
+  P <- sparseMatrix(P_rows, P_cols, x = P_vals, dims = c(n^2, ell))
+  expr2 <- P @ expr
+  expr3 <- t(Reshape(expr2, c(n, n)))
+  return(expr3)
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

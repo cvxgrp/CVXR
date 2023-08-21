@@ -318,9 +318,8 @@ dist_ratio_sub <- function(expr, t) {
 }
 
 mul_sup <- function(expr, t) {
-  xy <- expr@args
-  x <- xy[[1]]
-  y <- xy[[2]]
+  x <- expr@args[[1]]
+  y <- expr@args[[2]]
   if(is_nonneg(x) && is_nonneg(y))
     return(list(x >= t * InvPos(y)))
   else if(is_nonpos(x) && is_nonpos(y))
@@ -329,7 +328,135 @@ mul_sup <- function(expr, t) {
     stop("Incorrect signs")
 }
 
-# TODO: Convert functions in sets.py
+mul_sub <- function(expr, t) {
+  x <- expr@args[[1]]
+  y <- expr@args[[2]]
+  if(is_nonneg(x) && is_nonpos(y))
+    return(list(y <= t * InvPos(x)))
+  else if(is_nonpos(x) && is_nonneg(y))
+    return(list(x <= t * InvPos(y)))
+  else
+    stop("Incorrect signs")
+}
+
+ratio_sup <- function(expr, t) {
+  x <- expr@args[[1]]
+  y <- expr@args[[2]]
+  if(is_nonneg(y))
+    return(list(x >= t * y))
+  else if(is_nonpos(y))
+    return(list(x <= t * y))
+  else
+    stop("The denominator's sign must be known")
+}
+
+ratio_sub <- function(expr, t) {
+  x <- expr@args[[1]]
+  y <- expr@args[[2]]
+  if(is_nonneg(y))
+    return(list(x <= t * y))
+  else if(is_nonpos(y))
+    return(list(x >= t * y))
+  else
+    stop("The denominator's sign must be known")
+}
+
+length_sub <- function(expr, t) {
+  arg <- expr@args[[1]]
+  if(is(t, "Parameter")) {
+    sublevel_set <- function() {
+      if(value(t) < 0)
+        return(FALSE)
+      if(value(t) >= size(arg))
+        return(TRUE)
+      idx_start <- as.integer(value(Floor(t))) + 1
+      return(arg[seq(idx_start, size(arg))] == 0)   # TODO: Check if we should use nrow(arg) or size(arg).
+    }
+    return(list(sublevel_set))
+  } else {
+    idx_start <- as.integer(value(Floor(t))) + 1
+    return(list(arg[seq(idx_start, size(arg))] == 0))   # TODO: Check if we should use nrow(arg) or size(arg).
+  }
+}
+
+sign_sup <- function(expr, t) {
+  x <- expr@args[[1]]
+  
+  superlevel_set <- function() {
+    if(value(t) <= -1)
+      return(TRUE)
+    else if(value(t) <= 1)
+      return(x >= 0)
+    else
+      return(FALSE)
+  }
+  return(list(superlevel_set))
+}
+
+sign_sub <- function(expr, t) {
+  x <- expr@args[[1]]
+  
+  sublevel_set <- function() {
+    if(value(t) >= 1)
+      return(TRUE)
+    else if(value(t) >= -1)
+      return(x <= 0)
+    else
+      return(FALSE)
+  }
+  return(list(sublevel_set))
+}
+
+gen_lambda_max_sub <- function(expr, t) {
+  return(list(expr@args[[1]] == t(expr@args[[1]]), expr@args[[2]] %>>% 0, (t * expr@args[[2]] - expr@args[[1]]) %>>% 0))
+}
+
+condition_number_sub <- function(expr, t) {
+  A <- expr@args[[1]]
+  n <- nrow(A)
+  u <- Variable(pos = TRUE)
+  
+  prom_ut <- promote(u * t, c(n, 1))
+  prom_u <- promote(u, c(n, 1))
+  tmp_expr1 <- A - diag_vec(prom_u)
+  tmp_expr2 <- diag_vec(prom_ut) - A
+  
+  return(list(upper_tri(A) == upper_tri(t(A)), PSD(A), PSD(tmp_expr1), PSD(tmp_expr2)))
+}
+
+SUBLEVEL_SETS <- list(
+  "Multiply" = mul_sub,
+  "DivExpression" = ratio_sub,
+  "VecLength" = length_sub, 
+  "Sign" = sign_sub,
+  "DistRatio" = dist_ratio_sub,
+  "GenLambdaMax" = gen_lambda_max_sub,
+  "ConditionNumber" = condition_number_sub
+)
+
+SUPERLEVEL_SETS <- list(
+  "Multiply" = mul_sup,
+  "DivExpression" = ratio_sup,
+  "Sign" = sign_sup
+)
+
+# Return the t-level sublevel set for expr.
+# Returned as a constraint phi_t(x) <= 0, where phi_t(x) is convex.
+sublevel <- function(expr, t) {
+  if(class(expr) %in% names(SUBLEVEL_SETS))
+    return(SUBLEVEL_SETS[[class(expr)]](expr, t))
+  else
+    stop("Unimplemented: The ", class(expr), " atom is not yet supported in DQCP")
+}
+
+# Return the t-level superlevel set for expr.
+# Returned as a constraint phi_t(x) >= 0, where phi_t(x) is concave.
+superlevel <- function(expr, t) {
+  if(class(expr) %in% names(SUPERLEVEL_SETS))
+    return(SUPERLEVEL_SETS[[class(expr)]](expr, t))
+  else
+    stop("Unimplemented: The ", class(expr), " atom is not yet supported in DQCP")
+}
 
 integer_valued_fns <- c("Ceil", "Floor", "VecLength")
 

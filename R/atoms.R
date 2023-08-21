@@ -1118,7 +1118,7 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
 
 #' @param A An \linkS4class{Expression} or numeric matrix.
 #' @param X An \linkS4class{Expression} or numeric matrix.
-#' @rdname GenLambdaMax-class
+#' @rdname GmatMul-class
 GmatMul <- function(A, X) { .GmatMul(A = A, X = X) }
 
 setMethod("initialize", "GmatMul", function(.Object, ..., A, X) {

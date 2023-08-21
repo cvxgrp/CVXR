@@ -1,4 +1,3 @@
-
 Discrete2MixedInt.exprval_in_vec_ineq <- function(expr, vec) {
   expr_dim <- dim(expr)
   if(!(length(expr_dim) == 1 || (length(expr_dim) == 2 && expr_dim[2] == 1)))
@@ -78,4 +77,4 @@ setMethod("accepts", signature(object = "Valinvec2MixedInt", problem = "Problem"
   return(any(sapply(problem@constraints, function(con) { is(con, "FiniteSet") })))
 })
 
-Valinvec2MixedInt.CANON_METHODS <- list("FiniteSet" = finite_set_canon)
+Valinvec2MixedInt.CANON_METHODS <- list("FiniteSet" = Discrete2MixedInt.finite_set_canon)

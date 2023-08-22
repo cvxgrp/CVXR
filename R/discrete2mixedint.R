@@ -66,6 +66,8 @@ Discrete2MixedInt.finite_set_canon <- function(con, .args) {
 
 Valinvec2MixedInt <- function(problem = NULL) { .Valinvec2MixedInt(problem = problem) }
 
+Valinvec2MixedInt.CANON_METHODS <- list("FiniteSet" = Discrete2MixedInt.finite_set_canon)
+
 setMethod("initialize", "Valinvec2MixedInt", function(.Object, ...) {
   callNextMethod(.Object, ..., canon_methods = Valinvec2MixedInt.CANON_METHODS)
 })
@@ -76,5 +78,3 @@ setMethod("initialize", "Valinvec2MixedInt", function(.Object, ...) {
 setMethod("accepts", signature(object = "Valinvec2MixedInt", problem = "Problem"), function(object, problem) {
   return(any(sapply(problem@constraints, function(con) { is(con, "FiniteSet") })))
 })
-
-Valinvec2MixedInt.CANON_METHODS <- list("FiniteSet" = Discrete2MixedInt.finite_set_canon)

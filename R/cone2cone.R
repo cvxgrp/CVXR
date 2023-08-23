@@ -1,3 +1,225 @@
+Cone2Cone.FREE <- "fr"
+Cone2Cone.ZERO <- "0"
+Cone2Cone.NONNEG <- "+"
+Cone2Cone.EXP <- "e"
+Cone2Cone.DUAL_EXP <- "de"
+Cone2Cone.SOC <- "q"
+Cone2Cone.PSD <- "s"
+Cone2Cone.POW3D <- "pp3"
+Cone2Cone.DUAL_POW3D <- "dp3"
+
+#'
+#'    CVXR represents cone programs as
+#'
+#'        (P-Opt) min{ t(c) %*% x : A %*% x + b in K } + d,
+#'
+#'    where the corresponding dual is
+#'
+#'        (D-Opt) max{ -b %*% y : c = t(A) %*% y, y in K^* } + d.
+#'
+#'    For some solvers, it is much easier to specify a problem of the form (D-Opt) than it
+#'    is to specify a problem of the form (P-Opt). The purpose of this reduction is to handle
+#'    mapping between (P-Opt) and (D-Opt) so that a solver interface can pretend the original
+#'    problem was stated in terms (D-Opt).
+#'
+#'    Usage
+#'    -----
+#'    Dualize applies to ParamConeProg problems. It accesses (P-Opt) data by calling
+#'    ``c, d, A, b = apply_parameters(problem)``. It assumes the solver interface
+#'    has already executed its ``format_constraints`` function on the ParamConeProg problem.
+#'
+#'    A solver interface is responsible for calling both Dualize.perform and Dualize.invert.
+#'    The call to Dualize.perform should be one of the first things that happens, and the
+#'    call to Dualize.invert should be one of the last things that happens.
+#'
+#'    The "data" dict returned by Dualize.perform is keyed by A_KEY, B_KEY, C_KEY, and 'K_dir',
+#'    which respectively provide the dual constraint matrix (t(A)), the dual constraint
+#'    right-hand-side (c), the dual objective vector (-b), and the dual cones (K^*).
+#'    The solver interface should interpret this data is a new primal problem, just with a
+#'    maximization objective. Given a numerical solution, the solver interface should first
+#'    construct a CVXR Solution object where `y` is a primal variable, divided into
+#'    several blocks according to the structure of elementary cones appearing in K^*. The only
+#'    dual variable we use is that corresponding to the equality constraint `c = A^T y`.
+#'    No attempt should be made to map unbounded / infeasible status codes for (D-Opt) back
+#'    to unbounded / infeasible status codes for (P-Opt); all such mappings are handled in
+#'    Dualize.invert. Refer to Dualize.invert for detailed documentation.
+#'
+#'    Assumptions
+#'    -----------
+#'    The problem has no integer or boolean constraints. This is necessary because strong
+#'    duality does not hold for problems with discrete constraints.
+#'
+#'    Dualize.perform assumes "SOLVER.format_constraints()" has already been called. This
+#'    assumption allows flexibility in how a solver interface chooses to vectorize a
+#'    feasible set (e.g. how to order conic constraints, or how to vectorize the PSD cone).
+#'
+#'    Additional notes
+#'    ----------------
+#'
+#'    Dualize.invert is written in a way which is agnostic to how a solver formats constraints,
+#'    but it also imposes specific requirements on the input. Providing correct input to
+#'    Dualize.invert requires consideration to the effect of ``SOLVER.format_constraints`` and
+#'    the output of ``apply_parameters(problem)``.
+#'    
+Dualize.perform <- function(problem) {
+  tmp <- apply_parameters(problem)
+  c <- tmp[[1]]
+  d <- tmp[[2]]
+  A <- tmp[[3]]
+  b <- tmp[[4]]
+  
+  Kp <- cone_dims(problem)    # zero, nonneg, exp, soc, psd
+  
+  Kd <- list()
+  Kd[[FREE]] <- Kp@zero       # length of block of unconstrained variables.
+  Kd[[NONNEG]] <- Kp@nonneg   # length of block of nonneg variables.
+  Kd[[SOC]] <- Kp@soc         # lengths of blocks of soc-constrained variables.
+  Kd[[PSD]] <- Kp@psd         # "orders" of PSD variables.
+  Kd[DUAL_EXP]] <- Kp@exp     # number of length-3 blocks of dual exp cone variables.
+  Kd[[DUAL_POW3D]] <- Kp@p3d  # scale parameters for dual 3d power cones.
+  
+  data <- list()
+  data[[A_KEY]] <- t(A)
+  data[[B_KEY]] <- c
+  data[[C_KEY]] <- -b
+  data$K_dir <- Kd
+  data$dualized <- TRUE
+  
+  inv_data <- list()
+  inv_data[[OBJ_OFFSET]] <- d
+  inv_data$constr_map <- problem@constr_map
+  inv_data$x_id <- id(problem@x)
+  inv_data$K_dir <- Kd
+  inv_data$dualized <- TRUE
+  
+  return(list(data, inv_data))
+}
+
+#'
+#'  ``solution`` is a CVXR Solution object, formatted where
+#'
+#'    (D-Opt) max{ -b %*% y : c = t(A) %*% y, y in K^* } + d
+#'
+#'    is the primal problem from the solver's perspective. The purpose of this function
+#'    is to map such a solution back to the format
+#'
+#'    (P-Opt) min{ t(c) %*% x : A %*% x + b in K } + d.
+#'
+#'    This function handles mapping of primal and dual variables, and solver status codes.
+#'    The variable "x" in (P-Opt) is trivially populated from the dual variables to the
+#'    constraint "c = t(A) %*% y" in (D-Opt). Status codes also map back in a simple way.
+#'
+#'    Details on required formatting of solution.primal_vars
+#'    ------------------------------------------------------
+#'
+#'    We assume the dict solution@primal_vars is keyed by string-enums Cone2Cone.FREE ('fr'), 
+#'    Cone2Cone.NONNEG ('+'), Cone2Cone.SOC ('s'), Cone2Cone.PSD ('p'), and Cone2Cone.DUAL_EXP ('de'). 
+#'    The corresponding values are described below.
+#'
+#'    solution@primal_vars[[Cone2Cone.FREE]] should be a single vector. It corresponds to the 
+#'    (possibly concatenated) components of "y" which are subject to no conic constraints. 
+#'    We map these variables back to dual variables for equality constraints in (P-Opt).
+#'
+#'    solution@primal_vars[[Cone2Cone.NONNEG]] should also be a single vector, this time giving 
+#'    the possibly concatenated components of "y" which must be >= 0. We map these variables
+#'    back to dual variables for inequality constraints in (P-Opt).
+#'
+#'    solution@primal_vars[[Cone2Cone.SOC]] is a list of vectors specifying blocks of "y" which 
+#'    belong to the second-order-cone under the CVXR standard ({ z : z[1] >= || z[1 + seq_len(length(z) - 1)] || }).
+#'    We map these variables back to dual variables for SOC constraints in (P-Opt).
+#'
+#'    solution@primal_vars[[Cone2Cone.PSD]] is a list of symmetric positive semidefinite 
+#'    matrices which result by lifting the vectorized PSD blocks of "y" back into matrix form.
+#'    We assign these as dual variables to PSD constraints appearing in (P-Opt).
+#'
+#'    solution@primal_vars[[Cone2Cone.DUAL_EXP]] is a vector of concatenated length-3 slices 
+#'    of y, where each constituent length-3 slice belongs to dual exponential cone as implied 
+#'    by the CVXR standard of the primal exponential cone (see constraints.R:ExpCone).
+#'    We map these back to dual variables for exponential cone constraints in (P-Opt).
+#'
+Dualize.invert <- function(solution, inv_data) {
+  status <- solution@status
+  prob_attr <- solution@attr
+  primal_vars <- NULL
+  dual_vars <- NULL
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution@opt_val + inv_data[[OBJ_OFFSET]]
+    primal_vars <- list()
+    primal_vars[[inv_data$x_id]] <- solution@dual_vars[[EQ_DUAL]]
+    dual_vars <- list()
+    direct_prims <- solution@primal_vars
+    constr_map <- inv_data$constr_map
+    
+    i <- 1
+    for(con in constr_map$Zero) {
+      dv <- direct_prims[[Cone2Cone.FREE]][seq(i, i + size(con) - 1)]
+      if(size(dv) > 1)
+        dual_vars[[id(con)]] <- dv
+      else
+        dual_vars[[id(con)]] <- as.numeric(dv)   # TODO: Is this same as dv.item()?
+      i <- i + size(con)
+    }
+    
+    i <- 1
+    for(con in constr_map$Nonneg) {
+      dv <- direct_prims[[Cone2Cone.NONNEG]][seq(i, i + size(con) - 1)]
+      if(size(dv) > 1)
+        dual_vars[[id(con)]] <- dv
+      else
+        dual_vars[[id(con)]] <- as.numeric(dv)
+      i <- i + size(con)
+    }
+    
+    i <- 1
+    for(con in constr_map$SOC) {
+      block_len <- nrow(con)
+      dv <- Reduce(base::c, direct_prims[[Cone2Cone.SOC]][seq(i, i + size(con) - 1)])
+      dual_vars[[id(con)]] <- dv
+      i <- i + block_len
+    }
+    
+    i <- 1
+    for(i in seq(length(constr_map$PSD))) {
+      con <- constr_map$PSD[[i]]
+      dv <- direct_prims[[Cone2Cone.PSD]][i]
+      dual_vars[[id(con)]] <- dv
+    }
+    
+    i <- 1
+    for(con in constr_map$ExpCone) {
+      dv <- direct_prims[[Cone2Cone.DUAL_EXP]][seq(i, i + size(con) - 1)]
+      dual_vars[[id(con)]] <- dv
+      i <- i + size(con)
+    }
+    
+    i <- 1   # TODO: Should we reset i = 1 here?
+    for(con in constr_map$PowCone) {
+      dv <- direct_prims[[Cone2Cone.DUAL_POW3D]][seq_i, i + size(con) - 1]
+      dual_vars[[id(con)]] <- dv
+      i <- i + size(con)
+    }
+  } else if(status == INFEASIBLE) {
+    status <- UNBOUNDED
+    opt_val <- -Inf
+  } else if(status == INFEASIBLE_INACCURATE) {
+    status <- UNBOUNDED_INACCURATE
+    opt_val <- -Inf
+  } else if(status == UNBOUNDED) {
+    status <- INFEASIBLE
+    opt_val <- Inf
+  } else if(status == UNBOUNDED_INACCURATE) {
+    status <- INFEASIBLE_INACCURATE
+    opt_val <- Inf
+  } else {
+    status <- SOLVER_ERROR
+    opt_val <- NA_real_
+  }
+  sol <- Solution(status, opt_val, primal_vars, dual_vars, prob_attr)
+  return(sol)
+}
+
+# TODO: Convert affine2direct.py
+
 APPROX_CONES <- list("RelEntrConeQuad" = list("SOC"),
                      "OpRelEntrConeQuad" = list("PSD"))
 

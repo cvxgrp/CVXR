@@ -218,7 +218,238 @@ Dualize.invert <- function(solution, inv_data) {
   return(sol)
 }
 
-# TODO: Convert affine2direct.py
+#'
+#' CVXR represents mixed-integer cone programs as
+#'
+#'      (Aff)   min{ t(c) %*% x : A %*% x + b in K,
+#'                                x[bools] in {0, 1}, x[ints] in Z } + d.
+#'
+#' Some solvers do not accept input in the form (Aff). A general pattern we find
+#' across solver types is that the feasible set is represented by
+#'
+#'      (Dir)   min{ f %*% y : G %*% y <=_{K_aff} h, y in K_dir
+#'                             y[bools] in {0, 1}, y[ints] in Z } + d,
+#'
+#'    where K_aff is built from a list convex cones which includes the zero cone (ZERO),
+#'    and K_dir is built from a list of convex cones which includes the free cone (FREE).
+#'
+#'    This reduction handles mapping back and forth between problems stated in terms
+#'    of (Aff) and (Dir), by way of adding slack variables.
+#'
+#'    Notes
+#'    -----
+#'    Support for semidefinite constraints has not yet been implemented in this
+#'    reduction.
+#'
+#'    If the problem has no integer constraints, then the Dualize reduction should be
+#'    used instead.
+#'
+#'    Because this reduction is only intended for mixed-integer problems, this reduction
+#'    makes no attempt to recover dual variables when mapping between (Aff) and (Dir).
+#'
+#' ======================================================================================
+#' 
+#' "prob" is a ParamConeProg which represents
+#'
+#'    (Aff)   min{ t(c) %*% x : A %*% x + b in K,
+#'                           x[bools] in {0, 1}, x[ints] in Z } + d.
+#'
+#' We return data for an equivalent problem
+#'
+#'    (Dir)   min{ f %*% y : G %*% y <=_{K_aff} h, y in K_dir
+#'                           y[bools] in {0, 1}, y[ints] in Z } + d,
+#'
+#' where
+#' 
+#'    (1) K_aff is built from cone types specified in "affine" (a list of strings),
+#'    (2) a primal solution for (Dir) can be mapped back to a primal solution
+#'        for (Aff) by selecting the leading ``size(c)`` block of y's components.
+#'
+#' In the returned dict "data", data[[A_KEY]] = G, data[[B_KEY]] = h, data[[C_KEY]] = f,
+#' data[['K_aff']] = K_aff, data[['K_dir']] = K_dir, data[[BOOL_IDX]] = bools,
+#' and data[[INT_IDX]] = ints. The rows of G are ordered according to Cone2Cone.ZERO, 
+#' then (as applicable) Cone2Cone.NONNEG, Cone2Cone.SOC, and Cone2Cone.EXP. If  "c" 
+#' is the objective vector in (Aff), then ``y[seq_len(size(c) - 1)]`` should contain 
+#' the optimal solution to (Aff). The columns of G correspond first to variables in 
+#' cones Cone2Cone.FREE, then Cone2Cone.NONNEG, then Cone2Cone.SOC, then Cone2Cone.EXP.
+#' The length of the free cone is equal to ``size(c)``.
+#'
+#' Assumptions
+#' -----------
+#' The function call ``cdAb = apply_parameters(prob)`` returns (A,b) with
+#' rows formatted first for the zero cone, then for the nonnegative orthant, then
+#' second order cones, then the exponential cone. Removing this assumption will
+#' require adding additional data to ParamConeProg objects.
+#'
+Slacks.perform <- function(prob, affine) {
+  tmp <- apply_parameters(prob)   # A %*% x + b in K
+  c <- tmp[[1]]
+  d <- tmp[[2]]
+  A <- tmp[[3]]
+  b <- tmp[[4]]
+  A <- -A   # A %*% x <=_K b.
+  cone_dims <- cone_dims(prob)
+  if(!is.null(cone_dims@psd)) {
+    # This will need to account for different conventions: does order-n PSD constraint
+    # give rise to n^2 rows in A, or floor(n*(n-1)/2) rows?
+    stop("Unimplemented")
+  }
+  
+  for(val in affine) {
+    if(!(val %in% c(Cone2Cone.ZERO, Cone2Cone.NONNEG, Cone2Cone.EXP, Cone2Cone.SOC, Cone2Cone.POW3D)))
+      stop("Unimplemented")
+  }
+  if(!(Cone2Cone.ZERO %in% affine))
+    affine <- c(affine, Cone2Cone.ZERO)
+  
+  cone_lens <- list()
+  cone_lens[[Cone2Cone.ZERO]] <- cone_dims@zero
+  cone_lens[[Cone2Cone.NONNEG]] <- cone_dims@nonneg
+  cone_lens[[Cone2Cone.SOC]] <- sum(cone_dims@soc)
+  cone_lens[[Cone2Cone.EXP]] <- 3*cone_dims@exp
+  cone_lens[[Cone2Cone.POW3D]] <- 3*length(cone_dims@p3d)
+  
+  # If the rows of A are formatted in an order different from
+  # zero -> nonneg -> soc -> exp -> pow, then the below block of code should
+  # change. Right now there isn't enough data in (c, d, A, b, cone_dims,
+  # constr_map) which allows us to figure out the ordering of these rows.
+  row_offsets <- list()
+  row_offsets[[Cone2Cone.ZERO]] <- 0
+  row_offsets[[Cone2Cone.NONNEG]] <- cone_lens[[Cone2Cone.ZERO]],
+  row_offsets[[Cone2Cone.SOC]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]]
+  row_offsets[[Cone2Cone.EXP]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]]
+  row_offsets[[Cone2Cone.POW3D]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]] + cone_lens[[Cone2Cone.EXP]]
+  
+  A_aff <- list()
+  b_aff <- list()
+  A_slk <- list()
+  b_slk <- list()
+  total_slack <- 0
+  for(co_type in c(Cone2Cone.ZERO, Cone2Cone.NONNEG, Cone2Cone.SOC, Cone2Cone.EXP, Cone2Cone.POW3D)) {
+    # The order of the list in the for loop means that the matrix "G" in "G %*% z <=_{K_aff} h"
+    # will always have rows ordered by the zero cone, then the nonnegative orthant,
+    # then second order cones, and finally exponential cones. Changing the order
+    # of items in this list would change the order of row blocks in "G".
+    #
+    # If the order is changed, then this affects which columns of the final matrix
+    # "G" correspond to which types of cones. For example, c(Cone2Cone.ZERO, 
+    # Cone2Cone.SOC, Cone2Cone.EXP, Cone2Cone.POW3D, Cone2Cone.NONNEG) and Cone2Cone.NONNEG 
+    # is not in "affine", then the columns of G with nonnegative variables occur 
+    # after all free variables, soc variables, exp variables, and pow3d variables.
+    
+    co_dim <- cone_lens[[co_type]]
+    if(co_dim > 0) {
+      r <- row_offsets[[co_type]]
+      A_temp <- A[seq(r, r + co_dim - 1),]
+      b_temp <- b[seq(r, r + co_dim - 1)]
+      if(co_type %in% affine) {
+        A_aff <- c(A_aff, list(A_temp))
+        b_aff <- c(b_aff, list(b_temp))
+      } else {
+        total_slack <- total_slack + length(b_temp)
+        A_slk <- c(A_slk, list(A_temp))
+        b_slk <- c(b_slk, list(b_temp))
+      }
+    }
+  }
+  
+  K_dir <- list()
+  K_dir[[Cone2Cone.FREE]] <- size(prob@x)
+  if(Cone2Cone.NONNEG %in% affine)
+    K_dir[[Cone2Cone.NONNEG]] <- 0
+  else
+    K_dir[[Cone2Cone.NONNEG]] <- cone_dims@nonneg
+  if(Cone2Cone.SOC %in% affine)
+    K_dir[[Cone2Cone.SOC]] <- list()
+  else
+    K_dir[[Cone2Cone.SOC]] <- cone_dims@soc
+  if(Cone2Cone.EXP %in% affine)
+    K_dir[[Cone2Cone.EXP]] <- 0
+  else
+    K_dir[[Cone2Cone.EXP]] <- cone_dims@exp
+  K_dir[[Cone2Cone.PSD]] <- list()   # Not currently supported in this reduction
+  K_dir[[Cone2Cone.DUAL_EXP]] <- 0  # Not currently supported in CVXR
+  if(Cone2Cone.POW3D %in% affine)
+    K_dir[[Cone2Cone.POW3D]] <- list()
+  else
+    K_dir[[Cone2Cone.POW3D]] <- cone_dims@p3d
+  K_dir[[Cone2Cone.DUAL_POW3D]] <- list()   # Not currently supported in CVXR
+  
+  K_aff <- list()
+  if(Cone2Cone.NONNEG %in% affine)
+    K_aff[[Cone2Cone.NONNEG]] <- cone_dims@nonneg
+  else
+    K_aff[[Cone2Cone.NONNEG]] <- 0
+  if(ConeCone.SOC %in% affine)
+    K_aff[[Cone2Cone.SOC]] <- cone_dims@soc
+  else
+    K_aff[[Cone2Cone.SOC]] <- list()
+  if(Cone2Cone.EXP %in% affine)
+    K_aff[[Cone2Cone.EXP]] <- cone_dims@exp
+  else
+    K_aff[[Cone2Cone.EXP]] <- 0
+  K_aff[[Cone2Cone.PSD]] <- list()   # Currently not supported in this reduction
+  K_aff[[Cone2Cone.ZERO]] <- cone_dims@zero + total_slack
+  if(Cone2Cone.POW3D %in% affine)
+    K_aff[[Cone2Cone.POW3D]] <- cone_dims@p3d
+  else
+    K_aff[[Cone2Cone.POW3D]] <- list()
+  
+  data <- list()
+  if(length(A_slk) > 0) {
+    # We need to introduce slack variables.
+    A_slk <- Matrix(do.call("rbind", A_slk), sparse = TRUE)
+    eye <- sparseMatrix(seq(total_slack), seq(total_slack), x = rep(1, total_slack))
+    if(length(A_aff) > 0) {
+      A_aff <- Matrix(do.call("rbind", A_aff), sparse = TRUE)
+      G <- Matrix(rbind(cbind(A_slk, eye), cbind(A_aff, matrix(0, nrow = total_slack, ncol = total_slack))), sparse = TRUE)
+      h <- Reduce("c", c(b_slk, b_aff))   # Concatenate lists, then turn to vector
+    } else {
+      G <- cbind(A_slk, eye)
+      h <- Reduce("c", b_slk)
+    }
+    f <- c(c, rep(0, total_slack))
+  } else if(length(A_aff) > 0) {
+    # No slack variables were introduced.
+    G <- Matrix(do.call("rbind", A_aff), sparse = TRUE)
+    h <- Reduce("c", b_aff)
+    f <- c
+  } else
+    stop("Must have at least one slack or affine variable")
+  
+  data[[A_KEY]] <- G
+  data[[B_KEY]] <- h
+  data[[C_KEY]] <- f
+  data[[BOOL_IDX]] <- sapply(prob@x@boolean_idx, function(t) { as.integer(t[1]) })
+  data[[INT_IDX]] <- sapply(prob@x@integer_idx, function(t) { as.integer(t[1]) })
+  data$K_dir <- K_dir
+  data$K_aff <- K_aff
+  
+  inv_data <- list()
+  inv_data$x_id <- id(prob@x)
+  inv_data$K_dir <- K_dir
+  inv_data$K_aff <- K_aff
+  inv_data[[OBJ_OFFSET]] <- d
+  
+  return(list(data, inv_data))
+}
+
+Slack.invert <- function(solution, inv_data) {
+  if(solution@status in SOLUTION_PRESENT) {
+    prim_vars <- solution@primal_vars
+    x <- prim_vars[[Cone2Cone.FREE]]
+    x_id <- id(x)
+    for(i in seq(length(solution@primal_vars))) {
+      if(id(solution@primal_vars[[i]]) == x_id) {
+        solution@primal_vars[[i]] <- NULL
+        break
+      }
+    }
+    prim_vars[[inv_data$x_id]] <- x
+  }
+  solution@opt_val <- solution@opt_val + inv_data[[OBJ_OFFSET]]
+  return(solution)
+}
 
 APPROX_CONES <- list("RelEntrConeQuad" = list("SOC"),
                      "OpRelEntrConeQuad" = list("PSD"))

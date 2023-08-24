@@ -66,11 +66,15 @@ EliminatePwl.cummax_canon <- function(expr, args) {
   Y <- new("Variable", dim = dim(expr))
   constr <- list(X <= Y)
   if(axis == 2) {
-    if(nrow(Y) > 1)
-      constr <- c(constr, list(Y[1:(nrow(Y)-1),] <= Y[2:nrow(Y),]))
+    if(nrow(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- c(constr, list(Y[1:(nrow(Y) - 1,)] <= Y[2:nrow(Y),]))
   } else {
-    if(ncol(Y) > 1)
-      constr <- c(constr, list(Y[,1:(ncol(Y)-1)] <= Y[,2:ncol(Y)]))
+    if(ncol(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- c(constr, list(Y[,1:(ncol(Y) - 1)], Y[,2:ncol(Y)]))
   }
   return(list(Y, constr))
 }
@@ -89,19 +93,60 @@ EliminatePwl.cumsum_canon <- function(expr, args) {
   axis <- expr@axis
   
   # Implicit O(n) definition:
-  # X = Y[1,:] - Y[2:nrow(Y),:]
+  # X = Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),]
   # Y <- Variable(dim(expr))
   Y <- new("Variable", dim = dim(expr))
   if(axis == 2) {  # Cumulative sum on each column
-    constr <- list(Y[1,] == X[1,])
-    if(nrow(Y) > 1)
-      constr <- c(constr, list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),]))
+    if(nrow(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y) - 1),], Y[1,] == X[1,])
   } else {   # Cumulative sum on each row
-    constr <- list(Y[,1] == X[,1])
-    if(ncol(Y) > 1)
-      constr <- c(constr, list(X[,2:ncol(X)] == Y[,2:ncol(Y)] - Y[,1:(ncol(Y)-1)]))
+    if(ncol(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- list(X[,2:ncol(X)] == Y[,2:ncol(Y)] - Y[,1:(ncol(Y) - 1)], Y[,1] == X[,1])
   }
   return(list(Y, constr))
+}
+
+#' 
+#' EliminatePwl canonicalizer for the dot sort atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-lienar atom
+#' constructed from the dot sort atom where the objective
+#' function consists of the variable t of the same size as
+#' the original expression and the constraints consist of
+#' a vector multiplied by a vector of 1's.
+EliminatePwl.dotsort_canon <- function(expr, args) {
+  x <- args[[1]]
+  w <- args[[2]]
+  
+  if(is(w, "Constant")) {
+    w_val <- value(w)
+    w_tab <- base::table(w_val[w_val %in% unique(w_val)])
+    w_unique <- as.numeric(names(w_tab))
+    w_counts <- as.numeric(w_tab)
+    n_unique <- length(w_unique)
+  } else {
+    w_unique <- w
+    w_counts <- rep(1, size(w))
+    n_unique <- size(w_unique)
+  }
+  
+  # minimize   sum(t) + q %*% w_counts
+  # subject to x %*% t(w_unique) <= t + t(q)
+  #            0 <= t
+  
+  t <- Variable(size(x), 1, nonneg = TRUE)
+  q <- Variable(1, n_unique)
+  
+  obj <- sum(t) + q %*% matrix(w_counts)
+  x_w_unique_outer_product <- reshape_expr(x, c(size(x), 1)) %*% reshape_expr(w_unique, c(1, n_unique))
+  constraints <- list(x_w_unique_outer_product <= t + q)
+  return(list(obj, constraints))
 }
 
 #' 
@@ -162,9 +207,10 @@ EliminatePwl.max_elemwise_canon <- function(expr, args) {
 #' as the expression and the constraints consist of a simple
 #' inequality.
 EliminatePwl.min_entries_canon <- function(expr, args) {
+  axis <- expr@axis
   if(length(args) != 1)
-    stop("Length of args must be one")
-  tmp <- MaxEntries(-args[[1]])
+    stop("Length of args must be 1")
+  tmp <- MaxEntries(-args[[1]], axis = axis)
   canon <- EliminatePwl.max_entries_canon(tmp, tmp@args)
   return(list(-canon[[1]], canon[[2]]))
 }
@@ -271,4 +317,5 @@ EliminatePwl.CANON_METHODS <- list(Abs = EliminatePwl.abs_canon,
                                    MinEntries = EliminatePwl.min_entries_canon,
                                    Norm1 = EliminatePwl.norm1_canon,
                                    NormInf = EliminatePwl.norm_inf_canon,
-                                   SumLargest = EliminatePwl.sum_largest_canon)
+                                   SumLargest = EliminatePwl.sum_largest_canon,
+                                   DotSort = EliminatePwl.dotsort_canon)

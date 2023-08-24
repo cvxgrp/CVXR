@@ -49,36 +49,122 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #' affine arguments
 #'
 #' @rdname QpMatrixStuffing-class
-QpMatrixStuffing <- setClass("QpMatrixStuffing", contains = "MatrixStuffing")
+.QpMatrixStuffing <- setClass("QpMatrixStuffing", representation(canon_backend = "character"), prototype(canon_backend = NA_character_), contains = "MatrixStuffing")
+QpMatrixStuffing <- function(canon_backend = NA_character_) { .QpMatrixStuffing(canon_backend = canon_backend) }
+
+setMethod("initialize", "QpMatrixStuffing", function(.Object, ..., canon_backend = NA_character_) {
+  .Object@canon_backend <- canon_backend
+  callNextMethod(.Object, ...)
+})
 
 setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem"), function(object, problem) {
     inherits(problem@objective, "Minimize") &&
-        is_quadratic(problem@objective) &&
-        is_dcp(problem) &&
-        length(convex_attributes(variables(problem))) == 0 &&
-        all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") )) &&
-        are_args_affine(problem@constraints) &&
-        is_dpp(problem)
+    is_quadratic(problem@objective) &&
+    is_dcp(problem) &&
+    length(convex_attributes(variables(problem))) == 0 &&
+    all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") )) &&
+    are_args_affine(problem@constraints) &&
+    is_dpp(problem)
 })
 
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
-  # Extract to t(x) %*% P %*% x + t(q) %*% x, and store r
-  expr <- copy(expr(problem@objective))     # TODO: Need to copy objective?
-  Pqr <- coeff_quad_form(extractor, expr)
-  P <- Pqr[[1]]
-  q <- Pqr[[2]]
-  r <- Pqr[[3]]
-
-  # Concatenate all variables in one vector
+  # Extract to 0.5 * t(x) %*% P %*% x + t(q) %*% x + r
+  expr <- copy(expr(problem@objective))   # TODO: Do we need to copy objective?
+  Pq_params <- quad_form(extractor, expr)
+  params_to_P <- Pq_params[[1]]
+  params_to_q <- Pq_params[[2]]
+  # Handle 0.5 factor.
+  params_to_P <- 2*params_to_P
+  
+  # Concatenate all variables in one vector.
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  # x <- Variable(extractor@N, boolean = boolean, integer = integer)
-  #   new_obj <- quad_form(x, P) + t(q) %*% x
-  x <- Variable(extractor@N, 1, boolean = boolean, integer = integer)
-  new_obj <- new("QuadForm", x = x, P = P) + t(q) %*% x
-  return(list(new_obj, x, r))
+  x <- Variable(extractor@x_length, boolean = boolean, integer = integer)
+  return(list(params_to_P, params_to_q, x))
 })
+
+setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem"), function(object, problem) {
+  # See docs for MatrixStuffing perform function.
+  inverse_data <- InverseData(problem)
+  # Form the constraints
+  extractor <- CoeffExtractor(inverse_data, object@canon_backend)
+  tmp <- stuffed_objective(object, problem, extractor)
+  params_to_P <- tmp[[1]]
+  params_to_q <- tmp[[2]]
+  flattened_variable <- tmp[[3]]
+  
+  # Lower equality and inequality to ZeroConstraint and NonPosConstraint.
+  cons <- list()
+  for(con in problem@constraints) {
+    if(is(con, "EqConstraint"))
+      con <- lower_equality(con)
+    else if(is(con, "IneqConstraint"))
+      con <- lower_ineq_to_nonpos(con)
+    cons <- c(cons, con)
+  }
+  
+  # Reorder constraints to ZeroConstraint, NonPosConstraint.
+  constr_map <- group_constraints(cons)
+  ordered_cons <- c(constr_map[["ZeroConstraint"]], constr_map[["NonPosConstraint"]])
+  inverse_data@cons_id_map <- list()
+  for(con in ordered_cons) {
+    con_id <- id(con)
+    inverse_data@cons_id_map[[as.character(con_id)]] <- con_id
+  }
+  
+  inverse_data@constraints <- ordered_cons
+  # Batch expressions together, then split apart.
+  expr_list <- list()
+  for(c in ordered_cons) {
+    for(arg in c@args)
+      expr_list <- c(expr_list, arg)
+  }
+  params_to_Ab <- affine(extractor, expr_list)
+  
+  inverse_data@minimize <- inherits(problem@objective, "Minimize")
+  new_prob <- ParamQuadProg(params_to_P, params_to_q, flattened_variable, params_to_Ab, variables(problem),
+                            inverse_data@var_offsets, ordered_cons, parameters(problem), inverse_data@param_id_map)
+  return(list(new_prob, inverse_data))
+})
+
+setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  # Retrieves the solution to the original problem.
+  var_map <- inverse_data@var_offsets
+  # Flip sign of opt val if maximize.
+  opt_val <- solution@opt_val
+  if(!(solution@status %in% ERROR_STATUS) and !inverse_data@minimize)
+    opt_val <- -solution@opt_val
+  
+  primal_vars <- list()
+  dual_vars <- list()
+  if(!(solution@status %in% SOLUTION_PRESENT))
+    return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+  
+  # Split vectorized variable into components.
+  x_opt <- values(solution@primal_vars)[[1]]
+  for(var_id in names(var_map)) {
+    offset <- var_map[[var_id]]
+    shape <- inverse_data@var_shapes[[var_id]]
+    size <- as.integer(base::prod(shape))
+    primal_vars[[var_id]] <- matrix(x_opt[offset:(offset + size - 1)], nrow = shape[1], ncol = shape[2], byrow = FALSE)
+  }
+  
+  if(!is.null(solution@dual_vars) && length(solution@dual_vars) > 0) {
+    # Giant dual variable.
+    dual_var <- values(solution@dual_vars)[[1]]
+    offset <- 0
+    for(constr in inverse_data@constraints) {
+      # QP constraints can only have one argument.
+      arg_shape <- dim(constr@args[[1]])
+      dual_vars[[as.character(constr@id)]] <- matrix(dual_var[offset:(offset + size(constr@args[[1]]) - 1)], nrow = arg_shape[1], ncol = arg_shape[2], byrow = FALSE)
+      offset <- offset + size(constr)
+    }
+  }
+  
+  return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+})
+  
 
 # Atom canonicalizers
 Qp2QuadForm.huber_canon <- function(expr, args) {

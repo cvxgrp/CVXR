@@ -12,6 +12,8 @@ Complex2Real.accepts <- function(problem) {
   any(sapply(leaves, function(l) { is_complex(l) }))
 }
 
+Complex2Real.UNIMPLEMENTED_COMPLEX_DUALS <- c("SOC", "OpRelEntrConeQuad")
+
 #' @param object A \linkS4class{Complex2Real} object.
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn Complex2Real Checks whether or not the problem involves any complex numbers.
@@ -22,6 +24,17 @@ setMethod("accepts", signature(object = "Complex2Real", problem = "Problem"), fu
 #' @describeIn Complex2Real Converts a Complex problem into a Real one.
 setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), function(object, problem) {
   inverse_data <- InverseData(problem)
+  real2imag <- list()
+  for(var in variables(problem)) {
+    if(is_complex(var))
+      real2imag[[as.character(id(var))]] <- lu.get_id()
+  }
+  for(cons in problem@constraints) {
+    if(is_complex(cons)) {
+      real2imag[[as.character(id(cons))]] <- lu.get_id()
+    }
+  }
+  inverse_data@real2imag <- real2imag
 
   leaf_map <- list()
   obj <- Complex2Real.canonicalize_tree(problem@objective, inverse_data@real2imag, leaf_map)
@@ -33,15 +46,14 @@ setMethod("perform", signature(object = "Complex2Real", problem = "Problem"), fu
 
   constrs <- list()
   for(constraint in problem@constraints) {
-    if(inherits(constraint, "EqConstraint"))
-      constraint <- lower_equality(constraint)
-    constr <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
-    real_constr <- constr[[1]]
-    imag_constr <- constr[[2]]
-    if(!is.null(real_constr))
-      constrs <- c(constrs, real_constr)
-    if(!is.null(imag_constr))
-      constrs <- c(constrs, imag_constr)
+    # real2imag maps variable id to a potential new variable created for the imaginary part.
+    canon <- Complex2Real.canonicalize_tree(constraint, inverse_data@real2imag, leaf_map)
+    real_constrs <- canon[[1]]
+    imag_constrs <- canon[[2]]
+    if(is.list(real_constrs) || is(real_constrs, "Constraint"))
+      constrs <- c(constrs, real_constrs)
+    if(is.list(imag_constrs) || is(imag_constrs, "Constraint"))
+      constrs <- c(constrs, imag_constrs)
   }
 
   new_problem <- Problem(real_obj, constrs)
@@ -55,46 +67,76 @@ setMethod("invert", signature(object = "Complex2Real", solution = "Solution", in
   pvars <- list()
   dvars <- list()
   if(solution@status %in% SOLUTION_PRESENT) {
+    #
+    # Primal variables
+    # 
     for(vid in names(inverse_data@id2var)) {
       var <- inverse_data@id2var[[vid]]
-      if(is_real(var))
+      if(is_real(var))   # Purely real variables
         pvars[[vid]] <- solution@primal_vars[[vid]]
-      else if(is_imag(var)) {
+      else if(is_imag(var)) {   # Purely imaginary variables
         imag_id <- inverse_data@real2imag[[vid]]
         pvars[[vid]] <- 1i*solution@primal_vars[[as.character(imag_id)]]
-      } else if(is_complex(var) && is_hermitian(var)) {
+      } else if(is_complex(var) && is_hermitian(var)) {   # Hermitian variables
+        pvars[[vid]] <- solution@primal_vars[[vid]]
         imag_id <- inverse_data@real2imag[[vid]]
         
-        # Imaginary part may have been lost.
         if(as.character(imag_id) %in% names(solution@primal_vars)) {
           imag_val <- solution@primal_vars[[as.character(imag_id)]]
-          pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*(imag_val - t(imag_val))/2
-        } else
-          pvars[[vid]] <- solution@primal_vars[[vid]]
-      } else if(is_complex(var)) {
+          imag_val <- value(UpperTri.vec_to_upper_tri(imag_val, TRUE))
+          imag_val <- imag_val - t(imag_val)
+          pvars[[vid]] <- pvars[[vid]] + 1i*imag_val
+        }
+      } else if(is_complex(var)) {   # General complex variables
+        pvars[[vid]] <- solution@primal_vars[[vid]]
         imag_id <- inverse_data@real2imag[[vid]]
-        pvars[[vid]] <- solution@primal_vars[[vid]] + 1i*solution@primal_vars[[as.character(imag_id)]]
+        if(as.character(imag_id) %in% names(solution@primal_vars)) {
+          imag_val <- solution@primal_vars[[as.character(imag_id)]]
+          pvars[[vid]] <- pvars[[vid]] + 1i*imag_val
+        }
       }
     }
 
-    for(cid in names(inverse_data@id2cons)) {
-      cons <- inverse_data@id2cons[[cid]]
-      if(is_real(cons))
-        dvars[[vid]] <- solution@dual_vars[[cid]]
-      else if(is_imag(cons)) {
-        imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- 1i*solution@dual_vars[[as.character(imag_id)]]
-      # For equality and inequality constraints.
-      } else if((is(cons, "ZeroConstraint") || is(cons, "EqConstraint") || is(cons, "NonPosConstraint")) && is_complex(cons)) {
-        imag_id <- inverse_data@real2imag[[cid]]
-        dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[as.character(imag_id)]]
-      # For PSD constraints.
-      } else if(is(cons, "PSDConstraint") && is_complex(cons)) {
-        n <- nrow(cons@args[[1]])
-        dual <- solution@dual_vars[[cid]]
-        dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual), (n+1):ncol(dual)]
-      } else
-        stop("Unknown constraint type")
+    if(!is.null(solution@dual_vars)) {
+      # 
+      # Dual variables
+      # 
+      for(cid in names(inverse_data@id2cons)) {
+        cons <- inverse_data@id2cons[[cid]]
+        if(is_real(cons))
+          dvars[[cid]] <- solution@dual_vars[[cid]]
+        else if(is_imag(cons)) {
+          imag_id <- inverse_data@real2imag[[cid]]
+          dvars[[cid]] <- 1i*solution@dual_vars[[as.character(imag_id)]]
+        # All cases that follow are for complex-valued constraints:
+        #     1. Check inequality / equality constraints.
+        #     2. Check PSD constraints.
+        #     3. Check if a constraint is known to lack a complex dual implementation.
+        #     $. Raise an error.
+        } else if(is(cons, "ZeroConstraint") || is(cons, "EqConstraint") || is(cons, "IneqConstraint") || is(cons, "NonNegConstraint") || is(cons, "NonPosConstraint")) {
+          imag_id <- inverse_data@real2imag[[cid]]
+          if(imag_id %in% names(solution@dual_vars))
+            dvars[[cid]] <- solution@dual_vars[[cid]] + 1i*solution@dual_vars[[imag_id]]
+          else
+            dvars[[cid]] <- solution@dual_vars[[cid]]
+        } else if(is(cons, "PSDConstraint")) {
+          # Suppose we have a constraint con_x = X >> 0 where X is Hermitian.
+          #
+          # Define the matrix
+          #     Y := [[ re(X), im(X)],
+          #           [-im(X), re(X)]]
+          # and the constraint con_y = Y >> 0.
+          #
+          # The real part of the dual variable for con_x is the upper-left block of the dual variable for con_y.
+          # The imaginary part of the dual variable for con_x is the upper-right block of the dual variable for con_y.
+          n <- nrow(cons@args[[1]])
+          dual <- solution@dual_vars[[cid]]
+          dvars[[cid]] <- dual[1:n,1:n] + 1i*dual[(n+1):nrow(dual),1:n]
+        } else if(any(sapply(Complex2Real.UNIMPLEMENTED_COMPLEX_DUALS, function(c) { isinstance(cons, c) } ))) {
+          # TODO: Implement dual variable recovery
+        } else
+          stop("Unknown constraint type")
+      }
     }
   }
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
@@ -170,7 +212,8 @@ Complex2Real.abs_canon <- function(expr, real_args, imag_args, real2imag) {
   else {   # Complex
     real <- flatten(real_args[[1]])
     imag <- flatten(imag_args[[1]])
-    norms <- p_norm(hstack(real, imag), p = 2, axis = 1)
+    # norms <- p_norm(hstack(real, imag), p = 2, axis = 1)
+    norms <- p_norm(vstack(real, imag), p = 2, axis = 2)
     output <- reshape_expr(norms, dim(real_args[[1]]))
   }
   return(list(output, NULL))
@@ -217,7 +260,7 @@ Complex2Real.separable_canon <- function(expr, real_args, imag_args, real2imag) 
 Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
   # If no real arguments, return zero.
   if(is.null(real_args[[1]]))
-    return(list(0, NULL))
+    return(list(0*imag_args[[1]], NULL))
   else
     return(list(real_args[[1]], NULL))
 }
@@ -234,9 +277,29 @@ Complex2Real.real_canon <- function(expr, real_args, imag_args, real2imag) {
 Complex2Real.imag_canon <- function(expr, real_args, imag_args, real2imag) {
   # If no imaginary arguments, return zero.
   if(is.null(imag_args[[1]]))
-    return(list(0, NULL))
+    return(list(0*real_args[[1]], NULL))
   else
     return(list(imag_args[[1]], NULL))
+}
+
+#'
+#' Wrapper for Hermitian canonicalizer
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
+#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
+#' @return A canonicalization of a conjugate atom, where the returned
+#' variables are the real components and negative of the imaginary component.
+Complex2Real.hermitian_wrap_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(!is.null(imag_args[[1]]))
+    imag_arg <- SkewSymmetricWrap(imag_args[[1]])
+  else {
+    # This is a weird code path to hit.
+    imag_arg <- NULL
+  }
+  real_arg <- SymmetricWrap(real_args[[1]])
+  return(list(real_arg, imag_arg))
 }
 
 #' 
@@ -264,7 +327,6 @@ Complex2Real.conj_canon <- function(expr, real_args, imag_args, real2imag) {
 #' @param rh_arg The arguments for the right-hand side
 #' @return A joined expression of both left and right expressions
 Complex2Real.join <- function(expr, lh_arg, rh_arg) {
-  # 
   if(is.null(lh_arg) || is.null(rh_arg))
     return(NULL)
   else
@@ -329,6 +391,59 @@ Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
     return(list(NULL, Constant(Im(value(expr)))))
   else
     return(list(Constant(Re(value(expr))), Constant(Im(value(expr)))))
+}
+
+#' 
+#' Complex canonicalizer for the equality constraint
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
+#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
+#' @return A canonicalization of a binary atom, where the returned
+#' variables are the real component and the imaginary component.
+Complex2Real.equality_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(imag_args[[1]]) && is.null(imag_args[[2]]))
+    return(list(list(copy(expr, real_args)), NULL))
+  
+  # Fill in missing args with zeros.
+  for(i in seq_len(imag_args)) {
+    if(is.null(imag_args[[i]]))
+      imag_args[[i]] <- Constant(matrix(0, nrow = nrow(real_args[[i]]), ncol = ncol(real_args[[i]])))
+  }
+  
+  imag_cons <- list(EqConstraint(imag_args[[1]], imag_args[[2]], constr_id = real2imag[[as.character(id(expr))]]))
+  
+  if(is.null(real_args[[1]]) && is.null(real_args[[2]]))
+    return(list(NULL, imag_cons))
+  else {
+    # Fill in missing args with zeros.
+    for(i in seq_len(real_args)) {
+      if(is.null(real_args[[i]]))
+        real_args[[i]] <- Constant(matrix(0, nrow = nrow(imag_args[[i]]), ncol = ncol(imag_args[[i]])))
+    }
+    return(list(list(copy(expr, real_args)), imag_cons))
+  }
+}
+
+#' 
+#' Complex canonicalizer for the zero constraint
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
+#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
+#' @return A canonicalization of a binary atom, where the returned
+#' variables are the real component and the imaginary component.
+Complex2Real.zero_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is.null(imag_args[[1]]))
+    return(list(list(copy(expr, real_args)), NULL))
+  
+  imag_cons <- list(ZeroConstraint(imag_args[[1]], constr_id = real2imag[[as.character(id(expr))]]))
+  if(is.null(real_args[[1]]))
+    return(list(NULL, imag_cons))
+  else
+    return(list(list(copy(expr, real_args)), imag_cons))
 }
 
 # Matrix canonicalization.

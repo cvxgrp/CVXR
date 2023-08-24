@@ -2335,7 +2335,7 @@ setMethod("is_hermitian", "HermitianWrap", function(object) { TRUE })
 #' @name SkewSymmetricWrap-class
 #' @aliases SkewSymmetricWrap
 #' @rdname SkewSymmetricWrap-class
-.HermitianWrap <- setClass("SkewSymmetricWrap", contains = "Wrap")
+.SkewSymmetricWrap <- setClass("SkewSymmetricWrap", contains = "Wrap")
 
 #' @param arg A \linkS4class{Expression} object or matrix.
 #' @rdname SkewSymmetricWrap-class

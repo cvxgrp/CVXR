@@ -16,7 +16,7 @@ Qp2SymbolicQp.accepts <- function(problem) {
   is_qpwa(expr(problem@objective)) &&
   length(intersect(c("PSD", "NSD"), convex_attributes(variables(problem)))) == 0 &&
   all(sapply(problem@constraints, function(c) {
-        (inherits(c, c("NonPosConstraint", "IneqConstraint")) && is_pwl(expr(c))) ||
+        (inherits(c, c("NonPosConstraint", "NonNegConstraint", "IneqConstraint")) && is_pwl(expr(c))) ||
         (inherits(c, c("ZeroConstraint", "EqConstraint")) && are_args_affine(list(c)))
   }))
 }
@@ -33,6 +33,8 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
     stop("Cannot reduce problem to symbolic QP")
   callNextMethod(object, problem)
 })
+
+# TODO: Convert classes and functions in qp_matrix_stuffing.py
 
 #'
 #' The QpMatrixStuffing class.
@@ -54,8 +56,9 @@ setMethod("accepts", signature(object = "QpMatrixStuffing", problem = "Problem")
         is_quadratic(problem@objective) &&
         is_dcp(problem) &&
         length(convex_attributes(variables(problem))) == 0 &&
+        all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") )) &&
         are_args_affine(problem@constraints) &&
-        all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint", "EqConstraint", "IneqConstraint") ))
+        is_dpp(problem)
 })
 
 setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
@@ -107,7 +110,11 @@ Qp2QuadForm.huber_canon <- function(expr, args) {
 
 Qp2QuadForm.power_canon <- function(expr, args) {
   affine_expr <- args[[1]]
-  p <- expr@p
+  if(is.numeric(expr@p))
+    p <- expr@p
+  else
+    p <- value(expr@p)
+  
   if(is_constant(expr))
     return(list(Constant(value(expr)), list()))
   else if(p == 0)
@@ -115,12 +122,16 @@ Qp2QuadForm.power_canon <- function(expr, args) {
   else if(p == 1)
     return(list(affine_expr, list()))
   else if(p == 2) {
-    if(is(affine_expr, "Variable"))
-      return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr)), expr), list()))
-    else {
+    if(is(affine_expr, "Variable")) {
+      affine_expr_size <- size(affine_expr)
+      speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
+      return(list(SymbolicQuadForm(affine_expr, speye, expr), list()))
+    } else {
       # t <- Variable(dim(affine_expr))
       t <- new("Variable", dim = dim(affine_expr))
-      return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
+      t_size <- size(t)
+      speye <- sparseMatrix(1:t_size, 1:t_size, x = rep(1, t_size))
+      return(list(SymbolicQuadForm(t, speye, expr), list(affine_expr == t)))
     }
   }
   stop("Non-constant quadratic forms cannot be raised to a power greater than 2.")
@@ -141,17 +152,31 @@ Qp2QuadForm.quad_form_canon <- function(expr, args) {
 Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
   affine_expr <- args[[1]]
   y <- args[[2]]
+  # Simplify if y has no parameters
+  if(length(parameters(y)) == 0) {
+    affine_expr_size <- size(affine_expr)
+    speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
+    quad_mat <- speye/value(y)
+  } else {
+    # TODO: This code path produces an intermediate dense matrix, but it should be sparse the whole time.
+    affine_expr_size <- size(affine_expr)
+    speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
+    quad_mat <- speye/y
+  }
+  
   if(is(affine_expr, "Variable"))
-    return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr))/y, expr), list()))
+    return(list(SymbolicQuadForm(affine_expr, quad_mat, expr), list()))
   else {
     # t <- Variable(dim(affine_expr))
     t <- new("Variable", dim = dim(affine_expr))
-    return(list(SymbolicQuadForm(t, diag(size(affine_expr))/y, expr), list(affine_expr == t)))
+    return(list(SymbolicQuadForm(t, quad_mat, expr), list(affine_expr == t)))
   }
 }
 
+# TODO: Remove pwl canonicalize methods, use EliminatePwl reduction instead.
+
+# Conic canonicalization methods.
 Qp2QuadForm.CANON_METHODS <- list(
-  # Reuse cone canonicalization methods.
   Abs = Dcp2Cone.CANON_METHODS$Abs,
   CumSum = Dcp2Cone.CANON_METHODS$CumSum,
   MaxElemwise = Dcp2Cone.CANON_METHODS$MaxElemwise,
@@ -162,10 +187,13 @@ Qp2QuadForm.CANON_METHODS <- list(
   Norm1 = Dcp2Cone.CANON_METHODS$Norm1,
   NormInf = Dcp2Cone.CANON_METHODS$NormInf,
   Indicator = Dcp2Cone.CANON_METHODS$Indicator,
-  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex,
-  
-  # Canonicalizations that are different for QPs.
+  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex)
+
+# Canonicalizations that are different for QPs.
+Qp2QuadForm.QUAD_CANON_METHODS <- list(
   QuadOverLin = Qp2QuadForm.quad_over_lin_canon,
   Power = Qp2QuadForm.power_canon,
   Huber = Qp2QuadForm.huber_canon,
   QuadForm = Qp2QuadForm.quad_form_canon)
+
+Qp2QuadForm.CANON_METHODS <- c(Qp2QuadForm.CANON_METHODS, Qp2QuadForm.QUAD_CANON_METHODS)

@@ -34,6 +34,59 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
   callNextMethod(object, problem)
 })
 
+#'
+#'
+#' The ConeDims class.
+#' 
+#' This class contains a summary of cone dimensions present in constraints.
+#' 
+#' @slot zero The dimension of the zero cone.
+#' @slot nonpos The dimension of the nonpositive cone.
+#' @slot exp The number of 3-dimensional exponential cones.
+#' @slot soc A vector of the second-order cone dimensions.
+#' @slot psd A vector the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
+#' @rdname ConeDims-class
+.ConeDims <- setClass("ConeDims", representation(constr_map = "list", zero = "numeric", nonpos = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
+                                  prototype(zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0))
+ConeDims <- function(constr_map) { .ConeDims(constr_map = constr_map) }
+
+setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0) {
+  .Object@constr_map <- constr_map
+  .Object@zero <- as.integer(sum(sapply(constr_map$ZeroConstraint, size)))
+  .Object@nonpos <- as.integer(sum(sapply(constr_map$NonPosConstraint, size)))
+  .Object@exp <- as.integer(sum(sapply(constr_map$ExpCone, num_cones)))
+  # .Object@soc <- c()
+  # for(c in constr_map$SOC)
+  #   .Object@soc <- c(.Object@soc, cone_sizes(c))
+  # .Object@soc <- as.integer(.Object@soc)
+  .Object@soc <- as.integer(Reduce(base::c, lapply(constr_map$SOC, cone_sizes)))
+  .Object@psd <- as.integer(sapply(constr_map$PSDConstraint, nrow))
+  .Object
+})
+
+setMethod("show", "ConeDims", function(object) {
+  print(paste("(zero: ", x@zero, ", nonpos: ", x@nonpos, ", exp: ", x@exp, ", soc: ", x@soc, ", psd: ", x@psd, ")", sep = ""))
+})
+
+setMethod("as.character", "ConeDims", function(x) {
+  paste(x@zero, " equalities, ", x@nonpos, " inequalities, ", x@exp, " exponential cones, \nSOC constraints: ", x@soc, ", PSD constraints: ", x@psd, sep = "")
+})
+
+setMethod("$", "ConeDims", function(x, name) {
+  if(name == EQ_DIM)
+    return(x@zero)
+  else if(name == LEQ_DIM)
+    return(x@nonpos)
+  else if(name == EXP_DIM)
+    return(x@exp)
+  else if(name == SOC_DIM)
+    return(x@soc)
+  else if(name == PSD_DIM)
+    return(x@psd)
+  else
+    stop("Unknown key ", name)
+})
+
 # TODO: Convert classes and functions in qp_matrix_stuffing.py
 
 #'

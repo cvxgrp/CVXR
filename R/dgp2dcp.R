@@ -5,19 +5,30 @@
 #' problem. Because every (generalized) geometric program is a DGP problem,
 #' this reduction can be used to convert geometric programs into convex form.
 #' @rdname Dgp2Dcp-class
-Dgp2Dcp <- setClass("Dgp2Dcp", contains = "Canonicalization")
+.Dgp2Dcp <- setClass("Dgp2Dcp", contains = "Canonicalization")
+Dgp2Dcp <- function(problem = NULL) { .Dgp2Dcp(problem = problem) }
 
-#' @describeIn Dgp2Dcp Is the problem DGP?
-setMethod("accepts", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
-  return(is_dgp(problem))
+setMethod("initialize", "Dgp2Dcp", function(.Object, ..., problem = NULL) {
+  # Canonicalization of DGP is stateful; canon_methods is created in 'perform'.
+  callNextMethod(.Object, ..., canon_methods = NULL, problem = problem)
 })
 
 #' @param object A \linkS4class{Dgp2Dcp} object.
 #' @param problem A \linkS4class{Problem} object.
+#' @describeIn Dgp2Dcp Is the problem DGP?
+setMethod("accepts", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
+  is_dgp(problem) && 
+  all(sapply(parameters(problem), function(p) {
+      p_val <- value(p)
+      return(!is.null(p_val) && !is.na(p_val))
+    }))
+})
+
 #' @describeIn Dgp2Dcp Converts the DGP problem to a DCP problem.
 setMethod("perform", signature(object = "Dgp2Dcp", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("The supplied problem is not DGP")
+  
   object@canon_methods <- DgpCanonMethods()
   tmp <- callNextMethod(object, problem)
   object <- tmp[[1]]
@@ -51,8 +62,22 @@ setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse
   return(solution)
 })
 
-# Atom canonicalizers
-# TODO: Implement sum_largest/sum_smallest.
+# TODO: Do we need this in R? The Python sum function is a reduction with initial value 0.0, resulting in a non-DGP expression.
+Dgp2Dcp.explicit_sum <- function(expr) {
+  x <- Vec(expr)
+  summation <- x[1]
+  x_len <- size(x)
+  if(x_len > 1) {
+    for(i in seq(2, x_len))
+      summation <- summation + x[i]
+  }
+  return(summation)
+}
+
+#######################################################################
+#                         Atom canonicalizers
+#######################################################################
+
 #' 
 #' Dgp2Dcp canonicalizer for the addition atom
 #' 
@@ -63,26 +88,27 @@ setMethod("invert", signature(object = "Dgp2Dcp", solution = "Solution", inverse
 Dgp2Dcp.add_canon <- function(expr, args) {
   if(is_scalar(expr))
     return(list(log_sum_exp(do.call("HStack", args)), list()))
+  expr_dim <- dim(expr)
   
   rows <- list()
   summands <- lapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
-  if(length(dim(expr)) == 1) {
-    for(i in 1:nrow(expr)) {
+  if(length(expr_dim) == 1) {
+    for(i in seq_len(expr_dim[1])) {
       summand_args <- lapply(summands, function(summand) { summand[i] })
       row <- log_sum_exp(do.call("HStack", summand_args))
       rows <- c(rows, list(row))
     }
-    return(list(reshape_expr(bmat(rows), dim(expr)), list()))
+    return(list(reshape_expr(bmat(rows), expr_dim), list()))
   } else {
-    for(i in 1:nrow(expr)) {
+    for(i in seq_len(expr_dim[1])) {
       row <- list()
-      for(j in 1:ncol(expr)) {
+      for(j in seq_len(expr_dim[2])) {
         summand_args <- lapply(summands, function(summand) { summand[i,j] })
         row <- c(row, list(log_sum_exp(do.call("HStack", summand_args))))
       }
       rows <- c(rows, list(row))
     }
-    return(list(reshape_expr(bmat(rows), dim(expr)), list()))
+    return(list(reshape_expr(bmat(rows), expr_dim), list()))
   }
 }
 
@@ -134,13 +160,28 @@ Dgp2Dcp.exp_canon <- function(expr, args) {
 Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
   X <- args[[1]]
   # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
-  # Y represents log(Y) here, hence no positivity constraint.
-  # Y <- Variable(dim(X))
-  Y <- new("Variable", dim = dim(X))
-  prod <- MulExpression(Y, X)
-  lhs <- Dgp2Dcp.mulexpression_canon(prod, prod@args)[[1]]
-  lhs <- lhs + diag(1, nrow(prod))
-  return(list(Y, list(lhs <= Y)))
+  # This function implements the log-log transformation of these constraints.
+  # We can't use I in DGP, because it has zeros (we'd need to take its log).
+  # Instead, the constraint can be written as
+  #    diag(diff_pos(Y - YX)) >= 1,
+  # or, canonicalized, 
+  #    lhs_canon >= 0.
+  # Here, U = log(Y)
+  U <- new("Variable", dim = dim(X))
+  
+  # Canonicalization of diag(diff_pos(Y - YX))
+  # Note
+  #    Y - YX = Y \hadamard (\ones\ones^T - YX/Y)
+  #            = Y \hardamard one_minus_pos(YX/Y)
+  # and
+  #    Y \hadamard one_minus_pos(YX/Y) canonicalizes to
+  #    U + one_minus_pos_canon(YX_canon - Y_canon)
+  YX <- U %*% X
+  YX_canon <- Dgp2Dcp.mulexpression_canon(YX, YX@args)[[1]]
+  one_minus <- OneMinusPos(YX_canon - U)
+  canon <- Dgp2Dcp.one_minus_pos_canon(one_minus, one_minus@args)[[1]]
+  lhs_canon <- Diag(U + canon)
+  return(list(Y, list(lhs_canon >= 0)))
 }
 
 #' 
@@ -158,6 +199,17 @@ Dgp2Dcp.geo_mean_canon <- function(expr, args) {
     out <- out + p_i * x_i
   }
   return(list((1 / sum(expr@p))*out, list()))
+}
+
+#' 
+#' Dgp2Dcp canonicalizer for the geometric matrix multiplier atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the geometric matrix multiplier atom of a DGP expression, 
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.gmatmul_canon <- function(expr, args) {
+  return(list(expr@A %*% args[[1]], list()))
 }
 
 #' 
@@ -202,10 +254,10 @@ Dgp2Dcp.mulexpression_canon <- function(expr, args) {
   rows <- list()
   
   # TODO: Parallelize this for large matrices.
-  for(i in 1:nrow(lhs)) {
+  for(i in seq_len(nrow(lhs))) {
     row <- list()
-    for(j in 1:ncol(rhs)) {
-      hstack_args <- lapply(1:ncol(lhs), function(k) { lhs[i,k] + rhs[k,j] })
+    for(j in seq_len(ncol(rhs))) {
+      hstack_args <- lapply(seq_len(ncol(lhs)), function(k) { lhs[i,k] + rhs[k,j] })
       row <- c(row, list(log_sum_exp(do.call("HStack", hstack_args))))
     }
     rows <- c(rows, list(row))
@@ -230,7 +282,7 @@ Dgp2Dcp.nonpos_constr_canon <- function(expr, args) {
 }
 
 #' 
-#' Dgp2Dcp canonicalizer for the 1 norm atom
+#' Dgp2Dcp canonicalizer for the 1-norm atom
 #' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of values for the expr variable
@@ -244,7 +296,7 @@ Dgp2Dcp.norm1_canon <- function(expr, args) {
 }
 
 #' 
-#' Dgp2Dcp canonicalizer for the infinite norm atom
+#' Dgp2Dcp canonicalizer for the infinity-norm atom
 #' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of values for the expr variable
@@ -277,7 +329,12 @@ Dgp2Dcp.one_minus_pos_canon <- function(expr, args) {
 #' where the returned expression is the transformed DCP equivalent.
 Dgp2Dcp.parameter_canon <- function(expr, args) {
   # args <- list()
-  return(list(Parameter(log(value(expr)), name = name(expr)), list()))
+  # NB: We do *not* reuse the original parameter's ID. This is important,
+  # because we want to distinguish between parameters in the DGP problem
+  # and parameters in the DCP problem (for differentiation).
+  param <- new("Parameter", dim = dim(expr), name = name(expr))
+  value(param) <- base::log(value(expr))
+  return(list(param, list()))
 }
 
 #' 
@@ -290,10 +347,10 @@ Dgp2Dcp.parameter_canon <- function(expr, args) {
 Dgp2Dcp.pf_eigenvalue_canon <- function(expr, args) {
   X <- args[[1]]
   # rho(X) <= lambda iff there exists v s.t. Xv <= lambda v.
-  # v and lambda represent log variables, hence no positivity constraints.
+  # v and lambd represent log variables, hence no positivity constraints.
   lambd <- Variable()
   v <- Variable(nrow(X))
-  lhs <- MulExpression(X, v)
+  lhs <- X %*% v
   rhs <- lambd*v
   lhs <- Dgp2Dcp.mulexpression_canon(lhs, lhs@args)[[1]]
   rhs <- Dgp2Dcp.mul_canon(rhs, rhs@args)[[1]]
@@ -301,7 +358,7 @@ Dgp2Dcp.pf_eigenvalue_canon <- function(expr, args) {
 }
 
 #' 
-#' Dgp2Dcp canonicalizer for the p norm atom
+#' Dgp2Dcp canonicalizer for the p-norm atom
 #' 
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of values for the expr variable
@@ -323,7 +380,7 @@ Dgp2Dcp.pnorm_canon <- function(expr, args) {
     x <- t(x)
   
   rows <- list()
-  for(i in 1:nrow(x)) {
+  for(i in seq_len(nrow(x))) {
     row <- x[i,]
     # hstack_args <- lapply(seq_len(size(row)), function(j) { row[j]^p })
     # rows <- c(rows, list((1.0/p)*log_sum_exp(do.call("HStack", hstack_args))))
@@ -366,8 +423,8 @@ Dgp2Dcp.quad_form_canon <- function(expr, args) {
   x <- args[[1]]
   P <- args[[2]]
   elems <- list()
-  for(i in 1:nrow(P)) {
-    for(j in 1:nrow(P))
+  for(i in seq_len(nrow(P))) {
+    for(j in seq_len(nrow(P)))
       elems <- c(elems, list(P[i,j] + x[i] + x[j]))
   }
   return(list(log_sum_exp(do.call("HStack", elems)), list()))
@@ -381,10 +438,9 @@ Dgp2Dcp.quad_form_canon <- function(expr, args) {
 #' @return A canonicalization of the quadratic over linear atom of a 
 #' DGP expression, where the returned expression is the transformed DCP equivalent.
 Dgp2Dcp.quad_over_lin_canon <- function(expr, args) {
-  x <- Vec(args[[1]])
-  y <- args[[2]]
-  numerator <- 2*sum(x)
-  return(list(numerator - y, list()))
+  summed <- Dgp2Dcp.explicit_sum(2*args[[1]])
+  numerator <- Dgp2Dcp.add_canon(summed, summed@args)
+  return(list(numerator - args[[2]], list()))
 }
 
 #' 
@@ -396,29 +452,23 @@ Dgp2Dcp.quad_over_lin_canon <- function(expr, args) {
 #' where the returned expression is the transformed DCP equivalent.
 Dgp2Dcp.sum_canon <- function(expr, args) {
   X <- args[[1]]
-  new_dim <- dim(expr)
-  if(is.null(new_dim))
-    new_dim <- c(1,1)
-  
   if(is.na(expr@axis)) {
-    x <- Vec(X)
-    summation <- sum(x)
+    summation <- Dgp2Dcp.explicit_sum(X)
     canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
-    return(list(reshape_expr(canon, new_dim), list()))
+    return(list(reshape_expr(canon, dim(expr)), list()))
   }
   
   if(expr@axis == 2)
     X <- t(X)
   
   rows <- list()
-  for(i in 1:nrow(X)) {
-    x <- Vec(X[i,])
-    summation <- sum(x)
+  for(i in seq_len(nrow(X))) {
+    summation <- Dgp2Dcp.explicit_sum(X[i])
     canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
     rows <- c(rows, list(canon))
   }
   canon <- do.call("HStack", rows)
-  return(list(reshape_expr(canon, new_dim), list()))
+  return(list(reshape_expr(canon, dim(expr)), list()))
 }
 
 #' 
@@ -429,8 +479,20 @@ Dgp2Dcp.sum_canon <- function(expr, args) {
 #' @return A canonicalization of the trace atom of a DGP expression, 
 #' where the returned expression is the transformed DCP equivalent.
 Dgp2Dcp.trace_canon <- function(expr, args) {
-  diag_sum <- sum(Diag(args[[1]]))
+  diag_sum <- Dgp2Dcp.explicit_sum(Diag(args[[1]]))
   return(Dgp2Dcp.add_canon(diag_sum, diag_sum@args))
+}
+
+#' 
+#' Dgp2Dcp canonicalizer for the xexp atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the xexp atom of a DGP expression, 
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.xexp_canon <- function(expr, args) {
+  # expr <- NULL
+  return(list(args[[1]] + Exp(args[[1]]), list()))
 }
 
 #' 
@@ -443,7 +505,7 @@ Dgp2Dcp.trace_canon <- function(expr, args) {
 Dgp2Dcp.zero_constr_canon <- function(expr, args) {
   if(length(args) != 2)
     stop("Must have exactly 2 arguments")
-  return(list(ZeroConstraint(args[[1]] - args[[2]], id = id(expr)), list()))
+  return(list(ZeroConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
 }
 
 Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
@@ -452,13 +514,13 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
                               Exp = Dgp2Dcp.exp_canon,
                               EyeMinusInv = Dgp2Dcp.eye_minus_inv_canon,
                               GeoMean = Dgp2Dcp.geo_mean_canon,
+                              GMatMul = Dgp2Dcp.gmatmul_canon,
                               Log = Dgp2Dcp.log_canon,
                               MulExpression = Dgp2Dcp.mulexpression_canon,
                               Multiply = Dgp2Dcp.mul_canon,
                               Norm1 = Dgp2Dcp.norm1_canon,
                               NormInf = Dgp2Dcp.norm_inf_canon,
                               OneMinusPos = Dgp2Dcp.one_minus_pos_canon,
-                              Parameter = Dgp2Dcp.parameter_canon,
                               PfEigenvalue = Dgp2Dcp.pf_eigenvalue_canon,
                               Pnorm = Dgp2Dcp.pnorm_canon,
                               Power = Dgp2Dcp.power_canon,
@@ -467,7 +529,9 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
                               QuadOverLin = Dgp2Dcp.quad_over_lin_canon,
                               Trace = Dgp2Dcp.trace_canon,
                               SumEntries = Dgp2Dcp.sum_canon,
+                              XExp = Dgp2Dcp.xexp_canon,
                               Variable = NULL,
+                              Parameter = NULL,
                               
                               MaxEntries = EliminatePwl.CANON_METHODS$MaxEntries,
                               MinEntries = EliminatePwl.CANON_METHODS$MinEntries,
@@ -480,7 +544,7 @@ Dgp2Dcp.CANON_METHODS <- list(AddExpression = Dgp2Dcp.add_canon,
 #' Canonicalization of DGPs is a stateful procedure, hence the need for a class.
 #' 
 #' @rdname DgpCanonMethods-class
-.DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list"), prototype(.variables = list()), contains = "list")
+.DgpCanonMethods <- setClass("DgpCanonMethods", representation(.variables = "list", .parameters = "list"), prototype(.variables = list(), .parameters = list()), contains = "list")
 DgpCanonMethods <- function(...) { .DgpCanonMethods(...) }
 
 #' @param x A \linkS4class{DgpCanonMethods} object.

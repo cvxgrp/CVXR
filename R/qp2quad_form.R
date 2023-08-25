@@ -36,7 +36,7 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 
 #'
 #'
-#' The ConeDims class.
+#' The QpMatrixStuffingConeDims class.
 #' 
 #' This class contains a summary of cone dimensions present in constraints.
 #' 
@@ -45,12 +45,12 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #' @slot exp The number of 3-dimensional exponential cones.
 #' @slot soc A vector of the second-order cone dimensions.
 #' @slot psd A vector the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
-#' @rdname ConeDims-class
-.ConeDims <- setClass("ConeDims", representation(constr_map = "list", zero = "numeric", nonpos = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
+#' @rdname QpMatrixStuffingConeDims-class
+.QpMatrixStuffingConeDims <- setClass("QpMatrixStuffingConeDims", representation(constr_map = "list", zero = "numeric", nonpos = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
                                   prototype(zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0))
-ConeDims <- function(constr_map) { .ConeDims(constr_map = constr_map) }
+QpMatrixStuffingConeDims <- function(constr_map) { .QpMatrixStuffingConeDims(constr_map = constr_map) }
 
-setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0) {
+setMethod("initialize", "QpMatrixStuffingConeDims", function(.Object, constr_map, zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0) {
   .Object@constr_map <- constr_map
   .Object@zero <- as.integer(sum(sapply(constr_map$ZeroConstraint, size)))
   .Object@nonpos <- as.integer(sum(sapply(constr_map$NonPosConstraint, size)))
@@ -64,15 +64,15 @@ setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = 0, nonp
   .Object
 })
 
-setMethod("show", "ConeDims", function(object) {
+setMethod("show", "QpMatrixStuffingConeDims", function(object) {
   print(paste("(zero: ", x@zero, ", nonpos: ", x@nonpos, ", exp: ", x@exp, ", soc: ", x@soc, ", psd: ", x@psd, ")", sep = ""))
 })
 
-setMethod("as.character", "ConeDims", function(x) {
+setMethod("as.character", "QpMatrixStuffingConeDims", function(x) {
   paste(x@zero, " equalities, ", x@nonpos, " inequalities, ", x@exp, " exponential cones, \nSOC constraints: ", x@soc, ", PSD constraints: ", x@psd, sep = "")
 })
 
-setMethod("$", "ConeDims", function(x, name) {
+setMethod("$", "QpMatrixStuffingConeDims", function(x, name) {
   if(name == EQ_DIM)
     return(x@zero)
   else if(name == LEQ_DIM)
@@ -87,7 +87,105 @@ setMethod("$", "ConeDims", function(x, name) {
     stop("Unknown key ", name)
 })
 
-# TODO: Convert classes and functions in qp_matrix_stuffing.py
+#'
+#' The ParamQuadProg class.
+#' 
+#' This class represents a parametrized quadratic program.
+#' 
+#' minimize   x^T*P*x + q^T*x + d
+#' subject to (in)equality_constr(A_1*x + b_1, ...)
+#'            ...
+#'            (in)equality_constr(A_i*x + b_i, ...)
+#'
+#' The constant offsets d and b are the last column of c and A, respectively.
+#' 
+#' @rdname ParamQuadProg-class
+.ParamQuadProg <- setClass("ParamQuadProg", representation(P = "numeric", q = "numeric", x = "Expression", A = "numeric", variables = "list", var_id_to_col = "list", constraints = "list", parameters = "list", param_id_to_col = "list", formatted = "logical", reduced_P = "ReducedMatORNULL", reduced_A = "ReducedMatORNULL", constr_size = "numeric", id_to_param = "list", param_id_to_size = "list", total_param_size = "numeric", id_to_var = "list"),
+                           prototype(formatted = FALSE, reduced_P = NULL, reduced_A = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_integer_, id_to_var = list()), 
+                           contains = "ParamProb")
+ParamQuadProg <- function(P, q, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, formatted = FALSE) {
+  .ParamQuadProg(P = P, q = q, x = x, A = A, variables = variables, var_id_to_col = var_id_to_col, constraints = constraints, parameters = parameters, param_id_to_col = param_id_to_col, formatted = formatted)
+}
+
+setMethod("initialize", "ParamQuadProg", function(.Object, ..., P, q, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, formatted = FALSE, reduced_P = NULL, reduced_A = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_integer_, id_to_var = list()) {
+  .Object@P <- P
+  .Object@q <- q
+  .Object@x <- x
+  .Object@A <- A
+  
+  # Form a reduced representation of A and P for faster application of parameters.
+  .Object@reduced_A <- ReducedMat(.Object@A, size(.Object@x))
+  .Object@reduced_P <- ReducedMat(.Object@P, size(.Object@x), quad_form = TRUE)
+  
+  .Object@constraints <- constraints
+  .Object@constr_size <- sum(sapply(constraints, size))
+  .Object@parameters <- parameters
+  .Object@param_id_to_col <- param_id_to_col
+  .Object@id_to_param <- list()
+  for(p in .Object@parameters)
+    .Object@id_to_param[[as.character(p@id)]] <- size(p)
+  .Object@total_param_size <- sum(sapply(.Object@parameters, size))
+  
+  # TODO: Technically part of inverse data.
+  .Object@variables <- variables
+  .Object@var_id_to_col <- var_id_to_col
+  .Object@id_to_var <- list()
+  for(v in .Object@variables)
+    .Object@id_to_var[[as.character(v@id)]] <- v
+  .Object@formatted <- formatted   # Has this param cone prog been formatted for a solver?
+  
+  callNextMethod(.Object, ...)
+})
+
+#' @param object A \linkS4class{ParamQuadProg} object.
+#' @describeIn ParamQuadProg Is the problem mixed-integer?
+setMethod("is_mixed_integer", "ParamQuadProg", function(object) {
+  object@x@attributes$boolean || object@x@attributes$integer
+})
+
+#' @param id_to_param_value (Optional) List mapping paramter ids to values.
+#' @param zero_offset (Optional) If TRUE, zero out the constant offset in the parameter vector.
+#' @param keep_zeros (Optional) If TRUE, store explicit zeros in A where parameters are affected.
+#' @describeIn ParamQuadProg Returns A, b after applying parameters (and reshaping).
+setMethod("apply_parameters", "ParamQuadProg", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE) {
+  param_value <- function(idx) {
+    if(is.null(id_to_param_value) || length(id_to_param_value) == 0)
+      return(value(id_to_param[[idx]]))
+    else
+      return(id_to_param_value[[idx]])
+  }
+  param_vec <- canonInterface.get_parameter_vector(object@total_param_size, object@param_id_to_col, object@param_id_to_size, param_value, zero_offset = zero_offset)
+  
+  object@reduced_P <- cache(object@reduced_P, keep_zeros)
+  P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
+  
+  qd <- canonInterface.get_matrix_from_tensor(object@q, param_vec, size(object@x), with_offset = TRUE)
+  q <- qd[[1]]
+  d <- qd[[2]]
+  q <- as.matrix(as.vector(q))
+  
+  object@reduced_A <- cache(object@reduced_A, keep_zeros)
+  Ab <- get_matrix_from_tensor(object@reduced_A, param_vec, with_offset = TRUE)
+  A <- Ab[[1]]
+  b <- Ab[[2]]
+  
+  return(list(P, q, d, A, as.matrix(b)))
+})
+
+#' @describeIn ParamQuadProg Multiplies by Jacobian of parameter mapping.
+setMethod("apply_param_jac", "ParamQuadProg", function(object, delP, delq, delA, delb, active_params = NULL) {
+  stop("Unimplemented")
+})
+
+#' @describeIn ParamQuadProg Splits the solution into individual variables.
+setMethod("split_solution", "ParamQuadProg", function(object, sltn, active_vars = NULL) {
+  stop("Unimplemented")
+})
+
+#' @describeIn ParamQuadProg Adjoint of split_solution.
+setMethod("split_solution", "ParamQuadProg", function(object, del_vars = NULL) {
+  stop("Unimplemented")
+})
 
 #'
 #' The QpMatrixStuffing class.

@@ -5,11 +5,16 @@
 #' with affine objectives and conic constraints whose arguments are affine.
 #'
 #' @rdname Dcp2Cone-class
-.Dcp2Cone <- setClass("Dcp2Cone", contains = "Canonicalization")
-Dcp2Cone <- function(problem = NULL) { .Dcp2Cone(problem = problem) }
+.Dcp2Cone <- setClass("Dcp2Cone", representation(quad_obj = "logical", cone_canon_methods = "list", quad_canon_methods = "list"), 
+                                  prototype(quad_obj = FALSE, cone_canon_methods = Dcp2Cone.CANON_METHODS, quad_canon_methods = Qp2QuadForm.QUAD_CANON_METHODS), contains = "Canonicalization")
+Dcp2Cone <- function(problem = NULL, quad_obj = FALSE) { .Dcp2Cone(problem = problem, quad_obj = quad_obj) }
 
-setMethod("initialize", "Dcp2Cone", function(.Object, ...) {
-  callNextMethod(.Object, ..., canon_methods = Dcp2Cone.CANON_METHODS)
+setMethod("initialize", "Dcp2Cone", function(.Object, ..., quad_obj = FALSE, cone_canon_methods = Dcp2Cone.CANON_METHODS, quad_canon_methods = Qp2QuadForm.QUAD_CANON_METHODS) {
+  .Object <- callNextMethod(.Object, ...)
+  .Object@cone_canon_methods <- cone_canon_methods
+  .Object@quad_canon_methods <- quad_canon_methods
+  .Object@quad_obj <- quad_obj
+  .Object
 })
 
 #' @param object A \linkS4class{Dcp2Cone} object.
@@ -23,7 +28,72 @@ setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), functi
 setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to cone program")
-  callNextMethod(object, problem)
+  
+  inverse_data <- InverseData(problem)
+  
+  canon <- canonicalize_tree(object, problem@objective, TRUE)
+  canon_objective <- canon[[1]]
+  canon_constraints <- canon[[2]]
+  
+  for(constraint in problem@constraints) {
+    # canon_constr is the constraint rexpressed in terms of
+    # its canonicalized arguments, and aux_constr are the constraints
+    # generated while canonicalizing the arguments of the original
+    # constraint
+    canon <- canonicalize_tree(object, constraints, FALSE)
+    canon_constr <- canon[[1]]
+    aux_constr <- canon[[2]]
+    canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
+    inverse_data@cons_id_map[[as.character(id(constraint))]] <- id(canon_constr)
+  }
+  
+  new_problem <- Problem(canon_objective, canon_constraints)
+  return(list(new_problem, inverse_data))
+})
+
+#' @describeIn Dcp2Cone Recursively canonicalize an Expression.
+setMethod("canonicalize_tree", signature(object = "Dcp2Cone", expr = "Expression", affine_above = "logical"), function(object, expr, affine_above) {
+  # TODO: don't copy affine expressions?
+  if(inherits(expr, "PartialProblem")) {
+    canon <- canonicalize_tree(object, expr@args[[1]]@objective@expr, FALSE)
+    canon_expr <- canon[[1]]
+    constrs <- canon[[2]]
+    for(constr in expr@args[[1]]@constraints) {
+      canon <- canonicalize_tree(object, constr, FALSE)
+      canon_constr <- canon[[1]]
+      aux_constr <- canon[[2]]
+      constrs <- c(constrs, list(canon_constr), aux_constr)
+    }
+  } else {
+    affine_atom <- !(class(expr) %in% names(object@cone_canon_methods))
+    canon_args <- list()
+    constrs <- list()
+    for(arg in expr@args) {
+      tmp <- canonicalize_tree(object, art, affine_atom && affine_above)
+      canon_arg <- tmp[[1]]
+      c <- tmp[[2]]
+      canon_args <- c(canon_args, list(canon_arg))
+      constrs <- c(constrs, c)
+    }
+    tmp <- canonicalize_expr(object, expr, canon_args, affine_above)
+    canon_expr <- tmp[[1]]
+    c <- tmp[[2]]
+    constrs <- c(constrs, c)
+  }
+  return(list(canon_expr, constrs))
+})
+
+#' @describeIn Dcp2Cone Canonicalize an expression wrt canonicalized arguments.
+setMethod("canonicalize_expr", "Dcp2Cone", function(object, expr, args, affine_above) {
+  # Constant trees are collapsed, but parameter trees are preserved.
+  if(is(expr, "Expression") && (is_constant(expr) && (is.null(parameters(expr)) || length(parameters(expr)) == 0)))
+    return(list(expr, list()))
+  else if(object@quad_obj && affine_above && class(expr) %in% names(object@quad_canon_methods))
+    return(object@quad_canon_methods[[class(expr)]](expr, args))
+  else if(class(expr) %in% names(object@cone_canon_methods))
+    return(object@cone_canon_methods[[class(expr)]](expr, args))
+  else
+    return(list(copy(expr, args), list()))
 })
 
 #'
@@ -682,6 +752,160 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
 
   # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
   constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1)) %*% t)
+  return(list(t, constraints))
+}
+
+Dcp2Cone.suppfunc_canon <- function(expr, args) {
+  # The user-supplied argument to the support function:
+  y <- flatten(args[[1]])
+  parent <- expr@.parent
+  
+  # This Defines the set "X" associated with this support function:
+  conic <- conic_repr_of_set(parent)
+  A <- conic[[1]]
+  b <- conic[[2]]
+  K_self <- conic[[3]]
+  
+  # The main part of the duality trick for representing the epigraph
+  # of this support function:
+  eta <- Variable(size(b))
+  expr@.eta <- eta
+
+  n <- ncol(A)
+  n0 <- size(y)
+  if(n > n0) {
+    # The description of the set "X" used in this support
+    # function included n - n0 > 0 auxiliary variables.
+    # We can pretend these variables were user-defined
+    # by appending a suitable number of zeros to y.
+    y_lift <- HStack(list(y, rep(0, n - n0)))
+  } else
+    y_lift <- y
+  local_cons <- list(t(A) %*% eta + y_lift == 0)
+  
+  # Now, the conic constraints on eta.
+  #   nonneg, exp, soc, psd
+  nonnegsel <- K_sels$nonneg
+  if(size(nonnegsel) > 0) {
+    temp_expr <- eta[nonnegsel]
+    local_cons <- c(local_cons, list(temp_expr >= 0))
+  }
+  
+  socsels <- K_sels$soc
+  socsels_len <- length(socsels)
+  for(socsel in socsels) {
+    tempsca <- eta[socsel[1]]
+    tempvec <- eta[socsel[seq(2, socsels_len)]]
+    soccon <- SOC(tempsca, tempvec)
+    local_cons <- c(local_cons, list(soccon))
+  }
+  
+  psdsels <- K_sels$psd
+  for(psdsel in psdsels) {
+    curmat <- scs_psdvec_to_psdmat(eta, psdsel)
+    local_cons <- c(local_cons, list(curmat %>>% 0))
+  }
+  
+  expsel <- K_sels$exp
+  if(size(expsel) > 0) {
+    matexpsel <- matrix(expsel, ncol = 3, byrow = TRUE)
+    curr_u <- eta[matexpsel[,1]]
+    curr_v <- eta[matexpsel[,2]]
+    curr_w <- eta[matexpsel[,3]]
+    # (curr_u, curr_v, curr_w) needs to belong to the dual
+    # exponential cone, as used by the SCS solver. We map
+    # this to a primal exponential cone as follows.
+    ec <- ExpCone(-curr_v, -curr_u, base::exp(1) * curr_w)
+    local_cons.append(ec)
+  }
+  
+  epigraph <- b %*% eta
+  return(list(epigraph, local_cons))
+}
+
+Dcp2Cone.tr_inv_canon <- function(expr, args) {
+  X <- args[[1]]
+  n <- nrow(X)
+  su <- NULL
+  
+  constraints <- list()
+  for(i in seq_len(n)) {
+    ei <- matrix(0, nrow = n, ncol = 1)
+    ei[i] <- 1.0
+    ui <- Variable(1, 1)
+    R <- bmat(list(list(X, ei),
+                   list(t(ei), ui)))
+    constraints <- c(constraints, list(R %>>% 0))
+    if(is.null(su))
+      su <- ui
+    else
+      su <- su + ui
+  }
+  return(list(su, constraints))
+}
+
+Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
+  N <- args[[1]]
+  if(!is_real(N))
+    stop("N must be real")
+  
+  n <- nrow(N)
+  x <- Variable(n)
+  t <- Variable()
+  
+  # START code that applies to all spectral functions
+  constrs <- list()
+  if(n > 1) {
+    for(r in seq(2, n)) {
+      # lambda_sum_largest(N, r) <= sum(x[1:(r-1)])
+      expr_r <- lambda_sum_largest(N, r)
+      canon <- Dcp2Cone.lambda_sum_largest_canon(expr_r, expr_r@args)
+      epi <- canon[[1]]
+      cons <- canon[[2]]
+      constrs <- c(constrs, cons)
+      con <- NonPosConstraint(epi - sum(x[1:(r-1)]))
+      constrs <- c(constrs, list(con))
+    }
+  }
+  
+  # trace(N) \leq sum(x)
+  con <- (matrix_trace(N) == sum(x))
+  constrs <- c(constrs, list(con))
+  
+  # trace(N) == sum(x)
+  con <- ZeroConstraint(matrix_trace(N) - sum(x))
+  constrs <- c(constrs, list(con))
+  
+  # x[1:(n-1)] >= x[2:n]
+  #   x[1] >= x[2],  x[2] >= x[3], ...
+  if(n > 1) {
+    con <- NonPosConstraint(x[2:n] - x[1:(n - 1)])
+    constrs <- c(constrs, list(con))
+  }
+  
+  # END code that applies to all spectral functions
+  
+  # sum(entr(x)) >= t
+  canon <- Dcp2Cone.entr_canon(x, list(x))
+  hypos <- canon[[1]]
+  entr_cons <- canon[[2]]
+  constrs <- c(constrs, entr_cons)
+  con <- NonPosConstraint(t - sum(hypos))
+  constrs <- c(constrs, list(con))
+  
+  return(list(t, constrs))
+}
+
+Dcp2Cone.xexp_canon <- function(expr, args) {
+  x <- args[[1]]
+  u <- new("Variable", dim = dim(expr), nonneg = TRUE)
+  t <- new("Variable", dim = dim(expr), nonneg = TRUE)
+  power_expr <- Power(x, 2)
+  canon <- Dcp2Cone.power_canon(power_expr, power_expr@args)
+  power_obj <- canon[[1]]
+  constraints <- canon[[2]]
+  
+  constraints <- c(constraints, list(ExpCone(u, x, t), u >= power_obj, x >= 0))
   return(list(t, constraints))
 }
 

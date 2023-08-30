@@ -641,7 +641,7 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
 #' and the constraints consists of geometric mean constraints.
 Dcp2Cone.power_canon <- function(expr, args) {
   x <- args[[1]]
-  p <- expr@p
+  p <- expr@p_rational
   w <- expr@w
 
   if(p == 1)
@@ -679,14 +679,21 @@ Dcp2Cone.power_canon <- function(expr, args) {
 #' from the quadratic over linear canonicalization and same with the
 #' constraints.
 Dcp2Cone.quad_form_canon <- function(expr, args) {
+  # TODO: This doesn't work with parameters!
   decomp <- .decomp_quad(value(args[[2]]))
   scale <- decomp[[1]]
   M1 <- decomp[[2]]
   M2 <- decomp[[3]]
+  M1_dim <- dim(M1)
+  M2_dim <- dim(M2)
+  
+  # Special case where P == 0.
+  if((is.null(M1_dim) || size(M1) == 0) && (is.null(M2_dim) && size(M2) == 0))
+    return(list(Constant(0), list()))
 
-  if(!is.null(dim(M1)) && prod(dim(M1)) > 0)
+  if(!is.null(M1_dim) && prod(M1_dim) > 0)
     expr <- sum_squares(Constant(t(M1)) %*% args[[1]])
-  else if(!is.null(dim(M2)) && prod(dim(M2)) > 0) {
+  else if(!is.null(M2_dim) && prod(M2_dim) > 0) {
     scale <- -scale
     expr <- sum_squares(Constant(t(M2)) %*% args[[1]])
   }
@@ -722,6 +729,25 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
 }
 
 #' 
+#' Dcp2Cone canonicalizer for the relative entropy atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a relative entropy atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
+Dcp2Cone.rel_entr_canon <- function(expr, args) {
+  expr_dim <- dim(expr)
+  x <- promote(args[[1]], expr_dim)
+  y <- promote(args[[2]], expr_dim)
+  t <- new("Variable", dim = expr_dim)
+  constraints <- list(ExpCone(t, x, y))
+  obj <- -t
+  return(list(obj, constraints))
+}
+
+#' 
 #' Dcp2Cone canonicalizer for the sigma max atom
 #' 
 #' @param expr An \linkS4class{Expression} object
@@ -735,26 +761,28 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
   A_dim <- dim(A)
   n <- A_dim[1]
   m <- A_dim[2]
-  # X <- Variable(c(n+m, n+m), PSD = TRUE)
-  X <- new("Variable", dim = c(n+m, n+m), PSD = TRUE)
-
   expr_dim <- dim(expr)
-  # t <- Variable(expr_dim)
+  if(prod(expr_dim) != 1)
+    stop("Invalid shape of expr in sigma_max canonicalization")
+  
   t <- new("Variable", dim = expr_dim)
-  constraints <- list()
-
-  # Fix X using the fact that A must be affine by the DCP rules.
-  # X[1:n, 1:n] == I_n*t
-  constraints <- c(constraints, X[1:n, 1:n] == Constant(sparseMatrix(i = 1:n, j = 1:n, x = 1)) %*% t)
-
-  # X[1:n, (n+1):(n+m)] == A
-  constraints <- c(constraints, X[1:n, (n+1):(n+m)] == A)
-
-  # X[(n+1):(n+m), (n+1):(n+m)] == I_m*t
-  constraints <- c(constraints, X[(n+1):(n+m), (n+1):(n+m)] == Constant(sparseMatrix(i = 1:m, j = 1:m, x = 1)) %*% t)
+  tI_n <- sparseMatrix(seq(n), seq(n), x = rep(1, n)) * t
+  tI_m <- sparseMatrix(seq(m), seq(m), x = rep(1, m)) * t
+  X <- bmat(list(list(tI_n, A), 
+                 list(t(A), tI_m)))
+  constraints <- list(PSD(X))
   return(list(t, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the support function atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a support function atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
 Dcp2Cone.suppfunc_canon <- function(expr, args) {
   # The user-supplied argument to the support function:
   y <- flatten(args[[1]])
@@ -823,6 +851,15 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
   return(list(epigraph, local_cons))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the trinv atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a trinv atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
 Dcp2Cone.tr_inv_canon <- function(expr, args) {
   X <- args[[1]]
   n <- nrow(X)
@@ -844,6 +881,15 @@ Dcp2Cone.tr_inv_canon <- function(expr, args) {
   return(list(su, constraints))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the von Neumann entropy atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a von Neumann entropy atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
 Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
   N <- args[[1]]
   if(!is_real(N))
@@ -896,6 +942,15 @@ Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
   return(list(t, constrs))
 }
 
+#' 
+#' Dcp2Cone canonicalizer for the xexp atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a xexp atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
 Dcp2Cone.xexp_canon <- function(expr, args) {
   x <- args[[1]]
   u <- new("Variable", dim = dim(expr), nonneg = TRUE)

@@ -198,7 +198,7 @@ Dcp2Cone.geo_mean_canon <- function(expr, args) {
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
 
-  x_list <- lapply(1:length(w), function(i) { x[i] })
+  x_list <- lapply(seq_len(w), function(i) { x[i] })
 
   # TODO: Catch cases where we have (0,0,1)?
   # TODO: What about curvature case (should be affine) in trivial case of (0,0,1)?
@@ -252,7 +252,7 @@ Dcp2Cone.huber_canon <- function(expr, args) {
 #' where 0 is the objective function with the given constraints
 #' in the function.
 Dcp2Cone.indicator_canon <- function(expr, args) {
-  return(list(0, args))
+  return(list(Constant(0), args))
 }
 
 #' 
@@ -268,7 +268,7 @@ Dcp2Cone.kl_div_canon <- function(expr, args) {
   y <- promote(args[[2]], expr_dim)
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  constraints <- list(ExpCone(t, x, y), y >= 0)
+  constraints <- list(ExpCone(t, x, y))
   obj <- y - x - t
   return(list(obj, constraints))
 }
@@ -286,9 +286,14 @@ Dcp2Cone.lambda_max_canon <- function(expr, args) {
   n <- nrow(A)
   t <- Variable()
   prom_t <- promote(t, c(n,1))
-  # Constraint I*t - A to be PSD; note this expression must be symmetric
+  # Constrain I*t - A to be PSD; note this expression must be symmetric
   tmp_expr <- DiagVec(prom_t) - A
-  constr <- list(tmp_expr == t(tmp_expr), PSDConstraint(tmp_expr))
+  constr <- list(PSDConstraint(tmp_expr))
+  if(!is_symmetric(A)) {
+    ut <- UpperTri(A)
+    lt <- UpperTri(t(A))
+    constr <- c(constr, ut == lt)
+  }
   return(list(t, constr))
 }
 
@@ -340,6 +345,36 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
 #' ExpCone constraints + 1.
 Dcp2Cone.log1p_canon <- function(expr, args) {
   return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
+}
+
+#' 
+#' Dcp2Cone canonicalizer for the logistic function atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the logistic atom
+#' where the objective function is given by t0 and the 
+#' constraints consist of the ExpCone constraints.
+Dcp2Cone.logistic_canon <- function(expr, args) {
+  x <- args[[1]]
+  expr_dim <- dim(expr)
+  # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
+  # t0 <- Variable(expr_dim)
+  t0 <- new("Variable", dim = expr_dim)
+  canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
+  canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
+  
+  t1 <- canon1[[1]]
+  constr1 <- canon1[[2]]
+  t2 <- canon2[[1]]
+  constr2 <- canon2[[2]]
+  
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
+  return(list(t0, constraints))
 }
 
 #' 
@@ -405,33 +440,19 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   # Returns
   # -------
   # (Variable for objective, list of constraints)
-
-  A <- args[[1]]   # n by n matrix
+  
+  A <- args[[1]]  # n by n matrix.
   n <- nrow(A)
-  # Require that X and A are PSD.
-  # X <- Variable(c(2*n, 2*n), PSD = TRUE)
-  X <- Variable(2*n, 2*n, PSD = TRUE)
-  constraints <- list(PSDConstraint(A))
-
-  # Fix Z as upper triangular
-  # TODO: Represent Z as upper triangular vector
-  # Z <- Variable(c(n,n))
-  Z <- Variable(n,n)
-  Z_lower_tri <- UpperTri(t(Z))
-  constraints <- c(constraints, list(Z_lower_tri == 0))
-
-  # Fix diag(D) = Diag(Z): D[i,i] = Z[i,i]
-  D <- Variable(n)
-  constraints <- c(constraints, D == DiagMat(Z))
-  # Fix X using the fact that A must be affine by the DCP rules
-  # X[1:n, 1:n] == D
-  constraints <- c(constraints, X[1:n, 1:n] == DiagVec(D))
-  # X[1:n, (n+1):(2*n)] == Z
-  constraints <- c(constraints, X[1:n, (n+1):(2*n)] == Z)
-  # X[(n+1):(2*n),  (n+1):(2*n)] == A
-  constraints <- c(constraints, X[(n+1):(2*n), (n+1):(2*n)] == A)
-  # Add the objective sum(log(D[i,i]))
-  log_expr <- Log(D)
+  
+  z_small <- Variable(floor(n*(n+1)/2))
+  Z <- UpperTri.vec_to_upper_tri(z_small, strict = FALSE)
+  d_small <- DiagMat(Z)  # a vector
+  D <- DiagVec(d_small)  # a matrix
+  X <- bmat(list(list(D, Z),
+                 list(t(Z), A)))
+  
+  constraints <- list(PSDConstraint(X))
+  log_expr <- log(d)
   canon <- Dcp2Cone.log_canon(log_expr, log_expr@args)
   obj <- canon[[1]]
   constr <- canon[[2]]
@@ -461,9 +482,9 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   if(is.na(axis))   # shape = c(1,1)
     promoted_t <- promote(t, x_dim)
   else if(axis == 2)   # shape = c(1,n)
-    promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1) %*% reshape_expr(t, c(1 + x_dim[2], x_dim[3:length(x_dim)])))
+    promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1)) %*% reshape_expr(t, c(1, x_dim[2:length(x_dim)])))
   else   # shape = c(m,1)
-    promoted_t <- reshape_expr(t, c(1 + x_dim[1], x_dim[2:(length(x_dim)-1)])) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
+    promoted_t <- reshape_expr(t, c(x_dim[1:(length(x_dim)-1)], 1)) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
   
   exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
@@ -474,36 +495,6 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
     ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
   constraints <- c(canon[[2]], obj <= ones)
   return(list(t, constraints))
-}
-
-#' 
-#' Dcp2Cone canonicalizer for the logistic function atom
-#' 
-#' @param expr An \linkS4class{Expression} object
-#' @param args A list of \linkS4class{Constraint} objects
-#' @return A cone program constructed from the logistic atom
-#' where the objective function is given by t0 and the 
-#' constraints consist of the ExpCone constraints.
-Dcp2Cone.logistic_canon <- function(expr, args) {
-  x <- args[[1]]
-  expr_dim <- dim(expr)
-  # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
-  # t0 <- Variable(expr_dim)
-  t0 <- new("Variable", dim = expr_dim)
-  canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
-  canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
-
-  t1 <- canon1[[1]]
-  constr1 <- canon1[[2]]
-  t2 <- canon2[[1]]
-  constr2 <- canon2[[2]]
-
-  if(is.null(expr_dim))
-    ones <- Constant(1)
-  else
-    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
-  constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
-  return(list(t0, constraints))
 }
 
 #' 
@@ -530,7 +521,7 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   # A matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X.
   M <- bmat(list(list(P, X),
                  list(t(X), Tvar)))
-  constraints <- list(PSD(M))
+  constraints <- list(PSDConstraint(M))
   
   if(!is_symmetric(P)) {
     ut <- upper_tri(P)
@@ -906,7 +897,7 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
   tI_m <- sparseMatrix(seq(m), seq(m), x = rep(1, m)) * t
   X <- bmat(list(list(tI_n, A), 
                  list(t(A), tI_m)))
-  constraints <- list(PSD(X))
+  constraints <- list(PSDConstraint(X))
   return(list(t, constraints))
 }
 

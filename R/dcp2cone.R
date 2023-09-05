@@ -525,21 +525,73 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   X_dim <- dim(X)
   n <- X_dim[1]
   m <- X_dim[2]
-
-  # Create a matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X
-  # M <- Variable(c(n+m, n+m), PSD = TRUE)
-  # Tvar <- Variable(c(m,m), symmetric = TRUE)
-  M <- Variable(n+m, n+m, PSD = TRUE)
+  
   Tvar <- Variable(m, m, symmetric = TRUE)
-  constraints <- list()
-  # Fix M using the fact that P must be affine by the DCP rules.
-  # M[1:n, 1:n] == P
-  constraints <- c(constraints, M[1:n, 1:n] == P)
-  # M[1:n, (n+1):(n+m)] == X
-  constraints <- c(constraints, M[1:n, (n+1):(n+m)] == X)
-  # M[(n+1):(n+m), (n+1):(n+m)] == Tvar
-  constraints <- c(constraints, M[(n+1):(n+m), (n+1):(n+m)] == Tvar)
+  # A matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X.
+  M <- bmat(list(list(P, X),
+                 list(t(X), Tvar)))
+  constraints <- list(PSD(M))
+  
+  if(!is_symmetric(P)) {
+    ut <- upper_tri(P)
+    lt <- upper_tri(t(P))
+    constraints <- c(constraints, ut == lt)
+  }
   return(list(matrix_trace(Tvar), constraints))
+}
+
+#' 
+#' Dcp2Cone canonicalizer for the multiplication of expressions atom
+#' 
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the multiplication of expressions atom.
+Dcp2Cone.mul_canon <- function(expr, args) {
+  # TODO(akshayka): expose as a reduction for user's convenience
+  
+  # Only allow param * var (not var * param). Associate right to left.
+  # TODO: Only descend if both sides have parameters
+  lhs <- args[[1]]
+  rhs <- args[[2]]
+  lhs_parms <- parameters(lhs)
+  rhs_parms <- parameters(rhs)
+  if((is.null(lhs_parms) || length(lhs_parms) == 0) && (is.null(rhs_parms) && length(rhs_parms) == 0))
+    return(list(copy(expr, args), list()))
+  
+  op_type <- class(expr)
+  if(length(variables(lhs)) > 0) {
+    if(dpp_scope()) {   # TODO: Implement DPP scoping with global variables.
+      if(!is_affine(rhs))
+        stop("rhs must be affine if DPP")
+    }
+    t <- new("Variable", dim = dim(lhs))
+    return(list(do.call(op_type, list(t, rhs)), list(t == lhs)))
+  } else if(length(variables(rhs))) {
+    if(dpp_scope()) {
+      if(!is_affine(lhs))
+        stop("lhs must be affine if DPP")
+    }
+    t <- new("Variable", dim = dim(rhs))
+    return(list(do.call(op_type, list(lhs, t)), list(t == rhs)))
+  }
+  
+  # Neither side has variables. One side must be affine in parameters.
+  lhs_affine <- FALSE
+  rhs_affine <- FALSE
+  if(dpp_scope()) {
+    lhs_affine <- is_affine(lhs)
+    rhs_affine <- is_affine(rhs)
+  }
+  if(!(lhs_affine || rhs_affine))
+    stop("Either lhs or rhs must be affine in parameters")
+  
+  if(lhs_affine) {
+    t <- new("Variable", dim = dim(rhs))
+    return(list(lhs %*% t, list(t == rhs)))
+  } else {
+    t <- new("Variable", dim = dim(lhs))
+    return(list(t %*% rhs, list(t == lhs)))
+  }
 }
 
 #' 
@@ -561,14 +613,12 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   #   minimize (trace(U) + trace(V))/2
   #   subject to:
   #            [U A; t(A) V] is positive semidefinite
-  # X <- Variable(c(m+n, m+n), PSD = TRUE)
-  X <- Variable(m+n, m+n, PSD = TRUE)
-  constraints <- list()
-
-  # Fix X using the fact that A must be affine by the DCP rules.
-  # X[1:rows, (rows+1):(rows+cols)] == A
-  constraints <- c(constraints, X[1:m, (m+1):(m+n)] == A)
-  trace_value <- 0.5*matrix_trace(X)
+  U <- Variable(m, m, symmetric = TRUE)
+  V <- Variable(n, n, symmetric = TRUE)
+  X <- bmat(list(list(U, A),
+                 list(t(A), V)))
+  constraints <- list(X %>>% 0)
+  trace_value <- 0.5 * (matrix_trace(U) + matrix_trace(V))
   return(list(trace_value, constraints))
 }
 
@@ -635,8 +685,22 @@ Dcp2Cone.perspective_canon <- function(expr, args) {
   constraints <- c(constraints, list(-c@x_canon + t - s*d >= 0))
     
   # recover initial variables
+  
+  end_inds <- c(sort(unlist(prob_canon@var_id_to_col), decreasing = FALSE), nrow(x_canon) + 1)
+  
+  for(var in variables(expr@f)) {
+    start_ind <- prob_canon@var_id_to_col[[as.character(id(var))]]
+    end_ind <- end_inds[which(end_inds == start_ind) + 1]
     
-  # TODO: Finish this.
+    if(var@attributes$diag)  # checking for diagonal first because diagonal is also symmetric
+      constraints <- c(constraints, list(diag(var) == x_canon[start_ind:(end_ind - 1)]))
+    else if(is_symmetric(var) && size(var) > 1) {
+      n <- nrow(var)
+      inds <- which(upper.tri(matrix(1, nrow = n, ncol = n), diag = TRUE), arr.ind = TRUE)  # includes diagonal
+      constraints <- c(constraints, list(var[inds] == x_canon[start_ind:(end_ind - 1)]))
+    } else
+      constraints <- c(constraints, list(vec(var) == x_canon[start_ind:(end_ind - 1)]))
+  }
   
   if(is_convex(expr@f))
     return(list(t, constraints))

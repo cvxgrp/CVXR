@@ -36,7 +36,7 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
   canon_constraints <- canon[[2]]
   
   for(constraint in problem@constraints) {
-    # canon_constr is the constraint rexpressed in terms of
+    # canon_constr is the constraint re-expressed in terms of
     # its canonicalized arguments, and aux_constr are the constraints
     # generated while canonicalizing the arguments of the original
     # constraint
@@ -69,7 +69,7 @@ setMethod("canonicalize_tree", signature(object = "Dcp2Cone", expr = "Expression
     canon_args <- list()
     constrs <- list()
     for(arg in expr@args) {
-      tmp <- canonicalize_tree(object, art, affine_atom && affine_above)
+      tmp <- canonicalize_tree(object, arg, affine_atom && affine_above)
       canon_arg <- tmp[[1]]
       c <- tmp[[2]]
       canon_args <- c(canon_args, list(canon_arg))
@@ -94,6 +94,71 @@ setMethod("canonicalize_expr", "Dcp2Cone", function(object, expr, args, affine_a
     return(object@cone_canon_methods[[class(expr)]](expr, args))
   else
     return(list(copy(expr, args), list()))
+})
+
+#'
+#' Summary of Cone Dimensions Present in Constraints
+#'
+#' Constraints must be formatted as dictionary that maps from
+#' constraint type to a list of constraints of that type.
+#' 
+#' @slot zero The dimension of the zero cone.
+#' @slot nonneg The dimension of the non-negative cone.
+#' @slot exp The number of 3-dimensional exponential cones.
+#' @slot soc A vector of the second-order cone dimensions.
+#' @slot psd A vector of the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
+#' @rdname ConeDims-class
+ConeDims <- setClass("ConeDims", representation(zero = "numeric", nonneg = "numeric", exp = "numeric", soc = "numeric", psd = "numeric", p3d = "numeric"),
+                                 prototype(zero = NA_integer_, nonneg = NA_integer_, exp = NA_integer_, soc = NA_integer_, psd = NA_integer_, p3d = NA_real_))
+
+setMethod("initialize", "ConeDims", function(.Object, zero = NA_integer_, nonneg = NA_integer_, exp = NA_integer_, soc = NA_integer_, psd = NA_integer_, p3d = list()) {
+  .Object@zero <- as.integer(sum(sapply(constr_map$Zero, size)))
+  .Object@nonneg <- as.integer(sum(sapply(constr_map$NonNeg, size)))
+  .Object@exp <- as.integer(sum(sapply(constr_map$ExpCone, num_cones)))
+  
+  .Object@soc <- c()
+  for(con in constr_map$SOC)
+    .Object@soc <- c(.Object@soc, cone_sizes(con))
+  .Object@soc <- as.integer(.Object@soc)
+  .Object@psd <- as.integer(sapply(constr_map$PSD, nrow))
+  
+  p3d <- c()
+  if(!is.null(constr_map$PowCone3D)) {
+    for(con in constr_map$PowCone3D)
+      p3d <- c(p3d, value(con@alpha))
+  }
+  .Object@p3d <- p3d
+  .Object
+})
+
+setMethod("show", "ConeDims", function(object) {
+  cat(paste("zero:", object@zero), paste("nonneg:", object@nonneg), paste("exp:", object@exp),
+      paste("soc:", object@soc), paste("psd:", object@psd), paste("p3d:", object@p3d), sep = ", ")
+})
+
+setMethod("as.character", "ConeDims", function(x) {
+  sprintf("%i equalities, %i inequalities, %i exponential cones,\nSOC constraints: %s, PSD constraints: %s,\n3d power cones %s.", 
+          x@zero, x@nonneg, x@exp, 
+          paste("(", paste(x@soc, sep = ", "), ")", sep = ""), 
+          paste("(", paste(x@psd, sep = ", "), ")", sep = ""), 
+          paste("(", paste(x@p3d, sep = ", "), ")", sep = ""))
+})
+
+setMethod("$", signature(x = "ConeDims"), function(x, name) {
+  if(name == EQ_DIM)
+    return(object@zero)
+  else if(name == LEQ_DIM)
+    return(object@nonneg)
+  else if(name == EXP_DIM)
+    return(object@exp)
+  else if(name == SOC_DIM)
+    return(object@soc)
+  else if(name == PSD_DIM)
+    return(object@psd)
+  else if(name == "p3")   # P3D_DIM = "p3"
+    return(object@p3d)
+  else
+    stop("Unknown key: ", name)
 })
 
 #'
@@ -154,7 +219,7 @@ Dcp2Cone.entr_canon <- function(expr, args) {
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
 
-  # -x*log(x) >= t is equivalent to x/exp(t/x) <= 1
+  # -x*log(x) >= t is equivalent to x*exp(t/x) <= 1
   # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
   if(is.null(expr_dim))
     ones <- Constant(1)

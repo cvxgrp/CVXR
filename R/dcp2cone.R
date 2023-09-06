@@ -214,7 +214,117 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   return(list(params_to_P, params_to_c, x))
 })
 
-# TODO: ConeMatrixStuffing perform and invert functions.
+#' @describeIn ConeMatrixStuffing Constructs matrices and returns a ParamConeProg (parametrized cone program)
+setMethod("perform", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
+  inverse_data <- InverseData(problem)
+  # Form the constraints
+  extractor <- CoeffExtractor(inverse_data, object@canon_backend)
+  stuffed <- stuffed_objective(object, problem, extractor)
+  params_to_P <- stuffed[[1]]
+  params_to_c <- stuffed[[2]]
+  flattened_variable <- stuffed[[3]]
+  
+  # Lower equality and inequality to Zero and NonNeg.
+  cons <- list()
+  for(con in problem@constraints) {
+    if(is(con, "EqConstraint"))
+      con <- lower_equality(con)
+    else if(is(con, "IneqConstraint"))
+      con <- lower_ineq_to_nonneg(con)
+    else if(is(con, "NonPosConstraint"))
+      con <- nonpos2nonneg(con)
+    else if(is(con, "SOC") && con@axis == 1)
+      con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, constr_id = con@constr_id)
+    else if(is(con, "PowCone3D") && ndim(con@args[[1]]) > 1) {
+      xyz <- con@args
+      x <- xyz[[1]]
+      y <- xyz[[2]]
+      z <- xyz[[3]]
+      alpha <- con@alpha
+      con <- PowCone3D(flatten(x), flatten(y), flatten(z), flatten(alpha), constr_id = con@constr_id)
+    } else if(is(con, "ExpCone") && ndim(con@args[[1]]) > 1) {
+      xyz <- con@args
+      x <- xyz[[1]]
+      y <- xyz[[2]]
+      z <- xyz[[3]]
+      con <- ExpCone(flatten(x), flatten(y), flatten(z), constr_id = con@constr_id)
+    }
+    cons <- c(cons, con)
+  }
+  
+  # Reorder constraints to Zero, NonNeg, SOC, PSD, EXP, PowCone3D
+  constr_map <- group_constraints(cons)
+  ordered_cons <- c(constr_map$Zero, constr_map$NonNeg, constr_map$SOC, constr_map$PSD,
+                    constr_map$ExpCone, constr_map$PowCone3D)
+  inverse_data@cons_id_map <- list()
+  for(con in ordered_cons) {
+    con_id <- id(con)
+    inverse_data@cons_id_map[[as.character(con_id)]] <- con_id
+  }
+  
+  inverse_data@constraints <- ordered_cons
+  # Batch expressions together, then split apart.
+  for(c in ordered_cons) {
+    for(arg in c@args)
+      expr_list <- c(expr_list, arg)
+  }
+  params_to_problem_data <- affine(extractor, expr_list)
+  
+  inverse_data@minimize <- (inherits(problem@objective, "Minimize"))
+  new_prob <- ParamConeProg(params_to_c,
+                            flattened_variable,
+                            params_to_problem_data,
+                            variables(problem),
+                            inverse_data@var_offsets,
+                            ordered_cons,
+                            parameters(problem),
+                            inverse_data@param_id_map,
+                            P = params_to_P)
+  return(list(new_prob, inverse_data))
+})
+
+#' @param solution A \linkS4class{Solution} object to invert.
+#' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
+#' @describeIn ConeMatrixStuffing Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "ConeMatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  var_map <- inverse_data@var_offsets
+  con_map <- inverse_data@cons_id_map
+  # Flip sign of opt val if maximize.
+  opt_val <- solution@opt_val
+  if(!(solution@status %in% ERROR) && !inverse_data@minimize)
+    opt_val <- -solution@opt_val
+  
+  primal_vars <- list()
+  dual_vars <- list()
+  if(!(solution@status %in% SOLUTION_PRESENT))
+    return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+  
+  # Split vectorized variable into components.
+  x_opt <- values(solution@primal_vars)[[1]]
+  for(var_id in names(var_map)) {
+    offset <- var_map[[var_id]]
+    var_dim <- inverse_data@var_shapes[[var_id]]
+    var_size <- as.integer(prod(var_dim))
+    primal_vars[[var_id]] = matrix(x_opt[offset:(offset + var_size)], nrow = var_dim[1], ncol = var_dim[2], byrow = FALSE)
+  }
+  
+  if(!is.null(solution@dual_vars) && length(solution@dual_vars) > 0) {
+    for(old_con in names(con_map)) {
+      new_con <- con_map[[old_con]]
+      con_obj <- inverse_data@id2cons[[old_con]]
+      con_obj_dim <- dim(con_obj)
+      # TODO rationalize Exponential.
+      if(all(con_obj_dim == c(1,1)) || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
+        dual_vars[[old_con]] <- solution@dual_vars[[new_con]]
+      else
+        dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = con_obj_dim[1], ncol = con_obj_dim[2], byrow = FALSE)
+    }
+  }
+  
+  return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+})
+
+# TODO: ConeMatrixStuffing invert function.
 
 # Atom canonicalizers.
 #' 

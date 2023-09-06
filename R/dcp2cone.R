@@ -161,6 +161,198 @@ setMethod("$", signature(x = "ConeDims"), function(x, name) {
     stop("Unknown key: ", name)
 })
 
+# TODO(akshayka): unit tests
+#'
+#' Parametrized Cone Program
+#' 
+#' minimize   c'x  + d + [(1/2)x'Px]
+#' subject to cone_constr1(A_1*x + b_1, ...)
+#' ...
+#' cone_constrK(A_i*x + b_i, ...)
+#'
+#' The constant offsets d and b are the last column of c and A.
+#'
+#' @rdname ParamConeProg-class
+ParamConeProg <- setClass("ParamConeProg", representation(c = "numeric", x = "Variable", A = "numeric", variables = "list", var_id_to_col = "list",
+                                                          constraints = "list", parameters = "list", param_id_to_col = "list", P = "numeric", formatted = "logical",
+                                                          reduced_A = "numeric", reduced_P = "numeric", constr_size = "numeric", constr_map = "list", cone_dims = "S4ORNULL", 
+                                                          id_to_param = "list", param_id_to_size = "list", total_param_size = "numeric", id_to_var = "list"),
+                          prototype(P = NA_real_, formatted = FALSE, reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(), 
+                                    cone_dims = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_real_, id_to_var = list()), contains = "ParamProb")
+
+setMethod("initialize", "ParamConeProg", function(.Object, ..., c, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, P = NA_real_, formatted = FALSE, 
+                                                  reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(), cone_dims = NULL, id_to_param = list(), 
+                                                  param_id_to_size = list(), total_param_size = NA_real_, id_to_var = list()) {
+  # The problem data tensors; c is for the constraint, and A for
+  # the problem data matrix
+  .Object@c <- c
+  .Object@A <- A
+  .Object@P <- P
+  # The variable
+  .Object@x <- x
+  
+  # Form a reduced representation of A and P, for faster application
+  # of parameters.
+  .Object@reduced_A = ReducedMat(.Object@A, size(.Object@x))
+  .Object@reduced_P = ReducedMat(.Object@P, size(.Object@x), quad_form = TRUE)
+  
+  .Object@constraints <- constraints
+  .Object@constr_size <- sum(sapply(constraints, size))
+  .Object@constr_map <- group_constraints(constraints)
+  .Object@cone_dims <- ConeDims(.Object@constr_map)
+  .Object@parameters <- parameters
+  .Object@param_id_to_col <- param_id_to_col
+  
+  .Object@id_to_param <- list()
+  .Object@param_id_to_size <- list()
+  .Object@total_param_size <- 0
+  for(p in .Object@parameters) {
+    p_id_char <- as.character(id(p))
+    p_size <- size(p)
+    .Object@id_to_param[[p_id_char]] <- p
+    .Object@param_id_to_size[[p_id_char]] <- p_size
+    .Object@total_param_size <- .Object@total_param_size + p_size
+  }
+  
+  # TODO technically part of inverse data.
+  .Object@variables <- variables
+  .Object@var_id_to_col <- var_id_to_col
+  .Object@id_to_var <- list()
+  for(v in .Object@variables)
+    .Object@id_to_var[[as.character(id(v))]] <- v
+
+  # whether this param cone prog has been formatted for a solver
+  .Object@formatted <- formatted
+  .Object
+})
+
+#' @param object A \linkS4class{ParamConeProg} object.
+#' @describeIn ParamConeProg Is the problem mixed-integer?
+setMethod("is_mixed_integer", "ParamConeProg", function(object) {
+  return(object@x@attributes$boolean || object@x@attributes$integer)
+})
+
+#' @param id_to_param_value: (optional) dict mapping parameter ids to values.
+#' @param zero_offset: (optional) if True, zero out the constant offset in the parameter vector.
+#' @param keep_zeros: (optional) if True, store explicit zeros in A where parameters are affected.
+#' @param quad_obj: (optional) if True, include quadratic objective term.
+#' @describeIn ParamConeProg Returns A, b after applying parameters (and reshaping)
+setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE, quad_obj = FALSE) {
+  cache(object@reduced_A, keep_zeros)
+  
+  param_value <- function(idx) {
+    if(is.null(id_to_param_value))
+      return(value(object@id_to_param[[idx]]))
+    else
+      return(id_to_param_value[[idx]])
+  }
+  
+  param_vec <- canonInterface.get_parameter_vector(object@total_param_size, object@param_id_to_col, object@param_id_to_size, param_value, zero_offset = zero_offset)
+  c, d = canonInterface.get_matrix_from_tensor(object@c, param_vec, size(object@x), with_offset = TRUE)
+  c <- cd[[1]]
+  d <- cd[[2]]
+  c <- as.vector(c)
+  
+  Ab <- get_matrix_from_tensor(object@reduced_A, param_vec, with_offset = TRUE)
+  A <- Ab[[1]]
+  b <- Ab[[2]]
+  
+  if(quad_obj) {
+    cache(object@reduced_P, keep_zeros)
+    P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
+    return(list(P, c, d, A, matrix(b)))
+  } else
+    return(list(c, d, A, matrix(b)))
+})
+
+#' @describeIn ParamConeProg Multiplies by Jacobian of parameter mapping. Assumes delA is sparse. Returns a mapping of param id to dparam.
+setMethod("apply_param_jac", "ParamConeProg", function(object, delc, delA, delb, active_params = NULL) {
+  if(!(is.na(object@P) || is.null(object@P)))
+    stop("Can't apply Jacobian with a quadratic objective")
+  
+  if(is.null(active_params))
+    active_params <- sapply(object@parameters, id)
+  
+  if(length(object@c) == 1)
+    del_param_vec <- c()
+  else
+    del_param_vec <- delc %*% object@c[1:(length(object@c) - 1)]
+  
+  flatdelA <- delA
+  dim(flatdelA) <- c(prod(dim(delA)), 1)
+  sparsedelb <- Matrix(delb, sparse = TRUE)
+  delAb <- rbind(flatdelA, sparsedelb)
+  
+  one_gig_of_doubles <- 125000000
+  if(nrow(delAb) < one_gig_of_doubles) {
+    # fast path: if delAb is small enough, just materialize it
+    # in memory because sparse-matrix @ dense vector is much faster
+    # than sparse @ sparse
+    del_param_vec <- del_param_vec + t(object@A) %*% matrix(delAb)
+  } else {
+    # slow path.
+    # TODO: make this faster by intelligently operating on the
+    # sparse matrix data / making use of reduced_A
+    del_param_vec <- del_param_vec + matrix(t(delAb) %*% object@A)
+  }
+  del_param_vec <- as.vector(del_param_vec)
+  
+  param_id_to_delta_param <- list()
+  for(param_id in names(object@param_id_to_col)) {
+    col <- object@param_id_to_col[[param_id]]
+    if(param_id %in% names(active_params)) {
+      param <- object@id_to_param[[param_id]]
+      delta <- del_param_vec[col:(col + size(param))]
+      param_id_to_delta_param[[param_id]] <- matrix(delta, nrow = nrow(param), ncol = ncol(param), byrow = FALSE)
+    }
+  }
+  
+  return(param_id_to_delta_param)
+})
+
+#' @describeIn ParamConeProg Splits the solution into individual variables.
+setMethod("split_solution", "ParamConeProg", function(object, sltn, active_vars = NULL) {
+  if(is.null(active_vars))
+    active_vars <- sapply(object@variables, function(v) { as.character(id(v)) })
+  # var id to solution.
+  sltn_dict <- list()
+  for(var_id in names(object@var_id_to_col)) {
+    col <- object@var_id_to_col[[var_id]]
+    if(var_id %in% active_vars) {
+      var <- object@id_to_var[[var_id]]
+      value <- sltn[col:(size(var) + col)]
+      if(attributes_were_lowered(var)) {
+        orig_var <- variable_of_provenance(var)
+        value <- recover_value_for_variable(orig_var, value, project = FALSE)
+        sltn_dict[[as.character(id(orig_var))]] = matrix(value, nrow = nrow(orig_var), ncol = ncol(orig_var), byrow = FALSE)
+      } else
+        sltn_dict[[var_id]] = matrix(value, nrow = nrow(var), ncol = ncol(var), byrow = FALSE)
+    }
+  }
+  return(sltn_dict)
+})
+
+#' @describeIn ParamConeProg Adjoint of split solution.
+setMethod("split_adjoint", "ParamConeProg", function(object, del_vars = NULL) {
+  var_vec <- rep(0, size(object@x))
+  if(is.null(del_vars))
+    return(var_vec)
+  
+  for(var_id in names(del_vars)) {
+    delta <- del_vars[[var_id]]
+    var <- object@id_to_var[[var_id]]
+    col <- object@var_id_to_col[[var_id]]
+    if(attributes_were_lowered(var)) {
+      orig_var <- variable_of_provenance(var)
+      if(attributes_present(list(orig_var), SYMMETRIC_ATTRIBUTES))
+        delta <- delta + t(delta) - diag(diag(delta))
+      delta <- lower_value(orig_var, delta)
+    }
+    var_vec[col:(col + size(var))] <- as.vector(delta)
+  }
+  return(var_vec)
+})
+
 #'
 #' Construct Matrices for Linear Cone Problems
 #'

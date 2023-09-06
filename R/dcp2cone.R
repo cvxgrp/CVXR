@@ -173,37 +173,48 @@ setMethod("$", signature(x = "ConeDims"), function(x, name) {
 #'            cone_constrK(A_K*x + b_K, ...)
 #'
 #' @rdname ConeMatrixStuffing-class
-ConeMatrixStuffing <- setClass("ConeMatrixStuffing", contains = "MatrixStuffing")
+ConeMatrixStuffing <- setClass("ConeMatrixStuffing", representation(quad_obj = "logical", canon_backend = "character"), 
+                               prototype(quad_obj = FALSE, canon_backend = NA_character_), contains = "MatrixStuffing")
 
 #' @param object A \linkS4class{ConeMatrixStuffing} object.
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConeMatrixStuffing Is the solver accepted?
 setMethod("accepts", signature(object = "ConeMatrixStuffing", problem = "Problem"), function(object, problem) {
- return(inherits(problem@objective, "Minimize") &&
-        is_affine(expr(problem@objective)) &&
-        length(convex_attributes(variables(problem))) == 0 &&
-        are_args_affine(problem@constraints))
+  valid_obj_curv <- (object@quad_obj && is_quadratic(problem@objective@expr)) || is_affine(problem@objective@expr)
+  return(inherits(problem@objective, "Minimize") &&
+         valid_obj_curv &&
+         length(convex_attributes(variables(problem))) == 0 &&
+         are_args_affine(problem@constraints) &&
+         is_dpp(problem))
 })
 
 #' @param extractor Used to extract the affine coefficients of the objective.
 #' @describeIn ConeMatrixStuffing Returns a list of the stuffed matrices
 setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
-  # Extract to t(c) %*% x, store in r
-  CR <- affine(extractor, expr(problem@objective))
-  C <- CR[[1]]
-  R <- CR[[2]]
-
-  c <- matrix(C, ncol = 1)   # TODO: Check if converted to dense matrix and flattened like in CVXPY
+  # concatenate all variables in one vector
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
-  # x <- Variable(extractor@N, boolean = boolean, integer = integer)
-  x <- Variable(extractor@N, 1, boolean = boolean, integer = integer)
-
-  new_obj <- t(c) %*% x + 0
-
-  return(list(new_obj, x, R[1]))
+  # x <- Variable(extractor@x_length, boolean = boolean, integer = integer)
+  x <- Variable(extractor@x_length, 1, boolean = boolean, integer = integer)
+  
+  if(object@quad_obj) {
+    # extract to 0.5 %*% t(x) %*% P %*% x + t(q) %*% x + r
+    expr <- problem@objective@expr
+    tmp <- quad_form(extractor, expr)
+    params_to_P <- tmp[[1]]
+    params_to_c <- tmp[[2]]
+    # Handle 0.5 factor.
+    params_to_P <- 2*params_to_P
+  } else {
+    # Extract to t(c) %*% x + r; c is represented by a ma
+    params_to_c <- affine(extractor, problem@objective@expr)
+    params_to_P <- NULL
+  }
+  return(list(params_to_P, params_to_c, x))
 })
+
+# TODO: ConeMatrixStuffing perform and invert functions.
 
 # Atom canonicalizers.
 #' 

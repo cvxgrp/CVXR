@@ -220,6 +220,13 @@ setMethod("is_nsd", "Constant", function(object) {
 #' @rdname Constant-class
 #' @export
 as.Constant <- function(expr) {
+  if(is(expr, "list")) {
+    for(elem in expr) {
+      if(is(elem, "Expression"))
+        stop("The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack."
+    }
+  }
+  
   if(is(expr, "Expression"))
     expr
   else

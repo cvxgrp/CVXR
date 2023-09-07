@@ -208,16 +208,29 @@ setMethod("residual", "EqConstraint", function(object) {
     return(NA_real_)
   return(abs(val))
 })
+
 #' 
 #' The NonPosConstraint class
 #' 
+#' A constraint of the form \eqn{x \leq 0}.
+#' 
+#' The preferred way of creating a NonPosConstraint constraint is through
+#' operator overloading. To constrain an expression x to be non-positive,
+#' simply write \code{x <= 0}; to constrain x to be non-negative, write
+#' \code{x >= 0}. The former creates a NonPosConstraint constraint with x
+#' as its argument, while the latter creates one with -x as its argument.
+#' Strict inequalities are not supported, as they do not make sense in a
+#' numerical setting.
+#' 
 #' @rdname NonPosConstraint-class
 .NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"), contains = "Constraint")
-NonPosConstraint <- function(expr, id = NA_integer_) { .NonPosConstraint(expr = expr, id = id) }
+NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "NonPosConstraint", function(.Object, ..., expr) {
   .Object@expr <- expr
   callNextMethod(.Object, ..., args = list(expr))
+  if(!is_real(.Object@args[[1]]))
+    stop("Input to NonPosConstraint must be real")
 })
 
 #' @param x,object A \linkS4class{NonPosConstraint} object.
@@ -227,18 +240,20 @@ setMethod("name", "NonPosConstraint", function(x) {
   paste(name(x@args[[1]]), "<= 0")
 })
 
-#' @describeIn NonPosConstraint Is the constraint DCP?
-setMethod("is_dcp", "NonPosConstraint", function(object) { is_convex(object@args[[1]]) })
-#' @describeIn NonPosConstraint Is the constraint DGP?
-setMethod("is_dgp", "NonPosConstraint", function(object) { FALSE })
-#' @describeIn NonPosConstraint The graph implementation of the object.
-setMethod("canonicalize", "NonPosConstraint", function(object) {
-  canon <- canonical_form(object@args[[1]])
-  obj <- canon[[1]]
-  constraints <- canon[[2]]
-  dual_holder <- create_leq(obj, constr_id = id(object))
-  return(list(NA, c(constraints, list(dual_holder))))
+#' @describeIn NonPosConstraint A non-positive constraint is DCP if its argument is convex.
+setMethod("is_dcp", "NonPosConstraint", function(object, dpp = FALSE) { 
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_convex(object@args[[1]]))
+  }
+  return(is_convex(object@args[[1]]))
 })
+
+#' @describeIn NonPosConstraint Is the constraint DGP?
+setMethod("is_dgp", "NonPosConstraint", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn NonPosConstraint Is the constraint DQCP?
+setMethod("is_dqcp", "NonPosConstraint", function(object) { is_quasiconvex(object@args[[1]]) })
 
 #' @describeIn NonPosConstraint The residual of the constraint.
 setMethod("residual", "NonPosConstraint", function(object) {
@@ -246,6 +261,15 @@ setMethod("residual", "NonPosConstraint", function(object) {
   if(any(is.na(val)))
     return(NA_real_)
   return(pmax(val, 0))
+})
+
+#' @describeIn NonPosConstraint The violation of the constraint.
+setMethod("violation", "NonPosConstraint", function(object) {
+  resid <- residual(object)
+  if(any(is.na(resid)))
+    stop("Cannot compute the violation of a constraint whose expression is NA-valued.")
+  viol <- base::norm(resid, type = "2")
+  return(viol)
 })
 
 #'
@@ -297,6 +321,86 @@ setMethod("residual", "IneqConstraint", function(object) {
   return(pmax(val, 0))
 })
 
+#'
+#' The FiniteSet class.
+#' 
+#' This class represents a constraint that each entry of an Expression to take a value in a given set of real numbers.
+#' 
+#' @slot expre The given expression to be constrained. This Expression must be affine.
+#' If expre has multiple elements, then the constraint is applied separately to
+#' each element, i.e., after solving a problem with this constraint, we should have:
+#' \code{for(e in flatten(expre)) { print(value(e) %in% vec) # => TRUE }
+#' @slot vec The finite collection of values to which each entry of expre is to be constrained.
+#' @slot ineq_form A logical value controlling how this constraint is canonicalized into mixed-integer linear constraints.
+#' If TRUE, then we use a formulation with (size(vec) - 1) inequality constraints,
+#' one equality constraint, and (size(vec) - 1) binary variables for each element
+#' of expre. If FALSE, then we use a formulation with size(vec) binary variables and two
+#' equality constraints for each element of expre. Defaults to FALSE. The case ineq_form = TRUE may speed up some mixed-integer
+#' solvers that use simple branch and bound methods.
+#' @name FiniteSet-class
+#' @aliases FiniteSet
+#' @rdname FiniteSet-class
+.FiniteSet <- setClass("FiniteSet", representation(expre = "ConstValORExpr", vec = "list", ineq_form = "logical"),
+                       prototype(ineq_form = FALSE), contains = "Constraint")
+
+#' @param expre An affine Expression object.
+#' @param vec The finite collection of values to which each entry of expre is to be constrained.
+#' @param ineq_form A logical value controlling how this constraint is canonicalized.
+#' @param constr_id (Optional) An integer representing the unique ID of the constraint.
+#' @rdname FiniteSet-class
+FiniteSet <- function(expre, vec, ineq_form = FALSE, constr_id = NA_integer_) { .FiniteSet(expre = expre, vec = vec, ineq_form = ineq_form, constr_id = constr_id) }
+
+setMethod("initialize", "FiniteSet", function(.Object, ..., expre, vec, ineq_form = FALSE) {
+  vec <- flatten(as.Constant(vec))
+  if(!is_affine(expre))
+    stop("Provided Expression must be affine, but had curvature ", curvature(expre))
+    
+  # Note: we use the term "expre" rather than "expr" since
+  # "expr" is already a property used by all Constraint classes.
+  .Object@expre <- expre
+  .Object@vec <- vec
+  .Object@ineq_form <- ineq_form
+  callNextMethod(.Object, ..., args = list(expre, vec))
+})
+
+#' @param x,object A \linkS4class{FiniteSet} object.
+#' @describeIn FiniteSet The string representation of the constraint.
+setMethod("name", "FiniteSet", function(x) {
+  paste("FiniteSet(", as.character(x@args[[1]]), ", ", as.character(x@args[[2]]), ")", sep = "")
+})
+
+#' @describeIn FiniteSet Information needed to reconstruct the object aside from the args.
+setMethod("get_data", "FiniteSet", function(object) { list(object@ineq_form, id(object)) })
+
+#' @describeIn FiniteSet The constraint is DCP if the constrained expression is affine.
+setMethod("is_dcp", "FiniteSet", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping
+    return(is_affine(object@args[[1]]))
+  }
+  return(is_affine(object@args[[1]]))
+})
+
+#' @describeIn FiniteSet Is the constraint DGP?
+setMethod("is_dgp", "FiniteSet", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn FiniteSet Is the constraint DQCP?
+setMethod("is_dqcp", "FiniteSet", function(object) { is_dcp(object) })
+
+#' @describeIn FiniteSet The size of the constrained expression.
+setMethod("size", "FiniteSet", function(object) { size(object@expre) })
+
+setMethod("dim", "FiniteSet", function(x) { dim(object@expre) })
+
+#' @describeIn FiniteSet The residual of the constraint.
+setMethod("residual", "FiniteSet", function(object) {
+  expr_val <- as.vector(value(object@expre))
+  vec_val <- value(object@vec)
+  resids <- sapply(expr_val, min(abs(val - vec_val)))
+  res <- max(resids)
+  return(res)
+})
+
 # TODO: Do I need the NonlinearConstraint class?
 #'
 #' The NonlinearConstraint class.
@@ -314,7 +418,7 @@ setMethod("residual", "IneqConstraint", function(object) {
 
 #' @param f A nonlinear function.
 #' @param vars_ A list of variables involved in the function.
-#' @param id (Optional) An integer representing the unique ID of the contraint.
+#' @param id (Optional) An integer representing the unique ID of the constraint.
 #' @rdname NonlinearConstraint-class
 NonlinearConstraint <- function(f, vars_, id = NA_integer_) { .NonlinearConstraint(f = f, vars_ = vars_, id = id) }
 
@@ -428,12 +532,12 @@ setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
   for(val in args) {
     if(!(is_affine(val) && is_real(val)))
       stop("All arguments must be affine and real")
-    xs <- dim(.Object@x)
-    ys <- dim(.Object@y)
-    zs <- dim(.Object@z)
-    if(!all(xs == ys) || !all(xs == zs))
-      stop("All arguments must have the same shapes. Provided arguments have shapes ", xs, ", ", ys, ", and ", zs)
   }
+  xs <- dim(.Object@x)
+  ys <- dim(.Object@y)
+  zs <- dim(.Object@z)
+  if(!all(xs == ys) || !all(xs == zs))
+    stop("All arguments must have the same shapes. Provided arguments have shapes ", xs, ", ", ys, ", and ", zs)
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y, .Object@z))
 })
 
@@ -514,6 +618,241 @@ setReplaceMethod("dual_value", "ExpCone", function(object, value) {
   value(object@dual_variables[[2]]) <- dv1
   value(object@dual_variables[[3]]) <- dv2
   return(object)
+})
+
+#'
+#' The RelEntrConeQuad class.
+#'
+#' This class represents an approximate construction of the scalar relative entropy cone.
+#' 
+#' \deqn{
+#'  K_{re}=\\text{cl}\\{(x,y,z)\\in\\mathbb{R}_{++} \\times \\mathbb{R}_{++}\\times\\mathbb{R}_{++}\\:x\\log(x/y)\\leq z\\}
+#' }
+#'
+#' Since the above definition is very similar to the ExpCone, we provide a conversion method.
+#'
+#' More details on the approximation can be found in Theorem-3 on page-10 in the paper:
+#' Semidefinite Approximations of the Matrix Logarithm.
+#'
+#' @slot x The variable \eqn{x} in the (approximate) scalar relative entropy cone.
+#' @slot y The variable \eqn{y} in the (approximate) scalar relative entropy cone.
+#' @slot z The variable \eqn{z} in the (approximate) scalar relative entropy cone.
+#' @slot m An integer directly related to the number of generated nodes for the quadrature approximation used in the algorithm.
+#' @slot k An integer controlling the approximation.
+#' @name RelEntrConeQuad-class
+#' @aliases RelEntrConeQuad
+#' @rdname RelEntrConeQuad-class
+.RelEntrConeQuad <- setClass("RelEntrConeQuad", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr", m = "numeric", k = "numeric"), 
+                             validity = function(object) {
+                               if(as.integer(object@m) != object@m)
+                                 stop("[RelEntrConeQuad: m] The argument m must be an integer")
+                               if(as.integer(object@k) != object@k)
+                                 stop("[RelEntrConeQuad: k] The argument k must be an integer")
+                               return(TRUE)
+                              }, contains = "Constraint")
+
+#' @param x The variable \eqn{x} in the (approximate) scalar relative entropy cone.
+#' @param y The variable \eqn{y} in the (approximate) scalar relative entropy cone.
+#' @param z The variable \eqn{z} in the (approximate) scalar relative entropy cone.
+#' @param m An integer directly related to the number of generated nodes for the quadrature approximation used in the algorithm.
+#' @param k An integer controlling the approximation.
+#' @param constr_id (Optional) A numeric value representing the constraint ID.
+#' @rdname RelEntrConeQuad-class
+## #' @export
+RelEntrConeQuad <- function(x, y, z, m, k, constr_id = NA_integer_) { .RelEntrConeQuad(x = x, y = y, z = z, m = m, k = k, constr_id = constr_id) }
+
+setMethod("initialize", "RelEntrConeQuad", function(.Object, ..., x, y, z, m, k) {
+  .Object@x <- as.Constant(x)
+  .Object@y <- as.Constant(y)
+  .Object@z <- as.Constant(z)
+  args <- list(.Object@x, .Object@y, .Object@z)
+  for(val in args) {
+    if(!(is_affine(val) && is_real(val)))
+      stop("All arguments must be affine and real")
+  }
+  .Object@m <- m
+  .Object@k <- k
+  xs <- dim(.Object@x)
+  ys <- dim(.Object@y)
+  zs <- dim(.Object@z)
+  if(!all(xs == ys) || !all(xs == zs))
+    stop("All arguments must have the same shapes. Provided arguments have shapes ", xs, ", ", ys, ", and ", zs)
+  callNextMethod(.Object, ..., args = list(.Object@x, .Object@y, .Object@z))
+})
+
+#' @describeIn RelEntrConeQuad Information needed to reconstruct the object aside from the args.
+setMethod("get_data", "RelEntrConeQuad", function(object) { list(object@m, object@k, id(object)) })
+
+setMethod("show", "RelEntrConeQuad", function(object) {
+  print(paste("RelEntrConeQuad(", as.character(object@x), ", ", as.character(object@y), ", ", as.character(object@z), ", ", object@m, ", ", object@k, ")", sep = ""))
+})
+
+#' @rdname RelEntrConeQuad-class
+setMethod("as.character", "RelEntrConeQuad", function(x) {
+  paste("RelEntrConeQuad(", as.character(x@x), ", ", as.character(x@y), ", ", as.character(x@z), ", ", x@m, ", ", x@k, ")", sep = "")
+})
+
+setMethod("residual", "RelEntrConeQuad", function(object) {
+  # TODO: The projection should be implemented directly.
+  if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
+    return(NA_real_)
+  
+  x <- new("Variable", dim = dim(object@x))
+  y <- new("Variable", dim = dim(object@y))
+  z <- new("Variable", dim = dim(object@z))
+  constr <- list(RelEntrConeQuad(x, y, z, object@m, object@k))
+  obj <- Minimize(Norm2(HStack(x, y, z) - HStack(value(object@x), value(object@y), value(object@z))))
+  problem <- Problem(obj, constr)
+  result <- solve(problem)
+  return(result$value)
+})
+
+#' @describeIn RelEntrConeQuad The number of entries in the combined cones.
+setMethod("size", "RelEntrConeQuad", function(object) { 3*num_cones(object) })
+
+#' @describeIn RelEntrConeQuad The number of elementwise cones.
+setMethod("num_cones", "RelEntrConeQuad", function(object) { size(object@x) })
+
+#' @describeIn RelEntrConeQuad The dimensions of the exponential cones.
+setMethod("cone_sizes", "RelEntrConeQuad", function(object) { rep(3, num_cones(object)) })
+
+#' @describeIn RelEntrConeQuad An exponential constraint is DCP if each argument is affine.
+setMethod("is_dcp", "RelEntrConeQuad", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping
+    return(all(sapply(object@args, is_affine)))
+  }
+  return(all(sapply(object@args, is_affine)))
+})
+
+#' @describeIn RelEntrConeQuad Is the constraint DGP?
+setMethod("is_dgp", "RelEntrConeQuad", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn RelEntrConeQuad Is the constraint DQCP?
+setMethod("is_dqcp", "RelEntrConeQuad", function(object) { is_dcp(object) })
+
+setMethod("dim", "RelEntrConeQuad", function(x) { c(3, dim(x@x)) })
+
+#' @param value A numeric scalar, vector, or matrix.
+#' @describeIn RelEntrConeQuad Replaces the dual values of an exponential cone constraint.
+setReplaceMethod("dual_value", "RelEntrConeQuad", function(object, value) {
+  stop("Unimplemented")
+})
+
+#'
+#' The OpRelEntrConeQuad class.
+#'
+#' This class represents an approximate construction of the scalar relative entropy cone.
+#' 
+#' \deqn{
+#'  K_{re}^n=\\text{cl}\\{(X,Y,T)\\in\\mathbb{H}^n_{++} \\times \\mathbb{H}^n_{++}\\times\\mathbb{H}^n_{++}\\:D_{\\text{op}}\\succeq T\\}
+#' }
+#'
+#' This approximation uses \eqn{m + k} semidefinite constraints.
+#'
+#' More details on the approximation can be found in Theorem-3 on page-10 in the paper:
+#' Semidefinite Approximations of the Matrix Logarithm.
+#'
+#' @slot X The variable \eqn{X} in the (approximate) operator relative entropy cone.
+#' @slot Y The variable \eqn{Y} in the (approximate) operator relative entropy cone.
+#' @slot Z The variable \eqn{Z} in the (approximate) operator relative entropy cone.
+#' @slot m A positive integer that controls the number of quadrature nodes used in a local approximation of the matrix logarithm. Increasing this value results in better local approximations, but does not significantly expand the region of inputs for which the approximation is effective.
+#' @slot k A positive integer that sets the number of scaling points about which the quadrature approximation is performed. Increasing this value will expand the region of inputs over which the approximation is effective.
+#' @name OpRelEntrConeQuad-class
+#' @aliases OpRelEntrConeQuad
+#' @rdname OpRelEntrConeQuad-class
+.OpRelEntrConeQuad <- setClass("OpRelEntrConeQuad", representation(X = "ConstValORExpr", Y = "ConstValORExpr", Z = "ConstValORExpr", m = "numeric", k = "numeric"), 
+                               validity = function(object) {
+                                 if(as.integer(object@m) != object@m)
+                                   stop("[OpRelEntrConeQuad: m] The argument m must be an integer")
+                                 if(object@m <= 0)
+                                   stop("[OpRelEntrConeQuad: m] The argument m must be positive")
+                                 if(as.integer(object@k) != object@k)
+                                   stop("[OpRelEntrConeQuad: k] The argument k must be an integer")
+                                 if(object@k <= 0)
+                                   stop("[OpRelEntrConeQuad: k] The argument k must be positive")
+                                 return(TRUE)
+                               }, contains = "Constraint")
+
+#' @param X The variable \eqn{X} in the (approximate) operator relative entropy cone.
+#' @param Y The variable \eqn{y} in the (approximate) operator relative entropy cone.
+#' @param Z The variable \eqn{z} in the (approximate) operator relative entropy cone.
+#' @param m A positive integer that controls the number of quadrature nodes used in a local approximation of the matrix logarithm. Increasing this value results in better local approximations, but does not significantly expand the region of inputs for which the approximation is effective.
+#' @param k A positive integer that sets the number of scaling points about which the quadrature approximation is performed. Increasing this value will expand the region of inputs over which the approximation is effective.
+#' @param constr_id (Optional) A numeric value representing the constraint ID.
+#' @rdname OpRelEntrConeQuad-class
+## #' @export
+OpRelEntrConeQuad <- function(X, Y, Z, m, k, constr_id = NA_integer_) { .OpRelEntrConeQuad(X = X, Y = Y, Z = Z, m = m, k = k, constr_id = constr_id) }
+
+setMethod("initialize", "OpRelEntrConeQuad", function(.Object, ..., X, Y, Z, m, k) {
+  .Object@X <- as.Constant(X)
+  .Object@Y <- as.Constant(Y)
+  .Object@Z <- as.Constant(Z)
+  if(!is_hermitian(X) || !is_hermitian(Y) || !is_hermitian(Z))
+    stop("One of the input matrices has not explicitly been declared as symmetric or"
+         "Hermitian. If the inputs are Variable objects, try declaring them with the"
+         "symmetric=True or Hermitian=True properties. If the inputs are general "
+         "Expression objects that are known to be symmetric or Hermitian, then you"
+         "can wrap them with the symmetric_wrap and hermitian_wrap atoms. Failure to"
+         "do one of these things will cause this function to impose a symmetry or"
+         "conjugate-symmetry constraint internally, in a way that is very"
+         "inefficient.")
+  .Object@m <- m
+  .Object@k <- k
+  Xs <- dim(.Object@X)
+  Ys <- dim(.Object@Y)
+  Zs <- dim(.Object@Z)
+  if(!all(Xs == Ys) || !all(Xs == Zs))
+    stop("All arguments must have the same shapes. Provided arguments have shapes ", Xs, ", ", Ys, ", and ", Zs)
+  callNextMethod(.Object, ..., args = list(.Object@X, .Object@Y, .Object@Z))
+})
+
+#' @describeIn OpRelEntrConeQuad Information needed to reconstruct the object aside from the args.
+setMethod("get_data", "OpRelEntrConeQuad", function(object) { list(object@m, object@k, id(object)) })
+
+setMethod("show", "OpRelEntrConeQuad", function(object) {
+  print(paste("OpRelEntrConeQuad(", as.character(object@X), ", ", as.character(object@Y), ", ", as.character(object@Z), ", ", object@m, ", ", object@k, ")", sep = ""))
+})
+
+#' @rdname OpRelEntrConeQuad-class
+setMethod("as.character", "OpRelEntrConeQuad", function(x) {
+  paste("OpRelEntrConeQuad(", as.character(x@X), ", ", as.character(x@Y), ", ", as.character(x@Z), ", ", x@m, ", ", x@k, ")", sep = "")
+})
+
+setMethod("residual", "OpRelEntrConeQuad", function(object) {
+  stop("Unimplemented")
+})
+
+#' @describeIn OpRelEntrConeQuad The number of entries in the combined cones.
+setMethod("size", "OpRelEntrConeQuad", function(object) { 3*num_cones(object) })
+
+#' @describeIn OpRelEntrConeQuad The number of elementwise cones.
+setMethod("num_cones", "OpRelEntrConeQuad", function(object) { size(object@X) })
+
+#' @describeIn OpRelEntrConeQuad The dimensions of the exponential cones.
+setMethod("cone_sizes", "OpRelEntrConeQuad", function(object) { rep(3, num_cones(object)) })
+
+#' @describeIn OpRelEntrConeQuad An exponential constraint is DCP if each argument is affine.
+setMethod("is_dcp", "OpRelEntrConeQuad", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping
+    return(all(sapply(object@args, is_affine)))
+  }
+  return(all(sapply(object@args, is_affine)))
+})
+
+#' @describeIn OpRelEntrConeQuad Is the constraint DGP?
+setMethod("is_dgp", "OpRelEntrConeQuad", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn OpRelEntrConeQuad Is the constraint DQCP?
+setMethod("is_dqcp", "OpRelEntrConeQuad", function(object) { is_dcp(object) })
+
+setMethod("dim", "OpRelEntrConeQuad", function(x) { c(3, dim(x@X)) })
+
+#' @param value A numeric scalar, vector, or matrix.
+#' @describeIn OpRelEntrConeQuad Replaces the dual values of an exponential cone constraint.
+setReplaceMethod("dual_value", "OpRelEntrConeQuad", function(object, value) {
+  stop("Unimplemented")
 })
 
 #'

@@ -272,19 +272,85 @@ setMethod("violation", "NonPosConstraint", function(object) {
   return(viol)
 })
 
+#' 
+#' The NonNegConstraint class
+#' 
+#' A constraint of the form \eqn{x \geq 0}.
+#' 
+#' This class was created to account for the fact that the ConicSolver interface 
+#' returns matrix data stated with respect to the nonnegative orthant, rather than 
+#' the nonpositive orthant. This class can be removed if the behavior of ConicSolver is
+#' changed. However the current behavior of ConicSolver means CVXR's dual variable 
+#' and Lagrangian convention follows the most common convention in the literature.
+#' 
+#' @rdname NonNegConstraint-class
+.NonNegConstraint <- setClass("NonNegConstraint", representation(expr = "Expression"), contains = "Constraint")
+NonNegConstraint <- function(expr, constr_id = NA_integer_) { .NonNegConstraint(expr = expr, constr_id = constr_id) }
+
+setMethod("initialize", "NonNegConstraint", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., args = list(expr))
+  if(!is_real(.Object@args[[1]]))
+    stop("Input to NonNegConstraint must be real")
+})
+
+#' @param x,object A \linkS4class{NonNegConstraint} object.
+#' @describeIn NonNegConstraint The string representation of the constraint.
+setMethod("name", "NonNegConstraint", function(x) {
+  # paste("0 <=", as.character(x@args[[1]]))
+  paste("0 <=", name(x@args[[1]]))
+})
+
+#' @describeIn NonNegConstraint A non-positive constraint is DCP if its argument is convex.
+setMethod("is_dcp", "NonNegConstraint", function(object, dpp = FALSE) { 
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_concave(object@args[[1]]))
+  }
+  return(is_concave(object@args[[1]]))
+})
+
+#' @describeIn NonNegConstraint Is the constraint DGP?
+setMethod("is_dgp", "NonNegConstraint", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn NonNegConstraint Is the constraint DQCP?
+setMethod("is_dqcp", "NonNegConstraint", function(object) { is_quasiconcave(object@args[[1]]) })
+
+#' @describeIn NonNegConstraint The residual of the constraint.
+setMethod("residual", "NonNegConstraint", function(object) {
+  val <- value(expr(object))
+  if(any(is.na(val)))
+    return(NA_real_)
+  return(pmin(val, 0))
+})
+
+#' @describeIn NonNegConstraint The violation of the constraint.
+setMethod("violation", "NonNegConstraint", function(object) {
+  resid <- residual(object)
+  if(any(is.na(resid)))
+    stop("Cannot compute the violation of a constraint whose expression is NA-valued.")
+  viol <- base::norm(resid, type = "2")
+  return(viol)
+})
+
 #'
 #' The IneqConstraint class
+#' 
+#' A constraint of the form \eqn{x \leq y}.
 #'
+#' @slot lhs The expression to be upper-bounded by rhs.
+#' @slot rhs The expression to be lower-bounded by lhs.
 #' @rdname IneqConstraint-class
-.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
+.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), 
+                            prototype(expr = NA_real_), contains = "Constraint")
 
-IneqConstraint <- function(lhs, rhs, id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, id = id) }
+IneqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
 
 setMethod("initialize", "IneqConstraint", function(.Object, ..., lhs, rhs, expr = NA_real_) {
   .Object@lhs <- lhs
   .Object@rhs <- rhs
   .Object@expr <- lhs - rhs
-  if(is_complex(.Object@expr))
+  if(is_complex(.Object@expr))   # TODO: Remove this restriction when implemented.
     stop("Inequality constraints cannot be complex.")
   callNextMethod(.Object, ..., args = list(lhs, rhs))
 })
@@ -306,11 +372,39 @@ setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
 setMethod("expr", "IneqConstraint", function(object) { object@expr })
 
 #' @describeIn IneqConstraint A non-positive constraint is DCP if its argument is convex.
-setMethod("is_dcp", "IneqConstraint", function(object) { is_convex(object@expr) })
+setMethod("is_dcp", "IneqConstraint", function(object, dpp = FALSE) { 
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_convex(object@expr))
+  }
+  return(is_convex(object@expr))
+})
 
 #' @describeIn IneqConstraint Is the constraint DGP?
-setMethod("is_dgp", "IneqConstraint", function(object) {
-  is_log_log_convex(object@args[[1]]) && is_log_log_concave(object@args[[2]])
+setMethod("is_dgp", "IneqConstraint", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_log_log_convex(object@args[[1]]) && is_log_log_concave(object@args[[2]]))
+  }
+  return(is_log_log_convex(object@args[[1]]) && is_log_log_concave(object@args[[2]]))
+})
+
+#' @param context Must be either 'dcp' (disciplined convex program) or 'dgp' (disciplined geometric program).
+#' @describeIn Constraint is the constraint DPP in the given context?
+setMethod("is_dpp", "IneqConstraint", function(object, context = "dcp") {
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dpp(object, dpp = TRUE))
+  else
+    stop("Unsupported context ", context)
+})
+
+#' @describeIn IneqConstraint Is the constraing DQCP?
+setMethod("is_dqcp", "IneqConstraint", function(object) {
+  is_dcp(object) ||
+  (is_quasiconvex(object@args[[1]]) && is_constant(object@args[[2]])) ||
+  (is_constant(object@args[[1]]) && is_quasiconcave(object@args[[2]]))
 })
 
 #' @describeIn IneqConstraint The residual of the constraint.
@@ -873,9 +967,9 @@ setReplaceMethod("dual_value", "OpRelEntrConeQuad", function(object, value) {
                            }, contains = "Constraint")
 
 #' @param expr An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{X}.
-#' @param id (Optional) A numeric value representing the constraint ID.
+#' @param constr_id (Optional) A numeric value representing the constraint ID.
 #' @rdname PSDConstraint-class
-PSDConstraint <- function(expr, id = NA_integer_) { .PSDConstraint(expr = expr, id = id) }
+PSDConstraint <- function(expr, constr_id = NA_integer_) { .PSDConstraint(expr = expr, constr_id = constr_id) }
 
 setMethod("initialize", "PSDConstraint", function(.Object, ..., expr) {
   .Object@expr <- expr
@@ -889,11 +983,20 @@ setMethod("name", "PSDConstraint", function(x) {
   paste(name(x@args[[1]]), ">> 0")
 })
 
-#' @describeIn PSDConstraint The constraint is DCP if the left-hand and right-hand expressions are affine.
-setMethod("is_dcp", "PSDConstraint", function(object) { is_affine(object@args[[1]]) })
+#' @describeIn PSDConstraint The constraint is DCP if the constrained expression is affine.
+setMethod("is_dcp", "PSDConstraint", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping
+    return(is_affine(object@args[[1]]))
+  }
+  return(is_affine(object@args[[1]]))
+})
 
 #' @describeIn PSDConstraint Is the constraint DGP?
-setMethod("is_dgp", "PSDConstraint", function(object) { FALSE })
+setMethod("is_dgp", "PSDConstraint", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn PSDConstraint Is the constraint DQCP?
+setMethod("is_dqcp", "PSDConstraint", function(object) { is_dcp(object) })
 
 #' @describeIn PSDConstraint A \linkS4class{Expression} representing the residual of the constraint.
 setMethod("residual", "PSDConstraint", function(object) {
@@ -901,30 +1004,7 @@ setMethod("residual", "PSDConstraint", function(object) {
   if(any(is.na(val)))
     return(NA_real_)
   min_eig <- LambdaMin(object@args[[1]] + t(object@args[[1]]))/2
-  value(Neg(min_eig))
-})
-
-#' @describeIn PSDConstraint The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{PSDConstraint}.
-setMethod("canonicalize", "PSDConstraint", function(object) {
-  canon <- canonical_form(object@args[[1]])
-  obj <- canon[[1]]
-  constraints <- canon[[2]]
-  dual_holder <- PSDConstraint(obj, id = id(object))
-  return(list(NA, c(constraints, list(dual_holder))))
-})
-
-setMethod("format_constr", "PSDConstraint", function(object, eq_constr, leq_constr, dims, solver) {
-  .format <- function(object) {
-    leq_constr <- create_geq(expr(object), constr_id = object@id)
-    return(list(leq_constr))
-  }
-  new_leq_constr <- .format(object)
-
-  # 0 <= A.
-  leq_constr <- c(leq_constr, new_leq_constr)
-  # Update dims.
-  dims[[PSD_DIM]] <- c(dims[[PSD_DIM]], nrow(object))
-  list(eq_constr = eq_constr, leq_constr = leq_constr, dims = dims)
+  return(value(Neg(min_eig)))
 })
 
 #'

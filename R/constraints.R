@@ -6,10 +6,13 @@
 #' @name Constraint-class
 #' @aliases Constraint
 #' @rdname Constraint-class
-setClass("Constraint", representation(dual_variables = "list"), prototype(dual_variables = list()), contains = "Canonical")
+setClass("Constraint", representation(dual_variables = "list", constr_id = "integer"), prototype(dual_variables = list(), constr_id = NA_integer_), contains = "Canonical")
 
-setMethod("initialize", "Constraint", function(.Object, ..., dual_variables = list()) {
+setMethod("initialize", "Constraint", function(.Object, ..., dual_variables = list(), constr_id = NA_integer_) {
   .Object <- callNextMethod(.Object, ...)
+  # TODO: Cast constants
+  # .Object@args <- lapply(args, as.Constant)
+  .Object@constr_id <- ifelse(is.na(constr_id), get_id(), constr_id)
   # .Object@dual_variables <- lapply(.Object@args, function(arg) { Variable(dim(arg)) })
   .Object@dual_variables <- lapply(.Object@args, function(arg) { new("Variable", dim = dim(arg)) })
   return(.Object)
@@ -18,28 +21,51 @@ setMethod("initialize", "Constraint", function(.Object, ..., dual_variables = li
 #' @param x,object A \linkS4class{Constraint} object.
 #' @rdname Constraint-class
 setMethod("as.character", "Constraint", function(x) { name(x) })
+
 setMethod("show", "Constraint", function(object) {
   print(paste(class(object), "(", as.character(object@args[[1]]), ")", sep = ""))
 })
 
 #' @describeIn Constraint The dimensions of the constrained expression.
 setMethod("dim", "Constraint", function(x) { dim(x@args[[1]]) })
+
 #' @describeIn Constraint The size of the constrained expression.
 setMethod("size", "Constraint", function(object) { size(object@args[[1]]) })
+
 #' @describeIn Constraint Is the constraint real?
 setMethod("is_real", "Constraint", function(object) { !is_complex(object) })
+
 #' @describeIn Constraint Is the constraint imaginary?
 setMethod("is_imag", "Constraint", function(object) { all(sapply(object@args, is_imag)) })
+
 #' @describeIn Constraint Is the constraint complex?
 setMethod("is_complex", "Constraint", function(object) { any(sapply(object@args, is_complex)) })
+
+#' @param dpp A logical value indicating whether we are solving a disciplined parameterized program (DPP).
 #' @describeIn Constraint Is the constraint DCP?
-setMethod("is_dcp", "Constraint", function(object) { stop("Unimplemented") })
+setMethod("is_dcp", "Constraint", function(object, dpp = FALSE) { stop("Unimplemented") })
+
 #' @describeIn Constraint Is the constraint DGP?
-setMethod("is_dgp", "Constraint", function(object) { stop("Unimplemented") })
+setMethod("is_dgp", "Constraint", function(object, dpp = FALSE) { stop("Unimplemented") })
+
+#' @param context Must be either 'dcp' (disciplined convex program) or 'dgp' (disciplined geometric program).
+#' @describeIn Constraint is the constraint DPP in the given context?
+setMethod("is_dpp", "Constraint", function(object, context = "dcp") {
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dpp(object, dpp = TRUE))
+  else
+    stop("Unsupported context ", context)
+})
+
 #' @describeIn Constraint The residual of a constraint
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
-#' @describeIn Constraint The violation of a constraint.
+#' @describeIn Constraint The numeric residual of a constraint. The violation is defined as the 
+#' distance between the constrained expression's value and its projection onto the domain of the
+#' constraint: ||\\Pi(v) - v||_2^2, where `v` is the value of the constrained expression and
+#' `\\Pi` is the projection operator onto the constraint's domain.
 setMethod("violation", "Constraint", function(object) {
   resid <- residual(object)
   if(any(is.na(resid)))
@@ -48,7 +74,7 @@ setMethod("violation", "Constraint", function(object) {
 })
 
 #' @param tolerance The tolerance for checking if the constraint is violated.
-#' @describeIn Constraint The value of a constraint.
+#' @describeIn Constraint Checks whether the constraint violation is less than a tolerance.
 setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
   resid <- residual(object)
   if(any(is.na(resid)))
@@ -71,18 +97,26 @@ setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id
   else
-    object@id
+    object@constr_id
 })
 
 #' @describeIn Constraint Information needed to reconstruct the object aside from the args.
 setMethod("get_data", "Constraint", function(object) { list(id(object)) })
+
 #' @describeIn Constraint The dual values of a constraint.
-setMethod("dual_value", "Constraint", function(object) { value(object@dual_variables[[1]]) })
+setMethod("dual_value", "Constraint", function(object) {
+  dual_vals <- lapply(object@dual_variables, value)
+  if(length(dual_vals) == 1)
+    return(dual_vals[[1]])
+  else
+    return(dual_vals)
+})
+
 #' @param value A numeric scalar, vector, or matrix.
-#' @describeIn Constraint Replaces the dual values of a constraint..
+#' @describeIn Constraint Replaces the dual values of a constraint.
 setReplaceMethod("dual_value", "Constraint", function(object, value) {
-  object@dual_variables[[1]] <- value
-  object
+  value(object@dual_variables[[1]]) <- value
+  return(object)
 })
 
 #' 
@@ -381,15 +415,25 @@ setMethod("extract_variables", "NonlinearConstraint", function(object, x, var_of
 #' @param x The variable \eqn{x} in the exponential cone.
 #' @param y The variable \eqn{y} in the exponential cone.
 #' @param z The variable \eqn{z} in the exponential cone.
-#' @param id (Optional) A numeric value representing the constraint ID.
+#' @param constr_id (Optional) A numeric value representing the constraint ID.
 #' @rdname ExpCone-class
 ## #' @export
-ExpCone <- function(x, y, z, id = NA_integer_) { .ExpCone(x = x, y = y, z = z, id = id) }
+ExpCone <- function(x, y, z, constr_id = NA_integer_) { .ExpCone(x = x, y = y, z = z, constr_id = constr_id) }
 
 setMethod("initialize", "ExpCone", function(.Object, ..., x, y, z) {
-  .Object@x <- x
-  .Object@y <- y
-  .Object@z <- z
+  .Object@x <- as.Constant(x)
+  .Object@y <- as.Constant(y)
+  .Object@z <- as.Constant(z)
+  args <- list(.Object@x, .Object@y, .Object@z)
+  for(val in args) {
+    if(!(is_affine(val) && is_real(val)))
+      stop("All arguments must be affine and real")
+    xs <- dim(.Object@x)
+    ys <- dim(.Object@y)
+    zs <- dim(.Object@z)
+    if(!all(xs == ys) || !all(xs == zs))
+      stop("All arguments must have the same shapes. Provided arguments have shapes ", xs, ", ", ys, ", and ", zs)
+  }
   callNextMethod(.Object, ..., args = list(.Object@x, .Object@y, .Object@z))
 })
 
@@ -422,40 +466,54 @@ setMethod("residual", "ExpCone", function(object) {
 })
 
 #' @describeIn ExpCone The number of entries in the combined cones.
-setMethod("size", "ExpCone", function(object) {
-  # TODO: Use size of dual variable(s) instead.
-  sum(cone_sizes(object))
-})
+setMethod("size", "ExpCone", function(object) { 3 * num_cones(object) })
 
 #' @describeIn ExpCone The number of elementwise cones.
-setMethod("num_cones", "ExpCone", function(object) {
-  as.integer(prod(dim(object@args[[1]])))
+setMethod("num_cones", "ExpCone", function(object) { size(object@x) })
+
+setMethod("as_quad_approx", "ExpCone", function(object, m, k) {
+  if(as.integer(m) != m)
+    stop("m must be an integer")
+  if(as.integer(k) != k)
+    stop("k must be an integer")
+  return(RelEntrConeQuad(object@y, object@z, -object@x, m, k))
 })
 
 #' @describeIn ExpCone The dimensions of the exponential cones.
-setMethod("cone_sizes", "ExpCone", function(object) {
-  rep(num_cones(object), 3)
-})
+setMethod("cone_sizes", "ExpCone", function(object) { rep(3, num_cones(object)) })
 
 #' @describeIn ExpCone An exponential constraint is DCP if each argument is affine.
-setMethod("is_dcp", "ExpCone", function(object) {
-  all(sapply(object@args, is_affine))
+setMethod("is_dcp", "ExpCone", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping
+    return(all(sapply(object@args, is_affine)))
+  }
+  return(all(sapply(object@args, is_affine)))
 })
 
 #' @describeIn ExpCone Is the constraint DGP?
-setMethod("is_dgp", "ExpCone", function(object) { FALSE })
+setMethod("is_dgp", "ExpCone", function(object, dpp = FALSE) { FALSE })
 
-#' @describeIn ExpCone Canonicalizes by converting expressions to LinOps.
-setMethod("canonicalize", "ExpCone", function(object) {
-  arg_objs <- list()
-  arg_constr <- list()
-  for(arg in object@args) {
-    canon <- canonical_form(arg)
-    arg_objs <- c(arg_objs, canon[[1]])
-    arg_constr <- c(arg_constr, canon[[2]])
-  }
-  exp_constr <- do.call(ExpCone, arg_objs)
-  list(0, c(list(exp_constr), arg_constr))
+#' @describeIn ExpCone Is the constraint DQCP?
+setMethod("is_dqcp", "ExpCone", function(object) { is_dcp(object) })
+
+setMethod("dim", "ExpCone", function(x) { c(3, dim(x@x)) })
+
+#' @param value A numeric scalar, vector, or matrix.
+#' @describeIn ExpCone Replaces the dual values of an exponential cone constraint.
+setReplaceMethod("dual_value", "ExpCone", function(object, value) {
+  # TODO: verify that reshaping below works correctly
+  # Python code: value = np.reshape(value, newshape=(-1, 3))
+  value <- matrix(t(value), ncol = 3, byrow = TRUE)
+  
+  dv0 <- matrix(value[, 1], nrow = nrow(object@x), ncol = ncol(object@x))
+  dv1 <- matrix(value[, 2], nrow = nrow(object@y), ncol = ncol(object@y))
+  dv2 <- matrix(value[, 3], nrow = nrow(object@z), ncol = ncol(object@z))
+
+  value(object@dual_variables[[1]]) <- dv0
+  value(object@dual_variables[[2]]) <- dv1
+  value(object@dual_variables[[3]]) <- dv2
+  return(object)
 })
 
 #'

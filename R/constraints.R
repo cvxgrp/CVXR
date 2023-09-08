@@ -1440,3 +1440,121 @@ setReplaceMethod("dual_value", "SOC", function(object, value) {
   value(object@dual_variables[[2]]) <- X
   return(object)
 })
+
+#====================================#
+# Utility functions for constraints.
+#====================================#
+
+format_axis <- function(t, X, axis) {
+  """Formats all the row/column cones for the solver.
+
+    Parameters
+    ----------
+        t: The scalar part of the second-order constraint.
+        X: A matrix whose rows/columns are each a cone.
+        axis: Slice by column 0 or row 1.
+
+    Returns
+    -------
+    list
+        A list of LinLeqConstr that represent all the elementwise cones.
+    """
+  # Reduce to norms of columns.
+  if(axis == 1)
+    X <- lo.transpose(X)
+  # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
+  # gives the format for the elementwise cone constraints.
+  cone_size <- 1 + nrow(X)
+  terms <- list()
+  
+  # Make t_mat
+  mat_shape <- c(cone_size, 1)
+  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_shape)
+  t_mat <- lo.create_const(t_mat, mat_shape, sparse = TRUE)
+  t_vec <- t
+  
+  if(is.null(dim(t)))
+    # t is scalar
+    t_vec <- lo.reshape(t, c(1, 1))
+  else
+    # t is 1D
+    t_vec <- lo.reshape(t, c(1, nrow(t)))
+  
+  mul_shape <- c(cone_size, ncol(t_vec))
+  terms <- c(terms, list(lo.mul_expr(t_mat, t_vec, mul_shape)))
+  
+  # Make X_mat
+  if len(X.shape) == 1:
+    X = lu.reshape(X, (X.shape[0], 1))
+  
+  mat_shape <- c(cone_size, nrow(X))
+  val_arr <- rep(1.0, cone_size - 1)
+  row_arr <- seq(2, cone_size)
+  col_arr <- seq(1, cone_size - 1)
+  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_shape)
+  
+  X_mat <- lo.create_const(X_mat, mat_shape, sparse = TRUE)
+  mul_shape <- c(cone_size, ncol(X))
+  terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_shape)))
+  return(list(lo.create_geq(lo.sum_expr(terms))))
+}
+
+format_elemwise <- function(vars_) {
+  """Formats all the elementwise cones for the solver.
+
+    Parameters
+    ----------
+    vars_ : list
+        A list of the LinOp expressions in the elementwise cones.
+
+    Returns
+    -------
+    list
+        A list of LinLeqConstr that represent all the elementwise cones.
+    """
+  # Create matrices Ai such that 0 <= A0*x0 + ... + An*xn
+  # gives the format for the elementwise cone constraints.
+  spacing <- length(vars_)
+  
+  # Matrix spaces out columns of the LinOp expressions.
+  mat_shape <- c(spacing*nrow(vars_[[1]]), nrow(vars_[[1]]))
+  terms <- list()
+  for(i in seq_along(vars_)) {
+    var <- vars_[[i]]
+    mat <- get_spacing_matrix(mat_shape, spacing, i - 1)
+    terms <- c(terms, list(lo.mul_expr(mat, var)))
+  }
+  return(list(lo.create_geq(lo.sum_expr(terms))))
+}
+
+get_spacing_matrix <- function(shape, spacing, offset) {
+  """Returns a sparse matrix LinOp that spaces out an expression.
+
+    Parameters
+    ----------
+    shape : tuple
+        (rows in matrix, columns in matrix)
+    spacing : int
+        The number of rows between each non-zero.
+    offset : int
+        The number of zero rows at the beginning of the matrix.
+
+    Returns
+    -------
+    LinOp
+        A sparse matrix constant LinOp.
+    """
+  val_arr <- c()
+  row_arr <- c()
+  col_arr <- c()
+  
+  # Selects from each column.
+  for(var_row in seq(shape[2])) {
+    val_arr <- c(val_arr, 1.0)
+    row_arr <- c(row_arr, spacing*(var_row - 1) + offset + 1))
+    col_arr <- c(col_arr, var_row)
+  }
+  
+  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = shape)
+  return(lo.create_const(mat, shape, sparse = TRUE))
+}

@@ -26,6 +26,14 @@ setMethod("initialize", "Objective", function(.Object, ..., expr) {
   return(.Object)
 })
 
+setMethod("show", "Objective", function(object) {
+  cat("Objective(", name(object@args[[1]]), ")", sep = "")
+})
+
+setMethod("as.character", "Objective", function(x) {
+  paste("Objective", name(x@args[[1]]))
+})
+
 #' @param object An \linkS4class{Objective} object.
 #' @describeIn Objective The value of the objective expression.
 setMethod("value", "Objective", function(object) {
@@ -67,13 +75,41 @@ Minimize <- function(expr) { .Minimize(expr = expr) }
 setMethod("canonicalize", "Minimize", function(object) { canonical_form(object@args[[1]]) })
 
 #' @describeIn Minimize A logical value indicating whether the objective is convex.
-setMethod("is_dcp", "Minimize", function(object) { is_convex(object@args[[1]]) })
+setMethod("is_dcp", "Minimize", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_convex(object@args[[1]]))
+  }
+  return(is_convex(object@args[[1]]))
+})
 
 #' @describeIn Minimize A logical value indicating whether the objective is log-log convex.
-setMethod("is_dgp", "Minimize", function(object) { is_log_log_convex(object@args[[1]]) })
+setMethod("is_dgp", "Minimize", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_log_log_convex(object@args[[1]]))
+  }
+  return(is_log_log_convex(object@args[[1]]))
+})
+
+#' @describeIn Minimize Is the objective DPP?
+setMethod("is_dpp", "Minimize", function(object, context = "dcp") {
+  dpp_scope()   # TODO: Implement DPP scoping.
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dgp(object, dpp = TRUE))
+  else
+    stop("Unsupported context ", context)
+})
+
+#' @describeIn Minimize A logical value indicating whether the objective is quasiconvex.
+setMethod("is_dqcp", "Minimize", function(object) {
+  is_quasiconvex(object@args[[1]])
+})
 
 # The value of the objective given the solver primal value.
-setMethod("primal_to_result", "Minimize", function(object, result) { result })
+Minimize.primal_to_result <- function(result) { result }
 
 #'
 #' The Maximize class.
@@ -108,13 +144,39 @@ setMethod("canonicalize", "Maximize", function(object) {
 })
 
 #' @describeIn Maximize A logical value indicating whether the objective is concave.
-setMethod("is_dcp", "Maximize", function(object) { is_concave(object@args[[1]]) })
+setMethod("is_dcp", "Maximize", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_concave(object@args[[1]]))
+  }
+  return(is_concave(object@args[[1]]))
+})
 
 #' @describeIn Maximize A logical value indicating whether the objective is log-log concave.
-setMethod("is_dgp", "Maximize", function(object) { is_log_log_concave(object@args[[1]]) })
+setMethod("is_dgp", "Maximize", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_log_log_concave(object@args[[1]]))
+  }
+  return(is_log_log_concave(object@args[[1]]))
+})
+
+#' @describeIn Maximize Is the objective DPP?
+setMethod("is_dpp", "Maximize", function(object, context = "dcp") {
+  dpp_scope()   # TODO: Implement DPP scoping.
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dgp(object, dpp = TRUE))
+  else
+    stop("Unsupported context ", context)
+})
+
+#' @describeIn Maximize A logical value indicating whether the objective is quasiconcave.
+setMethod("is_dqcp", "Maximize", function(object) { is_quasiconcave(object@args[[1]]) })
 
 # The value of the objective given the solver primal value.
-setMethod("primal_to_result", "Maximize", function(object, result) { -result })
+Maximize.primal_to_result <- function(result) { -result }
 
 #'
 #' Arithmetic Operations on Objectives
@@ -127,6 +189,9 @@ setMethod("primal_to_result", "Maximize", function(object, result) { -result })
 #' @name Objective-arith
 NULL
 
+#============================#
+# Objective Class Arithmetic
+#============================#
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
 
@@ -134,13 +199,10 @@ setMethod("+", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { i
 setMethod("+", signature(e1 = "numeric", e2 = "Objective"), function(e1, e2) { e2 + e1 })
 
 #' @rdname Objective-arith
-setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@args[[1]]) })
+setMethod("-", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
 
 #' @rdname Objective-arith
-setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@args[[1]] + e2@args[[1]]) })
-
-#' @rdname Objective-arith
-setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
+setMethod("-", signature(e1 = "numeric", e2 = "Objective"), function(e1, e2) { if(length(e1) == 0 && e1 == 0) -e2 else stop("Unimplemented") })
 
 #' @rdname Objective-arith
 setMethod("-", signature(e1 = "Objective", e2 = "Minimize"), function(e1, e2) { e1 + (-e2) })
@@ -153,12 +215,6 @@ setMethod("-", signature(e1 = "Minimize", e2 = "Objective"), function(e1, e2) { 
 
 #' @rdname Objective-arith
 setMethod("-", signature(e1 = "Maximize", e2 = "Objective"), function(e1, e2) { (-e2) + e1 })
-
-#' @rdname Objective-arith
-setMethod("-", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
-
-#' @rdname Objective-arith
-setMethod("-", signature(e1 = "numeric", e2 = "Objective"), function(e1, e2) { e2 - e1 })
 
 #' @rdname Objective-arith
 setMethod("*", signature(e1 = "Minimize", e2 = "numeric"), function(e1, e2) {
@@ -179,6 +235,21 @@ setMethod("*", signature(e1 = "numeric", e2 = "Maximize"), function(e1, e2) { e2
 #' @rdname Objective-arith
 setMethod("/", signature(e1 = "Objective", e2 = "numeric"), function(e1, e2) { e1 * (1.0/e2) })
 
+#===========================#
+# Minimize Class Arithmetic
+#===========================#
+#' @rdname Objective-arith
+setMethod("-", signature(e1 = "Minimize", e2 = "missing"), function(e1, e2) { Maximize(expr = -e1@args[[1]]) })
+
+#' @rdname Objective-arith
+setMethod("+", signature(e1 = "Minimize", e2 = "Minimize"), function(e1, e2) { Minimize(e1@args[[1]] + e2@args[[1]]) })
+
+#' @rdname Objective-arith
+setMethod("+", signature(e1 = "Minimize", e2 = "Maximize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
+
+#===========================#
+# Maximize Class Arithmetic
+#===========================#
 #' @rdname Objective-arith
 setMethod("-", signature(e1 = "Maximize", e2 = "missing"), function(e1, e2) { Minimize(expr = -e1@args[[1]]) })
 
@@ -1048,4 +1119,29 @@ setMethod("*", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 
 #' @rdname Problem-arith
 setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
   Problem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
+})
+
+#'
+#' The ParamProb class.
+#' 
+#' This virtual class represents parametrized problems.
+#' 
+#' Parameterized problems are produced during the first canonicalization
+#' and allow canonicalization to be short-circuited for future solves.
+#' 
+#' @name ParamProb-class
+#' @aliases ParamProb
+#' @rdname ParamProb-class
+ParamProb <- setClass("ParamProb", contains = "VIRTUAL")
+
+#' @param object A \linkS4class{ParamProb} object.
+#' @describeIn ParamProb Is the problem mixed-integer?
+setMethod("is_mixed_integer", "ParamProb", function(object) { stop("Unimplemented") })
+
+#' @param id_to_param_value (Optional) List mapping parameter IDs to values.
+#' @param zero_offset (Optional) If TRUE, zero out the constant offset in the parameter vector.
+#' @param keep_zeros (Optional) If TRUE, store explicit zeros in A where parameters are affected.
+#' @describeIn ParamProb Returns A, b after applying parameters (and reshaping).
+setMethod("apply_parameters", "ParamProb", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE) {
+  stop("Unimplemented")
 })

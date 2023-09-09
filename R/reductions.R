@@ -1,14 +1,26 @@
-# Reduction utility functions.
-lower_inequality <- function(inequality) {
+#==============================#
+# Reduction utility functions
+#==============================#
+lower_ineq_to_nonpos <- function(inequality) {
   lhs <- inequality@args[[1]]
   rhs <- inequality@args[[2]]
-  NonPosConstraint(lhs - rhs, id = inequality@id)
+  NonPosConstraint(lhs - rhs, constr_id = inequality@constr_id)
+}
+
+lower_ineq_to_nonneg <- function(inequality) {
+  lhs <- inequality@args[[1]]
+  rhs <- inequality@args[[2]]
+  NonNegConstraint(rhs - lhs, constr_id = inequality@constr_id)
 }
 
 lower_equality <- function(equality) {
   lhs <- equality@args[[1]]
   rhs <- equality@args[[2]]
-  ZeroConstraint(lhs - rhs, id = equality@id)
+  ZeroConstraint(lhs - rhs, constr_id = equality@constr_id)
+}
+
+nonpos2nonneg <- function(nonpos) {
+  NonNegConstraint(-nonpos@expr, constr_id = nonpos@constr_id)
 }
 
 special_index_canon <- function(expr, args) {
@@ -23,7 +35,7 @@ special_index_canon <- function(expr, args) {
   arg <- args[[1]]
   arg_size <- size(arg)
   # identity <- diag(size(arg))
-  identity <- sparseMatrix(i = 1:arg_size, j = 1:arg_size, x = rep(1, arg_size))
+  identity <- sparseMatrix(i = seq(arg_size), j = seq(arg_size), x = rep(1, arg_size))
 
   v <- vec(arg)
   idmat <- matrix(identity[select_vec,], ncol = arg_size)
@@ -37,13 +49,82 @@ special_index_canon <- function(expr, args) {
 #' 
 #' Are the arguments affine?
 #' 
-#' @param constraints A \linkS4class{Constraint} object.
+#' @param constraints A list of \linkS4class{Constraint} object.
 #' @return All the affine arguments in given constraints.
 are_args_affine <- function(constraints) {
-  all(sapply(constraints, function(constr) {
-    all(sapply(constr@args, function(arg) { is_affine(arg) }))
-  }))
+  all(sapply(constraints, function(constr) { all(sapply(constr@args, is_affine)) }))
 }
+
+#'
+#' Organize the constraints into a list keyed by constraint names.
+#'
+#'@param constraints A list of \linkS4class{Constraint} objects
+#'@return A list keyed by constraint types where list[[cone_type]] maps to a list of exactly those constraints that are of type cone_type.
+group_constraints <- function(constraints) {
+  constr_map <- list()
+  for(c in constraints) {
+    if(class(c) %in% names(constr_map))
+      constr_map[[class(c)]] <- c(constr_map[[class(c)]], c)
+    else
+      constr_map[[class(c)]] <- list(c)
+  }
+  return(constr_map)
+}
+
+#'
+#' The ReducedMat class.
+#'
+#' This is a utility class for condensing the mapping from parameters to problem data.
+#' 
+#' For maximum efficiency of representation and application, the mapping from
+#' parameters to problem data must be condensed. It begins as a CSC sparse matrix
+#' matrix_data, such that multiplying by a parameter vector gives the problem data.
+#' The row index array and column pointer array are saved as problem_data_index,
+#' and a CSR matrix reduced_mat that when multiplied by a parameter vector gives
+#' the values array. The ReducedMat class caches the condensed representation
+#' and provides a method for multiplying by a parameter vector.
+#' 
+#' This class consolidates code from ParamConeProg and ParamQuadProg.
+#'
+#' @rdname ReducedMat-class
+ReducedMat <- setClass("ReducedMat", representation(matrix_data = "numeric", var_len = "integer", quad_form = "logical", reduced_mat = "numeric", problem_data_index = "ListORNULL", mapping_nonzero = "numeric"),
+                        prototype(quad_form = FALSE, reduced_mat = NA_real_, problem_data_index = NULL, mapping_nonzero = NA_integer_))
+
+#' @param keep_zeros (Optional) If TRUE, store explicit zeros in A where parameters are affected.
+#' @describeIn ReducedMat Cache computed attributes if not present.
+setMethod("cache", "ReducedMat", function(object, keep_zeros = FALSE) {
+  # Short circuit null case.
+  if(is.na(object@matrix_data))
+    return(object)
+  
+  if(is.na(object@reduced_mat)) {
+    # Form a reduced representation of the mapping, for faster application of parameters.
+    if(!is.null(dim(object@matrix_data)) && prod(dim(object@matrix_data)) != 0) {
+      tmp <- canonInterface.reduce_problem_data_tensor(object@matrix_data, object@var_len, object@quad_form)
+      reduced_mat <- tmp[[1]]
+      indices <- tmp[[2]]
+      indptr <- tmp[[3]]
+      shape <- tmp[[4]]
+      object@reduced_mat <- reduced_mat
+      object@problem_data_index <- list(indices, indptr, shape)
+    } else {
+      object@reduced_mat <- object@matrix_data
+      object@problem_data_index <- NULL
+    }
+  }
+  
+  if(keep_zeros && is.na(object@mapping_nonzero)) {
+    object@mapping_nonzero <- canonInterface.A_mapping_nonzero_rows(object@matrix_data, object@var_len)
+  }
+  return(object)
+})
+
+#' @param param_vec Flattened parameter vector
+#' @param with_offset (Optional) A logical value indicating whether to return offset. Defaults to TRUE.
+#' @describeIn ReducedMat Wraps get_matrix_from_tensor in canonInterface
+setMethod("get_matrix_from_tensor", "ReducedMat", function(object, param_vec, with_offset = TRUE) {
+  canonInterface.get_matrix_from_tensor(object@reduced_mat, param_vec, object@var_len, nonzero_rows = object@mapping_nonzero, with_offset = with_offset, problem_data_index = object@problem_data_index)
+})
 
 # Factory function for infeasible or unbounded solutions.
 failure_solution <- function(status) {
@@ -122,6 +203,65 @@ setMethod("perform", signature(object = "Reduction", problem = "Problem"), funct
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn Reduction Returns a solution to the original problem given the inverse data.
 setMethod("invert", signature(object = "Reduction", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { stop("Unimplemented") })
+
+#'
+#' The Solution class.
+#'
+#' This class represents a solution to an optimization problem.
+#'
+#' @rdname Solution-class
+.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
+                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
+
+Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
+  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
+}
+
+# TODO: Get rid of this and just skip calling copy on Solution objects.
+setMethod("copy", "Solution", function(object) { 
+  return(Solution(object@status, object@opt_val, object@primal_vars, object@dual_vars, object@attr))
+})
+
+#' @param x A \linkS4class{Solution} object.
+#' @rdname Solution-class
+setMethod("as.character", "Solution", function(x) {
+  paste("Solution(status = ", x@status, 
+              ", opt_val = ", x@opt_val, 
+              ", primal_vars = (", paste(x@primal_vars, collapse = ", "), 
+              "), dual_vars = (", paste(x@dual_vars, collapse = ", "), 
+              "), attr = (", paste(x@attr, collapse = ", "), "))", sep = "")
+})
+
+setMethod("show", "Solution", function(object) {
+  cat("Solution(", object@status, ", ",
+                   object@opt_val, ", (",
+                   paste(object@primal_vars, collapse = ", "), "), (",
+                   paste(object@dual_vars, collapse = ", "), "), (",
+                   paste(object@attr, collapse = ", "), "))", sep = "")
+})
+
+INF_OR_UNB_MESSAGE <- paste("The problem is either infeasible or unbounded, but the solver cannot tell which.",
+                           "Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
+                           "For GUROBI and CPLEX you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...).")
+
+# Factory function for infeasible or unbounded solutions.
+failure_solution <- function(status, attr = NULL) {
+  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
+    opt_val <- Inf
+  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
+    opt_val <- -Inf
+  else
+    opt_val <- NA_real_
+  
+  if(is.null(attr))
+    attr <- list()
+  if(status == INFEASIBLE_OR_UNBOUNDED)
+    attr$message <- INF_OR_UNB_MESSAGE
+  
+  return(Solution(status, opt_val, list(), list(), attr))
+}
+
+setClassUnion("SolutionORList", c("Solution", "list"))
 
 #'
 #' The Canonicalization class.
@@ -648,6 +788,8 @@ InverseData.get_var_offsets <- function(variables) {
 
 #'
 #' The MatrixStuffing class.
+#' 
+#' This class stuffs a problem into a standard form for a family of solvers.
 #'
 #' @rdname MatrixStuffing-class
 MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
@@ -656,111 +798,19 @@ MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
 #' @param problem A \linkS4class{Problem} object to stuff; the arguments of every constraint must be affine.
 #' @describeIn MatrixStuffing Returns a stuffed problem. The returned problem is a minimization problem in which every
 #' constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
-setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
-  inverse_data <- InverseData(problem)
-
-  # Form the constraints
-  extractor <- CoeffExtractor(inverse_data)
-  stuffed <- stuffed_objective(object, problem, extractor)
-  new_obj <- stuffed[[1]]
-  new_var <- stuffed[[2]]
-  inverse_data@r <- stuffed[[3]]
-
-  # Lower equality and inequality to ZeroConstraint and NonPosConstraint.
-  cons <- list()
-  for(con in problem@constraints) {
-    if(is(con, "EqConstraint"))
-      con <- lower_equality(con)
-    else if(is(con, "IneqConstraint"))
-      con <- lower_inequality(con)
-    else if(is(con, "SOC") && con@axis == 1)
-      con <- SOC(con@args[[1]], t(con@args[[2]]), axis = 2, id = con@id)
-    cons <- c(cons, con)
-  }
-
-  # Batch expressions together, then split apart.
-  expr_list <- flatten_list(lapply(cons, function(c) { c@args }))
-  Abfull <- affine(extractor, expr_list)
-  Afull <- Abfull[[1]]
-  bfull <- Abfull[[2]]
-  new_cons <- list()
-  offset <- 0
-
-  for(con in cons) {
-    arg_list <- list()
-    for(arg in con@args) {
-      arg_size <- size(arg)
-      if(arg_size == 1) {
-        A <- matrix(Afull[offset + 1,], nrow = 1)
-        b <- bfull[offset + 1]
-      } else {
-        A <- Afull[(offset + 1):(offset + arg_size),]
-        b <- bfull[(offset + 1):(offset + arg_size)]
-      }
-      arg_list <- c(arg_list, reshape_expr(A %*% new_var + b, dim(arg)))
-      offset <- offset + arg_size
-    }
-    new_cons <- c(new_cons, copy(con, arg_list))
-    inverse_data@cons_id_map[[as.character(con@id)]] <- new_cons[[length(new_cons)]]@id
-  }
-
-  # Map of old constraint id to new constraint id.
-  inverse_data@minimize <- inherits(problem@objective, "Minimize")
-  new_prob <- Problem(Minimize(new_obj), new_cons)
-  return(list(object, new_prob, inverse_data))
+setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) { 
+  stop("Unimplemented") 
 })
 
 #' @param object A \linkS4class{MatrixStuffing} object.
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn MatrixStuffing Returns the solution to the original problem given the inverse_data.
-setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
-    var_map <- inverse_data@var_offsets
-  con_map <- inverse_data@cons_id_map
-
-  # Flip sign of optimal value if maximization.
-  opt_val <- solution@opt_val
-  if(!(solution@status %in% ERROR) && !inverse_data@minimize)
-    opt_val <- -solution@opt_val
-
-  primal_vars <- list()
-  dual_vars <- list()
-  if(!(solution@status %in% SOLUTION_PRESENT))
-    return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
-
-  # Split vectorized variable into components.
-  x_opt <- solution@primal_vars[[1]]
-  for(var_id in names(var_map)) {
-    offset <- var_map[[var_id]]
-    var_dim <- inverse_data@var_dims[[var_id]]
-    size <- prod(var_dim)
-    primal_vars[[var_id]] <- matrix(x_opt[(offset+1):(offset+size)], nrow = var_dim[1], ncol = var_dim[2])
-  }
-
-  # Remap dual variables if dual exists (problem is convex).
-  if(length(solution@dual_vars) > 0) {
-    for(old_con in names(con_map)) {
-      new_con <- as.character(con_map[[old_con]])
-      con_obj <- inverse_data@id2cons[[old_con]]
-      obj_dim <- dim(con_obj)
-      # TODO: Rationalize Exponential.
-      if(length(obj_dim) == 0 || is(con_obj, "ExpCone") || is(con_obj, "SOC"))
-        dual_vars[[old_con]] <- solution@dual_vars[[new_con]]
-      else
-        dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = obj_dim[1], ncol = obj_dim[2])
-    }
-  }
-
-  # Add constant part
-  if(inverse_data@minimize)
-    opt_val <- opt_val + inverse_data@r
-  else
-    opt_val <- opt_val - inverse_data@r
-
-  return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
+setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) { 
+  stop("Unimplemented") 
 })
 
-setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", extractor = "CoeffExtractor"), function(object, problem, extractor) {
+setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
   stop("Unimplemented")
 })
 

@@ -298,40 +298,6 @@ SizeMetrics <- function(problem) {
 setClassUnion("SizeMetricsORNULL", c("SizeMetrics", "NULL"))
 
 #'
-#' The Solution class.
-#'
-#' This class represents a solution to an optimization problem.
-#'
-#' @rdname Solution-class
-.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
-                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
-
-Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
-  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
-}
-
-setMethod("show", "Solution", function(object) {
-  cat("Solution(", object@status, ", (",
-      paste(object@primal_vars, collapse = ", "), "), (",
-      paste(object@dual_vars, collapse = ", "), "), (",
-      paste(object@attr, collapse = ", "), "))", sep = "")
-})
-
-# TODO: Get rid of this and just skip calling copy on Solution objects.
-setMethod("copy", "Solution", function(object, args = NULL, id_objects = list()) { return(object) })
-
-#' @param x A \linkS4class{Solution} object.
-#' @rdname Solution-class
-setMethod("as.character", "Solution", function(x) {
-  paste("Solution(", x@status, ", (",
-        paste(x@primal_vars, collapse = ", "), "), (",
-        paste(x@dual_vars, collapse = ", "), "), (",
-        paste(x@attr, collapse = ", "), "))", sep = "")
-})
-
-setClassUnion("SolutionORList", c("Solution", "list"))
-
-#'
 #' The Problem class.
 #'
 #' This class represents a convex optimization problem.

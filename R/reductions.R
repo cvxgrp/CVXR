@@ -127,7 +127,19 @@ setMethod("invert", signature(object = "Reduction", solution = "Solution", inver
 #' The Canonicalization class.
 #'
 #' This class represents a canonicalization reduction.
-#'
+#' 
+#' This reduction recursively canonicalizes every expression tree in a problem, 
+#' visiting each node. At every node, this reduction first canonicalizes its 
+#' arguments; it then canonicalizes the node, using the canonicalized arguments.
+#' 
+#' The attribute canon_methods is a list mapping node types to functions that 
+#' canonicalize them; the signature of these canonicalizing functions must be
+#' \code{canon_func(expr, canon_args) --> (new_expr, constraints) }
+#' where expr is the Expression (node) to canonicalize, canon_args is a list of 
+#' the canonicalized arguments of this expression, new_expr is a canonicalized 
+#' expression, and constraints is a list of constraints introduced while 
+#' canonicalizing expr.
+#' 
 #' @rdname Canonicalization-class
 .Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
 
@@ -150,8 +162,9 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
     canon_constr <- canon[[1]]
     aux_constr <- canon[[2]]
     canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
-    inverse_data@cons_id_map[[as.character(constraint@id)]] <- canon_constr@id   # TODO: Check this updates like dict().update in Python
+    inverse_data@cons_id_map[[as.character(id(constraint))]] <- id(canon_constr)   # TODO: Check this updates like dict().update in Python
   }
+  
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(object, new_problem, inverse_data))
 })
@@ -172,6 +185,7 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
     if(vid %in% names(solution@dual_vars))
       dvars[[orig_id]] <- solution@dual_vars[[vid]]
   }
+  
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
 })
 
@@ -210,7 +224,8 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
 #' @param args List of arguments to canonicalize the expression.
 #' @describeIn Canonicalization Canonicalize an expression, w.r.t. canonicalized arguments.
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
-  if(is(expr, "Expression") && is_constant(expr)) {
+  expr_parms <- parameters(expr)
+  if(is(expr, "Expression") && is_constant(expr) && (is.null(expr_parms) || length(expr_parms) == 0)) {
     return(list(expr, list()))
   } else if(inherits(expr, names(object@canon_methods)))
     return(object@canon_methods[[class(expr)]](expr, args))   # TODO: Not working for DgpCanonMethods.
@@ -231,7 +246,21 @@ Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = proble
 #' @param x,object A \linkS4class{Chain} object.
 #' @rdname Chain-class
 setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
+
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
+
+# TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
+'[[.Chain' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+
+#' @param name The type of reduction.
+#' @describeIn Chain Returns the reduction of the specified type. 
+setMethod("$", signature(x = "Chain"), function(x, name) {
+  for(reduction in x@reductions) {
+    if(is(reduction, name))
+      return(reduction)
+  }
+  stop(name, " reduction not found")
+})
 
 #' @param problem A \linkS4class{Problem} object to check.
 #' @describeIn Chain A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
@@ -250,10 +279,12 @@ setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(
 })
 
 #' @describeIn Chain Applies the chain to a problem and returns an equivalent problem.
-setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem) {
+setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem, verbose = FALSE) {
   inverse_data <- list()
   for(i in seq_along(object@reductions)) {
     r <- object@reductions[[i]]
+    if(verbose)
+      print(paste("Applying reduction", class(r)))
     res <- perform(r, problem)
     
     object@reductions[[i]] <- res[[1]]
@@ -277,25 +308,61 @@ setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inv
   return(solution)
 })
 
-# Returns a list of the relevant attributes present among the variables.
-attributes_present <- function(variables, attr_map) {
-  attr_map[sapply(attr_map, function(attr) {
-    any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] }))
-  })]
-}
+#==================================#
+# Convex Attributes to Constraints
+#==================================#
 
 # Convex attributes that generate constraints.
 CONVEX_ATTRIBUTES <- c("nonneg", "nonpos", "pos", "neg", "symmetric", "diag", "PSD", "NSD")
+
+# Attributes related to symmetry.
+SYMMETRIC_ATTRIBUTES <- c("symmetric", "PSD", "NSD")
+
 convex_attributes <- function(variables) {
   # Returns a list of the (constraint-generating) convex attributes present among the variables.
   attributes_present(variables, CONVEX_ATTRIBUTES)
 }
 
-# Attributes related to symmetry.
-SYMMETRIC_ATTRIBUTES <- c("symmetric", "PSD", "NSD")
-symmetric_attributes <- function(variables) {
-  # Returns a list of the (constraint-generating) symmetric attributes present among the variables.
-  attributes_present(variables, SYMMETRIC_ATTRIBUTES)
+attributes_present <- function(variables, attr_map) {
+  # Returns a list of the relevant attributes present among the variables.
+  # attr_map[sapply(attr_map, function(attr) {
+  #  any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] }))
+  # })]
+  
+  attr_list <- c()
+  for(attr in attr_map) {
+    if(any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] })))
+      attr_list <- c(attr_list, attr)
+  }
+  return(attr_list)
+}
+
+recover_value_for_variable <- function(variable, lowered_value, project = TRUE) {
+  if(variable@attributes$diag) {
+    v_flat <- as.vector(lowered_value)
+    return(sparseMatrix(i = seq_along(v_flat), j = seq_along(v_flat), x = v_flat))
+  } else if(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) {
+    n <- nrow(variable)
+    value <- matrix(0, nrow = nrow(variable), ncol = ncol(variable))
+    triu_mask <- upper.tri(matrix(0, nrow =  n, ncol = n), diag = TRUE)
+    value[triu_mask] <- as.vector(lowered_value)
+    return(value + t(value) - diag(diag(value)))
+  } else if(project)
+    return(project(variable, lowered_value))
+  else
+    return(lowered_value)
+}
+
+lower_value <- function(variable, value) {
+  if(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) {
+    # return(upper.tri(value, diag = TRUE))
+    n <- nrow(variable)
+    triu_mask <- upper.tri(matrix(0, nrow = n, ncol = n), diag = TRUE)
+    return(value[triu_mask])
+  } else if(variable@attributes$diag)
+    return(diag(value))
+  else
+    return(value)
 }
 
 #'
@@ -312,7 +379,7 @@ setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CvxAttr2Constr Expand convex variable attributes to constraints.
 setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
-  if(length(convex_attributes(variables(problem))) == 0)
+  if(!attributes_present(variables(problem), CONVEX_ATTRIBUTES))
     return(list(object, problem, list()))
 
   # For each unique variable, add constraints.
@@ -321,9 +388,10 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   id2old_var <- list()
   constr <- list()
   for(var in variables(problem)) {
-    vid <- as.character(id(var))
-    if(!(vid %in% names(id2new_var))) {
-      id2old_var[[vid]] <- var
+    vid <- id(var)
+    vid_char <- as.character(id(var))
+    if(!(vid_char %in% names(id2new_var))) {
+      id2old_var[[vid_char]] <- var
       new_var <- FALSE
       new_attr <- var@attributes
       for(key in CONVEX_ATTRIBUTES) {
@@ -333,33 +401,38 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         }
       }
 
-      if(length(symmetric_attributes(list(var))) > 0) {
+      if(attributes_present(list(var), SYMMETRIC_ATTRIBUTES)) {
         n <- nrow(var)
         new_dim <- c(floor(n*(n+1)/2), 1)
         # upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
-        upper_tri <- do.call(.Variable, c(list(dim = new_dim), new_attr))
-        id2new_var[[vid]] <- upper_tri
+        upper_tri <- do.call(.Variable, c(list(dim = new_dim, var_id = vid), new_attr))
+        upper_tri <- set_variable_of_provenance(upper_tri, var)
+        id2new_var[[vid_char]] <- upper_tri
         fill_coeff <- Constant(upper_tri_to_full(n))
         full_mat <- fill_coeff %*% upper_tri
         obj <- reshape_expr(full_mat, c(n, n))
       } else if(var@attributes$diag) {
         # diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
-        diag_var <- do.call(.Variable, c(list(dim = c(nrow(var), 1)), new_attr))
-        id2new_var[[vid]] <- diag_var
+        diag_var <- do.call(.Variable, c(list(dim = c(nrow(var), 1), var_id = vid), new_attr))
+        diag_var <- set_variable_of_provenance(diag_var, var)
+        id2new_var[[vid_char]] <- diag_var
         obj <- diag(diag_var)
       } else if(new_var) {
         # obj <- do.call(Variable, c(list(dim(var)), new_attr))
-        obj <- do.call(.Variable, c(list(dim = dim(var)), new_attr))
-        id2new_var[[vid]] <- obj
+        obj <- do.call(.Variable, c(list(dim = dim(var), var_id = vid), new_attr))
+        obj <- set_variable_of_provenance(obj, var)
+        id2new_var[[vid_char]] <- obj
       } else {
         obj <- var
-        id2new_var[[vid]] <- obj
+        id2new_var[[vid_char]] <- obj
       }
 
-      id2new_obj[[vid]] <- obj
-      if(is_nonneg(var) || is_pos(var))
+      vid_new <- id(var)
+      vid_new_char <- as.character(vid_new)
+      id2new_obj[[vid_new_char]] <- obj
+      if(is_pos(var) || is_nonneg(var))
         constr <- c(constr, obj >= 0)
-      else if(is_nonpos(var) || is_neg(var))
+      else if(is_neg(var) || is_nonpos(var))
         constr <- c(constr, obj <= 0)
       else if(is_psd(var))
         constr <- c(constr, obj %>>% 0)
@@ -373,7 +446,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
   cons_id_map <- list()
   for(cons in problem@constraints) {
     constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))
-    cons_id_map[[as.character(cons@id)]] <- constr[[length(constr)]]@id
+    cons_id_map[[as.character(id(cons))]] <- id(constr[[length(constr)]])
   }
   inverse_data <- list(id2new_var, id2old_var, cons_id_map)
   return(list(object, Problem(obj, constr), inverse_data))
@@ -394,22 +467,9 @@ setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", 
   for(id in names(id2old_var)) {
     var <- id2old_var[[id]]
     new_var <- id2new_var[[id]]
-
-    # Need to map from constrained to symmetric variable.
     nvid <- as.character(id(new_var))
-    if(nvid %in% names(solution@primal_vars)) {
-      if(var@attributes$diag)
-        pvars[[id]] <- Matrix::Diagonal(x = as.vector(solution@primal_vars[[nvid]]))
-      else if(length(symmetric_attributes(list(var))) > 0) {
-        n <- nrow(var)
-        value <- matrix(0, nrow = n, ncol = n)   # Variable is symmetric
-        idxs <- lower.tri(value, diag = TRUE)
-        value[idxs] <- as.vector(solution@primal_vars[[nvid]])
-        value <- value + t(value) - diag(diag(value), n, n)
-        pvars[[id]] <- value
-      } else
-        pvars[[id]] <- project(var, solution@primal_vars[[nvid]])
-    }
+    if(nvid %in% names(solution@primal_vars))
+      pvars[[id]] <- recover_value_for_variable(var, solution@primal_vars[[nvid]])
   }
 
   dvars <- list()
@@ -432,8 +492,8 @@ EvalParams <- setClass("EvalParams", contains = "Reduction")
 
 EvalParams.replace_params_with_consts <- function(expr) {
   if(is.list(expr))
-    return(lapply(expr, function(elem) { EvalParams.replace_params_with_consts(elem) }))
-  else if(length(parameters(expr)) == 0)
+    return(lapply(expr, EvalParams.replace_params_with_consts ))
+  else if(is.null(parameters(expr)) || length(parameters(expr)) == 0)
     return(expr)
   else if(is(expr, "Parameter")) {
     if(any(is.na(value(expr))))
@@ -456,10 +516,11 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
   # Do not instantiate a new objective if it does not contain parameters.
   if(length(parameters(problem@objective)) > 0) {
     obj_expr <- EvalParams.replace_params_with_consts(expr(problem@objective))
-    if(inherits(problem@objective, "Maximize"))
-      objective <- Maximize(obj_expr)
-    else
-      objective <- Minimize(obj_expr)
+    objective <- do.call(class(problem@objective), list(obj_expr))
+    # if(inherits(problem@objective, "Maximize"))
+    #   objective <- Maximize(obj_expr)
+    # else
+    #   objective <- Minimize(obj_expr)
   } else
     objective <- problem@objective
 
@@ -470,7 +531,7 @@ setMethod("perform", signature(object = "EvalParams", problem = "Problem"), func
       args <- c(args, EvalParams.replace_params_with_consts(arg))
 
     # Do not instantiate a new constraint object if it did not contain parameters.
-    id_match <- mapply(function(new, old) { new@id == old@id }, args, c@args)
+    id_match <- mapply(function(new, old) { id(new) == id(old) }, args, c@args)
     if(all(unlist(id_match)))
       constraints <- c(constraints, c)
     else {   # Otherwise, create a copy of the constraint.
@@ -503,7 +564,7 @@ setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), f
 
 #' @param object A \linkS4class{FlipObjective} object.
 #' @param problem A \linkS4class{Problem} object.
-#' @describeIn FlipObjective Flip a minimization objective to a maximization and vice versa.
+#' @describeIn FlipObjective Flip a minimization objective to a maximization and vice versa: \eqn{\max f(x) = -\min -f(x)}
 setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
   if(inherits(problem@objective, "Maximize"))
     objective <- Minimize
@@ -518,10 +579,72 @@ setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), f
 #' @param inverse_data The inverse data returned by an invocation to apply.
 #' @describeIn FlipObjective Map the solution of the flipped problem to that of the original.
 setMethod("invert", signature(object = "FlipObjective", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
-  if(!is.null(solution@opt_val))
+  if(!is.na(solution@opt_val) && !is.null(solution@opt_val))
     solution@opt_val <- -solution@opt_val
   return(solution)
 })
+
+#'
+#' The InverseData class.
+#'
+#' This class stores the data useful for solution retrieval.
+#'
+#' @rdname InverseData-class
+.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
+                                                       param_dims = "list", param_to_size = "list", param_id_map = "list", 
+                                                       id2var = "list", id2cons = "list", cons_id_map = "list", constraints = "ListORNULL"),
+                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), 
+                                   param_dims = list(), param_to_size = list(), param_id_map = list(), id2var = list(), id2cons = list(),
+                                   cons_id_map = list(), constraints = NULL))
+
+InverseData <- function(problem) { .InverseData(problem = problem) }
+
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA) {
+  # Basic variable offset information
+  varis <- variables(problem)
+  varoffs <- get_var_offsets(.Object, varis)
+  .Object@id_map <- varoffs$id_map
+  .Object@var_offsets <- varoffs$var_offsets
+  .Object@x_length <- varoffs$x_length
+  .Object@var_dims <- varoffs$var_dims
+  
+  .Object@param_dims <- list()
+  # Always start with CONSTANT_ID.
+  .Object@param_to_size[[CONSTANT_ID]] <- 1
+  .Object@param_id_map <- list()
+  offset <- 0
+  for(param in parameters(problem)) {
+    pid <- as.character(id(param))
+    .Object@param_dims[[pid]] <- dim(param)
+    .Object@param_to_size[[pid]] <- size(param)
+    .Object@param_id_map[[pid]] <- offset
+    offset <- offset + size(param)
+  }
+  
+  # Map of variable id to variable
+  .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
+  
+  # Map of constraint id to constraint
+  .Object@id2cons <- stats::setNames(problem@constraints, sapply(constrs, function(cons) { as.character(id(cons)) }))
+  .Object@cons_id_map <- list()
+  .Object@constraints <- NULL
+  return(.Object)
+})
+
+InverseData.get_var_offsets <- function(variables) {
+  var_dims <- list()
+  var_offsets <- list()
+  id_map <- list()
+  vert_offset <- 0
+  for(x in variables) {
+    xid <- as.character(id(x))
+    var_dims[[xid]] <- dim(x)
+    var_offsets[[xid]] <- vert_offset
+    id_map[[xid]] <- c(vert_offset, size(x))
+    vert_offset <- vert_offset + size(x)
+  }
+  return(list(id_map = id_map, var_offsets = var_offsets, vert_offset = vert_offset, var_dims = var_dims))
+}
 
 #'
 #' The MatrixStuffing class.

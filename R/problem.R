@@ -1101,7 +1101,7 @@ setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
 setMethod("-", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
 
 #' @rdname Problem-arith
-setMethod("-", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { if(length(e1) == 1 && e2 == 0) -e2 else stop("Unimplemented") })
+setMethod("-", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { if(length(e1) == 1 && e1 == 0) -e2 else stop("Unimplemented") })
 
 #' @rdname Problem-arith
 setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
@@ -1144,4 +1144,86 @@ setMethod("is_mixed_integer", "ParamProb", function(object) { stop("Unimplemente
 #' @describeIn ParamProb Returns A, b after applying parameters (and reshaping).
 setMethod("apply_parameters", "ParamProb", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE) {
   stop("Unimplemented")
+})
+
+#'
+#' The XpressProblem class.
+#' 
+#' This class represents a convex optimization problem associated with the Xpress Optimizer.
+#' 
+#' @slot objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
+#' @slot constraints A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
+#' @name XpressProblem-class
+#' @aliases XpressProblem
+#' @rdname XpressProblem-class
+.XpressProblem <- setClass("XpressProblem", representation(.iis = "numeric", .transferRow = "numeric"), 
+                           prototype(.iis = NA_real_, .transferRow = NA_real_), contains = "Problem")
+
+#' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
+#' @param constraints (Optional) A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
+#' @rdname XpressProblem-class
+XpressProblem <- function(objective, constraints = list()) { 
+  .XpressProblem(objective = objective, constraints = constraints) 
+}
+
+setMethod(".reset_iis", "XpressProblem", function(object) {
+  object@.iis <- NA_real_
+  object@.transferRow <- NA_real_
+  return(object)
+})
+
+setMethod("show", "XpressProblem", function(object) {
+  cat("XpressProblem(", name(object@objective), ", (", paste(sapply(object@constraints, name), collapse = ", "), "))", sep = "")
+})
+
+#'
+#' Arithmetic Operations on XpressProblems
+#'
+#' Add, subtract, multiply, or divide DCP optimization problems.
+#'
+#' @param e1 The left-hand \linkS4class{XpressProblem} object.
+#' @param e2 The right-hand \linkS4class{XpressProblem} object.
+#' @return A \linkS4class{XpressProblem} object.
+#' @name XpressProblem-arith
+NULL
+
+#' @rdname Problem-arith
+setMethod("+", signature(e1 = "XpressProblem", e2 = "missing"), function(e1, e2) { XpressProblem(objective = e1@objective, constraints = e1@constraints) })
+
+#' @rdname XpressProblem-arith
+setMethod("-", signature(e1 = "XpressProblem", e2 = "missing"), function(e1, e2) { XpressProblem(objective = -e1@objective, constraints = e1@constraints) })
+
+#' @rdname XpressProblem-arith
+setMethod("*", signature(e1 = "XpressProblem", e2 = "numeric"), function(e1, e2) {
+  XpressProblem(objective = e1@objective * e2, constraints = e1@constraints)
+})
+
+#' @rdname XpressProblem-arith
+setMethod("+", signature(e1 = "XpressProblem", e2 = "numeric"), function(e1, e2) { if(length(e2) == 1 && e2 == 0) e1 else stop("Unimplemented") })
+
+#' @rdname XpressProblem-arith
+setMethod("+", signature(e1 = "numeric", e2 = "XpressProblem"), function(e1, e2) { e2 + e1 })
+
+#' @rdname XpressProblem-arith
+setMethod("+", signature(e1 = "XpressProblem", e2 = "XpressProblem"), function(e1, e2) {
+  XpressProblem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+})
+
+#' @rdname XpressProblem-arith
+setMethod("-", signature(e1 = "XpressProblem", e2 = "numeric"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname XpressProblem-arith
+setMethod("-", signature(e1 = "numeric", e2 = "XpressProblem"), function(e1, e2) { if(length(e1) == 1 && e1 == 0) -e2 else stop("Unimplemented") })
+
+#' @rdname XpressProblem-arith
+setMethod("-", signature(e1 = "XpressProblem", e2 = "XpressProblem"), function(e1, e2) {
+  XpressProblem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+})
+
+#' @rdname XpressProblem-arith
+setMethod("*", signature(e1 = "numeric", e2 = "XpressProblem"), function(e1, e2) { e2 * e1 })
+
+#' @rdname XpressProblem-arith
+setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
+  XpressProblem(objective = e1@objective * (1.0/e2), constraints = e1@constraints)
 })

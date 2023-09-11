@@ -485,24 +485,6 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
 })
 
 #' @param object A \linkS4class{Problem} object.
-#' @describeIn Problem The objective of the problem.
-setMethod("objective", "Problem", function(object) { object@objective })
-
-#' @describeIn Problem Set the value of the problem objective.
-setReplaceMethod("objective", "Problem", function(object, value) {
-  object@objective <- value
-  object
-})
-
-#' @describeIn Problem A list of the constraints of the problem.
-setMethod("constraints", "Problem", function(object) { object@constraints })
-
-#' @describeIn Problem Set the value of the problem constraints.
-setReplaceMethod("constraints", "Problem", function(object, value) {
-  object@constraints <- value
-  object
-})
-
 #' @describeIn Problem The value from the last time the problem was solved (or NA if not solved).
 setMethod("value", "Problem", function(object) {
   if(is.na(object@value))
@@ -511,34 +493,63 @@ setMethod("value", "Problem", function(object) {
     return(intf_scalar_value(object@value))
 })
 
-#' @param value A \linkS4class{Minimize} or \linkS4class{Maximize} object (objective), list of \linkS4class{Constraint} objects (constraints), or numeric scalar (value).
-#' @describeIn Problem Set the value of the optimal objective.
-setReplaceMethod("value", "Problem", function(object, value) {
-    object@value <- value
-    object
-})
-
-#' @describeIn Problem The status from the last time the problem was solved.
+#' @describeIn Problem The status from the last time the problem was solved; one of optimal, infeasible, or unbounded (with or without suffix inaccurate).
 setMethod("status", "Problem", function(object) { object@status })
 
-# Set the status of the problem.
-setReplaceMethod("status", "Problem", function(object, value) {
-    object@status <- value
-    object
+#' @describeIn Problem The solution from the last time the problem was solved.
+setMethod("solution", "Problem", function(object) { object@solution })
+
+#' @describeIn Problem The objective of the problem. Note that the objective cannot be reassigned after creation, and modifying the objective after creation will result in undefined behavior.
+setMethod("objective", "Problem", function(object) { object@objective })
+
+#' @describeIn Problem A list of the constraints of the problem. Note that constraints cannot be reassigned, appended to, or otherwise modified after creation, except through parameters.
+setMethod("constraints", "Problem", function(object) { object@constraints })
+
+#' @describeIn Problem Expose all parameters as a named list.
+setMethod("param_list", "Problem", function(object) {
+  res <- list()
+  for(parm in parameters(object))
+    res[[name(parm)]] <- parm
+  return(res)
 })
 
-#' @describeIn Problem A logical value indicating whether the problem statisfies DCP rules.
+#' @describeIn Problem Expose all variables as a named list.
+setMethod("var_list", "Problem", function(object) {
+  res <- list()
+  for(var in variables(problem))
+    res[[name(var)]] <- var
+  return(res)
+})
+
+#' @param dpp A logical value indicating whether to enforce the disciplined parametrized programming (DPP) ruleset; only relevant when the problem involves Parameters. DPP is a mild restriction of DCP. When a problem involving Parameters is DPP, subsequent solves can be much faster than the first one. For more information, consult the documentation at https://www.cvxpy.org/tutorial/advanced/index.html#disciplined-parametrized-programming
+#' @describeIn Problem A logical value indicating whether the problem satisfies DCP rules.
 #' @examples
 #' x <- Variable(2)
 #' p <- Problem(Minimize(p_norm(x, 2)), list(x >= 0))
 #' is_dcp(p)
-setMethod("is_dcp", "Problem", function(object) {
-  all(sapply(c(object@constraints, list(object@objective)), is_dcp))
+setMethod("is_dcp", "Problem", function(object, dpp = FALSE) {
+  all(sapply(c(object@constraints, list(object@objective)), function(expr) { is_dcp(expr, dpp) }))
 })
 
 #' @describeIn Problem A logical value indicating whether the problem statisfies DGP rules.
-setMethod("is_dgp", "Problem", function(object) {
-  all(sapply(c(object@constraints, list(object@objective)), is_dgp))
+setMethod("is_dgp", "Problem", function(object, dpp = FALSE) {
+  all(sapply(c(object@constraints, list(object@objective)), function(expr) { is_dgp(expr, dpp) }))
+})
+
+#' @describeIn Problem Does the problem satisfy the DQCP rules?
+setMethod("is_dqcp", "Problem", function(object) {
+  all(sapply(c(object@constraints, list(object@objective)), is_dqcp))
+})
+
+#' @param context A string indicating whether to check DPP-compliance for DCP (\code{context = "dcp"}) or DGP (\code{context = "dgp"}).
+#' @describeIn Problem Does the problem satisfy DPP rules?
+setMethod("is_dpp", "Problem", function(object, context = "dcp") {
+  if(tolower(context) == "dcp")
+    return(is_dcp(object, dpp = TRUE))
+  else if(tolower(context) == "dgp")
+    return(is_dgp(object, dpp = TRUE))
+  else
+    stop("Unsupported context ", context)
 })
 
 #' @describeIn Problem A logical value indicating whether the problem is a quadratic program.
@@ -559,96 +570,166 @@ setMethod("is_qp", "Problem", function(object) {
   return(is_dcp(object) && is_qpwa(object@objective@args[[1]]))
 })
 
-#' @describeIn Problem The graph implementation of the problem.
-setMethod("canonicalize", "Problem", function(object) {
-  obj_canon <- canonical_form(object@objective)
-  canon_constr <- obj_canon[[2]]
-
-  for(constr in object@constraints)
-    canon_constr <- c(canon_constr, canonical_form(constr)[[2]])
-  list(obj_canon[[1]], canon_constr)
-})
-
 #' @describeIn Problem logical value indicating whether the problem is a mixed integer program.
 setMethod("is_mixed_integer", "Problem", function(object) {
   any(sapply(variables(object), function(v) { v@attributes$boolean || v@attributes$integer }))
 })
 
 #' @describeIn Problem List of \linkS4class{Variable} objects in the problem.
-setMethod("variables", "Problem", function(object) { object@variables })
-
-Problem.build_variables <- function(object) {
+setMethod("variables", "Problem", function(object) {
   vars_ <- variables(object@objective)
-  constrs_ <- lapply(object@constraints, function(constr) { variables(constr) })
-  unique(flatten_list(c(vars_, constrs_)))   # Remove duplicates
-}
+  for(constr in object@constraints)
+    vars_ <- c(vars_, variables(constr))
+  unique_list(vars_)
+})
 
 #' @describeIn Problem List of \linkS4class{Parameter} objects in the problem.
 setMethod("parameters", "Problem", function(object) {
   params <- parameters(object@objective)
-  constrs_ <- lapply(object@constraints, function(constr) { parameters(constr) })
-  unique(flatten_list(c(params, constrs_)))   # Remove duplicates
+  for(constr in object@constraints)
+    params <- c(params, parameters(constr))
+  unique_list(params)
 })
 
 #' @describeIn Problem List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
-  constants_ <- lapply(object@constraints, function(constr) { constants(constr) })
-  constants_ <- c(constants(object@objective), constants_)
-  unique(flatten_list(constants_))   # TODO: Check duplicated constants are removed correctly
+  const_list <- list()
+  constants_ <- constraints(object@objective)
+  for(constr in object@constraints)
+    constants_ <- c(constants_, constants(constr))
+  # for(constant in constants_)
+  #   const_dict[[as.character(id(constant))]] <- constant
+  # unname(const_dict)
+  unique_list(constants)
 })
 
 #' @describeIn Problem List of \linkS4class{Atom} objects in the problem.
 setMethod("atoms", "Problem", function(object) {
-  atoms_ <- lapply(object@constraints, function(constr) { atoms(constr) })
-  atoms_ <- c(atoms_, atoms(object@objective))
-  unique(flatten_list(atoms_))
+  atoms_ <- atoms(object@objective)
+  for(constr in object@constraints)
+    atoms_ <- c(atoms_, atoms(constr))
+  unique_list(atoms_)
 })
 
 #' @describeIn Problem Information about the size of the problem.
-setMethod("size_metrics", "Problem", function(object) { object@.size_metrics })
-
-#' @describeIn Problem Additional information returned by the solver.
-setMethod("solver_stats", "Problem", function(object) { object@.solver_stats })
-
-#' @describeIn Problem Set the additional information returned by the solver in the problem.
-setMethod("solver_stats<-", "Problem", function(object, value) {
-    object@.solver_stats <- value
-    object
+setMethod("size_metrics", "Problem", function(object) {
+  if(is.null(object@size_metrics))
+    object@size_metrics <- SizeMetrics(object)
+  list(object, object@size_metrics)   # Return object because slot may have been modified.
 })
 
+#' @describeIn Problem Additional information returned by the solver.
+setMethod("solver_stats", "Problem", function(object) { object@solver_stats })
+
+# Compiles and solves the problem using the specified method.
 # solve.Problem <- function(object, method, ...) {
 #  if(missing(method))
 #    .solve(object, ...)
 #  else {
-#    func <- Problem.REGISTERED_SOLVE_METHODS[func_name]
+#    func <- Problem.REGISTERED_SOLVE_METHODS[[method]]
 #    func(object, ...)
 #  }
 # }
 
+# Adds a solve method to the Problem class.
 # Problem.register_solve <- function(name, func) {
-#  Problem.REGISTERED_SOLVE_METHODS[name] <- func
+#  Problem.REGISTERED_SOLVE_METHODS[[name]] <- func
 # }
 
 #'
 #' @param object A \linkS4class{Problem} class.
 #' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
-#' @param gp A logical value indicating whether the problem is a geometric program.
+#' @param gp A logical value indicating whether to parse the problem as a disciplined geometric program (DGP) instead of a disciplined convex program (DCP).
+#' @param enforce_dpp If TRUE, a DPPError will be thrown when trying to parse a non-DPP problem (instead of just a warning). Defaults to FALSE.
+#' @param ignore_dpp If TRUE, DPP problems will be treated as non-DPP, which may speed up compilation. Defaults to FALSE.
+#' @param canon_backend Specifies which backend to use for canonicalization, which can affect compilation time. Defaults to 'CPP'.
+#' @param verbose If TRUE, print verbose output related to problem compilation.
+#' @param solver_opts A list of options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical"), function(object, solver, gp) {
-  object <- .construct_chains(object, solver = solver, gp = gp)
-
-  tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  object@.solving_chain <- tmp[[1]]
-  data <- tmp[[2]]
-  solving_inverse_data <- tmp[[3]]
-
-  full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
-  inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
-
-  return(list(data = data, chain = full_chain, inverse_data = inverse_data))
+setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical", enforce_dpp = "logical", ignore_dpp = "logical", verbose = "logical", canon_backend = "character", solver_opts = "ListORNULL"), function(object, solver, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, verbose = FALSE, canon_backend = NA_character_, solver_ops = NULL) {
+  # Invalid DPP setting.
+  # Must be checked here to avoid cache issues.
+  if(enforce_dpp && ignore_dpp)
+    stop("DPPError: Cannot set enforce_dpp = TRUE and ignore_dpp = TRUE)")
+  
+  start_time <- Sys.time()
+  
+  # Cache includes ignore_dpp because it alters compilation.
+  key <- make_key(object@cache, solver, gp, ignore_dpp)
+  if(length(key) != length(object@cache@key) || !all(mapply(function(x, y) { x == y }, key, object@cache@key))) {
+    object@cache <- invalidate(object@cache)
+    solving_chain <- .construct_chain(object, solver = solver, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, canon_backend = canon_backend, solver_opts = solver_opts)
+    object@cache@key <- key
+    object@cache@solving_chain <- solving_chain
+    object@solver_cache <- list()
+  } else
+    solving_chain <- object@cache@solving_chain
+  
+  if(verbose) {
+    divider <- paste(rep("-", 79), collapse = "")
+    cat(paste(divider, sprintf("%45.11s", "Compilation"), divider, sep = "\n"))
+  }
+  
+  if(!is.null(object@cache@param_prog)) {
+    # Fast path, bypasses application of reductions.
+    if(verbose)
+      print("Using cached ASA map, for faster compilation (bypassing reduction chain)")
+    
+    if(gp) {
+      dgp2dcp <- get(object@cache@solving_chain, "Dgp2Dcp")
+      # Parameters in the param cone prog are the logs of parameters in the original problem (with one exception: parameters appearning as exponents (in Power and GmatMul atoms) are unchanged).
+      old_params_to_new_params <- dgp2dcp@canon_methods@parameters
+      for(param in parameters(object)) {
+        pid <- as.character(id(param))
+        if(pid %in% names(old_params_to_new_params))
+          value(old_params_to_new_params[[pid]]) <- log(value(param))   # TODO: Need to propagate new parameter values to param_prog.
+      }
+    }
+    
+    tmp <- perform(solving_chain@solver, object@cache@param_prog)
+    data <- tmp[[1]]
+    solver_inverse_data <- tmp[[2]]
+    inverse_data <- c(object@cache@inverse_data, list(solver_inverse_data))
+    object@compilation_time <- Sys.time() - start_time
+    object@compilation_time <- as.numeric(object@compilation_time)
+    
+    if(verbose)
+      print(paste("Finished problem compilation (took", sprintf("%.3e", object@compilation_time), "seconds"))
+  } else {
+    if(verbose) {
+      solver_name <- name(solving_chain@reductions[[length(solving_chain@reductions)]])
+      reduction_chain_str <- paste(sapply(solving_chain@reductions, class), collapse = " -> ")
+      print(paste("Compiling problem (target solver = ", solver_name, ")", sep = ""))
+      print(paste("Reduction chain:", reduction_chain_str))
+    }
+    
+    tmp <- perform(solving_chain, object, verbose)
+    data <- tmp[[1]]
+    inverse_data <- tmp[[2]]
+    save_to_cache <- (is(data, "list") && PARAM_PROB %in% names(data) && !any(sapply(solving_chain@reductions, function(reduction) { is(reduction, "EvalParams") })))
+    object@compilation_time <- Sys.time() - start_time
+    object@compilation_time <- as.numeric(object@compilation_time)
+    
+    if(verbose)
+      print(paste("Finished problem compilation (took", sprintf("%.3e", object@compilation_time), "seconds"))
+    
+    if(safe_to_cache) {
+      if(verbose && !is.null(parameters(object)) && length(parameters(object)) > 0)
+        print("(Subsequent compilations of this problem, using the same arguments, should take less time)")
+      object@cache@param_prog <- data[[PARAM_PROB]]
+      # The last datum in inverse_data corresponds to the solver, so we shouldn't cache it.
+      if(length(inverse_data) <= 1)
+        object@cache@inverse_data <- NULL
+      else
+        object@cache@inverse_data <- inverse_data[seq(length(inverse_data) - 1]
+    }
+  }
+  
+  return(list(data = data, solving_chain = solving_chain, inverse_data = inverse_data))
 })
 
-.find_candidate_solvers <- function(object, solver = NA, gp = FALSE) {
+# Find candidate solvers for the current problem. If solver is not NA, it checks if the specified solver is compatible with the problem passed.
+.find_candidate_solvers <- function(object, solver = NA_character_, gp = FALSE) {
   candidates <- list(qp_solvers = list(), conic_solvers = list())
 
   INSTALLED_SOLVERS <- installed_solvers()

@@ -123,6 +123,7 @@ SOLVER_NAME = "solver"
 SOLVE_TIME = "solve_time"  # in seconds
 SETUP_TIME = "setup_time"  # in seconds
 NUM_ITERS = "num_iters"    # number of iterations
+EXTRA_STATS = "extra_stats"   # extra solver-specific statistics
 
 # Keys for problem data dict.
 C_KEY = "c"

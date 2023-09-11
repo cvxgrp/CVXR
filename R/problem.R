@@ -259,6 +259,35 @@ setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { M
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
+setClassUnion("SolvingChainORNULL", c("SolvingChain", "NULL"))
+setClassUnion("ParamProgORNULL", c("ParamProg", "NULL"))
+setClassUnion("InverseDataORNULL", c("InverseData", "NULL"))
+
+#'
+#' The Cache class.
+#'
+#' This class contains cached information.
+#' 
+#' @rdname Cache-class
+Cache <- setClass("Cache", representation(key = "ListORNULL", solving_chain = "SolvingChainORNULL", param_prog = "ParamProgORNULL", inverse_data = "InverseDataORNULL"),
+                  prototype(key = NULL, solving_chain = NULL, param_prog = NULL, inverse_data = NULL))
+
+setMethod("invalidate", "Cache", function(object) {
+  object@key <- list()
+  object@solving_chain <- NULL
+  object@param_prog <- NULL
+  object@inverse_data <- NULL
+  return(object)
+})
+
+setMethod("make_key", "Cache", function(object, solver, gp, ignore_dpp) {
+  return(list(solver, gp, ignore_dpp))
+})
+
+setMethod("gp", function(object) {
+  return(!is.null(object@key) && !is.na(object@key) && object@key[[2]])
+})
+
 #'
 #' The SolverStats class.
 #'
@@ -268,11 +297,12 @@ setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { s
 #' @slot solve_time The time (in seconds) it took for the solver to solve the problem.
 #' @slot setup_time The time (in seconds) it took for the solver to set up the problem.
 #' @slot num_iters The number of iterations the solver had to go through to find a solution.
+#' @slot extra_stats Extra statistics specific to the solver; these statistics are typically returned directly from the solver, without modification by CVXR.
 #' @name SolverStats-class
 #' @aliases SolverStats
 #' @rdname SolverStats-class
-.SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric"),
-                         prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_))
+.SolverStats <- setClass("SolverStats", representation(solver_name = "character", solve_time = "numeric", setup_time = "numeric", num_iters = "numeric", extra_stats = "ListORNULL"),
+                         prototype(solver_name = NA_character_, solve_time = NA_real_, setup_time = NA_real_, num_iters = NA_real_, extra_stats = NULL))
 
 #' @param results_dict A list containing the results returned by the solver.
 #' @param solver_name The name of the solver.
@@ -282,12 +312,14 @@ setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { s
 #'   \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
 #'   \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
 #'   \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+#'   \item{\code{extra_stats}}{Extra statistics specific to the solver; these statistics are typically returned directly from the solver, without modification by CVXR.}
 #' }
 #' @rdname SolverStats-class
 SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
     solve_time <- NA_real_
     setup_time <- NA_real_
     num_iters <- NA_real_
+    extra_stats <- NULL
 
     if(SOLVE_TIME %in% names(results_dict))
         solve_time <- results_dict[[SOLVE_TIME]]
@@ -295,11 +327,10 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
         setup_time <- results_dict[[SETUP_TIME]]
     if(NUM_ITERS %in% names(results_dict))
         num_iters <- results_dict[[NUM_ITERS]]
-
-    solver_stats <- list(solver_name, solve_time, setup_time, num_iters)
-    names(solver_stats) <- c(SOLVER_NAME, SOLVE_TIME, SETUP_TIME, NUM_ITERS)
-    return(solver_stats)
-    ## .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters)
+    if(EXTRA_STATS %in% names(results_dict))
+      extra_stats <- results_dict[[EXTRA_STATS]]
+    
+    .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters, extra_stats = extra_stats)
 }
 
 #'
@@ -344,8 +375,9 @@ SizeMetrics <- function(problem) {
     if(max_data_dimension < big)
       max_data_dimension <- big
 
-    if(max_big_small_squared < as.numeric(big)*small*small)
-      max_big_small_squared <- as.numeric(big)*small*small
+    max_big_small_squared_init <- as.numeric(big)*as.numeric(small)^2
+    if(max_big_small_squared < max_big_small_squared_init)
+      max_big_small_squared <- max_big_small_squared_init
   }
 
   # num_scalar_eq_constr
@@ -358,7 +390,7 @@ SizeMetrics <- function(problem) {
   # num_scalar_leq_constr
   num_scalar_leq_constr <- 0
   for(constraint in problem@constraints) {
-    if(is(constraint, "IneqConstraint") || is(constraint, "NonPosConstraint"))
+    if(is(constraint, "IneqConstraint") || is(constraint, "NonPosConstraint") || is(constraint, "NonNegConstraint"))
       num_scalar_leq_constr <- num_scalar_leq_constr + size(expr(constraint))
   }
 
@@ -366,6 +398,7 @@ SizeMetrics <- function(problem) {
                max_data_dimension = max_data_dimension, max_big_small_squared = max_big_small_squared)
 }
 
+setClassUnion("SolverStatsORNULL", c("SolverStats", "NULL"))
 setClassUnion("SizeMetricsORNULL", c("SizeMetrics", "NULL"))
 
 #'
@@ -377,51 +410,19 @@ setClassUnion("SizeMetricsORNULL", c("SizeMetrics", "NULL"))
 #' @slot constraints (Optional) A list of constraints on the optimization variables.
 #' @slot value (Internal) Used internally to hold the value of the optimization objective at the solution.
 #' @slot status (Internal) Used internally to hold the status of the problem solution.
-#' @slot .cached_data (Internal) Used internally to hold cached matrix data.
-#' @slot .separable_problems (Internal) Used internally to hold separable problem data.
-#' @slot .size_metrics (Internal) Used internally to hold size metrics.
-#' @slot .solver_stats (Internal) Used internally to hold solver statistics.
+#' @slot solution (Internal) Used internally to hold the problem solution
+#' @slot cache (Internal) Used internally to hold cached matrix data.
+#' @slot solver_cache (Internal) Used internally to hold cached solver data.
+#' @slot size_metrics (Internal) Used internally to hold size metrics.
+#' @slot solver_stats (Internal) Used internally to hold solver statistics.
+#' @slot compilation_time (Internal) Used internally to hold the compilation time.
+#' @slot solve_time (Internal) Used internally to hold the solve time.
+#' @slot args (Internal) Used internally to hold the arguments (objective and constraints).
 #' @name Problem-class
 #' @aliases Problem
 #' @rdname Problem-class
-.Problem <- setClass("Problem", representation(objective = "Objective", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", .intermediate_chain = "ANY", .solving_chain = "ANY", .cached_chain_key = "list", .separable_problems = "list", .size_metrics = "SizeMetricsORNULL", .solver_stats = "list", args = "list", .solver_cache = "environment", .intermediate_problem = "ANY", .intermediate_inverse_data = "ANY"),
-                    prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = NULL, .solver_stats = NULL, args = list(), .solver_cache = new.env(parent=emptyenv()), .intermediate_problem = NULL, .intermediate_inverse_data = NULL),
-                    ## CLEANUP NOTE: The prototype should probably be
-                    ## removed in future versions since we never use
-                    ## it In particular, initializing the solver_cache
-                    ## environment at argument level poses problems in
-                    ## R 3.6 at least
-                    validity = function(object) {
-                      if(!inherits(object@objective, c("Minimize", "Maximize")))
-                        stop("[Problem: objective] objective must be Minimize or Maximize")
-                      if(!is.na(object@value))
-                        stop("[Problem: value] value should not be set by user")
-                      if(!is.na(object@status))
-                        stop("[Problem: status] status should not be set by user")
-                      if(!is.null(object@solution))
-                        stop("[Problem: solution] solution should not be set by user")
-                      if(!is.null(object@.intermediate_chain))
-                        stop("[Problem: .intermediate_chain] .intermediate_chain is an internal slot and should not be set by user")
-                      if(!is.null(object@.solving_chain))
-                        stop("[Problem: .solving_chain] .solving_chain is an internal slot and should not be set by user")
-                      if(length(object@.cached_chain_key) > 0)
-                        stop("[Problem: .cached_chain_key] .cached_chain_key is an internal slot and should not be set by user")
-                      if(length(object@.separable_problems) > 0)
-                        stop("[Problem: .separable_problems] .separable_problems is an internal slot and should not be set by user")
-                      if(!is.null(object@.size_metrics))
-                        stop("[Problem: .size_metrics] .size_metrics is an internal slot and should not be set by user")
-                      if(length(object@.solver_stats) > 0)
-                        stop("[Problem: .solver_stats] .solver_stats is an internal slot and should not be set by user")
-                      if(length(object@args) > 0)
-                        stop("[Problem: args] args is an internal slot and should not be set by user")
-                      if(length(object@.solver_cache) > 0)
-                        stop("[Problem: .solver_cache] .solver_cache is an internal slot and should not be set by user")
-                      if(!is.null(object@.intermediate_problem))
-                        stop("[Problem: .intermediate_problem] .intermediate_problem is an internal slot and should not be set by user")
-                      if(!is.null(object@.intermediate_inverse_data))
-                        stop("[Problem: .intermediate_inverse_data] .intermediate_inverse_data is an internal slot and should not be set by user")
-                      return(TRUE)
-                    }, contains = "Canonical")
+.Problem <- setClass("Problem", representation(objective = "Objective", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", cache = "Cache", solver_cache = "list", size_metrics = "SizeMetricsORNULL", solver_stats = "SolverStatsORNULL", compilation_time = "numeric", solve_time = "numeric", args = "list"),
+                    prototype(constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, cache = Cache(), solver_cache = list(), size_metrics = NULL, solver_stats = NULL, compilation_time = NA_real_, solve_time = NA_real_, args = list()), contains = "Canonical")
 
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @param constraints (Optional) A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
@@ -431,37 +432,55 @@ Problem <- function(objective, constraints = list()) {
   .Problem(objective = objective, constraints = constraints)
 }
 
-# Used by pool.map to send solve result back. Unsure if this is necessary for multithreaded operation in R.
-SolveResult <- function(opt_value, status, primal_values, dual_values) { list(opt_value = opt_value, status = status, primal_values = primal_values, dual_values = dual_values, class = "SolveResult") }
+Problem.validate_constraint <- function(constraint) {
+  if(is(constraint, "Constraint"))
+    return(constraint)
+  else if(is(constraint, "logical")) {
+    # Replace TRUE or FALSE values with equivalent Expressions.
+    if(constraint)
+      return(Constant(0) <= Constant(1))
+    else
+      return(Constant(1) <= Constant(0))
+  } else
+    stop("Problem has an invalid constraint of type ", class(constraint))
+}
 
-setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), variables, value = NA_real_, status = NA_character_, solution = NULL, .intermediate_chain = NULL, .solving_chain = NULL, .cached_chain_key = list(), .separable_problems = list(), .size_metrics = SizeMetrics(), .solver_stats = list(), args = list(), .solver_cache, .intermediate_problem = NULL, .intermediate_inverse_data = NULL) {
+setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, cache = Cache(), solver_cache = list(), size_metrics = NULL, solver_stats = NULL, compilation_time = NA_real_, solve_time = NA_real_, args = list()) {
+  if(is.null(constraints))
+    constraints <- list()
+  
+  # Check that objective is Minimize or Maximize.
+  if(!is(objective, "Minimize") && !is(objective, "Maximize"))
+    stop("Problem objective must be Minimize or Maximize")
+  
+  # Constraints and objective are immutable
   .Object@objective <- objective
-  .Object@constraints <- constraints
-  .Object@variables <- Problem.build_variables(.Object)
-  .Object@value <- value
-  .Object@status <- status
-  .Object@solution <- solution
-
-  .Object@.intermediate_problem <- .intermediate_problem
-  .Object@.intermediate_inverse_data <- .intermediate_inverse_data
-
-  # The intermediate and solving chains to canonicalize and solve the problem.
-  .Object@.intermediate_chain <- .intermediate_chain
-  .Object@.solving_chain <- .solving_chain
-  .Object@.cached_chain_key <- .cached_chain_key
-
-  # List of separable (sub)problems
-  .Object@.separable_problems <- .separable_problems
-
-  # Information about the dimensions of the problem and its constituent parts
-  .Object@.size_metrics <- SizeMetrics(.Object)
-
+  # Raise warning if objective has too many subexpressions.
+  if(node_count(.Object@objective) >= MAX_NODES)
+    warn("Objective constaints too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
+  
+  .Object@constraints <- lapply(constraints, Problem.validate_constraint)
+  # Raise warning if constraint has too many subexpressions.
+  for(i in seq_along(.Object@constraints)) {
+    constraint <- .Object@constraints[[i]]
+    if(node_count(constraints) >= MAX_NODES)
+      warn("Constaint ", i, " contains too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
+  }
+  
+  .Object@value <- NA_real_
+  .Object@status <- NA_character_
+  .Object@solution <- NULL
+  .Object@cache <- Cache()
+  .Object@solver_cache <- list()
+  
+  # Information about the dimensions of the problem and its constituent parts.
+  .Object@size_metrics <- NULL
+  
   # Benchmarks reported by the solver.
-  .Object@.solver_stats <- .solver_stats
+  .Object@solver_stats <- NULL
+  .Object@compilation_time <- NA_real_
+  .Object@solve_time <- NA_real_
   .Object@args <- list(.Object@objective, .Object@constraints)
-
-  # Cache for warm start.
-  .Object@.solver_cache <- new.env(parent=emptyenv())
   .Object
 })
 

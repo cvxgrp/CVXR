@@ -848,22 +848,110 @@ Problem.sort_candidate_solvers <- function(solvers) {
 #' @export
 setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, gp = FALSE, qcp = FALSE,
                                         requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, 
-                                        parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL,  ...) {
+                                        parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) {
+  # TODO: Need to update this function.
   if(parallel)
     stop("Unimplemented")
-  object <- .construct_chains(object, solver = solver, gp = gp)
-  tmp <- perform(object@.solving_chain, object@.intermediate_problem)
-  object@.solving_chain <- tmp[[1]]
-  data <- tmp[[2]]
-  solving_inverse_data <- tmp[[3]]
-  solution <- reduction_solve_via_data(object@.solving_chain, object, data, warm_start,
-                                       verbose, feastol, reltol, abstol, num_iter, list(...))
-
-  full_chain <- prepend(object@.solving_chain, object@.intermediate_chain)
-  inverse_data <- c(object@.intermediate_inverse_data, solving_inverse_data)
-  # object <- unpack_results(object, solution, full_chain, inverse_data)
-  # return(value(object))
-  unpack_results(object, solution, full_chain, inverse_data)
+  
+  if(verbose) {
+    divider <- paste(rep("=", 79), collapse = "")
+    version <- packageVersion("CVXR")
+    cat(paste(divider, sprintf("%38.4s", "CVXR"), sprintf("%39.6s", paste("v", version, sep = "")), divider, sep = "\n"))
+  }
+  
+  for(parameter in parameters(object)) {
+    if(is.na(value(parameter)))
+      stop("A Parameter (whose name is ", name(parameter), " ) does not have a value associated with it; all Parameter objects must have values before solving a problem")
+  }
+  
+  if(verbose) {
+    n_variables <- sum(sapply(variables(object), function(v) { prod(dim(v)) }))
+    n_parameters <- sum(sapply(parameters(object), function(p) { prod(dim(p)) }))
+    print(paste("Your problem has", n_variables, "variables,", length(object@constraints), "constraints, and", n_parameters, "parameters"))
+    
+    curvatures <- c()
+    if(is_dcp(object))
+      curvatures <- c(curvatures, "DCP")
+    if(is_dgp(object))
+      curvatures <- c(curvatures, "DGP")
+    if(is_dqcp(object))
+      curvatures <- c(curvatures, "DQCP")
+    print(paste("It is compliant with the following grammars:", paste(curvatures, collapse = ", ")))
+    
+    if(n_parameters == 0)
+      print("(If you need to solve this problem multiple times, but with different data, consider using parameters)")
+    print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
+  }
+  
+  INSTALLED_SOLVERS <- installed_solvers()
+  if(requires_grad) {
+    dpp_context <- ifelse(gp, "dgp", "dcp")
+    if(qcp)
+      stop("Cannot compute gradients of DQCP problems")
+    else if(!is_dpp(object, dpp_context))
+      stop("Problem is not DPP (when requires_grad = TRUE, problem must be DPP)")
+    else if(!is.na(solver) && !is(solver, "SCS") && !is(solver, "DIFFCP"))
+      stop("When requires_grad = TRUE, the only supported solver is SCS")
+    else if(!("DIFFCP" %in% INSTALLED_SOLVERS))
+      stop("The R library diffcp must be installed to differentiate through problems")
+    else
+      solver <- DIFFCP
+  } else {
+    if(gp && qcp)
+      stop("At most one of gp and qcp can be TRUE")
+    if(qcp && !is_dcp(object)) {
+      if(!is_dqcp(object))
+        stop("The problem is not DQCP")
+      if(verbose)
+        stop("Reducing DQCP problem to a one-parameter family of DCP problems, for bisection")
+      reductions <- list(Dqcp2Dcp())
+      start_time <- Sys.time()
+      if(inherits(object@objective, "Maximize")) {
+        reductions <- c(list(FlipObjective), reductions)
+        # FlipObjective flips the sign of the objective
+        low_in <- low
+        high_in <- high
+        if(!is.na(high))
+          low_in <- high*-1
+        if(!is.na(low))
+          high_in <- low*-1
+      }
+      
+      chain <- Chain(problem = object, reductions = reductions)
+      soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low_in, high = high_in, ...)
+      object <- unpack_problem(object, retrieve(chain, soln))
+      return(object@value)
+    }
+  }
+  
+  kwargs <- c(list(low = low_in, high = high_in), list(...))
+  tmp <- get_problem_data(object, solver, gp, enforce_dpp, ignore_dpp, verbose, canon_backend, kwargs)
+  data <- tmp[[1]]
+  solving_chain <- tmp[[2]]
+  inverse_data <- tmp[[3]]
+  
+  if(verbose) {
+    divider <- paste(rep("-", 79), collapse = "")
+    cat(paste(divider, sprintf("%45.16s", "Numerical solver"), divider, sep = "\n"))
+    solver_name <- name(solving_chain@reductions[[length(solving_chain@reductions)]])
+    print(paste("Invoking solver", solver_name, "to obtain a solution"))
+  }
+  
+  start_time <- Sys.time()
+  solution <- solve_via_data(solving_chain, object, data, warm_start, verbose, kwargs)
+  end_time <- Sys.time()
+  object@solve_time <- as.numeric(end_time - start_time)
+  object <- unpack_results(object, solution, solving_chain, inverse_data)
+  
+  if(verbose) {
+    divider <- paste(rep("-", 79), collapse = "")
+    cat(paste(divider, sprintf("%40.7s", "Summary"), divider, sep = "\n"))
+    print(paste("Problem status:", object@status))
+    print(paste("Optimal value:", object@value))
+    print(paste("Compilation took", object@compilation_time, "seconds"))
+    print(paste("Solver (including time spent in interface) took", object@solve_time, "seconds"))
+  }
+  return(list(object, object@value))
 })
 
 #' @docType methods
@@ -1327,13 +1415,13 @@ setMethod("unpack_results", "Problem", function(object, solution, chain, inverse
   if(solution@status %in% ERROR)
     stop("Solver failed. Try another solver, or solve with verbose = TRUE for more information")
   
-  # object <- unpack_problem(object, solution)
-  # object@solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
-  # return(object)
+  object <- unpack_problem(object, solution)
+  object@solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
+  return(object)
 
-  results <- unpack_problem(object, solution)
-  solver_stats <- SolverStats(solution@attr, name(chain@solver))
-  return(c(results, solver_stats))
+  # results <- unpack_problem(object, solution)
+  # solver_stats <- SolverStats(solution@attr, name(chain@solver))
+  # return(c(results, solver_stats))
 })
 
 handleNoSolution <- function(object, status) {
@@ -1401,6 +1489,8 @@ saveValuesById <- function(variables, offset_map, result_vec) {
     names(result) = sapply(variables, function(x) as.character(id(x)))
     result
 }
+
+# TODO: Implement show, as.character, and check arithmetic operations for Problem object.
 
 #'
 #' Arithmetic Operations on Problems

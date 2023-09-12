@@ -457,14 +457,14 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
   .Object@objective <- objective
   # Raise warning if objective has too many subexpressions.
   if(node_count(.Object@objective) >= MAX_NODES)
-    warn("Objective constaints too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
+    warning("Objective constraints too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
   
   .Object@constraints <- lapply(constraints, Problem.validate_constraint)
   # Raise warning if constraint has too many subexpressions.
   for(i in seq_along(.Object@constraints)) {
     constraint <- .Object@constraints[[i]]
     if(node_count(constraints) >= MAX_NODES)
-      warn("Constaint ", i, " contains too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
+      warning("Constraint ", i, " contains too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
   }
   
   .Object@value <- NA_real_
@@ -646,7 +646,7 @@ setMethod("solver_stats", "Problem", function(object) { object@solver_stats })
 #' @param verbose If TRUE, print verbose output related to problem compilation.
 #' @param solver_opts A list of options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.
 #' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "logical", enforce_dpp = "logical", ignore_dpp = "logical", verbose = "logical", canon_backend = "character", solver_opts = "ListORNULL"), function(object, solver, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, verbose = FALSE, canon_backend = NA_character_, solver_ops = NULL) {
+setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, verbose = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
   # Invalid DPP setting.
   # Must be checked here to avoid cache issues.
   if(enforce_dpp && ignore_dpp)
@@ -731,78 +731,124 @@ setMethod("get_problem_data", signature(object = "Problem", solver = "character"
 # Find candidate solvers for the current problem. If solver is not NA, it checks if the specified solver is compatible with the problem passed.
 .find_candidate_solvers <- function(object, solver = NA_character_, gp = FALSE) {
   candidates <- list(qp_solvers = list(), conic_solvers = list())
-
+  if(is(solver, "Solver"))
+    return(.add_custom_solver_candidates(solver))
+  
   INSTALLED_SOLVERS <- installed_solvers()
-  INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
 
   if(!is.na(solver)) {
     if(!(solver %in% INSTALLED_SOLVERS))
       stop("The solver ", solver, " is not installed")
     if(solver %in% CONIC_SOLVERS)
-      candidates$conic_solvers <- c(candidates$conic_solvers, solver)
+      candidates$conic_solvers <- c(candidates$conic_solvers, list(solver))
     if(solver %in% QP_SOLVERS)
-      candidates$qp_solvers <- c(candidates$qp_solvers, solver)
+      candidates$qp_solvers <- c(candidates$qp_solvers, list(solver))
   } else {
     candidates$qp_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% QP_SOLVERS]
-    candidates$conic_solvers <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
+    candidates$conic_solvers <- list()
+    # ECOS_BB can only be called explicitly.
+    for(slv in INSTALLED_SOLVERS) {
+      if(slv %in% CONIC_SOLVERS && slv != ECOS_BB)
+        candidates$conic_solvers <- c(candidates$conic_solvers, list(slv))
+    }
   }
-
+  
   # If gp, we must have only conic solvers.
   if(gp) {
     if(!is.na(solver) && !(solver %in% CONIC_SOLVERS))
-      stop("When gp = TRUE, solver must be a conic solver. Try calling solve() with solver = ECOS()")
+      stop("When gp = TRUE, solver must be a conic solver (received ", solver, "); try calling solve() with solver = 'ECOS'")
     else if(is.na(solver))
       candidates$qp_solvers <- list()   # No QP solvers allowed.
   }
-
+  
   if(is_mixed_integer(object)) {
+    # ECOS_BB must be called explicitly.
+    if(identical(INSTALLED_MI_SOLVERS, list(ECOS_BB)) && solver != ECOS_BB)
+      stop("You need a mixed-integer solver for this model. Refer to the documentation
+            https://www.cvxpy.org/tutorial/advanced/index.html#mixed-integer-programs
+            for discussion on this topic.
+
+            Quick fix 1: if you install the python package CVXOPT (pip install cvxopt),
+            then CVXR can use the open-source mixed-integer linear programming
+            solver `GLPK`. If your problem is nonlinear then you can install SCIP
+            (pip install pyscipopt).
+
+            Quick fix 2: you can explicitly specify solver = 'ECOS_BB'. This may result
+            in incorrect solutions and is not recommended.")
+  
+    # TODO: Provide a useful error message when the problem is nonlinear, but the only
+    # installed mixed-integer solvers are MILP solvers (e.g., GLPK_MI).
     if(length(candidates$qp_solvers) > 0) {
       qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
       candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
     }
-
+    
     if(length(candidates$conic_solvers) > 0) {
       conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
       candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
     }
-
+    
     if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
       stop("Problem is mixed-integer, but candidate QP/Conic solvers are not MIP-capable")
+  }
+  
+  return(candidates)
+}
+
+# Returns a list of candidate solvers where custom_solver is the only potential option.
+.add_custom_solver_candidates <- function(object, custom_solver) {
+  if(name(custom_solver) %in% SOLVERS)
+    stop("Custom solvers must have a different name than the officially supported ones")
+  
+  candidates <- list("qp_solvers" = list(), "conic_solvers" = list())
+  if(!is_mixed_integer(object) || mip_capable(custom_solver)) {
+    if(is(custom_solver, "QpSolver")) {
+      SOLVER_MAP_QP[[name(custom_solver)]] <- custom_solver
+      candidates$qp_solvers <- list(name(custom_solver))
+    } else if(is(custom_solver, "ConicSolver")) {
+      SOLVER_MAP_CONIC[[name(custom_solver)]] <- custom_solver
+      candidates$conic_solvers <- list(name(custom_solver))
+    }
   }
   return(candidates)
 }
 
-#'
-#' @param object A \linkS4class{Problem} class.
-#' @param solver A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.
-#' @param gp Is the problem a geometric problem?
-#' @describeIn Problem Get the problem data passed to the specified solver.
-setMethod("get_problem_data", signature(object = "Problem", solver = "character", gp = "missing"), function(object, solver, gp) {
-  get_problem_data(object, solver, gp = FALSE)
-})
+# Construct the chains required to reformulate and solve the problem. 
+# In particular, this function 1) finds the candidates solvers, 2) constructs the solving chain that performs the numeric reductions and solves the problem.
+.construct_chain <- function(object, solver = NA_character_, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
+  candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
+  .sort_candidate_solvers(object, candidate_solvers)
+  return(construct_solving_chain(object, candidate_solvers, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, canon_backend = canon_backend, solver_opts = solver_opts))
+}
 
-.construct_chains <- function(object, solver = NA, gp = FALSE) {
-  chain_key <- list(solver, gp)
-
-  if(!identical(chain_key, object@.cached_chain_key)) {
-    candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
-    object@.intermediate_chain <- construct_intermediate_chain(object, candidate_solvers, gp = gp)
-    tmp <- perform(object@.intermediate_chain, object)
-    object@.intermediate_chain <- tmp[[1]]
-    object@.intermediate_problem <- tmp[[2]]
-    object@.intermediate_inverse_data <- tmp[[3]]
-
-    object@.solving_chain <- construct_solving_chain(object@.intermediate_problem, candidate_solvers)
-    object@.cached_chain_key <- chain_key
+# Sorts candidate solvers lists according to CONIC_SOLVERS/QP_SOLVERS.
+Problem.sort_candidate_solvers <- function(solvers) {
+  if(length(solvers$conic_solvers) > 1) {
+    idx <- match(solvers$conic_solvers, CONIC_SOLVERS)
+    solvers$conic_solvers <- CONIC_SOLVERS[sort(idx, decreasing = FALSE)]
   }
+  if(length(solvers$qp_solvers) > 1) {
+   idx <- match(solvers$qp_solvers, QP_SOLVERS)
+   solvers$qp_solvers <- QP_SOLVERS[sort(idx, decreasing = FALSE)]
+  }
+  return(solvers)
+}
+
+.invalidate_cache <- function(object) {
+  object@cache_key <- NA_character_
+  object@solving_chain <- NULL
+  object@param_prog <- NULL
+  object@inverse_data <- NULL
   return(object)
 }
 
+#' @describeIn Problem This internal method solves a DCP compliant optimization problem. It saves the values of primal and dual variables in the Variable and Constraint objects, respectively.
 #' @docType methods
 #' @rdname psolve
 #' @export
-setMethod("psolve", "Problem", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE,
-                                        parallel = FALSE, gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL,  ...) {
+setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, gp = FALSE, qcp = FALSE,
+                                        requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, 
+                                        parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL,  ...) {
   if(parallel)
     stop("Unimplemented")
   object <- .construct_chains(object, solver = solver, gp = gp)
@@ -980,22 +1026,199 @@ valuesById <- function(object, results_dict, sym_data, solver) {
 #   return(object)
 # }
 
+#' @describeIn Problem Compute the gradient of a solution with respect to parameters.
+setMethod("backward", "Problem", function(object) {
+  if(!(DIFFCP %in% object@solver_cache))
+    stop("backward can only be called after calling solve with requires_grad = TRUE")
+  else if(!(object@status %in% SOLUTION_PRESENT))
+    stop("Backpropagating through infeasible/unbounded problems is not yet supported. Please file an issue on Github if you need this feature")
+  
+  # TODO: Backpropagate through dual variables as well.
+  backward_cache <- object@solver_cache[[DIFFCP]]
+  DT <- backward_cache$DT
+  zeros <- matrix(0, nrow = nrow(backward_cache$s), ncol = ncol(backward_cache$s))
+  del_vars <- list()
+  
+  gp <- gp(object@cache)
+  for(variable in variables(object)) {
+    vid_char <- as.character(id(variable))
+    if(is.na(variable@gradient))
+      del_vars[[vid_char]] <- matrix(1, nrow = nrow(variable), ncol = ncol(variable))
+    else
+      del_vars[[vid_char]] <- as.vector(variable@gradient)
+    
+    if(gp) {
+      # x_gp <- exp(x_cone_program),
+      # dx_gp/d x_cone_program <- exp(x_cone_program) <- x_gp
+      del_vars[[vid_char]] <- del_vars[[vid_char]]*value(variable)
+    }
+  }
+  
+  dx <- split_adjoint(object@cache@param_prog, del_vars)
+  start_time <- Sys.time()
+  tmp <- DT(dx, zeros, zeros)
+  dA <- tmp[[1]]
+  db <- tmp[[2]]
+  dc <- tmp[[3]]
+  end_time <- Sys.time()
+  backward_cache$DT_TIME <- end_time - start_time
+  backward_cache$DT_TIME <- as.numeric(backward_cache$DT_TIME)
+  dparams <- apply_param_jac(object@cache@param_prog, dc, -dA, db)
+  
+  if(!gp) {
+    for(i in seq_along(object@parameters)) {
+      pid_char <- as.character(id(object@parameters[[i]]))
+      object@parameters[[i]]@gradient <- dparams[[pid_char]]
+    }
+  } else {
+    dgp2dcp <- get(object@cache@solving_chain, "Dgp2Dcp")
+    old_params_to_new_params <- dgp2dcp@canon_methods@parameters
+    for(i in seq_along(object@parameters)) {
+      param <- object@parameters[[i]]
+      # Note: If param is an exponent in a Power or GmatMul atom, then the 
+      # parameter passes through unchanged to the DCP program; if the param is
+      # also used elsewhere (not as an exponent), then param will also be in
+      # ol_params_to_new_params. Therefore, 
+      # param@gradient = dparams[[as.character(id(param))]] (or 0) + 1/param*dparams[[as.character(id(new_param))]]
+      #
+      # Note that id(param) is in dparams if and only if param was used as an 
+      # exponent (because this means that the parameter entered the DCP problem 
+      # unchanged).
+      pid_char <- as.character(id(param))
+      if(pid_char %in% names(dparams))
+        grad <- dparams[[pid_char]]
+      else
+        grad <- 0.0
+      
+      if(pid_char %in% names(old_params_to_new_params)) {
+        new_param <- old_params_to_new_params[[pid_char]]
+        # value(new_param) == log(param), apply chain rule.
+        grad <- grad + (1.0 / value(param)) * dparams[[id(new_param)]]
+      }
+      object@parameters[[i]]@gradient <- grad
+    }
+  }
+  return(object)
+})
+
+#' @describeIn Problem Apply the derivative of the solution map to perturbations in the parameters.
+setMethod("derivative", "Problem", function(object) {
+  if(!(DIFFCP %in% object@solver_cache))
+    stop("derivative can only be called after calling solve with requires_grad = TRUE")
+  else if(!(object@status %in% SOLUTION_PRESENT))
+    stop("Differentiating through infeasible/unbounded problems is not yet supported. Please file an issue on Github if you need this feature")
+  
+  # TODO: Forward differentiate dual variables as well.
+  backward_cache <- object@solver_cache[[DIFFCP]]
+  param_prog <- object@cache@param_prog
+  D <- backward_cache$D
+  param_deltas <- list()
+  
+  gp <- gp(object@cache)
+  if(gp)
+    dgp2dcp <- get(object@cache@solving_chain, "Dgp2Dcp")
+  
+  if(is.null(parameters(object)) || length(parameters(object)) == 0) {
+    for(i in seq_along(object@variables)) {
+      vdim <- dim(object@variables[[i]])
+      object@variables[[i]]@delta <- matrix(0, nrow = vdim[1], ncol = vdim[2])
+    }
+    return(object)
+  }
+  
+  for(param in parameters(object)) {
+    pid <- id(param)
+    pid_char <- as.character(pid)
+    
+    if(is.na(param@delta))
+      delta <- matrix(0, nrow = nrow(param), ncol = ncol(param))
+    else
+      delta <- param@delta
+    if(gp) {
+      if(pid_char %in% names(dgp2dcp@canon_methods@parameters))
+        new_param_id <- id(dgp2dcp@canon_methods@parameters[[pid_char]])
+      else
+        new_param_id <- pid
+      param_deltas[[as.character(new_param_id)]] <- 1.0/value(param) * as.vector(delta)
+      if(as.character(id(param)) %in% names(param_prog@param_id_to_col)) {
+        # Here, param generated a new parameter and also passed through to the param cone prog unchanged (because it was an exponent of a power).
+        param_deltas[[pid_char]] <- as.vector(delta)
+      }
+    } else
+      param_deltas[[pid_char]] <- as.vector(delta)
+  }
+  
+  tmp <- apply_parameters(param_prog, param_deltas, zero_offset = TRUE)
+  dc <- tmp[[1]]
+  dA <- tmp[[3]]
+  db <- tmp[[4]]
+  
+  start_time <- Sys.time()
+  dx <- D(-dA, db, dc)[[1]]
+  end_time <- Sys.time()
+  backward_cache$D_TIME <- end_time - start_time
+  backward_cache$D_TIME <- as.numeric(backward_cache$D_TIME)
+  dvars <- split_solution(param_prog, dx, sapply(variables(object), id))
+  
+  for(i in seq_along(object@variables)) {
+    vid_char <- as.character(id(object@variables[[i]]))
+    object@variables[[i]]@delta <- dvars[[vid_char]]
+    if(gp) {
+      # x_gp = exp(x_cone_program),
+      # dx_gp/d x_cone_program = exp(x_cone_program) = x_gp
+      var_val <- value(object@variables[[i]])
+      object@variables[[i]]@delta <- object@variables[[i]]@delta*var_val
+    }
+  }
+  return(object)
+})
+
+.clear_solution <- function(object) {
+  for(i in seq_along(object@variables)) {
+    # value(object@variables[[i]]) <- NA_real_
+    object@variables[[i]] <- save_value(object@variables[[i]], NA_real_)
+  }
+  
+  for(i in seq_along(object@constraints)) {
+    for(j in seq_along(object@constraints[[i]]@dual_variables)) {
+      # value(object@constraints[[i]]@dual_variables[[j]]) <- NA_real_
+      object@constraints[[i]]@dual_variables[[j]] <- save_value(object@constraints[[i]]dual_variables[[j]], NA_real_)
+    }
+  }
+  
+  object@value <- NA_real_
+  object@status <- NA_character_
+  object@solution <- NULL
+  return(object)
+}
+
 setMethod("unpack_problem", signature(object = "Problem", solution = "Solution"), function(object, solution) {
   # if(solution@status %in% SOLUTION_PRESENT) {
-  #   for(v in variables(object))
-  #     object <- save_value(v, solution@primal_vars[id(v)])
-  #   for(c in object@constraints) {
-  #     if(id(c) %in% solution@dual_vars)
-  #       object <- save_value(c, solution@dual_vars[id(c)])
+  #   for(i in seq_along(object@variables)) {
+  #     vid_char <- as.character(id(object@variables[[i]]))
+  #     object@variables[[i]] <- save_value(object@variables[[i]], solution@primal_vars[[vid_char]])
   #   }
+  #   
+  #   for(i in seq_along(object@constraints)) {
+  #     cid_char <- as.character(id(object@constraints[[i]]))
+  #     if(cid_char %in% names(solution@dual_vars))
+  #       object@constraints[[i]] <- save_dual_value(object@constraints[[i]], solution@dual_vars[[cid_char]])
+  #   }
+  #
+  #   # Eliminate confusion of problem@value versus objective@value
+  #   object@value <- object@objective@value
   # } else if(solution@status %in% INF_OR_UNB) {
-  #   for(v in variables(object))
-  #     object <- save_value(v, NA)
-  #   for(constr in object@constraints)
-  #     object <- save_value(constr, NA)
+  #   for(i in seq_along(object@variables))
+  #     object@variables[[i]] <- save_value(object@variables[[i]], NA_real_)
+  #   
+  #   for(i in seq_along(object@constraints)) {
+  #     for(j in seq_along(object@constraints[[i]]@dual_variables))
+  #       object@constraints[[i]]@dual_variables[[j]] <- save_value(object@constraints[[i]]@dual_variables[[j]], NA_real_)
+  #   }
+  #   object@value <- solution@opt_val
   # } else
   #   stop("Cannot unpack invalid solution")
-  # object@value <- solution@opt_val
+  #
   # object@status <- solution@status
   # object@solution <- solution
   # return(object)
@@ -1095,9 +1318,19 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
   solution <- invert(chain, solution, inverse_data)
+  
+  if(solution@status %in% INACCURATE)
+    warning("Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose = TRUE for more information")
+  if(solution@status == INFEASIBLE_OR_UNBOUNDED)
+    warning(paste("The problem is either infeasible or unbounded, but the solver cannot tell which. Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
+                  "For GUROBI and CPLEX, you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...)", sep = "\n"))
+  if(solution@status %in% ERROR)
+    stop("Solver failed. Try another solver, or solve with verbose = TRUE for more information")
+  
   # object <- unpack_problem(object, solution)
-  # object@.solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
+  # object@solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
   # return(object)
+
   results <- unpack_problem(object, solution)
   solver_stats <- SolverStats(solution@attr, name(chain@solver))
   return(c(results, solver_stats))

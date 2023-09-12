@@ -1490,7 +1490,27 @@ saveValuesById <- function(variables, offset_map, result_vec) {
     result
 }
 
-# TODO: Implement show, as.character, and check arithmetic operations for Problem object.
+setMethod("as.character", "Problem", function(x) {
+  if(length(object@constraints) == 0)
+    return(as.character(object@objective))
+  else {
+    subect_to <- "subject to "
+    lines <- c(as.character(object@objective), paste(subject_to, object@constraints[[1]], sep = ""))
+    if(length(object@constraints) > 1) {
+      for(i in seq(2, length(object@constraints))) {
+        constr <- object@constraints[[i]]
+        lines <- c(lines, paste(rep(" ", length(subject_to)), as.character(constr), collapse = ""))
+      }
+    }
+    return(paste(lines,  collapse = "\n"))
+  }
+})
+
+setMethod("show", "Problem", function(object) {
+  cat("Problem(", as.character(object@objective), ", (", paste(sapply(object@constraints, as.character), ", "), "))", sep = "")
+})
+
+setMethod("is_constant", "Problem", function(object) { FALSE })
 
 #'
 #' Arithmetic Operations on Problems
@@ -1517,7 +1537,7 @@ setMethod("+", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { e2 
 
 #' @rdname Problem-arith
 setMethod("+", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective + e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+  Problem(objective = e1@objective + e2@objective, constraints = unique_list(c(e1@constraints, e2@constraints)))
 })
 
 #' @rdname Problem-arith
@@ -1528,7 +1548,7 @@ setMethod("-", signature(e1 = "numeric", e2 = "Problem"), function(e1, e2) { if(
 
 #' @rdname Problem-arith
 setMethod("-", signature(e1 = "Problem", e2 = "Problem"), function(e1, e2) {
-  Problem(objective = e1@objective - e2@objective, constraints = unique(c(e1@constraints, e2@constraints)))
+  Problem(objective = e1@objective - e2@objective, constraints = unique_list(c(e1@constraints, e2@constraints)))
 })
 
 #' @rdname Problem-arith

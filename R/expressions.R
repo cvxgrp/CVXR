@@ -44,12 +44,12 @@ setMethod("flatten", "numeric", function(object) { matrix(object, ncol = 1) })
   cast_op
 }
 
-# .value_impl.Expression <- function(object) { object@value }
-setMethod("value_impl", "Expression", function(object) { object@value })
-
 #' @param x,object An \linkS4class{Expression} object.
 #' @describeIn Expression The value of the expression.
 setMethod("value", "Expression", function(object) { stop("Unimplemented") })
+
+# .value_impl.Expression <- function(object) { object@value }
+setMethod("value_impl", "Expression", function(object) { object@value })
 
 #' @describeIn Expression The (sub/super)-gradient of the expression with respect to each variable.
 setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
@@ -57,14 +57,15 @@ setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
 #' @describeIn Expression A list of constraints describing the closure of the region where the expression is finite.
 setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
 
-setMethod("show", "Expression", function(object) {
-  cat("Expression(", curvature(object), ", ", sign(object), ", ", paste(dim(object), collapse = ", "), ")", sep = "")
-})
-
 #' @describeIn Expression The string representation of the expression.
 #' @export
 setMethod("as.character", "Expression", function(x) {
-  paste("Expression(", curvature(x), ", ", sign(x), ", ", paste(dim(x), collapse = ", "), ")", sep = "")
+  # name(x)
+  paste("Expression(", curvature(x), ", ", sign(x), ", (", paste(dim(x), collapse = ", "), "))", sep = "")
+})
+
+setMethod("show", "Expression", function(object) {
+  cat("Expression(", curvature(object), ", ", sign(object), ", (", paste(dim(object), collapse = ", "), "))", sep = "")
 })
 
 #' @describeIn Expression The name of the expression.
@@ -93,6 +94,18 @@ setMethod("curvature", "Expression", function(object) {
     curvature_str <- CONVEX
   else if(is_concave(object))
     curvature_str <- CONCAVE
+  else if(is_log_log_affine(object))
+    curvature_str <- LOG_LOG_AFFINE
+  else if(is_log_log_convex(object))
+    curvature_str <- LOG_LOG_CONVEX
+  else if(is_log_log_concave(object))
+    curvature_str <- LOG_LOG_CONCAVE
+  else if(is_quasilinear(object))
+    curvature_str <- QUASILINEAR
+  else if(is_quasiconvex(object))
+    curvature_str <- QUASICONVEX
+  else if(is_quasiconcave(object))
+    curvature_str <- QUASICONCAVE
   else
     curvature_str <- UNKNOWN
   curvature_str
@@ -123,7 +136,8 @@ setMethod("log_log_curvature", "Expression", function(object) {
 })
 
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
-setMethod("is_constant", "Expression", function(object) { length(variables(object)) == 0 || 0 %in% dim(object) })
+setMethod("is_constant", "Expression", function(object) { (0 %in% dim(object)) || all(sapply(object@args, is_constant)) }
+})
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
@@ -135,7 +149,13 @@ setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The expression is DCP if it is convex or concave.
-setMethod("is_dcp", "Expression", function(object) { is_convex(object) || is_concave(object) })
+setMethod("is_dcp", "Expression", function(object, doo = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_convex(object) || is_concave(object))
+  }
+  return(is_convex(object) || is_concave(object) )
+})
 
 #' @describeIn Expression Is the expression log-log constant, i.e., elementwise positive?
 setMethod("is_log_log_constant", "Expression", function(object) {
@@ -160,7 +180,28 @@ setMethod("is_log_log_convex", "Expression", function(object) { stop("Unimplemen
 setMethod("is_log_log_concave", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The expression is DGP if it is log-log DCP.
-setMethod("is_dgp", "Expression", function(object) { is_log_log_convex(object) || is_log_log_concave(object) })
+setMethod("is_dgp", "Expression", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_log_log_convex(object) || is_log_log_concave(object))
+  }
+  return(is_log_log_convex(object) || is_log_log_concave(object))
+})
+
+#' @describeIn Expression Is the expression a disciplined parametrized expression?
+setMethod("is_dpp", "Expression", function(object, context = "dcp") { stop("Unimplemented") })
+
+#' @describeIn Expression Is the expression quasiconvex?
+setMethod("is_quasiconvex", "Expression", function(object) { is_convex(object) })
+
+#' @describeIn Expression Is the expression quasiconcave?
+setMethod("is_quasiconcave", "Expression", function(object) { is_concave(object) })
+
+#' @describeIn Expression Is the expression quasilinear?
+setMethod("is_quasilinear", "Expression", function(object) { is_quasiconvex(object) && is_quasiconcave(object) })
+
+#' @describeIn Expression Is the expression DQCP?
+setMethod("is_dqcp", "Expression", function(object) { is_quasiconvex(object) || is_quasiconcave(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a Hermitian matrix.
 setMethod("is_hermitian", "Expression", function(object) { is_real(object) && is_symmetric(object) })
@@ -174,8 +215,14 @@ setMethod("is_nsd", "Expression", function(object) { FALSE })
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
 setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
 
+#' @describeIn Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
+setMethod("has_quadratic_term", "Expression", function(object) { is_constant(object) })
+
 #' @describeIn Expression A logical value indicating whether the expression is symmetric.
 setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression \eqn{X} is a real matrix that satisfies \eqn{X + X^T = 0}
+setMethod("is_skew_symmetric", "Expression", function(object) { FALSE })
 
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
 setMethod("is_pwl", "Expression", function(object) { is_constant(object) })
@@ -194,11 +241,11 @@ setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is
 #' @rdname sign
 #' @export
 setMethod("sign", "Expression", function(x) {
-  if(!is.na(is_zero(x)) && is_zero(x))
+  if(is_zero(x))
     sign_str <- ZERO
-  else if(!is.na(is_nonneg(x)) && is_nonneg(x))
+  else if(is_nonneg(x))
     sign_str <- NONNEG
-  else if(!is.na(is_nonpos(x)) && is_nonpos(x))
+  else if(is_nonpos(x))
     sign_str <- NONPOS
   else
     sign_str <- UNKNOWN
@@ -227,13 +274,13 @@ setMethod("is_imag", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_complex", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The number of entries in the expression.
-setMethod("size", "Expression", function(object) { as.integer(prod(dim(object))) })
+setMethod("size", "Expression", function(object) { size_from_dim(dim(object)) })
 
 #' @describeIn Expression The number of dimensions of the expression.
 setMethod("ndim", "Expression", function(object) { length(dim(object)) })
 
 #' @describeIn Expression Vectorizes the expression.
-setMethod("flatten", "Expression", function(object) { Vec(object) })
+setMethod("flatten", "Expression", function(object, byrow = FALSE) { Vec(object, byrow = byrow) })
 
 #' @describeIn Expression A logical value indicating whether the expression is a scalar.
 setMethod("is_scalar", "Expression", function(object) { all(dim(object) == 1) })
@@ -409,6 +456,12 @@ setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @docType methods
 #' @rdname power
 setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
+
+#' @docType methods
+#' @rdname power
+setMethod("^", signature(e1 = "numeric", e2 = "Expression"), function(e1, e2) {
+  stop("CVXR currently does not support variables on the right side of ^. Consider using the identity that a^x = exp(log(a)*x))")
+})
 
 # Matrix operators
 #' Matrix Transpose
@@ -587,12 +640,12 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
   .Object@dim <- as.integer(dim)
 
   if((PSD || NSD || symmetric || diag || hermitian) && (length(dim) != 2 || dim[1] != dim[2]))
-    stop("Invalid dimensions ", dim, ". Must be a square matrix.")
+    stop("Invalid dimensions (", paste(dim, collapse = ", "), "). Must be a square matrix.")
 
   # Construct matrix of boolean/integer-constrained indices.
   if(is.logical(boolean)) {
     if(boolean)
-      .Object@boolean_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { 1:k })))
+      .Object@boolean_idx <- as.matrix(do.call(expand.grid, lapply(dim, function(k) { seq(k) })))
     else
       .Object@boolean_idx <- matrix(0, nrow = 0, ncol = length(dim))
     bool_attr <- boolean
@@ -854,5 +907,11 @@ setMethod("is_nsd", "Leaf", function(object) { object@attributes$NSD })
 #' @describeIn Leaf Leaf nodes are always quadratic.
 setMethod("is_quadratic", "Leaf", function(object) { TRUE })
 
+#' @describeIn Leaf Leaf nodes are not quadratic terms.
+setMethod("has_quadratic_term", "Leaf", function(object) { FALSE })
+
 #' @describeIn Leaf Leaf nodes are always piecewise linear.
 setMethod("is_pwl", "Leaf", function(object) { TRUE })
+
+#' @describeIn Leaf Is the expression a disciplined parametrized expression?
+setMethod("is_dpp", "Leaf", function(object, context = "dcp") { TRUE })

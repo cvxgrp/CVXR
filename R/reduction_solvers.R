@@ -171,9 +171,9 @@ setMethod("is_installed", "ConstantSolver", function(solver) { TRUE })
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn ConstantSolver Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+setMethod("solve_via_data", "ConstantSolver", function(object, data, warm_start, verbose, solver_opts, solver_cache = NULL) {
   ## if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
-  return(reduction_solve(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts))
+  return(reduction_solve(object, data, warm_start, verbose, solver_opts))
 })
 
 #' @param problem A \linkS4class{Problem} object.
@@ -185,7 +185,7 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
   if(all(sapply(problem@constraints, function(c) { !is.na(value(c)) })))
     return(Solution(OPTIMAL, value(problem@objective), list(), list(), list()))
   else
-    return(Solution(INFEASIBLE, NA, list(), list(), list()))
+    return(Solution(INFEASIBLE, NA_real_, list(), list(), list()))
 })
 
 
@@ -328,23 +328,21 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
     reductions <- c(reductions, Complex2Real())
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
-
-  if(!gp) {
-      if (!is_dcp(problem)) {
-          err_msg  <- "Problem does not follow DCP rules."
-          if (is_dgp(problem)) {
-              err_msg  <- paste(err_msg, "However, the problem does follow DGP rules. Consider calling this function with gp = TRUE")
-          }
-          stop(err_msg)
-      }
-  } else {
-      if(!is_dgp(problem)) {
-          err_msg  <- "Problem does not follow DGP rules."
-          if (is_dcp(problem)) {
-              err_msg  <- paste(err_msg, "However, the problem does follow DCP rules. Consider calling this function with gp = FALSE")
-          }
-          stop(err_msg)
-      }
+  
+  if(!gp && !is_dcp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DCP")
+    if(is_dgp(problem))
+      append <- paste(append, "However, the problem does follow DGP rules. Consider calling solve() with gp = TRUE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop(paste("Problem does not follow DCP rules. Specifically:", append, sep = "\n"))
+  } else if(gp && !is_dgp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DGP")
+    if(is_dcp(problem))
+      append <- paste(append, "However, the problem does follow DCP rules. Consider calling solve with gp = FALSE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop(paste("Problem does not follow DGP rules.", append))
   }
 
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.

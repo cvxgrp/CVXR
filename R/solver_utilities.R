@@ -3,12 +3,14 @@
 # Solver utilities #
 #                  #
 ####################
-# solver_conic_intf <- list(ECOS(), ECOS_BB(), CVXOPT(), GLPK(), XPRESS(), GLPK_MI(), CBC_CONIC(), SCS(), SuperSCS(), GUROBI_CONIC(), MOSEK(), CPLEX_CONIC())
-# solver_qp_intf <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
+solver_conic_intf <- list(DIFFCP(), ECOS(),
+                          CVXOPT(), GLPK(), COPT(),
+                          GLPK_MI(), CBC(), CLARABEL(), SCS(), SDPA(),
+                          GUROBI(), MOSEK(), CPLEX(), NAG(), XPRESS(),
+                          SCIP(), SCIPY(), GLOP(), PDLP(),
+                          ECOS_BB())
 
-solver_conic_intf <- list(ECOS(), ECOS_BB(), CBC_CONIC(), CPLEX_CONIC(), CVXOPT(),
-                          GLPK_MI(), GLPK(), SCS(), GUROBI_CONIC(), MOSEK())
-solver_qp_intf <- list(OSQP(), GUROBI_QP(), CPLEX_QP())
+solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX(), XPRESS(), COPT(), PROXQP())
 
 SOLVER_MAP_CONIC <- solver_conic_intf
 names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, name)
@@ -16,10 +18,21 @@ names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, name)
 SOLVER_MAP_QP <- solver_qp_intf
 names(SOLVER_MAP_QP) <- sapply(solver_qp_intf, name)
 
-CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, SUPER_SCS_NAME, SCS_NAME,
-                   CPLEX_NAME, GUROBI_NAME, GLPK_NAME, XPRESS_NAME,
-                   GLPK_MI_NAME, CBC_NAME, CVXOPT_NAME, ECOS_BB_NAME)
-QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME)
+# CONIC_SOLVERS and QP_SOLVERS are sorted in order of decreasing solver
+# preference. QP_SOLVERS are those for which we have written interfaces
+# and are supported by QpSolver.
+CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, CLARABEL_NAME, SCS_NAME, SDPA_NAME,
+                   CPLEX_NAME, GUROBI_NAME, COPT_NAME, GLPK_NAME, NAG_NAME,
+                   GLPK_MI_NAME, CBC_NAME, CVXOPT_NAME, XPRESS_NAME, DIFFCP_NAME, 
+                   SCIP_NAME, GLOP_NAME, PDLP_NAME, ECOS_BB_NAME)
+
+QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME, XPRESS_NAME, COPT_NAME, PROXQP_NAME)
+
+MI_SOLVERS <- c(GLP_MI_NAME, MOSEK_NAME, GUROBI_NAME, CPLEX_NAME,
+                XPRESS_NAME, CBC_NAME, SCIP_NAME, COPT_NAME, ECOS_BB_NAME)
+
+MI_SOCP_SOLVERS <- c(MOSEK_NAME, GUROBI_NAME, CPLEX_NAME, XPRESS_NAME,
+                     SCIP_NAME, ECOS_BB_NAME)
 
 ## Global variable for changing behavior
 .CVXR_options <- new.env(parent = emptyenv())
@@ -40,8 +53,12 @@ installed_solvers <- function() {
 
     ## Check QP solvers.
     installed_qp <- names(SOLVER_MAP_QP[sapply(SOLVER_MAP_QP, is_installed)])
-
-    setdiff(c(installed_conic, installed_qp), .CVXR_options$blacklisted_solvers)
+    
+    # Remove duplicate names (for solvers that handle both conic and QP)
+    installed <- unique(c(installed_conic, installed_qp))
+    
+    # Remote blacklisted solvers
+    setdiff(installed, .CVXR_options$blacklisted_solvers)
 }
 
 #'
@@ -75,3 +92,6 @@ set_solver_blacklist <- function(solvers) {
     invisible(solvers)
 }
 
+INSTALLED_SOLVERS <- installed_solvers()
+INSTALLED_CONIC_SOLVERS <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% CONIC_SOLVERS]
+INSTALLED_MI_SOLVERS <- INSTALLED_SOLVERS[INSTALLED_SOLVERS %in% MI_SOLVERS]

@@ -734,8 +734,6 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
   if(is(solver, "Solver"))
     return(.add_custom_solver_candidates(solver))
   
-  INSTALLED_SOLVERS <- installed_solvers()
-
   if(!is.na(solver)) {
     if(!(solver %in% INSTALLED_SOLVERS))
       stop("The solver ", solver, " is not installed")
@@ -883,7 +881,6 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
     print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
   }
   
-  INSTALLED_SOLVERS <- installed_solvers()
   if(requires_grad) {
     dpp_context <- ifelse(gp, "dgp", "dcp")
     if(qcp)

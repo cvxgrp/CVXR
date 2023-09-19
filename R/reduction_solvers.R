@@ -80,9 +80,12 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
 #'
 #' The ReductionSolver class.
 #'
+#' Generic interface for a solver that uses reduction semantics.
+#'
+#' @slot dims_key The key that maps to ConeDims in the data returned by perform(). There are separate ConeDims classes for cone programs vs. QPs. See matrix stuffing functions for details.
 #' @rdname ReductionSolver-class
-setClass("ReductionSolver", representation(var_id = "character", eq_constr = "character", neq_constr = "character"),   # Keys for inverse data. Internal use only!
-                            prototype(var_id = "var_id", eq_constr = "eq_constr", neq_constr = "other_constr"), contains = "Reduction")
+setClass("ReductionSolver", representation(dims_key = "character", var_id = "character", dual_var_id = "character", eq_constr = "character", neq_constr = "character"),   # Keys for inverse data. Internal use only!
+                            prototype(dims_key = "dims", var_id = "var_id", dual_var_id = "dual_var_id", eq_constr = "eq_constr", neq_constr = "other_constr"), contains = "Reduction")
 
 # Solver capabilities.
 #' @param solver,object,x A \linkS4class{ReductionSolver} object.
@@ -96,7 +99,14 @@ setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
 setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
 
 #' @describeIn ReductionSolver Is the solver installed?
-setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(solver) })
+setMethod("is_installed", "ReductionSolver", function(solver) {
+  tryCatch({
+    import_solver(solver)
+  }, error = function(e) {
+    solver_str <- ifelse(is(solver, "character"), solver, name(solver))
+    warning("Encountered unexpected error importing solver ", solver_str)
+  })
+})
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
@@ -107,21 +117,21 @@ setMethod("is_installed", "ReductionSolver", function(solver) { import_solver(so
 #' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
-#' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
+#' @describeIn ReductionSolver Solve a problem represented by data returned from perform.
 setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
-  ##if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
+  ## if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
   stop("Unimplemented")
 })
 
 #' @param problem A \linkS4class{Problem} object.
-#' @describeIn ReductionSolver Solve a problem represented by data returned from apply.
-setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts) {
-  ret <- perform(object, problem)
-  object <- ret[[1]]
-  data <- ret[[2]]
-  inverse_data <- ret[[3]]
-  solution <- solve_via_data(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts)
-  return(invert(object, solution, inverse_data))
+#' @describeIn ReductionSolver Solve the problem and return a Solution object.
+setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
+  res <- perform(object, problem)
+  object <- res[[1]]
+  data <- res[[2]]
+  inv_data <- res[[3]]
+  solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
+  return(invert(object, solution, inv_data))
 })
 
 #'
@@ -188,12 +198,109 @@ setMethod("reduction_solve", "ConstantSolver", function(object, problem, warm_st
     return(Solution(INFEASIBLE, NA_real_, list(), list(), list()))
 })
 
+##################################################
+#                 SOLVING CHAIN
+##################################################
+
+SolvingChain.is_lp <- function(object) {
+  # Is problem a linear program?
+  for(c in object@constraints) {
+    if(!(is(c, "EqConstraint") || is(c, "ZeroConstraint")) || is_pwl(c@args[[1]]))
+      return(FALSE)
+  }
+  
+  for(var in variables(object)) {
+    if(is_psd(var) || is_nsd(var))
+      return(FALSE)
+  }
+  
+  return(is_dcp(object) && is_pwl(object@objective@args[[1]]))
+}
+
+SolvingChain.solve_as_qp(problem, candidates) {
+  conic_not_qp_slvs <- c()
+  for(s in candidates$conic_solvers) {
+    if(!(s %in% candidates$qp_solvers))
+      conic_not_qp_slvs <- c(conic_not_qp_slvs, s)
+  }
+  
+  if(SolvingChain.is_lp(problem) && length(conic_not_qp_slvs) > 0) {
+    # OSQP can take many iterations for LPs; use a conic solver instead.
+    # GUROBI and CPLEX QP/LP interfaces are more efficient -> Use them instead of conic if applicable.
+    return(FALSE)
+  }
+  return(length(candidates$qp_solvers) > 0 && Qp2SymbolicQp.accepts(problem))
+}
+
+#'
+#' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+#'
+#' @param problem The problem for which to build a chain.
+#' @param candidates List of candidate solvers divided into qp_solvers and conic_solvers.
+#' @param gp If TRUE, the problem is parsed as a Disciplined Geometric Program instead of a Disciplined Convex Program
+#' @return A list of Reduction objects that can be used to convert the problem to an intermediate form.
+SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solver_opts = NULL) {
+  reductions <- list()
+  
+  # TODO: Handle boolean constraints.
+  if(Complex2Real.accepts(problem))
+    reductions <- c(reductions, list(Complex2Real()))
+  if(gp)
+    reductions <- c(reductions, list(Dgp2Dcp()))
+  
+  if(!gp && !is_dcp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DCP")
+    if(is_dgp(problem))
+      append <- paste(append, "However, the problem does follow DGP rules. Consider calling solve() with gp = TRUE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop(paste("Problem does not follow DCP rules. Specifically:", append, sep = "\n"))
+  } else if(gp && !is_dgp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DGP")
+    if(is_dcp(problem))
+      append <- paste(append, "However, the problem does follow DCP rules. Consider calling solve() with gp = FALSE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop("Problem does not follow DGP rules. ", append)
+  }
+  
+  # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
+  if(inherits(problem@objective, "Maximize"))
+    reductions <- c(reductions, list(FlipObjective()))
+  
+  if(!is.null(solver_opts) && "use_quad_obj" %in% names(solver_opts))
+    use_quad <- solver_opts$use_quad_obj
+  else
+    use_quad <- TRUE
+  
+  if(SolvingChain.solve_as_qp(problem, candidates) && use_quad)
+    reductions <- c(reductions, list(CvxAttr2Constr(), Qp2SymbolicQp()))
+  else {
+    # Canonicalize into a conic problem.
+    if(length(candidates$conic_solvers) == 0)
+      stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
+  }
+  
+  constr_types <- sapply(problem@constraints, class)
+  if("FiniteSet" %in% constr_types)
+    reductions <- c(reductions, list(Valinvec2mixedint()))
+  
+  return(reductions)
+}
 
 #'
 #' Build a reduction chain from a problem to an installed solver.
+#' 
+#' Note that if the supplied problem has zero variables, the solver parameter 
+#' will be ignored.
 #'
 #' @param problem The problem for which to build a chain.
 #' @param candidates A list of candidate solvers.
+#' @param gp If TRUE, the problem is parsed as a Disciplined Geometric Program instead of a Disciplined Convex Program.
+#' @param enforce_dpp When TRUE, a DPPError will be throw when trying to parse a non-DPP problem (instead of just a warning). Defaults to FALSE.
+#' @param ignore_dpp When TRUE, DPP problems will be treated as non-DPP, which may speed up compilation. Defaults to FALSE.
+#' @param canon_backend Specifies which backend to use for canonicalization, which can affect compilation time. Defaults to NA, i.e., selecting the default backend ("CPP").
+#' @param solver_opts List of additional arguments to pass to the solver. 
 #' @return A \linkS4class{SolvingChain} that can be used to solve the problem.
 construct_solving_chain <- function(problem, candidates) {
   reductions <- list()
@@ -312,6 +419,8 @@ setMethod("reduction_solve_via_data", "SolvingChain", function(object, problem, 
 })
 
 #'
+#' Construct Intermediate Chain
+#'
 #' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
 #'
 #' @param problem The problem for which to build a chain.
@@ -363,8 +472,8 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
 })
 
 ################################################
-#              BISECTION
-###############################################
+#                 BISECTION
+################################################
 Bisection.lower_problem <- function(problem) {
   # Evaluates lazy constraints
   Problem(Minimize(0), c(problem@constraints, lapply(problem@.lazy_constraints, function(con) { con() })))
@@ -527,3 +636,125 @@ setMethod("bisect", "Problem", function(problem, solver = NULL, low = NA_real_, 
           "**************************************\n", sep = "")
   return(soln)
 })
+
+################################################
+#             MATRIX COMPRESSION
+################################################
+# TODO: This uses matrix pointers (indptr) in Python, so it should be implemented in C++.
+
+################################################
+#                 KKT SOLVER
+################################################
+# A custom KKT solver for CVXOPT that can handle redundant constraints.
+# Uses regularization and iterative refinement.
+
+REG_EPS <- 1e-9   # Regularization constant.
+
+setup_ldl_factor <- function(c, G, h, dims, A, b) {
+  # The meanings of arguments in this function are identical to those of the
+  # function cvxopt.solvers.conelp. Refer to CVXOPT documentation
+  #
+  # https://cvxopt.org/userguide/coneprog.html#linear-cone-programs
+  #
+  # for more information.
+  #
+  # Note: CVXOPT allows G and A to be passed as dense matrix objects. However,
+  # this function will only ever be called with spmatrix objects. If creating
+  # a custom kktsolver of your own, you need to conform to this sparse matrix
+  # assumption.
+  
+  factor <- kkt_ldl(G, dims, A)
+  return(factor)
+}
+
+kkt_ldl <- function(G, dims, A) {
+  # Returns a function handle "factor", which conforms to the CVXOPT
+  # custom KKT solver specifications:
+  #
+  #     https://cvxopt.org/userguide/coneprog.html#exploiting-structure.
+  #
+  # For convenience, we provide a short outline for how this function works.
+  #
+  # First, we allocate workspace for use in "factor". The factor function is
+  # called with data (H, W). Once called, the factor function computes an LDL
+  # factorization of the 3 x 3 system:
+  #
+  #     [ H           A'   G'*W^{-1}  ]
+  #     [ A           0    0          ].
+  #     [ W^{-T}*G    0   -I          ]
+  #
+  # Once that LDL factorization is computed, "factor" constructs another
+  # inner function, called "solve". The solve function uses the newly
+  # constructed LDL factorization to compute solutions to linear systems of
+  # the form
+  #
+  #     [ H     A'   G'    ]   [ ux ]   [ bx ]
+  #     [ A     0    0     ] * [ uy ] = [ by ].
+  #     [ G     0   -W'*W  ]   [ uz ]   [ bz ]
+  #
+  # The factor function concludes by returning a reference to the solve function.
+  #
+  # Note: In the 3 x 3 system, H is n x n, A is p x n, and G is N x n, where
+  # N = dims[['l']] + sum(dims[['q']]) + sum(sapply(dims[['s']], function(k) { k^2 })). 
+  # For cone programs, H is the zero matrix.
+  
+  p <- nrow(A)
+  n <- ncol(A)
+  ldK <- n + p + dims$l + sum(dims$q) + sum(sapply(dims$s, function(k) { as.integer(k*(k+1)/2) } ))
+  
+  stop("CVXOPT KKT solver is unimplemented. Need to write most of the code in C++.")
+  
+  # TODO: These should all be CVXOPT matrix objects.
+  K <- matrix(0, nrow = ldK, ncol = ldK)
+  ipiv <- matrix(0, nrow = ldK, ncol = 1)
+  u <- matrix(0, nrow = ldK, ncol = 1)
+  g <- matrix(0, nrow = nrow(G), ncol = 1)
+  
+  factor <- function(W, H = NA_real_) {
+    K <- 0*K
+    if(!is.na(H))
+      K[1:n, 1:n] <- H
+    K[(n+1):(n+p+1), 1:n] <- A
+    
+    for(k in seq(n)) {
+      g <- G[,k]
+      # TODO: These should be calls to functions in CVXOPT (cvxopt.misc).
+      # scale(g, W, trans='T', inverse='I')
+      # pack(g, K, dims, 0, offsety=k*ldK + n + p)
+    }
+    K[seq((ldK+1)*(p+n) + 1, nrow(K), by = ldK+1)] <- -1.0
+    
+    # Add positive regularization in 1x1 block and negative in 2x2 block.
+    K[seq(1, (ldK+1)*n, by = ldK+1)] <- K[seq(1, (ldK+1)*n, by = ldK+1)] + REG_EPS
+    K[seq((ldK+1)*n + 1, nrow(K), by = ldK+1)] <- K[seq((ldK+1)*n + 1, nrow(K), by = ldK+1)] - REG_EPS
+    # TODO: lapack.sytrf(K, ipiv)
+    
+    solve <- function(x, y, z) {
+      # Solve
+      #
+      #     [ H          A'   G'*W^{-1}  ]   [ ux   ]   [ bx        ]
+      #     [ A          0    0          ] * [ uy   [ = [ by        ]
+      #     [ W^{-T}*G   0   -I          ]   [ W*uz ]   [ W^{-T}*bz ]
+      #
+      # and return ux, uy, W*uz.
+      #
+      # On entry, x, y, z contain bx, by, bz.  On exit, they contain
+      # the solution ux, uy, W*uz.
+      
+      # TODO: This function needs to be implemented using CVXOPT/BLAS/LAPACK functions.
+      # blas.copy(x, u)
+      # blas.copy(y, u, offsety=n)
+      # scale(z, W, trans='T', inverse='I')
+      # pack(z, u, dims, 0, offsety=n + p)
+      # lapack.sytrs(K, ipiv, u)
+      # blas.copy(u, x, n=n)
+      # blas.copy(u, y, offsetx=n, n=p)
+      # unpack(u, z, dims, 0, offsetx=n + p)
+    }
+    
+    return(solve)
+  }
+  
+  return(factor)
+}
+

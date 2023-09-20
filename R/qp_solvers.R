@@ -12,15 +12,40 @@ is_stuffed_qp_objective <- function(objective) {
 #'
 #' A QP solver interface.
 #'
-setClass("QpSolver", contains = "ReductionSolver")
+setClass("QpSolver", representation(IS_MIP = "character"), prototype(IS_MIP = "IS_MIP"), contains = "ReductionSolver")   # Key IS_MIP for internal use only!
+
+#' @param object A \linkS4class{QpSolver} object.
+#' @describeIn QpSolver What classes of constraints does the solver support?
+setMethod("supported_constraints", "QpSolver", function(object) { c("ZeroConstraint", "NonPosConstraint") })
+
+#' @describeIn QPSolver Can the solver solve problems that do not have constraints?
+setMethod("requires_constr", "QpSolver", function(object) { FALSE })
 
 #' @param object A \linkS4class{QpSolver} object.
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn QpSolver Is this a QP problem?
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
-  return(inherits(problem@objective, "Minimize") && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
-           all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint" ))))
-})  
+  return(is(problem, "ParamQuadProg") 
+          && (mip_capable(object) || !is_mixed_integer(problem))
+          && length(convex_attributes(list(problem@x))) == 0
+          && (length(problem@constraints) > 0 || !requires_constr(object))
+          && all(sapply(problem@constraints, function(c) { class(c) %in% supported_constraints(object) })))
+})
+
+setMethod("prepare_data_and_inv_data", "QpSolver", function(object, problem) {
+  data <- list()
+  inv_data <- list(object@var_id = id(problem@x))
+  
+  constr_map <- group_constraints(problem@constraints)
+  data[[object@DIMS]] <- data[[object@DIMS]]
+  inv_data[[object@DIMS]] <- data[[object@DIMS]]
+  
+  # Add information about integer variables.
+  inv_data[[object@IS_MIP]] <- is_mixed_integer(problem)
+  
+  data[[PARAM_PROB]] <- problem
+  return(list(problem, data, inv_data))
+})
 
 #' @describeIn QpSolver Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {

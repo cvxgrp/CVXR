@@ -32,9 +32,10 @@ setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), functi
           && all(sapply(problem@constraints, function(c) { class(c) %in% supported_constraints(object) })))
 })
 
-setMethod("prepare_data_and_inv_data", "QpSolver", function(object, problem) {
+QpSolver.prepare_data_and_inv_data <- function(object, problem) {
   data <- list()
-  inv_data <- list(object@var_id = id(problem@x))
+  inv_data <- list()
+  inv_data[[object@VAR_ID]] <- id(problem@x)
   
   constr_map <- group_constraints(problem@constraints)
   data[[object@DIMS]] <- data[[object@DIMS]]
@@ -45,83 +46,65 @@ setMethod("prepare_data_and_inv_data", "QpSolver", function(object, problem) {
   
   data[[PARAM_PROB]] <- problem
   return(list(problem, data, inv_data))
-})
+}
 
 #' @describeIn QpSolver Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   # Construct QP problem data stored in a dictionary.
   # The QP has the following form
+  #
   #    minimize 1/2 x' P x + q' x
   #    subject to A x = b
   #               F x <= g
-  inverse_data <- InverseData(problem)
-
-  obj <- problem@objective
-  # quadratic part of objective is t(x) %*% P %*% x, but solvers expect 0.5*t(x) %*% P %*% x.
-  P <- 2*value(expr(obj)@args[[1]]@args[[2]])
-  q <- as.vector(value(expr(obj)@args[[2]]@args[[1]]))
-
+  
+  tmp_dat <- prepare_data_and_inv_data(object, problem)
+  problem <- tmp_dat[[1]]
+  data <- tmp_dat[[2]]
+  inv_data <- tmp_dat[[3]]
+  
+  tmp_parm <- apply_parameters(problem)
+  P <- tmp_parm[[1]]
+  q <- tmp_parm[[2]]
+  d <- tmp_parm[[3]]
+  AF <- tmp_parm[[4]]
+  bg <- tmp_parm[[5]]
+  inv_data[[OFFSET]] <- d
+  
   # Get number of variables.
-  n <- problem@.size_metrics@num_scalar_variables
-
-  if(length(problem@constraints) == 0) {
-    eq_cons <- list()
-    ineq_cons <- list()
+  n <- size(problem@x)
+  len_eq <- data[[object@DIMS]]@zero
+  len_leq <- data[[object@DIMS]]@nonpos
+  
+  if(len_eq > 0) {
+    A <- AF[1:len_eq,]
+    b <- -bg[1:len_eq]
   } else {
-    eq_cons <- problem@constraints[sapply(problem@constraints, inherits, what = "ZeroConstraint" )]
-    ineq_cons <- problem@constraints[sapply(problem@constraints, inherits, what = "NonPosConstraint" )]
+    A <- Matrix(0, nrow = 0, ncol = n, sparse = TRUE)
+    b <- matrix(0, nrow = 0, ncol = 1)
   }
-
-  # TODO: This dependence on ConicSolver is hacky; something should change here.
-  if(length(eq_cons) > 0) {
-    eq_coeffs <- list(list(), c())
-    for(con in eq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(expr(con))
-      eq_coeffs[[1]] <- c(eq_coeffs[[1]], list(coeff_offset[[1]]))
-      eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
-    }
-    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), sparse = TRUE)
-    b <- -eq_coeffs[[2]]
+  
+  if(len_leq > 0 && len_leq < nrow(AF)) {
+    Fmat <- AF[(len_eq + 1):nrow(AF),]
+    g <- -bg[(len_eq + 1):nrow(AF)]
   } else {
-    A <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
-    b <- -matrix(nrow = 0, ncol = 0)
+    Fmat <- Matrix(0, nrow = 0, ncol = n, sparse = TRUE)
+    g <- -matrix(0, nrow = 0, ncol = 1)
   }
-
-  if(length(ineq_cons) > 0) {
-    ineq_coeffs <- list(list(), c())
-    for(con in ineq_cons) {
-      coeff_offset <- ConicSolver.get_coeff_offset(expr(con))
-      ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], list(coeff_offset[[1]]))
-      ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
-    }
-    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), sparse = TRUE)
-    g <- -ineq_coeffs[[2]]
-  } else {
-    Fmat <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
-    g <- -matrix(nrow = 0, ncol = 0)
-  }
-
+  
   # Create dictionary with problem data.
-  variables <- variables(problem)[[1]]
-  data <- list()
   data[[P_KEY]] <- Matrix(P, sparse = TRUE)
   data[[Q_KEY]] <- q
   data[[A_KEY]] <- Matrix(A, sparse = TRUE)
   data[[B_KEY]] <- b
   data[[F_KEY]] <- Matrix(Fmat, sparse = TRUE)
   data[[G_KEY]] <- g
-  data[[BOOL_IDX]] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
-  data[[INT_IDX]] <- sapply(variables@integer_idx, function(t) { t[[1]] })
+  data[[BOOL_IDX]] <- sapply(problem@x@boolean_idx, function(t) { t[[1]] })
+  data[[INT_IDX]] <- sapply(problem@x@integer_idx, function(t) { t[[1]] })
   data$n_var <- n
   data$n_eq <- nrow(A)
   data$n_ineq <- nrow(Fmat)
-
-  inverse_data@sorted_constraints <- c(eq_cons, ineq_cons)
-
-  # Add information about integer variables.
-  inverse_data@is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
-
-  return(list(object, data, inverse_data))
+  
+  return(list(data, inv_data))
 })
 
 #'
@@ -633,7 +616,7 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
 })
 
 #'
-#' An interface for the OSQP solver.
+#' QP interface for the OSQP solver.
 #'
 #' @name OSQP-class
 #' @aliases OSQP
@@ -647,8 +630,9 @@ OSQP <- function() { new("OSQP") }
 
 #' @param solver,object,x A \linkS4class{OSQP} object.
 #' @param status A status code returned by the solver.
-#' @describeIn OSQP Converts status returned by the OSQP solver to its respective CVXPY status.
-setMethod("status_map", "OSQP", function(solver, status) {
+#' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
+#' @describeIn OSQP Converts status returned by the OSQP solver to its respective CVXR status.
+setMethod("status_map", "OSQP", function(solver, status, default = NA_character_) {
   if(status == 1)
     OPTIMAL
   else if(status == 2)
@@ -661,17 +645,23 @@ setMethod("status_map", "OSQP", function(solver, status) {
     UNBOUNDED
   else if(status == 4)
     UNBOUNDED_INACCURATE
+  else if(status == -6)
+    USER_LIMIT
   else if(status == -2 || status == -5 || status == -10)   # -2: Maxiter reached. -5: Interrupted by user. -10: Unsolved.
     SOLVER_ERROR
- else
-    stop("OSQP status unrecognized: ", status)
+ else {
+    if(is.na(default))
+      stop("OSQP status unrecognized: ", status)
+   else
+     default
+ }
 })
 
 #' @describeIn OSQP Returns the name of the solver.
 setMethod("name", "OSQP", function(x) { OSQP_NAME })
 
 #' @describeIn OSQP Imports the solver.
-##setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
+## setMethod("import_solver", "OSQP", function(solver) { requireNamespace("osqp", quietly = TRUE) })
 ## Since OSQP is a requirement, this is always TRUE
 setMethod("import_solver", "OSQP", function(solver) { TRUE })
 
@@ -680,141 +670,104 @@ setMethod("import_solver", "OSQP", function(solver) { TRUE })
 #' @describeIn OSQP Returns the solution to the original problem given the inverse_data.
 setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   attr <- list()
-  ## DWK CHANGES Below
-  ## Change slots to list elements
   attr[[SOLVE_TIME]] <- solution$info$run_time
+  attr[[EXTRA_STATS]] <- solution
 
   # Map OSQP statuses back to CVXR statuses.
-  status <- status_map(object, solution$info$status_val)
+  status <- status_map(object, solution$info$status_val, default = SOLVER_ERROR)
+  
   ## DWK CHANGE END
   if(status %in% SOLUTION_PRESENT) {
-      ## DWK CHANGES Below
-      opt_val <- solution$info$obj_val
-      ## DWK CHANGE END
+    opt_val <- solution$info$obj_val + inverse_data[[OFFSET]]
+    
     primal_vars <- list()
-    ## DWK CHANGE
-    ## primal_vars[names(inverse_data@id_map)] <- solution@x
-    primal_vars[[names(inverse_data@id_map)]] <- solution$x
-    dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data@sorted_constraints)
+    primal_vars[[object@VAR_ID]] <- as.matrix(solution$x)
+    
+    dual_vars <- list()
+    dual_vars[[object@DUAL_VAR_ID]] <- solution$y
+    
     attr[[NUM_ITERS]] <- solution$info$iter
-    return(Solution(status, opt_val, primal_vars, dual_vars, attr))
-    ## DWK CHANGE END
+    sol <- Solution(status, opt_val, primal_vars, dual_vars, attr)
   } else
-    return(failure_solution(status))
+    sol <- failure_solution(status)
+  return(sol)
 })
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
-#' @param feastol The feasible tolerance.
-#' @param reltol The relative tolerance.
-#' @param abstol The absolute tolerance.
-#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, feastol,
-                                             reltol,
-                                             abstol,
-                                             num_iter,
-                                             solver_opts, solver_cache) {
-  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
+setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NULL) {
+  require(osqp)
+  # if(is.null(solver_cache))
+  #   solver_cache  <- new.env(parent = emptyenv())
+  
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
   A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
-  data$full_A <- A
+  data$Ax <- A
   uA <- c(data[[B_KEY]], data[[G_KEY]])
   data$u <- uA
   lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
 
-  if(is.null(feastol)) {
-      feastol <- SOLVER_DEFAULT_PARAM$OSQP$eps_prim_inf
-  }
-  if(is.null(reltol)) {
-      reltol <- SOLVER_DEFAULT_PARAM$OSQP$eps_rel
-  }
-  if(is.null(abstol)) {
-      abstol <- SOLVER_DEFAULT_PARAM$OSQP$eps_abs
-  }
-  if(is.null(num_iter)) {
-      num_iter <- SOLVER_DEFAULT_PARAM$OSQP$max_iter
-  } else {
-      num_iter <- as.integer(num_iter)
-  }
+  # Overwrite defaults of eps_abs = eps_rel = 1e-3, max_iter = 4000.
+  if(is.null(solver_opts$eps_abs))
+      solver_opts$eps_abs <- 1e-5
+  if(is.null(solver_opts$eps_rel))
+    solver_opts$eps_rel <- 1e-5
+  if(is.null(solver_opts$max_iter))
+    solver_opts$max_iter <- 10000
 
-  control <- list(max_iter = num_iter,
-                  eps_abs = abstol,
-                  eps_rel = reltol,
-                  eps_prim_inf = feastol,
-                  eps_dual_inf = feastol,
-                  verbose = verbose)
-
-  control[names(solver_opts)] <- solver_opts
-
-  if(length(solver_cache$cache) > 0 && name(object) %in% names(solver_cache$cache)) {
-    # Use cached data.
-    cache <- solver_cache$cache[[name(object)]]
+  # Use cached data.
+  if(warm_start && !is.null(solver_cache) && name(object) %in% names(solver_cache)) {
+    cache <- solver_cache[[name(object)]]
     solver <- cache[[1]]
     old_data <- cache[[2]]
     results <- cache[[3]]
-
-    same_pattern <- all(dim(P) == dim(old_data[[P_KEY]])) &&
-        all(P@p == old_data[[P_KEY]]@p) &&
-        all(P@i == old_data[[P_KEY]]@i) &&
-        all(dim(A) == dim(old_data$full_A)) &&
-        all(A@p == old_data$full_A@p) &&
-        all(A@i == old_data$full_A@i)
-  } else
-      same_pattern <- FALSE
-
-  # If sparsity pattern differs, need to do setup.
-  if(warm_start && same_pattern) {
-      new_args <- list()
-      for(key in c("q", "l", "u")) {
-          if(any(data[[key]] != old_data[[key]]))
-              new_args[[key]] <- data[[key]]
-      }
-      factorizing <- FALSE
-
-      if(any(P@x != old_data[[P_KEY]]@x)) {
-          P_triu <- triu(P)
-          new_args$Px <- P_triu@x
-          factorizing <- TRUE
-      }
-      if(any(A@x != old_data$full_A@x)) {
-          new_args$Ax <- A@x
-          factorizing <- TRUE
-      }
-
-      if(length(new_args) > 0)
-          do.call(solver$Update, new_args)
-
-      ## Map OSQP statuses back to CVXR statuses.
-      #status <- status_map(object, results@info@status_val)
-      #if(status == OPTIMAL)
-      #    warm_start(solver, results@x, results@y)
-
-      ## Polish if factorizing.
-      if(is.null(control$polish)){
-        control$polish <- factorizing
-      }
-
-      #Update Parameters
-      solver$UpdateSettings(control)
-
+    
+    new_args <- list()
+    for(key in c("q", "l", "u")) {
+      if(any(data[[key]] != old_data[[key]]))
+        new_args[[key]] <- data[[key]]
+    }
+    
+    factorizing <- FALSE
+    if(any(dim(P) != old_data[[P_KEY]]) || any(P != old_data[[P_KEY]])) {
+      P_triu <- Matrix::triu(P)
+      new_args$Px <- P_triu
+      factorizing <- TRUE
+    } 
+    if(any(dim(A) != old_data$Ax) || any(A != old_data$Ax)) {
+      new_args$Ax <- A
+      factorizing <- TRUE
+    }
+    
+    if(length(new_args) > 0)
+      do.call(solver$Update, new_args)
+    
+    # Map OSQP statuses back to CVXR statuses.
+    status <- status_map(object, results$info$status_val, default = SOLVER_ERROR)
+    if(status == OPTIMAL)
+      solver$WarmStart(results$x, results$y)
+    
+    # Polish if factorizing.
+    if(is.null(solver_opts$polish))
+      solver_opts$polish <- TRUE
+    solver$UpdateSettings(c(list(verbose = verbose), solver_opts))
   } else {
-    if(is.null(control$polish))
-      control$polish <- TRUE
-
     # Initialize and solve problem.
-    solver <- osqp::osqp(P, q, A, lA, uA, control)
+    if(is.null(solver_opts$polish))
+      solver_opts$polish <- TRUE
+    solver <- osqp::osqp(P, q, A, lA, uA, c(list(verbose = verbose), solver_opts))
   }
-
+  
   results <- solver$Solve()
-  if (length(solver_cache) == 0L) {
-      solver_cache$cache[[name(object)]] <- list(solver, data, results)
+  
+  if(!is.null(solver_cache)) {
+    solver_cache[[name(object)]] <- list(solver, data, results)
   }
-
-  return(results)
+  return(list(results, solver_cache))
 })

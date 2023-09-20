@@ -120,14 +120,24 @@ setClass("CPLEX_QP", contains = "QpSolver")
 #' @export
 CPLEX_QP <- function() { new("CPLEX_QP") }
 
+constraint_cplex_infty <- function(v) {
+  # Limit values of vector v between +/- infinity as defined in the CPLEX library to be 1e20.
+  # https://www.ibm.com/docs/en/icos/22.1.1?topic=keywords-infinity
+  CPLEX_INF <- 1e20
+  # v[v >= CPLEX_INF] <- CPLEX_INF
+  # v[v <= -CPLEX_INF] <- -CPLEX_INF
+  return(pmin(pmax(v, -CPLEX_INF), CPLEX_INF))
+}
+
 #' @param x,object,solver A \linkS4class{CPLEX_QP} object.
 #' @describeIn CPLEX_QP Can the solver handle mixed-integer programs?
 setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
 
 # TODO: Add more!
 #' @param status A status code returned by the solver.
+#' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
 #' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
-setMethod("status_map", "CPLEX_QP", function(solver, status) {
+setMethod("status_map", "CPLEX_QP", function(solver, status, default = NA_character_) {
   if(status %in% c(1, 101, 102))
     OPTIMAL
   else if(status %in% c(3, 22, 4, 103))
@@ -136,8 +146,12 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
     UNBOUNDED
   else if(status %in% c(10, 107))
     USER_LIMIT
-  else
-    stop("CPLEX status unrecognized: ", status)
+  else {
+    if(is.na(default))
+      stop("CPLEX status unrecognized: ", status)
+    else
+      default
+  }
 })
 
 #' @describeIn CPLEX_QP Returns the name of the solver.
@@ -146,125 +160,77 @@ setMethod("name", "CPLEX_QP", function(x) { CPLEX_NAME })
 #' @describeIn CPLEX_QP Imports the solver.
 setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
 
-#' @param solution The raw solution returned by the solver.
+#' @param results The raw results returned by the solver.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn CPLEX_QP Returns the solution to the original problem given the inverse_data.
-setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
-  model <- solution$model
+setMethod("invert", signature(object = "CPLEX_QP", results = "list", inverse_data = "InverseData"), function(object, results, inverse_data){
+  model <- results$model
   attr <- list()
 
-  #Can't seem to find a way to increase verbosity of cplex. Can't get cputime
-  #if("cputime" %in% names(solution))
-  #  attr[SOLVE_TIME] <- results$cputime
-  #attr[NUM_ITERS] <- as.integer(get_num_barrier_iterations(model@solution@progress))
+  # TODO: Can't seem to find a way to increase verbosity of cplex. Can't get cputime
+  # if("cputime" %in% names(results))
+  #   attr[[SOLVE_TIME]] <- results$cputime
+  # if(inverse_data[[object@IS_MIP]])
+  #   attr[[NUM_ITERS]] <- 0
+  # else
+  #   attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model$solution$progress))
 
-  status <- status_map(object, solution$model$status)
+  status <- status_map(object, results$model$status)
 
   if(status %in% SOLUTION_PRESENT) {
     # Get objective value.
-    opt_val <- model$obj
+    opt_val <- model$obj + inverse_data[[OFFSET]]
 
     # Get solution.
     primal_vars <- list()
-    primal_vars[[names(inverse_data@id_map)[1]]] <- model$xopt
+    primal_vars[[object@VAR_ID]] <- model$xopt
 
     # Only add duals if not a MIP.
     dual_vars <- list()
-    if(!inverse_data@is_mip) {
-      y <- -as.matrix(model$extra$lambda) #there's a negative here, should we keep this?
-      dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
+    if(!inverse_data[[object@IS_MIP]]) {
+      y <- -as.matrix(model$extra$lambda)   # There's a negative here, should we keep this?
+      dual_vars <- list()
+      dual_vars[[object@DUAL_VAR_ID]] <- y
     }
-  } else {
-    primal_vars <- list()
-    dual_vars <- list()
-    opt_val <- Inf
-    if(status == UNBOUNDED)
-      opt_val <- -Inf
-  }
-
-  return(Solution(status, opt_val, primal_vars, dual_vars, attr))
+    
+    sol <- Solution(status, opt_val, primal_vars, dual_vars, attr)
+  } else
+    sol <- failure_solution(status, attr)
+  return(sol)
 })
-
-## Do we need this function?
-## @DK: no, we don't (BN)
-## setMethod("invert", "CPLEX_QP", function(object, solution, inverse_data) {
-##   model <- solution$model
-##   attr <- list()
-##   if("cputime" %in% names(solution))
-##     attr[[SOLVE_TIME]] <- solution$cputime
-##   attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model@solution@progress))
-
-##   status <- status_map(object, get_status(model@solution))
-
-##   if(status %in% SOLUTION_PRESENT) {
-##     # Get objective value.
-##     opt_val <- get_objective_value(model@solution)
-
-##     # Get solution.
-##     x <- as.matrix(get_values(model@solution))
-##     primal_vars <- list()
-##     primal_vars[names(inverse_data@id_map)[1]] <- x
-
-##     # Only add duals if not a MIP.
-##     dual_vars <- list()
-##     if(!inverse_data@is_mip) {
-##       y <- -as.matrix(get_dual_values(model@solution))
-##       dual_vars <- get_dual_values(y, extract_dual_value, inverse_data@sorted_constraints)
-##     }
-##   } else {
-##     primal_vars <- list()
-##     primal_vars[names(inverse_data@id_map)[1]] <- NA_real_
-
-##     dual_vars <- list()
-##     if(!inverse_data@is_mip) {
-##       dual_var_ids <- sapply(inverse_data@sorted_constraints, function(constr) { constr@id })
-##       dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
-##       names(dual_vars) <- dual_var_ids
-##     }
-
-##     opt_val <- Inf
-##     if(status == UNBOUNDED)
-##       opt_val <- -Inf
-##   }
-
-##   return(Solution(status, opt_val, primal_vars, dual_vars, attr))
-## })
 
 #' @param data Data generated via an apply call.
 #' @param warm_start A boolean of whether to warm start the solver.
 #' @param verbose A boolean of whether to enable solver verbosity.
-#' @param feastol The feasible tolerance on the primal and dual residual.
-#' @param reltol The relative tolerance on the duality gap.
-#' @param abstol The absolute tolerance on the duality gap.
-#' @param num_iter The maximum number of iterations.
 #' @param solver_opts A list of Solver specific options
 #' @param solver_cache Cache for the solver.
 #' @describeIn CPLEX_QP Solve a problem represented by data returned from apply.
-setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, feastol, reltol, abstol,
-                                                 num_iter,
-                                                 solver_opts, solver_cache) {
-  if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
-  #P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
-  P <- data[[P_KEY]]
+setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NULL) {
+  require(Rcplex)
+  if(is.null(solver_cache))
+    solver_cache  <- new.env(parent=emptyenv())
+  
+  P <- Matrix(data[[P_KEY]], byrow = TRUE, sparse = TRUE)
   q <- data[[Q_KEY]]
-  #A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE) #Equality constraints
-  A <- data[[A_KEY]]
+  A <- Matrix(data[[A_KEY]], byrow = TRUE, sparse = TRUE)   # Equality constraints
   b <- data[[B_KEY]] #Equality constraint RHS
-  #Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE) #Inequality constraints
-  Fmat <- data[[F_KEY]]
-  g <- data[[G_KEY]] #inequality constraint RHS
+  Fmat <- Matrix(data[[F_KEY]], byrow = TRUE, sparse = TRUE)   # Inequality constraints
+  g <- data[[G_KEY]]   # Inequality constraint RHS
   n_var <- data$n_var
   n_eq <- data$n_eq
   n_ineq <- data$n_ineq
+  
+  # Constrain values between bounds.
+  b <- constrain_cplex_infty(b)
+  g <- constrain_cplex_infty(g)
 
   #In case the b and g variables are empty
-  if( (0 %in% dim(b)) & (0 %in% dim(g)) ){
+  if((0 %in% dim(b)) && (0 %in% dim(g)))
     bvec <- rep(0, n_var)
-  } else{
+  else
     bvec <- c(b, g)
-  }
 
-  #Create one big constraint matrix with both inequalities and equalities
+  # Create one big constraint matrix with both inequalities and equalities
   Amat <- rbind(A, Fmat)
   if(n_eq + n_ineq == 0){
     #If both number of equalities and inequalities are 0, then constraints dont matter so set equal
@@ -311,7 +277,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
     # Define CPLEX problem and solve
     model <- Rcplex::Rcplex(cvec=q, Amat=Amat, bvec=bvec, Qmat=P, lb=-Inf, ub=Inf,
                             control=control, objsense="min", sense=sense_vec, vtype=vtype)
-    #control parameter would be used to set specific solver arguments. See cran Rcplex documentation
+    # control parameter would be used to set specific solver arguments. See cran Rcplex documentation
     }, error = function(e) {
       results_dict$status <- SOLVER_ERROR
     }
@@ -342,16 +308,18 @@ setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
   if(status == 2 || status == "OPTIMAL")
     OPTIMAL
-  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
+  else if(status == 3 || status == 6 || status == "INFEASIBLE") # DK: I added the words because the GUROBI solver seems to return the words
     INFEASIBLE
   else if(status == 5 || status == "UNBOUNDED")
     UNBOUNDED
   else if(status == 4 | status == "INF_OR_UNBD")
-    INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
+    INFEASIBLE_OR_UNBOUNDED
+  else if(status %in% c(7, 8, 10, 11, 12))
     SOLVER_ERROR   # TODO: Could be anything
+  else if(status == 9)   # Maximum time expired.
+    USER_LIMIT
   else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
+    OPTIMAL_INACCURATE
   else
     stop("GUROBI status unrecognized: ", status)
 })
@@ -701,8 +669,8 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
 #' @describeIn OSQP Solve a problem represented by data returned from apply.
 setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, solver_opts, solver_cache = NULL) {
   require(osqp)
-  # if(is.null(solver_cache))
-  #   solver_cache  <- new.env(parent = emptyenv())
+  if(is.null(solver_cache))
+    solver_cache  <- new.env(parent = emptyenv())
   
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]

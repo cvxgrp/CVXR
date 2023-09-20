@@ -600,21 +600,21 @@ setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2
 #' @slot id (Internal) A unique integer identification number used internally.
 #' @slot dim The dimensions of the leaf.
 #' @slot value The numeric value of the leaf.
-#' @slot nonneg Is the leaf nonnegative?
-#' @slot nonpos Is the leaf nonpositive?
-#' @slot complex Is the leaf a complex number?
+#' @slot nonneg Is the leaf constrained to be nonnegative?
+#' @slot nonpos Is the leaf constrained to be nonpositive?
+#' @slot complex Is the leaf complex valued?
 #' @slot imag Is the leaf imaginary?
-#' @slot symmetric Is the leaf a symmetric matrix?
-#' @slot diag Is the leaf a diagonal matrix?
-#' @slot PSD Is the leaf positive semidefinite?
-#' @slot NSD Is the leaf negative semidefinite?
-#' @slot hermitian Is the leaf hermitian?
-#' @slot boolean Is the leaf boolean? Is the variable boolean? May be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
+#' @slot symmetric Is the leaf symmetric?
+#' @slot diag Is the leaf diagonal?
+#' @slot PSD Is the leaf constrained to be positive semidefinite?
+#' @slot NSD Is the leaf constrained to be negative semidefinite?
+#' @slot hermitian Is the leaf Hermitian?
+#' @slot boolean Is the leaf boolean? Can be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
 #' indices which should be constrained as boolean, where each index is a vector of length exactly equal to the length of \code{dim}.
-#' @slot integer Is the leaf integer? The semantics are the same as the \code{boolean} argument.
+#' @slot integer Is the leaf integral? The semantics are the same as the \code{boolean} argument.
 #' @slot sparsity A matrix representing the fixed sparsity pattern of the leaf.
-#' @slot pos Is the leaf strictly positive?
-#' @slot neg Is the leaf strictly negative?
+#' @slot pos Is the leaf positive?
+#' @slot neg Is the leaf negative?
 #' @name Leaf-class
 #' @aliases Leaf
 #' @rdname Leaf-class
@@ -681,8 +681,8 @@ setMethod("initialize", "Leaf", function(.Object, ..., dim, value = NA_real_, no
     stop("Cannot set more than one special attribute.")
 
   if(!any(is.na(value)))
-    value(.Object) <- value
-  callNextMethod(.Object, ...)
+    .Object@value <- value
+  callNextMethod(.Object, ..., args = list())
 })
 
 setMethod("get_attr_str", "Leaf", function(object) {
@@ -772,9 +772,9 @@ setMethod("is_complex", "Leaf", function(object) {
 #' @describeIn Leaf A list of constraints describing the closure of the region where the leaf node is finite. Default is the full domain.
 setMethod("domain", "Leaf", function(object) {
   domain <- list()
-  if(object@attributes$nonneg)
+  if(object@attributes$nonneg || object@attributes$pos)
     domain <- c(domain, object >= 0)
-  else if(object@attributes$nonpos)
+  else if(object@attributes$nonpos || object@attributes$neg)
     domain <- c(domain, object <= 0)
   else if(object@attributes$PSD)
     domain <- c(domain, object %>>% 0)
@@ -786,6 +786,7 @@ setMethod("domain", "Leaf", function(object) {
 #' @param value A numeric scalar, vector, or matrix.
 #' @describeIn Leaf Project value onto the attribute set of the leaf.
 setMethod("project", "Leaf", function(object, value) {
+  # Only one attribute can be active at once (besides real, nonpos/nonneg, and bool/int).
   if(!is_complex(object))
     value <- Re(value)
 
@@ -835,13 +836,6 @@ setMethod("project", "Leaf", function(object, value) {
   } else
     return(value)
 })
-
-#' @describeIn Leaf Project and assign a value to the leaf.
-setMethod("project_and_assign", "Leaf", function(object, value) {
-  object@value <- project(object, value)
-  return(object)
-})
-
 #' @describeIn Leaf Get the value of the leaf.
 setMethod("value", "Leaf", function(object) { object@value })
 
@@ -851,24 +845,36 @@ setReplaceMethod("value", "Leaf", function(object, value) {
   return(object)
 })
 
+#' @describeIn Leaf Project and assign a value to the leaf.
+setMethod("project_and_assign", "Leaf", function(object, value) {
+  object@value <- project(object, value)
+  return(object)
+})
+
 #' @param val The assigned value.
 #' @describeIn Leaf Check that \code{val} satisfies symbolic attributes of leaf.
 setMethod("validate_val", "Leaf", function(object, val) {
   if(!any(is.na(val))) {
+    # Convert val to numeric vector/matrix or sparse matrix.
     val <- intf_convert(val)
     if(any(intf_dim(val) != dim(object)))
       stop("Invalid dimensions (", paste(intf_dim(val), collapse = ","), ") for value")
-    projection <- project(object, val)
+    projection <- project(object, val)   # Might be an R vector/matrix or sparse Matrix object.
     delta <- abs(val - projection)
 
-    if(is(delta, "sparseMatrix"))
-      close_enough <- all(abs(delta@x) <= SPARSE_PROJECTION_TOL)
-    else {
+    if(is(delta, "sparseMatrix")) {
+      # Based on current implementation of project, it is not possible for this Leaf to be PSD/NSD and a sparse matrix.
+      close_enough <- all(abs(delta@x) <= SPARSE_PROJECTION_TOL)   # Only check for near-equality on nonzero values.
+    } else {
       delta <- as.matrix(delta)
-      if(object@attributes$PSD || object@attributes$NSD)
+      # Need to measure residual in a canonical way.
+      if(object@attributes$PSD || object@attributes$NSD) {
+        # For PSD/NSD Leafs, we use the largest singular value norm.
         close_enough <- norm(delta, type = "2") <= PSD_NSD_PROJECTION_TOL
-      else
+      } else {
+        # For all other Leafs, we use the infinity norm on the vectorized Leaf.
         close_enough <- all(abs(delta) <= GENERAL_PROJECTION_TOL)
+      }
     }
 
     if(!close_enough) {
@@ -915,3 +921,6 @@ setMethod("is_pwl", "Leaf", function(object) { TRUE })
 
 #' @describeIn Leaf Is the expression a disciplined parametrized expression?
 setMethod("is_dpp", "Leaf", function(object, context = "dcp") { TRUE })
+
+#' @describeIn Leaf A list of the atoms in the expression.
+setMethod("atoms", "Leaf", function(object) { list() })

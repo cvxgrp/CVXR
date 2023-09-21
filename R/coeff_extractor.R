@@ -93,19 +93,19 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       var_offset <- affine_id_map[[var_id_char]][[1]]
       var_size <- affine_id_map[[var_id_char]][[2]]
       
+      # TODO: All the sparse COO matrix calculations involving P, c_part, etc must be checked!
       c_part <- c[(var_offset + 1):(var_offset + var_size),]
       P <- value(quad_forms[[var_id_char]][[3]]@P)
       if(!any(is.na(P))) {
         # Convert to sparse matrix.
         P <- as(P, "TsparseMatrix")
         if(var_size == 1)
-          c_part <- matrix(1, nrow = nrow(P), ncol = 1) * c_part   # TODO: Check this multiplication is correct.
+          c_part <- matrix(1, nrow = nrow(P), ncol = 1) * c_part
       } else
         P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = rep(1, var_size), repr = "T")
     
       # We multiply the columns of P by c_part by operating directly on the data.
-      # TODO: Finish converting Python code.
-      # data = P.data[:,None] * c_part[P.col]
+      data <- as.matrix(P@x) * c_part[P@j]
       P_tup <- list(data, list(P@i, P@j), dim(P))
       
       # Conceptually similar to P = P[:,:,None] * c_part[None,:,:].
@@ -118,11 +118,10 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
           acc_data <- tmp[[1]]
           acc_row <- tmp[[2]][[1]]
           acc_col <- tmp[[2]][[2]]
-          
-          # TODO: Finish converting Python code.
-          # acc_data = np.concatenate([acc_data, data], axis = 0)
-          # acc_row = np.concatenate([acc_row, P@i], axis = 0)
-          # acc_col = np.concatenate([acc_col, P@j], axis = 0)
+
+          acc_data <- c(acc_data, data)
+          acc_row <- c(acc_row, P@i)
+          acc_col <- c(acc_col, P@j)
           
           P_tup <- list(acc_data, list(acc_row, acc_col), dim(P))
           coeffs[[orig_id_char]]$P <- P_tup
@@ -144,48 +143,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       }
     }
   }
-  
   return(list(coeffs, constant))
-  
-
-  # Combine affine data with quadratic forms.
-  coeffs <- list()
-  for(var in variables(affine_problem)) {
-    var_id <- as.character(id(var))
-    if(var_id %in% names(quad_forms)) {
-      orig_id <- as.character(id(quad_forms[[var_id]][[3]]@args[[1]]))
-      var_offset <- affine_id_map[[var_id]][[1]]
-      var_size <- affine_id_map[[var_id]][[2]]
-      if(!any(is.na(value(quad_forms[[var_id]][[3]]@P)))) {
-        P <- value(quad_forms[[var_id]][[3]]@P)
-        if(is(P, "sparseMatrix"))
-          P <- as.matrix(P)
-        c_part <- c[1, (var_offset + 1):(var_offset + var_size)]
-        P <- sweep(P, MARGIN = 2, FUN = "*", c_part)
-      } else
-        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
-      if(orig_id %in% names(coeffs)) {
-        coeffs[[orig_id]]$P <- coeffs[[orig_id]]$P + P
-        coeffs[[orig_id]]$q <- coeffs[[orig_id]]$q + rep(0, nrow(P))
-      } else {
-        coeffs[[orig_id]] <- list()
-        coeffs[[orig_id]]$P <- P
-        coeffs[[orig_id]]$q <- rep(0, nrow(P))
-      }
-    } else {
-      var_offset <- affine_id_map[[var_id]][[1]]
-      var_size <- as.integer(prod(affine_var_dims[[var_id]]))
-      if(var_id %in% names(coeffs)) {
-        coeffs[[var_id]]$P <- coeffs[[var_id]]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + c[1, (var_offset + 1):(var_offset + var_size)]
-      } else {
-        coeffs[[var_id]] <- list()
-        coeffs[[var_id]]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- c[1, (var_offset + 1):(var_offset + var_size)]
-      }
-    }
-  }
-  return(list(coeffs, b))
 })
 
 setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {

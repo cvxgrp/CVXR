@@ -149,7 +149,7 @@ setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
 setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
 
 #' @describeIn Expression The expression is DCP if it is convex or concave.
-setMethod("is_dcp", "Expression", function(object, doo = FALSE) {
+setMethod("is_dcp", "Expression", function(object, dpp = FALSE) {
   if(dpp) {
     dpp_scope()   # TODO: Implement DPP scoping.
     return(is_convex(object) || is_concave(object))
@@ -164,8 +164,10 @@ setMethod("is_log_log_constant", "Expression", function(object) {
 
   if(is(object, "Constant") || is(object, "Parameter"))
     return(is_pos(object))
-  else
-    return(!is.na(value(object)) && all(value(object) > 0))
+  else {
+    val <- value(object)
+    return(!is.na(val) && all(val > 0))
+  }
 })
 
 #' @describeIn Expression Is the expression log-log affine?
@@ -464,6 +466,7 @@ setMethod("^", signature(e1 = "numeric", e2 = "Expression"), function(e1, e2) {
 })
 
 # Matrix operators
+#'
 #' Matrix Transpose
 #'
 #' The transpose of a matrix.
@@ -484,6 +487,28 @@ t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(x) }   # Need S3
 #' t(x)
 #' @export
 setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(x) })
+
+#'
+#' Conjugate Expression
+#' 
+#' The conjugate of the expression.
+#' 
+#' @param z An \linkS4class{Expression}
+#' @return An \linkS4class{Expression} representing the conjugate.
+#' @docType methods
+#' @aliases Conj
+#' @rdname Conjugate-class
+#' @method Conj Expression
+#' @export
+Conj.Expression <- function(z) { if(is_real(z) z else Conjugate(z) )}
+
+#' @docType methods
+#' @rdname Conjugate-class
+#' @examples
+#' z <- Constant(1 + 2*1i)
+#' Conj(z)
+#' @export
+setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z else Conjugate(z) })
 
 #' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
 #' @rdname MulExpression-class

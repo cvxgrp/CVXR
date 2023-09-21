@@ -1,13 +1,18 @@
 # TODO: Find best format for sparse matrices.
-.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", id_map = "list", N = "numeric", var_dims = "list"),
-                            prototype(id_map = list(), N = NA_real_, var_dims = list()))
+.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", canon_backend = "character", id_map = "list", x_length = "integer", var_dims = "list", param_dims = "list", param_to_size = "list", param_id_map = "list"),
+                                              prototype(canon_backend = NA_character_, id_map = list(), x_length = NA_integer_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()))
 
-CoeffExtractor <- function(inverse_data) { .CoeffExtractor(inverse_data = inverse_data) }
+CoeffExtractor <- function(inverse_data, canon_backend = NA_character_) { .CoeffExtractor(inverse_data = inverse_data, canon_backend = canon_backend) }
 
-setMethod("initialize", "CoeffExtractor", function(.Object, inverse_data, id_map, N, var_dims) {
+setMethod("initialize", "CoeffExtractor", function(.Object, inverse_data, canon_backend = NA_character_, id_map = list(), x_length = NA_integer_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()) {
+  .Object@inverse_data <- .Object@inverse_data
+  .Object@canon_backend <- .Object@canon_backend
   .Object@id_map <- inverse_data@var_offsets
-  .Object@N <- inverse_data@x_length
+  .Object@x_length <- inverse_data@x_length
   .Object@var_dims <- inverse_data@var_dims
+  .Object@param_dims <- inverse_data@param_dims
+  .Object@param_to_size <- inverse_data@param_to_size
+  .Object@param_id_map <- inverse_data@param_id_map
   return(.Object)
 })
 
@@ -23,23 +28,19 @@ setMethod("get_coeffs", signature(object = "CoeffExtractor", expr = "Expression"
 })
 
 setMethod("constant", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
-  size <- size(expr)
-  list(Matrix(nrow = size, ncol = object@N), as.vector(value(expr)))
+  expr_size <- size(expr)
+  list(Matrix(nrow = expr_size, ncol = object@x_length), as.vector(value(expr)))
 })
 
+#' @describeIn CoeffExtractor Extract problem data tensor from an expression that is reducible to \eqn{A*x + b}. Applying the tensor to a flattened parameter vector and reshaping will recover \eqn{A} and \eqn{b} (see the helpers in canonInterface).
 setMethod("affine", signature(object = "CoeffExtractor", expr = "list"), function(object, expr) {
-  if(length(expr) == 0)
-    size <- 0
-  else
-    size <- sum(sapply(expr, size))
-  op_list <- lapply(expr, function(e) { canonical_form(e)[[1]] })
-  VIJb <- get_problem_matrix(op_list, object@id_map)
-  V <- VIJb[[1]]
-  I <- VIJb[[2]] + 1   # TODO: Convert 0-indexing to 1-indexing in get_problem_matrix.
-  J <- VIJb[[3]] + 1
-  b <- VIJb[[4]]
-  A <- sparseMatrix(i = I, j = J, x = V, dims = c(size, object@N))
-  list(A, as.vector(b))
+  expr_list <- expr
+  if(!all(sapply(expr_list, is_dpp)))
+    stop("All expressions must be DPP")
+  
+  num_rows <- sum(sapply(expr_list, size))
+  op_list <- lapply(expr_list, function(e) { canonical_form(e)[[1]] })
+  canonInterface.get_problem_matrix(op_list, object@x_length, object@id_map, object@param_to_size, object@param_id_map, num_rows, object@canon_backend)
 })
 
 setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
@@ -48,15 +49,104 @@ setMethod("affine", signature(object = "CoeffExtractor", expr = "Expression"), f
 
 setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_expr, quad_forms) {
   # Assumes quadratic forms all have variable arguments. Affine expressions can be anything.
-  # Extract affine data.
-  affine_problem <- Problem(Minimize(affine_expr), list())
-  affine_inverse_data <- InverseData(affine_problem)
-  affine_id_map <- affine_inverse_data@id_map
-  affine_var_dims <- affine_inverse_data@var_dims
-  extractor <- CoeffExtractor(affine_inverse_data)
-  cb <- affine(extractor, expr(affine_problem@objective))
-  c <- cb[[1]]
-  b <- cb[[2]]
+  if(!is_dpp(affine_expr))
+    stop("affine_expr must be DPP")
+  
+  # Here we take the problem objective, replace all the SymbolicQuadForm
+  # atoms with variables of the same dimensions.
+  # We then apply the canonInterface to reduce the "affine head"
+  # of the expression tree to a coefficient vector c and constant offset d.
+  # Because the expression is parameterized, we extend that to a matrix
+  # [c1 c2 ...]
+  # [d1 d2 ...]
+  # where ci,di are the vector and constant for the ith parameter.
+  tmp <- InverseData.get_var_offsets(variables(affine_expr))
+  affine_id_map <- tmp[[1]]
+  affine_offsets <- tmp[[2]]
+  x_length <- tmp[[3]]
+  affine_var_dims <- tmp[[4]]
+  op_list <- list(canonical_form(affine_expr)[[1]])
+  param_coeffs <- canonInterface.get_problem_matrix(op_list, x_length, affine_offsets, object@param_to_size, object@param_id_map, size(affine_expr), object@canon_backend)
+  
+  # Iterates over every entry of the parameters vector,
+  # and obtains the Pi and qi for that entry i.
+  # These are then combined into matrices [P1.flatten(), P2.flatten(), ...]
+  # and [q1, q2, ...]
+  constant <- param_coeffs[nrow(param_coeffs),]
+  c <- param_coeffs[seq(nrow(param_coeffs) - 1),]@A
+  
+  # coeffs stores the P and q for each quad_form, as well as for true variable 
+  # nodes in the objective.
+  coeffs <- list()
+  
+  # The goal of this loop is to appropriately multiply the matrix P of each
+  # quadratic term by the coefficients in param_coeffs. Later, we combine all 
+  # the quadratic terms to form a single matrix P.
+  for(var in variables(affine_expr)) {
+    # quad_forms maps the ids of the SymbolicQuadForm atoms in the objective to
+    # (modified parent node of quad form, argument index of quad form, quad 
+    # form atom).
+    var_id <- id(var)
+    var_id_char <- as.character(vid)
+    if(var_id_char %in% names(quad_forms)) {
+      orig_id <- id(quad_forms[[var_id_char]][[3]]@args[[1]])
+      var_offset <- affine_id_map[[var_id_char]][[1]]
+      var_size <- affine_id_map[[var_id_char]][[2]]
+      
+      c_part <- c[(var_offset + 1):(var_offset + var_size),]
+      P <- value(quad_forms[[var_id_char]][[3]]@P)
+      if(!any(is.na(P))) {
+        # Convert to sparse matrix.
+        P <- as(P, "TsparseMatrix")
+        if(var_size == 1)
+          c_part <- matrix(1, nrow = nrow(P), ncol = 1) * c_part   # TODO: Check this multiplication is correct.
+      } else
+        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = rep(1, var_size), repr = "T")
+    
+      # We multiply the columns of P by c_part by operating directly on the data.
+      # TODO: Finish converting Python code.
+      # data = P.data[:,None] * c_part[P.col]
+      P_tup <- list(data, list(P@i, P@j), dim(P))
+      
+      # Conceptually similar to P = P[:,:,None] * c_part[None,:,:].
+      orig_id_char <- as.character(orig_id)
+      if(orig_id_char %in% names(coeffs)) {
+        if("P" %in% names(coeffs[[orig_id_char]])) {
+          # Concatenation becomes addition when constructing COO matrix because repeated indices are summed.
+          # Conceptually equivalent to coeffs[[orig_id_char]]$P <- coeffs[[orig_id_char]]$P + P_tup.
+          tmp <- coeffs[[orig_id_char]]$P
+          acc_data <- tmp[[1]]
+          acc_row <- tmp[[2]][[1]]
+          acc_col <- tmp[[2]][[2]]
+          
+          # TODO: Finish converting Python code.
+          # acc_data = np.concatenate([acc_data, data], axis = 0)
+          # acc_row = np.concatenate([acc_row, P@i], axis = 0)
+          # acc_col = np.concatenate([acc_col, P@j], axis = 0)
+          
+          P_tup <- list(acc_data, list(acc_row, acc_col), dim(P))
+          coeffs[[orig_id_char]]$P <- P_tup
+        } else
+          coeffs[[orig_id_char]]$P <- P_tup
+      } else {
+        coeffs[[orig_id_char]] <- list()
+        coeffs[[orig_id_char]]$P <- P_tup
+        coeffs[[orig_id_char]]$q <- matrix(0, nrow = nrow(P), ncol = ncol(c))
+      }
+    } else {
+      var_offset <- affine_id_map[[var_id_char]][[1]]
+      var_size <- as.integer(prod(affine_var_dims[[var_id_char]]))
+      if(var_id_char %in% names(coeffs))
+        coeffs[[var_id_char]]$q <- coeffs[[var_id_char]]$q + c[(var_offset + 1):(var_offset + var_size),]
+      else {
+        coeffs[[var_id_char]] <- list()
+        coeffs[[var_id_char]]$q <- c[(var_offset + 1):(var_offset + var_size),]
+      }
+    }
+  }
+  
+  return(list(coeffs, constant))
+  
 
   # Combine affine data with quadratic forms.
   coeffs <- list()

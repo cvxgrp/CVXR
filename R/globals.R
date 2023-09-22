@@ -107,16 +107,16 @@ flatten_list <- function(x) {
 
 # Return unique list preserving the order.
 unique_list <- function(duplicates_list) {
-  # used_id <- c()
-  # uniq_objs <- list()
-  # for(x in duplicates_list) {
-  #   if(!(id(x) %in% used)) {
-  #     used_id <- c(used_id, id(x))
-  #     uniq_objs <- c(uniq_objs, x)
-  #   }
-  # }
-  # uniq_objs
-  unique(flatten_list(duplicates_list))   # Remove duplicates
+  used_id <- c()
+  uniq_objs <- list()
+  for(x in duplicates_list) {
+    if(!(id(x) %in% used)) {
+      used_id <- c(used_id, id(x))
+      uniq_objs <- c(uniq_objs, x)
+    }
+  }
+  return(uniq_objs)
+  # unique(flatten_list(duplicates_list))   # Remove duplicates
 }
 
 #'

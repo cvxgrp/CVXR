@@ -98,8 +98,8 @@ BOOL_MAP = "7"
 INT_MAP = "8"
 
 # Keys in the dictionary of cone dimensions.
-##SCS3.0 changes this to "z"
-##EQ_DIM = "f"
+## SCS 3.0 changes this to "z"
+## EQ_DIM = "f"
 EQ_DIM = "z"
 LEQ_DIM = "l"
 SOC_DIM = "q"
@@ -394,24 +394,27 @@ get_spacing_matrix <- function(dim, spacing, offset) {
 #                                 #
 ###################################
 constant_grad <- function(expr) {
+  # Returns the gradient of constant terms in an expression.
+  # Matrix expressions are vectorized, so the gradient is a matrix.
   grad <- list()
   for(var in variables(expr)) {
-    rows <- prod(size(var))
-    cols <- prod(size(expr))
+    rows <- size(var)
+    cols <- size(expr)
     # Scalars -> 0
     if(rows == 1 && cols == 1)
-      grad[[as.character(var@id)]] <- 0.0
+      grad[[as.character(id(var))]] <- 0.0
     else
-      grad[[as.character(var@id)]] <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols))
+      grad[[as.character(id(var))]] <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols), repr = "C")
   }
-  grad
+  return(grad)
 }
 
 error_grad <- function(expr) {
+  # Returns a gradient of all NAs.
   vars <- variables(expr)
-  grad <- lapply(vars, function(var){ NA })
-  names(grad) <- sapply(vars, function(var) { var@id })
-  grad
+  grad <- as.list(rep(NA_real_, length(vars)))
+  names(grad) <- sapply(vars, id)
+  return(grad)
 }
 
 ###################
@@ -888,5 +891,79 @@ ku_dim <- function(key, dim) {
     dims <- c(dims, size)
   }
   dims
+}
+
+#######################
+#                     #
+# Debugging utilities #
+#                     #
+#######################
+
+node_count <- function(expr) {
+  # Return node count for the expression/constraint.
+  if("args" %in% slotNames(expr)) {
+    return(1 + sum(sapply(expr@args, node_count)))
+  } else
+    return(1)
+}
+
+build_non_disciplined_error_msg <- function(problem, discipline_type) {
+  prop_name <- NA_character_
+  prefix_conv <- ""
+  if(discipline_type == "DCP")
+    prop_name <- "is_dcp"
+  else if(discipline_type == "DGP") {
+    prop_name <- "is_dgp"
+    prefix_conv = "log_log_"
+  } else
+    stop("Unknown discipline type")
+  
+  find_non_prop_leaves <- function(expr, res = NULL) {
+    if(is.null(res))
+      res <- c()
+    if((is.null(expr@args) || length(expr@args) == 0) && slot(expr, prop_name)())
+      return(res)
+    
+    if((!slot(expr, prop_name)()) && all(sapply(expr@args, function(child) { slot(child, prop_name)() })) {
+      str_expr <- as.character(expr)
+      if(discipline_type == "DGP" && is(expr, "Variable")
+        str_expr <- paste(str_expr, "<-- needs to be declared positive")
+      res <- c(res, str_expr)
+    }
+    
+    for(child in expr@args)
+      res <- find_non_prop_leaves(child, res)
+    return(res)
+  }
+  
+  if(!slot(problem@objective, prop_name)()) {
+    non_disciplined_leaves <- find_non_prop_leaves(problem@objective@expr)
+    if(length(non_disciplined_leaves) > 0)
+      msg <- paste("The objective is not ", discipline_type, ". Its following subexpressions are not:", sep = "")
+    else {
+      convex_str <- paste(prefix_conv, "convex", sep = "")
+      concave_str <- paste(prefix_conv, "concave", sep = "")
+      fun_attr_check <- slot(problem@objective@args[[1]], paste("is_", convex_str, sep = ""))()
+      msg <- paste("The objective is not ", discipline_type, ", even though each sub-expression is.\n",
+                   "You are trying to ", problem@objective@NAME, " a function that is ", ifelse(fun_attr_check, convex_str, concave_str), ".", sep = "")
+    }
+    
+    for(expr in non_disciplined_leaves)
+      msg <- paste(msg, as.character(str), sep = "\n")
+    return(msg)
+  }
+  
+  disciplined_mask <- sapply(problem@constraints, is_dcp)
+  not_disciplined_constraints <- problem@constraints[!disciplined_mask]
+  # not_disciplined_constraints <- lapply(problem@constraints, function(expr) if(!is_dcp(expr)) expr )
+  
+  msg <- paste("The following constraints are not ", discipline_type, ":", sep = "")
+  for(expr in not_disciplined_constraints) {
+    msg <- paste(msg, "\n", as.character(expr), ", because the following subexpressions are not:", sep = "")
+    non_disciplined_leaves <- find_non_prop_leaves(expr)
+    for(subexpr in non_disciplined_leaves)
+      msg <- paste(msg, "\n|-- ", as.character(subexpr), sep = "")
+  }
+  return(msg)
 }
 

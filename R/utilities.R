@@ -4,65 +4,85 @@
 #                        #
 ##########################
 # Constants for operators.
-PLUS = "+"
-MINUS = "-"
-MUL = "*"
+PLUS <- "+"
+MINUS <- "-"
+MUL <- "*"
 
 # Prefix for default named variables.
-VAR_PREFIX = "var"
+VAR_PREFIX <- "var"
 # Prefix for default named parameters.
-PARAM_PREFIX = "param"
+PARAM_PREFIX <- "param"
+
+# Used to overload ==.
+NP_EQUAL_STR <- "equal"
 
 # Constraint types.
-EQ_CONSTR = "=="
-INEQ_CONSTR = "<="
+EQ_CONSTR <- "=="
+INEQ_CONSTR <- "<="
 
 # Atom groups.
-SOC_ATOMS = c("GeoMean", "Pnorm", "QuadForm", "QuadOverLin", "Power")
-EXP_ATOMS = c("LogSumExp", "LogDet", "Entr", "Exp", "KLDiv", "Log", "Log1p", "Logistic")
-PSD_ATOMS = c("LambdaMax", "LambdaSumLargest", "LogDet", "MatrixFrac", "NormNuc", "SigmaMax")
+SOC_ATOMS <- c("GeoMean", "Pnorm", "QuadForm", "QuadOverLin", "Power")
+EXP_ATOMS <- c("LogSumExp", "LogDet", "Entr", "Exp", "KLDiv", "Log", "Log1p", "Logistic")
+PSD_ATOMS <- c("LambdaMax", "LambdaSumLargest", "LogDet", "MatrixFrac", "NormNuc", "SigmaMax")
 
 # Solver Constants
-OPTIMAL = "optimal"
-OPTIMAL_INACCURATE = "optimal_inaccurate"
-INFEASIBLE = "infeasible"
-INFEASIBLE_INACCURATE = "infeasible_inaccurate"
-UNBOUNDED = "unbounded"
-UNBOUNDED_INACCURATE = "unbounded_inaccurate"
+OPTIMAL <- "optimal"
+OPTIMAL_INACCURATE <- "optimal_inaccurate"
+INFEASIBLE <- "infeasible"
+INFEASIBLE_INACCURATE <- "infeasible_inaccurate"
+UNBOUNDED <- "unbounded"
+UNBOUNDED_INACCURATE <- "unbounded_inaccurate"
+INFEASIBLE_OR_UNBOUNDED <- "infeasible_or_unbounded"
 USER_LIMIT <- "user_limit"
-SOLVER_ERROR = "solver_error"
+SOLVER_ERROR <- "solver_error"
+
 # Statuses that indicate a solution was found.
-SOLUTION_PRESENT = c(OPTIMAL, OPTIMAL_INACCURATE)
+SOLUTION_PRESENT <- c(OPTIMAL, OPTIMAL_INACCURATE, USER_LIMIT)
+
 # Statuses that indicate the problem is infeasible or unbounded.
-INF_OR_UNB = c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE)
+INF_OR_UNB <- c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE, INFEASIBLE_OR_UNBOUNDED)
+
+# Statuses that indicate an inaccurate solution.
+INACCURATE <- c(OPTIMAL_INACCURATE, INFEASIBLE_INACCURATE, UNBOUNDED_INACCURATE, USER_LIMIT)
+
 # Statuses that indicate an error.
-ERROR <- c(USER_LIMIT, SOLVER_ERROR)
+ERROR <- c(SOLVER_ERROR)
 
 ## Codes from lpSolveAPI solver (partial at the moment)
-DEGENERATE = "degenerate"
-NUMERICAL_FAILURE = "numerical_failure"
-TIMEOUT = "timeout"
-BB_FAILED = "branch_and_bound_failure"
+DEGENERATE <- "degenerate"
+NUMERICAL_FAILURE <- "numerical_failure"
+TIMEOUT <- "timeout"
+BB_FAILED <- "branch_and_bound_failure"
 
 ## Codes from GLPK (partial)
-UNDEFINED = "undefined"
+UNDEFINED <- "undefined"
 
 # Solver names.
-CBC_NAME = "CBC"
-CPLEX_NAME = "CPLEX"
-CVXOPT_NAME = "CVXOPT"
-ECOS_NAME = "ECOS"
-ECOS_BB_NAME = "ECOS_BB"
-GLPK_NAME = "GLPK"
-GLPK_MI_NAME = "GLPK_MI"
-GUROBI_NAME = "GUROBI"
-JULIA_OPT_NAME = "JULIA_OPT"
-MOSEK_NAME = "MOSEK"
-OSQP_NAME = "OSQP"
-SCS_NAME = "SCS"
-SUPER_SCS_NAME = "SUPER_SCS"
-XPRESS_NAME = "XPRESS"
-# SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME, LPSOLVE_NAME, GLPK_NAME, MOSEK_NAME, GUROBI_NAME)   # TODO: Add more when we implement other solvers
+CBC_NAME <- "CBC"
+CLARABEL_NAME <- "CLARABEL"
+COPT_NAME <- "COPT"
+CPLEX_NAME <- "CPLEX"
+CVXOPT_NAME <- "CVXOPT"
+DIFFCP_NAME <- "DIFFCP"
+ECOS_NAME <- "ECOS"
+ECOS_BB_NAME <- "ECOS_BB"
+GLOP_NAME <- "GLOP"
+GLPK_NAME <- "GLPK"
+GLPK_MI_NAME <- "GLPK_MI"
+GUROBI_NAME <- "GUROBI"
+MOSEK_NAME <- "MOSEK"
+NAG_NAME <- "NAG"
+OSQP_NAME <- "OSQP"
+PDLP_NAME <- "PDLP"
+PROXQP_NAME <- "PROXQP"
+SCIP_NAME <- "SCIP"
+SCS_NAME <- "SCS"
+SDPA_NAME <- "SDPA"
+XPRESS_NAME <- "XPRESS"
+SOLVER_NAMES <- c(CLARABEL_NAME, ECOS_NAME, CVXOPT_NAME, GLOP_NAME, GLPK_NAME, 
+                  GLPK_MI_NAME, SCS_NAME, SDPA_NAME, GUROBI_NAME, OSQP_NAME,
+                  CPLEX_NAME, MOSEK_NAME, CBC_NAME, COPT_NAME, XPRESS_NAME,
+                  PROXQP_NAME, NAG_NAME, PDLP_NAME, SCIP_NAME)
 
 # Solver option defaults
 SOLVER_DEFAULT_PARAM <- list(
@@ -81,87 +101,102 @@ SOLVER_DEFAULT_PARAM <- list(
 XPRESS_IIS = "XPRESS_IIS"
 XPRESS_TROW = "XPRESS_TROW"
 
+# Parametrized problem.
+PARAM_PROB <- "param_prob"
+
 # Parallel (meta) solver
-PARALLEL = "parallel"
+PARALLEL <- "parallel"
 
 # Robust CVXOPT LDL KKT solverg
-ROBUST_KKTSOLVER = "robust"
+ROBUST_KKTSOLVER <- "robust"
 
 # Map of constraint types
-EQ_MAP = "1"
-LEQ_MAP = "2"
-SOC_MAP = "3"
-SOC_EW_MAP = "4"
-PSD_MAP = "5"
-EXP_MAP = "6"
-BOOL_MAP = "7"
-INT_MAP = "8"
+# TODO: These should be defined in a solver model.
+EQ_MAP <- "1"
+LEQ_MAP <- "2"
+SOC_MAP <- "3"
+SOC_EW_MAP <- "4"
+PSD_MAP <- "5"
+EXP_MAP <- "6"
+BOOL_MAP <- "7"
+INT_MAP <- "8"
 
 # Keys in the dictionary of cone dimensions.
-## SCS 3.0 changes this to "z"
-## EQ_DIM = "f"
-EQ_DIM = "z"
-LEQ_DIM = "l"
-SOC_DIM = "q"
-PSD_DIM = "s"
-EXP_DIM = "ep"
+# Cone dims are now defined in matrix stuffing modules rather than the solver module.
+
+## EQ_DIM <- "f"   # SCS 3.0 changes this to "z"
+EQ_DIM <- "z"
+LEQ_DIM <- "l"
+SOC_DIM <- "q"
+PSD_DIM <- "s"
+EXP_DIM <- "ep"
 
 # Keys for non-convex constraints.
-BOOL_IDS = "bool_ids"
-BOOL_IDX = "bool_idx"
-INT_IDS = "int_ids"
-INT_IDX = "int_idx"
+BOOL_IDS <- "bool_ids"
+BOOL_IDX <- "bool_idx"
+INT_IDS <- "int_ids"
+INT_IDX <- "int_idx"
 
 # Keys for results_dict.
-STATUS = "status"
-VALUE = "value"
-OBJ_OFFSET = "obj_offset"
-PRIMAL = "primal"
-EQ_DUAL = "eq_dual"
-INEQ_DUAL = "ineq_dual"
-SOLVER_NAME = "solver"
-SOLVE_TIME = "solve_time"  # in seconds
-SETUP_TIME = "setup_time"  # in seconds
-NUM_ITERS = "num_iters"    # number of iterations
-EXTRA_STATS = "extra_stats"   # extra solver-specific statistics
+STATUS <- "status"
+VALUE <- "value"
+OBJ_OFFSET <- "obj_offset"
+PRIMAL <- "primal"
+EQ_DUAL <- "eq_dual"
+INEQ_DUAL <- "ineq_dual"
+SOLVER_NAME <- "solver"
+SOLVE_TIME <- "solve_time"  # in seconds
+SETUP_TIME <- "setup_time"  # in seconds
+NUM_ITERS <- "num_iters"    # number of iterations
+EXTRA_STATS <- "extra_stats"   # extra solver-specific statistics
 
 # Keys for problem data dict.
-C_KEY = "c"
-OFFSET = "offset"
-P_KEY = "P"
-Q_KEY = "q"
-A_KEY = "A"
-B_KEY = "b"
-G_KEY = "G"
-H_KEY = "h"
-F_KEY = "F"
-DIMS = "dims"
-BOOL_IDX = "bool_vars_idx"
-INT_IDX = "int_vars_idx"
+C_KEY <- "c"
+OFFSET <- "offset"
+P_KEY <- "P"
+Q_KEY <- "q"
+A_KEY <- "A"
+B_KEY <- "b"
+G_KEY <- "G"
+H_KEY <- "h"
+F_KEY <- "F"
+DIMS <- "dims"
+BOOL_IDX <- "bool_vars_idx"
+INT_IDX <- "int_vars_idx"
 
 # Keys for curvature and sign
-CONSTANT = "CONSTANT"
-AFFINE = "AFFINE"
-CONVEX = "CONVEX"
-CONCAVE = "CONCAVE"
-ZERO = "ZERO"
-NONNEG = "NONNEGATIVE"
-NONPOS = "NONPOSITIVE"
-UNKNOWN = "UNKNOWN"
+CONSTANT <- "CONSTANT"
+AFFINE <- "AFFINE"
+CONVEX <- "CONVEX"
+CONCAVE <- "CONCAVE"
+QUASILINEAR <- "QUASILINEAR"
+QUASICONVEX <- "QUASICONVEX"
+QUASICONCAVE <- "QUASICONCAVE"
+LOG_LOG_CONSTANT <- "LOG-LOG CONSTANT"
+LOG_LOG_AFFINE <- "LOG-LOG AFFINE"
+LOG_LOG_CONVEX <- "LOG-LOG CONVEX"
+LOG_LOG_CONCAVE <- "LOG-LOG CONCAVE"
+ZERO <- "ZERO"
+NONNEG <- "NONNEGATIVE"
+NONPOS <- "NONPOSITIVE"
+UNKNOWN <- "UNKNOWN"
 
-# Keys for log-log curvature
-LOG_LOG_CONSTANT = "LOG_LOG_CONSTANT"
-LOG_LOG_AFFINE = "LOG_LOG_AFFINE"
-LOG_LOG_CONVEX = "LOG_LOG_CONVEX"
-LOG_LOG_CONCAVE = "LOG_LOG_CONCAVE"
-
-SIGN_STRINGS = c(ZERO, NONNEG, NONPOS, UNKNOWN)
+# Canonicalization backends.
+RUST_CANON_BACKEND <- "RUST"
+CPP_CANON_BACKEND <- "CPP"
+DEFAULT_CANON_BACKEND <- CPP_CANON_BACKEND
 
 # Numerical tolerances.
-EIGVAL_TOL = 1e-10
-PSD_NSD_PROJECTION_TOL = 1e-8
-GENERAL_PROJECTION_TOL = 1e-10
-SPARSE_PROJECTION_TOL = 1e-10
+EIGVAL_TOL <- 1e-10
+PSD_NSD_PROJECTION_TOL <- 1e-8
+GENERAL_PROJECTION_TOL <- 1e-10
+SPARSE_PROJECTION_TOL <- 1e-10
+ATOM_EVAL_TOL <- 1e-4
+
+# DPP is slow when total size of parameters exceed this threshold.
+PARAM_THRESHOLD <- 1e4   # TODO: Should we reduce this?
+
+# TODO: Can we set the number of threads to use during compilation like in CVXPY?
 
 SolveResult <- list(SolveResult = list("opt_value", "status", "primal_values", "dual_values"))
 
@@ -190,18 +225,21 @@ apply_with_keepdims <- function(x, fun, axis = NA_real_, keepdims = FALSE) {
 # Utility functions for dimensions #
 #                                  #
 ####################################
+squeezed <- function(dim) {
+  return(dim[dim != 1])
+}
+
 sum_dims <- function(dims) {
-  if(length(dims) == 0)
-    return(NULL)
+  # Give the dimensions resulting from summing a list of dimensions.
+  if(is.null(dims) || length(dims) == 0)
+    return(NULL)   # Should I return NULL or 0 for scalars?
   else if(length(dims) == 1)
     return(dims[[1]])
 
   dim <- dims[[1]]
   for(t in dims[2:length(dims)]) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
-    # if(!(length(dim) == length(t) && all(dim == t)) && (!is.null(dim) && sum(dim != 1) != 0) && (!is.null(t) && sum(t != 1) != 0))
-    # if(!identical(dim, t) && (!is.null(dim) && !all(dim == 1)) && (!is.null(t) && !all(t == 1)))
-    if(!((length(dim) == length(t) && all(dim == t)) || all(dim == 1) || all(t == 1)))
+    if(length(dim) != t && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
       stop("Cannot broadcast dimensions")
 
     if(length(dim) >= length(t))
@@ -225,14 +263,13 @@ sum_dims <- function(dims) {
       for(idx in length(shorter):1) {
         d1 <- longer[offset + idx]
         d2 <- shorter[idx]
-        # if(!(length(d1) == length(d2) && all(d1 == d2)) && !(d1 == 1 || d2 == 1))
         if(d1 != d2 && !(d1 == 1 || d2 == 1))
           stop("Incompatible dimensions")
         if(d1 >= d2)
-          new_d <- d1
+          new_dim <- d1
         else
-          new_d <- d2
-        suffix <- c(new_d, suffix)
+          new_dim <- d2
+        suffix <- c(new_dim, suffix)
       }
     }
     dim <- c(prefix, suffix)
@@ -241,6 +278,10 @@ sum_dims <- function(dims) {
 }
 
 mul_dims_promote <- function(lh_dim, rh_dim) {
+  # Promotes dims as necessary and returns promoted dim of product.
+  # If lh_dim is of length one, prepend a one to it.
+  # If rh_dim is of length one, append a one to it.
+  
   if(is.null(lh_dim) || is.null(rh_dim) || length(lh_dim) == 0 || length(rh_dim) == 0)
     stop("Multiplication by scalars is not permitted")
 
@@ -251,6 +292,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
 
   lh_mat_dim <- lh_dim[(length(lh_dim)-1):length(lh_dim)]
   rh_mat_dim <- rh_dim[(length(rh_dim)-1):length(rh_dim)]
+  
   if(length(lh_dim) > 2)
     lh_head <- lh_dim[1:(length(lh_dim)-2)]
   else
@@ -267,6 +309,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
 }
 
 mul_dims <- function(lh_dim, rh_dim) {
+  # Give the dim resulting from multiplying two dims.
   lh_old <- lh_dim
   rh_old <- rh_dim
 
@@ -292,22 +335,32 @@ mul_dims <- function(lh_dim, rh_dim) {
   return(dim)
 }
 
+size_from_dim <- function(dim) {
+  # Compute the size of a given shape by multiplying the sizes of each axis.
+  # This is a replacement for as.integer(prod(dim)), which is much slower for
+  # small arrays than the implementation below.
+  return(Reduce("*", dim, 1))
+}
+
 ###############################
 #                             #
 # Utility functions for signs #
 #                             #
 ###############################
 sum_signs <- function(exprs) {
-  is_pos <- all(sapply(exprs, function(expr) { is_nonneg(expr) }))
-  is_neg <- all(sapply(exprs, function(expr) { is_nonpos(expr) }))
+  # Give the sign resulting from summing a list of expressions.
+  is_pos <- all(sapply(exprs, is_nonneg))
+  is_neg <- all(sapply(exprs, is_nonpos)
   c(is_pos, is_neg)
 }
 
 mul_sign <- function(lh_expr, rh_expr) {
+  # Give the sign resulting from multiplying two expressions.
   # ZERO * ANYTHING == ZERO
-  # NONNEGATIVE * NONNEGATIVE == NONNEGATIVE
-  # NONPOSITIVE * NONNEGATIVE == NONPOSITIVE
-  # NONPOSITIVE * NONPOSITIVE == NONNEGATIVE
+  # POSITIVE * POSITIVE == POSITIVE
+  # NEGATIVE * POSITIVE == NEGATIVE
+  # NEGATIVE * NEGATIVE == POSITIVE
+  
   lh_nonneg <- is_nonneg(lh_expr)
   rh_nonneg <- is_nonneg(rh_expr)
   lh_nonpos <- is_nonpos(lh_expr)
@@ -315,6 +368,7 @@ mul_sign <- function(lh_expr, rh_expr) {
 
   lh_zero <- lh_nonneg && lh_nonpos
   rh_zero <- rh_nonneg && rh_nonpos
+  
   is_zero <- lh_zero || rh_zero
 
   is_pos <- is_zero || (lh_nonneg && rh_nonneg) || (lh_nonpos && rh_nonpos)
@@ -537,9 +591,37 @@ gershgorin_psd_check <- function(A, tol) {
 # Perspective utilities #
 #                       #
 #########################
-
 form_cone_constraint <- function(z, constraint) {
-  stop("Unimplemented")
+  # Given a constraint represented as Ax + b in K for K a CVXR cone, 
+  # return an instantiated CVXR constraint.
+  if(is(constraint, "SOC")) {
+    # TODO: Figure out how to instantiate Ax + b in SOC where we know which
+    # lines from our ultimate A_pers(x,t,s) + b in K times ... correspond to
+    # this constraint.
+    return(SOC(t = z[1], X = z[2:nrow(z)]))
+  } else if(is(constraint, "NonNegConstraint"))
+    return(NonNegConstraint(z))
+  else if(is(constraint, "ExpCone")) {
+    n <- nrow(z)
+    if(!(length(dim(z)) == 1 || ncol(z) == 1))
+      stop("z must be a vector or matrix with a single column")
+    if(n %% 3 != 0)   # We think this is how the exponential cone works.
+      stop("n needs to be a multiple of 3")
+    step <- floor(n/3)
+    return(ExpCone(z[1:step], z[(step+1):(n-step)], z[(n-step+1):n]))
+  } else if(is(constraint, "ZeroConstraint"))
+    return(ZeroConstraint(z))
+  else if(is(constraint, "PSDConstraint")) {
+    N <- nrow(z)
+    n <- as.integer(N^0.5)
+    if(N != n^2)
+      stop("Argument is not a vectorized square matrix")
+    z_mat <- Reshape(z, c(n, n))
+    return(PSDConstraint(z_mat))   # Do we need constraint_id?
+  } else if(is(constraint, "PowCone3D"))
+    stop("Unimplemented")
+  else
+    stop("Unimplemented")
 }
 
 ###################
@@ -1018,7 +1100,45 @@ ku_dim <- function(key, dim) {
   dims
 }
 
-<<<<<<< Updated upstream
+###########################
+#                         #
+# Replace quadratic forms #
+#                         #
+###########################
+replace_quad_forms <- function(expr, quad_forms) {
+  for(idx in seq_along(expr@args)) {
+    arg <- expr@args[[idx]]
+    if(is(arg, "SymbolicQuadForm"), || is(arg, "QuadForm"))
+      quad_forms <- replace_quad_form(expr, idx, quad_forms)
+    else
+      quad_forms <- replace_quad_forms(arg, quad_forms)
+  }
+  return(quad_forms)
+}
+
+replace_quad_form <- function(expr, idx, quad_forms) {
+  quad_form <- expr@args[[idx]]
+  placeholder <- new("Variable", dim = dim(quad_form), var_id = id(quad_form))
+  expr@args[[idx]] <- placeholder
+  placeholder_id_char <- as.character(id(placeholder))
+  quad_forms[[placeholder_id_char]] <- list(expr, idx, quad_form)
+  return(quad_forms)
+}
+
+restore_quad_forms <- function(expr, quad_forms) {
+  # TODO: Check recursion is handled correctly by returning expr. (CVXPY modifies expr@args in place).
+  for(idx in seq_along(expr@args)) {
+    arg <- expr@args[[idx]]
+    arg_id_char <- as.character(id(arg))
+    if(is(arg, "Variable") && arg_id_char %in% names(quad_forms))
+      expr@args[[idx]] <- quad_forms[[arg_id_char]][[3]]
+    else
+      # restore_quad_forms(arg, quad_forms)
+      expr@args[[idx]] <- restore_quad_forms(arg, quad_forms)
+  }
+  return(expr)
+}
+
 #######################
 #                     #
 # Debugging utilities #

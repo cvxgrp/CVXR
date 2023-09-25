@@ -4,10 +4,11 @@
 #' This class represents an optimization objective.
 #'
 #' @slot expr A scalar \linkS4class{Expression} to optimize.
+#' @slot NAME (Internal) Name used for debug messages.
 #' @name Objective-class
 #' @aliases Objective
 #' @rdname Objective-class
-.Objective <- setClass("Objective", representation(expr = "ConstValORExpr"), contains = "Canonical")
+.Objective <- setClass("Objective", representation(expr = "ConstValORExpr", NAME = "objective"), contains = "Canonical")
 
 #' @param expr A scalar \linkS4class{Expression} to optimize.
 #' @rdname Objective-class

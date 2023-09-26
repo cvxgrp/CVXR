@@ -636,8 +636,11 @@ gm <- function(t, x, y) {
       axis = 2)
 }
 
-# Form internal constraints for weighted geometric mean t <= x^p
 gm_constrs <- function(t, x_list, p) {
+  # Form internal constraints for weighted geometric mean t <= x^p
+  # t <= x[1]^p[1] * x[2]^p[2] * ... * x[n]^p[n],
+  # where x and t can either be scalar or matrix variables.
+  
   if(!is_weight(p))
     stop("p must be a valid weight vector")
   w <- dyad_completion(p)
@@ -647,13 +650,14 @@ gm_constrs <- function(t, x_list, p) {
   d <- Rdictdefault(default = function(key) { new("Variable", dim = t_dim) })
   d[w] <- t
 
-  if(length(x_list) < length(w))
-    x_list <- c(x_list, list(t))
+  long_w <- length(w) - length(x_list)
+  if(long_w > 0)
+    x_list <- c(x_list, as.list(rep(t, long_w)))
 
   if(length(x_list) != length(w))
     stop("Expected length of x_list to be equal to length of w, but got ", length(x_list), " != ", length(w))
 
-  for(i in 1:length(w)) {
+  for(i in seq_along(x_list)) {
     p <- w[i]
     v <- x_list[[i]]
 
@@ -677,7 +681,7 @@ gm_constrs <- function(t, x_list, p) {
       constraints <- c(constraints, list(gm(d[elem], d[children[[1]]], d[children[[2]]])))
     }
   }
-  constraints
+  return(constraints)
 }
 
 # TODO: For powers of 2 and 1/2 only. Get rid of this when gm_constrs is working in general.
@@ -685,32 +689,46 @@ gm_constrs <- function(t, x_list, p) {
 #  list(gm(t, x_list[[1]], x_list[[2]]))
 # }
 
-# Return (t,1,x) power tuple: x <= t^(1/p) 1^(1-1/p)
 pow_high <- function(p) {
-  if(p <= 1) stop("Must have p > 1")
+  # Return (t,1,x) power tuple:
+  # x <= t^(1/p) 1^(1-1/p).
+  # User wants the epigraph variable t.
+  
+  if(p <= 1) 
+    stop("Must have p > 1")
   p <- 1/gmp::as.bigq(p)
   if(1/p == as.integer(1/p))
     return(list(as.integer(1/p), c(p, 1-p)))
-  list(1/p, c(p, 1-p))
+  return(list(1/p, c(p, 1-p)))
 }
 
-# Return (x,1,t) power tuple: t <= x^p 1^(1-p)
 pow_mid <- function(p) {
-  if(p >= 1 || p <= 0) stop("Must have 0 < p < 1")
+  # Return (x,1,t) power tuple:
+  # t <= x^p 1^(1-p).
+  # User wants the epigraph variable t.
+  
+  if(p >= 1 || p <= 0)
+    stop("Must have 0 < p < 1")
   p <- gmp::as.bigq(p)
-  list(p, c(p, 1-p))
+  return(list(p, c(p, 1-p)))
 }
 
-# Return (x,t,1) power tuple: 1 <= x^(p/(p-1)) t^(-1/(p-1))
 pow_neg <- function(p) {
-  if(p >= 0) stop("must have p < 0")
+  # Return (x,t,1) power tuple: 
+  # 1 <= x^(p/(p-1)) t^(-1/(p-1)).
+  # User wants the epigraph variable t.
+  
+  if(p >= 0)
+    stop("must have p < 0")
   p <- gmp::as.bigq(p)
   p <- p/(p-1)
-  list(p/(p-1), c(p, 1-p))
+  return(list(p/(p-1), c(p, 1-p)))
 }
 
 limit_denominator <- function(num, max_denominator = 10^6) {
-  # Adapted from the Python 2.7 fraction library: https://github.com/python/cpython/blob/2.7/Lib/fractions.py
+  # Closest fraction to self with denominator at most max_denominator.
+  # Adapted from the Python fractions library: https://github.com/python/cpython/blob/main/Lib/fractions.py
+  
   if(max_denominator < 1)
     stop("max_denominator should be at least 1")
   if(gmp::denominator(num) <= max_denominator)
@@ -738,49 +756,61 @@ limit_denominator <- function(num, max_denominator = 10^6) {
     n <- d
     d <- n - a*d
   }
-
   k <- floor((max_denominator - q0)/q1)
-  bound1 <- gmp::as.bigq(p0 + k*p1, q0 + k*q1)
-  bound2 <- gmp::as.bigq(p1, q1)
-  if(abs(bound2 - num) <= abs(bound1 - num))
-    return(bound2)
+  
+  # Determine which of the candidates (p0+k*p1)/(q0+k*q1) and p1/q1 is
+  # closer to self. The distance between them is 1/(q1*(q0+k*q1)), while
+  # the distance from p1/q1 to self is d/(q1*self._denominator). So we
+  # need to compare 2*(q0+k*q1) with self._denominator/d.
+  denom <- as.double(gmp::denominator(num))
+  if((2*d*(q0 + k*q1)) <= denom)
+    return(gmp::as.bigq(p1, q1))
   else
-    return(bound1)
+    return(gmp::as.bigq(p0 + k*p1, q0 + k*q1))
 }
 
-# Test if num is a positive integer power of 2
 is_power2 <- function(num) {
-  num > 0 && gmp::is.whole(log2(as.double(num)))
+  # Test if num is a positive integer power of 2.
+  # Note: Unlike Python, this uses the actual value of the number, so is_power2(1.0) returns TRUE.
+  return(gmp::is.whole(num) && num > 0 && !bitwAnd(num, num - 1))
 }
 
-# Test if frac is a non-negative dyadic fraction or integer
 is_dyad <- function(frac) {
+  # Test if frac is a non-negative dyadic fraction or integer.
   if(gmp::is.whole(frac) && frac >= 0)
-    TRUE
+    return(TRUE)
   else if(gmp::is.bigq(frac) && frac >= 0 && is_power2(gmp::denominator(frac)))
-    TRUE
+    return(TRUE)
   else
-    FALSE
+    return(FALSE)
 }
 
-# Test if a vector is a valid dyadic weight vector
 is_dyad_weight <- function(w) {
-  is_weight(w) && all(sapply(w, is_dyad))
+  # Test if a vector is a valid dyadic weight vector.
+  # w must be nonnegative, sum to 1, and have integer or dyadic fractional elements.
+  return(is_weight(w) && all(sapply(w, is_dyad)))
 }
 
-# Test if w is a valid weight vector, which consists of non-negative integer or fraction elements that sum to 1
 is_weight <- function(w) {
+  # Test if w is a valid weight vector.
+  # w must have nonnegative integer or fraction elements, and sum to 1.
+  
   # if(is.matrix(w) || is.vector(w))
-  #  w <- as.list(w)
+  #   w <- as.list(w)
+  
   valid_elems <- rep(FALSE, length(w))
-  for(i in 1:length(w))
+  for(i in seq_along(w))
     valid_elems[i] <- (w[i] >= 0) && (gmp::is.whole(w[i]) || gmp::is.bigq(w[i]))
-  all(valid_elems) && all.equal(sum(as.double(w)), 1)
+  valid_elems <- all(valid_elems)
+  
+  # return(all(valid_elems) && all.equal(sum(as.double(w)), 1))
+  return(valid_elems && sum(w) == 1)
 }
 
-# Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
-# When the input tuple contains only integers and fractions, "fracify" will try to represent the weights exactly
 fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
+  # Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
+  # When the input tuple contains only integers and fractions, "fracify" will try to represent the weights exactly
+  
   if(any(a < 0))
     stop("Input powers must be non-negative")
 
@@ -1024,17 +1054,18 @@ Key <- function(row, col) {
 }
 
 ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed for consistency in handling keys.
+  # Check if the key is a valid index.
   if(length(key) > 3)
     stop("Invalid index/slice")
-
+  
   nrow <- dim[1]
   ncol <- dim[2]
   row <- ku_format_slice(key$row, nrow)
   col <- ku_format_slice(key$col, ncol)
 
+  # Change single indices for vectors into double indices
   if(!is.null(row) && !is.null(col))
     key <- Key(row = row, col = col)
-  # Change single indices for vectors into double indices
   else if(is.null(row) && !is.null(col))
     key <- Key(row = seq_len(nrow), col = col)
   else if(!is.null(row) && is.null(col))
@@ -1044,7 +1075,8 @@ ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed
   return(key)
 }
 
-ku_format_slice <- function(key_val, dim) {
+ku_format_slice <- function(key_val, dim, axis) {
+  # Converts part of a key into a slice with a start and step.
   if(is.null(key_val))
     return(NULL)
   orig_key_val <- as.integer(key_val)
@@ -1105,36 +1137,70 @@ ku_dim <- function(key, dim) {
 # Replace quadratic forms #
 #                         #
 ###########################
+
+# These functions are used to handle both S4 class and list inputs to the
+# utility functions for replacing quadratic forms (necessary in e.g. coeff_quad_form).
+# TODO: Change LinOp representation from list to S4 class so we can get rid of
+# these extra checks.
+get_obj_slot(obj, name) {
+  if(is.list(obj))
+    return(obj[[name]])
+  else
+    return(slot(obj, name))
+}
+
+set_obj_slot(obj, name, idx, val) {
+  if(is.list(obj))
+    obj[[name]][[idx]] <- val
+  else
+    slot(obj, name)[[idx]] <- val
+  return(obj)
+}
+
 replace_quad_forms <- function(expr, quad_forms) {
-  for(idx in seq_along(expr@args)) {
-    arg <- expr@args[[idx]]
-    if(is(arg, "SymbolicQuadForm"), || is(arg, "QuadForm"))
-      quad_forms <- replace_quad_form(expr, idx, quad_forms)
-    else
-      quad_forms <- replace_quad_forms(arg, quad_forms)
+  # for(idx in seq_along(expr@args)) {
+  #   arg <- expr@args[[idx]]
+  for(idx in seq_along(get_obj_slot(expr, "args"))) {
+    arg <- get_obj_slot(expr, "args")[[idx]]
+    if(is(arg, "SymbolicQuadForm"), || is(arg, "QuadForm")) {
+      tmp <- replace_quad_form(expr, idx, quad_forms)
+      expr <- tmp[[1]]
+      quad_forms <- tmp[[2]]
+    } else {
+      tmp <- replace_quad_forms(arg, quad_forms)
+      arg <- tmp[[1]]
+      quad_forms <- tmp[[2]]
+    }
   }
-  return(quad_forms)
+  return(list(expr, quad_forms))
 }
 
 replace_quad_form <- function(expr, idx, quad_forms) {
-  quad_form <- expr@args[[idx]]
+  # quad_form <- expr@args[[idx]]
+  quad_form <- get_obj_slot(expr, "args")[[idx]]
   placeholder <- new("Variable", dim = dim(quad_form), var_id = id(quad_form))
-  expr@args[[idx]] <- placeholder
+  # expr@args[[idx]] <- placeholder
+  expr <- set_obj_slot(expr, "args", idx, placeholder)
   placeholder_id_char <- as.character(id(placeholder))
   quad_forms[[placeholder_id_char]] <- list(expr, idx, quad_form)
-  return(quad_forms)
+  return(list(expr, quad_forms))
 }
 
 restore_quad_forms <- function(expr, quad_forms) {
   # TODO: Check recursion is handled correctly by returning expr. (CVXPY modifies expr@args in place).
-  for(idx in seq_along(expr@args)) {
-    arg <- expr@args[[idx]]
+  # for(idx in seq_along(expr@args)) {
+  #   arg <- expr@args[[idx]]
+  for(idx in seq_along(get_obj_slot(expr, "args"))) {
+    arg <- get_obj_slot(expr, "args")
     arg_id_char <- as.character(id(arg))
-    if(is(arg, "Variable") && arg_id_char %in% names(quad_forms))
-      expr@args[[idx]] <- quad_forms[[arg_id_char]][[3]]
-    else
+    if(is(arg, "Variable") && arg_id_char %in% names(quad_forms)) {
+      # expr@args[[idx]] <- quad_forms[[arg_id_char]][[3]]
+      expr <- set_obj_slot(expr, "args", idx, quad_forms[[arg_id_char]][[3]])
+    } else {
       # restore_quad_forms(arg, quad_forms)
-      expr@args[[idx]] <- restore_quad_forms(arg, quad_forms)
+      # expr@args[[idx]] <- restore_quad_forms(arg, quad_forms)
+      expr <- set_obj_slot(expr, "args", idx, restore_quad_forms(arg, quad_forms))
+    }
   }
   return(expr)
 }

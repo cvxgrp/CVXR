@@ -11,3 +11,4 @@
 ^CRAN-RELEASE$
 ^inst/issues/*
 ^\.github$
+R-prev/*

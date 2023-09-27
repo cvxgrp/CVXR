@@ -37,9 +37,9 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #'
 #'
 #' The QpMatrixStuffingConeDims class.
-#' 
+#'
 #' This class contains a summary of cone dimensions present in constraints.
-#' 
+#'
 #' @slot zero The dimension of the zero cone.
 #' @slot nonpos The dimension of the nonpositive cone.
 #' @slot exp The number of 3-dimensional exponential cones.
@@ -89,19 +89,19 @@ setMethod("$", "QpMatrixStuffingConeDims", function(x, name) {
 
 #'
 #' The ParamQuadProg class.
-#' 
+#'
 #' This class represents a parametrized quadratic program.
-#' 
+#'
 #' minimize   x^T*P*x + q^T*x + d
 #' subject to (in)equality_constr(A_1*x + b_1, ...)
 #'            ...
 #'            (in)equality_constr(A_i*x + b_i, ...)
 #'
 #' The constant offsets d and b are the last column of c and A, respectively.
-#' 
+#'
 #' @rdname ParamQuadProg-class
 .ParamQuadProg <- setClass("ParamQuadProg", representation(P = "numeric", q = "numeric", x = "Expression", A = "numeric", variables = "list", var_id_to_col = "list", constraints = "list", parameters = "list", param_id_to_col = "list", formatted = "logical", reduced_P = "ReducedMatORNULL", reduced_A = "ReducedMatORNULL", constr_size = "numeric", id_to_param = "list", param_id_to_size = "list", total_param_size = "numeric", id_to_var = "list"),
-                           prototype(formatted = FALSE, reduced_P = NULL, reduced_A = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_integer_, id_to_var = list()), 
+                           prototype(formatted = FALSE, reduced_P = NULL, reduced_A = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_integer_, id_to_var = list()),
                            contains = "ParamProb")
 ParamQuadProg <- function(P, q, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, formatted = FALSE) {
   .ParamQuadProg(P = P, q = q, x = x, A = A, variables = variables, var_id_to_col = var_id_to_col, constraints = constraints, parameters = parameters, param_id_to_col = param_id_to_col, formatted = formatted)
@@ -112,11 +112,11 @@ setMethod("initialize", "ParamQuadProg", function(.Object, ..., P, q, x, A, vari
   .Object@q <- q
   .Object@x <- x
   .Object@A <- A
-  
+
   # Form a reduced representation of A and P for faster application of parameters.
   .Object@reduced_A <- ReducedMat(.Object@A, size(.Object@x))
   .Object@reduced_P <- ReducedMat(.Object@P, size(.Object@x), quad_form = TRUE)
-  
+
   .Object@constraints <- constraints
   .Object@constr_size <- sum(sapply(constraints, size))
   .Object@parameters <- parameters
@@ -125,7 +125,7 @@ setMethod("initialize", "ParamQuadProg", function(.Object, ..., P, q, x, A, vari
   for(p in .Object@parameters)
     .Object@id_to_param[[as.character(p@id)]] <- size(p)
   .Object@total_param_size <- sum(sapply(.Object@parameters, size))
-  
+
   # TODO: Technically part of inverse data.
   .Object@variables <- variables
   .Object@var_id_to_col <- var_id_to_col
@@ -133,7 +133,7 @@ setMethod("initialize", "ParamQuadProg", function(.Object, ..., P, q, x, A, vari
   for(v in .Object@variables)
     .Object@id_to_var[[as.character(v@id)]] <- v
   .Object@formatted <- formatted   # Has this param cone prog been formatted for a solver?
-  
+
   callNextMethod(.Object, ...)
 })
 
@@ -155,21 +155,21 @@ setMethod("apply_parameters", "ParamQuadProg", function(object, id_to_param_valu
       return(id_to_param_value[[idx]])
   }
   param_vec <- canonInterface.get_parameter_vector(object@total_param_size, object@param_id_to_col, object@param_id_to_size, param_value, zero_offset = zero_offset)
-  
+
   object@reduced_P <- cache(object@reduced_P, keep_zeros)
   P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
-  
+
   qd <- canonInterface.get_matrix_from_tensor(object@q, param_vec, size(object@x), with_offset = TRUE)
   q <- qd[[1]]
   d <- qd[[2]]
   q <- as.matrix(as.vector(q))
-  
+
   object@reduced_A <- cache(object@reduced_A, keep_zeros)
   Ab <- get_matrix_from_tensor(object@reduced_A, param_vec, with_offset = TRUE)
   A <- Ab[[1]]
   b <- Ab[[2]]
-  
-  return(list(P, q, d, A, as.matrix(b)))
+
+  return(list(P = P, q = q, d = d, AF = A, b = as.matrix(b)))
 })
 
 #' @describeIn ParamQuadProg Multiplies by Jacobian of parameter mapping.
@@ -226,7 +226,7 @@ setMethod("stuffed_objective", signature(object = "QpMatrixStuffing", problem = 
   params_to_q <- Pq_params[[2]]
   # Handle 0.5 factor.
   params_to_P <- 2*params_to_P
-  
+
   # Concatenate all variables in one vector.
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
@@ -244,7 +244,7 @@ setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem")
   params_to_P <- tmp[[1]]
   params_to_q <- tmp[[2]]
   flattened_variable <- tmp[[3]]
-  
+
   # Lower equality and inequality to ZeroConstraint and NonPosConstraint.
   cons <- list()
   for(con in problem@constraints) {
@@ -254,7 +254,7 @@ setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem")
       con <- lower_ineq_to_nonpos(con)
     cons <- c(cons, con)
   }
-  
+
   # Reorder constraints to ZeroConstraint, NonPosConstraint.
   constr_map <- group_constraints(cons)
   ordered_cons <- c(constr_map[["ZeroConstraint"]], constr_map[["NonPosConstraint"]])
@@ -263,7 +263,7 @@ setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem")
     con_id <- id(con)
     inverse_data@cons_id_map[[as.character(con_id)]] <- con_id
   }
-  
+
   inverse_data@constraints <- ordered_cons
   # Batch expressions together, then split apart.
   expr_list <- list()
@@ -272,7 +272,7 @@ setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem")
       expr_list <- c(expr_list, arg)
   }
   params_to_Ab <- affine(extractor, expr_list)
-  
+
   inverse_data@minimize <- inherits(problem@objective, "Minimize")
   new_prob <- ParamQuadProg(params_to_P, params_to_q, flattened_variable, params_to_Ab, variables(problem),
                             inverse_data@var_offsets, ordered_cons, parameters(problem), inverse_data@param_id_map)
@@ -286,12 +286,12 @@ setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution"
   opt_val <- solution@opt_val
   if(!(solution@status %in% ERROR_STATUS) and !inverse_data@minimize)
     opt_val <- -solution@opt_val
-  
+
   primal_vars <- list()
   dual_vars <- list()
   if(!(solution@status %in% SOLUTION_PRESENT))
     return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
-  
+
   # Split vectorized variable into components.
   x_opt <- values(solution@primal_vars)[[1]]
   for(var_id in names(var_map)) {
@@ -300,7 +300,7 @@ setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution"
     size <- as.integer(base::prod(shape))
     primal_vars[[var_id]] <- matrix(x_opt[offset:(offset + size - 1)], nrow = shape[1], ncol = shape[2], byrow = FALSE)
   }
-  
+
   if(!is.null(solution@dual_vars) && length(solution@dual_vars) > 0) {
     # Giant dual variable.
     dual_var <- values(solution@dual_vars)[[1]]
@@ -312,10 +312,10 @@ setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution"
       offset <- offset + size(constr)
     }
   }
-  
+
   return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
 })
-  
+
 
 # Atom canonicalizers
 Qp2QuadForm.huber_canon <- function(expr, args) {
@@ -326,20 +326,20 @@ Qp2QuadForm.huber_canon <- function(expr, args) {
   # s <- Variable(expr_dim)
   n <- new("Variable", dim = expr_dim)
   s <- new("Variable", dim = expr_dim)
-  
+
   # n^2 + 2*M*|s|
   # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
   power_expr <- Power(n, 2)
   canon <- Qp2QuadForm.power_canon(power_expr, power_expr@args)
   n2 <- canon[[1]]
   constr_sq <- canon[[2]]
-  
+
   abs_expr <- abs(s)
   canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
   abs_s <- canon[[1]]
   constr_abs <- canon[[2]]
   obj <- n2 + 2*M*abs_s
-  
+
   constraints <- c(constr_sq, constr_abs)
   constraints <- c(constraints, list(x == s + n))
   return(list(obj, constraints))
@@ -351,7 +351,7 @@ Qp2QuadForm.power_canon <- function(expr, args) {
     p <- expr@p
   else
     p <- value(expr@p)
-  
+
   if(is_constant(expr))
     return(list(Constant(value(expr)), list()))
   else if(p == 0)
@@ -400,7 +400,7 @@ Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
     speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
     quad_mat <- speye/y
   }
-  
+
   if(is(affine_expr, "Variable"))
     return(list(SymbolicQuadForm(affine_expr, quad_mat, expr), list()))
   else {

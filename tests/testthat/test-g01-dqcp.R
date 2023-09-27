@@ -244,35 +244,178 @@ test_that("test basic multiply nonpos", {
 })
 
 test_that("test basic multiply qcvx", {
+  x <- Variable(nonneg = TRUE)
+  y <- Variable(nonpos = TRUE)
+  expr <- x*y
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconvex(expr))
+  expect_false(is_quasiconcave(expr))
   
+  expect_false(is_dcp(expr))
+  
+  problem <- Problem(Minimize(expr), list(x <= 7, y >= -6))
+  expect_true(is_dqcp(problem))
+  expect_false(is_dcp(problem))
+  expect_false(is_dgp(problem))
+  
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), -42, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 7, tolerance = 1e-1)
+  expect_equal(result$getValue(y), -6, tolerance = 1e-1)
+  
+  x <- Variable(nonneg = TRUE)
+  y <- Variable(nonpos = TRUE)
+  expr <- y*x
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconvex(expr))
+  expect_false(is_quasiconcave(expr))
+  
+  expect_false(is_dcp(expr))
+  
+  problem <- Problem(Minimize(expr), list(x <= 7, y >= -6))
+  expect_true(is_dqcp(problem))
+  expect_false(is_dcp(problem))
+  expect_false(is_dgp(problem))
+  
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), -42, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 7, tolerance = 1e-1)
+  expect_equal(result$getValue(y), -6, tolerance = 1e-1)
 })
 
 test_that("test concave multiply", {
+  xy <- Variable(2, nonneg = TRUE)
+  x <- xy[1]
+  y <- xy[2]
+  expr <- sqrt(x)*sqrt(y)
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconcave(expr))
+  expect_false(is_quasiconvex(expr))
   
+  problem <- Problem(Maximize(expr), list(x <= 4, y <= 9))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 6, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 4, tolerance = 1e-1)
+  expect_equal(result$getValue(y), 9, tolerance = 1e-1)
+  
+  xy <- Variable(2, nonneg = TRUE)
+  x <- xy[1]
+  y <- xy[2]
+  expr <- (sqrt(x) + 2.0)*(sqrt(y) + 4.0)
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconcave(expr))
+  expect_false(is_quasiconvex(expr))
+  
+  problem <- Problem(Maximize(expr), list(x <= 4, y <= 9))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  # (2 + 2)*(3 + 4) = 28.
+  expect_equal(result$getValue(problem@objective), 28, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 4, tolerance = 1e-1)
+  expect_equal(result$getValue(y), 9, tolerance = 1e-1)
 })
 
 test_that("test basic ratio", {
+  x <- Variable()
+  y <- Variable(nonneg = TRUE)
+  expr <- x/y
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconcave(expr))
+  expect_true(is_quasiconvex(expr))
   
+  problem <- Problem(Minimize(expr), list(x == 12, y <= 6))
+  expect_true(is_dqcp(problem))
+  
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 2.0, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 12, tolerance = 1e-1)
+  expect_equal(result$getValue(y), 6, tolerance = 1e-1)
+  
+  x <- Variable()
+  y <- Variable(nonpos = TRUE)
+  expr <- x/y
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconcave(expr))
+  expect_true(is_quasiconvex(expr))
+  
+  problem <- Problem(Maximize(expr), list(x == 12, y >= -6))
+  expect_true(is_dqcp(problem))
+  
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), -2.0, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 12, tolerance = 1e-1)
+  expect_equal(result$getValue(y), -6, tolerance = 1e-1)
 })
 
 test_that("test lin frac", {
+  x <- Variable(2, nonneg = TRUE)
+  A <- rbind(c(1.0, 2.0), c(3.0, 4.0))
+  b <- c(0, 1)
+  C <- 2*A
+  d <- c(0, 1)
+  lin_frac <- ((A %*% x) + b)/((C %*% x) + d)
+  expect_true(is_dqcp(lin_frac))
+  expect_true(is_quasiconvex(lin_frac))
+  expect_true(is_quasiconcave(lin_frac))
   
+  problem <- Problem(Minimize(sum(x)), list(x >= 0, lin_frac <= 1))
+  expect_true(is_dqcp(problem))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 0, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 0, tolerance = 1e-5)
 })
 
 test_that("test concave frac", {
+  x <- Variable(nonneg = TRUE)
+  concave_frac <- sqrt(x)/exp(x)
+  expect_true(is_dqcp(concave_frac))
+  expect_true(is_quasiconcave(concave_frac))
+  expect_false(is_quasiconvex(concave_frac))
   
+  problem <- Problem(Maximize(concave_frac))
+  expect_true(is_dqcp(problem))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 0.428, tolerance = 1e-1)
+  expect_equal(result$getValue(x), 0.5, tolerance = 1e-1)
 })
 
 test_that("test length", {
+  x <- Variable(5)
+  expr <- length(x)
+  expect_true(is_dqcp(expr))
+  expect_true(is_quasiconvex(expr))
+  expect_false(is_quasiconcave(expr))
   
+  problem <- Problem(Minimize(expr), list(x[1] == 2.0, x[2] == 1.0))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 2)
+  expect_equal(result$getValue(x), matrix(c(2, 1, 0, 0, 0)), tolerance = 1e-7)
 })
 
 test_that("test length example", {
+  n <- 10
+  set.seed(1)
+  A <- matrix(rnorm(n^2), nrow = n, ncol = n)
+  x_star <- matrix(rnorm(n), nrow = n, ncol = 1)
+  b <- A %*% x_star
+  epsilon <- 1e-2
+  x <- Variable(n)
+  mse <- sum_squares(A %*% x - b)/n
+  problem <- Problem(Minimize(length(x)), list(mse <= epsilon))
+  if(!is_dqcp(problem))
+    stop("Problem must be DQCP")
+  # expect_true(is_dqcp(problem))
   
+  result <- solve(problem, qcp = TRUE)
+  if(is.na(result$value) || abs(result$value - 8) > (1e-8 + 1e-5*8))
+    stop("Optimal value should be 8")
+  # expect_equal(result$value, 8, tolerance = 1e-5)
 })
 
 test_that("test infeasible", {
-  
+  x <- Variable(2)
+  problem <- Problem(Minimize(length(x)), list(x == -1, ceil(x) >= 1))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_in(result$status, c(INFEASIBLE, INFEASIBLE_INACCURATE))
 })
 
 test_that("test sign", {
@@ -324,27 +467,71 @@ test_that("test multiply const", {
 })
 
 test_that("test div const", {
+  x <- Variable()
+  obj <- Minimize(ceil(x)/0.5)
+  problem <- Problem(obj, list(x >= 10))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(x), 10, tolerance = 1e-1)
+  expect_equal(result$value, 20, tolerance = 1e-1)
   
+  x <- Variable()
+  obj <- Maximize(ceil(x)/-0.5)
 })
 
 test_that("test reciprocal", {
-  
+  x <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(1/x))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$value, 0, tolerance = 1e-3)
 })
 
 test_that("test abs", {
+  x <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(abs(1/x)))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$value, 0, tolerance = 1e-3)
   
+  x <- Variable(neg = TRUE)
+  problem <- Problem(Minimize(abs(1/x)))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$value, 0, tolerance = 1e-3)
 })
 
 test_that("test tutorial example", {
-  
+  x <- Variable()
+  y <- Variable(pos = TRUE)
+  objective_fn <- -sqrt(x)/y
+  problem <- Problem(Minimize(objective_fn), list(exp(x) <= y))
+  # Smoke test.
+  result <- solve(problem, SOLVER, qcp = TRUE)
 })
 
 test_that("test curvature", {
-  
+  x <- Variable(3)
+  expr <- length(x)
+  expect_equal(curvature(expr), QUASICONVEX)
+  expr <- -length(x)
+  expect_equal(curvature(expr), QUASICONCAVE)
+  expr <- ceil(x)
+  expect_equal(curvature(expr), QUASILINEAR)
+  expect_true(is_quasilinear(expr))
 })
 
 test_that("test tutorial dqcp", {
+  # The sign of variables affects curvature analysis.
+  x <- Variable(nonneg = TRUE)
+  concave_frac <- x*sqrt(x)
+  constraint <- list(ceil(x) <= 10)
+  problem <- Problem(Maximize(concave_frac), constraint)
+  expect_true(is_quasiconcave(concave_frac))
+  expect_true(is_dqcp(constraints[[1]]))
+  expect_true(is_dqcp(problem))
   
+  w <- Variable()
+  fn <- w*sqrt(w)
+  problem <- Problem(Maximize(fn))
+  expect_false(is_dqcp(fn))
+  expect_false(is_dqcp(problem))
 })
 
 test_that("test add constant", {

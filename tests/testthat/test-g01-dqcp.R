@@ -419,51 +419,177 @@ test_that("test infeasible", {
 })
 
 test_that("test sign", {
+  x <- Variable()
+  problem <- Problem(Minimize(sign(x)), list(-2 <= x, x <= -0.5))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), -1)
+  expect_lte(result$getValue(x), 0)
   
+  problem <- Problem(Maximize(sign(x)), list(1 <= x, x <= 2))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 1.0)
+  expect_gt(result$getValue(x), 0)
+  
+  # Check that sign doesn't change value.
+  vector <- matrix(c(0.1, -0.3, 0.5))
+  variable <- Variable(length(vector))
+  problem <- Problem(Maximize(vector %*% variable), list(norm2(variable) <= 1))
+  result <- solve(problem, solver = "SCS")
+  
+  val <- value(variable)
+  val(sign(variable))
+  expect_equal(val, value(variable), tolerance = TOL)
+  
+  # sign is only QCP for univariate input.
+  x <- Variable(2)
+  obj <- sum_squares(rep(1, 2) - x)
+  constr <- list(sum(sign(x)) <= 1)
+  prob <- Problem(Minimize(obj), constr)
+  if(is_dqcp(prob))
+    stop("Problem should not be DQCP")
+  # expect_false(is_dqcp(prob))
 })
 
 test_that("test dist ratio", {
-  
+  x <- Variable(2)
+  a <- rep(1, 2)
+  b <- rep(0, 2)
+  problem <- Problem(Minimize(dist_ratio(x, a, b)), list(x <= 0.8))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(problem@objective), 0.25)
+  expect_equal(result$getValue(x), matrix(c(0.8, 0.8)))
 })
 
 test_that("test infeasible exp constr", {
-  
+  x <- Variable()
+  constr <- list(exp(ceil(x)) <= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, INFEASIBLE)
 })
 
 test_that("test infeasible inv_pos constr", {
-  
+  x <- Variable(nonneg = TRUE)
+  constr <- list(inv_pos(ceil(x)) <= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, INFEASIBLE)
 })
 
 test_that("test infeasible logistic constr", {
-  
+  x <- Variable(nonneg = TRUE)
+  constr <- list(logistic(ceil(x)) <= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, INFEASIBLE)
 })
 
 test_that("test noop exp constr", {
-  
+  x <- Variable()
+  constr <- list(exp(ceil(x)) <= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, OPTIMAL)
 })
 
 test_that("test noop inv_pos constr", {
-  
+  x <- Variable()
+  constr <- list(inv_pos(ceil(x)) >= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, OPTIMAL)
 })
 
 test_that("test noop logistic constr", {
-  
+  x <- Variable(nonneg = TRUE)
+  constr <- list(logistic(ceil(x)) >= -5)
+  problem <- Problem(Minimize(0), constr)
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(problem@status, OPTIMAL)
 })
 
 test_that("test gen_lambda_max matrix completion", {
+  A <- Variable(3, 3)
+  B <- Variable(3, 3, PSD = TRUE)
+  gen_lambda_max <- gen_lambda_max(A, B)
   
+  known_indices <- list(c(1,1), c(1,3), c(2,2))
+  known_A_vals <- c(1.0, 1.9, 0.8)
+  known_B_vals <- c(3.0, 1.4, 0.2)
+  constr <- list()
+  for(i in seq_along(known_indices)) {
+    idx_pair <- known_indices[[i]]
+    A[idx_pair[1], idx_pair[2]] == known_A_vals[i]
+    B[idx_pair[1], idx_pair[2]] == known_B_vals[j]
+  }
+  
+  problem <- Problem(Minimize(gen_lambda_max), constr)
+  expect_true(is_dqcp(problem))
+  # Smoke test.
+  result <- solve(problem, "SCS", qcp = TRUE)
 })
 
 test_that("test condition number", {
-  
+  A <- Variable(2, 2, PSD = TRUE)
+  con_num <- condition_number(A)
+  constr <- list(
+    A[1,1] == 2.0,
+    A[2,2] == 3.0,
+    A[1,2] <= 2, A[1,2] >= 1,
+    A[2,1] <= 2, A[2,1] >= 1
+  )
+  prob <- Problem(Minimize(con_num), constr)
+  expect_true(is_dqcp(prob))
+  # Smoke test.
+  result <- solve(prob, "SCS", qcp = TRUE)
+  ans <- rbind(c(2.0, 1.0), c(1.0, 3.0))
+  expect_equal(result$getValue(A), ans, tolerance = 1e-1)
 })
 
 test_that("test card ls", {
+  n <- 10
+  set.seed(1)
+  A <- matrix(rnorm(n^2), nrow = n, ncol = n)
+  x_star <- matrix(rnorm(n))
+  b <- A %*% x_star
+  epsilon <- 1e-3
   
+  x <- Variable(n)
+  objective_fn <- length(x)
+  mse <- sum_squares(A %*% x - b)/n
+  problem <- Problem(Minimize(objective_fn), list(mse <= epsilon))
+  # Smoke test.
+  result <- solve(problem, SOLVER, qcp = TRUE)
 })
 
 test_that("test multiply const", {
+  x <- Variable()
+  obj <- Minimize(0.5*ceil(x))
+  problem <- Problem(obj, list(x >= 10))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(x), 10, tolerance = 1e-1)
+  expect_equal(result$value, 5, tolerance = 1e-1)
   
+  x <- Variable()
+  obj <- Minimize(ceil(x)*0.5)
+  problem <- Problem(obj, list(x >= 10))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(x), 10, tolerance = 1e-1)
+  expect_equal(result$value, 5, tolerance = 1e-1)
+  
+  x <- Variable()
+  obj <- Maximize(-0.5*ceil(x))
+  problem <- Problem(obj, list(x >= 10))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(x), 10, tolerance = 1e-1)
+  expect_equal(result$value, -5, tolerance = 1e-1)
+  
+  x <- Variable()
+  obj <- Maximize(ceil(x)*-0.5)
+  problem <- Problem(obj, list(x >= 10))
+  result <- solve(problem, SOLVER, qcp = TRUE)
+  expect_equal(result$getValue(x), 10, tolerance = 1e-1)
+  expect_equal(result$value, -5, tolerance = 1e-1)
 })
 
 test_that("test div const", {

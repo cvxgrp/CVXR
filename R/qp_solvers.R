@@ -41,7 +41,7 @@ QpSolver.prepare_data_and_inv_data <- function(object, problem) {
   inv_data[[object@VAR_ID]] <- id(problem@x)
 
   constr_map <- group_constraints(problem@constraints)
-  inv_data[[object@DIMS]] <- data[[object@DIMS]] <- make_cone_dims(constr_map)
+  inv_data[[object@DIMS]] <- data[[object@DIMS]] <- ConeDims(constr_map)
 
   # Add information about integer variables.
   inv_data[[object@IS_MIP]] <- is_mixed_integer(problem)

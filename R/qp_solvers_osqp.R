@@ -91,16 +91,11 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   lA <- c(data[[B_KEY]], rep(-Inf, length(data[[G_KEY]])))
   data$l <- lA
 
-  # Overwrite defaults of eps_abs = eps_rel = 1e-3, max_iter = 4000.
-  if(is.null(solver_opts$eps_abs))
-      solver_opts$eps_abs <- 1e-5
-  if(is.null(solver_opts$eps_rel))
-    solver_opts$eps_rel <- 1e-5
-  if(is.null(solver_opts$max_iter))
-    solver_opts$max_iter <- 10000
+  ## Ensure our solver defaults or user overrides/preferences
+  solver_opts <- reconcile_solver_options(solver_opts, SOLVER_DEFAULT_PARAM$OSQP)
 
   # Use cached data.
-  if(warm_start && name(object) %in% names(solver_cache)) {  ## x %in% NULL will return FALSE always, so ok
+  if(warm_start && name(object) %in% names(solver_cache)) {  ## x %in% NULL will return FALSE always, so ok if solver_cache is NULL
     cache <- solver_cache[[name(object)]]
     solver <- cache[[1L]]
     old_data <- cache[[2L]]

@@ -60,6 +60,7 @@ UNDEFINED <- "undefined"
 # Solver names.
 CBC_NAME <- "CBC"
 CLARABEL_NAME <- "CLARABEL"
+PIQP_NAME <- "PIQP"
 COPT_NAME <- "COPT"
 CPLEX_NAME <- "CPLEX"
 CVXOPT_NAME <- "CVXOPT"
@@ -79,22 +80,23 @@ SCIP_NAME <- "SCIP"
 SCS_NAME <- "SCS"
 SDPA_NAME <- "SDPA"
 XPRESS_NAME <- "XPRESS"
-SOLVER_NAMES <- c(CLARABEL_NAME, ECOS_NAME, CVXOPT_NAME, GLOP_NAME, GLPK_NAME, 
+SOLVER_NAMES <- c(CLARABEL_NAME, ECOS_NAME, CVXOPT_NAME, GLOP_NAME, GLPK_NAME,
                   GLPK_MI_NAME, SCS_NAME, SDPA_NAME, GUROBI_NAME, OSQP_NAME,
                   CPLEX_NAME, MOSEK_NAME, CBC_NAME, COPT_NAME, XPRESS_NAME,
                   PROXQP_NAME, NAG_NAME, PDLP_NAME, SCIP_NAME)
 
 # Solver option defaults
 SOLVER_DEFAULT_PARAM <- list(
-    OSQP = list(max_iter = 10000, eps_abs = 1e-5, eps_rel = 1e-5, eps_prim_inf = 1e-4),
-    ECOS = list(maxit = 100, abstol = 1e-8, reltol = 1e-8, feastol = 1e-8),
-    ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
-    ## Until cccp fixes the bug I reported, we set the tolerances as below
-    CVXOPT = list(max_iters = 100, abstol = 1e-6, reltol = 1e-6, feastol = 1e-6, refinement = 1L, kktsolver = "chol"),
-    SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
-    CPLEX = list(itlim = 10000),
-    MOSEK = list(num_iter = 10000),
-    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
+  OSQP = list(max_iter = 10000, eps_abs = 1e-5, eps_rel = 1e-5, eps_prim_inf = 1e-4),
+  PIQP = list()  ## same as piqp itself
+  ECOS = list(maxit = 100, abstol = 1e-8, reltol = 1e-8, feastol = 1e-8),
+  ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
+  ## Until cccp fixes the bug I reported, we set the tolerances as below
+  CVXOPT = list(max_iters = 100, abstol = 1e-6, reltol = 1e-6, feastol = 1e-6, refinement = 1L, kktsolver = "chol"),
+  SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
+  CPLEX = list(itlim = 10000),
+  MOSEK = list(num_iter = 10000),
+  GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
 )
 
 # Xpress-specific items.
@@ -281,7 +283,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
   # Promotes dims as necessary and returns promoted dim of product.
   # If lh_dim is of length one, prepend a one to it.
   # If rh_dim is of length one, append a one to it.
-  
+
   if(is.null(lh_dim) || is.null(rh_dim) || length(lh_dim) == 0 || length(rh_dim) == 0)
     stop("Multiplication by scalars is not permitted")
 
@@ -292,7 +294,7 @@ mul_dims_promote <- function(lh_dim, rh_dim) {
 
   lh_mat_dim <- lh_dim[(length(lh_dim)-1):length(lh_dim)]
   rh_mat_dim <- rh_dim[(length(rh_dim)-1):length(rh_dim)]
-  
+
   if(length(lh_dim) > 2)
     lh_head <- lh_dim[1:(length(lh_dim)-2)]
   else
@@ -360,7 +362,7 @@ mul_sign <- function(lh_expr, rh_expr) {
   # POSITIVE * POSITIVE == POSITIVE
   # NEGATIVE * POSITIVE == NEGATIVE
   # NEGATIVE * NEGATIVE == POSITIVE
-  
+
   lh_nonneg <- is_nonneg(lh_expr)
   rh_nonneg <- is_nonneg(rh_expr)
   lh_nonpos <- is_nonpos(lh_expr)
@@ -368,7 +370,7 @@ mul_sign <- function(lh_expr, rh_expr) {
 
   lh_zero <- lh_nonneg && lh_nonpos
   rh_zero <- rh_nonneg && rh_nonpos
-  
+
   is_zero <- lh_zero || rh_zero
 
   is_pos <- is_zero || (lh_nonneg && rh_nonneg) || (lh_nonpos && rh_nonpos)
@@ -489,15 +491,15 @@ orth <- function(V, tol = 1e-12, ...) {
 
 onb_for_orthogonal_complement <- function(V) {
   # Let U = the orthogonal complement of range(V).
-  # This function returns an array Q whose columns are an orthonormal basis for U. 
+  # This function returns an array Q whose columns are an orthonormal basis for U.
   # It requires that dim(U) > 0.
   n <- nrow(V)
   Q1 <- orth(V)
   rank <- ncol(Q1)
-  
+
   if(n <= rank)
     stop("Must have n > rank")
-  
+
   if(is.complex(V))
     P <- diag(n) - Q1 %*% t(Conj(Q1))
   else
@@ -510,11 +512,11 @@ is_psd_within_tol <- function(A, tol) {
   # Return TRUE if we can certify that A is PSD (up to tolerance "tol").
   #
   # First we check if A is PSD according to the Gershgorin Circle Theorem.
-  # 
-  # If Gershgorin is inconclusive, then we use an iterative method to estimate 
-  # extremal eigenvalues of certain shifted versions of A. The shifts are chosen 
+  #
+  # If Gershgorin is inconclusive, then we use an iterative method to estimate
+  # extremal eigenvalues of certain shifted versions of A. The shifts are chosen
   # so that the signs of those eigenvalues tell us the signs of the eigenvalues of A.
-  # 
+  #
   # If there are numerical issues then it's possible that this function returns
   # FALSE even when A is PSD. If you know that you're in that situation, then
   # you should replace A by PSDWrap(A).
@@ -523,14 +525,14 @@ is_psd_within_tol <- function(A, tol) {
   # -----------
   # A = Symmetric (or Hermitian) dense or sparse matrix.
   # tol = Nonnegative floating point variable. Something very small, like 1e-10.
-  
+
   if(gershgorin_psd_check(A, tol))
     return(TRUE)
-  
+
   # Returns the eigenvalue w[i] of A where 1/(w[i] - sigma) is minimized.
   # If A - sigma*I is PSD, then w[i] should be equal to the largest eigenvalue of A.
   # If A - sigma*I is not PSD, then w[i] should be the largest eigenvalue of A where w[i] - sigma < 0.
-  # We should only call this function with sigma < 0. In this case, if A - sigma*I is not PSD, 
+  # We should only call this function with sigma < 0. In this case, if A - sigma*I is not PSD,
   # then A is not PSD, and w[i] < -abs(sigma) is a negative eigenvalue of A.
   # If A - sigma*I is PSD, then we obviously have that the smallest eigenvalue of A is >= sigma.
   SA_eigsh <- function(sigma) {
@@ -538,7 +540,7 @@ is_psd_within_tol <- function(A, tol) {
     res <- RSpectra::eigs_sym(A, k = 1, which = "SA", sigma = sigma, opts = list(retvec = FALSE))
     return(res$values)
   }
-  
+
   ev <- NA_real_
   tryCatch({
     ev <- SA_eigsh(-tol)   # Might return NA, or raise an exception.
@@ -555,18 +557,18 @@ is_psd_within_tol <- function(A, tol) {
 
 gershgorin_psd_check <- function(A, tol) {
   # Use the Gershgorin Circle Theorem
-  # 
+  #
   # https://en.wikipedia.org/wiki/Gershgorin_circle_theorem
-  # 
+  #
   # As a sufficient condition for A being PSD with tolerance "tol".
-  # 
+  #
   # The computational complexity of this function is O(nnz(A)).
-  # 
+  #
   # Parameters
   # -----------
   # A = Symmetric (or Hermitian) dense or sparse matrix.
   # tol = Nonnegative floating point variable. Something very small, like 1e-10.
-  
+
   if(is(A, "sparseMatrix")) {
     d <- diag(A)
     if(any(d < -tol))
@@ -592,7 +594,7 @@ gershgorin_psd_check <- function(A, tol) {
 #                       #
 #########################
 form_cone_constraint <- function(z, constraint) {
-  # Given a constraint represented as Ax + b in K for K a CVXR cone, 
+  # Given a constraint represented as Ax + b in K for K a CVXR cone,
   # return an instantiated CVXR constraint.
   if(is(constraint, "SOC")) {
     # TODO: Figure out how to instantiate Ax + b in SOC where we know which
@@ -1162,14 +1164,14 @@ build_non_disciplined_error_msg <- function(problem, discipline_type) {
     prefix_conv <- "log_log_"
   } else
     stop("Unknown discipline type ", discipline_type)
-  
+
   find_non_prop_leaves <- function(expr, res = NULL) {
     if(is.null(res))
       res <- c()
     # if((is.null(expr@args) || length(expr@args) == 0) && slot(expr, prop_name)())
     if((is.null(expr@args) || length(expr@args) == 0) && do.call(prop_name, expr))
       return(res)
-    
+
     # if(!slot(expr, prop_name)() && all(sapply(expr@args, function(child) { slot(child, prop_name)() } ))) {
     if(!do.call(prop_name, expr) && all(sapply(expr@args, function(child) { do.call(prop_name, child) } ))) {
       str_expr <- as.character(expr)
@@ -1177,12 +1179,12 @@ build_non_disciplined_error_msg <- function(problem, discipline_type) {
         str_expr <- paste(str_expr, "<-- needs to be declared positive")
       res <- c(res, str_expr)
     }
-    
+
     for(child in expr@args)
       res <- find_non_prop_leaves(child, res)
     return(res)
   }
-  
+
   # if(!slot(problem@objective, prop_name)()) {
   if(!do.call(prop_name, problem@objective)) {
     non_disciplined_leaves <- find_non_prop_leaves(problem@objective@expr)
@@ -1194,18 +1196,18 @@ build_non_disciplined_error_msg <- function(problem, discipline_type) {
       # fun_attr_check <- slot(problem@objective@args[[1]], paste("is_", convex_str, sep = ""))()
       fun_attr_check <- do.call(paste("is_", convex_str, sep = ""), problem@objective@args[[1]])
       msg <- paste("The objective is not ", discipline_type, ", even though each sub-expression is.\n",
-                   "You are trying to ", problem@objective@NAME, " a function that is ", 
+                   "You are trying to ", problem@objective@NAME, " a function that is ",
                    ifelse(fun_attr_check, convex_str, concave_str), sep = "")
     }
-    
+
     for(expr in non_disciplined_leaves)
       msg <- paste(msg, as.character(expr), sep = "\n")
     return(msg)
   }
-  
+
   disciplined_mask <- sapply(problem@constraints, is_dcp)
   not_disciplined_constraints <- problem@constraints[!disciplined_mask]
-  
+
   msg <- paste("The following constraints are not", discipline_type)
   for(expr in not_disciplined_constraints) {
     msg <- paste(msg, "\n", as.character(expr), ", because the following subexpressions are not:", sep = "")

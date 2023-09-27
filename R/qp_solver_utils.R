@@ -24,3 +24,14 @@ setMethod("initialize", "ConeDims",
   .Object
 })
 
+#' Update solver options using defaults and return list
+#' @param solver_opts the solver options named list
+#' @param the defaults the named list to reconcile against
+#' @return list of solver options
+reconcile_solver_options <- function(solver_opts, defaults) {
+  default_opts <- names(defaults)
+  for (x in default_opts) {
+    if (is.null(solver_opts[[x]])) solver_opts[[x]] <- defaults[[x]]
+  }
+  solver_opts
+}

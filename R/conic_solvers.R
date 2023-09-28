@@ -38,39 +38,6 @@ is_stuffed_cone_objective <- function(objective) {
                          && inherits(expr@args[[1]], c("MulExpression", "Multiply")) && inherits(expr@args[[2]], "Constant"))
 }
 
-#' Summary of cone dimensions present in constraints.
-#'
-#'    Constraints must be formatted as dictionary that maps from
-#'    constraint type to a list of constraints of that type.
-#'
-#'    Attributes
-#'    ----------
-#'    zero : int
-#'        The dimension of the zero cone.
-#'    nonpos : int
-#'        The dimension of the non-positive cone.
-#'    exp : int
-#'        The dimension of the exponential cone.
-#'    soc : list of int
-#'        A list of the second-order cone dimensions.
-#'    psd : list of int
-#'        A list of the positive semidefinite cone dimensions, where the
-#'        dimension of the PSD cone of k by k matrices is k.
-.ConeDims <- setClass("ConeDims", representation(constr_map = "list", zero = "numeric", nonpos = "numeric", exp = "numeric", soc = "list", psd = "list"),
-                                  prototype(zero = NA_real_, nonpos = NA_real_, exp = NA_real_, soc = list(), psd = list()))
-
-ConeDims <- function(constr_map) { .ConeDims(constr_map = constr_map) }
-
-setMethod("initialize", "ConeDims", function(.Object, constr_map, zero = NA_real_, nonpos = NA_real_, exp = NA_real_, soc = list(), psd = list()) {
-  .Object@zero <- ifelse(is.null(constr_map$ZeroConstraint), 0, sum(sapply(constr_map$ZeroConstraint, function(c) { size(c) })))
-  .Object@nonpos <- ifelse(is.null(constr_map$NonPosConstraint), 0, sum(sapply(constr_map$NonPosConstraint, function(c) { size(c) })))
-  .Object@exp <- ifelse(is.null(constr_map$ExpCone), 0, sum(sapply(constr_map$ExpCone, function(c) { num_cones(c) })))
-  .Object@soc <- as.list(Reduce(c, lapply(constr_map$SOC, function(c) { cone_sizes(c) })))
-  .Object@psd <- lapply(constr_map$PSDConstraint, function(c) { dim(c)[1] })
-  return(.Object)
-})
-
-
 #' The ConicSolver class.
 #'
 #' Conic solver class with reduction semantics.

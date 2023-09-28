@@ -5,7 +5,7 @@
 #' with affine objectives and conic constraints whose arguments are affine.
 #'
 #' @rdname Dcp2Cone-class
-.Dcp2Cone <- setClass("Dcp2Cone", representation(quad_obj = "logical", cone_canon_methods = "list", quad_canon_methods = "list"), 
+.Dcp2Cone <- setClass("Dcp2Cone", representation(quad_obj = "logical", cone_canon_methods = "list", quad_canon_methods = "list"),
                                   prototype(quad_obj = FALSE, cone_canon_methods = Dcp2Cone.CANON_METHODS, quad_canon_methods = Qp2QuadForm.QUAD_CANON_METHODS), contains = "Canonicalization")
 Dcp2Cone <- function(problem = NULL, quad_obj = FALSE) { .Dcp2Cone(problem = problem, quad_obj = quad_obj) }
 
@@ -28,13 +28,13 @@ setMethod("accepts", signature(object = "Dcp2Cone", problem = "Problem"), functi
 setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), function(object, problem) {
   if(!accepts(object, problem))
     stop("Cannot reduce problem to cone program")
-  
+
   inverse_data <- InverseData(problem)
-  
+
   canon <- canonicalize_tree(object, problem@objective, TRUE)
   canon_objective <- canon[[1]]
   canon_constraints <- canon[[2]]
-  
+
   for(constraint in problem@constraints) {
     # canon_constr is the constraint re-expressed in terms of
     # its canonicalized arguments, and aux_constr are the constraints
@@ -46,7 +46,7 @@ setMethod("perform", signature(object = "Dcp2Cone", problem = "Problem"), functi
     canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
     inverse_data@cons_id_map[[as.character(id(constraint))]] <- id(canon_constr)
   }
-  
+
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(new_problem, inverse_data))
 })
@@ -101,61 +101,60 @@ setMethod("canonicalize_expr", "Dcp2Cone", function(object, expr, args, affine_a
 #'
 #' Constraints must be formatted as dictionary that maps from
 #' constraint type to a list of constraints of that type.
-#' 
+#'
 #' @slot zero The dimension of the zero cone.
 #' @slot nonneg The dimension of the non-negative cone.
 #' @slot exp The number of 3-dimensional exponential cones.
 #' @slot soc A vector of the second-order cone dimensions.
 #' @slot psd A vector of the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
 #' @rdname ConeDims-class
-ConeDims <- setClass("ConeDims", representation(zero = "numeric", nonneg = "numeric", exp = "numeric", soc = "numeric", psd = "numeric", p3d = "numeric"),
-                                 prototype(zero = NA_integer_, nonneg = NA_integer_, exp = NA_integer_, soc = NA_integer_, psd = NA_integer_, p3d = NA_real_))
+ConeDims <- setClass("ConeDims",
+                     representation(zero = "integer", nonneg = "integer", exp = "integer",
+                                    soc = "integer", psd = "integer", p3d = "numeric"),
+                     prototype(zero = NA_integer_, nonneg = NA_integer_, exp = NA_integer_,
+                               soc = NA_integer_, psd = NA_integer_, p3d = NA_real_))
 
-setMethod("initialize", "ConeDims", function(.Object, zero = NA_integer_, nonneg = NA_integer_, exp = NA_integer_, soc = NA_integer_, psd = NA_integer_, p3d = list()) {
-  .Object@zero <- as.integer(sum(sapply(constr_map$Zero, size)))
-  .Object@nonneg <- as.integer(sum(sapply(constr_map$NonNeg, size)))
-  .Object@exp <- as.integer(sum(sapply(constr_map$ExpCone, num_cones)))
-  
-  .Object@soc <- c()
-  for(con in constr_map$SOC)
-    .Object@soc <- c(.Object@soc, cone_sizes(con))
-  .Object@soc <- as.integer(.Object@soc)
-  .Object@psd <- as.integer(sapply(constr_map$PSD, nrow))
-  
-  p3d <- c()
-  if(!is.null(constr_map$PowCone3D)) {
-    for(con in constr_map$PowCone3D)
-      p3d <- c(p3d, value(con@alpha))
-  }
-  .Object@p3d <- p3d
-  .Object
-})
+setMethod("initialize", "ConeDims",
+          function(.Object, constr_map) {
+            .Object$zero <- Reduce(sum, lapply(constr_map$Zero, size))
+            .Object$nonneg <- Reduce(sum, lapply(constr_map$NonNeg, size))
+            .Object$exp <- Reduce(sum, lapply(constr_map$ExpCone, num_cones))
+            .Object$soc <- unlist(lapply(constr_map$SOC, cone_sizes))
+            .Object$psd <- unlist(lapply(constr_map$PSD, nrow))
+            .Object$p3d <- unlist(lapply(constr_map$PowCone3D, function(x) value(x@alpha)))
+            .Object
+          })
 
 setMethod("show", "ConeDims", function(object) {
-  cat(paste("zero:", object@zero), paste("nonneg:", object@nonneg), paste("exp:", object@exp),
-      paste("soc:", object@soc), paste("psd:", object@psd), paste("p3d:", object@p3d), sep = ", ")
+  cat(
+    sprintf(
+      "zero: %i, nonneg: %i, exp: %i, soc: [%s], psd: [%s], p3d: [%s]\n",
+      object@zero, object@nonneg, object@exp, paste(object@soc, collapse = ","),
+      paste(object@psd, collapse = ","), paste(object@p3d, collapse = ",")
+    )
+  )
 })
 
 setMethod("as.character", "ConeDims", function(x) {
-  sprintf("%i equalities, %i inequalities, %i exponential cones,\nSOC constraints: %s, PSD constraints: %s,\n3d power cones %s.", 
-          x@zero, x@nonneg, x@exp, 
-          paste("(", paste(x@soc, sep = ", "), ")", sep = ""), 
-          paste("(", paste(x@psd, sep = ", "), ")", sep = ""), 
-          paste("(", paste(x@p3d, sep = ", "), ")", sep = ""))
+  sprintf(
+    "%i equalities, %i inequalities, %i exponential cones, SOC constraints: [%s], PSD constraints: [%s], Power Cones: [%s]",
+    object@zero, object@nonneg, object@exp, paste(object@soc, collapse = ","),
+    paste(object@psd, collapse = ","), paste(object@p3d, collapse = ",")
+  )
 })
 
 setMethod("$", signature(x = "ConeDims"), function(x, name) {
-  if(name == EQ_DIM)
+  if (name == EQ_DIM)
     return(object@zero)
-  else if(name == LEQ_DIM)
+  else if (name == LEQ_DIM)
     return(object@nonneg)
-  else if(name == EXP_DIM)
+  else if (name == EXP_DIM)
     return(object@exp)
-  else if(name == SOC_DIM)
+  else if (name == SOC_DIM)
     return(object@soc)
-  else if(name == PSD_DIM)
+  else if (name == PSD_DIM)
     return(object@psd)
-  else if(name == "p3")   # P3D_DIM = "p3"
+  else if (name == "p3")   # P3D_DIM = "p3"
     return(object@p3d)
   else
     stop("Unknown key: ", name)
@@ -164,7 +163,7 @@ setMethod("$", signature(x = "ConeDims"), function(x, name) {
 # TODO(akshayka): unit tests
 #'
 #' Parametrized Cone Program
-#' 
+#'
 #' minimize   c'x  + d + [(1/2)x'Px]
 #' subject to cone_constr1(A_1*x + b_1, ...)
 #' ...
@@ -175,13 +174,13 @@ setMethod("$", signature(x = "ConeDims"), function(x, name) {
 #' @rdname ParamConeProg-class
 ParamConeProg <- setClass("ParamConeProg", representation(c = "numeric", x = "Variable", A = "numeric", variables = "list", var_id_to_col = "list",
                                                           constraints = "list", parameters = "list", param_id_to_col = "list", P = "numeric", formatted = "logical",
-                                                          reduced_A = "numeric", reduced_P = "numeric", constr_size = "numeric", constr_map = "list", cone_dims = "S4ORNULL", 
+                                                          reduced_A = "numeric", reduced_P = "numeric", constr_size = "numeric", constr_map = "list", cone_dims = "S4ORNULL",
                                                           id_to_param = "list", param_id_to_size = "list", total_param_size = "numeric", id_to_var = "list"),
-                          prototype(P = NA_real_, formatted = FALSE, reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(), 
+                          prototype(P = NA_real_, formatted = FALSE, reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(),
                                     cone_dims = NULL, id_to_param = list(), param_id_to_size = list(), total_param_size = NA_real_, id_to_var = list()), contains = "ParamProb")
 
-setMethod("initialize", "ParamConeProg", function(.Object, ..., c, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, P = NA_real_, formatted = FALSE, 
-                                                  reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(), cone_dims = NULL, id_to_param = list(), 
+setMethod("initialize", "ParamConeProg", function(.Object, ..., c, x, A, variables, var_id_to_col, constraints, parameters, param_id_to_col, P = NA_real_, formatted = FALSE,
+                                                  reduced_A = NA_real_, reduced_P = NA_real_, constr_size = NA_real_, constr_map = list(), cone_dims = NULL, id_to_param = list(),
                                                   param_id_to_size = list(), total_param_size = NA_real_, id_to_var = list()) {
   # The problem data tensors; c is for the constraint, and A for
   # the problem data matrix
@@ -190,19 +189,19 @@ setMethod("initialize", "ParamConeProg", function(.Object, ..., c, x, A, variabl
   .Object@P <- P
   # The variable
   .Object@x <- x
-  
+
   # Form a reduced representation of A and P, for faster application
   # of parameters.
   .Object@reduced_A = ReducedMat(.Object@A, size(.Object@x))
   .Object@reduced_P = ReducedMat(.Object@P, size(.Object@x), quad_form = TRUE)
-  
+
   .Object@constraints <- constraints
   .Object@constr_size <- sum(sapply(constraints, size))
   .Object@constr_map <- group_constraints(constraints)
   .Object@cone_dims <- ConeDims(.Object@constr_map)
   .Object@parameters <- parameters
   .Object@param_id_to_col <- param_id_to_col
-  
+
   .Object@id_to_param <- list()
   .Object@param_id_to_size <- list()
   .Object@total_param_size <- 0
@@ -213,7 +212,7 @@ setMethod("initialize", "ParamConeProg", function(.Object, ..., c, x, A, variabl
     .Object@param_id_to_size[[p_id_char]] <- p_size
     .Object@total_param_size <- .Object@total_param_size + p_size
   }
-  
+
   # TODO technically part of inverse data.
   .Object@variables <- variables
   .Object@var_id_to_col <- var_id_to_col
@@ -239,24 +238,24 @@ setMethod("is_mixed_integer", "ParamConeProg", function(object) {
 #' @describeIn ParamConeProg Returns A, b after applying parameters (and reshaping)
 setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE, quad_obj = FALSE) {
   cache(object@reduced_A, keep_zeros)
-  
+
   param_value <- function(idx) {
     if(is.null(id_to_param_value))
       return(value(object@id_to_param[[idx]]))
     else
       return(id_to_param_value[[idx]])
   }
-  
+
   param_vec <- canonInterface.get_parameter_vector(object@total_param_size, object@param_id_to_col, object@param_id_to_size, param_value, zero_offset = zero_offset)
   c, d = canonInterface.get_matrix_from_tensor(object@c, param_vec, size(object@x), with_offset = TRUE)
   c <- cd[[1]]
   d <- cd[[2]]
   c <- as.vector(c)
-  
+
   Ab <- get_matrix_from_tensor(object@reduced_A, param_vec, with_offset = TRUE)
   A <- Ab[[1]]
   b <- Ab[[2]]
-  
+
   if(quad_obj) {
     cache(object@reduced_P, keep_zeros)
     P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
@@ -269,20 +268,20 @@ setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_valu
 setMethod("apply_param_jac", "ParamConeProg", function(object, delc, delA, delb, active_params = NULL) {
   if(!(is.na(object@P) || is.null(object@P)))
     stop("Can't apply Jacobian with a quadratic objective")
-  
+
   if(is.null(active_params))
     active_params <- sapply(object@parameters, id)
-  
+
   if(length(object@c) == 1)
     del_param_vec <- c()
   else
     del_param_vec <- delc %*% object@c[1:(length(object@c) - 1)]
-  
+
   flatdelA <- delA
   dim(flatdelA) <- c(prod(dim(delA)), 1)
   sparsedelb <- Matrix(delb, sparse = TRUE)
   delAb <- rbind(flatdelA, sparsedelb)
-  
+
   one_gig_of_doubles <- 125000000
   if(nrow(delAb) < one_gig_of_doubles) {
     # fast path: if delAb is small enough, just materialize it
@@ -296,7 +295,7 @@ setMethod("apply_param_jac", "ParamConeProg", function(object, delc, delA, delb,
     del_param_vec <- del_param_vec + matrix(t(delAb) %*% object@A)
   }
   del_param_vec <- as.vector(del_param_vec)
-  
+
   param_id_to_delta_param <- list()
   for(param_id in names(object@param_id_to_col)) {
     col <- object@param_id_to_col[[param_id]]
@@ -306,7 +305,7 @@ setMethod("apply_param_jac", "ParamConeProg", function(object, delc, delA, delb,
       param_id_to_delta_param[[param_id]] <- matrix(delta, nrow = nrow(param), ncol = ncol(param), byrow = FALSE)
     }
   }
-  
+
   return(param_id_to_delta_param)
 })
 
@@ -337,7 +336,7 @@ setMethod("split_adjoint", "ParamConeProg", function(object, del_vars = NULL) {
   var_vec <- rep(0, size(object@x))
   if(is.null(del_vars))
     return(var_vec)
-  
+
   for(var_id in names(del_vars)) {
     delta <- del_vars[[var_id]]
     var <- object@id_to_var[[var_id]]
@@ -365,7 +364,7 @@ setMethod("split_adjoint", "ParamConeProg", function(object, del_vars = NULL) {
 #'            cone_constrK(A_K*x + b_K, ...)
 #'
 #' @rdname ConeMatrixStuffing-class
-ConeMatrixStuffing <- setClass("ConeMatrixStuffing", representation(quad_obj = "logical", canon_backend = "character"), 
+ConeMatrixStuffing <- setClass("ConeMatrixStuffing", representation(quad_obj = "logical", canon_backend = "character"),
                                prototype(quad_obj = FALSE, canon_backend = NA_character_), contains = "MatrixStuffing")
 
 #' @param object A \linkS4class{ConeMatrixStuffing} object.
@@ -389,7 +388,7 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   integer <- boolint[[2]]
   # x <- Variable(extractor@x_length, boolean = boolean, integer = integer)
   x <- Variable(extractor@x_length, 1, boolean = boolean, integer = integer)
-  
+
   if(object@quad_obj) {
     # extract to 0.5 %*% t(x) %*% P %*% x + t(q) %*% x + r
     expr <- problem@objective@expr
@@ -415,7 +414,7 @@ setMethod("perform", signature(object = "ConeMatrixStuffing", problem = "Problem
   params_to_P <- stuffed[[1]]
   params_to_c <- stuffed[[2]]
   flattened_variable <- stuffed[[3]]
-  
+
   # Lower equality and inequality to Zero and NonNeg.
   cons <- list()
   for(con in problem@constraints) {
@@ -443,7 +442,7 @@ setMethod("perform", signature(object = "ConeMatrixStuffing", problem = "Problem
     }
     cons <- c(cons, con)
   }
-  
+
   # Reorder constraints to Zero, NonNeg, SOC, PSD, EXP, PowCone3D
   constr_map <- group_constraints(cons)
   ordered_cons <- c(constr_map$Zero, constr_map$NonNeg, constr_map$SOC, constr_map$PSD,
@@ -453,7 +452,7 @@ setMethod("perform", signature(object = "ConeMatrixStuffing", problem = "Problem
     con_id <- id(con)
     inverse_data@cons_id_map[[as.character(con_id)]] <- con_id
   }
-  
+
   inverse_data@constraints <- ordered_cons
   # Batch expressions together, then split apart.
   for(c in ordered_cons) {
@@ -461,7 +460,7 @@ setMethod("perform", signature(object = "ConeMatrixStuffing", problem = "Problem
       expr_list <- c(expr_list, arg)
   }
   params_to_problem_data <- affine(extractor, expr_list)
-  
+
   inverse_data@minimize <- (inherits(problem@objective, "Minimize"))
   new_prob <- ParamConeProg(params_to_c,
                             flattened_variable,
@@ -485,12 +484,12 @@ setMethod("invert", signature(object = "ConeMatrixStuffing", solution = "Solutio
   opt_val <- solution@opt_val
   if(!(solution@status %in% ERROR) && !inverse_data@minimize)
     opt_val <- -solution@opt_val
-  
+
   primal_vars <- list()
   dual_vars <- list()
   if(!(solution@status %in% SOLUTION_PRESENT))
     return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
-  
+
   # Split vectorized variable into components.
   x_opt <- values(solution@primal_vars)[[1]]
   for(var_id in names(var_map)) {
@@ -499,7 +498,7 @@ setMethod("invert", signature(object = "ConeMatrixStuffing", solution = "Solutio
     var_size <- as.integer(prod(var_dim))
     primal_vars[[var_id]] = matrix(x_opt[offset:(offset + var_size)], nrow = var_dim[1], ncol = var_dim[2], byrow = FALSE)
   }
-  
+
   if(!is.null(solution@dual_vars) && length(solution@dual_vars) > 0) {
     for(old_con in names(con_map)) {
       new_con <- con_map[[old_con]]
@@ -512,19 +511,19 @@ setMethod("invert", signature(object = "ConeMatrixStuffing", solution = "Solutio
         dual_vars[[old_con]] <- matrix(solution@dual_vars[[new_con]], nrow = con_obj_dim[1], ncol = con_obj_dim[2], byrow = FALSE)
     }
   }
-  
+
   return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
 })
 
 # TODO: ConeMatrixStuffing invert function.
 
 # Atom canonicalizers.
-#' 
+#'
 #' Dcp2Cone canonicalizer for the entropy atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
-#' @return A cone program constructed from an entropy atom where 
+#' @return A cone program constructed from an entropy atom where
 #' the objective function is just the variable t with an ExpCone constraint.
 Dcp2Cone.entr_canon <- function(expr, args) {
   x <- args[[1]]
@@ -542,12 +541,12 @@ Dcp2Cone.entr_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the exponential atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
-#' @return A cone program constructed from an exponential atom 
+#' @return A cone program constructed from an exponential atom
 #' where the objective function is the variable t with an ExpCone constraint.
 Dcp2Cone.exp_canon <- function(expr, args) {
   expr_dim <- dim(expr)
@@ -562,12 +561,12 @@ Dcp2Cone.exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the geometric mean atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
-#' @return A cone program constructed from a geometric mean atom 
+#' @return A cone program constructed from a geometric mean atom
 #' where the objective function is the variable t with geometric mean constraints
 Dcp2Cone.geo_mean_canon <- function(expr, args) {
   x <- args[[1]]
@@ -584,12 +583,12 @@ Dcp2Cone.geo_mean_canon <- function(expr, args) {
   return(list(t, gm_constrs(t, x_list, w)))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the huber atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
-#' @return A cone program constructed from a huber atom where the objective 
+#' @return A cone program constructed from a huber atom where the objective
 #' function is the variable t with square and absolute constraints
 Dcp2Cone.huber_canon <- function(expr, args) {
   M <- expr@M
@@ -621,9 +620,9 @@ Dcp2Cone.huber_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the indicator atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from an indicator atom and
@@ -633,9 +632,9 @@ Dcp2Cone.indicator_canon <- function(expr, args) {
   return(list(Constant(0), args))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the KL Divergence atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a KL divergence atom
@@ -651,9 +650,9 @@ Dcp2Cone.kl_div_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the lambda maximization atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a lambda maximization atom
@@ -675,9 +674,9 @@ Dcp2Cone.lambda_max_canon <- function(expr, args) {
   return(list(t, constr))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the largest lambda sum atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a lambda sum of the k
@@ -713,9 +712,9 @@ Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   return(list(obj, constr))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the log 1p atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log 1p atom where
@@ -725,13 +724,13 @@ Dcp2Cone.log1p_canon <- function(expr, args) {
   return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the logistic function atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the logistic atom
-#' where the objective function is given by t0 and the 
+#' where the objective function is given by t0 and the
 #' constraints consist of the ExpCone constraints.
 Dcp2Cone.logistic_canon <- function(expr, args) {
   x <- args[[1]]
@@ -741,12 +740,12 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   t0 <- new("Variable", dim = expr_dim)
   canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
   canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
-  
+
   t1 <- canon1[[1]]
   constr1 <- canon1[[2]]
   t2 <- canon2[[1]]
   constr2 <- canon2[[2]]
-  
+
   if(is.null(expr_dim))
     ones <- Constant(1)
   else
@@ -755,9 +754,9 @@ Dcp2Cone.logistic_canon <- function(expr, args) {
   return(list(t0, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the log atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log atom where
@@ -777,9 +776,9 @@ Dcp2Cone.log_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the log determinant atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a log determinant atom where
@@ -818,17 +817,17 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   # Returns
   # -------
   # (Variable for objective, list of constraints)
-  
+
   A <- args[[1]]  # n by n matrix.
   n <- nrow(A)
-  
+
   z_small <- Variable(floor(n*(n+1)/2))
   Z <- UpperTri.vec_to_upper_tri(z_small, strict = FALSE)
   d_small <- DiagMat(Z)  # a vector
   D <- DiagVec(d_small)  # a matrix
   X <- bmat(list(list(D, Z),
                  list(t(Z), A)))
-  
+
   constraints <- list(PSDConstraint(X))
   log_expr <- log(d)
   canon <- Dcp2Cone.log_canon(log_expr, log_expr@args)
@@ -838,9 +837,9 @@ Dcp2Cone.log_det_canon <- function(expr, args) {
   return(list(sum(obj), constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the log sum of the exp atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the log sum
@@ -855,7 +854,7 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   keepdims <- expr@keepdims
   # t <- Variable(expr_dim)
   t <- new("Variable", dim = expr_dim)
-  
+
   # log(sum(exp(x))) <= t <=> sum(exp(x-t)) <= 1.
   if(is.na(axis))   # shape = c(1,1)
     promoted_t <- promote(t, x_dim)
@@ -863,7 +862,7 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
     promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1)) %*% reshape_expr(t, c(1, x_dim[2:length(x_dim)])))
   else   # shape = c(m,1)
     promoted_t <- reshape_expr(t, c(x_dim[1:(length(x_dim)-1)], 1)) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
-  
+
   exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
   obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
@@ -875,13 +874,13 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the matrix fraction atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the matrix fraction
-#' atom, where the objective function is the trace of Tvar, a 
+#' atom, where the objective function is the trace of Tvar, a
 #' m by m matrix where the constraints consist of the matrix of
 #' the Schur complement of Tvar to consist of P, an n by n, given
 #' matrix, X, an n by m given matrix, and Tvar.
@@ -894,13 +893,13 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   X_dim <- dim(X)
   n <- X_dim[1]
   m <- X_dim[2]
-  
+
   Tvar <- Variable(m, m, symmetric = TRUE)
   # A matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X.
   M <- bmat(list(list(P, X),
                  list(t(X), Tvar)))
   constraints <- list(PSDConstraint(M))
-  
+
   if(!is_symmetric(P)) {
     ut <- upper_tri(P)
     lt <- upper_tri(t(P))
@@ -909,15 +908,15 @@ Dcp2Cone.matrix_frac_canon <- function(expr, args) {
   return(list(matrix_trace(Tvar), constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the multiplication of expressions atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from the multiplication of expressions atom.
 Dcp2Cone.mul_canon <- function(expr, args) {
   # TODO(akshayka): expose as a reduction for user's convenience
-  
+
   # Only allow param * var (not var * param). Associate right to left.
   # TODO: Only descend if both sides have parameters
   lhs <- args[[1]]
@@ -926,7 +925,7 @@ Dcp2Cone.mul_canon <- function(expr, args) {
   rhs_parms <- parameters(rhs)
   if((is.null(lhs_parms) || length(lhs_parms) == 0) && (is.null(rhs_parms) && length(rhs_parms) == 0))
     return(list(copy(expr, args), list()))
-  
+
   op_type <- class(expr)
   if(length(variables(lhs)) > 0) {
     if(dpp_scope()) {   # TODO: Implement DPP scoping with global variables.
@@ -943,7 +942,7 @@ Dcp2Cone.mul_canon <- function(expr, args) {
     t <- new("Variable", dim = dim(rhs))
     return(list(do.call(op_type, list(lhs, t)), list(t == rhs)))
   }
-  
+
   # Neither side has variables. One side must be affine in parameters.
   lhs_affine <- FALSE
   rhs_affine <- FALSE
@@ -953,7 +952,7 @@ Dcp2Cone.mul_canon <- function(expr, args) {
   }
   if(!(lhs_affine || rhs_affine))
     stop("Either lhs or rhs must be affine in parameters")
-  
+
   if(lhs_affine) {
     t <- new("Variable", dim = dim(rhs))
     return(list(lhs %*% t, list(t == rhs)))
@@ -963,9 +962,9 @@ Dcp2Cone.mul_canon <- function(expr, args) {
   }
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the nuclear norm atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a nuclear norm atom,
@@ -993,7 +992,7 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
 
 Dcp2Cone.perspective_canon <- function(expr, args) {
   # Only working for minimization right now.
-  
+
   if(is_convex(expr@f))
     aux_prob <- Problem(Minimize(expr@f))
   else
@@ -1007,18 +1006,18 @@ Dcp2Cone.perspective_canon <- function(expr, args) {
     chain@reductions = chain@reductions[[seq(num_red - 1)]]  # skip solver reduction
   prob_canon <- apply(chain, aux_prob)[[1]]  # grab problem instance
   # get cone representation of c, A, and b for some problem.
-  
+
   c <- as.vector(prob_canon@c)
   c_len <- length(c)
   c <- c[seq_len(c_len - 1)]
   d <- as.vector(prob_canon@c)
   d <- d[c_len]
-  
+
   Ab <- matrix(prob_canon@A, ncol = length(c) + 1, byrow = FALSE)
   Ab_ncol <- ncol(Ab)
   A <- Ab[, seq_len(Ab_ncol - 1)]
   b <- Ab[, Ab_ncol]
-  
+
   # given f in epigraph form, aka epi f = \{(x,t) | f(x) \leq t\}
   # = \{(x,t) | Fx +tg + e \in K} for K a cone, the epigraph of the
   # perspective, \{(x,s,t) | sf(x/s) \leq t} = \{(x,s,t) | Fx + tg + se \in K\}
@@ -1028,19 +1027,19 @@ Dcp2Cone.perspective_canon <- function(expr, args) {
   # with block matrices as Fx + tg + e \in K \times R_+
   # with F = [A ], g = [0], e = [b]
   #          [-c]      [1]      [-d]
-  
+
   # Actually, all we need is Ax + 0*t + sb \in K, -c^Tx + t - ds >= 0
-  
+
   t <- Variable()
   s <- args[[1]]
   x_canon <- prob_canon@x
   constraints <- list()
-  
+
   if(!is.null(dim(A))) {
     # Rules out the case where f is affine and requires no additional
     # constraints.
     x_pers <- A@x_canon + s*b
-  
+
     i <- 1
     for(con in prob_canon@constraints) {
       sz <- size(con)
@@ -1050,17 +1049,17 @@ Dcp2Cone.perspective_canon <- function(expr, args) {
       i <- i + sz
     }
   }
-  
+
   constraints <- c(constraints, list(-c@x_canon + t - s*d >= 0))
-    
+
   # recover initial variables
-  
+
   end_inds <- c(sort(unlist(prob_canon@var_id_to_col), decreasing = FALSE), nrow(x_canon) + 1)
-  
+
   for(var in variables(expr@f)) {
     start_ind <- prob_canon@var_id_to_col[[as.character(id(var))]]
     end_ind <- end_inds[which(end_inds == start_ind) + 1]
-    
+
     if(var@attributes$diag)  # checking for diagonal first because diagonal is also symmetric
       constraints <- c(constraints, list(diag(var) == x_canon[start_ind:(end_ind - 1)]))
     else if(is_symmetric(var) && size(var) > 1) {
@@ -1070,16 +1069,16 @@ Dcp2Cone.perspective_canon <- function(expr, args) {
     } else
       constraints <- c(constraints, list(vec(var) == x_canon[start_ind:(end_ind - 1)]))
   }
-  
+
   if(is_convex(expr@f))
     return(list(t, constraints))
   else
     return(list(-t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the p norm atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a pnorm atom, where
@@ -1135,9 +1134,9 @@ Dcp2Cone.pnorm_canon <- function(expr, args) {
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the power atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a power atom, where
@@ -1174,9 +1173,9 @@ Dcp2Cone.power_canon <- function(expr, args) {
   }
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the quadratic form atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a quadratic form atom,
@@ -1191,7 +1190,7 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   M2 <- decomp[[3]]
   M1_dim <- dim(M1)
   M2_dim <- dim(M2)
-  
+
   # Special case where P == 0.
   if((is.null(M1_dim) || size(M1) == 0) && (is.null(M2_dim) && size(M2) == 0))
     return(list(Constant(0), list()))
@@ -1208,9 +1207,9 @@ Dcp2Cone.quad_form_canon <- function(expr, args) {
   return(list(scale * obj, constr))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the quadratic over linear term atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a quadratic over linear
@@ -1220,22 +1219,22 @@ Dcp2Cone.quad_over_lin_canon <- function(expr, args) {
   # quad_over_lin := sum_{ij} X^2_{ij} / y
   x <- args[[1]]
   y <- flatten(args[[2]])
-  
+
   # Pre-condition: dim = c()
   t <- Variable(1)
-  
+
   # (y+t, y-t, 2*x) must lie in the second-order cone, where y+t is the scalar part
   # of the second-order cone constraint
-  # BUG: In Python, flatten produces single dimension (n,), but in R, we always treat 
+  # BUG: In Python, flatten produces single dimension (n,), but in R, we always treat
   # these as column vectors with dimension (n,1), necessitating the use of VStack.
   # constraints <- list(SOC(t = y+t, X = HStack(y-t, 2*flatten(x)), axis = 2))
   constraints <- list(SOC(t = y+t, X = VStack(y-t, 2*flatten(x)), axis = 2))
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the relative entropy atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a relative entropy atom
@@ -1252,9 +1251,9 @@ Dcp2Cone.rel_entr_canon <- function(expr, args) {
   return(list(obj, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the sigma max atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a sigma max atom
@@ -1269,19 +1268,19 @@ Dcp2Cone.sigma_max_canon <- function(expr, args) {
   expr_dim <- dim(expr)
   if(prod(expr_dim) != 1)
     stop("Invalid shape of expr in sigma_max canonicalization")
-  
+
   t <- new("Variable", dim = expr_dim)
   tI_n <- sparseMatrix(seq(n), seq(n), x = rep(1, n)) * t
   tI_m <- sparseMatrix(seq(m), seq(m), x = rep(1, m)) * t
-  X <- bmat(list(list(tI_n, A), 
+  X <- bmat(list(list(tI_n, A),
                  list(t(A), tI_m)))
   constraints <- list(PSDConstraint(X))
   return(list(t, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the support function atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a support function atom
@@ -1292,13 +1291,13 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
   # The user-supplied argument to the support function:
   y <- flatten(args[[1]])
   parent <- expr@.parent
-  
+
   # This Defines the set "X" associated with this support function:
   conic <- conic_repr_of_set(parent)
   A <- conic[[1]]
   b <- conic[[2]]
   K_self <- conic[[3]]
-  
+
   # The main part of the duality trick for representing the epigraph
   # of this support function:
   eta <- Variable(size(b))
@@ -1315,7 +1314,7 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
   } else
     y_lift <- y
   local_cons <- list(t(A) %*% eta + y_lift == 0)
-  
+
   # Now, the conic constraints on eta.
   #   nonneg, exp, soc, psd
   nonnegsel <- K_sels$nonneg
@@ -1323,7 +1322,7 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
     temp_expr <- eta[nonnegsel]
     local_cons <- c(local_cons, list(temp_expr >= 0))
   }
-  
+
   socsels <- K_sels$soc
   socsels_len <- length(socsels)
   for(socsel in socsels) {
@@ -1332,13 +1331,13 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
     soccon <- SOC(tempsca, tempvec)
     local_cons <- c(local_cons, list(soccon))
   }
-  
+
   psdsels <- K_sels$psd
   for(psdsel in psdsels) {
     curmat <- scs_psdvec_to_psdmat(eta, psdsel)
     local_cons <- c(local_cons, list(curmat %>>% 0))
   }
-  
+
   expsel <- K_sels$exp
   if(size(expsel) > 0) {
     matexpsel <- matrix(expsel, ncol = 3, byrow = TRUE)
@@ -1351,14 +1350,14 @@ Dcp2Cone.suppfunc_canon <- function(expr, args) {
     ec <- ExpCone(-curr_v, -curr_u, base::exp(1) * curr_w)
     local_cons.append(ec)
   }
-  
+
   epigraph <- b %*% eta
   return(list(epigraph, local_cons))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the trinv atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a trinv atom
@@ -1369,7 +1368,7 @@ Dcp2Cone.tr_inv_canon <- function(expr, args) {
   X <- args[[1]]
   n <- nrow(X)
   su <- NULL
-  
+
   constraints <- list()
   for(i in seq_len(n)) {
     ei <- matrix(0, nrow = n, ncol = 1)
@@ -1386,9 +1385,9 @@ Dcp2Cone.tr_inv_canon <- function(expr, args) {
   return(list(su, constraints))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the von Neumann entropy atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a von Neumann entropy atom
@@ -1399,11 +1398,11 @@ Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
   N <- args[[1]]
   if(!is_real(N))
     stop("N must be real")
-  
+
   n <- nrow(N)
   x <- Variable(n)
   t <- Variable()
-  
+
   # START code that applies to all spectral functions
   constrs <- list()
   if(n > 1) {
@@ -1418,24 +1417,24 @@ Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
       constrs <- c(constrs, list(con))
     }
   }
-  
+
   # trace(N) \leq sum(x)
   con <- (matrix_trace(N) == sum(x))
   constrs <- c(constrs, list(con))
-  
+
   # trace(N) == sum(x)
   con <- ZeroConstraint(matrix_trace(N) - sum(x))
   constrs <- c(constrs, list(con))
-  
+
   # x[1:(n-1)] >= x[2:n]
   #   x[1] >= x[2],  x[2] >= x[3], ...
   if(n > 1) {
     con <- NonPosConstraint(x[2:n] - x[1:(n - 1)])
     constrs <- c(constrs, list(con))
   }
-  
+
   # END code that applies to all spectral functions
-  
+
   # sum(entr(x)) >= t
   canon <- Dcp2Cone.entr_canon(x, list(x))
   hypos <- canon[[1]]
@@ -1443,13 +1442,13 @@ Dcp2Cone.von_neumann_entr_canon <- function(expr, args) {
   constrs <- c(constrs, entr_cons)
   con <- NonPosConstraint(t - sum(hypos))
   constrs <- c(constrs, list(con))
-  
+
   return(list(t, constrs))
 }
 
-#' 
+#'
 #' Dcp2Cone canonicalizer for the xexp atom
-#' 
+#'
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a xexp atom
@@ -1464,7 +1463,7 @@ Dcp2Cone.xexp_canon <- function(expr, args) {
   canon <- Dcp2Cone.power_canon(power_expr, power_expr@args)
   power_obj <- canon[[1]]
   constraints <- canon[[2]]
-  
+
   constraints <- c(constraints, list(ExpCone(u, x, t), u >= power_obj, x >= 0))
   return(list(t, constraints))
 }

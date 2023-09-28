@@ -474,5 +474,177 @@ test_that("test basic gp", {
   expect_equal(result$value, 15.59, tolerance = 1e-2)
 })
 
+test_that("test maximum", {
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  alpha <- Parameter(value = 0.5)
+  beta <- Parameter(pos = TRUE, value = 3.0)
+  kappa <- Parameter(pos = TRUE, value = 1.0)
+  tau <- Parameter(pos = TRUE, value = 4.0)
+  
+  prod1 <- x*y^alpha
+  prod2 <- beta*x*y^alpha
+  obj <- Minimize(max_elemwise(prod1, prod2))
+  constr <- list(x == kappa, y == tau)
+  
+  problem <- Problem(obj, constr)
+  expect_true(is_dgp(problem, dpp = TRUE))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # max(1*2, 3*1*2) = 6.
+  expect_equal(result$value, 6.0, tolerance = 1e-4)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+  
+  value(alpha) <- 2
+  value(beta) <- 0.5
+  value(kappa) <- 2.0   # x
+  value(tau) <- 3.0     # y
+  # obj <- Minimize(max_elemwise(prod1, prod2))
+  # constr <- list(x == kappa, y == tau)
+  # problem <- Problem(obj, constr)
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # max(2*9, 0.5*2*9) == 18.
+  expect_equal(result$value, 18.0, tolerance = 1e-4)
+  expect_equal(result$getValue(x), 2.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 3.0, tolerance = TOL)
+})
+
+test_that("test max", {
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  alpha <- Parameter(value = 0.5)
+  beta <- Parameter(pos = TRUE, value = 3.0)
+  kappa <- Parameter(pos = TRUE, value = 1.0)
+  tau <- Parameter(pos = TRUE, value = 4.0)
+  
+  prod1 <- x*y^alpha
+  prod2 <- beta*x*y^alpha
+  obj <- Minimize(max(hstack(prod1, prod2)))
+  constr <- list(x == kappa, y == tau)
+  
+  problem <- Problem(obj, constr)
+  expect_true(is_dgp(problem, dpp = TRUE))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # max(1*2, 3*1*2) = 6.
+  expect_equal(result$value, 6.0, tolerance = 1e-4)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+  
+  value(alpha) <- 2
+  value(beta) <- 0.5
+  value(kappa) <- 2.0   # x
+  value(tau) <- 3.0     # y
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # max(2*9, 0.5*2*9) == 18.
+  expect_equal(result$value, 18.0, tolerance = 1e-4)
+  expect_equal(result$getValue(x), 2.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 3.0, tolerance = TOL)
+})
+
+test_that("test param in exponent and elsewhere", {
+  alpha <- Parameter(pos = TRUE, value = 1.0, name = "alpha")
+  x <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(x^alpha), list(x == alpha))
+  
+  expect_true(is_dgp(problem, dpp = TRUE))
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 1.0, tolerance = TOL)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  
+  # Re-solve (which goes through a separate code path).
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 27.0, tolerance = TOL)
+  expect_equal(result$getValue(x), 3.0, tolerance = TOL)
+})
+
+test_that("test minimum", {
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  alpha <- Parameter(pos = TRUE, value = 1.0, name = "alpha")
+  beta <- Parameter(pos = TRUE, value = 3.0, name = "beta")
+  prod1 <- x*y^alpha
+  prod2 <- beta*x*y^alpha
+  posy <- prod1 + prod2
+  obj <- Maximize(min_elemwise(prod1, prod2, 1/posy))
+  constr <- list(x == alpha, y == 4.0)
+  
+  dgp <- Problem(obj, constr)
+  result <- solve(dgp, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # prod1 = 1*4, prod2 = 3*4 = 12, 1/posy = 1/(3 + 12).
+  expect_equal(result$value, 1.0/(4.0 + 12.0), tolerance = TOL)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+  
+  value(alpha) <- 2.0
+  # prod1 <- x*y^alpha
+  # prod2 <- beta*x*y^alpha
+  # posy <- prod1 + prod2
+  # obj <- Maximize(min_elemwise(prod1, prod2, 1/posy))
+  # constr <- list(x == alpha, y == 4.0)
+  # dgp <- Problem(obj, constr)
+  # prod1 = 2*16, prod2 = 3*2*16 = 96, 1/posy = 1/(32 + 96).
+  result <- solve(dgp, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 1.0/(32.0 + 96.0), tolerance = TOL)
+  expect_equal(result$getValue(x), 2.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+})
+
+test_that("test min", {
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  alpha <- Parameter(pos = TRUE, value = 1.0, name = "alpha")
+  beta <- Parameter(pos = TRUE, value = 3.0, name = "beta")
+  prod1 <- x*y^alpha
+  prod2 <- beta*x*y^alpha
+  posy <- prod1 + prod2
+  obj <- Maximize(min_entries(hstack(prod1, prod2, 1/posy)))
+  constr <- list(x == alpha, y == 4.0)
+  
+  dgp <- Problem(obj, constr)
+  result <- solve(dgp, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  # prod1 = 1*4, prod2 = 3*4 = 12, 1/posy = 1/(3 + 12).
+  expect_equal(result$value, 1.0/(4.0 + 12.0), tolerance = TOL)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+  
+  value(alpha) <- 2.0
+  # prod1 <- x*y^alpha
+  # prod2 <- beta*x*y^alpha
+  # posy <- prod1 + prod2
+  # obj <- Maximize(min_entries(hstack(prod1, prod2, 1/posy)))
+  # constr <- list(x == alpha, y == 4.0)
+  # dgp <- Problem(obj, constr)
+  # prod1 = 2*16, prod2 = 3*2*16 = 96, 1/posy = 1/(32 + 96).
+  result <- solve(dgp, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 1.0/(32.0 + 96.0), tolerance = TOL)
+  expect_equal(result$getValue(x), 2.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 4.0, tolerance = TOL)
+})
+
+test_that("test div", {
+  alpha <- Parameter(pos = TRUE, value = 3.0)
+  beta <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  p <- Problem(Minimize(x*y), list(y/alpha <= x, y >= beta))
+  result <- solve(p, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 1.0/3.0, tolerance = TOL)
+  expect_equal(result$getValue(x), 1.0/3.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 1.0, tolerance = TOL)
+  
+  value(beta) <- 2.0
+  p <- Problem(Minimize(x*y), list(y/alpha <= x, y >= beta))
+  result <- solve(p, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 4.0/3.0, tolerance = TOL)
+  expect_equal(result$getValue(x), 2.0/3.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 2.0, tolerance = TOL)
+})
+
+
 
 

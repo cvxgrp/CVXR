@@ -1,5 +1,6 @@
 context("test-g01-dpp")
 TOL <- 1e-6
+SOLVER <- "ECOS"
 
 test_that("test multiply scalar params not dpp", {
   x <- Parameter()
@@ -296,5 +297,182 @@ test_that("test ignore dpp", {
 # DGP Tests with DPP Flag #
 #                         #
 ###########################
+test_that("test basic equality constraint", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  dgp <- Problem(Minimize(x), list(x == alpha))
+  
+  expect_true(is_dgp(dgp@objective, dpp = TRUE))
+  expect_true(is_dgp(dgp@constraints[[1]], dpp = TRUE))
+  expect_true(is_dgp(dgp, dpp = TRUE))
+  dgp2dcp <- Dgp2Dcp(dgp)
+  
+  dcp <- reduce(dgp2dcp)
+  expect_true(is_dpp(dcp))
+  
+  result <- solve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  
+  value(alpha) <- 2.0
+  dgp <- Problem(Minimize(x), list(x == alpha))
+  result <- solve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(x), 2.0, tolerance = TOL)
+})
+
+test_that("test basic inequality constraint", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  constraint <- list(x + alpha <= x)
+  expect_true(is_dgp(consraint[[1]], dpp = TRUE))
+  expect_true(is_dgp(Problem(Minimize(1), constraint), dpp = TRUE))
+})
+
+test_that("test nonlla equality constraint not dpp", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  constraint <- list(x == x + alpha)
+  expect_false(is_dgp(constraint[[1]], dpp = TRUE))
+  expect_false(is_dgp(Problem(Minimize(1), constraint), dpp = TRUE))
+})
+
+test_that("test nonllcvx inequality constraint not dpp", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  constraint <- list(x <= x + alpha)
+  expect_false(is_dgp(constraint[[1]], dpp = TRUE))
+  expect_false(is_dgp(Problem(Minimize(1), constraint), dpp = TRUE))
+})
+
+test_that("test param monomial is dpp", {
+  alpha <- Parameter(pos = TRUE)
+  beta <- Parameter(pos = TRUE)
+  kappa <- Parameter(pos = TRUE)
+  
+  monomial <- alpha^1.2 * beta^0.5 * kappa^3 * kappa^2
+  expect_true(is_dgp(monomial, dpp = TRUE))
+})
+
+test_that("test param posynomial is dpp", {
+  alpha <- Parameter(pos = TRUE)
+  beta <- Parameter(pos = TRUE)
+  kappa <- Parameter(pos = TRUE)
+  
+  monomial <- alpha^1.2 * beta^0.5 * kappa^3 * kappa^2
+  posynomial <- monomial + alpha^2 * beta^3
+  expect_true(is_dgp(posynomial, dpp = TRUE))
+})
+
+test_that("test mixed monomial is dpp", {
+  alpha <- Parameter(pos = TRUE)
+  beta <- Parameter(pos = TRUE)
+  kappa <- Parameter(pos = TRUE)
+  tau <- Variable(pos = TRUE)
+  
+  monomial <- alpha^1.2 * beta^0.5 * kappa^3 * kappa^2 * tau
+  expect_true(is_dgp(monomial, dpp = TRUE))
+})
+
+test_that("test mixed posynomial is dpp", {
+  alpha <- Parameter(pos = TRUE)
+  beta <- Parameter(pos = TRUE)
+  kappa <- Parameter(pos = TRUE)
+  tau <- Variable(pos = TRUE)
+  
+  monomial <- alpha^1.2 * beta^0.5 * kappa^3 * kappa^2 * tau
+  posynomial <- (monomial + monomial)^3
+  expect_true(is_dgp(posynomial, dpp = TRUE))
+})
+
+test_that("test nested power not dpp", {
+  alpha <- Parameter(value = 1.0)
+  x <- Variable(pos = TRUE)
+  
+  pow1 <- x^alpha
+  expect_true(is_dgp(pow1, dpp = TRUE))
+  
+  pow2 <- pow1^alpha
+  expect_false(is_dgp(pow2, dpp = TRUE))
+})
+
+test_that("test non dpp problem raises error", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  dgp <- Problem(Minimize((alpha*x)^alpha), list(x == alpha))
+  expect_true(is_dgp(dgp@objective))
+  expect_false(is_dgp(dgp@objective, dpp = TRUE))
+  
+  expect_error(solve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = TRUE))
+  
+  result <- solve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = FALSE)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+})
+
+test_that("test basic monomial", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  beta <- Parameter(pos = TRUE, value = 2.0)
+  x <- Variable(pos = TRUE)
+  monomial <- alpha*beta*x
+  problem <- Problem(Minimize(monomial), list(x == alpha))
+  
+  expect_true(is_dgp(problem))
+  expect_true(is_dgp(problem, dpp = TRUE))
+  expect_false(is_dpp(problem, "dcp"))
+  
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$value, 2.0, tolerance = TOL)
+  
+  value(alpha) <- 3.0
+  # problem <- Problem(Minimize(monomial), list(x == alpha))
+  expect_equal(result$getValue(x), 3.0, tolerance = TOL)
+  # 3*2*3 == 18
+  expect_equal(result$value, 18.0, tolerance = TOL)
+})
+
+test_that("test basic posynomial", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  beta <- Parameter(pos = TRUE, value = 2.0)
+  kappa <- Parameter(pos = TRUE, value = 3.0)
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  
+  monomial_one <- alpha*beta*x
+  monomial_two <- beta*kappa*x*y
+  posynomial <- monomial_one + monomial_two
+  problem <- Problem(Minimize(posynomial), list(x == alpha, y == beta))
+  
+  expect_true(is_dgp(problem))
+  expect_true(is_dgp(problem, dpp = TRUE))
+  expect_false(is_dpp(problem, "dcp"))
+  
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(x), 1.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 2.0, tolerance = TOL)
+  # 1*2*1 + 2*3*1*2 == 2 + 12 == 14.
+  expect_equal(result$value, 14.0, tolerance = 1e-3)
+  
+  value(alpha) <- 4.0
+  value(beta) <- 5.0
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(x), 4.0, tolerance = TOL)
+  expect_equal(result$getValue(y), 5.0, tolerance = TOL)
+  # 4*5*4 + 5*3*4*5 == 80 + 300 == 380.
+  expect_equal(result$value, 380.0, tolerance = 1e-3)
+})
+
+test_that("test basic gp", {
+  xyz <- Variable(3, pos = TRUE)
+  x <- xyz[1]
+  y <- xyz[2]
+  z <- xyz[3]
+  a <- Parameter(pos = TRUE, value = 2.0)
+  b <- Parameter(pos = TRUE, value = 1.0)
+  constraints <- list(a*x*y + a*x*z + a*y*z <= b, x >= a*y)
+  problem <- Problem(Minimize(1/(x*y*z)), constraints)
+  expect_true(is_dgp(problem, dpp = TRUE))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 15.59, tolerance = 1e-2)
+})
+
 
 

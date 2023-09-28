@@ -645,6 +645,229 @@ test_that("test div", {
   expect_equal(result$getValue(y), 2.0, tolerance = TOL)
 })
 
+test_that("test one minus pos", {
+  x <- Variable(pos = TRUE)
+  obj <- Maximize(x)
+  alpha <- Parameter(pos = TRUE, value = 0.1)
+  constr <- list(one_minus_pos(alpha + x) >= 0.4)
+  problem <- Problem(obj, constr)
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 0.5, tolerance = TOL)
+  expect_equal(result$getValue(x), 0.5, tolerance = TOL)
+  
+  value(alpha) <- 0.4
+  # constr <- list(one_minus_pos(alpha + x) >= 0.4)
+  # problem <- Problem(obj, constr)
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 0.2, tolerance = TOL)
+  expect_equal(result$getValue(x), 0.2, tolerance = TOL)
+})
 
+test_that("test pf matrix completion", {
+  X <- Variable(3, 3, pos = TRUE)
+  obj <- Minimize(pf_eigenvalue(X))
+  known_indices <- list(c(1,1), c(1,3), c(2,2), c(3,1), c(3,2))
+  known_values <- c(1.0, 1.9, 0.8, 3.2, 5.9)
+  constr <- list()
+  for(i in seq_along(known_indices)) {
+    idx_pair <- known_indices[[i]]
+    constr <- c(constr, X[idx_pair[1], idx_pair[2]] == known_values[i])
+  }
+  constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  problem <- Problem(obj, constr)
+  # Smoke test.
+  result <- solve(problem, SOLVER, gp = TRUE)
+  optimal_value <- result$value
+  
+  param <- Parameter(length(known_values), pos = TRUE, value = 0.5*known_values)
+  constr <- list()
+  for(i in seq_along(known_indices)) {
+    idx_pair <- known_indices[[i]]
+    constr <- c(constr, X[idx_pair[1], idx_pair[2]] == param[i])
+  }
+  constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  problem <- Problem(obj, constr)
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  
+  # Now change param to point to known_value, and check we recover the correct optimal value.
+  value(param) <- known_values
+  # constr <- list()
+  # for(i in seq_along(known_indices)) {
+  #   idx_pair <- known_indices[[i]]
+  #   constr <- c(constr, X[idx_pair[1], idx_pair[2]] == param[i])
+  # }
+  # constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  # problem <- Problem(obj, constr)
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, optimal_value, tolerance = TOL)
+})
 
+test_that("test rank one nmf", {
+  X <- Variable(3, 3, pos = TRUE)
+  x <- Variable(3, pos = TRUE)
+  y <- Variable(3, pos = TRUE)
+  xy <- vstack(x[1]*y, x[2]*y, x[3]*y)
+  R <- max_elemwise(mul_elemwise(X, (xy)^(-1.0)), 
+                    mul_elemwise(X^(-1.0), xy))
+  objective <- sum(R)
+  constraints <- list(X[1,1] == 1.0, X[1,3] == 1.9, X[2,2] == 0.8, 
+                      X[3,1] == 3.2, X[3,2] == 5.9, x[1]*x[2]*x[3] == 1.0)
+  # Smoke test.
+  prob <- Problem(Minimize(objective), constraints)
+  result <- solve(prob, SOLVER, gp = TRUE)
+  optimal_value <- result$value
+  
+  param <- Parameter(value = -2.0)
+  R <- max_elemwise(mul_elemwise(X, (xy)^param),
+                    mul_elemwise(X^param, xy))
+  objective <- sum(R)
+  prob <- Problem(Minimize(objective), constraints)
+  result <- solve(prob, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  
+  # Now change param to point to known_value, and check we recover the correct
+  # optimal value.
+  value(param) <- -1.0
+  result <- solve(prob, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, optimal_value, tolerance = TOL)
+})
 
+test_that("test documentation prob", {
+  x <- Variable(pos = TRUE)
+  y <- Variable(pos = TRUE)
+  z <- Variable(pos = TRUE)
+  a <- Parameter(pos = TRUE, value = 4.0)
+  b <- Parameter(pos = TRUE, value = 2.0)
+  c <- Parameter(pos = TRUE, value = 10.0)
+  d <- Parameter(pos = TRUE, value = 1.0)
+  
+  objective_fn <- x*y*z
+  constraints <- list(a*x*y*z + b*x*z <= c, x <= b*y, y <= b*x, z >= d)
+  problem <- Problem(Maximize(objective_fn), constraints)
+  # Smoke test.
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+})
+
+test_that("test sum scalar", {
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  w <- Variable(pos = TRUE)
+  h <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(h), list(w*h >= 8, sum(alpha + w) <= 5))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 2, tolerance = TOL)
+  expect_equal(result$getValue(h), 2, tolerance = TOL)
+  expect_equal(result$getValue(w), 4, tolerance = TOL)
+  
+  value(alpha) <- 4.0
+  problem <- Problem(Minimize(h), list(w*h >= 8, sum(alpha + w) <= 5))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 8, tolerance = TOL)
+  expect_equal(result$getValue(h), 8, tolerance = TOL)
+  expect_equal(result$getValue(w), 1, tolerance = TOL)
+})
+
+test_that("test sum vector", {
+  alpha <- Parameter(2, pos = TRUE, value = c(1.0, 1.0))
+  w <- Variable(2, pos = TRUE)
+  h <- Variable(2, pos = TRUE)
+  problem <- Problem(Minimize(sum(h)), list(mul_elemwise(w, h) >= 20, sum(alpha + w) <= 10))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 10, tolerance = TOL)
+  expect_equal(result$getValue(h), matrix(c(5, 5)), tolerance = 1e-3)
+  expect_equal(result$getValue(w), matrix(c(4, 4)), tolerance = 1e-3)
+  
+  value(alpha) <- c(4.0, 4.0)
+  problem <- Problem(Minimize(sum(h)), list(mul_elemwise(w, h) >= 20, sum(alpha + w) <= 10))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 40, tolerance = TOL)
+  expect_equal(result$getValue(h), matrix(c(20, 20)), tolerance = 1e-3)
+  expect_equal(result$getValue(w), matrix(c(1, 1)), tolerance = 1e-3)
+})
+
+test_that("test sum squares vector", {
+  alpha <- Parameter(2, pos = TRUE, value = c(1.0, 1.0))
+  w <- Variable(2, pos = TRUE)
+  h <- Variable(2, pos = TRUE)
+  problem <- Problem(Minimize(sum_squares(alpha + h)), list(mul_elemwise(w, h) >= 20, sum(alpha + w) <= 10))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(w), matrix(c(4, 4)), tolerance = 1e-3)
+  expect_equal(result$getValue(h), matrix(c(5, 5)), tolerance = 1e-3)
+  expect_equal(result$value, 6^2 + 6^2, tolerance = TOL)
+  
+  value(alpha) <- c(4.0, 4.0)
+  problem <- Problem(Minimize(sum_squares(alpha + h)), list(mul_elemwise(w, h) >= 20, sum(alpha + w) <= 10))
+  result <- solve(problem, SOLVEr, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$getValue(w), matrix(c(1, 1)), tolerance = 1e-3)
+  expect_equal(result$getValue(h), matrix(c(20, 20)), tolerance = 1e-3)
+  expect_equal(result$value, 24^2 + 24^2, tolerance = 1e-3)
+})
+
+test_that("test sum matrix", {
+  w <- Variable(2, 2, pos = TRUE)
+  h <- Variable(2, 2, pos = TRUE)
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  problem <- Problem(Minimize(alpha*sum(h)), list(mul_elemwise(w, h) >= 10, sum(w) <= 20))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 8, tolerance = 1e-4)
+  expect_equal(result$getValue(h), rbind(c(2, 2), c(2, 2)), tolerance = 1e-4)
+  expect_equal(result$getValue(w), rbind(c(5, 5), c(5, 5)), tolerance = 1e-4)
+  
+  value(alpha) <- 2.0
+  result <- solve(problem, SOLVER, gp = TRUe, enforce_dpp = TRUE)
+  expect_equal(result$value, 16, tolerance = 1e-4)
+  
+  w <- Variable(2, 2, pos = TRUE)
+  h <- Parameter(2, 2, pos = TRUE)
+  value(h) <- matrix(1, nrow = 2, ncol = 2)
+  value(alpha) <- 1.0
+  problem <- Problem(Minimize(sum(alpha*h)), list(w == h))
+  result <- solve(problem, SOLVEr, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 4.0, tolerance = 1e-4)
+  
+  value(h) <- 2.0*matrix(1, nrow = 2, ncol = 2)
+  # problem <- Problem(Minimize(sum(alpha*h)), list(w == h))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 8.0, tolerance = 1e-4)
+  
+  value(h) <- 3.0*matrix(1, nrow = 2, ncol = 2)
+  # problem <- Problem(Minimize(sum(alpha*h)), list(w == h))
+  result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
+  expect_equal(result$value, 12.0, tolerance = 1e-4)
+})
+
+test_that("test exp", {
+  x <- Variable(4, pos = TRUE)
+  c <- Parameter(4, pos = TRUE)
+  expr <- exp(mul_elemwise(c, x))
+  expect_true(is_dgp(expr, dpp = TRUE))
+  
+  expr <- exp(t(c) %*% x)
+  expect_true(is_dgp(expr, dpp = TRUE))
+})
+
+test_that("test log", {
+  x <- Variable(4, pos = TRUE)
+  c <- Parameter(4, pos = TRUE)
+  expr <- log(mul_elemwise(c, x))
+  expect_true(is_dgp(expr, dpp = TRUE))
+  
+  expr <- log(t(c) %*% x)
+  expect_false(is_dgp(expr, dpp = TRUE))
+})
+
+test_that("test gmatmul", {
+  x <- Variable(2, pos = TRUE)
+  A <- Parameter(2, 2)
+  value(A) <- rbind(c(-5, 2), c(1, -3))
+  b <- matrix(c(3, 2))
+  expr <- gmatmul(A, x)
+  problem <- Problem(Minimize(1.0), list(expr == b))
+  expect_true(is_dgp(problem, dpp = TRUE))
+  result <- solve(problem, solver = "SCS", gp = TRUE, enforce_dpp = TRUE)
+  sltn <- exp(base::solve(value(A), log(b)))
+  expect_equal(result$getValue(x), sltn, tolerance = TOL)
+  
+  x_par <- Parameter(2, pos = TRUE)
+  expr <- gmatmul(A, x_par)
+  expect_false(is_dgp(expr, dpp = TRUE))
+  expect_true(is_dgp(expr, dpp = FALSE))
+})

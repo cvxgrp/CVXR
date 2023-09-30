@@ -1,7 +1,7 @@
 context("test-g01-cone2cone")
 TOL <- 1e-^6
 
-simulate_chain <- function(in_prob) {
+TestDualize.simulate_chain <- function(in_prob) {
   # Get a ParamConeProg object.
   reduction <- list(Dcp2Cone(), CvxAttr2Constr(), ConeMatrixStuffing())
   chain <- Chain(NULL, reductions)

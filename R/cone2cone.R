@@ -71,12 +71,12 @@ Dualize.perform <- function(problem) {
   Kp <- cone_dims(problem)    # zero, nonneg, exp, soc, psd
   
   Kd <- list()
-  Kd[[FREE]] <- Kp@zero       # length of block of unconstrained variables.
-  Kd[[NONNEG]] <- Kp@nonneg   # length of block of nonneg variables.
-  Kd[[SOC]] <- Kp@soc         # lengths of blocks of soc-constrained variables.
-  Kd[[PSD]] <- Kp@psd         # "orders" of PSD variables.
-  Kd[DUAL_EXP]] <- Kp@exp     # number of length-3 blocks of dual exp cone variables.
-  Kd[[DUAL_POW3D]] <- Kp@p3d  # scale parameters for dual 3d power cones.
+  Kd[[Cone2Cone.FREE]] <- Kp@zero       # length of block of unconstrained variables.
+  Kd[[Cone2Cone.NONNEG]] <- Kp@nonneg   # length of block of nonneg variables.
+  Kd[[Cone2Cone.SOC]] <- Kp@soc         # lengths of blocks of soc-constrained variables.
+  Kd[[Cone2Cone.PSD]] <- Kp@psd         # "orders" of PSD variables.
+  Kd[[Cone2Cone.DUAL_EXP]] <- Kp@exp     # number of length-3 blocks of dual exp cone variables.
+  Kd[[Cone2Cone.DUAL_POW3D]] <- Kp@p3d  # scale parameters for dual 3d power cones.
   
   data <- list()
   data[[A_KEY]] <- t(A)

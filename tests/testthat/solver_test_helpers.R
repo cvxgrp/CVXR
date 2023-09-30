@@ -1,3 +1,103 @@
+SolverTestHelper <- setClass("SolverTestHelper", representation(obj_pair = "list", var_pairs = "list", con_pairs = "list",
+                                                                objective = "Objective", constraints = "list", prob = "Problem", variables = "list",
+                                                                expect_val = "numeric", expect_dual_vars = "list", expect_prim_vars = "list"),
+                             prototype(objective = NULL, constraints = list(), prob = NULL, variables = list(), 
+                                       expect_val = NA_real_, expect_dual_vars = list(), expect_prim_vars = list()))
+
+setMethod("initialize", "SolverTestHelper", function(.Object, obj_pair, var_pairs, con_pairs, objective = NULL, constraints = list(), prob = NULL, variables = list(), 
+                                                     expect_val = NA_real_, expect_dual_vars = list(), expect_prim_vars = list()) {
+  .Object@objective <- obj_pair[[1]]
+  .Object@constraints <- lapply(con_pairs, function(pair) { pair[[1]] })
+  .Object@prob <- Problem(.Object@objective, .Object@constraints)
+  .Object@variables <- lapply(var_pairs, function(pair) { pair[[1]] })
+  
+  .Object@expect_val <- obj_pair[[2]]
+  .Object@expect_dual_vars <- lapply(con_pairs, function(pair) { pair[[2]] })
+  .Object@expect_prim_vars <- lapply(var_pairs, function(pair) { pair[[2]] })
+  return(.Object)
+})
+
+solve.SolverTestHelper <- function(object, solver, ...) {
+  solve(object@prob, solver = solver, ...)
+}
+
+setMethod("check_primal_feasibility", function(object, tolerance) {
+  all_cons <- object@constraints
+  for(x in variables(object@prob)) {
+    attrs <- x@attributes
+    if(attrs$nonneg || attrs$pos)
+      all_cons <- c(all_cons, x >= 0)
+    else if(attrs$nonpos || attrs$neg)
+      all_cons <- c(all_cons, x <= 0)
+    else if(attrs$imag)
+      all_cons <- c(all_cons, x + Conj(x) == 0)
+    else if(attrs$symmetric)
+      all_cons <- c(all_cons, x == t(x))
+    else if(attrs$diag)
+      all_cons <- c(all_cons, x - diag(diag(x)) == 0)
+    else if(attrs$PSD)
+      all_cons <- c(all_cons, x %>>% 0)
+    else if(attrs$NSD)
+      all_cons <- c(all_cons, x %<<% 0)
+    else if(attrs$hermitian)
+      all_cons <- c(all_cons, x == Conj(t(x)))
+    else if(attrs$boolean || attrs$integer) {
+      round_val <- round(value(x))
+      all_cons <- c(all_cons, x == round_val)
+    }
+  }
+  
+  for(con in all_cons) {
+    viol <- violation(con)
+    if(is(viol, "numeric"))
+      viol <- norm(viol, "2")
+    expect_equal(viol, 0, tolerance = tolerance)
+  }
+})
+
+check_dual_domains <- function(object, tolerance) {
+  # A full "dual feasibility" check would involve checking a stationary Lagrangian.
+  # No such test is planned here.
+  #
+  # TODO: once dual variables are stored for attributes
+  #   (e.g. X = Variable(shape=(n,n), PSD=True)), check
+  #   domains for dual variables of the attribute constraint.
+  
+  for(con in object@constraints) {
+    if(is(con, "PSD")) {
+      # TODO: Move this to PSD.dual_violation.
+      dv <- dual_value(con)
+      eigs <- eigen(dv)$values
+      min_eig <- min(eigs)
+      expect_gte(min_eig, -tolerance)
+    } else if(is(con, "ExpCone")) {
+      # TODO: Implement this (preferably with ExpCone.dual_violation).
+      stop("Unimplemented")
+    } else if(is(con, "SOC")) {
+      # TODO: Implemt this (preferably with SOC.dual_violation).
+      stop("Unimplemented")
+    } else if(is(con, "IneqConstraint")) {
+      # TODO: Move this to Inequality.dual_violation.
+      dv <- dual_value(con)
+      min_dv <- min(dv)
+      expect_gte(min_dv, -tolerance)
+    } else if(is(con, "EqConstraint") || is(con, "ZeroConstraint")) {
+      dv <- dual_value(con)
+      expect_false(any(is.na(dv)))
+      expect_true(is.numeric(dv))
+    } else if(is(con, "PowCone3D"))
+      stop("Unimplemented")
+    else
+      stop("Unknown constraint type ", class(con))
+  }
+}
+
+#########################
+#                       #
+# General Test Problems #
+#
+#########################
+
 lp_0 <- function() {
   x <- Variable(nrow = 2)
   con_pairs <- list(list(x == 0, NULL))
@@ -462,4 +562,166 @@ mi_lp_1 <- function() {
   return(sth)
 }
 
+mi_lp_2 <- function() {
+  # Instance "knapPI_1_50_1000_1" from "http://www.diku.dk/~pisinger/genhard.c"
+  n <- 50
+  c <- 995
+  z <- 8373
+  coeffs <- list(c(1, 94, 485, 0), c(2, 506, 326, 0), c(3, 416, 248, 0),
+                 c(4, 992, 421, 0), c(5, 649, 322, 0), c(6, 237, 795, 0),
+                 c(7, 457, 43, 1), c(8, 815, 845, 0), c(9, 446, 955, 0),
+                 c(10, 422, 252, 0), c(11, 791, 9, 1), c(12, 359, 901, 0),
+                 c(13, 667, 122, 1), c(14, 598, 94, 1), c(15, 7, 738, 0),
+                 c(16, 544, 574, 0), c(17, 334, 715, 0), c(18, 766, 882, 0),
+                 c(19, 994, 367, 0), c(20, 893, 984, 0), c(21, 633, 299, 0),
+                 c(22, 131, 433, 0), c(23, 428, 682, 0), c(24, 700, 72, 1),
+                 c(25, 617, 874, 0), c(26, 874, 138, 1), c(27, 720, 856, 0),
+                 c(28, 419, 145, 0), c(29, 794, 995, 0), c(30, 196, 529, 0),
+                 c(31, 997, 199, 1), c(32, 116, 277, 0), c(33, 908, 97, 1),
+                 c(34, 539, 719, 0), c(35, 707, 242, 0), c(36, 569, 107, 0),
+                 c(37, 537, 122, 0), c(38, 931, 70, 1), c(39, 726, 98, 1),
+                 c(40, 487, 600, 0), c(41, 772, 645, 0), c(42, 513, 267, 0),
+                 c(43, 81, 972, 0), c(44, 943, 895, 0), c(45, 58, 213, 0),
+                 c(46, 303, 748, 0), c(47, 764, 487, 0), c(48, 536, 923, 0),
+                 c(49, 724, 29, 1), c(50, 789, 674, 0))  # index, p / w / x
+  
+  X <- Variable(n, boolean = TRUE)
+  objective <- Maximize(sum(mul_elemwise(sapply(coeffs, function(i) { i[2] }), X)))
+  constraints <- list(sum(mul_elemwise(sapply(coeffs, function(i) { i[3] }), X)) <= c)
+  obj_pair <- list(objective, z)
+  con_pairs <- list(list(constraints[[1]], NULL))
+  var_pairs <- list(list(X, NULL))
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}
 
+mi_lp_3 <- function() {
+  # Infeasible (but relaxable) test case.
+  x <- Variable(4, boolean = TRUE)
+  objective <- Maximize(Constant(1))
+  constraints <- list(x[1] + x[2] + x[3] + x[4] <= 2,
+                      x[1] + x[2] + x[3] + x[4] >= 2,
+                      x[1] + x[2] <= 1,
+                      x[1] + x[3] <= 1,
+                      x[1] + x[4] <= 1,
+                      x[3] + x[4] <= 1,
+                      x[2] + x[4] <= 1,
+                      x[2] + x[3] <= 1)
+  obj_pair <- list(objective, -Inf)
+  con_pairs <- lapply(constraints, function(c) { list(c, NULL) })
+  var_pairs <- list(list(x, NULL))
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}
+
+mi_lp_4 <- function() {
+  # Test MI without constraints.
+  x <- Variable(boolean = TRUE)
+  objective <- Maximize(Constant(0.23)*x)
+  obj_pair <- list(objective, 0.23)
+  var_pairs <- list(list(x, 1))
+  sth <- SolverTestHelper(obj_pair, var_pairs, list())
+  return(sth)
+}
+
+mi_lp_5 <- function() {
+  # Infeasible boolean problem: https://trac.sagemath.org/ticket/31962#comment:48
+  z <- Variable(11, boolean = TRUE)
+  constraints <- list(z[3] + z[2] == 1,
+                      z[5] + z[4] == 1,
+                      z[7] + z[6] == 1,
+                      z[9] + z[8] == 1,
+                      z[11] + z[10] == 1,
+                      z[5] + z[2] <= 1,
+                      z[3] + z[4] <= 1,
+                      z[7] + z[3] <= 1,
+                      z[2] + z[6] <= 1,
+                      z[9] + z[7] <= 1,
+                      z[6] + z[8] <= 1,
+                      z[11] + z[9] <= 1,
+                      z[8] + z[10] <= 1,
+                      z[10] + z[5] <= 1,
+                      z[4] + z[11] <= 1)
+  obj <- Minimize(0)
+  obj_pair <- list(obj, Inf)
+  con_pairs <- lapply(constraints, function(c) { list(c, NULL) })
+  var_pairs <- list(list(z, NULL))
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}
+
+mi_socp_1 <- function() {
+  # Formulate the following mixed-integer SOCP with cvxpy
+  # min 3*x[1] + 2*x[2] + x[3] + y[1] + 2*y[2]
+  #     s.t. norm(x,2) <= y[1]
+  #          norm(x,2) <= y[2]
+  #          x[1] + x[2] + 3*x[3] >= 0.1
+  #          y <= 5, y integer.
+  
+  x <- Variable(3)
+  y <- Variable(2, integer = TRUE)
+  constraints <- list(norm(x, 2) <= y[1],
+                      norm(x, 2) <= y[2],
+                      x[1] + x[2] + 3*x[3] >= 0.1,
+                      y <= 5)
+  obj <- Minimize(3*x[1] + 2*x[2] + x[3] + y[1] + 2*y[2])
+  obj_pair <- list(obj, 0.21363997604807272)
+  var_pairs <- list(list(x, matrix(c(-0.78510265, -0.43565177,  0.44025147))),
+                    list(y, matrix(c(1, 1))))
+  con_pairs <- lapply(constraints, function(c) { list(c, NULL) })   # No dual values for mixed integer problems.
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}
+
+mi_socp_2 <- function() {
+  # An unnecessarily SOCP-based reformulation of MI_LP_1.
+  # Doesn't use SOC objects.
+  
+  x <- Variable(2)
+  bool_var <- Variable(boolean = TRUE)
+  int_var <- Variable(integer = TRUE)
+  objective <- Minimize(-4*x[1] - 5*x[2])
+  constraints <- list(2*x[1] + x[2] <= int_var,
+                      (x[1] + 2*x[2])^2 <= 9*bool_var,
+                      x >= 0,
+                      int_var == 3*bool_var,
+                      int_var == 3)
+  obj_pair <- list(objective, -9)
+  var_pairs <- list(list(x, matrix(c(1, 1))),
+                    list(bool_var, 1),
+                    list(int_var, 3))
+  con_pairs <- lapply(constraints, function(con) { list(con, NULL) })
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}
+
+mi_pcp_0 <- function() {
+  # max  x3 + x4 - x0
+  # s.t. x0 + x1 + x2 / 2 == 2,
+  #      (x0, x1, x3) in Pow3D(0.2)
+  #      (x2, q, x4) in Pow3D(0.4)
+  #      0.1 <= q <= 1.9
+  #      q integer
+  
+  x <- Variable(3)
+  hypos <- Variable(2)
+  q <- Variable(integer = TRUE)
+  objective <- Minimize(-sum(hypos) + x[1])
+  arg1 <- cbind(x[1], x[3])
+  arg2 <- cbind(x[2], q)
+  pc_con <- PowCone3D(arg1, arg2, hypos, c(0.2, 0.4))
+  con_pairs <- list(
+    list(x[1] + x[2] + 0.5*x[3] == 2, NULL),
+    list(pc_con, NULL),
+    list(0.1 <= q, NULL),
+    list(q <= 1.9, NULL)
+  )
+  obj_pair <- list(objective, -1.8073406786220672)
+  var_pairs <- list(
+    list(x, matrix(c(0.06393515, 0.78320961, 2.30571048))),
+    list(hypos, NULL),
+    list(q, 1.0)
+  )
+  sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
+  return(sth)
+}

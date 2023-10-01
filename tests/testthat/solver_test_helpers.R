@@ -21,7 +21,7 @@ solve.SolverTestHelper <- function(object, solver, ...) {
   solve(object@prob, solver = solver, ...)
 }
 
-setMethod("check_primal_feasibility", function(object, tolerance) {
+setMethod("check_primal_feasibility", "SolverTestHelper", function(object, tolerance) {
   all_cons <- object@constraints
   for(x in variables(object@prob)) {
     attrs <- x@attributes
@@ -55,7 +55,7 @@ setMethod("check_primal_feasibility", function(object, tolerance) {
   }
 })
 
-check_dual_domains <- function(object, tolerance) {
+setMethod("check_dual_domains", "SolverTestHelper", function(object, tolerance) {
   # A full "dual feasibility" check would involve checking a stationary Lagrangian.
   # No such test is planned here.
   #
@@ -74,7 +74,7 @@ check_dual_domains <- function(object, tolerance) {
       # TODO: Implement this (preferably with ExpCone.dual_violation).
       stop("Unimplemented")
     } else if(is(con, "SOC")) {
-      # TODO: Implemt this (preferably with SOC.dual_violation).
+      # TODO: Implement this (preferably with SOC.dual_violation).
       stop("Unimplemented")
     } else if(is(con, "IneqConstraint")) {
       # TODO: Move this to Inequality.dual_violation.
@@ -90,7 +90,65 @@ check_dual_domains <- function(object, tolerance) {
     else
       stop("Unknown constraint type ", class(con))
   }
-}
+})
+
+setMethod("check_complementarity", "SolverTestHelper", function(object, tolerance) {
+  # TODO: once dual variables are stored for attributes
+  #   (e.g. X = Variable(shape=(n,n), PSD=True)), check
+  #   complementarity against the dual variable of the
+  #   attribute constraint.
+  
+  for(con in object@constraints) {
+    if(is(con, "PSDConstraint")) {
+      dv <- dual_value(con)
+      pv <- value(con@args[[1]])
+      comp <- value(scalar_product(pv, dv))
+    } else if(is(con, "ExpCone") || is(con, "SOC") || is(con, "NonPosConstraint") || is(con, "ZeroConstraint"))
+      comp <- value(scalar_product(con@args, dual_value(con)))
+    else if(is(con, "IneqConstraint") || is(con, "EqConstraint"))
+      comp <- value(scalar_product(con@expr, dual_value(con)))
+    else if(is(con, "PowConeND"))
+      warn("\nPowConeND dual variables not implemented;\nSkipping complementarity check")
+    else
+      stop("Unknown constraint type ", class(con))
+    expect_equal(comp, 0, tolerance = tolerance)
+  }
+})
+
+setMethod("verify_objective", "SolverTestHelper", function(object, result, tolerance) {
+  actual <- result$getValue(object@prob@objective)
+  expect <- object@expect_val
+  if(!is.na(expect))
+    expect_equal(actual, expect, tolerance = tolerance)
+})
+
+setMethod("verify_primal_values", "SolverTestHelper", function(object, result, tolerance) {
+  for(idx in seq_along(object@variables)) {
+    actual <- result$getValue(object@variables[[idx]])
+    expect <- object@expect_prim_vars[[idx]]
+    if(!is.na(expect))
+      expect_equal(actual, expect, tolerance = tolerance)
+  }
+})
+
+setMethod("verify_dual_values", "SolverTestHelper", function(object, result, tolerance) {
+  for(idx in seq_len(object@constraints)) {
+    actual <- result$getDualValue(object@constraints[[idx]])
+    expect <- object@expect_dual_vars[[idx]]
+    if(!is.na(expect)) {
+      if(is.list(actual)) {
+        for(i in seq_along(actual)) {
+          act <- actual[[i]]
+          expt <- expect[[i]]
+          expect_equal(act, expt, tolerance = tolerance)
+        }
+      } else
+        expect_equal(actual, expect, tolerance = tolerance)
+    }
+  }
+})
+
+# TODO: check_complementarity, verify_objective, verify_primal_values, verify_dual_values.
 
 #########################
 #                       #

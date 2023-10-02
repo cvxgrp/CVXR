@@ -83,3 +83,109 @@ TestDualize.simulate_chain <- function(in_prob) {
   in_prob_sol <- invert(chain, cone_sol, inv_prob2cone)
   unpack(in_prob, in_prob_sol)
 }
+
+test_that("test lp 1", {
+  # Typical LP.
+  sth <- lp_1()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+  verify_dual_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test lp 2", {
+  # Typical LP.
+  sth <- lp_2()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+  verify_dual_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test lp 3", {
+  # Unbounded LP.
+  sth <- lp_3()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+})
+
+test_that("test lp 4", {
+  # Infeasible LP.
+  sth <- lp_4()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+})
+
+test_that("test lp 5", {
+  # LP with redundant constraints.
+  sth <- lp_5()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  check_primal_feasibility(sth, result, tolerance = 1e-4)
+  check_complementarity(sth, result, tolerance = 1e-4)
+  check_dual_domains(sth, result, tolerance = 1e-4)
+})
+
+test_that("test socp 0", {
+  sth <- socp_0()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test socp 1", {
+  sth <- socp_1()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test socp 2", {
+  sth <- socp_2()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+})
+
+.socp_3 <- function(axis) {
+  sth <- socp_3(axis)
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+  verify_dual_values(sth, result, tolerance = 1e-4)
+}
+
+test_that("test socp3 axis 1", {
+  .socp_3(1)
+})
+
+test_that("test socp3 axis 2", {
+  .socp_3(2)
+})
+
+test_that("test expcone 1", {
+  sth <- expcone_1()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+  verify_dual_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test expcone socp 1", {
+  sth <- expcone_socp_1()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-4)
+  verify_primal_values(sth, result, tolerance = 1e-4)
+  verify_dual_values(sth, result, tolerance = 1e-4)
+})
+
+test_that("test pcp 2", {
+  sth <- pcp_2()
+  result <- TestDualize.simulate_chain(sth@prob)
+  verify_objective(sth, result, tolerance = 1e-3)
+  verify_primal_values(sth, result, tolerance = 1e-3)
+  verify_dual_values(sth, result, tolerance = 1e-3)
+})
+
+# TODO: Add rest of cone2cone tests like TestSlacks.
+

@@ -21,7 +21,7 @@ solve.SolverTestHelper <- function(object, solver, ...) {
   solve(object@prob, solver = solver, ...)
 }
 
-setMethod("check_primal_feasibility", "SolverTestHelper", function(object, tolerance) {
+setMethod("check_primal_feasibility", "SolverTestHelper", function(object, result, tolerance) {
   all_cons <- object@constraints
   for(x in variables(object@prob)) {
     attrs <- x@attributes
@@ -42,20 +42,20 @@ setMethod("check_primal_feasibility", "SolverTestHelper", function(object, toler
     else if(attrs$hermitian)
       all_cons <- c(all_cons, x == Conj(t(x)))
     else if(attrs$boolean || attrs$integer) {
-      round_val <- round(value(x))
+      round_val <- round(result$getValue(x))
       all_cons <- c(all_cons, x == round_val)
     }
   }
   
   for(con in all_cons) {
-    viol <- violation(con)
-    if(is(viol, "numeric"))
+    viol <- result$getViolation(con)
+    if(is.numeric(viol))
       viol <- norm(viol, "2")
     expect_equal(viol, 0, tolerance = tolerance)
   }
 })
 
-setMethod("check_dual_domains", "SolverTestHelper", function(object, tolerance) {
+setMethod("check_dual_domains", "SolverTestHelper", function(object, result, tolerance) {
   # A full "dual feasibility" check would involve checking a stationary Lagrangian.
   # No such test is planned here.
   #
@@ -66,7 +66,7 @@ setMethod("check_dual_domains", "SolverTestHelper", function(object, tolerance) 
   for(con in object@constraints) {
     if(is(con, "PSD")) {
       # TODO: Move this to PSD.dual_violation.
-      dv <- dual_value(con)
+      dv <- result$getDualValue(con)
       eigs <- eigen(dv)$values
       min_eig <- min(eigs)
       expect_gte(min_eig, -tolerance)
@@ -78,11 +78,11 @@ setMethod("check_dual_domains", "SolverTestHelper", function(object, tolerance) 
       stop("Unimplemented")
     } else if(is(con, "IneqConstraint")) {
       # TODO: Move this to Inequality.dual_violation.
-      dv <- dual_value(con)
+      dv <- result$getDualValue(con)
       min_dv <- min(dv)
       expect_gte(min_dv, -tolerance)
     } else if(is(con, "EqConstraint") || is(con, "ZeroConstraint")) {
-      dv <- dual_value(con)
+      dv <- result$getDualValue(con)
       expect_false(any(is.na(dv)))
       expect_true(is.numeric(dv))
     } else if(is(con, "PowCone3D"))
@@ -92,7 +92,7 @@ setMethod("check_dual_domains", "SolverTestHelper", function(object, tolerance) 
   }
 })
 
-setMethod("check_complementarity", "SolverTestHelper", function(object, tolerance) {
+setMethod("check_complementarity", "SolverTestHelper", function(object, result, tolerance) {
   # TODO: once dual variables are stored for attributes
   #   (e.g. X = Variable(shape=(n,n), PSD=True)), check
   #   complementarity against the dual variable of the
@@ -100,13 +100,15 @@ setMethod("check_complementarity", "SolverTestHelper", function(object, toleranc
   
   for(con in object@constraints) {
     if(is(con, "PSDConstraint")) {
-      dv <- dual_value(con)
-      pv <- value(con@args[[1]])
-      comp <- value(scalar_product(pv, dv))
+      dv <- result$getDualValue(con)
+      pv <- result$getValue(con@args[[1]])
+      comp <- result$getValue(scalar_product(pv, dv))
     } else if(is(con, "ExpCone") || is(con, "SOC") || is(con, "NonPosConstraint") || is(con, "ZeroConstraint"))
-      comp <- value(scalar_product(con@args, dual_value(con)))
+      comp <- result$getValue(scalar_product(con@args, result$getDualValue(con)))
+    else if(is(con, "PowCone3D"))
+      comp <- result$getValue(scalar_product(con@args[1:3], result$getDualValue(con)))
     else if(is(con, "IneqConstraint") || is(con, "EqConstraint"))
-      comp <- value(scalar_product(con@expr, dual_value(con)))
+      comp <- result$getValue(scalar_product(con@expr, result$getDualValue(con)))
     else if(is(con, "PowConeND"))
       warn("\nPowConeND dual variables not implemented;\nSkipping complementarity check")
     else
@@ -147,8 +149,6 @@ setMethod("verify_dual_values", "SolverTestHelper", function(object, result, tol
     }
   }
 })
-
-# TODO: check_complementarity, verify_objective, verify_primal_values, verify_dual_values.
 
 #########################
 #                       #
@@ -782,4 +782,354 @@ mi_pcp_0 <- function() {
   )
   sth <- SolverTestHelper(obj_pair, var_pairs, con_pairs)
   return(sth)
+}
+
+#####################
+#                   #
+# Standard Test LPs #
+#                   #
+#####################
+
+StandardTestLPs.test_lp_0 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- lp_0()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals)
+    check_complementarity(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_1 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- lp_1()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals)
+    verify_dual_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_2 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- lp_2()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals)
+    verify_dual_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_3 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- lp_3()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_4 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- lp_4()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_5 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- lp_5()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  check_primal_feasibility(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    check_dual_domains(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_lp_6 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- lp_6()
+  result <- solve(sth, ...)
+  verify_objective(sth, result, tolerance)
+  check_primal_feasibility(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    check_dual_domains(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_0 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_0()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_1 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_2 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_2()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_3 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_3()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_4 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_4()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestLPs.test_mi_lp_5 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_lp_5()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+#####################
+#                   #
+# Standard Test QPs #
+#                   #
+#####################
+
+StandardTestQPs.test_qp_0 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- qp_0()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+#######################
+#                     #
+# Standard Test SOCPs #
+#                     #
+#######################
+
+StandardTestSOCPs.test_socp_0 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- socp_0()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals)
+    check_complementarity(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_socp_1 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- socp_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_socp_2 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- socp_2()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_socp_3ax1 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  sth <- socp_3(axis = 1)
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_socp_3ax2 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- socp_3(axis = 2)
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_mi_socp_1 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_socp_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+StandardTestSOCPs.test_mi_socp_2 <- function(solver, tolerance = 1e-4, ...) {
+  sth <- mi_socp_2()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
+}
+
+######################
+#                    #
+# Standard Test SDPs #
+#                    #
+######################
+
+StandardTestSDPs.test_sdp_1min <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- sdp_1("min")
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance = 1e-2)   # Only 2 digits recorded.
+  check_primal_feasibility(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    check_dual_domains(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSDPs.test_sdp_1max <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- sdp_1("max")
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance = 1e-2)   # Only 2 digits recorded.
+  check_primal_feasibility(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    check_dual_domains(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestSDPs.test_sdp_2 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  # Tolerance is set to 1e-3 instead of 1e-4 because analytic solution is unknown.
+  sth <- sdp_2()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  check_primal_feasibility(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    check_dual_domains(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+######################
+#                    #
+# Standard Test ECPs #
+#                    #
+######################
+
+StandardTestECPs.test_expcone_1 <- function(solver, tolerance = 1e-4, duals = TRUE, ...) {
+  sth <- expcone_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+###########################
+#                         #
+# Standard Test Mixed CPs #
+#                         #
+###########################
+
+StandardTestMixedCPs.test_exp_socp_1 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  sth <- expcone_socp_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+######################
+#                    #
+# Standard Test PCPs #
+#                    #
+######################
+
+StandardTestPCPs.test_pcp_1 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  sth <- pcp_1()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestPCPs.test_pcp_2 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  sth <- pcp_2()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestPCPs.test_pcp_3 <- function(solver, tolerance = 1e-3, duals = TRUE, ...) {
+  sth <- pcp_3()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  if(duals) {
+    check_complementarity(sth, result, tolerance)
+    verify_dual_values(sth, result, tolerance)
+  }
+  return(list(sth, result))
+}
+
+StandardTestPCPs.test_mi_pcp_0 <- function(solver, tolerance = 1e-3, ...) {
+  sth <- mi_pcp_0()
+  result <- solve(sth, solver, ...)
+  verify_objective(sth, result, tolerance)
+  verify_primal_values(sth, result, tolerance)
+  return(list(sth, result))
 }

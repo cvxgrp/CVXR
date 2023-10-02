@@ -621,6 +621,16 @@ setMethod("graph_implementation", "DivExpression", function(object, arg_objs, di
   DivExpression.graph_implementation(arg_objs, dim, data)
 })
 
+#' @param x An \linkS4class{Expression} or R numeric data.
+#' @param y An \linkS4class{Expression} or R numeric data.
+#' @describeIn BinaryOperator An \linkS4class{Expression} representing the standard inner product (or "scalar" product) of (x,y), conjugate-linear in x.
+scalar_product <- function(x, y) {
+  x <- Reshape.deep_flatten(x)
+  y <- Reshape.deep_flatten(y)
+  prod <- Multiply(Conjugate(x), y)
+  return(SumEntries(prod))
+}
+
 #'
 #' The Conjugate class.
 #' 

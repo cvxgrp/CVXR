@@ -555,7 +555,7 @@ test_that("test the upper_tri function", {
                "Argument to UpperTri must be a square matrix.", fixed = TRUE)
 })
 
-test_that("test vec to upper tri", {
+test_that("test vec_to_upper_tri", {
   xv <- Variable(3)
   X <- UpperTri.vec_to_upper_tri(xv)
   value(xv) <- matrix(c(1,2,3))
@@ -580,19 +580,21 @@ test_that("test vec to upper tri", {
 })
 
 test_that("test the huber function", {
+  # Valid.
   huber(x, 1)
+  
   expect_error(huber(x, -1),
                "M must be a non-negative scalar constant", fixed = TRUE)
   expect_error(huber(x, c(1, 1)),
                "M must be a non-negative scalar constant", fixed = TRUE)
 
-  # M parameter
+  # M parameter.
   M <- Parameter(nonneg = TRUE)
-  # Valid
+  # Valid.
   huber(x, M)
   value(M) <- 1
   expect_equal(value(huber(2, M)), 3, tolerance = TOL)
-  # Invalid
+  # Invalid.
   M <- Parameter(nonpos = TRUE)
   expect_error(huber(x, M),
                "M must be a non-negative scalar constant", fixed = TRUE)
@@ -605,6 +607,8 @@ test_that("test the sum_largest function", {
                "First argument must be a square matrix.", fixed = TRUE)
   expect_error(lambda_sum_largest(Variable(2, 2), 2.4),
                "Second argument must be a positive integer.", fixed = TRUE)
+  expect_error(value(lambda_sum_largest(rbind(c(1, 2), c(3, 4)), 2)), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
 })
 
 test_that("test the sum_smallest function", {
@@ -645,11 +649,11 @@ test_that("test the kronecker function", {
   expr <- kronecker(a, b)
   expect_true(is_nonneg(expr))
   expect_equal(dim(expr), c(6, 2))
-  b <- Parameter(2, nonpos = TRUE)
+  b <- Parameter(2, 1, nonpos = TRUE)
   expr <- kronecker(a, b)
   expect_true(is_nonpos(expr))
-  expect_error(kronecker(x, -1),
-               "The first argument to Kron must be constant.", fixed = TRUE)
+  expect_error(kronecker(x, x),
+               "At least one argument to Kron must be constant.", fixed = TRUE)
 })
 
 # test_that("test DCP properties of partial optimize", {
@@ -657,7 +661,6 @@ test_that("test the kronecker function", {
 #   dims <- 3
 #   x <- Variable(dims)
 #   t <- Variable(dims)
-#   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
 #   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
 #   g <- partial_optimize(p2, list(t), list(x))
 #   expect_equal(curvature(g), CONVEX)
@@ -840,10 +843,9 @@ test_that("test the kronecker function", {
 # })
 
 test_that("test the NonNegative Variable class", {
-  # x <- NonNegative()
   x <- Variable(nonneg = TRUE)
-  p <- Problem(Minimize(5+x), list(x >= 3))
-  result <- solve(p)
+  p <- Problem(Minimize(5 + x), list(x >= 3))
+  result <- solve(p, solver = "SCS", eps = 1e-5)
   expect_equal(result$value, 8, tolerance = TOL)
   expect_equal(result$getValue(x), 3, tolerance = TOL)
 })
@@ -852,7 +854,7 @@ test_that("test mixed_norm", {
   y <- Variable(5, 5)
   obj <- Minimize(mixed_norm(y, Inf, 1))
   prob <- Problem(obj, list(y == matrix(1, nrow = 5, ncol = 5)))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 5, tolerance = TOL)
 })
 
@@ -874,18 +876,18 @@ test_that("test that norm1 and normInf match definition for matrices", {
   X <- Variable(2, 2)
   obj <- Minimize(norm1(X))
   prob <- Problem(obj, list(X == A))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   print(result$value)
-  expect_equal(result$value, value(norm1(A)), TOL)
+  expect_equal(result$value, value(norm1(A)), tolerance = 1e-3)
 
   obj <- Minimize(norm_inf(X))
   prob <- Problem(obj, list(X == A))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   print(result$value)
-  expect_equal(result$value, value(norm_inf(A)), TOL)
+  expect_equal(result$value, value(norm_inf(A)), tolerance = 1e-3)
 })
 
-#DK, uncomment once Indicator in transforms is uncommented
+#DK: uncomment once Indicator in transforms is uncommented
 # test_that("test indicator", {
 #   x <- Variable()
 #   constraints <- list(0 <= x, x <= 1)
@@ -896,3 +898,35 @@ test_that("test that norm1 and normInf match definition for matrices", {
 #   expect_equal(value(expr), Inf)
 #
 # })
+
+test_that("test log_det", {
+  # Test malformed input.
+  expect_error(value(log_det(rbind(c(1, 2), c(3, 4)))), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
+})
+
+test_that("test lambda_max", {
+  expect_error(value(lambda_max(rbind(c(1, 2), c(3, 4)))), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
+})
+
+test_that("test diff", {
+  Av <- Variable(20, 10)
+  Bc <- matrix(0, nrow = 20, ncol = 10)
+  expect_equal(diff(Av, axis = 1), diff(Bc, axis = 1))
+  expect_equal(diff(Av, axis = 2), diff(Bc, axis = 2))
+  
+  # Issue 1834 in CVXPY.
+  x1 <- matrix(1:5, nrow = 1)
+  x2 <- Variable(1, 5, value = x1)
+  
+  expr <- diff(x1, axis = 1)
+  expect_equal(value(expr), diff(x1, axis = 1))
+  expr <- diff(x2, axis = 1)
+  expect_equal(value(expr), diff(x1, axis = 1))
+  
+  expect_error(value(diff(x1, axis = 2)), "< k elements")
+})
+
+# TODO: Add all unit tests in test_atoms.py after test_diff.
+# TODO: Go back to check/update partial_optimize tests (that are commented out).

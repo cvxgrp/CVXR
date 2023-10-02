@@ -150,6 +150,18 @@ setMethod("verify_dual_values", "SolverTestHelper", function(object, result, tol
   }
 })
 
+is.allclose <- function(a, b, rtol = 1e-5, atol = 1e-8, equal_na = FALSE) {
+  # Rough implementation of numpy's allclose function.
+  if(!equal_na) {
+    na_mask <- (is.na(a) || is.na(b))
+    a <- a[!na_mask]
+    b <- b[!na_mask]
+    if(length(a) == 0 && length(b) == 0)
+      return(TRUE)
+  }
+  return(abs(a - b) <= (atol + rtol * abs(b)))
+}
+
 #########################
 #                       #
 # General Test Problems #

@@ -23,6 +23,7 @@ test_that("test the norm_inf function", {
   exp <- x + y
   atom <- norm_inf(exp)
 
+  # expect_equal(name(atom), "norm_inf(x + y)")
   # expect_equal(dim(atom), NULL)
   expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
@@ -36,6 +37,7 @@ test_that("test the norm1 function", {
   exp <- x + y
   atom <- norm1(exp)
 
+  # expect_equal(name(atom), "norm1(x + y)")
   # expect_equal(dim(atom), NULL)
   expect_equal(dim(atom), c(1,1))
   expect_equal(curvature(atom), CONVEX)
@@ -43,8 +45,28 @@ test_that("test the norm1 function", {
   expect_equal(curvature(norm1(-atom)), CONVEX)
 })
 
+test_that("test list input", {
+  # Test that list input is rejected.
+  expect_error(max_entries(list(Variable(), 1)), 
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+  expect_error(norm(list(1, Variable())),
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+  
+  xv <- Variable()
+  yv <- Variable()
+  expect_error(norm(list(xv, yv)) <= 1,
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+})
+
+test_that("test norm exceptions", {
+  # Test that norm exceptions are raised as expected.
+  xv <- Variable(2)
+  expect_error(norm(xv, "nuc"), 
+               "Unsupported norm option nuc for non-matrix", fixed = TRUE)
+})
+
 test_that("test quad_form function", {
-  P <- Parameter(2,2)
+  P <- Parameter(2, 2, symmetric = TRUE)
   expr <- quad_form(x, P)
   expect_false(is_dcp(expr))
 })
@@ -74,12 +96,25 @@ test_that("test the power function", {
         expect_equal(sign(atom), NONNEG)
     }
   }
+  expect_equal(value(power(-1, 2)), 1)
   expect_error(value(power(-1, 3)),
                "Power cannot be applied to negative values", fixed = TRUE)
-
   expect_error(value(power(0, -1)),
                "Power cannot be applied to negative or zero values", fixed = TRUE)
 
+})
+
+test_that("test the xexp function", {
+  # Test for positive x.
+  xv <- Variable(pos = TRUE)
+  atom <- xexp(x)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  # Test for negative x.
+  xv <- Variable(neg = TRUE)
+  expect_false(curvature(atom) == CONCAVE)
+  expect_equal(sign(atom), NONPOS)
 })
 
 test_that("test the geo_mean function", {
@@ -155,6 +190,7 @@ test_that("test the p_norm function", {
 })
 
 test_that("test matrix norms", {
+  # Matrix 1-norm, 2-norm (sigma_max), infinity-norm, Frobenius norm, and maximum modulus norm.
   for(p in c("1", "2", "I", "F", "M")) {
     for(var in c(A, C)) {
       atom <- norm(var, p)
@@ -205,44 +241,48 @@ test_that("test the matrix_frac function", {
 })
 
 test_that("test the sign for max_entries", {
+  # One arg, test sign.
   expect_equal(sign(max_entries(1)), NONNEG)
   expect_equal(sign(max_entries(-2)), NONPOS)
   expect_equal(sign(max_entries(Variable())), UNKNOWN)
   expect_equal(sign(max_entries(0)), ZERO)
 
-  # Test with axis argument
+  # Test with axis argument.
   expect_equal(dim(max_entries(Variable(2), axis = 1)), c(2, 1))
   expect_equal(dim(max_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
   # expect_equal(dim(max_entries(Variable(c(2, 3)), axis = 1)), 2)
-  # expect_equal(dim(max_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
   expect_equal(dim(max_entries(Variable(2, 3), axis = 1)), c(2, 1))
   expect_equal(dim(max_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
 
-  # Invalid axis
+  # Invalid axis.
   expect_error(max_entries(x, axis = 4),
-               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
+  expect_error(max_entries(x, x))   # A common erroneous use-case.
 })
 
 test_that("test the sign for min_entries", {
+  # One arg, test sign.
   expect_equal(sign(min_entries(1)), NONNEG)
   expect_equal(sign(min_entries(-2)), NONPOS)
   expect_equal(sign(min_entries(Variable())), UNKNOWN)
   expect_equal(sign(min_entries(0)), ZERO)
 
-  # Test with axis argument
+  # Test with axis argument.
   expect_equal(dim(min_entries(Variable(2), axis = 1)), c(2, 1))
   expect_equal(dim(min_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
   # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 1)), 2)
-  # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
+  # expect_equal(dim(min_entries(Variable(2, 3), axis = 2)), 3)
   expect_equal(dim(min_entries(Variable(2, 3), axis = 1)), c(2, 1))
-  expect_equal(dim(min_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
+  expect_equal(dim(min_entries(Variable(2, 3), axis = 2)), c(3, 1))
 
-  # Invalid axis
+  # Invalid axis.
   expect_error(min_entries(x, axis = 4),
-               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
+  expect_error(min_entries(x, x))   # A common erroneous use-case.
 })
 
 test_that("test sign logic for max_elemwise", {
+  # Two args.
   expect_equal(sign(max_elemwise(1, 2)), NONNEG)
   expect_equal(sign(max_elemwise(1, Variable())), NONNEG)
   expect_equal(sign(max_elemwise(1, -2)), NONNEG)
@@ -257,15 +297,16 @@ test_that("test sign logic for max_elemwise", {
 
   expect_equal(sign(max_elemwise(-3, -2)), NONPOS)
 
-  # Many args
+  # Many args.
   expect_equal(sign(max_elemwise(-2, Variable(), 0, -1, Variable(), -1)), NONNEG)
 
-  # Promotion
+  # Promotion.
   expect_equal(sign(max_elemwise(1, Variable(2))), NONNEG)
   expect_equal(dim(max_elemwise(1, Variable(2))), c(2, 1))
 })
 
 test_that("test sign logic for min_elemwise", {
+  # Two args.
   expect_equal(sign(min_elemwise(1, 2)), NONNEG)
   expect_equal(sign(min_elemwise(1, Variable())), UNKNOWN)
   expect_equal(sign(min_elemwise(1, -2)), NONPOS)
@@ -280,10 +321,10 @@ test_that("test sign logic for min_elemwise", {
 
   expect_equal(sign(min_elemwise(-3, -2)), NONPOS)
 
-  # Many args
+  # Many args.
   expect_equal(sign(min_elemwise(-2, Variable(), 0, -1, Variable(), 1)), NONPOS)
 
-  # Promotion
+  # Promotion.
   expect_equal(sign(min_elemwise(-1, Variable(2))), NONPOS)
   expect_equal(dim(min_elemwise(-1, Variable(2))), c(2, 1))
 })
@@ -296,14 +337,13 @@ test_that("test the sum_entries function", {
   # expect_equal(dim(sum_entries(Variable(2))), NULL)
   expect_equal(dim(sum_entries(Variable(2))), c(1, 1))
   expect_equal(curvature(sum_entries(Variable(2))), AFFINE)
-  # expect_equal(dim(sum_entries(Variable(c(2, 1)), keepdims = TRUE)), c(1, 1))
   expect_equal(dim(sum_entries(Variable(2, 1), keepdims = TRUE)), c(1, 1))
 
-  # Mixed curvature
+  # Mixed curvature.
   mat <- matrix(c(1,-1), nrow = 1, ncol = 2)
   expect_equal(curvature(sum_entries( mat %*% Variable(2)^2 )), UNKNOWN)
 
-  # Test with axis argument
+  # Test with axis argument.
   expect_equal(dim(sum_entries(Variable(2), axis = 1)), c(2, 1))
   # expect_equal(dim(sum_entries(Variable(2), axis = 2)), NULL)
   expect_equal(dim(sum_entries(Variable(2), axis = 2)), c(1, 1))
@@ -316,13 +356,13 @@ test_that("test the sum_entries function", {
 
   # Invalid axis
   expect_error(sum_entries(x, axis = 4),
-               "Invalid argument for axis. Must be an integer between 1 and 2", fixed = TRUE)
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
 
-  A <- diag(3)
-  expect_equal(value(CVXR::sum_entries(A)), 3)
+  As <- Matrix(diag(3), sparse = TRUE)
+  expect_equal(value(CVXR::sum_entries(As)), 3)
 
-  A <- diag(3)
-  expect_equal(value(CVXR::sum_entries(A, axis = 1)), c(1, 1, 1))
+  As <- Matrix(diag(3), sparse = TRUE)
+  expect_equal(value(CVXR::sum_entries(As, axis = 2)), c(1, 1, 1))
 
 })
 
@@ -338,7 +378,7 @@ test_that("test the multiply function", {
 
   expect_equal(curvature(multiply(neg_param, x^2)), CONCAVE)
 
-  # Test promotion
+  # Test promotion.
   expect_equal(dim(multiply(c(1, -1), 1)), c(2, 1))
   expect_equal(dim(multiply(1, C)), dim(C))
   # expect_error(multiply(x, c(1, -1)))
@@ -350,23 +390,34 @@ test_that("test the multiply function", {
 
 test_that("test the vstack function", {
   atom <- vstack(x, y, x)
+  expect_equal(name(atom), "Vstack(x, y, x)")
   expect_equal(dim(atom), c(6, 1))
 
   atom <- vstack(A, C, B)
+  expect_equal(name(atom), "Vstack(A, C, B)")
   expect_equal(dim(atom), c(7, 2))
 
   entries <- list()
   for(i in 1:dim(x)[1]) {
-   for(j in 1:dim(x)[2]) {
-     entries <- c(entries, x[i, j])
-   }
+   # for(j in 1:dim(x)[2]) {
+   #   entries <- c(entries, x[i, j])
+   # }
+   entries <- c(entries, x[i])
   }
   atom <- do.call(vstack, entries)
   # atom <- vstack(x[1,1], x[2,1])
+  expect_equal(dim(atom), c(2,1))
+  # expect_equal(name(atom[2,1]), "vstack(x[1,1], x[2,1])[2,1]")
 
   expect_error(vstack(C, 1),
-               "All the input dimensions except for axis 1 must match exactly.", fixed = TRUE)
+               "All the input dimensions except for axis 2 must match exactly.", fixed = TRUE)
+  expect_error(vstack(x, Variable(3)),
+               "All the input dimensions except for axis 2 must match exactly.", fixed = TRUE)
+  expect_error(vstack())
 
+  # Test scalars with variables of dimension (1,).
+  expr <- vstack(2, Variable(1))
+  expect_equal(dim(expr), c(2,1))
 })
 
 test_that("test the reshape_expr function", {
@@ -384,7 +435,37 @@ test_that("test the reshape_expr function", {
   expect_equal(dim(expr), c(1, 2))
 
   expect_error(reshape_expr(C, c(5, 4)),
-               "Invalid reshape dimensions (54)", fixed = TRUE)
+               "Invalid reshape dimensions (5, 4)", fixed = TRUE)
+  
+  # Test reshaping by row.
+  ac <- seq(10)
+  A_np <- matrix(ac, nrow = 5, ncol = 2, byrow = TRUE)
+  A_cp <- reshape_expr(ac, new_dim = c(5, 2), byrow = TRUE)
+  expect_equal(A_np, value(A_cp), tolerance = TOL)
+  
+  X <- Variable(5, 2)
+  prob <- Problem(Minimize(0), list(X == A_cp))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(A_np, result$getValue(X))
+  
+  a_np <- matrix(A_np, nrow = length(ac), ncol = 1, byrow = TRUE)
+  a_cp <- reshape_expr(A_cp, new_dim = c(10, 1), byrow = TRUE)
+  expect_equal(a_np, value(a_cp))
+  
+  xv <- Variable(10)
+  prob <- Problem(Minimize(0), list(xv == a_cp))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(a_np, result$getValue(x))
+  
+  # Test more complex by row reshaping: matrix to another matrix.
+  b <- rbind(c(0, 1, 2), c(3, 4, 5), c(6, 7, 8), c(9, 10, 11))
+  b_reshaped <- matrix(b, nrow = 2, ncol = 6, byrow = TRUE)
+  X <- new("Variable", dim = dim(b))
+  X_reshaped <- reshape_expr(X, new_dim = c(2, 6), byrow = TRUE)
+  prob <- Problem(Minimize(0), list(X_reshaped == b_reshaped))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(b_reshaped, result$getValue(X_reshaped))
+  expect_equal(b, result$getValue(X))
 })
 
 test_that("test the vec function", {
@@ -417,9 +498,25 @@ test_that("test the diag function", {
   expect_equal(sign(expr), UNKNOWN)
   expect_equal(curvature(expr), AFFINE)
   expect_equal(dim(expr), c(2, 2))
+  
+  psd_matrix <- rbind(c(1, -1), c(-1, 1))
+  expr <- diag(psd_matrix)
+  expect_equal(sign(expr), NONNEG)
+  expect_equal(curvature(expr), CONSTANT)
+  expect_equal(dim(expr), c(2, 1))
 
   expect_error(diag(C),
                "Argument to Diag must be a vector or square matrix.", fixed = TRUE)
+  
+  # Test that diag is PSD.
+  w <- matrix(c(1.0, 2.0))
+  expr <- diag(w)
+  expect_true(is_psd(expr))
+  expr <- diag(-w)
+  expect_true(is_nsd(expr))
+  expr <- diag(matrix(c(1, -1)))
+  expect_false(is_psd(expr))
+  expect_false(is_nsd(expr))
 })
 
 test_that("test the matrix_trace function", {
@@ -431,6 +528,17 @@ test_that("test the matrix_trace function", {
 
   expect_error(matrix_trace(C),
                "Argument to Trace must be a square matrix", fixed = TRUE)
+})
+
+test_that("test trace sign psd", {
+  X_psd <- Variable(2, 2, PSD = TRUE)
+  X_nsd <- Variable(2, 2, NSD = TRUE)
+  
+  psd_trace <- matrix_trace(X_psd)
+  nsd_trace <- matrix_trace(X_nsd)
+  
+  expect_true(is_nonneg(psd_trace))
+  expect_true(is_nonpos(nsd_trace))
 })
 
 test_that("test the log1p function", {
@@ -445,6 +553,30 @@ test_that("test the log1p function", {
 test_that("test the upper_tri function", {
   expect_error(upper_tri(C),
                "Argument to UpperTri must be a square matrix.", fixed = TRUE)
+})
+
+test_that("test vec to upper tri", {
+  xv <- Variable(3)
+  X <- UpperTri.vec_to_upper_tri(xv)
+  value(xv) <- matrix(c(1,2,3))
+  actual <- value(X)
+  expect <- rbind(c(1,2), c(0,3))
+  expect_true(is.allclose(actual, expect))
+  
+  yv <- Variable(1)
+  value(yv) <- 4
+  Y <- UpperTri.vec_to_upper_tri(y, stric = TRUE)
+  actual <- value(Y)
+  expect <- rbind(c(0, 4), c(0, 0))
+  expect_true(is.allclose(actual, expect))
+  
+  A_expect <- rbind(c(0, 11, 12, 13),
+                    c(0,  0, 16, 17),
+                    c(0,  0,  0, 21),
+                    c(0,  0,  0, 0))
+  ac <- c(11, 12, 13, 16, 17, 21)
+  A_actual <- value(UpperTri.vec_to_upper_tri(ac, strict = TRUE))
+  expect_true(is.allclose(A_actual, A_expect))
 })
 
 test_that("test the huber function", {

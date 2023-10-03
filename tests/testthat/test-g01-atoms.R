@@ -656,6 +656,8 @@ test_that("test the kronecker function", {
                "At least one argument to Kron must be constant.", fixed = TRUE)
 })
 
+# TODO: Go back to check/update partial_optimize tests (that are commented out).
+
 # test_that("test DCP properties of partial optimize", {
 #   # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
 #   dims <- 3
@@ -928,5 +930,295 @@ test_that("test diff", {
   expect_error(value(diff(x1, axis = 2)), "< k elements")
 })
 
-# TODO: Add all unit tests in test_atoms.py after test_diff.
-# TODO: Go back to check/update partial_optimize tests (that are commented out).
+test_that("test log_normcdf", {
+  expect_equal(sign(log_normcdf(x)), NONPOS)
+  expect_equal(curvature(log_normcdf(x)), CONCAVE)
+  
+  for(xv in -4:4) {
+    # expect_equal(plnorm(xv), value(log_normcdf(xv)), tolerance = 1e-2)
+    expect_true(abs(plnorm(xv) - value(log_normcdf(xv))) <= 1e-2)
+  }
+  
+  yv <- Variable(2, 2)
+  obj <- Minimize(sum(-log_normcdf(yv)))
+  prob <- Problem(obj, list(yv == 2))
+  result <- solve(prob, solver = "ECOS")
+  # expect_equal(-result$value, 4*plnorm(2), tolerance = 1e-2)
+  expect_true(abs(-result$value - 4*plnorm(2)) <= 1e-2)
+})
+
+test_that("test scalar_product", {
+  p <- rep(1, 4)
+  v <- Variable(4)
+  
+  obj <- Minimize(scalar_product(v, p))
+  prob <- Problem(obj, list(v >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), p))
+  
+  # With a parameter.
+  p <- Parameter(4)
+  v <- Variable(4)
+  
+  value(p) <- rep(1, 4)
+  obj <- Minimize(scalar_product(v, p))
+  prob <- Problem(obj, list(v >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), value(p)))
+})
+
+test_that("test Conj function", {
+  v <- Variable(4)
+  obj <- Minimize(sum(v))
+  prob <- Problem(obj, list(Conj(v) >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), matrix(rep(1, 4))))
+})
+
+test_that("test approximation of log-gamma", {
+  # Test evaluation.
+  Ac <- 1:9
+  Ac <- matrix(Ac, nrow = 3, ncol = 3, byrow = TRUE)
+  true_val <- base::lgamma(Ac)   # Note: This returns the natural logarithm of the absolute value of the gamma function.
+  expect_true(is.allclose(value(loggamma(Ac)), true_val, atol = 1e-1))
+  
+  # Test solving a problem.
+  X <- Variable(3, 3)
+  cost <- sum(loggamma(X))
+  prob <- Problem(Minimize(cost), list(X == Ac))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$value, sum(true_val), atol = 1e0))
+})
+
+test_that("test partial_trace atom", {
+  # rho_ABC = rhoA \otimes rho_B \otimes rho_C.
+  # Here \otimes signifies the Kronecker product.
+  # Each rho_i is normalized, i.e., Tr(rho_i) = 1.
+  
+  # Set random state.
+  set.seed(1)
+  
+  # Generate five test cases.
+  rho_A <- matrix(runif(4*4), nrow = 4, ncol = 4) + 1i*matrix(runif(4*4), nrow = 4, ncol = 4)
+  rho_A <- rho_A/sum(diag(rho_A))
+  rho_B <- matrix(runif(3*3), nrow = 3, ncol = 3) + 1i*matrix(runif(3*3), nrow = 3, ncol = 3)
+  rho_B <- rho_B/sum(diag(rho_B))
+  rho_C <- matrix(runif(2*2), nrow = 2, ncol = 2) + 1i*matrix(runif(2*2), nrow = 2, ncol = 2)
+  rho_C <- rho_C/sum(diag(rho_C))
+  rho_AB <- kronecker(rho_A, rho_B)
+  rho_AC <- kronecker(rho_A, rho_C)
+  
+  # Construct a CVXR Variable with value equal to rho_A \otimes rho_B \otimes rho_C.
+  temp <- kronecker(rho_AB, rho_C)
+  rho_ABC <- new("Variable", dim = dim(temp), complex = TRUE)
+  value(rho_ABC) <- temp
+  
+  # Try to recover simpler tensors products by taking partial traces of more complicated tensors.
+  # TODO: Revisit once partial_trace is implemented to check axis parameter.
+  rho_AB_test <- partial_trace(rho_ABC, c(4, 3, 2), axis = 2)
+  rho_AC_test <- partial_trace(rho_ABC, c(4, 3, 2), axis = 1)
+  rho_A_test <- partial_trace(rho_AB_test, c(4, 3), axis = 1)
+  rho_B_test <- partial_trace(rho_AB_test, c(4, 3), axis = 0)
+  rho_C_test <- partial_trace(rho_AC_test, c(4, 2), axis = 0)
+  
+  # See if the outputs of partial_trace are correct.
+  expect_true(is.allclose(value(rho_AB_test), rho_AB))
+  expect_true(is.allclose(value(rho_AC_test), rho_AC))
+  expect_true(is.allclose(value(rho_A_test)), rho_A)
+  expect_true(is.allclose(value(rho_B_test)), rho_B)
+  expect_true(is.allclose(value(rho_C_test)), rho_C)
+})
+
+test_that("test exceptions raised by partial_trace", {
+  # TODO: Revisit once partial_trace is implemented to check axis and errors.
+  X <- Variable(4, 3)
+  expect_error(partial_trace(X, dims = c(2, 3), axis = 0), 
+               "Only supports square matrices", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_trace(X, dims = c(2, 3), axis = -1), 
+               "Invalid axis argument, should be 0 and 2, got -1", TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_trace(X, dims = c(2, 4), axis = 0), 
+               "Dimension of system doesn't correspond to dimension of subsystems", fixed = TRUE)
+})
+
+test_that("test the partial_transpose atom", {
+  # rho_ABC = rho_A \otimes rho_B \otimes rho_C.
+  # Here \otimes signifies Kronecker product.
+  # Each rho_i is normalized, i.e., Tr(rho_i) = 1.
+  
+  # Set random state.
+  set.seed(1)
+  
+  # Generate three test cases.
+  rho_A <- matrix(runif(8*8), nrow = 8, ncol = 8) + 1i*matrix(runif(8*8), nrow = 8, ncol = 8)
+  rho_A <- rho_A/sum(diag(rho_A))
+  rho_B <- matrix(runif(6*6), nrow = 6, ncol = 6) + 1i*matrix(runif(6*6), nrow = 6, ncol = 6)
+  rho_B <- rho_A/sum(diag(rho_B))
+  rho_C <- matrix(runif(4*4), nrow = 4, ncol = 4) + 1i*matrix(runif(4*4), nrow = 4, ncol = 4)
+  rho_C <- rho_A/sum(diag(rho_C))
+  
+  rho_TC <- kronecker(kronecker(rho_A, rho_B), t(rho_C))
+  rho_TB <- kronecker(kronecker(rho_A, t(rho_B)), rho_C)
+  rho_TA <- kronecker(kronecker(t(rho_A), rho_B), rho_C)
+  
+  # Construct a CVXR Variable with value equal to rho_A \otimes rho_B \otimes rho_C.
+  temp <- kronecker(kronecker(rho_A, rho_B), rho_C)
+  rho_ABC <- new("Variable", dim = dim(temp), complex = TRUE)
+  value(rho_ABC) <- temp
+  
+  # Try to recover simpler tensors products by taking partial transposes of more complicated tensors.
+  # TODO: Revisit once partial_transpose is implemented to check axis parameter.
+  rho_TC_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 2)
+  rho_TB_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 1)
+  rho_TA_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 0)
+  
+  # See if the outputs of partial_transpose are correct.
+  expect_true(is.allclose(value(rho_TC_test), rho_TC))
+  expect_true(is.allclose(value(rho_TB_test), rho_TB))
+  expect_true(is.allclose(value(rho_TA_test), rho_TA))
+})
+
+test_that("test exceptions raised by partial_transpose", {
+  # TODO: Revisit once partial_transpose is implemented to check axis and errors.
+  X <- Variable(4, 3)
+  expect_error(partial_transpose(X, dims = c(2, 3), axis = 0), 
+               "Only supports square matrices", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_transpose(X, dims = c(2, 3), axis = -1),
+               "Invalid axis argument, should be between 0 and 2, got -1", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_transpose(X, dims = c(2, 4), axis = 0),
+               "Dimension of system doesn't correspond to dimension of subsystems", fixed = TRUE)
+})
+
+test_that("test log_sum_exp sign", {
+  # Test for nonnegative x.
+  xv <- Variable(nonneg = TRUE)
+  atom <- log_sum_exp(xv)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  # Test for nonpositive x.
+  xv <- Variable(nonpos = TRUE)
+  atom <- log_sum_exp(xv)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), UNKNOWN)
+})
+
+test_that("test flatten and vec", {
+  # Constant argument.
+  A <- 0:9
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(reshaped, byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped), byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = TRUE)
+  expr <- vec(reshaped, byrow = TRUE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped), byrow = TRUE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(reshaped, byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped))
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  # Variable argument.
+  x <- Variable(2, 5)
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(x, byrow = FALSE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A), byrow = FALSE)
+  result <- Problem(Minimize(0), list(expr == A))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = TRUE)
+  expr <- vec(x, byrow = TRUE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A), byrow = TRUE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(x)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A))
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+})
+
+test_that("test the TrInv atom", {
+  Tnum <- 5
+  # Solves the following SDP problem:
+  #           minimize    trace(inv(X))
+  #               s.t.    X is PSD
+  #                       trace(X) == 1
+  
+  # Create a symmetric matrix variable.
+  X <- Variable(Tnum, Tnum, symmetric = TRUE)
+  
+  # Define and solve the CVXR problem.
+  # X should be a PSD.
+  constraints <- list(X %>>% 0)
+  constraints <- c(constraints, list(matrix_trace(X) == 1))
+  prob <- Problem(Minimize(tr_inv(X)), constraints)
+  result <- solve(prob, verbose = TRUE)
+  
+  # Check result. The best value is T^2.
+  expect_equal(result$value, Tnum^2, tolerance = TOL)
+  X_actual <- value(X)
+  X_expect <- diag(Tnum) / Tnum
+  expect_equal(X_actual, X_expect, tolerance = 1e-4)
+  
+  # Second SDP problem, given a row full-rank matrix M:
+  #           minimize    trace(inv(M * X * M.T))
+  #               s.t.    X is PSD
+  #                       -1 <= X[i][j] <= 1 for all i,j
+  constraints <- list(X %>>% 0)
+  
+  # n should not be greater than T, because the input should be positive definite.
+  n <- 4
+  M <- matrix(rnorm(n*Tnum), nrow = n, ncol = Tnum)
+  constraints <- list(constraints, list(X >= -1, X <= 1))
+  prob <- Problem(Minimize(tr_inv(M %*% X %*% t(M))), constraints)
+  MM <- M %*% t(M)
+  naiveRes <- sum(eigen(MM, only.values = TRUE)$values^-1)
+  result <- solve(prob, verbose = TRUE)
+  
+  # The optimized result should be smaller than the naive result, where X of the naive result is I.
+  expect_true(result$value <- naiveRes)
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

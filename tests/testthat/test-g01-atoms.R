@@ -656,193 +656,207 @@ test_that("test the kronecker function", {
                "At least one argument to Kron must be constant.", fixed = TRUE)
 })
 
-# TODO: Go back to check/update partial_optimize tests (that are commented out).
+test_that("test DCP properties of partial optimize", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_equal(curvature(g), CONVEX)
 
-# test_that("test DCP properties of partial optimize", {
-#   # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
-#   dims <- 3
-#   x <- Variable(dims)
-#   t <- Variable(dims)
-#   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#   g <- partial_optimize(p2, list(t), list(x))
-#   expect_equal(curvature(g), CONVEX)
-#
-#   p2 <- Problem(Maximize(sum_entries(t)), list(-t <= x, x <= t))
-#   g <- partial_optimize(p2, list(t), list(x))
-#   expect_equal(curvature(g), CONCAVE)
-#
-#   p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
-#   g <- partial_optimize(p2, list(t), list(x))
-#   expect_false(is_convex(g))
-#   expect_false(is_concave(g))
-# })
-#
-# test_that("test the partial_optimize eval 1-norm", {
-#   # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
-#   dims <- 3
-#   x <- Variable(dims)
-#   t <- Variable(dims)
-#   xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
-#   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= xval, xval <= t))
-#   result1 <- solve(p1)
-#
-#   # Minimize the 1-norm via partial_optimize
-#   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, list(t), list(x))
-#   # p3 <- Problem(Minimize(g), list(x == xval))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, -result3$value)
-#
-#   # Try leaving out args
-#
-#   # Minimize the 1-norm via partial_optimize
-#   p2 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#   # g <- partial_optimize(p2, opt_vars = list(t))
-#   # p3 <- Problem(Minimize(g), list(x == xval))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-#
-#   # Minimize the 1-norm via partial_optimize
-#   # g <- partial_optimize(p2, dont_opt_vars = list(x))
-#   # p3 <- Problem(Minimize(g), list(x == xval))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-#
-#   # expect_error(partial_optimize(p2))
-#   # expect_error(partial_optimize(p2, list(), list(x)))
-# })
-#
-# test_that("test partial_optimize min 1-norm", {
-#   # Minimize the 1-norm in the usual way
-#   dims <- 3
-#   x <- Variable(dims)
-#   t <- Variable(dims)
-#   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#
-#   # Minimize the 1-norm via partial_optimize
-#   # g <- partial_optimize(p1, list(t), list(x))
-#   # p2 <- Problem(Minimize(g))
-#   # result2 <- solve(p2)
-#
-#   result1 <- solve(p1)
-#   # expect_equal(result1$value, result2$value)
-# })
-#
-# test_that("test partial_optimize simple problem", {
-#   x <- Variable(1)
-#   y <- Variable(1)
-#
-#   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
-#   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
-#   result1 <- solve(p1)
-#
-#   # Solve the two-stage problem via partial_optimize
-#   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
-#   # g <- partial_optimize(p2, list(y), list(x))
-#   # p3 <- Problem(Minimize(x+g), list(x >= 5))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-# })
-#
-# test_that("test partial_optimize special var", {
-#   x <- Bool(1)
-#   y <- Int(1)
-#
-#   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
-#   p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
-#   # result1 <- solve(p1)
-#
-#   # Solve the two-stage problem via partial_optimize
-#   p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
-#   # g <- partial_optimize(p2, list(y), list(x))
-#   # p3 <- Problem(Minimize(x+g), list(x >= 5))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-# })
-#
-# test_that("test partial_optimize special constr", {
-#   x <- Variable(1)
-#   y <- Variable(1)
-#
-#   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
-#   p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
-#   result1 <- solve(p1)
-#
-#   # Solve the two-stage problem via partial_optimize
-#   p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
-#   # g <- partial_optimize(p2, list(y), list(x))
-#   # p3 <- Problem(Minimize(x+g), list(x >= 5))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-# })
-#
-# test_that("test partial_optimize with parameters", {
-#   x <- Variable(1)
-#   y <- Variable(1)
-#   gamma <- Parameter()
-#
-#   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
-#   p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
-#   gamma@value <- 3
-#   # result1 <- solve(p1)
-#
-#   # Solve the two-stage problem via partial_optimize
-#   p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
-#   # g <- partial_optimize(p2, list(y), list(x))
-#   # p3 <- Problem(Minimize(x+g), list(x >= 5))
-#   # result3 <- solve(p3)
-#   # expect_equal(result1$value, result3$value)
-# })
-#
-# test_that("test partial_optimize numeric function", {
-#   x <- Variable(1)
-#   y <- Variable(1)
-#   xval <- 4
-#
-#   # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
-#   p1 <- Problem(Minimize(y), list(xval+y >= 3))
-#   result1 <- solve(p1)
-#
-#   # Solve the two-stage problem via partial_optimize
-#   constr <- list(y >= -100)
-#   p2 <- Problem(Minimize(y), c(x+y >= 3, constr))
-#   # g <- partial_optimize(p2, list(y), list(x))
-#   # x@value <- xval
-#   # y@value <- 42
-#   # const[1]@dual_variable@value <- 42
-#   # result <- g@value
-#   # expect_equal(result, result1$value)
-#   # expect_equal(y@value, 42)
-#   # expect_equal(constr[1]@dual_value, 42)
-#
-#   # No variables optimized over
-#   p2 <- Problem(Minimize(y), list(x+y >= 3))
-#   # g <- partial_optimize(p2, list(), list(x,y))
-#   # x@value <- xval
-#   # y@value <- 42
-#   # p2@constraints[1]@dual_variable@value <- 42
-#   # result <- g@value
-#   # expect_equal(result, y@value)
-#   # expect_equal(y@value, 42)
-#   # expect_equal(p2@constraints[1]@dual_value, 42)
-# })
-#
-# test_that("test partial_optimize stacked", {
-#   # Minimize the 1-norm in the usual way
-#   dims <- 3
-#   x <- Variable(dims)
-#   t <- Variable(dims)
-#   p1 <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
-#
-#   # Minimize the 1-norm via partial_optimize
-#   # g <- partial_optimize(p1, list(t), list(x))
-#   # g2 <- partial_optimize(Problem(Minimize(g)), list(x))
-#   # p2 <- Problem(Minimize(g2))
-#   # result2 <- solve(p2)
-#
-#   result1 <- solve(p1)
-#   # expect_equal(result1$value, result2$value)
-# })
+  p2 <- Problem(Maximize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_equal(curvature(g), CONCAVE)
+
+  p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_false(is_convex(g))
+  expect_false(is_concave(g))
+})
+
+test_that("test the partial_optimize eval 1-norm", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= xval, xval <= t))
+  result1 <- solve(p1, solver = "ECOS")
+
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+
+  # Minimize the 1-norm using maximize.
+  p2 <- Problem(Maximize(sum(-t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, opt_vars = list(t), solver = "ECOS")
+  p3 <- Problem(Maximize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, -result2$value, tolerance = TOL)
+  
+  # Try leaving out args
+
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, opt_vars = list(t), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p2, dont_opt_vars = list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value)
+
+  expect_error(partial_optimize(p2, solver = "ECOS"),
+               "partial_optimize called with neither opt_vars nor dont_opt_vars", fixed = TRUE)
+  
+  expect_error(partial_optimize(p2, list(), list(x), solver = "ECOS"), 
+               "If opt_vars and new_opt_vars are both specified, they must contain all variables in the problem", fixed = TRUE)
+})
+
+test_that("test partial_optimize min 1-norm", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p1, list(t), list(x), solver = "ECOS")
+  p2 <- Problem(Minimize(g))
+  result2 <- solve(p2, solver = "ECOS")
+
+  result1 <- solve(p1, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize simple problem", {
+  x <- Variable(1)
+  y <- Variable(1)
+
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "ECOS")
+
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize special var", {
+  if(length(INSTALLED_MI_SOLVERS) == 0) {
+    print("No mixed-integer solver is installed")
+    return()
+  }
+  
+  x <- Variable(boolean = TRUE)
+  y <- Variable(integer =  TRUE)
+
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "ECOS_BB")
+
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x))
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "ECOS_BB")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize special constr", {
+  x <- Variable(1)
+  y <- Variable(1)
+
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-9)
+
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-9)
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result3 <- solve(p3, solver = "SCS", eps = 1e-9)
+  expect_equal(result1$value, result2$value, tolerance = 1e-4)
+})
+
+test_that("test partial_optimize with parameters", {
+  x <- Variable(1)
+  y <- Variable(1)
+  gamma <- Parameter()
+
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
+  value(gamma) <- 3
+  # p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-6)
+
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-6)
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "SCS", eps = 1e-6)
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize numeric function", {
+  x <- Variable()
+  y <- Variable()
+  xval <- 4
+
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(y), list(xval+y >= 3))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-6)
+
+  # Solve the two-stage problem via partial_optimize
+  constr <- list(y >= -100)
+  p2 <- Problem(Minimize(y), c(x+y >= 3, constr))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-6)
+  value(x) <- xval
+  value(y) <- 42
+  value(constr[[1]]@dual_variables[[1]]) <- 42
+  res <- value(g)
+  expect_equal(res, result1$value, tolerance = TOL)
+  expect_equal(value(y), 42, tolerance = TOL)
+  expect_equal(dual_value(constr[[1]]), 42, tolerance = TOL)
+
+  # No variables optimized over
+  p2 <- Problem(Minimize(y), list(x+y >= 3))
+  g <- partial_optimize(p2, list(), list(x,y), solver = "SCS", eps = 1e-6)
+  value(x) <- xval
+  value(y) <- 42
+  value(p2@constraints[[1]]@dual_variables[[1]]) <- 42
+  res <- value(g)
+  expect_equal(res, value(y), tolerance = TOL)
+  expect_equal(value(y), 42, tolerance = TOL)
+  expect_equal(dual_value(p2@constraints[[1]]), 42, tolerance = TOL)
+})
+
+test_that("test partial_optimize stacked", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p1, list(t), list(x), solver = "ECOS")
+  g2 <- partial_optimize(Problem(Minimize(g)), list(x), solver = "ECOS")
+  p2 <- Problem(Minimize(g2))
+  result2 <- solve(p2, solver = "ECOS")
+
+  result1 <- solve(p1, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
 
 test_that("test the NonNegative Variable class", {
   x <- Variable(nonneg = TRUE)
@@ -859,18 +873,6 @@ test_that("test mixed_norm", {
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 5, tolerance = TOL)
 })
-
-# test_that("test whether changing an array constant breaks DCP", {
-#   c <- matrix(c(1, 2), nrow = 2, ncol = 1)
-#   x@value <- c(1, 1)
-#   expr <- t(c) %*% x^2
-#   expect_equal(value(expr), 3, tolerance = TOL)
-#   expect_true(is_dcp(expr))
-#
-#   c[1] <- -1
-#   expect_equal(value(expr), 3, tolerance = TOL)
-#   expect_true(is_dcp(expr))
-# })
 
 test_that("test that norm1 and normInf match definition for matrices", {
   A <- rbind(c(1,2), c(3,4))
@@ -889,17 +891,21 @@ test_that("test that norm1 and normInf match definition for matrices", {
   expect_equal(result$value, value(norm_inf(A)), tolerance = 1e-3)
 })
 
-#DK: uncomment once Indicator in transforms is uncommented
-# test_that("test indicator", {
-#   x <- Variable()
-#   constraints <- list(0 <= x, x <= 1)
-#   expr <- Indicator(constraints)
-#   x@value <- .5
-#   expect_equal(value(expr), 0.0)
-#   x@value <- 2
-#   expect_equal(value(expr), Inf)
-#
-# })
+test_that("test indicator", {
+  x <- Variable()
+  constraints <- list(0 <= x, x <= 1)
+  expr <- Indicator(constraints)
+  
+  value(x) <- 0.5
+  # constraints <- list(0 <= x, x <= 1)
+  # expr <- Indicator(constraints)
+  expect_equal(value(expr), 0.0)
+
+  value(x) <- 2
+  # constraints <- list(0 <= x, x <= 1)
+  # expr <- Indicator(constraints)
+  expect_equal(value(expr), Inf)
+})
 
 test_that("test log_det", {
   # Test malformed input.

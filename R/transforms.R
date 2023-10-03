@@ -14,28 +14,33 @@
 #   callNextMethod(.Object, ...)
 # })
 #
+# setMethod("is_constant", "Indicator", function(object) {
+#   all_args <- do.call("+", lapply(object@args, function(c) { c@args }))
+#   all(sapply(all_args, is_constant))
+# })
+#
 # setMethod("is_convex", "Indicator", function(object) { TRUE })
 # setMethod("is_concave", "Indicator", function(object) { FALSE })
+# setMethod("is_log_log_convex", "Indicator", function(object) { FALSE })
+# setMethod("is_log_log_concave", "Indicator", function(object) { FALSE })
 # setMethod("is_nonneg", "Indicator", function(object) { TRUE })
 # setMethod("is_nonpos", "Indicator", function(object) { FALSE })
+# setMethod("is_imag", "Indicator", function(object) { FALSE })
+# setMethod("is_complex", "Indicator", function(object) { FALSE })
 # setMethod("get_data", "Indicator", function(object) { list(object@err_tol) })
-# setMethod("size", "Indicator", function(object) { c(1,1) })
+# setMethod("dim", "Indicator", function(x) { c(1,1) })
 # setMethod("name", "Indicator", function(object) { cat("Indicator(", object@args, ")") })
 # setMethod("domain", "Indicator", function(object) { object@args })
+#
 # setMethod("value", "Indicator", function(object) {
-#   vals <- sapply(object@args, function(cons) { value(cons) })
-#   if(all(!is.na(vals)))
-#     return(0)
+#   vals <- sapply(object@args, function(cons) { constr_value(cons, tolerance = object@err_tol) })
+#   if(all(vals))
+#     return(0.0)
 #   else
 #     return(Inf)
 # })
+#
 # setMethod("grad", "Indicator", function(object) { stop("Unimplemented") })
-# setMethod("canonicalize", "Indicator", function(object) {
-#   constraints <- list()
-#   for(cons in object@args)
-#     constraints <- c(constraints, list(canonical_form(cons)[[2]]))
-#   list(create_const(0, c(1,1)), constraints)
-# })
 
 #'
 #' Affine Approximation to an Expression
@@ -64,7 +69,7 @@ linearize <- function(expr) {
       stop("Cannot linearize non-affine expression with missing variable values.")
     grad_map <- grad(expr)
     for(var in variables(expr)) {
-      grad_var <- grad_map[[as.character(var@id)]]
+      grad_var <- grad_map[[as.character(id(var))]]
       if(any(is.na(grad_var)))
         return(NA_real_)
       else if(is_matrix(var)) {

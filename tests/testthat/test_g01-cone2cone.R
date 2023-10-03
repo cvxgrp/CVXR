@@ -187,5 +187,30 @@ test_that("test pcp 2", {
   verify_dual_values(sth, result, tolerance = 1e-3)
 })
 
-# TODO: Add rest of cone2cone tests like TestSlacks.
+###############
+#             #
+# Test Slacks #
+#             #
+###############
+
+AFF_LP_CASES <- list(c(NONNEG), c())
+AFF_SOCP_CASES <- list(c(NONNEG, SOC), c(NONNEG), c(SOC), c())
+AFF_EXP_CASES <- list(c(NONNEG, EXP), c(NONNEG), c(EXP), c())
+AFF_PCP_CASES <- list(c(NONNEG), c(POW3D), c())
+AFF_MIXED_CASES <- list(c(NONNEG), c())
+
+TestSlacks.simulate_chain <- function(in_prob, affine, ...) {
+  # Get a ParamConeProg object.
+  reductions <- list(Dcp2Cone(), CvxAttr2Constr(), ConeMatrixStuffing())
+  chain <- Chain(NULL, reductions)
+  tmp <- perform(chain, in_prob)
+  cone_prog <- tmp[[1]]
+  inv_prob2cone <- tmp[[2]]
+  
+  # Apply the Slacks reduction, reconstruct a high-level problem, solve the problem, invert the reduction.
+  cone_prog <- format_constraints(ConicSolver(), cone_prog, exp_cone_order = c(0, 1, 2))
+  # TODO: Finish this.
+}
+
+# TODO: Add rest of cone2cone tests and classes like TestSlacks, TestPowND, etc.
 

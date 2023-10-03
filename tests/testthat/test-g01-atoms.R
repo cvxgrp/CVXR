@@ -1199,26 +1199,3 @@ test_that("test the TrInv atom", {
   # The optimized result should be smaller than the naive result, where X of the naive result is I.
   expect_true(result$value <- naiveRes)
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

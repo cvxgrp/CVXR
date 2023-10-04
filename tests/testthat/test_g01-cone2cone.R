@@ -631,6 +631,3 @@ sdp_ipm_installed <- function() {
   viable <- intersect(c("CVXOPT", "MOSEK", "COPT"), installed_solvers())
   return(length(viable) > 0)
 }
-
-# TODO: Add TestOpRelConeQuad functions from cone2cone unit tests.
-

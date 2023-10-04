@@ -14,12 +14,12 @@ test_that("test the Variable class", {
   expect_true(is_complex(z))
   expect_true(is_imag(z))
 
-  expect_error(value(x) <- c(1i, 0))
+  expect_error(value(x) <- c(1i, 0), "Variable value must be real", fixed = TRUE)
 
   value(y) <- c(1, 0)
   value(y) <- c(1i, 0)
 
-  expect_error(value(z) <- c(1, 0))
+  expect_error(value(z) <- c(1, 0), "Variable value must be imaginary", fixed = TRUE)
 })
 
 test_that("test the Parameter class", {
@@ -35,12 +35,12 @@ test_that("test the Parameter class", {
   expect_true(is_complex(z))
   expect_true(is_imag(z))
 
-  expect_error(value(x) <- c(1i, 0))
+  expect_error(value(x) <- c(1i, 0), "Parameter value must be real", fixed = TRUE)
 
   value(y) <- c(1, 0)
   value(y) <- c(1i, 0)
 
-  expect_error(value(z) <- c(1, 0))
+  expect_error(value(z) <- c(1, 0), "Parameter value must be imaginary", fixed = TRUE)
 })
 
 test_that("test the Constant class", {
@@ -60,8 +60,8 @@ test_that("test the Constant class", {
 test_that("test objectives", {
   skip_on_cran()
   x <- Variable(complex = TRUE)
-  expect_error(Minimize(x))
-  expect_error(Maximize(x))
+  expect_error(Minimize(x), "The Minimize objective must be real valued", fixed = TRUE)
+  expect_error(Maximize(x), "The Maximize objective must be real valued", fixed = TRUE)
 })
 
 test_that("test basic arithmetic expressions", {
@@ -95,7 +95,7 @@ test_that("test basic arithmetic expressions", {
   expect_false(is_imag(expr))
 
   A <- matrix(1, nrow = 2, ncol = 2)
-  expr <- A %*% y %*% A
+  expr <- (A %*% A) %*% y
   expect_true(is_complex(expr))
   expect_true(is_imag(expr))
 })

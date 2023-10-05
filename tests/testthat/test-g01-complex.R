@@ -713,14 +713,3 @@ test_that("test illegal complex args", {
   expect_error(NonNeg(x))
   expect_error(NonPos(x))
 })
-
-
-
-
-
-
-
-
-
-
-

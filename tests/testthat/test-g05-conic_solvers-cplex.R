@@ -121,7 +121,7 @@ test_that("test cplex lp 2", {
 test_that("test cplex lp 3", {
   # CPLEX initially produces an INFEASIBLE_OR_UNBOUNDED status.
   sth <- lp_3()
-  result <- solve(prob, solver = "CPLEX")
+  expect_warning(result <- solve(prob, solver = "CPLEX"))
   expect_equal(result$status, INFEASIBLE_OR_UNBOUNDED)
   # Determine the precise status with reoptimize = TRUE.
   StandardTestLPs.test_lp_3(solver = "CPLEX", reoptimize = TRUE)

@@ -49,7 +49,7 @@ test_that("test the EqConstraint class", {
   expect_error(x == y)
 })
 
-test_that("test the LeqConstraint class", {
+test_that("test the IneqConstraint class", {
   skip_on_cran()
   constr <- x <= z
   expect_equal(name(constr), "x <= z")
@@ -78,7 +78,8 @@ test_that("test the LeqConstraint class", {
   expect_true(constr_value(constr))
   expect_equal(violation(constr), matrix(c(0,0)), tolerance = TOL)
   expect_equal(residual(constr), matrix(c(0,0)), tolerance = TOL)
-
+  
+  # Incompatible dimensions.
   expect_error(x <= y)
 })
 
@@ -132,6 +133,8 @@ test_that("test the >= operator", {
   constr <- z >= x
   expect_equal(name(constr), "x <= z")
   expect_equal(dim(constr), c(2,1))
+  
+  # Incompatible dimensions.
   expect_error(y >= x)
 })
 
@@ -141,4 +144,58 @@ test_that("test the SOC class", {
   scalar_exp <- a + b
   constr <- SOC(scalar_exp, exp)
   expect_equal(size(constr), 3)
+  
+  # Test invalid dimensions.
+  expect_error(SOC(Variable(1), Variable(1, 4), axis = 2), 
+               "Argument dimensions (1,1) and (1,4), with axis = 2, are incompatible", fixed = TRUE)
+  
+  # Test residual.
+  # 1D.
+  n <- 5
+  x0 <- 0:(n-1)
+  t0 <- 2
+  xv <- Variable(n, value = x0)
+  tv <- Variable(value = t0)
+  resid <- residual(SOC(tv, xv))
+  expect_equal(ndim(resid), 0)
+  dist <- sum_squares(xv - x0) + square(tv - t0)
+  prob <- Problem(Minimize(dist), list(SOC(tv, xv)))
+  result <- solve(prob)
+  expect_equal(sqrt(result$getValue(dist)), resid, tolerance = TOL)
+  
+  # TODO.
+})
+
+test_that("test the NonPosConstraint for correctness", {
+  n <- 3
+  xv <- Variable(n)
+  cc <- 0:(n-1)
+  prob <- Problem(Maximize(sum(xv)), list(NonPosConstraint(xv - cc)))
+  
+  # Solve through cone program path.
+  result1 <- solve(prob, solver = "ECOS")
+  expect_equal(result1$getValue(xv), cc, tolerance = TOL)
+  
+  # Solve through QP path.
+  result2 <- solve(prob, solver = "OSQP")
+  expect_equal(result2$getValue(xv), cc, tolerance = TOL)
+})
+
+test_that("test dual variables work for NonPosConstraint", {
+  n <- 3
+  xv <- Variable(n)
+  cc <- 0:(n-1)
+  prob <- Problem(Maximize(sum(xv)), list((xv - cc) <= 0))
+  result <- solve(prob, solver = "ECOS")
+  dual <- result$getDualValue(prob@constraints[[1]])
+  
+  prob <- Problem(Maximize(sum(xv)), list(NonPosConstraint(xv - cc)))
+  
+  # Solve through cone program path.
+  result1 <- solve(prob, solver = "ECOS")
+  expect_equal(result1$getDualValue(prob@constraints[[1]]), dual, tolerance = TOL)
+  
+  # Solve through QP path.
+  result2 <- solve(prob, solver = "OSQP")
+  expect_equal(result2$getDualValue(prob@constraints[[1]]), dual, tolerance = TOL)
 })

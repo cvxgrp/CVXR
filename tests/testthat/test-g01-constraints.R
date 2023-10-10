@@ -163,7 +163,116 @@ test_that("test the SOC class", {
   result <- solve(prob)
   expect_equal(sqrt(result$getValue(dist)), resid, tolerance = TOL)
   
-  # TODO.
+  # 2D, axis = 1.
+  n <- 5
+  k <- 3
+  x0 <- matrix(0:(n*k-1), nrow = n, ncol = k, byrow = TRUE)
+  t0 <- matrix(c(1,2,3))
+  xv <- Variable(n, k, value = x0)
+  tv <- Variable(k, value = t0)
+  resid <- residual(SOC(tv, xv, axis = 1))
+  expect_equal(dim(resid), c(k,1))
+  for(i in 1:k) {
+    dist <- sum_squares(xv[i,] - x0[i,]) + sum_squares(tv[i] - t0[i])
+    prob <- Problem(Minimize(dist), list(SOC(tv[i], xv[i,])))
+    result <- solve(prob)
+    expect_equal(sqrt(result$getValue(dist)), resid[i], tolerance = TOL)
+  }
+  
+  # 2D, axis = 2.
+  n <- 5
+  k <- 3
+  x0 <- matrix(0:(n*k-1), nrow = n, ncol = k, byrow = TRUE)
+  t0 <- matrix(c(1,2,3))
+  xv <- Variable(n, k, value = x0)
+  tv <- Variable(k, value = t0)
+  resid <- residual(SOC(tv, xv, axis = 2))
+  expect_equal(dim(resid), c(k,1))
+  for(i in 1:k) {
+    dist <- sum_squares(xv[,i] - x0[,i]) + sum_squares(tv[i] - t0[i])
+    prob <- Problem(Minimize(dist), list(SOC(tv[i], xv[,i])))
+    result <- solve(prob)
+    expect_equal(sqrt(result$getValue(dist)), resid[i], tolerance = TOL)
+  }
+  
+  # Test all three cases:
+  # 1. t >= ||x||
+  # 2. -||x|| < t < ||x||
+  # 3. t <= -||x||
+  k <- 3
+  n <- 3
+  x0 <- matrix(1, nrow = k, ncol = n)
+  norms <- norm(x0, "2")
+  t0 <- matrix(c(2, 0.5, -2))*norms
+  xv <- Variable(k, n, value = x0)
+  tv <- Variable(k, value = t0)
+  resid <- residual(SOC(tv, xv, axis = 1))
+  expect_equal(dim(resid), c(k,1))
+  for(i in 1:k) {
+    dist <- sum_squares(xv[i,] - x0[i,]) + sum_squares(tv[i] - t0[i])
+    prob <- Problem(Minimize(dist), list(SOC(t[i], x[i,])))
+    result <- solve(prob)
+    expect_equal(sqrt(result$getValue(dist)), resid[i], tolerance = 1e-4)
+  }
+})
+
+test_that("test Pow3D constraint", {
+  n <- 3
+  set.seed(0)
+  alpha <- 0.275
+  xv <- Variable(n)
+  yv <- Variable(n)
+  zv <- Variable(n)
+  con <- PowCone3D(xv, yv, zv, alpha)
+  
+  # Check violation against feasible values.
+  x0 <- 0.1 + runif(n)
+  y0 <- 0.1 + runif(n)
+  z0 <- x0^alpha + y0^(1 - alpha)
+  z0[2] <- z0[2]*-1
+  
+  value(xv) <- x0
+  value(yv) <- y0
+  value(zv) <- z0
+  # con <- PowCone3D(xv, yv, zv, alpha)
+  viol <- residual(con)
+  expect_gte(viol, 0.99*abs(x1[1]))
+  
+  # Check invalid constraint data.
+  expect_error(con <- PowCone3D(xv, yv, zv, 1.001))
+  expect_error(con <- PowCone3D(xv, yv, zv, -0.00001))
+})
+
+test_that("test PowND constraint", {
+  n <- 4
+  Wv <- Variable(n)
+  zv <- Variable()
+  set.seed(0)
+  alpha <- 0.5 + runif(n)
+  alpha <- alpha/sum(alpha)
+  
+  expect_error(con <- PowConeND(Wv, zv, alpha + 0.01))   # Entries don't sum to one.
+  expect_error(con <- PowConeND(Wv, zv, matrix(alpha, nrow = n, ncol = 1, byrow = TRUE)))
+  expect_error(con <- PowConeND(reshape_expr(Wv, c(n,1)), zv, matrix(alpha, nrow = n, ncol = 1, byrow = TRUE), axis = 1))
+
+  # Compute a violation.
+  con <- PowConeND(Wv, zv, alpha)
+  W0 <- 0.01 + runif(n)
+  z0 <- prod(W0^alpha) + 0.05
+  value(W) <- W0
+  value(z) <- z0
+  # con <- PowConeND(Wv, zv, alpha)
+  viol <- violation(con)
+  expect_gte(viol, 0.01)
+  expect_lte(viol, 0.06)
+})
+
+test_that("test chained constraints", {
+  # Tests that chaining constraints raises an error.
+  error_str <- "Cannot evaluate the truth value of a constraint or chain constraints, e.g., 1 >= x >= 0"
+  expect_error(z <= x <= 1, error_str, fixed = TRUE)
+  expect_error(x == z == 1, error_str, fixed = TRUE)
+  expect_error(as.logical(z <= x), error_str, fixed = TRUE)
 })
 
 test_that("test the NonPosConstraint for correctness", {

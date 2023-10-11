@@ -666,37 +666,24 @@ test_that("test one minus pos", {
 test_that("test pf matrix completion", {
   X <- Variable(3, 3, pos = TRUE)
   obj <- Minimize(pf_eigenvalue(X))
-  known_indices <- list(c(1,1), c(1,3), c(2,2), c(3,1), c(3,2))
-  known_values <- c(1.0, 1.9, 0.8, 3.2, 5.9)
-  constr <- list()
-  for(i in seq_along(known_indices)) {
-    idx_pair <- known_indices[[i]]
-    constr <- c(constr, X[idx_pair[1], idx_pair[2]] == known_values[i])
-  }
-  constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  known_indices <- cbind(c(1,1,2,3,3), c(1,3,2,1,2))
+  constr <- list(X[known_indices] == c(1.0, 1.9, 0.8, 3.2, 5.9),
+                 X[1,2] * X[2,1] * X[2,3] * X[3,3] == 1.0)
   problem <- Problem(obj, constr)
   # Smoke test.
   result <- solve(problem, SOLVER, gp = TRUE)
   optimal_value <- result$value
   
   param <- Parameter(length(known_values), pos = TRUE, value = 0.5*known_values)
-  constr <- list()
-  for(i in seq_along(known_indices)) {
-    idx_pair <- known_indices[[i]]
-    constr <- c(constr, X[idx_pair[1], idx_pair[2]] == param[i])
-  }
-  constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  constr <- list(X[known_indices] == param,
+                 X[1,2] * X[2,1] * X[2,3] * X[3,3] == 1.0)
   problem <- Problem(obj, constr)
   result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
   
   # Now change param to point to known_value, and check we recover the correct optimal value.
   value(param) <- known_values
-  # constr <- list()
-  # for(i in seq_along(known_indices)) {
-  #   idx_pair <- known_indices[[i]]
-  #   constr <- c(constr, X[idx_pair[1], idx_pair[2]] == param[i])
-  # }
-  # constr <- c(constr, X[1,2]*X[2,1]*X[2,3]*X[3,3] == 1.0)
+  # constr <- list(X[known_indices] == param,
+  #                X[1,2] * X[2,1] * X[2,3] * X[3,3] == 1.0)
   # problem <- Problem(obj, constr)
   result <- solve(problem, SOLVER, gp = TRUE, enforce_dpp = TRUE)
   expect_equal(result$value, optimal_value, tolerance = TOL)

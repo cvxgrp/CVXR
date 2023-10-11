@@ -253,92 +253,101 @@ test_that("test min_entries", {
   expect_equal(result$getValue(y), 4.0, tolerance = TOL)
 })
 
-# TODO: Enable test once sum_largest is implemented.
-# test_that("test sum_largest", {
-#   x <- Variable(4, pos = TRUE)
-#   obj <- Minimize(sum_largest(x, 3))
-#   constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
-#   dgp <- Problem(obj, constr)
-#   dgp2dcp <- Dgp2Dcp(dgp)
-#   tmp <- reduce(dgp2dcp)
-#   dgp2dcp <- tmp[[1]]
-#   dcp <- tmp[[2]]
-#   result <- solve(dcp)
-#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, result$solution))
-#   opt <- 6.0
-#   expect_equal(dgp@value, opt, tolerance = TOL)
-#   expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
-#   dgp <- clear_solution(dgp)
-#   result <- solve(dgp, gp = TRUE)
-#   expect_equal(result$value, opt, tolerance = TOL)
-#   expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
-#
-#   # An unbounded problem.
-#   x <- Variable(4, pos = TRUE)
-#   y <- Variable(pos = TRUE)
-#   obj <- Minimize(sum_largest(x, 3)*y)
-#   constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
-#   dgp <- Problem(obj, constr)
-#   dgp2dcp <- Dgp2Dcp(dgp)
-#   tmp <- reduce(dgp2dcp)
-#   dgp2dcp <- tmp[[1]]
-#   dcp <- tmp[[2]]
-#   opt <- solve(dcp)
-#   expect_equal(dcp@value, -Inf)
-#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, opt$solution))
-#   expect_equal(dgp@value, 0.0, tolerance = TOL)
-#   expect_equal(dgp@status, "unbounded")
-#   dgp <- clear_solution(dgp)
-#   result <- solve(dgp, gp = TRUE)
-#   expect_equal(result$value, 0.0, tolerance = TOL)
-#   expect_equal(result$status, "unbounded")
-#
-#   # Another unbounded problem.
-#   x <- Variable(2, pos = TRUE)
-#   obj <- Minimize(sum_largest(x, 1))
-#   dgp <- Problem(obj)
-#   dgp2dcp <- Dgp2Dcp(dgp)
-#   tmp <- reduce(dgp2dcp)
-#   dgp2dcp <- tmp[[1]]
-#   dcp <- tmp[[2]]
-#   opt <- solve(dcp)
-#   expect_equal(result$value, -Inf)
-#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, opt$solution))
-#   expect_equal(dgp@value, 0.0, tolerance = TOL)
-#   expect_equal(dgp@status, "unbounded")
-#   dgp <- clear_solution(dgp)
-#   result <- solve(dgp, gp = TRUE)
-#   expect_equal(dgp@value, 0.0, tolerance = TOL)
-#   expect_equal(dgp@status, "unbounded")
-#
-#   # Composition with posynomials.
-#   x <- Variable(4, pos = TRUE)
-#   obj <- Minimize(sum_largest(hstack(list(3*x[1]^(0.5) * x[2]^(0.5), x[1]*x[2] + 0.5*x[2]*x[4]^3, x[3])), 2))
-#   constr <- list(x[1]*x[2] >= 16)
-#   dgp <- Problem(obj, constr)
-#   dgp2dcp <- Dgp2Dcp(dgp)
-#   dcp <- reduce(dgp2dcp)
-#   result <- solve(dcp)
-#   dgp <- unpack_problem(dgp, retrieve(dgp2dcp, result$solution))
-#
-#   # opt = 3 * sqrt(4) * sqrt(4) + (4 * 4 + 0.5 * 4 * epsilon) = 28
-#   opt <- 28.0
-#   expect_equal(dgp@value, opt, tolerance = 1e-2)
-#   expect_equal(value(x[1]*x[2]), 16.0, tolerance = 1e-2)
-#   expect_equal(value(x[4]), 0.0, tolerance = 1e-2)
-#   dgp <- clear_solution(dgp)
-#   result <- solve(dgp, gp = TRUE)
-#   expect_equal(result$value, opt, tolerance = 1e-2)
-#   expect_equal(value(x[1]*x[2]), 16.0, tolerance = 1e-2)
-#   expect_equal(value(x[4]), 0.0, tolerance = 1e-2)
-# })
+test_that("test sum_largest", {
+  print("Enable test once sum_largest is implemented")
+  return()
+  
+  skip_on_cran()
+  x <- Variable(4, pos = TRUE)
+  obj <- Minimize(sum_largest(x, 3))
+  constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
+  dgp <- Problem(obj, constr)
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  result <- solve(dcp, solver = SOLVER)
+  solution <- form_solution(dcp, result)
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
+  opt <- 6.0
+  expect_equal(dgp_unpack$value, opt, tolerance = TOL)
+  expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
+  # dgp <- clear_solution(dgp)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, opt, tolerance = TOL)
+  expect_equal(value(x[1]*x[2]*x[3]*x[4]), 16, tolerance = 1e-2)
+
+  # An unbounded problem.
+  x <- Variable(4, pos = TRUE)
+  y <- Variable(pos = TRUE)
+  obj <- Minimize(sum_largest(x, 3)*y)
+  constr <- list(x[1]*x[2]*x[3]*x[4] >= 16)
+  dgp <- Problem(obj, constr)
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  opt <- solve(dcp, solver = SOLVER)
+  expect_equal(opt$value, -Inf)
+  solution <- form_solution(dcp, opt)
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
+  expect_equal(dgp_unpack$value, 0.0, tolerance = TOL)
+  expect_equal(dgp_unpack$status, "unbounded")
+  # dgp <- clear_solution(dgp)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 0.0, tolerance = TOL)
+  expect_equal(result$status, "unbounded")
+
+  # Another unbounded problem.
+  x <- Variable(2, pos = TRUE)
+  obj <- Minimize(sum_largest(x, 1))
+  dgp <- Problem(obj, list())
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  opt <- solve(dcp, solver = SOLVER)
+  expect_equal(opt$value, -Inf)
+  solution <- form_solution(dcp, opt)
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
+  expect_equal(dgp_unpack$value, 0.0, tolerance = TOL)
+  expect_equal(dgp_unpack$status, "unbounded")
+  # dgp <- clear_solution(dgp)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 0.0, tolerance = TOL)
+  expect_equal(result$status, "unbounded")
+
+  # Composition with posynomials.
+  x <- Variable(4, pos = TRUE)
+  obj <- Minimize(sum_largest(hstack(list(3*x[1]^(0.5) * x[2]^(0.5), x[1]*x[2] + 0.5*x[2]*x[4]^3, x[3])), 2))
+  constr <- list(x[1]*x[2] >= 16)
+  dgp <- Problem(obj, constr)
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  result <- solve(dcp, solver = SOLVER)
+  solution <- form_solution(dcp, result)
+  dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
+
+  # opt = 3 * sqrt(4) * sqrt(4) + (4 * 4 + 0.5 * 4 * epsilon) = 28
+  opt <- 28.0
+  expect_equal(dgp_unpack$value, opt, tolerance = 1e-2)
+  expect_equal(dgp_unpack$getValue(x[1]*x[2]), 16.0, tolerance = 1e-2)
+  expect_equal(dgp_unpack$getValue(x[4]), 0.0, tolerance = 1e-2)
+  # dgp <- clear_solution(dgp)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, opt, tolerance = 1e-2)
+  expect_equal(result$getValue(x[1]*x[2]), 16.0, tolerance = 1e-2)
+  expect_equal(result$getValue(x[4]), 0.0, tolerance = 1e-2)
+})
 
 test_that("test div", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   p <- Problem(Minimize(x*y), list(y/3 <= x, y >= 1))
-  result <- solve(p, gp = TRUE)
+  result <- solve(p, solver = SOLVEr, gp = TRUE)
   expect_equal(result$value, 1.0/3.0, tolerance = TOL)
   expect_equal(result$getValue(y), 1.0, tolerance = TOL)
   expect_equal(result$getValue(x), 1.0/3.0, tolerance = TOL)
@@ -349,28 +358,28 @@ test_that("test geo_mean", {
   x <- Variable(3, pos = TRUE)
   p <- c(1, 2, 0.5)
   expr <- geo_mean(x, p)
-  dgp <- Problem(Minimize(expr))
+  dgp <- Problem(Minimize(expr), list())
   dgp2dcp <- Dgp2Dcp(dgp)
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  result <- solve(dcp)
+  result <- solve(dcp, solver = SOLVER)
   expect_equal(result$value, -Inf)
 
   solution <- form_solution(dcp, result)
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
-  result <- solve(dgp, gp = TRUE)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(result$value, 0.0)
   expect_equal(result$status, "unbounded")
 })
 
 test_that("test solving non-dgp problem raises error", {
   skip_on_cran()
-  problem <- Problem(Minimize(-1.0*Variable()))
-  expect_error(solve(problem, gp = TRUE))
-  result <- solve(problem)
+  problem <- Problem(Minimize(-1.0*Variable()), list())
+  expect_error(solve(problem, solver = SOLVER, gp = TRUE), "However, the problem does not follow DCP rules")
+  result <- solve(problem, solver = SOLVER)
   expect_equal(result$status, "unbounded")
   expect_equal(result$value, -Inf)
 })
@@ -378,10 +387,20 @@ test_that("test solving non-dgp problem raises error", {
 test_that("test solving non-dcp problem raises error", {
   skip_on_cran()
   problem <- Problem(Minimize(Variable(pos = TRUE) * Variable(pos = TRUE)))
-  expect_error(solve(problem))
-  result <- solve(problem, gp = TRUE)
-  expect_equal(result$status, "unbounded", tolerance = TOL)
+  expect_error(solve(problem, solver = SOLVER, gp = TRUE), "However, the problem does not follow DGP rules")
+  result <- solve(problem, solver = SOLVER)
+  expect_equal(result$status, "unbounded")
   expect_equal(result$value, 0.0, tolerance = TOL)
+})
+
+test_that("test solving non-dcp problem raises detailed error", {
+  x <- Variable(3)
+  problem <- Problem(Minimize(sum(x) - sum_squares(x)))
+  expect_error(solve(problem, solver = SOLVER), "The objective is not DCP")
+  
+  x <- Variable(name = "x")
+  problem <- Problem(Minimize(x), list(x*x <= 5))
+  expect_error(solve(problem, solver = SOLVER), "The following constraints are not DCP")
 })
 
 test_that("test add_canon", {
@@ -413,7 +432,7 @@ test_that("test add_canon", {
 test_that("test matmul_canon", {
   skip_on_cran()
   X <- Constant(rbind(1:3, 4:6))
-  Y <- Constant(matrix(1:3, nrow = 3))
+  Y <- Constant(matrix(1:3, ncol = 1))
   Z <- X %*% Y
   canon <- Dgp2Dcp.mulexpression_canon(Z, Z@args)
   canon_matrix <- canon[[1]]
@@ -445,7 +464,7 @@ test_that("test one_minus_pos", {
   obj <- Maximize(x)
   constr <- list(one_minus_pos(x) >= 0.4)
   problem <- Problem(obj, constr)
-  result <- solve(problem, gp = TRUE)
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
   expect_equal(result$value, 0.6, tolerance = TOL)
   expect_equal(result$getValue(x), 0.6, tolerance = TOL)
 })
@@ -454,21 +473,24 @@ test_that("test qp solver not allowed", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   problem <- Problem(Minimize(x))
-  expect_error(solve(problem, solver = "OSQP", gp = TRUE))
+  expect_error(solve(problem, solver = "OSQP", gp = TRUE), 
+               "When gp = TRUE, solver must be a conic solver (received 'OSQP'); try calling solve() with solver = 'ECOS'", fixed = TRUE)
 })
 
-# TODO: Enable test once sum_largest is implemented.
-# test_that("test paper example sum_largest", {
-#   x <- Variable(4, pos = TRUE)
-#   x1 <- x[1]
-#   x2 <- x[2]
-#   x3 <- x[3]
-#   x4 <- x[4]
-#   obj <- Minimize(sum_largest(hstack(3*x1^(0.5) * x2^(0.5), x1*x2 + 0.5*x2*x4^3, x3), 2))
-#   constr <- list(x1*x2*x3 >= 16)
-#   p <- Problem(obj, constr)
-#   expect_silent(solve(p, gp = TRUE))   # Smoke test.
-# })
+test_that("test paper example sum_largest", {
+  print("Enable test once sum_largest is implemented")
+  return()
+  
+  x <- Variable(4, pos = TRUE)
+  x1 <- x[1]
+  x2 <- x[2]
+  x3 <- x[3]
+  x4 <- x[4]
+  obj <- Minimize(sum_largest(hstack(3*x1^(0.5) * x2^(0.5), x1*x2 + 0.5*x2*x4^3, x3), 2))
+  constr <- list(x1*x2*x3 >= 16)
+  p <- Problem(obj, constr)
+  expect_silent(solve(p, solver = SOLVER, gp = TRUE))   # Smoke test.
+})
 
 test_that("test paper example one_minus_pos", {
   skip_on_cran()
@@ -477,16 +499,19 @@ test_that("test paper example one_minus_pos", {
   obj <- Minimize(x*y)
   constr <- list((y * one_minus_pos(x/y))^2 >= 1, x >= y/3)
   problem <- Problem(obj, constr)
-  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
+  expect_silent(solve(problem, solver = SOLVER, gp = TRUE))   # Smoke test.
 })
 
 test_that("test paper example eye_minus_inv", {
   skip_on_cran()
-  X <- Variable(2,2, pos = TRUE)
+  X <- Variable(2, 2, pos = TRUE)
   obj <- Minimize(matrix_trace(eye_minus_inv(X)))
-  constr <- list(geo_mean(diag(X)) == 0.1)
+  constr <- list(geo_mean(diag(X)) == 0.1,
+                 geo_mean(hstack(X[1,2], X[2,1])) == 0.1)
   problem <- Problem(obj, constr)
-  expect_silent(solve(problem, gp = TRUE, solver = "SCS"))   # Smoke test.
+  result <- solve(problem, solver = "ECOS", gp = TRUE)
+  expect_equal(result$getValue(X), 0.1*matrix(1, nrow = 2, ncol = 2), tolerance = 1e-3)
+  expect_equal(result$value, 2.25, tolerance = TOL)
 })
 
 test_that("test paper example exp_log", {
@@ -496,12 +521,12 @@ test_that("test paper example exp_log", {
   obj <- Minimize(x*y)
   constr <- list(exp(y/x) <= log(y))
   problem <- Problem(obj, constr)
-  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
+  expect_silent(solve(problem, solver = SOLVER, gp = TRUE))   # Smoke test.
 })
 
 test_that("test pf matrix completion", {
   skip_on_cran()
-  X <- Variable(3,3, pos = TRUE)
+  X <- Variable(3, 3, pos = TRUE)
   obj <- Minimize(pf_eigenvalue(X))
   known_indices <- cbind(c(1,1,2,3,3), c(1,3,2,1,2))
   constr <- list(X[known_indices] == c(1.0, 1.9, 0.8, 3.2, 5.9),
@@ -512,17 +537,17 @@ test_that("test pf matrix completion", {
 
 test_that("test rank one nmf", {
   skip_on_cran()
-  X <- Variable(3,3, pos = TRUE)
+  X <- Variable(3, 3, pos = TRUE)
   x <- Variable(3, pos = TRUE)
   y <- Variable(3, pos = TRUE)
-  xy <- hstack(x[1]*y, x[2]*y, x[3]*y)
+  xy <- vstack(x[1]*y, x[2]*y, x[3]*y)
   R <- max_elemwise(multiply(X, (xy)^(-1.0)), multiply(X^(-1.0), xy))
   objective <- sum(R)
   constraints <- list(X[1,1] == 1.0, X[1,3] == 1.9, X[2,2] == 0.8, X[3,1] == 3.2, X[3,2] == 5.9,
-                      x[1] * x[2] * x[3] == 1.0)
+                      x[1]*x[2]*x[3] == 1.0)
   # Smoke test.
   prob <- Problem(Minimize(objective), constraints)
-  expect_silent(solve(prob, gp = TRUE))
+  expect_silent(solve(prob, solver = SOLVER, gp = TRUE))
 })
 
 test_that("test documentation problem", {
@@ -534,7 +559,7 @@ test_that("test documentation problem", {
   objective_fn <- x*y*z
   constraints <- list(4*x*y*z + 2*x*z <= 10, x <= 2*y, y <= 2*x, z >= 1)
   problem <- Problem(Maximize(objective_fn), constraints)
-  expect_silent(solve(problem, gp = TRUE))   # Smoke test.
+  expect_silent(solve(problem, solver = SOLVER, gp = TRUE))   # Smoke test.
 })
 
 test_that("test solver error", {
@@ -542,7 +567,7 @@ test_that("test solver error", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   prod <- x*y
-  dgp <- Problem(Minimize(prod))
+  dgp <- Problem(Minimize(prod), list())
   dgp2dcp <- Dgp2Dcp()
   tmp <- perform(dgp2dcp, dgp)
   dgp2dcp <- tmp[[1]]

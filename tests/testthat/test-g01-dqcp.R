@@ -512,16 +512,9 @@ test_that("test gen_lambda_max matrix completion", {
   A <- Variable(3, 3)
   B <- Variable(3, 3, PSD = TRUE)
   gen_lambda_max <- gen_lambda_max(A, B)
-  
-  known_indices <- list(c(1,1), c(1,3), c(2,2))
-  known_A_vals <- c(1.0, 1.9, 0.8)
-  known_B_vals <- c(3.0, 1.4, 0.2)
-  constr <- list()
-  for(i in seq_along(known_indices)) {
-    idx_pair <- known_indices[[i]]
-    A[idx_pair[1], idx_pair[2]] == known_A_vals[i]
-    B[idx_pair[1], idx_pair[2]] == known_B_vals[j]
-  }
+  known_indices <- cbind(c(1,1,2), c(1,3,2))
+  constr <- list(A[known_indices] == c(1.0, 1.9, 0.8),
+                 B[known_indices] == c(3.0, 1.4, 0.2))
   
   problem <- Problem(Minimize(gen_lambda_max), constr)
   expect_true(is_dqcp(problem))

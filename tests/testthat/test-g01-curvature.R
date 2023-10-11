@@ -9,13 +9,16 @@ unknown_curv <- log(Variable()^3)
 pos <- Constant(1)
 neg <- Constant(-1)
 zero <- Constant(0)
-unknown_sign <- Parameter()
+unknown_sign <- pos + neg
+
+QUASILINEAR <- CVXR:::QUASILINEAR
+UNKNOWN <- CVXR:::UNKNOWN
 
 test_that("test curvature addition", {
   skip_on_cran()
   expect_equal(curvature(const + cvx), curvature(cvx))
-  expect_equal(curvature(unknown_curv + ccv), curvature(unknown_curv))
-  expect_equal(curvature(cvx + ccv), curvature(unknown_curv))
+  expect_equal(curvature(unknown_curv + ccv), UNKNOWN)
+  expect_equal(curvature(cvx + ccv), UNKNOWN)
   expect_equal(curvature(cvx + cvx), curvature(cvx))
   expect_equal(curvature(aff + ccv), curvature(ccv))
 })
@@ -23,9 +26,9 @@ test_that("test curvature addition", {
 test_that("test curvature subtraction", {
   skip_on_cran()
   expect_equal(curvature(const - cvx), curvature(ccv))
-  expect_equal(curvature(unknown_curv - ccv), curvature(unknown_curv))
+  expect_equal(curvature(unknown_curv - ccv), UNKNOWN)
   expect_equal(curvature(cvx - ccv), curvature(cvx))
-  expect_equal(curvature(cvx - cvx), curvature(unknown_curv))
+  expect_equal(curvature(cvx - cvx), UNKNOWN)
   expect_equal(curvature(aff - ccv), curvature(cvx))
 })
 
@@ -34,11 +37,11 @@ test_that("test multiplication of sign and curvature", {
   expect_equal(curvature(zero * cvx), curvature(aff))
   expect_equal(curvature(neg * cvx), curvature(ccv))
   expect_equal(curvature(neg * ccv), curvature(cvx))
-  expect_equal(curvature(neg * unknown_curv), curvature(unknown_curv))
+  expect_equal(curvature(neg * unknown_curv), QUASILINEAR)
   expect_equal(curvature(pos * aff), curvature(aff))
   expect_equal(curvature(pos * ccv), curvature(ccv))
   expect_equal(curvature(unknown_sign * const), curvature(const))
-  expect_equal(curvature(unknown_sign * ccv), curvature(unknown_curv))
+  expect_equal(curvature(unknown_sign * ccv), UNKNOWN)
 })
 
 test_that("test curvature negation", {

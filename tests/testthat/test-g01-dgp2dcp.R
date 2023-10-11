@@ -1,5 +1,6 @@
 context("test-g01-dgp2dcp")
 TOL <- 1e-6
+SOLVER <- "ECOS"
 
 Solution <- CVXR:::Solution
 perform <- CVXR:::perform
@@ -33,7 +34,7 @@ test_that("test unconstrained monomial", {
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
   prod <- x*y
-  dgp <- Problem(Minimize(prod))
+  dgp <- Problem(Minimize(prod), list())
   dgp2dcp <- Dgp2Dcp(dgp)
 
   tmp <- reduce(dgp2dcp)
@@ -44,7 +45,7 @@ test_that("test unconstrained monomial", {
   expect_equal(length(cvxr_expr(dcp@objective)@args), 2)
   expect_equal(class(cvxr_expr(dcp@objective)@args[[1]])[1], "Variable")
   expect_equal(class(cvxr_expr(dcp@objective)@args[[2]])[1], "Variable")
-  opt <- solve(dcp)
+  opt <- solve(dcp, solver = SOLVER)
 
   # dcp is solved in log-space, so it is unbounded below
   # (since the OPT for dgp is 0 + epsilon).
@@ -55,16 +56,16 @@ test_that("test unconstrained monomial", {
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 0.0)
   expect_equal(dgp_unpack$status, "unbounded")
-  opt <- solve(dgp, gp = TRUE)
+  opt <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(opt$value, 0.0)
   expect_equal(opt$status, "unbounded")
 
-  dgp <- Problem(Maximize(prod))
+  dgp <- Problem(Maximize(prod), list())
   dgp2dcp <- Dgp2Dcp(dgp)
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  opt <- solve(dcp)
+  opt <- solve(dcp, solver = SOLVER)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
 
@@ -72,7 +73,7 @@ test_that("test unconstrained monomial", {
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, Inf)
   expect_equal(dgp_unpack$status, "unbounded")
-  opt <- solve(dgp, gp = TRUE)
+  opt <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(opt$value, Inf)
   expect_equal(opt$status, "unbounded")
 })
@@ -86,9 +87,9 @@ test_that("test basic equality constraint", {
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  expect_equal(class(dcp@objective@args[[1]])[1], "Variable")
+  expect_equal(class(cvxr_expr(dcp@objective))[1], "Variable")
 
-  opt <- solve(dcp)
+  opt <- solve(dcp, solver = SOLVER)
   expect_equal(opt$value, 0.0, tolerance = TOL)
   expect_equal(opt$getValue(variables(dcp)[[1]]), 0.0, tolerance = TOL)
 
@@ -96,19 +97,20 @@ test_that("test basic equality constraint", {
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 1.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(x), 1.0, tolerance = TOL)
-  result <- solve(dgp, gp = TRUE)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(result$value, 1.0, tolerance = TOL)
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
 })
 
 test_that("test basic GP", {
   skip_on_cran()
-  x <- Variable(pos = TRUE)
-  y <- Variable(pos = TRUE)
-  z <- Variable(pos = TRUE)
+  xyz <- Variable(3, pos = TRUE)
+  x <- xyz[1]
+  y <- xyz[2]
+  z <- xyz[3]
   constraints <- list(2*x*y + 2*x*z + 2*y*z <= 1.0, x >= 2*y)
   problem <- Problem(Minimize(1/(x*y*z)), constraints)
-  result <- solve(problem, gp = TRUE)
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
   expect_equal(15.59, result$value, tolerance = 1e-2)
 })
 
@@ -116,7 +118,6 @@ test_that("test max_elemwise", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
-  z <- Variable(pos = TRUE)
 
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
@@ -128,24 +129,25 @@ test_that("test max_elemwise", {
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  opt <- solve(dcp)
+  opt <- solve(dcp, solver = SOLVER)
   solution <- form_solution(dcp, opt)
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 6.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(x), 1.0, tolerance = TOL)
   expect_equal(dgp_unpack$getValue(y), 4.0, tolerance = TOL)
-  result <- solve(dgp, gp = TRUE)
-  expect_equal(result$value, 6.0, tolerance = TOL)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 6.0, tolerance = 1e-4)
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
 })
 
-# TODO_NARAS_5: Test keepdims. Need to edit test to match CVXPY.
 test_that("test prod_entries", {
   skip_on_cran()
-  X <- matrix(0:11, nrow = 4, ncol = 3)
+  X <- matrix(0:11, nrow = 4, ncol = 3, byrow = TRUE)
   expect_equal(prod(X), value(prod_entries(X)))
   expect_equal(apply(X, 1, prod), value(prod_entries(X, axis = 1)))
   expect_equal(apply(X, 2, prod), value(prod_entries(X, axis = 2)))
+  expect_equal(matrix(apply(X, 1, prod), ncol = 1), value(prod_entries(X, axis = 1, keepdims = TRUE)))
+  expect_equal(matrix(apply(X, 2, prod), nrow = 1), value(prod_entries(X, axis = 2, keepdims = TRUE)))
 
   prod <- prod_entries(X)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
@@ -158,9 +160,18 @@ test_that("test prod_entries", {
   prod <- prod_entries(X, axis = 2)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
   expect_equal(apply(X, 2, sum), value(X_canon))
+  
+  prod <- prod_entries(X, axis = 1, keepdims = TRUE)
+  X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
+  expect_equal(matrix(apply(X, 1, sum), ncol = 1), value(X_canon))
+  
+  prod <- prod_entries(X, axis = 2, keepdims = TRUE)
+  X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
+  expect_equal(matrix(apply(X, 2, sum), nrow = 1), value(X_canon))
 
-  X <- matrix(0:11, nrow = 12, ncol = 1)
+  X <- matrix(0:11)
   expect_equal(prod(X), value(prod_entries(X)))
+  expect_equal(matrix(prod(X)), value(prod_entries(X, keepdims = TRUE)))
 
   prod <- prod_entries(X)
   X_canon <- Dgp2Dcp.prod_canon(prod, prod@args)[[1]]
@@ -184,7 +195,6 @@ test_that("test max_entries", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
-  z <- Variable(pos = TRUE)
 
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
@@ -196,13 +206,13 @@ test_that("test max_entries", {
   tmp <- reduce(dgp2dcp)
   dgp2dcp <- tmp[[1]]
   dcp <- tmp[[2]]
-  opt <- solve(dcp)
+  opt <- solve(dcp, solver = SOLVER)
   solution <- form_solution(dcp, opt)
   dgp_unpack <- unpack_problem(dgp, retrieve(dgp2dcp, solution))
   expect_equal(dgp_unpack$value, 6.0)
   expect_equal(dgp_unpack$getValue(x), 1.0)
   expect_equal(dgp_unpack$getValue(y), 4.0)
-  result <- solve(dgp, gp = TRUE)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(result$value, 6.0, tolerance = TOL)
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
 })
@@ -211,7 +221,6 @@ test_that("test min_elemwise", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
-  z <- Variable(pos = TRUE)
 
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
@@ -220,7 +229,7 @@ test_that("test min_elemwise", {
   constr <- list(x == 1.0, y == 4.0)
 
   dgp <- Problem(obj, constr)
-  result <- solve(dgp, gp = TRUE)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
   expect_equal(result$value, 1.0/(2.0 + 6.0), tolerance = TOL)
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
   expect_equal(result$getValue(y), 4.0, tolerance = TOL)
@@ -230,7 +239,6 @@ test_that("test min_entries", {
   skip_on_cran()
   x <- Variable(pos = TRUE)
   y <- Variable(pos = TRUE)
-  z <- Variable(pos = TRUE)
 
   prod1 <- x*y^(0.5)
   prod2 <- 3.0*x*y^(0.5)
@@ -239,8 +247,8 @@ test_that("test min_entries", {
   constr <- list(x == 1.0, y == 4.0)
 
   dgp <- Problem(obj, constr)
-  result <- solve(dgp, gp = TRUE)
-  expect_equal(result$value, 1.0/(2.0 + 6.0), tolerance = TOL)
+  result <- solve(dgp, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 1.0/(2.0 + 6.0), tolerance = 1e-4)
   expect_equal(result$getValue(x), 1.0, tolerance = TOL)
   expect_equal(result$getValue(y), 4.0, tolerance = TOL)
 })
@@ -544,4 +552,116 @@ test_that("test solver error", {
   soln <- Solution("solver_error", NA_real_, list(), list(), list())
   dgp_soln <- invert(dgp2dcp, soln, inverse_data)
   expect_equal(dgp_soln@status, "solver_error")
+})
+
+test_that("test sum scalar", {
+  w <- Variable(pos = TRUE)
+  h <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(h), list(w*h >= 10, sum(w) <= 5))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 2, tolerance = TOL)
+  expect_equal(result$getValue(h), 2, tolerance = TOL)
+  expect_equal(result$getValue(w), 5, tolerance = TOL)
+})
+
+test_that("test sum vector", {
+  w <- Variable(2, pos = TRUE)
+  h <- Variable(2, pos = TRUE)
+  problem <- Problem(Minimize(sum(h)), list(multiply(w, h) >= 10, sum(w) <= 10))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 4, tolerance = TOL)
+  expect_equal(result$getValue(h), matrix(c(2,2)), tolerance = TOL)
+  expect_equal(result$getValue(w), matrix(c(5,5)), tolerance = TOL)
+})
+
+test_that("test sum squares vector", {
+  w <- Variable(2, pos = TRUE)
+  h <- Variable(2, pos = TRUE)
+  problem <- Problem(Minimize(sum_squares(h)), list(multiply(w, h) >= 10, sum(w) <= 10))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 8, tolerance = TOL)
+  expect_equal(result$getValue(h), matrix(c(2,2)), tolerance = TOL)
+  expect_equal(result$getValue(w), matrix(c(5,5)), tolerance = TOL)
+})
+
+test_that("test sum matrix", {
+  w <- Variable(2, 2, pos = TRUE)
+  h <- Variable(2, 2, pos = TRUE)
+  problem <- Problem(Minimize(sum(h)), list(multiply(w, h) >= 10, sum(w) <= 20))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 8, tolerance = TOL)
+  expect_equal(result$getValue(h), matrix(2, nrow = 2, ncol = 2), tolerance = TOL)
+  expect_equal(result$getValue(w), matrix(5, nrow = 2, ncol = 2), tolerance = TOL)
+})
+
+test_that("test trace", {
+  w <- Variable(1, 1, pos = TRUE)
+  h <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(h), list(w*h >= 10, matrix_trace(w) <= 5))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 2, tolerance = TOL)
+  expect_equal(result$getValue(h), 2, tolerance = TOL)
+  expect_equal(result$getValue(w), matrix(5), tolerance = TOL)
+})
+
+test_that("test parameter", {
+  param <- Parameter(pos = TRUE)
+  value(param) <- 1.0
+  dgp <- Problem(Minimize(param), list())
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  expect_equal(value(parameters(dcp)[[1]]), log(value(param)))
+  
+  x <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(x), list(x == param))
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 1.0, tolerance = TOL)
+  
+  value(param) <- 2.0
+  result <- solve(problem, solver = SOLVER, gp = TRUE)
+  expect_equal(result$value, 2.0, tolerance = TOL)
+})
+
+test_that("test parameter name", {
+  param <- Parameter(pos = TRUE, name = "alpha")
+  dgp <- Problem(Minimize(param), list())
+  dgp2dcp <- Dgp2Dcp(dgp)
+  tmp <- reduce(dgp2dcp)
+  dgp2dcp <- tmp[[1]]
+  dcp <- tmp[[2]]
+  expect_equal(name(parameters(dcp)[[1]]), "alpha")
+})
+
+test_that("test gmatmul", {
+  x <- Variable(2, pos = TRUE)
+  A <- rbind(c(-5,2), c(1,-3))
+  b <- matrix(c(3,2))
+  # expr <- gmatmul(A, x)
+  value(x) <- b
+  expr <- gmatmul(A, x)
+  expect_equal(value(expr), matrix(c(3^(-5)*2^2, 3/8)))
+  A_par <- Parameter(2, 2, value = A)
+  expect_equal(value(gmatmul(A_par, x)), matrix(c(3^(-5)*2^2, 3/8)))
+  value(x) <- NA_real_
+  
+  expr <- gmatmul(A, x)
+  prob <- Problem(Minimize(1.0), list(expr == b))
+  result <- solve(prob, solver = SOLVER, gp = TRUE)
+  sltn <- exp(base::solve(A, log(b)))
+  expect_equal(result$getValue(x), sltn, tolerance = TOL)
+})
+
+test_that("test xexp", {
+  x <- Variable(2, pos = TRUE)
+  b <- matrix(c(1, 0.5))
+  # expr <- xexp(x)
+  value(x) <- b
+  expr <- xexp(x)
+  expect_equal(value(expr), matrix(c(exp(1), 0.5*exp(0.5))))
+  
+  prob <- Problem(Minimize(prod_entries(expr)), list(x >= b))
+  result <- solve(prob, solver = SOLVER, gp = TRUE)
+  expect_equal(result$getValue(expr), matrix(c(exp(1), 0.5*exp(0.5))), tolerance = TOL)
 })

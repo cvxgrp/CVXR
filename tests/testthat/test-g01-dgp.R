@@ -171,3 +171,50 @@ test_that("test geometric mean", {
   expect_true(is_log_log_convex(expr))
   expect_true(is_log_log_concave(expr))
 })
+
+test_that("test builtin sum", {
+  x <- Variable(2, pos = TRUE)
+  expect_true(is_log_log_convex(sum(x)))
+})
+
+test_that("test gmatmul", {
+  x <- Variable(2, pos = TRUE)
+  A <- Variable(2, 2)
+  expect_error(gmatmul(A, x), "gmatmul(A, X) requires that A be constant", fixed = TRUE)
+  
+  x <- Variable(2)
+  A <- matrix(1, nrow = 4, ncol = 2)
+  expect_error(gmatmul(A, x), "gmatmul(A, X) requires that X be positive", fixed = TRUE)
+  
+  x <- Variable(3, pos = TRUE)
+  A <- matrix(1, nrow = 4, ncol = 3)
+  expr <- gmatmul(A, x)
+  expect_true(is_dgp(expr))
+  expect_true(is_log_log_affine(expr))
+  expect_true(is_log_log_convex(expr))
+  expect_true(is_log_log_concave(expr))
+  expect_true(is_nonneg(expr))
+  expect_true(is_incr(expr, 1))
+  expect_true(is_decr(gmatmul(-A, x), 1))
+  
+  x <- Variable(2, 3, pos = TRUE)
+  A <- rbind(c(2, -1), c(0, 3))
+  expr <- gmatmul(A, x)
+  expect_true(is_dgp(expr))
+  expect_true(is_log_log_affine(expr))
+  expect_true(is_log_log_convex(expr))
+  expect_true(is_log_log_concave(expr))
+  expect_false(is_incr(expr, 1))
+  expect_false(is_decr(expr, 1))
+})
+
+test_that("test power sign", {
+  x <- Variable(pos = TRUE)
+  expect_true(is_nonneg(x^1))
+  expect_false(is_nonpos(x^1))
+})
+
+test_that("test sparse constant not allowed", {
+  sparse_matrix <- Constant(Matrix(c(1.0, 2.0), sparse = TRUE))
+  expect_false(is_log_log_constant(sparse_matrix))
+})

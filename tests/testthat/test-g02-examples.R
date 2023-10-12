@@ -557,36 +557,74 @@ test_that("Test examples from CVXR introduction", {
   })
 })
 
+test_that("Test image in-painting", {
+  skip_on_cran()
+  
+  set.seed(1)
+  rows <- 100
+  cols <- 100
+  
+  # Load the images.
+  # Convert to arrays.
+  Uorig <- sample(0:254, size = rows*cols, replace = TRUE)
+  Uorig <- matrix(Uorig, nrow = rows, ncol = cols)
+  
+  # Known is 1 if the pixel is known, 0 if the pixel was corrupted.
+  Known <- matrix(0, nrow = rows, ncol = cols)
+  for(i in 1:rows) {
+    for(j in 1:cols) {
+      if(runif(1) > 0.7)
+        Known[i,j] <- 1
+    }
+  }
+  Ucorr <- Known*Uorig
+  
+  # Recover the original image using total variation in-painting.
+  U <- Variable(rows, cols)
+  obj <- Minimize(tv(U))
+  constraints <- list(multiply(Known, U) == multiply(Known, Ucorr))
+  prob <- Problem(obj, constraints)
+  result <- solve(prob, solver = "SCS")
+})
+
 test_that("Test advanced tutorial 2", {
-    skip_on_cran()
-    x <- Variable()
-    prob <- Problem(Minimize(x^2), list(x == 2))
+  skip_on_cran()
 
-    # Get ECOS arguments.
-    tmp <- get_problem_data(prob, "ECOS")
+  x <- Variable()
+  prob <- Problem(Minimize(square(x)), list(x == 2))
 
-    # Get ECOS_BB arguments.
-    tmp <- get_problem_data(prob, "ECOS_BB")
+  # Get ECOS arguments.
+  tmp <- get_problem_data(prob, "ECOS")
+  data <- tmp[[1]]
+  chain <- tmp[[2]]
+  inverse <- tmp[[3]]
 
-    # Get CVXOPT arguments.
-    if("CVXOPT" %in% installed_solvers())
-        tmp <- get_problem_data(prob, "CVXOPT")
-
-    # Get SCS arguments.
-    tmp <- get_problem_data(prob, "SCS")
-
-    # Get ECOS arguments.
-    library(ECOSolveR)
-    tmp <- get_problem_data(prob, "ECOS")
+  # Get CVXOPT arguments.
+  if("CVXOPT" %in% installed_solvers()) {
+    tmp <- get_problem_data(prob, "CVXOPT")
     data <- tmp[[1]]
     chain <- tmp[[2]]
     inverse <- tmp[[3]]
+  }
 
-    # Call ECOS solver.
-    solution <- ECOSolveR::ECOS_csolve(c = data$c, G = data$G, h = data$h, dims = ECOS.dims_to_solver_dict(data$dims), A = data$A, b = data$b)
+  # Get SCS arguments.
+  tmp <- get_problem_data(prob, "SCS")
+  data <- tmp[[1]]
+  chain <- tmp[[2]]
+  inverse <- tmp[[3]]
 
-    # Unpack raw solver output.
-    unpack_results(prob, solution, chain, inverse)
+  # Get ECOS arguments.
+  library(ECOSolveR)
+  tmp <- get_problem_data(prob, "ECOS")
+  data <- tmp[[1]]
+  chain <- tmp[[2]]
+  inverse <- tmp[[3]]
+
+  # Call ECOS solver.
+  solution <- ECOSolveR::ECOS_csolve(c = data$c, G = data$G, h = data$h, dims = ECOS.dims_to_solver_dict(data$dims), A = data$A, b = data$b)
+
+  # Unpack raw solver output.
+  unpack_results(prob, solution, chain, inverse)
 })
 
 test_that("Test log_sum_exp that failed in CVXPY Github issue", {

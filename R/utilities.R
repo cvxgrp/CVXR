@@ -25,93 +25,6 @@ SOC_ATOMS <- c("GeoMean", "Pnorm", "QuadForm", "QuadOverLin", "Power")
 EXP_ATOMS <- c("LogSumExp", "LogDet", "Entr", "Exp", "KLDiv", "Log", "Log1p", "Logistic")
 PSD_ATOMS <- c("LambdaMax", "LambdaSumLargest", "LogDet", "MatrixFrac", "NormNuc", "SigmaMax")
 
-# Solver Constants
-OPTIMAL <- "optimal"
-OPTIMAL_INACCURATE <- "optimal_inaccurate"
-INFEASIBLE <- "infeasible"
-INFEASIBLE_INACCURATE <- "infeasible_inaccurate"
-UNBOUNDED <- "unbounded"
-UNBOUNDED_INACCURATE <- "unbounded_inaccurate"
-INFEASIBLE_OR_UNBOUNDED <- "infeasible_or_unbounded"
-USER_LIMIT <- "user_limit"
-SOLVER_ERROR <- "solver_error"
-
-# Statuses that indicate a solution was found.
-SOLUTION_PRESENT <- c(OPTIMAL, OPTIMAL_INACCURATE, USER_LIMIT)
-
-# Statuses that indicate the problem is infeasible or unbounded.
-INF_OR_UNB <- c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE, INFEASIBLE_OR_UNBOUNDED)
-
-# Statuses that indicate an inaccurate solution.
-INACCURATE <- c(OPTIMAL_INACCURATE, INFEASIBLE_INACCURATE, UNBOUNDED_INACCURATE, USER_LIMIT)
-
-# Statuses that indicate an error.
-ERROR <- c(SOLVER_ERROR)
-
-## Codes from lpSolveAPI solver (partial at the moment)
-DEGENERATE <- "degenerate"
-NUMERICAL_FAILURE <- "numerical_failure"
-TIMEOUT <- "timeout"
-BB_FAILED <- "branch_and_bound_failure"
-
-## Codes from GLPK (partial)
-UNDEFINED <- "undefined"
-
-# Solver names.
-CBC_NAME <- "CBC"
-CLARABEL_NAME <- "CLARABEL"
-PIQP_NAME <- "PIQP"
-COPT_NAME <- "COPT"
-CPLEX_NAME <- "CPLEX"
-CVXOPT_NAME <- "CVXOPT"
-DIFFCP_NAME <- "DIFFCP"
-ECOS_NAME <- "ECOS"
-ECOS_BB_NAME <- "ECOS_BB"
-GLOP_NAME <- "GLOP"
-GLPK_NAME <- "GLPK"
-GLPK_MI_NAME <- "GLPK_MI"
-GUROBI_NAME <- "GUROBI"
-MOSEK_NAME <- "MOSEK"
-NAG_NAME <- "NAG"
-OSQP_NAME <- "OSQP"
-PDLP_NAME <- "PDLP"
-PROXQP_NAME <- "PROXQP"
-SCIP_NAME <- "SCIP"
-SCS_NAME <- "SCS"
-SDPA_NAME <- "SDPA"
-XPRESS_NAME <- "XPRESS"
-SOLVER_NAMES <- c(CLARABEL_NAME, ECOS_NAME, CVXOPT_NAME, GLOP_NAME, GLPK_NAME,
-                  GLPK_MI_NAME, SCS_NAME, SDPA_NAME, GUROBI_NAME, OSQP_NAME,
-                  CPLEX_NAME, MOSEK_NAME, CBC_NAME, COPT_NAME, XPRESS_NAME,
-                  PROXQP_NAME, NAG_NAME, PDLP_NAME, SCIP_NAME)
-
-# Solver option defaults
-SOLVER_DEFAULT_PARAM <- list(
-  OSQP = list(max_iter = 10000, eps_abs = 1e-5, eps_rel = 1e-5, eps_prim_inf = 1e-4),
-  PIQP = list()  ## same as piqp itself
-  ECOS = list(maxit = 100, abstol = 1e-8, reltol = 1e-8, feastol = 1e-8),
-  ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
-  ## Until cccp fixes the bug I reported, we set the tolerances as below
-  CVXOPT = list(max_iters = 100, abstol = 1e-6, reltol = 1e-6, feastol = 1e-6, refinement = 1L, kktsolver = "chol"),
-  SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
-  CPLEX = list(itlim = 10000),
-  MOSEK = list(num_iter = 10000),
-  GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
-)
-
-# Xpress-specific items.
-XPRESS_IIS = "XPRESS_IIS"
-XPRESS_TROW = "XPRESS_TROW"
-
-# Parametrized problem.
-PARAM_PROB <- "param_prob"
-
-# Parallel (meta) solver
-PARALLEL <- "parallel"
-
-# Robust CVXOPT LDL KKT solverg
-ROBUST_KKTSOLVER <- "robust"
-
 # Map of constraint types
 # TODO: These should be defined in a solver model.
 EQ_MAP <- "1"
@@ -139,18 +52,8 @@ BOOL_IDX <- "bool_idx"
 INT_IDS <- "int_ids"
 INT_IDX <- "int_idx"
 
-# Keys for results_dict.
-STATUS <- "status"
-VALUE <- "value"
-OBJ_OFFSET <- "obj_offset"
-PRIMAL <- "primal"
-EQ_DUAL <- "eq_dual"
-INEQ_DUAL <- "ineq_dual"
-SOLVER_NAME <- "solver"
-SOLVE_TIME <- "solve_time"  # in seconds
-SETUP_TIME <- "setup_time"  # in seconds
-NUM_ITERS <- "num_iters"    # number of iterations
-EXTRA_STATS <- "extra_stats"   # extra solver-specific statistics
+# Parametrized problem.
+PARAM_PROB <- "param_prob"
 
 # Keys for problem data dict.
 C_KEY <- "c"
@@ -437,8 +340,8 @@ format_elemwise <- function(vars_) {
 
 # Returns a sparse matrix LinOp that spaces out an expression.
 get_spacing_matrix <- function(dim, spacing, offset) {
-  col_arr <- 1:dim[2]
-  row_arr <- spacing*(col_arr - 1) + 1 + offset
+  col_arr <- seq_len(dim[2])
+  row_arr <- spacing * (col_arr - 1) + 1 + offset
   val_arr <- rep(1.0, dim[2])
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = dim)
   create_const(mat, dim, sparse = TRUE)
@@ -642,7 +545,7 @@ gm_constrs <- function(t, x_list, p) {
   # Form internal constraints for weighted geometric mean t <= x^p
   # t <= x[1]^p[1] * x[2]^p[2] * ... * x[n]^p[n],
   # where x and t can either be scalar or matrix variables.
-  
+
   if(!is_weight(p))
     stop("p must be a valid weight vector")
   w <- dyad_completion(p)
@@ -695,8 +598,8 @@ pow_high <- function(p) {
   # Return (t,1,x) power tuple:
   # x <= t^(1/p) 1^(1-1/p).
   # User wants the epigraph variable t.
-  
-  if(p <= 1) 
+
+  if(p <= 1)
     stop("Must have p > 1")
   p <- 1/gmp::as.bigq(p)
   if(1/p == as.integer(1/p))
@@ -708,7 +611,7 @@ pow_mid <- function(p) {
   # Return (x,1,t) power tuple:
   # t <= x^p 1^(1-p).
   # User wants the epigraph variable t.
-  
+
   if(p >= 1 || p <= 0)
     stop("Must have 0 < p < 1")
   p <- gmp::as.bigq(p)
@@ -716,10 +619,10 @@ pow_mid <- function(p) {
 }
 
 pow_neg <- function(p) {
-  # Return (x,t,1) power tuple: 
+  # Return (x,t,1) power tuple:
   # 1 <= x^(p/(p-1)) t^(-1/(p-1)).
   # User wants the epigraph variable t.
-  
+
   if(p >= 0)
     stop("must have p < 0")
   p <- gmp::as.bigq(p)
@@ -730,7 +633,7 @@ pow_neg <- function(p) {
 limit_denominator <- function(num, max_denominator = 10^6) {
   # Closest fraction to self with denominator at most max_denominator.
   # Adapted from the Python fractions library: https://github.com/python/cpython/blob/main/Lib/fractions.py
-  
+
   if(max_denominator < 1)
     stop("max_denominator should be at least 1")
   if(gmp::denominator(num) <= max_denominator)
@@ -759,7 +662,7 @@ limit_denominator <- function(num, max_denominator = 10^6) {
     d <- n - a*d
   }
   k <- floor((max_denominator - q0)/q1)
-  
+
   # Determine which of the candidates (p0+k*p1)/(q0+k*q1) and p1/q1 is
   # closer to self. The distance between them is 1/(q1*(q0+k*q1)), while
   # the distance from p1/q1 to self is d/(q1*self._denominator). So we
@@ -796,15 +699,15 @@ is_dyad_weight <- function(w) {
 is_weight <- function(w) {
   # Test if w is a valid weight vector.
   # w must have nonnegative integer or fraction elements, and sum to 1.
-  
+
   # if(is.matrix(w) || is.vector(w))
   #   w <- as.list(w)
-  
+
   valid_elems <- rep(FALSE, length(w))
   for(i in seq_along(w))
     valid_elems[i] <- (w[i] >= 0) && (gmp::is.whole(w[i]) || gmp::is.bigq(w[i]))
   valid_elems <- all(valid_elems)
-  
+
   # return(all(valid_elems) && all.equal(sum(as.double(w)), 1))
   return(valid_elems && sum(w) == 1)
 }
@@ -812,7 +715,7 @@ is_weight <- function(w) {
 fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
   # Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
   # When the input tuple contains only integers and fractions, "fracify" will try to represent the weights exactly
-  
+
   if(any(a < 0))
     stop("Input powers must be non-negative")
 
@@ -1059,7 +962,7 @@ ku_validate_key <- function(key, dim) {   # TODO: This may need to be reassessed
   # Check if the key is a valid index.
   if(length(key) > 3)
     stop("Invalid index/slice")
-  
+
   nrow <- dim[1]
   ncol <- dim[2]
   row <- ku_format_slice(key$row, nrow)

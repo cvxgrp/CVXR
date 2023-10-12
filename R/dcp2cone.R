@@ -116,8 +116,8 @@ ConeDims <- setClass("ConeDims",
 
 setMethod("initialize", "ConeDims",
           function(.Object, constr_map) {
-            .Object$zero <- Reduce(sum, lapply(constr_map$Zero, size))
-            .Object$nonneg <- Reduce(sum, lapply(constr_map$NonNeg, size))
+            .Object$zero <- Reduce(sum, lapply(constr_map$ZeroConstraint, size))
+            .Object$nonneg <- Reduce(sum, lapply(constr_map$NonNegConstraint, size))
             .Object$exp <- Reduce(sum, lapply(constr_map$ExpCone, num_cones))
             .Object$soc <- unlist(lapply(constr_map$SOC, cone_sizes))
             .Object$psd <- unlist(lapply(constr_map$PSD, nrow))
@@ -259,9 +259,9 @@ setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_valu
   if(quad_obj) {
     cache(object@reduced_P, keep_zeros)
     P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
-    return(list(P, c, d, A, matrix(b)))
+    return(list(P = p, c = c, d = d, A = A, b = matrix(b)))
   } else
-    return(list(c, d, A, matrix(b)))
+    return(list(c = c, d = d, A = A, b = matrix(b)))
 })
 
 #' @describeIn ParamConeProg Multiplies by Jacobian of parameter mapping. Assumes delA is sparse. Returns a mapping of param id to dparam.

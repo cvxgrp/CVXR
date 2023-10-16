@@ -26,11 +26,21 @@ save_value <- CVXR:::save_value
 
 test_that("Test the Variable class", {
   skip_on_cran()
-  x <- Variable(2, name = "x")
-  y <- Variable()
-  expect_equal(dim(x), c(2,1))
-  expect_equal(dim(y), c(1,1))
-  expect_equal(curvature(x), AFFINE)
+  xv <- Variable(2)
+  yv <- Variable(2)
+  expect_false(name(xv) == name(yv))
+  
+  xv <- Variable(2, name = "x")
+  yv <- Variable()
+  expect_equal(name(xv), "x")
+  expect_equal(dim(xv), c(2,1))
+  expect_equal(dim(yv), c(1,1))
+  expect_equal(curvature(xv), AFFINE)
+  # expect_equal(dim(canonical_form(x)[[1]]), c(2, 1))
+  # expect_equal(canonical_form(x)[[2]], list())
+  
+  expect_equal(as.character(x), "Variable(2, 1)")
+  expect_equal(as.character(A), "Variable(2, 2)")
 
   expect_error(Variable(2,2, diag = TRUE, symmetric = TRUE), "Cannot set more than one special attribute.", fixed = TRUE)
   expect_error(Variable(2,0), "Invalid dimensions 20", fixed = TRUE)
@@ -900,4 +910,102 @@ test_that("test piecewise linear", {
 
   expr <- p_norm(3*y^2, 1)
   expect_false(is_pwl(expr))
+})
+
+test_that("test curvature string is populated for log-log expressions", {
+  skip_on_cran()
+  xv <- Variable(pos = TRUE)
+  monomial <- x*x*x
+  expect_equal(curvature(monomial), LOG_LOG_AFFINE)
+  
+  posynomial <- x*x*x + x
+  expect_equal(curvature(posynomial), LOG_LOG_CONVEX)
+  
+  llcv <- 1/(x*x*x + x)
+  expect_equal(curvature(llcv), LOG_LOG_CONCAVE)
+})
+
+test_that("test conversion of native t(x) %*% A %*% x into QuadForms", {
+  # Trivial quad form
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(0, -1)))
+  expr <- t(xv) %*% Ac %*% xv
+  expect_true(is(expr, QuadForm))
+  
+  # QuadForm inside nested expr: 0.5 * (t(x) %*% A %*% x) + t(x) %*% x
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(0, -1)))
+  expr <- (1/2) * (t(xv) %*% Ac %*% xv) + t(xv) %*% xv
+  expect_true(is(expr@args[[1]]@args[[2]], QuadForm))
+  expect_true(identical(expr@args[[1]]@args[[2]]@args[[1]], x))
+  
+  # QuadForm inside nested expr: (0.5 * t(c) %*% c) * (t(x) %*% A %*% x) + t(x) %*% x
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(0, -1)))
+  cc <- Constant(c(2, -2))
+  expr <- (1/2 * t(cc) %*% cc) * (t(xv) %*% Ac %*% xv) + t(xv) %*% xv
+  expect_true(is(expr@args[[1]]@args[[2]], QuadForm))
+  expect_true(identical(expr@args[[1]]@args[[2]]@args[[1]], x))
+  
+  # QuadForm with sparse matrices
+  xv <- Variable(2)
+  Ac <- Constant(Matrix(diag(2), sparse = TRUE))
+  expr <- t(xv) %*% Ac %*% xv
+  expect_true(is(expr, QuadForm))
+  
+  # QuadForm with mismatched dimensions raises error
+  xv <- Variable(2)
+  Ac <- Constant(diag(3))
+  expect_error(t(xv) %*% Ac %*% xv)
+  
+  # QuadForm with PSD-wrapped matrix
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(0, 1)))
+  expr <- t(xv) %*% psd_wrap(Ac) %*% xv
+  expect_true(is(expr, QuadForm))
+  
+  # QuadForm with nested subexpr
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(2, 0, 0), c(0, 0, 1)))
+  M <- Constant(rbind(c(2, 0, 0), c(0, 2, 0), c(0, 0, 2)))
+  b <- Constant(c(1, 2, 3))
+  
+  yv <- Ac %*% xv - b
+  expr <- t(yv) %*% M %*% yv
+  expect_true(is(expr, QuadForm))
+  expect_true(identical(expr@args[[1]], yv))
+  expect_true(identical(expr@args[[2]], M))
+  
+  # QuadForm with parameters
+  xv <- Variable(2)
+  Ap <- Parameter(2, 2, symmetric = TRUE)
+  expr <- t(xv) %*% Ap %*% xv
+  expect_true(is(expr, QuadForm))
+  
+  # Expect error for asymmetric/nonhermitian matrices
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(1, 1)))
+  expect_error(t(xv) %*% Ac %*% xv)
+  
+  xv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 1i), c(1i, 1)))
+  expect_error(t(xv) %*% Ac %*% xv)
+  
+  # Not a quad_form because t(x) %*% A %*% y where x, y not necessarily equal
+  xv <- Variable(2)
+  yv <- Variable(2)
+  Ac <- Constant(rbind(c(1, 0), c(0, -1)))
+  expr <- t(xv) %*% Ac %*% yv
+  expect_false(is(expr, QuadForm))
+  
+  # Not a quad_form because M is variable
+  xv <- Variable(2)
+  M <- Variable(2, 2)
+  expr <- t(xv) %*% M %*% xv
+  expect_false(is(expr, QuadForm))
+  
+  xc <- Constant(c(1, 0))
+  M <- Variable(2, 2)
+  expr <- t(xc) %*% M %*% xc
+  expect_false(is(expr, QuadForm))
 })

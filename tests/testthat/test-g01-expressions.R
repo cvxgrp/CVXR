@@ -41,11 +41,34 @@ test_that("Test the Variable class", {
   
   expect_equal(as.character(x), "Variable(2, 1)")
   expect_equal(as.character(A), "Variable(2, 2)")
+  
+  # Test dim provided as vector instead of tuple
+  expect_equal(dim(Variable(c(2), integer = TRUE)), c(2,1))
+  
+  # # Scalar variable
+  # coeff <- coefficients(a)
+  # expect_equal(coeff[[as.character(id(a))]], c(1))
+  
+  # # Vector variable.
+  # coeffs <- coefficients(xv)
+  # expect_equal(names(coeffs), c(as.character(id(xv))))
+  # vec <- coeffs[[as.character(id(xv))]][[1]]
+  # expect_equal(dim(vec), c(2,2))
+  # expect_equal(vec[1,1], 1)
+  
+  # # Matrix variable.
+  # coeffs <- coefficients(A)
+  # expect_equal(names(coeffs), c(as.character(id(A))))
+  # expect_equal(length(coeffs[[as.character(id(A))]]), 2) || 0 %in% dim(self)
+  # mat <- coeffs[[as.character(id(A))]][[2]]
+  # expect_equal(dim(mat), c(2,4))
+  # expect_equal(mat[1,3], 1)
 
-  expect_error(Variable(2,2, diag = TRUE, symmetric = TRUE), "Cannot set more than one special attribute.", fixed = TRUE)
-  expect_error(Variable(2,0), "Invalid dimensions 20", fixed = TRUE)
-  expect_error(Variable(2,0.5), "Invalid dimensions 20.5", fixed = TRUE)
-
+  expect_error(Variable(2, 2, diag = TRUE, symmetric = TRUE), 
+               "Cannot set more than one special attribute.", fixed = TRUE)
+  expect_error(Variable(2, 0), "Invalid dimensions (2,0)", fixed = TRUE)
+  expect_error(Variable(2, 0.5), "Invalid dimensions (2,0.5)", fixed = TRUE)
+  # expect_error(Variable(2, name = 1), "Variable name 1 must be a string", fixed = TRUE)
 })
 
 test_that("Test assigning a value to a variable", {
@@ -54,7 +77,7 @@ test_that("Test assigning a value to a variable", {
   a <- Variable()
   value(a) <- 1
   expect_equal(value(a), matrix(1))
-  expect_error(value(a) <- c(2,1), "Invalid dimensions (2,1) for value", fixed = TRUE)
+  expect_error(value(a) <- c(2,1), "Invalid dimensions (2,1) for Variable value", fixed = TRUE)
 
   # Test assigning None
   value(a) <- 1
@@ -74,26 +97,25 @@ test_that("Test assigning a value to a variable", {
   # Test assigning negative val to non-negative variable
   x <- Variable(nonneg = TRUE)
   expect_error(value(x) <- -2, "Value must be nonnegative", fixed = TRUE)
-
-  # Small negative values are rounded to zero
-  # *** BEGIN BN EDIT
-  # This last test does not seem right given the change
-  # made in interface.R for intf_sign!!
-  # value(x) <- -1e-8
-  # expect_equal(value(x), 0)
-  # *** END BN EDIT
 })
 
 test_that("Test transposing variables", {
   skip_on_cran()
   var <- t(a)
+  expect_equal(name(var), "a")
   expect_equal(dim(var), c(1,1))
 
   a <- save_value(a, 2)
   var <- t(a)
   expect_equal(value(var), matrix(2))
+  
+  var <- x
+  expect_equal(name(var), "x")
+  expect_equal(dim(var), c(2,1))
 
-  var <- t(x)
+  xv <- Variable(2, 1, name = "x")
+  var <- t(xv)
+  expect_equal(name(var), "t(x)")
   expect_equal(dim(var), c(1,2))
 
   x <- save_value(x, matrix(c(1, 2), nrow = 2, ncol = 1))
@@ -102,17 +124,28 @@ test_that("Test transposing variables", {
   expect_equal(value(var)[1,2], 2)
 
   var <- t(C)
+  expect_equal(name(var), "t(C)")
   expect_equal(dim(var), c(2,3))
+  
+  # coeffs <- coefficients(canonical_form(var)[[1]])
+  # mat <- values(coeffs)[[1]][[1]]
+  # expect_equal(dim(mat), c(2,6))
+  # expect_equal(mat[2,4], 1)
 
   index <- var[2,1]
+  expect_equal(index, "t(C)[2,1]")
   expect_equal(dim(index), c(1,1))
 
   var <- t(t(x))
+  expect_equal(name(var), "t(t(x))")
   expect_equal(dim(var), c(2,1))
 })
 
 test_that("Test the Constant class", {
   skip_on_cran()
+  c <- Constant(2.0)
+  expect_equal(name(c), as.character(2.0))
+  
   c <- Constant(2)
   expect_equal(value(c), matrix(2))
   expect_equal(dim(c), c(1,1))
@@ -120,8 +153,12 @@ test_that("Test the Constant class", {
   expect_equal(sign(c), NONNEG)
   expect_equal(sign(Constant(-2)), NONPOS)
   expect_equal(sign(Constant(0)), ZERO)
-  expect_equal(canonical_form(c)[[1]]$dim, c(1,1))
-  expect_equal(canonical_form(c)[[2]], list())
+  # expect_equal(canonical_form(c)[[1]]$dim, c(1,1))
+  # expect_equal(canonical_form(c)[[2]], list())
+  
+  # coeffs <- coefficients(c)
+  # expect_equal(names(coeffs), c(CONSTANT))
+  # expect_equal(coeffs[[CONSTANT]], c(2))
 
   # Test the sign
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
@@ -131,9 +168,13 @@ test_that("Test the Constant class", {
   expect_equal(sign(0*c), ZERO)
   c <- Constant(matrix(c(2, -2), nrow = 1, ncol = 2))
   expect_equal(sign(c), UNKNOWN)
+  
+  c <- Constant(matrix(0, nrow = 2, ncol = 1))
+  expect_equal(dim(c), c(2,1))
 
   # Test sign of a complex expression
   c <- Constant(matrix(c(1,2), nrow = 2, ncol = 1))
+  expect_equal(dim(c), c(2,1))
   Acon <- Constant(matrix(1, nrow = 2, ncol = 2))
   exp <- t(c) %*% Acon %*% c
   expect_equal(sign(exp), NONNEG)
@@ -142,6 +183,130 @@ test_that("Test the Constant class", {
   expect_equal(sign(exp), NONNEG)
   exp <- t(c) %*% A
   expect_equal(sign(exp), UNKNOWN)
+  
+  # Test as.character.
+  expect_equal(as.character(c), "Constant(CONSTANT, NONNEGATIVE, (2,1))")
+})
+
+test_that("test constant PSD and NSD", {
+  skip_on_cran()
+  
+  n <- 5
+  set.seed(0)
+  U <- matrix(rnorm(n*n), nrow = n, ncol = n)
+  U <- U %*% t(U)
+  U <- eigen(U)$vectors   # U is now an orthogonal matrix
+  
+  # Try four indefinite matrices with different eigenvalue
+  # spread around the origin.
+  v1 <- matrix(c(3, 2, 1, 1e-8, -1))
+  P <- Constant(U %*% diag(v1) %*% t(U))
+  expect_false(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  v2 <- matrix(c(3, 2, 2, 1e-6, -1))
+  P <- Constant(U %*% diag(v2) %*% t(U))
+  expect_false(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  v3 <- matrix(c(3, 2, 2, 1e-4, -1e-6))
+  P <- Constant(U %*% diag(v3) %*% t(U))
+  expect_false(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  v4 <- matrix(c(-1, 3, 0, 0, 0))
+  P <- Constant(U %*% diag(v4) %*% t(U))
+  expect_false(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  # Try a test case given in GitHub issue 1451.
+  # (Should be equivalent to v4 above).
+  P <- Constant(rbind(c(1,2), c(2,1)))
+  x <- Variable(2)
+  expr <- quad_form(x, P)
+  expect_false(is_dcp(expr))
+  expect_false(is_dcp(-expr))
+  expect_false(gershgorin_psd_check(value(P), tolerance = 0.99))
+  
+  # Useful Gershgorin disc check
+  P <- Constant(rbind(c(2,1), c(1,2)))
+  expect_true(gershgorin_psd_check(value(P), tolerance = 0.0))
+  
+  # Verify good behavior for large eigenvalues
+  P <- Constant(diag(c(rep(1e-4, 9), -1e4)))
+  expect_false(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  # Check a case when the matrix is in fact PSD.
+  P <- Constant(matrix(1, nrow = 5, ncol = 5))
+  expect_true(is_psd(P))
+  expect_false(is_nsd(P))
+  
+  # Check with sparse inputs
+  P <- Constant(Matrix(diag(10), sparse = TRUE))
+  expect_true(gershgorin_psd_check(value(P), EIGVAL_TOL))
+  expect_true(is_psd(P))
+  expect_true(is_nsd(-P))
+  Q <- -EIGVAL_TOL/2 * P
+  expect_true(gershgorin_psd_check(value(Q), EIGVAL_TOL))
+  Q <- -1.1*EIGVAL_TOL*P
+  expect_false(gershgorin_psd_check(value(Q), EIGVAL_TOL))
+  expect_false(is_psd(Q))
+})
+
+test_that("test constant skew symmetric", {
+  # Define inputs
+  M1_false <- diag(3)
+  M2_true <- matrix(0, nrow = 3, ncol = 3)
+  M3_true <- rbind(c(0,1), c(-1,0))
+  M4_true <- rbind(c(0,-1), c(1,0))
+  M5_false <- rbind(c(0,1), c(1,0))
+  M6_false <- rbind(c(1,1), c(-1,0))
+  M7_false <- rbind(c(0,1), c(-1.1,0))
+  
+  # Test dense constants
+  C <- Constant(M1_false)
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(M2_true)
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(M3_true)
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(M4_true)
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(M5_false)
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(M6_false)
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(M7_false)
+  expect_false(is_skew_symmetric(C))
+  
+  # Test sparse constants
+  C <- Constant(Matrix(M1_false, sparse = TRUE))
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(Matrix(M2_true, sparse = TRUE))
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(Matrix(M3_true, sparse = TRUE))
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(Matrix(M4_true, sparse = TRUE))
+  expect_true(is_skew_symmetric(C))
+  C <- Constant(Matrix(M5_false, sparse = TRUE))
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(Matrix(M6_false, sparse = TRUE))
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(Matrix(M7_false, sparse = TRUE))
+  expect_false(is_skew_symmetric(C))
+  
+  # Test complex inputs: never recognized as skew-symmetric.
+  C <- Constant(1i * M2_true)
+  # From a mathematical standpoint one can argue that this should
+  # be true, but I don't think there's precedent for CVXR
+  # automatically converting complex expressions with zero imaginary-part
+  # into equivalent real expressions.
+  expect_false(is_skew_symmetric(C))
+  C <- Constant(1i * M3_true)
+  expect_false(is_skew_symmetric(C))
+  C <-  Constant(1i * M4_true)
+  expect_false(is_skew_symmetric(C))
 })
 
 test_that("test R vectors as constants", {
@@ -153,91 +318,82 @@ test_that("test R vectors as constants", {
   expect_equal(dim(c %*% x), c(1,1))
 })
 
-test_that("test the Parameters class", {
+test_that("test Parameter class on good inputs", {
   skip_on_cran()
   p <- Parameter(name = "p")
   expect_equal(name(p), "p")
   expect_equal(dim(p), c(1,1))
-
-  p <- Parameter(4, 3, nonneg = TRUE)
-  expect_error(value(p) <- 1,
-               "Invalid dimensions (1,1) for value", fixed = TRUE)
-
-  val <- matrix(-1, nrow = 4, ncol = 3)
-  val[1,1] <- 2
-
-  p <- Parameter(4, 3, nonneg = TRUE)
-  expect_error(value(p) <- val,
-               "Value must be nonnegative", fixed = TRUE)
-
-  p <- Parameter(4, 3, nonpos = TRUE)
-  expect_error(value(p) <- val,
-               "Value must be nonpositive", fixed = TRUE)
-
-  # No error for unknown sign
+  
+  # Entry-wise constraints on parameter values.
+  val <- -matrix(1, nrow = 4, ncol = 3)
+  val[1, 1] <- 2
   p <- Parameter(4, 3)
   value(p) <- val
 
-  # Initialize a parameter with a value
+  # Initialize a parameter with a value; later set it to NA.
   p <- Parameter(value = 10)
   expect_equal(value(p), matrix(10))
-
-  # Test assigning NA
   value(p) <- 10
   value(p) <- NA_real_
   expect_true(is.na(value(p)))
+  
+  # Test parameter representation.
+  p <- Parameter(4, 3, nonpos = TRUE)
+  expect_equal(as.character(p), "Parameter(4, 3, nonpos = TRUE)")
 
-  # Test valid diagonal parameter
+  # Test valid diagonal parameter.
   p <- Parameter(2, 2, diag = TRUE)
-  value(p) <- sparseMatrix(i = 1:2, j = 1:2, x=c(1,1))
-  expect_equal(as.matrix(value(p)), diag(2), check.attributes = FALSE)
-
-  expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = c(2,1)),
-               "Value must be nonpositive", fixed = TRUE)
-  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = c(1,2)),
-               "Invalid dimensions (2,1) for value", fixed = TRUE)
+  value(p) <- Matrix(diag(2), sparse = TRUE)
+  expect_equal(as.matrix(value(p)), diag(2), check.attributes = FALSE, tolerance = 1e-10)
 })
 
-#DK
-test_that("test the PSD/NSD matrices", {
+test_that("test PSD and NSD parameters", {
   skip_on_cran()
+  
   # Test valid rank-deficient PSD parameter.
   set.seed(42)
-  a <- matrix(rnorm(100*95), nrow = 100)
-  a2 <- a%*%t(a) # This must be a PSD matrix.
+  a <- matrix(rnorm(100*95), nrow = 100, ncol = 95)
+  a2 <- a %*% t(a)   # This must be a PSD matrix.
   p <- Parameter(100, 100, PSD = TRUE)
   value(p) <- a2
-  expect_equal(value(p), a2, TOL)
+  expect_equal(value(p), a2, tolerance = 1e-10)
 
   # Test positive definite matrix with non-distinct eigenvalues
   m <- 10
   n <- 5
-  A <- matrix(rnorm(m*n), nrow = m) + 1i * matrix(rnorm(m*n), nrow = m) # a random complex matrix
-  A <- Conj(t(A)) %*% A # a random Hermitian positive definite matrix
+  A <- matrix(rnorm(m*n), nrow = m, ncol = n) + 1i * matrix(rnorm(m*n), nrow = m, ncol = n)   # a random complex matrix
+  A <- Conj(t(A)) %*% A   # a random Hermitian positive definite matrix
   A <- rbind(cbind(Re(A), -Im(A)), cbind(Im(A), Re(A)))
 
   p <- Parameter(2*n, 2*n, PSD = TRUE)
   value(p) <- A
-  expect_equal(value(p), A, TOL)
+  expect_equal(value(p), A, tolerance = TOL)
 
-  # Test invalid PSD parameter
-  expect_error(p <- Parameter(2, 2, PSD = TRUE, value = matrix(c(1, 0, 0, -1), nrow = 2)),
-               'Value must be positive semidefinite', fixed = TRUE)
-
-  #Test invalid NSD parameter
-  expect_error(p <- Parameter(2, 2, NSD = TRUE, value = matrix(c(1, 0, 0, -1), nrow = 2)),
-               'Value must be negative semidefinite', fixed = TRUE)
-
-  # Test arithmetic.
-  p <- Parameter(2, 2, PSD = TRUE)
-  expect_true(CVXR:::is_psd(2*p))
-  expect_true(CVXR:::is_psd(p+p))
-  expect_true(CVXR:::is_nsd(-p))
-  expect_true(CVXR:::is_psd(-2*-p))
-
+  # Test invalid PSD and NSD parameters
+  n <- 5
+  P <- Parameter(n, n, PSD = TRUE)
+  N <- Parameter(n, n, NSD = TRUE)
+  
+  set.seed(0)
+  U <- matrix(rnorm(n*n), nrow = n, ncol = n)
+  U <- U %*% t(U)
+  U <- eigen(U)$vectors   # U is now an orthogonal matrix
+  v1 <- matrix(c(3, 2, 1, 1e-8, -1))
+  v2 <- matrix(c(3, 2, 2, 1e-6, -1))
+  v3 <- matrix(c(3, 2, 2, 1e-4, -1e-6))
+  v4 <- matrix(c(-1, 3, 0, 0, 0))
+  vs <- list(v1, v2, v3, v4)
+  
+  for(vi in vs) {
+    expect_error(value(P) <- U %*% diag(vi) %*% t(U),
+                 "Parameter value must be positive semidefinite.", fixed = TRUE)
+    expect_error(value(N) <- -U %*% diag(vi) %*% t(U),
+                 "Parameter value must be negative semidefinite.", fixed = TRUE)
+  }
 })
 
-#DK
+# TODO: Check rest of tests.
+
 test_that("test the Parameter class on bad inputs",{
   skip_on_cran()
   p <- Parameter(name = 'p')

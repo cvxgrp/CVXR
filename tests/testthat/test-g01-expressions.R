@@ -392,8 +392,6 @@ test_that("test PSD and NSD parameters", {
   }
 })
 
-# TODO: Check rest of tests.
-
 test_that("test the Parameter class on bad inputs",{
   skip_on_cran()
   p <- Parameter(name = 'p')
@@ -401,44 +399,45 @@ test_that("test the Parameter class on bad inputs",{
   expect_equal(dim(p), c(1,1))
 
   p <- Parameter(4, 3, nonneg = TRUE)
-  #DK: I changed this from the python version because the dimensions aren't exactly the same as in cvxpy
-  expect_error(value(p) <- c(1,1), "Invalid dimensions (2,1) for value", fixed = TRUE)
+  expect_error(value(p) <- 1, "Invalid dimensions c(1,1) for Parameter value.", fixed = TRUE)
+  # expect_error(value(p) <- c(1,1), "Invalid dimensions (2,1) for Parameter value.", fixed = TRUE)
 
-  val <- matrix(rep(-1, 12), nrow = 4)
+  val <- -matrix(1, nrow = 4, ncol = 3)
   val[1,1] <- 2
 
   p <- Parameter(4, 3, nonneg = TRUE)
-  expect_error(value(p) <- val, 'Value must be nonnegative', fixed = TRUE)
+  expect_error(value(p) <- val, "Parameter value must be nonnegative.", fixed = TRUE)
 
   p <- Parameter(4, 3, nonpos = TRUE)
-  expect_error(value(p) <- val, 'Value must be nonpositive', fixed = TRUE)
+  expect_error(value(p) <- val, "Parameter value must be nonpositive.", fixed = TRUE)
 
   expect_error(p <- Parameter(2, 1, nonpos = TRUE, value = matrix(c(2,1))),
-               'Value must be nonpositive', fixed = TRUE)
+               "Parameter value must be nonpositive", fixed = TRUE)
 
-  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = matrix(c(2,1))),
-               'Invalid dimensions (2,1) for value', fixed = TRUE)
+  expect_error(p <- Parameter(4, 3, nonneg = TRUE, value = matrix(c(1,2))),
+               "Invalid dimensions (2,1) for Parameter value.", fixed = TRUE)
 
   expect_error(p <- Parameter(2, 2, diag = TRUE, symmetric = TRUE),
-               'Cannot set more than one special attribute.', fixed = TRUE)
+               "Cannot set more than one special attribute in Parameter.", fixed = TRUE)
 
   # Boolean
-  expect_error(p <- Parameter(2, 2, boolean = TRUE, value = matrix(c(1, 1, 1, -1), nrow = 2)),
-               'Value must be boolean', fixed = TRUE)
+  expect_error(p <- Parameter(2, 2, boolean = TRUE, value = rbind(c(1,1), c(1,-1))),
+               "Parameter value must be boolean.", fixed = TRUE)
 
   # Integer
-  expect_error(p <- Parameter(2, 2, integer = TRUE, value = matrix(c(1, 1.5, 1, -1), nrow = 2)),
-               'Value must be integer', fixed = TRUE)
+  expect_error(p <- Parameter(2, 2, integer = TRUE, value = rbind(c(1,1.5), c(1,-1))),
+               "Parameter value must be integer.", fixed = TRUE)
 
   # Diag
-  expect_error(p <- Parameter(2, 2, diag = TRUE, value = matrix(c(1, 1, 1, -1), nrow = 2)),
-               'Value must be diagonal', fixed = TRUE)
+  expect_error(p <- Parameter(2, 2, diag = TRUE, value = rbind(c(1,1), c(1,-1))),
+               "Parameter value must be diagonal.", fixed = TRUE)
 
   # Symmetric
-  expect_error(p <- Parameter(2, 2, symmetric = TRUE, value = matrix(c(1, 1, -1, -1), nrow = 2)),
-               'Value must be symmetric', fixed = TRUE)
-
+  expect_error(p <- Parameter(2, 2, symmetric = TRUE, value = rbind(c(1,1), c(-1,-1))),
+               "Parameter value must be symmetric.", fixed = TRUE)
 })
+
+# TODO: Check rest of tests.
 
 #DK
 test_that("test symmetric variables",{

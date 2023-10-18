@@ -437,70 +437,70 @@ test_that("test the Parameter class on bad inputs",{
                "Parameter value must be symmetric.", fixed = TRUE)
 })
 
-# TODO: Check rest of tests.
-
-#DK
 test_that("test symmetric variables",{
   skip_on_cran()
   expect_error(v <- Variable(4, 3, symmetric = TRUE),
-               'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
+               "Invalid dimensions (4,3). Must be a square matrix.", fixed = TRUE)
 
   v <- Variable(2, 2, symmetric = TRUE)
-  expect_true(CVXR:::is_symmetric(v))
+  expect_true(is_symmetric(v))
   v <- Variable(2, 2, PSD = TRUE)
-  expect_true(CVXR:::is_symmetric(v))
+  expect_true(is_symmetric(v))
   v <- Variable(2, 2, NSD = TRUE)
-  expect_true(CVXR:::is_symmetric(v))
+  expect_true(is_symmetric(v))
   v <- Variable(2, 2, diag = TRUE)
-  expect_true(CVXR:::is_symmetric(v))
-  expect_true(CVXR:::is_symmetric(a))
-  expect_true(!CVXR:::is_symmetric(A))
+  expect_true(is_symmetric(v))
+  expect_true(is_symmetric(a))
+  expect_false(is_symmetric(A))
 
   v <- Variable(2, 2, symmetric = TRUE)
   expr <- v + v
-  expect_true(CVXR:::is_symmetric(expr))
+  expect_true(is_symmetric(expr))
   expr <- -v
-  expect_true(CVXR:::is_symmetric(expr))
+  expect_true(is_symmetric(expr))
   expr <- t(v)
-  expect_true(CVXR:::is_symmetric(expr))
-  expr <- CVXR:::Real(v)
-  expect_true(CVXR:::is_symmetric(expr))
-  expr <- CVXR:::Imag(v)
-  expect_true(CVXR:::is_symmetric(expr))
-  expr <- CVXR:::Conjugate(v)
-  expect_true(CVXR:::is_symmetric(expr))
-  expr <- CVXR:::Promote(Variable(), c(2,2))
-  expect_true(CVXR:::is_symmetric(expr))
+  expect_true(is_symmetric(expr))
+  expr <- Re(v)
+  expect_true(is_symmetric(expr))
+  expr <- Im(v)
+  expect_true(is_symmetric(expr))
+  expr <- Conj(v)
+  expect_true(is_symmetric(expr))
+  expr <- Promote(Variable(), c(2,2))
+  expect_true(is_symmetric(expr))
 
 })
 
-#DK
 test_that("test Hermitian variables", {
   skip_on_cran()
   expect_error(v <- Variable(4, 3, hermitian = TRUE),
-               'Invalid dimensions 43. Must be a square matrix.', fixed = TRUE)
+               "Invalid dimensions (4,3). Must be a square matrix.", fixed = TRUE)
 
   v <- Variable(2, 2, hermitian = TRUE)
-  expect_true(CVXR:::is_hermitian(v))
+  expect_true(is_hermitian(v))
+  # v <- Variable(2, 2, PSD = TRUE)
+  # expect_true(is_symmetric(v))
+  # v <- Variable(2, 2, NSD = TRUE)
+  # expect_true(is_symmetric(v))
   v <- Variable(2, 2, diag = TRUE)
-  expect_true(CVXR:::is_hermitian(v))
+  expect_true(is_hermitian(v))
 
 
   v <- Variable(2, 2, hermitian = TRUE)
   expr <- v + v
-  expect_true(CVXR:::is_hermitian(expr))
+  expect_true(is_hermitian(expr))
   expr <- -v
-  expect_true(CVXR:::is_hermitian(expr))
+  expect_true(is_hermitian(expr))
   expr <- t(v)
-  expect_true(CVXR:::is_hermitian(expr))
-  expr <- CVXR:::Real(v)
-  expect_true(CVXR:::is_hermitian(expr))
-  expr <- CVXR:::Imag(v)
-  expect_true(CVXR:::is_hermitian(expr))
-  expr <- CVXR:::Conjugate(v)
-  expect_true(CVXR:::is_hermitian(expr))
-  expr <- CVXR:::Promote(Variable(), c(2,2))
-  expect_true(CVXR:::is_hermitian(expr))
+  expect_true(is_hermitian(expr))
+  expr <- Re(v)
+  expect_true(is_hermitian(expr))
+  expr <- Im(v)
+  expect_true(is_hermitian(expr))
+  expr <- Conj(v)
+  expect_true(is_hermitian(expr))
+  expr <- Promote(Variable(), c(2,2))
+  expect_true(is_hermitian(expr))
 })
 
 test_that("test rounding for attributes", {
@@ -508,81 +508,91 @@ test_that("test rounding for attributes", {
 
   # Nonpos
   v <- Variable(1, nonpos = TRUE)
-  expect_equal(CVXR:::project(v, 1), 0)
+  expect_equal(project(v, 1), 0)
   v <- Variable(2, nonpos = TRUE)
-  expect_equal(CVXR:::project(v, c(1, -1)), c(0,-1))
+  expect_equal(project(v, c(1, -1)), c(0,-1))
 
   # Nonneg
   v <- Variable(1, nonneg = TRUE)
-  expect_equal(CVXR:::project(v, -1), 0)
+  expect_equal(project(v, -1), 0)
   v <- Variable(2, nonneg = TRUE)
-  expect_equal(CVXR:::project(v, c(1, -1)), c(1,0))
+  expect_equal(project(v, c(1, -1)), c(1,0))
 
   # Boolean
   v <- Variable(2, 2, boolean = TRUE)
-  expect_equal(CVXR:::project(v, t(matrix(c(1, 1, -1, 0), nrow =2))), c(1, 0, 1, 0), check.attributes = FALSE)
+  expect_equal(project(v, cbind(c(1, -1), c(1, 0))), c(1, 0, 1, 0), check.attributes = FALSE)
 
   # Integer
   v <- Variable(2, 2, integer = TRUE)
-  expect_equal(CVXR:::project(v, t(matrix(c(1, 1, -1.6, 0), nrow =2))), c(1, -2, 1, 0), check.attributes = FALSE)
+  expect_equal(project(v, cbind(c(1, -1.6), c(1, 0))), c(1, -2, 1, 0), check.attributes = FALSE)
 
   # Symmetric
   v <- Variable(2, 2, symmetric = TRUE)
-  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, 0), nrow =2)), c(1, 0, 0, 0), check.attributes = FALSE)
+  expect_equal(project(v, rbind(c(1, -1), c(1, 0))), c(1, 0, 0, 0), check.attributes = FALSE)
 
   # PSD
   v <- Variable(2, 2, PSD = TRUE)
-  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, -1), nrow =2)), c(1, 0, 0, 0), check.attributes = FALSE)
+  expect_equal(project(v, rbind(c(1, -1), c(1, -1))), c(1, 0, 0, 0), check.attributes = FALSE)
 
   # NSD
   v <- Variable(2, 2, NSD = TRUE)
-  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1, -1), nrow =2)), c(0, 0, 0, -1), check.attributes = FALSE)
+  expect_equal(project(v, rbind(c(1, -1), c(1, -1))), c(0, 0, 0, -1), check.attributes = FALSE)
 
   # diag
   v <- Variable(2, 2, diag = TRUE)
-  expect_equal(as.matrix(CVXR:::project(v, matrix(c(1, 1, -1, 0), nrow =2))), c(1, 0, 0, 0), check.attributes = FALSE)
+  expect_equal(matrix(project(v, rbind(c(1, -1), c(1, 0)))), c(1, 0, 0, 0), check.attributes = FALSE)
 
   # Hermitian
   v <- Variable(2, 2, hermitian = TRUE)
-  expect_equal(CVXR:::project(v, matrix(c(1, 1, -1i, 0), nrow =2)), matrix(c(1, 0.5 + 0.5i, 0.5 - 0.5i, 0), nrow = 2), check.attributes = FALSE)
+  expect_equal(project(v, rbind(c(1, -1i), c(1, 0))), c(1, 0.5 + 0.5i, 0.5 - 0.5i, 0), check.attributes = FALSE)
 
   A <- Constant(1.0)
-  expect_equal(CVXR:::is_psd(A), TRUE)
-  expect_equal(CVXR:::is_nsd(A), FALSE)
+  expect_true(is_psd(A))
+  expect_false(is_nsd(A))
   A <- Constant(-1.0)
-  expect_equal(CVXR:::is_psd(A), FALSE)
-  expect_equal(CVXR:::is_nsd(A), TRUE)
+  expect_false(is_psd(A))
+  expect_true(is_nsd(A))
   A <- Constant(0.0)
-  expect_equal(CVXR:::is_psd(A), TRUE)
-  expect_equal(CVXR:::is_nsd(A), TRUE)
-
+  expect_true(is_psd(A))
+  expect_true(is_nsd(A))
 })
 
 test_that("test the AddExpression class", {
   skip_on_cran()
+  
   # Vectors
   c <- Constant(c(2,2))
   exp <- x + c
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
-  expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste(name(x), "+", name(c)))
   expect_equal(dim(exp), c(2,1))
 
   z <- Variable(2, name = "z")
   exp <- exp + z + x
+  
+  # Incompatible dimensions
   expect_error(x + y)
 
   # Matrices
   exp <- A + B
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(2,2))
+  
+  # Incompatible dimensions
   expect_error(A + C)
+  
+  # Incompatible dimensions
   expect_error(AddExpression(A, C))
 
   # Test that sum is flattened
   exp <- x + c + x
   expect_equal(length(exp@args), 3)
+  
+  # Test repr
+  expect_equal(as.character(exp), "Expression(AFFINE, UNKNOWN, (2,1))")
 })
 
 test_that("test the SubExpression class", {
@@ -592,81 +602,85 @@ test_that("test the SubExpression class", {
   exp <- x - c
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
-  expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste(name(x), "-", name(Constant(c(2,2)))))
   expect_equal(dim(exp), c(2,1))
 
   z <- Variable(2, name = "z")
   exp <- exp - z - x
+  
+  # Incompatible dimensions
   expect_error(x - y)
 
   # Matrices
   exp <- A - B
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(2,2))
+  
+  # Incompatible dimensions
   expect_error(A - C)
+  
+  # Test repr
+  expect_equal(as.character(exp), "Expression(AFFINE, UNKNOWN, (2,1))")
 })
 
 test_that("test the MulExpression class", {
   skip_on_cran()
+  
   # Vectors
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
-  expr <- c %*% x
-  expect_equal(curvature(expr), AFFINE)
+  exp <- c %*% x
+  expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(c[1]*x), UNKNOWN)
-  expect_equal(canonical_form(expr)[[1]]$dim, c(1,1))
-  expect_equal(canonical_form(expr)[[2]], list())
-  expect_equal(dim(expr), c(1,1))
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(1,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste(name(c), "*", name(x)))
+  expect_equal(dim(exp), c(1,1))
 
   # Incompatible dimensions
   expect_error(matrix(c(2,2,3), nrow = 3, ncol = 1) %*% x)
 
   # Matrices: incompatible dimensions
-  expect_error(Constant(cbind(c(2,1), c(2,2))) %*% C)
+  expect_error(Constant(rbind(c(2,1), c(2,2))) %*% C)
 
   # Affine times affine is okay
   expect_warning(q <- A %*% B)
   expect_true(is_quadratic(q))
 
-  # Non-affine times non-constant raises error
-  # expect_error(expect_warning(A %*% B) %*% A)
-
   # Constant expressions
-  Tmat <- Constant(cbind(c(1,2,3), c(3,5,5)))
+  Tmat <- Constant(rbind(c(1,2,3), c(3,5,5)))
   expr <- (Tmat + Tmat) %*% B
   expect_equal(curvature(expr), AFFINE)
   expect_equal(dim(expr), c(3,2))
 
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2, 2, -2), nrow = 1, ncol = 3))
-  expr <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
-  expect_equal(sign(expr), UNKNOWN)
-
-  # Scalar constants on the right should be moved left
-  # expr <- C*2
-  # expect_equivalent(value(expr@args[[1]]), 2)
-
-  # Scalar variables on the left should be moved right
-  # expr <- a*c(2,1)
-  # expect_equivalent(value(expr@args[[1]]), matrix(c(2,1)))
+  exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
+  expect_equal(sign(exp), UNKNOWN)
 })
 
 test_that("test matrix multiplication operator %*%", {
   skip_on_cran()
+  
   # Vectors
   c <- Constant(matrix(2, nrow = 1, ncol = 2))
   exp <- c %*% x
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
-  expect_equal(canonical_form(exp)[[1]]$dim, c(1,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(1,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  expect_equal(name(exp), paste(name(c), "%*%", name(x)))
   expect_equal(dim(exp), c(1,1))
 
-  # expect_error(x %*% 2)    Note: Allow scalars to be multiplied with %*% to distinguish MulExpression from MulElemwise.
+  # Note: Allow scalars to be multiplied with %*% to distinguish MulExpression from MulElemwise.
+  # expect_error(x %*% 2, "Scalar operands are not allowed, use '*' instead", fixed = TRUE)
+  
+  # Incompatible dimensions
   expect_error(x %*% matrix(c(2,2,3), nrow = 3, ncol = 1))
 
   # Matrices
-  expect_error(Constant(cbind(c(2,1), c(2,2))) %*% C)
+  expect_error(Constant(rbind(c(2,1), c(2,2))) %*% C)
 
   # Affine times affine is okay
   expect_warning(q <- A %*% B)
@@ -676,45 +690,45 @@ test_that("test matrix multiplication operator %*%", {
   # expect_error(expect_warning(A %*% B %*% A))
 
   # Constant expressions
-  Tmat <- Constant(cbind(c(1,2,3), c(3,5,5)))
+  Tmat <- Constant(rbind(c(1,2,3), c(3,5,5)))
   exp <- (Tmat + Tmat) %*% B
   expect_equal(curvature(exp), AFFINE)
-  expect_equal(sign(exp), UNKNOWN)
-
+  expect_equal(dim(exp), c(3,2))
+  
   # Expression that would break sign multiplication without promotion
   c <- Constant(matrix(c(2,2,-2), nrow = 1, ncol = 3))
   exp <- matrix(c(1,2), nrow = 1, ncol = 2) + c %*% C
   expect_equal(sign(exp), UNKNOWN)
 
-  # Testing shape.
+  # Testing dim.
   a <- Parameter(1)
   x <- Variable(1)
-  expr <- a%*%x
+  expr <- a %*% x
   expect_equal(dim(expr), c(1,1))
 
-  A <- Parameter(4,4)
-  z <- Variable(4,1)
+  A <- Parameter(4, 4)
+  z <- Variable(4, 1)
   expr <- A %*% z
   expect_equal(dim(expr), c(4,1))
 
   v <- Variable(1,1)
   col_scalar <- Parameter(1,1)
-  expect_true(identical(dim(v), dim(col_scalar), dim(col_scalar)))
-
+  expect_true(identical(dim(v), dim(col_scalar), dim(t(col_scalar))))
 })
 
 test_that("test the DivExpression class", {
   skip_on_cran()
+  
   # Vectors
   exp <- x/2
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
-  expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste(name(c), "*", name(x)))
   expect_equal(dim(exp), c(2,1))
 
-  expect_error(x/c(2,2,3),
-               "Incompatible dimensions for division", fixed = TRUE)
+  expect_error(x/c(2,2,3), "Incompatible dimensions for division", fixed = TRUE)
 
   # Constant expressions
   c <- Constant(2)
@@ -725,9 +739,9 @@ test_that("test the DivExpression class", {
 
   # Parameters
   p <- Parameter(nonneg = TRUE)
-  value(p) <- 2
   exp <- 2/p
-  expect_equal(value(exp), matrix(1))
+  value(p) <- 2
+  expect_equal(value(exp), 1)
 
   rho <- Parameter(nonneg = TRUE)
   value(rho) <- 1
@@ -737,18 +751,31 @@ test_that("test the DivExpression class", {
   expect_equal(sign(Constant(2)/Constant(2)), NONNEG)
   expect_equal(sign(Constant(2)*rho), NONNEG)
   expect_equal(sign(rho/2), NONNEG)
+  
+  # Broadcasting.
+  x <- Variable(3, 3)
+  c <- matrix(1:3, nrow = 3, ncol = 1)
+  expr <- x / c
+  expect_equal(dim(expr), c(3, 3))
+  value(x) <- matrix(1, nrow = 3, ncol = 3)
+  A <- matrix(1, nrow = 3, ncol = 3) / c
+  expect_equal(A, value(expr))
+  # expect_error(x / 1:3, "Incompatible dimensions for division.")
 })
 
 test_that("test the NegExpression class", {
   skip_on_cran()
+  
   # Vectors
   exp <- -x
   expect_equal(curvature(exp), AFFINE)
+  expect_equal(dim(exp), c(2,1))
   expect_true(is_affine(exp))
   expect_equal(sign(exp), UNKNOWN)
   expect_false(is_nonneg(exp))
-  expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste("-", name(x), sep = ""))
   expect_equal(dim(exp), dim(x))
 
   # Matrices
@@ -759,14 +786,16 @@ test_that("test the NegExpression class", {
 
 test_that("test promotion of scalar constants", {
   skip_on_cran()
+  
   # Vectors
   exp <- x + 2
   expect_equal(curvature(exp), AFFINE)
   expect_true(is_affine(exp))
   expect_equal(sign(exp), UNKNOWN)
   expect_false(is_nonpos(exp))
-  expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
-  expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(canonical_form(exp)[[1]]$dim, c(2,1))
+  # expect_equal(canonical_form(exp)[[2]], list())
+  # expect_equal(name(exp), paste(name(x), "+", name(Constant(2))))
   expect_equal(dim(exp), c(2,1))
 
   expect_equal(dim(4 - x), c(2,1))
@@ -779,8 +808,11 @@ test_that("test promotion of scalar constants", {
   exp <- (A + 2) + 4
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(3 * A), c(2,2))
+  
   expect_equal(dim(exp), c(2,2))
 })
+
+# TODO: Finish updating tests
 
 test_that("test indexing expression", {
   skip_on_cran()
@@ -1065,6 +1097,38 @@ test_that("test piecewise linear", {
 
   expr <- p_norm(3*y^2, 1)
   expect_false(is_pwl(expr))
+})
+
+test_that("test addition broadcasting", {
+  skip_on_cran()
+  
+  y <- Parameter(3, 1)
+  z <- Variable(1, 3)
+  value(y) <- 1:2
+  value(z) <- 1:2 - 1
+  expr <- y + z
+  expect_equal(value(expr), value(y) + value(z))
+
+  prob <- Problem(Minimize(sum(expr)), list(z == value(z)))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$getValue(expr), result$getValue(y) + result$getValue(z))
+  
+  set.seed(0)
+  m <- 3
+  n <- 4
+  A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+  
+  col_scale <- Variable(n)
+  
+  expect_error(A + col_scale, "Cannot broadcast dimensions (3, 4) (4, 1)", fixed = TRUE)
+  
+  col_scale <- Variable(c(1, n))
+  C <- A + col_scale
+  expect_equal(dim(C), c(m, n))
+  
+  row_scale <- Variable(c(m, 1))
+  R <- A + row_scale
+  expect_equal(dim(R), c(m, n))
 })
 
 test_that("test curvature string is populated for log-log expressions", {

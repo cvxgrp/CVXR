@@ -816,32 +816,43 @@ test_that("test promotion of scalar constants", {
 
 test_that("test indexing expression", {
   skip_on_cran()
+  
   # Tuple of integers as key
   exp <- x[2,1]
+  # expect_equal(name(exp), "x[2,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_true(is_affine(exp))
   expect_equal(dim(exp), c(1,1))
+  # coeff <- coefficients(canonical_form(exp)[[1]])[[as.character(id(x))]][[1]]
+  # expect_equal(coeff[1,2], 1)
   expect_equal(value(exp), NA_real_)
 
   exp <- t(x[2,1])
+  # expect_equal(name(exp), "x[2,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
-  expect_error(x[3,1])
-  expect_error(x[3])
+  
+  expect_error(x[3,1], "Too many indices for expression", fixed = TRUE)
+  expect_error(x[3], "Index 2 is out of bounds for axis 2 with size 2", fixed = TRUE)
 
   # Slicing
   exp <- C[1:2,2]
+  # expect_equal(name(exp), "C[1:2,2]")
   expect_equal(dim(exp), c(2,1))
   exp <- C[1:nrow(C),1:2]
+  # expect_equal(name(exp), "C[1:nrow(C),1:2]")
   expect_equal(dim(exp), c(3,2))
   exp <- C[seq(1, nrow(C), 2), seq(1, ncol(C), 2)]
+  # expect_equal(name(exp), "C[seq(1::3,1::3)]")
   expect_equal(dim(exp), c(2,1))
   exp <- C[1:3, seq(1,2,2)]
+  # expect_equal(name(exp), "C[1:3,1]")
   expect_equal(dim(exp), c(3,1))
   exp <- C[1:nrow(C),1]
+  # expect_equal(name(exp), "C[1:,1]")
   expect_equal(dim(exp), c(3,1))
 
-  c <- Constant(cbind(c(1,-2), c(0,4)))
+  c <- Constant(rbind(c(1,-2), c(0,4)))
   exp <- c[2,2]
   expect_equal(curvature(exp), CONSTANT)
   expect_equal(sign(exp), UNKNOWN)
@@ -850,7 +861,7 @@ test_that("test indexing expression", {
   expect_equal(dim(exp), c(1,1))
   expect_equal(value(exp), matrix(4))
 
-  c <- Constant(cbind(c(1,-2,3), c(0,4,5), c(7,8,9)))
+  c <- Constant(rbind(c(1,-2,3), c(0,4,5), c(7,8,9)))
   exp <- c[1:3, seq(1,4,2)]
   expect_equal(curvature(exp), CONSTANT)
   expect_true(is_constant(exp))
@@ -863,39 +874,47 @@ test_that("test indexing expression", {
 
   # Arithmetic expression indexing
   exp <- (x + z)[2,1]
+  # expect_equal(name(exp), "x[2,1] + z[2,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(sign(exp), UNKNOWN)
   expect_equal(dim(exp), c(1,1))
 
   exp <- (x + a)[2,1]
+  # expect_equal(name(exp), "x[2,1] + a")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 
   exp <- (x - z)[2,1]
+  # expect_equal(name(exp), "x[2,1] - z[2,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 
   exp <- (x - a)[2,1]
+  # expect_equal(name(exp), "x[2,1] - a")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 
   exp <- (-x)[2,1]
+  # expect_equal(name(exp), "-x[2,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- (c %*% x)[2,1]
+  # expect_equal(name(exp), "(2,4)^T * x[1:,1]")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- (c*a)[2,1]
+  # expect_equal(name(exp), "2*a")
   expect_equal(curvature(exp), AFFINE)
   expect_equal(dim(exp), c(1,1))
 })
 
-# DK: not sure if applicable in CVXR
+# Note: Not really applicable to CVXR, but leaving here for records.
 # test_that("test NA as idx", {
+#   skip_on_cran()
 #   expr <- a[NA, NA]
 #   expect_equal(dim(expr), c(1, 1))
 #
@@ -910,28 +929,32 @@ test_that("test indexing expression", {
 #   expect_equal(value(expr), c(1,2))
 #
 # })
-# test_that("test ouf of bounds indices", {
-#   expect_error(x[100])
-#   expect_error(x[-100])
-# })
 
 test_that("test out of bounds indices", {
   skip_on_cran()
-  expect_error(x[100])
-  expect_error(x[c(1,-2)])
+  # TODO: These tests, especially for negative indices, need to be adapted to CVXR.
+  
+  expect_error(x[100], "Index 100 is out of bounds for axis 1 with size 2", fixed = TRUE)
+  expect_error(x[-100], "Index -100 is out of bounds for axis 1 with size 2", fixed = TRUE)
 
   exp <- x[-100]
-  expect_equal(dim(exp), c(2,1))
-
-  exp <- x[0]
-  expect_equal(dim(exp), c(0,1))
-  expect_equal(value(exp), matrix(NA, nrow = 0, ncol = 0))
-
-  # TODO_NARAS_8: More testing of R's out of bounds indices. R's behavior is different from Python, so we can't copy CVXPY's tests.
+  expect_equal(size(exp), 1)
+  expect_equal(value(exp), c())
+  
+  exp <- C[100:2]
+  expect_equal(dim(exp), c(1,2))
+  
+  exp <- C[,-199:2]
+  expect_equal(dim(exp), c(3,2))
+  
+  exp <- C[,-199:-3]
+  expect_equal(dim(exp), c(3,1))
 })
 
 test_that("test negative indices", {
   skip_on_cran()
+  # TODO: Double check indexing matches Python unit tests.
+  
   c <- Constant(rbind(c(1,2), c(3,4)))
   exp <- c[-1,-1]
   expect_equal(value(exp), matrix(4))
@@ -939,7 +962,7 @@ test_that("test negative indices", {
   expect_equal(curvature(exp), CONSTANT)
 
   c <- Constant(1:4)
-  exp <- c[c(-1,-4)]
+  exp <- c[2:(nrow(c)-1)]
   expect_equal(value(exp), matrix(c(2,3)))
   expect_equal(dim(exp), c(2,1))
   expect_equal(curvature(exp), CONSTANT)
@@ -953,15 +976,25 @@ test_that("test negative indices", {
   x <- Variable(4)
   expect_equal(dim(x[seq(4,1,-1)]), c(4,1))
   prob <- Problem(Minimize(0), list(x[seq(4,1,-1)] == c))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$getValue(x), matrix(c(4,3,2,1)))
 
-  # TODO_NARAS_9: More testing of R's negative indices (and sequences of negative indices)
+  x <- Variable(2)
+  expect_equal(dim(x[seq(4,1,-1)]), c(2,1))
+  
+  c <- Constant(rbind(c(1,2), c(3,4)))
+  expr <- c[1, seq(2,1,-1)]
+  expect_equal(dim(expr), c(1,1))
+  expect_equal(value(expr), matrix(3))
+  
+  expr <- c[1, seq(2,1,-1)]
+  expect_equal(dim(expr), c(2,1))
+  expect_equal(value(expr), matrix(c(3,1)))
 })
 
 test_that("test indexing with logical matrices", {
   skip_on_cran()
-    ##  require(Matrix)
+  
   A <- rbind(1:4, 5:8, 9:12)
   C <- Constant(A)
 
@@ -983,7 +1016,7 @@ test_that("test indexing with logical matrices", {
   expect_equal(matrix(A[c(TRUE, FALSE, TRUE), 4]), value(expr))
 
   # Index for rows, logical vector for columns
-  expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]
+  expr <- C[2, c(TRUE, FALSE, FALSE, TRUE)]   # TODO: Add option for drop = TRUE in overloaded [.
   expect_equal(dim(expr), c(1, 2))
   expect_equal(sign(expr), NONNEG)
   expect_equal(A[2, c(TRUE, FALSE, FALSE, TRUE), drop = FALSE], value(expr))
@@ -995,8 +1028,8 @@ test_that("test indexing with logical matrices", {
   expect_equal(A[c(TRUE, TRUE, TRUE), 2:3], value(expr))
 
   # Slice for rows, logical vector for columns
-  expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]
-  expect_equal(dim(expr), c(1,3))    # Always cast 1-D arrays as column vectors. Edit: NOT!!
+  expr <- C[2:(nrow(C)-1), c(TRUE, FALSE, TRUE, TRUE)]   # TODO: Add option for drop = TRUE in overloaded [.
+  expect_equal(dim(expr), c(1,3))
   expect_equal(sign(expr), NONNEG)
   expect_equal(A[2:(nrow(A)-1), c(TRUE, FALSE, TRUE, TRUE), drop = FALSE], value(expr))
 
@@ -1025,7 +1058,7 @@ test_that("test indexing with vectors/matrices of indices", {
   expect_equal(matrix(A[c(1,3),4]), value(expr))
 
   # Index for rows, vector for columns
-  expr <- C[2,c(1,3)]
+  expr <- C[2,c(1,3)]   # TODO: Add option for drop = TRUE in overloaded [.
   expect_equal(dim(expr), c(1,2))
   expect_equal(sign(expr), NONNEG)
   expect_equal(A[2,c(1,3), drop = FALSE], value(expr))
@@ -1037,10 +1070,10 @@ test_that("test indexing with vectors/matrices of indices", {
   expect_equal(A[c(1,3), 2:3], value(expr))
 
   # Vector for rows and columns
-  expr <- C[c(1,2), c(2,4)]
+  expr <- C[2:(nrow(C)-1), c(2,4)]
   expect_equal(dim(expr), c(2,2))
   expect_equal(sign(expr), NONNEG)
-  expect_equal(A[c(1,2), c(2,4)], value(expr))
+  expect_equal(A[2:(nrow(C)-1), c(2,4)], value(expr))
 
   # Matrix for rows, vector for columns
   expr <- C[matrix(c(1,2)), c(2,4)]
@@ -1065,23 +1098,52 @@ test_that("test powers", {
   expect_equal(curvature(exp), CONVEX)
 })
 
-test_that("test built-in sum (not good usage)", {
+test_that("test sum_entries function", {
   skip_on_cran()
   a_copy <- a
   value(a_copy) <- 1
-  expr <- sum(a_copy)
+  expr <- sum_entries(a_copy)
   expect_equal(value(expr), 1)
 
   x_copy <- x
   value(x_copy) <- c(1,2)
-  expr <- sum(x_copy)
+  expr <- sum_entries(x_copy)
   expect_equal(value(expr), 3)
+})
+
+test_that("test copy function for variable types", {
+  skip_on_cran()
+  x <- Variable(3, 4, name = "x")
+  y <- copy(x)
+  expect_equal(dim(y), c(3,4))
+  expect_equal(name(y), "x")
+  
+  x <- Variable(5, 5, PSD = TRUE, name = "x")
+  y <- copy(x)
+  expect_equal(dim(y), c(5,5))
+})
+
+test_that("test copy function for Parameters", {
+  skip_on_cran()
+  x <- Parameter(3, 4, name = "x", nonneg = TRUE)
+  y <- copy(x)
+  expect_equal(dim(y), c(3,4))
+  expect_equal(name(y), "x")
+  expect_equal(sign(y), NONNEG)
+})
+
+test_that("test copy function for Constants", {
+  skip_on_cran()
+  x <- Constant(2)
+  y <- copy(x)
+  expect_equal(dim(y), c(1,1))
+  expect_equal(value(y), 2)
 })
 
 test_that("test piecewise linear", {
   skip_on_cran()
-  A <- matrix(stats::rnorm(6), nrow = 2, ncol = 3)
-  b <- matrix(stats::rnorm(2))
+  A <- matrix(1, nrow = 2, ncol = 3)
+  b <- matrix(c(1, 1))
 
   expr <- A %*% y - b
   expect_true(is_pwl(expr))
@@ -1097,6 +1159,33 @@ test_that("test piecewise linear", {
 
   expr <- p_norm(3*y^2, 1)
   expect_false(is_pwl(expr))
+})
+
+test_that("test multiply broadcasting", {
+  skip_on_cran()
+  
+  y <- Parameter(3, 1)
+  z <- Variable(1, 3)
+  value(y) <- 1:2
+  value(z) <- (1:2 - 1)
+  expr <- multiply(y, z)
+  expect_equal(value(expr), value(y)*value(z))
+  
+  prob <- Problem(Minimize(sum(expr)), list(z == value(z)))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$getValue(expr), result$getValue(y)*result$getValue(z))
+  
+  set.seed(0)
+  m <- 3
+  n <- 4
+  A <- matrix(runif(m*n), nrow = m, ncol = n)
+  
+  col_scale <- Variable(n)
+  expect_error(multiply(A, col_scale), "Cannot broadcast dimensions (3,4) (4,1)", fixed = TRUE)
+  
+  col_scale <- Variable(m, 1)
+  R <- multiply(A, row_scale)
+  expect_equal(dim(R), c(m,n))
 })
 
 test_that("test addition broadcasting", {

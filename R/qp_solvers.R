@@ -12,14 +12,17 @@ is_stuffed_qp_objective <- function(objective) {
 #'
 #' A QP solver interface.
 #'
-setClass("QpSolver", representation(IS_MIP = "character"), prototype(IS_MIP = "IS_MIP"), contains = "ReductionSolver")   # Key IS_MIP for internal use only!
+# Slots IS_MIP, REQUIRES_CONSTR, and SUPPORTED_CONSTRAINTS are for internal use only!
+setClass("QpSolver", representation(IS_MIP = "character", REQUIRES_CONSTR = "logical", SUPPORTED_CONSTRAINTS = "character"), 
+                     prototype(IS_MIP = "IS_MIP", REQUIRES_CONSTR = FALSE, SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonPosConstraint")), 
+         contains = "ReductionSolver")
 
 #' @param object A \linkS4class{QpSolver} object.
 #' @describeIn QpSolver What classes of constraints does the solver support?
-setMethod("supported_constraints", "QpSolver", function(object) { c("ZeroConstraint", "NonPosConstraint") })
+setMethod("supported_constraints", "QpSolver", function(object) { object@SUPPORTED_CONSTRAINTS })
 
 #' @describeIn QPSolver Can the solver solve problems that do not have constraints?
-setMethod("requires_constr", "QpSolver", function(object) { FALSE })
+setMethod("requires_constr", "QpSolver", function(object) { object@REQUIRES_CONSTR })
 
 #' @param object A \linkS4class{QpSolver} object.
 #' @param problem A \linkS4class{Problem} object.

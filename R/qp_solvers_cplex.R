@@ -5,7 +5,7 @@
 #' @aliases CPLEX_QP
 #' @rdname CPLEX_QP-class
 #' @export
-setClass("CPLEX_QP", contains = "QpSolver")
+setClass("CPLEX_QP", prototype(MIP_CAPABLE = TRUE), contains = "QpSolver")
 
 #' @rdname CPLEX_QP-class
 #' @export
@@ -20,10 +20,7 @@ constraint_cplex_infty <- function(v) {
   return(pmin(pmax(v, -CPLEX_INF), CPLEX_INF))
 }
 
-#' @param x,object,solver A \linkS4class{CPLEX_QP} object.
-#' @describeIn CPLEX_QP Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "CPLEX_QP", function(solver) { TRUE })
-
+#' @param x,object A \linkS4class{CPLEX_QP} object.
 #' @param status A status code returned by the solver.
 #' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
 #' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.

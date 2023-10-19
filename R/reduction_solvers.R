@@ -83,14 +83,15 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
 #' Generic interface for a solver that uses reduction semantics.
 #'
 #' @slot DIMS The key that maps to ConeDims in the data returned by perform(). There are separate ConeDims classes for cone programs vs. QPs. See matrix stuffing functions for details.
+#' @slot MIP_CAPABLE Can the solver handle mixed-integer programs?
 #' @rdname ReductionSolver-class
-setClass("ReductionSolver", representation(DIMS = "character", VAR_ID = "character", DUAL_VAR_ID = "character", EQ_CONSTR = "character", NEQ_CONSTR = "character"),   # Keys for inverse data. Internal use only!
-                            prototype(DIMS = "dims", VAR_ID = "var_id", DUAL_VAR_ID = "dual_var_id", EQ_CONSTR = "eq_constr", NEQ_CONSTR = "other_constr"), contains = "Reduction")
+setClass("ReductionSolver", representation(DIMS = "character", VAR_ID = "character", DUAL_VAR_ID = "character", EQ_CONSTR = "character", NEQ_CONSTR = "character", MIP_CAPABLE = "logical"),   # Keys for inverse data. Internal use only!
+                            prototype(DIMS = "dims", VAR_ID = "var_id", DUAL_VAR_ID = "dual_var_id", EQ_CONSTR = "eq_constr", NEQ_CONSTR = "other_constr", MIP_CAPABLE = FALSE), contains = "Reduction")
 
 # Solver capabilities.
 #' @param solver,object,x A \linkS4class{ReductionSolver} object.
 #' @describeIn ReductionSolver Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "ReductionSolver", function(solver) { FALSE })
+setMethod("mip_capable", "ReductionSolver", function(solver) { solver@MIP_CAPABLE })
 
 #' @describeIn ReductionSolver Returns the name of the solver
 setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
@@ -137,11 +138,7 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
 #'
 #' The ConstantSolver class.
 #'
-ConstantSolver <- setClass("ConstantSolver", contains = "ReductionSolver")
-
-#' @param solver,object,x A \linkS4class{ConstantSolver} object.
-#' @describeIn ConstantSolver Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "ConstantSolver", function(solver) { TRUE })
+ConstantSolver <- setClass("ConstantSolver", prototype(MIP_CAPABLE = TRUE), contains = "ReductionSolver")
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConstantSolver Is the solver capable of solving the problem?

@@ -43,15 +43,18 @@ is_stuffed_cone_objective <- function(objective) {
 #' Conic solver class with reduction semantics.
 #'
 #' @rdname ConicSolver-class
-ConicSolver <- setClass("ConicSolver", representation(dims = "character"),   # The key that maps to ConeDims in the data returned by perform().
-                                       prototype(dims = "dims"), contains = "ReductionSolver")
+ConicSolver <- setClass("ConicSolver", representation(dims = "character", REQUIRES_CONSTR = "logical", SUPPORTED_CONSTRAINTS = "character", MI_SUPPORTED_CONSTRAINTS = "character"),   # The key that maps to ConeDims in the data returned by perform().
+                                       prototype(dims = "dims", REQUIRES_CONSTR = FALSE, SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonNegConstraint"), MI_SUPPORTED_CONSTRAINTS = c()), contains = "ReductionSolver")
 
 # Every conic solver must support Zero and NonPos constraints.
-setMethod("supported_constraints", "ConicSolver", function(solver) { c("ZeroConstraint", "NonPosConstraint") })
+setMethod("supported_constraints", "ConicSolver", function(solver) { solver@SUPPORTED_CONSTRAINTS })
+
+# By default, mixed-integer constraints are not supported
+setMethod("mi_supported_constraints", "ConicSolver", function(solver) { solver@MI_SUPPORTED_CONSTRAINTS })
 
 # Some solvers cannot solve problems that do not have constraints.
 # For such solvers, requires_constr should return TRUE.
-setMethod("requires_constr", "ConicSolver", function(solver) { FALSE })
+setMethod("requires_constr", "ConicSolver", function(solver) { solver@REQUIRES_CONSTR })
 
 #' @param object A \linkS4class{ConicSolver} object.
 #' @param problem A \linkS4class{Problem} object.
@@ -239,16 +242,13 @@ setMethod("invert", signature(object = "ConicSolver", solution = "Solution", inv
 #' @rdname ECOS-class
 #' @export
 setClass("ECOS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
-                 prototype(exp_cone_order = c(0, 2, 1)), contains = "ConicSolver")
+                 prototype(exp_cone_order = c(0, 2, 1), MIP_CAPABLE = FALSE, 
+                           SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC", "ExpCone")), 
+         contains = "ConicSolver")
 
 #' @rdname ECOS-class
 #' @export
 ECOS <- function() { new("ECOS") }
-
-# Solver capabilities.
-#' @describeIn ECOS Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "ECOS", function(solver) { FALSE })
-setMethod("supported_constraints", "ECOS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone") })
 
 # EXITCODES from ECOS
 # ECOS_OPTIMAL  (0)   Problem solved to optimality
@@ -397,17 +397,16 @@ setMethod("solve_via_data", "ECOS", function(object, data, warm_start, verbose,
 #' @rdname SCS-class
 #' @export
 setClass("SCS", representation(exp_cone_order = "numeric"),   # Order of exponential cone arguments for solver. Internal only!
-                prototype(exp_cone_order = c(0, 1, 2)), contains = "ConicSolver")
+                prototype(exp_cone_order = c(0, 1, 2), MIP_CAPABLE = FALSE, REQUIRES_CONSTR = TRUE, 
+                          SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint")), 
+         contains = "ConicSolver")
 
 #' @rdname SCS-class
 #' @export
 SCS <- function() { new("SCS") }
 
 # Solver capabilities.
-#' @describeIn SCS Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "SCS", function(solver) { FALSE })
-setMethod("requires_constr", "SCS", function(solver) { TRUE })
-setMethod("supported_constraints", "SCS", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "ExpCone", "PSDConstraint") })
+setMethod("requires_constr", "SCS", function(solver) { solver@REQUIRES_CONSTR })
 
 # Map of SCS status to CVXR status.
 #' @param solver,object,x A \linkS4class{SCS} object.
@@ -627,15 +626,12 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
 #' @aliases CBC_CONIC
 #' @rdname CBC_CONIC-class
 #' @export
-setClass("CBC_CONIC", contains = "SCS")
+setClass("CBC_CONIC", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver()),
+                                MI_SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver())), contains = "SCS")
 
 #' @rdname CBC_CONIC-class
 #' @export
 CBC_CONIC <- function() { new("CBC_CONIC") }
-
-# Solver capabilities.
-#' @describeIn CBC_CONIC Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "CBC_CONIC", function(solver) { TRUE })
 
 #' @param solver,object,x A \linkS4class{CBC_CONIC} object.
 #' @param status A status code returned by the solver.
@@ -818,15 +814,12 @@ setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verb
 #' @aliases CPLEX_CONIC
 #' @rdname CPLEX_CONIC-class
 #' @export
-CPLEX_CONIC <- setClass("CPLEX_CONIC", contains = "SCS")
+CPLEX_CONIC <- setClass("CPLEX_CONIC", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC"),
+                                                 MI_SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC")), contains = "SCS")
 
 #' @rdname CPLEX_CONIC-class
 #' @export
 CPLEX_CONIC <- function() { new("CPLEX_CONIC") }
-
-#' @describeIn CPLEX_CONIC Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "CPLEX_CONIC", function(solver) { TRUE })
-setMethod("supported_constraints", "CPLEX_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 #' @param solver,object,x A \linkS4class{CPLEX_CONIC} object.
 #' @describeIn CPLEX_CONIC Returns the name of the solver.
@@ -1094,14 +1087,9 @@ setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, ve
 
 #' An interface for the CVXOPT solver.
 #'
-setClass("CVXOPT", contains = "ECOS")
+setClass("CVXOPT", prototype(MIP_CAPABLE = FALSE, SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint")), contains = "ECOS")
 
 CVXOPT <- function() { new("CVXOPT") }
-
-# Solver capabilities.
-#' @describeIn CVXOPT Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "CVXOPT", function(solver) { FALSE })
-setMethod("supported_constraints", "CVXOPT", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint") })
 
 # Map of CVXOPT status to CVXR status.
 #' @param solver,object,x A \linkS4class{CVXOPT} object.
@@ -1310,16 +1298,15 @@ setMethod("solve_via_data", "CVXOPT", function(object, data, warm_start, verbose
 #' @aliases ECOS_BB
 #' @rdname ECOS_BB-class
 #' @export
-setClass("ECOS_BB", contains = "ECOS")
+setClass("ECOS_BB", representation(MI_SUPPORTED_CONSTRAINTS = "character"), 
+                    prototype(MIP_CAPABLE = TRUE, MI_SUPPORTED_CONSTRAINTS = supported_constraints(ECOS())), 
+         contains = "ECOS")
 
 #' @rdname ECOS_BB-class
 #' @export
 ECOS_BB <- function() { new("ECOS_BB") }
 
-#' @param solver,object,x A \linkS4class{ECOS_BB} object.
-#' @describeIn ECOS_BB Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "ECOS_BB", function(solver) { TRUE })
-
+#' @param object,x A \linkS4class{ECOS_BB} object.
 #' @describeIn ECOS_BB Returns the name of the solver.
 setMethod("name", "ECOS_BB", function(x) { ECOS_BB_NAME })
 
@@ -1399,15 +1386,11 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 #' @aliases GLPK
 #' @rdname GLPK-class
 #' @export
-setClass("GLPK", contains = "CVXOPT")
+setClass("GLPK", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver())), contains = "CVXOPT")
 
 #' @rdname GLPK-class
 #' @export
 GLPK <- function() { new("GLPK") }
-
-#' @describeIn GLPK Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "GLPK", function(solver) { TRUE })
-setMethod("supported_constraints", "GLPK", function(solver) { supported_constraints(ConicSolver()) })
 
 #' @param solver,object,x A \linkS4class{GLPK} object.
 #' @param status A status code returned by the solver.
@@ -1537,15 +1520,12 @@ setMethod("solve_via_data", "GLPK", function(object, data, warm_start, verbose, 
 #' @aliases GLPK_MI
 #' @rdname GLPK_MI-class
 #' @export
-setClass("GLPK_MI", contains = "GLPK")
+setClass("GLPK_MI", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver()),
+                              MI_SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver())), contains = "GLPK")
 
 #' @rdname GLPK_MI-class
 #' @export
 GLPK_MI <- function() { new("GLPK_MI") }
-
-#' @describeIn GLPK_MI Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "GLPK_MI", function(solver) { TRUE })
-setMethod("supported_constraints", "GLPK_MI", function(solver) { supported_constraints(ConicSolver()) })
 
 # Map of GLPK_MI status to CVXR status.
 #' @param solver,object,x A \linkS4class{GLPK_MI} object.
@@ -1655,17 +1635,12 @@ setMethod("solve_via_data", "GLPK_MI", function(object, data, warm_start, verbos
 #' @aliases GUROBI_CONIC
 #' @rdname GUROBI_CONIC-class
 #' @export
-setClass("GUROBI_CONIC", contains = "SCS")
+setClass("GUROBI_CONIC", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC"),
+                                   MI_SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC")), contains = "SCS")
 
 #' @rdname GUROBI_CONIC-class
 #' @export
 GUROBI_CONIC <- function() { new("GUROBI_CONIC") }
-
-# Solver capabilities.
-#' @param solver,object,x A \linkS4class{GUROBI_CONIC} object.
-#' @describeIn GUROBI_CONIC Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "GUROBI_CONIC", function(solver) { TRUE })
-setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
 
 # Is this one that's used? Should we delete?
 # Map of Gurobi status to CVXR status.
@@ -1685,6 +1660,7 @@ setMethod("supported_constraints", "GUROBI_CONIC", function(solver) { c(supporte
 #     stop("GUROBI status unrecognized: ", status)
 # })
 
+#' @param object,x A \linkS4class{GUROBI_CONIC} object.
 #' @describeIn GUROBI_CONIC Returns the name of the solver.
 setMethod("name", "GUROBI_CONIC", function(x) { GUROBI_NAME })
 
@@ -1926,7 +1902,10 @@ setMethod("solve_via_data", "GUROBI_CONIC", function(object, data, warm_start, v
 #' @rdname MOSEK-class
 #' @export
 setClass("MOSEK", representation(exp_cone_order = "numeric"),   # Order of exponential cone constraints. Internal only!
-                  prototype(exp_cone_order = c(2, 1, 0)), contains = "ConicSolver")
+                  prototype(exp_cone_order = c(2, 1, 0), MIP_CAPABLE = TRUE,
+                            SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint", "ExpCone"),
+                            MI_SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC")),   # Does not support MISDP.
+         contains = "ConicSolver")
 
 #' @rdname MOSEK-class
 #' @export
@@ -1975,11 +1954,7 @@ psd_coeff_offset <- function(problem, c) {
   return(list(G, h, dim))
 }
 
-#' @param solver,object,x A \linkS4class{MOSEK} object.
-#' @describeIn MOSEK Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "MOSEK", function(solver) { TRUE })
-setMethod("supported_constraints", "MOSEK", function(solver) { c(supported_constraints(ConicSolver()), "SOC", "PSDConstraint", "ExpCone") })
-
+#' @param object,x A \linkS4class{MOSEK} object.
 #' @describeIn MOSEK Imports the solver.
 #' @importFrom utils packageDescription
 setMethod("import_solver", "MOSEK", function(solver) {
@@ -2776,11 +2751,8 @@ tri_to_full <- function(lower_tri, n) {
 #   return(results)
 # })
 
-# XPRESS <- setClass("XPRESS", contains = "SCS")
-#
-# # Solver capabilities.
-# setMethod("mip_capable", "XPRESS", function(solver) { TRUE })
-# setMethod("supported_constraints", "XPRESS", function(solver) { c(supported_constraints(ConicSolver()), "SOC") })
+# XPRESS <- setClass("XPRESS", prototype(MIP_CAPABLE = TRUE, SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC"),
+#                                        MI_SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC")), contains = "SCS")
 #
 # # Map of XPRESS status to CVXR status.
 # setMethod("status_map", "XPRESS", function(solver, status) {

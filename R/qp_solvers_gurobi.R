@@ -5,16 +5,13 @@
 #' @aliases GUROBI_QP
 #' @rdname GUROBI_QP-class
 #' @export
-setClass("GUROBI_QP", contains = "QpSolver")
+setClass("GUROBI_QP", prototype(MIP_CAPABLE = TRUE), contains = "QpSolver")
 
 #' @rdname GUROBI_QP-class
 #' @export
 GUROBI_QP <- function() { new("GUROBI_QP") }
 
-#' @param solver,object,x A \linkS4class{GUROBI_QP} object.
-#' @describeIn GUROBI_QP Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
-
+#' @param object,x A \linkS4class{GUROBI_QP} object.
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_QP", function(solver, status, default = NA) {

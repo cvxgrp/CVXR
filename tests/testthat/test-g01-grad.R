@@ -10,97 +10,126 @@ C <- Variable(3, 2, name = "C")
 
 test_that("Test gradient for affine_prod", {
   skip_on_cran()
-  value(C) <- rbind(c(1,-2), c(3,4), c(-1,-3))
-  value(A) <- rbind(c(3,2), c(-5,1))
-  expect_warning(expr <- C %*% A)
+  
+  C_copy <- C
+  A_copy <- A
+  expr <- C_copy %*% A_copy
+  value(C_copy) <- rbind(c(1,-2), c(3,4), c(-1,-3))
+  value(A_copy) <- rbind(c(3,2), c(-5,1))
 
-  expect_equivalent(as.matrix(grad(expr)[[as.character(C@id)]]), rbind(c(3,0,0,2,0,0), c(0,3,0,0,2,0), c(0,0,3,0,0,2),
-                                                    c(-5,0,0,1,0,0), c(0,-5,0,0,1,0), c(0,0,-5,0,0,1)))
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), rbind(c(1,3,-1,0,0,0), c(-2,4,-3,0,0,0), c(0,0,0,1,3,-1),
-                                                   c(0,0,0,-2,4,-3)))
+  arr_val <- rbind(c(3,0,0,2,0,0), c(0,3,0,0,2,0), c(0,0,3,0,0,2),
+                   c(-5,0,0,1,0,0), c(0,-5,0,0,1,0), c(0,0,-5,0,0,1))
+  expect_equivalent(matrix(grad(expr)[[as.character(id(C_copy))]]), arr_val)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), 
+                    rbind(c(1,3,-1,0,0,0), c(-2,4,-3,0,0,0), 
+                          c(0,0,0,1,3,-1), c(0,0,0,-2,4,-3)))
 })
 
 test_that("Test gradient for p_norm", {
   skip_on_cran()
-  value(x) <- c(-1,0)
-  expr <- p_norm(x, 1)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(-1,0)))
+  
+  x_copy <- x
+  value(x_copy) <- c(-1,0)
+  expr <- p_norm(x_copy, 1)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(-1,0)))
 
-  value(x) <- c(0,10)
-  expr <- p_norm(x, 1)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(0,1)))
+  value(x_copy) <- c(0,10)
+  expr <- p_norm(x_copy, 1)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(0,1)))
 
-  value(x) <- c(-3,4)
-  expr <- p_norm(x, 2)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(-3.0/5,4.0/5)))
+  value(x_copy) <- c(-3,4)
+  expr <- p_norm(x_copy, 2)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(-3.0/5, 4.0/5)))
 
-  value(x) <- c(-1,2)
-  expr <- p_norm(x, 0.5)
-  expect_true(is.na(grad(expr)[[as.character(x@id)]]))
+  value(x_copy) <- c(-1,2)
+  expr <- p_norm(x_copy, 0.5)
+  expect_true(is.na(grad(expr)[[as.character(id(x_copy))]]))
 
-  value(x) <- c(0,0)
-  expr <- p_norm(x, 0.5)
-  expect_true(is.na(grad(expr)[[as.character(x@id)]]))
+  value(x_copy) <- c(0,0)
+  expr <- p_norm(x_copy, 0.5)
+  expect_true(is.na(grad(expr)[[as.character(id(x_copy))]]))
 
-  value(x) <- c(0,0)
-  expr <- p_norm(x, 2)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(0,0)))
+  value(x_copy) <- c(0,0)
+  expr <- p_norm(x_copy, 2)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(0,0)))
 
-  value(A) <- rbind(c(2,-2), c(2,2))
-  expr <- p_norm(A, 2)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(0.5,0.5,-0.5,0.5)))
+  value(x_copy) <- c(1,2)
+  expr <- p_norm(x_copy, 2, axis = 1)
+  val <- diag(2)
+  expect_equal(matrix(grad(expr))[[as.character(id(x_copy))]], val)
+  
+  A_copy <- A
+  value(A_copy) <- rbind(c(2,-2), c(2,2))
+  expr <- p_norm(A_copy, 2)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), matrix(c(0.5, 0.5, -0.5, 0.5)))
 
-  value(A) <- rbind(c(3,-3), c(4,4))
-  expr <- p_norm(A, 2, axis = 2)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), rbind(c(0.6,0), c(0.8,0), c(0,-0.6), c(0,0.8)))
+  value(A_copy) <- rbind(c(3,-3), c(4,4))
+  expr <- p_norm(A_copy, 2, axis = 2)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), rbind(c(0.6,0), c(0.8,0), c(0,-0.6), c(0,0.8)))
 
-  value(A) <- rbind(c(3,-4), c(4,3))
-  expr <- p_norm(A, 2, axis = 1)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), rbind(c(0.6,0), c(0,0.8), c(-0.8,0), c(0,0.6)))
+  value(A_copy) <- rbind(c(3,-4), c(4,3))
+  expr <- p_norm(A_copy, 2, axis = 1)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), rbind(c(0.6,0), c(0,0.8), c(-0.8,0), c(0,0.6)))
 
-  value(A) <- rbind(c(3,-4), c(4,3))
-  expr <- p_norm(A, 0.5)
-  expect_true(is.na(grad(expr)[[as.character(A@id)]]))
+  value(A_copy) <- rbind(c(0,0), c(10,0))
+  expr <- p_norm(A_copy, 2, axis = 1)
+  expect_equivalent(matrix(grad(expr))[[as.character(id(A_copy))]], rbind(c(0,0), c(0,1), c(0,0), c(0,0)))
+  
+  value(A_copy) <- rbind(c(0,0), c(10,0))
+  expr <- p_norm(A_copy, 1, axis = 1)
+  expect_equivalent(matrix(grad(expr))[[as.character(id(A_copy))]], rbind(c(0,0), c(0,1), c(0,0), c(0,0)))
+  
+  value(A_copy) <- rbind(c(3,-4), c(4,3))
+  expr <- p_norm(A_copy, 0.5)
+  expect_true(is.na(grad(expr)[[as.character(id(A_copy))]]))
 })
 
 test_that("Test gradient for log_sum_exp", {
   skip_on_cran()
-  value(x) <- c(0,1)
-  expr <- log_sum_exp(x)
+  
+  x_copy <- x
+  value(x_copy) <- c(0,1)
+  expr <- log_sum_exp(x_copy)
   e <- exp(1)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(1.0/(1+e), e/(1+e))))
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(1.0/(1+e), e/(1+e))))
 
-  value(A) <- rbind(c(0,1), c(-1,0))
-  expr <- log_sum_exp(A)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(1.0/(2+e+1.0/e), 1.0/e/(2+e+1.0/e), e/(2+e+1.0/e), 1.0/(2+e+1.0/e))))
+  A_copy <- A
+  value(A_copy) <- rbind(c(0,1), c(-1,0))
+  expr <- log_sum_exp(A_copy)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), matrix(c(1.0/(2+e+1.0/e), 1.0/e/(2+e+1.0/e), e/(2+e+1.0/e), 1.0/(2+e+1.0/e))))
 
-  value(A) <- rbind(c(0,1), c(-1,0))
-  expr <- log_sum_exp(A, axis = 2)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), cbind(c(1.0/(1+1.0/e), 1.0/e/(1+1.0/e), 0, 0), c(0, 0, e/(1+e), 1.0/(1+e))))
+  value(A_copy) <- rbind(c(0,1), c(-1,0))
+  expr <- log_sum_exp(A_copy, axis = 2)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A_copy))]]), cbind(c(1.0/(1+1.0/e), 1.0/e/(1+1.0/e), 0, 0), c(0, 0, e/(1+e), 1.0/(1+e))))
 })
 
 test_that("Test gradient for geo_mean", {
   skip_on_cran()
-  value(x) <- c(1,2)
-  expr <- geo_mean(x)
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(sqrt(2)/2, 1.0/2/sqrt(2))))
+  
+  x_copy <- x
+  value(x_copy) <- c(1,2)
+  expr <- geo_mean(x_copy)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(sqrt(2)/2, 1.0/2/sqrt(2))))
 
-  value(x) <- c(0,2)
-  expr <- geo_mean(x)
-  expect_true(is.na(grad(expr)[[as.character(x@id)]]))
+  value(x_copy) <- c(0,2)
+  expr <- geo_mean(x_copy)
+  expect_true(is.na(grad(expr)[[as.character(id(x_copy))]]))
 
-  value(x) <- c(1,2)
-  expr <- geo_mean(x, c(1,0))
-  expect_equivalent(as.matrix(grad(expr)[[as.character(x@id)]]), matrix(c(1,0)))
+  value(x_copy) <- c(1,2)
+  expr <- geo_mean(x_copy, c(1,0))
+  expect_equivalent(as.matrix(grad(expr)[[as.character(id(x_copy))]]), matrix(c(1,0)))
 
   # No exception for single weight
-  value(x) <- c(-1,2)
-  expr <- geo_mean(x, c(1,0))
-  expect_true(is.na(grad(expr)[[as.character(x@id)]]))
+  value(x_copy) <- c(-1,2)
+  expr <- geo_mean(x_copy, c(1,0))
+  expect_true(is.na(grad(expr)[[as.character(id(x_copy))]]))
 })
+
+# TODO: Finish checking tests.
 
 test_that("Test gradient for lambda_max", {
   skip_on_cran()
+  
   value(A) <- cbind(c(2,0), c(0,1))
   expr <- lambda_max(A)
   expect_equivalent(as.matrix(grad(expr)[[as.character(A@id)]]), matrix(c(1,0,0,0)))

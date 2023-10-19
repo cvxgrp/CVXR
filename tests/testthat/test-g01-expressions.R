@@ -812,8 +812,6 @@ test_that("test promotion of scalar constants", {
   expect_equal(dim(exp), c(2,2))
 })
 
-# TODO: Finish updating tests
-
 test_that("test indexing expression", {
   skip_on_cran()
   

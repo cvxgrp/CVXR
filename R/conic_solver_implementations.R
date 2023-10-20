@@ -974,20 +974,6 @@ setMethod("solve_via_data", "ECOS_BB", function(object, data, warm_start, verbos
   return(solution)
 })
 
-#'
-#' Utility method for formatting a ConeDims instance into a dictionary
-#' that can be supplied to ECOS.
-#'
-#' @param cone_dims A \linkS4class{ConeDims} instance.
-#' @return A dictionary of cone dimensions
-#' @export
-ECOS.dims_to_solver_dict <- function(cone_dims) {
-  cones <- list(l = as.integer(cone_dims@nonpos),
-                q = lapply(cone_dims@soc, function(v) { as.integer(v) }),
-                e = as.integer(cone_dims@exp))
-  return(cones)
-}
-
 #' An interface for the GLPK solver.
 #'
 #' @name GLPK-class

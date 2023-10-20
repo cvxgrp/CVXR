@@ -82,14 +82,17 @@ are_args_affine <- function(constraints) {
 #'@return A list keyed by constraint types where list[[cone_type]] maps to a list of exactly those constraints that are of type cone_type.
 group_constraints <- function(constraints) {
   ## The constr_types list below should match the map named used in ConeDims-class (file dcp2cone.R)
-  constr_types <- c("ZeroConstraint", "NonNegConstraint", "SOC", "PSD", "ExpCone", "PowCone3D")
-  constr_map <- vector(mode = "list", length = length(constr_types))
-  names(constr_map) <- constr_types
+  constr_map <- c(ZeroConstraint = list(),
+                    NonNegConstraint = list(),
+                    SOC = list(),
+                    PSD = list(),
+                    ExpCone = list(),
+                    PowCone3D = list())
   for (constr in constraints) {
     cl <- class(constr)
-    constr_map[[cl]] <- append(constr_map[[cl]], constr)
+    constr_map[[cl]] <- append(constr_map[[cl]], list(constr))
   }
-  ## Drop NULLs and return
+  ## Drop empty lists and return
   constr_map[lengths(constr_map) > 0]
 }
 

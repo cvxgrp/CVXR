@@ -39,14 +39,12 @@ dims_to_solver_dict <- function(cone_dims)  {
 ConicSolver <- setClass("ConicSolver",
                         slots = list(
                           # The key that maps to ConeDims in the data returned by apply()
-                          DIMS = "character",
+                          ## DIMS = "character",  Already in super class ReductionSolver
                           # Every conic solver must support Zero and NonNeg constraints.
                           SUPPORTED_CONSTRAINTS = "character",
                           # Some solvers cannot solve problems that do not have constraints.
                           # For such solvers, REQUIRES_CONSTR should be set to True.
                           REQUIRES_CONSTR = "logical",
-                          # By default, MIP constraints not supported
-                          MIP_CAPABLE = "logical",
                           # Does it support quadratic objective?
                           SUPPORTS_QUAD_OBJECTIVE = "logical",
                           # If a solver supports exponential cones, it must specify the corresponding order
@@ -55,10 +53,8 @@ ConicSolver <- setClass("ConicSolver",
                           # Whenever a solver uses this convention, EXP_CONE_ORDER should be [0, 1, 2].
                           EXP_CONE_ORDER = "integer"),
                         prototype =
-                          list(DIMS = "dims",
-                               SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonNegConstraint"),
+                          list(SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonNegConstraint"),
                                REQUIRES_CONSTR = FALSE,
-                               MIP_CAPABLE = FALSE,
                                SUPPORTS_QUAD_OBJECTIVE = FALSE,
                                EXP_CONE_ORDER = integer(0)),
                         contains = "ReductionSolver")
@@ -72,9 +68,6 @@ setMethod("requires_constr", "ConicSolver", function(solver) { solver@REQUIRES_C
 
 # Does this support quadratic objective? By default no.
 setMethod("supports_quad_obj", "ConicSolver", function(solver) { solver@SUPPORTS_QUAD_OBJECTIVE })
-
-# Does this support quadratic objective? By default no.
-setMethod("mip_capable", "ConicSolver", function(solver) { solver@MIP_CAPABLE })
 
 #' @param object A \linkS4class{ConicSolver} object.
 #' @param problem A \linkS4class{Problem} object.

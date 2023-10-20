@@ -32,7 +32,7 @@ test_that("test sign negation", {
   expect_equal(sign(-pos), sign(neg))
 })
 
-test_that("test if sign is nonnegative or nonpositive", {
+test_that("test the is_nonneg and is_nonpos methods", {
   expect_true(is_nonneg(pos))
   expect_false(is_nonneg(neg))
   expect_false(is_nonneg(unknown))

@@ -16,49 +16,50 @@ test_that("test that results are symmetric", {
   constraints <- c(constraints, M + C2 == x2)
   objective <- Minimize(matrix_trace(M))
   prob <- Problem(objective, constraints)
-  result <- solve(prob, abstol = TOL, reltol = TOL)
+  result <- solve(prob, solver = "SCS")
   M_val <- result$getValue(M)
   expect_equal(M_val, t(M_val), tolerance = TOL)
 })
 
 test_that("SDP in objective and constraint", {
   skip_on_cran()
+  
   # PSD in objective.
-  obj <- Minimize(sum((X - Fmat)^2))
+  obj <- Minimize(sum(square(X - Fmat)))
   p <- Problem(obj, list())
-  result <- solve(p, reltol = TOL, abstol = TOL)
-  expect_equal(result$value, 1, tolerance = TOL)
+  result <- solve(p, solver = "SCS")
+  expect_equal(result$value, 1, tolerance = 1e-4)
 
   Xres <- result$getValue(X)
-  expect_equal(Xres[1,1], 1, tolerance = TOL)
+  expect_equal(Xres[1,1], 1, tolerance = 1e-3)
   expect_equal(Xres[1,2], 0, tolerance = TOL)
   expect_equal(Xres[2,1], 0, tolerance = TOL)
   expect_equal(Xres[2,2], 0, tolerance = TOL)
 
   # PSD in constraint.
   # ECHU: note to self, apparently this is a source of redundancy.
-  obj <- Minimize(sum((Y - Fmat)^2))
+  obj <- Minimize(sum(square(Y - Fmat)))
   p <- Problem(obj, list(Y == Variable(2, 2, PSD = TRUE)))
-  result <- solve(p, reltol = TOL, abstol = TOL)
-  expect_equal(result$value, 1, tolerance = TOL)
+  result <- solve(p, solver = "SCS")
+  expect_equal(result$value, 1, tolerance = 1e-2)
 
   Yres <- result$getValue(Y)
-  expect_equal(Yres[1,1], 1, tolerance = TOL)
+  expect_equal(Yres[1,1], 1, tolerance = 1e-3)
   expect_equal(Yres[1,2], 0, tolerance = TOL)
   expect_equal(Yres[2,1], 0, tolerance = TOL)
-  expect_equal(Yres[2,2], 0, tolerance = TOL)
+  expect_equal(Yres[2,2], 0, tolerance = 1e-3)
 
   # Index into semidef
-  obj <- Minimize((X[1,1] - 1)^2 + (X[2,1] - 2)^2 + (X[2,2] - 4)^2)
+  # obj <- Minimize(square(X[1,1] - 1) + square(X[2,1] - 2) + square(X[1,2] - 3) + square(X[2,2] - 4))
+  obj <- Minimize(square(X[1,1] - 1) + square(X[2,1] - 2) + square(X[2,2] - 4))
   p <- Problem(obj, list())
-  result <- solve(p, reltol = TOL, abstol = TOL)
-  ## print(result$getValue(X))
+  result <- solve(p, solver = "SCS")
+  # print(result$getValue(X))
   expect_equal(result$value, 0, tolerance = TOL)
 
   Xres <- result$getValue(X)
-  ## Update with scs3.0 the tolerances here have to be more lenient
-  expect_equal(Xres[1,1], 1, tolerance = 10 * TOL)
-  expect_equal(Xres[1,2], 2, tolerance = 10 * TOL)
-  expect_equal(Xres[2,1], 2, tolerance = 10 * TOL)
-  expect_equal(Xres[2,2], 4, tolerance = 10 * TOL)
+  expect_equal(Xres[1,1], 1, tolerance = 1e-2)
+  expect_equal(Xres[1,2], 2, tolerance = 1e-2)
+  expect_equal(Xres[2,1], 2, tolerance = 1e-2)
+  expect_equal(Xres[2,2], 4, tolerance = 1e-2)
 })

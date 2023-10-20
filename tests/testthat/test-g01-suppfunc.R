@@ -8,7 +8,7 @@ TOL <- 1e-6
 #    Dcp2Cone.suppfunc_canon in dcp2cone
 
 test_that("test Rn", {
-  set.seed(1)
+  set.seed(0)
   n <- 5
   x <- Variable(n)
   sigma <- suppfunc(x, list())
@@ -21,7 +21,7 @@ test_that("test Rn", {
   actual <- result$value
   expected <- t(a) %*% a
   expect_lte(abs(actual - expected), 1e-6)
-  actual <- value(y)
+  actual <- result$getValue(y)
   expected <- a
   expect_lte(base::norm(actual - expected, "2"), 1e-6)
   viol <- result$getViolation(cons[[1]])
@@ -33,7 +33,7 @@ test_that("test vector1norm", {
   set.seed(1)
   a <- matrix(rnorm(n), nrow = n, ncol = 1)
   x <- Variable(n)
-  sigma <- suppfunc(x, list(norm(x - a, 1) <= 1))
+  sigma <- suppfunc(x, list(norm1(x - a) <= 1))
   y <- matrix(rnorm(n), nrow = n, ncol = 1)
   y_var <- Variable(n)
   prob <- Problem(Minimize(sigma(y_var)), list(y == y_var))
@@ -49,15 +49,15 @@ test_that("test vector2norm", {
   set.seed(1)
   a <- matrix(rnorm(n), nrow = n, ncol = 1)
   x <- Variable(n)
-  sigma <- suppfunc(x, list(norm(x - a, 2) <= 1))
+  sigma <- suppfunc(x, list(norm2(x - a) <= 1))
   y <- matrix(rnorm(n), nrow = n, ncol = 1)
   y_var <- Variable(n)
   prob <- Problem(Minimize(sigma(y_var)), list(y == y_var))
   result <- solve(prob, solver = "ECOS")
   actual <- result$value
   expected <- t(a) %*% y + base::norm(y, "2")
-  expect_lte(abs(actual - expected), 1e-5)
-  expect_lte(abs(result$getValue(prob@objective@expr) - result$value), 1e-5)
+  expect_lte(abs(actual - expected), 1e-6)
+  expect_lte(abs(result$getValue(prob@objective@expr) - result$value), 1e-6)
 })
 
 test_that("test rectangular variable", {
@@ -129,7 +129,8 @@ test_that("test expcone 1", {
 
 test_that("test expcone 2", {
   x <- Variable(3)
-  tempcons <- list(sum(x) <= 1.0, sum(x) >= 0.1, x >= 0.01, kl_div(x[2], x[1]) + x[2] - x[1] + x[3] <= 0)
+  tempcons <- list(sum(x) <= 1.0, sum(x) >= 0.1, x >= 0.01, 
+                   kl_div(x[2], x[1]) + x[2] - x[1] + x[3] <= 0)
   sigma <- suppfunc(x, tempcons)
   y <- Variable(3)
   a <- matrix(c(-3, -2, -1))   # This is negative of objective in mosek_conif example.
@@ -148,6 +149,7 @@ test_that("test expcone 2", {
 
 test_that("test basic lmi", {
   set.seed(4)
+  n <- 3
   A <- matrix(rnorm(n^2), nrow = n, ncol = n)
   A <- t(A) %*% A
   X <- Variable(n, n)   # Will fail if you try PSD = TRUE or symmetric = TRUE.
@@ -167,7 +169,7 @@ test_that("test basic lmi", {
 test_that("test invalid solver", {
   n <- 3
   x <- Variable(n)
-  sigma <- suppfunc(x, list(norm(x - rnorm(n), 2) <= 1))
+  sigma <- suppfunc(x, list(norm2(x - rnorm(n)) <= 1))
   y_var <- Variable(n)
   prob <- Problem(Minimize(sigma(y_var)), list(rnorm(n) == y_var))
   expect_error(solve(prob, solver = "OSQP"), ".*could not be reduced to a QP.*")

@@ -320,6 +320,7 @@ test_that("Test abs", {
 
 test_that("Test linearize method", {
   skip_on_cran()
+  
   # Affine
   value(x) <- c(1,2)
   expr <- (2*x - 5)[1]
@@ -335,9 +336,9 @@ test_that("Test linearize method", {
 
   # Convex
   expr <- A^2 + 5
-  expect_error(linearize(expr))
+  expect_error(linearize(expr), "Cannot linearize non-affine expression with missing variable values.", fixed = TRUE)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- A^2 + 5
   lin_expr <- linearize(expr)
   manual <- value(expr) + 2*reshape_expr(value(diag(vec(A))) %*% vec(A - value(A)), c(2, 2))
@@ -388,7 +389,7 @@ test_that("Test gradient for log", {
   expr <- log(x)
   expect_true(is.na(grad(expr)[[as.character(id(x))]]))
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- log(A)
   val <- diag(c(1, 1/2, 1/3, 1/4))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -417,7 +418,7 @@ test_that("Test domain for log1p", {
   expr <- log1p(x)
   expect_true(is.na(grad(expr)[[as.character(id(x))]]))
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- log1p(A)
   val <- diag(c(1/2, 1/3, 1/4, 1/5))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -446,7 +447,7 @@ test_that("Test domain for entr", {
   expr <- entr(x)
   expect_true(is.na(grad(expr)[[as.character(id(x))]]))
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- entr(A)
   val <- diag(-(log(1:4)+1))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -476,7 +477,7 @@ test_that("Test domain for exp", {
   val <- diag(exp(c(-1e-9,4)))
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- exp(A)
   val <- diag(exp(1:4))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -506,7 +507,7 @@ test_that("Test domain for logistic", {
   val <- diag(exp(c(-1e-9,4))/(1+exp(c(-1e-9,4))))
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- logistic(A)
   val <- diag(exp(1:4)/(1+exp(1:4)))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -536,7 +537,7 @@ test_that("Test domain for huber", {
   val <- diag(c(0,2))
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- CVXR::huber(A, M = 3)
   val <- diag(c(2,4,6,6))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -578,13 +579,57 @@ test_that("Test domain for kl_div", {
   expect_true(is.na(grad(expr)[[as.character(id(x))]]))
   expect_true(is.na(grad(expr)[[as.character(id(y))]]))
 
-  value(A) <- cbind(c(1,2), c(3,4))
-  value(B) <- cbind(c(5,1), c(3.5,2.3))
+  value(A) <- rbind(c(1,2), c(3,4))
+  value(B) <- rbind(c(5,1), c(3.5,2.3))
   expr <- kl_div(A, B)
   div <- as.numeric(value(A) / value(B))
   val <- diag(log(div))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
   val <- diag(1-div)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(B))]]), val)
+})
+
+test_that("Test domain for rel_entr", {
+  b <- Variable()
+  expr <- rel_entr(a, b)
+  value(a) <- 2
+  value(b) <- 4
+  expect_equal(grad(expr)[[as.character(id(a))]], log(2/4) + 1)
+  expect_equal(grad(expr)[[as.character(id(b))]], -(2/4))
+  
+  value(a) <- 3
+  value(b) <- 0
+  expr <- rel_entr(a, b)
+  expect_true(is.na(grad(expr)[[as.character(id(a))]]))
+  expect_true(is.na(grad(expr)[[as.character(id(b))]]))
+  
+  value(a) <- -1
+  value(b) <- 2
+  expect_true(is.na(grad(expr)[[as.character(id(a))]]))
+  expect_true(is.na(grad(expr)[[as.character(id(b))]]))
+  
+  y <- Variable(2)
+  expr <- rel_entr(x, y)
+  value(x) <- c(3,4)
+  value(y) <- c(5,8)
+  val <- diag(log(c(3,4)) - log(c(5,8)) + 1)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)
+  val <- diag(c(-3/5,-4/8))
+  expect_equivalent(matrix(grad(expr)[[as.character(id(y))]]), val)
+  
+  expr <- rel_entr(x, y)
+  value(x) <- c(-1e-9,4)
+  value(y) <- c(1,2)
+  expect_true(is.na(grad(expr)[[as.character(id(x))]]))
+  expect_true(is.na(grad(expr)[[as.character(id(y))]]))
+  
+  expr <- rel_entr(A, B)
+  value(A) <- rbind(c(1,2), c(3,4))
+  value(B) <- rbind(c(5,1), c(3.5,2.3))
+  div <- as.numeric(value(A) / value(B))
+  val <- diag(log(div) + 1)
+  expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
+  val <- diag(-div)
   expect_equivalent(matrix(grad(expr)[[as.character(id(B))]]), val)
 })
 
@@ -626,8 +671,8 @@ test_that("Test domain for max_elemwise", {
   val <- diag(c(1,0))
   expect_equivalent(matrix(grad(expr)[[as.character(id(y))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
-  value(B) <- cbind(c(5,1), c(3,2.3))
+  value(A) <- rbind(c(1,2), c(3,4))
+  value(B) <- rbind(c(5,1), c(3,2.3))
   expr <- max_elemwise(A, B)
   div <- as.numeric(value(A) / value(B))
   val <- diag(c(0,1,1,1))
@@ -674,8 +719,8 @@ test_that("Test domain for min_elemwise", {
   val <- diag(c(0,0))
   expect_equivalent(matrix(grad(expr)[[as.character(id(y))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
-  value(B) <- cbind(c(5,1), c(3,2.3))
+  value(A) <- rbind(c(1,2), c(3,4))
+  value(B) <- rbind(c(5,1), c(3,2.3))
   expr <- min_elemwise(A, B)
   div <- as.numeric(value(A) / value(B))
   val <- diag(c(1,0,1,0))
@@ -706,7 +751,7 @@ test_that("Test domain for power", {
   expr <- x^3
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), rbind(c(0,0), c(0,48)))
 
-  value(A) <- cbind(c(1,-2), c(3,4))
+  value(A) <- rbind(c(1,-2), c(3,4))
   expr <- A^2
   val <- diag(c(2,-4,6,8))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
@@ -719,52 +764,52 @@ test_that("Test domain for power", {
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), matrix(0, nrow = 2, ncol = 2))
 })
 
-# test_that("Test grad for partial minimization/maximization problems", {
-  # for(obj in list(Minimize(a^-1), Maximize(Entr(a)))) {
-  #   prob <- Problem(obj, list(x + a >= c(5,8)))
-  #
-  #   # Optimize over nothing
-  #   expr <- partial_optimize(prob, dont_opt_vars = list(x, a))
-  #   value(a) <- NA
-  #   value(x) <- NA
-  #   grad <- grad(expr)
-  #   expect_true(is.na(grad[[as.character(id(a))]]))
-  #   expect_true(is.na(grad[[as.character(id(x))]]))
-  #
-  #   # Outside domain
-  #   value(a) <- 1.0
-  #   value(x) <- c(5,5)
-  #   grad <- grad(expr)
-  #   expect_true(is.na(grad[[as.character(id(a))]]))
-  #   expect_true(is.na(grad[[as.character(id(x))]]))
-  #
-  #   value(a) <- 1
-  #   value(x) <- c(10,10)
-  #   grad <- grad(expr)
-  #   expect_equal(grad[[as.character(id(a))]], grad(obj@.args[[1]])[[as.character(id(B))]])
-  #   expect_equal(matrix(grad[[as.character(id(x))]]), rep(0,4))
-  #
-  #   # Optimize over x
-  #   expr <- partial_optimize(prob, opt_vars = list(x))
-  #   value(a) <- 1
-  #   grad <- grad(expr)
-  #   expect_equal(grad[[as.character(id(a))]], grad(obj@.args[[1]])[[as.character(id(a))]] + 0)
-  #
-  #   # Optimize over a
-  #   fix_prob <- Problem(obj, list(x + a >= c(5,8), x == 0))
-  #   result <- solve(fix_prob)
-  #   dual_val <- fix_prob@constraints[1]@dual_variable@value
-  #   expr <- partial_optimize(prob, opt_vars = list(a))
-  #   value(x) <- c(0,0)
-  #   grad <- grad(expr)
-  #   expect_equal(matrix(grad[[as.character(id(x))]]), dual_val)
-  #
-  #   # Optimize over x and a
-  #   expr <- partial_optimize(prob, opt_vars = list(x, a))
-  #   grad <- grad(expr)
-  #   expect_equal(grad, list())
-  # }
-# })
+test_that("Test grad for partial minimization/maximization problems", {
+  for(obj in list(Minimize(a^-1), Maximize(entr(a)))) {
+    prob <- Problem(obj, list(x + a >= c(5,8)))
+  
+    # Optimize over nothing
+    expr <- partial_optimize(prob, dont_opt_vars = list(x, a), solver = "ECOS")
+    value(a) <- NA
+    value(x) <- NA
+    grad <- grad(expr)
+    expect_true(is.na(grad[[as.character(id(a))]]))
+    expect_true(is.na(grad[[as.character(id(x))]]))
+  
+    # Outside domain
+    value(a) <- 1.0
+    value(x) <- c(5,5)
+    grad <- grad(expr)
+    expect_true(is.na(grad[[as.character(id(a))]]))
+    expect_true(is.na(grad[[as.character(id(x))]]))
+  
+    value(a) <- 1
+    value(x) <- c(10,10)
+    grad <- grad(expr)
+    expect_equal(grad[[as.character(id(a))]], grad(obj@args[[1]])[[as.character(id(a))]])
+    expect_equivalent(matrix(grad[[as.character(id(x))]]), matrix(rep(0,4)))
+  
+    # Optimize over x
+    expr <- partial_optimize(prob, opt_vars = list(x), solver = "ECOS")
+    value(a) <- 1
+    grad <- grad(expr)
+    expect_equal(grad[[as.character(id(a))]], grad(obj@args[[1]])[[as.character(id(a))]] + 0)
+  
+    # Optimize over a
+    fix_prob <- Problem(obj, list(x + a >= c(5,8), x == 0))
+    result <- solve(fix_prob, solver = "ECOS")
+    dual_val <- result$getDualValue(fix_prob@constraints[[1]])
+    expr <- partial_optimize(prob, opt_vars = list(a), solver = "ECOS")
+    value(x) <- c(0,0)
+    grad <- grad(expr)
+    expect_equivalent(matrix(grad[[as.character(id(x))]]), dual_val)
+  
+    # Optimize over x and a
+    expr <- partial_optimize(prob, opt_vars = list(x, a), solver = "ECOS")
+    grad <- grad(expr)
+    expect_equal(grad, list())
+  }
+})
 
 test_that("Test grad for affine atoms", {
   skip_on_cran()
@@ -785,12 +830,12 @@ test_that("Test grad for affine atoms", {
   val <- -diag(c(1,1))
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- -A
   val <- -diag(rep(1,4))
   expect_equivalent(matrix(grad(expr)[[as.character(id(A))]]), val)
 
-  value(A) <- cbind(c(1,2), c(3,4))
+  value(A) <- rbind(c(1,2), c(3,4))
   expr <- A[1,2]
   val <- matrix(0, nrow = 4, ncol = 1)
   val[3] <- 1
@@ -799,7 +844,7 @@ test_that("Test grad for affine atoms", {
   z <- Variable(3)
   value(x) <- c(1,2)
   value(z) <- c(1,2,3)
-  expr <- vstack(x, z)
+  expr <- hstack(x, z)
   val <- matrix(0, nrow = 2, ncol = 5)
   val[,1:2] <- diag(2)
   expect_equivalent(matrix(grad(expr)[[as.character(id(x))]]), val)

@@ -39,7 +39,6 @@ setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), functi
 })
 
 QpSolver.prepare_data_and_inv_data <- function(object, problem) {
-  data <- list()
   inv_data <- list()
   inv_data[[object@VAR_ID]] <- id(problem@x)
 
@@ -49,6 +48,7 @@ QpSolver.prepare_data_and_inv_data <- function(object, problem) {
   # Add information about integer variables.
   inv_data[[object@IS_MIP]] <- is_mixed_integer(problem)
 
+  data <- list()
   data[[PARAM_PROB]] <- problem
   list(problem = problem, data = data, inv_data = inv_data)
 }
@@ -62,7 +62,7 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
   #    subject to A x = b
   #               F x <= g
 
-  tmp_dat <- prepare_data_and_inv_data(object, problem)
+  tmp_dat <- QPSolver.prepare_data_and_inv_data(object, problem)
   problem <- tmp_dat$problem
   data <- tmp_dat$data
   inv_data <- tmp_dat$inv_data

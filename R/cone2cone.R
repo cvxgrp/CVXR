@@ -60,16 +60,16 @@ Cone2Cone.DUAL_POW3D <- "dp3"
 #'    but it also imposes specific requirements on the input. Providing correct input to
 #'    Dualize.invert requires consideration to the effect of ``SOLVER.format_constraints`` and
 #'    the output of ``apply_parameters(problem)``.
-#'    
+#'
 Dualize.perform <- function(problem) {
   tmp <- apply_parameters(problem)
   c <- tmp[[1]]
   d <- tmp[[2]]
   A <- tmp[[3]]
   b <- tmp[[4]]
-  
+
   Kp <- cone_dims(problem)    # zero, nonneg, exp, soc, psd
-  
+
   Kd <- list()
   Kd[[Cone2Cone.FREE]] <- Kp@zero       # length of block of unconstrained variables.
   Kd[[Cone2Cone.NONNEG]] <- Kp@nonneg   # length of block of nonneg variables.
@@ -77,21 +77,21 @@ Dualize.perform <- function(problem) {
   Kd[[Cone2Cone.PSD]] <- Kp@psd         # "orders" of PSD variables.
   Kd[[Cone2Cone.DUAL_EXP]] <- Kp@exp     # number of length-3 blocks of dual exp cone variables.
   Kd[[Cone2Cone.DUAL_POW3D]] <- Kp@p3d  # scale parameters for dual 3d power cones.
-  
+
   data <- list()
   data[[A_KEY]] <- t(A)
   data[[B_KEY]] <- c
   data[[C_KEY]] <- -b
   data$K_dir <- Kd
   data$dualized <- TRUE
-  
+
   inv_data <- list()
   inv_data[[OBJ_OFFSET]] <- d
   inv_data$constr_map <- problem@constr_map
   inv_data$x_id <- id(problem@x)
   inv_data$K_dir <- Kd
   inv_data$dualized <- TRUE
-  
+
   return(list(data, inv_data))
 }
 
@@ -112,28 +112,28 @@ Dualize.perform <- function(problem) {
 #'    Details on required formatting of solution.primal_vars
 #'    ------------------------------------------------------
 #'
-#'    We assume the dict solution@primal_vars is keyed by string-enums Cone2Cone.FREE ('fr'), 
-#'    Cone2Cone.NONNEG ('+'), Cone2Cone.SOC ('s'), Cone2Cone.PSD ('p'), and Cone2Cone.DUAL_EXP ('de'). 
+#'    We assume the dict solution@primal_vars is keyed by string-enums Cone2Cone.FREE ('fr'),
+#'    Cone2Cone.NONNEG ('+'), Cone2Cone.SOC ('s'), Cone2Cone.PSD ('p'), and Cone2Cone.DUAL_EXP ('de').
 #'    The corresponding values are described below.
 #'
-#'    solution@primal_vars[[Cone2Cone.FREE]] should be a single vector. It corresponds to the 
-#'    (possibly concatenated) components of "y" which are subject to no conic constraints. 
+#'    solution@primal_vars[[Cone2Cone.FREE]] should be a single vector. It corresponds to the
+#'    (possibly concatenated) components of "y" which are subject to no conic constraints.
 #'    We map these variables back to dual variables for equality constraints in (P-Opt).
 #'
-#'    solution@primal_vars[[Cone2Cone.NONNEG]] should also be a single vector, this time giving 
+#'    solution@primal_vars[[Cone2Cone.NONNEG]] should also be a single vector, this time giving
 #'    the possibly concatenated components of "y" which must be >= 0. We map these variables
 #'    back to dual variables for inequality constraints in (P-Opt).
 #'
-#'    solution@primal_vars[[Cone2Cone.SOC]] is a list of vectors specifying blocks of "y" which 
+#'    solution@primal_vars[[Cone2Cone.SOC]] is a list of vectors specifying blocks of "y" which
 #'    belong to the second-order-cone under the CVXR standard ({ z : z[1] >= || z[1 + seq_len(length(z) - 1)] || }).
 #'    We map these variables back to dual variables for SOC constraints in (P-Opt).
 #'
-#'    solution@primal_vars[[Cone2Cone.PSD]] is a list of symmetric positive semidefinite 
+#'    solution@primal_vars[[Cone2Cone.PSD]] is a list of symmetric positive semidefinite
 #'    matrices which result by lifting the vectorized PSD blocks of "y" back into matrix form.
 #'    We assign these as dual variables to PSD constraints appearing in (P-Opt).
 #'
-#'    solution@primal_vars[[Cone2Cone.DUAL_EXP]] is a vector of concatenated length-3 slices 
-#'    of y, where each constituent length-3 slice belongs to dual exponential cone as implied 
+#'    solution@primal_vars[[Cone2Cone.DUAL_EXP]] is a vector of concatenated length-3 slices
+#'    of y, where each constituent length-3 slice belongs to dual exponential cone as implied
 #'    by the CVXR standard of the primal exponential cone (see constraints.R:ExpCone).
 #'    We map these back to dual variables for exponential cone constraints in (P-Opt).
 #'
@@ -149,7 +149,7 @@ Dualize.invert <- function(solution, inv_data) {
     dual_vars <- list()
     direct_prims <- solution@primal_vars
     constr_map <- inv_data$constr_map
-    
+
     i <- 1
     for(con in constr_map$Zero) {
       dv <- direct_prims[[Cone2Cone.FREE]][seq(i, i + size(con) - 1)]
@@ -159,7 +159,7 @@ Dualize.invert <- function(solution, inv_data) {
         dual_vars[[id(con)]] <- as.numeric(dv)   # TODO: Is this same as dv.item()?
       i <- i + size(con)
     }
-    
+
     i <- 1
     for(con in constr_map$Nonneg) {
       dv <- direct_prims[[Cone2Cone.NONNEG]][seq(i, i + size(con) - 1)]
@@ -169,7 +169,7 @@ Dualize.invert <- function(solution, inv_data) {
         dual_vars[[id(con)]] <- as.numeric(dv)
       i <- i + size(con)
     }
-    
+
     i <- 1
     for(con in constr_map$SOC) {
       block_len <- nrow(con)
@@ -177,23 +177,23 @@ Dualize.invert <- function(solution, inv_data) {
       dual_vars[[id(con)]] <- dv
       i <- i + block_len
     }
-    
+
     i <- 1
     for(i in seq(length(constr_map$PSD))) {
       con <- constr_map$PSD[[i]]
       dv <- direct_prims[[Cone2Cone.PSD]][i]
       dual_vars[[id(con)]] <- dv
     }
-    
+
     i <- 1
     for(con in constr_map$ExpCone) {
       dv <- direct_prims[[Cone2Cone.DUAL_EXP]][seq(i, i + size(con) - 1)]
       dual_vars[[id(con)]] <- dv
       i <- i + size(con)
     }
-    
+
     i <- 1   # TODO: Should we reset i = 1 here?
-    for(con in constr_map$PowCone) {
+    for(con in constr_map$PowCone3D) {
       dv <- direct_prims[[Cone2Cone.DUAL_POW3D]][seq_i, i + size(con) - 1]
       dual_vars[[id(con)]] <- dv
       i <- i + size(con)
@@ -248,7 +248,7 @@ Dualize.invert <- function(solution, inv_data) {
 #'    makes no attempt to recover dual variables when mapping between (Aff) and (Dir).
 #'
 #' ======================================================================================
-#' 
+#'
 #' "prob" is a ParamConeProg which represents
 #'
 #'    (Aff)   min{ t(c) %*% x : A %*% x + b in K,
@@ -260,17 +260,17 @@ Dualize.invert <- function(solution, inv_data) {
 #'                           y[bools] in {0, 1}, y[ints] in Z } + d,
 #'
 #' where
-#' 
+#'
 #'    (1) K_aff is built from cone types specified in "affine" (a list of strings),
 #'    (2) a primal solution for (Dir) can be mapped back to a primal solution
 #'        for (Aff) by selecting the leading ``size(c)`` block of y's components.
 #'
 #' In the returned dict "data", data[[A_KEY]] = G, data[[B_KEY]] = h, data[[C_KEY]] = f,
 #' data[['K_aff']] = K_aff, data[['K_dir']] = K_dir, data[[BOOL_IDX]] = bools,
-#' and data[[INT_IDX]] = ints. The rows of G are ordered according to Cone2Cone.ZERO, 
-#' then (as applicable) Cone2Cone.NONNEG, Cone2Cone.SOC, and Cone2Cone.EXP. If  "c" 
-#' is the objective vector in (Aff), then ``y[seq_len(size(c) - 1)]`` should contain 
-#' the optimal solution to (Aff). The columns of G correspond first to variables in 
+#' and data[[INT_IDX]] = ints. The rows of G are ordered according to Cone2Cone.ZERO,
+#' then (as applicable) Cone2Cone.NONNEG, Cone2Cone.SOC, and Cone2Cone.EXP. If  "c"
+#' is the objective vector in (Aff), then ``y[seq_len(size(c) - 1)]`` should contain
+#' the optimal solution to (Aff). The columns of G correspond first to variables in
 #' cones Cone2Cone.FREE, then Cone2Cone.NONNEG, then Cone2Cone.SOC, then Cone2Cone.EXP.
 #' The length of the free cone is equal to ``size(c)``.
 #'
@@ -294,21 +294,21 @@ Slacks.perform <- function(prob, affine) {
     # give rise to n^2 rows in A, or floor(n*(n-1)/2) rows?
     stop("Unimplemented")
   }
-  
+
   for(val in affine) {
     if(!(val %in% c(Cone2Cone.ZERO, Cone2Cone.NONNEG, Cone2Cone.EXP, Cone2Cone.SOC, Cone2Cone.POW3D)))
       stop("Unimplemented")
   }
   if(!(Cone2Cone.ZERO %in% affine))
     affine <- c(affine, Cone2Cone.ZERO)
-  
+
   cone_lens <- list()
   cone_lens[[Cone2Cone.ZERO]] <- cone_dims@zero
   cone_lens[[Cone2Cone.NONNEG]] <- cone_dims@nonneg
   cone_lens[[Cone2Cone.SOC]] <- sum(cone_dims@soc)
   cone_lens[[Cone2Cone.EXP]] <- 3*cone_dims@exp
   cone_lens[[Cone2Cone.POW3D]] <- 3*length(cone_dims@p3d)
-  
+
   # If the rows of A are formatted in an order different from
   # zero -> nonneg -> soc -> exp -> pow, then the below block of code should
   # change. Right now there isn't enough data in (c, d, A, b, cone_dims,
@@ -319,7 +319,7 @@ Slacks.perform <- function(prob, affine) {
   row_offsets[[Cone2Cone.SOC]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]]
   row_offsets[[Cone2Cone.EXP]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]]
   row_offsets[[Cone2Cone.POW3D]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]] + cone_lens[[Cone2Cone.EXP]]
-  
+
   A_aff <- list()
   b_aff <- list()
   A_slk <- list()
@@ -332,11 +332,11 @@ Slacks.perform <- function(prob, affine) {
     # of items in this list would change the order of row blocks in "G".
     #
     # If the order is changed, then this affects which columns of the final matrix
-    # "G" correspond to which types of cones. For example, c(Cone2Cone.ZERO, 
-    # Cone2Cone.SOC, Cone2Cone.EXP, Cone2Cone.POW3D, Cone2Cone.NONNEG) and Cone2Cone.NONNEG 
-    # is not in "affine", then the columns of G with nonnegative variables occur 
+    # "G" correspond to which types of cones. For example, c(Cone2Cone.ZERO,
+    # Cone2Cone.SOC, Cone2Cone.EXP, Cone2Cone.POW3D, Cone2Cone.NONNEG) and Cone2Cone.NONNEG
+    # is not in "affine", then the columns of G with nonnegative variables occur
     # after all free variables, soc variables, exp variables, and pow3d variables.
-    
+
     co_dim <- cone_lens[[co_type]]
     if(co_dim > 0) {
       r <- row_offsets[[co_type]]
@@ -352,7 +352,7 @@ Slacks.perform <- function(prob, affine) {
       }
     }
   }
-  
+
   K_dir <- list()
   K_dir[[Cone2Cone.FREE]] <- size(prob@x)
   if(Cone2Cone.NONNEG %in% affine)
@@ -374,7 +374,7 @@ Slacks.perform <- function(prob, affine) {
   else
     K_dir[[Cone2Cone.POW3D]] <- cone_dims@p3d
   K_dir[[Cone2Cone.DUAL_POW3D]] <- list()   # Not currently supported in CVXR
-  
+
   K_aff <- list()
   if(Cone2Cone.NONNEG %in% affine)
     K_aff[[Cone2Cone.NONNEG]] <- cone_dims@nonneg
@@ -394,7 +394,7 @@ Slacks.perform <- function(prob, affine) {
     K_aff[[Cone2Cone.POW3D]] <- cone_dims@p3d
   else
     K_aff[[Cone2Cone.POW3D]] <- list()
-  
+
   data <- list()
   if(length(A_slk) > 0) {
     # We need to introduce slack variables.
@@ -416,7 +416,7 @@ Slacks.perform <- function(prob, affine) {
     f <- c
   } else
     stop("Must have at least one slack or affine variable")
-  
+
   data[[A_KEY]] <- G
   data[[B_KEY]] <- h
   data[[C_KEY]] <- f
@@ -424,13 +424,13 @@ Slacks.perform <- function(prob, affine) {
   data[[INT_IDX]] <- sapply(prob@x@integer_idx, function(t) { as.integer(t[1]) })
   data$K_dir <- K_dir
   data$K_aff <- K_aff
-  
+
   inv_data <- list()
   inv_data$x_id <- id(prob@x)
   inv_data$K_dir <- K_dir
   inv_data$K_aff <- K_aff
   inv_data[[OBJ_OFFSET]] <- d
-  
+
   return(list(data, inv_data))
 }
 
@@ -457,17 +457,17 @@ APPROX_CONES <- list("RelEntrConeQuad" = list("SOC"),
 # Helper function for returning the weights and nodes for an n-point Gauss-Legendre quadrature on [0, 1].
 gauss_legendre <- function(n) {
   beta <- 0.5/sqrt(rep(1, n-1) - (2*seq(1, n-1))^(-2))
-  
+
   Tmat <- matrix(0, nrow = n, ncol = n)
   for(i in seq(1, n - 1)) {
     Tmat[i,i+1] <- beta[i]
     Tmat[i+1,i] <- beta[i]
   }
-  
+
   Tmat_eig <- eigen(Tmat, only.values = FALSE)
   D <- Tmat_eig$values
   V <- Tmat_eig$vectors
-  
+
   x <- D
   x <- sort(x)
   i <- order(x)
@@ -488,7 +488,7 @@ rotated_quad_cone <- function(X, y, z) {
     stop("X must have ", m, " rows")
   if(length(dim(X)) < 2)
     X <- Reshape(X, c(m,1))
-  
+
   #####################################
   # Comments from Dcp2Cone.quad_over_lin_canon:
   #   quad_over_lin := sum_{i} x^2_{i} / y
@@ -526,7 +526,7 @@ RelEntrConeQuad_canon <- function(con, args) {
   x <- con@x
   y <- con@y
   n <- size(x)
-  
+
   # Z has been declared so as to allow for proper vectorization.
   Z <- Variable(k+1, n)
   gauss <- gauss_legendre(m)
@@ -535,13 +535,13 @@ RelEntrConeQuad_canon <- function(con, args) {
   Tvar <- Variable(m, n)
   lead_con <- Zero(w %*% Tvar + con@z/2^k)
   constrs <- list(Zero(Z[1] - y))
-  
+
   for(i in seq(k)) {
     # The following matrix needs to be PSD.
     #     [Z[i]  , Z[i+1]]
     #     [Z[i+1], x     ]
     # The below recipe for imposing a 2x2 matrix as PSD follows from pg. 35, Ex. 2.6
-    # of Boyd's convex optimization. Where the constraint simply becomes a rotated 
+    # of Boyd's convex optimization. Where the constraint simply becomes a rotated
     # quadratic cone, see Dcp2Cone.quad_over_lin_canon for the very similar scalar case.
     epi <- Z[i,]
     stackedZ <- Z[i+1,]
@@ -549,7 +549,7 @@ RelEntrConeQuad_canon <- function(con, args) {
     constrs <- c(constrs, cons)
     constrs <- c(constrs, list(epi >= 0, x >= 0))
   }
-  
+
   for(i in seq(m)) {
     off_diag <- -(t[i]^0.5)*Tvar[i,]
     # The following matrix needs to be PSD.
@@ -560,7 +560,7 @@ RelEntrConeQuad_canon <- function(con, args) {
     constrs <- c(constrs, cons)
     constrs <- c(constrs, list(epi >= 0, x - t[i]*Tvar[i,] >= 0))
   }
-  
+
   return(list(lead_con, constrs))
 }
 
@@ -569,19 +569,19 @@ OpRelEntrConeQuad_canon <- function(con, args) {
   m <- conm
   X <- con@X
   Y <- con@Y
-  
+
   if(!is_real(X))
     stop("X must be real")
   if(!is_real(Y))
     stop("Y must be real")
   if(!is_real(con@Z))
     stop("Z must be real")
-  
+
   X_dim <- dim(X)
   Zs <- lapply(seq(k+1), function(i) { Variable(X_dim[1], X_dim[2], symmetric = TRUE) })
   Ts <- lapply(seq(m+1), function(i) { Variable(X_dim[1], X_dim[2], symmetric = TRUE) })
   constrs <- list(Zeros(Zs[[1]] - Y))
-  
+
   if(!is_symmetric(X)) {
     ut <- upper_tri(X)
     lt <- upper_tri(t(X))
@@ -597,19 +597,19 @@ OpRelEntrConeQuad_canon <- function(con, args) {
     lt <- upper_tri(t(con@Z))
     constrs <- c(constrs, ut == lt)
   }
-  
+
   gauss <- gauss_legendre(m)
   w <- gauss[[1]]
   t <- gauss[[2]]
   sum_list <- lapply(seq(m), function(i) { w[i] * Ts[i] })
   lead_con <- Zero(AddExpression(sum_list) + con@Z/2^k)
-  
+
   for(i in seq(k)) {
     #    [Z[i],   Z[i+1]]
     #    [Z[i+1], x     ]
     constrs <- c(constrs, Bmat(list(list(Zs[i], Zs[i+1]), list(t(Zs[i+1]), X))) %>>% 0)
   }
-  
+
   for(i in seq(m)) {
     off_diag <- -(t[i]^0.5) * Ts[i]
     # The following matrix needs to be PSD.
@@ -617,7 +617,7 @@ OpRelEntrConeQuad_canon <- function(con, args) {
     #    [off_diag,        x - t[i]*T[i]]
     constrs <- c(constrs, Bmat(list(list(Zs[k] - X - Ts[i], off_diag), list(t(off_diag), X - t[i] * Ts[i]))) %>>% 0)
   }
-  
+
   return(list(lead_con, constrs))
 }
 
@@ -627,7 +627,7 @@ von_neumann_entr_QuadApprox <- function(expr, args) {
   canon <- von_neumann_entr_canon(expr, args)
   epi <- canon[[1]]
   initial_cons <- canon[[2]]
-  
+
   cons <- list()
   for(con in initial_cons) {
     if(is(con, "ExpCone")) {   # Should only hit this once.
@@ -660,14 +660,14 @@ von_neumann_entr_canon_dispatch <- function(expr, args) {
 
 QuadApprox <- function(problem = NULL) { .QuadApprox(problem = problem) }
 
-QuadApprox.CANON_METHODS <- list("RelEntrConeQuad" = RelEntrConeQuad_canon, 
+QuadApprox.CANON_METHODS <- list("RelEntrConeQuad" = RelEntrConeQuad_canon,
                                  "OpRelEntrConeQuad" = OpRelEntrConeQuad_canon)
 
 setMethod("initialize", "QuadApprox", function(.Object, ...) {
   callNextMethod(.Object, ..., canon_methods = QuadApprox.CANON_METHODS)
 })
 
-# An "exotic" cone is defined as any cone that isn't supported by ParamConeProg. 
+# An "exotic" cone is defined as any cone that isn't supported by ParamConeProg.
 # If ParamConeProg is updated to support more cones, then it may be necessary to change this file.
 EXOTIC_CONES <- list("PowConeND" = list("PowCone3D"))
 
@@ -680,17 +680,17 @@ pow_nd_canon <- function(con, args) {
   alpha <- value(alpha)
   W <- args[[1]]
   z <- args[[2]]
-  
+
   if(axis == 1) {
     W <- t(W)
     alpha <- t(alpha)
   }
-  
+
   if(ndim(W) == 1) {
     W <- Reshape(W, c(size(W), 1))
     alpha <- Reshape(alpha, c(size(W), 1))
   }
-  
+
   W_dim <- dim(W)
   n <- W_dim[1]
   k <- W_dim[2]
@@ -698,7 +698,7 @@ pow_nd_canon <- function(con, args) {
     can_canon <- PowCone3D(W[1,], W[2,], z, alpha[1,])
   else {
     Tvar <- Variable(n-2, k)
-    
+
     x_3d <- list()
     y_3d <- list()
     z_3d <- list()
@@ -709,7 +709,7 @@ pow_nd_canon <- function(con, args) {
       y_3d <- c(y_3d, W[n,j])
       z_3d <- c(z_3d, z[j])
       z_3d <- c(z_3d, Tvar[,j])
-      
+
       r_nums <- alpha[,j]
       r_dens <- rev(base::cumsum(rev(r_nums)))   # Equivalent to sapply(seq(n), function(i) { sum(alpha[seq(i,n), j]) }).
       r <- r_nums / r_dens
@@ -717,7 +717,7 @@ pow_nd_canon <- function(con, args) {
     }
 
     # TODO: Ideally, we should construct x, y, z, alpha_p3d by applying suitable sparse matrices to W, z, Tvar,
-    # rather than using the HStack atom. (HStack will probably result in longer compile times).    
+    # rather than using the HStack atom. (HStack will probably result in longer compile times).
     x_3d <- do.call(HStack, x_3d)
     y_3d <- do.call(HStack, y_3d)
     z_3d <- do.call(HStack, z_3d)
@@ -725,7 +725,7 @@ pow_nd_canon <- function(con, args) {
 
     can_con <- PowCone3D(x_3d, y_3d, z_3d, alpha_p3d)
   }
-  
+
   # Return a single PowCone3D constraint defined over all auxiliary variables needed for the reduction to go through. There are no "auxiliary constraints" beyond this one.
   return(list(can_con, list()))
 }

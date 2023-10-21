@@ -1,0 +1,18 @@
+## to get to previous cvxpy which we matched
+## do a git checkout 757c6b38d in the cvxpy tree.
+## then check master out again
+
+0. It makes sense to split some R files into chunks so that it matches
+the python code for ease of debugging in the future.  So we should
+split up some files.
+
+1. We combine `lin_ops.py` and `lin_utils.py` into a single file
+`lin_ops.R`. We should rename all our functions `lo.is_scalar`,
+`lo.is_const` to be `lu.is_scalar` and `lu.is_const` etc. respy. Also some
+functions like `create_const`, `create_param` should be
+`lu.create_const`, `lu.create_param` etc. Then global replace
+everywhere. 
+
+2. Following up on 1, in affine.R, SpecialIndex.graph_implementation
+uses lu_reshape lu_create_const etc. These should be lu.reshape and
+lu.create_const etc.

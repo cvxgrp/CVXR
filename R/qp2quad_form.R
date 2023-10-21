@@ -46,21 +46,21 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #' @slot soc A vector of the second-order cone dimensions.
 #' @slot psd A vector the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
 #' @rdname QpMatrixStuffingConeDims-class
-.QpMatrixStuffingConeDims <- setClass("QpMatrixStuffingConeDims", representation(constr_map = "list", zero = "numeric", nonpos = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
+.QpMatrixStuffingConeDims <- setClass("QpMatrixStuffingConeDims", representation(constr_map = "list", zero = "numeric", nonneg = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
                                   prototype(zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0))
 QpMatrixStuffingConeDims <- function(constr_map) { .QpMatrixStuffingConeDims(constr_map = constr_map) }
 
 setMethod("initialize", "QpMatrixStuffingConeDims", function(.Object, constr_map, zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0) {
   .Object@constr_map <- constr_map
-  .Object@zero <- as.integer(sum(sapply(constr_map$ZeroConstraint, size)))
-  .Object@nonpos <- as.integer(sum(sapply(constr_map$NonPosConstraint, size)))
+  .Object@zero <- as.integer(sum(sapply(constr_map$Zero, size)))
+  .Object@nonneg <- as.integer(sum(sapply(constr_map$NonNeg, size)))
   .Object@exp <- as.integer(sum(sapply(constr_map$ExpCone, num_cones)))
   # .Object@soc <- c()
   # for(c in constr_map$SOC)
   #   .Object@soc <- c(.Object@soc, cone_sizes(c))
   # .Object@soc <- as.integer(.Object@soc)
   .Object@soc <- as.integer(Reduce(base::c, lapply(constr_map$SOC, cone_sizes)))
-  .Object@psd <- as.integer(sapply(constr_map$PSDConstraint, nrow))
+  .Object@psd <- as.integer(sapply(constr_map$PSD, nrow))
   .Object
 })
 
@@ -251,13 +251,15 @@ setMethod("perform", signature(object = "QpMatrixStuffing", problem = "Problem")
     if(is(con, "EqConstraint"))
       con <- lower_equality(con)
     else if(is(con, "IneqConstraint"))
-      con <- lower_ineq_to_nonpos(con)
+      con <- lower_ineq_to_nonneg(con)
+    else if(is(con, "NonPosConstraint"))
+      con <- nonpos2nonneg(con)
     cons <- c(cons, con)
   }
 
-  # Reorder constraints to ZeroConstraint, NonPosConstraint.
+  # Reorder constraints to ZeroConstraint, NonNegConstraint.
   constr_map <- group_constraints(cons)
-  ordered_cons <- c(constr_map[["ZeroConstraint"]], constr_map[["NonPosConstraint"]])
+  ordered_cons <- c(constr_map$Zero, constr_map$NonNeg)
   inverse_data@cons_id_map <- list()
   for(con in ordered_cons) {
     con_id <- id(con)

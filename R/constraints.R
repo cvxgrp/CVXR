@@ -62,7 +62,7 @@ setMethod("is_dpp", "Constraint", function(object, context = "dcp") {
 #' @describeIn Constraint The residual of a constraint
 setMethod("residual", "Constraint", function(object) { stop("Unimplemented") })
 
-#' @describeIn Constraint The numeric residual of a constraint. The violation is defined as the 
+#' @describeIn Constraint The numeric residual of a constraint. The violation is defined as the
 #' distance between the constrained expression's value and its projection onto the domain of the
 #' constraint: ||\\Pi(v) - v||_2^2, where `v` is the value of the constrained expression and
 #' `\\Pi` is the projection operator onto the constraint's domain.
@@ -83,9 +83,9 @@ setMethod("constr_value", "Constraint", function(object, tolerance = 1e-8) {
 })
 
 
-#' 
+#'
 #' A Class Union of List and Constraint
-#' 
+#'
 #' @name ListORConstr-class
 #' @rdname ListORConstr-class
 setClassUnion("ListORConstr", c("list", "Constraint"))
@@ -119,9 +119,9 @@ setReplaceMethod("dual_value", "Constraint", function(object, value) {
   return(object)
 })
 
-#' 
+#'
 #' The ZeroConstraint class
-#' 
+#'
 #' @rdname ZeroConstraint-class
 .ZeroConstraint <- setClass("ZeroConstraint", representation(expr = "Expression"), contains = "Constraint")
 ZeroConstraint <- function(expr, constr_id = NA_integer_) { .ZeroConstraint(expr = expr, constr_id = constr_id) }
@@ -143,7 +143,7 @@ setMethod("show", "ZeroConstraint", function(object) {
 })
 
 #' @rdname ZeroConstraint-class
-setMethod("as.character", "ZeroConstraint", function(x) { 
+setMethod("as.character", "ZeroConstraint", function(x) {
   paste(as.character(x@args[[1]]), "== 0")
 })
 
@@ -188,9 +188,9 @@ setReplaceMethod("dual_value", "ZeroConstraint", function(object, value) {
   return(object)
 })
 
-#' 
+#'
 #' The EqConstraint class
-#' 
+#'
 #' @rdname EqConstraint-class
 .EqConstraint <- setClass("EqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), prototype(expr = NA_real_), contains = "Constraint")
 EqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .EqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
@@ -218,7 +218,7 @@ setMethod("show", "EqConstraint", function(object) {
 })
 
 #' @rdname EqConstraint-class
-setMethod("as.character", "EqConstraint", function(x) { 
+setMethod("as.character", "EqConstraint", function(x) {
   paste(as.character(x@args[[1]]), "==", as.character(x@args[[2]]))
 })
 
@@ -232,7 +232,7 @@ setMethod("size", "EqConstraint", function(object) { size(object@expr) })
 setMethod("expr", "EqConstraint", function(object) { object@expr })
 
 #' @describeIn EqConstraint Is the constraint DCP?
-setMethod("is_dcp", "EqConstraint", function(object, dpp = FALSE) { 
+setMethod("is_dcp", "EqConstraint", function(object, dpp = FALSE) {
   if(dpp) {
     dpp_scope()
     return(is_affine(object@expr))
@@ -273,11 +273,11 @@ setReplaceMethod("dual_value", "EqConstraint", function(object, value) {
   return(object)
 })
 
-#' 
+#'
 #' The NonPosConstraint class
-#' 
+#'
 #' A constraint of the form \eqn{x \leq 0}.
-#' 
+#'
 #' The preferred way of creating a NonPosConstraint constraint is through
 #' operator overloading. To constrain an expression x to be non-positive,
 #' simply write \code{x <= 0}; to constrain x to be non-negative, write
@@ -285,7 +285,7 @@ setReplaceMethod("dual_value", "EqConstraint", function(object, value) {
 #' as its argument, while the latter creates one with -x as its argument.
 #' Strict inequalities are not supported, as they do not make sense in a
 #' numerical setting.
-#' 
+#'
 #' @rdname NonPosConstraint-class
 .NonPosConstraint <- setClass("NonPosConstraint", representation(expr = "Expression"), contains = "Constraint")
 NonPosConstraint <- function(expr, constr_id = NA_integer_) { .NonPosConstraint(expr = expr, constr_id = constr_id) }
@@ -305,7 +305,7 @@ setMethod("name", "NonPosConstraint", function(x) {
 })
 
 #' @describeIn NonPosConstraint A non-positive constraint is DCP if its argument is convex.
-setMethod("is_dcp", "NonPosConstraint", function(object, dpp = FALSE) { 
+setMethod("is_dcp", "NonPosConstraint", function(object, dpp = FALSE) {
   if(dpp) {
     dpp_scope()   # TODO: Implement DPP scoping.
     return(is_convex(object@args[[1]]))
@@ -336,17 +336,17 @@ setMethod("violation", "NonPosConstraint", function(object) {
   return(viol)
 })
 
-#' 
+#'
 #' The NonNegConstraint class
-#' 
+#'
 #' A constraint of the form \eqn{x \geq 0}.
-#' 
-#' This class was created to account for the fact that the ConicSolver interface 
-#' returns matrix data stated with respect to the nonnegative orthant, rather than 
+#'
+#' This class was created to account for the fact that the ConicSolver interface
+#' returns matrix data stated with respect to the nonnegative orthant, rather than
 #' the nonpositive orthant. This class can be removed if the behavior of ConicSolver is
-#' changed. However the current behavior of ConicSolver means CVXR's dual variable 
+#' changed. However the current behavior of ConicSolver means CVXR's dual variable
 #' and Lagrangian convention follows the most common convention in the literature.
-#' 
+#'
 #' @rdname NonNegConstraint-class
 .NonNegConstraint <- setClass("NonNegConstraint", representation(expr = "Expression"), contains = "Constraint")
 NonNegConstraint <- function(expr, constr_id = NA_integer_) { .NonNegConstraint(expr = expr, constr_id = constr_id) }
@@ -366,7 +366,7 @@ setMethod("name", "NonNegConstraint", function(x) {
 })
 
 #' @describeIn NonNegConstraint A non-positive constraint is DCP if its argument is convex.
-setMethod("is_dcp", "NonNegConstraint", function(object, dpp = FALSE) { 
+setMethod("is_dcp", "NonNegConstraint", function(object, dpp = FALSE) {
   if(dpp) {
     dpp_scope()   # TODO: Implement DPP scoping.
     return(is_concave(object@args[[1]]))
@@ -399,13 +399,13 @@ setMethod("violation", "NonNegConstraint", function(object) {
 
 #'
 #' The IneqConstraint class
-#' 
+#'
 #' A constraint of the form \eqn{x \leq y}.
 #'
 #' @slot lhs The expression to be upper-bounded by rhs.
 #' @slot rhs The expression to be lower-bounded by lhs.
 #' @rdname IneqConstraint-class
-.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"), 
+.IneqConstraint <- setClass("IneqConstraint", representation(lhs = "ConstValORExpr", rhs = "ConstValORExpr", expr = "ConstValORExpr"),
                             prototype(expr = NA_real_), contains = "Constraint")
 
 IneqConstraint <- function(lhs, rhs, constr_id = NA_integer_) { .IneqConstraint(lhs = lhs, rhs = rhs, constr_id = constr_id) }
@@ -436,7 +436,7 @@ setMethod("size", "IneqConstraint", function(object) { size(object@expr) })
 setMethod("expr", "IneqConstraint", function(object) { object@expr })
 
 #' @describeIn IneqConstraint A non-positive constraint is DCP if its argument is convex.
-setMethod("is_dcp", "IneqConstraint", function(object, dpp = FALSE) { 
+setMethod("is_dcp", "IneqConstraint", function(object, dpp = FALSE) {
   if(dpp) {
     dpp_scope()   # TODO: Implement DPP scoping.
     return(is_convex(object@expr))
@@ -481,9 +481,9 @@ setMethod("residual", "IneqConstraint", function(object) {
 
 #'
 #' The FiniteSet class.
-#' 
+#'
 #' This class represents a constraint that each entry of an Expression to take a value in a given set of real numbers.
-#' 
+#'
 #' @slot expre The given expression to be constrained. This Expression must be affine.
 #' If expre has multiple elements, then the constraint is applied separately to
 #' each element, i.e., after solving a problem with this constraint, we should have:
@@ -512,7 +512,7 @@ setMethod("initialize", "FiniteSet", function(.Object, ..., expre, vec, ineq_for
   vec <- flatten(as.Constant(vec))
   if(!is_affine(expre))
     stop("Provided Expression must be affine, but had curvature ", curvature(expre))
-    
+
   # Note: we use the term "expre" rather than "expr" since
   # "expr" is already a property used by all Constraint classes.
   .Object@expre <- expre
@@ -687,7 +687,7 @@ setReplaceMethod("dual_value", "ExpCone", function(object, value) {
 #' The RelEntrConeQuad class.
 #'
 #' This class represents an approximate construction of the scalar relative entropy cone.
-#' 
+#'
 #' \deqn{
 #'  K_{re}=\\text{cl}\\{(x,y,z)\\in\\mathbb{R}_{++} \\times \\mathbb{R}_{++}\\times\\mathbb{R}_{++}\\:x\\log(x/y)\\leq z\\}
 #' }
@@ -705,7 +705,7 @@ setReplaceMethod("dual_value", "ExpCone", function(object, value) {
 #' @name RelEntrConeQuad-class
 #' @aliases RelEntrConeQuad
 #' @rdname RelEntrConeQuad-class
-.RelEntrConeQuad <- setClass("RelEntrConeQuad", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr", m = "numeric", k = "numeric"), 
+.RelEntrConeQuad <- setClass("RelEntrConeQuad", representation(x = "ConstValORExpr", y = "ConstValORExpr", z = "ConstValORExpr", m = "numeric", k = "numeric"),
                              validity = function(object) {
                                if(as.integer(object@m) != object@m)
                                  stop("[RelEntrConeQuad: m] The argument m must be an integer")
@@ -759,7 +759,7 @@ setMethod("residual", "RelEntrConeQuad", function(object) {
   # TODO: The projection should be implemented directly.
   if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
     return(NA_real_)
-  
+
   x <- new("Variable", dim = dim(object@x))
   y <- new("Variable", dim = dim(object@y))
   z <- new("Variable", dim = dim(object@z))
@@ -806,7 +806,7 @@ setReplaceMethod("dual_value", "RelEntrConeQuad", function(object, value) {
 #' The OpRelEntrConeQuad class.
 #'
 #' This class represents an approximate construction of the scalar relative entropy cone.
-#' 
+#'
 #' \deqn{
 #'  K_{re}^n=\\text{cl}\\{(X,Y,T)\\in\\mathbb{H}^n_{++} \\times \\mathbb{H}^n_{++}\\times\\mathbb{H}^n_{++}\\:D_{\\text{op}}\\succeq T\\}
 #' }
@@ -824,7 +824,7 @@ setReplaceMethod("dual_value", "RelEntrConeQuad", function(object, value) {
 #' @name OpRelEntrConeQuad-class
 #' @aliases OpRelEntrConeQuad
 #' @rdname OpRelEntrConeQuad-class
-.OpRelEntrConeQuad <- setClass("OpRelEntrConeQuad", representation(X = "ConstValORExpr", Y = "ConstValORExpr", Z = "ConstValORExpr", m = "numeric", k = "numeric"), 
+.OpRelEntrConeQuad <- setClass("OpRelEntrConeQuad", representation(X = "ConstValORExpr", Y = "ConstValORExpr", Z = "ConstValORExpr", m = "numeric", k = "numeric"),
                                validity = function(object) {
                                  if(as.integer(object@m) != object@m)
                                    stop("[OpRelEntrConeQuad: m] The argument m must be an integer")
@@ -920,19 +920,19 @@ setReplaceMethod("dual_value", "OpRelEntrConeQuad", function(object, value) {
 
 #'
 #' The PowCone3D class.
-#' 
+#'
 #' This class represents a collection of 3D power cone constraints
 #'
 #' \deqn{x[i]^alpha[i] * y[i]^(1-alpha[i]) \geq |z[i]| \text{for all} i, x \geq 0, y \geq 0}
-#' 
-#' If the parameter alpha is a scalar, it will be promoted to a vector matching 
-#' the (common) sizes of x, y, z. The numeric value of alpha (or its components, 
+#'
+#' If the parameter alpha is a scalar, it will be promoted to a vector matching
+#' the (common) sizes of x, y, z. The numeric value of alpha (or its components,
 #' in the vector case) must be a number in the open interval (0, 1).
 #'
-#' We store flattened representations of the arguments (x, y, z, and alpha) as 
-#' Expression objects. We construct dual variables with respect to these 
+#' We store flattened representations of the arguments (x, y, z, and alpha) as
+#' Expression objects. We construct dual variables with respect to these
 #' flattened representations.
-#' 
+#'
 #' @slot x An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{x}.
 #' @slot y An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{y}.
 #' @slot z An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{z}.
@@ -957,12 +957,12 @@ setMethod("initialize", "PowCone3D", function(.Object, ..., x, y, z, alpha) {
     if(!(is_affine(val) && is_real(val)))
       stop("All arguments must be affine and real")
   }
-  
+
   alpha <- as.Constant(alpha)
   if(is_scalar(alpha))
     alpha <- Promote(alpha, dim(.Object@x))
   .Object@alpha <- alpha
-  
+
   alpha_val <- value(.Object@alpha)
   if(any(alpha_val <= 0) || any(alpha_val >= 1))
     stop("alpha must have entries in the open interval (0, 1)")
@@ -985,7 +985,7 @@ setMethod("residual", "PowCone3D", function(object) {
   # TODO: The projection should be implemented directly.
   if(is.na(value(object@x)) || is.na(value(object@y)) || is.na(value(object@z)))
     return(NA_real_)
-  
+
   x <- new("Variable", dim = dim(object@x))
   y <- new("Variable", dim = dim(object@y))
   z <- new("Variable", dim = dim(object@z))
@@ -1047,7 +1047,7 @@ setReplaceMethod("dual_value", "PowCone3D", function(object, value) {
   dv0 <- matrix(value[1,], nrow = nrow(object@x), ncol = ncol(object@x))
   dv1 <- matrix(value[2,], nrow = nrow(object@y), ncol = ncol(object@y))
   dv2 <- matrix(value[3,], nrow = nrow(object@z), ncol = ncol(object@z))
-  
+
   value(object@dual_variables[[1]]) <- dv0
   value(object@dual_variables[[2]]) <- dv1
   value(object@dual_variables[[3]]) <- dv2
@@ -1056,21 +1056,21 @@ setReplaceMethod("dual_value", "PowCone3D", function(object, value) {
 
 #'
 #' The PowConeND class.
-#' 
-#' This class represents a collection of N-dimensional power cone constraints 
+#'
+#' This class represents a collection of N-dimensional power cone constraints
 #' that is mathematically equivalent to the following code snippet:
 #'
-#' \code{apply(W^alpha, axis, prod) >= abs(z)}, 
+#' \code{apply(W^alpha, axis, prod) >= abs(z)},
 #' W >= 0
-#' 
-#' All arguments must be Expression-like, and z must satisfy ndim(z) <= 1. The 
+#'
+#' All arguments must be Expression-like, and z must satisfy ndim(z) <= 1. The
 #' rows (resp. columns) of alpha must sum to 1 when axis = 1 (resp. axis = 2).
 #'
-#' Note: unlike PowCone3D, we make no attempt to promote alpha to the 
+#' Note: unlike PowCone3D, we make no attempt to promote alpha to the
 #' appropriate shape. The dimensions of W and alpha must match exactly.
-#' 
+#'
 #' Note: Dual variables are not currently implemented for this type of constraint.
-#' 
+#'
 #' @slot W An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{W}.
 #' @slot z An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{z}.
 #' @slot alpha An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{\alpha}. Must be in the open interval (0, 1).
@@ -1078,7 +1078,7 @@ setReplaceMethod("dual_value", "PowCone3D", function(object, value) {
 #' @name PowConeND-class
 #' @aliases PowConeND
 #' @rdname PowConeND-class
-.PowConeND <- setClass("PowConeND", representation(W = "ConstValORExpr", z = "ConstValORExpr", alpha = "ConstValORExpr", axis = "numeric"), prototype(axis = 2), 
+.PowConeND <- setClass("PowConeND", representation(W = "ConstValORExpr", z = "ConstValORExpr", alpha = "ConstValORExpr", axis = "numeric"), prototype(axis = 2),
                        validity = function(object) {
                                       if(length(axis) > 1 || (axis != 1 && axis != 2))
                                         stop("[PowConeND: axis] axis must be either 1 (rows) or 2 (columns)")
@@ -1096,22 +1096,22 @@ setMethod("initialize", "PowConeND", function(.Object, ..., W, z, alpha, axis = 
   W <- as.Constant(W)
   if(!(is_real(W) && is_affine(W)))
     stop("Invalid first argument; W must be affine and real.")
-  
+
   z <- as.Constant(z)
   # if(!(ndim(z) <= 1 || (ndim(z) == 2 && ncol(z) == 1)) || !(is_real(z) && is_affine(z)))
   if(ndim(z) > 1 || !(is_real(z) && is_affine(z)))
     stop("Invalid second argument. z must be affine, real, and have at most one ndim(z) <= 1.")
-  
+
   # Check z has one entry per cone.
   if((ndim(W) <= 1 && size(z) > 1) ||
      (ndim(W) == 2 && size(z) != dim(W)[axis]) ||
      (ndim(W) == 1 && axis == 1))
     stop("Argument dimensions and axis are incompatible")
-  
+
   axis_opp <- ifelse(axis == 1, 2, 1)
   if(ndim(W) == 2 && dim(W)[axis_opp] <= 1)
     stop("PowConeND requires left-hand-side to have at least two terms.")
-  
+
   alpha <- as.Constant(alpha)
   if(any(dim(alpha) != dim(W)))
     stop("W and alpha dimensions must be equal")
@@ -1119,14 +1119,14 @@ setMethod("initialize", "PowConeND", function(.Object, ..., W, z, alpha, axis = 
     stop("Argument alpha must be entry-wise positive.")
   if(any(abs(1 - apply(value(alpha), axis_opp, sum)) > 1e-6))
     stop("Argument alpha must sum to 1 along specified axis.")
-  
+
   .Object@W <- W
   .Object@z <- z
   .Object@alpha <- alpha
   .Object@axis <- axis
   if(ndim(z) == 0)
     z <- flatten(z)
-  
+
   callNextMethod(.Object, ..., args = list(W, z))
 })
 
@@ -1149,7 +1149,7 @@ setMethod("residual", "PowConeND", function(object) {
   # TODO: The projection should be implemented directly.
   if(is.na(value(object@W)) || is.na(value(object@z)))
     return(NA_real_)
-  
+
   W <- new("Variable", dim = dim(object@W))
   z <- new("Variable", dim = dim(object@z))
   constr <- list(PowConeND(W, z, object@alpha, axis = object@axis))
@@ -1174,7 +1174,7 @@ setMethod("size", "PowConeND", function(object) {
 setMethod("cone_sizes", "PowConeND", function(object) {
   axis_opp <- ifelse(object@axis == 1, 2, 1)
   cone_size <- 1 + dim(object@args[[1]])[axis_opp]
-  rep(cone_size, num_cones(object)) 
+  rep(cone_size, num_cones(object))
 })
 
 #' @describeIn PowConeND The constraint is DCP if the constrained expression is affine.
@@ -1263,7 +1263,7 @@ setMethod("residual", "PSDConstraint", function(object) {
 #'
 #' This class represents a second-order cone constraint for each row/column, i.e. \eqn{\|x\|_2 \leq t}.
 #' It assumes t is a vector the same length as X's rows (resp. columns) for axis == 1 (resp. 2).
-#' 
+#'
 #' @slot t The scalar part of the second-order constraint.
 #' @slot X A matrix whose rows/columns are each a cone.
 #' @slot axis The dimension along which to constrain: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
@@ -1271,7 +1271,7 @@ setMethod("residual", "PSDConstraint", function(object) {
 #' @aliases SOC
 #' @rdname SOC-class
 .SOC <- setClass("SOC", representation(t = "ConstValORExpr", X = "ConstValORExpr", axis = "numeric"),
-                        prototype(t = NA_real_, X = NA_real_, axis = 2), 
+                        prototype(t = NA_real_, X = NA_real_, axis = 2),
                         validity = function(object) {
                           if(length(object@axis) > 1 || (object@axis != 1 && object@axis != 2))
                             stop("[SOC: axis] axis must be either 1 (rows) or 2 (columns)")
@@ -1292,16 +1292,16 @@ setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
   X_dim <- dim(X)
   if(length(t_dim) >= 2 || !is_real(t))
     stop("Invalid first argument")
-  
+
   # Check t has one entry per cone.
-  if((length(X_dim) <= 1 and t_size > 1) || 
+  if((length(X_dim) <= 1 and t_size > 1) ||
      (length(X_dim) == 2 && t_size != X_dim[axis]) ||
      (length(X_dim) == 1 && axis == 1))
     stop("Argument dimensions and axis are incompatible")
-  
+
   if(is.null(t_dim) || length(t_dim) == 0)
     t <- flatten(t)
-    
+
   .Object@t <- t
   .Object@X <- X
   .Object@axis <- axis
@@ -1331,14 +1331,14 @@ setMethod("residual", "SOC", function(object) {
   X <- value(object@args[[2]])
   if(is.na(t) || is.na(X))
     return(NA)
-  
+
   # Reduce axis = 2 to axis = 1.
   if(object@axis == 2)
     X <- t(X)
-  
+
   promoted <- (ndim(X) == 1)
   X <- matrix(X)
-  
+
   # Initializing with zeros makes "0 if t <= -||x||" the default case for the projection
   if(is.null(dim(t)))
     t_proj <- matrix(0)
@@ -1350,22 +1350,22 @@ setMethod("residual", "SOC", function(object) {
     X_proj <- matrix(0, nrow = nrow(X), ncol = ncol(X))
 
   norms <- apply(X, 1, function(row) { norm(row, "2") })
-  
+
   # 1. proj(t,X) = (t,X) if t >= ||x||
   t_geq_x_norm <- (t >= norms)
   t_proj[t_geq_x_norm] <- t[t_geq_x_norm]
   X_proj[t_geq_x_norm] <- X[t_geq_x_norm]
-  
+
   # 2. proj(t,X) = 0.5*(t/||x|| + 1)(||x||,x)  if -||x|| < t < ||x||
   abs_t_less_x_norm <- (abs(t) < norms)
   avg_coeff <- 0.5 * (1 + t/norms)
   X_proj[abs_t_less_x_norm] <- diag(avg_coeff[abs_t_less_x_norm]) %*% X[abs_t_less_x_norm]
   t_proj[abs_t_less_x_norm] <- avg_coeff[abs_t_less_x_norm] * norms[abs_t_less_x_norm]
-  
+
   Xt <- cbind(X, t)
   Xt_proj <- cbind(X_proj, t_proj)
   resid <- apply(Xt - Xt_proj, 1, function(row) { norm(row, "2") })
-  
+
   # Demote back to 1D.
   if(promoted)
     return(resid[1])
@@ -1427,134 +1427,19 @@ setReplaceMethod("dual_value", "SOC", function(object, value) {
     idx <- 2
   else
     stop("Unimplemented")
-  
+
   cone_size <- 1 + dim(object@args[[2]])[idx]
   value <- t(matrix(t(value), nrow = cone_size, byrow = FALSE))
-  
+
   t <- value[,1]
   X <- value[,2:ncol(value)]
   if(object@axis == 2)
     X <- t(X)
-  
+
   value(object@dual_variables[[1]]) <- t
   value(object@dual_variables[[2]]) <- X
   return(object)
 })
 
-#====================================#
-# Utility functions for constraints.
-#====================================#
-
-format_axis <- function(t, X, axis) {
-  """Formats all the row/column cones for the solver.
-
-    Parameters
-    ----------
-        t: The scalar part of the second-order constraint.
-        X: A matrix whose rows/columns are each a cone.
-        axis: Slice by column 0 or row 1.
-
-    Returns
-    -------
-    list
-        A list of LinLeqConstr that represent all the elementwise cones.
-    """
-  # Reduce to norms of columns.
-  if(axis == 1)
-    X <- lo.transpose(X)
-  # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
-  # gives the format for the elementwise cone constraints.
-  cone_size <- 1 + nrow(X)
-  terms <- list()
-  
-  # Make t_mat
-  mat_shape <- c(cone_size, 1)
-  t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_shape)
-  t_mat <- lo.create_const(t_mat, mat_shape, sparse = TRUE)
-  t_vec <- t
-  
-  if(is.null(dim(t)))
-    # t is scalar
-    t_vec <- lo.reshape(t, c(1, 1))
-  else
-    # t is 1D
-    t_vec <- lo.reshape(t, c(1, nrow(t)))
-  
-  mul_shape <- c(cone_size, ncol(t_vec))
-  terms <- c(terms, list(lo.mul_expr(t_mat, t_vec, mul_shape)))
-  
-  # Make X_mat
-  if len(X.shape) == 1:
-    X = lu.reshape(X, (X.shape[0], 1))
-  
-  mat_shape <- c(cone_size, nrow(X))
-  val_arr <- rep(1.0, cone_size - 1)
-  row_arr <- seq(2, cone_size)
-  col_arr <- seq(1, cone_size - 1)
-  X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_shape)
-  
-  X_mat <- lo.create_const(X_mat, mat_shape, sparse = TRUE)
-  mul_shape <- c(cone_size, ncol(X))
-  terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_shape)))
-  return(list(lo.create_geq(lo.sum_expr(terms))))
-}
-
-format_elemwise <- function(vars_) {
-  """Formats all the elementwise cones for the solver.
-
-    Parameters
-    ----------
-    vars_ : list
-        A list of the LinOp expressions in the elementwise cones.
-
-    Returns
-    -------
-    list
-        A list of LinLeqConstr that represent all the elementwise cones.
-    """
-  # Create matrices Ai such that 0 <= A0*x0 + ... + An*xn
-  # gives the format for the elementwise cone constraints.
-  spacing <- length(vars_)
-  
-  # Matrix spaces out columns of the LinOp expressions.
-  mat_shape <- c(spacing*nrow(vars_[[1]]), nrow(vars_[[1]]))
-  terms <- list()
-  for(i in seq_along(vars_)) {
-    var <- vars_[[i]]
-    mat <- get_spacing_matrix(mat_shape, spacing, i - 1)
-    terms <- c(terms, list(lo.mul_expr(mat, var)))
-  }
-  return(list(lo.create_geq(lo.sum_expr(terms))))
-}
-
-get_spacing_matrix <- function(shape, spacing, offset) {
-  """Returns a sparse matrix LinOp that spaces out an expression.
-
-    Parameters
-    ----------
-    shape : tuple
-        (rows in matrix, columns in matrix)
-    spacing : int
-        The number of rows between each non-zero.
-    offset : int
-        The number of zero rows at the beginning of the matrix.
-
-    Returns
-    -------
-    LinOp
-        A sparse matrix constant LinOp.
-    """
-  val_arr <- c()
-  row_arr <- c()
-  col_arr <- c()
-  
-  # Selects from each column.
-  for(var_row in seq(shape[2])) {
-    val_arr <- c(val_arr, 1.0)
-    row_arr <- c(row_arr, spacing*(var_row - 1) + offset + 1))
-    col_arr <- c(col_arr, var_row)
-  }
-  
-  mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = shape)
-  return(lo.create_const(mat, shape, sparse = TRUE))
-}
+## Deleted duplicated and not-in-effect functions:
+## format_axis, format_elemwise, get_spacing_matrix

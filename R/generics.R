@@ -956,7 +956,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE,
                               gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, ...) { standardGeneric("psolve") })
 
 #'

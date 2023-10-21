@@ -259,9 +259,9 @@ setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_valu
   if(quad_obj) {
     cache(object@reduced_P, keep_zeros)
     P <- get_matrix_from_tensor(object@reduced_P, param_vec, with_offset = FALSE)[[1]]
-    return(list(P, c, d, A, matrix(b)))
+    return(list(P = p, c = c, d = d, A = A, b = matrix(b)))
   } else
-    return(list(c, d, A, matrix(b)))
+    return(list(c = c, d = d, A = A, b = matrix(b)))
 })
 
 #' @describeIn ParamConeProg Multiplies by Jacobian of parameter mapping. Assumes delA is sparse. Returns a mapping of param id to dparam.

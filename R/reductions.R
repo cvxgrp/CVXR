@@ -46,14 +46,34 @@ special_index_canon <- function(expr, args) {
   list(lowered, list())
 }
 
-#' 
+#'
 #' Are the arguments affine?
-#' 
+#'
 #' @param constraints A list of \linkS4class{Constraint} object.
 #' @return All the affine arguments in given constraints.
 are_args_affine <- function(constraints) {
   all(sapply(constraints, function(constr) { all(sapply(constr@args, is_affine)) }))
 }
+
+
+## #' REPLACED BELOW by modified version
+## #' Organize the constraints into a list keyed by constraint names.
+## #'
+## #'@param constraints A list of \linkS4class{Constraint} objects
+## #'@return A list keyed by constraint types where list[[cone_type]]
+## #'   maps to a list of exactly those constraints that are of type
+## #'   cone_type.
+## group_constraints <- function(constraints) {
+##   constr_map <- list()
+##   for(c in constraints) {
+##     if(class(c) %in% names(constr_map))
+##       constr_map[[class(c)]] <- c(constr_map[[class(c)]], c)
+##     else
+##       constr_map[[class(c)]] <- list(c)
+##   }
+##   return(constr_map)
+## }
+
 
 #'
 #' Organize the constraints into a list keyed by constraint names.
@@ -61,21 +81,26 @@ are_args_affine <- function(constraints) {
 #'@param constraints A list of \linkS4class{Constraint} objects
 #'@return A list keyed by constraint types where list[[cone_type]] maps to a list of exactly those constraints that are of type cone_type.
 group_constraints <- function(constraints) {
-  constr_map <- list()
-  for(c in constraints) {
-    if(class(c) %in% names(constr_map))
-      constr_map[[class(c)]] <- c(constr_map[[class(c)]], c)
-    else
-      constr_map[[class(c)]] <- list(c)
+  ## The constr_types list below should match the map named used in ConeDims-class (file dcp2cone.R)
+  constr_map <- c(Zero = list(),
+                    NonNeg = list(),
+                    SOC = list(),
+                    PSD = list(),
+                    ExpCone = list(),
+                    PowCone3D = list())
+  for (constr in constraints) {
+    cl <- class(constr)
+    constr_map[[cl]] <- append(constr_map[[cl]], list(constr))
   }
-  return(constr_map)
+  ## Drop empty lists and return
+  constr_map[lengths(constr_map) > 0]
 }
 
 #'
 #' The ReducedMat class.
 #'
 #' This is a utility class for condensing the mapping from parameters to problem data.
-#' 
+#'
 #' For maximum efficiency of representation and application, the mapping from
 #' parameters to problem data must be condensed. It begins as a CSC sparse matrix
 #' matrix_data, such that multiplying by a parameter vector gives the problem data.
@@ -83,7 +108,7 @@ group_constraints <- function(constraints) {
 #' and a CSR matrix reduced_mat that when multiplied by a parameter vector gives
 #' the values array. The ReducedMat class caches the condensed representation
 #' and provides a method for multiplying by a parameter vector.
-#' 
+#'
 #' This class consolidates code from ParamConeProg and ParamQuadProg.
 #'
 #' @rdname ReducedMat-class
@@ -96,7 +121,7 @@ setMethod("cache", "ReducedMat", function(object, keep_zeros = FALSE) {
   # Short circuit null case.
   if(is.na(object@matrix_data))
     return(object)
-  
+
   if(is.na(object@reduced_mat)) {
     # Form a reduced representation of the mapping, for faster application of parameters.
     if(!is.null(dim(object@matrix_data)) && prod(dim(object@matrix_data)) != 0) {
@@ -112,7 +137,7 @@ setMethod("cache", "ReducedMat", function(object, keep_zeros = FALSE) {
       object@problem_data_index <- NULL
     }
   }
-  
+
   if(keep_zeros && is.na(object@mapping_nonzero)) {
     object@mapping_nonzero <- canonInterface.A_mapping_nonzero_rows(object@matrix_data, object@var_len)
   }
@@ -147,17 +172,17 @@ setClassUnion("ProblemORNULL", c("Problem", "NULL"))
 #' between solutions of either problem: if we reduce a problem \eqn{A} to another
 #' problem \eqn{B} and then proceed to find a solution to \eqn{B}, we can convert
 #' it to a solution of \eqn{A} with at most a moderate amount of effort.
-#' 
-#' A reduction that is instantiated with a non-NULL problem offers two key methods: 
-#' reduce and retrieve. The reduce method converts the problem the reduction 
-#' was instantiated with to an equivalent problem. The retrieve method takes 
-#' as an argument a Solution for the equivalent problem and returns a Solution 
+#'
+#' A reduction that is instantiated with a non-NULL problem offers two key methods:
+#' reduce and retrieve. The reduce method converts the problem the reduction
+#' was instantiated with to an equivalent problem. The retrieve method takes
+#' as an argument a Solution for the equivalent problem and returns a Solution
 #' for the problem owned by the reduction.
 #'
-#' Every reduction supports three low-level methods: accepts, perform, and invert. 
-#' The accepts method of a particular reduction specifies the types of problems 
-#' that it is applicable to, the perform method takes a problem and reduces it to 
-#' an equivalent form, and the invert method maps solutions from reduced-to problems 
+#' Every reduction supports three low-level methods: accepts, perform, and invert.
+#' The accepts method of a particular reduction specifies the types of problems
+#' that it is applicable to, the perform method takes a problem and reduces it to
+#' an equivalent form, and the invert method maps solutions from reduced-to problems
 #' to their problems of provenance.
 #'
 #' @rdname Reduction-class
@@ -218,17 +243,17 @@ Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
 }
 
 # TODO: Get rid of this and just skip calling copy on Solution objects.
-setMethod("copy", "Solution", function(object) { 
+setMethod("copy", "Solution", function(object) {
   return(Solution(object@status, object@opt_val, object@primal_vars, object@dual_vars, object@attr))
 })
 
 #' @param x A \linkS4class{Solution} object.
 #' @rdname Solution-class
 setMethod("as.character", "Solution", function(x) {
-  paste("Solution(status = ", x@status, 
-              ", opt_val = ", x@opt_val, 
-              ", primal_vars = (", paste(x@primal_vars, collapse = ", "), 
-              "), dual_vars = (", paste(x@dual_vars, collapse = ", "), 
+  paste("Solution(status = ", x@status,
+              ", opt_val = ", x@opt_val,
+              ", primal_vars = (", paste(x@primal_vars, collapse = ", "),
+              "), dual_vars = (", paste(x@dual_vars, collapse = ", "),
               "), attr = (", paste(x@attr, collapse = ", "), "))", sep = "")
 })
 
@@ -252,12 +277,12 @@ failure_solution <- function(status, attr = NULL) {
     opt_val <- -Inf
   else
     opt_val <- NA_real_
-  
+
   if(is.null(attr))
     attr <- list()
   if(status == INFEASIBLE_OR_UNBOUNDED)
     attr$message <- INF_OR_UNB_MESSAGE
-  
+
   return(Solution(status, opt_val, list(), list(), attr))
 }
 
@@ -267,19 +292,19 @@ setClassUnion("SolutionORList", c("Solution", "list"))
 #' The Canonicalization class.
 #'
 #' This class represents a canonicalization reduction.
-#' 
-#' This reduction recursively canonicalizes every expression tree in a problem, 
-#' visiting each node. At every node, this reduction first canonicalizes its 
+#'
+#' This reduction recursively canonicalizes every expression tree in a problem,
+#' visiting each node. At every node, this reduction first canonicalizes its
 #' arguments; it then canonicalizes the node, using the canonicalized arguments.
-#' 
-#' The attribute canon_methods is a list mapping node types to functions that 
+#'
+#' The attribute canon_methods is a list mapping node types to functions that
 #' canonicalize them; the signature of these canonicalizing functions must be
 #' \code{canon_func(expr, canon_args) --> (new_expr, constraints) }
-#' where expr is the Expression (node) to canonicalize, canon_args is a list of 
-#' the canonicalized arguments of this expression, new_expr is a canonicalized 
-#' expression, and constraints is a list of constraints introduced while 
+#' where expr is the Expression (node) to canonicalize, canon_args is a list of
+#' the canonicalized arguments of this expression, new_expr is a canonicalized
+#' expression, and constraints is a list of constraints introduced while
 #' canonicalizing expr.
-#' 
+#'
 #' @rdname Canonicalization-class
 .Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
 
@@ -304,7 +329,7 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
     canon_constraints <- c(canon_constraints, aux_constr, list(canon_constr))
     inverse_data@cons_id_map[[as.character(id(constraint))]] <- id(canon_constr)   # TODO: Check this updates like dict().update in Python
   }
-  
+
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(object, new_problem, inverse_data))
 })
@@ -325,7 +350,7 @@ setMethod("invert", signature(object = "Canonicalization", solution = "Solution"
     if(vid %in% names(solution@dual_vars))
       dvars[[orig_id]] <- solution@dual_vars[[vid]]
   }
-  
+
   return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
 })
 
@@ -393,7 +418,7 @@ setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.c
 '[[.Chain' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
 
 #' @param name The type of reduction.
-#' @describeIn Chain Returns the reduction of the specified type. 
+#' @describeIn Chain Returns the reduction of the specified type.
 setMethod("$", signature(x = "Chain"), function(x, name) {
   for(reduction in x@reductions) {
     if(is(reduction, name))
@@ -410,7 +435,7 @@ setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(
     r <- object@reductions[[i]]
     if(!accepts(r, problem))
       return(FALSE)
-    
+
     tmp <- perform(r, problem)
     object@reductions[[i]] <- tmp[[1]]
     problem <- tmp[[2]]
@@ -426,7 +451,7 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
     if(verbose)
       print(paste("Applying reduction", class(r)))
     res <- perform(r, problem)
-    
+
     object@reductions[[i]] <- res[[1]]
     problem <- res[[2]]
     inv <- res[[3]]
@@ -468,7 +493,7 @@ attributes_present <- function(variables, attr_map) {
   # attr_map[sapply(attr_map, function(attr) {
   #  any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] }))
   # })]
-  
+
   attr_list <- c()
   for(attr in attr_map) {
     if(any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] })))
@@ -731,9 +756,9 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
 #'
 #' @rdname InverseData-class
 .InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
-                                                       param_dims = "list", param_to_size = "list", param_id_map = "list", 
+                                                       param_dims = "list", param_to_size = "list", param_id_map = "list",
                                                        id2var = "list", id2cons = "list", cons_id_map = "list", constraints = "ListORNULL"),
-                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), 
+                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(),
                                    param_dims = list(), param_to_size = list(), param_id_map = list(), id2var = list(), id2cons = list(),
                                    cons_id_map = list(), constraints = NULL))
 
@@ -747,7 +772,7 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@var_offsets <- varoffs$var_offsets
   .Object@x_length <- varoffs$x_length
   .Object@var_dims <- varoffs$var_dims
-  
+
   .Object@param_dims <- list()
   # Always start with CONSTANT_ID.
   .Object@param_to_size[[CONSTANT_ID]] <- 1
@@ -760,10 +785,10 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
     .Object@param_id_map[[pid]] <- offset
     offset <- offset + size(param)
   }
-  
+
   # Map of variable id to variable
   .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
-  
+
   # Map of constraint id to constraint
   .Object@id2cons <- stats::setNames(problem@constraints, sapply(constrs, function(cons) { as.character(id(cons)) }))
   .Object@cons_id_map <- list()
@@ -788,7 +813,7 @@ InverseData.get_var_offsets <- function(variables) {
 
 #'
 #' The MatrixStuffing class.
-#' 
+#'
 #' This class stuffs a problem into a standard form for a family of solvers.
 #'
 #' @rdname MatrixStuffing-class
@@ -798,16 +823,16 @@ MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
 #' @param problem A \linkS4class{Problem} object to stuff; the arguments of every constraint must be affine.
 #' @describeIn MatrixStuffing Returns a stuffed problem. The returned problem is a minimization problem in which every
 #' constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
-setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) { 
-  stop("Unimplemented") 
+setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
+  stop("Unimplemented")
 })
 
 #' @param object A \linkS4class{MatrixStuffing} object.
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
 #' @param inverse_data The data encoding the original problem.
 #' @describeIn MatrixStuffing Returns the solution to the original problem given the inverse_data.
-setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) { 
-  stop("Unimplemented") 
+setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  stop("Unimplemented")
 })
 
 setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {

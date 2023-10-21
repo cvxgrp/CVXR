@@ -31,18 +31,6 @@ expcone_permutor <- function(n_cones, exp_cone_order) {
   return(perm)
 }
 
-# #'
-# #' Organize the constraints into a dictionary keyed by constraint names.
-# #'
-# #' @param constraints a list of constraints.
-# #' @return A list of constraint types where constr_map[[cone_type]] maps to a list.
-# group_constraints <- function(constraints) {
-#  constr_map <- list()
-#  for(c in constraints)
-#    constr_map[[class(c)]] <- c(constr_map[[class(c)]], c)
-#  return(constr_map)
-# }
-
 #'
 #' Gets a specified value of a dual variable.
 #'
@@ -85,8 +73,22 @@ get_dual_values <- function(result_vec, parse_func, constraints) {
 #' @slot DIMS The key that maps to ConeDims in the data returned by perform(). There are separate ConeDims classes for cone programs vs. QPs. See matrix stuffing functions for details.
 #' @slot MIP_CAPABLE Can the solver handle mixed-integer programs?
 #' @rdname ReductionSolver-class
-setClass("ReductionSolver", representation(DIMS = "character", VAR_ID = "character", DUAL_VAR_ID = "character", EQ_CONSTR = "character", NEQ_CONSTR = "character", MIP_CAPABLE = "logical"),   # Keys for inverse data. Internal use only!
-                            prototype(DIMS = "dims", VAR_ID = "var_id", DUAL_VAR_ID = "dual_var_id", EQ_CONSTR = "eq_constr", NEQ_CONSTR = "other_constr", MIP_CAPABLE = FALSE), contains = "Reduction")
+setClass("ReductionSolver",
+         slots = list(
+           DIMS = "character",
+           VAR_ID = "character",
+           DUAL_VAR_ID = "character",
+           EQ_CONSTR = "character",
+           NEQ_CONSTR = "character",
+           MIP_CAPABLE = "logical"),   # Keys for inverse data. Internal use only!
+         prototype = list(
+           DIMS = "dims",
+           VAR_ID = "var_id",
+           DUAL_VAR_ID = "dual_var_id",
+           EQ_CONSTR = "eq_constr",
+           NEQ_CONSTR = "other_constr",
+           MIP_CAPABLE = FALSE),
+         contains = "Reduction")
 
 # Solver capabilities.
 #' @param solver,object,x A \linkS4class{ReductionSolver} object.
@@ -205,12 +207,12 @@ SolvingChain.is_lp <- function(object) {
     if(!(is(c, "EqConstraint") || is(c, "ZeroConstraint")) || is_pwl(c@args[[1]]))
       return(FALSE)
   }
-  
+
   for(var in variables(object)) {
     if(is_psd(var) || is_nsd(var))
       return(FALSE)
   }
-  
+
   return(is_dcp(object) && is_pwl(object@objective@args[[1]]))
 }
 
@@ -220,7 +222,7 @@ SolvingChain.solve_as_qp(problem, candidates) {
     if(!(s %in% candidates$qp_solvers))
       conic_not_qp_slvs <- c(conic_not_qp_slvs, s)
   }
-  
+
   if(SolvingChain.is_lp(problem) && length(conic_not_qp_slvs) > 0) {
     # OSQP can take many iterations for LPs; use a conic solver instead.
     # GUROBI and CPLEX QP/LP interfaces are more efficient -> Use them instead of conic if applicable.
@@ -238,13 +240,13 @@ SolvingChain.solve_as_qp(problem, candidates) {
 #' @return A list of Reduction objects that can be used to convert the problem to an intermediate form.
 SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solver_opts = NULL) {
   reductions <- list()
-  
+
   # TODO: Handle boolean constraints.
   if(Complex2Real.accepts(problem))
     reductions <- c(reductions, list(Complex2Real()))
   if(gp)
     reductions <- c(reductions, list(Dgp2Dcp()))
-  
+
   if(!gp && !is_dcp(problem)) {
     append <- build_non_disciplined_error_msg(problem, "DCP")
     if(is_dgp(problem))
@@ -260,16 +262,16 @@ SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solve
       append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
     stop("Problem does not follow DGP rules. ", append)
   }
-  
+
   # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
   if(inherits(problem@objective, "Maximize"))
     reductions <- c(reductions, list(FlipObjective()))
-  
+
   if(!is.null(solver_opts) && "use_quad_obj" %in% names(solver_opts))
     use_quad <- solver_opts$use_quad_obj
   else
     use_quad <- TRUE
-  
+
   if(SolvingChain.solve_as_qp(problem, candidates) && use_quad)
     reductions <- c(reductions, list(CvxAttr2Constr(), Qp2SymbolicQp()))
   else {
@@ -277,18 +279,18 @@ SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solve
     if(length(candidates$conic_solvers) == 0)
       stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
   }
-  
+
   constr_types <- sapply(problem@constraints, class)
   if("FiniteSet" %in% constr_types)
     reductions <- c(reductions, list(Valinvec2mixedint()))
-  
+
   return(reductions)
 }
 
 #'
 #' Build a reduction chain from a problem to an installed solver.
-#' 
-#' Note that if the supplied problem has zero variables, the solver parameter 
+#'
+#' Note that if the supplied problem has zero variables, the solver parameter
 #' will be ignored.
 #'
 #' @param problem The problem for which to build a chain.
@@ -297,13 +299,13 @@ SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solve
 #' @param enforce_dpp When TRUE, a DPPError will be throw when trying to parse a non-DPP problem (instead of just a warning). Defaults to FALSE.
 #' @param ignore_dpp When TRUE, DPP problems will be treated as non-DPP, which may speed up compilation. Defaults to FALSE.
 #' @param canon_backend Specifies which backend to use for canonicalization, which can affect compilation time. Defaults to NA, i.e., selecting the default backend ("CPP").
-#' @param solver_opts List of additional arguments to pass to the solver. 
+#' @param solver_opts List of additional arguments to pass to the solver.
 #' @return A \linkS4class{SolvingChain} that can be used to solve the problem.
 construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
   if(length(variables(problem)) == 0)
     return(SolvingChain(reductions = list(ConstantSolver())))
   reductions <- SolvingChain.reductions_for_problem_class(problem, candidates, gp, solver_opts)
-  
+
   # Process DPP status of the problem.
   dpp_context <- ifelse(gp, "dgp", "dcp")
   dpp_error_msg <- paste("You are solving a parameterized problem that is not DPP. ",
@@ -312,7 +314,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
                          "documentation on Discplined Parametrized Programming, at\n"
                          "\thttps://www.cvxpy.org/tutorial/advanced/index.html#"
                          "disciplined-parametrized-programming", sep = "")
-  
+
   if(ignore_dpp || !is_dpp(problem, dpp_context)) {
     # No warning for ignore_dpp.
     if(ignore_dpp)
@@ -329,7 +331,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
     if(n_parameters >= PARAM_THRESHOLD)
       warning("Your problem has too many parameters for efficient DPP compilation. We suggest setting ignore_dpp = TRUE")
   }
-  
+
   # Conclude with matrix stuffing; choose one of the following paths:
   #   1) QpMatrixStuffing -> [a QpSolver]
   #   2) ConeMatrixStuffing -> [a ConicSolver]
@@ -337,7 +339,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
     use_quad <- solver_opts$use_quad_obj
   else
     use_quad <- TRUE
-  
+
   if(SolvingChain.solve_as_qp(problem, candidates) && use_quad) {
     # Canonicalize as a QP.
     solver <- candidates$qp_solvers[[1]]
@@ -345,12 +347,12 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
     reductions <- c(reductions, list(QpMatrixStuffing(canon_backend = canon_backend), solver_instance))
     return(SolvingChain(reductions = reductions))
   }
-  
+
   # Canonicalize as a cone program.
   if(length(candidates$conic_solvers) == 0)
     stop(paste("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers (",
                paste(unlist(candidates), collapse = ","), ")", sep = ""))
-  
+
   # We use constr_types to infer an incomplete list of cones that the solver will need after canonicalization.
   constr_types <- sapply(problem@constraints, class)
   constr_types <- unique(constr_types)
@@ -362,10 +364,10 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
       constr_types <- c(constr_types, app_cos)
     constr_types <- constr_types[which(constr_types != co)]
   }
-  
-  # We now go over individual elementary cones support by CVXR (SOC, ExpCone, 
+
+  # We now go over individual elementary cones support by CVXR (SOC, ExpCone,
   # NonNegConstraint, ZeroConstraint, PSDConstraint, PowCone3D) and check if
-  # they've appeared in constr_types or if the problem has an atom requiring 
+  # they've appeared in constr_types or if the problem has an atom requiring
   # that cone.
   cones <- c()
   atoms <- atoms(problem)
@@ -380,7 +382,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   if("PSDConstraint" %in% constr_types || any(atoms %in% PSD_ATOMS) || any(variables(problem), function(v) { is_psd(v) || is_nsd(v) }))
     cones <- c(cones, "PSDConstraint")
   if("PowCone3D" %in% constr_types) {
-    # If we add in atoms that specifically use the 3D power cone (rather than 
+    # If we add in atoms that specifically use the 3D power cone (rather than
     # the ND power cone), then we'll need to check for those atoms here as well.
     cones <- c(cones, "PowCone3D")
   }
@@ -388,22 +390,22 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   # Here, we make use of the observation that canonicalization only
   # increases the number of constraints in our problem.
   has_constr <- length(cones) > 0 || length(problem@constraints) > 0
-  
+
   for(solver %in% candidates$conic_solvers) {
     solver_instance <- SOLVER_MAP_CONIC[[solver]]
-    
+
     # Cones supported for MI problems may differ from non MI.
     if(is_mixed_integer(problem))
       supported_constraints <- mi_supported_constraints(solver_instance)
     else
       supported_constraints <- supported_constraints(solver_instance)
-    
+
     if(all(cones %in% supported_constraints) && (has_constr || !requires_constr(solver_instance))) {
       if(length(ex_cost) > 0)
         reductions <- c(reductions, list(Exotic2Common()))
       if("RelEntrConeQuad" %in% approx_cos || "OpRelEntrConeQuad" %in% approx_cos)
         reductions <- c(reductions, list(QuadApprox()))
-      
+
       # Should the objective be canonicalized to a quadratic?
       if(!is.null(solver_opts) && "use_quad_obj" %in% names(solver_opts))
         use_quad_obj <- solver_opts$use_quad_obj
@@ -414,7 +416,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
       return(SolvingChain(reductions = reductions))
     }
   }
-  
+
   stop(paste("Either candidate conic solvers (",
        paste(candidates$conic_solvers, sep = " ", collapse = ","), ") do not support the cones output by the problem (",
        paste(cones, sep = " ", collapse = ","), "), or there are not enough constraints in the problem.", sep = ""))
@@ -491,7 +493,7 @@ setMethod("construct_intermediate_chain", signature(problem = "Problem", candida
     reductions <- c(reductions, Complex2Real())
   if(gp)
     reductions <- c(reductions, Dgp2Dcp())
-  
+
   if(!gp && !is_dcp(problem)) {
     append <- build_non_disciplined_error_msg(problem, "DCP")
     if(is_dgp(problem))
@@ -538,9 +540,9 @@ Bisection.infeasible <- function(problem, result) {
   is.null(problem) || result$status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE)
 }
 
-# TODO: Eliminate the need for reconstructing the problem (via Bisection.lower_problem). 
-# Right now, some constraints are lazy, namely the callable constraints, because for 
-# certain values of the parameters they become invalidated. Either support lazy 
+# TODO: Eliminate the need for reconstructing the problem (via Bisection.lower_problem).
+# Right now, some constraints are lazy, namely the callable constraints, because for
+# certain values of the parameters they become invalidated. Either support lazy
 # constraints that do not need recompilation, or (if possible) find rewritings that 'just work'.
 Bisection.find_bisection_interval <- function(problem, t, solver = NULL, low = NA_real_, high = NA_real_, max_iters = 100) {
   # Finds an interval for bisection
@@ -548,7 +550,7 @@ Bisection.find_bisection_interval <- function(problem, t, solver = NULL, low = N
     low <- ifelse(is_nonneg(t), 0, -1)
   if(is.na(high))
     high <- ifelse(is_nonpos(t), 0, 1)
-  
+
   infeasible_low <- is_nonneg(t)
   feasible_high <- is_nonpos(t)
   for(i in seq(max_iters)) {
@@ -565,7 +567,7 @@ Bisection.find_bisection_interval <- function(problem, t, solver = NULL, low = N
       else
         stop("Solver failed with status ", result$status)
     }
-    
+
     if(!infeasible_low) {
       value(t) <- low
       lowered <- Bisection.lower_problem(problem)
@@ -579,11 +581,11 @@ Bisection.find_bisection_interval <- function(problem, t, solver = NULL, low = N
       } else
         stop("Solver failed with status ", result$status)
     }
-    
+
     if(infeasible_low && feasible_high)
       return(c(low, high))
   }
-  
+
   stop("Unable to find suitable interval for bisection; your problem may be unbounded.")
 }
 
@@ -591,11 +593,11 @@ Bisection.bisect_int <- function(problem, solver, t, low, high, tighten_lower, t
   # Bisect problem on the parameter t
   verbose_freq <- 5
   soln <- NA_real_
-  
+
   for(i in seq(max_iters)) {
     if(low > high)
       stop("low must be less than or equal to high")
-    
+
     if(!is.na(soln) && (high - low) <= eps) {
       # the previous iteration might have been infeasible, but
       # the tighten* functions might have narrowed the interval
@@ -603,7 +605,7 @@ Bisection.bisect_int <- function(problem, solver, t, low, high, tighten_lower, t
       # soln is not None check)
       return(c(soln, low, high))
     }
-    
+
     query_pt <- (low + high) / 2.0
     if(verbose && i %% verbose_freq == 0) {
       print(paste("(iteration ", i, ") lower bound: ", low, sep = ""))
@@ -613,7 +615,7 @@ Bisection.bisect_int <- function(problem, solver, t, low, high, tighten_lower, t
     value(t) <- query_pt
     lowered <- Bisection.lowered_problem(problem)
     result <- solve(lowered, solver = solver)
-    
+
     if(Bisection.infeasible(lowered, result)) {
       if(verbose && i %% verbose_freq == 0)
         print(paste("(iteration ", i, ") query was infeasible"))
@@ -633,9 +635,9 @@ Bisection.bisect_int <- function(problem, solver, t, low, high, tighten_lower, t
 
 #'
 #' Bisection on a one-parameter family of DCP problems.
-#' 
+#'
 #' Bisects on a one-parameter family of DCP problems emitted by Dqcp2Dcp.
-#' 
+#'
 #' @param problem A \linkS4class{Problem} emitted by Dqcp2Dcp.
 #' @param solver The solver to use for bisection.
 #' @param low (Optional) Lower bound for bisection.
@@ -652,12 +654,12 @@ setMethod("bisect", "Problem", function(problem, solver = NULL, low = NA_real_, 
   t <- tmp[[2]]
   tighten_lower <- tmp[[3]]
   tighten_higher <- tmp[[4]]
-  
+
   if(verbose)
     cat("\n******************************************************",
         "**************************\n",
         "Preparing to bisect problem\n\n", as.character(Bisection.lower_problem(problem)), "\n", sep = "")
-  
+
   lowered_feas <- Bisection.lower_problem(feas_problem)
   result <- solve(lowered_feas, solver = solver)
   if(Bisection.infeasible(lowered_feas, result)) {
@@ -665,7 +667,7 @@ setMethod("bisect", "Problem", function(problem, solver = NULL, low = NA_real_, 
       print("Problem is infeasible")
     return(failure_solution(INFEASIBLE))
   }
-  
+
   if(is.na(low) || is.na(high)) {
     if(verbose)
       print("Finding interval for bisection...")
@@ -673,12 +675,12 @@ setMethod("bisect", "Problem", function(problem, solver = NULL, low = NA_real_, 
     low <- tmp[[1]]
     high <- tmp[[2]]
   }
-  
+
   if(verbose) {
     print(paste("initial lower bound:", low))
     print(paste("initial upper bound:", high))
   }
-  
+
   tmp <- Bisection.bisect_int(problem, solver, t, low, high, tighten_lower, tighten_higher, eps, verbose, max_iters)
   soln <- tmp[[1]]
   low <- tmp[[2]]
@@ -716,7 +718,7 @@ setup_ldl_factor <- function(c, G, h, dims, A, b) {
   # this function will only ever be called with spmatrix objects. If creating
   # a custom kktsolver of your own, you need to conform to this sparse matrix
   # assumption.
-  
+
   factor <- kkt_ldl(G, dims, A)
   return(factor)
 }
@@ -749,27 +751,27 @@ kkt_ldl <- function(G, dims, A) {
   # The factor function concludes by returning a reference to the solve function.
   #
   # Note: In the 3 x 3 system, H is n x n, A is p x n, and G is N x n, where
-  # N = dims[['l']] + sum(dims[['q']]) + sum(sapply(dims[['s']], function(k) { k^2 })). 
+  # N = dims[['l']] + sum(dims[['q']]) + sum(sapply(dims[['s']], function(k) { k^2 })).
   # For cone programs, H is the zero matrix.
-  
+
   p <- nrow(A)
   n <- ncol(A)
   ldK <- n + p + dims$l + sum(dims$q) + sum(sapply(dims$s, function(k) { as.integer(k*(k+1)/2) } ))
-  
+
   stop("CVXOPT KKT solver is unimplemented. Need to write most of the code in C++.")
-  
+
   # TODO: These should all be CVXOPT matrix objects.
   K <- matrix(0, nrow = ldK, ncol = ldK)
   ipiv <- matrix(0, nrow = ldK, ncol = 1)
   u <- matrix(0, nrow = ldK, ncol = 1)
   g <- matrix(0, nrow = nrow(G), ncol = 1)
-  
+
   factor <- function(W, H = NA_real_) {
     K <- 0*K
     if(!is.na(H))
       K[1:n, 1:n] <- H
     K[(n+1):(n+p+1), 1:n] <- A
-    
+
     for(k in seq(n)) {
       g <- G[,k]
       # TODO: These should be calls to functions in CVXOPT (cvxopt.misc).
@@ -777,12 +779,12 @@ kkt_ldl <- function(G, dims, A) {
       # pack(g, K, dims, 0, offsety=k*ldK + n + p)
     }
     K[seq((ldK+1)*(p+n) + 1, nrow(K), by = ldK+1)] <- -1.0
-    
+
     # Add positive regularization in 1x1 block and negative in 2x2 block.
     K[seq(1, (ldK+1)*n, by = ldK+1)] <- K[seq(1, (ldK+1)*n, by = ldK+1)] + REG_EPS
     K[seq((ldK+1)*n + 1, nrow(K), by = ldK+1)] <- K[seq((ldK+1)*n + 1, nrow(K), by = ldK+1)] - REG_EPS
     # TODO: lapack.sytrf(K, ipiv)
-    
+
     solve <- function(x, y, z) {
       # Solve
       #
@@ -794,7 +796,7 @@ kkt_ldl <- function(G, dims, A) {
       #
       # On entry, x, y, z contain bx, by, bz.  On exit, they contain
       # the solution ux, uy, W*uz.
-      
+
       # TODO: This function needs to be implemented using CVXOPT/BLAS/LAPACK functions.
       # blas.copy(x, u)
       # blas.copy(y, u, offsety=n)
@@ -805,10 +807,10 @@ kkt_ldl <- function(G, dims, A) {
       # blas.copy(u, y, offsetx=n, n=p)
       # unpack(u, z, dims, 0, offsetx=n + p)
     }
-    
+
     return(solve)
   }
-  
+
   return(factor)
 }
 

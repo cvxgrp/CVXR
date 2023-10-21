@@ -20,7 +20,6 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 #' @export
 setClass("ECOS", contains = "ConicSolver")
 
-
 setMethod("initialize", "ECOS",
           function(.Object, ...) {
             ##.Object <- callNextMethod(.Object, ...)
@@ -96,6 +95,7 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   }
 
   data[[PARAM_PROB]] <- problem
+
   data[[object@dims]] <- inv_data[[object@dims]] <- problem@cone_dims
 
   constr_map <- problem@constr_map

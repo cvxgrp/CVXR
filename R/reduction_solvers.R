@@ -31,18 +31,6 @@ expcone_permutor <- function(n_cones, exp_cone_order) {
   return(perm)
 }
 
-# #'
-# #' Organize the constraints into a dictionary keyed by constraint names.
-# #'
-# #' @param constraints a list of constraints.
-# #' @return A list of constraint types where constr_map[[cone_type]] maps to a list.
-# group_constraints <- function(constraints) {
-#  constr_map <- list()
-#  for(c in constraints)
-#    constr_map[[class(c)]] <- c(constr_map[[class(c)]], c)
-#  return(constr_map)
-# }
-
 #'
 #' Gets a specified value of a dual variable.
 #'

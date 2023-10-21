@@ -116,8 +116,8 @@ ConeDims <- setClass("ConeDims",
 
 setMethod("initialize", "ConeDims",
           function(.Object, constr_map) {
-            .Object$zero <- Reduce(sum, lapply(constr_map$ZeroConstraint, size))
-            .Object$nonneg <- Reduce(sum, lapply(constr_map$NonNegConstraint, size))
+            .Object$zero <- Reduce(sum, lapply(constr_map$Zero, size))
+            .Object$nonneg <- Reduce(sum, lapply(constr_map$NonNeg, size))
             .Object$exp <- Reduce(sum, lapply(constr_map$ExpCone, num_cones))
             .Object$soc <- unlist(lapply(constr_map$SOC, cone_sizes))
             .Object$psd <- unlist(lapply(constr_map$PSD, nrow))

@@ -275,9 +275,9 @@ ConicSolver.prepare_data_and_inv_data <- function(object, problem) {
   data[[PARAM_PROB]] <- problem
   data[[DIMS]] <- inv_data[[DIMS]] <- problem@cone_dims
   constr_map <- problem@constr_map
-  inv_data[[EQ_CONSTR]] <- constr_map[["ZeroConstraint"]]
+  inv_data[[EQ_CONSTR]] <- constr_map$Zero
   ## For why I do this below, see function group_constraints in reductions.R
-  k <- match(c("NonNegConstraint", "SOC", "PSDConstraint", "ExpCone", "PowCone3d"),
+  k <- match(c("NonNeg", "SOC", "PSD", "ExpCone", "PowCone3D"),
              names(constr_map))
   inv_data[[NEQ_CONSTR]] <- constr_map[ k[!is.na(k)] ]
 

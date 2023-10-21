@@ -99,8 +99,8 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   data[[object@dims]] <- inv_data[[object@dims]] <- problem@cone_dims
 
   constr_map <- problem@constr_map
-  inv_data[[EQ_CONSTR]] <- constr_map$ZeroConstraint
-  inv_data[[NEQ_CONSTR]] <- c(constr_map$NonNegConstraint, constr_map$SOC, constr_map$ExpCone)
+  inv_data[[EQ_CONSTR]] <- constr_map$Zero
+  inv_data[[NEQ_CONSTR]] <- c(constr_map$NonNeg, constr_map$SOC, constr_map$ExpCone)
 
   len_eq_ind <- seq_len(problem@cone_dims$zero)
 

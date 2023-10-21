@@ -118,8 +118,8 @@ SCS.psd_format_constr <- function(constr) {
 ##   # 3) SOC.
 ##   # 4) PSD.
 ##   # 5) Exponential.
-##   zero_constr <- constr_map$ZeroConstraint
-##   neq_constr <- c(constr_map$NonPosConstraint, constr_map$SOC, constr_map$PSDConstraint, constr_map$ExpCone)
+##   zero_constr <- constr_map$Zero
+##   neq_constr <- c(constr_map$NonPos, constr_map$SOC, constr_map$PSD, constr_map$ExpCone)
 ##   inv_data[[object@eq_constr]] <- zero_constr
 ##   inv_data[[object@neq_constr]] <- neq_constr
 

@@ -35,13 +35,6 @@ setMethod("initialize", "ECOS",
 ## #' @export
 ## ECOS <- function() { new("ECOS") }
 
-
-
-# Solver capabilities.
-#' @describeIn ECOS Can the solver handle mixed-integer programs?
-setMethod("mip_capable", "ECOS", function(solver) { FALSE })
-##setMethod("supported_constraints", "ECOS", function(solver) { c(, "SOC", "ExpCone") })
-
 # EXITCODES from ECOS
 # ECOS_OPTIMAL  (0)   Problem solved to optimality
 # ECOS_PINF     (1)   Found certificate of primal infeasibility
@@ -77,8 +70,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 })
 
 #' @describeIn ECOS Imports the solver
-##setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
-setMethod("import_solver", "ECOS", function(solver) { TRUE }) ## we require ECOS
+setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
 
 #' @describeIn ECOS Returns the name of the solver
 setMethod("name", "ECOS", function(solver) { ECOS_NAME })

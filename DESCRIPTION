@@ -103,7 +103,7 @@ Collate:
     'CVXcanon-R6.R'
     'Deque.R'
     'canonInterface.R'
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Encoding: UTF-8
 Enhances: 
     Rcplex,

@@ -852,14 +852,14 @@ setMethod("initialize", "OpRelEntrConeQuad", function(.Object, ..., X, Y, Z, m, 
   .Object@Y <- as.Constant(Y)
   .Object@Z <- as.Constant(Z)
   if(!is_hermitian(X) || !is_hermitian(Y) || !is_hermitian(Z))
-    stop("One of the input matrices has not explicitly been declared as symmetric or"
-         "Hermitian. If the inputs are Variable objects, try declaring them with the"
-         "symmetric=True or Hermitian=True properties. If the inputs are general "
-         "Expression objects that are known to be symmetric or Hermitian, then you"
-         "can wrap them with the symmetric_wrap and hermitian_wrap atoms. Failure to"
-         "do one of these things will cause this function to impose a symmetry or"
-         "conjugate-symmetry constraint internally, in a way that is very"
-         "inefficient.")
+    stop(paste(c("One of the input matrices has not explicitly been declared as symmetric or",
+                 "Hermitian. If the inputs are Variable objects, try declaring them with the",
+                 "symmetric=True or Hermitian=True properties. If the inputs are general ",
+                 "Expression objects that are known to be symmetric or Hermitian, then you",
+                 "can wrap them with the symmetric_wrap and hermitian_wrap atoms. Failure to",
+                 "do one of these things will cause this function to impose a symmetry or",
+                 "conjugate-symmetry constraint internally, in a way that is very",
+                 "inefficient."), collapse = "\n"))
   .Object@m <- m
   .Object@k <- k
   Xs <- dim(.Object@X)
@@ -1294,7 +1294,7 @@ setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
     stop("Invalid first argument")
 
   # Check t has one entry per cone.
-  if((length(X_dim) <= 1 and t_size > 1) ||
+  if((length(X_dim) <= 1 && t_size > 1) ||
      (length(X_dim) == 2 && t_size != X_dim[axis]) ||
      (length(X_dim) == 1 && axis == 1))
     stop("Argument dimensions and axis are incompatible")

@@ -56,8 +56,9 @@ setMethod("invert", signature(object = "PIQP", solution = "list", inverse_data =
 
   if (status %in% SOLUTION_PRESENT) {
     opt_val <- solution$info$obj_val + inverse_data[[OFFSET]]
-    primal_vars <- list(object@VAR_ID = as.matrix(solution$x))
-    dual_vars <- list(object@DUAL_VAR_ID = solution$y)
+    primal_vars <- dual_vars <- list()
+    primal_vars[[object@VAR_ID]] <- as.matrix(solution$x)
+    dual_vars[[object@DUAL_VAR_ID]] <- solution$y
     attr[[NUM_ITERS]] <- solution$info$iter
     sol <- Solution(status, opt_val, primal_vars, dual_vars, attr)
   } else

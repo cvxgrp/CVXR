@@ -2,10 +2,10 @@
 #' The Constant class.
 #'
 #' This class represents a constant value.
-#' 
+#'
 #' Raw numerical constants (R primitive types, Matrix dense and sparse matrices,
-#' et) are implicitly cast to constants via Expression operator overloading. 
-#' For example, if \code{x} is an expression and \code{c} is a raw constant, 
+#' et) are implicitly cast to constants via Expression operator overloading.
+#' For example, if \code{x} is an expression and \code{c} is a raw constant,
 #' then \code{x + c} creates an expression by casting \code{c} to a Constant.
 #'
 #' @slot value A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.
@@ -233,21 +233,21 @@ as.Constant <- function(expr) {
   if(is(expr, "list")) {
     for(elem in expr) {
       if(is(elem, "Expression"))
-        stop("The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack."
+        stop("The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack.")
     }
+
+    if(is(expr, "Expression"))
+      expr
+    else
+      Constant(value = expr)
   }
-  
-  if(is(expr, "Expression"))
-    expr
-  else
-    Constant(value = expr)
 }
 
 #'
 #' The Parameter class.
 #'
 #' This class represents a parameter in an optimization problem.
-#' 
+#'
 #' Parameters are constant expressions whose value may be specified
 #' after problem creation. The only way to modify a problem after its
 #' creation is through parameters. For example, you might choose to declare
@@ -295,7 +295,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = N
     .Object@.is_vector <- FALSE
   else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
     stop("Unimplemented")
-  
+
   # This is handled in Canonical: .Object@id <- ifelse(is.na(id), get_id(), id)
   if(is.na(name))
     .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
@@ -310,7 +310,7 @@ setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = N
   # Save in virtual environment cache.
   .Object <- callNextMethod(.Object, ..., dim = dim, value = .Object@value)
   .Object@.is_constant <- TRUE
-  
+
   # Cache in virtual environment.
   .Object@venv <- new.env(parent = emptyenv())
   .Object@venv$value <- .Object@value
@@ -318,6 +318,10 @@ setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = N
   # .Object@venv$gradient <- .Object@gradient
   return(.Object)
 })
+
+
+
+
 
 #' @param object,x A \linkS4class{Parameter} object.
 #' @describeIn Parameter Returns information needed to reconstruct the expression besides args: \code{list(dim, name, value, id, attributes)}.
@@ -433,3 +437,4 @@ setMethod("value", "CallbackParam", function(object) {
   #   val <- as.vector(val)
   # return(val)
 })
+

@@ -247,7 +247,7 @@ setMethod("apply_parameters", "ParamConeProg", function(object, id_to_param_valu
   }
 
   param_vec <- canonInterface.get_parameter_vector(object@total_param_size, object@param_id_to_col, object@param_id_to_size, param_value, zero_offset = zero_offset)
-  c, d = canonInterface.get_matrix_from_tensor(object@c, param_vec, size(object@x), with_offset = TRUE)
+  cd = canonInterface.get_matrix_from_tensor(object@c, param_vec, size(object@x), with_offset = TRUE)
   c <- cd[[1]]
   d <- cd[[2]]
   c <- as.vector(c)
@@ -859,7 +859,7 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
   if(is.na(axis))   # shape = c(1,1)
     promoted_t <- promote(t, x_dim)
   else if(axis == 2)   # shape = c(1,n)
-    promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1)) %*% reshape_expr(t, c(1, x_dim[2:length(x_dim)])))
+    promoted_t <- Constant(matrix(1, nrow = x_dim[1], ncol = 1)) %*% reshape_expr(t, c(1, x_dim[2:length(x_dim)]))
   else   # shape = c(m,1)
     promoted_t <- reshape_expr(t, c(x_dim[1:(length(x_dim)-1)], 1)) %*% Constant(matrix(1, nrow = 1, ncol = x_dim[2]))
 

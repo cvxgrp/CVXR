@@ -151,7 +151,7 @@ setMethod("is_dpp", "Atom", function(object, context = "dcp") {
     return(is_dcp(object, dpp = TRUE))
   else if(tolower(context) == "dgp")
     return(is_dgp(object, dpp = TRUE))
-  else:
+  else
     stop("Unsupported context ", context)
 })
 
@@ -611,14 +611,14 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 #' This class represents the ratio of the \eqn{l_2}-norm distance from \eqn{x} to two points \eqn{a} and \eqn{b}, i.e.,
 #'
 #' \deqn{||x - a||_2 / ||x - b||_2},
-#' 
+#'
 #' where \eqn{a} and \eqn{b} are constants with \eqn{norm(x - a)_2 \leq norm(x - b)}.
 #'
 #' @slot x An \linkS4class{Expression}.
 #' @name DistRatio-class
 #' @aliases DistRatio
 #' @rdname DistRatio-class
-.DistRatio <- setClass("DistRatio", representation(x = "ConstValORExpr", a = "numeric", b = "numeric"), 
+.DistRatio <- setClass("DistRatio", representation(x = "ConstValORExpr", a = "numeric", b = "numeric"),
                        validity = function(object) {
                          if(!is_constant(object@args[[2]]))
                            stop("[DistRatio: a] The argument a must be a constant.")
@@ -681,21 +681,21 @@ setMethod(".grad", "DistRatio", function(object, values) { return(NA_real_) })
 #' The DotSort class.
 #'
 #' This class represents the value
-#' 
+#'
 #' \deqn{\langle sort\left(vec(X)\right), sort\left(vec(W)\right) \rangle},
-#' 
+#'
 #' where \eqn{X} is an expression and \eqn{W} is a constant.
-#' 
+#'
 #' Both arguments are flattened, i.e., we define \eqn{x = vec(X)} and \eqn{w = vec(W)}.
 #' If the length of \eqn{w} is less than the length of \eqn{x}, it is conceptually padded with zeroes.
 #' When the length of \eqn{w} is larger than the length of \eqn{x}, an exception is raised.
-#' 
+#'
 #' DotSort is a generalization of SumLargest and SumSmallest:
 #' SumLargest(X, 3) is equivalent to DotSort(X, c(1,1,1))
 #' SumLargest(X, 3.5) is equivalent to DotSort(X, c(1,1,1,0.5))
 #' SumSmallest(X, 3) is equivalent to -DotSort(X, c(-1,-1,-1))
-#' 
-#' When the constant argument is not a boolean vector, DotSort can be considered as a weighted sum 
+#'
+#' When the constant argument is not a boolean vector, DotSort can be considered as a weighted sum
 #' of \eqn{x}, where the largest weight is assigned to the largest entry in \eqn{x}, etc.
 #'
 .DotSort <- setClass("DotSort", representation(X = "ConstValORExpr", W = "ConstVal"), contains = "Atom")
@@ -749,13 +749,13 @@ setMethod("sign_from_args", "DotSort", function(object) {
   # Same as argument.
   x_pos <- is_nonneg(object@args[[1]])
   x_neg <- is_nonpos(object@args[[1]])
-  
+
   w_pos <- is_nonneg(object@args[[2]])
   w_neg <- is_nonpos(object@args[[2]])
-  
+
   is_positive <- (x_pos && w_pos) || (x_neg && w_neg)
   is_negative <- (x_neg && w_pos) || (x_pos && w_neg)
-  
+
   return(c(is_positive, is_negative))
 })
 
@@ -786,7 +786,7 @@ setMethod("get_data", "DotSort", function(object) { list() })
 DotSort.get_args_from_values <- function(values) {
   x <- as.numeric(t(values[[1]]))
   w <- as.numeric(t(values[[2]]))
-  
+
   w_padded <- rep(0, length(x))
   w_padded[1:length(w)] <- w
   return(list(x, w_padded))
@@ -1101,11 +1101,11 @@ setMethod("copy", "GeoMean", function(object, args = NULL, id_objects = list()) 
 
 #'
 #' The GmatMul atom.
-#' 
+#'
 #' Geometric matrix multiplication: \eqn{A \mathbin{\diamond} X}.
-#' 
+#'
 #' For \eqn{A \in \mathbf{R}^{m \times n}} and \eqn{X \in \mathbf{R}^{n \times p}_{++}}, this atom represents
-#' 
+#'
 #' \deqn{\left[\begin{array}{ccc} \prod_{j=1}^n X_{j1}^{A_{1j}} & \cdots & \prod_{j=1}^n X_{pj}^{A_{1j}} \\ \vdots &  & \vdots \\ \prod_{j=1}^n X_{j1}^{A_{mj}} & \cdots & \prod_{j=1}^n X_{pj}^{A_{mj}} \end{array}\right]}
 #'
 #' This atom is log-log affine in \eqn{X}.
@@ -1167,13 +1167,13 @@ setMethod("is_atom_convex", "GmatMul", function(object) { FALSE })
 setMethod("is_atom_concave", "GmatMul", function(object) { FALSE })
 
 #' @describeIn GmatMul List of \linkS4class{Parameter} objects in the atom.
-setMethod("parameters", "GmatMul", function(object) { 
+setMethod("parameters", "GmatMul", function(object) {
   # The exponent matrix, which is not an argument, may be parametrized.
-  c(parameters(object@args[[1]]), parameters(obje)) 
+  c(parameters(object@args[[1]]), parameters(obje))
 })
 
 #' @describeIn GmatMul Is the atom log-log convex?
-setMethod("is_atom_log_log_convex", "GmatMul", function(object) { 
+setMethod("is_atom_log_log_convex", "GmatMul", function(object) {
   if(dpp_scope_active()) {
     # This branch applies curvature rules for DPP.
     #
@@ -1184,7 +1184,7 @@ setMethod("is_atom_log_log_convex", "GmatMul", function(object) {
     # A power X^A is log-log convex (actually, affine) as long as
     # at least one of X and P do not contain parameters.
     #
-    # Note by construction (see A is either a Constant or a Parameter, ie, 
+    # Note by construction (see A is either a Constant or a Parameter, ie,
     # either is(A, Constant) or is(A, Parameter)).
     X <- object@args[[1]]
     A <- object@A
@@ -1221,7 +1221,7 @@ HarmonicMean <- function(x) {
 
 #'
 #' The InvProb atom.
-#' 
+#'
 #' The reciprocal of a product of the entries of a vector \eqn{x}, \eqn{(\prod_{i=1}^n x_i)^{-1}}, where \eqn{n} is the length of \eqn{x}.
 #'
 #' @param x An expression or vector whose reciprocal product is to be computed. Must have positive entries.
@@ -2371,18 +2371,18 @@ DiffPos <- function(x, y) {
 
 #'
 #' The Perspective class.
-#' 
+#'
 #' This class represents the perspective transform of a convex or concave scalar expression.
 #' It uses the fact that, given a cone form for the epigraph of \eqn{f} via
-#' 
+#'
 #' \deqn{\{(t, x) \in \mathbb{R}^{n+1} : t \geq f(x) \} = \{(t, x) : Fx + gt + e \in K\}},
-#' 
+#'
 #' the epigraph of the perspective transform of \eqn{f} can be given by
-#' 
+#'
 #' \deqn{\{(t, x, s) \in \mathbb{R}^{n+2} : t \geq sf(x/s) \} = \{ (t, x, s) : Fx + gt + se \in K \}}.
-#' 
+#'
 #' (See https://web.stanford.edu/~boyd/papers/pdf/sw_aff_ctrl.pdf).
-#' 
+#'
 #' Note that this is the perspective transform of a scalar expression viewed as
 #' a function of its underlying variables. The perspective atom does not return
 #' a `Callable`, so you cannot create compositions such as \eqn{p(g(x),s)}, where
@@ -2424,22 +2424,22 @@ setMethod("to_numeric", "Perspective", function(object, values) {
     stop("s must be nonnegative")
   if(abs(values[[1]]) <= 1e-8)
     stop("There are valid cases where s = 0, but we do not handle this yet, e.g., f(x) = x + 1")
-  
+
   s_val <- values[[1]]
   f <- object@f
-  
+
   f_vars <- variables(f)
-  n_vars <- length(f_vars) 
+  n_vars <- length(f_vars)
   old_x_vals <- lapply(f_vars, value)
-  
+
   for(i in seq_len(n_vars))
     value(f_vars[[i]]) <- values[[i+1]]/values[[1]]
-  
+
   ret_val <- value(f)*s_val
 
   for(i in seq_len(n_vars))
     value(f_vars[[i]]) <- old_x_vals[[i]]
-  
+
   return(ret_val)
 })
 
@@ -2448,13 +2448,13 @@ setMethod("sign_from_args", "Perspective", function(object) {
   f_pos <- is_nonneg(object@f)
   f_neg <- is_nonpos(object@f)
   s_pos <- is_nonneg(object@args[[1]])
-  
+
   if(!s_pos)
     stop("s must be nonnegative")
-  
+
   is_positive <- (f_pos && s_pos)
   is_negative <- (f_neg && s_pos)
-  
+
   return(c(is_positive, is_negative))
 })
 
@@ -2730,7 +2730,7 @@ setMethod(".grad", "QuadForm", function(object, values) {
 
 #'
 #' The SuppFuncAtom class.
-#' 
+#'
 #' This class represents the support function of an affine expression \eqn{y}.
 #'
 #' @slot y An \linkS4class{Expression} with \code{is_affine(y) == TRUE}.
@@ -2838,7 +2838,7 @@ setMethod("value_impl", "SuppFuncAtom", function(object) {
     dummy <- Variable()
     cons <- list(dummy == 1)
   }
-  
+
   prob <- Problem(Maximize(y_val %*% x_flat), cons)
   result <- solve(prob, solver = "SCS", eps = 1e-6)
   return(result$value)
@@ -3315,7 +3315,7 @@ TotalVariation <- function(value, ...) {
 
 #'
 #' The TrInv atom.
-#' 
+#'
 #' The trace of the inverse of a positive definite matrix \eqn{X}, \eqn{tr(X^{-1})}.
 #'
 #' @slot X An \linkS4class{Expression} representing a positive definite matrix.
@@ -3376,7 +3376,7 @@ setMethod("is_decr", "TrInv", function(object, idx) { FALSE })
 
 #' @param values A list of numeric values for the arguments
 #' @describeIn TrInv Gives the (sub/super)gradient of the atom w.r.t. each variable
-setMethod(".grad", "TrInv", function(object, values) { 
+setMethod(".grad", "TrInv", function(object, values) {
   X <- values[[1]]
   eigen_val <- eigen(X, only.values = TRUE)$values
   if(base::min(eigen_val) > 0) {
@@ -3406,15 +3406,15 @@ setMethod("value", "TrInv", function(object) {
 
 #'
 #' The VonNeumannEntr atom.
-#' 
+#'
 #' The von Neumann entropy of the positive definite matrix \eqn{X \in \mathbb{S}_{+}^n}, \eqn{tr(X logm(X))},
 #' where tr() is the trace and logm() is the matrix logarithm.
-#' 
+#'
 #' May alternatively be expressed as \eqn{von_neumann_entr(X) = -\sum_{i=1}^n \lambda_i \log \lambda_i},
 #' where \eqn{\lambda_i} are the eigenvalues of \eqn{X}.
-#' 
+#'
 #' This atom does not enforce \eqn{tr(X) = 1} as is expected in applications from quantum mechanics.
-#' 
+#'
 #' @slot X An \linkS4class{Expression} representing a positive semidefinite matrix.
 #' @name VonNeumannEntr-class
 #' @aliases VonNeumannEntr
@@ -3438,7 +3438,7 @@ setMethod("initialize", "VonNeumannEntr", function(.Object, ..., X, quad_approx)
 setMethod("to_numeric", "VonNeumannEntr", function(object, values) {
   X <- values[[1]]
   w <- eigen(X, symmetric = TRUE, only.values = TRUE)$values
-  
+
   # Sum of the entropy of the eigenvalues w.
   if(any(w < 0))
     return(-Inf)
@@ -3484,7 +3484,7 @@ setMethod("get_data", "VonNeumannEntr", function(object) { list(object@quad_appr
 
 #' @param values A list of numeric values for the arguments
 #' @describeIn VonNeumannEntr Gives the (sub/super)gradient of the atom w.r.t. each variable
-setMethod(".grad", "VonNeumannEntr", function(object, values) { 
+setMethod(".grad", "VonNeumannEntr", function(object, values) {
   # X <- values[[1]]
   # L <- cholesky(X)
   # derivative <- 2*(L + L * logm(dot(t(L), L)))

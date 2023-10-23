@@ -68,9 +68,9 @@ setMethod("value", "Indicator", function(object) {
 })
 
 #' @describeIn Indicator Gives the (sub/super)gradient of the expression wrt each variable. Matrix expressions are vectorized, so the gradient is a matrix. NA indicates variable values unknown or outside domain.
-setMethod("grad", "Indicator", function(object) { 
+setMethod("grad", "Indicator", function(object) {
   # TODO: Implement gradient.
-  stop("Unimplemented") 
+  stop("Unimplemented")
 })
 
 #############
@@ -84,10 +84,10 @@ setMethod("grad", "Indicator", function(object) {
 #'
 #' Gives an elementwise lower (upper) bound for convex (concave) expressions that is tight
 #' at the current variable/parameter values. No guarantees for non-DCP expressions.
-#' 
+#'
 #' If f and g are convex, the objective f-g can be (heuristically) minimized using the
 #' implementation below of the convex-concave method:
-#' 
+#'
 #' \code{for(iters in 1:N)
 #'    solve(Problem(Minimize(f - linearize(g))))}
 #'
@@ -148,7 +148,7 @@ linearize <- function(expr) {
 #' @param ... Additional solver specific keyword arguments.
 #' @return An expression representing the partial optimization.
 #'         Convex for minimization objectives and concave for maximization objectives.
-#'         
+#'
 partial_optimize <- function(prob, opt_vars = list(), dont_opt_vars = list(), solver = NA, ...) {
   # One of the two arguments must be specified.
   if((is.null(opt_vars) || length(opt_vars) == 0) && (is.null(dont_opt_vars) || length(dont_opt_vars) == 0))
@@ -168,7 +168,7 @@ partial_optimize <- function(prob, opt_vars = list(), dont_opt_vars = list(), so
         stop("If opt_vars and dont_opt_vars are both specified, they must contain all variables in the problem.")
     }
   }
-  
+
   # Replace the opt_vars in prob with new variables.
   id_to_new_var <- list()
   for(var in opt_vars)
@@ -181,7 +181,7 @@ partial_optimize <- function(prob, opt_vars = list(), dont_opt_vars = list(), so
 
 #'
 #' A Partial Optimization Problem
-#' 
+#'
 #' @slot opt_vars The variables to optimize over.
 #' @slot dont_opt_vars The variables to not optimize over.
 #' @name PartialProblem-class
@@ -219,7 +219,7 @@ setMethod("is_convex", "PartialProblem", function(object) {
 
 #' @describeIn PartialProblem Is the expression concave?
 setMethod("is_concave", "PartialProblem", function(object) {
-  is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective), "Maximize")
+  is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Maximize")
 })
 
 #' @describeIn PartialProblem Is the expression a disciplined parameterized expression?
@@ -241,8 +241,8 @@ setMethod("is_log_log_concave", "PartialProblem", function(object) {
 })
 
 #' @describeIn PartialProblem Is the expression nonnegative?
-setMethod("is_nonneg", "PartialProblem", function(object) { 
-  is_nonneg(object@args[[1]]@objective@args[[1]]) 
+setMethod("is_nonneg", "PartialProblem", function(object) {
+  is_nonneg(object@args[[1]]@objective@args[[1]])
 })
 
 #' @describeIn PartialProblem Is the expression nonpositive?
@@ -279,7 +279,7 @@ setMethod("grad", "PartialProblem", function(object) {
   #          + \sum_i Dh_i(x^*,y) \nu^*_i
   # where x^*, \lambda^*_i, \nu^*_i are optimal primal/dual variables.
   # Add PSD constraints in same way.
-  
+
   # Short circuit for constant
   if(is_constant(object))
     return(constant_grad(object))
@@ -287,7 +287,7 @@ setMethod("grad", "PartialProblem", function(object) {
   old_vals <- list()
   for(var in variables(object))
     old_vals[[as.character(id(var))]] <- value(var)
-  
+
   fix_vars <- list()
   for(var in object@dont_opt_vars) {
     if(is.na(value(var)))
@@ -295,14 +295,14 @@ setMethod("grad", "PartialProblem", function(object) {
     else
       fix_vars <- c(fix_vars, list(var == value(var)))
   }
-  
+
   prob <- Problem(object@args[[1]]@objective, c(fix_vars, object@args[[1]]@constraints))
   result <- do.call("solve", c(list(a = prob, solver = object@solver), object@.solve_kwargs))
 
   # Compute gradient.
   if(result$status %in% SOLUTION_PRESENT) {
     sign <- as.numeric(is_convex(object) - is_concave(object))
-    
+
     # Form Lagrangian.
     lagr <- object@args[[1]]@objective@args[[1]]
     for(constr in object@args[[1]]@constraints) {
@@ -314,7 +314,7 @@ setMethod("grad", "PartialProblem", function(object) {
       else
         lagr <- lagr + matrix_trace(lprod)
     }
-    
+
     grad_map <- grad(lagr)   # TODO: After finishing grad implementation, we probably need to update this call by passing in result of solving problem.
     res_grad <- list()
     for(var in object@dont_opt_vars) {
@@ -323,7 +323,7 @@ setMethod("grad", "PartialProblem", function(object) {
     }
   } else   # Unbounded, infeasible, or solver error.
     res_grad <- error_grad(object)
-  
+
   # Restore the original values to the variables.
   for(var in variables(object))
     value(var) <- old_vals[[as.character(id(var))]]
@@ -342,7 +342,7 @@ setMethod("value", "PartialProblem", function(object) {
   old_vals <- list()
   for(var in variables(object))
     old_vals[[as.character(id(var))]] <- value(var)
-  
+
   fix_vars <- list()
   for(var in object@dont_opt_vars) {
     if(is.na(value(var)))
@@ -350,14 +350,14 @@ setMethod("value", "PartialProblem", function(object) {
     else
       fix_vars <- c(fix_vars, list(var == value(var)))
   }
-  
+
   prob <- Problem(object@args[[1]]@objective, c(fix_vars, object@args[[1]]@constraints))
   result <- do.call("solve", c(list(a = prob, solver = object@solver), object@.solve_kwargs))
-  
+
   # Restore the original values to the variables.
   for(var in variables(object))
     value(var) <- old_vals[[as.character(id(var))]]
-  
+
   # Need to get value returned by solver in case of stacked partial_optimizes.
   return(result$value)
 })
@@ -409,7 +409,7 @@ targets_and_priorities <- function(objectives, priorities, targets, limits = lis
   #
   # Returns:
   #   A Minimize/Maximize objective.
-  
+
   num_objs <- length(objectives)
   new_objs <- list()
 
@@ -449,7 +449,7 @@ Scalarize.max <- function(objectives, weights) {
   # Returns:
   #   A Minimize objective.
   #
-  
+
   num_objs <- length(objectives)
   expr <- .MaxElemwise(atom_args = lapply(seq(num_objs), function(i) { (objectives[[i]]*weights[i])@args[[1]] }))
   return(Minimize(expr))
@@ -470,7 +470,7 @@ Scalarize.log_sum_exp <- function(objectives, weights, gamma) {
   #
   # Returns:
   #   A Minimize objective.
-  
+
   num_objs <- length(objectives)
   terms <- lapply(seq(num_objs), function(i) { (objectives[[i]]*weights[i])@args[[1]] })
   expr <- LogSumExp(gamma*VStack(terms))/gamma
@@ -496,12 +496,12 @@ scs_coniclift <- function(x, constraints) {
   #
   #  Notes
   #  -----
-  #  This function DOES NOT work when x has attributes, like PSD=TRUE, diag=TRUE, 
+  #  This function DOES NOT work when x has attributes, like PSD=TRUE, diag=TRUE,
   #  symmetric=TRUE, etc...
 
-  # The objective value is only used to make sure that "x" participates in the 
-  # problem. So, if constraints is an empty list, then the support function is 
-  # the standard support function for R^n.  
+  # The objective value is only used to make sure that "x" participates in the
+  # problem. So, if constraints is an empty list, then the support function is
+  # the standard support function for R^n.
   prob <- Problem(Minimize(sum(x)), constraints)
 
   tmp <- get_problem_data(prob, solver = "SCS")
@@ -511,7 +511,7 @@ scs_coniclift <- function(x, constraints) {
   inv <- invdata[length(invdata)-2]
   x_offset <- inv@var_offsets[as.character(id(x))]
   x_indices <- seq(x_offset, x_offset + size(x)) + 1
-  
+
   A <- data$A
   x_selector <- as.logical(matrix(0, nrow = ncol(A), ncol = 1))
   x_selector[x_indices] <- TRUE
@@ -536,30 +536,30 @@ scs_cone_selectors <- function(K) {
   #   selectors: List keyed by strings, which specify cone types. Values are
   #   R vectors or lists of vectors. The vectors give row indices of the affine
   #   operator (A, b) returned by SCS's perform function.
-  
+
   if(K@p3d) {
     # TODO: Implement this.
     stop("Unimplemented: SuppFunc doesn't yet support feasible sets represented with power cone constraints")
   }
-  
+
   idx <- K@zero + 1
   nonneg_idxs <- seq(idx, idx + K@nonneg - 1)
   idx <- idx + K@nonneg
-  
+
   soc_idxs <- list()
   for(soc in K@soc) {
     idxs <- seq(idx, idx + soc - 1)
     soc_idxs <- c(soc_idxs, list(idxs))
     idx <- idx + soc
   }
-  
+
   psd_idxs <- list()
   for(psd in K@psd) {
     veclen <- psd*floor((psd + 1)/2)
     psd_idxs <- c(psd_idxs, list(seq(idx, idx + veclen - 1)))
     idx <- idx + veclen
   }
-  
+
   expsize <- 3*K@exp
   exp_idxs <- seq(idx, idx + expsize - 1)
   selectors <- list(nonneg = nonneg_idxs, exp = exp_idxs, soc = soc_idxs, psd = psd_idxs)
@@ -569,7 +569,7 @@ scs_cone_selectors <- function(K) {
 #'
 #' The SuppFunc class
 #'
-#' Given a list of CVXR Constraint objects constraints involving a real CVXR 
+#' Given a list of CVXR Constraint objects constraints involving a real CVXR
 #' Variable x, consider the convex set
 #'
 #'
@@ -586,19 +586,19 @@ scs_cone_selectors <- function(K) {
 #'
 #'  Notes
 #'  -----
-#'  You are allowed to use CVXR Variables other than x to define constraints, 
-#'  but the set S only consists of objects (vectors or matrices) with the same 
+#'  You are allowed to use CVXR Variables other than x to define constraints,
+#'  but the set S only consists of objects (vectors or matrices) with the same
 #'  dimensions as x.
 #'
-#'  It's possible for the support function to take the value +Inf for a fixed 
-#'  vector y. This is an important point, and it's one reason why support 
-#'  functions are actually formally defined with the supremum sup rather than 
+#'  It's possible for the support function to take the value +Inf for a fixed
+#'  vector y. This is an important point, and it's one reason why support
+#'  functions are actually formally defined with the supremum sup rather than
 #'  the maximum max.
-#'  
+#'
 #' @slot x This \linkS4class{Variable} object cannot have any attributes, such as \code{PSD = TRUE}, \code{nonneg = TRUE}, \code{symmetric = TRUE}, etc...
 #' @slot constraints A list of \linkS4class{Constraint}s. Usually, these are constraints over x, and some number of auxiliary CVXR Variables. It is valid to supply \code{constraints = list()}.
 #' @examples
-#' # If h = SuppFunc(x, constraints), then you can use h just like any other 
+#' # If h = SuppFunc(x, constraints), then you can use h just like any other
 #' # scalar-valued atom in CVXR. For example, if x was a CVXR Variable with
 #' # ndim(x) == 1, you could do the following:
 #'
@@ -624,7 +624,7 @@ setMethod("initialize", "SuppFunc", function(.Object, x, constraints, A = NA_rea
     if(length(con_params) > 0)
       stop("Convex sets described with Parameter objects are not allowed")
   }
-  
+
   .Object@x <- x
   .Object@constraints <- constraints
   .Object@A <- NA_real_
@@ -646,13 +646,13 @@ call.SuppFunc <- function(object, y) {
     constrs <- list(dummy == 1)
   } else
     constrs <- object@constraints
-  
+
   Abk <- scs_coniclift(object@x, constrs)
   A <- Abk[[1]]
   b <- Abk[[2]]
   k <- Abk[[3]]
   K_sels <- scs_cone_selectors(K)
-  
+
   object@A <- A
   object@b <- b
   object@K_sels <- K_sels

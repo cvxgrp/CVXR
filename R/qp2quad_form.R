@@ -286,7 +286,7 @@ setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution"
   var_map <- inverse_data@var_offsets
   # Flip sign of opt val if maximize.
   opt_val <- solution@opt_val
-  if(!(solution@status %in% ERROR_STATUS) and !inverse_data@minimize)
+  if(!(solution@status %in% ERROR_STATUS) && !inverse_data@minimize)
     opt_val <- -solution@opt_val
 
   primal_vars <- list()

@@ -315,7 +315,7 @@ Slacks.perform <- function(prob, affine) {
   # constr_map) which allows us to figure out the ordering of these rows.
   row_offsets <- list()
   row_offsets[[Cone2Cone.ZERO]] <- 0
-  row_offsets[[Cone2Cone.NONNEG]] <- cone_lens[[Cone2Cone.ZERO]],
+  row_offsets[[Cone2Cone.NONNEG]] <- cone_lens[[Cone2Cone.ZERO]]
   row_offsets[[Cone2Cone.SOC]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]]
   row_offsets[[Cone2Cone.EXP]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]]
   row_offsets[[Cone2Cone.POW3D]] <- cone_lens[[Cone2Cone.ZERO]] + cone_lens[[Cone2Cone.NONNEG]] + cone_lens[[Cone2Cone.SOC]] + cone_lens[[Cone2Cone.EXP]]
@@ -435,7 +435,7 @@ Slacks.perform <- function(prob, affine) {
 }
 
 Slack.invert <- function(solution, inv_data) {
-  if(solution@status in SOLUTION_PRESENT) {
+  if(solution@status %in% SOLUTION_PRESENT) {
     prim_vars <- solution@primal_vars
     x <- prim_vars[[Cone2Cone.FREE]]
     x_id <- id(x)

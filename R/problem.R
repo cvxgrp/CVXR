@@ -268,7 +268,7 @@ setClassUnion("InverseDataORNULL", c("InverseData", "NULL"))
 #' The Cache class.
 #'
 #' This class contains cached information.
-#' 
+#'
 #' @rdname Cache-class
 Cache <- setClass("Cache", representation(key = "ListORNULL", solving_chain = "SolvingChainORNULL", param_prog = "ParamProgORNULL", inverse_data = "InverseDataORNULL"),
                   prototype(key = NULL, solving_chain = NULL, param_prog = NULL, inverse_data = NULL))
@@ -330,7 +330,7 @@ SolverStats <- function(results_dict = list(), solver_name = NA_character_) {
         num_iters <- results_dict[[NUM_ITERS]]
     if(EXTRA_STATS %in% names(results_dict))
       extra_stats <- results_dict[[EXTRA_STATS]]
-    
+
     .SolverStats(solver_name = solver_name, solve_time = solve_time, setup_time = setup_time, num_iters = num_iters, extra_stats = extra_stats)
 }
 
@@ -449,17 +449,17 @@ Problem.validate_constraint <- function(constraint) {
 setMethod("initialize", "Problem", function(.Object, ..., objective, constraints = list(), value = NA_real_, status = NA_character_, solution = NULL, cache = Cache(), solver_cache = list(), size_metrics = NULL, solver_stats = NULL, compilation_time = NA_real_, solve_time = NA_real_, args = list()) {
   if(is.null(constraints))
     constraints <- list()
-  
+
   # Check that objective is Minimize or Maximize.
   if(!is(objective, "Minimize") && !is(objective, "Maximize"))
     stop("Problem objective must be Minimize or Maximize")
-  
+
   # Constraints and objective are immutable
   .Object@objective <- objective
   # Raise warning if objective has too many subexpressions.
   if(node_count(.Object@objective) >= MAX_NODES)
     warning("Objective constraints too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
-  
+
   .Object@constraints <- lapply(constraints, Problem.validate_constraint)
   # Raise warning if constraint has too many subexpressions.
   for(i in seq_along(.Object@constraints)) {
@@ -467,16 +467,16 @@ setMethod("initialize", "Problem", function(.Object, ..., objective, constraints
     if(node_count(constraints) >= MAX_NODES)
       warning("Constraint ", i, " contains too many subexpressions. Consider vectorizing your CVXR code to speed up compilation")
   }
-  
+
   .Object@value <- NA_real_
   .Object@status <- NA_character_
   .Object@solution <- NULL
   .Object@cache <- Cache()
   .Object@solver_cache <- list()
-  
+
   # Information about the dimensions of the problem and its constituent parts.
   .Object@size_metrics <- NULL
-  
+
   # Benchmarks reported by the solver.
   .Object@solver_stats <- NULL
   .Object@compilation_time <- NA_real_
@@ -652,9 +652,9 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
   # Must be checked here to avoid cache issues.
   if(enforce_dpp && ignore_dpp)
     stop("DPPError: Cannot set enforce_dpp = TRUE and ignore_dpp = TRUE)")
-  
+
   start_time <- Sys.time()
-  
+
   # Cache includes ignore_dpp because it alters compilation.
   key <- make_key(object@cache, solver, gp, ignore_dpp)
   if(length(key) != length(object@cache@key) || !all(mapply(function(x, y) { x == y }, key, object@cache@key))) {
@@ -665,17 +665,17 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     object@solver_cache <- list()
   } else
     solving_chain <- object@cache@solving_chain
-  
+
   if(verbose) {
     divider <- paste(rep("-", 79), collapse = "")
     cat(paste(divider, sprintf("%45.11s", "Compilation"), divider, sep = "\n"))
   }
-  
+
   if(!is.null(object@cache@param_prog)) {
     # Fast path, bypasses application of reductions.
     if(verbose)
       print("Using cached ASA map, for faster compilation (bypassing reduction chain)")
-    
+
     if(gp) {
       dgp2dcp <- get(object@cache@solving_chain, "Dgp2Dcp")
       # Parameters in the param cone prog are the logs of parameters in the original problem (with one exception: parameters appearning as exponents (in Power and GmatMul atoms) are unchanged).
@@ -686,14 +686,14 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
           value(old_params_to_new_params[[pid]]) <- log(value(param))   # TODO: Need to propagate new parameter values to param_prog.
       }
     }
-    
+
     tmp <- perform(solving_chain@solver, object@cache@param_prog)
     data <- tmp[[1]]
     solver_inverse_data <- tmp[[2]]
     inverse_data <- c(object@cache@inverse_data, list(solver_inverse_data))
     object@compilation_time <- Sys.time() - start_time
     object@compilation_time <- as.numeric(object@compilation_time)
-    
+
     if(verbose)
       print(paste("Finished problem compilation (took", sprintf("%.3e", object@compilation_time), "seconds"))
   } else {
@@ -703,17 +703,17 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
       print(paste("Compiling problem (target solver = ", solver_name, ")", sep = ""))
       print(paste("Reduction chain:", reduction_chain_str))
     }
-    
+
     tmp <- perform(solving_chain, object, verbose)
     data <- tmp[[1]]
     inverse_data <- tmp[[2]]
     save_to_cache <- (is(data, "list") && PARAM_PROB %in% names(data) && !any(sapply(solving_chain@reductions, function(reduction) { is(reduction, "EvalParams") })))
     object@compilation_time <- Sys.time() - start_time
     object@compilation_time <- as.numeric(object@compilation_time)
-    
+
     if(verbose)
       print(paste("Finished problem compilation (took", sprintf("%.3e", object@compilation_time), "seconds"))
-    
+
     if(safe_to_cache) {
       if(verbose && !is.null(parameters(object)) && length(parameters(object)) > 0)
         print("(Subsequent compilations of this problem, using the same arguments, should take less time)")
@@ -722,10 +722,10 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
       if(length(inverse_data) <= 1)
         object@cache@inverse_data <- NULL
       else
-        object@cache@inverse_data <- inverse_data[seq(length(inverse_data) - 1]
+        object@cache@inverse_data <- inverse_data[seq(length(inverse_data) - 1)]
     }
   }
-  
+
   return(list(data = data, solving_chain = solving_chain, inverse_data = inverse_data))
 })
 
@@ -734,7 +734,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
   candidates <- list(qp_solvers = list(), conic_solvers = list())
   if(is(solver, "Solver"))
     return(.add_custom_solver_candidates(solver))
-  
+
   if(!is.na(solver)) {
     if(!(solver %in% INSTALLED_SOLVERS))
       stop("The solver ", solver, " is not installed")
@@ -751,7 +751,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
         candidates$conic_solvers <- c(candidates$conic_solvers, list(slv))
     }
   }
-  
+
   # If gp, we must have only conic solvers.
   if(gp) {
     if(!is.na(solver) && !(solver %in% CONIC_SOLVERS))
@@ -759,7 +759,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     else if(is.na(solver))
       candidates$qp_solvers <- list()   # No QP solvers allowed.
   }
-  
+
   if(is_mixed_integer(object)) {
     # ECOS_BB must be called explicitly.
     if(identical(INSTALLED_MI_SOLVERS, list(ECOS_BB)) && solver != ECOS_BB)
@@ -774,23 +774,23 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 
             Quick fix 2: you can explicitly specify solver = 'ECOS_BB'. This may result
             in incorrect solutions and is not recommended.")
-  
+
     # TODO: Provide a useful error message when the problem is nonlinear, but the only
     # installed mixed-integer solvers are MILP solvers (e.g., GLPK_MI).
     if(length(candidates$qp_solvers) > 0) {
       qp_filter <- sapply(candidates$qp_solvers, function(s) { mip_capable(SOLVER_MAP_QP[[s]]) })
       candidates$qp_solvers <- candidates$qp_solvers[qp_filter]
     }
-    
+
     if(length(candidates$conic_solvers) > 0) {
       conic_filter <- sapply(candidates$conic_solvers, function(s) { mip_capable(SOLVER_MAP_CONIC[[s]]) })
       candidates$conic_solvers <- candidates$conic_solvers[conic_filter]
     }
-    
+
     if(length(candidates$conic_solvers) == 0 && length(candidates$qp_solvers) == 0)
       stop("Problem is mixed-integer, but candidate QP/Conic solvers are not MIP-capable")
   }
-  
+
   return(candidates)
 }
 
@@ -798,7 +798,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 .add_custom_solver_candidates <- function(object, custom_solver) {
   if(name(custom_solver) %in% SOLVERS)
     stop("Custom solvers must have a different name than the officially supported ones")
-  
+
   candidates <- list("qp_solvers" = list(), "conic_solvers" = list())
   if(!is_mixed_integer(object) || mip_capable(custom_solver)) {
     if(is(custom_solver, "QpSolver")) {
@@ -812,7 +812,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
   return(candidates)
 }
 
-# Construct the chains required to reformulate and solve the problem. 
+# Construct the chains required to reformulate and solve the problem.
 # In particular, this function 1) finds the candidates solvers, 2) constructs the solving chain that performs the numeric reductions and solves the problem.
 .construct_chain <- function(object, solver = NA_character_, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
   candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
@@ -846,28 +846,28 @@ Problem.sort_candidate_solvers <- function(solvers) {
 #' @rdname psolve
 #' @export
 setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, gp = FALSE, qcp = FALSE,
-                                        requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, 
+                                        requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
                                         parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) {
   # TODO: Need to update this function.
   if(parallel)
     stop("Unimplemented")
-  
+
   if(verbose) {
     divider <- paste(rep("=", 79), collapse = "")
     version <- packageVersion("CVXR")
     cat(paste(divider, sprintf("%38.4s", "CVXR"), sprintf("%39.6s", paste("v", version, sep = "")), divider, sep = "\n"))
   }
-  
+
   for(parameter in parameters(object)) {
     if(is.na(value(parameter)))
       stop("A Parameter (whose name is ", name(parameter), " ) does not have a value associated with it; all Parameter objects must have values before solving a problem")
   }
-  
+
   if(verbose) {
     n_variables <- sum(sapply(variables(object), function(v) { prod(dim(v)) }))
     n_parameters <- sum(sapply(parameters(object), function(p) { prod(dim(p)) }))
     print(paste("Your problem has", n_variables, "variables,", length(object@constraints), "constraints, and", n_parameters, "parameters"))
-    
+
     curvatures <- c()
     if(is_dcp(object))
       curvatures <- c(curvatures, "DCP")
@@ -876,12 +876,12 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
     if(is_dqcp(object))
       curvatures <- c(curvatures, "DQCP")
     print(paste("It is compliant with the following grammars:", paste(curvatures, collapse = ", ")))
-    
+
     if(n_parameters == 0)
       print("(If you need to solve this problem multiple times, but with different data, consider using parameters)")
     print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
   }
-  
+
   if(requires_grad) {
     dpp_context <- ifelse(gp, "dgp", "dcp")
     if(qcp)
@@ -914,33 +914,33 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
         if(!is.na(low))
           high_in <- low*-1
       }
-      
+
       chain <- Chain(problem = object, reductions = reductions)
       soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low_in, high = high_in, ...)
       object <- unpack_problem(object, retrieve(chain, soln))
       return(object@value)
     }
   }
-  
+
   kwargs <- c(list(low = low_in, high = high_in), list(...))
   tmp <- get_problem_data(object, solver, gp, enforce_dpp, ignore_dpp, verbose, canon_backend, kwargs)
   data <- tmp[[1]]
   solving_chain <- tmp[[2]]
   inverse_data <- tmp[[3]]
-  
+
   if(verbose) {
     divider <- paste(rep("-", 79), collapse = "")
     cat(paste(divider, sprintf("%45.16s", "Numerical solver"), divider, sep = "\n"))
     solver_name <- name(solving_chain@reductions[[length(solving_chain@reductions)]])
     print(paste("Invoking solver", solver_name, "to obtain a solution"))
   }
-  
+
   start_time <- Sys.time()
   solution <- solve_via_data(solving_chain, object, data, warm_start, verbose, kwargs)
   end_time <- Sys.time()
   object@solve_time <- as.numeric(end_time - start_time)
   object <- unpack_results(object, solution, solving_chain, inverse_data)
-  
+
   if(verbose) {
     divider <- paste(rep("-", 79), collapse = "")
     cat(paste(divider, sprintf("%40.7s", "Summary"), divider, sep = "\n"))
@@ -1118,13 +1118,13 @@ setMethod("backward", "Problem", function(object) {
     stop("backward can only be called after calling solve with requires_grad = TRUE")
   else if(!(object@status %in% SOLUTION_PRESENT))
     stop("Backpropagating through infeasible/unbounded problems is not yet supported. Please file an issue on Github if you need this feature")
-  
+
   # TODO: Backpropagate through dual variables as well.
   backward_cache <- object@solver_cache[[DIFFCP]]
   DT <- backward_cache$DT
   zeros <- matrix(0, nrow = nrow(backward_cache$s), ncol = ncol(backward_cache$s))
   del_vars <- list()
-  
+
   gp <- gp(object@cache)
   for(variable in variables(object)) {
     vid_char <- as.character(id(variable))
@@ -1132,14 +1132,14 @@ setMethod("backward", "Problem", function(object) {
       del_vars[[vid_char]] <- matrix(1, nrow = nrow(variable), ncol = ncol(variable))
     else
       del_vars[[vid_char]] <- as.vector(variable@gradient)
-    
+
     if(gp) {
       # x_gp <- exp(x_cone_program),
       # dx_gp/d x_cone_program <- exp(x_cone_program) <- x_gp
       del_vars[[vid_char]] <- del_vars[[vid_char]]*value(variable)
     }
   }
-  
+
   dx <- split_adjoint(object@cache@param_prog, del_vars)
   start_time <- Sys.time()
   tmp <- DT(dx, zeros, zeros)
@@ -1150,7 +1150,7 @@ setMethod("backward", "Problem", function(object) {
   backward_cache$DT_TIME <- end_time - start_time
   backward_cache$DT_TIME <- as.numeric(backward_cache$DT_TIME)
   dparams <- apply_param_jac(object@cache@param_prog, dc, -dA, db)
-  
+
   if(!gp) {
     for(i in seq_along(object@parameters)) {
       pid_char <- as.character(id(object@parameters[[i]]))
@@ -1161,21 +1161,21 @@ setMethod("backward", "Problem", function(object) {
     old_params_to_new_params <- dgp2dcp@canon_methods@parameters
     for(i in seq_along(object@parameters)) {
       param <- object@parameters[[i]]
-      # Note: If param is an exponent in a Power or GmatMul atom, then the 
+      # Note: If param is an exponent in a Power or GmatMul atom, then the
       # parameter passes through unchanged to the DCP program; if the param is
       # also used elsewhere (not as an exponent), then param will also be in
-      # ol_params_to_new_params. Therefore, 
+      # ol_params_to_new_params. Therefore,
       # param@gradient = dparams[[as.character(id(param))]] (or 0) + 1/param*dparams[[as.character(id(new_param))]]
       #
-      # Note that id(param) is in dparams if and only if param was used as an 
-      # exponent (because this means that the parameter entered the DCP problem 
+      # Note that id(param) is in dparams if and only if param was used as an
+      # exponent (because this means that the parameter entered the DCP problem
       # unchanged).
       pid_char <- as.character(id(param))
       if(pid_char %in% names(dparams))
         grad <- dparams[[pid_char]]
       else
         grad <- 0.0
-      
+
       if(pid_char %in% names(old_params_to_new_params)) {
         new_param <- old_params_to_new_params[[pid_char]]
         # value(new_param) == log(param), apply chain rule.
@@ -1193,17 +1193,17 @@ setMethod("derivative", "Problem", function(object) {
     stop("derivative can only be called after calling solve with requires_grad = TRUE")
   else if(!(object@status %in% SOLUTION_PRESENT))
     stop("Differentiating through infeasible/unbounded problems is not yet supported. Please file an issue on Github if you need this feature")
-  
+
   # TODO: Forward differentiate dual variables as well.
   backward_cache <- object@solver_cache[[DIFFCP]]
   param_prog <- object@cache@param_prog
   D <- backward_cache$D
   param_deltas <- list()
-  
+
   gp <- gp(object@cache)
   if(gp)
     dgp2dcp <- get(object@cache@solving_chain, "Dgp2Dcp")
-  
+
   if(is.null(parameters(object)) || length(parameters(object)) == 0) {
     for(i in seq_along(object@variables)) {
       vdim <- dim(object@variables[[i]])
@@ -1211,11 +1211,11 @@ setMethod("derivative", "Problem", function(object) {
     }
     return(object)
   }
-  
+
   for(param in parameters(object)) {
     pid <- id(param)
     pid_char <- as.character(pid)
-    
+
     if(is.na(param@delta))
       delta <- matrix(0, nrow = nrow(param), ncol = ncol(param))
     else
@@ -1233,19 +1233,19 @@ setMethod("derivative", "Problem", function(object) {
     } else
       param_deltas[[pid_char]] <- as.vector(delta)
   }
-  
+
   tmp <- apply_parameters(param_prog, param_deltas, zero_offset = TRUE)
   dc <- tmp[[1]]
   dA <- tmp[[3]]
   db <- tmp[[4]]
-  
+
   start_time <- Sys.time()
   dx <- D(-dA, db, dc)[[1]]
   end_time <- Sys.time()
   backward_cache$D_TIME <- end_time - start_time
   backward_cache$D_TIME <- as.numeric(backward_cache$D_TIME)
   dvars <- split_solution(param_prog, dx, sapply(variables(object), id))
-  
+
   for(i in seq_along(object@variables)) {
     vid_char <- as.character(id(object@variables[[i]]))
     object@variables[[i]]@delta <- dvars[[vid_char]]
@@ -1264,14 +1264,14 @@ setMethod("derivative", "Problem", function(object) {
     # value(object@variables[[i]]) <- NA_real_
     object@variables[[i]] <- save_value(object@variables[[i]], NA_real_)
   }
-  
+
   for(i in seq_along(object@constraints)) {
     for(j in seq_along(object@constraints[[i]]@dual_variables)) {
       # value(object@constraints[[i]]@dual_variables[[j]]) <- NA_real_
-      object@constraints[[i]]@dual_variables[[j]] <- save_value(object@constraints[[i]]dual_variables[[j]], NA_real_)
+      object@constraints[[i]]@dual_variables[[j]] <- save_value(object@constraints[[i]]@dual_variables[[j]], NA_real_)
     }
   }
-  
+
   object@value <- NA_real_
   object@status <- NA_character_
   object@solution <- NULL
@@ -1284,7 +1284,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
   #     vid_char <- as.character(id(object@variables[[i]]))
   #     object@variables[[i]] <- save_value(object@variables[[i]], solution@primal_vars[[vid_char]])
   #   }
-  #   
+  #
   #   for(i in seq_along(object@constraints)) {
   #     cid_char <- as.character(id(object@constraints[[i]]))
   #     if(cid_char %in% names(solution@dual_vars))
@@ -1296,7 +1296,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
   # } else if(solution@status %in% INF_OR_UNB) {
   #   for(i in seq_along(object@variables))
   #     object@variables[[i]] <- save_value(object@variables[[i]], NA_real_)
-  #   
+  #
   #   for(i in seq_along(object@constraints)) {
   #     for(j in seq_along(object@constraints[[i]]@dual_variables))
   #       object@constraints[[i]]@dual_variables[[j]] <- save_value(object@constraints[[i]]@dual_variables[[j]], NA_real_)
@@ -1404,7 +1404,7 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
 #' @docType methods
 setMethod("unpack_results", "Problem", function(object, solution, chain, inverse_data) {
   solution <- invert(chain, solution, inverse_data)
-  
+
   if(solution@status %in% INACCURATE)
     warning("Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose = TRUE for more information")
   if(solution@status == INFEASIBLE_OR_UNBOUNDED)
@@ -1412,7 +1412,7 @@ setMethod("unpack_results", "Problem", function(object, solution, chain, inverse
                   "For GUROBI and CPLEX, you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...)", sep = "\n"))
   if(solution@status %in% ERROR)
     stop("Solver failed. Try another solver, or solve with verbose = TRUE for more information")
-  
+
   object <- unpack_problem(object, solution)
   object@solver_stats <- SolverStats(object@solution@attr, name(chain@solver))
   return(object)
@@ -1564,12 +1564,12 @@ setMethod("/", signature(e1 = "Problem", e2 = "numeric"), function(e1, e2) {
 
 #'
 #' The ParamProb class.
-#' 
+#'
 #' This virtual class represents parametrized problems.
-#' 
+#'
 #' Parameterized problems are produced during the first canonicalization
 #' and allow canonicalization to be short-circuited for future solves.
-#' 
+#'
 #' @name ParamProb-class
 #' @aliases ParamProb
 #' @rdname ParamProb-class
@@ -1589,22 +1589,22 @@ setMethod("apply_parameters", "ParamProb", function(object, id_to_param_value = 
 
 #'
 #' The XpressProblem class.
-#' 
+#'
 #' This class represents a convex optimization problem associated with the Xpress Optimizer.
-#' 
+#'
 #' @slot objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @slot constraints A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
 #' @name XpressProblem-class
 #' @aliases XpressProblem
 #' @rdname XpressProblem-class
-.XpressProblem <- setClass("XpressProblem", representation(.iis = "numeric", .transferRow = "numeric"), 
+.XpressProblem <- setClass("XpressProblem", representation(.iis = "numeric", .transferRow = "numeric"),
                            prototype(.iis = NA_real_, .transferRow = NA_real_), contains = "Problem")
 
 #' @param objective A \linkS4class{Minimize} or \linkS4class{Maximize} object representing the optimization objective.
 #' @param constraints (Optional) A list of \linkS4class{Constraint} objects representing constraints on the optimization variables.
 #' @rdname XpressProblem-class
-XpressProblem <- function(objective, constraints = list()) { 
-  .XpressProblem(objective = objective, constraints = constraints) 
+XpressProblem <- function(objective, constraints = list()) {
+  .XpressProblem(objective = objective, constraints = constraints)
 }
 
 setMethod(".reset_iis", "XpressProblem", function(object) {

@@ -255,7 +255,7 @@ size_from_dim <- function(dim) {
 sum_signs <- function(exprs) {
   # Give the sign resulting from summing a list of expressions.
   is_pos <- all(sapply(exprs, is_nonneg))
-  is_neg <- all(sapply(exprs, is_nonpos)
+  is_neg <- all(sapply(exprs, is_nonpos))
   c(is_pos, is_neg)
 }
 
@@ -1047,14 +1047,14 @@ ku_dim <- function(key, dim) {
 # utility functions for replacing quadratic forms (necessary in e.g. coeff_quad_form).
 # TODO: Change LinOp representation from list to S4 class so we can get rid of
 # these extra checks.
-get_obj_slot(obj, name) {
+get_obj_slot <- function(obj, name) {
   if(is.list(obj))
     return(obj[[name]])
   else
     return(slot(obj, name))
 }
 
-set_obj_slot(obj, name, idx, val) {
+set_obj_slot <- function(obj, name, idx, val) {
   if(is.list(obj))
     obj[[name]][[idx]] <- val
   else
@@ -1067,7 +1067,7 @@ replace_quad_forms <- function(expr, quad_forms) {
   #   arg <- expr@args[[idx]]
   for(idx in seq_along(get_obj_slot(expr, "args"))) {
     arg <- get_obj_slot(expr, "args")[[idx]]
-    if(is(arg, "SymbolicQuadForm"), || is(arg, "QuadForm")) {
+    if(is(arg, "SymbolicQuadForm") || is(arg, "QuadForm")) {
       tmp <- replace_quad_form(expr, idx, quad_forms)
       expr <- tmp[[1]]
       quad_forms <- tmp[[2]]

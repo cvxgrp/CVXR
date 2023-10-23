@@ -28,7 +28,7 @@ dims_to_solver_dict <- function(cone_dims)  {
        ep = cone_dims@exp,
        s = cone_dims@psd,
        p = cone_dims@p3d
-  }
+       )
 }
 
 #' The ConicSolver class.
@@ -186,11 +186,11 @@ setMethod("format_constr", "ConicSolver", function(object, problem, exp_cone_ord
         arg_mats <- arg_mats.append(space_mat)
       }
       restruct_mat.append(list(do.call(cbind, arg_mats)))
-      } else if (inherits(ct, "PSD")) {
-        restruct_mat.append(list(ConicSolver.psd_format_mat(constr)))
-      } else {
-        stop("Unsupported constraint type.")
-      }
+    } else if (inherits(ct, "PSD")) {
+      restruct_mat.append(list(ConicSolver.psd_format_mat(constr)))
+    } else {
+      stop("Unsupported constraint type.")
+    }
   }
   # Form new ParamConeProg
   ## Much simplified version in R but keeping comments
@@ -295,7 +295,7 @@ setMethod("perform", signature(object = "ConicSolver", problem = "Problem"), fun
 
   ## Since problem is ParamConeProg, we can use named args
   ## See method "apply_params" for ParamConeProg in dcp2cone.R
-  if (!is.na(problem@P) {
+  if (!is.na(problem@P)) {
     tmp_parm <- apply_parameters(problem, quad_obj = TRUE)
   } else {
     tmp_parm <- apply_parameters(problem)
@@ -305,6 +305,6 @@ setMethod("perform", signature(object = "ConicSolver", problem = "Problem"), fun
   inv_data[[OFFSET]] <- tmp_parm$d
   data[[A_KEY]] <- -tmp_parm$A
   data[[B_KEY]] <- tmp_parm$b
-  return(list(data = data, inv_data = inv_data))
-}
+  list(data = data, inv_data = inv_data)
+})
 

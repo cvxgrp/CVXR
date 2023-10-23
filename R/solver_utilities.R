@@ -77,7 +77,7 @@ ROBUST_KKTSOLVER <- "robust"
 # Solver option defaults
 SOLVER_DEFAULT_PARAM <- list(
   OSQP = list(max_iter = 10000, eps_abs = 1e-5, eps_rel = 1e-5, eps_prim_inf = 1e-4),
-  PIQP = list()  ## same as piqp itself
+  PIQP = list(),  ## same as piqp itself
   ECOS = list(maxit = 100, abstol = 1e-8, reltol = 1e-8, feastol = 1e-8),
   ECOS_BB = list(maxit = 1000, abstol = 1e-6, reltol = 1e-3, feastol = 1e-6),
   ## Until cccp fixes the bug I reported, we set the tolerances as below

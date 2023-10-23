@@ -150,16 +150,23 @@ setMethod("verify_dual_values", "SolverTestHelper", function(object, result, tol
   }
 })
 
+np.isclose <- function(a, b, rtol = 1e-05, atol = 1e-08, equal_na = FALSE) {
+  # Rough implementation of numpy's isclose function.
+  res <- rep(FALSE, length(a))
+  if(equal_na) {
+    na_both <- is.na(a) && is.na(b)
+    res[na_both] <- TRUE
+  }
+  na_neither <- (!is.na(a) && !is.na(b))
+  a_nona <- a[na_neither]
+  b_nona <- b[na_neither]
+  res[na_neither] <- (abs(a_nona - b_nona) <= (atol + rtol*abs(b_nona)))
+  return(res)
+}
+
 is.allclose <- function(a, b, rtol = 1e-5, atol = 1e-8, equal_na = FALSE) {
   # Rough implementation of numpy's allclose function.
-  if(!equal_na) {
-    na_mask <- (is.na(a) || is.na(b))
-    a <- a[!na_mask]
-    b <- b[!na_mask]
-    if(length(a) == 0 && length(b) == 0)
-      return(TRUE)
-  }
-  return(abs(a - b) <= (atol + rtol * abs(b)))
+  return(all(np.isclose(a, b, rtol = rtol, atol = atol, equal_na = equal_na)))
 }
 
 #########################

@@ -57,11 +57,11 @@ test_that("Test creating a constant", {
 
   # Sparse matrix constant
   dim <- c(5, 5)
-  mat <- create_const(Matrix::sparseMatrix(i = 1:5, j = 1:5, x = 1), dim, sparse = TRUE)
+  mat <- create_const(Matrix(diag(5), sparse = TRUE), dim, sparse = TRUE)
   expect_equal(mat$dim, dim)
   expect_equal(length(mat$args), 0)
   expect_equal(mat$type, SPARSE_CONST)
-  expect_equivalent(as.matrix(mat$data), diag(rep(1, 5)))
+  expect_equivalent(as.matrix(mat$data), diag(5))
 })
 
 test_that("Test adding lin expr", {
@@ -86,8 +86,8 @@ test_that("Test getting vars from an expression", {
   # Expanding dict.
   add_expr <- lo.sum_expr(list(x, y, A))
   vars_ <- get_expr_vars(add_expr)
-  expect_equal(vars_[[1]], list(x$data, dim))
-  expect_equal(vars_[[2]], list(y$data, dim))
+  ref <- list(list(x$data, dim), list(y$data, dim))
+  expect_equal(vars_, ref)
 })
 
 test_that("Test negating an expression", {

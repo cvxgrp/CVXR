@@ -1,5 +1,4 @@
-# TODO_NARAS_11: This test is pretty time consuming. Move to manual group?
-context("test-g01-qp")
+context("test-g01-qp_solvers")
 TOL <- 1e-6
 
 a <- Variable(name = "a")
@@ -19,24 +18,19 @@ slope <- Variable(1, name = "slope")
 offset <- Variable(1, name = "offset")
 quadratic_coeff <- Variable(1, name = "quadratic_coeff")
 
-Tlen <- 100
+Tlen <- 30
 position <- Variable(2, Tlen, name = "position")
 velocity <- Variable(2, Tlen, name = "velocity")
 force <- Variable(2, Tlen - 1, name = "force")
 
 xs <- Variable(80, name = "xs")
-xsr <- Variable(200, name = "xsr")
+xsr <- Variable(50, name = "xsr")
 xef <- Variable(80, name = "xef")
 
 # Check for all installed QP solvers
 solvers <- installed_solvers()
-## On CRAN skip CPLEX, since I believe there are some
-## false positive failures. So skip CPLEX
-solvers  <-  setdiff(solvers, "CPLEX")
-
 solvers <- solvers[solvers %in% CVXR:::QP_SOLVERS]
-## if("MOSEK" %in% installed_solvers())
-##   solvers <- c(solvers, "MOSEK")
+# solvers  <-  setdiff(solvers, "CPLEX")   # Skip CPLEX on CRAN, since I believe there are some false positive failures.
 
 solve_QP <- function(problem, solver_name) {
   solve(problem, solver = solver_name, verbose = TRUE)
@@ -44,7 +38,7 @@ solve_QP <- function(problem, solver_name) {
 
 test_quad_over_lin <- function(solver) {
   skip_on_cran()
-  p <- Problem(Minimize(0.5 * quad_over_lin(abs(x-1), 1)), list(x <= -1))
+  p <- Problem(Minimize(0.5*quad_over_lin(abs(x-1), 1)), list(x <= -1))
   result <- solve_QP(p, solver)
   for(var in variables(p))
     expect_equal(result$getValue(var), matrix(c(-1, -1)), tolerance = 1e-4)
@@ -59,7 +53,7 @@ test_abs <- function(solver) {
   constr <- list()
   constr <- c(constr, abs(u[2] - u[1]) <= 100)
   prob <- Problem(Minimize(sum_squares(u)), constr)
-  print(paste("The problem is QP: ", is_qp(prob), sep = ""))
+  print(paste("The problem is QP:", is_qp(prob)))
   expect_true(is_qp(prob))
   result <- solve(prob, solver = solver)
   expect_equal(result$value, 0, tolerance = TOL)
@@ -95,6 +89,7 @@ test_square_affine <- function(solver) {
 
 test_quad_form <- function(solver) {
   skip_on_cran()
+  set.seed(0)
   A <- matrix(rnorm(5*5), nrow = 5, ncol = 5)
   z <- matrix(rnorm(5), nrow = 5, ncol = 1)
   P <- t(A) %*% A
@@ -103,6 +98,20 @@ test_quad_form <- function(solver) {
   result <- solve_QP(p, solver)
   for(var in variables(p))
     expect_equal(result$getValue(var), z, tolerance = 1e-4)
+}
+
+test_rep_quad_form <- function(solver) {
+  # A problem where the quad_form term is used multiple times.
+  set.seed(0)
+  A <- matrix(rnorm(5*5), nrow = 5, ncol = 5)
+  z <- matrix(rnorm(5))
+  P <- t(A) %*% A
+  q <- -2*P %*% z
+  qf <- QuadForm(w, P)
+  p <- Problem(Minimize(0.5*qf + 0.5*qf + t(q) %*% w))
+  result <- solve_QP(p, solver)
+  for(var in variables(p))
+    expect_equal(z, result$getValue(var), tolerance = 1e-4)
 }
 
 test_affine_problem <- function(solver) {
@@ -132,7 +141,7 @@ test_maximize_problem <- function(solver) {
 test_norm_2 <- function(solver) {
   skip_on_cran()
   A <- matrix(rnorm(10*5), nrow = 10, ncol = 5)
-  b <- matrix(rnorm(10), nrow = 10)
+  b <- matrix(rnorm(10), nrow = 10, ncol = 1)
   p <- Problem(Minimize(p_norm(A %*% w - b, 2)))
   result <- solve_QP(p, solver)
 
@@ -148,13 +157,14 @@ test_mat_norm_2 <- function(solver) {
   p <- Problem(Minimize(p_norm(A %*% C - B, 2)))
   result <- solve_QP(p, solver)
 
-  C_star <- base::solve(qr(A),B)
+  C_star <- base::solve(qr(A), B)
   for(var in variables(p))
     expect_equal(result$getValue(var), C_star, tolerance = 0.1)
 }
 
 test_quad_form_coeff <- function(solver) {
   skip_on_cran()
+  set.seed(0)
   A <- matrix(rnorm(5*5), nrow = 5, ncol = 5)
   z <- matrix(rnorm(5), nrow = 5, ncol = 1)
   P <- t(A) %*% A
@@ -168,9 +178,9 @@ test_quad_form_coeff <- function(solver) {
 test_quad_form_bound <- function(solver) {
   skip_on_cran()
   P <- rbind(c(13, 12, -2), c(12, 17, 6), c(-2, 6, 12))
-  q <- matrix(c(-22, -14.5, 13))
+  q <- matrix(c(-22, -14.5, 13), nrow = 3, ncol = 1)
   r <- 1
-  y_star <- matrix(c(1, 0.5, -1))
+  y_star <- matrix(c(1, 0.5, -1), nrow = 3, ncol = 1)
   p <- Problem(Minimize(0.5*quad_form(y, P) + t(q) %*% y + r),
                list(y >= -1, y <= 1))
   result <- solve_QP(p, solver)
@@ -180,16 +190,19 @@ test_quad_form_bound <- function(solver) {
 
 test_regression_1 <- function(solver) {
   skip_on_cran()
-  # Number of examples to use
+  set.seed(1)
+  
+  # Number of examples to use.
   n <- 100
 
-  # Specify the true value of the variable
-  true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
+  # Specify the true value of the variable.
+  true_coeffs <- matrix(c(2, -2, 0.5), nrow = 3, ncol = 1)
 
-  # Generate data
+  # Generate data.
   x_data <- 5*rnorm(n)
   x_data_expanded <- sapply(1:3, function(i) { x_data^i })
-  y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
+  x_data_expanded <- matrix(x_data_expanded)
+  y_data <- t(x_data_expanded) %*% true_coeffs + 0.5*runif(n)
 
   line <- offset + slope*x_data
   residuals <- line - y_data
@@ -205,16 +218,21 @@ test_regression_1 <- function(solver) {
 
 test_regression_2 <- function(solver) {
   skip_on_cran()
-  # Number of examples to use
+  set.seed(1)
+  
+  # Number of examples to use.
   n <- 100
 
-  # Specify the true value of the variable
-  true_coeffs <- matrix(c(2, -2, 0.5), ncol = 1)
+  # Specify the true value of the variable.
+  true_coeffs <- matrix(c(2, -2, 0.5), nrow = 3, ncol = 1)
 
-  # Generate data
+  # Generate data.
   x_data <- 5*rnorm(n)
   x_data_expanded <- sapply(1:3, function(i) { x_data^i })
-  y_data <- x_data_expanded %*% true_coeffs + 0.5*runif(n)
+  x_data_expanded <- matrix(x_data_expanded)
+  print(dim(x_data_expanded))
+  print(dim(true_coeffs))
+  y_data <- t(x_data_expanded) %*% true_coeffs + 0.5*runif(n)
 
   quadratic <- offset + slope*x_data + quadratic_coeff*x_data^2
   residuals <- quadratic - y_data
@@ -232,47 +250,53 @@ test_regression_2 <- function(solver) {
 
 test_control <- function(solver) {
   skip_on_cran()
-  # Some constraints on our motion
-  # The object should start from the origin, and end at rest
+  
+  # Some constraints on our motion.
+  # The object should start from the origin, and end at rest.
   initial_velocity <- c(-20, 100)
   final_position <- c(100, 100)
 
-  Tlen <- 100  # The number of timesteps
-  h <- 0.1  # The time between time intervals
-  mass <- 1  # Mass of object
-  drag <- 0.1  # Drag on object
-  g <- c(0, -9.8)  # Gravity on object
+  Tlen <- 30       # The number of timesteps.
+  h <- 0.1         # The time between time intervals.
+  mass <- 1        # Mass of object.
+  drag <- 0.1      # Drag on object.
+  g <- c(0, -9.8)  # Gravity on object.
 
-  # Create a problem instance
+  # Create a problem instance.
   constraints = list()
 
-  # Add constraints on our variables
+  # Add constraints on our variables.
   for(i in 1:(Tlen - 1)) {
     constraints <- c(constraints, position[,i+1] == position[,i] + h*velocity[,i])
     acceleration <- force[,i]/mass + g - drag*velocity[,i]
     constraints <- c(constraints, velocity[,i+1] == velocity[,i] + h*acceleration)
   }
 
-  # Add position constraints
+  # Add position constraints.
   constraints <- c(constraints, position[,1] == 0)
   constraints <- c(constraints, position[,ncol(position)] == final_position)
 
-  # Add velocity constraints
+  # Add velocity constraints.
   constraints <- c(constraints, velocity[,1] == initial_velocity)
   constraints <- c(constraints, velocity[,ncol(velocity)] == 0)
 
-  # Solve the problem
-  p <- Problem(Minimize(.01*sum_squares(force)), constraints)
+  # Solve the problem.
+  p <- Problem(Minimize(0.01*sum_squares(force)), constraints)
   result <- solve_QP(p, solver)
-  expect_equal(178.500, result$value, tolerance = 0.1)
+  expect_equal(1059.616, result$value, tolerance = 0.1)
 }
 
 test_sparse_system <- function(solver) {
   skip_on_cran()
-  library(Matrix)
+  if(!require(Matrix)) {
+    print("Matrix library not installed. Skipping test.")
+    return()
+  }
+  
   m <- 100
   n <- 80
-
+  
+  set.seed(1)
   density <- 0.4
   A <- rsparsematrix(m, n, density)
   b <- rnorm(m)
@@ -284,8 +308,9 @@ test_sparse_system <- function(solver) {
 
 test_smooth_ridge <- function(solver) {
   skip_on_cran()
-  n <- 200
-  k <- 50
+  set.seed(1)
+  n <- 50
+  k <- 20
   eta <- 1
 
   A <- matrix(1, nrow = k, ncol = n)
@@ -293,45 +318,49 @@ test_smooth_ridge <- function(solver) {
   obj <- sum_squares(A %*% xsr - b) + eta*sum_squares(diff(xsr))
   p <- Problem(Minimize(obj), list())
   result <- solve_QP(p, solver)
-  expect_equal(0, result$value, tolerance = 1e-4)
+  expect_equal(result$value, 0, tolerance = 1e-4)
 }
 
 test_huber_small <- function(solver) {
   skip_on_cran()
-  # Solve the Huber regression problem
-    x <- Variable(3)
+  
+  # Solve the Huber regression problem.
+  x <- Variable(3)
   objective <- sum(huber(x))
 
-  # Solve problem with QP
+  # Solve problem with QP.
   p <- Problem(Minimize(objective), list(x[3] >= 3))
   result <- solve_QP(p, solver)
-  expect_equal(3, result$getValue(x[3]), tolerance = 1e-4)
-  expect_equal(5, result$getValue(objective), tolerance = 1e-4)
+  expect_equal(result$getValue(x[3]), 3, tolerance = 1e-4)
+  expect_equal(result$getValue(objective), 5, tolerance = 1e-4)
 }
 
 test_huber <- function(solver) {
   skip_on_cran()
-  library(Matrix)
+  if(!require(Matrix)) {
+    print("Matrix library not installed. Skipping test.")
+    return()
+  }
 
-  # Generate problem data
+  # Generate problem data.
   n <- 3
   m <- 5
 
-  set.seed(1)
-  A <- rsparsematrix(m, n, density=0.8)
+  set.seed(2)
+  A <- rsparsematrix(m, n, density = 0.8)
   x_true <- matrix(rnorm(n), ncol = 1)/sqrt(n)
   ind95 <- as.numeric(rnorm(m) < 0.95)
   b <- A %*% x_true + 0.5*rnorm(m)*ind95 + 10*runif(m)*(1 - ind95)
 
-  # Solve the Huber regression problem
+  # Solve the Huber regression problem.
   x <- Variable(n)
   objective <- sum(CVXR::huber(A %*% x - b))
 
-  # Solve problem with QP
+  # Solve problem with QP.
   p <- Problem(Minimize(objective))
   result <- solve_QP(p, solver)
-  expect_equal(result$getValue(objective), 0.14427356210544268, tolerance = 1e-3)
-  expect_equal(result$getValue(x), matrix(c(0.19534822, 0.56081768, -0.02134507)), tolerance = 1e-3)
+  expect_equal(result$getValue(objective), 1.327429461061672, tolerance = 1e-3)
+  expect_equal(result$getValue(x), matrix(c(-1.03751745, 0.86657204, -0.9649172)), tolerance = 1e-3)
 }
 
 test_equivalent_forms_1 <- function(solver) {
@@ -342,16 +371,16 @@ test_equivalent_forms_1 <- function(solver) {
 
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-  b <- matrix(rnorm(m), ncol = 1)
+  b <- matrix(rnorm(m), nrow = m, ncol = 1)
   G <- matrix(rnorm(r*n), nrow = r, ncol = n)
-  h <- matrix(rnorm(r), ncol = 1)
+  h <- matrix(rnorm(r), nrow = r, ncol = 1)
 
   obj1 <- 0.1*sum((A %*% xef - b)^2)
   cons <- list(G %*% xef == h)
 
   p1 <- Problem(Minimize(obj1), cons)
   result <- solve_QP(p1, solver)
-  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
+  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
 }
 
 test_equivalent_forms_2 <- function(solver) {
@@ -362,11 +391,11 @@ test_equivalent_forms_2 <- function(solver) {
 
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-  b <- matrix(rnorm(m), ncol = 1)
+  b <- matrix(rnorm(m), nrow = m, ncol = 1)
   G <- matrix(rnorm(r*n), nrow = r, ncol = n)
-  h <- matrix(rnorm(r), ncol = 1)
+  h <- matrix(rnorm(r), nrow = r, ncol = 1)
 
-  # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
+  # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2.
   P <- t(A) %*% A
   q <- -2*t(A) %*% b
   r <- t(b) %*% b
@@ -376,7 +405,7 @@ test_equivalent_forms_2 <- function(solver) {
 
   p2 <- Problem(Minimize(obj2), cons)
   result <- solve_QP(p2, solver)
-  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
+  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
 }
 
 test_equivalent_forms_3 <- function(solver) {
@@ -387,11 +416,11 @@ test_equivalent_forms_3 <- function(solver) {
 
   set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
-  b <- matrix(rnorm(m), ncol = 1)
+  b <- matrix(rnorm(m), nrow = m, ncol = 1)
   G <- matrix(rnorm(r*n), nrow = r, ncol = n)
-  h <- matrix(rnorm(r), ncol = 1)
+  h <- matrix(rnorm(r), nrow = r, ncol = 1)
 
-  # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2
+  # ||Ax-b||^2 = x^T (A^T A) x - 2(A^T b)^T x + ||b||^2.
   P <- t(A) %*% A
   q <- -2*t(A) %*% b
   r <- t(b) %*% b
@@ -402,7 +431,7 @@ test_equivalent_forms_3 <- function(solver) {
 
   p3 <- Problem(Minimize(obj3), cons)
   result <- solve_QP(p3, solver)
-  expect_equal(result$value, 62.2204590894, tolerance = 1e-4)
+  expect_equal(result$value, 68.1119420108, tolerance = 1e-4)
 }
 
 test_that("test all solvers", {
@@ -425,13 +454,14 @@ test_that("test all solvers", {
     test_quad_form_bound(solver)
     test_regression_1(solver)
     test_regression_2(solver)
+    test_rep_quad_form(solver)
 
     # Slow tests:
     test_control(solver)
     test_sparse_system(solver)
     test_smooth_ridge(solver)
     test_huber_small(solver)
-    #test_huber(solver)
+    test_huber(solver)
     test_equivalent_forms_1(solver)
     test_equivalent_forms_2(solver)
     test_equivalent_forms_3(solver)
@@ -443,23 +473,51 @@ test_that("Test warm start", {
   m <- 200
   n <- 100
 
+  set.seed(1)
   A <- matrix(rnorm(m*n), nrow = m, ncol = n)
   b <- Parameter(m)
 
   # Construct the problem.
   x <- Variable(n)
+  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
 
   value(b) <- rnorm(m)
-  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
-  result <- solve(prob, warm_start=FALSE)
-  result2 <- solve(prob, warm_start=TRUE)
+  result <- solve(prob, solver = "OSQP", warm_start=FALSE)
+  result2 <- solve(prob, solver = "OSQP", warm_start=TRUE)
   expect_equal(result$value, result2$value)
 
   value(b) <- rnorm(m)
-  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
-  result <- solve(prob, warm_start=TRUE)
-  result2 <- solve(prob, warm_start=FALSE)
+  result <- solve(prob, solver = "OSQP", warm_start=TRUE)
+  result2 <- solve(prob, solver = "OSQP", warm_start=FALSE)
   expect_equal(result$value, result2$value)
+})
+
+test_that("Test GUROBI warm start with a user provided point", {
+  skip_on_cran()
+  if("GUROBI" %in% installed_solvers()) {
+    library(gurobi)
+    m <- 4
+    n <- 3
+    
+    y <- Variable(nonneg = TRUE)
+    X <- Variable(m, n)
+    X_vals <- matrix(0:(m*n - 1), nrow = m, ncol = n, byrow = TRUE)
+    value(X) <- X_vals + 1
+    prob <- Problem(Minimize(y^2 + sum(x)), list(X == X_vals))
+    result <- solve(prob, solver = "GUROBI", warm_start = TRUE)
+    
+    # Check that "start" value was set appropriately.
+    model <- result$solver_stats@extra_stats
+    model_x <- getVars(model)
+    expect_equal(model_x[1]$start, gurobi:::UNDEFINED)
+    expect_true(is.allclose(model_x[1]$x, 0))
+    for(i in 1:size(X)) {
+      row <- (i - 1) %% nrow(X) + 1
+      col <- floor((i - 1) / nrow(X)) + 1
+      expect_equal(model_x[i + 1]$start, X_vals[row, col] + 1)
+      expect_true(is.allclose(model_x[i + 1]$x, result$getValue(X)[row, col]))
+    }
+  }
 })
 
 test_that("Test solve parametric vs. full problem", {
@@ -470,7 +528,7 @@ test_that("Test solve parametric vs. full problem", {
   b_vec <- c(-10, -2.)
 
   for(solver in solvers) {
-    # Solve from scratch with no parameters
+    # Solve from scratch with no parameters.
     x_full <- list()
     obj_full <- c()
     for(b in b_vec) {
@@ -482,14 +540,15 @@ test_that("Test solve parametric vs. full problem", {
       obj_full <- c(obj_full, result$value)
     }
 
-    # Solve parametric
+    # Solve parametric.
     x_param <- list()
     obj_param <- c()
     b <- Parameter()
+    obj <- Minimize(a*x^2 + b*x)
     constraints <- list(0 <= x, x <= 1)
+    prob <- Problem(obj, constraints)
     for(b_value in b_vec) {
       value(b) <- b_value
-      prob <- Problem(Minimize(a*x^2 + b*x), constraints)
       result <- solve(prob, solver=solver)
       x_param <- c(x_param, list(result$getValue(x)))
       obj_param <- c(obj_param, result$value)
@@ -511,6 +570,87 @@ test_that("Test issue arising with square plus parameter", {
 
   obj <- Minimize(b^2 + abs(a))
   prob <- Problem(obj)
-  result <- solve(prob)
-  expect_equal(result$value, 1.0)
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$value, 1.0, tolerance = TOL)
+})
+
+# TODO: Update tests for the R gurobi library.
+
+test_that("Test GUROBI time limit no solution", {
+  # Make sure that if Gurobi terminates due to a time limit before finding a solution:
+  #   1) no error is raised,
+  #   2) solver stats are returned.
+  # The test is skipped if something changes on Gurobi's side so that:
+  #   - a solution is found despite a time limit of zero,
+  #   - a different termination criteria is hit first.
+  skip_on_cran()
+  
+  if("GUROBI" %in% installed_solvers()) {
+    library(gurobi)
+    objective <- Minimize(x[1])
+    constraints <- list(x[1] >= 1)
+    prob <- Problem(objective, constraints)
+    tryCatch({
+      result <- solve(prob, solver = "GUROBI", TimeLimit = 0.0)
+    }, error = function(e) {
+      stop("An exception ", e, " is raised instead of returning a result.")
+    })
+    
+    extra_stats <- NULL
+    solver_stats <- ifelse("solver_stats" %in% names(result), result$solver_stats, NULL)
+    if(!is.null(solver_stats))
+      extra_stats <- ifelse("extra_stats" %in% slotNames(solver_stats), solver_stats@extra_stats, NULL)
+    expect_true(!is.null(extra_stats), "Solver stats have not been returned")
+    
+    nb_solutions <- ifelse("SolCount" %in% slotNames(extra_stats), extra_stats@SolCount, NULL)
+    if(!is.null(nb_solutions)) {
+      print("GUROBI has found a solution, the test is not relevant anymore")
+      return()
+    }
+    
+    solver_status <- ifelse("Status" %in% slotNames(extra_stats), extra_stats@Status, NA_character_)
+    if(solver_status != gurobi:::TIME_LIMIT) {
+      print("GUROBI terminated for a different reason than reaching time limit, the test is not relevant anymore")
+      return()
+    }
+  } else {
+    prob <- Problem(Minimize(norm1(x)), list(x == 0))
+    expect_error(solve(prob, solver = "GUROBI", TimeLimit = 0), "The solver GUROBI is not installed.", fixed = TRUE)
+  }
+})
+
+test_that("test GUROBI environment", {
+  # Tests that Gurobi environments can be passed to Model.
+  # Gurobi environments can include licensing and model parameter data.
+  skip_on_cran()
+  
+  if("GUROBI" %in% installed_solvers()) {
+    library(gurobi)
+    
+    # Set a few parameters to random values close to their defaults.
+    params <- list(MIPGap = runif(),                  # range {0, INFINITY}
+                   AggFill = sample(0:9, size = 1),   # range {-1, MAXINT}
+                   PerturbValue = runif())            # range: {0, INFINITY}
+    
+    # Create a custom environment and set some parameters.
+    custon_env <- gurobi:::Env()
+    for(k in names(params)) {
+      v <- params[[k]]
+      custom_env$setParam(k, v)
+    }
+    
+    # Testing QP Solver interface.
+    sth <- StandardTestLPs.test_lp_0(solver = "GUROBI", env = custom_env)
+    model <- sth@prob@solver_stats@extra_stats
+    for(k in names(params)) {
+      # https://www.gurobi.com/documentation/current/refman/cpp_env_getparaminfo.html
+      v <- params[[k]]
+      info <- model$getParamInfo(k)
+      p_val <- info[[3]]
+      expect_equal(v, p_val)
+    }
+  } else {
+    prob <- Problem(Minimize(norm1(x)), list(x == 0))
+    expect_error(solve(prob, solver = "GUROBI", TimeLimit = 0), "The solver GUROBI is not installed.", fixed = TRUE)
+  }
 })

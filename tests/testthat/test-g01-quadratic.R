@@ -102,7 +102,7 @@ test_that("test sum_squares function", {
   expect_true(is_quadratic(s))
   expect_true(is_dcp(s))
 
-  # Frobenius norm squared is indeed quadratic
+  # Frobenius norm squared is indeed quadratic,
   # but can't show quadraticity using recursive rules
   t <- norm(y, "F")^2
   expect_false(is_constant(t))
@@ -116,11 +116,11 @@ test_that("test indefinite quadratic", {
   y <- Variable()
   z <- Variable()
 
-  s <- y*z
+  expect_warning(s <- y*z)
   expect_true(is_quadratic(s))
   expect_false(is_dcp(s))
 
-  t <- (x+y)^2 - s - z*z
+  expect_warning(t <- (x+y)^2 - s - z*z)
   expect_true(is_quadratic(t))
   expect_false(is_dcp(t))
 })
@@ -133,8 +133,8 @@ test_that("test non-quadratic", {
   s <- max_entries(vstack(x, y, z))^2
   expect_false(is_quadratic(s))
 
-  s <- max_entries(vstack(x^2, power(y, 2), z))
-  expect_false(is_quadratic(s))
+  t <- max_entries(vstack(x^2, power(y, 2), z))
+  expect_false(is_quadratic(t))
 })
 
 test_that("test affine product", {
@@ -146,4 +146,25 @@ test_that("test affine product", {
   expect_false(is_affine(s))
   expect_true(is_quadratic(s))
   expect_false(is_dcp(s))
+})
+
+test_that("test the has_quadratic term function", {
+  x <- Variable()
+  expect_false(has_quadratic_term(x))
+  expect_false(has_quadratic_term(3 + 3*x))
+  expect_true(has_quadratic_term(x^2))
+  expect_true(has_quadratic_term(x^2/2))
+  expect_true(has_quadratic_term(x^2 + x^3))
+  expect_true(has_quadratic_term(Conj(x^2)))
+  expect_false(has_quadratic_term(pos(x^2)))
+  expect_true(has_quadratic_term(square(x^2)))
+  expect_true(has_quadratic_term(huber(x^3)))
+  expect_true(has_quadratic_term(power(x^2, 1)))
+  expect_true(has_quadratic_term(quad_over_lin(x^3, x)))
+  
+  y <- Variable(2)
+  P <- diag(2)
+  expect_true(has_quadratic_term(matrix_frac(y^3, P)))
+  P <- Parameter(2,2, PSD = TRUE)
+  expect_true(has_quadratic_term(matrix_frac(y^3, P)))
 })

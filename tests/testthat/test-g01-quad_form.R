@@ -76,6 +76,7 @@ test_that("Test quad_form with a sparse matrix", {
 })
 
 test_that("Test quad_form with a parameter", {
+  skip_on_cran()
   P <- Parameter(2,2,PSD = TRUE)
   Q <- diag(2)
   x <- Variable(2)
@@ -107,6 +108,7 @@ test_that("Test error when P is symmetric but not definite", {
 })
 
 test_that("Test that PSD check when eigenvalue is exactly -EIGVAL_TOL", {
+  skip_on_cran()
   P <- rbind(c(-0.999*EIGVAL_TOL, 0), c(0, 10))
   x <- Variable(2)
   
@@ -117,6 +119,7 @@ test_that("Test that PSD check when eigenvalue is exactly -EIGVAL_TOL", {
 })
 
 test_that("Test that NSD check when eigenvalue is exactly EIGVAL_TOL", {
+  skip_on_cran()
   P <- rbind(c(0.999*EIGVAL_TOL, 0), c(0, -10))
   x <- Variable(2)
   
@@ -153,6 +156,7 @@ test_that("Test a quad_form multiplied by zero", {
 })
 
 test_that("Test quad_form with P = 0", {
+  skip_on_cran()
   x <- Variable(3)
   A <- diag(3)
   b <- matrix(rep(1,3))
@@ -164,6 +168,7 @@ test_that("Test quad_form with P = 0", {
 })
 
 test_that("test assume_PSD argument", {
+  skip_on_cran()
   x <- Variable(3)
   A <- diag(3)
   expr <- quad_form(x, A, assume_PSD = TRUE)

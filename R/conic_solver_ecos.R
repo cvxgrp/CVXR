@@ -80,8 +80,8 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   ## CHECK: SHOULD problem not be of class ParamConeProg ? ASSUMING so, below because accepts method for
   ## ConicSolver checks for that.
 
-  data <- list()
-  inv_data <- list(object@VAR_ID = id(problem@x))
+  inv_data <- data <- list()
+  inv_data[[object@VAR_ID]] <- id(problem@x)
   # Format constraints
   #
   # ECOS requires constraints to be specified in the following order:
@@ -160,19 +160,19 @@ setMethod("solve_via_data", "ECOS", function(object,
                                              abstol,
                                              num_iter,
                                              solver_opts,
-                                             solver_cache = new.env(parent = emptyenv()))
+                                             solver_cache = new.env(parent = emptyenv())) {
 
   if (is.null(feastol)) {
-      feastol <- SOLVER_DEFAULT_PARAM$ECOS$feastol
+    feastol <- SOLVER_DEFAULT_PARAM$ECOS$feastol
   }
   if (is.null(reltol)) {
-      reltol <- SOLVER_DEFAULT_PARAM$ECOS$reltol
+    reltol <- SOLVER_DEFAULT_PARAM$ECOS$reltol
   }
   if (is.null(abstol)) {
-      abstol <- SOLVER_DEFAULT_PARAM$ECOS$abstol
+    abstol <- SOLVER_DEFAULT_PARAM$ECOS$abstol
   }
   if (is.null(num_iter)) {
-      num_iter <- SOLVER_DEFAULT_PARAM$ECOS$maxit
+    num_iter <- SOLVER_DEFAULT_PARAM$ECOS$maxit
   }
   ecos_opts <- ECOSolveR::ecos.control(maxit = as.integer(num_iter),
                                        feastol = feastol,

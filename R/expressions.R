@@ -137,7 +137,7 @@ setMethod("log_log_curvature", "Expression", function(object) {
 
 #' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
 setMethod("is_constant", "Expression", function(object) { (0 %in% dim(object)) || all(sapply(object@args, is_constant)) }
-})
+)
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
 setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
@@ -490,9 +490,9 @@ setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x els
 
 #'
 #' Conjugate Expression
-#' 
+#'
 #' The conjugate of the expression.
-#' 
+#'
 #' @param z An \linkS4class{Expression}
 #' @return An \linkS4class{Expression} representing the conjugate.
 #' @docType methods
@@ -500,7 +500,7 @@ setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x els
 #' @rdname Conjugate-class
 #' @method Conj Expression
 #' @export
-Conj.Expression <- function(z) { if(is_real(z) z else Conjugate(z) )}
+Conj.Expression <- function(z) { if(is_real(z)) z else Conjugate(z) }
 
 #' @docType methods
 #' @rdname Conjugate-class

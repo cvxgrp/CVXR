@@ -79,7 +79,8 @@ setMethod("invert", signature(object = "CPLEX_QP", results = "list", inverse_dat
     opt_val <- model$obj + inverse_data[[OFFSET]]
 
     # Get solution.
-    primal_vars <- list(object@VAR_ID = model$xopt)
+    primal_vars <- list()
+    primal_vars[[object@VAR_ID]] <- model$xopt
 
     # Only add duals if not a MIP.
     dual_vars <- list()

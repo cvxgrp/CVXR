@@ -216,7 +216,7 @@ SolvingChain.is_lp <- function(object) {
   return(is_dcp(object) && is_pwl(object@objective@args[[1]]))
 }
 
-SolvingChain.solve_as_qp(problem, candidates) {
+SolvingChain.solve_as_qp <- function(problem, candidates) {
   conic_not_qp_slvs <- c()
   for(s in candidates$conic_solvers) {
     if(!(s %in% candidates$qp_solvers))
@@ -238,7 +238,7 @@ SolvingChain.solve_as_qp(problem, candidates) {
 #' @param candidates List of candidate solvers divided into qp_solvers and conic_solvers.
 #' @param gp If TRUE, the problem is parsed as a Disciplined Geometric Program instead of a Disciplined Convex Program
 #' @return A list of Reduction objects that can be used to convert the problem to an intermediate form.
-SolvingChain.reductions_for_problem_class(problem, candidates, gp = FALSE, solver_opts = NULL) {
+SolvingChain.reductions_for_problem_class <- function(problem, candidates, gp = FALSE, solver_opts = NULL) {
   reductions <- list()
 
   # TODO: Handle boolean constraints.
@@ -309,11 +309,10 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   # Process DPP status of the problem.
   dpp_context <- ifelse(gp, "dgp", "dcp")
   dpp_error_msg <- paste("You are solving a parameterized problem that is not DPP. ",
-                         "Because the problem is not DPP, subsequent solves will not be "
-                         "faster than the first one. For more information, see the "
-                         "documentation on Discplined Parametrized Programming, at\n"
-                         "\thttps://www.cvxpy.org/tutorial/advanced/index.html#"
-                         "disciplined-parametrized-programming", sep = "")
+                         "Because the problem is not DPP, subsequent solves will not be ",
+                         "faster than the first one. For more information, see the ",
+                         "documentation on Discplined Parametrized Programming, at",
+                         "\thttps://www.cvxpy.org/tutorial/advanced/index.html#disciplined-parametrized-programming", collapse = "\n")
 
   if(ignore_dpp || !is_dpp(problem, dpp_context)) {
     # No warning for ignore_dpp.
@@ -391,7 +390,7 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   # increases the number of constraints in our problem.
   has_constr <- length(cones) > 0 || length(problem@constraints) > 0
 
-  for(solver %in% candidates$conic_solvers) {
+  for(solver in candidates$conic_solvers) {
     solver_instance <- SOLVER_MAP_CONIC[[solver]]
 
     # Cones supported for MI problems may differ from non MI.

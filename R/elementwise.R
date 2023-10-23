@@ -117,7 +117,7 @@ setMethod(".grad", "Abs", function(object, values) {
 #' The Ceil class.
 #'
 #' This class represents elementwise ceiling.
-#' 
+#'
 #' @slot x An \linkS4class{Expression}.
 #' @name Ceil-class
 #' @aliases Ceil
@@ -138,7 +138,7 @@ setMethod("initialize", "Ceil", function(.Object, ..., x) {
 #' @describeIn Ceil The numeric value of the expression.
 setMethod("to_numeric", "Ceil", function(object, values) {
   digits <- as.integer(abs(log10(ATOM_EVAL_TOL)))
-  
+
   # Note: For rounding off a 5, see documentation for R's round function.
   # Compare with the Python numpy implementation used in CVXPY.
   return(ceiling(round(values[[]], digits = digits)))
@@ -322,7 +322,7 @@ setMethod(".grad", "Exp", function(object, values) {
 #' The Floor class.
 #'
 #' This class represents elementwise ceiling.
-#' 
+#'
 #' @slot x An \linkS4class{Expression}.
 #' @name Floor-class
 #' @aliases Floor
@@ -675,9 +675,9 @@ setMethod(".domain", "Log1p", function(object) { list(object@args[[1]] >= -1) })
 #' The LogGamma atom.
 #'
 #' The elementwise log of the gamma function.
-#' 
+#'
 #' This implementation has modest accuracy over the full range, approaching perfect
-#' accuracy as \eqn{x} approaches infinity. For details on the nature of the approximation, 
+#' accuracy as \eqn{x} approaches infinity. For details on the nature of the approximation,
 #' return to CVXPY GitHub Issue #228 https://github.com/cvxpy/cvxpy/issues/228#issuecomment-544281906.
 #'
 #' @param x An \linkS4class{Expression} object.
@@ -746,12 +746,12 @@ setMethod(".grad", "Logistic", function(object, values) {
 #' The LogNormCdf atom.
 #'
 #' The elementwise log of the cumulative distribution function of a standard normal random variable.
-#' 
+#'
 #' This implementation is a quadratic approximation with modest accuracy over [-4, 4].
-#' For details on the nature of the approximation, refer to CVXPY GitHub PR #1224 
+#' For details on the nature of the approximation, refer to CVXPY GitHub PR #1224
 #' https://github.com/cvxpy/cvxpy/pull/1224#issue-793221374.
-#' 
-#' Note: Python SciPy's analog of LogNormCdf is called log_ndtr: 
+#'
+#' Note: Python SciPy's analog of LogNormCdf is called log_ndtr:
 #' https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.log_ndtr.html
 #'
 #' @param x An \linkS4class{Expression} object.
@@ -759,15 +759,15 @@ setMethod(".grad", "Logistic", function(object, values) {
 LogNormCdf <- function(x) {
   x <- as.Constant(x)
   flat_x <- Reshape(x, c(1, size(x)))
-  
-  d <- sqrt(0.02301291, 0.08070214, 0.16411522, 0.09003495, 0.08200854, 
+
+  d <- sqrt(0.02301291, 0.08070214, 0.16411522, 0.09003495, 0.08200854,
             0.01371543, 0.04641081)
   A <- sparseMatrix(i = seq(length(d)), j = seq(length(d)), x = d)
   b <- matrix(c(3, 2, 1, 0,-1, -2.5, -3.5))
-  
-  y <- A %*% (b %*% matrix(1, dim(flat_x)) - matrix(1, dim(b)) $*$ flat_x)
+
+  y <- A %*% (b %*% matrix(1, dim(flat_x)) - matrix(1, dim(b)) %*% flat_x)
   out <- -SumEntries(MaxElemwise(y, 0)^2, axis = 2)
-  
+
   return(Reshape(out, dim(x)))
 }
 
@@ -1193,9 +1193,9 @@ setMethod("name", "Power", function(x) {
 #' The RelEntr class.
 #'
 #' This class represents elementwise \eqn{x\log(x/y)}.
-#' 
+#'
 #' For disambiguation between RelEntr and KLDiv, see https://github.com/cvxpy/cvxpy/issues/733
-#' 
+#'
 #' @slot x An \linkS4class{Expression}.
 #' @slot y An \linkS4class{Expression}.
 #' @name RelEntr-class
@@ -1254,7 +1254,7 @@ setMethod("is_decr", "RelEntr", function(object, idx) {
 
 #' @param values A list of numeric values for the arguments
 #' @describeIn RelEntr Gives the (sub/super)gradient of the atom w.r.t. each variable
-setMethod(".grad", "RelEntr", function(object, values) { 
+setMethod(".grad", "RelEntr", function(object, values) {
   if(min(values[[1]]) <= 0 || min(values[[2]]) <= 0)
     # Non-differentiable.
     return(list(NA_real_, NA_real_))
@@ -1289,7 +1289,7 @@ Scalene <- function(x, alpha, beta) { alpha*Pos(x) + beta*Neg(x) }
 #' The XExp class.
 #'
 #' This class represents elementwise \eqn{x\exp^x}.
-#' 
+#'
 #' @slot x An \linkS4class{Expression}.
 #' @name XExp-class
 #' @aliases XExp
@@ -1339,7 +1339,7 @@ setMethod("is_decr", "XExp", function(object, idx) { FALSE })
 
 #' @param values A list of numeric values for the arguments
 #' @describeIn XExp Gives the (sub/super)gradient of the atom w.r.t. each variable
-setMethod(".grad", "XExp", function(object, values) { 
+setMethod(".grad", "XExp", function(object, values) {
   rows <- size(object@args[[1]])
   cols <- size(object)
   grad_vals <- base::exp(values[[1]])*(1 + values[[1]])

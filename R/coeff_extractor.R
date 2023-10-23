@@ -37,7 +37,7 @@ setMethod("affine", signature(object = "CoeffExtractor", expr = "list"), functio
   expr_list <- expr
   if(!all(sapply(expr_list, is_dpp)))
     stop("All expressions must be DPP")
-  
+
   num_rows <- sum(sapply(expr_list, size))
   op_list <- lapply(expr_list, function(e) { canonical_form(e)[[1]] })
   canonInterface.get_problem_matrix(op_list, object@x_length, object@id_map, object@param_to_size, object@param_id_map, num_rows, object@canon_backend)
@@ -51,7 +51,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   # Assumes quadratic forms all have variable arguments. Affine expressions can be anything.
   if(!is_dpp(affine_expr))
     stop("affine_expr must be DPP")
-  
+
   # Here we take the problem objective, replace all the SymbolicQuadForm
   # atoms with variables of the same dimensions.
   # We then apply the canonInterface to reduce the "affine head"
@@ -67,24 +67,24 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
   affine_var_dims <- tmp[[4]]
   op_list <- list(canonical_form(affine_expr)[[1]])
   param_coeffs <- canonInterface.get_problem_matrix(op_list, x_length, affine_offsets, object@param_to_size, object@param_id_map, size(affine_expr), object@canon_backend)
-  
+
   # Iterates over every entry of the parameters vector,
   # and obtains the Pi and qi for that entry i.
   # These are then combined into matrices [P1.flatten(), P2.flatten(), ...]
   # and [q1, q2, ...]
   constant <- param_coeffs[nrow(param_coeffs),]
   c <- param_coeffs[seq(nrow(param_coeffs) - 1),]@A
-  
-  # coeffs stores the P and q for each quad_form, as well as for true variable 
+
+  # coeffs stores the P and q for each quad_form, as well as for true variable
   # nodes in the objective.
   coeffs <- list()
-  
+
   # The goal of this loop is to appropriately multiply the matrix P of each
-  # quadratic term by the coefficients in param_coeffs. Later, we combine all 
+  # quadratic term by the coefficients in param_coeffs. Later, we combine all
   # the quadratic terms to form a single matrix P.
   for(var in variables(affine_expr)) {
     # quad_forms maps the ids of the SymbolicQuadForm atoms in the objective to
-    # (modified parent node of quad form, argument index of quad form, quad 
+    # (modified parent node of quad form, argument index of quad form, quad
     # form atom).
     var_id <- id(var)
     var_id_char <- as.character(vid)
@@ -92,7 +92,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       orig_id <- id(quad_forms[[var_id_char]][[3]]@args[[1]])
       var_offset <- affine_id_map[[var_id_char]][[1]]
       var_size <- affine_id_map[[var_id_char]][[2]]
-      
+
       # TODO: All the sparse COO matrix calculations involving P, c_part, etc must be checked!
       c_part <- c[(var_offset + 1):(var_offset + var_size),]
       P <- value(quad_forms[[var_id_char]][[3]]@P)
@@ -103,11 +103,11 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
           c_part <- matrix(1, nrow = nrow(P), ncol = 1) * c_part
       } else
         P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = rep(1, var_size), repr = "T")
-    
+
       # We multiply the columns of P by c_part by operating directly on the data.
       data <- as.matrix(P@x) * c_part[P@j]
       P_tup <- list(data, list(P@i, P@j), dim(P))
-      
+
       # Conceptually similar to P = P[:,:,None] * c_part[None,:,:].
       orig_id_char <- as.character(orig_id)
       if(orig_id_char %in% names(coeffs)) {
@@ -122,7 +122,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
           acc_data <- c(acc_data, data)
           acc_row <- c(acc_row, P@i)
           acc_col <- c(acc_col, P@j)
-          
+
           P_tup <- list(acc_data, list(acc_row, acc_col), dim(P))
           coeffs[[orig_id_char]]$P <- P_tup
         } else
@@ -167,7 +167,7 @@ setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expres
   # Sort variables corresponding to their starting indices in ascending order.
   shuffle <- order(unlist(object@id_map), decreasing = FALSE)
   offsets <- object@id_map[shuffle]
-  
+
   # Extract quadratic matrices and vectors.
   num_params <- ncol(constant)
   P_list <- list()
@@ -178,23 +178,23 @@ setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expres
     offset <- offsets[[var_id_char]]
     dim <- object@var_dims[[var_id_char]]
     size <- as.integer(prod(dim))
-    
+
     if(var_id_char %in% names(coeffs) && "P" %in% names(coeffs[[var_id_char]])) {
       P <- coeffs[[var_id_char]]$P
       P_entries <- P_entries + length(P[[1]])
     } else
       P <- list(c(), list(c(), c()), c(size, size))
-    
+
     if(var_id_char %in% names(coeffs) && "q" %in% coeffs[[var_id_char]])
       q <- coeffs[[var_id_char]]$q
     else
       q <- matrix(0, nrow = size, ncol = num_params)
-    
+
     P_list <- c(P_list, list(P))
     q_list <- c(q_list, list(q))
     P_height <- P_height + size
   }
-  
+
   if(P_height != object@x_length)
     stop("Resulting quadratic form does not have appropriate dimensions")
 
@@ -210,23 +210,22 @@ setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expres
   vals <- rep(0, P_entries)
   entry_offset <- 0
   for(P in P_list) {
-    """Conceptually, the code is equivalent to
-    ```
-    above = np.zeros((gap_above, P.shape[1], num_params))
-    below = np.zeros((gap_below, P.shape[1], num_params))
-    padded_P = np.concatenate([above, P, below], axis=0)
-    padded_P = np.reshape(padded_P, (P_height*P.shape[1], num_params),
-                          order='F')
+    ##Conceptually, the code is equivalent to
+    ## above = np.zeros((gap_above, P.shape[1], num_params))
+    ## below = np.zeros((gap_below, P.shape[1], num_params))
+    ## padded_P = np.concatenate([above, P, below], axis=0)
+    ## padded_P = np.reshape(padded_P, (P_height*P.shape[1], num_params),
+    ##                       order='F')
+    ## padded_P_list.append(padded_P)
+
+    ## but done by constructing a COO matrix.
+
     padded_P_list.append(padded_P)
-    ```
-    but done by constructing a COO matrix.
-    """
-    padded_P_list.append(padded_P) 
     P_vals <- P[[1]]
     P_rows <- P[[2]][[1]]
     P_cols <- P[[2]][[2]]
     P_dim <- P[[3]]
-    
+
     if(!is.null(P_vals) && length(P_vals) > 0) {
       P_cols_ext <- big64::as.integer64(P_cols) * integer64(P_height)   # TODO: Check if this is elementwise multiplication of a rep call in Python.
       base_rows <- gap_above + acc_height + P_rows + P_cols_ext
@@ -236,14 +235,14 @@ setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expres
       cols[(entry_offset + 1):(entry_offset + length(P_vals))] <- full_cols
       entry_offset <- entry_offset + length(P_vals)
     }
-    
+
     gap_above <- gap_above + P_dim[1]
     acc_height <- acc_height + P_height*bit64::integer64(P_dim[2])
   }
-  
+
   # Stitch together Ps and qs and constant.
   P <- sparseMatrix(i = rows, j = cols, x = vals, dims = c(acc_height, num_params))
-  
+
   # Stack q with constant offset as last row.
   q <- do.call("rbind", q_list)
   q <- do.call("rbind", list(q, constant@A))

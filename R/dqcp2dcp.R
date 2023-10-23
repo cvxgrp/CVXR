@@ -20,7 +20,7 @@ Dqcp2Dcp.get_lazy_and_real_constraints <- function(constraints) {
 #' be lazy, i.e., callables that return a constraint when called. The problem
 #' will only be DCP once the lazy constraints are replaced with actual
 #' constraints.
-#' 
+#'
 #' Problems emitted by this reduction can be solved with the bisect function.
 #'
 #' @rdname Dqcp2Cone-class
@@ -44,14 +44,14 @@ setMethod("accepts", signature(object = "Dqcp2Cone", problem = "Problem"), funct
 setMethod("invert", signature(object = "Dqcp2Cone", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
   pvars <- list()
   for(vid in inverse_data@id_map) {
-    if(vid in solution@primal_vars)
+    if(vid %in% solution@primal_vars)
       pvars[[vid]] <- solution@primal_vars[[vid]]
     else
       # Variable was optimized out because it was unconstrained.
       pvars[[vid]] <- 0.0
   }
   return(Solution(solution@status, solution@opt_val, pvars, list(), solution@attr))
-}
+})
 
 #' @describeIn Dqcp2Cone Recursively canonicalize the objective and every constraint.
 setMethod("perform", signature(object = "Dqcp2Cone", problem = "Problem"), function(object, problem) {
@@ -63,7 +63,7 @@ setMethod("perform", signature(object = "Dqcp2Cone", problem = "Problem"), funct
   real <- tmp[[2]]
   feas_problem <- Problem(Minimize(0), real)
   feas_problem@.lazy_constraints <- lazy
-  
+
   objective <- problem@objective@expr
   if(is_nonneg(objective))
     t <- Parameter(nonneg = TRUE)
@@ -72,7 +72,7 @@ setMethod("perform", signature(object = "Dqcp2Cone", problem = "Problem"), funct
   else
     t <- Parameter()
   constraints <- c(constraints, Dqcp2Dcp.canonicalize_constraint(objective <= t))
-  
+
   tmp <- Dqcp2Dcp.get_lazy_and_real_constraints(constraints)
   lazy <- tmp[[1]]
   real <- tmp[[2]]
@@ -119,7 +119,7 @@ setMethod("canon_args", "Dqcp2Cone", function(object, expr) {
 setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
   lhs <- constr@args[[1]]
   rhs <- constr@args[[2]]
-  
+
   if(is(constr, "Inequality")) {
     # Taking inverses can yield +/-; this is handled here.
     lhs_val <- as.vector(value(lhs))
@@ -132,7 +132,7 @@ setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
       return(list(FALSE))
     }
   }
-  
+
   if(is_dcp(constr)) {
     tmp <- canonicalize_tree(object, constr)
     canon_constr <- tmp[[1]]
@@ -140,18 +140,18 @@ setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
     constr_list <- c(list(canon_constr), aux_constr)
     return(constr_list)
   }
-  
+
   # Canonicalize lhs <= rhs.
   # Either lhs or rhs is quasiconvex (and not convex).
   if(!is(constr, "Inequality"))
     stop("constr must be of class Inequality")
-  
+
   # Short-circuit zero-valued expressions to simplify inverse logic.
   if(is_zero(lhs))
     return(canonicalize_constraint(object, 0 <= rhs))
   if(is_zero(rhs))
     return(canonicalize_constraint(object, lhs <= 0))
-  
+
   if(is_quasiconvex(lhs) && !is_convex(lhs)) {
     # Quasiconvex <= constant.
     if(!is_constant(rhs))
@@ -181,7 +181,7 @@ setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
       return(c(sublevel_set, aux_args_constr))
     }
   }
-  
+
   # Constant <= quasiconcave.
   if(!is_quasiconcave(rhs))
     stop("rhs must be quasiconcave")
@@ -270,25 +270,25 @@ inverse <- function(expr) {
       # Denominator is constant.
       const <- expr@args[[2]]
       return(function(t) { const * t })
-    } else if(class(expr) == "AddExpression") {
-      if(is_constant(expr@args[[1]]))
-        const <- expr@args[[1]]
-      else
-        const <- expr@args[[2]]
-      return(function(t) { t - const })
-    } else if(class(expr) == "Abs") {
-      arg <- expr@args[[1]]
-      if(is_nonneg(arg))
-        return(function(t) { t })
-      else if(is_nonpos(arg))
-        return(function(t) { -t })
-      else
-        stop("Sign of argument must be known")
-    } else if(class(expr) %in% c("SumEntries", "CumSum"))
-      return(function(t) { t })
+    }
+  } else if(class(expr) == "AddExpression") {
+    if(is_constant(expr@args[[1]]))
+      const <- expr@args[[1]]
     else
-      stop("Expression cannot be inverted")
-  }
+      const <- expr@args[[2]]
+    return(function(t) { t - const })
+  } else if(class(expr) == "Abs") {
+    arg <- expr@args[[1]]
+    if(is_nonneg(arg))
+      return(function(t) { t })
+    else if(is_nonpos(arg))
+      return(function(t) { -t })
+    else
+      stop("Sign of argument must be known")
+  } else if(class(expr) %in% c("SumEntries", "CumSum"))
+    return(function(t) { t })
+  else
+    stop("Expression cannot be inverted")
 }
 
 invertible <- function(expr) {
@@ -307,7 +307,7 @@ dist_ratio_sub <- function(expr, t) {
   x <- expr@args[[1]]
   a <- expr@a
   b <- expr@b
-  
+
   sublevel_set <- function() {
     if(value(t) > 1)
       return(FALSE)
@@ -381,7 +381,7 @@ length_sub <- function(expr, t) {
 
 sign_sup <- function(expr, t) {
   x <- expr@args[[1]]
-  
+
   superlevel_set <- function() {
     if(value(t) <= -1)
       return(TRUE)
@@ -395,7 +395,7 @@ sign_sup <- function(expr, t) {
 
 sign_sub <- function(expr, t) {
   x <- expr@args[[1]]
-  
+
   sublevel_set <- function() {
     if(value(t) >= 1)
       return(TRUE)
@@ -415,19 +415,19 @@ condition_number_sub <- function(expr, t) {
   A <- expr@args[[1]]
   n <- nrow(A)
   u <- Variable(pos = TRUE)
-  
+
   prom_ut <- promote(u * t, c(n, 1))
   prom_u <- promote(u, c(n, 1))
   tmp_expr1 <- A - diag_vec(prom_u)
   tmp_expr2 <- diag_vec(prom_ut) - A
-  
+
   return(list(upper_tri(A) == upper_tri(t(A)), PSD(A), PSD(tmp_expr1), PSD(tmp_expr2)))
 }
 
 SUBLEVEL_SETS <- list(
   "Multiply" = mul_sub,
   "DivExpression" = ratio_sub,
-  "VecLength" = length_sub, 
+  "VecLength" = length_sub,
   "Sign" = sign_sub,
   "DistRatio" = dist_ratio_sub,
   "GenLambdaMax" = gen_lambda_max_sub,

@@ -1,11 +1,10 @@
 context("test-g01-perspective")
 
-quad_example <- function(request) {
+quad_example <- function(r_val) {
   # Reference expected output.
   x <- Variable()
   s <- Variable()
-  
-  r <- request$param
+  r <- r_val
   
   obj <- quad_over_lin(x, s) + r*x - 4*s
   constraints <- list(x >= 2, s <= 0.5)
@@ -13,6 +12,54 @@ quad_example <- function(request) {
   result <- solve(prob_ref, solver = "ECOS")
   
   return(list(result$getValue(prob_ref), result$getValue(s), result$getValue(x), r))
+}
+
+test_p_norms <- function(p) {
+  x <- Variable(3)
+  s <- Variable(nonneg = TRUE, name = "s")
+  f <- p_norm(x, p)
+  obj <- perspective(f, s)
+  constraints <- list(1 == s, x >= c(1,2,3))
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "ECOS")
+  
+  # Reference problem.
+  ref_x <- Variable(3, pos = TRUE)
+  ref_s <- Variable(pos = TRUE)
+  
+  obj <- sum(power(ref_x, p) / power(ref_s, p-1))
+  
+  ref_constraints <- list(ref_x >= c(1,2,3), ref_s == 1)
+  ref_prob <- Problem(Minimize(obj), ref_constraints)
+  result_ref <- solve(ref_prob, gp = TRUE)
+  
+  expect_true(np.isclose(result$value^p, result_ref$value))
+  expect_true(is.allclose(result$getValue(x), result_ref$getValue(ref_x)))
+  if(p != 1)   # s is not used when denominator is s^0.
+    expect_true(np.isclose(result$getValue(s), result_ref$getValue(ref_s)))
+}
+
+test_rel_entr <- function(cvx) {
+  x <- Variable()
+  s <- Variable(nonneg = TRUE)
+  f <- log(x)*ifelse(cvx, -1, 1)
+  obj <- perspective(f, s)
+  constraints <- list(1 <= s, s <= 2, 1 <= x, x <= 2)
+  prob <- Problem(ifelse(cvx, Minimize(obj), Maximize(obj)))
+  result <- solve(prob, solver = "ECOS")
+  
+  # Reference problem.
+  ref_x <- Variable()
+  ref_s <- Variable()
+  obj <- rel_entr(ref_s, ref_x)*ifelse(cvx, 1, -1)
+  
+  ref_constraints <- list(1 <= ref_x, ref_x <= 2, 1 <= ref_s, ref_s <= 2)
+  ref_prob <- Problem(ifelse(cvx, Minimize(obj), Maximize(obj)), ref_constraints)
+  result_ref <- solve(ref_prob, solver = "ECOS")
+  
+  expect_true(np.isclose(result$value, result_ref$value))
+  expect_true(is.allclose(result$getValue(x), result_ref$getValue(ref_x)))
+  expect_true(np.isclose(result$getValue(s), result_ref$getValue(ref_s)))
 }
 
 lse_example <- function() {
@@ -28,6 +75,48 @@ lse_example <- function() {
   ref_prob <- Problem(Minimize(ref_t), ref_constraints)
   result <- solve(ref_prob, solver = "ECOS")
   return(list(result$value, result$getValue(ref_x), result$getValue(ref_s)))
+}
+
+test_evaluate_persp <- function(x_val, s_val) {
+  x <- Variable()
+  s <- Variable(nonneg = TRUE)
+  f_exp <- square(x) + 3*x - 5
+  obj <- perspective(f_exp, s)
+  
+  val_array <- matrix(c(s_val, x_val))
+  value(x) <- x_val
+  value(s) <- s_val   # Currently assumes variables have values before querying.
+  val <- as.numeric(val_array)
+  
+  # True val.
+  ref_val <- x_val^2/s_val + 3*x_val - 5*s_val
+  expect_true(np.isclose(val, ref_val))
+}
+
+test_power <- function(n) {
+  # Reference problem.
+  ref_x <- Variable(pos = TRUE)
+  ref_s <- Variable(pos = TRUE)
+  
+  # f(x) = x^n -> persp(f)(x,s) = x^n / s^(n-1)
+  obj <- power(ref_x, n) / power(ref_s, n-1)
+  constraints <- list(ref_x >= 1, ref_s <= 0.5)
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob, gp = TRUE)
+  
+  # Perspective problem.
+  x <- Variable()
+  s <- Variable(nonneg = TRUE)
+  f <- power(x, n)
+  obj <- perspective(f, s)
+  constraints <- list(x >= 1, s <= 0.5)
+  
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "ECOS")
+  
+  expect_true(np.isclose(result$value, result_ref$value))
+  expect_true(np.isclose(result$getValue(x), result_ref$getValue(ref_x)))
+  expect_true(np.isclose(result$getValue(s), result_ref$getValue(ref_s)))
 }
 
 test_psd_mf_persp <- function(n) {
@@ -99,6 +188,16 @@ test_that("test monotonicity", {
   expect_false(is_decr(p, 2))
 })
 
+test_that("test p-norms", {
+  for(p in c(1,2))
+    test_p_norms(p)
+})
+
+test_that("test rel_entr", {
+  for(cvx in c(TRUE, FALSE))
+    test_rel_entr(cvx)
+})
+
 test_that("test exp", {
   x <- Variable()
   s <- Variable(nonneg = TRUE)
@@ -143,15 +242,90 @@ test_that("test lse", {
   expect_true(np.isclose(result$getValue(s), ref_s))
 })
 
-# TODO: test_evaluate_persp
+test_that("test evaluate persp", {
+  xs_vals <- list(c(1,2), c(5,0.25, c(0.5,7)))
+  for(xs_val in xs_vals) {
+    x_val <- xs_val[1]
+    s_val <- xs_val[2]
+    test_evaluate_persp(x_val, s_val)
+  }
+})
 
-# TODO: test_quad_atom
+test_that("test quad atom", {
+  for(r_val in c(2, 3, 4, -2, 0)) {
+    ref <- quad_example(r_val)
+    ref_val <- ref[[1]]
+    ref_s <- ref[[2]]
+    ref_x <- ref[[3]]
+    r <- ref[[4]]
+    
+    # Form objective, introduce original variable.
+    x <- Variable()
+    s <- Variable(nonneg = TRUE)
+    f_exp <- square(x) + r*x - 4
+    obj <- perspective(f_exp, s)
+    
+    constraints <- list(s <= 0.5, x >= 2)
+    prob <- Problem(Minimize(obj), constraints)
+    result <- solve(prob, verbose = TRUE)
+    
+    expect_true(np.isclose(result$value, ref_val))
+    expect_true(np.isclose(result$getValue(x), ref_x))   # Assuming the solutions are unique...
+    expect_true(np.isclose(result$getValue(s), ref_s))
+  }
+})
 
-# TODO: test_quad_persp_persp
+test_that("test quad persp persp", {
+  for(r_val in c(2, 3, 4, -2, 0)) {
+    ref <- quad_example(r_val)
+    ref_val <- ref[[1]]
+    ref_s <- ref[[2]]
+    ref_x <- ref[[3]]
+    r <- ref[[4]]
+    
+    # Form objective, introduce original variable.
+    x <- Variable()
+    s <- Variable(nonneg = TRUE)
+    t <- Variable(nonneg = TRUE)
+    
+    # f(x) -> sf(x/s) -> t(s/t)*f(xt/ts) - > sf(x/s)
+    f_exp <- square(x) + r*x - 4
+    obj_inner <- perspective(f_exp, s)
+    obj <- perspective(obj_inner, t)
+    
+    constraints <- list(0.1 <= s, s <= 0.5, x >= 2, 0.1 <= t, t <= 0.5)
+    prob <- Problem(Minimize(obj), constraints)
+    result <- solve(prob, verbose = TRUE)
+    
+    expect_true(np.isclose(result$value, ref_val))
+    expect_true(np.isclose(result$getValue(x), ref_x))
+    expect_true(np.isclose(result$getValue(s), ref_s))
+  }
+})
 
-# TODO: test_quad_quad
+test_that("test quad quad", {
+  # Reference problem.
+  ref_x <- Variable()
+  ref_s <- Variable(nonneg =  TRUE)
+  
+  # f(x) = x^4 -> persp(f)(x,s) = x^4 / s^3 = (x^2/s)^2 / s.
+  obj <- quad_over_lin(quad_over_lin(ref_x, ref_s), ref_s)
+  constraints <- list(ref_x >= 5, ref_s <= 3)
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob, solver = "ECOS")
+  
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "ECOS")
+  
+  expect_true(np.isclose(result$value, result_ref$value))
+  expect_true(np.isclose(result$getValue(x), result_ref$getValue(ref_x)))
+  expect_true(np.isclose(result$getValue(s), result_ref$getValue(ref_s)))
+})
 
-# TODO: test_power
+test_that("test power", {
+  for(n in c(4, 5, 7, 11))
+    test_power(n)
+})
 
 test_that("test psd tr persp", {
   # Reference problem.

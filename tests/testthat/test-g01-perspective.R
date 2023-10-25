@@ -30,6 +30,59 @@ lse_example <- function() {
   return(list(result$value, result$getValue(ref_x), result$getValue(ref_s)))
 }
 
+test_psd_mf_persp <- function(n) {
+  # Reference problem.
+  ref_x <- Variable(n)
+  ref_P <- Variable(n, n, PSD = TRUE)
+  
+  # matrix_frac is homogenous of degree 1 so its perspective is itself.
+  obj <- matrix_frac(ref_x, ref_P)
+  constraints <- list(ref_x == 5, ref_P == diag(n))
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob, solver = "SCS")
+  
+  # Perspective problem.
+  x <- Variable(n)
+  P <- Variable(n, n, PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  
+  f <- matrix_frac(x, P)
+  obj <- perspective(f, s)
+  constraints <- list(x == 5, P == diag(n), s == 1)
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "SCS")
+  
+  expect_equal(result$status, OPTIMAL)
+  expect_true(np.isclose(result$value, result_ref$value, atol = 1e-2))
+  expect_true(is.allclose(result$getValue(x), result_ref$getValue(ref_x), atol = 1e-2))
+}
+
+test_psd_tr_square <- function(n) {
+  # Reference problem.
+  ref_s <- Variable(nonneg = TRUE)
+  ref_P <- Variable(n, n, PSD = TRUE)
+  
+  # Tr(X)^2 perspective is quad over line of Tr(X).
+  obj <- quad_over_lin(matrix_trace(ref_P), ref_s)
+  constraints <- list(ref_s <= 5, ref_P %>>% diag(n))
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob, solver = "SCS")
+  
+  # Perspective problem.
+  P <- Variable(n, n, PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  
+  f <- perspective(square(matrix_trace(P)), s)
+  obj <- perspective(f, s)
+  constraints <- list(s <= 5, P %>>% diag(n))
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "SCS")
+  
+  expect_equal(result$status, OPTIMAL)
+  expect_true(np.isclose(result$value, result_ref$value, atol = 1e-3))
+  expect_true(is.allclose(result$getValue(P), result_ref$getValue(ref_P), atol = 1e-4))
+}
+
 test_that("test monotonicity", {
   x <- Variable(nonneg = TRUE)
   f <- exp(x)
@@ -88,6 +141,89 @@ test_that("test lse", {
   expect_true(np.isclose(result$value, ref_prob))
   expect_true(is.allclose(result$getValue(x), ref_x))
   expect_true(np.isclose(result$getValue(s), ref_s))
+})
+
+# TODO: test_evaluate_persp
+
+# TODO: test_quad_atom
+
+# TODO: test_quad_persp_persp
+
+# TODO: test_quad_quad
+
+# TODO: test_power
+
+test_that("test psd tr persp", {
+  # Reference problem.
+  ref_P <- Variable(2, 2, PSD = TRUE)
+  
+  obj <- matrix_trace(ref_P)
+  constraints <- list(ref_P == diag(2))
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob, solver = "SCS")
+  
+  # Perspective problem.
+  P <- Variable(2, 2, PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  
+  f <- matrix_trace(P)
+  
+  obj <- perspective(f, s)
+  constraints <- list(P == diag(2), s == 1)
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob, solver = "SCS")
+  
+  expect_equal(result$status, OPTIMAL)
+  expect_true(np.isclose(result$value, result_ref$value))
+})
+
+test_that("test psd mf persp", {
+  for(n in c(2, 3, 11))
+    test_psd_mf_persp(n)
+})
+
+test_that("test psd tr square", {
+  for(n in c(2, 3, 11))
+    test_psd_tr_square(n)
+})
+
+test_that("test diag", {
+  X_ref <- Variable(2, 2, diag = TRUE)
+  obj <- matrix_trace(X_ref)
+  constraints <- list(diag(X_ref) >= c(1,2))
+  ref_prob <- Problem(Minimize(obj), constraints)
+  result_ref <- solve(ref_prob)
+  
+  X <- Variable(2, 2, diag = TRUE)
+  f <- matrix_trace(X)
+  s <- Variable(nonneg = TRUE)
+  obj <- perspective(f, s)
+  constraints <- list(diag(X) >= c(1,2), s == 1)
+  prob <- Problem(Minimize(obj), constraints)
+  result <- solve(prob)
+  
+  expect_equal(result$status, OPTIMAL)
+  expect_true(np.isclose(result$value, result_ref$value, atol = 1e-3))
+  expect_true(is.allclose(result$getValue(X), result_ref$getValue(X_ref), atol = 1e-4))
+})
+
+test_that("test scalar x", {
+  x <- Variable()
+  s <- Variable(nonneg = TRUE)
+  obj <- perspective(x-1, s)
+  
+  prob <- Problem(Minimize(obj), list(x >= 3.14, s <= 1))
+  result <- solve(prob)
+  expect_true(np.isclose(result$value, 3.14 - 1))
+})
+
+test_that("test assert s nonzero", {
+  x <- Variable()
+  s <- Variable(nonneg = TRUE)
+  obj <- perspective(x+1, s)
+  
+  prob <- Problem(Minimize(obj), list(x >= 3.14))
+  expect_error(result <- solve(prob), "There are valid cases")
 })
 
 test_that("test parameter", {

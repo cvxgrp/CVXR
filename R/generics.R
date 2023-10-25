@@ -191,6 +191,7 @@ setGeneric("is_log_log_concave", function(object) { standardGeneric("is_log_log_
 #' Determine if a problem or expression complies with the disciplined convex programming rules.
 #'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @param dpp a boolean flag indicating if it is DPP or not, default `FALSE`
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
 #' @examples
 #' x <- Variable()
@@ -200,7 +201,7 @@ setGeneric("is_log_log_concave", function(object) { standardGeneric("is_log_log_
 #' @docType methods
 #' @rdname is_dcp
 #' @export
-setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
+setGeneric("is_dcp", function(object, dpp = FALSE) { standardGeneric("is_dcp") })
 
 #'
 #' DGP Compliance
@@ -208,6 +209,7 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' Determine if a problem or expression complies with the disciplined geometric programming rules.
 #'
 #' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @param dpp a flag indicating if it is a DPP or not, default `FALSE`
 #' @return A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.
 #' @examples
 #' x <- Variable(pos = TRUE)
@@ -218,7 +220,8 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' @docType methods
 #' @rdname is_dgp
 #' @export
-setGeneric("is_dgp", function(object) { standardGeneric("is_dgp") })
+setGeneric("is_dgp", function(object, dpp = FALSE) { standardGeneric("is_dgp") })
+
 
 #'
 #' Size of Expression
@@ -914,7 +917,9 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' data[["G"]]
 #' @rdname get_problem_data
 #' @export
-setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("get_problem_data") })
+setGeneric("get_problem_data", function(object, solver, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE,
+                                        verbose = FALSE, canon_backend = NA_character_,
+                                        solver_opts = NULL) { standardGeneric("get_problem_data") })
 
 #'
 #' Solve a DCP Problem
@@ -956,8 +961,10 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE,
-                              gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, ...) { standardGeneric("psolve") })
+setGeneric("psolve", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE,
+                              verbose = FALSE, gp = FALSE, qcp = FALSE,
+                              requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
+                              parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) { standardGeneric("psolve") })
 
 #'
 #' Is Problem a QP?
@@ -1140,7 +1147,7 @@ setGeneric("retrieve", function(object, solution) { standardGeneric("retrieve") 
 #' }
 #' @docType methods
 #' @rdname perform
-setGeneric("perform", function(object, problem) { standardGeneric("perform") })
+setGeneric("perform", function(object, problem, verbose = FALSE) { standardGeneric("perform") })
 
 #'
 #' Return Original Solution
@@ -1162,14 +1169,14 @@ setGeneric("square", function(x) { standardGeneric("square") })
 ## Start of newly added generics
 setGeneric("expr", function(object) { standardGeneric("expr") })
 setGeneric("ndim", function(object) { standardGeneric("ndim") })
-setGeneric("flatten", function(object) { standardGeneric("flatten") })
+setGeneric("flatten", function(object, byrow = FALSE) { standardGeneric("flatten") })
 setGeneric("value_impl", function(object) { standardGeneric("value_impl") })
 setGeneric("var_id", function(object) { standardGeneric("var_id") })
 setGeneric("get_attr_str", function(object) { standardGeneric("get_attr_str") })
 setGeneric("get_var_offsets", function(object, variables) { standardGeneric("get_var_offsets") })
 setGeneric("allow_complex", function(object) { standardGeneric("allow_complex") })
-setGeneric("canonicalize_tree", function(object, expr) { standardGeneric("canonicalize_tree") })
-setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("canonicalize_expr") })
+setGeneric("canonicalize_tree", function(object, expr, affine_above) { standardGeneric("canonicalize_tree") })
+setGeneric("canonicalize_expr", function(object, expr, args, affine_above) { standardGeneric("canonicalize_expr") })
 setGeneric("stuffed_objective", function(object, problem, extractor) { standardGeneric("stuffed_objective") })
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
@@ -1196,3 +1203,201 @@ setGeneric("tree_copy", function(object, id_objects = list()) { standardGeneric(
 setGeneric("op_name", function(object) { standardGeneric("op_name") })
 setGeneric("op_func", function(object) { standardGeneric("op_func") })
 ## End of newly added generics
+
+## More added generics
+#'
+#' DPP Compliance
+#'
+#' Determine if a problem or expression complies with the disciplined parametric programming rules.
+#'
+#' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @param context should be one of 'dcp' (default) or 'dgp'
+#' @return A logical value indicating whether the problem or expression is DPP compliant, i.e. uses parameters
+#' @examples
+#' p <- Parameter(pos = TRUE, value = 5)
+#' y <- Variable(pos = TRUE)
+#' prob <- Problem(Minimize(p*y), list(x >= 5, y >= 5))
+#' is_dpp(prob)
+#' @docType methods
+#' @rdname is_dpp
+#' @export
+setGeneric("is_dpp", function(object, context = 'dcp' ) { standardGeneric("is_dpp") })
+
+#'
+#' Quasiconvex?
+#'
+#' Determine if an expression is quasiconvex
+#'
+#' @param object A \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression is quasiconvex or not
+#' @examples
+#' y <- Variable(pos = TRUE)
+#' is_quasiconvex(y)
+#' @docType methods
+#' @rdname is_quasiconvex
+#' @export
+setGeneric("is_quasiconvex", function(object) { standardGeneric("is_quasiconvex") })
+
+#'
+#' Quasiconcave?
+#'
+#' Determine if an expression is quasiconcave
+#'
+#' @param object A \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression is quasiconcave or not
+#' @examples
+#' y <- Variable(pos = TRUE)
+#' is_quasiconcave(y)
+#' @docType methods
+#' @rdname is_quasiconcave
+#' @export
+setGeneric("is_quasiconcave", function(object) { standardGeneric("is_quasiconcave") })
+
+#'
+#' Quasilinear?
+#'
+#' Determine if an expression is quasilinear
+#'
+#' @param object A \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression is quasilinear or not
+#' @examples
+#' y <- Variable(pos = TRUE)
+#' is_quasilinear(y)
+#' @docType methods
+#' @rdname is_quasilinear
+#' @export
+setGeneric("is_quasilinear", function(object) { standardGeneric("is_quasilinear") })
+
+#'
+#' DQCP Compliance
+#'
+#' Determine if a problem or expression complies with the disciplined quasiconvex programming rules.
+#'
+#' @param object A \linkS4class{Problem} or \linkS4class{Expression} object.
+#' @return A logical value indicating whether the problem or expression is DQCP compliant
+#' @examples
+#' x <- Variable(pos = TRUE)
+#' y <- Variable(pos = TRUE)
+#' prob <- Problem(Minimize(x*y), list(x >= 5, y >= 5))
+#' is_dqcp(prob)
+#' @docType methods
+#' @rdname is_dqcp
+#' @export
+setGeneric("is_dqcp", function(object) { standardGeneric("is_dqcp") })
+
+#'
+#' Determine if an expression has a quadratic term
+#'
+#' @param object A \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression has a quadratic term or not
+#' @examples
+#' y <- Variable(pos = TRUE)
+#' has_quadratic_term(3*y + y^2)
+#' @docType methods
+#' @rdname has_quadratic_term
+#' @export
+setGeneric("has_quadratic_term", function(object) { standardGeneric("has_quadratic_term") })
+
+#'
+#' Determine if an expression is skew symmetric
+#'
+#' @param object A \linkS4class{Expression} object.
+#' @return A logical value indicating whether the expression is skew symmetric or not
+#' @examples
+#' m <- matrix(0, nrow = 3, ncol = 3)
+#' is_skew_symmetric(m)
+#' @docType methods
+#' @rdname is_skew_symmetric
+#' @export
+setGeneric("is_skew_symmetric", function(object) { standardGeneric("is_skew_symmetric") })
+
+#'
+#' Determine if the attributes on a variable were lowered
+#'
+#' @param object A \linkS4class{Variable} object.
+#' @return A logical value indicating whether the attributes were lowered or not
+#' @docType methods
+#' @rdname attributes_were_lowered
+#' @export
+setGeneric("attributes_were_lowered", function(object) { standardGeneric("attributes_were_lowered") })
+
+#'
+#' Set a variable attributes using another
+#'
+#' @param object A \linkS4class{Variable} object.
+#' @param variable Another \linkS4class{Variable} object.
+#' @return A modified object with the attributes set
+#' @docType methods
+#' @rdname set_variable_of_provenance
+#' @export
+setGeneric("set_variable_of_provenance", function(object, variable) { standardGeneric("set_variable_of_provenance") })
+
+#'
+#' Return a variable with attributes from which this variable was generated
+#'
+#' @param object A \linkS4class{Variable} object.
+#' @return a variable of provenance attributes
+#' @docType methods
+#' @rdname variable_of_provenance
+#' @export
+setGeneric("variable_of_provenance", function(object, variable) { standardGeneric("variable_of_provenance") })
+
+#' Determine if an atom is quasiconvex
+#'
+#' @param object A \linkS4class{Atom} object.
+#' @return A logical value indicating whether the expression is quasiconvex or not
+#' @examples
+#' @docType methods
+#' @rdname is_atom_quasiconvex
+#' @export
+setGeneric("is_atom_quasiconvex", function(object) { standardGeneric("is_atom_quasiconvex") })
+
+#' Determine if an atom is quasiconcave
+#'
+#' @param object A \linkS4class{Atom} object.
+#' @return A logical value indicating whether the expression is quasiconcave or not
+#' @examples
+#' @docType methods
+#' @rdname is_atom_quasiconcave
+#' @export
+setGeneric("is_atom_quasiconcave", function(object) { standardGeneric("is_atom_quasiconcave") })
+
+#' .non_const_idx
+#'
+#' @param object A \linkS4class{Atom} object.
+#' @return a list of indexes of constant atoms
+#' @examples
+#' @docType methods
+#' @rdname .non_const_idx
+#' @export
+setGeneric(".non_const_idx", function(object) { standardGeneric(".non_const_idx") })
+
+#' .is_real
+#'
+#' @param object A \linkS4class{Atom} object.
+#' @return true or false
+#' @examples
+#' @docType methods
+#' @rdname .is_real
+#' @export
+setGeneric(".is_real", function(object) { standardGeneric(".is_real") })
+setGeneric("expand_args", function(object) { standardGeneric("expand_args") })
+setGeneric("invalidate", function(object) { standardGeneric("invalidate") })
+setGeneric("make_key", function(object, solver, gp, ignore_dpp) { standardGeneric("make_key") })
+setGeneric("gp", function(object) { standardGeneric("gp") })
+setGeneric("solution", function(object) { standardGeneric("solution") })
+setGeneric("param_list", function(object) { standardGeneric("param_list") })
+setGeneric("var_list", function(object) { standardGeneric("var_list") })
+setGeneric("backward", function(object) { standardGeneric("backward") })
+setGeneric("derivative", function(object) { standardGeneric("derivative") })
+setGeneric("apply_parameters", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE, quad_obj = FALSE) { standardGeneric("apply_parameters") })
+setGeneric(".reset_iis", function(object) { standardGeneric(".reset_iis") })
+setGeneric("as_quad_approx", function(object, m, k) { standardGeneric("as_quad_approx") })
+setGeneric("cache", function(object, keep_zeros = FALSE) { standardGeneric("cache") })
+setGeneric("get_matrix_from_tensor", function(object, param_vec, with_offset = TRUE) { standardGeneric("get_matrix_from_tensor") })
+setGeneric("bisect", function(problem, solver = NULL, low = NA_real_, high = NA_real_, eps = 1e-6, verbose = FALSE, max_iters = 100, max_iters_interval_search = 100) { standardGeneric("bisect") })
+setGeneric("apply_param_jac", function(object, delc, delA, delb, active_params = NULL) { standardGeneric("apply_param_jac") })
+setGeneric("split_solution", function(object, sltn, active_vars = NULL) { standardGeneric("split_solution") })
+setGeneric("split_adjoint", function(object, del_vars = NULL) { standardGeneric("split_adjoint") })
+setGeneric("variable_canon", function(object, variable, args) { standardGeneric("variable_canon") })
+setGeneric("parameter_canon", function(object, parameter, args) { standardGeneric("parameter_canon") })

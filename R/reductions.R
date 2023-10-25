@@ -151,6 +151,9 @@ setMethod("get_matrix_from_tensor", "ReducedMat", function(object, param_vec, wi
   canonInterface.get_matrix_from_tensor(object@reduced_mat, param_vec, object@var_len, nonzero_rows = object@mapping_nonzero, with_offset = with_offset, problem_data_index = object@problem_data_index)
 })
 
+setClassUnion("ReducedMatORNULL", c("ReducedMat", "NULL"))
+
+
 # Factory function for infeasible or unbounded solutions.
 failure_solution <- function(status) {
   if(status == INFEASIBLE)
@@ -764,6 +767,9 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
 
 InverseData <- function(problem) { .InverseData(problem = problem) }
 
+## Add InverseData to class union InverseDataORNUL
+setIs("InverseData", "InverseDataORNULL")
+
 setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA) {
   # Basic variable offset information
   varis <- variables(problem)
@@ -835,9 +841,9 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
   stop("Unimplemented")
 })
 
-setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
-  stop("Unimplemented")
-})
+## setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
+##   stop("Unimplemented")
+## })
 
 #'
 #' Coalesces bool, int indices for variables.

@@ -140,7 +140,9 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
 #'
 #' The ConstantSolver class.
 #'
-ConstantSolver <- setClass("ConstantSolver", prototype(MIP_CAPABLE = TRUE), contains = "ReductionSolver")
+ConstantSolver <- setClass("ConstantSolver",
+                           prototype = list(MIP_CAPABLE = TRUE),
+                           contains = "ReductionSolver")
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConstantSolver Is the solver capable of solving the problem?
@@ -431,6 +433,9 @@ setClassUnion("ReductionSolverORNULL", c("ReductionSolver", "NULL"))
 #' @rdname SolvingChain-class
 .SolvingChain <- setClass("SolvingChain", representation(solver = "ReductionSolverORNULL"), prototype(solver = NULL), contains = "Chain")
 SolvingChain <- function(problem = NULL, reductions = list()) { .SolvingChain(problem = problem, reductions = reductions) }
+
+## Add Solving Chain to SolvingChainOrNULL
+setIs("SolvingChain", "SolvingChainORNULL")
 
 setMethod("initialize", "SolvingChain", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)

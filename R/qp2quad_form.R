@@ -1,3 +1,5 @@
+## Uses definitions in dcpcanon.R which needs to precede this when sourcing!
+
 #'
 #' The Qp2SymbolicQp class.
 #'
@@ -136,6 +138,10 @@ setMethod("initialize", "ParamQuadProg", function(.Object, ..., P, q, x, A, vari
 
   callNextMethod(.Object, ...)
 })
+
+## Add ParamQuadProg to class union ParamProgORNULL
+setIs("ParamQuadProg", "ParamProgORNULL")
+
 
 #' @param object A \linkS4class{ParamQuadProg} object.
 #' @describeIn ParamQuadProg Is the problem mixed-integer?
@@ -318,121 +324,3 @@ setMethod("invert", signature(object = "QpMatrixStuffing", solution = "Solution"
   return(Solution(solution@status, opt_val, primal_vars, dual_vars, solution@attr))
 })
 
-
-# Atom canonicalizers
-Qp2QuadForm.huber_canon <- function(expr, args) {
-  M <- expr@M
-  x <- args[[1]]
-  expr_dim <- dim(expr)
-  # n <- Variable(expr_dim)
-  # s <- Variable(expr_dim)
-  n <- new("Variable", dim = expr_dim)
-  s <- new("Variable", dim = expr_dim)
-
-  # n^2 + 2*M*|s|
-  # TODO: Make use of recursion inherent to canonicalization process and just return a power / abs expression for readability's sake.
-  power_expr <- Power(n, 2)
-  canon <- Qp2QuadForm.power_canon(power_expr, power_expr@args)
-  n2 <- canon[[1]]
-  constr_sq <- canon[[2]]
-
-  abs_expr <- abs(s)
-  canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
-  abs_s <- canon[[1]]
-  constr_abs <- canon[[2]]
-  obj <- n2 + 2*M*abs_s
-
-  constraints <- c(constr_sq, constr_abs)
-  constraints <- c(constraints, list(x == s + n))
-  return(list(obj, constraints))
-}
-
-Qp2QuadForm.power_canon <- function(expr, args) {
-  affine_expr <- args[[1]]
-  if(is.numeric(expr@p))
-    p <- expr@p
-  else
-    p <- value(expr@p)
-
-  if(is_constant(expr))
-    return(list(Constant(value(expr)), list()))
-  else if(p == 0)
-    return(list(matrix(1, nrow = nrow(affine_expr), ncol = ncol(affine_expr)), list()))
-  else if(p == 1)
-    return(list(affine_expr, list()))
-  else if(p == 2) {
-    if(is(affine_expr, "Variable")) {
-      affine_expr_size <- size(affine_expr)
-      speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
-      return(list(SymbolicQuadForm(affine_expr, speye, expr), list()))
-    } else {
-      # t <- Variable(dim(affine_expr))
-      t <- new("Variable", dim = dim(affine_expr))
-      t_size <- size(t)
-      speye <- sparseMatrix(1:t_size, 1:t_size, x = rep(1, t_size))
-      return(list(SymbolicQuadForm(t, speye, expr), list(affine_expr == t)))
-    }
-  }
-  stop("Non-constant quadratic forms cannot be raised to a power greater than 2.")
-}
-
-Qp2QuadForm.quad_form_canon <- function(expr, args) {
-  affine_expr <- expr@args[[1]]
-  P <- expr@args[[2]]
-  if(is(affine_expr, "Variable"))
-    return(list(SymbolicQuadForm(affine_expr, P, expr), list()))
-  else {
-    # t <- Variable(dim(affine_expr))
-    t <- new("Variable", dim = dim(affine_expr))
-    return(list(SymbolicQuadForm(t, P, expr), list(affine_expr == t)))
-  }
-}
-
-Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
-  affine_expr <- args[[1]]
-  y <- args[[2]]
-  # Simplify if y has no parameters
-  if(length(parameters(y)) == 0) {
-    affine_expr_size <- size(affine_expr)
-    speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
-    quad_mat <- speye/value(y)
-  } else {
-    # TODO: This code path produces an intermediate dense matrix, but it should be sparse the whole time.
-    affine_expr_size <- size(affine_expr)
-    speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
-    quad_mat <- speye/y
-  }
-
-  if(is(affine_expr, "Variable"))
-    return(list(SymbolicQuadForm(affine_expr, quad_mat, expr), list()))
-  else {
-    # t <- Variable(dim(affine_expr))
-    t <- new("Variable", dim = dim(affine_expr))
-    return(list(SymbolicQuadForm(t, quad_mat, expr), list(affine_expr == t)))
-  }
-}
-
-# TODO: Remove pwl canonicalize methods, use EliminatePwl reduction instead.
-
-# Conic canonicalization methods.
-Qp2QuadForm.CANON_METHODS <- list(
-  Abs = Dcp2Cone.CANON_METHODS$Abs,
-  CumSum = Dcp2Cone.CANON_METHODS$CumSum,
-  MaxElemwise = Dcp2Cone.CANON_METHODS$MaxElemwise,
-  MinElemwise = Dcp2Cone.CANON_METHODS$MinElemwise,
-  SumLargest = Dcp2Cone.CANON_METHODS$SumLargest,
-  MaxEntries = Dcp2Cone.CANON_METHODS$MaxEntries,
-  MinEntries = Dcp2Cone.CANON_METHODS$MinEntries,
-  Norm1 = Dcp2Cone.CANON_METHODS$Norm1,
-  NormInf = Dcp2Cone.CANON_METHODS$NormInf,
-  Indicator = Dcp2Cone.CANON_METHODS$Indicator,
-  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex)
-
-# Canonicalizations that are different for QPs.
-Qp2QuadForm.QUAD_CANON_METHODS <- list(
-  QuadOverLin = Qp2QuadForm.quad_over_lin_canon,
-  Power = Qp2QuadForm.power_canon,
-  Huber = Qp2QuadForm.huber_canon,
-  QuadForm = Qp2QuadForm.quad_form_canon)
-
-Qp2QuadForm.CANON_METHODS <- c(Qp2QuadForm.CANON_METHODS, Qp2QuadForm.QUAD_CANON_METHODS)

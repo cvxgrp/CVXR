@@ -1446,6 +1446,19 @@ test_that("Test power function", {
   expect_true(abs(1.7*xs^0.7 - 2.3*xs^-3.3 - 0.45*xs^-0.55) <= 1e-3)
 })
 
+test_that("Test bug with 64-bit integers", {
+  if(!require(bit64)) {
+    print("bit64 library not found. Skipping test.")
+    return()
+  }
+  
+  q <- Variable(as.integer64(2))
+  objective <- Minimize(norm1(q))
+  problem <- Problem(objective)
+  result <- solve(problem, solver = "SCS")
+  print(result$getValue(q))
+})
+
 test_that("Test a problem with multiply by a scalar", {
   skip_on_cran()
   Tnum <- 10
@@ -1522,6 +1535,128 @@ test_that("Test the pos and neg attributes", {
   prob <- Problem(Maximize(x))
   result <- solve(prob, solver = "ECOS")
   expect_equal(result$getValue(x), 0, tolerance = TOL)
+})
+
+test_that("Test saving and loading problems", {
+  prob <- Problem(Minimize(2*a + 3), list(a >= 1))
+  saveRDS(prob, file = "prob_test.RDS")   # TODO: Figure out where to save this in unit test runs (esp. on CRAN).
+  new_prob <- loadRDS("prob_test.RDS")
+  result <- solve(new_prob, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, 5.0, tolerance = TOL)
+  expect_equal(result$getValue(variables(new_prob)[[1]]), 1.0, tolerance = TOL)
+})
+
+test_that("Test problem with sparse int8 matrix", {
+  a <- Variable(3, 1)
+  q <- matrix(c(1.88922129, 0.06938685, 0.91948919), ncol = 1)
+  P <- rbind(c(280.64, -49.84, -80),
+             c(-49.84, 196.04, 139),
+             c(-80, 139, 106))
+  D_dense <- rbind(c(-1, 1, 0,  0, 0, 0),
+                   c(0, -1, 1,  0, 0, 0),
+                   c(0,  0, 0, -1, 1, 0))
+  D_dense <- as.integer(D_dense)
+  D_sparse <- Matrix(D_dense, sparse = TRUE)
+  
+  make_problem <- function(D) {
+    obj <- Minimize(0.5*quad_form(a, P), - t(a) %*% q)
+    expect_true(is_dcp(obj))
+    
+    alpha <- Parameter(nonneg = TRUE, value = 2)
+    constraints <- list(a >= 0, -alpha <= t(D) %*% a, t(D) %*% a <= alpha)
+    
+    prob <- Problem(obj, constraints)
+    result <- solve(prob, solver = "ECOS")
+    expect_equal(result$status, "optimal")
+    return(list(prob, result))
+  }
+  
+  expected_coef <- matrix(c(-0.011728003147, 0.011728002895, 0.000000000252,
+                            -0.017524801335, 0.017524801335, 0.), nrow = 1)
+  
+  tmp <- make_problem(D_dense)
+  prob <- tmp[[1]]
+  result <- tmp[[2]]
+  coef_dense <- t(result$getValue(a)) %*% D_dense
+  expect_equal(expected_coef, coef_dense, tolerance = TOL)
+  
+  tmp <- make_problem(D_sparse)
+  prob <- tmp[[1]]
+  result <- tmp[[2]]
+  coef_sparse <- t(result$getValue(a)) %*% D_sparse
+  expect_equal(expected_coef, coef_sparse, tolerance = TOL)
+})
+
+test_that("Test QP code path with special indexing", {
+  # TODO: Is this test necessary given how R handles indexing? (No slice object like Python).
+  x <- Variable(1, 3)
+  y <- sum(x[,1:2], axis = 1)
+  cost <- QuadForm(y, diag(1))
+  prob <- Problem(Minimize(cost))
+  result1 <- solve(prob, solver = "SCS")
+  
+  x <- Variable(1, 3)
+  y <- sum(x[,c(1,2)], axis = 1)
+  cost <- QuadForm(y, diag(1))
+  prob <- Problem(Minimize(cost))
+  result2 <- solve(prob, solver = "SCS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("Test a problem with indicators", {
+  n <- 5
+  m <- 2
+  q <- 0:(n-1)
+  a <- matrix(1, nrow = m, ncol = n)
+  b <- matrix(1, nrow = m, ncol = 1)
+  x <- Variable(n, 1, name = "x")
+  
+  constraints <- list(a %*% x == b)
+  objective <- Minimize((1/2)*square(t(q) %*% x) + indicator(constraints))
+  problem <- Problem(objective)
+  result1 <- solve(problem, solver = "SCS", eps = 1e-5)
+  solution1 <- result1$value
+  
+  # Without indicators.
+  objective <- Minimize((1/2)*square(t(q) %*% x))
+  problem <- Problem(objective, constraints)
+  result2 <- solve(problem, solver = "SCS", eps = 1e-5)
+  solution2 <- result2$value
+  expect_equal(solution1, solution2, tolerance = TOL)
+})
+
+test_that("Test that rmul works with 1x1 matrices", {
+  x <- matrix(c(4144.30127531))
+  y <- matrix(c(7202.52114311))
+  z <- Variable(1, 1)
+  objective <- Minimize(quad_form(z, x) - 2*t(z) %*% y)
+  
+  prob <- Problem(objective)
+  res <- solve(prob, solver = "OSQP", verbose = TRUE)
+  result1 <- res$value
+  
+  x <- 4144.30127531
+  y <- 7202.52114311
+  z <- Variable()
+  objective <- Minimize(x*z^2 - 2*z*y)
+  
+  prob <- Problem(objective)
+  res <- solve(prob, solver = "OSQP", verbose = TRUE)
+  expect_equal(res$value, result1, tolerance = TOL)
+})
+
+test_that("Test reshape of a min with axis = 2", {
+  x <- Variable(5, 2)
+  y <- Variable(5, 2)
+  
+  stacked_flattened <- vstack(vec(x), vec(y))   # (2, 10).
+  minimum <- min_entries(stacked_flatten, axis = 2)   # (10,)
+  reshaped_minimum <- reshape_expr(minimum, c(5, 2))   # (5, 2).
+  
+  obj <- sum(reshaped_minimum)
+  problem <- Problem(Maximize(obj), list(x == 1, y == 2))
+  result <- solve(problem, solver = "SCS")
+  expect_equal(result$value, 10, tolerance = TOL)
 })
 
 test_that("Test a problem with constant values only that is infeasible", {

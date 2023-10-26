@@ -1191,64 +1191,50 @@ test_that("Test a problem with diag", {
   expect_equal(result$value, 0.583151, tolerance = 1e-2)
 })
 
-# test_that("Test presolve parameters", {
-#   # Test with parameters
-#   gamma <- Parameter(nonneg = TRUE)
-#   x <- Variable()
-#   obj <- Minimize(x)
-#   value(gamma) <- 0
-#   prob <- Problem(obj, list(gamma == 1, x >= 0))
-#   result <- solve(prob, solver = "SCS")
-#   expect_equal(result$status, "infeasible")
-#
-#   value(gamma) <- 1
-#   prob <- Problem(obj, list(gamma == 1, x >= 0))
-#   result <- solve(prob, solver = "SCS")
-#   expect_equal(result$status, "optimal")
-# })
+test_that("Test presolve with parameters", {
+  # Test with parameters.
+  gamma <- Parameter(nonneg = TRUE)
+  x <- Variable()
+  obj <- Minimize(x)
+  prob <- Problem(obj, list(gamma == 1, x >= 0))
+  value(gamma) <- 0
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$status, INFEASIBLE)
 
-# test_that("Test that expressions with parameters are updated properly", {
-#   x <- Variable()
-#   y <- Variable()
-#   x0 <- Parameter()
-#
-#   # Initial guess for x
-#   value(x0) <- 2
-#
-#   # Make the constraints x^2 - y == 0
-#   xSquared <- x0*x0 + 2*x0*(x-x0)
-#   g <- xSquared - y
-#
-#   # Set up the problem
-#   obj <- abs(x - 1)
-#   prob <- Problem(Minimize(obj), list(g == 0))
-#   result <- solve(prob)
-#
-#   value(x0) <- 1
-#   xSquared <- x0*x0 + 2*x0*(x-x0)
-#   g <- xSquared - y
-#   prob <- Problem(Minimize(obj), list(g == 0))
-#   result <- solve(prob)
-#   # expect_equal(result$getValue(g), 0, tolerance = TOL)
-#
-#   # Test multiplication
-#   prob <- Problem(Minimize(x0*x), list(x == 1))
-#   value(x0) <- 2
-#   result <- solve(prob)
-#   x0@value <- 1
-#   result <- solve(prob)
-#   expect_equal(result$value, 1, tolerance = TOL)
-# })
+  value(gamma) <- 1
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$status, OPTIMAL)
+})
 
-test_that("Test interaction of caching with changing constraints", {
-  skip_on_cran()
-  prob <- Problem(Minimize(a), list(a == 2, a >= 1))
-  result <- solve(prob)
-  expect_equal(result$value, 2, tolerance = TOL)
+test_that("Test that expressions with parameters are updated properly", {
+  x <- Variable()
+  y <- Variable()
+  x0 <- Parameter()
+  xSquared <- x0*x0 + 2*x0*(x - x0)
 
-  prob@constraints[[1]] = (a == 1)
-  result <- solve(prob)
-  expect_equal(result$value, 1, tolerance = TOL)
+  # Initial guess for x.
+  value(x0) <- 2
+
+  # Make the constraints x^2 - y == 0.
+  g <- xSquared - y
+
+  # Set up the problem.
+  obj <- abs(x - 1)
+  prob <- Problem(Minimize(obj), list(g == 0))
+  expect_false(is_dpp(prob))
+  expect_warning(solve(prob, solver = "SCS"))
+
+  value(x0) <- 1
+  expect_warning(result <- solve(prob, solver = "SCS"))
+  expect_equal(result$getValue(g), 0, tolerance = TOL)
+
+  # Test multiplication.
+  prob <- Problem(Minimize(x0*x), list(x == 1))
+  value(x0) <- 2
+  expect_warning(solve(prob, solver = "SCS"))
+  value(x0)
+  expect_warning(result <- solve(prob, solver = "SCS"))
+  expect_equal(result$value, 1, tolerance = 1e-2)
 })
 
 test_that("Test positive definite constraints", {
@@ -1257,47 +1243,70 @@ test_that("Test positive definite constraints", {
   obj <- Maximize(C[1,3])
   constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == t(C), C %>>% 0)
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 0.583151, tolerance = 1e-2)
 
   C <- Variable(2,2)
   obj <- Maximize(C[1,2])
   constraints <- list(C == 1, C %>>% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
-  expect_equal(result$status, "infeasible")
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$status, INFEASIBLE)
 
   C <- Variable(2, 2, symmetric = TRUE)
   obj <- Minimize(C[1,1])
-  constraints <- list(C %<<% cbind(c(2,0), c(0,2)))
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
-  expect_equal(result$status, "unbounded")
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$status, UNBOUNDED)
 })
 
 test_that("Test the duals of PSD constraints", {
   skip_on_cran()
-  # Test dual values with SCS
-  C <- Variable(2, 2, symmetric = TRUE, name = "C")
+  if("CVXOPT" %in% installed_solvers()) {
+    # Test the dual values with CVXOPT.
+    C <- Variable(2, 2, symmetric = TRUE, name = "C")
+    obj <- Maximize(C[1,1])
+    constraints <- list(C %<<% rbind(c(2,0), c(0,2)))
+    prob <- Problem(obj, constraints)
+    result <- solve(prob, solver = "CVXOPT")
+    expect_equal(result$value, 2, tolerance = TOL)
+    
+    psd_constr_dual <- result$getDualValue(constraints[[1]])
+    C <- Variable(2, 2, symmetric = TRUE, name = "C")
+    X <- Variable(2, 2, PSD = TRUE)
+    obj <- Maximize(C[1,1])
+    constraints <- list(X == rbind(c(2,0), c(0,2)) - C)
+    prob <- Problem(obj, constraints)
+    result <- solve(prob, solver = "CVXOPT")
+    # Symmetrizing is valid, because the dual variable is with respect to an
+    # unstructured equality constraint. Dual optimal solutions are non-unique
+    # in this formulation, up to symmetrizing the dual variable.
+    new_constr_dual <- (result$getDualValue(constraints[[1]]) + result$getDualValue(constraints[[2]]))/2
+    expect_equal(new_constr_dual, psd_constr_dual, tolerance = TOL)
+  }
+  
+  # Test dual values with SCS.
+  C <- Variable(2, 2, symmetric = TRUE)
   obj <- Maximize(C[1,1])
-  constraints <- list(C %<<% cbind(c(2,0), c(0,2)))
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)))
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 2, tolerance = 1e-4)
 
   psd_constr_dual <- result$getDualValue(constraints[[1]])
-  C <- Variable(2, 2, symmetric = TRUE, name = "C")
+  C <- Variable(2, 2, symmetric = TRUE)
   X <- Variable(2, 2, PSD = TRUE)
   obj <- Maximize(C[1,1])
-  constraints <- list(X == cbind(c(2,0), c(0,2)) - C)
+  constraints <- list(X == rbind(c(2,0), c(0,2)) - C)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
-  expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
+  expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = TOL)
 
-  # Test dual values with SCS that have off-diagonal entries
+  # Test dual values with SCS that have off-diagonal entries.
   C <- Variable(2, 2, symmetric = TRUE)
   obj <- Maximize(C[1,2] + C[2,1])
-  constraints <- list(C %<<% cbind(c(2,0), c(0,2)), C >= 0)
+  constraints <- list(C %<<% rbind(c(2,0), c(0,2)), C >= 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 4, tolerance = 1e-3)
@@ -1306,7 +1315,7 @@ test_that("Test the duals of PSD constraints", {
   C <- Variable(2, 2, symmetric = TRUE)
   X <- Variable(2, 2, PSD = TRUE)
   obj <- Maximize(C[1,2] + C[2,1])
-  constraints <- list(X == cbind(c(2,0), c(0,2)) - C, C >= 0)
+  constraints <- list(X == rbind(c(2,0), c(0,2)) - C, C >= 0)
   prob <- Problem(obj, constraints)
   result <- solve(prob, solver = "SCS")
   expect_equal(result$getDualValue(constraints[[1]]), psd_constr_dual, tolerance = 1e-3)
@@ -1314,92 +1323,89 @@ test_that("Test the duals of PSD constraints", {
 
 test_that("Test geo_mean function", {
   skip_on_cran()
-    x <- Variable(2)
-    cost <- geo_mean(x)
-    prob <- Problem(Maximize(cost), list(x <= 1))
-    result <- solve(prob)
-    expect_equal(result$value, 1, tolerance = TOL)
+  x <- Variable(2)
+  cost <- geo_mean(x)
+  prob <- Problem(Maximize(cost), list(x <= 1))
+  result <- solve(prob, solver = "SCS", eps = 1e-5)
+  expect_equal(result$value, 1, tolerance = TOL)
 
-    prob <- Problem(Maximize(cost), list(sum(x) <= 1))
-    result <- solve(prob)
-    expect_equal(result$getValue(x), matrix(c(0.5,0.5)), tolerance = TOL)
+  prob <- Problem(Maximize(cost), list(sum(x) <= 1))
+  result <- solve(prob, solver = "SCS", eps = 1e-5)
+  expect_equal(result$getValue(x), matrix(c(0.5,0.5)), tolerance = TOL)
 
-    x <- Variable(3,3)
-    expect_error(geo_mean(x))
+  x <- Variable(3,3)
+  expect_error(geo_mean(x))
 
-    x <- Variable(3,1)
-    g <- geo_mean(x)
-    ##expect_equal(g@w, gmp::as.bigq(1,3)*3, tolerance = TOL)
+  x <- Variable(3,1)
+  g <- geo_mean(x)
+  # expect_equal(g@w, gmp::as.bigq(1,3)*3, tolerance = TOL)
 
-    x <- Variable(1,5)
-    g <- geo_mean(x)
-    ##expect_equal(g@w, gmp::as.bigq(1,5)*5, tolerance = TOL)
+  x <- Variable(1,5)
+  g <- geo_mean(x)
+  # expect_equal(g@w, gmp::as.bigq(1,5)*5, tolerance = TOL)
 
-    ## Check that we get the right answer for max geo_mean(x) s.t. sum(x) <= 1
-    p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
+  # Check that we get the right answer for max geo_mean(x) s.t. sum(x) <= 1.
+  p <- c(0.07, 0.12, 0.23, 0.19, 0.39)
 
-    short_geo_mean <- function(x, p) {
-        p <- as.numeric(p)/sum(p)
-        x <- as.numeric(x)
-        prod(x^p)
-    }
+  short_geo_mean <- function(x, p) {
+      p <- as.numeric(p)/sum(p)
+      x <- as.numeric(x)
+      return(prod(x^p))
+  }
 
-    x <- Variable(5)
-    prob <- Problem(Maximize(geo_mean(x, p)), list(sum(x) <= 1))
-    result <- solve(prob)
-    x <- as.numeric(result$getValue(x))
-    x_true <- p/sum(p)
+  x <- Variable(5)
+  prob <- Problem(Maximize(geo_mean(x, p)), list(sum(x) <= 1))
+  result <- solve(prob, solver = "SCS", eps = 1e-5)
+  x <- as.numeric(result$getValue(x))
+  x_true <- p/sum(p)
 
-    expect_equal(result$value, result$getValue(geo_mean(x, p)), tolerance = TOL)
-    expect_equal(result$value, short_geo_mean(x, p), tolerance = TOL)
-    expect_equal(x, x_true, tolerance = 1e-3)
+  expect_true(is.allclose(result$value, result$getValue(geo_mean(x, p))))
+  expect_true(is.allclose(result$value, short_geo_mean(x, p)))
+  expect_true(is.allclose(x, x_true, 1e-3))
+  
+  # Check that we get the right answer for max geo_mean(x) s.t. p_norm(x) <= 1.
+  x <- Variable(5)
+  prob <- Problem(Maximize(geo_mean(x, p)), list(p_norm(x) <= 1))
+  result <- solve(prob, solver = "SCS", eps = 1e-5)
+  x <- as.numeric(result$getValue(x))
+  x_true <- sqrt(p/sum(p))
 
-    ## Check that we get the right answer for max geo_mean(x) s.t. p_norm(x) <= 1
-    x <- Variable(5)
-    prob <- Problem(Maximize(geo_mean(x, p)), list(p_norm(x) <= 1))
-    result <- solve(prob)
-    x <- as.numeric(result$getValue(x))
-    x_true <- sqrt(p/sum(p))
+  expect_true(is.allclose(result$value, result$getValue(geo_mean(x, p))))
+  expect_true(is.allclose(result$value, short_geo_mean(x, p)))
+  expect_true(is.allclose(x, x_true, 1e-3))
 
-    expect_equal(result$value, result$getValue(geo_mean(x, p)), tolerance = 1e-3)
-    expect_equal(result$value, short_geo_mean(x, p), tolerance = 1e-3)
-    expect_equal(x, x_true, tolerance = 1e-3)
+  # The following 3 tests check vstack and hstack input to geo_mean
+  # The following 3 formulations should be equivalent
+  n <- 5
+  x_true <- matrix(rep(1,n))
+  x <- Variable(n)
 
-    ## The following 3 tests check vstack and hstack input to geo_mean
-    ## The following 3 formulations should be equivalent
-    n <- 5
-    x_true <- rep(1,n)
-    x <- Variable(n)
+  result <- solve(Problem(Maximize(geo_mean(x)), list(x <= 1)), solver = "SCS")
+  xval <- as.numeric(result$getValue(x))
+  expect_true(is.allclose(xval, x_true, 1e-3))
 
-    result <- solve(Problem(Maximize(geo_mean(x)), list(x <= 1)))
-    xval <- as.numeric(result$getValue(x))
-    expect_equal(xval, x_true, tolerance = 1e-3)
+  args <- lapply(seq_len(n), function(ind) x[ind])
+  y <- do.call(vstack, args)
+  result <- solve(Problem(Maximize(geo_mean(y)), list(x <= 1)), solver = "SCS")
+  xval <- as.numeric(result$getValue(x))
+  expect_true(is.allclose(xval, x_true, 1e-3))
 
-    ##args <- list()
-    ##for(i in 1:n)
-    ##    args <- c(args, x[i])
-    args <- lapply(seq_len(n), function(ind) x[ind])
-    y <- do.call(vstack, args)
-    result <- solve(Problem(Maximize(geo_mean(y)), list(x <= 1)))
-    xval <- as.numeric(result$getValue(x))
-    expect_equal(xval, x_true, tolerance = 1e-3)
-
-    y <- do.call(hstack, args)
-    result <- solve(Problem(Maximize(geo_mean(y)), list(x <= 1)))
-    xval <- as.numeric(result$getValue(x))
-    expect_equal(xval, x_true, tolerance = 1e-3)
+  y <- do.call(hstack, args)
+  result <- solve(Problem(Maximize(geo_mean(y)), list(x <= 1)), solver = "SCS")
+  xval <- as.numeric(result$getValue(x))
+  expect_true(is.allclose(xval, x_true, 1e-3))
 })
 
 test_that("Test p_norm function", {
   skip_on_cran()
-    x <- Variable(3, name = "x")
-    avec <- c(1.0, 2, 3)
+  x <- Variable(3, name = "x")
+  avec <- c(1.0, 2, 3)
 
-    ## TODO: Add -1, 0.5, 0.3, -2.3 and testing positivity constraints
+  # TODO: Add -1, 0.5, 0.3, -2.3 and testing positivity constraints
 
   for(p in c(1, 1.6, 1.3, 2, 1.99, 3, 3.7, Inf)) {
     prob <- Problem(Minimize(p_norm(x, p = p)), list(t(x) %*% avec >= 1))
-    result <- solve(prob)
+    result <- solve(prob, solver = "ECOS", verbose = TRUE)
 
     # Formula is true for any a >= 0 with p > 1
     if(p == Inf)
@@ -1411,9 +1417,10 @@ test_that("Test p_norm function", {
       x_true <- avec^(1.0/(p-1)) / as.numeric(avec %*% (avec^(1.0/(p-1))))
 
     x_alg <- as.vector(result$getValue(x))
-    expect_equal(x_alg, x_true, tolerance = 1e-3)
-    expect_equal(result$value, .p_norm(x_alg, p), tolerance = TOL)
-    expect_equal(.p_norm(x_alg, p), result$getValue(p_norm(x_alg, p)))
+    print(paste("p =", p))
+    expect_true(is.allclose(x_alg, x_true, 1e-2))
+    expect_true(is.allclose(result$value, .p_norm(x_alg, p)))
+    expect_true(is.allclose(.p_norm(x_alg, p), result$getValue(p_norm(x_alg, p))))
   }
 })
 
@@ -1425,15 +1432,15 @@ test_that("Test p_norm concave", {
   a <- c(-1.0, 2, 3)
   for(p in c(-1, 0.5, 0.3, -2.3)) {
     prob <- Problem(Minimize(sum_entries(abs(x-a))), list(p_norm(x,p) >= 0))
-    result <- solve(prob)
-    expect_equal(result$value, 1, tolerance = TOL)
+    result <- solve(prob, solver = "ECOS")
+    expect_true(is.allclose(result$value, 1))
   }
 
   a <- c(1.0, 2, 3)
   for(p in c(-1, 0.5, 0.3, -2.3)) {
     prob <- Problem(Minimize(sum_entries(abs(x-a))), list(p_norm(x,p) >= 0))
-    result <- solve(prob)
-    expect_equal(result$value, 0, tolerance = TOL)
+    result <- solve(prob, solver = "ECOS")
+    expect_equal(result$value, 0, tolerance = 1e-6)
   }
 })
 
@@ -1441,22 +1448,9 @@ test_that("Test power function", {
   skip_on_cran()
   x <- Variable()
   prob <- Problem(Minimize(power(x, 1.7) + power(x, -2.3) - power(x, 0.45)))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS", eps = 1e-5)
   xs <- result$getValue(x)
   expect_true(abs(1.7*xs^0.7 - 2.3*xs^-3.3 - 0.45*xs^-0.55) <= 1e-3)
-})
-
-test_that("Test bug with 64-bit integers", {
-  if(!require(bit64)) {
-    print("bit64 library not found. Skipping test.")
-    return()
-  }
-  
-  q <- Variable(as.integer64(2))
-  objective <- Minimize(norm1(q))
-  problem <- Problem(objective)
-  result <- solve(problem, solver = "SCS")
-  print(result$getValue(q))
 })
 
 test_that("Test a problem with multiply by a scalar", {
@@ -1480,11 +1474,57 @@ test_that("Test a problem with multiply by a scalar", {
 
   obj <- Minimize(sum_entries(multiply(2, x)))
   prob <- Problem(obj, list(x == 2))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 8, tolerance = TOL)
 })
 
+test_that("Test bug with 64-bit integers", {
+  skip_on_cran()
+  if(!require(bit64)) {
+    print("bit64 library not found. Skipping test.")
+    return()
+  }
+  
+  q <- Variable(as.integer64(2))
+  objective <- Minimize(norm1(q))
+  problem <- Problem(objective)
+  result <- solve(problem, solver = "SCS")
+  print(result$getValue(q))
+})
+
+test_that("Test bug with negative slice", {
+  skip_on_cran()
+  x <- Variable(2)
+  objective <- Minimize(x[1] + x[2])
+  constraints <- list(x[-2:nrow(x)] >= 1)
+  problem <- Problem(objective, constraints)
+  result <- solve(problem, solver = "SCS", eps = 1e-6)
+  expect_equal(result$getValue(x), matrix(c(1,1)), tolerance = TOL)
+})
+
+test_that("Test p_norm with axis != 2", {
+  skip_on_cran()
+  b <- 0:1
+  X <- Variable(2, 10)
+  expr <- p_norm(X, p = 2, axis = 1) - b
+  con <- list(expr <= 0)
+  obj <- Maximize(sum(X))
+  prob <- Problem(obj, con)
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(expr), matrix(c(0,0)), tolerance = TOL)
+  
+  b <- 0:9
+  X <- Variable(10, 2)
+  expr <- p_norm(X, p = 2, axis = 1) - b
+  con <- list(expr <= 0)
+  obj <- Maximize(sum(X))
+  prob <- Problem(obj, con)
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(expr), matrix(rep(0, 10)), tolerance = TOL)
+})
+
 test_that("Test constraints that evaluate to booleans", {
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   prob <- Problem(Minimize(x), list(TRUE))
   result <- solve(prob, solver = "ECOS")
@@ -1521,11 +1561,13 @@ test_that("Test constraints that evaluate to booleans", {
 })
 
 test_that("Test a problem with an invalid constraint", {
+  skip_on_cran()
   x <- Variable()
   expect_error(Problem(Minimize(x), list(sum(x))), "Problem has an invalid constraint")
 })
 
 test_that("Test the pos and neg attributes", {
+  skip_on_cran()
   x <- Variable(pos = TRUE)
   prob <- Problem(Minimize(x))
   result <- solve(prob, solver = "ECOS")
@@ -1538,6 +1580,7 @@ test_that("Test the pos and neg attributes", {
 })
 
 test_that("Test saving and loading problems", {
+  skip_on_cran()
   prob <- Problem(Minimize(2*a + 3), list(a >= 1))
   saveRDS(prob, file = "prob_test.RDS")   # TODO: Figure out where to save this in unit test runs (esp. on CRAN).
   new_prob <- loadRDS("prob_test.RDS")
@@ -1547,6 +1590,7 @@ test_that("Test saving and loading problems", {
 })
 
 test_that("Test problem with sparse int8 matrix", {
+  skip_on_cran()
   a <- Variable(3, 1)
   q <- matrix(c(1.88922129, 0.06938685, 0.91948919), ncol = 1)
   P <- rbind(c(280.64, -49.84, -80),
@@ -1588,6 +1632,8 @@ test_that("Test problem with sparse int8 matrix", {
 })
 
 test_that("Test QP code path with special indexing", {
+  skip_on_cran()
+  
   # TODO: Is this test necessary given how R handles indexing? (No slice object like Python).
   x <- Variable(1, 3)
   y <- sum(x[,1:2], axis = 1)
@@ -1604,6 +1650,7 @@ test_that("Test QP code path with special indexing", {
 })
 
 test_that("Test a problem with indicators", {
+  skip_on_cran()
   n <- 5
   m <- 2
   q <- 0:(n-1)
@@ -1626,6 +1673,7 @@ test_that("Test a problem with indicators", {
 })
 
 test_that("Test that rmul works with 1x1 matrices", {
+  skip_on_cran()
   x <- matrix(c(4144.30127531))
   y <- matrix(c(7202.52114311))
   z <- Variable(1, 1)
@@ -1646,6 +1694,7 @@ test_that("Test that rmul works with 1x1 matrices", {
 })
 
 test_that("Test reshape of a min with axis = 2", {
+  skip_on_cran()
   x <- Variable(5, 2)
   y <- Variable(5, 2)
   
@@ -1660,12 +1709,15 @@ test_that("Test reshape of a min with axis = 2", {
 })
 
 test_that("Test a problem with constant values only that is infeasible", {
+  skip_on_cran()
   p <- Problem(Maximize(0), list(Constant(0) == 1))
   result <- solve(p, solver = "SCS")
   expect_equal(result$status, INFEASIBLE)
 })
 
 test_that("Test Huber regression works with SCS", {
+  skip_on_cran()
+  
   # See CVXPY issue #1370.
   set.seed(1)
   m <- 5
@@ -1686,6 +1738,8 @@ test_that("Test Huber regression works with SCS", {
 })
 
 test_that("Test a complex rmul expression with a parameter", {
+  skip_on_cran()
+  
   # See CVXPY issue #1555.
   b <- Variable(1)
   param <- Parameter(1)
@@ -1700,6 +1754,8 @@ test_that("Test a complex rmul expression with a parameter", {
 })
 
 test_that("Test the cumsum axis bug with row or column matrix", {
+  skip_on_cran()
+  
   # See CVXPY issue #1678.
   n <- 5
   
@@ -1721,6 +1777,8 @@ test_that("Test the cumsum axis bug with row or column matrix", {
 })
 
 test_that("Test the cummax axis bug with row or column matrix", {
+  skip_on_cran()
+  
   # See CVXPY issue #1678.
   n <- 5
   

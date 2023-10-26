@@ -19,12 +19,35 @@ SCS.dims_to_solver_dict <- CVXR:::SCS.dims_to_solver_dict
 ECOS.dims_to_solver_dict <- CVXR:::ECOS.dims_to_solver_dict
 .p_norm <- CVXR:::.p_norm
 
+test_that("test string representation", {
+  skip_on_cran()
+  obj <- Minimize(a)
+  prob <- Problem(obj)
+  expect_equal(as.character(prob), paste("Problem(", as.character(obj), ", ())", sep = ""))
+  
+  constraints <- list(x*2 == x, x == 0)
+  prob <- Problem(obj, constraints)
+  expect_equal(as.character(prob), "Problem(", as.character(obj), ", (", paste(sapply(constraints, as.character), sep = ", "), "))", sep = "")
+  
+  # Test str.
+  a_name <- name(a)
+  result <- paste("minimize ", a_name, "\nsubject to ", a_name, " == 0\n           ", name(a), " <= 0", sep = "")
+  prob <- Problem(Minimize(a), list(ZeroConstraint(a), NonPosConstraint(a)))
+  expect_equal(as.character(prob), result)
+})
+
 test_that("test the variables method", {
   skip_on_cran()
   p <- Problem(Minimize(a), list(a <= x, b <= A + 2))
   vars_ <- variables(p)
   ref <- list(a, x, b, A)
-  mapply(function(v, r) { expect_equal(v, r) }, vars_, ref)
+  expect_setequal(vars_, ref)
+})
+
+test_that("test var dict", {
+  skip_on_cran()
+  p <- Problem(Minimize(a), list(a <= x, b <= A + 2))
+  expect_equal(p@var_dict, list(a = a, x = x, b = b, A = A))
 })
 
 test_that("test the parameters method", {
@@ -35,7 +58,23 @@ test_that("test the parameters method", {
   p <- Problem(Minimize(p1), list(a + p1 <= p2, b <= p3 + p3 + 2))
   params <- parameters(p)
   ref <- c(p1, p2, p3)
-  mapply(function(p, r) { expect_equal(p, r) }, params, ref)
+  expect_setequal(params, ref)
+})
+
+test_that("test param dict", {
+  skip_on_cran()
+  p1 <- Parameter(name = "p1")
+  p2 <- Parameter(3, nonpos = TRUE, name = "p2")
+  p3 <- Parameter(4, 4, nonneg = TRUE, name = "p3")
+  p <- Problem(Minimize(p1), list(a + p1 <= p2, b <= p3 + p3 + 2))
+  expect_equal(p@param_dict, list(p1 = p1, p2 = p2, p3 = p3))
+})
+
+test_that("test solving a problem with unspecified parameters", {
+  skip_on_cran()
+  param <- Parameter(name = "lambda")
+  problem <- Problem(Minimize(param), list())
+  expect_error(solve(problem, solver = "SCS"), "A Parameter (whose name is 'lambda')")
 })
 
 test_that("test the constants method", {
@@ -51,7 +90,7 @@ test_that("test the constants method", {
     expect_true(all(value(c) == r))
   }, constants_, ref)
 
-  # Single scalar constants
+  # Single scalar constants.
   p <- Problem(Minimize(a), list(x >= 1))
   constants_ <- constants(p)
   ref <- list(matrix(1))
@@ -81,7 +120,8 @@ test_that("Test the size_metrics method", {
 
   # num_scalar_data
   n_data <- size_metrics(p)@num_scalar_data
-  ref <- size(p1) + size(p2) + size(p3) + length(constants)  # 2 and c2 %*% c1 are both single scalar constants
+  # 2 and c2 %*% c1 are both single scalar constants
+  ref <- prod(size(p1)) + prod(size(p2)) + prod(size(p3)) + length(constants)
   expect_equal(n_data, ref)
 
   # num_scalar_eq_constr
@@ -91,7 +131,7 @@ test_that("Test the size_metrics method", {
 
   # num_scalar_leq_constr
   n_leq_constr <- size_metrics(p)@num_scalar_leq_constr
-  ref <- size(p3) + size(p2)
+  ref <- prod(size(p3)) + prod(size(p2))
   expect_equal(n_leq_constr, ref)
 
   # max_data_dimension
@@ -104,29 +144,49 @@ test_that("Test the solver_stats method", {
   skip_on_cran()
   prob <- Problem(Minimize(p_norm(x)), list(x == 0))
   result <- solve(prob, solver = "ECOS")
-  expect_true(result$solve_time > 0)
-  expect_true(result$setup_time > 0)
-  expect_true(result$num_iters > 0)
+  stats <- results$solver_stats
+  expect_gt(stats@solve_time, 0)
+  expect_gt(stats@setup_time, 0)
+  expect_gt(stats@num_iters, 0)
+  expect_true("info" %in% names(stats@extra_stats))
+  
+  prob <- Problem(Minimize(p_norm(x)), list(x == 0))
+  result <- solve(prob, solver = "SCS")
+  stats <- result$solver_stats
+  expect_gt(stats@solve_time, 0)
+  expect_gt(stats@setup_time, 0)
+  expect_gt(stats@num_iters, 0)
+  expect_true("info" %in% names(stats@extra_stats))
+  
+  prob <- Problem(Minimize(sum(x)), list(x == 0))
+  result <- solve(prob, solver = "OSQP")
+  stats <- result$solver_stats
+  expect_gt(stats@solve_time, 0)
+  
+  # We do not populate setup_time for OSQP (OSQP decomposes time
+  # into setup, solve, and polish; these are summed to obtain solve_time).
+  expect_gt(stats@num_iters, 0)
+  expect_true("info" %in% names(stats@extra_stats))
 })
 
 test_that("Test the get_problem_data method", {
   skip_on_cran()
   data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")[[1]]
-  dims <- data[[ConicSolver()@dims]]
+  dims <- data[[ConicSolver()@DIMS]]
   expect_equal(dims@exp, 1)
-  expect_equal(length(data[["c"]]), 2)
-  expect_equal(dim(data[["A"]]), c(3,2))
+  expect_equal(length(data$c), 2)
+  expect_equal(dim(data$A), c(3,2))
 
   data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "ECOS")[[1]]
-  dims <- data[[ConicSolver()@dims]]
+  dims <- data[[ConicSolver()@DIMS]]
   expect_equal(dims@soc, list(3))
-  expect_equal(length(data[["c"]]), 3)
-  expect_equal(dim(data[["A"]]), c(0,0))
-  expect_equal(dim(data[["G"]]), c(3,3))
+  expect_equal(length(data$c), 3)
+  expect_equal(dim(data$A), c(0,0))
+  expect_equal(dim(data$G), c(3,3))
 
   if("CVXOPT" %in% INSTALLED_SOLVERS) {
     data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "CVXOPT")[[1]]
-    dims <- data[["dims"]]
+    dims <- data[[ConicSolver()@DIMS]]
     expect_equal(dims@soc, list(3))
     # TODO: We cannot test whether the coefficients or offsets were correctly parsed until we update the CVXOPT interface.
   }
@@ -139,27 +199,27 @@ test_that("Test unpack results method", {
   args <- tmp[[1]]
   chain <- tmp[[2]]
   inv <- tmp[[3]]
-  data <- list(c = args[["c"]], A = args[["A"]], b = args[["b"]])
-  cones <- SCS.dims_to_solver_dict(args[[ConicSolver()@dims]])
+  data <- list(c = args$c, A = args$A, b = args$b)
+  cones <- SCS.dims_to_solver_dict(args[[ConicSolver()@DIMS]])
   solution <- scs::scs(A = data$A, b = data$b, obj = data$c, cone = cones)
   prob <- Problem(Minimize(exp(a)), list(a == 0))
   result <- unpack_results(prob, solution, chain, inv)
   expect_equal(result$getValue(a), 0, tolerance = 1e-3)
   expect_equal(result$value, 1, tolerance = 1e-3)
-  expect_equal(result$status, "optimal")
+  expect_equal(result$status, OPTIMAL)
 
   prob <- Problem(Minimize(p_norm(x)), list(x == 0))
   tmp <- get_problem_data(prob, solver = "ECOS")
   args <- tmp[[1]]
   chain <- tmp[[2]]
   inv <- tmp[[3]]
-  cones <- ECOS.dims_to_solver_dict(args[[ConicSolver()@dims]])
-  solution <- ECOSolveR::ECOS_csolve(args[["c"]], args[["G"]], args[["h"]], cones, args[["A"]], args[["b"]])
+  cones <- ECOS.dims_to_solver_dict(args[[ConicSolver()@DIMS]])
+  solution <- ECOSolveR::ECOS_csolve(args$c, args$G, args$h, cones, args$A, args$b)
   prob <- Problem(Minimize(p_norm(x)), list(x == 0))
   result <- unpack_results(prob, solution, chain, inv)
-  expect_equal(result$getValue(x), matrix(c(0,0)))
-  expect_equal(result$value, 0)
-  expect_equal(result$status, "optimal")
+  expect_equal(result$getValue(x), matrix(c(0,0)), tolerance = TOL)
+  expect_equal(result$value, 0, tolerance = TOL)
+  expect_equal(result$status, OPTIMAL)
 })
 
 # test_that("Test silencing and enabling solver messages", {
@@ -1409,4 +1469,139 @@ test_that("Test a problem with multiply by a scalar", {
   prob <- Problem(obj, list(x == 2))
   result <- solve(prob)
   expect_equal(result$value, 8, tolerance = TOL)
+})
+
+test_that("Test constraints that evaluate to booleans", {
+  x <- Variable(pos = TRUE)
+  prob <- Problem(Minimize(x), list(TRUE))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 0, tolerance = TOL)
+  
+  prob <- Problem(Minimize(x), as.list(rep(TRUE, 10)))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 0, tolerance = TOL)
+  
+  prob <- Problem(Minimize(x), c(list(42 <= x), as.list(rep(TRUE, 10))))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 42, tolerance = TOL)
+  
+  prob <- Problem(Minimize(x), c(list(TRUE), list(42 <= x), as.list(rep(TRUE, 10))))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 42, tolerance = TOL)
+  
+  prob <- Problem(Minimize(x), list(FALSE))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$status, INFEASIBLE)
+  
+  prob <- Problem(Minimize(x), as.list(rep(FALSE, 10)))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$status, INFEASIBLE)
+  
+  prob <- Problem(Minimize(x), c(as.list(rep(TRUE, 10)), list(FALSE), as.list(rep(TRUE, 10))))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$status, INFEASIBLE)
+  
+  # Only TRUEs, but infeasible solution since x must be non-negative.
+  prob <- Problem(Minimize(x), c(list(TRUE), list(x <= -42), as.list(rep(TRUE, 10))))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$status, INFEASIBLE)
+})
+
+test_that("Test a problem with an invalid constraint", {
+  x <- Variable()
+  expect_error(Problem(Minimize(x), list(sum(x))), "Problem has an invalid constraint")
+})
+
+test_that("Test the pos and neg attributes", {
+  x <- Variable(pos = TRUE)
+  prob <- Problem(Minimize(x))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 0, tolerance = TOL)
+  
+  x <- Variable(neg = TRUE)
+  prob <- Problem(Maximize(x))
+  result <- solve(prob, solver = "ECOS")
+  expect_equal(result$getValue(x), 0, tolerance = TOL)
+})
+
+test_that("Test a problem with constant values only that is infeasible", {
+  p <- Problem(Maximize(0), list(Constant(0) == 1))
+  result <- solve(p, solver = "SCS")
+  expect_equal(result$status, INFEASIBLE)
+})
+
+test_that("Test Huber regression works with SCS", {
+  # See CVXPY issue #1370.
+  set.seed(1)
+  m <- 5
+  n <- 2
+  
+  x0 <- matrix(rnorm(n), nrow = n, ncol = 1)
+  A <- matrix(rnorm(m*n), nrow = m, ncol = n)
+  b <- A %*% x0 + 0.01*matrix(rnorm(m))
+  
+  # Add outlier noise.
+  k <- as.integer(0.02*m)
+  idx <- sample.int(m, size = k)
+  b[idx] <- b[idx] + 10*matrix(rnorm(k))
+  
+  x <- Variable(n)
+  prob <- Problem(Minimize(sum(huber(A %*% x - b))))
+  result <- solve(prob, solver = "SCS")
+})
+
+test_that("Test a complex rmul expression with a parameter", {
+  # See CVXPY issue #1555.
+  b <- Variable(1)
+  param <- Parameter(1)
+  
+  constraints <- list()
+  objective <- Minimize((2*b) %*% param)
+  prob <- Problem(objective, constraints)
+  
+  value(param) <- matrix(1)
+  result <- solve(prob)
+  expect_equal(result$value, -Inf)
+})
+
+test_that("Test the cumsum axis bug with row or column matrix", {
+  # See CVXPY issue #1678.
+  n <- 5
+  
+  # Solve for axis = 1.
+  x1 <- Variable(n, 1)
+  expr1 <- cumsum(x1, axis = 1)
+  prob1 <- Problem(Minimize(0), list(expr1 == 1))
+  result <- solve(prob1)
+  expect <- matrix(1, nrow = n, ncol = 1)
+  expect_equal(result$getValue(expr1), expect, tolerance = TOL)
+  
+  # Solve for axis = 2.
+  x2 <- Variable(1, n)
+  expr2 <- cumsum(x2, axis = 2)
+  prob2 <- Problem(Minimize(0), list(expr2 == 1))
+  result <- solve(prob2)
+  expect <- matrix(1, nrow = 1, ncol = n)
+  expect_equal(result$getValue(expr2), expect, tolerance = TOL)
+})
+
+test_that("Test the cummax axis bug with row or column matrix", {
+  # See CVXPY issue #1678.
+  n <- 5
+  
+  # Solve for axis = 1.
+  x1 <- Variable(n, 1)
+  expr1 <- cummax(x1, axis = 1)
+  prob1 <- Problem(Maximize(sum(x1)), list(expr1 == 1))
+  result <- solve(prob1)
+  expect <- matrix(1, nrow = n, ncol = 1)
+  expect_equal(result$getValue(expr1), expect, tolerance = TOL)
+  
+  # Solve for axis = 2.
+  x2 <- Variable(1, n)
+  expr2 <- cummax(x2, axis = 2)
+  prob2 <- Problem(Maximize(sum(x2)), list(expr2 == 1))
+  result <- solve(prob2)
+  expect <- matrix(1, nrow = 1, ncol = n)
+  expect_equal(result$getValue(expr2), expect, tolerance = TOL)
 })

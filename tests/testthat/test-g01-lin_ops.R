@@ -87,7 +87,7 @@ test_that("Test getting vars from an expression", {
   add_expr <- lo.sum_expr(list(x, y, A))
   vars_ <- get_expr_vars(add_expr)
   ref <- list(list(x$data, dim), list(y$data, dim))
-  expect_equal(vars_, ref)
+  expect_setequal(vars_, ref)
 })
 
 test_that("Test negating an expression", {
@@ -112,7 +112,7 @@ test_that("Test creating an equality constraint", {
   expect_equal(constr$dim, dim)
   vars_ <- get_expr_vars(constr$expr)
   ref <- list(list(x$data, dim), list(y$data, dim))
-  expect_equal(vars_, ref)
+  expect_setequal(vars_, ref)
 })
 
 test_that("Test creating a less than or equal constraint", {
@@ -127,7 +127,7 @@ test_that("Test creating a less than or equal constraint", {
   expect_equal(constr$dim, dim)
   vars_ <- get_expr_vars(constr$expr)
   ref <- list(list(x$data, dim), list(y$data, dim))
-  expect_equal(vars_, ref)
+  expect_setequal(vars_, ref)
 })
 
 test_that("Test sum entries op", {

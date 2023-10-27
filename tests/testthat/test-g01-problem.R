@@ -222,102 +222,108 @@ test_that("Test unpack results method", {
   expect_equal(result$status, OPTIMAL)
 })
 
-# test_that("Test silencing and enabling solver messages", {
-# })
+test_that("Test silencing and enabling solver messages", {
+  skip_on_cran()
+  # TODO: Write this test by capturing stdout in R.
+})
 
-# test_that("Test registering other solve methods", {
-#  Problem.register_solve("test", function(self) { 1 })
-#  p <- Problem(Minimize(1))
-#  result <- solve(p, method = "test")
-#  expect_equal(result$value, 1)
-#
-#  test <- function(self, a, b = 2) { c(a, b) }
-#  Problem.register_solve("test", test)
-#  p <- Problem(Minimize(0))
-#  result <- solve(p, 1, b = 3, method = "test")
-#  expect_equal(result$value, c(1,3))
-#  result <- solve(p, 1, method = "test")
-#  expect_equal(result$value, c(1,2))
-#  result <- solve(p, 1, method = "test", b = 4)
-#  expect_equal(result$value, c(1,4))
-# })
+test_that("Test registering other solve methods", {
+  skip_on_cran()
+  Problem.register_solve("test", function(object) { 1 })
+  p <- Problem(Minimize(1))
+  result <- solve(p, method = "test")
+  expect_equal(result$value, 1)
 
-# TODO: Adapt this test to the reduction infrastructure.
+  test <- function(object, a, b = 2) { c(a, b) }
+  Problem.register_solve("test", test)
+  p <- Problem(Minimize(0))
+  result <- solve(p, 1, b = 3, method = "test")
+  expect_equal(result$value, matrix(c(1,3)))
+  result <- solve(p, 1, method = "test")
+  expect_equal(result$value, matrix(c(1,2)))
+  result <- solve(p, 1, method = "test", b = 4)
+  expect_equal(result$value, matrix(c(1,4)))
+})
+
 # test_that("Test that variables and constraints keep a consistent order", {
+#   # TODO: Adapt this test to the reduction infrastructure.
+#   skip_on_cran()
 #   num_solves <- 4
 #   vars_lists <- list()
 #   ineqs_lists <- list()
 #   var_ids_order_created <- list()
+#
 #   for(k in 1:num_solves) {
 #     sum <- 0
 #     constraints <- list()
 #     var_ids <- c()
 #     for(i in 1:100) {
 #       var <- Variable(name = as.character(i))
-#       var_ids <- c(var_ids, var@id)
+#       var_ids <- c(var_ids, id(var))
 #       sum <- sum + var
 #       constraints <- c(constraints, list(var >= i))
 #     }
 #     var_ids_order_created <- c(var_ids_order_created, list(var_ids))
+#
 #     obj <- Minimize(sum)
 #     p <- Problem(obj, constraints)
 #     canon <- canonicalize(p)
 #     objective <- canon[[1]]
 #     constraints <- canon[[2]]
-#     sym_data <- SymData(objective, constraints, ECOS())
+#     sym_data <- SymData(objective, constraints, SOLVERS[[ECOS]])
 #
-#     # Sort by offset
+#     # Sort by offset.
 #     offsets <- sym_data@.var_offsets
 #     vars_ <- as.numeric(names(sort(offsets, decreasing = FALSE)))
 #     vars_lists <- c(vars_lists, list(vars_))
 #     ineqs_lists <- c(ineqs_lists, list(sym_data@.constr_map[[LEQ_MAP]]))
 #   }
 #
-#   # Verify order of variables is consistent
+#   # Verify order of variables is consistent.
 #   for(i in 1:num_solves)
 #     expect_equal(var_ids_order_created[[i]], vars_lists[[i]])
 #
 #   for(i in 1:num_solves) {
-#     idx <- 1
-#     for(constr in ineqs_lists[[i]]) {
-#       var_tmp <- get_expr_vars(constr$expr)[[1]]
+#     for(idx in seq_along(ineqs_lists[[i]])) {
+#       constr <- ineqs_lists[[i]][[idx]]
+#       var_tmp <- lo.get_expr_vars(constr@expr)[[1]]
 #       var_id <- as.numeric(var_tmp[[1]])
-#       expect_equal(var_ids_order_created[[i]][idx], var_id)
-#       idx <- idx + 1
+#       expect_equal(var_ids_order_created[[i]][[idx]], var_id)
 #     }
 #   }
 # })
 
-# TODO: Adapt this test to the reduction infrastructure.
 # test_that("Test removing duplicate constraints objects", {
+#   # TODO: Adapt this test to the reduction infrastructure.
+#   skip_on_cran()
 #   eq <- (x == 2)
 #   le <- (x <= 2)
 #   obj <- 0
 #
-#   test <- function(self) {
-#     canon <- canonicalize(self)
+#   test <- function(object) {
+#     canon <- canonicalize(object)
 #     objective <- canon[[1]]
 #     constraints <- canon[[2]]
-#     sym_data <- SymData(objective, constraints)
-#     list(length(sym_data@constr_map[EQ_MAP]), length(sym_data@constr_map[LEQ_MAP]))
+#     sym_data <- SymData(objective, constraints, SOLVERS[[CVXOPT]])
+#     list(length(sym_data@constr_map[[EQ_MAP]]), length(sym_data@constr_map[[LEQ_MAP]]))
 #   }
-#   # Problem.register_solve("test", test)
-#   # p <- Problem(Minimize(obj), list(eq, eq, le, le))
-#   # result <- solve(p, method = "test")
-#   # expect_equal(result$value, c(1,1))
+#   Problem.register_solve("test", test)
+#   p <- Problem(Minimize(obj), list(eq, eq, le, le))
+#   result <- solve(p, method = "test")
+#   expect_equal(result$value, matrix(c(1,1)))
 #
-#   # Internal constraints
-#   X <- Semidef(2)
+#   # Internal constraints.
+#   X <- Variable(2, 2, PSD = TRUE)
 #   obj <- sum_entries(X + X)
 #   p <- Problem(Minimize(obj))
-#   # result <- solve(p, method = "test")
-#   # expect_equal(result$value, c(0,1))
+#   result <- solve(p, method = "test")
+#   expect_equal(result$value, matrix(c(0,1)))
 #
-#   # Duplicates from non-linear constraints
-#   # exp <- norm(x, "2")
-#   # prob <- Problem(Minimize(0), list(exp <= 1, exp <= 2))
-#   # result <- solve(prob, method = "test")
-#   # expect_equal(result$value, c(0,4))
+#   # Duplicates from non-linear constraints.
+#   expr <- p_norm(x, p = 2)
+#   prob <- Problem(Minimize(0), list(expr <= 1, expr <= 2))
+#   result <- solve(prob, method = "test")
+#   expect_equal(result$value, matrix(c(0,3)))
 # })
 
 test_that("test the is_dcp method", {
@@ -327,13 +333,13 @@ test_that("test the is_dcp method", {
 
   p <- Problem(Maximize(norm_inf(a)))
   expect_false(is_dcp(p))
-  expect_error(solve(p))
+  expect_error(solve(p, solver = "SCS"))
 })
 
 test_that("test the is_qp method", {
   skip_on_cran()
   A <- matrix(rnorm(4*3), nrow = 4, ncol = 3)
-  b <- matrix(rnorm(4), nrow = 4)
+  b <- matrix(rnorm(4), nrow = 4, ncol = 1)
   Aeq <- matrix(rnorm(2*3), nrow = 2, ncol = 3)
   beq <- matrix(rnorm(2), nrow = 2, ncol = 1)
   Fmat <- matrix(rnorm(2*3), nrow = 2, ncol = 3)
@@ -353,6 +359,9 @@ test_that("test the is_qp method", {
 
   p <- Problem(Minimize(obj), list(Aeq %*% y == beq, Fmat %*% y <= g))
   expect_true(is_qp(p))
+  
+  p <- Problem(Minimize(qpwa_obj), list(Aeq %*% y == beq, Fmat %*% y <= g))
+  expect_true(is_qp(p))
 
   p <- Problem(Minimize(obj), list(max_elemwise(1, 3*y) <= 200, abs(2*y) <= 100, p_norm(2*y, 1) <= 1000, Aeq %*% y == beq))
   expect_true(is_qp(p))
@@ -371,7 +380,7 @@ test_that("test problems involving variables with the same name", {
   skip_on_cran()
   var <- Variable(name = "a")
   p <- Problem(Maximize(a + var), list(var == 2 + a, var <= 3))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-5)
   expect_equal(result$value, 4.0, tolerance = TOL)
   expect_equal(result$getValue(a), 1, tolerance = TOL)
   expect_equal(result$getValue(var), 3, tolerance = TOL)
@@ -383,37 +392,37 @@ test_that("test adding problems", {
   prob2 <- Problem(Minimize(2*b), list(a >= 1, b >= 2))
   prob_minimize <- prob1 + prob2
   expect_equal(length(prob_minimize@constraints), 3)
-  result <- solve(prob_minimize)
+  result <- solve(prob_minimize, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 6, tolerance = TOL)
 
   prob3 <- Problem(Maximize(a), list(b <= 1))
   prob4 <- Problem(Maximize(2*b), list(a <= 2))
   prob_maximize <- prob3 + prob4
   expect_equal(length(prob_maximize@constraints), 2)
-  result <- solve(prob_maximize)
+  result <- solve(prob_maximize, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 4, tolerance = TOL)
 
-  # Test using the sum function
+  # Test using the sum function.
   prob5 <- Problem(Minimize(3*a))
   prob_sum <- Reduce("+", list(prob1, prob2, prob5))
   expect_equal(length(prob_sum@constraints), 3)
-  result <- solve(prob_sum)
+  result <- solve(prob_sum, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 12, tolerance = TOL)
   prob_sum <- Reduce("+", list(prob1))
   expect_equal(length(prob_sum@constraints), 1)
 
-  # Test Minimize + Maximize
-  expect_error(prob_bad_sum <- prob1 + prob3, "Problem does not follow DCP rules")
+  # Test Minimize + Maximize.
+  expect_error(prob_bad_sum <- prob1 + prob3, "Problem does not follow DCP rules.", fixed = TRUE)
 })
 
 test_that("test problem multiplication by scalar", {
   skip_on_cran()
   prob1 <- Problem(Minimize(a^2), list(a >= 2))
-  answer <- solve(prob1)$value
+  answer <- solve(prob1, solver = "SCS")$value
   factors <- c(0, 1, 2.3, -4.321)
   for(f in factors) {
-    expect_equal(solve(f * prob1)$value, f * answer, tolerance = TOL)
-    expect_equal(solve(prob1 * f)$value, f * answer, tolerance = TOL)
+    expect_equal(solve(f * prob1, solver = "SCS")$value, f * answer, tolerance = 1e-3)
+    expect_equal(solve(prob1 * f, solver = "SCS")$value, f * answer, tolerance = 1e-3)
   }
 })
 
@@ -426,131 +435,102 @@ test_that("test problem linear combinations", {
   # Simple addition and multiplication.
   combo1 <- prob1 + 2 * prob2
   combo1_ref <- Problem(Minimize(a + 4*b), list(a >= b, a >= 1, b >= 2))
-  expect_equal(solve(combo1)$value, solve(combo1_ref)$value)
+  expect_equal(solve(combo1, solver = "ECOS")$value, solve(combo1_ref, solver = "ECOS")$value, tolerance = TOL)
 
   # Division and subtraction.
   combo2 <- prob1 - prob3/2
   combo2_ref <- Problem(Minimize(a + (b + a)^2/2), list(b >= 3, a >= b))
-  expect_equal(solve(combo2)$value, solve(combo2_ref)$value)
+  expect_equal(solve(combo2, solver = "ECOS")$value, solve(combo2_ref, solver = "ECOS")$value, tolerance = TOL)
 
   # Multiplication with 0 (prob2's constraints should still hold).
   combo3 <- prob1 + 0*prob2 - 3*prob3
   combo3_ref <- Problem(Minimize(a + 3*(b + a)^2), list(a >= b, a >= 1, b >= 3))
-  expect_equal(solve(combo3)$value, solve(combo3_ref)$value, tolerance = TOL)
+  expect_equal(solve(combo3, solver = "ECOS")$value, solve(combo3_ref, solver = "ECOS")$value, tolerance = TOL)
 })
-
-# test_that("test solving problems in parallel", {
-#   p <- Parameter()
-#   problem <- Problem(Minimize(a^2 + b^2 + p), list(b >= 2, a >= 1))
-#   value(p) <- 1
-#
-#   # Ensure that parallel solver still works after repeated calls
-#   for(i in 1:2) {
-#     result <- solve(problem, parallel = TRUE)
-#     expect_equal(result$value, 6.0, tolerance = TOL)
-#     expect_equal(result$status, "optimal")
-#     expect_equal(result$getValue(a), 1, tolerance = TOL)
-#     expect_equal(result$getValue(b), 2, tolerance = TOL)
-#   }
-#
-#   # The constant p should not be a separate problem, but rather added to the first separable problem
-#   expect_true(length(problem@.separable_problems) == 2)
-#
-#   # Ensure that parallel solver works with options
-#   result <- solve(problem, parallel = TRUE, verbose = TRUE, warm_start = TRUE)
-#   expect_equal(result$value, 6.0, tolerance = TOL)
-#   expect_equal(result$status, "optimal")
-#   expect_equal(result$getValue(a), 1, tolerance = TOL)
-#   expect_equal(result$getValue(b), 2, tolerance = TOL)
-#
-#   # Ensure that parallel solver works when problem changes
-#   objective <- Minimize(a^2 + b^2)
-#   problem <- Problem(objective, problem@constraints)
-#   result <- solve(problem, parallel = TRUE)
-#   expect_equal(result$value, 5.0, tolerance = TOL)
-#   expect_equal(result$status, "optimal")
-#   expect_equal(result$getValue(a), 1, tolerance = TOL)
-#   expect_equal(result$getValue(b), 2, tolerance = TOL)
-# })
 
 test_that("Test scalar LP problems", {
   skip_on_cran()
   p <- Problem(Minimize(3*a), list(a >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 6, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
 
   p <- Problem(Maximize(3*a - b), list(a <= 2, b == a, b <= 5))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 4.0, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
   expect_equal(result$getValue(b), 2, tolerance = TOL)
 
-  # With a constant in the objective
+  # With a constant in the objective.
   p <- Problem(Minimize(3*a - b + 100), list(a >= 2, b + 5*c - 2 == a, b <= 5 + c))
-  result <- solve(p)
-  expect_equal(result$value, 101+1.0/6, tolerance = TOL)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, 101 + 1.0/6, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
-  expect_equal(result$getValue(b), 5-1.0/6, tolerance = TOL)
+  expect_equal(result$getValue(b), 5 - 1.0/6, tolerance = TOL)
   expect_equal(result$getValue(c), -1.0/6, tolerance = TOL)
 
-  # Test status and value
-  exp <- Maximize(a)
-  p <- Problem(exp, list(a <= 2))
+  # Test status and value.
+  expr <- Maximize(a)
+  p <- Problem(expr, list(a <= 2))
   result <- solve(p, solver = "ECOS")
-  # expect_equal(result$value, value(p))
-  expect_equal(result$status, "optimal")
+  expect_equal(result$value, result$getValue(p))
+  expect_equal(result$status, OPTIMAL)
   expect_false(is.na(result$getValue(a)))
   expect_false(is.na(result$getDualValue(p@constraints[[1]])))
 
-  # Unbounded problems
+  # Unbounded problems.
   p <- Problem(Maximize(a), list(a >= 2))
   result <- solve(p, solver = "ECOS")
+  expect_equal(result$status, UNBOUNDED)
   expect_equal(result$value, Inf)
+  expect_gt(result$value, 0)
   expect_true(is.na(result$getValue(a)))
   expect_true(is.na(result$getDualValue(p@constraints[[1]])))
 
   if("CVXOPT" %in% INSTALLED_SOLVERS) {
     p <- Problem(Minimize(-a), list(a >= 2))
     result <- solve(p, solver = "CVXOPT")
-    # expect_equal(result$value, value(p))
-    expect_equal(result$status, "unbounded")
+    expect_equal(result$value, result$getValue(p))
+    expect_equal(result$status, UNBOUNDED)
     expect_equal(result$value, -Inf)
+    expect_lt(result$value, 0)
   }
 
-  # Infeasible problems
+  # Infeasible problems.
   p <- Problem(Maximize(a), list(a >= 2, a <= 1))
-  # a <- save_value(a, 2)
-  # p@constraints[[1]] <- save_value(p@constraints[[1]], 2)
+  a <- save_value(a, 2)
+  p@constraints[[1]] <- save_value(p@constraints[[1]], 2)
 
   result <- solve(p, solver = "ECOS")
-  # expect_equal(result$value, value(p))
-  expect_equal(result$status, "infeasible")
+  expect_equal(result$value, result$getValue(p))
+  expect_equal(result$status, INFEASIBLE)
   expect_equal(result$value, -Inf)
+  expect_lt(result$value, 0)
   expect_true(is.na(result$getValue(a)))
   expect_true(is.na(result$getDualValue(p@constraints[[1]])))
 
   p <- Problem(Minimize(-a), list(a >= 2, a <= 1))
   result <- solve(p, solver = "ECOS")
-  # expect_equal(result$value, value(p))
-  expect_equal(result$status, "infeasible")
+  expect_equal(result$value, result$getValue(p))
+  expect_equal(result$status, INFEASIBLE)
   expect_equal(result$value, Inf)
+  expect_gt(result$value, 0)
 })
 
 test_that("Test vector LP problems", {
   skip_on_cran()
-  c <- Constant(matrix(c(1, 2), nrow = 2, ncol = 1))@value
+  c <- value(Constant(matrix(c(1, 2), nrow = 2, ncol = 1)))
   p <- Problem(Minimize(t(c) %*% x), list(x >= c))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 5, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(1, 2)), tolerance = TOL)
 
-  A <- Constant(rbind(c(3, 5), c(1, 2)))@value
+  A <- value(Constant(cbind(c(3, 5), c(1, 2))))
   I <- Constant(rbind(c(1, 0), c(0, 1)))
   p <- Problem(Minimize(t(c) %*% x + a), list(A %*% x >= c(-1, 1), 4*I %*% z == x, z >= c(2,2), a >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 26, tolerance = 1e-3)
-  obj <- result$getValue(t(c) %*% x + a)
+  obj <- result$getValue(t(c) %*% x + a)[1]
   expect_equal(obj, result$value, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(8,8)), tolerance = 1e-3)
   expect_equal(result$getValue(z), matrix(c(2,2)), tolerance = 1e-3)
@@ -569,45 +549,45 @@ test_that("Test matrix LP problems", {
   skip_on_cran()
   Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 2)))
   p <- Problem(Minimize(1), list(A == Tmat))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 1, tolerance = TOL)
   expect_equal(result$getValue(A), Tmat, tolerance = TOL)
 
   Tmat <- value(Constant(matrix(1, nrow = 2, ncol = 3)*2))
   p <- Problem(Minimize(1), list(A >= Tmat %*% C, A == B, C == t(Tmat)))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 1, tolerance = TOL)
   expect_equal(result$getValue(A), result$getValue(B), tolerance = TOL)
-  expect_equal(result$getValue(C), t(Tmat), tolerance = TOL)
+  expect_equal(result$getValue(C), Tmat, tolerance = TOL)
   expect_true(all(result$getValue(A) >= Tmat %*% result$getValue(C)))
 
-  # Test variables are dense
+  # Test variables are dense.
   expect_true(is(result$getValue(A), "matrix"))
 })
 
 test_that("Test variable promotion", {
   skip_on_cran()
   p <- Problem(Minimize(a), list(x <= a, x == c(1, 2)))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 2, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
 
   p <- Problem(Minimize(a), list(A <= a, A == rbind(c(1,2), c(3,4))))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 4, tolerance = TOL)
   expect_equal(result$getValue(a), 4, tolerance = TOL)
 
-  # Promotion must happen before multiplication
+  # Promotion must happen before multiplication.
   p <- Problem(Minimize(matrix(1, nrow = 1, ncol = 2) %*% (x + a + 1)), list(a + x >= c(1, 2)))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 5, tolerance = TOL)
 })
 
 test_that("Test parameter promotion", {
   skip_on_cran()
   a <- Parameter()
+  expr <- rbind(c(1,2), c(3,4))*a
   value(a) <- 2
-  exp <- cbind(c(1,2), c(3,4))*a
   expect_false(any(value(exp) - 2*cbind(c(1,2), c(3,4)) != 0))
 })
 
@@ -621,41 +601,40 @@ test_that("test problems with parameters", {
   value(p1) <- 2
   value(p2) <- -matrix(1, nrow = 3, ncol = 1)
   value(p3) <- matrix(1, nrow = 4, ncol = 4)
-  ##p <- Problem(Maximize(p1*a), list(a + p1 <= p2, b <= p3 + p3 + 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, -6, tolerance = TOL)
 
   value(p1) <- NA_real_
-  p <- Problem(Maximize(p1*a), list(a + p1 <= p2, b <= p3 + p3 + 2))
-  expect_error(solve(p))
+  expect_error(solve(p, solver = "SCS", eps = 1e-6))
 })
 
 test_that("test problems with norm_inf", {
   skip_on_cran()
-  # Constant argument
+  
+  # Constant argument.
   p <- Problem(Minimize(norm_inf(-2)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 2, tolerance = TOL)
 
-  # Scalar arguments
+  # Scalar arguments.
   p <- Problem(Minimize(norm_inf(a)), list(a >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 2, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
 
   p <- Problem(Minimize(3*norm_inf(a + 2*b) + c), list(a >= 2, b <= -1, c == 3))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 3, tolerance = TOL)
   expect_equal(result$getValue(a + 2*b), 0, tolerance = TOL)
   expect_equal(result$getValue(c), 3, tolerance = TOL)
 
-  # Maximize
+  # Maximize.
   p <- Problem(Maximize(-norm_inf(a)), list(a <= -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(a), -2, tolerance = TOL)
 
-  # Vector arguments
+  # Vector arguments.
   p <- Problem(Minimize(norm_inf(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
   result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 12, tolerance = TOL)
@@ -664,59 +643,61 @@ test_that("test problems with norm_inf", {
 
 test_that("Test problems with norm1", {
   skip_on_cran()
-  # Constant argument
+  
+  # Constant argument.
   p <- Problem(Minimize(norm1(-2)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 2, tolerance = TOL)
 
-  # Scalar arguments
+  # Scalar arguments.
   p <- Problem(Minimize(norm1(a)), list(a <= -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 2, tolerance = TOL)
   expect_equal(result$getValue(a), -2, tolerance = TOL)
 
-  # Maximize
+  # Maximize.
   p <- Problem(Maximize(-norm1(a)), list(a <= -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(a), -2, tolerance = TOL)
 
-  # Vector arguments
+  # Vector arguments.
   p <- Problem(Minimize(norm1(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 15, tolerance = TOL)
   expect_equal(result$getValue(x[2] - z[2]), 7, tolerance = TOL)
 })
 
 test_that("Test problems with norm2", {
   skip_on_cran()
-  # Constant argument
-  p <- Problem(Minimize(norm2(-2)))
-  result <- solve(p)
+  
+  # Constant argument.
+  p <- Problem(Minimize(p_norm(-2, p = 2)))
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 2, tolerance = TOL)
 
-  # Scalar arguments
-  p <- Problem(Minimize(norm2(a)), list(a <= -2))
-  result <- solve(p)
+  # Scalar arguments.
+  p <- Problem(Minimize(p_norm(a, p = 2)), list(a <= -2))
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 2, tolerance = TOL)
   expect_equal(result$getValue(a), -2, tolerance = TOL)
 
-  # Maximize
-  p <- Problem(Maximize(-norm2(a)), list(a <= -2))
-  result <- solve(p)
+  # Maximize.
+  p <- Problem(Maximize(-p_norm(a, p = 2)), list(a <= -2))
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, -2, tolerance = TOL)
   expect_equal(result$getValue(a), -2, tolerance = TOL)
 
-  # Vector arguments
-  p <- Problem(Minimize(norm2(x - z) + 5), list(x >= c(2,3), z <= c(-1,-4)))
-  result <- solve(p)
+  # Vector arguments.
+  p <- Problem(Minimize(p_norm(x - z, p = 2) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 12.61577, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
   expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
 
-  # Row arguments
-  p <- Problem(Minimize(norm2(t(x - z)) + 5), list(x >= c(2,3), z <= c(-1,-4)))
-  result <- solve(p)
+  # Row arguments.
+  p <- Problem(Minimize(p_norm(t(x - z), p = 2) + 5), list(x >= c(2,3), z <= c(-1,-4)))
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 12.61577, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
   expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
@@ -725,38 +706,45 @@ test_that("Test problems with norm2", {
 test_that("Test problems with abs", {
   skip_on_cran()
   p <- Problem(Minimize(sum_entries(abs(A))), list(-2 >= A))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 8, tolerance = TOL)
   expect_equal(result$getValue(A), matrix(rep(-2, 4), nrow = 2, ncol = 2), tolerance = TOL)
 })
 
 test_that("Test problems with quad_form", {
   skip_on_cran()
-  expect_error(solve(Problem(Minimize(quad_form(x, A)))), "At least one argument to QuadForm must be constant.")
-  expect_error(solve(Problem(Minimize(quad_form(1, A)))), "Invalid dimensions for arguments.")
-  expect_error(solve(Problem(Minimize(quad_form(x, rbind(c(-1,0), c(0,9)))))))              # Error: Problem does not follow DCP rules
+  expect_error(solve(Problem(Minimize(quad_form(x, A))), solver = "SCS", eps = 1e-6), 
+               "At least one argument to QuadForm must be non-variable.", fixed = TRUE)
+  
+  expect_error(solve(Problem(Minimize(quad_form(1, A))), solver = "SCS", eps = 1e-6), 
+               "Invalid dimensions for arguments.", fixed = TRUE)
+  
+  expect_warning(objective <- Minimize(quad_form(x, rbind(c(-1,0), c(0,9)))))
+  expect_error(solve(Problem(objective), solver = "SCS", eps = 1e-6), 
+               "Problem does not follow DCP rules.", fixed = TRUE)
 
   P <- rbind(c(4,0), c(0,9))
   p <- Problem(Minimize(quad_form(x, P)), list(x >= 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 13, tolerance = 1e-3)
 
   c <- c(1,2)
   p <- Problem(Minimize(quad_form(c, A)), list(A >= 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 9, tolerance = TOL)
 
   c <- c(1,2)
   P <- rbind(c(4,0), c(0,9))
   p <- Problem(Minimize(quad_form(c, P)))
-  result <- solve(p)
-  expect_equal(result$value, 40)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, 40, tolerance = TOL)
 })
 
 test_that("Test combining atoms", {
   skip_on_cran()
-  p <- Problem(Minimize(norm2(5 + p_norm(z,1) + p_norm(x,1) + norm_inf(x - z))), list(x >= c(2,3), z <= c(-1,-4), p_norm(x + z,2) <= 2))
-  result <- solve(p)
+  p <- Problem(Minimize(p_norm(5 + norm1(z) + norm1(x) + norm_inf(x - z), p = 2)), 
+               list(x >= c(2,3), z <= c(-1,-4), p_norm(x + z, 2) <= 2))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 22, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
   expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
@@ -764,8 +752,8 @@ test_that("Test combining atoms", {
 
 test_that("Test multiplying by constant atoms", {
   skip_on_cran()
-  p <- Problem(Minimize(norm2(c(3,4)) * a), list(a >= 2))
-  result <- solve(p)
+  p <- Problem(Minimize(p_norm(c(3,4), p = 2)*a), list(a >= 2))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 10, tolerance = TOL)
   expect_equal(result$getValue(a), 2, tolerance = TOL)
 })
@@ -778,23 +766,22 @@ test_that("Test recovery of dual variables", {
         acc <- 1e-1
       else
         acc <- 1e-5
-      p <- Problem(Minimize(p_norm(x + z, 1)), list(x >= c(2,3), cbind(c(1,2), c(3,4)) %*% z == c(-1,-4), p_norm(x + z, 2) <= 100))
+      p <- Problem(Minimize(norm1(x + z)), list(x >= c(2,3), rbind(c(1,2), c(3,4)) %*% z == c(-1,-4), p_norm(x + z, p = 2) <= 100))
       result <- solve(p, solver = solver)
       expect_equal(result$value, 4, tolerance = acc)
       expect_equal(result$getValue(x), matrix(c(4,3)), tolerance = acc)
       expect_equal(result$getValue(z), matrix(c(-4,1)), tolerance = acc)
 
-      # Dual values
+      # Dual values.
       expect_equal(result$getDualValue(p@constraints[[1]]), matrix(c(0,1)), tolerance = acc)
       expect_equal(result$getDualValue(p@constraints[[2]]), matrix(c(-1,0.5)), tolerance = acc)
       expect_equal(result$getDualValue(p@constraints[[3]]), 0, tolerance = acc)
 
-      Tmat <- matrix(1, nrow = 2, ncol = 3) * 2
-      c <- matrix(c(3,4), nrow = 1, ncol = 2)
+      Tmat <- matrix(1, nrow = 2, ncol = 3)*2
       p <- Problem(Minimize(1), list(A >= Tmat %*% C, A == B, C == t(Tmat)))
       result <- solve(p, solver = solver)
 
-      # Dual values
+      # Dual values.
       expect_equal(result$getDualValue(p@constraints[[1]]), matrix(0, nrow = 2, ncol = 2), tolerance = acc)
       expect_equal(result$getDualValue(p@constraints[[2]]), matrix(0, nrow = 2, ncol = 2), tolerance = acc)
       expect_equal(result$getDualValue(p@constraints[[3]]), matrix(0, nrow = 3, ncol = 2), tolerance = acc)

@@ -57,7 +57,7 @@ test_that("test the parameters method", {
   p3 <- Parameter(4, 4, nonneg = TRUE)
   p <- Problem(Minimize(p1), list(a + p1 <= p2, b <= p3 + p3 + 2))
   params <- parameters(p)
-  ref <- c(p1, p2, p3)
+  ref <- list(p1, p2, p3)
   expect_setequal(params, ref)
 })
 
@@ -84,9 +84,12 @@ test_that("test the constants method", {
   p <- Problem(Minimize(c1 %*% x), list(x >= c2))
   constants_ <- constants(p)
   ref <- list(c1, c2)
-  expect_equal(length(constants_), length(ref))
+  expect_equal(length(ref), length(constants_))
+  
   mapply(function(c, r) {
     expect_equal(dim(c), dim(r))
+    # Allows comparison between R matrices and vectors.
+    # Necessary because of the way CVXR handles vectors and constants.
     expect_true(all(value(c) == r))
   }, constants_, ref)
 
@@ -97,6 +100,8 @@ test_that("test the constants method", {
   expect_equal(length(ref), length(constants_))
   mapply(function(c, r) {
     expect_equal(dim(c), dim(r))
+    # Allows comparison between R matrices and vectors.
+    # Necessary because of the way CVXR handles vectors and constants.
     expect_true(all(value(c) == r))
   }, constants_, ref)
 })
@@ -113,28 +118,28 @@ test_that("Test the size_metrics method", {
 
   p <- Problem(Minimize(p1), list(a + p1 <= p2, b <= p3 + p3 + constants[1], c == constants[2]))
 
-  # num_scalar variables
+  # num_scalar variables.
   n_variables <- size_metrics(p)@num_scalar_variables
   ref <- size(a) + size(b) + size(c)
   expect_equal(n_variables, ref)
 
-  # num_scalar_data
+  # num_scalar_data.
   n_data <- size_metrics(p)@num_scalar_data
   # 2 and c2 %*% c1 are both single scalar constants
   ref <- prod(size(p1)) + prod(size(p2)) + prod(size(p3)) + length(constants)
   expect_equal(n_data, ref)
 
-  # num_scalar_eq_constr
+  # num_scalar_eq_constr.
   n_eq_constr <- size_metrics(p)@num_scalar_eq_constr
-  ref <- prod(dim(c2 %*% c1))
+  ref <- size(c2 %*% c1)
   expect_equal(n_eq_constr, ref)
 
-  # num_scalar_leq_constr
+  # num_scalar_leq_constr.
   n_leq_constr <- size_metrics(p)@num_scalar_leq_constr
   ref <- prod(size(p3)) + prod(size(p2))
   expect_equal(n_leq_constr, ref)
 
-  # max_data_dimension
+  # max_data_dimension.
   max_data_dim <- size_metrics(p)@max_data_dimension
   ref <- max(dim(p3))
   expect_equal(max_data_dim, ref)
@@ -169,7 +174,7 @@ test_that("Test the solver_stats method", {
   expect_true("info" %in% names(stats@extra_stats))
 })
 
-test_that("Test the get_problem_data method", {
+test_that("Test get_problem_data method", {
   skip_on_cran()
   data <- get_problem_data(Problem(Minimize(exp(a) + 2)), "SCS")[[1]]
   dims <- data[[ConicSolver()@DIMS]]
@@ -188,7 +193,8 @@ test_that("Test the get_problem_data method", {
     data <- get_problem_data(Problem(Minimize(p_norm(x) + 3)), "CVXOPT")[[1]]
     dims <- data[[ConicSolver()@DIMS]]
     expect_equal(dims@soc, list(3))
-    # TODO: We cannot test whether the coefficients or offsets were correctly parsed until we update the CVXOPT interface.
+    # TODO: We cannot test whether the coefficients or offsets were correctly 
+    # parsed until we update the CVXOPT interface.
   }
 })
 
@@ -223,8 +229,57 @@ test_that("Test unpack results method", {
 })
 
 test_that("Test silencing and enabling solver messages", {
+  # Capture stdout in R using capture.output: https://stat.ethz.ch/R-manual/R-devel/library/utils/html/capture.output.html
+  # More discussion here: https://stackoverflow.com/questions/16358435/is-it-possible-to-redirect-console-output-to-a-variable
   skip_on_cran()
-  # TODO: Write this test by capturing stdout in R.
+  outputs <- list(True = list(), False = list())
+  for(solver in INSTALLED_SOLVERS) {
+    for(verbose in c(TRUE, FALSE)) {
+      # Don't test GLPK because there's a race condition in setting CVXOPT solver options.
+      if(solver %in% c("GLPK", "GLPK_MI", "MOSEK", "CBC", "SDPA", "COPT"))
+        next
+      
+      out <- capture.output({
+        p <- Problem(Minimize(a + x[1]), list(a >= 2, x >= 2))
+        result <- solve(p, solver = solver, verbose = verbose)
+        
+        if(solver %in% SOLVER_MAP_CONIC) {
+          if(SOLVER_MAP_CONIC[[solver]]@MIP_CAPABLE) {
+            p@constraints <- c(p@constraints, Variable(boolean = TRUE) == 0)
+            result <- solve(p, solver = solver, verbose = verbose)
+          }
+          
+          if("ExpCone" %in% SOLVER_MAP_CONIC[[solver]]@SUPPORTED_CONSTRAINTS) {
+            p <- Problem(Minimize(a), list(log(a) >= 2))
+            result <- solve(p, solver = solver, verbose = verbose)
+          }
+          
+          if("PSDConstraint" %in% SOLVER_MAP_CONIC[[solver]]@SUPPORTED_CONSTRAINTS) {
+            a_mat <- reshape_expr(a, new_dim = c(1,1))
+            p <- Problem(Minimize(a), list(lambda_min(a_mat) >= 2))
+            result <- solve(p, solver = solver, verbose = verbose)
+          }
+        }
+      })
+      
+      vnam <- ifelse(verbose, "True", "False")
+      outputs[[vnam]] <- c(outputs[[vnam]], list(out, solver))
+    }
+  }
+  
+  for(oval in outputs$True) {
+    output <- oval[[1]]
+    solver <- oval[[2]]
+    print(solver)
+    expect_gt(length(output), 0)
+  }
+  
+  for(oval in outputs$True) {
+    output <- oval[[1]]
+    solver <- oval[[2]]
+    print(solver)
+    expect_equal(length(output), 0)
+  }
 })
 
 test_that("Test registering other solve methods", {
@@ -1351,7 +1406,7 @@ test_that("Test positive definite constraints", {
 
 test_that("Test the duals of PSD constraints", {
   skip_on_cran()
-  if("CVXOPT" %in% installed_solvers()) {
+  if("CVXOPT" %in% INSTALLED_SOLVERS) {
     # Test the dual values with CVXOPT.
     C <- Variable(2, 2, symmetric = TRUE, name = "C")
     obj <- Maximize(C[1,1])
@@ -1886,3 +1941,39 @@ test_that("Test the cummax axis bug with row or column matrix", {
   expect <- matrix(1, nrow = 1, ncol = n)
   expect_equal(result$getValue(expr2), expect, tolerance = TOL)
 })
+
+test_that("Test aa warning is raised for high node count", {
+  # Warning raised for constraint.
+  a <- Variable(100, 100)
+  b <- do.call("sum", lapply(1:100, function(i) { sum(a[i]) }))
+  expect_warning(Problem(Maximize(0)), list(b >= 0))
+  
+  # Warning raised for objective.
+  a <- Variable(100, 100)
+  b <- do.call("sum", lapply(1:100, function(i) { sum(a[i]) }))
+  expect_warning(Problem(Maximize(b)))
+  
+  # No warning.
+  a <- Variable(100, 100)
+  c <- sum(a)
+  expect_no_warning(Problem(Maximize(0)), list(c >= 0))
+})
+
+# We don't need this test in R because R automatically creates deep copies:
+# test_that("Test copy and deepcopy of constraints", {
+#   x <- Variable()
+#   y <- Variable()
+#   
+#   constraints <- list(x + y == 1, x - y >= 1)
+#   atoms(constraints[[1]])
+#   constraints <- copy(constraints)
+#   
+#   obj <- Minimize((x - y)^2)
+#   prob <- Problem(obj, constraints)
+#   result <- solve(prob)
+#   expect_equal(result$status, OPTIMAL)
+#   expect_true(is.allclose(result$getValue(x), 1))
+#   expect_true(is.allclose(result$getValue(y), 0))
+#   
+#   expect_error(deepcopy(constraints), "Creating a deepcopy of a CVXR expression is not supported")
+# })

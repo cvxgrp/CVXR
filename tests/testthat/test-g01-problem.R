@@ -804,201 +804,242 @@ test_that("Test recovery of dual variables", {
 
 test_that("Test problems with indexing", {
   skip_on_cran()
-  # Vector variables
-  p <- Problem(Maximize(x[1,1]), list(x[1,1] <= 2, x[2,1] == 3))
-  result <- solve(p)
+  
+  # Vector variables.
+  p <- Problem(Maximize(x[1]), list(x[1] <= 2, x[2] == 3))
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 2, tolerance = TOL)
-  expect_equal(result$getValue(x), matrix(c(2,3)))
+  expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
 
   n <- 10
-  Aloc <- matrix(0:(n^2-1), nrow = n, ncol = n)
+  Aloc <- matrix(0:(n^2-1), nrow = n, ncol = n, byrow = TRUE)
   xloc <- Variable(n,n)
   p <- Problem(Minimize(sum_entries(xloc)), list(xloc == Aloc))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   answer <- n*n*(n*n+1)/2 - n*n
-  expect_equal(result$value, answer)
+  expect_equal(result$value, answer, tolerance = TOL)
 
-  # Matrix variables
+  # Matrix variables.
   obj <- A[1,1] + A[1,2] + A[2,2] + A[2,1]
   p <- Problem(Maximize(obj), list(A <= rbind(c(1,-2), c(-3,4))))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 0, tolerance = TOL)
   expect_equal(result$getValue(A), rbind(c(1,-2), c(-3,4)))
 
-  # Indexing arithmetic expressions
+  # Indexing arithmetic expressions.
   exp <- cbind(c(1,2), c(3,4)) %*% z + x
-  p <- Problem(Minimize(exp[2,1]), list(x == z, z == c(1,2)))
-  result <- solve(p)
+  p <- Problem(Minimize(exp[2]), list(x == z, z == c(1,2)))
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 12, tolerance = TOL)
   expect_equal(result$getValue(x), result$getValue(z), tolerance = TOL)
+})
+
+test_that("Test problems that have special types as indices", {
+  # Test with default 32-bit int indices.
+  cost <- x[1:integer(2)][1]
+  p <- Problem(Minimize(cost), list(x == 1))
+  result <- solve(p, solver = "SCS")
+  expect_equal(result$value, 1, tolerance = TOL)
+  expect_equal(result$getValue(x), matrix(c(1,1)), tolerance = TOL)
+  
+  # Test with 64-bit int indices.
+  if(require(bit64)) {
+    cost <- x[1:integer64(2)][1]
+    p <- Problem(Minimize(cost), list(x == 1))
+    result <- solve(p, solver = "SCS")
+    expect_equal(result$value, 1, tolerance = TOL)
+    expect_equal(result$getValue(x), matrix(c(1,1)), tolerance = TOL)
+  } else {
+    print("bit64 library not installed. Skipping test.")
+    return()
+  }
 })
 
 test_that("Test problems with slicing", {
   skip_on_cran()
   p <- Problem(Maximize(sum_entries(C)), list(C[2:3,] <= 2, C[1,] == 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
+  expect_equal(result$getValue(C), rbind(c(1,2,2), c(1,2,2)))
 
   p <- Problem(Maximize(sum_entries(C[seq(1,3,2),2])), list(C[2:3,] <= 2, C[1,] == 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(C[seq(1,3,2),2]), matrix(c(1,2)))
+  expect_equal(result$getValue(C[seq(1,3,2),2]), matrix(c(1,2)), tolerance = TOL)
 
-  p <- Problem(Maximize(sum_entries((C[1:2,] + A)[,1:2])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
-                                                             (A + B)[,2] == 2, B == 1))
-  result <- solve(p)
+  p <- Problem(Maximize(sum_entries((C[1:2,] + A)[,1:2])), 
+               list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3,
+                    (A + B)[,2] == 2, B == 1))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 12, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,]), cbind(c(1,2), c(1,2)), tolerance = TOL)
-  expect_equal(result$getValue(A), cbind(c(2,2),c(1,1)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,]), rbind(c(1,2), c(1,2)), tolerance = TOL)
+  expect_equal(result$getValue(A), rbind(c(2,2), c(1,1)), tolerance = TOL)
 
   p <- Problem(Maximize(matrix(c(3,4), nrow = 1, ncol = 2) %*% (C[1:2,] + A)[,1]),
                list(C[2:3,] <= 2, C[1,] == 1, matrix(c(1,2), nrow = 1, ncol = 2) %*% (A + B)[,1] == 3,
                     (A + B)[,2] == 2, B == 1, 3*A[,1] <= 3))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 12, tolerance = TOL)
   expect_equal(result$getValue(C[1:2,1]), matrix(c(1,2)), tolerance = TOL)
-  expect_equal(result$getValue(A), cbind(c(1,-0.5), c(1,1)), tolerance = TOL)
+  expect_equal(result$getValue(A), rbind(c(1,-0.5), c(1,1)), tolerance = TOL)
 
-  p <- Problem(Minimize(norm2((C[1:2,] + A)[,1])), list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
-  result <- solve(p)
+  p <- Problem(Minimize(p_norm((C[1:2,] + A)[,1]), p = 2), 
+               list(C[2:3,] <= 2, C[1,] == 1, (A + B)[,1] == 3, (A + B)[,2] == 2, B == 1))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = 1e-4)
-  expect_equal(result$getValue(A), cbind(c(2,2), c(1,1)), tolerance = TOL)
+  expect_equal(result$getValue(C[1:2,1]), matrix(c(1,-2)), tolerance = 1e-3)
+  expect_equal(result$getValue(A), rbind(c(2,2), c(1,1)), tolerance = TOL)
 
-  # Transpose of slice
+  # Transpose of slice.
   p <- Problem(Maximize(sum_entries(C)), list(t(C[2:3,]) <= 2, t(C[1,]) == 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
+  expect_equal(result$getValue(C), rbind(c(1,2,2), c(1,2,2)), tolerance = TOL)
 })
 
 test_that("Test the vstack function", {
   skip_on_cran()
+  a <- Variable(1, 1, name = "a")
+  b <- Variable(1, 1, name = "b")
+  
+  x <- Variable(2, 1, name = "x")
+  y <- Variable(3, 1, name = "y")
+  
   c <- matrix(1, nrow = 1, ncol = 5)
   p <- Problem(Minimize(c %*% vstack(x, y)), list(x == c(1,2), y == c(3,4,5)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-5)
   expect_equal(result$value, 15, tolerance = TOL)
 
   c <- matrix(1, nrow = 1, ncol = 4)
   p <- Problem(Minimize(c %*% vstack(x, x)), list(x == c(1,2)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 6, tolerance = TOL)
 
   c <- matrix(1, nrow = 2, ncol = 2)
   p <- Problem(Minimize(sum_entries(vstack(A, C))), list(A >= 2*c, C == -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, -4, tolerance = TOL)
 
   c <- matrix(1, nrow = 1, ncol = 2)
   p <- Problem(Minimize(sum_entries(vstack(c %*% A, c %*% B))), list(A >= 2, B == -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 0, tolerance = TOL)
 
   c <- matrix(c(1,-1), nrow = 2, ncol = 1)
-  p <- Problem(Minimize(t(c) %*% vstack(a^2, sqrt(b))), list(a == 2, b == 16))
-  expect_error(solve(p))
+  p <- Problem(Minimize(t(c) %*% vstack(square(a), sqrt(b))), list(a == 2, b == 16))
+  expect_error(solve(p, solver = "SCS", eps = 1e-5), "Problem does not follow DCP rules.")
 })
 
-test_that("Test the hstack function", {
+test_that("Test the hstack atom", {
   skip_on_cran()
+  a <- Variable(1, 1, name = "a")
+  b <- Variable(1, 1, name = "b")
+  
+  x <- Variable(2, 1, name = "x")
+  y <- Variable(3, 1, name = "y")
+  
   c <- matrix(1, nrow = 1, ncol = 5)
   p <- Problem(Minimize(c %*% t(hstack(t(x), t(y)))), list(x == c(1,2), y == c(3,4,5)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 15, tolerance = TOL)
 
   c <- matrix(1, nrow = 1, ncol = 4)
   p <- Problem(Minimize(c %*% t(hstack(t(x), t(x)))), list(x == c(1,2)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 6, tolerance = TOL)
 
   c <- matrix(1, nrow = 2, ncol = 2)
   p <- Problem(Minimize(sum_entries(hstack(t(A), t(C)))), list(A >= 2*c, C == -2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, -4, tolerance = TOL)
 
   D <- Variable(3,3)
   expr <- hstack(C, D)
   p <- Problem(Minimize(expr[1,2] + sum_entries(hstack(expr, expr))), list(C >= 0, D >= 0, D[1,1] == 2, C[1,2] == 3))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-8)
   expect_equal(result$value, 13, tolerance = TOL)
 
   c <- matrix(c(1,-1), nrow = 2, ncol = 1)
-  p <- Problem(Minimize(t(c) %*% t(hstack(t(a^2), t(sqrt(b))))), list(a == 2, b == 16))
-  expect_error(solve(p))
+  p <- Problem(Minimize(t(c) %*% t(hstack(t(square(a)), t(sqrt(b))))), list(a == 2, b == 16))
+  expect_error(solve(p, solver = "SCS", eps = 1e-5), "Problem does not follow DCP rules.")
 })
 
 test_that("Test using a CVXR expression as an objective", {
   skip_on_cran()
-  expect_error(Problem(x+2))
+  expect_error(Problem(x+2), "Problem objective must be Minimize or Maximize.", fixed = TRUE)
 })
 
 test_that("Test variable transpose", {
   skip_on_cran()
   p <- Problem(Minimize(sum_entries(x)), list(t(x) >= matrix(c(1,2), nrow = 1, ncol = 2)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 3, tolerance = TOL)
-  expect_equal(result$getValue(x), matrix(c(1,2)))
+  expect_equal(result$getValue(x), matrix(c(1,2)), tolerance = TOL)
 
   p <- Problem(Minimize(sum_entries(C)), list(matrix(c(1,1), nrow = 1, ncol = 2) %*% t(C) >= matrix(0:2, nrow = 1, ncol = 3)))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   value <- result$getValue(C)
 
   constraints <- lapply(1:3, function(i) { 1*C[i,1] + 1*C[i,2] >= (i-1) })
   p <- Problem(Minimize(sum_entries(C)), constraints)
-  result2 <- solve(p)
-  expect_equal(result$value, result2$value)
-  expect_equal(result$getValue(C), value)
+  result2 <- solve(p, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, result2$value, tolerance = TOL)
+  expect_equal(result2$getValue(C), value, tolerance = TOL)
 
-  p <- Problem(Minimize(A[1,2] - t(A)[2,1]), list(A == cbind(c(1,2), c(3,4))))
-  result <- solve(p)
+  p <- Problem(Minimize(A[1,2] - t(A)[2,1]), list(A == rbind(c(1,2), c(3,4))))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 0, tolerance = TOL)
-
-  exp <- t(-x)
+  
   p <- Problem(Minimize(sum_entries(x)), list(t(-x) <= 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, -2, tolerance = TOL)
 
   c <- matrix(c(1,-1), nrow = 2, ncol = 1)
-  p <- Problem(Minimize(max_elemwise(t(c), 2, 2 + t(c))[2]))
-  result <- solve(p)
+  p <- Problem(Minimize(max_elemwise(t(c), 2, 2 + t(c))[1,2]))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 2, tolerance = TOL)
 
   c <- cbind(c(1,-1,2), c(1,-1,2))
   p <- Problem(Minimize(sum_entries(t(max_elemwise(c, 2, 2+c))[,1])))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 6, tolerance = TOL)
 
   c <- cbind(c(1,-1,2), c(1,-1,2))
-  p <- Problem(Minimize(sum_entries(t(t(c)^2)[,1])))
-  result <- solve(p)
+  p <- Problem(Minimize(sum_entries(t(square(t(c)))[,1])))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 6, tolerance = TOL)
 
-  # Slice of transpose
+  # Slice of transpose.
   p <- Problem(Maximize(sum_entries(C)), list(t(C)[,2:3] <= 2, t(C)[,1] == 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)))
+  expect_equal(result$getValue(C), cbind(c(1,2,2), c(1,2,2)), tolerance = TOL)
 })
 
 test_that("Test multiplication on the left by a non-constant", {
   skip_on_cran()
   c <- matrix(c(1,2), nrow = 2, ncol = 1)
   p <- Problem(Minimize(t(c) %*% A %*% c), list(A >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 18, tolerance = TOL)
 
   p <- Problem(Minimize(a*2), list(a >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 4, tolerance = TOL)
 
   p <- Problem(Minimize(t(x) %*% c), list(x >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 6, tolerance = TOL)
 
   p <- Problem(Minimize((t(x) + t(z)) %*% c), list(x >= 2, z >= 1))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 9, tolerance = TOL)
+  
+  A <- matrix(1, nrow = 5, ncol = 10)
+  x <- Variable(5)
+  p <- Problem(Minimize(sum_entries(t(x) %*% A)), list(x >= 0))
+  result <- solve(p, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, 0, tolerance = TOL)
 })
 
 test_that("Test redundant constraints", {
@@ -1006,33 +1047,40 @@ test_that("Test redundant constraints", {
   obj <- Minimize(sum_entries(x))
   constraints <- list(x == 2, x == 2, t(x) == 2, x[1] == 2)
   p <- Problem(obj, constraints)
-  result <- solve(p, solver = "ECOS")
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 4, tolerance = TOL)
 
-  obj <- Minimize(sum_entries(x^2))
+  obj <- Minimize(sum_entries(square(x)))
   constraints <- list(x == x)
   p <- Problem(obj, constraints)
-  result <- solve(p, solver = "ECOS")
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 0, tolerance = TOL)
+  
+  obj <- Minimize(sum(square(x)))
+  constraints <- list(x == x)
+  problem <- Problem(obj, constraints)
+  expect_error(solve(problem, solver = "ECOS"), 
+               "ECOS cannot handle sparse data with nnz == 0; this is a bug in ECOS, and it indicates that your problem might have redundant constraints.", fixed = TRUE)
 })
 
-test_that("Test that symmetry is enforced", {
+test_that("Test that SDP symmetry is enforced", {
   skip_on_cran()
   p <- Problem(Minimize(lambda_max(A)), list(A >= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$getValue(A), t(result$getValue(A)), tolerance = 1e-3)
 
-  p <- Problem(Minimize(lambda_max(A)), list(A == cbind(c(1,2), c(3,4))))
-  result <- solve(p)
-  expect_equal(result$status, "infeasible")
+  p <- Problem(Minimize(lambda_max(A)), list(A == rbind(c(1,2), c(3,4))))
+  result <- solve(p, solver = "SCS")
+  expect_equal(result$status, INFEASIBLE)
 })
 
 test_that("Test SDP", {
   skip_on_cran()
-  # Ensure SDP constraints enforce transpose
+  
+  # Ensure SDP constraints enforce transpose.
   obj <- Maximize(A[2,1] - A[1,2])
   p <- Problem(obj, list(lambda_max(A) <= 100, A[1,1] == 2, A[2,2] == 2, A[2,1] == 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 0, tolerance = 1e-3)
 })
 
@@ -1040,32 +1088,33 @@ test_that("Test getting values for expressions", {
   skip_on_cran()
   diff_exp <- x - z
   inf_exp <- norm_inf(diff_exp)
-  sum_entries_exp <- 5 + p_norm(z,1) + p_norm(x,1) + inf_exp
-  constr_exp <- norm2(x + z)
-  obj <- norm2(sum_entries_exp)
+  sum_entries_exp <- 5 + norm1(z) + norm1(x) + inf_exp
+  constr_exp <- p_norm(x + z, p = 2)
+  obj <- p_norm(sum_entries_exp, p = 2)
   p <- Problem(Minimize(obj), list(x >= c(2,3), z <= c(-1,-4), constr_exp <= 2))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS", eps = 1e-6)
   expect_equal(result$value, 22, tolerance = TOL)
   expect_equal(result$getValue(x), matrix(c(2,3)), tolerance = TOL)
   expect_equal(result$getValue(z), matrix(c(-1,-4)), tolerance = TOL)
 
-  # Expression values
+  # Expression values.
   xs <- result$getValue(x)
   zs <- result$getValue(z)
   expect_equal(result$getValue(diff_exp), xs - zs, tolerance = TOL)
   expect_equal(result$getValue(inf_exp), norm(xs - zs, "I"))
   expect_equal(result$getValue(sum_entries_exp), 5 + norm(zs, "1") + norm(xs, "1") + norm(xs - zs, "I"))
-  expect_equal(result$getValue(constr_exp), base::norm(xs + zs, "2"))
+  expect_equal(result$getValue(constr_exp), norm(xs + zs, "2"))
   expect_equal(result$getValue(obj), result$value)
 })
 
 test_that("Test multiplication by zero", {
   skip_on_cran()
-  exp <- 0*a
-  expect_equal(value(exp), matrix(0))
-  obj <- Minimize(exp)
+  value(a) <- 1
+  expr <- 0*a
+  expect_equal(value(expr), matrix(0))
+  obj <- Minimize(expr)
   p <- Problem(obj)
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 0, tolerance = TOL)
   expect_false(is.na(result$getValue(a)))
 })
@@ -1074,99 +1123,149 @@ test_that("Tests a problem with division", {
   skip_on_cran()
   obj <- Minimize(norm_inf(A/5))
   p <- Problem(obj, list(A >= 5))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 1, tolerance = TOL)
+  
+  c <- Constant(rbind(c(1,-1), c(2,-2)))
+  expr <- A/(1/c)
+  obj <- Minimize(norm_inf(expr))
+  p <- Problem(obj, list(A == 5))
+  result <- solve(p, solver = "ECOS")
+  expect_equal(result$value, 10, tolerance = TOL)
+  expect_equal(result$getValue(expr), rbind(c(5,-5), c(10,-10)), tolerance = TOL)
+  
+  # Test with a sparse matrix.
+  c <- Matrix(c(1,2), sparse = TRUE)
+  c <- Constant(c)
+  expr <- Minimize(norm_inf(expr))
+  p <- Problem(obj, list(x == 5))
+  result <- solve(p, solver = "ECOS")
+  expect_equal(result$value, 10, tolerance = TOL)
+  expect_equivalent(as.matrix(result$getValue(expr)), matrix(c(5,10)), tolerance = TOL)
+  
+  # Test promotion.
+  c <- rbind(c(1,-1), c(2,-2))
+  c <- Constant(c)
+  expr <- a/(1/c)
+  obj <- Minimize(norm_inf(expr))
+  p <- Problem(obj, list(a == 5))
+  result <- solve(p, solver = "ECOS")
+  expect_equal(result$value, 10, tolerance = TOL)
+  expect_equivalent(result$getValue(expr), rbind(c(5,-5), c(10,-10)), tolerance = TOL)
 })
 
 test_that("Tests problems with multiply", {
   skip_on_cran()
-  c <- cbind(c(1,-1), c(2,-2))
+  c <- rbind(c(1,-1), c(2,-2))
   expr <- multiply(c, A)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(A == 5))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equal(result$getValue(expr), cbind(c(5,-5), c(10,-10)), tolerance = TOL)
+  expect_equal(result$getValue(expr), rbind(c(5,-5), c(10,-10)), tolerance = TOL)
 
-  # Test with a sparse matrix
-  c <- Matrix::sparseMatrix(i = c(1,2), j = c(1,1), x = c(1,2))
+  # Test with a sparse matrix.
+  c <- Matrix(c(1,2), sparse = TRUE)
   expr <- multiply(c, x)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(x == 5))
-  result <- solve(p)
+  result <- solve(p, solver = "ECOS")
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equivalent(as.matrix(result$getValue(expr)), matrix(c(5,10)))
+  expect_equivalent(as.matrix(result$getValue(expr)), matrix(c(5,10)), tolerance = TOL)
 
-  # Test promotion
-  c <- cbind(c(1,-1), c(2,-2))
+  # Test promotion.
+  c <- rbind(c(1,-1), c(2,-2))
   expr <- multiply(c, a)
   obj <- Minimize(norm_inf(expr))
   p <- Problem(obj, list(a == 5))
-  result <- solve(p)
+  result <- solve(p, solver = "SCS")
   expect_equal(result$value, 10, tolerance = TOL)
-  expect_equivalent(as.matrix(result$getValue(expr)), cbind(c(5,-5), c(10,-10)))
+  expect_equivalent(as.matrix(result$getValue(expr)), rbind(c(5,-5), c(10,-10)), tolerance = TOL)
 })
 
 test_that("Tests that errors occur when you use an invalid solver", {
   skip_on_cran()
-  expect_error(solve(Problem(Minimize(Bool())), solver = "ECOS"))
+  expect_error(solve(Problem(Minimize(Variable(boolean = TRUE))), solver = "ECOS"))
   expect_error(solve(Problem(Minimize(lambda_max(a))), solver = "ECOS"))
   expect_error(solve(Problem(Minimize(a)), solver = "SCS"))
 })
 
+test_that("Tests that a solver error is raised when a solver fails", {
+  skip_on_cran()
+  A <- matrix(rnorm(40*40), nrow = 40, ncol = 40)
+  b <- A %*% matrix(rnorm(40))
+  prob <- Problem(Minimize(sum_squares(A %*% Variable(40) - b)))
+  expect_error(solve(prob, solver = "OSQP", max_iter = 1))
+})
+
 test_that("Tests problems with reshape_expr", {
   skip_on_cran()
-  # Test on scalars
-  expect_equal(value(reshape_expr(1,c(1,1))), matrix(1))
+  
+  # Test on scalars.
+  expect_equal(value(reshape_expr(1, c(1,1))), matrix(1))
 
-  # Test vector to matrix
+  # Test vector to matrix.
   x <- Variable(4)
   mat <- cbind(c(1,-1), c(2,-2))
-  vec <- matrix(1:4)
+  vec <- matrix(1:4, ncol = 1)
   vec_mat <- cbind(c(1,2), c(3,4))
-  expr <- reshape_expr(x,c(2,2))
+  expr <- reshape_expr(x, c(2,2))
   obj <- Minimize(sum_entries(mat %*% expr))
   prob <- Problem(obj, list(x == vec))
-  result <- solve(prob)
-  expect_equal(result$value, sum(mat %*% vec_mat))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$value, sum(mat %*% vec_mat), tolerance = TOL)
 
-  # Test on matrix to vector
+  # Test on matrix to vector.
   c <- 1:4
-  expr <- reshape_expr(A,c(4,1))
+  expr <- reshape_expr(A, c(4,1))
   obj <- Minimize(t(expr) %*% c)
-  constraints <- list(A == cbind(c(-1,-2), c(3,4)))
+  constraints <- list(A == rbind(c(-1,-2), c(3,4)))
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 20, tolerance = TOL)
   expect_equal(result$getValue(expr), matrix(c(-1,-2,3,4)))
-  expect_equal(result$getValue(reshape_expr(expr,c(2,2))), cbind(c(-1,-2), c(3,4)))
+  expect_equal(result$getValue(reshape_expr(expr, c(2,2))), rbind(c(-1,-2), c(3,4)))
 
-  # Test matrix to matrix
-  expr <- reshape_expr(C,c(2,3))
+  # Test matrix to matrix.
+  expr <- reshape_expr(C, c(2,3))
   mat <- rbind(c(1,-1), c(2,-2))
   C_mat <- rbind(c(1,4), c(2,5), c(3,6))
   obj <- Minimize(sum_entries(mat %*% expr))
   prob <- Problem(obj, list(C == C_mat))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   reshaped = matrix(C_mat, nrow = 2, ncol = 3, byrow = FALSE)
   expect_equal(result$value, sum(mat %*% reshaped), tolerance = TOL)
-  expect_equal(result$getValue(expr), reshaped, tolerance = TOL)
+  expect_equal(result$getValue(expr), C_mat, tolerance = TOL)
 
-  # Test promoted expressions
+  # Test promoted expressions.
   c <- cbind(c(1,-1), c(2,-2))
-  expr <- reshape_expr(c * a,c(1,4))
-  obj <- Minimize(expr %*% (1:4))
+  expr <- reshape_expr(c * a, c(1,4))
+  obj <- Minimize(expr %*% matrix(1:4))
   prob <- Problem(obj, list(a == 2))
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, -6, tolerance = TOL)
   expect_equal(result$getValue(expr), 2*matrix(c, nrow = 1), tolerance = TOL)
 
-  expr <- reshape_expr(c * a,c(4,1))
-  obj <- Minimize(t(expr) %*% (1:4))
+  expr <- reshape_expr(c * a, c(4,1))
+  obj <- Minimize(t(expr) %*% matrix(1:4))
   prob <- Problem(obj, list(a == 2))
-  result <- solve(prob)
+  result <- solve(prob, solver =)
   expect_equal(result$value, -6, tolerance = TOL)
   expect_equal(result$getValue(expr), 2*matrix(c, ncol = 1), tolerance = TOL)
+})
+
+test_that("test problems with cumsum", {
+  tt <- Variable(5)
+  prob <- Problem(Minimize(sum(tt)), list(cumsum(tt, 2) >= -0.0001))
+  result <- solve(prob, solver = "SCS", eps = 1e-8)
+  expect_equal(result$value, -0.0001, tolerance = TOL)
+})
+
+test_that("test problems with cummax", {
+  tt <- Variable(5)
+  prob <- Problem(Maximize(sum(tt)), list(cummax(tt, 2) <= c(1,2,3,4,5)))
+  result <- solve(prob, solver = "SCS", eps = 1e-6)
+  expect_equal(result$value, 15, tolerance = TOL)
 })
 
 test_that("Tests problems with vec", {
@@ -1174,9 +1273,9 @@ test_that("Tests problems with vec", {
   c <- 1:4
   expr <- vec(A)
   obj <- Minimize(t(expr) %*% c)
-  constraints <- list(A == cbind(c(-1,-2), c(3,4)))
+  constraints <- list(A == rbind(c(-1,-2), c(3,4)))
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 20, tolerance = TOL)
   expect_equal(result$getValue(expr), matrix(c(-1,-2,3,4)))
 })
@@ -1187,11 +1286,13 @@ test_that("Test a problem with diag", {
   obj <- Maximize(C[1,3])
   constraints <- list(diag(C) == 1, C[1,2] == 0.6, C[2,3] == -0.3, C == Variable(3, 3, PSD = TRUE))
   prob <- Problem(obj, constraints)
-  result <- solve(prob)
+  result <- solve(prob, solver = "SCS")
   expect_equal(result$value, 0.583151, tolerance = 1e-2)
 })
 
 test_that("Test presolve with parameters", {
+  skip_on_cran()
+  
   # Test with parameters.
   gamma <- Parameter(nonneg = TRUE)
   x <- Variable()

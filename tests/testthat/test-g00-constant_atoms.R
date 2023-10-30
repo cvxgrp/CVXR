@@ -24,7 +24,7 @@ log_sum_exp_axis_2 <- function(x) { log_sum_exp(x, axis = 2, keepdims = TRUE) }
 
 # Map from solver name to a list of strings for atoms that fail.
 KNOWN_SOLVER_ERRORS <- list()
-KNOWN_SOLVER_ERRORS$MOSESK <- c("xexp")
+KNOWN_SOLVER_ERRORS$MOSEK <- c("xexp")
 
 atoms_minimize <- list(
             list(abs, c(2,2), list(cbind(c(-5,2), c(-3,1))), Constant(cbind(c(5,2), c(3,1)))),
@@ -197,10 +197,11 @@ atoms_maximize <- list(
             list(function(x) { (x + Constant(0))^0.5 }, c(2,2), list(cbind(c(2,4), c(16,1))), Constant(cbind(c(1.414213562373095,2), c(4,1))))
           )
 
+
 # Can the solver solver the problem?
 check_solver <- function(prob, solver_name) {
   atom_str <- as.character(prob@objective@args[[1]])
-  if(solver_name %in% names(KNOWN_SOLVER_ERRORS)) {
+  if(solver_name %in% names(KNOW_SOLVER_ERRORS)) {
     for(bad_atom_name in KNOWN_SOLVER_ERRORS[[solver_name]]) {
       if(grepl(bad_atom_name, atom_str, fixed = TRUE))
         return(FALSE)
@@ -208,18 +209,15 @@ check_solver <- function(prob, solver_name) {
   }
   
   tryCatch({
-      if(solver_name == ROBUST_CVXOPT)
-          solver_name <- "CVXOPT"
-
-      chains <- CVXR:::.construct_chains(prob, solver = solver_name)
-      
-      return(TRUE)
+    if(solver_name == ROBUST_CVXOPT)
+      solver_name <- "CVXOPT"
+    chains <- CVXR:::.construct_chains(prob, solver = solver_name)
+    return(TRUE)
   }, error = function(e) {
-      return(FALSE)
+    # warning(e)
+    return(FALSE)
   })
 }
-
-ecnt  <- 0   # Count number of tests.
 
 # Test numeric version of atoms.
 run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
@@ -231,13 +229,13 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
     print(problem@constraints)
     print(paste("solver", solver))
   }
-
+  
   if(check_solver(problem, solver)) {
     tolerance <- SOLVERS_TO_TOL[[solver]]
     
     tryCatch({
       if(solver == ROBUST_CVXOPT)
-        result <- solve(problem, solver = CVXOPT, verbose = verbose, kktsolver = ROBUST_KKTSOLVER)
+        result <- solve(problem, solver = "CVXOPT", verbose = verbose, kktsolver = ROBUST_KKTSOLVER)
       else
         result <- solve(problem, solver = solver, verbose = verbose)
     }, error = function(e) {
@@ -251,21 +249,9 @@ run_atom <- function(atom, problem, obj_val, solver, verbose = FALSE) {
         print(result$value)
         print(obj_val)
       }
-      
-      obj_diff <- (result$value - obj_val)/(1 + abs(obj_val))
-      expect_true(abs(obj_diff) <= tolerance)
-      
-      if(abs(obj_diff) > tolerance) {
-        ecnt  <- ecnt + 1
-        sink("test_constant_atoms_out.txt", append = TRUE)
-        cat(sprintf("Solver: %s\n", solver))
-        print(atom)
-        cat(sprintf("Result: %.10f \t Expected: %.10f \t Obj_diff: %.10f\n", result$value, obj_val, obj_diff))
-        sink()
-        saveRDS(list(problem  = problem, solver = "solver"), file = sprintf("error-%02d.RDS", ecnt))
-      }
+      expect_true(-tolerance <= (result$value - obj_val) / (1 + abs(obj_val)) <= tolerance)
     } else
-        stop("Problem status is sub-optimal: ", result$status)
+      stop("No solution present. Problem status: ", result$status)
   }
 }
 
@@ -282,100 +268,60 @@ get_indices <- function(size) {
 atoms_minimize <- lapply(atoms_minimize, function(a) { list(a, Minimize) })
 atoms_maximize <- lapply(atoms_maximize, function(a) { list(a, Maximize) })
 
+test_constant_atoms <- function(atom_info, objective_type) {
+  atom <- atom_info[[1]]
+  size <- atom_info[[2]]
+  args <- atom_info[[3]]
+  obj_val <- atom_info[[4]]
+  
+  for(indexer in get_indices(size)) {
+    for(solver in SOLVERS_TO_TRY) {
+      # Atoms with Constant arguments.
+      prob_val <- value(obj_val[indexer])
+      const_args <- lapply(args, Constant)
+      if(length(size) != 0)
+        objective <- objective_type(do.call(atom, const_args)[indexer])
+      else
+        objective <- objective_type(do.call(atom, const_args))
+      problem <- Problem(objective)
+      run_atom(atom, problem, prob_val, solver)
+      
+      # Atoms with Variable arguments.
+      variables <- list()
+      constraints <- list()
+      for(idx in seq_along(args)) {
+        expr <- args[[idx]]
+        variables <- c(variables, new("Variable", dim = intf_dim(expr)))
+        constraints <- c(constraints, variables[[length(variables)]] == expr)
+      }
+      if(length(size) != 0)
+        objective <- objective_type(do.call(atom, variables)[indexer])
+      else
+        objective <- objective_type(do.call(atom, variables))
+      problem <- Problem(objective, constraints)
+      run_atom(atom, problem, prob_val, solver)
+      
+      # Atoms with Parameter arguments.
+      parameters <- list()
+      for(expr in args) {
+        parameters <- c(parameters, new("Parameter", dim = intf_dim(expr)))
+        value(parameters[[length(parameters)]]) <- intf_const_to_matrix(expr)
+      }
+      if(length(size) != 0)
+        objective <- objective_type(do.call(atom, parameters)[indexer])
+      else
+        objective <- objective_type(do.call(atom, parameters))
+      run_atom(atom, Problem(objective), prob_val, solver)
+    }
+  }
+}
+
 test_that("Test all constant atoms", {
   skip_on_cran()
-  ## if(file.exists("test_constant_atoms_out.txt"))
-  ##  file.remove("test_constant_atoms_out.txt")
-  ## atom_part  <- 0 ## counter for atom part (DEBUG AID)
-  for(a in atoms) {
-      atom_list <- a[[1]]
-      objective_type <- a[[2]]
-      ## counter  <- 0 ## list item counter (DEBUG AID)
-      for(al in atom_list) {
-          ##counter  <- counter + 1 ## list item counter (DEBUG AID)
-          atom <- al[[1]]
-          dims <- al[[2]]
-          args <- al[[3]]
-          obj_val <- al[[4]]
-          for(row in 1:dims[1]) {
-              for(col in 1:dims[2]) {
-                  for(solver in SOLVERS_TO_TRY) {
-                      ## cat(sprintf("i: %d j: %d solver: %S \n", atom_part, counter, solver)) ## (DEBUG AID)
-                      ## Atoms with Constant arguments
-                      const_args <- lapply(args, Constant)
-                      run_atom(atom, Problem(objective_type(do.call(atom, const_args)[row, col])),
-                               value(obj_val[row, col]), solver)
-
-                      ## Atoms with Variable arguments
-                      variables <- list()
-                      constraints <- list()
-                      for(expr in args) {
-                          expr_dim <- CVXR:::intf_dim(expr)
-                          # variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
-                          variables <- c(variables, new("Variable", dim = expr_dim))
-                          constraints <- c(constraints, variables[[length(variables)]] == expr)
-                      }
-                      objective <- objective_type(do.call(atom, variables)[row, col])
-                      ## print(atom)
-                      ## print(value(obj_val[row, col]))
-                      run_atom(atom, Problem(objective, constraints), value(obj_val[row, col]), solver)
-
-                      ## Atoms with Parameter arguments
-                      ## parameters <- list()
-                      ## for(expr in args) {
-                      ##     expr_dim <- dim(expr)
-                      ##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
-                      ##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
-                      ## }
-                      ## objective <- objective_type(do.call(atom, parameters)[row, col])
-                      ## run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
-                  }
-              }
-          }
-      }
+  atoms_list <- c(atoms_minimize, atoms_maximize)
+  for(a in atoms_list) {
+    atom_info <- a[[1]]
+    objective_type <- a[[2]]
+    test_constant_atom(atom_info, objective_type)
   }
 })
-
-## To isolate a problem with a particular atom, run the test below
-## after setting uncommenting lines lablled "DEBUG AID"
-## From that you will get atom part i, item number j and solver.
-## Run this function with the same atoms and those args to isolate it
-## run_brat  <- function(atoms, i, j, solver) {
-##   atom_el  <- atoms[[i]]
-##   objective_type  <- atom_el[[2]]
-##   al  <- atom_el[[1]][[j]]
-##   atom <- al[[1]]
-##   dims <- al[[2]]
-##   args <- al[[3]]
-##   obj_val <- al[[4]]
-##   row  <- dims[1]
-##   col  <- dims[2]
-##   const_args <- lapply(args, Constant)
-##   problem1  <- Problem(objective_type(do.call(atom, const_args)[row, col]))
-##   result <- solve(problem1, solver = solver, verbose = TRUE)
-##   ## Atoms with Variable arguments
-##   variables <- list()
-##   constraints <- list()
-##   for(expr in args) {
-##     expr_dim <- CVXR:::intf_dim(expr)
-##     variables <- c(variables, Variable(expr_dim[1], expr_dim[2]))
-##     constraints <- c(constraints, variables[[length(variables)]] == expr)
-##   }
-##   objective <- objective_type(do.call(atom, variables)[row, col])
-##   problem2  <- Problem(objective, constraints)
-##   result <- solve(problem2, solver = solver, verbose = TRUE)
-##   ## Atoms with Parameter arguments
-##   parameters <- list()
-##   for(expr in args) {
-##     expr_dim <- dim(expr)
-##     parameters <- c(parameters, Parameter(expr_dim[1], expr_dim[2]))
-##     value(parameters[[length(parameters)]]) <- as.matrix(expr)
-##   }
-##   objective <- objective_type(do.call(atom, parameters)[row, col])
-##   run_atom(atom, Problem(objective), value(obj_val[row, col]), solver)
-## }
-
-
-
-
-

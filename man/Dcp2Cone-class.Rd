@@ -6,11 +6,17 @@
 \alias{.Dcp2Cone}
 \alias{accepts,Dcp2Cone,Problem-method}
 \alias{perform,Dcp2Cone,Problem-method}
+\alias{canonicalize_tree,Dcp2Cone,Expression,logical-method}
+\alias{canonicalize_expr,Dcp2Cone-method}
 \title{Reduce DCP Problem to Conic Form}
 \usage{
 \S4method{accepts}{Dcp2Cone,Problem}(object, problem)
 
 \S4method{perform}{Dcp2Cone,Problem}(object, problem)
+
+\S4method{canonicalize_tree}{Dcp2Cone,Expression,logical}(object, expr, affine_above)
+
+\S4method{canonicalize_expr}{Dcp2Cone}(object, expr, args, affine_above)
 }
 \arguments{
 \item{object}{A \linkS4class{Dcp2Cone} object.}
@@ -26,5 +32,9 @@ with affine objectives and conic constraints whose arguments are affine.
 \item \code{accepts(object = Dcp2Cone, problem = Problem)}: A problem is accepted if it is a minimization and is DCP.
 
 \item \code{perform(object = Dcp2Cone, problem = Problem)}: Converts a DCP problem to a conic form.
+
+\item \code{canonicalize_tree(object = Dcp2Cone, expr = Expression, affine_above = logical)}: Recursively canonicalize an Expression.
+
+\item \code{canonicalize_expr(Dcp2Cone)}: Canonicalize an expression wrt canonicalized arguments.
 
 }}

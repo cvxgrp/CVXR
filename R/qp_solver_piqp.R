@@ -16,7 +16,7 @@ PIQP <- function() { new("PIQP") }
 #' @param status A status code returned by the solver.
 #' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
 #' @describeIn PIQP Converts status returned by the PIQP solver to its respective CVXR status.
-setMethod("status_map", "PIQP", function(solver, status, default = NA_character_) {
+setMethod("status_map", "PIQP", function(solver, status) {
   PIQP_STATUS_MAP <- list(
     "1" = OPTIMAL,
     "-1" = USER_LIMIT, # Maxiter reached
@@ -27,11 +27,8 @@ setMethod("status_map", "PIQP", function(solver, status, default = NA_character_
   )
 
   status_string <- PIQP_STATUS_MAP[[as.character(status)]]
-  if (is.null(status_string)) {
-    if (is.na(default))
-      stop("PIQP status unrecognized: ", status)
-    else
-      default
+ if (is.null(status_string)) {
+      stop("OSQP status unrecognized: ", status)
   } else {
     status_string
   }

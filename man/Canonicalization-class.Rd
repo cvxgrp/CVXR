@@ -6,7 +6,7 @@
 \alias{.Canonicalization}
 \alias{perform,Canonicalization,Problem-method}
 \alias{invert,Canonicalization,Solution,InverseData-method}
-\alias{canonicalize_tree,Canonicalization-method}
+\alias{canonicalize_tree,Canonicalization,ANY,ANY-method}
 \alias{canonicalize_expr,Canonicalization-method}
 \title{The Canonicalization class.}
 \usage{
@@ -14,7 +14,7 @@
 
 \S4method{invert}{Canonicalization,Solution,InverseData}(object, solution, inverse_data)
 
-\S4method{canonicalize_tree}{Canonicalization}(object, expr)
+\S4method{canonicalize_tree}{Canonicalization,ANY,ANY}(object, expr)
 
 \S4method{canonicalize_expr}{Canonicalization}(object, expr, args)
 }
@@ -34,6 +34,19 @@
 \description{
 This class represents a canonicalization reduction.
 }
+\details{
+This reduction recursively canonicalizes every expression tree in a problem,
+visiting each node. At every node, this reduction first canonicalizes its
+arguments; it then canonicalizes the node, using the canonicalized arguments.
+
+The attribute canon_methods is a list mapping node types to functions that
+canonicalize them; the signature of these canonicalizing functions must be
+\code{canon_func(expr, canon_args) --> (new_expr, constraints) }
+where expr is the Expression (node) to canonicalize, canon_args is a list of
+the canonicalized arguments of this expression, new_expr is a canonicalized
+expression, and constraints is a list of constraints introduced while
+canonicalizing expr.
+}
 \section{Methods (by generic)}{
 \itemize{
 \item \code{perform(object = Canonicalization, problem = Problem)}: Recursively canonicalize the objective and every constraint.
@@ -44,7 +57,7 @@ This class represents a canonicalization reduction.
   inverse_data = InverseData
 )}: Performs the reduction on a problem and returns an equivalent problem.
 
-\item \code{canonicalize_tree(Canonicalization)}: Recursively canonicalize an Expression.
+\item \code{canonicalize_tree(object = Canonicalization, expr = ANY, affine_above = ANY)}: Recursively canonicalize an Expression.
 
 \item \code{canonicalize_expr(Canonicalization)}: Canonicalize an expression, w.r.t. canonicalized arguments.
 

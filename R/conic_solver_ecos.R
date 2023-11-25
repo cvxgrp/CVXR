@@ -18,16 +18,11 @@ ECOS.dims_to_solver_dict <- function(cone_dims) {
 #' @aliases ECOS
 #' @rdname ECOS-class
 #' @export
-setClass("ECOS", contains = "ConicSolver")
-
-setMethod("initialize", "ECOS",
-          function(.Object, ...) {
-            ##.Object <- callNextMethod(.Object, ...)
-            ## Ensure EXP_CONE_ORDER is set
-            .Object@EXP_CONE_ORDER <- c(0L, 1L, 2L)
-            .Object@SUPPORTED_CONSTRAINTS <- c(.Object@SUPPORTED_CONSTRAINTS, "SOC", "ExpCone")
-            .Object
-          })
+ECOS <- setClass("ECOS", contains = "ConicSolver",
+                 prototype = list(
+                   EXP_CONE_ORDER = c(0L, 1L, 2L),
+                   SUPPORTED_CONSTRAINTS = c(ConicSolver()@SUPPORTED_CONSTRAINTS, "SOC", "ExpCone"))
+                 )
 
 ## The function below not needed usually!
 ## #' @rdname ECOS-class
@@ -72,7 +67,7 @@ setMethod("status_map", "ECOS", function(solver, status) {
 setMethod("import_solver", "ECOS", function(solver) { requireNamespace("ECOSolveR", quietly = TRUE) })
 
 #' @describeIn ECOS Returns the name of the solver
-setMethod("name", "ECOS", function(solver) { ECOS_NAME })
+setMethod("name", "ECOS", function(x) { ECOS_NAME })
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ECOS Returns a new problem and data for inverting the new solution.
@@ -99,8 +94,8 @@ setMethod("perform", signature(object = "ECOS", problem = "Problem"), function(o
   data[[object@dims]] <- inv_data[[object@dims]] <- problem@cone_dims
 
   constr_map <- problem@constr_map
-  inv_data[[EQ_CONSTR]] <- constr_map$Zero
-  inv_data[[NEQ_CONSTR]] <- c(constr_map$NonNeg, constr_map$SOC, constr_map$ExpCone)
+  inv_data[[EQ_CONSTR]] <- constr_map$ZeroConstraint
+  inv_data[[NEQ_CONSTR]] <- c(constr_map$NonNegConstraint, constr_map$SOC, constr_map$ExpCone)
 
   len_eq_ind <- seq_len(problem@cone_dims$zero)
 

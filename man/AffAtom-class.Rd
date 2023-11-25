@@ -13,6 +13,7 @@
 \alias{is_incr,AffAtom-method}
 \alias{is_decr,AffAtom-method}
 \alias{is_quadratic,AffAtom-method}
+\alias{has_quadratic_term,AffAtom-method}
 \alias{is_qpwa,AffAtom-method}
 \alias{is_pwl,AffAtom-method}
 \alias{is_psd,AffAtom-method}
@@ -37,6 +38,8 @@
 \S4method{is_decr}{AffAtom}(object, idx)
 
 \S4method{is_quadratic}{AffAtom}(object)
+
+\S4method{has_quadratic_term}{AffAtom}(object)
 
 \S4method{is_qpwa}{AffAtom}(object)
 
@@ -77,6 +80,8 @@ This virtual class represents an affine atomic expression.
 \item \code{is_decr(AffAtom)}: The atom is not weakly decreasing in any argument.
 
 \item \code{is_quadratic(AffAtom)}: Is every argument quadratic?
+
+\item \code{has_quadratic_term(AffAtom)}: Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
 
 \item \code{is_qpwa(AffAtom)}: Is every argument quadratic of piecewise affine?
 

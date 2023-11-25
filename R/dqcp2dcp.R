@@ -24,7 +24,9 @@ Dqcp2Dcp.get_lazy_and_real_constraints <- function(constraints) {
 #' Problems emitted by this reduction can be solved with the bisect function.
 #'
 #' @rdname Dqcp2Cone-class
-.Dqcp2Cone <- setClass("Dqcp2Cone", prototype(.bisection_data = NULL), contains = "Canonicalization")
+.Dqcp2Cone <- setClass("Dqcp2Cone",
+                       slots = list(.bisection_data = "list"),
+                       prototype = list(.bisection_data = NULL), contains = "Canonicalization")
 Dqcp2Cone <- function(problem = NULL) { .Dqcp2Cone(problem = problem) }
 
 setMethod("initialize", "Dqcp2Cone", function(.Object, ...) {

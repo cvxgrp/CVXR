@@ -8,12 +8,15 @@
 \alias{EqConstraint-class}
 \alias{.EqConstraint}
 \alias{name,EqConstraint-method}
+\alias{as.character,EqConstraint-method}
 \alias{dim,EqConstraint-method}
 \alias{size,EqConstraint-method}
 \alias{expr,EqConstraint-method}
 \alias{is_dcp,EqConstraint-method}
 \alias{is_dgp,EqConstraint-method}
 \alias{residual,EqConstraint-method}
+\alias{dual_value,EqConstraint-method}
+\alias{dual_value<-,EqConstraint-method}
 \title{The EqConstraint class}
 \usage{
 \S4method{==}{Expression,Expression}(e1, e2)
@@ -24,22 +27,30 @@
 
 \S4method{name}{EqConstraint}(x)
 
+\S4method{as.character}{EqConstraint}(x)
+
 \S4method{dim}{EqConstraint}(x)
 
 \S4method{size}{EqConstraint}(object)
 
 \S4method{expr}{EqConstraint}(object)
 
-\S4method{is_dcp}{EqConstraint}(object)
+\S4method{is_dcp}{EqConstraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{EqConstraint}(object)
+\S4method{is_dgp}{EqConstraint}(object, dpp = FALSE)
 
 \S4method{residual}{EqConstraint}(object)
+
+\S4method{dual_value}{EqConstraint}(object)
+
+\S4method{dual_value}{EqConstraint}(object) <- value
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to compare.}
 
 \item{x, object}{A \linkS4class{EqConstraint} object.}
+
+\item{value}{A numeric scalar, vector, or matrix.}
 }
 \description{
 The EqConstraint class
@@ -59,5 +70,9 @@ The EqConstraint class
 \item \code{is_dgp(EqConstraint)}: Is the constraint DGP?
 
 \item \code{residual(EqConstraint)}: The residual of the constraint..
+
+\item \code{dual_value(EqConstraint)}: The dual values of a constraint.
+
+\item \code{dual_value(EqConstraint) <- value}: Replaces the dual values of a constraint.
 
 }}

@@ -22,6 +22,7 @@
 \alias{expr,IneqConstraint-method}
 \alias{is_dcp,IneqConstraint-method}
 \alias{is_dgp,IneqConstraint-method}
+\alias{is_dqcp,IneqConstraint-method}
 \alias{residual,IneqConstraint-method}
 \title{The IneqConstraint class}
 \usage{
@@ -57,9 +58,11 @@
 
 \S4method{expr}{IneqConstraint}(object)
 
-\S4method{is_dcp}{IneqConstraint}(object)
+\S4method{is_dcp}{IneqConstraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{IneqConstraint}(object)
+\S4method{is_dgp}{IneqConstraint}(object, dpp = FALSE)
+
+\S4method{is_dqcp}{IneqConstraint}(object)
 
 \S4method{residual}{IneqConstraint}(object)
 }
@@ -69,7 +72,7 @@
 \item{x, object}{A \linkS4class{IneqConstraint} object.}
 }
 \description{
-The IneqConstraint class
+A constraint of the form \eqn{x \leq y}.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -85,6 +88,16 @@ The IneqConstraint class
 
 \item \code{is_dgp(IneqConstraint)}: Is the constraint DGP?
 
+\item \code{is_dqcp(IneqConstraint)}: Is the constraing DQCP?
+
 \item \code{residual(IneqConstraint)}: The residual of the constraint.
 
 }}
+\section{Slots}{
+
+\describe{
+\item{\code{lhs}}{The expression to be upper-bounded by rhs.}
+
+\item{\code{rhs}}{The expression to be lower-bounded by lhs.}
+}}
+

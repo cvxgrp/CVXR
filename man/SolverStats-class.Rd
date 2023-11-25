@@ -21,6 +21,7 @@ A list containing
   \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
   \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
   \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+  \item{\code{extra_stats}}{Extra statistics specific to the solver; these statistics are typically returned directly from the solver, without modification by CVXR.}
 }
 }
 \description{
@@ -36,5 +37,7 @@ This class contains the miscellaneous information that is returned by a solver a
 \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
 
 \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+
+\item{\code{extra_stats}}{Extra statistics specific to the solver; these statistics are typically returned directly from the solver, without modification by CVXR.}
 }}
 

@@ -8,16 +8,16 @@
 \alias{as.character,SOC-method}
 \alias{residual,SOC-method}
 \alias{get_data,SOC-method}
-\alias{format_constr,SOC-method}
 \alias{num_cones,SOC-method}
 \alias{size,SOC-method}
 \alias{cone_sizes,SOC-method}
 \alias{is_dcp,SOC-method}
 \alias{is_dgp,SOC-method}
-\alias{canonicalize,SOC-method}
+\alias{is_dqcp,SOC-method}
+\alias{dual_value<-,SOC-method}
 \title{The SOC class.}
 \usage{
-SOC(t, X, axis = 2, id = NA_integer_)
+SOC(t, X, axis = 2, constr_id = NA_integer_)
 
 \S4method{as.character}{SOC}(x)
 
@@ -25,19 +25,19 @@ SOC(t, X, axis = 2, id = NA_integer_)
 
 \S4method{get_data}{SOC}(object)
 
-\S4method{format_constr}{SOC}(object, eq_constr, leq_constr, dims, solver)
-
 \S4method{num_cones}{SOC}(object)
 
 \S4method{size}{SOC}(object)
 
 \S4method{cone_sizes}{SOC}(object)
 
-\S4method{is_dcp}{SOC}(object)
+\S4method{is_dcp}{SOC}(object, dpp = FALSE)
 
-\S4method{is_dgp}{SOC}(object)
+\S4method{is_dgp}{SOC}(object, dpp = FALSE)
 
-\S4method{canonicalize}{SOC}(object)
+\S4method{is_dqcp}{SOC}(object)
+
+\S4method{dual_value}{SOC}(object) <- value
 }
 \arguments{
 \item{t}{The scalar part of the second-order constraint.}
@@ -46,28 +46,21 @@ SOC(t, X, axis = 2, id = NA_integer_)
 
 \item{axis}{The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.}
 
-\item{id}{(Optional) A numeric value representing the constraint ID.}
+\item{constr_id}{(Optional) A numeric value representing the constraint ID.}
 
 \item{x, object}{A \linkS4class{SOC} object.}
 
-\item{eq_constr}{A list of the equality constraints in the canonical problem.}
-
-\item{leq_constr}{A list of the inequality constraints in the canonical problem.}
-
-\item{dims}{A list with the dimensions of the conic constraints.}
-
-\item{solver}{A string representing the solver to be called.}
+\item{value}{A numeric scalar, vector, or matrix.}
 }
 \description{
-This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
+This class represents a second-order cone constraint for each row/column, i.e. \eqn{\|x\|_2 \leq t}.
+It assumes t is a vector the same length as X's rows (resp. columns) for axis == 1 (resp. 2).
 }
 \section{Methods (by generic)}{
 \itemize{
 \item \code{residual(SOC)}: The residual of the second-order constraint.
 
 \item \code{get_data(SOC)}: Information needed to reconstruct the object aside from the args.
-
-\item \code{format_constr(SOC)}: Format SOC constraints as inequalities for the solver.
 
 \item \code{num_cones(SOC)}: The number of elementwise cones.
 
@@ -79,7 +72,9 @@ This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 
 \item \code{is_dgp(SOC)}: Is the constraint DGP?
 
-\item \code{canonicalize(SOC)}: The canonicalization of the constraint.
+\item \code{is_dqcp(SOC)}: Is the constraint DQCP?
+
+\item \code{dual_value(SOC) <- value}: Replaces the dual values of a second-order cone constraint.
 
 }}
 \section{Slots}{
@@ -89,6 +84,6 @@ This class represents a second-order cone constraint, i.e. \eqn{\|x\|_2 \leq t}.
 
 \item{\code{X}}{A matrix whose rows/columns are each a cone.}
 
-\item{\code{axis}}{The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.}
+\item{\code{axis}}{The dimension along which to constrain: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.}
 }}
 

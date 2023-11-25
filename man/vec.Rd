@@ -5,7 +5,7 @@
 \alias{vec}
 \title{Vectorization of a Matrix}
 \usage{
-vec(X)
+vec(X, byrow = FALSE)
 }
 \arguments{
 \item{X}{An \linkS4class{Expression} or matrix.}

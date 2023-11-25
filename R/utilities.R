@@ -1187,3 +1187,36 @@ build_non_disciplined_error_msg <- function(problem, discipline_type) {
   return(msg)
 }
 
+
+#' Return the symmetric 2D array defined by taking a vector specifying
+#' its lower triangular entries in column-major order
+#' @param v A list of length (dim * (dim + 1) / 2).
+#' @param dim The number of rows (equivalently, columns) in the output
+#'   array.
+#' @return Return the symmetric 2D array defined by taking `v` to
+#'   specify its lower triangular matrix.
+vectorized_lower_tri_to_mat <- function(v, dim) {
+  v <- unlist(v)
+  indseq <- seq_len(dim)
+  i_seq <- unlist(lapply(indseq, seq.int, to = dim))
+  j_seq <- unlist(lapply(indseq, function(i) rep(i, times = dim - i + 1)))
+  Matrix::sparseMatrix(i = c(i_seq, j_seq), j = c(j_seq, i_seq), x = c(v, v),
+                       dims = c(dim, dim), use.last.ij = TRUE)
+}
+
+#' Return the triplet form of the symmetric 2D array defined by taking
+#' a vector specifying its lower triangular entries in column-major
+#' order
+#' @param v A list of length (dim * (dim + 1) / 2).
+#' @param dim The number of rows (equivalently, columns) in the output
+#'   array.
+#' @return Return the symmetric 2D array defined by taking `v` to
+#'   specify its lower triangular matrix.
+vectorized_lower_tri_to_triples <- function(v, dim) {
+  v <- unlist(v)
+  indseq <- seq_len(dim)
+  i_seq <- unlist(lapply(indseq, seq.int, to = dim))
+  j_seq <- unlist(lapply(indseq, function(i) rep(i, times = dim - i + 1)))
+  list(row = c(i_seq, j_seq), cols = c(j_seq, i_seq), vals = c(v, v))
+}
+

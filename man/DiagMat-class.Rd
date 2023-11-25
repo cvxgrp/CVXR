@@ -9,6 +9,7 @@
 \alias{dim_from_args,DiagMat-method}
 \alias{is_atom_log_log_convex,DiagMat-method}
 \alias{is_atom_log_log_concave,DiagMat-method}
+\alias{is_nonneg,DiagMat-method}
 \alias{graph_implementation,DiagMat-method}
 \title{The DiagMat class.}
 \usage{
@@ -21,6 +22,8 @@ DiagMat(expr)
 \S4method{is_atom_log_log_convex}{DiagMat}(object)
 
 \S4method{is_atom_log_log_concave}{DiagMat}(object)
+
+\S4method{is_nonneg}{DiagMat}(object)
 
 \S4method{graph_implementation}{DiagMat}(object, arg_objs, dim, data = NA_real_)
 }
@@ -49,6 +52,8 @@ This class represents the extraction of the diagonal from a square matrix.
 \item \code{is_atom_log_log_convex(DiagMat)}: Is the atom log-log convex?
 
 \item \code{is_atom_log_log_concave(DiagMat)}: Is the atom log-log concave?
+
+\item \code{is_nonneg(DiagMat)}: A logical value indicating whether the atom is nonnegative.
 
 \item \code{graph_implementation(DiagMat)}: The graph implementation of the atom.
 

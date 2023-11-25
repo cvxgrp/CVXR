@@ -48,14 +48,14 @@ setMethod("perform", signature(object = "Qp2SymbolicQp", problem = "Problem"), f
 #' @slot soc A vector of the second-order cone dimensions.
 #' @slot psd A vector the positive semidefinite cone dimensions, where the dimension of the PSD cone of k by k matrices is k.
 #' @rdname QpMatrixStuffingConeDims-class
-.QpMatrixStuffingConeDims <- setClass("QpMatrixStuffingConeDims", representation(constr_map = "list", zero = "numeric", nonneg = "numeric", exp = "numeric", soc = "numeric", psd = "numeric"),
-                                  prototype(zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0))
+.QpMatrixStuffingConeDims <- setClass("QpMatrixStuffingConeDims", representation(constr_map = "list", zero = "integer", nonpos = "integer", exp = "integer", soc = "integer", psd = "integer"),
+                                  prototype(zero = integer(0), nonpos = integer(0), exp = integer(0), soc = integer(0), psd = integer(0)))
 QpMatrixStuffingConeDims <- function(constr_map) { .QpMatrixStuffingConeDims(constr_map = constr_map) }
 
-setMethod("initialize", "QpMatrixStuffingConeDims", function(.Object, constr_map, zero = 0, nonpos = 0, exp = 0, soc = 0, psd = 0) {
+setMethod("initialize", "QpMatrixStuffingConeDims", function(.Object, constr_map) {
   .Object@constr_map <- constr_map
-  .Object@zero <- as.integer(sum(sapply(constr_map$Zero, size)))
-  .Object@nonneg <- as.integer(sum(sapply(constr_map$NonNeg, size)))
+  .Object@zero <- as.integer(sum(sapply(constr_map$ZeroConstraint, size)))
+  .Object@nonneg <- as.integer(sum(sapply(constr_map$NonPosConstraint, size)))
   .Object@exp <- as.integer(sum(sapply(constr_map$ExpCone, num_cones)))
   # .Object@soc <- c()
   # for(c in constr_map$SOC)
@@ -178,20 +178,24 @@ setMethod("apply_parameters", "ParamQuadProg", function(object, id_to_param_valu
   return(list(P = P, q = q, d = d, AF = A, b = as.matrix(b)))
 })
 
-#' @describeIn ParamQuadProg Multiplies by Jacobian of parameter mapping.
-setMethod("apply_param_jac", "ParamQuadProg", function(object, delP, delq, delA, delb, active_params = NULL) {
-  stop("Unimplemented")
-})
+## COMMENT THIS OUT SINCE the signature in cvxpy itself is wrong: the cached problem only has
+## delc, delA, delB, and active_params as arguments.
+## #' @describeIn ParamQuadProg Multiplies by Jacobian of parameter mapping.
+## setMethod("apply_param_jac", "ParamQuadProg", function(object, delP, delq, delA, delb, active_params = NULL) {
+##   stop("Unimplemented")
+## })
 
-#' @describeIn ParamQuadProg Splits the solution into individual variables.
-setMethod("split_solution", "ParamQuadProg", function(object, sltn, active_vars = NULL) {
-  stop("Unimplemented")
-})
+## JUST COMMENTING OUT Unimplemented stuff as they cause more problems.
+##
+## #' @describeIn ParamQuadProg Splits the solution into individual variables.
+## setMethod("split_solution", "ParamQuadProg", function(object, sltn, active_vars = NULL) {
+##   stop("Unimplemented")
+## })
 
-#' @describeIn ParamQuadProg Adjoint of split_solution.
-setMethod("split_solution", "ParamQuadProg", function(object, del_vars = NULL) {
-  stop("Unimplemented")
-})
+## #' @describeIn ParamQuadProg Adjoint of split_solution.
+## setMethod("split_solution", "ParamQuadProg", function(object, del_vars = NULL) {
+##   stop("Unimplemented")
+## })
 
 #'
 #' The QpMatrixStuffing class.

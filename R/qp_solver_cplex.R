@@ -5,7 +5,7 @@
 #' @aliases CPLEX_QP
 #' @rdname CPLEX_QP-class
 #' @export
-setClass("CPLEX_QP", prototype(MIP_CAPABLE = TRUE), contains = "QpSolver")
+setClass("CPLEX_QP", prototype = list(MIP_CAPABLE = TRUE), contains = "QpSolver")
 
 #' @rdname CPLEX_QP-class
 #' @export
@@ -24,7 +24,7 @@ constraint_cplex_infty <- function(v) {
 #' @param status A status code returned by the solver.
 #' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
 #' @describeIn CPLEX_QP Converts status returned by the CPLEX solver to its respective CVXPY status.
-setMethod("status_map", "CPLEX_QP", function(solver, status, default = NA_character_) {
+setMethod("status_map", "CPLEX_QP", function(solver, status) {
   CPLEX_STATUS_MAP <- list(
     "1" = OPTIMAL,
     "101" = OPTIMAL,
@@ -42,10 +42,7 @@ setMethod("status_map", "CPLEX_QP", function(solver, status, default = NA_charac
 
   status_string <- CPLEX_STATUS_MAP[[as.character(status)]]
   if (is.null(status_string)) {
-    if (is.na(default))
       stop("OSQP status unrecognized: ", status)
-    else
-      default
   } else {
     status_string
   }
@@ -60,19 +57,19 @@ setMethod("import_solver", "CPLEX_QP", function(solver) { requireNamespace("Rcpl
 #' @param results The raw results returned by the solver.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.
 #' @describeIn CPLEX_QP Returns the solution to the original problem given the inverse_data.
-setMethod("invert", signature(object = "CPLEX_QP", results = "list", inverse_data = "InverseData"), function(object, results, inverse_data){
-  model <- results$model
+setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_data = "InverseData"), function(object, solution, inverse_data){
+  model <- solution$model
   attr <- list()
 
   # TODO: Can't seem to find a way to increase verbosity of cplex. Can't get cputime
-  # if("cputime" %in% names(results))
-  #   attr[[SOLVE_TIME]] <- results$cputime
+  # if("cputime" %in% names(solution))
+  #   attr[[SOLVE_TIME]] <- solution$cputime
   # if(inverse_data[[object@IS_MIP]])
   #   attr[[NUM_ITERS]] <- 0
   # else
   #   attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model$solution$progress))
 
-  status <- status_map(object, results$model$status, SOLVER_ERROR)
+  status <- status_map(object, solution$model$status, SOLVER_ERROR)
 
   if(status %in% SOLUTION_PRESENT) {
     # Get objective value.
@@ -121,7 +118,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   g <- constrain_cplex_infty(g)
 
   #In case the b and g variables are empty
-  if((0 %in% dim(b)) && (0 %in% dim(g)))
+  if(prod(dim(b)) == 0 && prod(dim(g)) == 0)
     bvec <- rep(0, n_var)
   else
     bvec <- c(b, g)
@@ -165,7 +162,7 @@ setMethod("solve_via_data", "CPLEX_QP", function(object, data, warm_start, verbo
   results_dict <- list()
 
   #In case A matrix is empty
-  if(0 %in% dim(Amat)){
+  if(prod(dim(Amat)) == 0) {
     Amat <- matrix(0, nrow = length(q), ncol = length(q))
   }
 

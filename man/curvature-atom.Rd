@@ -11,6 +11,8 @@
 \alias{is_atom_log_log_convex,Atom-method}
 \alias{is_atom_log_log_concave,Atom-method}
 \alias{is_atom_log_log_affine,Atom-method}
+\alias{is_atom_quasiconvex,Atom-method}
+\alias{is_atom_quasiconcave,Atom-method}
 \title{Curvature of an Atom}
 \usage{
 is_atom_convex(object)
@@ -30,6 +32,10 @@ is_atom_affine(object)
 \S4method{is_atom_log_log_concave}{Atom}(object)
 
 \S4method{is_atom_log_log_affine}{Atom}(object)
+
+\S4method{is_atom_quasiconvex}{Atom}(object)
+
+\S4method{is_atom_quasiconcave}{Atom}(object)
 }
 \arguments{
 \item{object}{A \linkS4class{Atom} object.}

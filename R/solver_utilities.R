@@ -113,14 +113,38 @@ reconcile_solver_options <- function(solver_opts, defaults) {
   solver_opts
 }
 
-solver_conic_intf <- list(DIFFCP(), ECOS(),
-                          CVXOPT(), GLPK(), COPT(),
-                          GLPK_MI(), CBC(), CLARABEL(), SCS(), SDPA(),
-                          GUROBI(), MOSEK(), CPLEX(), NAG(), XPRESS(),
-                          SCIP(), SCIPY(), GLOP(), PDLP(),
-                          ECOS_BB())
+## We drop DIFFCP() because it is a solver implemented in python
 
-solver_qp_intf <- list(OSQP(), GUROBI(), CPLEX(), XPRESS(), COPT(), PROXQP())
+solver_conic_intf <- list(ECOS()
+                          #, CVXOPT()
+                          #, GLPK()
+                          #, COPT(),
+                          #, GLPK_MI(),
+                          #, CBC(),
+                          #, CLARABEL(),
+                        , SCS()
+                          #, SDPA(),
+                          #, GUROBI(),
+                        , MOSEK()
+                          #, CPLEX(),
+                          #, NAG(),
+                          #, XPRESS(),
+                          #, SCIP(),
+                          #, SCIPY(),
+                          #, GLOP()
+                          #, PDLP(),
+                          #, DIFFCP()
+                          #, ECOS_BB()
+                          )
+
+solver_qp_intf <- list(OSQP()
+                     , GUROBI_QP()
+                     , CPLEX_QP()
+                       #, XPRESS()
+                       #, COPT(),
+                     , PIQP()
+                       #, PROXQP()
+                       )
 
 SOLVER_MAP_CONIC <- solver_conic_intf
 names(SOLVER_MAP_CONIC) <- sapply(solver_conic_intf, name)
@@ -131,18 +155,55 @@ names(SOLVER_MAP_QP) <- sapply(solver_qp_intf, name)
 # CONIC_SOLVERS and QP_SOLVERS are sorted in order of decreasing solver
 # preference. QP_SOLVERS are those for which we have written interfaces
 # and are supported by QpSolver.
-CONIC_SOLVERS <- c(MOSEK_NAME, ECOS_NAME, CLARABEL_NAME, SCS_NAME, SDPA_NAME,
-                   CPLEX_NAME, GUROBI_NAME, COPT_NAME, GLPK_NAME, NAG_NAME,
-                   GLPK_MI_NAME, CBC_NAME, CVXOPT_NAME, XPRESS_NAME, DIFFCP_NAME,
-                   SCIP_NAME, GLOP_NAME, PDLP_NAME, ECOS_BB_NAME)
+CONIC_SOLVERS <- c(MOSEK_NAME
+                 , ECOS_NAME
+                   #, CLARABEL_NAME
+                 , SCS_NAME
+                   #, SDPA_NAME
+                 , CPLEX_NAME
+                 , GUROBI_NAME
+                   #, COPT_NAME
+                   #, GLPK_NAME
+                   #, NAG_NAME
+                   #, GLPK_MI_NAME
+                   #, CBC_NAME
+                   #, CVXOPT_NAME
+                   #, XPRESS_NAME
+                   #, DIFFCP_NAME
+                   #, SCIP_NAME
+                   #, GLOP_NAME
+                   #, PDLP_NAME
+                   #, ECOS_BB_NAME
+                   )
 
-QP_SOLVERS <- c(OSQP_NAME, GUROBI_NAME, CPLEX_NAME, XPRESS_NAME, COPT_NAME, PROXQP_NAME)
+QP_SOLVERS <- c(OSQP_NAME
+              , GUROBI_NAME
+              , CPLEX_NAME
+              , PIQP_NAME
+                #, XPRESS_NAME
+                #, COPT_NAME
+                #, PROXQP_NAME
+                )
 
-MI_SOLVERS <- c(GLP_MI_NAME, MOSEK_NAME, GUROBI_NAME, CPLEX_NAME,
-                XPRESS_NAME, CBC_NAME, SCIP_NAME, COPT_NAME, ECOS_BB_NAME)
+MI_SOLVERS <- c(
+  # GLP_MI_NAME,
+  MOSEK_NAME
+, GUROBI_NAME
+, CPLEX_NAME
+  #, XPRESS_NAME
+  #, CBC_NAME
+  #, SCIP_NAME
+  #, COPT_NAME
+  #, ECOS_BB_NAME
+)
 
-MI_SOCP_SOLVERS <- c(MOSEK_NAME, GUROBI_NAME, CPLEX_NAME, XPRESS_NAME,
-                     SCIP_NAME, ECOS_BB_NAME)
+MI_SOCP_SOLVERS <- c(MOSEK_NAME
+                   , GUROBI_NAME
+                   , CPLEX_NAME
+                     #, XPRESS_NAME
+                     #, SCIP_NAME
+                     #, ECOS_BB_NAME
+                     )
 
 ## Global variable for changing behavior
 .CVXR_options <- new.env(parent = emptyenv())

@@ -5,17 +5,18 @@
 \alias{Problem-class}
 \alias{.Problem}
 \alias{Problem}
-\alias{objective,Problem-method}
-\alias{objective<-,Problem-method}
-\alias{constraints,Problem-method}
-\alias{constraints<-,Problem-method}
 \alias{value,Problem-method}
-\alias{value<-,Problem-method}
 \alias{status,Problem-method}
+\alias{solution,Problem-method}
+\alias{objective,Problem-method}
+\alias{constraints,Problem-method}
+\alias{param_list,Problem-method}
+\alias{var_list,Problem-method}
 \alias{is_dcp,Problem-method}
 \alias{is_dgp,Problem-method}
+\alias{is_dqcp,Problem-method}
+\alias{is_dpp,Problem-method}
 \alias{is_qp,Problem-method}
-\alias{canonicalize,Problem-method}
 \alias{is_mixed_integer,Problem-method}
 \alias{variables,Problem-method}
 \alias{parameters,Problem-method}
@@ -23,35 +24,37 @@
 \alias{atoms,Problem-method}
 \alias{size_metrics,Problem-method}
 \alias{solver_stats,Problem-method}
-\alias{solver_stats<-,Problem-method}
-\alias{get_problem_data,Problem,character,logical-method}
-\alias{get_problem_data,Problem,character,missing-method}
+\alias{get_problem_data,Problem-method}
+\alias{backward,Problem-method}
+\alias{derivative,Problem-method}
 \alias{unpack_results,Problem-method}
 \title{The Problem class.}
 \usage{
 Problem(objective, constraints = list())
 
-\S4method{objective}{Problem}(object)
-
-\S4method{objective}{Problem}(object) <- value
-
-\S4method{constraints}{Problem}(object)
-
-\S4method{constraints}{Problem}(object) <- value
-
 \S4method{value}{Problem}(object)
-
-\S4method{value}{Problem}(object) <- value
 
 \S4method{status}{Problem}(object)
 
-\S4method{is_dcp}{Problem}(object)
+\S4method{solution}{Problem}(object)
 
-\S4method{is_dgp}{Problem}(object)
+\S4method{objective}{Problem}(object)
+
+\S4method{constraints}{Problem}(object)
+
+\S4method{param_list}{Problem}(object)
+
+\S4method{var_list}{Problem}(object)
+
+\S4method{is_dcp}{Problem}(object, dpp = FALSE)
+
+\S4method{is_dgp}{Problem}(object, dpp = FALSE)
+
+\S4method{is_dqcp}{Problem}(object)
+
+\S4method{is_dpp}{Problem}(object, context = "dcp")
 
 \S4method{is_qp}{Problem}(object)
-
-\S4method{canonicalize}{Problem}(object)
 
 \S4method{is_mixed_integer}{Problem}(object)
 
@@ -67,11 +70,20 @@ Problem(objective, constraints = list())
 
 \S4method{solver_stats}{Problem}(object)
 
-\S4method{solver_stats}{Problem}(object) <- value
+\S4method{get_problem_data}{Problem}(
+  object,
+  solver,
+  gp = FALSE,
+  enforce_dpp = FALSE,
+  ignore_dpp = FALSE,
+  verbose = FALSE,
+  canon_backend = NA_character_,
+  solver_opts = NULL
+)
 
-\S4method{get_problem_data}{Problem,character,logical}(object, solver, gp)
+\S4method{backward}{Problem}(object)
 
-\S4method{get_problem_data}{Problem,character,missing}(object, solver, gp)
+\S4method{derivative}{Problem}(object)
 
 \S4method{unpack_results}{Problem}(object, solution, chain, inverse_data)
 }
@@ -82,11 +94,23 @@ Problem(objective, constraints = list())
 
 \item{object}{A \linkS4class{Problem} class.}
 
-\item{value}{A \linkS4class{Minimize} or \linkS4class{Maximize} object (objective), list of \linkS4class{Constraint} objects (constraints), or numeric scalar (value).}
+\item{dpp}{A logical value indicating whether to enforce the disciplined parametrized programming (DPP) ruleset; only relevant when the problem involves Parameters. DPP is a mild restriction of DCP. When a problem involving Parameters is DPP, subsequent solves can be much faster than the first one. For more information, consult the documentation at https://www.cvxpy.org/tutorial/advanced/index.html#disciplined-parametrized-programming}
+
+\item{context}{A string indicating whether to check DPP-compliance for DCP (\code{context = "dcp"}) or DGP (\code{context = "dgp"}).}
 
 \item{solver}{A string indicating the solver that the problem data is for. Call \code{installed_solvers()} to see all available.}
 
-\item{gp}{Is the problem a geometric problem?}
+\item{gp}{A logical value indicating whether to parse the problem as a disciplined geometric program (DGP) instead of a disciplined convex program (DCP).}
+
+\item{enforce_dpp}{If TRUE, a DPPError will be thrown when trying to parse a non-DPP problem (instead of just a warning). Defaults to FALSE.}
+
+\item{ignore_dpp}{If TRUE, DPP problems will be treated as non-DPP, which may speed up compilation. Defaults to FALSE.}
+
+\item{verbose}{If TRUE, print verbose output related to problem compilation.}
+
+\item{canon_backend}{Specifies which backend to use for canonicalization, which can affect compilation time. Defaults to 'CPP'.}
+
+\item{solver_opts}{A list of options that will be passed to the specific solver. In general, these options will override any default settings imposed by CVXR.}
 
 \item{solution}{A \linkS4class{Solution} object.}
 
@@ -99,27 +123,29 @@ This class represents a convex optimization problem.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{objective(Problem)}: The objective of the problem.
-
-\item \code{objective(Problem) <- value}: Set the value of the problem objective.
-
-\item \code{constraints(Problem)}: A list of the constraints of the problem.
-
-\item \code{constraints(Problem) <- value}: Set the value of the problem constraints.
-
 \item \code{value(Problem)}: The value from the last time the problem was solved (or NA if not solved).
 
-\item \code{value(Problem) <- value}: Set the value of the optimal objective.
+\item \code{status(Problem)}: The status from the last time the problem was solved; one of optimal, infeasible, or unbounded (with or without suffix inaccurate).
 
-\item \code{status(Problem)}: The status from the last time the problem was solved.
+\item \code{solution(Problem)}: The solution from the last time the problem was solved.
 
-\item \code{is_dcp(Problem)}: A logical value indicating whether the problem statisfies DCP rules.
+\item \code{objective(Problem)}: The objective of the problem. Note that the objective cannot be reassigned after creation, and modifying the objective after creation will result in undefined behavior.
+
+\item \code{constraints(Problem)}: A list of the constraints of the problem. Note that constraints cannot be reassigned, appended to, or otherwise modified after creation, except through parameters.
+
+\item \code{param_list(Problem)}: Expose all parameters as a named list.
+
+\item \code{var_list(Problem)}: Expose all variables as a named list.
+
+\item \code{is_dcp(Problem)}: A logical value indicating whether the problem satisfies DCP rules.
 
 \item \code{is_dgp(Problem)}: A logical value indicating whether the problem statisfies DGP rules.
 
-\item \code{is_qp(Problem)}: A logical value indicating whether the problem is a quadratic program.
+\item \code{is_dqcp(Problem)}: Does the problem satisfy the DQCP rules?
 
-\item \code{canonicalize(Problem)}: The graph implementation of the problem.
+\item \code{is_dpp(Problem)}: Does the problem satisfy DPP rules?
+
+\item \code{is_qp(Problem)}: A logical value indicating whether the problem is a quadratic program.
 
 \item \code{is_mixed_integer(Problem)}: logical value indicating whether the problem is a mixed integer program.
 
@@ -135,11 +161,11 @@ This class represents a convex optimization problem.
 
 \item \code{solver_stats(Problem)}: Additional information returned by the solver.
 
-\item \code{solver_stats(Problem) <- value}: Set the additional information returned by the solver in the problem.
+\item \code{get_problem_data(Problem)}: Get the problem data passed to the specified solver.
 
-\item \code{get_problem_data(object = Problem, solver = character, gp = logical)}: Get the problem data passed to the specified solver.
+\item \code{backward(Problem)}: Compute the gradient of a solution with respect to parameters.
 
-\item \code{get_problem_data(object = Problem, solver = character, gp = missing)}: Get the problem data passed to the specified solver.
+\item \code{derivative(Problem)}: Apply the derivative of the solution map to perturbations in the parameters.
 
 \item \code{unpack_results(Problem)}: Parses the output from a solver and updates the problem state, including the status,
 objective value, and values of the primal and dual variables.
@@ -157,13 +183,21 @@ Assumes the results are from the given solver.
 
 \item{\code{status}}{(Internal) Used internally to hold the status of the problem solution.}
 
-\item{\code{.cached_data}}{(Internal) Used internally to hold cached matrix data.}
+\item{\code{solution}}{(Internal) Used internally to hold the problem solution}
 
-\item{\code{.separable_problems}}{(Internal) Used internally to hold separable problem data.}
+\item{\code{cache}}{(Internal) Used internally to hold cached matrix data.}
 
-\item{\code{.size_metrics}}{(Internal) Used internally to hold size metrics.}
+\item{\code{solver_cache}}{(Internal) Used internally to hold cached solver data.}
 
-\item{\code{.solver_stats}}{(Internal) Used internally to hold solver statistics.}
+\item{\code{size_metrics}}{(Internal) Used internally to hold size metrics.}
+
+\item{\code{solver_stats}}{(Internal) Used internally to hold solver statistics.}
+
+\item{\code{compilation_time}}{(Internal) Used internally to hold the compilation time.}
+
+\item{\code{solve_time}}{(Internal) Used internally to hold the solve time.}
+
+\item{\code{args}}{(Internal) Used internally to hold the arguments (objective and constraints).}
 }}
 
 \examples{

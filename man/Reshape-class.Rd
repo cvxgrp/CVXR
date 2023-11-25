@@ -14,7 +14,7 @@
 \alias{graph_implementation,Reshape-method}
 \title{The Reshape class.}
 \usage{
-Reshape(expr, new_dim)
+Reshape(expr, new_dim, byrow = FALSE)
 
 \S4method{to_numeric}{Reshape}(object, values)
 
@@ -34,6 +34,8 @@ Reshape(expr, new_dim)
 \item{expr}{An \linkS4class{Expression} or numeric matrix.}
 
 \item{new_dim}{The new dimensions.}
+
+\item{byrow}{A logical value indicating whether the matrix is filled by rows. If \code{FALSE} (default), the matrix is filled by columns.}
 
 \item{object}{A \linkS4class{Reshape} object.}
 

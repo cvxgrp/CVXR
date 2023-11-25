@@ -16,8 +16,11 @@
 \alias{is_complex,Atom-method}
 \alias{is_convex,Atom-method}
 \alias{is_concave,Atom-method}
+\alias{is_dpp,Atom-method}
 \alias{is_log_log_convex,Atom-method}
 \alias{is_log_log_concave,Atom-method}
+\alias{is_quasiconvex,Atom-method}
+\alias{is_quasiconcave,Atom-method}
 \alias{canonicalize,Atom-method}
 \alias{graph_implementation,Atom-method}
 \alias{value_impl,Atom-method}
@@ -51,9 +54,15 @@
 
 \S4method{is_concave}{Atom}(object)
 
+\S4method{is_dpp}{Atom}(object, context = "dcp")
+
 \S4method{is_log_log_convex}{Atom}(object)
 
 \S4method{is_log_log_concave}{Atom}(object)
+
+\S4method{is_quasiconvex}{Atom}(object)
+
+\S4method{is_quasiconcave}{Atom}(object)
 
 \S4method{canonicalize}{Atom}(object)
 
@@ -107,15 +116,21 @@ This virtual class represents atomic expressions in CVXR.
 
 \item \code{is_concave(Atom)}: A logical value indicating whether the atom is concave.
 
+\item \code{is_dpp(Atom)}: A logical value indicating whether the atom is a disciplined parameterized expression.
+
 \item \code{is_log_log_convex(Atom)}: A logical value indicating whether the atom is log-log convex.
 
 \item \code{is_log_log_concave(Atom)}: A logical value indicating whether the atom is log-log concave.
+
+\item \code{is_quasiconvex(Atom)}: A logical value indicating whether the atom is quasiconvex.
+
+\item \code{is_quasiconcave(Atom)}: A logical value indicating whether the atom is quasiconcave.
 
 \item \code{canonicalize(Atom)}: Represent the atom as an affine objective and conic constraints.
 
 \item \code{graph_implementation(Atom)}: The graph implementation of the atom.
 
-\item \code{value_impl(Atom)}: Returns the value of each of the componets in an Atom. Returns an empty matrix if it's an empty atom
+\item \code{value_impl(Atom)}: Returns the value of each of the components in an Atom. Returns an empty matrix if it's an empty atom
 
 \item \code{value(Atom)}: Returns the value of the atom.
 

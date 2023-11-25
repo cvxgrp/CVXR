@@ -2,7 +2,7 @@
 % Please edit documentation in R/dgp2dcp.R
 \name{Dgp2Dcp.norm1_canon}
 \alias{Dgp2Dcp.norm1_canon}
-\title{Dgp2Dcp canonicalizer for the 1 norm atom}
+\title{Dgp2Dcp canonicalizer for the 1-norm atom}
 \usage{
 Dgp2Dcp.norm1_canon(expr, args)
 }
@@ -16,5 +16,5 @@ A canonicalization of the norm1 atom of a DGP expression,
 where the returned expression is the transformed DCP equivalent.
 }
 \description{
-Dgp2Dcp canonicalizer for the 1 norm atom
+Dgp2Dcp canonicalizer for the 1-norm atom
 }

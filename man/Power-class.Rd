@@ -129,7 +129,7 @@ For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
 
 \item \code{.grad(Power)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
-\item \code{.domain(Power)}: Returns constraints describng the domain of the node
+\item \code{.domain(Power)}: Returns constraints describing the domain of the node
 
 \item \code{get_data(Power)}: A list containing the output of \code{pow_low, pow_mid}, or \code{pow_high} depending on the input power.
 

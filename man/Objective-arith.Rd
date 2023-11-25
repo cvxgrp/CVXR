@@ -4,20 +4,20 @@
 \alias{Objective-arith}
 \alias{+,Objective,numeric-method}
 \alias{+,numeric,Objective-method}
-\alias{-,Minimize,missing-method}
-\alias{+,Minimize,Minimize-method}
-\alias{+,Minimize,Maximize-method}
+\alias{-,Objective,numeric-method}
+\alias{-,numeric,Objective-method}
 \alias{-,Objective,Minimize-method}
 \alias{-,Objective,Maximize-method}
 \alias{-,Minimize,Objective-method}
 \alias{-,Maximize,Objective-method}
-\alias{-,Objective,numeric-method}
-\alias{-,numeric,Objective-method}
 \alias{*,Minimize,numeric-method}
 \alias{*,Maximize,numeric-method}
 \alias{*,numeric,Minimize-method}
 \alias{*,numeric,Maximize-method}
 \alias{/,Objective,numeric-method}
+\alias{-,Minimize,missing-method}
+\alias{+,Minimize,Minimize-method}
+\alias{+,Minimize,Maximize-method}
 \alias{-,Maximize,missing-method}
 \alias{+,Maximize,Maximize-method}
 \alias{+,Maximize,Minimize-method}
@@ -27,11 +27,9 @@
 
 \S4method{+}{numeric,Objective}(e1, e2)
 
-\S4method{-}{Minimize,missing}(e1, e2)
+\S4method{-}{Objective,numeric}(e1, e2)
 
-\S4method{+}{Minimize,Minimize}(e1, e2)
-
-\S4method{+}{Minimize,Maximize}(e1, e2)
+\S4method{-}{numeric,Objective}(e1, e2)
 
 \S4method{-}{Objective,Minimize}(e1, e2)
 
@@ -40,10 +38,6 @@
 \S4method{-}{Minimize,Objective}(e1, e2)
 
 \S4method{-}{Maximize,Objective}(e1, e2)
-
-\S4method{-}{Objective,numeric}(e1, e2)
-
-\S4method{-}{numeric,Objective}(e1, e2)
 
 \S4method{*}{Minimize,numeric}(e1, e2)
 
@@ -54,6 +48,12 @@
 \S4method{*}{numeric,Maximize}(e1, e2)
 
 \S4method{/}{Objective,numeric}(e1, e2)
+
+\S4method{-}{Minimize,missing}(e1, e2)
+
+\S4method{+}{Minimize,Minimize}(e1, e2)
+
+\S4method{+}{Minimize,Maximize}(e1, e2)
 
 \S4method{-}{Maximize,missing}(e1, e2)
 

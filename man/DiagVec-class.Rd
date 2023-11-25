@@ -11,6 +11,8 @@
 \alias{is_atom_log_log_concave,DiagVec-method}
 \alias{is_symmetric,DiagVec-method}
 \alias{is_hermitian,DiagVec-method}
+\alias{is_psd,DiagVec-method}
+\alias{is_nsd,DiagVec-method}
 \alias{graph_implementation,DiagVec-method}
 \title{The DiagVec class.}
 \usage{
@@ -27,6 +29,10 @@ DiagVec(expr)
 \S4method{is_symmetric}{DiagVec}(object)
 
 \S4method{is_hermitian}{DiagVec}(object)
+
+\S4method{is_psd}{DiagVec}(object)
+
+\S4method{is_nsd}{DiagVec}(object)
 
 \S4method{graph_implementation}{DiagVec}(object, arg_objs, dim, data = NA_real_)
 }
@@ -59,6 +65,10 @@ This class represents the conversion of a vector into a diagonal matrix.
 \item \code{is_symmetric(DiagVec)}: Is the expression symmetric?
 
 \item \code{is_hermitian(DiagVec)}: Is the expression hermitian?
+
+\item \code{is_psd(DiagVec)}: Is the atom positive semidefinite?
+
+\item \code{is_nsd(DiagVec)}: Is the atom negative semidefinite?
 
 \item \code{graph_implementation(DiagVec)}: The graph implementation of the atom.
 

@@ -17,6 +17,7 @@
 \alias{graph_implementation,Index-method}
 \alias{to_numeric,SpecialIndex-method}
 \alias{dim_from_args,SpecialIndex-method}
+\alias{graph_implementation,SpecialIndex-method}
 \title{The Index class.}
 \usage{
 \S4method{[}{Expression,missing,missing,ANY}(x, i, j, ..., drop = TRUE)
@@ -44,6 +45,8 @@ Index(expr, key)
 \S4method{to_numeric}{SpecialIndex}(object, values)
 
 \S4method{dim_from_args}{SpecialIndex}(object)
+
+\S4method{graph_implementation}{SpecialIndex}(object, arg_objs, dim, data = NA_real_)
 }
 \arguments{
 \item{x}{A \linkS4class{Expression} object.}
@@ -88,6 +91,8 @@ This class represents indexing or slicing into a matrix.
 \item \code{to_numeric(SpecialIndex)}: The index/slice into the given value.
 
 \item \code{dim_from_args(SpecialIndex)}: The dimensions of the atom.
+
+\item \code{graph_implementation(SpecialIndex)}: The graph implementation of the atom.
 
 }}
 \section{Slots}{

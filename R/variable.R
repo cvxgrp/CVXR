@@ -107,14 +107,15 @@ setMethod("initialize", "Variable", function(.Object, ..., dim = NULL, name = NA
   callNextMethod(.Object, ..., dim = dim, value = .Object@value)
 })
 
-#' @param x,object A \linkS4class{Variable} object.
-#' @describeIn Variable The name of the variable.
+#' @docType methods
+#' @param x A \linkS4class{Variable} object.
+#' @describeIn Variable The name of the variable
 #' @export
 setMethod("name", "Variable", function(x) { x@name })
 
 setMethod("is_constant", "Variable", function(object) { FALSE })
 
-#' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix.
+#' @describeIn Variable The sub/super-gradient of the variable represented as a sparse matrix
 setMethod("grad", "Variable", function(object) {
   # TODO: Do not assume dim is 2-D.
   len <- size(object)
@@ -128,21 +129,25 @@ setMethod("grad", "Variable", function(object) {
   return(result)
 })
 
-#' @describeIn Variable Returns itself as a variable.
+#' @docType methods
+#' @describeIn Variable Returns itself as a variable
 setMethod("variables", "Variable", function(object) { list(object) })
 
-#' @describeIn Variable The graph implementation of the object.
+#' @docType methods
+#' @describeIn Variable The graph implementation of the object
 setMethod("canonicalize", "Variable", function(object) {
   obj <- create_var(dim(object), id(object))
   list(obj, list())
 })
 
-#' @describeIn Variable Returns TRUE iff variable generated when lowering a variable with attributes.
+#' @docType methods
+#' @describeIn Variable Returns TRUE iff variable generated when lowering a variable with attributes
 setMethod("attributes_were_lowered", "Variable", function(object) {
   !is.null(object@variable_with_attributes)
 })
 
-#' @describeIn Variable
+#' @docType methods
+#' @describeIn Variable Returns the variable of provenance
 setMethod("set_variable_of_provenance", signature(object = "Variable", variable = "Variable"), function(object, variable) {
   if(is.null(variable@attributes) || length(variable@attributes) == 0)
     stop("variable attributes must be defined")
@@ -150,7 +155,8 @@ setMethod("set_variable_of_provenance", signature(object = "Variable", variable 
   object
 })
 
-#' @describeIn Variable Returns a variable with attributes from which this variable was generated.
+#' @docType methods
+#' @describeIn Variable Returns a variable with attributes from which this variable was generated
 setMethod("variable_of_provenance", "Variable", function(object) {
   object@variable_with_attributes
 })
@@ -163,7 +169,7 @@ setMethod("show", "Variable", function(object) {
     print(paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = ""))
 })
 
-#' @rdname Variable-class
+#' @describeIn Variable Convert to a character representation
 setMethod("as.character", "Variable", function(x) {
   attr_str <- get_attr_str(x)
   if(length(attr_str) > 0)

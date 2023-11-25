@@ -7,6 +7,7 @@
 \alias{Transpose}
 \alias{to_numeric,Transpose-method}
 \alias{is_symmetric,Transpose-method}
+\alias{is_skew_symmetric,Transpose-method}
 \alias{is_hermitian,Transpose-method}
 \alias{dim_from_args,Transpose-method}
 \alias{is_atom_log_log_convex,Transpose-method}
@@ -18,6 +19,8 @@
 \S4method{to_numeric}{Transpose}(object, values)
 
 \S4method{is_symmetric}{Transpose}(object)
+
+\S4method{is_skew_symmetric}{Transpose}(object)
 
 \S4method{is_hermitian}{Transpose}(object)
 
@@ -50,6 +53,8 @@ This class represents the matrix transpose.
 \item \code{to_numeric(Transpose)}: The transpose of the given value.
 
 \item \code{is_symmetric(Transpose)}: Is the expression symmetric?
+
+\item \code{is_skew_symmetric(Transpose)}: Is the expression skew symmetric?
 
 \item \code{is_hermitian(Transpose)}: Is the expression hermitian?
 

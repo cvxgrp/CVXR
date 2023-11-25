@@ -1346,7 +1346,6 @@ setGeneric("variable_of_provenance", function(object, variable) { standardGeneri
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return A logical value indicating whether the expression is quasiconvex or not
-#' @examples
 #' @docType methods
 #' @rdname is_atom_quasiconvex
 #' @export
@@ -1356,7 +1355,6 @@ setGeneric("is_atom_quasiconvex", function(object) { standardGeneric("is_atom_qu
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return A logical value indicating whether the expression is quasiconcave or not
-#' @examples
 #' @docType methods
 #' @rdname is_atom_quasiconcave
 #' @export
@@ -1366,7 +1364,6 @@ setGeneric("is_atom_quasiconcave", function(object) { standardGeneric("is_atom_q
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return a list of indexes of constant atoms
-#' @examples
 #' @docType methods
 #' @rdname .non_const_idx
 #' @export
@@ -1376,12 +1373,11 @@ setGeneric(".non_const_idx", function(object) { standardGeneric(".non_const_idx"
 #'
 #' @param object A \linkS4class{Atom} object.
 #' @return true or false
-#' @examples
 #' @docType methods
 #' @rdname .is_real
 #' @export
 setGeneric(".is_real", function(object) { standardGeneric(".is_real") })
-setGeneric("expand_args", function(object) { standardGeneric("expand_args") })
+setGeneric("expand_args", function(expr) { standardGeneric("expand_args") })
 setGeneric("invalidate", function(object) { standardGeneric("invalidate") })
 setGeneric("make_key", function(object, solver, gp, ignore_dpp) { standardGeneric("make_key") })
 setGeneric("gp", function(object) { standardGeneric("gp") })
@@ -1401,3 +1397,7 @@ setGeneric("split_solution", function(object, sltn, active_vars = NULL) { standa
 setGeneric("split_adjoint", function(object, del_vars = NULL) { standardGeneric("split_adjoint") })
 setGeneric("variable_canon", function(object, variable, args) { standardGeneric("variable_canon") })
 setGeneric("parameter_canon", function(object, parameter, args) { standardGeneric("parameter_canon") })
+setGeneric("supports_quad_obj", function(solver) { standardGeneric("supports_quad_obj") })
+setGeneric("psd_format_mat", function(solver, constr) { standardGeneric("psd_format_mat") })
+setGeneric("canon_args", function(object, expr) { standardGeneric("canon_args") })
+setGeneric("canonicalize_constraint", function(object, expr) { standardGeneric("canonicalize_constraint") })

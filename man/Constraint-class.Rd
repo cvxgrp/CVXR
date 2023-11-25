@@ -12,6 +12,7 @@
 \alias{is_complex,Constraint-method}
 \alias{is_dcp,Constraint-method}
 \alias{is_dgp,Constraint-method}
+\alias{is_dpp,Constraint-method}
 \alias{residual,Constraint-method}
 \alias{violation,Constraint-method}
 \alias{constr_value,Constraint-method}
@@ -19,6 +20,7 @@
 \alias{dual_value,Constraint-method}
 \alias{dual_value<-,Constraint-method}
 \alias{size,ZeroConstraint-method}
+\alias{is_dpp,IneqConstraint-method}
 \title{The Constraint class.}
 \usage{
 \S4method{as.character}{Constraint}(x)
@@ -33,9 +35,11 @@
 
 \S4method{is_complex}{Constraint}(object)
 
-\S4method{is_dcp}{Constraint}(object)
+\S4method{is_dcp}{Constraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{Constraint}(object)
+\S4method{is_dgp}{Constraint}(object, dpp = FALSE)
+
+\S4method{is_dpp}{Constraint}(object, context = "dcp")
 
 \S4method{residual}{Constraint}(object)
 
@@ -50,9 +54,15 @@
 \S4method{dual_value}{Constraint}(object) <- value
 
 \S4method{size}{ZeroConstraint}(object)
+
+\S4method{is_dpp}{IneqConstraint}(object, context = "dcp")
 }
 \arguments{
 \item{x, object}{A \linkS4class{Constraint} object.}
+
+\item{dpp}{A logical value indicating whether we are solving a disciplined parameterized program (DPP).}
+
+\item{context}{Must be either 'dcp' (disciplined convex program) or 'dgp' (disciplined geometric program).}
 
 \item{tolerance}{The tolerance for checking if the constraint is violated.}
 
@@ -77,18 +87,25 @@ This virtual class represents a mathematical constraint.
 
 \item \code{is_dgp(Constraint)}: Is the constraint DGP?
 
+\item \code{is_dpp(Constraint)}: is the constraint DPP in the given context?
+
 \item \code{residual(Constraint)}: The residual of a constraint
 
-\item \code{violation(Constraint)}: The violation of a constraint.
+\item \code{violation(Constraint)}: The numeric residual of a constraint. The violation is defined as the
+distance between the constrained expression's value and its projection onto the domain of the
+constraint: ||\\Pi(v) - v||_2^2, where `v` is the value of the constrained expression and
+`\\Pi` is the projection operator onto the constraint's domain.
 
-\item \code{constr_value(Constraint)}: The value of a constraint.
+\item \code{constr_value(Constraint)}: Checks whether the constraint violation is less than a tolerance.
 
 \item \code{get_data(Constraint)}: Information needed to reconstruct the object aside from the args.
 
 \item \code{dual_value(Constraint)}: The dual values of a constraint.
 
-\item \code{dual_value(Constraint) <- value}: Replaces the dual values of a constraint..
+\item \code{dual_value(Constraint) <- value}: Replaces the dual values of a constraint.
 
 \item \code{size(ZeroConstraint)}: The size of the constrained expression.
+
+\item \code{is_dpp(IneqConstraint)}: is the constraint DPP in the given context?
 
 }}

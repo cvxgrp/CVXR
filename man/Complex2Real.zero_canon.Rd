@@ -2,7 +2,7 @@
 % Please edit documentation in R/complex2real.R
 \name{Complex2Real.zero_canon}
 \alias{Complex2Real.zero_canon}
-\title{Complex canonicalizer for the zero atom}
+\title{Complex canonicalizer for the zero constraint}
 \usage{
 Complex2Real.zero_canon(expr, real_args, imag_args, real2imag)
 }
@@ -16,9 +16,8 @@ Complex2Real.zero_canon(expr, real_args, imag_args, real2imag)
 \item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
 }
 \value{
-A canonicalization of a zero atom, where the returned
-variables are the real component and the imaginary component.
+A canonicalization of a zero constraint, where the returned variables are the real component and the imaginary component.
 }
 \description{
-Complex canonicalizer for the zero atom
+Complex canonicalizer for the zero constraint
 }

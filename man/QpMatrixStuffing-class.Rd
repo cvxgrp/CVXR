@@ -3,7 +3,7 @@
 \docType{class}
 \name{QpMatrixStuffing-class}
 \alias{QpMatrixStuffing-class}
-\alias{QpMatrixStuffing}
+\alias{.QpMatrixStuffing}
 \title{The QpMatrixStuffing class.}
 \description{
 This class fills in numeric values for the problem instance and

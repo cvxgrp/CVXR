@@ -4,7 +4,16 @@
 \alias{get_problem_data}
 \title{Get Problem Data}
 \usage{
-get_problem_data(object, solver, gp)
+get_problem_data(
+  object,
+  solver,
+  gp = FALSE,
+  enforce_dpp = FALSE,
+  ignore_dpp = FALSE,
+  verbose = FALSE,
+  canon_backend = NA_character_,
+  solver_opts = NULL
+)
 }
 \arguments{
 \item{object}{A \linkS4class{Problem} object.}

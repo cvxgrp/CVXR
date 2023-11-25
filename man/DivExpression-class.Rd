@@ -10,6 +10,7 @@
 \alias{DivExpression}
 \alias{to_numeric,DivExpression-method}
 \alias{is_quadratic,DivExpression-method}
+\alias{has_quadratic_term,DivExpression-method}
 \alias{is_qpwa,DivExpression-method}
 \alias{dim_from_args,DivExpression-method}
 \alias{is_atom_convex,DivExpression-method}
@@ -30,6 +31,8 @@
 \S4method{to_numeric}{DivExpression}(object, values)
 
 \S4method{is_quadratic}{DivExpression}(object)
+
+\S4method{has_quadratic_term}{DivExpression}(object)
 
 \S4method{is_qpwa}{DivExpression}(object)
 
@@ -72,6 +75,8 @@ This class represents one expression divided by another expression.
 \item \code{to_numeric(DivExpression)}: Matrix division by a scalar.
 
 \item \code{is_quadratic(DivExpression)}: Is the left-hand expression quadratic and the right-hand expression constant?
+
+\item \code{has_quadratic_term(DivExpression)}: Can be a quadratic term if divisor is constant.
 
 \item \code{is_qpwa(DivExpression)}: Is the expression quadratic of piecewise affine?
 

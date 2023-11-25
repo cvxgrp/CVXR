@@ -3,19 +3,19 @@
 \docType{class}
 \name{Canonical-class}
 \alias{Canonical-class}
-\alias{expr,Canonical-method}
 \alias{id,Canonical-method}
+\alias{expr,Canonical-method}
 \alias{canonical_form,Canonical-method}
 \alias{variables,Canonical-method}
 \alias{parameters,Canonical-method}
-\alias{constants,Canonical-method}
 \alias{atoms,Canonical-method}
+\alias{constants,Canonical-method}
 \alias{get_data,Canonical-method}
 \title{The Canonical class.}
 \usage{
-\S4method{expr}{Canonical}(object)
-
 \S4method{id}{Canonical}(object)
+
+\S4method{expr}{Canonical}(object)
 
 \S4method{canonical_form}{Canonical}(object)
 
@@ -23,9 +23,9 @@
 
 \S4method{parameters}{Canonical}(object)
 
-\S4method{constants}{Canonical}(object)
-
 \S4method{atoms}{Canonical}(object)
+
+\S4method{constants}{Canonical}(object)
 
 \S4method{get_data}{Canonical}(object)
 }
@@ -37,19 +37,19 @@ This virtual class represents a canonical expression.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{expr(Canonical)}: The expression associated with the input.
-
 \item \code{id(Canonical)}: The unique ID of the canonical expression.
 
-\item \code{canonical_form(Canonical)}: The graph implementation of the input.
+\item \code{expr(Canonical)}: The expression associated with the input.
+
+\item \code{canonical_form(Canonical)}: The graph implementation of the object stored as a property.
 
 \item \code{variables(Canonical)}: List of \linkS4class{Variable} objects in the expression.
 
 \item \code{parameters(Canonical)}: List of \linkS4class{Parameter} objects in the expression.
 
-\item \code{constants(Canonical)}: List of \linkS4class{Constant} objects in the expression.
-
 \item \code{atoms(Canonical)}: List of \linkS4class{Atom} objects in the expression.
+
+\item \code{constants(Canonical)}: List of \linkS4class{Constant} objects in the expression.
 
 \item \code{get_data(Canonical)}: Information needed to reconstruct the expression aside from its arguments.
 

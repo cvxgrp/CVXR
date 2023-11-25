@@ -5,27 +5,33 @@
 \alias{Variable-class}
 \alias{.Variable}
 \alias{Variable}
-\alias{as.character,Variable-method}
 \alias{name,Variable-method}
-\alias{value,Variable-method}
 \alias{grad,Variable-method}
 \alias{variables,Variable-method}
 \alias{canonicalize,Variable-method}
+\alias{attributes_were_lowered,Variable-method}
+\alias{set_variable_of_provenance,Variable,Variable-method}
+\alias{variable_of_provenance,Variable-method}
+\alias{as.character,Variable-method}
 \title{The Variable class.}
 \usage{
-Variable(rows = NULL, cols = NULL, name = NA_character_, ...)
-
-\S4method{as.character}{Variable}(x)
+Variable(rows = 1, cols = 1, name = NA_character_, var_id = NA_integer_, ...)
 
 \S4method{name}{Variable}(x)
-
-\S4method{value}{Variable}(object)
 
 \S4method{grad}{Variable}(object)
 
 \S4method{variables}{Variable}(object)
 
 \S4method{canonicalize}{Variable}(object)
+
+\S4method{attributes_were_lowered}{Variable}(object)
+
+\S4method{set_variable_of_provenance}{Variable,Variable}(object, variable)
+
+\S4method{variable_of_provenance}{Variable}(object)
+
+\S4method{as.character}{Variable}(x)
 }
 \arguments{
 \item{rows}{The number of rows in the variable.}
@@ -34,24 +40,32 @@ Variable(rows = NULL, cols = NULL, name = NA_character_, ...)
 
 \item{name}{(Optional) A character string representing the name of the variable.}
 
+\item{var_id}{(Optional) A unique ID for the variable.}
+
 \item{...}{(Optional) Additional attribute arguments. See \linkS4class{Leaf} for details.}
 
-\item{x, object}{A \linkS4class{Variable} object.}
+\item{x}{A \linkS4class{Variable} object.}
 }
 \description{
 This class represents an optimization variable.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{name(Variable)}: The name of the variable.
+\item \code{name(Variable)}: The name of the variable
 
-\item \code{value(Variable)}: Get the value of the variable.
+\item \code{grad(Variable)}: The sub/super-gradient of the variable represented as a sparse matrix
 
-\item \code{grad(Variable)}: The sub/super-gradient of the variable represented as a sparse matrix.
+\item \code{variables(Variable)}: Returns itself as a variable
 
-\item \code{variables(Variable)}: Returns itself as a variable.
+\item \code{canonicalize(Variable)}: The graph implementation of the object
 
-\item \code{canonicalize(Variable)}: The canonical form of the variable.
+\item \code{attributes_were_lowered(Variable)}: Returns TRUE iff variable generated when lowering a variable with attributes
+
+\item \code{set_variable_of_provenance(object = Variable, variable = Variable)}: Returns the variable of provenance
+
+\item \code{variable_of_provenance(Variable)}: Returns a variable with attributes from which this variable was generated
+
+\item \code{as.character(Variable)}: Convert to a character representation
 
 }}
 \section{Slots}{

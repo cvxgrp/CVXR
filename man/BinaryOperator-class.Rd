@@ -9,6 +9,7 @@
 \alias{sign_from_args,BinaryOperator-method}
 \alias{is_imag,BinaryOperator-method}
 \alias{is_complex,BinaryOperator-method}
+\alias{scalar_product}
 \title{The BinaryOperator class.}
 \usage{
 \S4method{name}{BinaryOperator}(x)
@@ -20,11 +21,17 @@
 \S4method{is_imag}{BinaryOperator}(object)
 
 \S4method{is_complex}{BinaryOperator}(object)
+
+scalar_product(x, y)
 }
 \arguments{
 \item{x, object}{A \linkS4class{BinaryOperator} object.}
 
 \item{values}{A list of arguments to the atom.}
+
+\item{y}{An \linkS4class{Expression} or R numeric data.}
+
+\item{x}{An \linkS4class{Expression} or R numeric data.}
 }
 \description{
 This base class represents expressions involving binary operators.
@@ -40,6 +47,11 @@ This base class represents expressions involving binary operators.
 \item \code{is_imag(BinaryOperator)}: Is the expression imaginary?
 
 \item \code{is_complex(BinaryOperator)}: Is the expression complex valued?
+
+}}
+\section{Functions}{
+\itemize{
+\item \code{scalar_product()}: An \linkS4class{Expression} representing the standard inner product (or "scalar" product) of (x,y), conjugate-linear in x.
 
 }}
 \section{Slots}{

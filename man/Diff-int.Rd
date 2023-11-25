@@ -2,7 +2,7 @@
 % Please edit documentation in R/affine.R
 \name{Diff}
 \alias{Diff}
-\title{Takes the k-th order differences}
+\title{The Diff atom.}
 \usage{
 Diff(x, lag = 1, k = 1, axis = 2)
 }

@@ -5,27 +5,38 @@
 \alias{ZeroConstraint-class}
 \alias{.ZeroConstraint}
 \alias{name,ZeroConstraint-method}
+\alias{as.character,ZeroConstraint-method}
 \alias{dim,ZeroConstraint-method}
 \alias{is_dcp,ZeroConstraint-method}
 \alias{is_dgp,ZeroConstraint-method}
+\alias{is_dqcp,ZeroConstraint-method}
 \alias{residual,ZeroConstraint-method}
-\alias{canonicalize,ZeroConstraint-method}
+\alias{dual_value,ZeroConstraint-method}
+\alias{dual_value<-,ZeroConstraint-method}
 \title{The ZeroConstraint class}
 \usage{
 \S4method{name}{ZeroConstraint}(x)
 
+\S4method{as.character}{ZeroConstraint}(x)
+
 \S4method{dim}{ZeroConstraint}(x)
 
-\S4method{is_dcp}{ZeroConstraint}(object)
+\S4method{is_dcp}{ZeroConstraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{ZeroConstraint}(object)
+\S4method{is_dgp}{ZeroConstraint}(object, dpp = FALSE)
+
+\S4method{is_dqcp}{ZeroConstraint}(object)
 
 \S4method{residual}{ZeroConstraint}(object)
 
-\S4method{canonicalize}{ZeroConstraint}(object)
+\S4method{dual_value}{ZeroConstraint}(object)
+
+\S4method{dual_value}{ZeroConstraint}(object) <- value
 }
 \arguments{
 \item{x, object}{A \linkS4class{ZeroConstraint} object.}
+
+\item{value}{A numeric scalar, vector, or matrix.}
 }
 \description{
 The ZeroConstraint class
@@ -40,8 +51,12 @@ The ZeroConstraint class
 
 \item \code{is_dgp(ZeroConstraint)}: Is the constraint DGP?
 
+\item \code{is_dqcp(ZeroConstraint)}: Is the constraint DQCP?
+
 \item \code{residual(ZeroConstraint)}: The residual of a constraint
 
-\item \code{canonicalize(ZeroConstraint)}: The graph implementation of the object.
+\item \code{dual_value(ZeroConstraint)}: The dual values of a constraint.
+
+\item \code{dual_value(ZeroConstraint) <- value}: Replaces the dual values of a constraint.
 
 }}

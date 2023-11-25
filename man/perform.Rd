@@ -5,7 +5,7 @@
 \alias{perform}
 \title{Perform Reduction}
 \usage{
-perform(object, problem)
+perform(object, problem, verbose = FALSE)
 }
 \arguments{
 \item{object}{A \linkS4class{Reduction} object.}

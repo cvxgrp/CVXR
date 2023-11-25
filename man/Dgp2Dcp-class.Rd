@@ -3,7 +3,7 @@
 \docType{class}
 \name{Dgp2Dcp-class}
 \alias{Dgp2Dcp-class}
-\alias{Dgp2Dcp}
+\alias{.Dgp2Dcp}
 \alias{accepts,Dgp2Dcp,Problem-method}
 \alias{perform,Dgp2Dcp,Problem-method}
 \alias{canonicalize_expr,Dgp2Dcp-method}

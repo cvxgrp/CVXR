@@ -3,10 +3,10 @@
 \docType{class}
 \name{Parameter-class}
 \alias{Parameter-class}
-\alias{.Parameter}
 \alias{Parameter}
 \alias{get_data,Parameter-method}
 \alias{name,Parameter-method}
+\alias{is_constant,Parameter-method}
 \alias{value,Parameter-method}
 \alias{value<-,Parameter-method}
 \alias{grad,Parameter-method}
@@ -14,17 +14,11 @@
 \alias{canonicalize,Parameter-method}
 \title{The Parameter class.}
 \usage{
-Parameter(
-  rows = NULL,
-  cols = NULL,
-  name = NA_character_,
-  value = NA_real_,
-  ...
-)
-
 \S4method{get_data}{Parameter}(object)
 
 \S4method{name}{Parameter}(x)
+
+\S4method{is_constant}{Parameter}(object)
 
 \S4method{value}{Parameter}(object)
 
@@ -37,26 +31,25 @@ Parameter(
 \S4method{canonicalize}{Parameter}(object)
 }
 \arguments{
-\item{rows}{The number of rows in the parameter.}
-
-\item{cols}{The number of columns in the parameter.}
-
-\item{name}{(Optional) A character string representing the name of the parameter.}
-
-\item{value}{(Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.}
-
-\item{...}{Additional attribute arguments. See \linkS4class{Leaf} for details.}
-
 \item{object, x}{A \linkS4class{Parameter} object.}
 }
 \description{
-This class represents a parameter, either scalar or a matrix.
+This class represents a parameter in an optimization problem.
+}
+\details{
+Parameters are constant expressions whose value may be specified
+after problem creation. The only way to modify a problem after its
+creation is through parameters. For example, you might choose to declare
+the hyper-parameters of a machine learning model to be Parameter objects;
+more generally, Parameters are useful for computing trade-off curves.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{get_data(Parameter)}: Returns \code{list(dim, name, value, attributes)}.
+\item \code{get_data(Parameter)}: Returns information needed to reconstruct the expression besides args: \code{list(dim, name, value, id, attributes)}.
 
 \item \code{name(Parameter)}: The name of the parameter.
+
+\item \code{is_constant(Parameter)}: Is the expression constant?
 
 \item \code{value(Parameter)}: The value of the parameter.
 
@@ -72,13 +65,21 @@ This class represents a parameter, either scalar or a matrix.
 \section{Slots}{
 
 \describe{
-\item{\code{rows}}{The number of rows in the parameter.}
+\item{\code{dim}}{the dimensions of the parameter.}
 
-\item{\code{cols}}{The number of columns in the parameter.}
+\item{\code{name}}{the name of this parameter}
 
-\item{\code{name}}{(Optional) A character string representing the name of the parameter.}
+\item{\code{PARAM_COUNT}}{count of parameters, (currently unused?)}
 
-\item{\code{value}}{(Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.}
+\item{\code{venv}}{an environment used for reference semantics in setting values for parameter}
+
+\item{\code{delta}}{the delta parameter}
+
+\item{\code{gradient}}{the gradient parameter}
+
+\item{\code{is_constant}}{flag indicating the parameter is constant}
+
+\item{\code{is_vector}}{flag indicating the parameter is a vector}
 }}
 
 \examples{

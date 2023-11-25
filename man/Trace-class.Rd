@@ -8,6 +8,9 @@
 \alias{to_numeric,Trace-method}
 \alias{validate_args,Trace-method}
 \alias{dim_from_args,Trace-method}
+\alias{sign_from_args,Trace-method}
+\alias{is_real,Trace-method}
+\alias{is_complex,Trace-method}
 \alias{is_atom_log_log_convex,Trace-method}
 \alias{is_atom_log_log_concave,Trace-method}
 \alias{graph_implementation,Trace-method}
@@ -20,6 +23,12 @@ Trace(expr)
 \S4method{validate_args}{Trace}(object)
 
 \S4method{dim_from_args}{Trace}(object)
+
+\S4method{sign_from_args}{Trace}(object)
+
+\S4method{is_real}{Trace}(object)
+
+\S4method{is_complex}{Trace}(object)
 
 \S4method{is_atom_log_log_convex}{Trace}(object)
 
@@ -50,6 +59,12 @@ This class represents the sum of the diagonal entries in a matrix.
 \item \code{validate_args(Trace)}: Check the argument is a square matrix.
 
 \item \code{dim_from_args(Trace)}: The atom is a scalar.
+
+\item \code{sign_from_args(Trace)}: The (is positive, is negative) sign of the atom.
+
+\item \code{is_real(Trace)}: A logical value indicating whether the atom is real.
+
+\item \code{is_complex(Trace)}: A logical value indicating whether the atom is complex.
 
 \item \code{is_atom_log_log_convex(Trace)}: Is the atom log-log convex?
 

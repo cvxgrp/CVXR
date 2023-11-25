@@ -8,15 +8,21 @@
 \alias{canonicalize,Maximize-method}
 \alias{is_dcp,Maximize-method}
 \alias{is_dgp,Maximize-method}
+\alias{is_dpp,Maximize-method}
+\alias{is_dqcp,Maximize-method}
 \title{The Maximize class.}
 \usage{
 Maximize(expr)
 
 \S4method{canonicalize}{Maximize}(object)
 
-\S4method{is_dcp}{Maximize}(object)
+\S4method{is_dcp}{Maximize}(object, dpp = FALSE)
 
-\S4method{is_dgp}{Maximize}(object)
+\S4method{is_dgp}{Maximize}(object, dpp = FALSE)
+
+\S4method{is_dpp}{Maximize}(object, context = "dcp")
+
+\S4method{is_dqcp}{Maximize}(object)
 }
 \arguments{
 \item{expr}{A scalar \linkS4class{Expression} to maximize.}
@@ -33,6 +39,10 @@ This class represents an optimization objective for maximization.
 \item \code{is_dcp(Maximize)}: A logical value indicating whether the objective is concave.
 
 \item \code{is_dgp(Maximize)}: A logical value indicating whether the objective is log-log concave.
+
+\item \code{is_dpp(Maximize)}: Is the objective DPP?
+
+\item \code{is_dqcp(Maximize)}: A logical value indicating whether the objective is quasiconcave.
 
 }}
 \section{Slots}{

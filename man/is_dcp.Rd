@@ -5,10 +5,12 @@
 \alias{is_dcp}
 \title{DCP Compliance}
 \usage{
-is_dcp(object)
+is_dcp(object, dpp = FALSE)
 }
 \arguments{
 \item{object}{A \linkS4class{Problem} or \linkS4class{Expression} object.}
+
+\item{dpp}{a boolean flag indicating if it is DPP or not, default `FALSE`}
 }
 \value{
 A logical value indicating whether the problem or expression is DCP compliant, i.e. no unknown curvatures.

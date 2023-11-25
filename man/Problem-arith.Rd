@@ -13,6 +13,7 @@
 \alias{*,Problem,numeric-method}
 \alias{*,numeric,Problem-method}
 \alias{/,Problem,numeric-method}
+\alias{+,XpressProblem,missing-method}
 \title{Arithmetic Operations on Problems}
 \usage{
 \S4method{+}{Problem,missing}(e1, e2)
@@ -36,6 +37,8 @@
 \S4method{*}{numeric,Problem}(e1, e2)
 
 \S4method{/}{Problem,numeric}(e1, e2)
+
+\S4method{+}{XpressProblem,missing}(e1, e2)
 }
 \arguments{
 \item{e1}{The left-hand \linkS4class{Problem} object.}

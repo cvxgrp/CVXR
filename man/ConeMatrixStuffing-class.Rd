@@ -6,11 +6,17 @@
 \alias{ConeMatrixStuffing}
 \alias{accepts,ConeMatrixStuffing,Problem-method}
 \alias{stuffed_objective,ConeMatrixStuffing,Problem,CoeffExtractor-method}
+\alias{perform,ConeMatrixStuffing,Problem-method}
+\alias{invert,ConeMatrixStuffing,Solution,InverseData-method}
 \title{Construct Matrices for Linear Cone Problems}
 \usage{
 \S4method{accepts}{ConeMatrixStuffing,Problem}(object, problem)
 
 \S4method{stuffed_objective}{ConeMatrixStuffing,Problem,CoeffExtractor}(object, problem, extractor)
+
+\S4method{perform}{ConeMatrixStuffing,Problem}(object, problem)
+
+\S4method{invert}{ConeMatrixStuffing,Solution,InverseData}(object, solution, inverse_data)
 }
 \arguments{
 \item{object}{A \linkS4class{ConeMatrixStuffing} object.}
@@ -18,6 +24,10 @@
 \item{problem}{A \linkS4class{Problem} object.}
 
 \item{extractor}{Used to extract the affine coefficients of the objective.}
+
+\item{solution}{A \linkS4class{Solution} object to invert.}
+
+\item{inverse_data}{A \linkS4class{InverseData} object containing data necessary for the inversion.}
 }
 \description{
 Linear cone problems are assumed to have a linear objective and cone constraints,
@@ -38,5 +48,13 @@ subject to cone_constr1(A_1*x + b_1, ...)
   problem = Problem,
   extractor = CoeffExtractor
 )}: Returns a list of the stuffed matrices
+
+\item \code{perform(object = ConeMatrixStuffing, problem = Problem)}: Constructs matrices and returns a ParamConeProg (parametrized cone program)
+
+\item \code{invert(
+  object = ConeMatrixStuffing,
+  solution = Solution,
+  inverse_data = InverseData
+)}: Returns the solution to the original problem given the inverse_data.
 
 }}

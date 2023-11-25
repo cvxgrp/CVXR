@@ -22,7 +22,7 @@
 \item{inverse_data}{The data encoding the original problem.}
 }
 \description{
-The MatrixStuffing class.
+This class stuffs a problem into a standard form for a family of solvers.
 }
 \section{Methods (by generic)}{
 \itemize{

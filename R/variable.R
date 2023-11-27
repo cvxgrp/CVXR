@@ -50,10 +50,10 @@ upper_tri_to_full <- function(n) {
 .Variable <- setClass("Variable", representation(dim = "NumORNULL", name = "character", variable_with_attributes = "ANY", delta = "numeric", gradient = "numeric", .is_vector = "logical"),
                                   prototype(dim = NULL, name = NA_character_, variable_with_attributes = NULL, delta = NA_real_, gradient = NA_real_, .is_vector = NA),
                                   validity = function(object) {
-                                    if(!is.null(object@variable_with_attributes))
-                                      stop("[Variable: validation] variable_with_attributes is an internal slot and should not be set by the user")
-                                    if(!is.na(object@.is_vector))
-                                      stop("[Variable: validation] .is_vector is an internal slot and should not be set by the user")
+                                    ## if(!is.null(object@variable_with_attributes))
+                                    ##   stop("[Variable: validation] variable_with_attributes is an internal slot and should not be set by the user")
+                                    ## if(!is.na(object@.is_vector))
+                                    ##   stop("[Variable: validation] .is_vector is an internal slot and should not be set by the user")
                                     return(TRUE)
                                   }, contains = "Leaf")
 

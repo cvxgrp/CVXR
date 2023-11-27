@@ -35,7 +35,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
     .Object@value <- Matrix(value, sparse = TRUE)
     .Object@sparse <- TRUE
   } else {
-    if(is.na(value))
+    if(any(is.na(value)))
       .Object@value <- value
     else
       .Object@value <- as.matrix(value)
@@ -235,12 +235,11 @@ as.Constant <- function(expr) {
       if(is(elem, "Expression"))
         stop("The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack.")
     }
-
-    if(is(expr, "Expression"))
-      expr
-    else
-      Constant(value = expr)
   }
+  if(is(expr, "Expression"))
+    expr
+  else
+    Constant(value = expr)
 }
 
 #'

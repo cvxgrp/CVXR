@@ -98,6 +98,9 @@ GENERAL_PROJECTION_TOL <- 1e-10
 SPARSE_PROJECTION_TOL <- 1e-10
 ATOM_EVAL_TOL <- 1e-4
 
+# Max number of nodes a reasonable expression should have (used for debugging).
+MAX_NODES = 10000
+
 # DPP is slow when total size of parameters exceed this threshold.
 PARAM_THRESHOLD <- 1e4   # TODO: Should we reduce this?
 
@@ -144,7 +147,7 @@ sum_dims <- function(dims) {
   dim <- dims[[1]]
   for(t in dims[2:length(dims)]) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
-    if(length(dim) != t && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
+    if(!(length(dim) == length(t) && all(dim == t)) && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
       stop("Cannot broadcast dimensions")
 
     if(length(dim) >= length(t))
@@ -1117,7 +1120,7 @@ restore_quad_forms <- function(expr, quad_forms) {
 #######################
 node_count <- function(expr) {
   # Return node count for the expression/constraint.
-  if("args" %in% slotNames(expr)) {
+  if("args" %in% slotNames(expr) && length(expr@args) >= 1) {
     return(1 + sum(sapply(expr@args, node_count)))
   } else
     return(1)

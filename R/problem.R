@@ -921,12 +921,12 @@ Problem.sort_candidate_solvers <- function(solvers) {
 #' @docType methods
 #' @rdname Problem This internal method solves a DCP compliant optimization problem. It saves the values of primal and dual variables in the Variable and Constraint objects, respectively.
 #' @export
-setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, gp = FALSE, qcp = FALSE,
-                                        requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
+setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = TRUE, verbose = FALSE, gp = FALSE, qcp = FALSE,
+                                        requires_grad = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
                                         parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) {
   # TODO: Need to update this function.
-  if(parallel)
-    stop("Unimplemented")
+  # if(parallel)
+  #   stop("Unimplemented")
 
   if(verbose) {
     divider <- paste(rep("=", 79), collapse = "")
@@ -985,20 +985,20 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
         # FlipObjective flips the sign of the objective
         low_in <- low
         high_in <- high
-        if(!is.na(high))
-          low_in <- high*-1
-        if(!is.na(low))
-          high_in <- low*-1
+        if(!is.na(high_in))
+          low <- high_in*-1
+        if(!is.na(low_in))
+          high <- low_in*-1
       }
 
       chain <- Chain(problem = object, reductions = reductions)
-      soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low_in, high = high_in, ...)
+      soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low, high = high, verbose = verbose, ...)
       object <- unpack_problem(object, retrieve(chain, soln))
       return(object@value)
     }
   }
 
-  kwargs <- c(list(low = low_in, high = high_in), list(...))
+  kwargs <- c(list(feastol = feastol, reltol = reltol, abstol = abstol, num_iter = num_iter, low = low, high = high), list(...))
   tmp <- get_problem_data(object, solver, gp, enforce_dpp, ignore_dpp, verbose, canon_backend, kwargs)
   data <- tmp[[1]]
   solving_chain <- tmp[[2]]

@@ -76,7 +76,7 @@ setMethod("accepts", signature(object = "MOSEK", problem = "Problem"), function(
 #' @details
 #' Special cases PSD constraints, as MOSEK expects constraints to be
 #' imposed on solely the lower triangular part of the variable matrix.
-#' This function differs from the SCS version only in the fact that it does not apply the `\sqrt(2)` scaling on off-diagonal entries. This difference is necessary based on how we implement the `MOSEK$bar_data`.
+#' This function differs from the SCS version only in the fact that it does not apply the \eqn{\sqrt(2)} scaling on off-diagonal entries. This difference is necessary based on how we implement the `MOSEK$bar_data`.
 #' @param constr a list of constraints
 #' @return a linear operator to multiply by PSD constraint coefficients.
 #' @importFrom Matrix sparseMatrix

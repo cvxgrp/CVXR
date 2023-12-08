@@ -672,13 +672,13 @@ setMethod("parameters", "Problem", function(object) {
 #' @describeIn Problem List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
   const_list <- list()
-  constants_ <- constraints(object@objective)
+  constants_ <- constants(object@objective)
   for(constr in object@constraints)
     constants_ <- c(constants_, constants(constr))
   # for(constant in constants_)
   #   const_dict[[as.character(id(constant))]] <- constant
   # unname(const_dict)
-  unique_list(constants)
+  unique_list(constants_)
 })
 
 #' @describeIn Problem List of \linkS4class{Atom} objects in the problem.
@@ -824,7 +824,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     candidates$conic_solvers <- list()
     # ECOS_BB can only be called explicitly.
     for(slv in INSTALLED_SOLVERS) {
-      if(slv %in% CONIC_SOLVERS && slv != ECOS_BB)
+      if(slv %in% CONIC_SOLVERS && slv != "ECOS_BB")
         candidates$conic_solvers <- c(candidates$conic_solvers, list(slv))
     }
   }
@@ -839,7 +839,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 
   if(is_mixed_integer(object)) {
     # ECOS_BB must be called explicitly.
-    if(identical(INSTALLED_MI_SOLVERS, list(ECOS_BB)) && solver != ECOS_BB)
+    if(identical(INSTALLED_MI_SOLVERS, list("ECOS_BB")) && solver != "ECOS_BB")
       stop("You need a mixed-integer solver for this model. Refer to the documentation
             https://www.cvxpy.org/tutorial/advanced/index.html#mixed-integer-programs
             for discussion on this topic.
@@ -892,8 +892,8 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 # Construct the chains required to reformulate and solve the problem.
 # In particular, this function 1) finds the candidates solvers, 2) constructs the solving chain that performs the numeric reductions and solves the problem.
 .construct_chain <- function(object, solver = NA_character_, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
-  candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
-  .sort_candidate_solvers(object, candidate_solvers)
+  candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
+  candidate_solvers <- Problem.sort_candidate_solvers(candidate_solvers)
   return(construct_solving_chain(object, candidate_solvers, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, canon_backend = canon_backend, solver_opts = solver_opts))
 }
 
@@ -940,8 +940,12 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
   }
 
   if(verbose) {
-    n_variables <- sum(sapply(variables(object), function(v) { prod(dim(v)) }))
-    n_parameters <- sum(sapply(parameters(object), function(p) { prod(dim(p)) }))
+    vars_ <- variables(object)
+    n_variables <- ifelse(length(vars_) > 0, sum(sapply(vars_, function(v) { prod(dim(v)) })), 0)
+    
+    parms_ <- parameters(object)
+    n_parameters <- ifelse(length(parms_) > 0, sum(sapply(parms_, function(p) { prod(dim(p)) })), 0)
+    
     print(paste("Your problem has", n_variables, "variables,", length(object@constraints), "constraints, and", n_parameters, "parameters"))
 
     curvatures <- c()
@@ -957,7 +961,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
       print("(If you need to solve this problem multiple times, but with different data, consider using parameters)")
     print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
   }
-
+  
   if(requires_grad) {
     dpp_context <- ifelse(gp, "dgp", "dcp")
     if(qcp)
@@ -969,7 +973,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
     else if(!("DIFFCP" %in% INSTALLED_SOLVERS))
       stop("The R library diffcp must be installed to differentiate through problems")
     else
-      solver <- DIFFCP
+      solver <- "DIFFCP"
   } else {
     if(gp && qcp)
       stop("At most one of gp and qcp can be TRUE")
@@ -999,7 +1003,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
   }
 
   kwargs <- c(list(feastol = feastol, reltol = reltol, abstol = abstol, num_iter = num_iter, low = low, high = high), list(...))
-  tmp <- get_problem_data(object, solver, gp, enforce_dpp, ignore_dpp, verbose, canon_backend, kwargs)
+  tmp <- get_problem_data(object, solver, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, verbose = verbose, canon_backend = canon_backend, solver_opts = kwargs)
   data <- tmp[[1]]
   solving_chain <- tmp[[2]]
   inverse_data <- tmp[[3]]
@@ -1032,7 +1036,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
 #' @rdname psolve
 #' @method solve Problem
 #' @export
-setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b = NA, ...) {
+setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b, ...) {
   kwargs <- list(...)
   if(missing(b)) {
     if("solver" %in% names(kwargs))

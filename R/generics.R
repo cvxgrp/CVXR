@@ -963,7 +963,7 @@ setGeneric("get_problem_data", function(object, solver, gp = FALSE, enforce_dpp 
 #' @export
 setGeneric("psolve", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE,
                               verbose = FALSE, gp = FALSE, qcp = FALSE,
-                              requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
+                              requires_grad = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
                               parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) { standardGeneric("psolve") })
 
 #'

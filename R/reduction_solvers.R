@@ -328,7 +328,8 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   } else if(any(sapply(parameters(problem), is_complex)))
     reductions <- c(list(EvalParams()), reductions)
   else {   # Compilation with DPP.
-    n_parameters <- sum(parameters(problem), function(param) { prod(dim(param)) })
+    parms_ <- parameters(problem)
+    n_parameters <- ifelse(length(parms_) > 0, sum(parms_, function(param) { prod(dim(param)) }), 0)
     if(n_parameters >= PARAM_THRESHOLD)
       warning("Your problem has too many parameters for efficient DPP compilation. We suggest setting ignore_dpp = TRUE")
   }

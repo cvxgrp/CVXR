@@ -91,7 +91,7 @@ setMethod("copy", "Canonical", function(object, args = list(), id_objects = list
   obj_id_char <- as.character(obj_id)
   if(obj_id_char %in% names(id_objects))
     return(id_objects[[obj_id_char]])
-  if(is.null(args))
+  if(is.null(args) || length(args) == 0)
     args <- object@args
   else {
     if(length(args) != length(object@args))

@@ -1076,7 +1076,9 @@ replace_quad_forms <- function(expr, quad_forms) {
       quad_forms <- tmp[[2]]
     } else {
       tmp <- replace_quad_forms(arg, quad_forms)
-      arg <- tmp[[1]]
+      # arg <- tmp[[1]]
+      # TODO: Check this is modifying args correctly and doesn't impede restore_quad_forms.
+      expr <- set_obj_slot(expr, "args", idx, tmp[[1]])
       quad_forms <- tmp[[2]]
     }
   }
@@ -1086,7 +1088,8 @@ replace_quad_forms <- function(expr, quad_forms) {
 replace_quad_form <- function(expr, idx, quad_forms) {
   # quad_form <- expr@args[[idx]]
   quad_form <- get_obj_slot(expr, "args")[[idx]]
-  placeholder <- new("Variable", dim = dim(quad_form), var_id = id(quad_form))
+  # placeholder <- do.call("Variable", nrow = nrow(quad_form), ncol = ncol(quad_form), var_id = id(quad_form))
+  placeholder <- new("Variable", dim = dim(quad_form), id = id(quad_form))
   # expr@args[[idx]] <- placeholder
   expr <- set_obj_slot(expr, "args", idx, placeholder)
   placeholder_id_char <- as.character(id(placeholder))

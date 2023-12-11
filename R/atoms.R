@@ -375,10 +375,6 @@ setMethod("atoms", "Atom", function(object) {
   return(unique(atom_list))
 })
 
-#' @param value A numeric value
-#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
-setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
-
 #'
 #' The AxisAtom class.
 #'
@@ -469,6 +465,10 @@ setMethod(".axis_grad", "AxisAtom", function(object, values) {
   }
   list(D)
 })
+
+#' @param value A numeric value
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })
 
 #'
 #' The ConditionNumber class.

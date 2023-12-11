@@ -24,14 +24,16 @@
 \alias{is_complex,Leaf-method}
 \alias{domain,Leaf-method}
 \alias{project,Leaf-method}
-\alias{project_and_assign,Leaf-method}
 \alias{value,Leaf-method}
 \alias{value<-,Leaf-method}
+\alias{project_and_assign,Leaf-method}
 \alias{validate_val,Leaf-method}
 \alias{is_psd,Leaf-method}
 \alias{is_nsd,Leaf-method}
 \alias{is_quadratic,Leaf-method}
+\alias{has_quadratic_term,Leaf-method}
 \alias{is_pwl,Leaf-method}
+\alias{is_dpp,Leaf-method}
 \title{The Leaf class.}
 \usage{
 \S4method{get_data}{Leaf}(object)
@@ -74,11 +76,11 @@
 
 \S4method{project}{Leaf}(object, value)
 
-\S4method{project_and_assign}{Leaf}(object, value)
-
 \S4method{value}{Leaf}(object)
 
 \S4method{value}{Leaf}(object) <- value
+
+\S4method{project_and_assign}{Leaf}(object, value)
 
 \S4method{validate_val}{Leaf}(object, val)
 
@@ -88,7 +90,13 @@
 
 \S4method{is_quadratic}{Leaf}(object)
 
+\S4method{has_quadratic_term}{Leaf}(object)
+
 \S4method{is_pwl}{Leaf}(object)
+
+\S4method{is_dpp}{Leaf}(object, context = "dcp")
+
+\S4method{atoms}{Leaf}(object)
 }
 \arguments{
 \item{object, x}{A \linkS4class{Leaf} object.}
@@ -142,11 +150,11 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 
 \item \code{project(Leaf)}: Project value onto the attribute set of the leaf.
 
-\item \code{project_and_assign(Leaf)}: Project and assign a value to the leaf.
-
 \item \code{value(Leaf)}: Get the value of the leaf.
 
 \item \code{value(Leaf) <- value}: Set the value of the leaf.
+
+\item \code{project_and_assign(Leaf)}: Project and assign a value to the leaf.
 
 \item \code{validate_val(Leaf)}: Check that \code{val} satisfies symbolic attributes of leaf.
 
@@ -156,7 +164,13 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 
 \item \code{is_quadratic(Leaf)}: Leaf nodes are always quadratic.
 
+\item \code{has_quadratic_term(Leaf)}: Leaf nodes are not quadratic terms.
+
 \item \code{is_pwl(Leaf)}: Leaf nodes are always piecewise linear.
+
+\item \code{is_dpp(Leaf)}: Is the expression a disciplined parametrized expression?
+
+\item \code{atoms(Leaf)}: A list of the atoms in the expression.
 
 }}
 \section{Slots}{
@@ -168,33 +182,33 @@ This class represents a leaf node, i.e. a Variable, Constant, or Parameter.
 
 \item{\code{value}}{The numeric value of the leaf.}
 
-\item{\code{nonneg}}{Is the leaf nonnegative?}
+\item{\code{nonneg}}{Is the leaf constrained to be nonnegative?}
 
-\item{\code{nonpos}}{Is the leaf nonpositive?}
+\item{\code{nonpos}}{Is the leaf constrained to be nonpositive?}
 
-\item{\code{complex}}{Is the leaf a complex number?}
+\item{\code{complex}}{Is the leaf complex valued?}
 
 \item{\code{imag}}{Is the leaf imaginary?}
 
-\item{\code{symmetric}}{Is the leaf a symmetric matrix?}
+\item{\code{symmetric}}{Is the leaf symmetric?}
 
-\item{\code{diag}}{Is the leaf a diagonal matrix?}
+\item{\code{diag}}{Is the leaf diagonal?}
 
-\item{\code{PSD}}{Is the leaf positive semidefinite?}
+\item{\code{PSD}}{Is the leaf constrained to be positive semidefinite?}
 
-\item{\code{NSD}}{Is the leaf negative semidefinite?}
+\item{\code{NSD}}{Is the leaf constrained to be negative semidefinite?}
 
-\item{\code{hermitian}}{Is the leaf hermitian?}
+\item{\code{hermitian}}{Is the leaf Hermitian?}
 
-\item{\code{boolean}}{Is the leaf boolean? Is the variable boolean? May be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
+\item{\code{boolean}}{Is the leaf boolean? Can be \code{TRUE} = entire leaf is boolean, \code{FALSE} = entire leaf is not boolean, or a vector of
 indices which should be constrained as boolean, where each index is a vector of length exactly equal to the length of \code{dim}.}
 
-\item{\code{integer}}{Is the leaf integer? The semantics are the same as the \code{boolean} argument.}
+\item{\code{integer}}{Is the leaf integral? The semantics are the same as the \code{boolean} argument.}
 
 \item{\code{sparsity}}{A matrix representing the fixed sparsity pattern of the leaf.}
 
-\item{\code{pos}}{Is the leaf strictly positive?}
+\item{\code{pos}}{Is the leaf positive?}
 
-\item{\code{neg}}{Is the leaf strictly negative?}
+\item{\code{neg}}{Is the leaf negative?}
 }}
 

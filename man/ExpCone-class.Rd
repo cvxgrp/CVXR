@@ -12,10 +12,11 @@
 \alias{cone_sizes,ExpCone-method}
 \alias{is_dcp,ExpCone-method}
 \alias{is_dgp,ExpCone-method}
-\alias{canonicalize,ExpCone-method}
+\alias{is_dqcp,ExpCone-method}
+\alias{dual_value<-,ExpCone-method}
 \title{The ExpCone class.}
 \usage{
-ExpCone(x, y, z, id = NA_integer_)
+ExpCone(x, y, z, constr_id = NA_integer_)
 
 \S4method{as.character}{ExpCone}(x)
 
@@ -27,11 +28,13 @@ ExpCone(x, y, z, id = NA_integer_)
 
 \S4method{cone_sizes}{ExpCone}(object)
 
-\S4method{is_dcp}{ExpCone}(object)
+\S4method{is_dcp}{ExpCone}(object, dpp = FALSE)
 
-\S4method{is_dgp}{ExpCone}(object)
+\S4method{is_dgp}{ExpCone}(object, dpp = FALSE)
 
-\S4method{canonicalize}{ExpCone}(object)
+\S4method{is_dqcp}{ExpCone}(object)
+
+\S4method{dual_value}{ExpCone}(object) <- value
 }
 \arguments{
 \item{x}{The variable \eqn{x} in the exponential cone.}
@@ -40,9 +43,11 @@ ExpCone(x, y, z, id = NA_integer_)
 
 \item{z}{The variable \eqn{z} in the exponential cone.}
 
-\item{id}{(Optional) A numeric value representing the constraint ID.}
+\item{constr_id}{(Optional) A numeric value representing the constraint ID.}
 
 \item{object}{A \linkS4class{ExpCone} object.}
+
+\item{value}{A numeric scalar, vector, or matrix.}
 }
 \description{
 This class represents a reformulated exponential cone constraint operating elementwise on \eqn{a, b, c}.
@@ -71,7 +76,9 @@ K = \{(x,y,z) | y, z > 0, y\log(y) + x \leq y\log(z)\} \cup \{(x,y,z) | x \leq 0
 
 \item \code{is_dgp(ExpCone)}: Is the constraint DGP?
 
-\item \code{canonicalize(ExpCone)}: Canonicalizes by converting expressions to LinOps.
+\item \code{is_dqcp(ExpCone)}: Is the constraint DQCP?
+
+\item \code{dual_value(ExpCone) <- value}: Replaces the dual values of an exponential cone constraint.
 
 }}
 \section{Slots}{

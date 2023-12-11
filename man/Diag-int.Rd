@@ -2,7 +2,7 @@
 % Please edit documentation in R/affine.R
 \name{Diag}
 \alias{Diag}
-\title{Turns an expression into a DiagVec object}
+\title{The Diag atom.}
 \usage{
 Diag(expr)
 }

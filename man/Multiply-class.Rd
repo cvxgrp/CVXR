@@ -9,6 +9,8 @@
 \alias{dim_from_args,Multiply-method}
 \alias{is_atom_log_log_convex,Multiply-method}
 \alias{is_atom_log_log_concave,Multiply-method}
+\alias{is_atom_quasiconvex,Multiply-method}
+\alias{is_atom_quasiconcave,Multiply-method}
 \alias{is_psd,Multiply-method}
 \alias{is_nsd,Multiply-method}
 \alias{graph_implementation,Multiply-method}
@@ -23,6 +25,10 @@ Multiply(lh_exp, rh_exp)
 \S4method{is_atom_log_log_convex}{Multiply}(object)
 
 \S4method{is_atom_log_log_concave}{Multiply}(object)
+
+\S4method{is_atom_quasiconvex}{Multiply}(object)
+
+\S4method{is_atom_quasiconcave}{Multiply}(object)
 
 \S4method{is_psd}{Multiply}(object)
 
@@ -57,6 +63,10 @@ This class represents the elementwise product of two expressions.
 \item \code{is_atom_log_log_convex(Multiply)}: Is the atom log-log convex?
 
 \item \code{is_atom_log_log_concave(Multiply)}: Is the atom log-log concave?
+
+\item \code{is_atom_quasiconvex(Multiply)}: Is the atom quasiconvex?
+
+\item \code{is_atom_quasiconcave(Multiply)}: Is the atom quasiconcave?
 
 \item \code{is_psd(Multiply)}: Is the expression a positive semidefinite matrix?
 

@@ -98,6 +98,9 @@ GENERAL_PROJECTION_TOL <- 1e-10
 SPARSE_PROJECTION_TOL <- 1e-10
 ATOM_EVAL_TOL <- 1e-4
 
+# Max number of nodes a reasonable expression should have (used for debugging).
+MAX_NODES = 10000
+
 # DPP is slow when total size of parameters exceed this threshold.
 PARAM_THRESHOLD <- 1e4   # TODO: Should we reduce this?
 
@@ -144,7 +147,7 @@ sum_dims <- function(dims) {
   dim <- dims[[1]]
   for(t in dims[2:length(dims)]) {
     # Only allow broadcasting for 0-D arrays or summation of scalars.
-    if(length(dim) != t && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
+    if(!(length(dim) == length(t) && all(dim == t)) && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
       stop("Cannot broadcast dimensions")
 
     if(length(dim) >= length(t))
@@ -1073,7 +1076,9 @@ replace_quad_forms <- function(expr, quad_forms) {
       quad_forms <- tmp[[2]]
     } else {
       tmp <- replace_quad_forms(arg, quad_forms)
-      arg <- tmp[[1]]
+      # arg <- tmp[[1]]
+      # TODO: Check this is modifying args correctly and doesn't impede restore_quad_forms.
+      expr <- set_obj_slot(expr, "args", idx, tmp[[1]])
       quad_forms <- tmp[[2]]
     }
   }
@@ -1083,7 +1088,8 @@ replace_quad_forms <- function(expr, quad_forms) {
 replace_quad_form <- function(expr, idx, quad_forms) {
   # quad_form <- expr@args[[idx]]
   quad_form <- get_obj_slot(expr, "args")[[idx]]
-  placeholder <- new("Variable", dim = dim(quad_form), var_id = id(quad_form))
+  # placeholder <- do.call("Variable", nrow = nrow(quad_form), ncol = ncol(quad_form), var_id = id(quad_form))
+  placeholder <- new("Variable", dim = dim(quad_form), id = id(quad_form))
   # expr@args[[idx]] <- placeholder
   expr <- set_obj_slot(expr, "args", idx, placeholder)
   placeholder_id_char <- as.character(id(placeholder))
@@ -1117,7 +1123,7 @@ restore_quad_forms <- function(expr, quad_forms) {
 #######################
 node_count <- function(expr) {
   # Return node count for the expression/constraint.
-  if("args" %in% slotNames(expr)) {
+  if("args" %in% slotNames(expr) && length(expr@args) >= 1) {
     return(1 + sum(sapply(expr@args, node_count)))
   } else
     return(1)
@@ -1185,6 +1191,44 @@ build_non_disciplined_error_msg <- function(problem, discipline_type) {
       msg <- paste(msg, "\n|-- ", as.character(subexpr), sep = "")
   }
   return(msg)
+}
+
+#######################
+#                     #
+#    Vectorization    #
+#                     #
+#######################
+
+#' Return the symmetric 2D array defined by taking a vector specifying
+#' its lower triangular entries in column-major order
+#' @param v A list of length (dim * (dim + 1) / 2).
+#' @param dim The number of rows (equivalently, columns) in the output
+#'   array.
+#' @return Return the symmetric 2D array defined by taking `v` to
+#'   specify its lower triangular matrix.
+vectorized_lower_tri_to_mat <- function(v, dim) {
+  v <- unlist(v)
+  indseq <- seq_len(dim)
+  i_seq <- unlist(lapply(indseq, seq.int, to = dim))
+  j_seq <- unlist(lapply(indseq, function(i) rep(i, times = dim - i + 1)))
+  Matrix::sparseMatrix(i = c(i_seq, j_seq), j = c(j_seq, i_seq), x = c(v, v),
+                       dims = c(dim, dim), use.last.ij = TRUE)
+}
+
+#' Return the triplet form of the symmetric 2D array defined by taking
+#' a vector specifying its lower triangular entries in column-major
+#' order
+#' @param v A list of length (dim * (dim + 1) / 2).
+#' @param dim The number of rows (equivalently, columns) in the output
+#'   array.
+#' @return Return the symmetric 2D array defined by taking `v` to
+#'   specify its lower triangular matrix.
+vectorized_lower_tri_to_triples <- function(v, dim) {
+  v <- unlist(v)
+  indseq <- seq_len(dim)
+  i_seq <- unlist(lapply(indseq, seq.int, to = dim))
+  j_seq <- unlist(lapply(indseq, function(i) rep(i, times = dim - i + 1)))
+  list(row = c(i_seq, j_seq), cols = c(j_seq, i_seq), vals = c(v, v))
 }
 
 #'

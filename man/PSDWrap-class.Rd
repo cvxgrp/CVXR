@@ -5,12 +5,21 @@
 \alias{PSDWrap-class}
 \alias{.PSDWrap}
 \alias{PSDWrap}
+\alias{validate_args,PSDWrap-method}
 \alias{is_psd,PSDWrap-method}
+\alias{is_nsd,PSDWrap-method}
+\alias{is_hermitian,PSDWrap-method}
 \title{The PSDWrap class.}
 \usage{
 PSDWrap(arg)
 
+\S4method{validate_args}{PSDWrap}(object)
+
 \S4method{is_psd}{PSDWrap}(object)
+
+\S4method{is_nsd}{PSDWrap}(object)
+
+\S4method{is_hermitian}{PSDWrap}(object)
 }
 \arguments{
 \item{arg}{A \linkS4class{Expression} object or matrix.}
@@ -22,6 +31,12 @@ A no-op wrapper to assert the input argument is positive semidefinite.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{validate_args(PSDWrap)}: Check the input is a square matrix.
+
 \item \code{is_psd(PSDWrap)}: Is the atom positive semidefinite?
+
+\item \code{is_nsd(PSDWrap)}: Is the atom negative semidefinite?
+
+\item \code{is_hermitian(PSDWrap)}: Is the atom Hermitian?
 
 }}

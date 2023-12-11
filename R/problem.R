@@ -1,3 +1,6 @@
+setClassUnion("ListORNULL", c("list", "NULL"))
+
+
 #'
 #' The Objective class.
 #'
@@ -8,7 +11,9 @@
 #' @name Objective-class
 #' @aliases Objective
 #' @rdname Objective-class
-.Objective <- setClass("Objective", representation(expr = "ConstValORExpr", NAME = "objective"), contains = "Canonical")
+.Objective <- setClass("Objective",
+                       representation(expr = "ConstValORExpr", NAME = "character"),
+                       contains = "Canonical")
 
 #' @param expr A scalar \linkS4class{Expression} to optimize.
 #' @rdname Objective-class
@@ -16,6 +21,7 @@ Objective <- function(expr) { .Objective(expr = expr) }
 
 setMethod("initialize", "Objective", function(.Object, ..., expr) {
   .Object@expr <- expr
+  .Object@NAME  <- "objective"
   .Object@args <- list(as.Constant(expr))
   # .Object <- callNextMethod(.Object, ..., args = list(as.Constant(expr)))
 
@@ -260,9 +266,21 @@ setMethod("+", signature(e1 = "Maximize", e2 = "Maximize"), function(e1, e2) { M
 #' @rdname Objective-arith
 setMethod("+", signature(e1 = "Maximize", e2 = "Minimize"), function(e1, e2) { stop("Problem does not follow DCP rules") })
 
-setClassUnion("SolvingChainORNULL", c("SolvingChain", "NULL"))
-setClassUnion("ParamProgORNULL", c("ParamProg", "NULL"))
-setClassUnion("InverseDataORNULL", c("InverseData", "NULL"))
+#setClassUnion("SolvingChainORNULL", c("SolvingChain", "NULL"))
+## We add SolvingChain later to the class union below using setIs function
+## see reduction_solvers.R near SolvingChain class defn
+setClassUnion("SolvingChainORNULL", c("NULL"))
+
+#setClassUnion("ParamProbORNULL", c("ParamProg", "NULL")) ## THIS SEEMS WRONG, perhaps meant next line
+#setClassUnion("ParamProgORNULL", c("ParamQuadProg", "ParamConeProg", "NULL"))
+## We add ParamQuadProg, ParamConeProg later to class union below using setIs
+## see dcp2cone.R near ParamConeProg class defn and dcp2quad.R near ParamQuadProg
+setClassUnion("ParamProgORNULL", c("NULL"))
+
+#setClassUnion("InverseDataORNULL", c("InverseData", "NULL"))
+## We add InverseData to InverseDataORNULL later to class union below using setIs
+## see reductions.R near InverseData class defn
+setClassUnion("InverseDataORNULL", c("NULL"))
 
 #'
 #' The Cache class.
@@ -285,7 +303,7 @@ setMethod("make_key", "Cache", function(object, solver, gp, ignore_dpp) {
   return(list(solver, gp, ignore_dpp))
 })
 
-setMethod("gp", function(object) {
+setMethod("gp", "Cache", function(object) {
   return(!is.null(object@key) && !is.na(object@key) && object@key[[2]])
 })
 
@@ -401,6 +419,65 @@ SizeMetrics <- function(problem) {
 
 setClassUnion("SolverStatsORNULL", c("SolverStats", "NULL"))
 setClassUnion("SizeMetricsORNULL", c("SizeMetrics", "NULL"))
+
+#'
+#' The Solution class.
+#'
+#' This class represents a solution to an optimization problem.
+#'
+#' @rdname Solution-class
+.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
+                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
+
+Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
+  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
+}
+
+# TODO: Get rid of this and just skip calling copy on Solution objects.
+setMethod("copy", "Solution", function(object) {
+  return(Solution(object@status, object@opt_val, object@primal_vars, object@dual_vars, object@attr))
+})
+
+#' @param x A \linkS4class{Solution} object.
+#' @rdname Solution-class
+setMethod("as.character", "Solution", function(x) {
+  paste("Solution(status = ", x@status,
+              ", opt_val = ", x@opt_val,
+              ", primal_vars = (", paste(x@primal_vars, collapse = ", "),
+              "), dual_vars = (", paste(x@dual_vars, collapse = ", "),
+              "), attr = (", paste(x@attr, collapse = ", "), "))", sep = "")
+})
+
+setMethod("show", "Solution", function(object) {
+  cat("Solution(", object@status, ", ",
+                   object@opt_val, ", (",
+                   paste(object@primal_vars, collapse = ", "), "), (",
+                   paste(object@dual_vars, collapse = ", "), "), (",
+                   paste(object@attr, collapse = ", "), "))", sep = "")
+})
+
+INF_OR_UNB_MESSAGE <- paste("The problem is either infeasible or unbounded, but the solver cannot tell which.",
+                           "Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
+                           "For GUROBI and CPLEX you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...).")
+
+# Factory function for infeasible or unbounded solutions.
+failure_solution <- function(status, attr = NULL) {
+  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
+    opt_val <- Inf
+  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
+    opt_val <- -Inf
+  else
+    opt_val <- NA_real_
+
+  if(is.null(attr))
+    attr <- list()
+  if(status == INFEASIBLE_OR_UNBOUNDED)
+    attr$message <- INF_OR_UNB_MESSAGE
+
+  return(Solution(status, opt_val, list(), list(), attr))
+}
+
+setClassUnion("SolutionORList", c("Solution", "list"))
 
 #'
 #' The Problem class.
@@ -595,13 +672,13 @@ setMethod("parameters", "Problem", function(object) {
 #' @describeIn Problem List of \linkS4class{Constant} objects in the problem.
 setMethod("constants", "Problem", function(object) {
   const_list <- list()
-  constants_ <- constraints(object@objective)
+  constants_ <- constants(object@objective)
   for(constr in object@constraints)
     constants_ <- c(constants_, constants(constr))
   # for(constant in constants_)
   #   const_dict[[as.character(id(constant))]] <- constant
   # unname(const_dict)
-  unique_list(constants)
+  unique_list(constants_)
 })
 
 #' @describeIn Problem List of \linkS4class{Atom} objects in the problem.
@@ -747,7 +824,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     candidates$conic_solvers <- list()
     # ECOS_BB can only be called explicitly.
     for(slv in INSTALLED_SOLVERS) {
-      if(slv %in% CONIC_SOLVERS && slv != ECOS_BB)
+      if(slv %in% CONIC_SOLVERS && slv != "ECOS_BB")
         candidates$conic_solvers <- c(candidates$conic_solvers, list(slv))
     }
   }
@@ -762,7 +839,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 
   if(is_mixed_integer(object)) {
     # ECOS_BB must be called explicitly.
-    if(identical(INSTALLED_MI_SOLVERS, list(ECOS_BB)) && solver != ECOS_BB)
+    if(identical(INSTALLED_MI_SOLVERS, list("ECOS_BB")) && solver != "ECOS_BB")
       stop("You need a mixed-integer solver for this model. Refer to the documentation
             https://www.cvxpy.org/tutorial/advanced/index.html#mixed-integer-programs
             for discussion on this topic.
@@ -815,8 +892,8 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
 # Construct the chains required to reformulate and solve the problem.
 # In particular, this function 1) finds the candidates solvers, 2) constructs the solving chain that performs the numeric reductions and solves the problem.
 .construct_chain <- function(object, solver = NA_character_, gp = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_, solver_opts = NULL) {
-  candidate_solvers <- .find_candidate_solvers(solver = solver, gp = gp)
-  .sort_candidate_solvers(object, candidate_solvers)
+  candidate_solvers <- .find_candidate_solvers(object, solver = solver, gp = gp)
+  candidate_solvers <- Problem.sort_candidate_solvers(candidate_solvers)
   return(construct_solving_chain(object, candidate_solvers, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, canon_backend = canon_backend, solver_opts = solver_opts))
 }
 
@@ -841,16 +918,15 @@ Problem.sort_candidate_solvers <- function(solvers) {
   return(object)
 }
 
-#' @describeIn Problem This internal method solves a DCP compliant optimization problem. It saves the values of primal and dual variables in the Variable and Constraint objects, respectively.
 #' @docType methods
-#' @rdname psolve
+#' @rdname Problem This internal method solves a DCP compliant optimization problem. It saves the values of primal and dual variables in the Variable and Constraint objects, respectively.
 #' @export
-setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, gp = FALSE, qcp = FALSE,
-                                        requires_grad = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
+setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_dcp = FALSE, warm_start = TRUE, verbose = FALSE, gp = FALSE, qcp = FALSE,
+                                        requires_grad = FALSE, enforce_dpp = FALSE, ignore_dpp = FALSE, canon_backend = NA_character_,
                                         parallel = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, low = NA_real_, high = NA_real_, ...) {
   # TODO: Need to update this function.
-  if(parallel)
-    stop("Unimplemented")
+  # if(parallel)
+  #   stop("Unimplemented")
 
   if(verbose) {
     divider <- paste(rep("=", 79), collapse = "")
@@ -864,8 +940,12 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
   }
 
   if(verbose) {
-    n_variables <- sum(sapply(variables(object), function(v) { prod(dim(v)) }))
-    n_parameters <- sum(sapply(parameters(object), function(p) { prod(dim(p)) }))
+    vars_ <- variables(object)
+    n_variables <- ifelse(length(vars_) > 0, sum(sapply(vars_, function(v) { prod(dim(v)) })), 0)
+    
+    parms_ <- parameters(object)
+    n_parameters <- ifelse(length(parms_) > 0, sum(sapply(parms_, function(p) { prod(dim(p)) })), 0)
+    
     print(paste("Your problem has", n_variables, "variables,", length(object@constraints), "constraints, and", n_parameters, "parameters"))
 
     curvatures <- c()
@@ -881,7 +961,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
       print("(If you need to solve this problem multiple times, but with different data, consider using parameters)")
     print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
   }
-
+  
   if(requires_grad) {
     dpp_context <- ifelse(gp, "dgp", "dcp")
     if(qcp)
@@ -893,7 +973,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
     else if(!("DIFFCP" %in% INSTALLED_SOLVERS))
       stop("The R library diffcp must be installed to differentiate through problems")
     else
-      solver <- DIFFCP
+      solver <- "DIFFCP"
   } else {
     if(gp && qcp)
       stop("At most one of gp and qcp can be TRUE")
@@ -909,21 +989,21 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
         # FlipObjective flips the sign of the objective
         low_in <- low
         high_in <- high
-        if(!is.na(high))
-          low_in <- high*-1
-        if(!is.na(low))
-          high_in <- low*-1
+        if(!is.na(high_in))
+          low <- high_in*-1
+        if(!is.na(low_in))
+          high <- low_in*-1
       }
 
       chain <- Chain(problem = object, reductions = reductions)
-      soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low_in, high = high_in, ...)
+      soln <- bisect(reduce(chain), solver = solver, verbose = verbose, low = low, high = high, verbose = verbose, ...)
       object <- unpack_problem(object, retrieve(chain, soln))
       return(object@value)
     }
   }
 
-  kwargs <- c(list(low = low_in, high = high_in), list(...))
-  tmp <- get_problem_data(object, solver, gp, enforce_dpp, ignore_dpp, verbose, canon_backend, kwargs)
+  kwargs <- c(list(feastol = feastol, reltol = reltol, abstol = abstol, num_iter = num_iter, low = low, high = high), list(...))
+  tmp <- get_problem_data(object, solver, gp = gp, enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp, verbose = verbose, canon_backend = canon_backend, solver_opts = kwargs)
   data <- tmp[[1]]
   solving_chain <- tmp[[2]]
   inverse_data <- tmp[[3]]
@@ -956,7 +1036,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
 #' @rdname psolve
 #' @method solve Problem
 #' @export
-setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b = NA, ...) {
+setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b, ...) {
   kwargs <- list(...)
   if(missing(b)) {
     if("solver" %in% names(kwargs))
@@ -1586,6 +1666,201 @@ setMethod("is_mixed_integer", "ParamProb", function(object) { stop("Unimplemente
 setMethod("apply_parameters", "ParamProb", function(object, id_to_param_value = NULL, zero_offset = FALSE, keep_zeros = FALSE) {
   stop("Unimplemented")
 })
+
+#'
+#' A Partial Optimization Problem
+#'
+#' @slot opt_vars The variables to optimize over.
+#' @slot dont_opt_vars The variables to not optimize over.
+#' @name PartialProblem-class
+#' @aliases PartialProblem
+#' @rdname PartialProblem-class
+.PartialProblem <- setClass("PartialProblem", representation(.prob = "Problem", opt_vars = "list", dont_opt_vars = "list", solver = "ANY", .solve_kwargs = "list"),
+                                              prototype(opt_vars = list(), dont_opt_vars = list(), solver = NA_character_, .solve_kwargs = list()),
+                             contains = "Expression")
+
+PartialProblem <- function(prob, opt_vars, dont_opt_vars, solver, ...) {
+  .PartialProblem(.prob = prob, opt_vars = opt_vars, dont_opt_vars = dont_opt_vars, solver = solver, .solve_kwargs = list(...))
+}
+
+setMethod("initialize", "PartialProblem", function(.Object, ..., .prob, opt_vars = list(), dont_opt_vars = list(), solver = NA_character_, .solve_kwargs = list()) {
+  .Object@.prob <- .prob
+  .Object@opt_vars <- opt_vars
+  .Object@dont_opt_vars <- dont_opt_vars
+  .Object@solver <- solver
+  .Object@.solve_kwargs <- .solve_kwargs
+  callNextMethod(.Object, ..., args = list(.prob))
+})
+
+#' @describeIn PartialProblem Returns info needed to reconstruct the expression besides the args.
+setMethod("get_data", "PartialProblem", function(object) { list(object@opt_vars, object@dont_opt_vars, object@solver) })
+
+#' @describeIn PartialProblem Is the expression constant?
+setMethod("is_constant", "PartialProblem", function(object) {
+  length(variables(object@args[[1]])) == 0
+})
+
+#' @describeIn PartialProblem Is the expression convex?
+setMethod("is_convex", "PartialProblem", function(object) {
+  is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Minimize")
+})
+
+#' @describeIn PartialProblem Is the expression concave?
+setMethod("is_concave", "PartialProblem", function(object) {
+  is_dcp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Maximize")
+})
+
+#' @describeIn PartialProblem Is the expression a disciplined parameterized expression?
+setMethod("is_dpp", "PartialProblem", function(object, context = "dcp") {
+  if(tolower(context) %in% c("dcp", "dgp"))
+    is_dpp(object@args[[1]], context)
+  else
+    stop("Unsupported context ", context)
+})
+
+#' @describeIn PartialProblem Is the expression log-log convex?
+setMethod("is_log_log_convex", "PartialProblem", function(object) {
+  is_dgp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Minimize")
+})
+
+#' @describeIn PartialProblem Is the expression log-log concave?
+setMethod("is_log_log_concave", "PartialProblem", function(object) {
+  is_dgp(object@args[[1]]) && inherits(object@args[[1]]@objective, "Maximize")
+})
+
+#' @describeIn PartialProblem Is the expression nonnegative?
+setMethod("is_nonneg", "PartialProblem", function(object) {
+  is_nonneg(object@args[[1]]@objective@args[[1]])
+})
+
+#' @describeIn PartialProblem Is the expression nonpositive?
+setMethod("is_nonpos", "PartialProblem", function(object) {
+  is_nonpos(object@args[[1]]@objective@args[[1]])
+})
+
+#' @describeIn PartialProblem Is the expression imaginary?
+setMethod("is_imag", "PartialProblem", function(object) { FALSE })
+
+#' @describeIn PartialProblem Is the expression complex valued?
+setMethod("is_complex", "PartialProblem", function(object) { FALSE })
+
+#' @describeIn PartialProblem Returns the (row, col) dimensions of the expression.
+setMethod("dim", "PartialProblem", function(x) { c(1,1) })
+
+setMethod("name", "PartialProblem", function(x) { cat("PartialProblem(", x@args[[1]], ")") })
+
+#' @describeIn PartialProblem Returns the variables in the problem.
+setMethod("variables", "PartialProblem", function(object) { variables(object@args[[1]]) })
+
+#' @describeIn PartialProblem Returns the parameters in the problem.
+setMethod("parameters", "PartialProblem", function(object) { parameters(object@args[[1]]) })
+
+#' @describeIn PartialProblem Returns the constants in the problem.
+setMethod("constants", "PartialProblem", function(object) { constants(object@args[[1]]) })
+
+#' @describeIn PartialProblem Gives the (sub/super)gradient of the expression wrt each variable. Matrix expressions are vectorized, so the gradient is a matrix. NA indicates variable values unknown or outside domain.
+setMethod("grad", "PartialProblem", function(object) {
+  # Subgrad of g(y) = min f_0(x,y)
+  #                   s.t. f_i(x,y) <= 0, i = 1,..,p
+  #                        h_i(x,y) == 0, i = 1,...,q
+  # Given by Df_0(x^*,y) + \sum_i Df_i(x^*,y) \lambda^*_i
+  #          + \sum_i Dh_i(x^*,y) \nu^*_i
+  # where x^*, \lambda^*_i, \nu^*_i are optimal primal/dual variables.
+  # Add PSD constraints in same way.
+
+  # Short circuit for constant
+  if(is_constant(object))
+    return(constant_grad(object))
+
+  old_vals <- list()
+  for(var in variables(object))
+    old_vals[[as.character(id(var))]] <- value(var)
+
+  fix_vars <- list()
+  for(var in object@dont_opt_vars) {
+    if(is.na(value(var)))
+      return(error_grad(object))
+    else
+      fix_vars <- c(fix_vars, list(var == value(var)))
+  }
+
+  prob <- Problem(object@args[[1]]@objective, c(fix_vars, object@args[[1]]@constraints))
+  result <- do.call("solve", c(list(a = prob, solver = object@solver), object@.solve_kwargs))
+
+  # Compute gradient.
+  if(result$status %in% SOLUTION_PRESENT) {
+    sign <- as.numeric(is_convex(object) - is_concave(object))
+
+    # Form Lagrangian.
+    lagr <- object@args[[1]]@objective@args[[1]]
+    for(constr in object@args[[1]]@constraints) {
+      # TODO: better way to get constraint expressions.
+      lagr_multiplier <- as.Constant(sign * result$getDualValue(constr))
+      lprod <- t(lagr_multiplier) %*% constr@expr
+      if(is_scalar(lprod))
+        lagr <- lagr + sum(lprod)
+      else
+        lagr <- lagr + matrix_trace(lprod)
+    }
+
+    grad_map <- grad(lagr)   # TODO: After finishing grad implementation, we probably need to update this call by passing in result of solving problem.
+    res_grad <- list()
+    for(var in object@dont_opt_vars) {
+      var_id_char <- as.character(id(var))
+      res_grad[[var_id_char]] <- grad_map[[var_id_char]]
+    }
+  } else   # Unbounded, infeasible, or solver error.
+    res_grad <- error_grad(object)
+
+  # Restore the original values to the variables.
+  for(var in variables(object))
+    value(var) <- old_vals[[as.character(id(var))]]
+  return(res_grad)
+})
+
+#' @describeIn PartialProblem A list of constraints describing the closure of the region where the expression is finite.
+setMethod("domain", "PartialProblem", function(object) {
+  # Variables optimized over are replaced in object@args[[1]]
+  obj_expr <- object@args[[1]]@objective@args[[1]]
+  c(object@args[[1]]@constraints, domain(obj_expr))
+})
+
+#' @describeIn PartialProblem Returns the numeric value of the expression.
+setMethod("value", "PartialProblem", function(object) {
+  old_vals <- list()
+  for(var in variables(object))
+    old_vals[[as.character(id(var))]] <- value(var)
+
+  fix_vars <- list()
+  for(var in object@dont_opt_vars) {
+    if(is.na(value(var)))
+      return(NA_real_)
+    else
+      fix_vars <- c(fix_vars, list(var == value(var)))
+  }
+
+  prob <- Problem(object@args[[1]]@objective, c(fix_vars, object@args[[1]]@constraints))
+  result <- do.call("solve", c(list(a = prob, solver = object@solver), object@.solve_kwargs))
+
+  # Restore the original values to the variables.
+  for(var in variables(object))
+    value(var) <- old_vals[[as.character(id(var))]]
+
+  # Need to get value returned by solver in case of stacked partial_optimizes.
+  return(result$value)
+})
+
+#' @describeIn PartialProblem Returns the graph implementation of the object. Chain ids of all the opt_vars.
+setMethod("canonicalize", "PartialProblem", function(object) {
+  # Canonical form for objective and problem switches from minimize to maximize.
+  canon <- canonical_form(object@args[[1]]@objective@args[[1]])
+  obj <- canon[[1]]
+  constrs <- canon[[2]]
+  for(cons in object@args[[1]]@constraints)
+    constrs <- c(constrs, list(canonical_form(cons)[[2]]))
+  list(obj, constrs)
+})
+
 
 #'
 #' The XpressProblem class.

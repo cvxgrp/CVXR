@@ -5,6 +5,7 @@
 \alias{Chain-class}
 \alias{.Chain}
 \alias{as.character,Chain-method}
+\alias{$,Chain-method}
 \alias{accepts,Chain,Problem-method}
 \alias{perform,Chain,Problem-method}
 \alias{invert,Chain,SolutionORList,list-method}
@@ -12,14 +13,18 @@
 \usage{
 \S4method{as.character}{Chain}(x)
 
+\S4method{$}{Chain}(x, name)
+
 \S4method{accepts}{Chain,Problem}(object, problem)
 
-\S4method{perform}{Chain,Problem}(object, problem)
+\S4method{perform}{Chain,Problem}(object, problem, verbose = FALSE)
 
 \S4method{invert}{Chain,SolutionORList,list}(object, solution, inverse_data)
 }
 \arguments{
 \item{x, object}{A \linkS4class{Chain} object.}
+
+\item{name}{The type of reduction.}
 
 \item{problem}{A \linkS4class{Problem} object to check.}
 
@@ -33,6 +38,8 @@ their constraint values.
 }
 \section{Methods (by generic)}{
 \itemize{
+\item \code{$}: Returns the reduction of the specified type.
+
 \item \code{accepts(object = Chain, problem = Problem)}: A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
 reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
 

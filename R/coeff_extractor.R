@@ -1,10 +1,10 @@
 # TODO: Find best format for sparse matrices.
-.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", canon_backend = "character", id_map = "list", x_length = "integer", var_dims = "list", param_dims = "list", param_to_size = "list", param_id_map = "list"),
-                                              prototype(canon_backend = NA_character_, id_map = list(), x_length = NA_integer_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()))
+.CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", canon_backend = "character", id_map = "list", x_length = "numeric", var_dims = "list", param_dims = "list", param_to_size = "list", param_id_map = "list"),
+                                              prototype(canon_backend = NA_character_, id_map = list(), x_length = NA_real_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()))
 
 CoeffExtractor <- function(inverse_data, canon_backend = NA_character_) { .CoeffExtractor(inverse_data = inverse_data, canon_backend = canon_backend) }
 
-setMethod("initialize", "CoeffExtractor", function(.Object, inverse_data, canon_backend = NA_character_, id_map = list(), x_length = NA_integer_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()) {
+setMethod("initialize", "CoeffExtractor", function(.Object, inverse_data, canon_backend = NA_character_, id_map = list(), x_length = NA_real_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()) {
   .Object@inverse_data <- .Object@inverse_data
   .Object@canon_backend <- .Object@canon_backend
   .Object@id_map <- inverse_data@var_offsets

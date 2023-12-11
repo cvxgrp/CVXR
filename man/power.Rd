@@ -3,11 +3,14 @@
 \docType{methods}
 \name{^,Expression,numeric-method}
 \alias{^,Expression,numeric-method}
+\alias{^,numeric,Expression-method}
 \alias{power}
 \alias{^}
 \title{Elementwise Power}
 \usage{
 \S4method{^}{Expression,numeric}(e1, e2)
+
+\S4method{^}{numeric,Expression}(e1, e2)
 
 power(x, p, max_denom = 1024)
 }

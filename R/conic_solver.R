@@ -1,9 +1,9 @@
 ## Return a diagonal sparse matrix of given size
 sp.eye <- function(n, repr = c("C", "R", "T"), negate = FALSE) {
-  repr <- match.arg(repr)
-  ind <- seq.int(0, length.out = n)
-  vals <- if (negate) rep(-1.0, n) else rep(1.0, n)
-  Matrix::sparseMatrix(i = ind, j = ind, x = vals, index1 = FALSE, dims = c(n, n), repr = repr)
+    repr <- match.arg(repr)
+    ind <- seq.int(0, length.out = n)
+    vals <- if (negate) rep(-1.0, n) else rep(1.0, n)
+    Matrix::sparseMatrix(i = ind, j = ind, x = vals, index1 = FALSE, dims = c(n, n), repr = repr)
 }
 
 #' A wrapper for linear operators
@@ -11,24 +11,24 @@ sp.eye <- function(n, repr = c("C", "R", "T"), negate = FALSE) {
 #' @param dim the dimensions
 #' @return a function that will perform the linear operation
 as_block_diag_linear_operator <- function(matrices) {
-  ncols <- lapply(matrices, ncol)
-  col_indices <- c(0, cumsum(ncols))
-  index_seq <- seq_along(matrices)
-  do.call(rbind,
-          lapply(index_seq,
-                 function(i) matrices[[i]] %*% X[, col_indices[i]:col_indices[i + 1]]))
+    ncols <- lapply(matrices, ncol)
+    col_indices <- c(0, cumsum(ncols))
+    index_seq <- seq_along(matrices)
+    do.call(rbind,
+            lapply(index_seq,
+                   function(i) matrices[[i]] %*% X[, col_indices[i]:col_indices[i + 1]]))
 }
 
-# Utility method for formatting a ConeDims instance into a dictionary
-# that can be supplied to solvers.
+## Utility method for formatting a ConeDims instance into a dictionary
+## that can be supplied to solvers.
 dims_to_solver_dict <- function(cone_dims)  {
-  list(f =  cone_dims@zero,
-       l = cone_dims@nonneg,
-       q = cone_dims@soc,
-       ep = cone_dims@exp,
-       s = cone_dims@psd,
-       p = cone_dims@p3d
-       )
+    list(f =  cone_dims@zero,
+         l = cone_dims@nonneg,
+         q = cone_dims@soc,
+         ep = cone_dims@exp,
+         s = cone_dims@psd,
+         p = cone_dims@p3d
+         )
 }
 
 #' The ConicSolver class.
@@ -38,46 +38,63 @@ dims_to_solver_dict <- function(cone_dims)  {
 #' @rdname ConicSolver-class
 ConicSolver <- setClass("ConicSolver",
                         slots = list(
-                          # The key that maps to ConeDims in the data returned by apply()
-                          ## DIMS = "character",  Already in super class ReductionSolver
-                          # Every conic solver must support Zero and NonNeg constraints.
-                          SUPPORTED_CONSTRAINTS = "character",
-                          # Some solvers cannot solve problems that do not have constraints.
-                          # For such solvers, REQUIRES_CONSTR should be set to True.
-                          REQUIRES_CONSTR = "logical",
-                          # Does it support quadratic objective?
-                          SUPPORTS_QUAD_OBJECTIVE = "logical",
-                          # If a solver supports exponential cones, it must specify the corresponding order
-                          # The cvxpy standard for the exponential cone is:
-                          #     K_e = closure{(x,y,z) |  z >= y * exp(x/y), y>0}.
-                          # Whenever a solver uses this convention, EXP_CONE_ORDER should be [0, 1, 2].
-                          EXP_CONE_ORDER = "integer"),
+                            ## The key that maps to ConeDims in the data returned by apply()
+                            ## DIMS = "character",  Already in super class ReductionSolver
+                            ## Every conic solver must support Zero and NonNeg constraints.
+                            SUPPORTED_CONSTRAINTS = "character",
+                            ## Some solvers cannot solve problems that do not have constraints.
+                            ## For such solvers, REQUIRES_CONSTR should be set to True.
+                            REQUIRES_CONSTR = "logical",
+                            ## Does it support quadratic objective?
+                            SUPPORTS_QUAD_OBJECTIVE = "logical",
+                            ## What sort of MIP constraints are supported?
+                            MI_SUPPORTED_CONSTRAINTS = "character",
+                            ## If a solver supports exponential cones, it must specify the corresponding order
+                            ## The cvxpy standard for the exponential cone is:
+                            ##     K_e = closure{(x,y,z) |  z >= y * exp(x/y), y>0}.
+                            ## Whenever a solver uses this convention, EXP_CONE_ORDER should be [0, 1, 2].
+                            EXP_CONE_ORDER = "integer"),
                         prototype =
                           list(SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonNegConstraint"),
                                REQUIRES_CONSTR = FALSE,
+                               MI_SUPPORTED_CONSTRAINTS = character(0),
                                SUPPORTS_QUAD_OBJECTIVE = FALSE,
-                               EXP_CONE_ORDER = integer(0)),
+                               EXP_CONE_ORDER = integer(0)
+                               ),
                         contains = "ReductionSolver")
 
 # Every conic solver must support Zero and NonNeg constraints.
 setMethod("supported_constraints", "ConicSolver", function(solver) { solver@SUPPORTED_CONSTRAINTS })
 
-# Some solvers cannot solve problems that do not have constraints.
-# For such solvers, requires_constr should return TRUE.
+## Some solvers cannot solve problems that do not have constraints.
+## For such solvers, requires_constr should return TRUE.
 setMethod("requires_constr", "ConicSolver", function(solver) { solver@REQUIRES_CONSTR })
 
-# Does this support quadratic objective? By default no.
+## Does this support quadratic objective? By default no.
 setMethod("supports_quad_obj", "ConicSolver", function(solver) { solver@SUPPORTS_QUAD_OBJECTIVE })
 
+#' Can the problem be solved with a conic solver?
 #' @param object A \linkS4class{ConicSolver} object.
 #' @param problem A \linkS4class{Problem} object.
-#' @describeIn ConicSolver Can the problem be solved with a conic solver?
+#' @describeIn ConicSolver
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
-  is(problem, "ParamConeProg") &&
-    (object@MIP_CAPABLE || !is_mixed_integer(problem)) &&
-    length(convex_attributes(variables(problem))) == 0 &&
-    (length(problem@constraints) > 0 || !object@REQUIRES_CONSTR) &&
-    all(as.logical(lapply(problem@constraints, inherits, what = object@SUPPORTED_CONSTRAINTS)))
+    is(problem, "ParamConeProg") &&
+        (object@MIP_CAPABLE || !is_mixed_integer(problem)) &&
+        (length(convex_attributes(variables(problem))) == 0) &&
+        (length(problem@constraints) > 0 || !object@REQUIRES_CONSTR) &&
+        do.call(all, lapply(problem@constraints, inherits, what = object@SUPPORTED_CONSTRAINTS))
+})
+
+#' Return a matrix to multiply by PSD constraint coefficients, default is identity
+#'
+#' @param solver A \linkS4class{ConicSolver} object.
+#' @param constr the constraints
+#' @importFrom Matrix sparseMatrix
+#' @noRd
+setMethod("psd_format_mat", "ConicSolver", function(solver, constr) {
+    n <- length(constr)
+    ind <- seq.int(0, length.out = n)
+    Matrix::sparseMatrix(i = ind, j = ind, x = rep(1, n), index1 = FALSE, dims = c(n, n))
 })
 
 #' Create a spacing matrix in compressed column format
@@ -113,17 +130,6 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, streak, num_blocks, off
   Matrix::sparseMatrix(i = row_arr, j = col_arr, x = values, dims = dim, index1 = FALSE)
 }
 
-#' Return a matrix to multiply by PSD constraint coefficients, default is identity
-#'
-#' @param constr the constraints
-#' @importFrom Matrix sparseMatrix
-#' @noRd
-ConicSolver.psd_format_mat <- function(constr) {
-  n <- length(constr)
-  ind <- seq.int(0, length.out = n)
-  Matrix::sparseMatrix(i = ind, j = ind, x = rep(1, n), index1 = FALSE, dims = c(n, n))
-}
-
 #' Format constraints and return a `ParamConeProg`
 #' @details
 #' The `ParamConeProg` will have problem data tensors that will yield the
@@ -146,7 +152,8 @@ ConicSolver.psd_format_mat <- function(constr) {
 #' @param exp_cone_order a list indicating how the exponential cone arguments are ordered
 #' @return a `ParamConeProg` with structured A.
 #' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
-setMethod("format_constr", "ConicSolver", function(object, problem, exp_cone_order) {
+ConicSolver.format_constr <- function(object, problem) {
+  exp_cone_order <- object@EXP_CONE_ORDER
   constr <- problem@constraints
   restruct_mat <- list()
   for (ct in constr) {
@@ -223,7 +230,7 @@ setMethod("format_constr", "ConicSolver", function(object, problem, exp_cone_ord
       param_id_to_col = problem@param_id_to_col,
       P = problem@P,
       formatted = TRUE)
-})
+}
 
 #' @param solution A \linkS4class{Solution} object to invert.
 #' @param inverse_data A \linkS4class{InverseData} object containing data necessary for the inversion.

@@ -20,7 +20,7 @@ setClassUnion("ListORExpr", c("list", "Expression"))
 setClassUnion("NumORgmp", c("numeric", "bigq", "bigz"))
 setClassUnion("NumORNULL", c("numeric", "NULL"))
 setClassUnion("NumORLogical", c("logical", "numeric"))
-setClassUnion("ReducedMatORNULL", c("ReducedMat", "NULL"))
+#setClassUnion("ReducedMatORNULL", c("ReducedMat", "NULL"))
 setClassUnion("S4ORNULL", c("S4", "NULL"))
 
 # Helper function since syntax is different for LinOp (list) vs. Expression object

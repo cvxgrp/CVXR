@@ -13,9 +13,9 @@ EliminatePwl.abs_canon(expr, args)
 }
 \value{
 A canonicalization of the picewise-lienar atom
-constructed from an absolute atom where the objective function 
-consists of the variable that is of the same dimension as the 
-original expression and the constraints consist of splitting 
+constructed from an absolute atom where the objective function
+consists of the variable that is of the same dimension as the
+original expression and the constraints consist of splitting
 the absolute value into two inequalities.
 }
 \description{

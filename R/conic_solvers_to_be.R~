@@ -2052,27 +2052,6 @@ scaled_lower_tri <- function(matrix) {
   return(coeff %*% vectorized_matrix)
 }
 
-#'
-#' Expands lower triangular to full matrix.
-#'
-#' @param lower_tri A matrix representing the lower triangular part of the matrix,
-#' stacked in column-major order
-#' @param n The number of rows (columns) in the full square matrix.
-#' @return A matrix that is the scaled expansion of the lower triangular matrix.
-tri_to_full <- function(lower_tri, n) {
-  # Expands n*floor((n+1)/2) lower triangular to full matrix.
-  # Scales off-diagonal by 1/sqrt(2), as per the SCS specification.
-  full <- matrix(0, nrow = n, ncol = n)
-  full[upper.tri(full, diag = TRUE)] <- lower_tri
-  full[lower.tri(full, diag = TRUE)] <- lower_tri
-
-  unscaled_diag <- diag(full)
-  full <- full/sqrt(2)
-  diag(full) <- unscaled_diag
-
-  matrix(full, nrow = n*n, byrow = FALSE)
-}
-
 # SuperSCS <- setClass("SuperSCS", contains = "SCS")
 # SuperSCS.default_settings <- function(object) {
 #   list(use_indirect = FALSE, eps = 1e-8, max_iters = 10000)

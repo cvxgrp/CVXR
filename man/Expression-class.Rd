@@ -20,11 +20,17 @@
 \alias{is_log_log_convex,Expression-method}
 \alias{is_log_log_concave,Expression-method}
 \alias{is_dgp,Expression-method}
+\alias{is_dpp,Expression-method}
+\alias{is_quasiconvex,Expression-method}
+\alias{is_quasiconcave,Expression-method}
+\alias{is_quasilinear,Expression-method}
+\alias{is_dqcp,Expression-method}
 \alias{is_hermitian,Expression-method}
 \alias{is_psd,Expression-method}
 \alias{is_nsd,Expression-method}
 \alias{is_quadratic,Expression-method}
 \alias{is_symmetric,Expression-method}
+\alias{is_skew_symmetric,Expression-method}
 \alias{is_pwl,Expression-method}
 \alias{is_qpwa,Expression-method}
 \alias{is_zero,Expression-method}
@@ -64,7 +70,7 @@
 
 \S4method{is_concave}{Expression}(object)
 
-\S4method{is_dcp}{Expression}(object)
+\S4method{is_dcp}{Expression}(object, dpp = FALSE)
 
 \S4method{is_log_log_constant}{Expression}(object)
 
@@ -74,7 +80,17 @@
 
 \S4method{is_log_log_concave}{Expression}(object)
 
-\S4method{is_dgp}{Expression}(object)
+\S4method{is_dgp}{Expression}(object, dpp = FALSE)
+
+\S4method{is_dpp}{Expression}(object, context = "dcp")
+
+\S4method{is_quasiconvex}{Expression}(object)
+
+\S4method{is_quasiconcave}{Expression}(object)
+
+\S4method{is_quasilinear}{Expression}(object)
+
+\S4method{is_dqcp}{Expression}(object)
 
 \S4method{is_hermitian}{Expression}(object)
 
@@ -85,6 +101,8 @@
 \S4method{is_quadratic}{Expression}(object)
 
 \S4method{is_symmetric}{Expression}(object)
+
+\S4method{is_skew_symmetric}{Expression}(object)
 
 \S4method{is_pwl}{Expression}(object)
 
@@ -108,7 +126,7 @@
 
 \S4method{ndim}{Expression}(object)
 
-\S4method{flatten}{Expression}(object)
+\S4method{flatten}{Expression}(object, byrow = FALSE)
 
 \S4method{is_scalar}{Expression}(object)
 
@@ -160,6 +178,16 @@ This class represents a mathematical expression.
 
 \item \code{is_dgp(Expression)}: The expression is DGP if it is log-log DCP.
 
+\item \code{is_dpp(Expression)}: Is the expression a disciplined parametrized expression?
+
+\item \code{is_quasiconvex(Expression)}: Is the expression quasiconvex?
+
+\item \code{is_quasiconcave(Expression)}: Is the expression quasiconcave?
+
+\item \code{is_quasilinear(Expression)}: Is the expression quasilinear?
+
+\item \code{is_dqcp(Expression)}: Is the expression DQCP?
+
 \item \code{is_hermitian(Expression)}: A logical value indicating whether the expression is a Hermitian matrix.
 
 \item \code{is_psd(Expression)}: A logical value indicating whether the expression is a positive semidefinite matrix.
@@ -169,6 +197,8 @@ This class represents a mathematical expression.
 \item \code{is_quadratic(Expression)}: A logical value indicating whether the expression is quadratic.
 
 \item \code{is_symmetric(Expression)}: A logical value indicating whether the expression is symmetric.
+
+\item \code{is_skew_symmetric(Expression)}: A logical value indicating whether the expression \eqn{X} is a real matrix that satisfies \eqn{X + X^T = 0}
 
 \item \code{is_pwl(Expression)}: A logical value indicating whether the expression is piecewise linear.
 

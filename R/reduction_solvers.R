@@ -140,7 +140,9 @@ setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_s
 #'
 #' The ConstantSolver class.
 #'
-ConstantSolver <- setClass("ConstantSolver", prototype(MIP_CAPABLE = TRUE), contains = "ReductionSolver")
+ConstantSolver <- setClass("ConstantSolver",
+                           prototype = list(MIP_CAPABLE = TRUE),
+                           contains = "ReductionSolver")
 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn ConstantSolver Is the solver capable of solving the problem?
@@ -326,7 +328,8 @@ construct_solving_chain <- function(problem, candidates, gp = FALSE, enforce_dpp
   } else if(any(sapply(parameters(problem), is_complex)))
     reductions <- c(list(EvalParams()), reductions)
   else {   # Compilation with DPP.
-    n_parameters <- sum(parameters(problem), function(param) { prod(dim(param)) })
+    parms_ <- parameters(problem)
+    n_parameters <- ifelse(length(parms_) > 0, sum(parms_, function(param) { prod(dim(param)) }), 0)
     if(n_parameters >= PARAM_THRESHOLD)
       warning("Your problem has too many parameters for efficient DPP compilation. We suggest setting ignore_dpp = TRUE")
   }
@@ -431,6 +434,9 @@ setClassUnion("ReductionSolverORNULL", c("ReductionSolver", "NULL"))
 #' @rdname SolvingChain-class
 .SolvingChain <- setClass("SolvingChain", representation(solver = "ReductionSolverORNULL"), prototype(solver = NULL), contains = "Chain")
 SolvingChain <- function(problem = NULL, reductions = list()) { .SolvingChain(problem = problem, reductions = reductions) }
+
+## Add Solving Chain to SolvingChainOrNULL
+setIs("SolvingChain", "SolvingChainORNULL")
 
 setMethod("initialize", "SolvingChain", function(.Object, ...) {
   .Object <- callNextMethod(.Object, ...)

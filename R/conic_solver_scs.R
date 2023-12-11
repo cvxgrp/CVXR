@@ -1,21 +1,67 @@
+#' Expands n*floor((n+1)/2) lower triangular to full matrix and scales
+#' off-diagonal by 1/sqrt(2), as per the SCS specification.
+#' @param lower_tri A matrix representing the lower triangular part of
+#'   the matrix, stacked in column-major order
+#' @param n The number of rows (columns) in the full square matrix.
+#' @return A matrix that is the scaled expansion of the lower
+#'   triangular matrix.
+tri_to_full <- function(lower_tri, n) {
+  full <- matrix(0, nrow = n, ncol = n)
+  full[upper.tri(full, diag = TRUE)] <- lower_tri
+  full[lower.tri(full, diag = TRUE)] <- lower_tri
+
+  unscaled_diag <- diag(full)
+  full <- full/sqrt(2)
+  diag(full) <- unscaled_diag
+
+  matrix(full, nrow = n*n, byrow = FALSE)
+}
+
+#' Return `V` so that _vec[indices] belongs to the SCS-standard PSD
+#' cone_ can be written in natural cvxpy syntax as _V >> 0_.
+#' @param vec list of affine expressions
+#' @param indices contains nonnegative integers, which can index into
+#'   `vec`
+#' @details This function is similar to `tri_to_full`, which is also
+#'   found in this file. The difference is that this function works
+#'   without indexed assignment `mat[i,j] = expr`. Such indexed
+#'   assignment cannot be used, because this function builds a CVXR
+#'   expression, rather than a numeric matrix.
+SCS.psdvec_to_psdmat <- function(vec, indices) {
+  n <- floor(sqrt(2 * length(indices)))
+  zero_mat <- matrix(0, nrow = n, ncol = n)
+  indseq <- seq_len(n)
+  i_seq <- unlist(lapply(indseq, seq.int, to = dim))
+  j_seq <- unlist(lapply(indseq, function(i) rep(i, times = dim - i + 1)))
+
+  mats <- lapply(seq_along(indices),
+                 function(i) {
+                   mat <- zero_mat
+                   idx <- indices[i]
+                   r <- i_seq[i]; c <- j_seq[i];
+                   if (r == c) {
+                     mat[r, r] <- 1
+                   } else {
+                     mat[r, c] <- mat[c, r] <- 1 / sqrt(2)
+                   }
+                   vec[idx] * mat
+                 })
+  do.call(sum, mats)
+}
+
+
 #' An interface for the SCS solver
 #'
 #' @name SCS-class
 #' @aliases SCS
 #' @rdname SCS-class
 #' @export
-setClass("SCS", contains = "ConicSolver")
-
-setMethod("initialize", "SCS",
-          function(.Object, ...) {
-            ##.Object <- callNextMethod(.Object, ...)
-            ## Ensure EXP_CONE_ORDER is set
-            .Object@EXP_CONE_ORDER <- c(0L, 1L, 2L)
-            .Object@SUPPORTED_CONSTRAINTS <- c(.Object@SUPPORTED_CONSTRAINTS, "SOC", "ExpCone", "PSDConstraint")
-            .Object@REQUIRES_CONSTRAINTS <- TRUE
-            .Object
-          })
-
+SCS <- setClass("SCS", contains = "ConicSolver",
+                prototype = list(
+                    EXP_CONE_ORDER = c(0L, 1L, 2L),
+                    SUPPORTED_CONSTRAINTS = c(ConicSolver()@SUPPORTED_CONSTRAINTS, "SOC", "ExpCone", "PSDConstraint"),
+                    REQUIRES_CONSTR = TRUE)
+                )
 ## Not needed usually
 ## #' @rdname SCS-class
 ## #' @export
@@ -68,29 +114,30 @@ setMethod("supports_quad_obj", "SCS", function(solver) { TRUE }) ## we require s
 #' sqrt(2), and applies to the symmetric part of the constrained expression.
 #' @param constr a list of constraints
 #' @return a linear operator to multiply by PSD constraint coefficients.
-SCS.psd_format_constr <- function(constr) {
+#' @importFrom Matrix sparseMatrix
+setMethod("psd_format_mat", "SCS",  function(solver, constr) {
   rows <- cols <- nrow(constr)
   ind_seq <- seq_len(rows)
   entries <- rows * (cols + 1) %/% 2
-  val_array <- sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
-                            dims = c(rows, cols))
+  val_array <- Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
+                                    dims = c(rows, cols))
   val_tri <- lower.tri(val_array, diag = TRUE)
   col_arr <- which(val_tri)
   val_array[val_tri] <- sqrt(2.0)
   diag(val_array) <- 1.0
   n <- rows * cols
-  scaled_lower_tri <- sparseMatrix(i = seq_len(entries), j = col_arr,
-                                   x = val_array@x, dims = c(entries, n))
+  scaled_lower_tri <- Matrix::sparseMatrix(i = seq_len(entries), j = col_arr,
+                                           x = val_array@x, dims = c(entries, n))
   idx <- seq_len(n)
   val_symm <- rep(0.5 , 2 * n)
   tmp <- ind_seq - 1L
   res <- rows * tmp
   row_symm <- c(idx, idx)
   col_symm <- c(idx, unlist(lapply(ind_seq, `+`, res)))
-  symm_matrix <- sparseMatrix(i = row_symm, j = col_symm, x = val_symm,
-                              dims = c(n, n))
+  symm_matrix <- Matrix::sparseMatrix(i = row_symm, j = col_symm, x = val_symm,
+                                      dims = c(n, n))
   scaled_lower_tri %*% symm_matrix
-}
+})
 
 ## THIS METHOD now dispatches to the super class
 ## #' @describeIn SCS Returns a new problem and data for inverting the new solution
@@ -204,9 +251,10 @@ setMethod("solve_via_data", "SCS", function(object, data, warm_start, verbose, f
 
   args <- list(A = A, b = data[[B_KEY]], c = data[[C_KEY]])
   if(warm_start && !is.null(solver_cache) && length(solver_cache) > 0 && name(object) %in% names(solver_cache)) {
-    args$x <- solver_cache[[name(object)]]$x
-    args$y <- solver_cache[[name(object)]]$y
-    args$s <- solver_cache[[name(object)]]$s
+    obj_name <- name(object)
+    args$x <- solver_cache[[obj_name]]$x
+    args$y <- solver_cache[[obj_name]]$y
+    args$s <- solver_cache[[obj_name]]$s
   }
   cones <- SCS.dims_to_solver_dict(data[[ConicSolver()@dims]])
 

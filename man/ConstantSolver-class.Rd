@@ -4,7 +4,6 @@
 \name{ConstantSolver-class}
 \alias{ConstantSolver-class}
 \alias{ConstantSolver}
-\alias{mip_capable,ConstantSolver-method}
 \alias{accepts,ConstantSolver,Problem-method}
 \alias{perform,ConstantSolver,Problem-method}
 \alias{invert,ConstantSolver,Solution,list-method}
@@ -15,8 +14,6 @@
 \alias{reduction_solve,ConstantSolver,ANY-method}
 \title{The ConstantSolver class.}
 \usage{
-\S4method{mip_capable}{ConstantSolver}(solver)
-
 \S4method{accepts}{ConstantSolver,Problem}(object, problem)
 
 \S4method{perform}{ConstantSolver,Problem}(object, problem)
@@ -34,19 +31,13 @@
   data,
   warm_start,
   verbose,
-  feastol,
-  reltol,
-  abstol,
-  num_iter,
   solver_opts,
-  solver_cache
+  solver_cache = NULL
 )
 
 \S4method{reduction_solve}{ConstantSolver,ANY}(object, problem, warm_start, verbose, solver_opts)
 }
 \arguments{
-\item{solver, object, x}{A \linkS4class{ConstantSolver} object.}
-
 \item{problem}{A \linkS4class{Problem} object.}
 
 \item{solution}{A \linkS4class{Solution} object to invert.}
@@ -59,6 +50,10 @@
 
 \item{verbose}{A boolean of whether to enable solver verbosity.}
 
+\item{solver_opts}{A list of Solver specific options}
+
+\item{solver_cache}{Cache for the solver.}
+
 \item{feastol}{The feasible tolerance.}
 
 \item{reltol}{The relative tolerance.}
@@ -66,18 +61,12 @@
 \item{abstol}{The absolute tolerance.}
 
 \item{num_iter}{The maximum number of iterations.}
-
-\item{solver_opts}{A list of Solver specific options}
-
-\item{solver_cache}{Cache for the solver.}
 }
 \description{
 The ConstantSolver class.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{mip_capable(ConstantSolver)}: Can the solver handle mixed-integer programs?
-
 \item \code{accepts(object = ConstantSolver, problem = Problem)}: Is the solver capable of solving the problem?
 
 \item \code{perform(object = ConstantSolver, problem = Problem)}: Returns a list of the ConstantSolver, Problem, and an empty list.

@@ -13,5 +13,5 @@ HarmonicMean(x)
 The harmonic mean of \code{x}.
 }
 \description{
-The harmonic mean of x, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where n is the length of x.
+The harmonic mean of \eqn{x}, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where \eqn{n} is the length of \eqn{x}.
 }

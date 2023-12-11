@@ -1387,8 +1387,8 @@ setMethod("dim_from_args", "Kron", function(object) {
 })
 
 #' @describeIn Kron Is the atom convex?
-setMethod("is_atom_convex", "AffAtom", function(object) {
-  if(dpp_scopy_active()) {
+setMethod("is_atom_convex", "Kron", function(object) {
+  if(dpp_scope_active()) {
     # Kron is not DPP if any parameters are present
     x <- object@args[[1]]
     y <- object@args[[2]]
@@ -1398,7 +1398,7 @@ setMethod("is_atom_convex", "AffAtom", function(object) {
 })
 
 #' @describeIn Kron Is the atom concave?
-setMethod("is_atom_concave", "AffAtom", function(object) {
+setMethod("is_atom_concave", "Kron", function(object) {
   return(is_atom_convex(object))
 })
 

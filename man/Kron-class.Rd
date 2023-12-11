@@ -8,9 +8,13 @@
 \alias{to_numeric,Kron-method}
 \alias{validate_args,Kron-method}
 \alias{dim_from_args,Kron-method}
+\alias{is_atom_convex,AffAtom-method}
+\alias{is_atom_concave,AffAtom-method}
 \alias{sign_from_args,Kron-method}
 \alias{is_incr,Kron-method}
 \alias{is_decr,Kron-method}
+\alias{is_psd,Kron-method}
+\alias{is_nsd,Kron-method}
 \alias{graph_implementation,Kron-method}
 \title{The Kron class.}
 \usage{
@@ -22,11 +26,19 @@ Kron(lh_exp, rh_exp)
 
 \S4method{dim_from_args}{Kron}(object)
 
+\S4method{is_atom_convex}{AffAtom}(object)
+
+\S4method{is_atom_concave}{AffAtom}(object)
+
 \S4method{sign_from_args}{Kron}(object)
 
 \S4method{is_incr}{Kron}(object, idx)
 
 \S4method{is_decr}{Kron}(object, idx)
+
+\S4method{is_psd}{Kron}(object)
+
+\S4method{is_nsd}{Kron}(object)
 
 \S4method{graph_implementation}{Kron}(object, arg_objs, dim, data = NA_real_)
 }
@@ -58,11 +70,19 @@ This class represents the kronecker product.
 
 \item \code{dim_from_args(Kron)}: The dimensions of the atom.
 
+\item \code{is_atom_convex(AffAtom)}: Is the atom convex?
+
+\item \code{is_atom_concave(AffAtom)}: Is the atom concave?
+
 \item \code{sign_from_args(Kron)}: The sign of the atom.
 
-\item \code{is_incr(Kron)}: Is the left-hand expression positive?
+\item \code{is_incr(Kron)}: Is the composition non-decreasing in argument \code{idx}?
 
-\item \code{is_decr(Kron)}: Is the right-hand expression negative?
+\item \code{is_decr(Kron)}: Is the composition non-increasing in argument \code{idx}?
+
+\item \code{is_psd(Kron)}: Is the atom a positive semidefinite matrix?
+
+\item \code{is_nsd(Kron)}: Is the atom a negative semidefinite matrix?
 
 \item \code{graph_implementation(Kron)}: The graph implementation of the atom.
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/reduction_solvers.R
 \name{construct_intermediate_chain,Problem,list-method}
 \alias{construct_intermediate_chain,Problem,list-method}
-\title{Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.}
+\title{Construct Intermediate Chain}
 \usage{
 \S4method{construct_intermediate_chain}{Problem,list}(problem, candidates, gp = FALSE)
 }

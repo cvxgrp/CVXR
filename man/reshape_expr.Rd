@@ -6,7 +6,7 @@
 \alias{reshape}
 \title{Reshape an Expression}
 \usage{
-reshape_expr(expr, new_dim)
+reshape_expr(expr, new_dim, byrow = FALSE)
 }
 \arguments{
 \item{expr}{An \linkS4class{Expression}, vector, or matrix.}

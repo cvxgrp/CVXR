@@ -5,7 +5,7 @@
 #' @aliases GUROBI_QP
 #' @rdname GUROBI_QP-class
 #' @export
-setClass("GUROBI_QP", prototype(MIP_CAPABLE = TRUE), contains = "QpSolver")
+setClass("GUROBI_QP", prototype = list(MIP_CAPABLE = TRUE), contains = "QpSolver")
 
 #' @rdname GUROBI_QP-class
 #' @export
@@ -14,7 +14,7 @@ GUROBI_QP <- function() { new("GUROBI_QP") }
 #' @param object,x A \linkS4class{GUROBI_QP} object.
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
-setMethod("status_map", "GUROBI_QP", function(solver, status, default = NA) {
+setMethod("status_map", "GUROBI_QP", function(solver, status) {
   GUROBI_STATUS_MAP <- list(
     "2" = OPTIMAL,
     "3" = INFEASIBLE,
@@ -33,10 +33,7 @@ setMethod("status_map", "GUROBI_QP", function(solver, status, default = NA) {
 
   status_string <- GUROBI_STATUS_MAP[[as.character(status)]]
   if (is.null(status_string)) {
-    if (is.na(default))
-      stop("GUROBI status unrecognized: ", status)
-    else
-      default
+      stop("OSQP status unrecognized: ", status)
   } else {
     status_string
   }

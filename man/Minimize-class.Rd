@@ -8,15 +8,21 @@
 \alias{canonicalize,Minimize-method}
 \alias{is_dcp,Minimize-method}
 \alias{is_dgp,Minimize-method}
+\alias{is_dpp,Minimize-method}
+\alias{is_dqcp,Minimize-method}
 \title{The Minimize class.}
 \usage{
 Minimize(expr)
 
 \S4method{canonicalize}{Minimize}(object)
 
-\S4method{is_dcp}{Minimize}(object)
+\S4method{is_dcp}{Minimize}(object, dpp = FALSE)
 
-\S4method{is_dgp}{Minimize}(object)
+\S4method{is_dgp}{Minimize}(object, dpp = FALSE)
+
+\S4method{is_dpp}{Minimize}(object, context = "dcp")
+
+\S4method{is_dqcp}{Minimize}(object)
 }
 \arguments{
 \item{expr}{A scalar \linkS4class{Expression} to minimize.}
@@ -33,6 +39,10 @@ This class represents an optimization objective for minimization.
 \item \code{is_dcp(Minimize)}: A logical value indicating whether the objective is convex.
 
 \item \code{is_dgp(Minimize)}: A logical value indicating whether the objective is log-log convex.
+
+\item \code{is_dpp(Minimize)}: Is the objective DPP?
+
+\item \code{is_dqcp(Minimize)}: A logical value indicating whether the objective is quasiconvex.
 
 }}
 \section{Slots}{

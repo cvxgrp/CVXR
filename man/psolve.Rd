@@ -4,37 +4,27 @@
 \name{psolve}
 \alias{psolve}
 \alias{solve}
-\alias{psolve,Problem-method}
 \alias{solve,Problem,ANY-method}
 \title{Solve a DCP Problem}
 \usage{
 psolve(
   object,
-  solver = NA,
+  solver = NA_character_,
   ignore_dcp = FALSE,
   warm_start = FALSE,
   verbose = FALSE,
-  parallel = FALSE,
   gp = FALSE,
+  qcp = FALSE,
+  requires_grad = FALSE,
+  ignore_dpp = FALSE,
+  canon_backend = NA_character_,
+  parallel = FALSE,
   feastol = NULL,
   reltol = NULL,
   abstol = NULL,
   num_iter = NULL,
-  ...
-)
-
-\S4method{psolve}{Problem}(
-  object,
-  solver = NA,
-  ignore_dcp = FALSE,
-  warm_start = FALSE,
-  verbose = FALSE,
-  parallel = FALSE,
-  gp = FALSE,
-  feastol = NULL,
-  reltol = NULL,
-  abstol = NULL,
-  num_iter = NULL,
+  low = NA_real_,
+  high = NA_real_,
   ...
 )
 
@@ -51,9 +41,9 @@ psolve(
 
 \item{verbose}{(Optional) A logical value indicating whether to print additional solver output.}
 
-\item{parallel}{(Optional) A logical value indicating whether to solve in parallel if the problem is separable.}
-
 \item{gp}{(Optional) A logical value indicating whether the problem is a geometric program. Defaults to \code{FALSE}.}
+
+\item{parallel}{(Optional) A logical value indicating whether to solve in parallel if the problem is separable.}
 
 \item{feastol}{The feasible tolerance on the primal and dual residual.}
 

@@ -4,16 +4,35 @@
 \alias{construct_solving_chain}
 \title{Build a reduction chain from a problem to an installed solver.}
 \usage{
-construct_solving_chain(problem, candidates)
+construct_solving_chain(
+  problem,
+  candidates,
+  gp = FALSE,
+  enforce_dpp = FALSE,
+  ignore_dpp = FALSE,
+  canon_backend = NA_character_,
+  solver_opts = NULL
+)
 }
 \arguments{
 \item{problem}{The problem for which to build a chain.}
 
 \item{candidates}{A list of candidate solvers.}
+
+\item{gp}{If TRUE, the problem is parsed as a Disciplined Geometric Program instead of a Disciplined Convex Program.}
+
+\item{enforce_dpp}{When TRUE, a DPPError will be throw when trying to parse a non-DPP problem (instead of just a warning). Defaults to FALSE.}
+
+\item{ignore_dpp}{When TRUE, DPP problems will be treated as non-DPP, which may speed up compilation. Defaults to FALSE.}
+
+\item{canon_backend}{Specifies which backend to use for canonicalization, which can affect compilation time. Defaults to NA, i.e., selecting the default backend ("CPP").}
+
+\item{solver_opts}{List of additional arguments to pass to the solver.}
 }
 \value{
 A \linkS4class{SolvingChain} that can be used to solve the problem.
 }
 \description{
-Build a reduction chain from a problem to an installed solver.
+Note that if the supplied problem has zero variables, the solver parameter
+will be ignored.
 }

@@ -14,7 +14,7 @@ EliminatePwl.min_entries_canon(expr, args)
 \value{
 A canonicalization of the piecewise-lienar atom
 constructed by a minimum entries atom where the
-objective function is the negative of variable 
+objective function is the negative of variable
 t produced by max_elemwise_canon of the same dimension
 as the expression and the constraints consist of a simple
 inequality.

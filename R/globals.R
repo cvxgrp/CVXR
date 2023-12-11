@@ -44,6 +44,10 @@ resetOptions <- function() {
     .CVXR.options
 }
 
+# TODO: Implement DPP scoping.
+dpp_scope <- function() { FALSE }
+dpp_scope_active <- function() { FALSE }
+
 #'
 #' Get ID
 #'
@@ -110,7 +114,7 @@ unique_list <- function(duplicates_list) {
   used_id <- c()
   uniq_objs <- list()
   for(x in duplicates_list) {
-    if(!(id(x) %in% used)) {
+    if(!(id(x) %in% used_id)) {
       used_id <- c(used_id, id(x))
       uniq_objs <- c(uniq_objs, x)
     }

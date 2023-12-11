@@ -1388,7 +1388,7 @@ power <- Power
 #' }
 #' @docType methods
 #' @name scalene
-#' @rdname scalene
+#' @rdname Scalene
 #' @export
 scalene <- Scalene
 

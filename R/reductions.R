@@ -82,18 +82,19 @@ are_args_affine <- function(constraints) {
 #'@return A list keyed by constraint types where list[[cone_type]] maps to a list of exactly those constraints that are of type cone_type.
 group_constraints <- function(constraints) {
   ## The constr_types list below should match the map named used in ConeDims-class (file dcp2cone.R)
-  constr_map <- c(Zero = list(),
-                    NonNeg = list(),
-                    SOC = list(),
-                    PSD = list(),
-                    ExpCone = list(),
-                    PowCone3D = list())
+  constr_map <- list()
+  constr_names <- character(0)
   for (constr in constraints) {
     cl <- class(constr)
-    constr_map[[cl]] <- append(constr_map[[cl]], list(constr))
+    index <- match(cl, constr_names)
+    if (is.na(index)) { ## class not yet appeared in list
+      constr_map[[cl]] <- list(constr) ## add new named item to list
+      constr_names <- c(constr_names, cl)  ## add name to list of names
+    } else {
+      constr_map[[cl]] <- c(constr_map[[cl]], list(constr))
+    }
   }
-  ## Drop empty lists and return
-  constr_map[lengths(constr_map) > 0]
+  constr_map
 }
 
 #'
@@ -150,6 +151,9 @@ setMethod("cache", "ReducedMat", function(object, keep_zeros = FALSE) {
 setMethod("get_matrix_from_tensor", "ReducedMat", function(object, param_vec, with_offset = TRUE) {
   canonInterface.get_matrix_from_tensor(object@reduced_mat, param_vec, object@var_len, nonzero_rows = object@mapping_nonzero, with_offset = with_offset, problem_data_index = object@problem_data_index)
 })
+
+setClassUnion("ReducedMatORNULL", c("ReducedMat", "NULL"))
+
 
 # Factory function for infeasible or unbounded solutions.
 failure_solution <- function(status) {
@@ -230,65 +234,6 @@ setMethod("perform", signature(object = "Reduction", problem = "Problem"), funct
 setMethod("invert", signature(object = "Reduction", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) { stop("Unimplemented") })
 
 #'
-#' The Solution class.
-#'
-#' This class represents a solution to an optimization problem.
-#'
-#' @rdname Solution-class
-.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
-                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
-
-Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
-  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
-}
-
-# TODO: Get rid of this and just skip calling copy on Solution objects.
-setMethod("copy", "Solution", function(object) {
-  return(Solution(object@status, object@opt_val, object@primal_vars, object@dual_vars, object@attr))
-})
-
-#' @param x A \linkS4class{Solution} object.
-#' @rdname Solution-class
-setMethod("as.character", "Solution", function(x) {
-  paste("Solution(status = ", x@status,
-              ", opt_val = ", x@opt_val,
-              ", primal_vars = (", paste(x@primal_vars, collapse = ", "),
-              "), dual_vars = (", paste(x@dual_vars, collapse = ", "),
-              "), attr = (", paste(x@attr, collapse = ", "), "))", sep = "")
-})
-
-setMethod("show", "Solution", function(object) {
-  cat("Solution(", object@status, ", ",
-                   object@opt_val, ", (",
-                   paste(object@primal_vars, collapse = ", "), "), (",
-                   paste(object@dual_vars, collapse = ", "), "), (",
-                   paste(object@attr, collapse = ", "), "))", sep = "")
-})
-
-INF_OR_UNB_MESSAGE <- paste("The problem is either infeasible or unbounded, but the solver cannot tell which.",
-                           "Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
-                           "For GUROBI and CPLEX you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...).")
-
-# Factory function for infeasible or unbounded solutions.
-failure_solution <- function(status, attr = NULL) {
-  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
-    opt_val <- Inf
-  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
-    opt_val <- -Inf
-  else
-    opt_val <- NA_real_
-
-  if(is.null(attr))
-    attr <- list()
-  if(status == INFEASIBLE_OR_UNBOUNDED)
-    attr$message <- INF_OR_UNB_MESSAGE
-
-  return(Solution(status, opt_val, list(), list(), attr))
-}
-
-setClassUnion("SolutionORList", c("Solution", "list"))
-
-#'
 #' The Canonicalization class.
 #'
 #' This class represents a canonicalization reduction.
@@ -306,7 +251,8 @@ setClassUnion("SolutionORList", c("Solution", "list"))
 #' canonicalizing expr.
 #'
 #' @rdname Canonicalization-class
-.Canonicalization <- setClass("Canonicalization", representation(canon_methods = "list"), prototype(canon_methods = list()), contains = "Reduction")
+.Canonicalization <- setClass("Canonicalization", slots = list(canon_methods = "list"),
+                              prototype = list(canon_methods = list()), contains = "Reduction")
 
 Canonicalization <- function(problem, canon_methods) { .Canonicalization(problem = problem, canon_methods = canon_methods) }
 
@@ -333,6 +279,73 @@ setMethod("perform", signature(object = "Canonicalization", problem = "Problem")
   new_problem <- Problem(canon_objective, canon_constraints)
   return(list(object, new_problem, inverse_data))
 })
+
+
+#'
+#' The InverseData class.
+#'
+#' This class stores the data useful for solution retrieval.
+#'
+#' @rdname InverseData-class
+.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
+                                                       param_dims = "list", param_to_size = "list", param_id_map = "list",
+                                                       id2var = "list", id2cons = "list", cons_id_map = "list", constraints = "ListORNULL"),
+                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(),
+                                   param_dims = list(), param_to_size = list(), param_id_map = list(), id2var = list(), id2cons = list(),
+                                   cons_id_map = list(), constraints = NULL))
+
+InverseData <- function(problem) { .InverseData(problem = problem) }
+
+## Add InverseData to class union InverseDataORNUL
+setIs("InverseData", "InverseDataORNULL")
+
+setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA) {
+  # Basic variable offset information
+  varis <- variables(problem)
+  varoffs <- InverseData.get_var_offsets(varis)
+  .Object@id_map <- varoffs$id_map
+  .Object@var_offsets <- varoffs$var_offsets
+  .Object@x_length <- varoffs$vert_offset
+  .Object@var_dims <- varoffs$var_dims
+
+  .Object@param_dims <- list()
+  # Always start with CONSTANT_ID.
+  .Object@param_to_size[[CONSTANT_ID]] <- 1
+  .Object@param_id_map <- list()
+  offset <- 0
+  for(param in parameters(problem)) {
+    pid <- as.character(id(param))
+    .Object@param_dims[[pid]] <- dim(param)
+    .Object@param_to_size[[pid]] <- size(param)
+    .Object@param_id_map[[pid]] <- offset
+    offset <- offset + size(param)
+  }
+
+  # Map of variable id to variable
+  .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
+
+  # Map of constraint id to constraint
+  constrs <- problem@constraints
+  .Object@id2cons <- stats::setNames(constrs, sapply(constrs, function(cons) { as.character(id(cons)) }))
+  .Object@cons_id_map <- list()
+  .Object@constraints <- NULL
+  return(.Object)
+})
+
+InverseData.get_var_offsets <- function(variables) {
+  var_dims <- list()
+  var_offsets <- list()
+  id_map <- list()
+  vert_offset <- 0
+  for(x in variables) {
+    xid <- as.character(id(x))
+    var_dims[[xid]] <- dim(x)
+    var_offsets[[xid]] <- vert_offset
+    id_map[[xid]] <- c(vert_offset, size(x))
+    vert_offset <- vert_offset + size(x)
+  }
+  return(list(id_map = id_map, var_offsets = var_offsets, vert_offset = vert_offset, var_dims = var_dims))
+}
 
 #' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
 #' @param inverse_data An \linkS4class{InverseData} object that contains the data encoding the original problem.
@@ -506,7 +519,7 @@ recover_value_for_variable <- function(variable, lowered_value, project = TRUE) 
   if(variable@attributes$diag) {
     v_flat <- as.vector(lowered_value)
     return(sparseMatrix(i = seq_along(v_flat), j = seq_along(v_flat), x = v_flat))
-  } else if(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) {
+  } else if(length(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) > 0) {
     n <- nrow(variable)
     value <- matrix(0, nrow = nrow(variable), ncol = ncol(variable))
     triu_mask <- upper.tri(matrix(0, nrow =  n, ncol = n), diag = TRUE)
@@ -519,7 +532,7 @@ recover_value_for_variable <- function(variable, lowered_value, project = TRUE) 
 }
 
 lower_value <- function(variable, value) {
-  if(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) {
+  if(length(attributes_present(list(variable), SYMMETRIC_ATTRIBUTES)) > 0) {
     # return(upper.tri(value, diag = TRUE))
     n <- nrow(variable)
     triu_mask <- upper.tri(matrix(0, nrow = n, ncol = n), diag = TRUE)
@@ -544,7 +557,7 @@ setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), 
 #' @param problem A \linkS4class{Problem} object.
 #' @describeIn CvxAttr2Constr Expand convex variable attributes to constraints.
 setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
-  if(!attributes_present(variables(problem), CONVEX_ATTRIBUTES))
+  if(length(attributes_present(variables(problem), CONVEX_ATTRIBUTES)) == 0)
     return(list(object, problem, list()))
 
   # For each unique variable, add constraints.
@@ -566,7 +579,7 @@ setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), 
         }
       }
 
-      if(attributes_present(list(var), SYMMETRIC_ATTRIBUTES)) {
+      if(length(attributes_present(list(var), SYMMETRIC_ATTRIBUTES)) > 0) {
         n <- nrow(var)
         new_dim <- c(floor(n*(n+1)/2), 1)
         # upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
@@ -750,68 +763,6 @@ setMethod("invert", signature(object = "FlipObjective", solution = "Solution", i
 })
 
 #'
-#' The InverseData class.
-#'
-#' This class stores the data useful for solution retrieval.
-#'
-#' @rdname InverseData-class
-.InverseData <- setClass("InverseData", representation(problem = "Problem", id_map = "list", var_offsets = "list", x_length = "numeric", var_dims = "list",
-                                                       param_dims = "list", param_to_size = "list", param_id_map = "list",
-                                                       id2var = "list", id2cons = "list", cons_id_map = "list", constraints = "ListORNULL"),
-                         prototype(id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(),
-                                   param_dims = list(), param_to_size = list(), param_id_map = list(), id2var = list(), id2cons = list(),
-                                   cons_id_map = list(), constraints = NULL))
-
-InverseData <- function(problem) { .InverseData(problem = problem) }
-
-setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = list(), var_offsets = list(), x_length = NA_real_, var_dims = list(), id2var = list(), real2imag = list(), id2cons = list(), cons_id_map = list(), r = NA_real_, minimize = NA, sorted_constraints = list(), is_mip = NA) {
-  # Basic variable offset information
-  varis <- variables(problem)
-  varoffs <- get_var_offsets(.Object, varis)
-  .Object@id_map <- varoffs$id_map
-  .Object@var_offsets <- varoffs$var_offsets
-  .Object@x_length <- varoffs$x_length
-  .Object@var_dims <- varoffs$var_dims
-
-  .Object@param_dims <- list()
-  # Always start with CONSTANT_ID.
-  .Object@param_to_size[[CONSTANT_ID]] <- 1
-  .Object@param_id_map <- list()
-  offset <- 0
-  for(param in parameters(problem)) {
-    pid <- as.character(id(param))
-    .Object@param_dims[[pid]] <- dim(param)
-    .Object@param_to_size[[pid]] <- size(param)
-    .Object@param_id_map[[pid]] <- offset
-    offset <- offset + size(param)
-  }
-
-  # Map of variable id to variable
-  .Object@id2var <- stats::setNames(varis, sapply(varis, function(var) { as.character(id(var)) }))
-
-  # Map of constraint id to constraint
-  .Object@id2cons <- stats::setNames(problem@constraints, sapply(constrs, function(cons) { as.character(id(cons)) }))
-  .Object@cons_id_map <- list()
-  .Object@constraints <- NULL
-  return(.Object)
-})
-
-InverseData.get_var_offsets <- function(variables) {
-  var_dims <- list()
-  var_offsets <- list()
-  id_map <- list()
-  vert_offset <- 0
-  for(x in variables) {
-    xid <- as.character(id(x))
-    var_dims[[xid]] <- dim(x)
-    var_offsets[[xid]] <- vert_offset
-    id_map[[xid]] <- c(vert_offset, size(x))
-    vert_offset <- vert_offset + size(x)
-  }
-  return(list(id_map = id_map, var_offsets = var_offsets, vert_offset = vert_offset, var_dims = var_dims))
-}
-
-#'
 #' The MatrixStuffing class.
 #'
 #' This class stuffs a problem into a standard form for a family of solvers.
@@ -835,9 +786,9 @@ setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", 
   stop("Unimplemented")
 })
 
-setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
-  stop("Unimplemented")
-})
+## setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
+##   stop("Unimplemented")
+## })
 
 #'
 #' Coalesces bool, int indices for variables.

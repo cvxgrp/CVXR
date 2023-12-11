@@ -3,22 +3,13 @@
 \docType{class}
 \name{CallbackParam-class}
 \alias{CallbackParam-class}
-\alias{.CallbackParam}
 \alias{CallbackParam}
 \alias{value,CallbackParam-method}
 \title{The CallbackParam class.}
 \usage{
-CallbackParam(callback, dim = NULL, ...)
-
 \S4method{value}{CallbackParam}(object)
 }
 \arguments{
-\item{callback}{A callback function that generates the parameter value.}
-
-\item{dim}{The dimensions of the parameter.}
-
-\item{...}{Additional attribute arguments. See \linkS4class{Leaf} for details.}
-
 \item{object}{A \linkS4class{CallbackParam} object.}
 }
 \description{
@@ -35,6 +26,6 @@ This class represents a parameter whose value is obtained by evaluating a functi
 \examples{
 x <- Variable(2)
 fun <- function() { value(x) }
-y <- CallbackParam(fun, dim(x), nonneg = TRUE)
+y <- CallbackParam(fun, dim = dim(x), nonneg = TRUE)
 get_data(y)
 }

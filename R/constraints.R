@@ -484,7 +484,7 @@ setMethod("residual", "IneqConstraint", function(object) {
 #'
 #' This class represents a constraint that each entry of an Expression to take a value in a given set of real numbers.
 #'
-#' @slot expre The given expression to be constrained. This Expression must be affine.
+#' @slot expre The given expression, which must be affine, to be constrained.
 #' If expre has multiple elements, then the constraint is applied separately to
 #' each element, i.e., after solving a problem with this constraint, we should have:
 #' \code{for(e in flatten(expre)) { print(value(e) %in% vec) # => TRUE }
@@ -1005,9 +1005,6 @@ setMethod("is_imag", "PowCone3D", function(object) { FALSE })
 #' @describeIn PowCone3D A logical value indicating whether the constraint is complex.
 setMethod("is_complex", "PowCone3D", function(object) { FALSE })
 
-#' @describeIn PowCone3D The number of entries in the combined cones.
-setMethod("size", "SOC", function(object) { 3*num_cones(object) })
-
 #' @describeIn PowCone3D The number of elementwise cones.
 setMethod("num_cones", "PowCone3D", function(object) { size(object@x) })
 
@@ -1313,6 +1310,9 @@ setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
 setMethod("as.character", "SOC", function(x) {
   paste("SOC(", as.character(x@t), ", ", as.character(x@X), ")", sep = "")
 })
+
+#' @describeIn PowCone3D The number of entries in the combined cones.
+setMethod("size", "SOC", function(object) { 3*num_cones(object) })
 
 #' @describeIn SOC The residual of the second-order constraint.
 setMethod("residual", "SOC", function(object) {

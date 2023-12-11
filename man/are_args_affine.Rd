@@ -7,7 +7,7 @@
 are_args_affine(constraints)
 }
 \arguments{
-\item{constraints}{A \linkS4class{Constraint} object.}
+\item{constraints}{A list of \linkS4class{Constraint} object.}
 }
 \value{
 All the affine arguments in given constraints.

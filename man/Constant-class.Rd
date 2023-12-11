@@ -8,6 +8,7 @@
 \alias{show,Constant-method}
 \alias{name,Constant-method}
 \alias{constants,Constant-method}
+\alias{is_constant,Constant-method}
 \alias{value,Constant-method}
 \alias{is_pos,Constant-method}
 \alias{grad,Constant-method}
@@ -19,6 +20,7 @@
 \alias{is_complex,Constant-method}
 \alias{is_symmetric,Constant-method}
 \alias{is_hermitian,Constant-method}
+\alias{is_skew_symmetric,Constant-method}
 \alias{is_psd,Constant-method}
 \alias{is_nsd,Constant-method}
 \alias{as.Constant}
@@ -31,6 +33,8 @@ Constant(value)
 \S4method{name}{Constant}(x)
 
 \S4method{constants}{Constant}(object)
+
+\S4method{is_constant}{Constant}(object)
 
 \S4method{value}{Constant}(object)
 
@@ -54,6 +58,8 @@ Constant(value)
 
 \S4method{is_hermitian}{Constant}(object)
 
+\S4method{is_skew_symmetric}{Constant}(object)
+
 \S4method{is_psd}{Constant}(object)
 
 \S4method{is_nsd}{Constant}(object)
@@ -71,15 +77,23 @@ as.Constant(expr)
 A \linkS4class{Constant} representing the input as a constant.
 }
 \description{
-This class represents a constant.
+This class represents a constant value.
 
 Coerce an R object or expression into the \linkS4class{Constant} class.
+}
+\details{
+Raw numerical constants (R primitive types, Matrix dense and sparse matrices,
+et) are implicitly cast to constants via Expression operator overloading.
+For example, if \code{x} is an expression and \code{c} is a raw constant,
+then \code{x + c} creates an expression by casting \code{c} to a Constant.
 }
 \section{Methods (by generic)}{
 \itemize{
 \item \code{name(Constant)}: The name of the constant.
 
 \item \code{constants(Constant)}: Returns itself as a constant.
+
+\item \code{is_constant(Constant)}: Is the expression a constant?
 
 \item \code{value(Constant)}: The value of the constant.
 
@@ -103,6 +117,8 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 
 \item \code{is_hermitian(Constant)}: A logical value indicating whether the constant is a Hermitian matrix.
 
+\item \code{is_skew_symmetric(Constant)}: Is the expression skew symmetric?
+
 \item \code{is_psd(Constant)}: A logical value indicating whether the constant is a positive semidefinite matrix.
 
 \item \code{is_nsd(Constant)}: A logical value indicating whether the constant is a negative semidefinite matrix.
@@ -114,10 +130,6 @@ Coerce an R object or expression into the \linkS4class{Constant} class.
 \item{\code{value}}{A numeric element, vector, matrix, or data.frame. Vectors are automatically cast into a matrix column.}
 
 \item{\code{sparse}}{(Internal) A logical value indicating whether the value is a sparse matrix.}
-
-\item{\code{is_pos}}{(Internal) A logical value indicating whether all elements are non-negative.}
-
-\item{\code{is_neg}}{(Internal) A logical value indicating whether all elements are non-positive.}
 }}
 
 \examples{

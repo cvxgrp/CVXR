@@ -7,36 +7,50 @@
 \alias{name,NonPosConstraint-method}
 \alias{is_dcp,NonPosConstraint-method}
 \alias{is_dgp,NonPosConstraint-method}
-\alias{canonicalize,NonPosConstraint-method}
+\alias{is_dqcp,NonPosConstraint-method}
 \alias{residual,NonPosConstraint-method}
+\alias{violation,NonPosConstraint-method}
 \title{The NonPosConstraint class}
 \usage{
 \S4method{name}{NonPosConstraint}(x)
 
-\S4method{is_dcp}{NonPosConstraint}(object)
+\S4method{is_dcp}{NonPosConstraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{NonPosConstraint}(object)
+\S4method{is_dgp}{NonPosConstraint}(object, dpp = FALSE)
 
-\S4method{canonicalize}{NonPosConstraint}(object)
+\S4method{is_dqcp}{NonPosConstraint}(object)
 
 \S4method{residual}{NonPosConstraint}(object)
+
+\S4method{violation}{NonPosConstraint}(object)
 }
 \arguments{
 \item{x, object}{A \linkS4class{NonPosConstraint} object.}
 }
 \description{
-The NonPosConstraint class
+A constraint of the form \eqn{x \leq 0}.
+}
+\details{
+The preferred way of creating a NonPosConstraint constraint is through
+operator overloading. To constrain an expression x to be non-positive,
+simply write \code{x <= 0}; to constrain x to be non-negative, write
+\code{x >= 0}. The former creates a NonPosConstraint constraint with x
+as its argument, while the latter creates one with -x as its argument.
+Strict inequalities are not supported, as they do not make sense in a
+numerical setting.
 }
 \section{Methods (by generic)}{
 \itemize{
 \item \code{name(NonPosConstraint)}: The string representation of the constraint.
 
-\item \code{is_dcp(NonPosConstraint)}: Is the constraint DCP?
+\item \code{is_dcp(NonPosConstraint)}: A non-positive constraint is DCP if its argument is convex.
 
 \item \code{is_dgp(NonPosConstraint)}: Is the constraint DGP?
 
-\item \code{canonicalize(NonPosConstraint)}: The graph implementation of the object.
+\item \code{is_dqcp(NonPosConstraint)}: Is the constraint DQCP?
 
 \item \code{residual(NonPosConstraint)}: The residual of the constraint.
+
+\item \code{violation(NonPosConstraint)}: The violation of the constraint.
 
 }}

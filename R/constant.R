@@ -35,7 +35,7 @@ setMethod("initialize", "Constant", function(.Object, ..., value = NA_real_, spa
     .Object@value <- Matrix(value, sparse = TRUE)
     .Object@sparse <- TRUE
   } else {
-    if(is.na(value))
+    if(any(is.na(value)))
       .Object@value <- value
     else
       .Object@value <- as.matrix(value)
@@ -235,12 +235,11 @@ as.Constant <- function(expr) {
       if(is(elem, "Expression"))
         stop("The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack.")
     }
-
-    if(is(expr, "Expression"))
-      expr
-    else
-      Constant(value = expr)
   }
+  if(is(expr, "Expression"))
+    expr
+  else
+    Constant(value = expr)
 }
 
 #'
@@ -254,27 +253,14 @@ as.Constant <- function(expr) {
 #' the hyper-parameters of a machine learning model to be Parameter objects;
 #' more generally, Parameters are useful for computing trade-off curves.
 #'
-#' @slot dim The dimensions of the parameter.
-#' @slot name (Optional) A character string representing the name of the parameter.
-#' @name Parameter-class
-#' @aliases Parameter
-#' @rdname Parameter-class
-.Parameter <- setClass("Parameter", representation(dim = "numeric", name = "character", PARAM_COUNT = "numeric", venv = "ANY", delta = "numeric", gradient = "numeric", .is_constant = "logical", .is_vector = "logical"),
-                                    prototype(dim = NULL, name = NA_character_, PARAM_COUNT = 0, venv = NULL, delta = NA_real_, gradient = NA_real_, .is_constant = TRUE, .is_vector = NA),
-                                   validity = function(object) {
-                                     if(!is.null(object@venv))
-                                       stop("[Variable: validation] variable_with_attributes is an internal slot and should not be set by the user")
-                                     if(!is.na(object@.is_vector))
-                                       stop("[Variable: validation] .is_vector is an internal slot and should not be set by the user")
-                                     return(TRUE)
-                                   }, contains = "Leaf")
-
-#' @param rows The number of rows in the parameter.
-#' @param cols The number of columns in the parameter.
-#' @param name (Optional) A character string representing the name of the parameter.
-#' @param id (Optional) A unique ID for the variable.
-#' @param value (Optional) A numeric element, vector, matrix, or data.frame. Defaults to \code{NA} and may be changed with \code{value<-} later.
-#' @param ... Additional attribute arguments. See \linkS4class{Leaf} for details.
+#' @slot dim the dimensions of the parameter.
+#' @slot name the name of this parameter
+#' @slot PARAM_COUNT count of parameters, (currently unused?)
+#' @slot venv an environment used for reference semantics in setting values for parameter
+#' @slot delta the delta parameter
+#' @slot gradient the gradient parameter
+#' @slot is_constant flag indicating the parameter is constant
+#' @slot is_vector flag indicating the parameter is a vector
 #' @rdname Parameter-class
 #' @examples
 #' x <- Parameter(3, name = "x0", nonpos = TRUE) ## 3-vec negative
@@ -282,46 +268,53 @@ as.Constant <- function(expr) {
 #' is_nonpos(x)
 #' size(x)
 #' @export
-Parameter <- function(rows = 1, cols = 1, name = NA_character_, id = NA_integer_, value = NA_real_, ...) { .Parameter(dim = c(rows, cols), name = name, id = id, value = value, ...) }
+Parameter <- setClass("Parameter",
+                      slots =
+                        list(dim = "integer",
+                             name = "character",
+                             PARAM_COUNT = "integer",
+                             venv = "environment", # so that we may have reference sematics for value!
+                             delta = "numeric",
+                             gradient = "numeric",
+                             is_constant = "logical",
+                             is_vector = "logical"
+                             ),
+                      contains = "Leaf")
 
-setMethod("initialize", "Parameter", function(.Object, ..., dim = NULL, name = NA_character_, value = NA_real_, PARAM_COUNT = 0, venv = NULL, delta = NA_real_, gradient = NA_real_, .is_constant = TRUE, .is_vector = NA) {
-  if(length(dim) == 0 || is.null(dim)) {  # Force constants to default to c(1,1).
-    dim <- c(1,1)
-    .Object@.is_vector <- TRUE
-  } else if(length(dim) == 1) {  # Treat as a column vector.
-    dim <- c(dim,1)
-    .Object@.is_vector <- TRUE
-  } else if(length(dim) == 2)
-    .Object@.is_vector <- FALSE
-  else if(length(dim) > 2)   # TODO: Tensors are currently unimplemented.
-    stop("Unimplemented")
+setMethod("initialize", "Parameter",
+          function(.Object, ..., dim = integer(0), name = NA_character_, value = NA_real_,
+                   PARAM_COUNT = 0L, delta = NA_real_, gradient = NA_real_) {
 
-  # This is handled in Canonical: .Object@id <- ifelse(is.na(id), get_id(), id)
-  if(is.na(name))
-    .Object@name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
-  else
-    .Object@name <- name
-
-  # Initialize with value if provided
-  .Object@value <- value
-  .Object@delta <- delta
-  .Object@gradient <- gradient
-
-  # Save in virtual environment cache.
-  .Object <- callNextMethod(.Object, ..., dim = dim, value = .Object@value)
-  .Object@.is_constant <- TRUE
-
-  # Cache in virtual environment.
-  .Object@venv <- new.env(parent = emptyenv())
-  .Object@venv$value <- .Object@value
-  # .Object@venv$delta <- .Object@delta
-  # .Object@venv$gradient <- .Object@gradient
-  return(.Object)
-})
-
-
-
-
+            # This is handled in Canonical: .Object@id <- ifelse(is.na(id), get_id(), id)
+            if (is.na(name)) {
+              name <- sprintf("%s%s", PARAM_PREFIX, .Object@id)
+            }
+            .Object@name <- name
+            d <- length(dim)
+            if (d == 0L) {  # Force constants to default to c(1,1).
+              dim <- c(1L, 1L)
+              .Object@is_vector <- TRUE
+            } else if (d == 1L) {  # Treat as a column vector.
+              dim <- c(dim, 1L)
+              .Object@is_vector <- TRUE
+            } else if (d == 2L) {
+              .Object@is_vector <- FALSE
+            } else if (d > 2) {  # TODO: Tensors are currently unimplemented.
+              stop("Unimplemented")
+            } else {
+              stop("Unimplemented")
+            }
+            .Object@dim <- dim
+            .Object@delta <- delta
+            .Object@gradient <- gradient
+            .Object <- callNextMethod(.Object, ..., dim = dim, value = value)
+            .Object@is_constant <- TRUE
+            # Cache in virtual environment.
+            .Object@venv <- new.env(parent = emptyenv())
+            # Initialize with value if provided
+            .Object@venv$value <- .Object@value
+            return(.Object)
+          })
 
 #' @param object,x A \linkS4class{Parameter} object.
 #' @describeIn Parameter Returns information needed to reconstruct the expression besides args: \code{list(dim, name, value, id, attributes)}.
@@ -409,30 +402,20 @@ is_param_free <- function(expr) {
 #' @name CallbackParam-class
 #' @aliases CallbackParam
 #' @rdname CallbackParam-class
-.CallbackParam <- setClass("CallbackParam", representation(callback = "function", dim = "NumORNULL"),
-                                            prototype(dim = NULL), contains = "Parameter")
-
-#' @param callback A callback function that generates the parameter value.
-#' @param dim The dimensions of the parameter.
-#' @param ... Additional attribute arguments. See \linkS4class{Leaf} for details.
-#' @rdname CallbackParam-class
 #' @examples
 #' x <- Variable(2)
 #' fun <- function() { value(x) }
-#' y <- CallbackParam(fun, dim(x), nonneg = TRUE)
+#' y <- CallbackParam(fun, dim = dim(x), nonneg = TRUE)
 #' get_data(y)
 #' @export
-CallbackParam <- function(callback, dim = NULL, ...) { .CallbackParam(callback = callback, dim = dim, ...) }
-
-setMethod("initialize", "CallbackParam", function(.Object, ..., callback, dim = NULL) {
-  .Object@callback <- callback
-  callNextMethod(.Object, ..., dim = dim)
-})
+CallbackParam <- setClass("CallbackParam",
+                          slots = list(callback = "function"),
+                          contains = "Parameter")
 
 #' @param object A \linkS4class{CallbackParam} object.
 #' @rdname CallbackParam-class
 setMethod("value", "CallbackParam", function(object) {
-  val <- validate_val(object, object@callback())
+  object@venv@value <- validate_val(object, object@callback())
   # if(object@.is_vector)
   #   val <- as.vector(val)
   # return(val)

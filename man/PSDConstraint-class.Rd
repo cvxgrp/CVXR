@@ -16,8 +16,8 @@
 \alias{name,PSDConstraint-method}
 \alias{is_dcp,PSDConstraint-method}
 \alias{is_dgp,PSDConstraint-method}
+\alias{is_dqcp,PSDConstraint-method}
 \alias{residual,PSDConstraint-method}
-\alias{canonicalize,PSDConstraint-method}
 \title{The PSDConstraint class.}
 \usage{
 e1 \%>>\% e2
@@ -36,24 +36,24 @@ e1 \%<<\% e2
 
 \S4method{\%<<\%}{ConstVal,Expression}(e1, e2)
 
-PSDConstraint(expr, id = NA_integer_)
+PSDConstraint(expr, constr_id = NA_integer_)
 
 \S4method{name}{PSDConstraint}(x)
 
-\S4method{is_dcp}{PSDConstraint}(object)
+\S4method{is_dcp}{PSDConstraint}(object, dpp = FALSE)
 
-\S4method{is_dgp}{PSDConstraint}(object)
+\S4method{is_dgp}{PSDConstraint}(object, dpp = FALSE)
+
+\S4method{is_dqcp}{PSDConstraint}(object)
 
 \S4method{residual}{PSDConstraint}(object)
-
-\S4method{canonicalize}{PSDConstraint}(object)
 }
 \arguments{
 \item{e1, e2}{The \linkS4class{Expression} objects or numeric constants to compare.}
 
 \item{expr}{An \linkS4class{Expression}, numeric element, vector, or matrix representing \eqn{X}.}
 
-\item{id}{(Optional) A numeric value representing the constraint ID.}
+\item{constr_id}{(Optional) A numeric value representing the constraint ID.}
 
 \item{x, object}{A \linkS4class{PSDConstraint} object.}
 }
@@ -64,13 +64,13 @@ This class represents the positive semidefinite constraint, \eqn{\frac{1}{2}(X +
 \itemize{
 \item \code{name(PSDConstraint)}: The string representation of the constraint.
 
-\item \code{is_dcp(PSDConstraint)}: The constraint is DCP if the left-hand and right-hand expressions are affine.
+\item \code{is_dcp(PSDConstraint)}: The constraint is DCP if the constrained expression is affine.
 
 \item \code{is_dgp(PSDConstraint)}: Is the constraint DGP?
 
-\item \code{residual(PSDConstraint)}: A \linkS4class{Expression} representing the residual of the constraint.
+\item \code{is_dqcp(PSDConstraint)}: Is the constraint DQCP?
 
-\item \code{canonicalize(PSDConstraint)}: The graph implementation of the object. Marks the top level constraint as the \code{dual_holder} so the dual value will be saved to the \linkS4class{PSDConstraint}.
+\item \code{residual(PSDConstraint)}: A \linkS4class{Expression} representing the residual of the constraint.
 
 }}
 \section{Slots}{

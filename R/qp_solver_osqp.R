@@ -16,7 +16,7 @@ OSQP <- function() { new("OSQP") }
 #' @param status A status code returned by the solver.
 #' @param default A status string to return if no status code match is found. If \code{default = NA}, this method will return an error when there is no match.
 #' @describeIn OSQP Converts status returned by the OSQP solver to its respective CVXR status.
-setMethod("status_map", "OSQP", function(solver, status, default = NA_character_) {
+setMethod("status_map", "OSQP", function(solver, status) {
   OSQP_STATUS_MAP <- list(
     "1" = OPTIMAL,
     "2" = OPTIMAL_INACCURATE,
@@ -32,10 +32,7 @@ setMethod("status_map", "OSQP", function(solver, status, default = NA_character_
 
   status_string <- OSQP_STATUS_MAP[[as.character(status)]]
   if (is.null(status_string)) {
-    if (is.na(default))
       stop("OSQP status unrecognized: ", status)
-    else
-      default
   } else {
     status_string
   }

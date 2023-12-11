@@ -39,5 +39,7 @@ This class represents an optimization objective.
 
 \describe{
 \item{\code{expr}}{A scalar \linkS4class{Expression} to optimize.}
+
+\item{\code{NAME}}{(Internal) Name used for debug messages.}
 }}
 

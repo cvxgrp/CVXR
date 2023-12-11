@@ -78,7 +78,7 @@ This atom is log-log convex.
 
 \item \code{is_decr(EyeMinusInv)}: Is the atom weakly decreasing in the index?
 
-\item \code{.grad(EyeMinusInv)}: Gives EyeMinusInv the (sub/super)gradient of the atom w.r.t. each variable
+\item \code{.grad(EyeMinusInv)}: Gives the (sub/super)gradient of the atom w.r.t. each variable
 
 }}
 \section{Slots}{

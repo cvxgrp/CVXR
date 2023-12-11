@@ -16,8 +16,7 @@ Complex2Real.norm_nuc_canon(expr, real_args, imag_args, real2imag)
 \item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
 }
 \value{
-A canonicalization of a nuclear norm matrix atom, where the returned
-variables are the real component and the imaginary component.
+A canonicalization of a nuclear norm matrix atom, where the returned variables are the real component and the imaginary component.
 }
 \description{
 Complex canonicalizer for the nuclear norm atom

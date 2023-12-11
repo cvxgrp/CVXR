@@ -54,7 +54,7 @@ setMethod("is_dpp", "Constraint", function(object, context = "dcp") {
   if(tolower(context) == "dcp")
     return(is_dcp(object, dpp = TRUE))
   else if(tolower(context) == "dgp")
-    return(is_dpp(object, dpp = TRUE))
+    return(is_dgp(object, dpp = TRUE))
   else
     stop("Unsupported context ", context)
 })
@@ -459,7 +459,7 @@ setMethod("is_dpp", "IneqConstraint", function(object, context = "dcp") {
   if(tolower(context) == "dcp")
     return(is_dcp(object, dpp = TRUE))
   else if(tolower(context) == "dgp")
-    return(is_dpp(object, dpp = TRUE))
+    return(is_dgp(object, dpp = TRUE))
   else
     stop("Unsupported context ", context)
 })

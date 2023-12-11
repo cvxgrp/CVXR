@@ -27,7 +27,7 @@ setMethod("status_map", "OSQP", function(solver, status) {
     "4" = UNBOUNDED_INACCURATE,
     "-6" = USER_LIMIT,
     "-5" = SOLVER_ERROR,           # Interrupted by user
-    "-10" = SOLVER_ERROR
+    "-10" = SOLVER_ERROR           # Unsolved
   )
 
   status_string <- OSQP_STATUS_MAP[[as.character(status)]]
@@ -55,7 +55,7 @@ setMethod("invert", signature(object = "OSQP", solution = "list", inverse_data =
                EXTRA_STATS =  solution)
 
   # Map OSQP statuses back to CVXR statuses.
-  status <- status_map(object, solution$info$status_val, default = SOLVER_ERROR)
+  status <- status_map(object, solution$info$status_val)
 
   if (status %in% SOLUTION_PRESENT) {
     opt_val <- solution$info$obj_val + inverse_data[[OFFSET]]
@@ -120,7 +120,7 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
       do.call(solver$Update, new_args)
 
     # Map OSQP statuses back to CVXR statuses.
-    status <- status_map(object, results$info$status_val, default = SOLVER_ERROR)
+    status <- status_map(object, results$info$status_val)
     if(status == OPTIMAL)
       solver$WarmStart(results$x, results$y)
 

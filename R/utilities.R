@@ -1244,12 +1244,12 @@ vectorized_lower_tri_to_triples <- function(v, dim) {
 #' @name Version-class
 #' @aliases Version
 #' @rdname Version-class
-.Version <- setClass("Version", representation(v = "ANY", major = "integer", minor = "integer", micro = "integer", ),
-                               prototype(major = NA_integer_, minor = NA_integer_, micro = NA_integer_))
+.Version <- setClass("Version", representation(v = "ANY", major = "integer", minor = "integer", micro = "integer"),
+                                prototype(major = NA_integer_, minor = NA_integer_, micro = NA_integer_))
 
 Version <- function(v) { new("Version", v = v) }
 
-setMethod("initialize", "Version", function(.Object, ..., v, major, minor, integer) {
+setMethod("initialize", "Version", function(.Object, ..., v, major, minor, micro) {
   if(is.character(v)) {
     v <- strsplit(v, "rc")[[1]][1]
     v <- strsplit(v, ".")[[1]]

@@ -806,9 +806,9 @@ Complex2Real.psd_canon <- function(expr, real_args, imag_args, real2imag) {
 #' variables are the real component and the NULL imaginary component.
 Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
   if(is.null(real_args[[2]]))   # Imaginary.
-    output <- list(SOC(real_args[[1]], imag_args[[2]], axis = expr@axis, id = real2imag[[as.character(expr@id)]]))
+    output <- list(SOC(real_args[[1]], imag_args[[2]], axis = expr@axis, constr_id = real2imag[[as.character(expr@id)]]))
   else if(is.null(imag_args[[2]]))   # Real.
-    output <- list(SOC(real_args[[1]], real_args[[2]], axis = expr@axis, id = expr@id))
+    output <- list(SOC(real_args[[1]], real_args[[2]], axis = expr@axis, constr_id = expr@id))
   else {   # Complex.
     orig_dim <- dim(real_args[[2]])
     real <- flatten(real_args[[2]])
@@ -816,7 +816,7 @@ Complex2Real.soc_canon <- function(expr, real_args, imag_args, real2imag) {
     flat_X <- new("Variable", dim = dim(real))
     inner_SOC <- SOC(flat_X, vstack(real, imag), axis = 2)   # TODO: Check the axis here is correct.
     real_X <- reshape_expr(flat_X, orig_dim)
-    outer_SOC <- SOC(real_args[[1]], real_X, axis = expr@axis, id = expr@id)
+    outer_SOC <- SOC(real_args[[1]], real_X, axis = expr@axis, constr_id = expr@id)
     output <- list(inner_SOC, outer_SOC)
   }
   return(list(output, NULL))

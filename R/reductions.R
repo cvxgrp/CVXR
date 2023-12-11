@@ -154,16 +154,21 @@ setMethod("get_matrix_from_tensor", "ReducedMat", function(object, param_vec, wi
 
 setClassUnion("ReducedMatORNULL", c("ReducedMat", "NULL"))
 
-
 # Factory function for infeasible or unbounded solutions.
-failure_solution <- function(status) {
-  if(status == INFEASIBLE)
-    opt_val = Inf
-  else if(status == UNBOUNDED)
-    opt_val = -Inf
+failure_solution <- function(status, attr = NULL) {
+  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
+    opt_val <- Inf
+  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
+    opt_val <- -Inf
   else
-    opt_val = NA_real_
-  return(Solution(status, opt_val, list(), list(), list()))
+    opt_val <- NA_real_
+
+  if(is.null(attr))
+    attr <- list()
+  if(status == INFEASIBLE_OR_UNBOUNDED)
+    attr$message <- INF_OR_UNB_MESSAGE
+
+  return(Solution(status, opt_val, list(), list(), attr))
 }
 
 setClassUnion("ProblemORNULL", c("Problem", "NULL"))

@@ -69,7 +69,7 @@ setMethod("invert", signature(object = "CPLEX_QP", solution = "list", inverse_da
   # else
   #   attr[[NUM_ITERS]] <- as.integer(get_num_barrier_iterations(model$solution$progress))
 
-  status <- status_map(object, solution$model$status, SOLVER_ERROR)
+  status <- status_map(object, solution$model$status)
 
   if(status %in% SOLUTION_PRESENT) {
     # Get objective value.

@@ -49,7 +49,7 @@ setMethod("invert", signature(object = "PIQP", solution = "list", inverse_data =
                EXTRA_STATS =  solution)
 
   # Map PIQP statuses back to CVXR statuses.
-  status <- status_map(object, solution$info$status_val, default = SOLVER_ERROR)
+  status <- status_map(object, solution$info$status_val)
 
   if (status %in% SOLUTION_PRESENT) {
     opt_val <- solution$info$obj_val + inverse_data[[OFFSET]]

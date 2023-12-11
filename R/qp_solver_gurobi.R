@@ -60,7 +60,7 @@ setMethod("invert", signature(object = "GUROBI_QP", solution = "list", inverse_d
   attr <- list(SOLVE_TIME =  solution$runtime,
                NUM_ITERS = solution$baritercount + solution$itercount)
 
-  status <- status_map(object, solution$status, default = SOLVER_ERROR)
+  status <- status_map(object, solution$status)
 
   primal_vars <- list()
   if(status %in% SOLUTION_PRESENT) {

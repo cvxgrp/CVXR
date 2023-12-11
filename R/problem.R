@@ -460,23 +460,6 @@ INF_OR_UNB_MESSAGE <- paste("The problem is either infeasible or unbounded, but 
                            "Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
                            "For GUROBI and CPLEX you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...).")
 
-# Factory function for infeasible or unbounded solutions.
-failure_solution <- function(status, attr = NULL) {
-  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
-    opt_val <- Inf
-  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
-    opt_val <- -Inf
-  else
-    opt_val <- NA_real_
-
-  if(is.null(attr))
-    attr <- list()
-  if(status == INFEASIBLE_OR_UNBOUNDED)
-    attr$message <- INF_OR_UNB_MESSAGE
-
-  return(Solution(status, opt_val, list(), list(), attr))
-}
-
 setClassUnion("SolutionORList", c("Solution", "list"))
 
 #'

@@ -28,7 +28,7 @@ CVXR includes several open source solvers in addition to the default
 OSQP, ECOS and SCS. Recent (1.x+) versions also include support for
 commercial solvers such as [MOSEK](https://www.mosek.com),
 [GUROBI](https://www.gurobi.com) and
-[CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+[CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer).
 
 For details and examples, we refer you to [Fu, Narasimhan,
 Boyd](https://dx.doi.org/10.18637/jss.v094.i14) (2020). If you use

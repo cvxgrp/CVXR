@@ -18,7 +18,7 @@ If expr is a CVXR expression, then expr^p is equivalent to Power(expr, p)."><met
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-12</span>
       </span>
     </div>
 
@@ -158,15 +158,30 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
     <p>For \(p = 0\), \(f(x) = 1\), constant, positive.</p>
 <p>For \(p = 1\), \(f(x) = x\), affine, increasing, same sign as \(x\).</p>
 <p>For \(p = 2,4,8,...\), \(f(x) = |x|^p\), convex, signed monotonicity, positive.</p>
-<p>For \(p &lt; 0\) and \(f(x) = \)</p><ul><li><p>\(x^p\) for \(x &gt; 0\)</p></li>
-<li><p>\(+\infty\)\(x \leq 0\)</p></li>
-</ul><p>, this function is convex, decreasing, and positive.</p>
-<p>For \(0 &lt; p &lt; 1\) and \(f(x) =\)</p><ul><li><p>\(x^p\) for \(x \geq 0\)</p></li>
-<li><p>\(-\infty\)\(x &lt; 0\)</p></li>
-</ul><p>, this function is concave, increasing, and positive.</p>
-<p>For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><ul><li><p>\(x^p\) for \(x \geq 0\)</p></li>
-<li><p>\(+\infty\)\(x &lt; 0\)</p></li>
-</ul><p>, this function is convex, increasing, and positive.</p>
+<p>For \(p &lt; 0\) and \(f(x) = \)</p><dl><dt>\(x^p\)</dt>
+<dd><p>for \(x &gt; 0\)</p></dd>
+
+  <dt>\(+\infty\)</dt>
+<dd><p>\(x \leq 0\)</p></dd>
+
+
+</dl><p>, this function is convex, decreasing, and positive.</p>
+<p>For \(0 &lt; p &lt; 1\) and \(f(x) =\)</p><dl><dt>\(x^p\)</dt>
+<dd><p>for \(x \geq 0\)</p></dd>
+
+  <dt>\(-\infty\)</dt>
+<dd><p>\(x &lt; 0\)</p></dd>
+
+
+</dl><p>, this function is concave, increasing, and positive.</p>
+<p>For \(p &gt; 1, p \neq 2,4,8,\ldots\) and \(f(x) = \)</p><dl><dt>\(x^p\)</dt>
+<dd><p>for \(x \geq 0\)</p></dd>
+
+  <dt>\(+\infty\)</dt>
+<dd><p>\(x &lt; 0\)</p></dd>
+
+
+</dl><p>, this function is convex, increasing, and positive.</p>
     </div>
     <div id="methods-by-generic-">
     <h2>Methods (by generic)</h2>
@@ -218,7 +233,7 @@ If <code>expr</code> is a CVXR expression, then <code>expr^p</code> is equivalen
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

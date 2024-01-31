@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-12</span>
       </span>
     </div>
 
@@ -92,7 +92,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2022-10-28</h4>
+            <h4 data-toc-skip class="date">2024-01-31</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="hidden name"><code>cvxr_intro.Rmd</code></div>
@@ -522,8 +522,10 @@ as</p>
 <code class="sourceCode R"><span><span class="va">constraint1</span> <span class="op">&lt;-</span> <span class="va">betaHat</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="va">betaHat</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;=</span> <span class="fl">0</span></span></code></pre></div>
 <p>but it is easier working with matrices in general with
 <code>CVXR</code>.</p>
-<p>For the nonnegativity for rest of the variables, we construct a <span class="math inline">\(10\times 10\)</span> matrix <span class="math inline">\(A\)</span> to have 1’s along the diagonal
-everywhere except rows 2 and 3 and zeros everywhere.</p>
+<p>For the nonnegativity for rest of the variables, we construct a <span class="math inline">\(10\times
+10\)</span> matrix <span class="math inline">\(A\)</span> to have 1’s
+along the diagonal everywhere except rows 2 and 3 and zeros
+everywhere.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag.html">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">B</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">B</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"$\\beta_{"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span>, <span class="st">"}$"</span><span class="op">)</span></span>
@@ -766,7 +768,7 @@ variability.</p>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-fu:naras:boyd:2017" class="csl-entry">
 Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017.
 <span>“CVXR: An r Package for Disciplined Convex Optimization.”</span>
@@ -793,7 +795,7 @@ Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017.
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

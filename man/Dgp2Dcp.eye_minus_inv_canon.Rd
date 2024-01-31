@@ -2,7 +2,7 @@
 % Please edit documentation in R/dgp2dcp.R
 \name{Dgp2Dcp.eye_minus_inv_canon}
 \alias{Dgp2Dcp.eye_minus_inv_canon}
-\title{Dgp2Dcp canonicalizer for the (I - X)^{-1} atom}
+\title{Dgp2Dcp canonicalizer for the \eqn{(I - X)^{-1}} atom}
 \usage{
 Dgp2Dcp.eye_minus_inv_canon(expr, args)
 }
@@ -12,9 +12,9 @@ Dgp2Dcp.eye_minus_inv_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the (I - X)^{-1} atom of a DGP expression, 
+A canonicalization of the \eqn{(I - X)^{-1}} atom of a DGP expression,
 where the returned expression is the transformed DCP equivalent.
 }
 \description{
-Dgp2Dcp canonicalizer for the (I - X)^{-1} atom
+Dgp2Dcp canonicalizer for the \eqn{(I - X)^{-1}} atom
 }

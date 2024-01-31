@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-12</span>
       </span>
     </div>
 
@@ -115,11 +115,11 @@
 <ul><li><p><code>accepts(object = ConicSolver, problem = Problem)</code>: Can the problem be solved with a conic solver?</p></li>
 <li><p><code>reduction_format_constr(ConicSolver)</code>: Return a list representing a cone program whose problem data tensors
 will yield the coefficient "A" and offset "b" for the respective constraints:
-Linear Equations: A <!-- %*% x == b, -->
-Linear inequalities: A <!-- %*% x &lt;= b, -->
-Second order cone: A <!-- %*% x &lt;=_{SOC} b, -->
-Exponential cone: A <!-- %*% x &lt;=_{EXP} b, -->
-Semidefinite cone: A <!-- %*% x &lt;=_{SOP} b. --></p></li>
+Linear Equations: \(A x = b\),
+Linear inequalities: \(A x \leq b\),
+Second order cone: \(A x \leq_{SOC} b\),
+Exponential cone: \(A x \leq_{EXP} b\),
+Semidefinite cone: \(A x \leq_{SOP} b\).</p></li>
 <li><p><code>group_coeff_offset(ConicSolver)</code>: Combine the constraints into a single matrix, offset.</p></li>
 <li><p><code>invert(object = ConicSolver, solution = Solution, inverse_data = InverseData)</code>: Returns the solution to the original problem given the inverse_data.</p></li>
 </ul></div>
@@ -136,7 +136,7 @@ Semidefinite cone: A <!-- %*% x &lt;=_{SOP} b. --></p></li>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

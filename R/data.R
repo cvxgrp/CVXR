@@ -28,7 +28,7 @@
 #' Direct Standardization: Population
 #'
 #' Randomly generated data for direct standardization example.
-#' Sex was drawn from a Bernoulli distribution, and age was drawn from a uniform distribution on {10,...,60}.
+#' Sex was drawn from a Bernoulli distribution, and age was drawn from a uniform distribution on \eqn{10,\ldots,60}.
 #' The response was drawn from a normal distribution with a mean that depends on sex and age, and a variance of 1.
 #'
 #' @name dspop

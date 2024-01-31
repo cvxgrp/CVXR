@@ -12,7 +12,7 @@ Dgp2Dcp.div_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the division atom of a DGP expression, 
+A canonicalization of the division atom of a DGP expression,
 where the returned expression is the log transformed DCP equivalent.
 }
 \description{

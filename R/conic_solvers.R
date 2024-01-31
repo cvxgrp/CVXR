@@ -160,11 +160,11 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
 #' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
 #' will yield the coefficient "A" and offset "b" for the respective constraints:
-#' Linear Equations: A %*% x == b,
-#' Linear inequalities: A %*% x <= b,
-#' Second order cone: A %*% x <=_{SOC} b,
-#' Exponential cone: A %*% x <=_{EXP} b,
-#' Semidefinite cone: A %*% x <=_{SOP} b.
+#' Linear Equations: \eqn{A x = b},
+#' Linear inequalities: \eqn{A x \leq b},
+#' Second order cone: \eqn{A x \leq_{SOC} b},
+#' Exponential cone: \eqn{A x \leq_{EXP} b},
+#' Semidefinite cone: \eqn{A x \leq_{SOP} b}.
 setMethod("reduction_format_constr", "ConicSolver", function(object, problem, constr, exp_cone_order) {
   coeffs <- list()
   offsets <- list()
@@ -1991,12 +1991,12 @@ vectorized_lower_tri_to_mat <- function(v, dim) {
 }
 
 #'
-#' Given a problem returns a PSD constrain
+#' Given a problem returns a PSD constraint
 #'
 #' @param problem A \linkS4class{Problem} object.
 #' @param c A vector of coefficients.
 #' @return Returns an array G and vector h such that the given constraint is
-#' equivalent to G*z <=_{PSD} h.
+#' equivalent to \eqn{G*z \leq_{PSD} h}.
 psd_coeff_offset <- function(problem, c) {
   extractor <- CoeffExtractor(InverseData(problem))
   tmp <- affine(extractor, expr(c))

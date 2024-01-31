@@ -1,11 +1,11 @@
 
+<!-- README.md is generated from the source: README.Rmd -->
+
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />
 
-
-[![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions?workflow=R-CMD-check)
-[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
-[![Coverage
-Status](https://img.shields.io/codecov/c/github/cvxgrp/CVXR/master.svg)](https://codecov.io/github/cvxgrp/CVXR?branch=master)
+[![R build
+status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 
 CVXR provides an object-oriented modeling language for convex
@@ -29,10 +29,10 @@ commercial solvers such as [MOSEK](https://www.mosek.com),
 [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
 
 For details and examples, we refer you to [Fu, Narasimhan,
-Boyd](https://dx.doi.org/10.18637/jss.v094.i14) (2020). If you use
-CVXR in your work, please cite this reference. (The R command
-`citation("CVXR", bibtex = TRUE)` will also give you a
-bibtex-formatted entry.)
+Boyd](https://dx.doi.org/10.18637/jss.v094.i14) (2020). If you use CVXR
+in your work, please cite this reference. (The R command
+`citation("CVXR", bibtex = TRUE)` will also give you a bibtex-formatted
+entry.)
 
 ## Installation
 
@@ -59,4 +59,3 @@ install_github("cvxgrp/CVXR")
 A number of tutorial examples are available on the [CVXR
 website](https://cvxr.rbind.io) along with links to our useR! 2019
 short-course.
-

@@ -42,11 +42,11 @@ Conic solver class with reduction semantics.
 
 \item \code{reduction_format_constr(ConicSolver)}: Return a list representing a cone program whose problem data tensors
 will yield the coefficient "A" and offset "b" for the respective constraints:
-Linear Equations: A %*% x == b,
-Linear inequalities: A %*% x <= b,
-Second order cone: A %*% x <=_{SOC} b,
-Exponential cone: A %*% x <=_{EXP} b,
-Semidefinite cone: A %*% x <=_{SOP} b.
+Linear Equations: \eqn{A x = b},
+Linear inequalities: \eqn{A x \leq b},
+Second order cone: \eqn{A x \leq_{SOC} b},
+Exponential cone: \eqn{A x \leq_{EXP} b},
+Semidefinite cone: \eqn{A x \leq_{SOP} b}.
 
 \item \code{group_coeff_offset(ConicSolver)}: Combine the constraints into a single matrix, offset.
 

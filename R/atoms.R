@@ -1786,7 +1786,7 @@ setMethod(".grad", "OneMinusPos", function(object, values) { Matrix(-object@.one
 #'
 #' @param x An \linkS4class{Expression}
 #' @param y An \linkS4class{Expression}
-#' @return The difference x - y with domain {x,y: x > y > 0}.
+#' @return The difference \eqn{x - y} with domain \eqn{x,y: x > y > 0}.
 DiffPos <- function(x, y) {
   x * OneMinusPos(y/x)
 }

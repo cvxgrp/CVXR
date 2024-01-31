@@ -1,19 +1,12 @@
 ---
 output: github_document
 ---
-<!-- badges: start -->
-[![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
-[![R-CMD-check](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
-<!-- badges: end -->
 
 <!-- README.md is generated from the source: README.Rmd -->
 
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />
-
-[![Travis-CI Build Status](https://travis-ci.org/cvxgrp/CVXR.svg?branch=master)](https://travis-ci.org/cvxgrp/CVXR)
+[![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
-[![Coverage
-Status](https://img.shields.io/codecov/c/github/cvxgrp/CVXR/master.svg)](https://codecov.io/github/cvxgrp/CVXR?branch=master)
 [![](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 
 CVXR provides an object-oriented modeling language for convex

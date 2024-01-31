@@ -12,7 +12,7 @@ DiffPos(x, y)
 \item{y}{An \linkS4class{Expression}}
 }
 \value{
-The difference x - y with domain {x,y: x > y > 0}.
+The difference \eqn{x - y} with domain \eqn{x,y: x > y > 0}.
 }
 \description{
 The difference between expressions, \eqn{x - y}, where \eqn{x > y > 0}.

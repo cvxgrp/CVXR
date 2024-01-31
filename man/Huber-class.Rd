@@ -51,8 +51,8 @@ Huber(x, M = 1)
 \item{idx}{An index into the atom.}
 }
 \description{
-This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
-\itemize{
+This class represents the elementwise Huber function, \eqn{Huber(x, M = 1)}
+\describe{
   \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
    \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
  }

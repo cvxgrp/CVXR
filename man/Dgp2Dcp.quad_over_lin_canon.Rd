@@ -12,7 +12,7 @@ Dgp2Dcp.quad_over_lin_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the quadratic over linear atom of a 
+A canonicalization of the quadratic over linear atom of a
 DGP expression, where the returned expression is the transformed DCP equivalent.
 }
 \description{

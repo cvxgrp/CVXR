@@ -2,7 +2,7 @@
 % Please edit documentation in R/conic_solvers.R
 \name{psd_coeff_offset}
 \alias{psd_coeff_offset}
-\title{Given a problem returns a PSD constrain}
+\title{Given a problem returns a PSD constraint}
 \usage{
 psd_coeff_offset(problem, c)
 }
@@ -13,8 +13,8 @@ psd_coeff_offset(problem, c)
 }
 \value{
 Returns an array G and vector h such that the given constraint is
-equivalent to G*z <=_{PSD} h.
+equivalent to \eqn{G*z \leq_{PSD} h}.
 }
 \description{
-Given a problem returns a PSD constrain
+Given a problem returns a PSD constraint
 }

@@ -1,3 +1,8 @@
+# CVXR 1.0-12
+
+* `Rmosek` to be removed from CRAN, so moved to drat repo
+* Cleaned up some problematic Rd files shown in CRAN results
+
 # CVXR 1.0-11
 
 * Being more careful about coercing to `dgCMatrix`

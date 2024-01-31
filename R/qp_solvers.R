@@ -20,7 +20,7 @@ setClass("QpSolver", contains = "ReductionSolver")
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   return(inherits(problem@objective, "Minimize") && is_stuffed_qp_objective(problem@objective) && are_args_affine(problem@constraints) &&
            all(sapply(problem@constraints, inherits, what = c("ZeroConstraint", "NonPosConstraint" ))))
-})  
+})
 
 #' @describeIn QpSolver Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
@@ -55,7 +55,8 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
       eq_coeffs[[1]] <- c(eq_coeffs[[1]], list(coeff_offset[[1]]))
       eq_coeffs[[2]] <- c(eq_coeffs[[2]], coeff_offset[[2]])
     }
-    A <- Matrix(do.call(rbind, eq_coeffs[[1]]), sparse = TRUE)
+    #A <- Matrix(do.call(rbind, eq_coeffs[[1]]), sparse = TRUE)
+    A <- do.call(rbind, eq_coeffs[[1]])
     b <- -eq_coeffs[[2]]
   } else {
     A <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
@@ -69,7 +70,8 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
       ineq_coeffs[[1]] <- c(ineq_coeffs[[1]], list(coeff_offset[[1]]))
       ineq_coeffs[[2]] <- c(ineq_coeffs[[2]], coeff_offset[[2]])
     }
-    Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), sparse = TRUE)
+    #Fmat <- Matrix(do.call(rbind, ineq_coeffs[[1]]), sparse = TRUE)
+    Fmat <- do.call(rbind, ineq_coeffs[[1]])
     g <- -ineq_coeffs[[2]]
   } else {
     Fmat <- Matrix(nrow = 0, ncol = n, sparse = TRUE)
@@ -78,12 +80,23 @@ setMethod("perform", signature(object = "QpSolver", problem = "Problem"), functi
 
   # Create dictionary with problem data.
   variables <- variables(problem)[[1]]
+  ## Ensure A, P and Fmat are all sparse
+  if (!is(A, "dgCMatrix")) {
+    A <- as(as(A, "CsparseMatrix"), "generalMatrix")
+  }
+  if (!is(P, "dgCMatrix")) {
+    P <- as(as(P, "CsparseMatrix"), "generalMatrix")
+  }
+  if (!is(Fmat, "dgCMatrix")) {
+    Fmat <- as(as(Fmat, "CsparseMatrix"), "generalMatrix")
+  }
+
   data <- list()
-  data[[P_KEY]] <- Matrix(P, sparse = TRUE)
+  data[[P_KEY]] <- P
   data[[Q_KEY]] <- q
-  data[[A_KEY]] <- Matrix(A, sparse = TRUE)
+  data[[A_KEY]] <- A
   data[[B_KEY]] <- b
-  data[[F_KEY]] <- Matrix(Fmat, sparse = TRUE)
+  data[[F_KEY]] <- Fmat
   data[[G_KEY]] <- g
   data[[BOOL_IDX]] <- sapply(variables@boolean_idx, function(t) { t[[1]] })
   data[[INT_IDX]] <- sapply(variables@integer_idx, function(t) { t[[1]] })
@@ -696,7 +709,9 @@ setMethod("solve_via_data", "OSQP", function(object, data, warm_start, verbose, 
   if (missing(solver_cache)) solver_cache  <- new.env(parent=emptyenv())
   P <- data[[P_KEY]]
   q <- data[[Q_KEY]]
-  A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
+  #A <- Matrix(do.call(rbind, list(data[[A_KEY]], data[[F_KEY]])), sparse = TRUE)
+  ## Since we have ensured that these matrices are sparse above, can ignore coercing!
+  A <- do.call(rbind, list(data[[A_KEY]], data[[F_KEY]]))
   data$full_A <- A
   uA <- c(data[[B_KEY]], data[[G_KEY]])
   data$u <- uA

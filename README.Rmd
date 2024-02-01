@@ -1,7 +1,3 @@
----
-output: github_document
----
-
 <!-- README.md is generated from the source: README.Rmd -->
 
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />

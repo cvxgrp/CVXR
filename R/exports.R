@@ -1098,8 +1098,8 @@ entr <- Entr
 #'
 #' Huber Function
 #'
-#' The elementwise Huber function, \eqn{Huber(x, M) = }
-#' \itemize{
+#' The elementwise Huber function, \eqn{Huber(x, M) = 1}
+#' \describe{
 #'   \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
 #'    \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
 #'  }
@@ -1334,17 +1334,17 @@ pos <- Pos
 #' For \eqn{p = 1} and \eqn{f(x) = x}, this function is affine, increasing, and the same sign as \eqn{x}.
 #' For \eqn{p = 2,4,8,\ldots} and \eqn{f(x) = |x|^p}, this function is convex, positive, with signed monotonicity.
 #' For \eqn{p < 0} and \eqn{f(x) = }
-#' \itemize{
+#' \describe{
 #'   \item{\eqn{x^p}}{ for \eqn{x > 0}}
 #'   \item{\eqn{+\infty}}{\eqn{x \leq 0}}
 #' }, this function is convex, decreasing, and positive.
 #' For \eqn{0 < p < 1} and \eqn{f(x) =}
-#' \itemize{
+#' \describe{
 #'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
 #'   \item{\eqn{-\infty}}{\eqn{x < 0}}
 #' }, this function is concave, increasing, and positivea.
 #' For \eqn{p > 1, p \neq 2,4,8,\ldots} and \eqn{f(x) = }
-#' \itemize{
+#' \describe{
 #'   \item{\eqn{x^p}}{ for \eqn{x \geq 0}}
 #'   \item{\eqn{+\infty}}{\eqn{x < 0}}
 #' }, this function is convex, increasing, and positive.

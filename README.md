@@ -5,7 +5,7 @@ output: github_document
 <!-- README.md is generated from the source: README.Rmd -->
 
 # CVXR <img src="man/figures/logo.png" width="100" align="right" />
-[![R build status](https://github.com/cvxgrp/CVXR/workflows/R-CMD-check/badge.svg)](https://github.com/cvxgrp/CVXR/actions)
+[![R-CMD-check](https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/CVXR)](https://cran.r-project.org/package=CVXR)
 [![](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 

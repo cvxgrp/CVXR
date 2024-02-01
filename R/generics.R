@@ -956,7 +956,7 @@ setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("g
 #' @aliases psolve solve
 #' @rdname psolve
 #' @export
-setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE, 
+setGeneric("psolve", function(object, solver = NA, ignore_dcp = FALSE, warm_start = FALSE, verbose = FALSE, parallel = FALSE,
                               gp = FALSE, feastol = NULL, reltol = NULL, abstol = NULL, num_iter = NULL, ...) { standardGeneric("psolve") })
 
 #'
@@ -1134,7 +1134,7 @@ setGeneric("retrieve", function(object, solution) { standardGeneric("retrieve") 
 #' @param object A \linkS4class{Reduction} object.
 #' @param problem A \linkS4class{Problem} on which the reduction will be performed.
 #' @return A list containing
-#' \itemize{
+#' \describe{
 #'    \item{"problem"}{A \linkS4class{Problem} or list representing the equivalent problem.}
 #'    \item{"inverse_data"}{A \linkS4class{InverseData} or list containing the data needed to invert this particular reduction.}
 #' }

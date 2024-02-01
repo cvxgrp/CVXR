@@ -16,8 +16,8 @@ huber(x, M = 1)
 An \linkS4class{Expression} representing the Huber function evaluated at the input.
 }
 \description{
-The elementwise Huber function, \eqn{Huber(x, M) = }
-\itemize{
+The elementwise Huber function, \eqn{Huber(x, M) = 1}
+\describe{
   \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
    \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
  }

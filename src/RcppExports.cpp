@@ -49,6 +49,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sweep_in_place
+void sweep_in_place(Rcpp::NumericMatrix P, Rcpp::NumericVector c_part);
+RcppExport SEXP _CVXR_sweep_in_place(SEXP PSEXP, SEXP c_partSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type P(PSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type c_part(c_partSEXP);
+    sweep_in_place(P, c_part);
+    return R_NilValue;
+END_RCPP
+}
 // LinOp__new
 SEXP LinOp__new();
 RcppExport SEXP _CVXR_LinOp__new() {
@@ -415,6 +426,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_build_matrix_0", (DL_FUNC) &_CVXR_build_matrix_0, 2},
     {"_CVXR_build_matrix_1", (DL_FUNC) &_CVXR_build_matrix_1, 3},
     {"_CVXR_cpp_convolve", (DL_FUNC) &_CVXR_cpp_convolve, 2},
+    {"_CVXR_sweep_in_place", (DL_FUNC) &_CVXR_sweep_in_place, 2},
     {"_CVXR_LinOp__new", (DL_FUNC) &_CVXR_LinOp__new, 0},
     {"_CVXR_LinOp__get_sparse", (DL_FUNC) &_CVXR_LinOp__get_sparse, 1},
     {"_CVXR_LinOp__set_sparse", (DL_FUNC) &_CVXR_LinOp__set_sparse, 2},

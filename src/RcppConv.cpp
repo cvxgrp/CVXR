@@ -14,3 +14,18 @@ Rcpp::NumericVector cpp_convolve(Rcpp::NumericVector xa, Rcpp::NumericVector xb)
       iab[i + j] += ia[i] * ib[j];
   return xab;
 }
+
+
+// [[Rcpp::export(.sweep_in_place)]]
+void sweep_in_place(Rcpp::NumericMatrix P, Rcpp::NumericVector c_part) {
+  int nrow = P.nrow();
+  int ncol = P.ncol();
+  if (ncol != c_part.size()) {
+    Rcpp::stop("sweep_in_place: Incompatible dimensions");
+  }
+  for (int i = 0; i < nrow; i++) {
+    for (int j = 0; j < ncol; j++) {
+      P(i, j) = P(i, j) * c_part[j];
+    }
+  }
+}

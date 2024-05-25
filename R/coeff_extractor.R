@@ -131,7 +131,8 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
         if(is(P, "sparseMatrix"))
           P <- as.matrix(P)
         c_part <- c[1, (var_offset + 1):(var_offset + var_size)]
-        P <- sweep(P, MARGIN = 2, FUN = "*", c_part)
+        ## P <- sweep(P, MARGIN = 2, FUN = "*", c_part)
+        .Call('_CVXR_sweep_in_place', PACKAGE = 'CVXR', P, c_part)
       } else
         P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
       if(orig_id %in% names(coeffs)) {

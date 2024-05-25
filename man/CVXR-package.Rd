@@ -19,6 +19,15 @@ convexity. Once verified, the problem is converted into standard
 conic form using graph implementations and passed to a cone solver
 such as ECOS or SCS.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://cvxr.rbind.io}
+  \item \url{https://www.cvxgrp.org/CVXR/}
+  \item Report bugs at \url{https://github.com/cvxgrp/CVXR/issues}
+}
+
+}
 \author{
 Anqi Fu, Balasubramanian Narasimhan, John Miller, Steven Diamond, Stephen Boyd
 

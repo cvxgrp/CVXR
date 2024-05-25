@@ -58,14 +58,15 @@ setMethod("stuffed_objective", signature(object = "ConeMatrixStuffing", problem 
   C <- CR[[1]]
   R <- CR[[2]]
 
-  c <- matrix(C, ncol = 1)   # TODO: Check if converted to dense matrix and flattened like in CVXPY
+  ##c <- matrix(C, ncol = 1)   # TODO: Check if converted to dense matrix and flattened like in CVXPY
+
   boolint <- extract_mip_idx(variables(problem))
   boolean <- boolint[[1]]
   integer <- boolint[[2]]
   # x <- Variable(extractor@N, boolean = boolean, integer = integer)
   x <- Variable(extractor@N, 1, boolean = boolean, integer = integer)
 
-  new_obj <- t(c) %*% x + 0
+  new_obj <- C %*% x + 0
 
   return(list(new_obj, x, R[1]))
 })

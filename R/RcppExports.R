@@ -24,6 +24,14 @@
     .Call('_CVXR_cpp_convolve', PACKAGE = 'CVXR', xa, xb)
 }
 
+.sweep_dgCmat_in_place <- function(A, c_part) {
+    invisible(.Call('_CVXR_multiply_dgCMatrix_vector', PACKAGE = 'CVXR', A, c_part))
+}
+
+.sweep_in_place <- function(P, c_part) {
+    invisible(.Call('_CVXR_sweep_in_place', PACKAGE = 'CVXR', P, c_part))
+}
+
 #' Create a new LinOp object.
 #'
 #' @return an external ptr (Rcpp::XPtr) to a LinOp object instance.

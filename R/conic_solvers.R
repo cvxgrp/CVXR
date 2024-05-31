@@ -156,6 +156,14 @@ ConicSolver.get_spacing_matrix <- function(dim, spacing, offset) {
 ##   return(mat)
 ## }
 
+reshape_sparse_mat_by_row <- function(M, new_dim) {
+  ## Note, no check on new_dim for efficiency
+  m <- t(M)
+  dim(m) <- rev(new_dim)
+  t(m)
+}
+
+
 #' @param constr A \linkS4class{Constraint} to format.
 #' @param exp_cone_order A list indicating how the exponential cone arguments are ordered.
 #' @describeIn ConicSolver Return a list representing a cone program whose problem data tensors
@@ -191,11 +199,22 @@ setMethod("reduction_format_constr", "ConicSolver", function(object, problem, co
     #   coeffs[[2]][gap:(2*(gap-1)),]
     # TODO: Keep X_coeff sparse while reshaping!
     X_coeff <- coeffs[[2]]
-    reshaped <- matrix(t(X_coeff), nrow = nrow(coeffs[[1]]), byrow = TRUE)
-    stacked <- -cbind(coeffs[[1]], reshaped)
-    stacked <- matrix(t(stacked), nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol = ncol(coeffs[[1]]), byrow = TRUE)
+    
+    ## reshaped <- matrix(t(X_coeff), nrow = nrow(coeffs[[1]]), byrow = TRUE)
+    cfs1 <- coeffs[[1]]
+    new_r <- nrow(cfs1)
+    new_c <- prod(dim(X_coeff)) / new_r
+    reshaped <- reshape_sparse_mat_by_row(X_coeff, new_dim = c(new_r, new_c))
+    
+    stacked <- -cbind(cfs1, reshaped)
+    ## stacked <- matrix(t(stacked), nrow = nrow(coeffs[[1]]) + nrow(X_coeff), ncol = ncol(coeffs[[1]]), byrow = TRUE)
+    stacked <- reshape_sparse_mat_by_row(
+      stacked,
+      new_dim = c(new_r + nrow(X_coeff), ncol(cfs1))
+    )
 
-    offset <- cbind(offsets[[1]], matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
+    offset <- cbind(offsets[[1]],
+                    matrix(t(offsets[[2]]), nrow = nrow(offsets[[1]]), byrow = TRUE))
     offset <- matrix(t(offset), ncol = 1)
     return(list(Matrix(stacked, sparse = TRUE), as.vector(offset)))
   } else if(inherits(constr, "ExpCone")) {
@@ -2088,7 +2107,8 @@ setMethod("perform", signature(object = "MOSEK", problem = "Problem"), function(
   coeff_offs <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
   c <- coeff_offs[[1]]
   constant <- coeff_offs[[2]]
-  data[[C_KEY]] <- as.vector(c)
+  #data[[C_KEY]] <- as.vector(c)
+  data[[C_KEY]] <- c
   inv_data$n0 <- length(data[[C_KEY]])
   data[[OBJ_OFFSET]] <- constant[1]
   data[[DIMS]] <- list()

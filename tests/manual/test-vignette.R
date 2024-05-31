@@ -52,7 +52,7 @@ test_that("Test non-negative least squares", {
     coeff <- cbind(b, beta_ols, beta_nnls)
     colnames(coeff) <- c("Actual", "OLS", "NNLS")
     rownames(coeff) <- paste("beta", 1:length(b)-1, sep = "")
-    barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend = TRUE)
+    barplot(t(coeff), ylab = "Coefficients", beside = TRUE, legend.text = TRUE)
 })
 
 test_that("Test censored regression", {

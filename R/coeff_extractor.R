@@ -126,14 +126,30 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
       orig_id <- as.character(id(quad_forms[[var_id]][[3]]@args[[1]]))
       var_offset <- affine_id_map[[var_id]][[1]]
       var_size <- affine_id_map[[var_id]][[2]]
+      ind_seq <- seq.int(from = var_offset + 1, length.out = var_size)
       if(!any(is.na(value(quad_forms[[var_id]][[3]]@P)))) {
         P <- value(quad_forms[[var_id]][[3]]@P)
-        if(is(P, "sparseMatrix"))
-          P <- as.matrix(P)
-        c_part <- c[1, (var_offset + 1):(var_offset + var_size)]
-        P <- sweep(P, MARGIN = 2, FUN = "*", c_part)
-      } else
-        P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
+        ## Assuming P is a matrix or a sparsematrix
+        ## Force P to be sparse
+        if (is.matrix(P)) {
+          ind <- which(P != 0, arr.ind = TRUE)
+          P <- sparseMatrix(p = c(0L, cumsum(tabulate(ind[, 2L], ncol(P)))),
+                            i = ind[, 1L] - 1L,
+                            x = P[ind], dims = dim(P), index1 = FALSE)
+        }
+        ## if(is(P, "sparseMatrix")) {          
+        ##  P <- as.matrix(P)
+        ##c_part <- c[1, (var_offset + 1):(var_offset + var_size)]
+        c_part <- c[1L, ind_seq]
+        ## P <- sweep(P, MARGIN = 2, FUN = "*", c_part)
+        ##if(is(P, "sparseMatrix"))
+        .Call('_CVXR_multiply_dgCMatrix_vector', PACKAGE = 'CVXR', P, c_part)
+        ##else
+        ##  .Call('_CVXR_sweep_in_place', PACKAGE = 'CVXR', P, c_part)          
+      } else {
+        ##P <- sparseMatrix(i = 1:var_size, j = 1:var_size, x = c[1, (var_offset + 1):(var_offset + var_size)])
+        P <- sparseMatrix(i = seq_len(var_size), j = seq_len(var_size), x = c[1L, ind_seq])
+      }
       if(orig_id %in% names(coeffs)) {
         coeffs[[orig_id]]$P <- coeffs[[orig_id]]$P + P
         coeffs[[orig_id]]$q <- coeffs[[orig_id]]$q + rep(0, nrow(P))
@@ -145,13 +161,16 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
     } else {
       var_offset <- affine_id_map[[var_id]][[1]]
       var_size <- as.integer(prod(affine_var_dims[[var_id]]))
+      ind_seq <- seq.int(from = var_offset + 1, length.out = var_size)
       if(var_id %in% names(coeffs)) {
         coeffs[[var_id]]$P <- coeffs[[var_id]]$P + sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + c[1, (var_offset + 1):(var_offset + var_size)]
+        ##coeffs[[var_id]]$q <- coeffs[[var_id]]$q + c[1, (var_offset + 1):(var_offset + var_size)]
+        coeffs[[var_id]]$q <- coeffs[[var_id]]$q + c[1L, ind_seq]
       } else {
         coeffs[[var_id]] <- list()
         coeffs[[var_id]]$P <- sparseMatrix(i = c(), j = c(), dims = c(var_size, var_size))
-        coeffs[[var_id]]$q <- c[1, (var_offset + 1):(var_offset + var_size)]
+        ## coeffs[[var_id]]$q <- c[1, (var_offset + 1):(var_offset + var_size)]
+        coeffs[[var_id]]$q <- c[1L, ind_seq]
       }
     }
   }

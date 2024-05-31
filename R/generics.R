@@ -220,6 +220,12 @@ setGeneric("is_dcp", function(object) { standardGeneric("is_dcp") })
 #' @export
 setGeneric("is_dgp", function(object) { standardGeneric("is_dgp") })
 
+## #' DGP canonical methods indexing
+## #' @param A \linkS4class{DgpCanonMethods} object
+## #' @param a variable index of type character
+## #' @export
+## setGeneric("[[", function(object, i, j) standardGeneric("[["))
+
 #'
 #' Size of Expression
 #'

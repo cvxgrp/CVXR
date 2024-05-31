@@ -1,3 +1,10 @@
+# CVXR 1.0-13
+
+* Address inefficient processing of cones for MOSEK (Issue 137
+  reported by aszekMosek)
+* Fix `extract_quadratic_coeffs` to use sparse matrix and sweep in
+  place for better memory use (reported by Marissa Reitsma) 
+
 # CVXR 1.0-12
 
 * `Rmosek` to be removed from CRAN, so moved to drat repo

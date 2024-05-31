@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-1000
+Version: 1.0-13
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -63,7 +63,7 @@ LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true
 Collate:
-    'CVXR.R'
+    'CVXR-package.R'
     'data.R'
     'globals.R'
     'generics.R'

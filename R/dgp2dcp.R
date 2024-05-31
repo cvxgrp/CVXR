@@ -489,6 +489,8 @@ setMethod("names", signature(x = "DgpCanonMethods"), function(x) { names(Dgp2Dcp
 
 # TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
 '[[.DgpCanonMethods' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+## Here's an implementation using S4!
+## setMethod(f = "[[", signature = c(object = "DgpCanonMethods", i = "character", j = "missing") function(x, i, j) object@.variables[[i]] )
 
 #' @param name The name of the atom or expression to canonicalize.
 #' @describeIn DgpCanonMethods Returns either a canonicalized variable or

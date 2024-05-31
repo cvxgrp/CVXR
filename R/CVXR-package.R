@@ -20,12 +20,10 @@
 #' @import Matrix
 #' @importFrom stats rnorm runif
 #' @aliases CVXR-package CVXR
-#' @docType package
 #' @author Anqi Fu, Balasubramanian Narasimhan, John Miller, Steven Diamond, Stephen Boyd
-#'
-#' Maintainer: Anqi Fu<anqif@stanford.edu>
-#' @keywords package
-NULL
+#' Maintainer: Anqi Fu<anqif@alumni.stanford.edu>
+#' @keywords internal
+"_PACKAGE"
 
 
 

@@ -49,6 +49,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// multiply_dgCMatrix_vector
+void multiply_dgCMatrix_vector(S4 A, NumericVector c_part);
+RcppExport SEXP _CVXR_multiply_dgCMatrix_vector(SEXP ASEXP, SEXP c_partSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type c_part(c_partSEXP);
+    multiply_dgCMatrix_vector(A, c_part);
+    return R_NilValue;
+END_RCPP
+}
 // sweep_in_place
 void sweep_in_place(Rcpp::NumericMatrix P, Rcpp::NumericVector c_part);
 RcppExport SEXP _CVXR_sweep_in_place(SEXP PSEXP, SEXP c_partSEXP) {
@@ -426,6 +437,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_build_matrix_0", (DL_FUNC) &_CVXR_build_matrix_0, 2},
     {"_CVXR_build_matrix_1", (DL_FUNC) &_CVXR_build_matrix_1, 3},
     {"_CVXR_cpp_convolve", (DL_FUNC) &_CVXR_cpp_convolve, 2},
+    {"_CVXR_multiply_dgCMatrix_vector", (DL_FUNC) &_CVXR_multiply_dgCMatrix_vector, 2},
     {"_CVXR_sweep_in_place", (DL_FUNC) &_CVXR_sweep_in_place, 2},
     {"_CVXR_LinOp__new", (DL_FUNC) &_CVXR_LinOp__new, 0},
     {"_CVXR_LinOp__get_sparse", (DL_FUNC) &_CVXR_LinOp__get_sparse, 1},

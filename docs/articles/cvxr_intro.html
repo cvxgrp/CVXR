@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -39,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CVXR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-12</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-13</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2024-01-31</h4>
+            <h4 data-toc-skip class="date">2024-05-31</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="hidden name"><code>cvxr_intro.Rmd</code></div>
@@ -113,15 +113,16 @@ by combining constants, variables, and parameters using a library of
 functions with known mathematical properties. <code>CVXR</code> then
 applies signed <a href="https://cvxr.rbind.io" class="external-link">disciplined convex
 programming (DCP)</a> to verify the problem’s convexity. Once verified,
-the problem is converted into standard conic form using graph
-implementations and passed to a cone solver such as <a href="https://github.com/embotech/ecos" class="external-link">ECOS</a> or <a href="https://github.com/cvxgrp/scs" class="external-link">SCS</a>.</p>
+the problem is converted into standard form using graph implementations
+and passed to a convex solver such as <a href="https://osqp.org" class="external-link">OSQP</a> or <a href="https://github.com/embotech/ecos" class="external-link">ECOS</a> or <a href="https://github.com/cvxgrp/scs" class="external-link">SCS</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="where-can-i-learn-more">Where can I learn more?<a class="anchor" aria-label="anchor" href="#where-can-i-learn-more"></a>
 </h2>
-<p>The paper by <span class="citation">Fu, Narasimhan, and Boyd
-(2017)</span> is the main reference. Further documentation, along with a
-number of tutorial examples, is also available on the <a href="https://cvxr.rbind.io" class="external-link">CVXR website</a>.</p>
+<p>The paper by <a href="https://doi.org/10.18637/jss.v094.i14" class="external-link"><span class="citation">Fu, Narasimhan, and Boyd (2020)</span></a> is the main
+reference. Further documentation, along with a number of tutorial
+examples, is also available on the <a href="https://cvxr.rbind.io" class="external-link">CVXR
+website</a>.</p>
 <p>Below we provide a simple example to get you started.</p>
 </div>
 <div class="section level2">
@@ -768,10 +769,11 @@ variability.</p>
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
-<div id="ref-fu:naras:boyd:2017" class="csl-entry">
-Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017.
-<span>“CVXR: An r Package for Disciplined Convex Optimization.”</span>
-<a href="https://web.stanford.edu/~boyd/papers/cvxr_paper.html" class="external-link">https://web.stanford.edu/~boyd/papers/cvxr_paper.html</a>.
+<div id="ref-cvxr2020" class="csl-entry">
+Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2020.
+<span>“<span>CVXR</span>: An <span>R</span> Package for Disciplined
+Convex Optimization.”</span> <em>Journal of Statistical Software</em> 94
+(14): 1–34. <a href="https://doi.org/10.18637/jss.v094.i14" class="external-link">https://doi.org/10.18637/jss.v094.i14</a>.
 </div>
 </div>
 </div>
@@ -794,7 +796,7 @@ Fu, Anqi, Balasubramanian Narasimhan, and Stephen Boyd. 2017.
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>

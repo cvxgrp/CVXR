@@ -24,19 +24,18 @@ problems in a natural mathematical syntax rather than the restrictive
 standard form required by most solvers. The user specifies an
 objective and set of constraints by combining constants, variables,
 and parameters using a library of functions with known mathematical
-properties. `CVXR` then applies
-signed [disciplined convex programming (DCP)](https://cvxr.rbind.io)
-to verify the problem’s convexity. Once verified, the problem is
-converted into standard conic form using graph implementations and
-passed to a cone solver such
-as [ECOS](https://github.com/embotech/ecos)
+properties. `CVXR` then applies signed [disciplined convex programming
+(DCP)](https://cvxr.rbind.io) to verify the problem’s convexity. Once
+verified, the problem is converted into standard form using
+graph implementations and passed to a convex solver such as
+[OSQP](https://osqp.org) or [ECOS](https://github.com/embotech/ecos)
 or [SCS](https://github.com/cvxgrp/scs).
 
 ## Where can I learn more? 
 
-The paper by @fu:naras:boyd:2017 is the main reference. Further
-documentation, along with a number of tutorial examples, is also
-available on the [CVXR website](https://cvxr.rbind.io).
+The paper by [@cvxr2020](https://doi.org/10.18637/jss.v094.i14) is the
+main reference. Further documentation, along with a number of tutorial
+examples, is also available on the [CVXR website](https://cvxr.rbind.io).
 
 Below we provide a simple example to get you started. 
 

@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-13
+Version: 1.0-14
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -86,6 +86,7 @@ Collate:
     'eliminate_pwl.R'
     'dcp2cone.R'
     'dgp2dcp.R'
+    'sparse_utils.R'
     'qp2quad_form.R'
     'qp_solvers.R'
     'utilities.R'

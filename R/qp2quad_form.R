@@ -116,11 +116,11 @@ Qp2QuadForm.power_canon <- function(expr, args) {
     return(list(affine_expr, list()))
   else if(p == 2) {
     if(is(affine_expr, "Variable"))
-      return(list(SymbolicQuadForm(affine_expr, diag(size(affine_expr)), expr), list()))
+      return(list(SymbolicQuadForm(affine_expr, make_sparse_diagonal_matrix(size(affine_expr)), expr), list()))
     else {
       # t <- Variable(dim(affine_expr))
       t <- new("Variable", dim = dim(affine_expr))
-      return(list(SymbolicQuadForm(t, diag(size(t)), expr), list(affine_expr == t)))
+      return(list(SymbolicQuadForm(t, make_sparse_diagonal_matrix(size(t)), expr), list(affine_expr == t)))
     }
   }
   stop("Non-constant quadratic forms cannot be raised to a power greater than 2.")

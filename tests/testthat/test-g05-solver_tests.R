@@ -170,8 +170,8 @@ test_that("Test a basic SDP with all solvers", {
   check_matrix <- matrix(c(.3771707, -.5692205, .1166577, -.5692205,
                            .8590441, -.1760618, .11665767,
                            -.17606183, .03608155), nrow = n)
-  # SCS and MOSEK and CVXOPT are the only three solvers that support SDPs
-  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT"))) {
+  # SCS and MOSEK and CVXOPT, CLARABEL are the only solvers that support SDPs
+  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT", "CLARABEL"))) {
     result <- solve(prob, solver = solver)
     print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 1.395479, tolerance=TOL)
@@ -212,7 +212,7 @@ test_that("Test a simple geometric program", {
                       y <= 2*x,
                       z >=1)
   prob <- Problem(Maximize(obj), constraints)
-  for(solver in c("ECOS", "SCS")){
+  for(solver in c("ECOS", "SCS", "CLARABEL")){
     result <- solve(prob, solver=solver, gp=TRUE)
     expect_equal(result$value, 2, tolerance=TOL)
     expect_equal(result$getValue(x), 1, tolerance=TOL)

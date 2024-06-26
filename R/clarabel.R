@@ -231,7 +231,7 @@ setMethod("solve_via_data", "CLARABEL", function(object, data, warm_start, verbo
   control[names(solver_opts)] <- solver_opts
 
   # Returns the result of the call to the solver.
-  results <- clarabel::clarabel(A = args$A, b = args$b, q = args$c, cone = cones, control = control)
+  results <- clarabel::clarabel(A = args$A, b = args$b, q = args$c, cones = cones, control = control)
   if(!is.null(solver_cache) && length(solver_cache) > 0)
     solver_cache[[name(object)]] <- results
   return(results)

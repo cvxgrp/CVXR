@@ -1,3 +1,9 @@
+# CVXR 1.0-14
+
+* Address further inefficiency in use of diagonal matrices in
+  `qp2quad_form.R`
+* Add initial interface to clarabel solver
+
 # CVXR 1.0-13
 
 * Address inefficient processing of cones for MOSEK (Issue 137

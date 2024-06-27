@@ -46,6 +46,15 @@
     <loc>https://www.cvxgrp.org/CVXR/reference/CBC_CONIC-class.html</loc>
   </url>
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/CLARABEL-class.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/CLARABEL.dims_to_solver_dict.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/CLARABEL.extract_dual_value.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/CPLEX_CONIC-class.html</loc>
   </url>
   <url>
@@ -1045,6 +1054,9 @@
     <loc>https://www.cvxgrp.org/CVXR/reference/logistic.html</loc>
   </url>
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/make_sparse_diagonal_matrix.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/matrix_frac.html</loc>
   </url>
   <url>
@@ -1159,6 +1171,9 @@
     <loc>https://www.cvxgrp.org/CVXR/reference/scaled_lower_tri.html</loc>
   </url>
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/scaled_upper_tri.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/scalene.html</loc>
   </url>
   <url>
@@ -1210,10 +1225,16 @@
     <loc>https://www.cvxgrp.org/CVXR/reference/tri_to_full.html</loc>
   </url>
   <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/triu_to_full.html</loc>
+  </url>
+  <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/tv.html</loc>
   </url>
   <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/unpack_results.html</loc>
+  </url>
+  <url>
+    <loc>https://www.cvxgrp.org/CVXR/reference/updated_scaled_lower_tri.html</loc>
   </url>
   <url>
     <loc>https://www.cvxgrp.org/CVXR/reference/upper_tri.html</loc>

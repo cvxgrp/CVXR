@@ -63,6 +63,7 @@ SCS_NAME = "SCS"
 SUPER_SCS_NAME = "SUPER_SCS"
 XPRESS_NAME = "XPRESS"
 # SOLVERS_NAME <- c(ECOS_NAME, ECOS_BB_NAME, SCS_NAME, LPSOLVE_NAME, GLPK_NAME, MOSEK_NAME, GUROBI_NAME)   # TODO: Add more when we implement other solvers
+CLARABEL_NAME <- "CLARABEL"
 
 # Solver option defaults
 SOLVER_DEFAULT_PARAM <- list(
@@ -74,7 +75,8 @@ SOLVER_DEFAULT_PARAM <- list(
     SCS = list(max_iters = 2500, eps_rel = 1e-4, eps_abs = 1e-4, eps_infeas = 1e-7),
     CPLEX = list(itlim = 10000),
     MOSEK = list(num_iter = 10000),
-    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6)
+    GUROBI = list(num_iter = 10000, FeasibilityTol = 1e-6),
+    CLARABEL = list(max_iter = 200L, verbose = FALSE, tol_gap_abs = 1e-8, tol_gap_rel = 1e-8, tol_feas = 1e-8)
 )
 
 # Xpress-specific items.

@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-13
+Version: 1.0-14
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -51,7 +51,8 @@ Imports:
     ECOSolveR (>= 0.5.4),
     scs (>= 3.0),
     stats,
-    osqp
+    osqp,
+    clarabel (>= 0.9.0)
 Suggests:
     knitr,
     rmarkdown,
@@ -83,9 +84,11 @@ Collate:
     'reduction_solvers.R'
     'complex2real.R'
     'conic_solvers.R'
+    'clarabel.R'
     'eliminate_pwl.R'
     'dcp2cone.R'
     'dgp2dcp.R'
+    'sparse_utils.R'
     'qp2quad_form.R'
     'qp_solvers.R'
     'utilities.R'

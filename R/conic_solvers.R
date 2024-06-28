@@ -1747,7 +1747,7 @@ setMethod("import_solver", "GUROBI_CONIC", function(solver) { requireNamespace("
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_CONIC Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
-    if(status == 2 || status == "OPTIMAL")
+  if(status == 2 || status == "OPTIMAL")
     OPTIMAL
   else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
     INFEASIBLE
@@ -1755,10 +1755,10 @@ setMethod("status_map", "GUROBI_CONIC", function(solver, status) {
     UNBOUNDED
   else if(status == 4 | status == "INF_OR_UNBD")
     INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
+  else if(status %in% c(11,12) || status %in% c("INTERRUPTED", "NUMERIC"))
     SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
+  else if(status %in% c(7,8,9,10,13) || status %in% c("ITERATION_LIMIT", "NODE_LIMIT", "TIME_LIMIT", "SOLUTION_LIMIT", "SUBOPTIMAL"))
+    OPTIMAL_INACCURATE   # user limit exceeded (but suboptimal solution may still exist) or known to be suboptimal
   else
     stop("GUROBI status unrecognized: ", status)
 })

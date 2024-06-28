@@ -12,30 +12,15 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-// Some useful defines for Matricies/etc.
+#ifndef LINOPOPERATIONS_H
+#define LINOPOPERATIONS_H
 
-#ifndef UTILS_H
-#define UTILS_H
+#include "LinOp.hpp"
+#include "Utils.hpp"
+#include <map>
+#include <vector>
 
-#ifndef _R_INTERFACE_
-
-#include "../include/Eigen/Sparse"
-#include "../include/Eigen/Core"
-
-#else
-
-#include <Rcpp.h>
-#include <RcppEigen.h>
-
-std::string genRandomId(); // generate a random id for Linops etc.
-
-#endif
-
-#define NULL_MATRIX Eigen::SparseMatrix<double>(0,0)
-
-typedef Eigen::Matrix<int, Eigen::Dynamic, 1> Vector;
-typedef Eigen::SparseMatrix<double> Matrix;
-typedef std::map<int, Matrix> CoeffMap;
-typedef Eigen::Triplet<double> Triplet;
+Tensor get_node_coeffs(const LinOp &lin, int arg_idx);
+Tensor lin_to_tensor(const LinOp &lin);
 
 #endif

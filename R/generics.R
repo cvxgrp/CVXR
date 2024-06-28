@@ -920,7 +920,10 @@ setGeneric("solver_stats<-", function(object, value) { standardGeneric("solver_s
 #' data[["G"]]
 #' @rdname get_problem_data
 #' @export
-setGeneric("get_problem_data", function(object, solver, gp) { standardGeneric("get_problem_data") })
+setGeneric("get_problem_data",
+  function(object, solver, ignore_dcp = FALSE, gp = FALSE) { standardGeneric("get_problem_data") },
+  signature = c("object", "solver")
+)
 
 #'
 #' Solve a DCP Problem
@@ -1179,7 +1182,7 @@ setGeneric("canonicalize_expr", function(object, expr, args) { standardGeneric("
 setGeneric("stuffed_objective", function(object, problem, extractor) { standardGeneric("stuffed_objective") })
 setGeneric("prepend", function(object, chain) { standardGeneric("prepend") })
 setGeneric("group_coeff_offset", function(object, problem, constraints, exp_cone_order) { standardGeneric("group_coeff_offset") })
-setGeneric("construct_intermediate_chain", function(problem, candidates, gp) { standardGeneric("construct_intermediate_chain") })
+setGeneric("construct_intermediate_chain", function(problem, candidates, ignore_dcp, gp) { standardGeneric("construct_intermediate_chain") })
 setGeneric("solve_via_data", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) { standardGeneric("solve_via_data") })
 setGeneric("unpack_problem", function(object, solution) { standardGeneric("unpack_problem") })
 setGeneric("unpack_results", function(object, solution, chain, inverse_data) { standardGeneric("unpack_results") })

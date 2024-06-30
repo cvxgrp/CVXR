@@ -87,7 +87,7 @@ get_solver_codes <- function(name) {
   result <- .CVXR_cache$status_codes[[name]]
   if (is.null(result)) {
     result <- .CVXR_cache$status_codes[[name]] <- 
-      read.csv(system.file("extdata", paste0(name, "_status_codes.csv"), package = "CVXR"))
+      utils::read.csv(system.file("extdata", paste0(name, "_status_codes.csv"), package = "CVXR"))
   }
   result
 }

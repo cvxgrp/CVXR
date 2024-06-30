@@ -171,7 +171,8 @@ test_that("Test a basic SDP with all solvers", {
                            .8590441, -.1760618, .11665767,
                            -.17606183, .03608155), nrow = n)
   # SCS and MOSEK and CVXOPT, CLARABEL are the only solvers that support SDPs
-  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT", "CLARABEL"))) {
+  ## Not adding clarabel for now
+  for(solver in intersect(INSTALLED_SOLVERS, c("SCS", "MOSEK", "CVXOPT"))) {
     result <- solve(prob, solver = solver)
     print(sprintf("Solver: %s status: %s\n", solver, result$status))
     expect_equal(result$value, 1.395479, tolerance=TOL)

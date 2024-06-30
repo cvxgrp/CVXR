@@ -52,7 +52,8 @@ Imports:
     scs (>= 3.0),
     stats,
     osqp,
-    cli
+    cli,
+    utils
 Suggests:
     knitr,
     rmarkdown,

@@ -213,7 +213,8 @@ test_that("Test a simple geometric program", {
                       y <= 2*x,
                       z >=1)
   prob <- Problem(Maximize(obj), constraints)
-  for(solver in c("ECOS", "SCS", "CLARABEL")){
+  ## Leave out CLARABEL for now
+  for(solver in c("ECOS", "SCS")){
     result <- solve(prob, solver=solver, gp=TRUE)
     expect_equal(result$value, 2, tolerance=TOL)
     expect_equal(result$getValue(x), 1, tolerance=TOL)

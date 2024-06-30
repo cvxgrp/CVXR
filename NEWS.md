@@ -1,3 +1,12 @@
+# CVXR 1.0-15
+
+* Revert `clarabel` requirement and use enhance rather than import
+  until really necessary ([Issue
+  142](https://github.com/cvxgrp/CVXR/issues/142)).
+* Update return codes for `user_limit` etc to be
+  `infeasible_inaccurate` to match [`CVXPY` for gurobi](https://github.com/cvxpy/cvxpy/pull/1270)
+* Add an S3 print method for result from `solve()`.
+
 # CVXR 1.0-14
 
 * Address further inefficiency in use of diagonal matrices in

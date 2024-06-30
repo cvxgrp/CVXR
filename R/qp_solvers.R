@@ -140,7 +140,7 @@ setMethod("status_map", "CPLEX_QP", function(solver, status) {
   else if(status %in% c(2, 21, 118))
     UNBOUNDED
   else if(status %in% c(10, 107))
-    USER_LIMIT
+    INFEASIBLE_INACCURATE
   else
     stop("CPLEX status unrecognized: ", status)
 })
@@ -345,20 +345,34 @@ setMethod("mip_capable", "GUROBI_QP", function(solver) { TRUE })
 #' @param status A status code returned by the solver.
 #' @describeIn GUROBI_QP Converts status returned by the GUROBI solver to its respective CVXPY status.
 setMethod("status_map", "GUROBI_QP", function(solver, status) {
-  if(status == 2 || status == "OPTIMAL")
-    OPTIMAL
-  else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
-    INFEASIBLE
-  else if(status == 5 || status == "UNBOUNDED")
-    UNBOUNDED
-  else if(status == 4 | status == "INF_OR_UNBD")
-    INFEASIBLE_INACCURATE
-  else if(status %in% c(7,8,9,10,11,12))
-    SOLVER_ERROR   # TODO: Could be anything
-  else if(status == 13)
-    OPTIMAL_INACCURATE   # Means time expired.
-  else
+  gurobi_status_codes <- get_solver_codes(GUROBI_NAME)
+  index <- match(x = status, table = gurobi_status_codes$status)
+  if (is.na(index)) {
     stop("GUROBI status unrecognized: ", status)
+  }
+  result <- gurobi_status_codes$cvxr_status[index]
+  ## On second thought, I don't like this attribute business:
+  ## we should be able to propagate full information in a structured way.
+  ## attr(result, "status_code") <- status
+  ## attr(result, "status_desc") <- gurobi_status_codes$desc[index]
+  result
+
+  ## Old approach left as is
+  ## if(status == 2 || status == "OPTIMAL")
+  ##   OPTIMAL
+  ## else if(status == 3 || status == 6 || status == "INFEASIBLE") #DK: I added the words because the GUROBI solver seems to return the words
+  ##   INFEASIBLE
+  ## else if(status == 5 || status == "UNBOUNDED")
+  ##   UNBOUNDED
+  ## else if(status == 4 | status == "INF_OR_UNBD")
+  ##   INFEASIBLE_INACCURATE
+  ## else if(status %in% c(7,8,9,10,11,12))
+  ##   SOLVER_ERROR   # TODO: Could be anything
+  ## else if(status == 13)
+  ##   OPTIMAL_INACCURATE   # Means time expired.
+  ## else
+  ##   stop("GUROBI status unrecognized: ", status)
+
 })
 
 #' @describeIn GUROBI_QP Returns the name of the solver.

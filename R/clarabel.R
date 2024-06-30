@@ -48,8 +48,10 @@ setMethod("status_map", "CLARABEL", function(solver, status) {
 setMethod("name", "CLARABEL", function(x) { CLARABEL_NAME })
 
 #' @describeIn CLARABEL Imports the solver
-## Since CLARABEL is required, this is always TRUE
-setMethod("import_solver", "CLARABEL", function(solver) { TRUE })
+## Since CLARABEL is now optional, we check if it is available
+setMethod("import_solver", "CLARABEL", function(solver) {
+    requireNamespace("clarabel", quietly = TRUE)
+})
 
 #' @param problem A \linkS4class{Problem} object.
 #' @param constr A \linkS4class{Constraint} to format.

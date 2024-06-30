@@ -30,7 +30,7 @@ test_that("test a simple mixed integer program for GUROBI", {
   prob <- Problem(obj, constraint)
   cvxr <- solve(prob, solver="GUROBI")
 
-  expect_equal(cvxr$status, "optimal")
+  expect_true(cvxr$status == "optimal")
   expect_equal(cvxr$value, gurobiResult$objval, tolerance = 1e-4)
   expect_equal(cvxr$getValue(xvar), matrix(gurobiResult$x), tolerance = 1e-4)
 
@@ -61,7 +61,7 @@ test_that("test a simple QP for GUROBI",{
   prob <- Problem(obj, constraint)
   cvxr <- solve(prob, solver="GUROBI")
 
-  expect_equal(cvxr$status, "optimal")
+  expect_true(cvxr$status == "optimal")
   expect_equal(cvxr$value, gurobiResult$objval, tolerance = 1e-4)
   expect_equal(cvxr$getValue(xvar), matrix(gurobiResult$x), tolerance = 1e-4)
 

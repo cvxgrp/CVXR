@@ -1,4 +1,4 @@
-#include "LinOp.h"
+#include "LinOp.hpp"
 
 //' Create a new LinOp object.
 //'

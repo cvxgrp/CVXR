@@ -94,12 +94,16 @@ void process_constraint(const LinOp &lin, ProblemData &problemData,
          of coefficient matrices */
 int get_total_constraint_length(std::vector<LinOp *> constraints) {
   int result = 0;
+#ifdef _R_INTERFACE_
 #ifdef _R_DEBUG_
 	Rcpp::Rcout << "In get_total_constraint_length, size = " << constraints.size() << std::endl;
 #endif
+#endif
   for (unsigned i = 0; i < constraints.size(); i++) {
+#ifdef _R_INTERFACE_
 #ifdef _R_DEBUG_
     Rcpp::Rcout << "i, r, c, " << constraints[i]->get_shape()[0] << ", " << constraints[i]->get_shape()[1] << std::endl;
+#endif
 #endif
     result += vecprod(constraints[i]->get_shape());
   }
@@ -175,13 +179,45 @@ ProblemData init_data_tensor(std::map<int, int> param_to_size) {
  * and maps containing our mapping from variables, and a map from the rows of
  * our matrix to their corresponding constraint.
  */
-SEXP build_matrix_2(std::vector<const LinOp *> constraints, int var_length,
-		    std::map<int, int> id_to_col,
-		    std::map<int, int> param_to_size, int num_threads) {
+
+//'  Build a sparse matrix representation of the cone program, given a list of linear operations
+//' @param xp the ConstLinOpVector object XPtr
+//' @param var_length the variable length
+//' @param idc the \code{id_to_col} named int vector in R with integer names
+//' @param psize the \code{param_to_size} named int vector in R with integer names
+//' @param num_threads the int number of threads
+//' @return a XPtr to a ProblemData Object
+// [[Rcpp::export(.build_matrix_0)]]
+SEXP build_matrix_0(SEXP xp, int var_length,
+		    Rcpp::IntegerVector idc,
+		    Rcpp::IntegerVector psize, int num_threads) {
   /* Build matrix one constraint at a time */
+#ifdef _R_INTERFACE_
 #ifdef _R_DEBUG_
-  Rcpp::Rcout << "In Build_matrix_2" <<std::endl;    
-#endif  
+  Rcpp::Rcout << "In Build_matrix_0" <<std::endl;    
+#endif
+#endif
+
+  Rcpp::XPtr<ConstLinOpVector> ptrX(xp); // constraints is ready
+
+  std::map<int, int> id_to_col;
+  if (idc.size() > 0) {
+    Rcpp::StringVector s = idc.names();
+    for (int i = 0; i < s.size(); i++) {
+      id_to_col[atoi(s[i])] = idc[i];
+    }
+  }
+
+  std::map<int, int> param_to_size;
+  if (psize.size() > 0) {
+    Rcpp::StringVector s = psize.names();
+    for (int i = 0; i < s.size(); i++) {
+      param_to_size[atoi(s[i])] = psize[i];
+    }
+  }
+
+  // Rest as usual...
+  
   ProblemData prob_data = init_data_tensor(param_to_size);
 
   int vert_offset = 0;
@@ -209,8 +245,10 @@ SEXP build_matrix_2(std::vector<const LinOp *> constraints, int var_length,
     process_constraint(
       *constraint, prob_data, vert_offset, var_length, id_to_col);
   }
+
   // Set the external pointer
   Rcpp::XPtr<ProblemData> ptr( prob_data, true );
+  // Return the pointer
   return ptr;
 }
 
@@ -223,11 +261,32 @@ SEXP build_matrix_2(std::vector<const LinOp *> constraints, int var_length,
                 the vertical offset for constraint i + the size of constraint i
    must be less than the vertical offset for constraint i+1.
                 */
-SEXP build_matrix_3(std::vector<const LinOp *> constraints, int var_length,
-		  std::map<int, int> id_to_col,
-		  std::map<int, int> param_to_size,
-		  std::vector<int> constr_offsets) {
-  ProblemData prob_data = init_data_tensor(param_to_size);
+
+SEXP build_matrix_1(SEXP xp, int var_length,
+		    Rcpp::IntegerVector idc,
+		    Rcpp::IntegerVector psize,
+		    std::vector<int> constr_offsets) {
+  
+  Rcpp::XPtr<ConstLinOpVector> constraints(xp); // constraints is ready
+  
+  std::map<int, int> id_to_col;
+  if (idc.size() > 0) {
+    Rcpp::StringVector s = idc.names();
+    for (int i = 0; i < s.size(); i++) {
+      id_to_col[atoi(s[i])] = idc[i];
+    }
+  }
+
+  std::map<int, int> param_to_size;
+  if (psize.size() > 0) {
+    Rcpp::StringVector s = psize.names();
+    for (int i = 0; i < s.size(); i++) {
+      param_to_size[atoi(s[i])] = psize[i];
+    }
+  }
+    
+
+    ProblemData prob_data = init_data_tensor(param_to_size);
 
   /* Build matrix one constraint at a time */
   for (unsigned i = 0; i < constraints.size(); i++) {

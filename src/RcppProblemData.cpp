@@ -1,5 +1,5 @@
-#include "Utils.h"
-#include "ProblemData.h"
+#include "Utils.hpp"
+#include "ProblemData.hpp"
 
 //' Create a new ProblemData object.
 //'

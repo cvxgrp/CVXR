@@ -53,7 +53,8 @@ Imports:
     stats,
     osqp,
     geigen,
-    RSpectra
+    RSpectra,
+    uuid
 Suggests:
     knitr,
     rmarkdown,

@@ -757,6 +757,11 @@ Tensor get_index_mat(const LinOp &lin, int arg_idx) {
                0, 0);
   coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
   coeffs.makeCompressed();
+#ifdef _R_INTERFACE_
+#ifdef _R_DEBUG_
+	Rcpp::Rcout << Eigen::MatrixXd(coeffs) << std::endl;
+#endif	
+#endif
   return build_tensor(coeffs);
 }
 

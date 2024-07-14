@@ -1,8 +1,7 @@
 //    This file is part of cvxr
 
 #ifdef _R_INTERFACE_
-#include "CVXR.h"
-#include "CVXcanon.h"
+#include "cvxcore.hpp"
 
 static const char hexArray[] = { '0', '1', '2', '3', '4',
 				 '5', '6', '7', '8', '9',

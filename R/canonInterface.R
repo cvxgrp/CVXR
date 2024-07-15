@@ -626,39 +626,3 @@ set_linC_data <- function(linC, linR) {
     set_matrix_data(linC, linR)
   }
 }
-
-#' Set Matrix Data
-#'
-#' Calls the appropriate cvxcore function to set the matrix data field of
-#' our C++ linOp.
-#'
-#' @param linC A C++ linOp object.
-#' @param linPy A Python linOp object.
-set_matrix_data <- function(linC, linPy) {
-  if (get_type(linPy) == SPARSE_CONST) {
-    coo <- format_matrix(linPy$data, format = 'sparse')
-    linC$set_sparse_data(coo$data, coo$row, coo$col, coo$dim[1L], coo$dim[2L])  ## COO format of sparse matrix
-  } else {
-    linC$set_dense_data(format_matrix(linPy$data, dim = linPy$dim))
-    linC$set_data_ndim(length(linPy$dim))
-  }
-}
-
-#' Set Slice Data
-#'
-#' Loads the slice data, start, stop, and step into our C++ linOp.
-#' The semantics of the slice operator is treated exactly the same as in
-#' Python. Note that the 'None' cases had to be handled at the wrapper level,
-#' since we must load integers into our vector.
-#'
-#' @param linC A C++ linOp object.
-#' @param linPy A Python linOp object.
-set_slice_data <- function(linC, linPy) {
-  for (i in seq_along(linPy$data)) {
-    sl <- linPy$data[[i]]
-    for (var(sl$start, sl$stop, sl$step)) {
-      slice_vec$push_back(as.integer(var))
-    }
-    linC$push_back_slice_vec(seq.int(from = sl$start, to = sl$stop, by = sl$step)) # Make sure step is 1 if not provided!
-  }
-}

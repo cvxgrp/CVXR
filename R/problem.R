@@ -746,7 +746,7 @@ setMethod("solve", signature(a = "Problem", b = "ANY"), function(a, b = NA, ...)
 # }
 
 valuesById <- function(object, results_dict, sym_data, solver) {
-    if(results_dict[[STATUS]] %in% SOLUTION_PRESENT) {
+  if(results_dict[[STATUS]] %in% SOLUTION_PRESENT) {
         outList <- list(value = results_dict[[VALUE]])
         ## Save values for variables in object
         tmp <- saveValuesById(variables(object), sym_data@.var_offsets, results_dict[[PRIMAL]])
@@ -862,7 +862,6 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
   # object@status <- solution@status
   # object@solution <- solution
   # return(object)
-
   result <- list()
   if(solution@status %in% SOLUTION_PRESENT) {
     for(v in variables(object)) {
@@ -948,6 +947,21 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
   return(result)
 })
 
+#' @importFrom cli cli_bullets
+#' @method print cvxr_result
+#' @export
+print.cvxr_result <- function(x, ...) {
+  mark <- if(!is.null(x$status) && x$status == "optimal" ) "v" else "x"
+  out <- c(
+           sprintf("Status: %s", x$status),
+           sprintf("Objective value: %f\n", x$value),
+           sprintf("Solver: %s\n", x$solver),
+           "<this_obj>$getValue(x): get value of variable/constraint x"
+           )
+  names(out) <- c(mark, mark, " ", "i")
+  cli_bullets(out)
+}
+
 #' @describeIn Problem
 #' Parses the output from a solver and updates the problem state, including the status,
 #' objective value, and values of the primal and dual variables.
@@ -963,7 +977,9 @@ setMethod("unpack_results", "Problem", function(object, solution, chain, inverse
   # return(object)
   results <- unpack_problem(object, solution)
   solver_stats <- SolverStats(solution@attr, name(chain@solver))
-  return(c(results, solver_stats))
+  result <- c(results, solver_stats)
+  class(result) <- "cvxr_result"
+  result
 })
 
 handleNoSolution <- function(object, status) {

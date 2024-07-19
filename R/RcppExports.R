@@ -32,6 +32,10 @@
     invisible(.Call('_CVXR_sweep_in_place', PACKAGE = 'CVXR', P, c_part))
 }
 
+upper_tri_to_full <- function(n) {
+    .Call('_CVXR_upper_tri_to_full', PACKAGE = 'CVXR', n)
+}
+
 #' Create a new LinOp object.
 #'
 #' @return an external ptr (Rcpp::XPtr) to a LinOp object instance.

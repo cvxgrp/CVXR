@@ -71,6 +71,17 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// upper_tri_to_full
+Eigen::SparseMatrix<double> upper_tri_to_full(int n);
+RcppExport SEXP _CVXR_upper_tri_to_full(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(upper_tri_to_full(n));
+    return rcpp_result_gen;
+END_RCPP
+}
 // LinOp__new
 SEXP LinOp__new();
 RcppExport SEXP _CVXR_LinOp__new() {
@@ -439,6 +450,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_cpp_convolve", (DL_FUNC) &_CVXR_cpp_convolve, 2},
     {"_CVXR_multiply_dgCMatrix_vector", (DL_FUNC) &_CVXR_multiply_dgCMatrix_vector, 2},
     {"_CVXR_sweep_in_place", (DL_FUNC) &_CVXR_sweep_in_place, 2},
+    {"_CVXR_upper_tri_to_full", (DL_FUNC) &_CVXR_upper_tri_to_full, 1},
     {"_CVXR_LinOp__new", (DL_FUNC) &_CVXR_LinOp__new, 0},
     {"_CVXR_LinOp__get_sparse", (DL_FUNC) &_CVXR_LinOp__get_sparse, 1},
     {"_CVXR_LinOp__set_sparse", (DL_FUNC) &_CVXR_LinOp__set_sparse, 2},

@@ -73,3 +73,28 @@ void sweep_in_place(Rcpp::NumericMatrix P, Rcpp::NumericVector c_part) {
     }
   }
 }
+
+// [[Rcpp::depends(RcppEigen)]]
+// [[Rcpp::export]]
+Eigen::SparseMatrix<double> upper_tri_to_full(int n) {
+  if (n == 0) {
+    Eigen::SparseMatrix<double> result(0, 0);
+    return result;
+  } else {
+    int entries = floor((double) n * ((double) n + 1.0) / 2.0);
+    std::vector<Eigen::Triplet<double>> triplets;  
+    int count = 0;
+    for (int i = 0; i < n; ++i) {
+      for (int j = i; j < n; ++j) {
+	triplets.emplace_back(j * n + i, count, 1.0);      
+	if (i != j) {
+	  triplets.emplace_back(i * n + j, count, 1.0);      
+	}
+	count++;
+      }
+    }
+    Eigen::SparseMatrix<double> result(n * n, entries);
+    result.setFromTriplets(triplets.begin(), triplets.end());
+    return result;
+  }
+}

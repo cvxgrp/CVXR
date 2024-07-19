@@ -1,0 +1,595 @@
+## CVXPY SOURCE: cvxpy/expression/expression.py
+
+#'
+#' The Expression class.
+#'
+#' This class represents a mathematical expression. Overloads many operators to allow for convenient creation of compound expressions (e.g., the sum of two expressions) and constraints.
+#'
+#' @name Expression-class
+#' @aliases Expression
+#' @rdname Expression-class
+Expression <- setClass("Expression", contains = "Canonical")
+# Casts the second argument of a binary operator as an Expression
+.cast_other <- function(binary_op) {
+  cast_op <- function(object, other) {
+    other <- as.Constant(other)
+    binary_op(object, other)
+  }
+  cast_op
+}
+
+#' @param x,object An \linkS4class{Expression} object.
+#' @describeIn Expression The value of the expression.
+setMethod("value", "Expression", function(object) { stop("Unimplemented") })
+
+# .value_impl.Expression <- function(object) { object@value }
+setMethod("value_impl", "Expression", function(object) { object@value })
+
+#' @describeIn Expression The (sub/super)-gradient of the expression with respect to each variable.
+setMethod("grad", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression A list of constraints describing the closure of the region where the expression is finite.
+setMethod("domain", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The string representation of the expression.
+#' @export
+#' @importFrom glue glue glue_collapse 
+setMethod("as.character", "Expression", function(x) {
+  # name(x)
+  dims <- glue::glue_collapse("{dim(x)}", sep = ", ")
+  glue::glue("Expression({curvature(x)}, {sign(x)}[{dims}]")
+})
+
+setMethod("show", "Expression", function(object) {
+  cli::text(as.character(object))
+})
+
+#' @describeIn Expression The name of the expression.
+#' @export
+setMethod("name", "Expression", function(x) { stop("Unimplemented") })
+
+#' @describeIn Expression The expression itself.
+setMethod("expr", "Expression", function(object) { object })
+
+#'
+#' Curvature of Expression
+#'
+#' The curvature of an expression.
+#'
+#' @param object An \linkS4class{Expression} object.
+#' @return A string indicating the curvature of the expression, either "CONSTANT", "AFFINE", "CONVEX", "CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname curvature
+#' @export
+setMethod("curvature", "Expression", function(object) {
+  if(is_constant(object))
+    curvature_str <- CONSTANT
+  else if(is_affine(object))
+    curvature_str <- AFFINE
+  else if(is_convex(object))
+    curvature_str <- CONVEX
+  else if(is_concave(object))
+    curvature_str <- CONCAVE
+  else if(is_log_log_affine(object))
+    curvature_str <- LOG_LOG_AFFINE
+  else if(is_log_log_convex(object))
+    curvature_str <- LOG_LOG_CONVEX
+  else if(is_log_log_concave(object))
+    curvature_str <- LOG_LOG_CONCAVE
+  else if(is_quasilinear(object))
+    curvature_str <- QUASILINEAR
+  else if(is_quasiconvex(object))
+    curvature_str <- QUASICONVEX
+  else if(is_quasiconcave(object))
+    curvature_str <- QUASICONCAVE
+  else
+    curvature_str <- UNKNOWN
+  curvature_str
+})
+
+#'
+#' Log-Log Curvature of Expression
+#'
+#' The log-log curvature of an expression.
+#'
+#' @param object An \linkS4class{Expression} object.
+#' @return A string indicating the log-log curvature of the expression, either "LOG_LOG_CONSTANT", "LOG_LOG_AFFINE", "LOG_LOG_CONVEX", "LOG_LOG_CONCAVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname log_log_curvature
+#' @export
+setMethod("log_log_curvature", "Expression", function(object) {
+  if(is_log_log_constant(object))
+    curvature_str <- LOG_LOG_CONSTANT
+  else if(is_log_log_affine(object))
+    curvature_str <- LOG_LOG_AFFINE
+  else if(is_log_log_convex(object))
+    curvature_str <- LOG_LOG_CONVEX
+  else if(is_log_log_concave(object))
+    curvature_str <- LOG_LOG_CONCAVE
+  else
+    curvature_str <- UNKNOWN
+  curvature_str
+})
+
+#' @describeIn Expression The expression is constant if it contains no variables or is identically zero.
+setMethod("is_constant", "Expression", function(object) { (0 %in% dim(object)) || all(sapply(object@args, is_constant)) }
+)
+
+#' @describeIn Expression The expression is affine if it is constant or both convex and concave.
+setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
+
+#' @describeIn Expression A logical value indicating whether the expression is convex.
+setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression A logical value indicating whether the expression is concave.
+setMethod("is_concave", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The expression is DCP if it is convex or concave.
+setMethod("is_dcp", "Expression", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_convex(object) || is_concave(object))
+  }
+  return(is_convex(object) || is_concave(object) )
+})
+
+#' @describeIn Expression Is the expression log-log constant, i.e., elementwise positive?
+setMethod("is_log_log_constant", "Expression", function(object) {
+  if(!is_constant(object))
+    return(FALSE)
+
+  if(is(object, "Constant") || is(object, "Parameter"))
+    return(is_pos(object))
+  else {
+    val <- value(object)
+    return(!is.na(val) && all(val > 0))
+  }
+})
+
+#' @describeIn Expression Is the expression log-log affine?
+setMethod("is_log_log_affine", "Expression", function(object) {
+  is_log_log_constant(object) || (is_log_log_convex(object) && is_log_log_concave(object))
+})
+
+#' @describeIn Expression Is the expression log-log convex?
+setMethod("is_log_log_convex", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression Is the expression log-log concave?
+setMethod("is_log_log_concave", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The expression is DGP if it is log-log DCP.
+setMethod("is_dgp", "Expression", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(is_log_log_convex(object) || is_log_log_concave(object))
+  }
+  return(is_log_log_convex(object) || is_log_log_concave(object))
+})
+
+#' @describeIn Expression Is the expression a disciplined parametrized expression?
+setMethod("is_dpp", "Expression", function(object, context = "dcp") { stop("Unimplemented") })
+
+#' @describeIn Expression Is the expression quasiconvex?
+setMethod("is_quasiconvex", "Expression", function(object) { is_convex(object) })
+
+#' @describeIn Expression Is the expression quasiconcave?
+setMethod("is_quasiconcave", "Expression", function(object) { is_concave(object) })
+
+#' @describeIn Expression Is the expression quasilinear?
+setMethod("is_quasilinear", "Expression", function(object) { is_quasiconvex(object) && is_quasiconcave(object) })
+
+#' @describeIn Expression Is the expression DQCP?
+setMethod("is_dqcp", "Expression", function(object) { is_quasiconvex(object) || is_quasiconcave(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a Hermitian matrix.
+setMethod("is_hermitian", "Expression", function(object) { is_real(object) && is_symmetric(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a positive semidefinite matrix.
+setMethod("is_psd", "Expression", function(object) { FALSE })
+
+#' @describeIn Expression A logical value indicating whether the expression is a negative semidefinite matrix.
+setMethod("is_nsd", "Expression", function(object) { FALSE })
+
+#' @describeIn Expression A logical value indicating whether the expression is quadratic.
+setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
+
+#' @describeIn Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
+setMethod("has_quadratic_term", "Expression", function(object) { is_constant(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is symmetric.
+setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression \eqn{X} is a real matrix that satisfies \eqn{X + X^T = 0}
+setMethod("is_skew_symmetric", "Expression", function(object) { FALSE })
+
+#' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
+setMethod("is_pwl", "Expression", function(object) { is_constant(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is quadratic of piecewise affine.
+setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
+
+#'
+#' Sign of Expression
+#'
+#' The sign of an expression.
+#'
+#' @param x An \linkS4class{Expression} object.
+#' @return A string indicating the sign of the expression, either "ZERO", "NONNEGATIVE", "NONPOSITIVE", or "UNKNOWN".
+#' @docType methods
+#' @rdname sign
+#' @export
+setMethod("sign", "Expression", function(x) {
+  if(is_zero(x))
+    sign_str <- ZERO
+  else if(is_nonneg(x))
+    sign_str <- NONNEG
+  else if(is_nonpos(x))
+    sign_str <- NONPOS
+  else
+    sign_str <- UNKNOWN
+  sign_str
+})
+
+#' @describeIn Expression The expression is zero if it is both nonnegative and nonpositive.
+setMethod("is_zero", "Expression", function(object) { is_nonneg(object) && is_nonpos(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is nonnegative.
+setMethod("is_nonneg", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression A logical value indicating whether the expression is nonpositive.
+setMethod("is_nonpos", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The \code{c(row, col)} dimensions of the expression.
+setMethod("dim", "Expression", function(x) { stop("Unimplemented") })
+
+#' @describeIn Expression A logical value indicating whether the expression is real.
+setMethod("is_real", "Expression", function(object) { !is_complex(object) })
+
+#' @describeIn Expression A logical value indicating whether the expression is imaginary.
+setMethod("is_imag", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression A logical value indicating whether the expression is complex.
+setMethod("is_complex", "Expression", function(object) { stop("Unimplemented") })
+
+#' @describeIn Expression The number of entries in the expression.
+setMethod("size", "Expression", function(object) { size_from_dim(dim(object)) })
+
+#' @describeIn Expression The number of dimensions of the expression.
+setMethod("ndim", "Expression", function(object) { length(dim(object)) })
+
+#' @describeIn Expression Vectorizes the expression.
+setMethod("flatten", "Expression", function(object, byrow = FALSE) { Vec(object, byrow = byrow) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a scalar.
+setMethod("is_scalar", "Expression", function(object) { all(dim(object) == 1L) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a row or column vector.
+setMethod("is_vector", "Expression", function(object) { ndim(object) <= 1L || (ndim(object) == 2L && min(dim(object)) == 1L) })
+
+#' @describeIn Expression A logical value indicating whether the expression is a matrix.
+setMethod("is_matrix", "Expression", function(object) { ndim(object) == 2L && nrow(object) > 1L && ncol(object) > 1L })
+
+#' @describeIn Expression Number of rows in the expression.
+#' @export
+setMethod("nrow", "Expression", function(x) { dim(x)[1L] })
+
+#' @describeIn Expression Number of columns in the expression.
+#' @export
+setMethod("ncol", "Expression", function(x) { dim(x)[2L] })
+
+# Slice operators
+#' @param x A \linkS4class{Expression} object.
+#' @param i,j The row and column indices of the slice.
+#' @param ... (Unimplemented) Optional arguments.
+#' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "missing", j = "missing", drop = "ANY"), function(x, i, j, ..., drop) { x })
+
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "numeric", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(is_vector(x) && nrow(x) < ncol(x))
+    Index(x, Key(NULL, i))   # If only first index given, apply it along longer dimension of vector
+  else
+    Index(x, Key(i, NULL))
+})
+
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "missing", j = "numeric", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index(x, Key(NULL, j))
+})
+
+#' @rdname Index-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "numeric", j = "numeric", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  Index(x, Key(i, j))
+})
+
+#' @param i,j The row and column indices of the slice.
+#' @param ... (Unimplemented) Optional arguments.
+#' @param drop (Unimplemented) A logical value indicating whether the result should be coerced to the lowest possible dimension.
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "index", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  if(is_vector(x) && nrow(x) < ncol(x))
+    SpecialIndex(x, Key(NULL, i))   # If only first index given, apply it along longer dimension of vector
+  else
+    SpecialIndex(x, Key(i, NULL))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "missing", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  SpecialIndex(x, Key(NULL, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "index", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  SpecialIndex(x, Key(i, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "matrix", j = "index", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  SpecialIndex(x, Key(i, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "index", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  SpecialIndex(x, Key(i, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "matrix", j = "matrix", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  SpecialIndex(x, Key(i, j))
+})
+
+#' @rdname SpecialIndex-class
+#' @export
+setMethod("[", signature(x = "Expression", i = "matrix", j = "missing", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+  # This follows conventions in Matrix package, but differs from base handling of matrices
+  SpecialIndex(x, Key(i, NULL))
+})
+
+#  @rdname Index-class
+# setMethod("[", signature(x = "Expression", i = "ANY", j = "ANY", drop = "ANY"), function(x, i, j, ..., drop = TRUE) {
+#  stop("Invalid or unimplemented Expression slice operation")
+# })
+
+# Arithmetic operators
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to add.
+#' @rdname AddExpression-class
+setMethod("+", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { e1 })
+
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to subtract.
+#' @rdname NegExpression-class
+setMethod("-", signature(e1 = "Expression", e2 = "missing"), function(e1, e2) { NegExpression(expr = e1) })
+
+#' @rdname AddExpression-class
+setMethod("+", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { AddExpression(arg_groups = list(e1, e2)) })
+
+#' @rdname AddExpression-class
+setMethod("+", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { AddExpression(arg_groups = list(e1, e2)) })
+
+#' @rdname AddExpression-class
+setMethod("+", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e2 + e1 })
+
+#' @rdname NegExpression-class
+setMethod("-", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
+
+#' @rdname NegExpression-class
+setMethod("-", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 + (-e2) })
+
+#' @rdname NegExpression-class
+setMethod("-", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { e1 + NegExpression(expr = e2) })
+
+#'
+#' Elementwise multiplication operator
+#'
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to multiply elementwise.
+#' @docType methods
+#' @rdname mul_elemwise
+setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
+  e1_dim <- dim(e1)
+  e2_dim <- dim(e2)
+
+  # if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
+  if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] || e1_dim[1] != e2_dim[length(e2_dim)]
+                                            && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
+    Multiply(lh_exp = e1, rh_exp = e2)
+  else
+    stop("Incompatible dimensions for elementwise multiplication, use '%*%' for matrix multiplication")
+})
+
+#' @docType methods
+#' @rdname mul_elemwise
+setMethod("*", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { as.Constant(e2) * e1 })
+
+#' @docType methods
+#' @rdname mul_elemwise
+setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) * e2 })
+
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
+#' @rdname DivExpression-class
+setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
+  if((is_scalar(e1) || is_scalar(e2)) || all(dim(e1) == dim(e2)))
+    DivExpression(lh_exp = e1, rh_exp = e2)
+  else
+    stop("Incompatible dimensions for division")
+})
+
+#' @rdname DivExpression-class
+setMethod("/", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 / as.Constant(e2) })
+
+#' @rdname DivExpression-class
+setMethod("/", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) / e2 })
+
+#' @param e1 An \linkS4class{Expression} object to exponentiate.
+#' @param e2 The power of the exponential. Must be a numeric scalar.
+#' @docType methods
+#' @rdname power
+setMethod("^", signature(e1 = "Expression", e2 = "numeric"), function(e1, e2) { Power(x = e1, p = e2) })
+
+#' @docType methods
+#' @rdname power
+setMethod("^", signature(e1 = "numeric", e2 = "Expression"), function(e1, e2) {
+  stop("CVXR currently does not support variables on the right side of ^. Consider using the identity that a^x = exp(log(a)*x))")
+})
+
+# Matrix operators
+#'
+#' Matrix Transpose
+#'
+#' The transpose of a matrix.
+#'
+#' @param x An \linkS4class{Expression} representing a matrix.
+#' @return An \linkS4class{Expression} representing the transposed matrix.
+#' @docType methods
+#' @aliases t
+#' @rdname transpose
+#' @method t Expression
+#' @export
+t.Expression <- function(x) { if(ndim(x) <= 1) x else Transpose(x) }   # Need S3 method dispatch as well
+
+#' @docType methods
+#' @rdname transpose
+#' @examples
+#' x <- Variable(3, 4)
+#' t(x)
+#' @export
+setMethod("t", signature(x = "Expression"), function(x) { if(ndim(x) <= 1) x else Transpose(x) })
+
+#'
+#' Conjugate Expression
+#'
+#' The conjugate of the expression.
+#'
+#' @param z An \linkS4class{Expression}
+#' @return An \linkS4class{Expression} representing the conjugate.
+#' @docType methods
+#' @aliases Conj
+#' @rdname Conjugate-class
+#' @method Conj Expression
+#' @export
+Conj.Expression <- function(z) { if(is_real(z)) z else Conjugate(z) }
+
+#' @docType methods
+#' @rdname Conjugate-class
+#' @examples
+#' z <- Constant(1 + 2*1i)
+#' Conj(z)
+#' @export
+setMethod("Conj", signature(z = "Expression"), function(z) { if(is_real(z)) z else Conjugate(z) })
+
+#' @param x,y The \linkS4class{Expression} objects or numeric constants to multiply.
+#' @rdname MulExpression-class
+setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
+  x_dim <- dim(x)
+  y_dim <- dim(y)
+
+  # if(is.null(x_dim) || is.null(y_dim))
+  #  stop("Scalar operands are not allowed,  use '*' instead")
+  # else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
+  #   stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
+  if(is.null(x_dim) || is.null(y_dim) || is_scalar(x) || is_scalar(y))
+    # stop("Scalar operands are not allowed, use '*' instead")
+    Multiply(lh_exp = x, rh_exp = y)
+  else if(is_constant(x) || is_constant(y))
+    MulExpression(lh_exp = x, rh_exp = y)
+  else {
+    warning("Forming a non-convex expression")
+    MulExpression(lh_exp = x, rh_exp = y)
+  }
+})
+
+#' @rdname MulExpression-class
+setMethod("%*%", signature(x = "Expression", y = "ConstVal"), function(x, y) { x %*% as.Constant(y) })
+
+#' @rdname MulExpression-class
+setMethod("%*%", signature(x = "ConstVal", y = "Expression"), function(x, y) { as.Constant(x) %*% y })
+
+# Comparison operators
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
+#' @rdname EqConstraint-class
+setMethod("==", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { EqConstraint(e1, e2) })
+
+#' @rdname EqConstraint-class
+setMethod("==", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 == as.Constant(e2) })
+
+#' @rdname EqConstraint-class
+setMethod("==", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) == e2 })
+
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
+#' @rdname IneqConstraint-class
+setMethod("<=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { IneqConstraint(e1, e2) })
+
+#' @rdname IneqConstraint-class
+setMethod("<=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 <= as.Constant(e2) })
+
+#' @rdname IneqConstraint-class
+setMethod("<=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) <= e2 })
+
+#' @rdname IneqConstraint-class
+setMethod("<",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
+
+#' @rdname IneqConstraint-class
+setMethod("<",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 < as.Constant(e2) })
+
+#' @rdname IneqConstraint-class
+setMethod("<",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) < e2 })
+
+#' @rdname IneqConstraint-class
+setMethod(">=", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { e2 <= e1 })
+
+#' @rdname IneqConstraint-class
+setMethod(">=", signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 >= as.Constant(e2) })
+
+#' @rdname IneqConstraint-class
+setMethod(">=", signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) >= e2 })
+
+#' @rdname IneqConstraint-class
+setMethod(">",  signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { stop("Unimplemented: Strict inequalities are not allowed.") })
+
+#' @rdname IneqConstraint-class
+setMethod(">",  signature(e1 = "Expression", e2 = "ConstVal"),   function(e1, e2) { e1 > as.Constant(e2) })
+
+#' @rdname IneqConstraint-class
+setMethod(">",  signature(e1 = "ConstVal",   e2 = "Expression"), function(e1, e2) { as.Constant(e1) > e2 })
+
+# Positive definite inequalities
+#' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to compare.
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%>>%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e1 - e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%>>%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %>>% as.Constant(e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%>>%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %>>% e2 })
+
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%<<%", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) { PSDConstraint(e2 - e1) })
+
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%<<%", signature(e1 = "Expression", e2 = "ConstVal"), function(e1, e2) { e1 %<<% as.Constant(e2) })
+
+#' @docType methods
+#' @rdname PSDConstraint-class
+#' @export
+setMethod("%<<%", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) { as.Constant(e1) %<<% e2 })
+

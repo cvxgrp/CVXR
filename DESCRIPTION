@@ -54,7 +54,9 @@ Imports:
     osqp,
     geigen,
     RSpectra,
-    uuid
+    uuid,
+    glue,
+    cli
 Suggests:
     knitr,
     rmarkdown,

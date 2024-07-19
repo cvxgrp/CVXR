@@ -74,7 +74,6 @@ void sweep_in_place(Rcpp::NumericMatrix P, Rcpp::NumericVector c_part) {
   }
 }
 
-#include <cmath>
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::export]]
 Eigen::SparseMatrix<double> upper_tri_to_full(int n) {

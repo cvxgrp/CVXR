@@ -1,0 +1,157 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/wraps.py
+
+#'
+#' The Wrap class.
+#'
+#' This virtual class represents a no-op wrapper to assert properties.
+#'
+#' @name Wrap-class
+#' @aliases Wrap
+#' @rdname Wrap-class
+Wrap <- setClass("Wrap", contains = c("VIRTUAL", "AffAtom"))
+
+#' @param object A \linkS4class{Wrap} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Wrap Returns the input value.
+setMethod("to_numeric", "Wrap", function(object, values) { values[[1]] })
+
+#' @describeIn Wrap The dimensions of the atom.
+setMethod("dim_from_args", "Wrap", function(object) { dim(object@args[[1]]) })
+
+#' @describeIn Wrap Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Wrap", function(object) { TRUE })
+
+#' @describeIn Wrap Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Wrap", function(object) { TRUE })
+
+Wrap.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(arg_objs[[1]], list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn Wrap The graph implementation of the atom.
+setMethod("graph_implementation", "Wrap", function(object, arg_objs, dim, data = NA_real_) {
+  Wrap.graph_implementation(arg_objs, dim, data)
+})
+
+#'
+#' The PSDWrap class.
+#'
+#' A no-op wrapper to assert the input argument is positive semidefinite.
+#'
+#' @name PSDWrap-class
+#' @aliases PSDWrap
+#' @rdname PSDWrap-class
+.PSDWrap <- setClass("PSDWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname PSDWrap-class
+PSDWrap <- function(arg) { .PSDWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{PSDWrap} object.
+#' @describeIn PSDWrap Check the input is a square matrix.
+setMethod("validate_args", "PSDWrap", function(object) {
+  arg <- object@args[[1]]
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+})
+
+#' @describeIn PSDWrap Is the atom positive semidefinite?
+setMethod("is_psd", "PSDWrap", function(object) { TRUE })
+
+#' @describeIn PSDWrap Is the atom negative semidefinite?
+setMethod("is_nsd", "PSDWrap", function(object) { FALSE })
+
+#' @describeIn PSDWrap Is the atom Hermitian?
+setMethod("is_hermitian", "PSDWrap", function(object) { TRUE })
+
+validate_real_square <- function(arg) {
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+  else if(!is_real(arg))
+    stop("The input must be a real matrix")
+}
+
+#'
+#' The SymmetricWrap class.
+#'
+#' A no-op wrapper to assert the input argument is symmetric.
+#'
+#' @name SymmetricWrap-class
+#' @aliases SymmetricWrap
+#' @rdname SymmetricWrap-class
+.SymmetricWrap <- setClass("SymmetricWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname SymmetricWrap-class
+SymmetricWrap <- function(arg) { .SymmetricWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{SymmetricWrap} object.
+#' @describeIn SymmetricWrap Check the input is a real square matrix.
+setMethod("validate_args", "SymmetricWrap", function(object) {
+  validate_real_square(object@args[[1]])
+})
+
+#' @describeIn SymmetricWrap Is the atom symmetric?
+setMethod("is_symmetric", "SymmetricWrap", function(object) { TRUE })
+
+#' @describeIn SymmetricWrap Is the atom Hermitian?
+setMethod("is_hermitian", "SymmetricWrap", function(object) { TRUE })
+
+#'
+#' The HermitianWrap class.
+#'
+#' A no-op wrapper to assert the input argument is Hermitian.
+#'
+#' @name HermitianWrap-class
+#' @aliases HermitianWrap
+#' @rdname HermitianWrap-class
+.HermitianWrap <- setClass("HermitianWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname HermitianWrap-class
+HermitianWrap <- function(arg) { .HermitianWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{HermitianWrap} object.
+#' @describeIn HermitianWrap Check the input is a real square matrix.
+setMethod("validate_args", "HermitianWrap", function(object) {
+  arg <- object@args[[1]]
+  arg_dim <- dim(arg)
+  ndim_test <- (length(arg_dim) == 2)
+  if(!ndim_test || arg_dim[1] != arg_dim[2])
+    stop("The input must be a square matrix")
+})
+
+#' @describeIn HermitianWrap Is the atom Hermitian?
+setMethod("is_hermitian", "HermitianWrap", function(object) { TRUE })
+
+#'
+#' The SkewSymmetricWrap class.
+#'
+#' A no-op wrapper to assert the input argument is skew symmetric.
+#'
+#' @name SkewSymmetricWrap-class
+#' @aliases SkewSymmetricWrap
+#' @rdname SkewSymmetricWrap-class
+.SkewSymmetricWrap <- setClass("SkewSymmetricWrap", contains = "Wrap")
+
+#' @param arg A \linkS4class{Expression} object or matrix.
+#' @rdname SkewSymmetricWrap-class
+SkewSymmetricWrap <- function(arg) { .SkewSymmetricWrap(atom_args = list(arg)) }
+
+#' @param object A \linkS4class{SkewSymmetricWrap} object.
+#' @describeIn SkewSymmetricWrap Check the input is a real square matrix.
+setMethod("validate_args", "SkewSymmetricWrap", function(object) {
+  validate_real_square(object@args[[1]])
+})
+
+#' @describeIn SkewSymmetricWrap Is the atom skew symmetric?
+setMethod("is_skew_symmetric", "SkewSymmetricWrap", function(object) { TRUE })
+
+

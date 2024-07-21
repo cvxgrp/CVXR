@@ -1,0 +1,114 @@
+## CVXPY SOURCE: cvxpy/atoms/matrix_frac.py
+#'
+#' The MatrixFrac class.
+#'
+#' The matrix fraction function \eqn{tr(X^T P^{-1} X)}.
+#'
+#' @slot X An \linkS4class{Expression} or numeric matrix.
+#' @slot P An \linkS4class{Expression} or numeric matrix.
+#' @name MatrixFrac-class
+#' @aliases MatrixFrac
+#' @rdname MatrixFrac-class
+.MatrixFrac <- setClass("MatrixFrac", representation(X = "ConstValORExpr", P = "ConstValORExpr"), contains = "Atom")
+
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @param P An \linkS4class{Expression} or numeric matrix.
+#' @rdname MatrixFrac-class
+MatrixFrac <- function(X, P) { .MatrixFrac(X = X, P = P) }
+
+setMethod("initialize", "MatrixFrac", function(.Object, ..., X, P) {
+  .Object@X <- X
+  .Object@P <- P
+  callNextMethod(.Object, ..., atom_args = list(.Object@X, .Object@P))
+})
+
+#' @describeIn MatrixFrac Does the atom handle complex numbers?
+setMethod("allow_complex", "MatrixFrac", function(object) { TRUE })
+
+#' @param object A \linkS4class{MatrixFrac} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn MatrixFrac The trace of \eqn{X^TP^{-1}X}.
+setMethod("to_numeric", "MatrixFrac", function(object, values) {
+  # TODO: Raise error if not invertible?
+  X <- values[[1]]
+  P <- values[[2]]
+  if(is_complex(object@args[[1]]))
+    product <- t(Conj(X)) %*% base::solve(P) %*% X
+  else
+    product <- t(X) %*% base::solve(P) %*% X
+
+  if(length(dim(product)) == 2)
+    return(sum(diag(product)))
+  else
+    return(product)
+})
+
+#' @describeIn MatrixFrac Check that the dimensions of \code{x} and \code{P} match.
+setMethod("validate_args", "MatrixFrac", function(object) {
+  X <- object@args[[1]]
+  P <- object@args[[2]]
+  if(ndim(P) != 2 || nrow(P) != ncol(P))
+    stop("The second argument to MatrixFrac must be a square matrix.")
+  else if(nrow(X) != nrow(P))
+    stop("The arguments to MatrixFrac have incompatible dimensions.")
+})
+
+#' @describeIn MatrixFrac The atom is a scalar.
+setMethod("dim_from_args", "MatrixFrac", function(object) { c(1,1) })
+
+#' @describeIn MatrixFrac The atom is positive.
+setMethod("sign_from_args", "MatrixFrac", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn MatrixFrac The atom is convex.
+setMethod("is_atom_convex", "MatrixFrac", function(object) { TRUE })
+
+#' @describeIn MatrixFrac The atom is not concave.
+setMethod("is_atom_concave", "MatrixFrac", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn MatrixFrac The atom is not monotonic in any argument.
+setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
+
+#' @describeIn MatrixFrac The atom is not monotonic in any argument.
+setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
+
+#' @describeIn MatrixFrac True if x is affine and P is constant.
+setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+
+#' @describeIn MatrixFrac True if x is piecewise linear and P is constant.
+setMethod("is_qpwa", "MatrixFrac", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
+
+#' @describeIn MatrixFrac Returns constraints describing the domain of the node
+setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn MatrixFrac Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "MatrixFrac", function(object, values) {
+  X <- as.matrix(values[[1]])
+  P <- as.matrix(values[[2]])
+  P_inv <- tryCatch({
+    base::solve(P)
+  }, error = function(e) {
+      list(NA_real_, NA_real_)
+  })
+
+  ## if(is.null(dim(P_inv)) && is.na(P_inv))
+  ##   return(list(NA_real_, NA_real_))
+
+  if(is.null(dim(P_inv)))
+      return(list(NA_real_, NA_real_))
+
+  # partial_X = (P^-1+P^-T)X
+  # partial_P = (P^-1 * X * X^T * P^-1)^T
+  DX <- (P_inv + t(P_inv)) %*% X
+  DX <- as.vector(t(DX))
+  DX <- Matrix(DX, sparse = TRUE)
+
+  DP <- P_inv %*% X
+  DP <- DP %*% t(X)
+  DP <- DP %*% P_inv
+  DP <- -t(DP)
+  DP <- Matrix(as.vector(t(DP)), sparse = TRUE)
+  list(DX, DP)
+})
+

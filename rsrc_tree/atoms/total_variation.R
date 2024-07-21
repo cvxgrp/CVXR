@@ -1,0 +1,40 @@
+## CVXPY SOURCE: cvxpy/atoms/total_variation.py
+#'
+#' The TotalVariation atom.
+#'
+#' The total variation of a vector, matrix, or list of matrices.
+#' Uses L1 norm of discrete gradients for vectors and L2 norm of discrete gradients for matrices.
+#'
+#' @param value An \linkS4class{Expression} representing the value to take the total variation of.
+#' @param ... Additional matrices extending the third dimension of value.
+#' @return An expression representing the total variation.
+TotalVariation <- function(value, ...) {
+  value <- as.Constant(value)
+  if(ndim(value) == 0 || (nrow(value) == 1 && ncol(value) == 1))
+    stop("TotalVariation cannot take a scalar argument")
+  else if(ndim(value) == 1 || nrow(value) == 1 || ncol(value) == 1) {  # L1 norm for vectors
+    if(nrow(value) == 1)
+      value <- t(value)
+    Norm(value[2:nrow(value),1] - value[1:(nrow(value)-1),1], 1)
+  } else {   # L2 norm for matrices
+    val_dim <- dim(value)
+    rows <- val_dim[1]
+    cols <- val_dim[2]
+    args <- lapply(list(...), as.Constant)
+    values <- c(list(value), args)
+
+    diffs <- list()
+    for(mat in values) {
+      if(rows > 1 && cols > 1) {
+        diffs <- c(diffs, list(mat[1:(rows-1), 2:cols] - mat[1:(rows-1), 1:(cols-1)],
+                               mat[2:rows, 1:(cols-1)] - mat[1:(rows-1), 1:(cols-1)]))
+      } else {
+        diffs <- c(diffs, list(matrix(0, nrow = rows-1, ncol = cols-1),
+                               matrix(0, nrow = rows-1, ncol = cols-1)))
+      }
+    }
+    len <- nrow(diffs[[1]]) * ncol(diffs[[2]])
+    stacked <- .VStack(atom_args = lapply(diffs, function(diff) { Reshape(diff, c(1, len)) }))
+    SumEntries(Norm(stacked, p = 2, axis = 2))
+  }
+}

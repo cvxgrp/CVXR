@@ -1,0 +1,71 @@
+## CVXPY SOURCE: cvxpy/atoms/prod.py
+
+#'
+#' The ProdEntries class.
+#'
+#' The product of the entries in an expression.
+#'
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @name ProdEntries-class
+#' @aliases ProdEntries
+#' @rdname ProdEntries-class
+.ProdEntries <- setClass("ProdEntries", contains = "AxisAtom")
+
+#' @param ... \linkS4class{Expression} objects, vectors, or matrices.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @rdname ProdEntries-class
+ProdEntries <- function(..., axis = NA_real_, keepdims = FALSE) {
+  exprs <- list(...)
+  if(length(exprs) == 0)
+    stop("Must provide at least one expression")
+  else if(length(exprs) == 1)
+    .ProdEntries(expr = exprs[[1]], axis = axis, keepdims = keepdims)
+  else
+    .ProdEntries(expr = do.call("HStack", exprs))
+}
+
+#' @param object A \linkS4class{ProdEntries} object.
+#' @param values A list of values to take the product of.
+#' @describeIn ProdEntries The product of all the entries.
+setMethod("to_numeric", "ProdEntries", function(object, values) {
+  apply_with_keepdims(values[[1]], prod, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn ProdEntries Returns the sign (is positive, is negative) of the atom.
+setMethod("sign_from_args", "ProdEntries", function(object) {
+  if(is_nonneg(object@args[[1]]))
+    c(TRUE, FALSE)
+  else
+    c(FALSE, FALSE)
+})
+
+#' @describeIn ProdEntries Is the atom convex?
+setMethod("is_atom_convex", "ProdEntries", function(object) { FALSE })
+
+#' @describeIn ProdEntries Is the atom concave?
+setMethod("is_atom_concave", "ProdEntries", function(object) { FALSE })
+
+#' @describeIn ProdEntries Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "ProdEntries", function(object) { TRUE })
+
+#' @describeIn ProdEntries is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "ProdEntries", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn ProdEntries Is the atom weakly increasing in the argument \code{idx}?
+setMethod("is_incr", "ProdEntries", function(object, idx) { is_nonneg(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn ProdEntries Is the atom weakly decreasing in the argument \code{idx}?
+setMethod("is_decr", "ProdEntries", function(object, idx) { FALSE })
+
+#' @param value A numeric value.
+#' @describeIn ProdEntries Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "ProdEntries", function(object, value) { prod(value)/value })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn ProdEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "ProdEntries", function(object, values) { .axis_grad(object, values) })
+

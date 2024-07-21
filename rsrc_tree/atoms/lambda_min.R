@@ -1,0 +1,13 @@
+## CVXPY SOURCE: cvxpy/atoms/lambda_min.py
+#'
+#' The LambdaMin atom.
+#'
+#' The minimum eigenvalue of a matrix, \eqn{\lambda_{\min}(A)}.
+#'
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @return Returns the minimum eigenvalue of a matrix.
+LambdaMin <- function(A) {
+  A <- as.Constant(A)
+  -LambdaMax(-A)
+}
+

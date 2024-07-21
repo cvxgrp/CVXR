@@ -1,0 +1,147 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/ceil.py
+
+#'
+#' The Ceil class.
+#'
+#' This class represents elementwise ceiling.
+#'
+#' @slot x An \linkS4class{Expression}.
+#' @name Ceil-class
+#' @aliases Ceil
+#' @rdname Ceil-class
+.Ceil <- setClass("Ceil", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname Ceil-class
+Ceil <- function(x) { .Ceil(x = x) }
+
+setMethod("initialize", "Ceil", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Ceil} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Ceil The numeric value of the expression.
+setMethod("to_numeric", "Ceil", function(object, values) {
+  digits <- as.integer(abs(log10(ATOM_EVAL_TOL)))
+
+  # Note: For rounding off a 5, see documentation for R's round function.
+  # Compare with the Python numpy implementation used in CVXPY.
+  return(ceiling(round(values[[]], digits = digits)))
+})
+
+#' @describeIn Ceil The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "Ceil", function(object) {
+  if(is_nonneg(object@args[[1]]) && is_nonpos(object@args[[1]]))
+    return(c(TRUE, TRUE))
+  else if(is_nonneg(object@args[[1]]))
+    return(c(TRUE, FALSE))
+  else if(is_nonpos(object@args[[1]]))
+    return(c(FALSE, TRUE))
+  else
+    return(c(FALSE, FALSE))
+})
+
+#' @describeIn Ceil Is the atom convex?
+setMethod("is_atom_convex", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom concave?
+setMethod("is_atom_concave", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Ceil", function(object) { FALSE })
+
+#' @describeIn Ceil Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "Ceil", function(object) { TRUE })
+
+#' @describeIn Ceil Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "Ceil", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn Ceil Is the atom weakly increasing in the index?
+setMethod("is_incr", "Ceil", function(object, idx) { TRUE })
+
+#' @describeIn Ceil Is the atom weakly decreasing in the index?
+setMethod("is_decr", "Ceil", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Ceil Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Ceil", function(object, values) {
+  arg_dim <- dim(object@values[[1]])
+  return(Matrix(0, nrow = arg_dim[1], ncol = arg_dim[2], sparse = TRUE))
+})
+
+#'
+#' The Floor class.
+#'
+#' This class represents elementwise ceiling.
+#'
+#' @slot x An \linkS4class{Expression}.
+#' @name Floor-class
+#' @aliases Floor
+#' @rdname Floor-class
+.Floor <- setClass("Floor", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname Floor-class
+Floor <- function(x) { .Floor(x = x) }
+
+setMethod("initialize", "Floor", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Floor} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Floor The numeric value of the expression.
+setMethod("to_numeric", "Floor", function(object, values) {
+  return(floor(values[[1]]))
+})
+
+#' @describeIn Floor The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "Floor", function(object) {
+  if(is_nonneg(object@args[[1]]) && is_nonpos(object@args[[1]]))
+    return(c(TRUE, TRUE))
+  else if(is_nonneg(object@args[[1]]))
+    return(c(TRUE, FALSE))
+  else if(is_nonpos(object@args[[1]]))
+    return(c(FALSE, TRUE))
+  else
+    return(c(FALSE, FALSE))
+})
+
+#' @describeIn Floor Is the atom convex?
+setMethod("is_atom_convex", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom concave?
+setMethod("is_atom_concave", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Floor", function(object) { FALSE })
+
+#' @describeIn Floor Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "Floor", function(object) { TRUE })
+
+#' @describeIn Floor Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "Floor", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn Floor Is the atom weakly increasing in the index?
+setMethod("is_incr", "Floor", function(object, idx) { TRUE })
+
+#' @describeIn Floor Is the atom weakly decreasing in the index?
+setMethod("is_decr", "Floor", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Floor Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Floor", function(object, values) {
+  arg_dim <- dim(object@values[[1]])
+  return(Matrix(0, nrow = arg_dim[1], ncol = arg_dim[2], sparse = TRUE))
+})

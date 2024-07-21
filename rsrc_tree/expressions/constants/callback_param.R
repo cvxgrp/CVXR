@@ -1,0 +1,30 @@
+## CVXPY SOURCE: cvxpy/expressions/constants/callback_param.py
+#'
+#' The CallbackParam class.
+#'
+#' This class represents a parameter whose value is obtained by evaluating a function.
+#'
+#' @slot callback A callback function that generates the parameter value.
+#' @slot dim The dimensions of the parameter.
+#' @name CallbackParam-class
+#' @aliases CallbackParam
+#' @rdname CallbackParam-class
+#' @examples
+#' x <- Variable(2)
+#' fun <- function() { value(x) }
+#' y <- CallbackParam(fun, dim = dim(x), nonneg = TRUE)
+#' get_data(y)
+#' @export
+CallbackParam <- setClass("CallbackParam",
+                          slots = list(callback = "function"),
+                          contains = "Parameter")
+
+#' @param object A \linkS4class{CallbackParam} object.
+#' @rdname CallbackParam-class
+setMethod("value", "CallbackParam", function(object) {
+  object@venv@value <- validate_val(object, object@callback())
+  # if(object@.is_vector)
+  #   val <- as.vector(val)
+  # return(val)
+})
+

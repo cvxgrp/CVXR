@@ -1,0 +1,59 @@
+## CVXPY SOURCE: cvxpy/atoms/sign.py
+#'
+#' The SignEntries class.
+#'
+#' The sign of an expression (-1 for x <= 0, +1 for x > 0).
+#'
+#' @slot x An \linkS4class{Expression}.
+#' @name SignEntries-class
+#' @aliases SignEntries
+#' @rdname SignEntries-class
+.SignEntries <- setClass("SignEntries", representation(x = "ConstValORExpr"), contains = "Atom")
+
+#' @param x An \linkS4class{Expression}.
+#' @rdname SignEntries-class
+SignEntries <- function(x = x) { .SignEntries(x = x) }
+
+setMethod("initialize", "SignEntries", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{SignEntries} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn SignEntries The sign of \code{x}.
+setMethod("to_numeric", "SignEntries", function(object, values) {
+  x <- values[[1]]
+  x[x > 0] <- 1.0
+  x[x <= 0] <- -1.0
+  return(x)
+})
+
+#' @describeIn SignEntries The (row, col) shape of the atom.
+setMethod("dim_from_args", "SignEntries", function(object) { c(1,1) })
+
+#' @describeIn SignEntries The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args",  "SignEntries", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
+
+#' @describeIn SignEntries Is the atom convex?
+setMethod("is_atom_convex", "SignEntries", function(object) { FALSE })
+
+#' @describeIn SignEntries Is the atom concave?
+setMethod("is_atom_concave", "SignEntries", function(object) { FALSE })
+
+#' @describeIn SignEntries Is the atom quasiconvex?
+setMethod("is_atom_quasiconvex", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+
+#' @describeIn SignEntries Is the atom quasiconcave?
+setMethod("is_atom_quasiconcave", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn SignEntries Is the atom weakly increasing?
+setMethod("is_incr", "SignEntries", function(object, idx) { FALSE })
+
+#' @describeIn SignEntries Is the atom weakly decreasing?
+setMethod("is_decr", "SignEntries", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn SignEntries Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "SignEntries", function(object, values) { return(NA_real_) })

@@ -1,0 +1,13 @@
+## CVXPY SOURCE: cvxpy/atoms/harmonic_mean.py
+#'
+#' The HarmonicMean atom.
+#'
+#' The harmonic mean of \eqn{x}, \eqn{\frac{1}{n} \sum_{i=1}^n x_i^{-1}}, where \eqn{n} is the length of \eqn{x}.
+#'
+#' @param x An expression or number whose harmonic mean is to be computed. Must have positive entries.
+#' @return The harmonic mean of \code{x}.
+HarmonicMean <- function(x) {
+  x <- as.Constant(x)
+  size(x) * Pnorm(x = x, p = -1)
+}
+

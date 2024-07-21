@@ -1,0 +1,73 @@
+## CVXPY SOURCE: cvxpy/atoms/norm_inf.py
+
+#'
+#' The NormInf class.
+#'
+#' This class represents the infinity-norm.
+#'
+#' @name NormInf-class
+#' @aliases NormInf
+#' @rdname NormInf-class
+.NormInf <- setClass("NormInf", contains = "AxisAtom")
+
+NormInf <- function(x, axis = NA_real_, keepdims = FALSE) { .NormInf(expr = x, axis = axis, keepdims = keepdims) }
+
+#' @param x,object A \linkS4class{NormInf} object.
+#' @describeIn NormInf The name and arguments of the atom.
+setMethod("name", "NormInf", function(x) {
+  paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
+})
+
+#' @describeIn NormInf Returns the infinity norm of \code{x}.
+setMethod("to_numeric", "NormInf", function(object, values) {
+  if(is.na(object@axis))
+    # base::norm(values[[1]], type = "I")
+    max(abs(values[[1]]))
+  else
+    # apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "I") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { max(abs(x)) }, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn NormInf Does the atom handle complex numbers?
+setMethod("allow_complex", "NormInf", function(object) { TRUE })
+
+#' @describeIn NormInf The atom is always positive.
+setMethod("sign_from_args", "NormInf", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn NormInf The atom is convex.
+setMethod("is_atom_convex", "NormInf", function(object) { TRUE })
+
+#' @describeIn NormInf The atom is not concave.
+setMethod("is_atom_concave", "NormInf", function(object) { FALSE })
+
+#' @describeIn NormInf Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "NormInf", function(object) { TRUE })
+
+#' @describeIn NormInf Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "NormInf", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn NormInf Is the composition weakly increasing in argument \code{idx}?
+setMethod("is_incr", "NormInf", function(object, idx) { is_nonneg(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn NormInf Is the composition weakly decreasing in argument \code{idx}?
+setMethod("is_decr", "NormInf", function(object, idx) { is_nonpos(object@args[[1]]) })
+
+#' @describeIn NormInf Is the atom piecewise linear?
+setMethod("is_pwl", "NormInf", function(object) { is_pwl(object@args[[1]]) })
+
+#' @describeIn NormInf Returns the axis.
+setMethod("get_data", "NormInf", function(object) { list(object@axis) })
+
+#' @describeIn NormInf Returns constraints describing the domain of the node
+setMethod(".domain", "NormInf", function(object) { list() })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "NormInf", function(object, values) { .axis_grad(object, values) })
+
+#' @param value A numeric value
+#' @describeIn NormInf Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "NormInf", function(object, value) { stop("Unimplemented") })   # TODO: Implement this! })
+

@@ -1,0 +1,54 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/logistic.py
+#'
+#' The Logistic class.
+#'
+#' This class represents the elementwise operation \eqn{\log(1 + e^x)}.
+#' This is a special case of log(sum(exp)) that evaluates to a vector rather than to a scalar,
+#' which is useful for logistic regression.
+#'
+#' @slot x An \linkS4class{Expression} or numeric constant.
+#' @name Logistic-class
+#' @aliases Logistic
+#' @rdname Logistic-class
+.Logistic <- setClass("Logistic", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @rdname Logistic-class
+Logistic <- function(x) { .Logistic(x = x) }
+
+setMethod("initialize", "Logistic", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Logistic} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Logistic Evaluates \code{e^x} elementwise, adds one, and takes the natural logarithm.
+setMethod("to_numeric", "Logistic", function(object, values) { log(1 + exp(values[[1]])) })
+
+#' @describeIn Logistic The atom is positive.
+setMethod("sign_from_args", "Logistic", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn Logistic The atom is convex.
+setMethod("is_atom_convex", "Logistic", function(object) { TRUE })
+
+#' @describeIn Logistic The atom is not concave.
+setMethod("is_atom_concave", "Logistic", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Logistic The atom is weakly increasing.
+setMethod("is_incr", "Logistic", function(object, idx) { TRUE })
+
+#' @describeIn Logistic The atom is not weakly decreasing.
+setMethod("is_decr", "Logistic", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Logistic Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Logistic", function(object, values) {
+  rows <- size(object@args[[1]])
+  cols <- size(object)
+  exp_val <- exp(values[[1]])
+  grad_vals <- exp_val/(1 + exp_val)
+  list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
+})
+

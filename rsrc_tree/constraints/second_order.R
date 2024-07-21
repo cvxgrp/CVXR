@@ -1,0 +1,189 @@
+## CVXPY SOURCE: cvxpy/expression/consraints/second_order.py
+#'
+#' The SOC class.
+#'
+#' This class represents a second-order cone constraint for each row/column, i.e. \eqn{\|x\|_2 \leq t}.
+#' It assumes t is a vector the same length as X's rows (resp. columns) for axis == 1 (resp. 2).
+#'
+#' @slot t The scalar part of the second-order constraint.
+#' @slot X A matrix whose rows/columns are each a cone.
+#' @slot axis The dimension along which to constrain: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @name SOC-class
+#' @aliases SOC
+#' @rdname SOC-class
+.SOC <- setClass("SOC", representation(t = "ConstValORExpr", X = "ConstValORExpr", axis = "numeric"),
+                        prototype(t = NA_real_, X = NA_real_, axis = 2),
+                        validity = function(object) {
+                          if(length(object@axis) > 1 || (object@axis != 1 && object@axis != 2))
+                            stop("[SOC: axis] axis must be either 1 (rows) or 2 (columns)")
+                          return(TRUE)
+                        }, contains = "Constraint")
+
+#' @param t The scalar part of the second-order constraint.
+#' @param X A matrix whose rows/columns are each a cone.
+#' @param axis The dimension along which to slice: \code{1} indicates rows, and \code{2} indicates columns. The default is \code{2}.
+#' @param constr_id (Optional) A numeric value representing the constraint ID.
+#' @rdname SOC-class
+## #' @export
+SOC <- function(t, X, axis = 2, constr_id = NA_integer_) { .SOC(t = t, X = X, axis = axis, constr_id = constr_id) }
+
+setMethod("initialize", "SOC", function(.Object, ..., t, X, axis = 2) {
+  t_dim <- dim(t)
+  t_size <- size(t)
+  X_dim <- dim(X)
+  if(length(t_dim) >= 2 || !is_real(t))
+    stop("Invalid first argument")
+
+  # Check t has one entry per cone.
+  if((length(X_dim) <= 1 && t_size > 1) ||
+     (length(X_dim) == 2 && t_size != X_dim[axis]) ||
+     (length(X_dim) == 1 && axis == 1))
+    stop("Argument dimensions and axis are incompatible")
+
+  if(is.null(t_dim) || length(t_dim) == 0)
+    t <- flatten(t)
+
+  .Object@t <- t
+  .Object@X <- X
+  .Object@axis <- axis
+  callNextMethod(.Object, ..., args = list(t, X))
+})
+
+#' @param x,object A \linkS4class{SOC} object.
+#' @rdname SOC-class
+setMethod("as.character", "SOC", function(x) {
+  paste("SOC(", as.character(x@t), ", ", as.character(x@X), ")", sep = "")
+})
+
+#' @describeIn PowCone3D The number of entries in the combined cones.
+setMethod("size", "SOC", function(object) { 3*num_cones(object) })
+
+#' @describeIn SOC The residual of the second-order constraint.
+setMethod("residual", "SOC", function(object) {
+  # For each cone, returns:
+  #
+  #      ||(t,X) - proj(t,X)||
+  #      with
+  #      proj(t,X) = (t,X)                       if t >= ||x||
+  #                  0.5*(t/||x|| + 1)(||x||,x)  if -||x|| < t < ||x||
+  #                  0                           if t <= -||x||
+  #      References:
+  #           https://docs.mosek.com/modeling-cookbook/practical.html#distance-to-a-cone
+  #           https://math.stackexchange.com/questions/2509986/projection-onto-the-second-order-cone
+
+  t <- value(object@args[[1]])
+  X <- value(object@args[[2]])
+  if(is.na(t) || is.na(X))
+    return(NA)
+
+  # Reduce axis = 2 to axis = 1.
+  if(object@axis == 2)
+    X <- t(X)
+
+  promoted <- (ndim(X) == 1)
+  X <- matrix(X)
+
+  # Initializing with zeros makes "0 if t <= -||x||" the default case for the projection
+  if(is.null(dim(t)))
+    t_proj <- matrix(0)
+  else
+    t_proj <- matrix(0, nrow = nrow(t), ncol = ncol(t))
+  if(is.null(dim(X)))
+    X_proj <- matrix(0)
+  else
+    X_proj <- matrix(0, nrow = nrow(X), ncol = ncol(X))
+
+  norms <- apply(X, 1, function(row) { norm(row, "2") })
+
+  # 1. proj(t,X) = (t,X) if t >= ||x||
+  t_geq_x_norm <- (t >= norms)
+  t_proj[t_geq_x_norm] <- t[t_geq_x_norm]
+  X_proj[t_geq_x_norm] <- X[t_geq_x_norm]
+
+  # 2. proj(t,X) = 0.5*(t/||x|| + 1)(||x||,x)  if -||x|| < t < ||x||
+  abs_t_less_x_norm <- (abs(t) < norms)
+  avg_coeff <- 0.5 * (1 + t/norms)
+  X_proj[abs_t_less_x_norm] <- diag(avg_coeff[abs_t_less_x_norm]) %*% X[abs_t_less_x_norm]
+  t_proj[abs_t_less_x_norm] <- avg_coeff[abs_t_less_x_norm] * norms[abs_t_less_x_norm]
+
+  Xt <- cbind(X, t)
+  Xt_proj <- cbind(X_proj, t_proj)
+  resid <- apply(Xt - Xt_proj, 1, function(row) { norm(row, "2") })
+
+  # Demote back to 1D.
+  if(promoted)
+    return(resid[1])
+  else
+    return(resid)
+})
+
+#' @describeIn SOC Information needed to reconstruct the object aside from the args.
+setMethod("get_data", "SOC", function(object) { list(object@axis, id(object)) })
+
+#' @describeIn SOC The number of elementwise cones.
+setMethod("num_cones", "SOC", function(object) { size(object@args[[1]]) })
+
+#' @describeIn SOC The number of entries in the combined cones.
+setMethod("size", "SOC", function(object) {
+  if(object@axis == 2)   # Collapse columns.
+    idx <- 1
+  else if(object@axis == 1)   # Collapse rows.
+    idx <- 2
+  else
+    stop("Unimplemented")
+  cone_size <- 1 + dim(object@args[[2]])[idx]
+  return(cone_size * num_cones(object))
+})
+
+#' @describeIn SOC The dimensions of the second-order cones.
+setMethod("cone_sizes", "SOC", function(object) {
+  if(object@axis == 2)   # Collapse columns.
+    idx <- 1
+  else if(object@axis == 1)   # Collapse rows.
+    idx <- 2
+  else
+    stop("Unimplemented")
+  cone_size <- 1 + dim(object@args[[2]])[idx]
+  return(rep(cone_size, num_cones(object)))
+})
+
+#' @describeIn SOC An SOC constraint is DCP if each of its arguments is affine.
+setMethod("is_dcp", "SOC", function(object, dpp = FALSE) {
+  if(dpp) {
+    dpp_scope()   # TODO: Implement DPP scoping.
+    return(all(sapply(object@args, is_affine)))
+  }
+  return(all(sapply(object@args, is_affine)))
+})
+
+#' @describeIn SOC Is the constraint DGP?
+setMethod("is_dgp", "SOC", function(object, dpp = FALSE) { FALSE })
+
+#' @describeIn SOC Is the constraint DQCP?
+setMethod("is_dqcp", "SOC", function(object) { is_dcp(object) })
+
+#' @param value A numeric scalar, vector, or matrix.
+#' @describeIn SOC Replaces the dual values of a second-order cone constraint.
+setReplaceMethod("dual_value", "SOC", function(object, value) {
+  if(object@axis == 2)   # Collapse columns.
+    idx <- 1
+  else if(object@axis == 1)   # Collapse rows.
+    idx <- 2
+  else
+    stop("Unimplemented")
+
+  cone_size <- 1 + dim(object@args[[2]])[idx]
+  value <- t(matrix(t(value), nrow = cone_size, byrow = FALSE))
+
+  t <- value[,1]
+  X <- value[,2:ncol(value)]
+  if(object@axis == 2)
+    X <- t(X)
+
+  value(object@dual_variables[[1]]) <- t
+  value(object@dual_variables[[2]]) <- X
+  return(object)
+})
+
+## Deleted duplicated and not-in-effect functions:
+## format_axis, format_elemwise, get_spacing_matrix

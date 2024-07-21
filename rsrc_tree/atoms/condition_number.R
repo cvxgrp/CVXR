@@ -1,0 +1,68 @@
+## CVXPY SOURCE: cvxpy/atoms/condition_number.py
+
+#'
+#' The ConditionNumber class.
+#'
+#' This class represents the condition number of a positive definite matrix \eqn{A}, i.e.,
+#'
+#' \deqn{\lambda_{\max}(A) / \lambda_{\min}(A)}
+#'
+#' @slot expr An \linkS4class{Expression} representing a positive definite matrix.
+#' @name ConditionNumber-class
+#' @aliases ConditionNumber
+#' @rdname ConditionNumber-class
+.ConditionNumber <- setClass("ConditionNumber", representation(A = "ConstValORExpr"), contains = "Atom")
+
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @rdname ConditionNumber-class
+ConditionNumber <- function(A) { .ConditionNumber(A = A) }
+
+setMethod("initialize", "ConditionNumber", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
+})
+
+#' @param object A \linkS4class{ConditionNumber} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn ConditionNumber The condition number of the matrix.
+setMethod("to_numeric", "ConditionNumber", function(object, values) {
+  # eigen_vec <- base::eigen(values[[1]], only.values = TRUE)$values
+  # max_eigen <- max(eigen_vec)
+  # min_eigen <- min(eigen_vec)
+  # return(max_eigen / min_eigen)
+  base::kappa(values[[1]], exact = TRUE)
+})
+
+#' @describeIn ConditionNumber Returns constraints describing the domain of the node.
+setMethod(".domain", "ConditionNumber", function(object) { list(Conj(t(object@args[[1]])) == object@args[[1]], object@args[[1]] %>>% 0) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn ConditionNumber Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "ConditionNumber", function(object, values) { stop("Unimplemented") })
+
+#' @describeIn ConditionNumber Check that the matrix is square.
+setMethod("validate_args", "ConditionNumber", function(object) {
+  arg_dim <- dim(object@args[[1]])
+  if(length(arg_dim) != 2 || arg_dim[1] != arg_dim[2])
+    stop("The argument to ConditionNumber must be a square matrix")
+})
+
+#' @describeIn ConditionNumber The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "ConditionNumber", function(object) { c(1,1) })
+
+#' @describeIn ConditionNumber The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "ConditionNumber", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn ConditionNumber Is the atom convex?
+setMethod("is_atom_convex", "ConditionNumber", function(object) { FALSE })
+
+#' @describeIn ConditionNumber Is the atom concave?
+setMethod("is_atom_concave", "ConditionNumber", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn ConditionNumber Is the atom weakly increasing in the index?
+setMethod("is_incr", "ConditionNumber", function(object, idx) { FALSE })
+
+#' @describeIn ConditionNumber Is the atom weakly decreasing in the index?
+setMethod("is_decr", "ConditionNumber", function(object, idx) { FALSE })
+

@@ -1,0 +1,60 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/abs.py
+
+#'
+#' The Abs class.
+#'
+#' This class represents the elementwise absolute value.
+#'
+#' @slot x An \linkS4class{Expression} object.
+#' @name Abs-class
+#' @aliases Abs
+#' @rdname Abs-class
+.Abs <- setClass("Abs", representation(x = "Expression"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression} object.
+#' @rdname Abs-class
+Abs <- function(x) { .Abs(x = x) }
+
+setMethod("initialize", "Abs", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object An \linkS4class{Abs} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Abs The elementwise absolute value of the input.
+setMethod("to_numeric", "Abs", function(object, values) { abs(values[[1]]) })
+
+#' @describeIn Abs Does the atom handle complex numbers?
+setMethod("allow_complex", "Abs", function(object) { TRUE })
+
+#' @describeIn Abs The atom is positive.
+setMethod("sign_from_args", "Abs", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn Abs The atom is convex.
+setMethod("is_atom_convex", "Abs", function(object) { TRUE })
+
+#' @describeIn Abs The atom is not concave.
+setMethod("is_atom_concave", "Abs", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Abs A logical value indicating whether the atom is weakly increasing.
+setMethod("is_incr", "Abs", function(object, idx) { is_nonneg(object@args[[idx]]) })
+
+#' @describeIn Abs A logical value indicating whether the atom is weakly decreasing.
+setMethod("is_decr", "Abs", function(object, idx) { is_nonpos(object@args[[idx]]) })
+
+#' @describeIn Abs Is \code{x} piecewise linear?
+setMethod("is_pwl", "Abs", function(object) {
+  is_pwl(object@args[[1]]) && (is_real(object@args[[1]]) || is_imag(object@args[[1]]))
+})
+
+setMethod(".grad", "Abs", function(object, values) {
+  # Grad: +1 if positive, -1 if negative
+  rows <- size(expr(object))
+  cols <- size(object)
+  D <- array(0, dim = dim(expr(object)))
+  D <- D + (values[[1]] > 0)
+  D <- D - (values[[1]] < 0)
+  list(Elementwise.elemwise_grad_to_diag(D, rows, cols))
+})

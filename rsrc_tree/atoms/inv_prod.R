@@ -1,0 +1,17 @@
+## CVXPY SOURCE: cvxpy/atoms/inv_prod.py
+#'
+#' The InvProd atom.
+#'
+#' The reciprocal of a product of the entries of a vector \eqn{x}, \eqn{(\prod_{i=1}^n x_i)^{-1}}, where \eqn{n} is the length of \eqn{x}.
+#'
+#' @param x An expression or vector whose reciprocal product is to be computed. Must have positive entries.
+#' @return The reciprocal product of \code{x}.
+InvProd <- function(value) {
+  val_dim <- dim(value)
+  if(is.na(val_dim) || is.null(val_dim))
+    p <- 1
+  else
+    p <- as.integer(sum(val_dim))
+  Power(InvPos(GeoMean(value)), p)
+}
+

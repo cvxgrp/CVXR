@@ -1,0 +1,76 @@
+## CVXPY SOURCE: cvxpy/atoms/sum_largest.py
+#'
+#' The SumLargest class.
+#'
+#' The sum of the largest k values of a matrix.
+#'
+#' @slot x An \linkS4class{Expression} or numeric matrix.
+#' @slot k The number of largest values to sum over.
+#' @name SumLargest-class
+#' @aliases SumLargest
+#' @rdname SumLargest-class
+.SumLargest <- setClass("SumLargest", representation(x = "ConstValORExpr", k = "numeric"), contains = "Atom")
+
+#' @param x An \linkS4class{Expression} or numeric matrix.
+#' @param k The number of largest values to sum over.
+#' @rdname SumLargest-class
+SumLargest <- function(x, k) { .SumLargest(x = x, k = k) }
+
+setMethod("initialize", "SumLargest", function(.Object, ..., x, k) {
+  .Object@x <- x
+  .Object@k <- k
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{SumLargest} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn SumLargest The sum of the \code{k} largest entries of the vector or matrix.
+setMethod("to_numeric", "SumLargest", function(object, values) {
+  # Return the sum of the k largest entries of the matrix
+  value <- as.vector(values[[1]])
+  k <- min(object@k, length(value))
+  val_sort <- sort(value, decreasing = TRUE)
+  sum(val_sort[1:k])
+})
+
+#' @describeIn SumLargest Check that \code{k} is a positive integer.
+setMethod("validate_args",   "SumLargest", function(object) {
+  if(as.integer(object@k) != object@k || object@k <= 0)
+    stop("[SumLargest: validation] k must be a positive integer")
+  callNextMethod()
+})
+
+#' @describeIn SumLargest The atom is a scalar.
+setMethod("dim_from_args", "SumLargest", function(object) { c(1,1) })
+
+#' @describeIn SumLargest The sign of the atom.
+setMethod("sign_from_args", "SumLargest", function(object) { c(is_nonneg(object@args[[1]]), is_nonpos(object@args[[1]])) })
+
+#' @describeIn SumLargest The atom is convex.
+setMethod("is_atom_convex", "SumLargest", function(object) { TRUE })
+
+#' @describeIn SumLargest The atom is not concave.
+setMethod("is_atom_concave", "SumLargest", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn SumLargest The atom is weakly increasing in every argument.
+setMethod("is_incr", "SumLargest", function(object, idx) { TRUE })
+
+#' @describeIn SumLargest The atom is not weakly decreasing in any argument.
+setMethod("is_decr", "SumLargest", function(object, idx) { FALSE })
+
+#' @describeIn SumLargest A list containing \code{k}.
+setMethod("get_data", "SumLargest", function(object) { list(object@k) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn SumLargest Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "SumLargest", function(object, values) {
+  # Grad: 1 for each of the k largest indices
+  value <- as.vector(t(values[[1]]))
+  k <- min(object@k, length(value))
+  indices <- order(value, decreasing = TRUE)
+  arg_dim <- dim(object@args[[1]])
+  D <- matrix(0, nrow = arg_dim[1]*arg_dim[2], ncol = 1)
+  D[indices[1:k]] <- 1
+  list(Matrix(D, sparse = TRUE))
+})

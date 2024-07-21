@@ -1,0 +1,76 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/entr.py
+
+#'
+#' The Entr class.
+#'
+#' This class represents the elementwise operation \eqn{-xlog(x)}.
+#'
+#' @slot x An \linkS4class{Expression} or numeric constant.
+#' @name Entr-class
+#' @aliases Entr
+#' @rdname Entr-class
+.Entr <- setClass("Entr", representation(x = "ConstValORExpr"), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression} or numeric constant.
+#' @rdname Entr-class
+Entr <- function(x) { .Entr(x = x) }
+
+setMethod("initialize", "Entr", function(.Object, ..., x) {
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object An \linkS4class{Entr} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Entr The elementwise entropy function evaluated at the value.
+setMethod("to_numeric", "Entr", function(object, values) {
+  xlogy <- function(x, y) {
+    tmp <- x*log(y)
+    tmp[x == 0] <- 0
+    tmp
+  }
+
+  x <- values[[1]]
+  results <- -xlogy(x, x)
+
+  # Return -Inf outside the domain
+  results[is.na(results)] <- -Inf
+  if(all(dim(results) == 1))
+    results <- as.vector(results)
+  results
+})
+
+#' @describeIn Entr The sign of the atom is unknown.
+setMethod("sign_from_args", "Entr", function(object) { c(FALSE, FALSE) })
+
+#' @describeIn Entr The atom is not convex.
+setMethod("is_atom_convex", "Entr", function(object) { FALSE })
+
+#' @describeIn Entr The atom is concave.
+setMethod("is_atom_concave", "Entr", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn Entr The atom is weakly increasing.
+setMethod("is_incr", "Entr", function(object, idx) { FALSE })
+
+#' @describeIn Entr The atom is weakly decreasing.
+setMethod("is_decr", "Entr", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Entr Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Entr", function(object, values) {
+  rows <- size(object@args[[1]])
+  cols <- size(object)
+
+  # Outside domain or on boundary
+  if(min(values[[1]]) <= 0)
+    return(list(NA_real_))   # Non-differentiable
+  else {
+    grad_vals <- -log(values[[1]]) - 1
+    return(list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
+  }
+})
+
+#' @describeIn Entr Returns constraints descrbing the domain of the node
+setMethod(".domain", "Entr", function(object) { list(object@args[[1]] >= 0) })
+

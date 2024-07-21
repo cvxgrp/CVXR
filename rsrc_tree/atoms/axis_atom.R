@@ -1,0 +1,96 @@
+## CVXPY SOURCE: cvxpy/atoms/axis_atom.py
+
+#'
+#' The AxisAtom class.
+#'
+#' This virtual class represents atomic expressions that can be applied along an axis in CVXR.
+#'
+#' @slot expr A numeric element, data.frame, matrix, vector, or Expression.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @name AxisAtom-class
+#' @aliases AxisAtom
+#' @rdname AxisAtom-class
+AxisAtom <- setClass("AxisAtom", representation(expr = "ConstValORExpr", axis = "ANY", keepdims = "logical"),
+                                 prototype(axis = NA_real_, keepdims = FALSE), contains = c("VIRTUAL", "Atom"))
+
+setMethod("initialize", "AxisAtom", function(.Object, ..., expr, axis = NA_real_, keepdims = FALSE) {
+  .Object@expr <- expr
+  .Object@axis <- axis
+  .Object@keepdims <- keepdims
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
+})
+
+#' @param object An \linkS4class{Atom} object.
+#' @describeIn AxisAtom The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "AxisAtom", function(object) {
+  # TODO: Revisit this when we properly handle dimensions of scalars (NULL) and 1-D vectors (length only).
+  arg_dim <- dim(object@args[[1]])
+  if(object@keepdims && is.na(object@axis))   # Copy scalar to maintain original dimensions.
+    arg_dim <- rep(1, length(arg_dim))
+  else if(object@keepdims && !is.na(object@axis)) {   # Collapse dimensions NOT in axis to 1.
+    collapse <- setdiff(1:length(arg_dim), object@axis)
+    arg_dim[collapse] <- 1
+  } else if(!object@keepdims && is.na(object@axis))   # Return a scalar.
+    # arg_dim <- NULL   # TODO: Should this be NA instead?
+    arg_dim <- rep(1, length(arg_dim))
+  else {   # Drop dimensions NOT in axis and collapse atom.
+    # arg_dim <- arg_dim[object@axis]
+    collapse <- setdiff(1:length(arg_dim), object@axis)
+    arg_dim <- c(arg_dim[object@axis], rep(1, length(collapse)))
+  }
+  return(arg_dim)
+})
+
+#' @describeIn AxisAtom A list containing \code{axis} and \code{keepdims}.
+setMethod("get_data", "AxisAtom", function(object) { list(object@axis, object@keepdims) })
+
+#' @describeIn AxisAtom Check that the new dimensions have the same number of entries as the old.
+setMethod("validate_args", "AxisAtom", function(object) {
+  if(!is.na(object@axis) && any(object@axis > ndim(object@args[[1]]) || object@axis <= 0))
+    stop("Invalid argument for axis. Must be an integer between 1 and ", ndim(object@args[[1]]))
+  callNextMethod()
+})
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".axis_grad", "AxisAtom", function(object, values) {
+  if(is.na(object@axis) || ndim(object@args[[1]]) < 2) {
+    value <- matrix(values[[1]], nrow = size(object@args[[1]]), ncol = 1)
+    D <- .column_grad(object, value)
+    if(is(D, "Matrix") || !any(is.na(D)))
+      D <- Matrix(D, sparse = TRUE)
+  } else {
+    m <- nrow(object@args[[1]])
+    n <- ncol(object@args[[1]])
+    if(object@axis == 2) {   # Function apply to each column
+      D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, n))
+      for(i in 1:n) {
+        value <- values[[1]][,i]
+        d <- t(.column_grad(object, value))
+        if(any(is.na(as.vector(d))))
+          return(list(NA_real_))
+        row <- seq((i-1)*n+1, (i-1)*n+m, length.out = m)
+        col <- rep(1,m) * i
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, n))
+      }
+    } else {   # Function apply to each row
+      values <- t(values[[1]])
+      D <- sparseMatrix(i = c(), j = c(), dims = c(m*n, m))
+      for(i in 1:m) {
+        value <- values[,i]
+        d <- t(.column_grad(object, value))
+        if(any(is.na(as.vector(d))))
+          return(list(NA_real_))
+        row <- seq(i, i+(n-1)*m, length.out = n)
+        col <- rep(1,n)*i
+        D <- D + sparseMatrix(i = row, j = col, x = as.vector(d), dims = c(m*n, m))
+      }
+    }
+  }
+  list(D)
+})
+
+#' @param value A numeric value
+#' @describeIn AxisAtom Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "AxisAtom", function(object, value) { stop("Unimplemented") })

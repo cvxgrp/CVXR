@@ -1,0 +1,79 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/vstack.py
+
+#'
+#' The VStack class.
+#'
+#' Vertical concatenation of values.
+#'
+#' @slot ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
+#' @name VStack-class
+#' @aliases VStack
+#' @rdname VStack-class
+.VStack <- setClass("VStack", contains = "AffAtom")
+
+#' @param ... \linkS4class{Expression} objects or matrices. All arguments must have the same number of columns.
+#' @rdname VStack-class
+VStack <- function(...) { .VStack(atom_args = list(...)) }
+
+#' @param object A \linkS4class{VStack} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn VStack Vertically concatenate the values using \code{rbind}.
+setMethod("to_numeric", "VStack", function(object, values) {
+  # do.call("rbind", values)   # Doesn't work on some objects like xts.
+  mat <- Reduce("rbind", values)
+  rownames(mat) <- NULL   # Get rid of init row name
+  return(mat)
+})
+
+#' @describeIn VStack Check all arguments have the same width.
+setMethod("validate_args", "VStack", function(object) {
+  model <- dim(object@args[[1]])
+  if(length(object@args) >= 2) {
+    for(arg in object@args[2:length(object@args)]) {
+      arg_dim <- dim(arg)
+      if(length(arg_dim) != length(model) || length(model) != length(arg_dim) ||
+         (length(model) > 1 && any(model[2:length(model)] != arg_dim[2:length(arg_dim)])) ||
+         (length(model) <= 1 && any(model != arg_dim)))
+        stop("All the input dimensions except for axis 1 must match exactly.")
+    }
+  }
+})
+
+#' @describeIn VStack The dimensions of the atom.
+setMethod("dim_from_args", "VStack", function(object) {
+  if(ndim(object@args[[1]]) == 0)
+    c(length(object@args), 1)
+  else if(ndim(object@args[[1]]) == 1)
+    c(length(object@args), dim(object@args[[1]])[1])
+  else {
+    rows <- sum(sapply(object@args, function(arg) { dim(arg)[1] }))
+    arg_dim <- dim(object@args[[1]])
+    if(length(arg_dim) < 2)
+      # c(rows, NA)
+      c(rows, 1)
+    else
+      c(rows, arg_dim[2:length(arg_dim)])
+  }
+})
+
+#' @describeIn VStack Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "VStack", function(object) { TRUE })
+
+#' @describeIn VStack Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "VStack", function(object) { TRUE })
+
+VStack.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lo.vstack(arg_objs, dim), list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn VStack The graph implementation of the atom.
+setMethod("graph_implementation", "VStack", function(object, arg_objs, dim, data = NA_real_) {
+  VStack.graph_implementation(arg_objs, dim, data)
+})
+
+setMethod("rbind2", signature(x = "Expression", y = "ANY"), function(x, y, ...) { VStack(x, y) })
+setMethod("rbind2", signature(x = "ANY", y = "Expression"), function(x, y, ...) { VStack(x, y) })
+

@@ -1,0 +1,20 @@
+## CVXPY SOURCE: cvxpy/atoms/.py
+#'
+#' The MixedNorm atom.
+#'
+#' The \eqn{l_{p,q}} norm of X, \eqn{(\sum_k (\sum_l ||X_{k,l}||^p)^{q/p})^{1/q}}.
+#'
+#' @param X The matrix to take the \eqn{l_{p,q}} norm of
+#' @param p The type of inner norm
+#' @param q The type of outer norm
+#' @return Returns the mixed norm of X with specified parameters p and q
+MixedNorm <- function(X, p = 2, q = 1) {
+  X <- as.Constant(X)
+
+  # Inner norms
+  vecnorms <- Norm(X, p, axis = 1)
+
+  # Outer norms
+  Norm(vecnorms, q)
+}
+

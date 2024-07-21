@@ -1,0 +1,92 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/maximum.py
+
+#'
+#' The MaxElemwise class.
+#'
+#' This class represents the elementwise maximum.
+#'
+#' @slot arg1 The first \linkS4class{Expression} in the maximum operation.
+#' @slot arg2 The second \linkS4class{Expression} in the maximum operation.
+#' @slot ... Additional \linkS4class{Expression} objects in the maximum operation.
+#' @name MaxElemwise-class
+#' @aliases MaxElemwise
+#' @rdname MaxElemwise-class
+.MaxElemwise <- setClass("MaxElemwise", validity = function(object) {
+                           if(is.null(object@args) || length(object@args) < 2)
+                             stop("[MaxElemwise: validation] args must have at least 2 arguments")
+                           return(TRUE)
+                         }, contains = "Elementwise")
+
+#' @param arg1 The first \linkS4class{Expression} in the maximum operation.
+#' @param arg2 The second \linkS4class{Expression} in the maximum operation.
+#' @param ... Additional \linkS4class{Expression} objects in the maximum operation.
+#' @rdname MaxElemwise-class
+MaxElemwise <- function(arg1, arg2, ...) { .MaxElemwise(atom_args = list(arg1, arg2, ...)) }
+
+#' @param object A \linkS4class{MaxElemwise} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn MaxElemwise The elementwise maximum.
+setMethod("to_numeric", "MaxElemwise", function(object, values) {
+  # Reduce(function(x, y) { ifelse(x >= y, x, y) }, values)
+  Reduce("pmax", values)
+})
+
+#' @describeIn MaxElemwise The sign of the atom.
+setMethod("sign_from_args", "MaxElemwise", function(object) {
+  # Reduces the list of argument signs according to the following rules:
+  #    NONNEGATIVE, ANYTHING = NONNEGATIVE
+  #    ZERO, UNKNOWN = NONNEGATIVE
+  #    ZERO, ZERO = ZERO
+  #    ZERO, NONPOSITIVE = ZERO
+  #    UNKNOWN, NONPOSITIVE = UNKNOWN
+  #    NONPOSITIVE, NONPOSITIVE = NONPOSITIVE
+  is_pos <- any(sapply(object@args, is_nonneg))
+  is_neg <- all(sapply(object@args, is_nonpos))
+  c(is_pos, is_neg)
+})
+
+#' @describeIn MaxElemwise The atom is convex.
+setMethod("is_atom_convex", "MaxElemwise", function(object) { TRUE })
+
+#' @describeIn MaxElemwise The atom is not concave.
+setMethod("is_atom_concave", "MaxElemwise", function(object) { FALSE })
+
+#' @describeIn MaxElemwise Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "MaxElemwise", function(object) { TRUE })
+
+#' @describeIn MaxElemwise Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "MaxElemwise", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn MaxElemwise The atom is weakly increasing.
+setMethod("is_incr", "MaxElemwise", function(object, idx) { TRUE })
+
+#' @describeIn MaxElemwise The atom is not weakly decreasing.
+setMethod("is_decr", "MaxElemwise", function(object, idx) { FALSE })
+
+#' @describeIn MaxElemwise Are all the arguments piecewise linear?
+setMethod("is_pwl", "MaxElemwise", function(object) { all(sapply(object@args, is_pwl)) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn MaxElemwise Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "MaxElemwise", function(object, values) {
+  max_vals <- to_numeric(object, values)
+  vals_dim <- dim(max_vals)
+  if(is.null(vals_dim))
+    unused <- matrix(TRUE, nrow = length(max_vals), ncol = 1)
+  else
+    unused <- array(TRUE, dim = vals_dim)
+  grad_list <- list()
+  idx <- 1
+  for(value in values) {
+    rows <- size(object@args[[idx]])
+    cols <- size(object)
+    grad_vals <- (value == max_vals) & unused
+
+    # Remove all the max_vals that were used
+    unused[value == max_vals] <- FALSE
+    grad_list <- c(grad_list, list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols)))
+    idx <- idx + 1
+  }
+  grad_list
+})

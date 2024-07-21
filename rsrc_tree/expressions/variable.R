@@ -1,41 +1,43 @@
+## CVXPY SOURCE: cvxpy/expression/variable.py
 #
 # Upper Triangle to Full Matrix
+# Moved to C++ routine
 #
 # Returns a coefficient matrix to create a symmetric matrix: if `x` is the upper triangular part in row-major order, then Ax = full symmetric matrix, where `A=upper_tri_full(dim(x)[1])`. 
 #
 # @param n The width/height of the matrix
 # @return The coefficient matrix.
-upper_tri_to_full <- function(n) {
-  if (n == 0) {
-    return(sparseMatrix(i = integer(0), j = integer(0), dims = c(0L, 0L)))
-  }
-  entries <- floor(n *(n + 1L) / 2L)
+## upper_tri_to_full <- function(n) {
+##   if (n == 0) {
+##     return(sparseMatrix(i = integer(0), j = integer(0), dims = c(0L, 0L)))
+##   }
+##   entries <- floor(n *(n + 1L) / 2L)
 
-  val_arr <- c()
-  row_arr <- c()
-  col_arr <- c()
-  count <- 1
-  for(i in 1:n) {
-    for(j in i:n) {
-      # Index in the original matrix
-      col_arr <- c(col_arr, count)
+##   val_arr <- c()
+##   row_arr <- c()
+##   col_arr <- c()
+##   count <- 1
+##   for(i in 1:n) {
+##     for(j in i:n) {
+##       # Index in the original matrix
+##       col_arr <- c(col_arr, count)
 
-      # Index in the filled matrix
-      row_arr <- c(row_arr, (j-1)*n + i)
-      val_arr <- c(val_arr, 1.0)
-      if(i != j) {
-        # Index in the original matrix
-        col_arr <- c(col_arr, count)
+##       # Index in the filled matrix
+##       row_arr <- c(row_arr, (j-1)*n + i)
+##       val_arr <- c(val_arr, 1.0)
+##       if(i != j) {
+##         # Index in the original matrix
+##         col_arr <- c(col_arr, count)
 
-        # Index in the filled matrix
-        row_arr <- c(row_arr, (i-1)*n + j)
-        val_arr <- c(val_arr, 1.0)
-      }
-      count <- count + 1
-    }
-  }
-  sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
-}
+##         # Index in the filled matrix
+##         row_arr <- c(row_arr, (i-1)*n + j)
+##         val_arr <- c(val_arr, 1.0)
+##       }
+##       count <- count + 1
+##     }
+##   }
+##   sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
+## }
 
 #'
 #' The Variable class.
@@ -161,19 +163,17 @@ setMethod("variable_of_provenance", "Variable", function(object) {
   object@variable_with_attributes
 })
 
-setMethod("show", "Variable", function(object) {
-  attr_str <- get_attr_str(object)
-  if(length(attr_str) > 0)
-    print(paste("Variable((", paste(dim(object), collapse = ", "), "), ", attr_str, ")", sep = ""))
-  else
-    print(paste("Variable(", paste(dim(object), collapse = ", "), ")", sep = ""))
-})
-
 #' @describeIn Variable Convert to a character representation
 setMethod("as.character", "Variable", function(x) {
-  attr_str <- get_attr_str(x)
+  dims <- glue::glue_collapse("{dim(x)}", sep = ", ")
+  attr_str <- get_attr_str(object)
   if(length(attr_str) > 0)
-    cat("Variable((", paste(dim(x), collapse = ", "), "), ", attr_str, ")", sep = "")
+    glue::glue("Variable[{dims}]({attr_str})")    
   else
-    cat("Variable(", paste(dim(x), collapse = ", "), ")", sep = "")
+    glue::glue("Variable[{dims}]")        
 })
+
+setMethod("show", "Variable", function(object) {
+  cli::text(as.character(object))
+})
+

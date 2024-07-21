@@ -1,0 +1,60 @@
+## CVXPY SOURCE: cvxpy/atoms/norm_nuc.py
+#'
+#' The NormNuc class.
+#'
+#' The nuclear norm, i.e. sum of the singular values of a matrix.
+#'
+#' @slot A An \linkS4class{Expression} or numeric matrix.
+#' @name NormNuc-class
+#' @aliases NormNuc
+#' @rdname NormNuc-class
+.NormNuc <- setClass("NormNuc", representation(A = "ConstValORExpr"), contains = "Atom")
+
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @rdname NormNuc-class
+NormNuc <- function(A) { .NormNuc(A = A) }
+
+setMethod("initialize", "NormNuc", function(.Object, ..., A) {
+  .Object@A <- A
+  callNextMethod(.Object, ..., atom_args = list(.Object@A))
+})
+
+#' @param object A \linkS4class{NormNuc} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn NormNuc The nuclear norm (i.e., the sum of the singular values) of \code{A}.
+setMethod("to_numeric", "NormNuc", function(object, values) {
+  # Returns the nuclear norm (i.e. the sum of the singular values) of A
+  sum(svd(values[[1]])$d)
+})
+
+#' @describeIn NormNuc Does the atom handle complex numbers?
+setMethod("allow_complex", "NormNuc", function(object) { TRUE })
+
+#' @describeIn NormNuc The atom is a scalar.
+setMethod("dim_from_args", "NormNuc", function(object) { c(1,1) })
+
+#' @describeIn NormNuc The atom is positive.
+setMethod("sign_from_args",  "NormNuc", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn NormNuc The atom is convex.
+setMethod("is_atom_convex", "NormNuc", function(object) { TRUE })
+
+#' @describeIn NormNuc The atom is not concave.
+setMethod("is_atom_concave", "NormNuc", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn NormNuc The atom is not monotonic in any argument.
+setMethod("is_incr", "NormNuc", function(object, idx) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn NormNuc The atom is not monotonic in any argument.
+setMethod("is_decr", "NormNuc", function(object, idx) { FALSE })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn NormNuc Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "NormNuc", function(object, values) {
+  # Grad: UV^T
+  s <- svd(values[[1]])
+  D <- s$u %*% t(s$v)
+  list(Matrix(as.vector(D), sparse = TRUE))
+})

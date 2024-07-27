@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/nonpos.py
+## CVXPY SOURCE: cvxpy/expression/constraints/nonpos.py
 
 #'
 #' The NonPosConstraint class

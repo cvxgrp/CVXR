@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/second_order.py
+## CVXPY SOURCE: cvxpy/expression/constraints/second_order.py
 #'
 #' The SOC class.
 #'

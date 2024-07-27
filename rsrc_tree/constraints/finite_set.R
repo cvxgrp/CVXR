@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/finite_set.py
+## CVXPY SOURCE: cvxpy/expression/constraints/finite_set.py
 #'
 #' The FiniteSet class.
 #'

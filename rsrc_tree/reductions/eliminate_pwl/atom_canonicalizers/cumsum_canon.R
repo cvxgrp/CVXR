@@ -1,0 +1,32 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/cumsum_canon.py
+#'
+#' EliminatePwl canonicalizer for the cumulative sum atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-lienar atom
+#' constructed from a cumulative sum atom where the objective
+#' is Y that is of the same dimension as the matrix of the expression
+#' and the constraints consist of various row constraints
+EliminatePwl.cumsum_canon <- function(expr, args) {
+  X <- args[[1]]
+  axis <- expr@axis
+
+  # Implicit O(n) definition:
+  # X = Y[2:nrow(Y),] - Y[1:(nrow(Y)-1),]
+  # Y <- Variable(dim(expr))
+  Y <- new("Variable", dim = dim(expr))
+  if(axis == 2) {  # Cumulative sum on each column
+    if(nrow(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- list(X[2:nrow(X),] == Y[2:nrow(Y),] - Y[1:(nrow(Y) - 1),], Y[1,] == X[1,])
+  } else {   # Cumulative sum on each row
+    if(ncol(expr) == 1)
+      return(list(X, list()))
+    else
+      constr <- list(X[,2:ncol(X)] == Y[,2:ncol(Y)] - Y[,1:(ncol(Y) - 1)], Y[,1] == X[,1])
+  }
+  return(list(Y, constr))
+}
+

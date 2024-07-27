@@ -1,0 +1,31 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/logistic_canon.py
+#'
+#' Dcp2Cone canonicalizer for the logistic function atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the logistic atom
+#' where the objective function is given by t0 and the
+#' constraints consist of the ExpCone constraints.
+Dcp2Cone.logistic_canon <- function(expr, args) {
+  x <- args[[1]]
+  expr_dim <- dim(expr)
+  # log(1 + exp(x)) <= t is equivalent to exp(-t) + exp(x - t) <= 1
+  # t0 <- Variable(expr_dim)
+  t0 <- new("Variable", dim = expr_dim)
+  canon1 <- Dcp2Cone.exp_canon(expr, list(-t0))
+  canon2 <- Dcp2Cone.exp_canon(expr, list(x - t0))
+
+  t1 <- canon1[[1]]
+  constr1 <- canon1[[2]]
+  t2 <- canon2[[1]]
+  constr2 <- canon2[[2]]
+
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  constraints <- c(constr1, constr2, list(t1 + t2 <= ones))
+  return(list(t0, constraints))
+}
+

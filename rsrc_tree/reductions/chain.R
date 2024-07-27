@@ -1,0 +1,77 @@
+## CVXPY SOURCE: cvxpy/reductions/chain.py
+## NOTE how `apply` is renamed to `perform`!
+#'
+#' The Chain class.
+#'
+#' This class represents a reduction that replaces symbolic parameters with
+#' their constraint values.
+#'
+#' @rdname Chain-class
+.Chain <- setClass("Chain", representation(reductions = "list"), prototype(reductions = list()), contains = "Reduction")
+Chain <- function(problem = NULL, reductions = list()) { .Chain(problem = problem, reductions = reductions) }
+
+#' @param x,object A \linkS4class{Chain} object.
+#' @rdname Chain-class
+setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.character), collapse = ", ") })
+
+setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
+
+# TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
+'[[.Chain' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+
+#' @param name The type of reduction.
+#' @describeIn Chain Returns the reduction of the specified type.
+setMethod("$", signature(x = "Chain"), function(x, name) {
+  for(reduction in x@reductions) {
+    if(is(reduction, name))
+      return(reduction)
+  }
+  stop(name, " reduction not found")
+})
+
+#' @param problem A \linkS4class{Problem} object to check.
+#' @describeIn Chain A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
+#' reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
+setMethod("accepts", signature(object = "Chain", problem = "Problem"), function(object, problem) {
+  for(i in seq_along(object@reductions)) {
+    r <- object@reductions[[i]]
+    if(!accepts(r, problem))
+      return(FALSE)
+
+    tmp <- perform(r, problem)
+    object@reductions[[i]] <- tmp[[1]]
+    problem <- tmp[[2]]
+  }
+  return(TRUE)
+})
+
+#' @describeIn Chain Applies the chain to a problem and returns an equivalent problem.
+setMethod("perform", signature(object = "Chain", problem = "Problem"), function(object, problem, verbose = FALSE) {
+  inverse_data <- list()
+  for(i in seq_along(object@reductions)) {
+    r <- object@reductions[[i]]
+    if(verbose)
+      print(paste("Applying reduction", class(r)))
+    res <- perform(r, problem)
+
+    object@reductions[[i]] <- res[[1]]
+    problem <- res[[2]]
+    inv <- res[[3]]
+    inverse_data <- c(inverse_data, list(inv))
+  }
+  return(list(object, problem, inverse_data))
+})
+
+#' @param solution A \linkS4class{Solution} or list.
+#' @param inverse_data A list that contains the data encoding the original problem.
+#' @describeIn Chain Performs the reduction on a problem and returns an equivalent problem.
+setMethod("invert", signature(object = "Chain", solution = "SolutionORList", inverse_data = "list"), function(object, solution, inverse_data) {
+  m <- min(length(object@reductions), length(inverse_data))
+  for(i in rev(seq_len(m))) {
+    r <- object@reductions[[i]]
+    inv <- inverse_data[[i]]
+    solution <- invert(r, solution, inv)
+  }
+  return(solution)
+})
+

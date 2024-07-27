@@ -1,0 +1,21 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/abs_canon.py
+# Atom canonicalizers.
+#'
+#' EliminatePwl canonicalizer for the absolute atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the picewise-lienar atom
+#' constructed from an absolute atom where the objective function
+#' consists of the variable that is of the same dimension as the
+#' original expression and the constraints consist of splitting
+#' the absolute value into two inequalities.
+#'
+EliminatePwl.abs_canon <- function(expr, args) {
+  x <- args[[1]]
+  # t <- Variable(dim(expr))
+  t <- new("Variable", dim = dim(expr))
+  constraints <- list(t >= x, t >= -x)
+  return(list(t, constraints))
+}
+

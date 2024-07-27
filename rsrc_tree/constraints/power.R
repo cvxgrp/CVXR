@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/power.py
+## CVXPY SOURCE: cvxpy/expression/constraints/power.py
 #'
 #' The PowCone3D class.
 #'

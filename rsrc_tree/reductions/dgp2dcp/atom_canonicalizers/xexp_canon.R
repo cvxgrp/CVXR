@@ -1,0 +1,13 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/xexp_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the xexp atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the xexp atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.xexp_canon <- function(expr, args) {
+  # expr <- NULL
+  return(list(args[[1]] + Exp(args[[1]]), list()))
+}
+

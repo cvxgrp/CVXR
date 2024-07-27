@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/.py
+## CVXPY SOURCE: cvxpy/expression/constraints/.py
 #'
 #' The Constraint class.
 #'

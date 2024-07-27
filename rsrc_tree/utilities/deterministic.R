@@ -1,0 +1,22 @@
+## CVXPY SOURCE: cvxpy/utilities/deterministic.py
+
+# Return unique list preserving the order.
+unique_list <- function(duplicates_list) {
+  used_id <- c()
+  uniq_objs <- list()
+  for(x in duplicates_list) {
+    if(!(id(x) %in% used_id)) {
+      used_id <- c(used_id, id(x))
+      uniq_objs <- c(uniq_objs, x)
+    }
+  }
+  return(uniq_objs)
+  # unique(flatten_list(duplicates_list))   # Remove duplicates
+}
+
+## Replace above by faster code below
+## # Return unique list preserving the order.
+## unique_list <- function(duplicates_list) {
+##   ids <- sapply(duplicates_list, id)
+##   duplicates_list[!duplicated(ids)]
+## }

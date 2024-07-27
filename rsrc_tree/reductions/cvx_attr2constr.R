@@ -1,0 +1,176 @@
+## CVXPY SOURCE: cvxpy/reductions/cvx_attr2constr.py
+
+#==================================#
+# Convex Attributes to Constraints
+#==================================#
+
+## We prefix this with `r.` to avoid global clashes. (`r.` for reductions)
+
+# Convex attributes that generate constraints.
+r.CONVEX_ATTRIBUTES <- c("nonneg", "nonpos", "pos", "neg", "symmetric", "diag", "PSD", "NSD")
+
+# Attributes related to symmetry.
+r.SYMMETRIC_ATTRIBUTES <- c("symmetric", "PSD", "NSD")
+
+convex_attributes <- function(variables) {
+  # Returns a list of the (constraint-generating) convex attributes present among the variables.
+  attributes_present(variables, r.CONVEX_ATTRIBUTES)
+}
+
+attributes_present <- function(variables, attr_map) {
+  # Returns a list of the relevant attributes present among the variables.
+  # attr_map[sapply(attr_map, function(attr) {
+  #  any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] }))
+  # })]
+
+  attr_list <- c()
+  for(attr in attr_map) {
+    if(any(sapply(variables, function(v) { !is.null(v@attributes[[attr]]) && v@attributes[[attr]] })))
+      attr_list <- c(attr_list, attr)
+  }
+  return(attr_list)
+}
+
+recover_value_for_variable <- function(variable, lowered_value, project = TRUE) {
+  if(variable@attributes$diag) {
+    v_flat <- as.vector(lowered_value)
+    return(sparseMatrix(i = seq_along(v_flat), j = seq_along(v_flat), x = v_flat))
+  } else if(length(attributes_present(list(variable), r.SYMMETRIC_ATTRIBUTES)) > 0) {
+    n <- nrow(variable)
+    value <- matrix(0, nrow = nrow(variable), ncol = ncol(variable))
+    triu_mask <- upper.tri(matrix(0, nrow =  n, ncol = n), diag = TRUE)
+    value[triu_mask] <- as.vector(lowered_value)
+    return(value + t(value) - diag(diag(value)))
+  } else if(project)
+    return(project(variable, lowered_value))
+  else
+    return(lowered_value)
+}
+
+lower_value <- function(variable, value) {
+  if(length(attributes_present(list(variable), r.SYMMETRIC_ATTRIBUTES)) > 0) {
+    # return(upper.tri(value, diag = TRUE))
+    n <- nrow(variable)
+    triu_mask <- upper.tri(matrix(0, nrow = n, ncol = n), diag = TRUE)
+    return(value[triu_mask])
+  } else if(variable@attributes$diag)
+    return(diag(value))
+  else
+    return(value)
+}
+
+#'
+#' The CvxAttr2Constr class.
+#'
+#' This class represents a reduction that expands convex variable attributes into constraints.
+#'
+#' @rdname CvxAttr2Constr-class
+CvxAttr2Constr <- setClass("CvxAttr2Constr", contains = "Reduction")
+
+setMethod("accepts", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) { TRUE })
+
+#' @param object A \linkS4class{CvxAttr2Constr} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn CvxAttr2Constr Expand convex variable attributes to constraints.
+setMethod("perform", signature(object = "CvxAttr2Constr", problem = "Problem"), function(object, problem) {
+  if(length(attributes_present(variables(problem), r.CONVEX_ATTRIBUTES)) == 0)
+    return(list(object, problem, list()))
+
+  # For each unique variable, add constraints.
+  id2new_var <- list()
+  id2new_obj <- list()
+  id2old_var <- list()
+  constr <- list()
+  for(var in variables(problem)) {
+    vid <- id(var)
+    vid_char <- as.character(id(var))
+    if(!(vid_char %in% names(id2new_var))) {
+      id2old_var[[vid_char]] <- var
+      new_var <- FALSE
+      new_attr <- var@attributes
+      for(key in r.CONVEX_ATTRIBUTES) {
+        if(new_attr[[key]]) {
+          new_var <- TRUE
+          new_attr[[key]] <- FALSE
+        }
+      }
+
+      if(length(attributes_present(list(var), r.SYMMETRIC_ATTRIBUTES)) > 0) {
+        n <- nrow(var)
+        new_dim <- c(floor(n*(n+1)/2), 1)
+        # upper_tri <- do.call(Variable, c(list(new_dim), new_attr))
+        upper_tri <- do.call(.Variable, c(list(dim = new_dim, var_id = vid), new_attr))
+        upper_tri <- set_variable_of_provenance(upper_tri, var)
+        id2new_var[[vid_char]] <- upper_tri
+        fill_coeff <- Constant(upper_tri_to_full(n))
+        full_mat <- fill_coeff %*% upper_tri
+        obj <- reshape_expr(full_mat, c(n, n))
+      } else if(var@attributes$diag) {
+        # diag_var <- do.call(Variable, c(list(nrow(var)), new_attr))
+        diag_var <- do.call(.Variable, c(list(dim = c(nrow(var), 1), var_id = vid), new_attr))
+        diag_var <- set_variable_of_provenance(diag_var, var)
+        id2new_var[[vid_char]] <- diag_var
+        obj <- diag(diag_var)
+      } else if(new_var) {
+        # obj <- do.call(Variable, c(list(dim(var)), new_attr))
+        obj <- do.call(.Variable, c(list(dim = dim(var), var_id = vid), new_attr))
+        obj <- set_variable_of_provenance(obj, var)
+        id2new_var[[vid_char]] <- obj
+      } else {
+        obj <- var
+        id2new_var[[vid_char]] <- obj
+      }
+
+      vid_new <- id(var)
+      vid_new_char <- as.character(vid_new)
+      id2new_obj[[vid_new_char]] <- obj
+      if(is_pos(var) || is_nonneg(var))
+        constr <- c(constr, obj >= 0)
+      else if(is_neg(var) || is_nonpos(var))
+        constr <- c(constr, obj <= 0)
+      else if(is_psd(var))
+        constr <- c(constr, obj %>>% 0)
+      else if(var@attributes$NSD)
+        constr <- c(constr, obj %<<% 0)
+    }
+  }
+
+  # Create new problem.
+  obj <- tree_copy(problem@objective, id_objects = id2new_obj)
+  cons_id_map <- list()
+  for(cons in problem@constraints) {
+    constr <- c(constr, tree_copy(cons, id_objects = id2new_obj))
+    cons_id_map[[as.character(id(cons))]] <- id(constr[[length(constr)]])
+  }
+  inverse_data <- list(id2new_var, id2old_var, cons_id_map)
+  return(list(object, Problem(obj, constr), inverse_data))
+})
+
+#' @param object A \linkS4class{CvxAttr2Constr} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The inverse data returned by an invocation to apply.
+#' @describeIn CvxAttr2Constr Performs the reduction on a problem and returns an equivalent problem.
+setMethod("invert", signature(object = "CvxAttr2Constr", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
+  if(is.null(inverse_data) || length(inverse_data) == 0)
+    return(solution)
+
+  id2new_var <- inverse_data[[1]]
+  id2old_var <- inverse_data[[2]]
+  cons_id_map <- inverse_data[[3]]
+  pvars <- list()
+  for(id in names(id2old_var)) {
+    var <- id2old_var[[id]]
+    new_var <- id2new_var[[id]]
+    nvid <- as.character(id(new_var))
+    if(nvid %in% names(solution@primal_vars))
+      pvars[[id]] <- recover_value_for_variable(var, solution@primal_vars[[nvid]])
+  }
+
+  dvars <- list()
+  for(orig_id in names(cons_id_map)) {
+    vid <- as.character(cons_id_map[[orig_id]])
+    if(vid %in% names(solution@dual_vars))
+      dvars[[orig_id]] <- solution@dual_vars[[vid]]
+  }
+  return(Solution(solution@status, solution@opt_val, pvars, dvars, solution@attr))
+})

@@ -1,0 +1,75 @@
+## CVXPY SOURCE: cvxpy/reductions/matrix_stuffing.py
+
+#'
+#' Coalesces bool, int indices for variables.
+#'
+#' @param variables A list of \linkS4class{Variable} objects.
+#' @return Coalesces bool, int indices for variables. The indexing scheme assumes that the variables will be coalesced into
+#' a single one-dimensional variable, with each variable being reshaped in Fortran order.
+extract_mip_idx <- function(variables) {
+  # The indexing scheme assumes that the variables will be coalesced into a single
+  # one-dimensional variable with each variable being reshaped in Fortran order.
+
+  ravel_multi_index <- function(multi_index, x, vert_offset) {
+    # Ravel a multi-index and add a vertical offset to it
+    ravel_idx <- array(FALSE, dim(x))
+    ravel_idx[multi_index] <- TRUE
+    ravel_idx <- which(ravel_idx, arr.ind = FALSE)
+    return(sapply(ravel_idx, function(idx) { vert_offset + idx }))
+  }
+
+  boolean_idx <- c()
+  integer_idx <- c()
+  vert_offset <- 0
+  for(x in variables) {
+    if(nrow(x@boolean_idx) > 0) {
+      multi_index <- x@boolean_idx
+      boolean_idx <- c(boolean_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    if(nrow(x@integer_idx) > 0) {
+      multi_index <- x@integer_idx
+      integer_idx <- c(integer_idx, ravel_multi_index(multi_index, x, vert_offset))
+    }
+    vert_offset <- vert_offset + size(x)
+  }
+
+  if(is.null(boolean_idx))
+    boolean_idx <- matrix(0, nrow = 0, ncol = 1)
+  else
+    boolean_idx <- as.matrix(boolean_idx)
+  if(is.null(integer_idx))
+    integer_idx <- matrix(0, nrow = 0, ncol = 1)
+  else
+    integer_idx <- as.matrix(integer_idx)
+  return(list(boolean_idx, integer_idx))
+}
+
+#'
+#' The MatrixStuffing class.
+#'
+#' This class stuffs a problem into a standard form for a family of solvers.
+#'
+#' @rdname MatrixStuffing-class
+MatrixStuffing <- setClass("MatrixStuffing", contains = "Reduction")
+
+#' @param object A \linkS4class{MatrixStuffing} object.
+#' @param problem A \linkS4class{Problem} object to stuff; the arguments of every constraint must be affine.
+#' @describeIn MatrixStuffing Returns a stuffed problem. The returned problem is a minimization problem in which every
+#' constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
+setMethod("perform", signature(object = "MatrixStuffing", problem = "Problem"), function(object, problem) {
+  stop("Unimplemented")
+})
+
+#' @param object A \linkS4class{MatrixStuffing} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The data encoding the original problem.
+#' @describeIn MatrixStuffing Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "MatrixStuffing", solution = "Solution", inverse_data = "InverseData"), function(object, solution, inverse_data) {
+  stop("Unimplemented")
+})
+
+## setMethod("stuffed_objective", signature(object = "MatrixStuffing", problem = "Problem", inverse_data = "InverseData"), function(object, problem, inverse_data) {
+##   stop("Unimplemented")
+## })
+
+

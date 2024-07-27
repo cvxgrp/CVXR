@@ -1,0 +1,76 @@
+## CVXPY SOURCE: cvxpy/transforms/indicator.py
+
+#'
+#' The Indicator class.
+#'
+#' An expression representing the convex function I(constraints) = 0 if constraints hold, and +Inf otherwise.
+#'
+#' @slot constraints A list of \linkS4class{Constraint}s.
+#' @slot err_tol A numeric tolerance for determing whether the constraints hold.
+#' @name Indicator-class
+#' @aliases Indicator
+#' @rdname Indicator-class
+.Indicator <- setClass("Indicator", representation(constraints = "list", err_tol = "numeric"),
+                                    prototype(constraints = list(), err_tol = 1e-3), contains = "Expression")
+Indicator <- function(constraints, err_tol = 1e-3) { .Indicator(args = constraints, err_tol = err_tol) }
+indicator <- Indicator
+
+setMethod("initialize", "Indicator", function(.Object, ..., constraints = list(), err_tol = 1e-3) {
+  .Object@constraints <- constraints
+  .Object@err_tol <- err_tol
+  callNextMethod(.Object, ..., args = constraints)
+})
+
+#' @describeIn Indicator Expression is constant if all constraints have constant args.
+setMethod("is_constant", "Indicator", function(object) {
+  all_args <- do.call("+", lapply(object@args, function(c) { c@args }))
+  all(sapply(all_args, is_constant))
+})
+
+#' @describeIn Indicator Is the expression convex?
+setMethod("is_convex", "Indicator", function(object) { TRUE })
+
+#' @describeIn Indicator Is the expression concave?
+setMethod("is_concave", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Is the expression log-log convex?
+setMethod("is_log_log_convex", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Is the expression log-log concave?
+setMethod("is_log_log_concave", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Is the expression positive?
+setMethod("is_nonneg", "Indicator", function(object) { TRUE })
+
+#' @describeIn Indicator Is the expression negative?
+setMethod("is_nonpos", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Is the expression imaginary?
+setMethod("is_imag", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Is the expression complex valued?
+setMethod("is_complex", "Indicator", function(object) { FALSE })
+
+#' @describeIn Indicator Returns information needed to reconstruct the expression besides the args.
+setMethod("get_data", "Indicator", function(object) { list(object@err_tol) })
+
+#' @describeIn Indicator Returns the (row, col) dimensions of the expression.
+setMethod("dim", "Indicator", function(x) { c(1,1) })
+
+#' @describeIn Indicator Returns the string representation of the expression.
+setMethod("name", "Indicator", function(x) { cat("Indicator(", x@args, ")") })
+
+#' @describeIn Indicator A list of constraints describe the closure of the region where the expression is finite.
+setMethod("domain", "Indicator", function(object) { object@args })
+
+#' @describeIn Indicator Returns the numeric value of the expression.
+setMethod("value", "Indicator", function(object) {
+  vals <- sapply(object@args, function(cons) { constr_value(cons, tolerance = object@err_tol) })
+  ifelse(all(vals), 0.0, Inf)
+})
+
+#' @describeIn Indicator Gives the (sub/super)gradient of the expression wrt each variable. Matrix expressions are vectorized, so the gradient is a matrix. NA indicates variable values unknown or outside domain.
+setMethod("grad", "Indicator", function(object) {
+  # TODO: Implement gradient.
+  stop("Unimplemented")
+})

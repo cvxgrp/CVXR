@@ -1,0 +1,34 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/matrix_frac_canon.py
+#'
+#' Dcp2Cone canonicalizer for the matrix fraction atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from the matrix fraction
+#' atom, where the objective function is the trace of Tvar, a
+#' m by m matrix where the constraints consist of the matrix of
+#' the Schur complement of Tvar to consist of P, an n by n, given
+#' matrix, X, an n by m given matrix, and Tvar.
+Dcp2Cone.matrix_frac_canon <- function(expr, args) {
+  X <- args[[1]]   # n by m matrix
+  P <- args[[2]]   # n by n matrix
+
+  if(length(dim(X)) == 1)
+    X <- reshape_expr(X, c(nrow(X), 1))
+  X_dim <- dim(X)
+  n <- X_dim[1]
+  m <- X_dim[2]
+
+  Tvar <- Variable(m, m, symmetric = TRUE)
+  # A matrix with Schur complement Tvar - t(X) %*% inv(P) %*% X.
+  M <- bmat(list(list(P, X),
+                 list(t(X), Tvar)))
+  constraints <- list(PSDConstraint(M))
+
+  if(!is_symmetric(P)) {
+    ut <- upper_tri(P)
+    lt <- upper_tri(t(P))
+    constraints <- c(constraints, ut == lt)
+  }
+  return(list(matrix_trace(Tvar), constraints))
+}

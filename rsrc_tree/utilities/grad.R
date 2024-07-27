@@ -1,0 +1,29 @@
+## CVXPY SOURCE: cvxpy/utilities/grad.py
+###################################
+#                                 #
+# Utility functions for gradients #
+#                                 #
+###################################
+constant_grad <- function(expr) {
+  # Returns the gradient of constant terms in an expression.
+  # Matrix expressions are vectorized, so the gradient is a matrix.
+  grad <- list()
+  for(var in variables(expr)) {
+    rows <- size(var)
+    cols <- size(expr)
+    # Scalars -> 0
+    if(rows == 1 && cols == 1)
+      grad[[as.character(id(var))]] <- 0.0
+    else
+      grad[[as.character(id(var))]] <- sparseMatrix(i = c(), j = c(), dims = c(rows, cols), repr = "C")
+  }
+  return(grad)
+}
+
+error_grad <- function(expr) {
+  # Returns a gradient of all NAs.
+  vars <- variables(expr)
+  grad <- as.list(rep(NA_real_, length(vars)))
+  names(grad) <- sapply(vars, id)
+  return(grad)
+}

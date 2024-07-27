@@ -1,0 +1,419 @@
+## CVXPY SOURCE: cvxpy/utilities/power_tools.py
+###################
+#                 #
+# Power utilities #
+#                 #
+###################
+gm <- function(t, x, y) {
+  length <- size(t)
+  SOC(t = reshape_expr(x+y, c(length, 1)),
+      X = vstack(reshape_expr(x-y, c(1, length)), reshape_expr(2*t, c(1, length))),
+      axis = 2)
+}
+
+gm_constrs <- function(t, x_list, p) {
+  # Form internal constraints for weighted geometric mean t <= x^p
+  # t <= x[1]^p[1] * x[2]^p[2] * ... * x[n]^p[n],
+  # where x and t can either be scalar or matrix variables.
+
+  if(!is_weight(p))
+    stop("p must be a valid weight vector")
+  w <- dyad_completion(p)
+
+  tree <- decompose(w)
+  t_dim <- dim(t)
+  d <- Rdictdefault(default = function(key) { new("Variable", dim = t_dim) })
+  d[w] <- t
+
+  long_w <- length(w) - length(x_list)
+  if(long_w > 0)
+    x_list <- c(x_list, as.list(rep(t, long_w)))
+
+  if(length(x_list) != length(w))
+    stop("Expected length of x_list to be equal to length of w, but got ", length(x_list), " != ", length(w))
+
+  for(i in seq_along(x_list)) {
+    p <- w[i]
+    v <- x_list[[i]]
+
+    if(p > 0) {
+      tmp <- rep(0, length(w))
+      tmp[i] <- 1
+      d[tmp] <- v
+    }
+  }
+
+  constraints <- list()
+  for(item in tree$items) {
+    elem <- item$key
+    children <- item$value
+
+    if(!any(elem == 1)) {
+      for(key in list(elem, children[[1]], children[[2]])) {
+        if(!is.element(key, d))
+          d[key] <- d@default(key)   # Generate new value using default function
+      }
+      constraints <- c(constraints, list(gm(d[elem], d[children[[1]]], d[children[[2]]])))
+    }
+  }
+  return(constraints)
+}
+
+# TODO: For powers of 2 and 1/2 only. Get rid of this when gm_constrs is working in general.
+# gm_constrs_spec <- function(t, x_list, p) {
+#  list(gm(t, x_list[[1]], x_list[[2]]))
+# }
+
+pow_high <- function(p) {
+  # Return (t,1,x) power tuple:
+  # x <= t^(1/p) 1^(1-1/p).
+  # User wants the epigraph variable t.
+
+  if(p <= 1)
+    stop("Must have p > 1")
+  p <- 1/gmp::as.bigq(p)
+  if(1/p == as.integer(1/p))
+    return(list(as.integer(1/p), c(p, 1-p)))
+  return(list(1/p, c(p, 1-p)))
+}
+
+pow_mid <- function(p) {
+  # Return (x,1,t) power tuple:
+  # t <= x^p 1^(1-p).
+  # User wants the epigraph variable t.
+
+  if(p >= 1 || p <= 0)
+    stop("Must have 0 < p < 1")
+  p <- gmp::as.bigq(p)
+  return(list(p, c(p, 1-p)))
+}
+
+pow_neg <- function(p) {
+  # Return (x,t,1) power tuple:
+  # 1 <= x^(p/(p-1)) t^(-1/(p-1)).
+  # User wants the epigraph variable t.
+
+  if(p >= 0)
+    stop("must have p < 0")
+  p <- gmp::as.bigq(p)
+  p <- p/(p-1)
+  return(list(p/(p-1), c(p, 1-p)))
+}
+
+limit_denominator <- function(num, max_denominator = 10^6) {
+  # Closest fraction to self with denominator at most max_denominator.
+  # Adapted from the Python fractions library: https://github.com/python/cpython/blob/main/Lib/fractions.py
+
+  if(max_denominator < 1)
+    stop("max_denominator should be at least 1")
+  if(gmp::denominator(num) <= max_denominator)
+    return(gmp::as.bigq(num))
+
+  p0 <- 0
+  q0 <- 1
+  p1 <- 1
+  q1 <- 0
+
+  n <- as.double(gmp::numerator(num))
+  d <- as.double(gmp::denominator(num))
+
+  while(TRUE) {
+    a <- floor(n/d)
+    q2 <- q0 + a*q1
+    if(q2 > max_denominator)
+      break
+
+    p0 <- p1
+    q0 <- q1
+    p1 <- p0 + a*p1
+    q1 <- q2
+
+    n <- d
+    d <- n - a*d
+  }
+  k <- floor((max_denominator - q0)/q1)
+
+  # Determine which of the candidates (p0+k*p1)/(q0+k*q1) and p1/q1 is
+  # closer to self. The distance between them is 1/(q1*(q0+k*q1)), while
+  # the distance from p1/q1 to self is d/(q1*self._denominator). So we
+  # need to compare 2*(q0+k*q1) with self._denominator/d.
+  denom <- as.double(gmp::denominator(num))
+  if((2*d*(q0 + k*q1)) <= denom)
+    return(gmp::as.bigq(p1, q1))
+  else
+    return(gmp::as.bigq(p0 + k*p1, q0 + k*q1))
+}
+
+is_power2 <- function(num) {
+  # Test if num is a positive integer power of 2.
+  # Note: Unlike Python, this uses the actual value of the number, so is_power2(1.0) returns TRUE.
+  return(gmp::is.whole(num) && num > 0 && !bitwAnd(num, num - 1))
+}
+
+is_dyad <- function(frac) {
+  # Test if frac is a non-negative dyadic fraction or integer.
+  if(gmp::is.whole(frac) && frac >= 0)
+    return(TRUE)
+  else if(gmp::is.bigq(frac) && frac >= 0 && is_power2(gmp::denominator(frac)))
+    return(TRUE)
+  else
+    return(FALSE)
+}
+
+is_dyad_weight <- function(w) {
+  # Test if a vector is a valid dyadic weight vector.
+  # w must be nonnegative, sum to 1, and have integer or dyadic fractional elements.
+  return(is_weight(w) && all(sapply(w, is_dyad)))
+}
+
+is_weight <- function(w) {
+  # Test if w is a valid weight vector.
+  # w must have nonnegative integer or fraction elements, and sum to 1.
+
+  # if(is.matrix(w) || is.vector(w))
+  #   w <- as.list(w)
+
+  valid_elems <- rep(FALSE, length(w))
+  for(i in seq_along(w))
+    valid_elems[i] <- (w[i] >= 0) && (gmp::is.whole(w[i]) || gmp::is.bigq(w[i]))
+  valid_elems <- all(valid_elems)
+
+  # return(all(valid_elems) && all.equal(sum(as.double(w)), 1))
+  return(valid_elems && sum(w) == 1)
+}
+
+fracify <- function(a, max_denom = 1024, force_dyad = FALSE) {
+  # Return a valid fractional weight tuple (and its dyadic completion) to represent the weights given by "a"
+  # When the input tuple contains only integers and fractions, "fracify" will try to represent the weights exactly
+
+  if(any(a < 0))
+    stop("Input powers must be non-negative")
+
+  if(!(gmp::is.whole(max_denom) && max_denom > 0))
+    stop("Input denominator must be an integer")
+
+  # TODO: Handle case where a contains mixture of BigQ, BigZ, and regular R numbers
+  # if(is.matrix(a) || is.vector(a))
+  #  a <- as.list(a)
+  max_denom <- next_pow2(max_denom)
+  total <- sum(a)
+
+  if(force_dyad)
+    w_frac <- make_frac(a, max_denom)
+  else if(all(sapply(a, function(v) { gmp::is.whole(v) || gmp::is.bigq(v) }))) {
+    w_frac <- rep(gmp::as.bigq(0), length(a))
+    for(i in 1:length(a))
+      w_frac[i] <- gmp::as.bigq(a[i], total)
+    d <- max(gmp::denominator(w_frac))
+    if(d > max_denom)
+      stop("Can't reliably represent the weight vector. Try increasing 'max_denom' or checking the denominators of your input fractions.")
+  } else {
+    # fall through code
+    w_frac <- rep(gmp::as.bigq(0), length(a))
+    for(i in 1:length(a))
+      w_frac[i] <- gmp::as.bigq(as.double(a[i])/total)
+    if(as.double(sum(w_frac)) != 1)     # TODO: Do we need to limit the denominator with gmp?
+      w_frac <- make_frac(a, max_denom)
+  }
+  list(w_frac, dyad_completion(w_frac))
+}
+
+# Approximate "a/sum(a)" with tuple of fractions with denominator exactly "denom"
+make_frac <- function(a, denom) {
+  a <- as.double(a)/sum(a)
+  b <- sapply(a, function(v) { as.double(v * denom) })
+  b <- as.matrix(as.integer(b))
+  err <- b/as.double(denom) - a
+
+  inds <- order(err)[1:(denom - sum(b))]
+  b[inds] <- b[inds] + 1
+
+  denom <- as.integer(denom)
+  bout <- rep(gmp::as.bigq(0), length(b))
+  for(i in 1:length(b))
+    bout[i] <- gmp::as.bigq(b[i], denom)
+  bout
+}
+
+# Return the dyadic completion of "w"
+dyad_completion <- function(w) {
+  # TODO: Need to handle whole decimal numbers here, e.g.
+  # w <- c(1, 0, 0.0, gmp::as.bigq(0,1)) should give c(Bigq(1,1), Bigq(0,1), Bigq(0,1), Bigq(0,1))
+  for(i in 1:length(w))
+    w[i] <- gmp::as.bigq(w[i])
+  d <- gmp::as.bigq(max(gmp::denominator(w)))
+
+  # if extra_index
+  p <- next_pow2(d)
+  if(p == d)
+    # the tuple of fractions is already dyadic
+    return(w)
+  else {
+    # need to add dummy variable to represent as dyadic
+    orig <- rep(gmp::as.bigq(0), length(w))
+    for(i in 1:length(w))
+      orig[i] <- gmp::as.bigq(w[i]*d, p)
+    return(c(orig, gmp::as.bigq(p-d,p)))
+  }
+}
+
+# Return the l_infinity norm error from approximating the vector a_orig/sum(a_orig) with the weight vector w_approx
+approx_error <- function(a_orig, w_approx) {
+  if(!all(a_orig >= 0))
+    stop("a_orig must be a non-negative vector")
+  if(!is_weight(w_approx))
+    stop("w_approx must be a weight vector")
+  if(length(a_orig) != length(w_approx))
+    stop("a_orig and w_approx must have the same length")
+
+  w_orig <- as.matrix(a_orig)/sum(a_orig)
+
+  as.double(max(abs(w_orig - w_approx)))
+}
+
+# Return first power of 2 >= n
+next_pow2 <- function(n) {
+  if(n <= 0) return(1)
+
+  ## NOTE: With CVXR 1.0, R.utils is no longer imported since log2 will work on both gmp integers
+  ## and 64-bit integers
+  # len <- nchar(R.utils::intToBin(n))
+  # n2 <- bitwShiftL(1, len)
+  # if(bitwShiftR(n2, 1) == n)
+  #   return(n)
+  # else
+  #   return(n2)
+  p <- log2(as.double(n))
+  return(2^ceiling(p))
+}
+
+# Check that w_dyad is a valid dyadic completion of w
+check_dyad <- function(w, w_dyad) {
+  if(!(is_weight(w) && is_dyad_weight(w_dyad)))
+    return(FALSE)
+
+  if(length(w) == length(w_dyad) && all(w == w_dyad))
+    # w is its own dyadic completion
+    return(TRUE)
+
+  if(length(w_dyad) == length(w) + 1) {
+    if(length(w) == 0)
+      return(TRUE)
+
+    denom <- 1-w_dyad[length(w_dyad)]
+    cmp <- rep(gmp::as.bigq(0), length(w_dyad)-1)
+    for(i in 1:(length(w_dyad)-1))
+      cmp[i] <- gmp::as.bigq(w_dyad[i], denom)
+    return(all(w == cmp))
+  } else
+    return(FALSE)
+}
+
+# Split a tuple of dyadic rationals into two children so d_tup = 1/2*(child1 + child2)
+split <- function(w_dyad) {
+  # vector is all zeros with single 1, so can't be split and no children
+  if(any(w_dyad == 1))
+    return(list())
+
+  bit <- gmp::as.bigq(1, 1)
+  child1 <- rep(gmp::as.bigq(0), length(w_dyad))
+  if(is.list(w_dyad)) {
+    child2 <- rep(gmp::as.bigq(0), length(w_dyad))
+    for(i in 1:length(w_dyad))
+      child2[i] <- 2*w_dyad[[i]]
+  } else
+    child2 <- 2*w_dyad
+
+  while(TRUE) {
+    for(ind in 1:length(child2)) {
+      val <- child2[ind]
+      if(val >= bit) {
+        child2[ind] <- child2[ind] - bit
+        child1[ind] <- child1[ind] + bit
+      }
+      if(sum(child1) == 1)
+        return(list(child1, child2))
+    }
+    bit <- bit/2
+  }
+  stop("Something wrong with input w_dyad")
+}
+
+# Recursively split dyadic tuples to produce a DAG
+decompose <- function(w_dyad) {
+  if(!is_dyad_weight(w_dyad))
+    stop("input must be a dyadic weight vector")
+
+  tree <- Rdict()
+  todo <- list(as.vector(w_dyad))
+
+  i <- 1
+  len <- length(todo)
+  while(i <= len) {
+    t <- todo[[i]]
+    if(!is.element(t, tree)) {
+      tree[t] <- split(t)
+      todo <- c(todo, tree[t])
+      len <- length(todo)
+    }
+    i <- i + 1
+  }
+  tree
+}
+
+# String representation of objects in a vector
+prettyvec <- function(t) {
+  paste("(", paste(t, collapse = ", "), ")", sep = "")
+}
+
+# Print keys of dictionary with children indented underneath
+prettydict <- function(d) {
+  key_sort <- order(sapply(d$keys, get_max_denom), decreasing = TRUE)
+  keys <- d$keys[key_sort]
+  result <- ""
+  for(vec in keys) {
+    child_order <- order(sapply(d[vec], get_max_denom), decreasing = FALSE)
+    children <- d[vec][child_order]
+    result <- paste(result, prettyvec(vec), "\n", sep = "")
+    for(child in children)
+      result <- paste(result, " ", prettyvec(child), "\n", sep = "")
+  }
+  result
+}
+
+# Get the maximum denominator in a sequence of "BigQ" and "int" objects
+get_max_denom <- function(tup) {
+  denom <- rep(gmp::as.bigq(0), length(tup))
+  for(i in 1:length(tup)) {
+    denom[i] <- gmp::denominator(gmp::as.bigq(tup[i]))
+  }
+  max(denom)
+}
+
+# Return lower bound on number of cones needed to represent tuple
+lower_bound <- function(w_dyad) {
+  if(!is_dyad_weight(w_dyad))
+    stop("w_dyad must be a dyadic weight")
+  md <- get_max_denom(w_dyad)
+
+  if(is(md, "bigq") || is(md, "bigz")) {
+    ## md_int <- bit64::as.integer64(gmp::asNumeric(md))
+    ## bstr <- sub("^[0]+", "", bit64::as.bitstring(md_int))   # Get rid of leading zeros
+    ## lb1 <- nchar(bstr)
+      ## # TODO: Should use formatBin in mpfr, but running into problems with precision
+      lb1  <- log2(bit64::as.integer64(gmp::asNumeric(md)))
+  } else {
+      ##lb1 <- nchar(R.utils::intToBin(md))-1
+      lb1  <- log2(md)
+  }
+  # don't include zero entries
+  lb2 <- sum(w_dyad != 0) - 1
+  max(lb1, lb2)
+}
+
+# Return number of cones in tree beyond known lower bounds
+over_bound <- function(w_dyad, tree) {
+  nonzeros <- sum(w_dyad != 0)
+  return(length(tree) - lower_bound(w_dyad) - nonzeros)
+}
+

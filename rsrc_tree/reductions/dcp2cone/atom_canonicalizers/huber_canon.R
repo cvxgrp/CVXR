@@ -1,0 +1,38 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/huber_canon.py
+#'
+#' Dcp2Cone canonicalizer for the huber atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a huber atom where the objective
+#' function is the variable t with square and absolute constraints
+Dcp2Cone.huber_canon <- function(expr, args) {
+  M <- expr@M
+  x <- args[[1]]
+  expr_dim <- dim(expr)
+  # n <- Variable(expr_dim)
+  # s <- Variable(expr_dim)
+  n <- new("Variable", dim = expr_dim)
+  s <- new("Variable", dim = expr_dim)
+
+  # n^2 + 2*M*|s|
+  # TODO: Make use of recursion inherent to canonicalization process and just return a
+  # power/abs expression for readiability's sake
+  power_expr <- power(n,2)
+  canon <- Dcp2Cone.power_canon(power_expr, power_expr@args)
+  n2 <- canon[[1]]
+  constr_sq <- canon[[2]]
+
+  abs_expr <- abs(s)
+  canon <- EliminatePwl.abs_canon(abs_expr, abs_expr@args)
+  abs_s <- canon[[1]]
+  constr_abs <- canon[[2]]
+
+  obj <- n2 + 2*M*abs_s
+
+  # x == s + n
+  constraints <- c(constr_sq, constr_abs)
+  constraints <- c(constraints, x == s + n)
+  return(list(obj, constraints))
+}
+

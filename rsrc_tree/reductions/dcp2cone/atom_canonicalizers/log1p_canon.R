@@ -1,0 +1,13 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/log1p_canon.py
+#'
+#' Dcp2Cone canonicalizer for the log 1p atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a log 1p atom where
+#' t is the objective function and the constraints consist of
+#' ExpCone constraints + 1.
+Dcp2Cone.log1p_canon <- function(expr, args) {
+  return(Dcp2Cone.log_canon(expr, list(args[[1]] + 1)))
+}
+

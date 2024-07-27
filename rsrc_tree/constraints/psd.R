@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/psd.py
+## CVXPY SOURCE: cvxpy/expression/constraints/psd.py
 #'
 #' The PSDConstraint class.
 #'

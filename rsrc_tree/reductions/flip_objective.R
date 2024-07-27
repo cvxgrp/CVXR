@@ -1,0 +1,33 @@
+## CVXPY SOURCE: cvxpy/reductions/flip_objective.py
+#'
+#' The FlipObjective class.
+#'
+#' This class represents a reduction that flips a minimization objective to a
+#' maximization and vice versa.
+#'
+#' @rdname FlipObjective-class
+FlipObjective <- setClass("FlipObjective", contains = "Reduction")
+
+setMethod("accepts", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) { TRUE })
+
+#' @param object A \linkS4class{FlipObjective} object.
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn FlipObjective Flip a minimization objective to a maximization and vice versa: \eqn{\max f(x) = -\min -f(x)}
+setMethod("perform", signature(object = "FlipObjective", problem = "Problem"), function(object, problem) {
+  if(inherits(problem@objective, "Maximize"))
+    objective <- Minimize
+  else
+    objective <- Maximize
+  problem <- Problem(objective(-expr(problem@objective)), problem@constraints)
+  return(list(object, problem, list()))
+})
+
+#' @param object A \linkS4class{FlipObjective} object.
+#' @param solution A \linkS4class{Solution} to a problem that generated the inverse data.
+#' @param inverse_data The inverse data returned by an invocation to apply.
+#' @describeIn FlipObjective Map the solution of the flipped problem to that of the original.
+setMethod("invert", signature(object = "FlipObjective", solution = "Solution", inverse_data = "list"), function(object, solution, inverse_data) {
+  if(!is.na(solution@opt_val) && !is.null(solution@opt_val))
+    solution@opt_val <- -solution@opt_val
+  return(solution)
+})

@@ -1,0 +1,73 @@
+## CVXPY SOURCE: cvxpy/reductions/solvers/solver.py
+
+#'
+#' The ReductionSolver class.
+#'
+#' Generic interface for a solver that uses reduction semantics.
+#'
+#' @slot DIMS The key that maps to ConeDims in the data returned by perform(). There are separate ConeDims classes for cone programs vs. QPs. See matrix stuffing functions for details.
+#' @slot MIP_CAPABLE Can the solver handle mixed-integer programs?
+#' @rdname ReductionSolver-class
+setClass("ReductionSolver",
+         slots = list(
+           DIMS = "character",
+           VAR_ID = "character",
+           DUAL_VAR_ID = "character",
+           EQ_CONSTR = "character",
+           NEQ_CONSTR = "character",
+           MIP_CAPABLE = "logical"),   # Keys for inverse data. Internal use only!
+         prototype = list(
+           DIMS = "dims",
+           VAR_ID = "var_id",
+           DUAL_VAR_ID = "dual_var_id",
+           EQ_CONSTR = "eq_constr",
+           NEQ_CONSTR = "other_constr",
+           MIP_CAPABLE = FALSE),
+         contains = "Reduction")
+
+# Solver capabilities.
+#' @param solver,object,x A \linkS4class{ReductionSolver} object.
+#' @describeIn ReductionSolver Can the solver handle mixed-integer programs?
+setMethod("mip_capable", "ReductionSolver", function(solver) { solver@MIP_CAPABLE })
+
+#' @describeIn ReductionSolver Returns the name of the solver
+setMethod("name", "ReductionSolver", function(x) { stop("Unimplemented") })
+
+#' @describeIn ReductionSolver Imports the solver
+setMethod("import_solver", "ReductionSolver", function(solver) { stop("Unimplemented") })
+
+#' @describeIn ReductionSolver Is the solver installed?
+setMethod("is_installed", "ReductionSolver", function(solver) {
+  tryCatch({
+    import_solver(solver)
+  }, error = function(e) {
+    solver_str <- ifelse(is(solver, "character"), solver, name(solver))
+    warning("Encountered unexpected error importing solver ", solver_str)
+  })
+})
+
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn ReductionSolver Solve a problem represented by data returned from perform.
+setMethod("solve_via_data", "ReductionSolver", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  ## if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
+  stop("Unimplemented")
+})
+
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn ReductionSolver Solve the problem and return a Solution object.
+setMethod("reduction_solve", "ReductionSolver", function(object, problem, warm_start, verbose, solver_opts) {
+  res <- perform(object, problem)
+  object <- res[[1]]
+  data <- res[[2]]
+  inv_data <- res[[3]]
+  solution <- solve_via_data(object, data, warm_start, verbose, solver_opts)
+  return(invert(object, solution, inv_data))
+})

@@ -1,0 +1,40 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/power_canon.py
+
+#'
+#' Dcp2Cone canonicalizer for the power atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a power atom, where
+#' the objective function consists of the variable t which is
+#' of the dimension of the original vector from the power atom
+#' and the constraints consists of geometric mean constraints.
+Dcp2Cone.power_canon <- function(expr, args) {
+  x <- args[[1]]
+  p <- expr@p_rational
+  w <- expr@w
+
+  if(p == 1)
+    return(list(x, list()))
+
+  expr_dim <- dim(expr)
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  if(p == 0)
+    return(list(ones, list()))
+  else {
+    # t <- Variable(expr_dim)
+    t <- new("Variable", dim = expr_dim)
+    # TODO: gm_constrs requires each of its inputs to be a Variable; is this something that we want to change?
+    if(p > 0 && p < 1)
+      return(list(t, gm_constrs(t, list(x, ones), w)))
+    else if(p > 1)
+      return(list(t, gm_constrs(x, list(t, ones), w)))
+    else if(p < 0)
+      return(list(t, gm_constrs(ones, list(x, t), w)))
+    else
+      stop("This power is not yet supported")
+  }
+}

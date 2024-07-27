@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/zero.py
+## CVXPY SOURCE: cvxpy/expression/constraints/zero.py
 #'
 #' The ZeroConstraint class
 #'

@@ -1,0 +1,18 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/parameter_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the parameter atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the parameter atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.parameter_canon <- function(expr, args) {
+  # args <- list()
+  # NB: We do *not* reuse the original parameter's ID. This is important,
+  # because we want to distinguish between parameters in the DGP problem
+  # and parameters in the DCP problem (for differentiation).
+  param <- new("Parameter", dim = dim(expr), name = name(expr))
+  value(param) <- base::log(value(expr))
+  return(list(param, list()))
+}
+

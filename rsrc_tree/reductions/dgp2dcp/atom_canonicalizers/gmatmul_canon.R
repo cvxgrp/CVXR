@@ -1,0 +1,12 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/gmatmul_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the geometric matrix multiplier atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the geometric matrix multiplier atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.gmatmul_canon <- function(expr, args) {
+  return(list(expr@A %*% args[[1]], list()))
+}
+

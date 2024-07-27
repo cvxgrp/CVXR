@@ -1,0 +1,23 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/geo_mean_canon.py
+#'
+#' Dcp2Cone canonicalizer for the geometric mean atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a geometric mean atom
+#' where the objective function is the variable t with geometric mean constraints
+Dcp2Cone.geo_mean_canon <- function(expr, args) {
+  x <- args[[1]]
+  w <- expr@w
+  expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
+
+  x_list <- lapply(seq_len(w), function(i) { x[i] })
+
+  # TODO: Catch cases where we have (0,0,1)?
+  # TODO: What about curvature case (should be affine) in trivial case of (0,0,1)?
+  # Should this behavior match with what we do in power?
+  return(list(t, gm_constrs(t, x_list, w)))
+}
+

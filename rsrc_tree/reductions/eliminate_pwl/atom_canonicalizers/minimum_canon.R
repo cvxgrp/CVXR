@@ -1,0 +1,18 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/minimum_canon.py
+#'
+#' EliminatePwl canonicalizer for the elementwise minimum atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-lienar atom
+#' constructed by a minimum elementwise atom where the
+#' objective function is the negative of variable t
+#' t produced by max_elemwise_canon of the same dimension
+#' as the expression and the constraints consist of a simple
+#' inequality.
+EliminatePwl.min_elemwise_canon <- function(expr, args) {
+  tmp <- do.call(MaxElemwise, lapply(args, function(arg) { -arg }))
+  canon <- EliminatePwl.max_elemwise_canon(tmp, tmp@args)
+  return(list(-canon[[1]], canon[[2]]))
+}
+

@@ -1,0 +1,19 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/maximum_canon.py
+#'
+#' EliminatePwl canonicalizer for the elementwise maximum atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-linear atom
+#' constructed by a elementwise maximum atom where the
+#' objective function is the variable t of the same dimension
+#' as the expression and the constraints consist of a simple
+#' inequality.
+EliminatePwl.max_elemwise_canon <- function(expr, args) {
+  # expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = dim(expr))
+  constraints <- lapply(args, function(elem) { t >= elem })
+  return(list(t, constraints))
+}
+

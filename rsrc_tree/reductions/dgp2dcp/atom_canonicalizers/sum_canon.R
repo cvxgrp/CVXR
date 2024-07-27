@@ -1,0 +1,29 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/sum_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the sum atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the sum atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.sum_canon <- function(expr, args) {
+  X <- args[[1]]
+  if(is.na(expr@axis)) {
+    summation <- Dgp2Dcp.explicit_sum(X)
+    canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
+    return(list(reshape_expr(canon, dim(expr)), list()))
+  }
+
+  if(expr@axis == 2)
+    X <- t(X)
+
+  rows <- list()
+  for(i in seq_len(nrow(X))) {
+    summation <- Dgp2Dcp.explicit_sum(X[i])
+    canon <- Dgp2Dcp.add_canon(summation, summation@args)[[1]]
+    rows <- c(rows, list(canon))
+  }
+  canon <- do.call("HStack", rows)
+  return(list(reshape_expr(canon, dim(expr)), list()))
+}
+

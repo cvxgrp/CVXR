@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/consraints/exponential.py
+## CVXPY SOURCE: cvxpy/expression/constraints/exponential.py
 #'
 #' The ExpCone class.
 #'

@@ -1,0 +1,61 @@
+## CVXPY SOURCE: cvxpy/reductions/solution.py
+
+# Factory function for infeasible or unbounded solutions.
+failure_solution <- function(status, attr = NULL) {
+  if(status %in% c(INFEASIBLE, INFEASIBLE_INACCURATE))
+    opt_val <- Inf
+  else if(status %in% c(UNBOUNDED, UNBOUNDED_INACCURATE))
+    opt_val <- -Inf
+  else
+    opt_val <- NA_real_
+
+  if(is.null(attr))
+    attr <- list()
+  if(status == INFEASIBLE_OR_UNBOUNDED)
+    attr$message <- INF_OR_UNB_MESSAGE
+
+  return(Solution(status, opt_val, list(), list(), attr))
+}
+
+INF_OR_UNB_MESSAGE <- paste("The problem is either infeasible or unbounded, but the solver cannot tell which.",
+                           "Disable any solver-specific presolve methods and re-solve to determine the precise problem status.",
+                           "For GUROBI and CPLEX you can automatically perform this re-solve with the keyword argument solve(prob, reoptimize = TRUE, ...).")
+
+
+#'
+#' The Solution class.
+#'
+#' This class represents a solution to an optimization problem.
+#'
+#' @rdname Solution-class
+.Solution <- setClass("Solution", representation(status = "character", opt_val = "numeric", primal_vars = "list", dual_vars = "list", attr = "list"),
+                      prototype(primal_vars = list(), dual_vars = list(), attr = list()))
+
+Solution <- function(status, opt_val, primal_vars, dual_vars, attr) {
+  .Solution(status = status, opt_val = opt_val, primal_vars = primal_vars, dual_vars = dual_vars, attr = attr)
+}
+
+# TODO: Get rid of this and just skip calling copy on Solution objects.
+setMethod("copy", "Solution", function(object) {
+  return(Solution(object@status, object@opt_val, object@primal_vars, object@dual_vars, object@attr))
+})
+
+#' @param x A \linkS4class{Solution} object.
+#' @rdname Solution-class
+setMethod("as.character", "Solution", function(x) {
+  paste("Solution(status = ", x@status,
+              ", opt_val = ", x@opt_val,
+              ", primal_vars = (", paste(x@primal_vars, collapse = ", "),
+              "), dual_vars = (", paste(x@dual_vars, collapse = ", "),
+              "), attr = (", paste(x@attr, collapse = ", "), "))", sep = "")
+})
+
+setMethod("show", "Solution", function(object) {
+  cat("Solution(", object@status, ", ",
+                   object@opt_val, ", (",
+                   paste(object@primal_vars, collapse = ", "), "), (",
+                   paste(object@dual_vars, collapse = ", "), "), (",
+                   paste(object@attr, collapse = ", "), "))", sep = "")
+})
+
+setClassUnion("SolutionORList", c("Solution", "list"))

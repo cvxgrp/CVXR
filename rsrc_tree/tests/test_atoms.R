@@ -1,0 +1,1207 @@
+context("test_atoms")
+TOL <- 1e-5
+
+CONSTANT <- "CONSTANT"
+AFFINE <- "AFFINE"
+CONVEX <- "CONVEX"
+CONCAVE <- "CONCAVE"
+ZERO <- "ZERO"
+UNKNOWN <- "UNKNOWN"
+NONNEG <- "NONNEGATIVE"
+NONPOS <- "NONPOSITIVE"
+
+a <- Variable(name = "a")
+
+x <- Variable(2, name = "x")
+y <- Variable(2, name = "y")
+
+A <- Variable(2, 2, name = "A")
+B <- Variable(2, 2, name = "B")
+C <- Variable(3, 2, name = "C")
+
+test_that("test the norm_inf function", {
+  exp <- x + y
+  atom <- norm_inf(exp)
+  
+  # expect_equal(name(atom), "norm_inf(x + y)")
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_true(is_convex(atom))
+  expect_true(is_concave(-atom))
+  expect_equal(curvature(norm_inf(atom)), CONVEX)
+  expect_equal(curvature(norm_inf(-atom)), CONVEX)
+})
+
+test_that("test the norm1 function", {
+  exp <- x + y
+  atom <- norm1(exp)
+  
+  # expect_equal(name(atom), "norm1(x + y)")
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(curvature(norm1(atom)), CONVEX)
+  expect_equal(curvature(norm1(-atom)), CONVEX)
+})
+
+test_that("test list input", {
+  # Test that list input is rejected.
+  expect_error(max_entries(list(Variable(), 1)), 
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+  expect_error(norm(list(1, Variable())),
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+  
+  xv <- Variable()
+  yv <- Variable()
+  expect_error(norm(list(xv, yv)) <= 1,
+               "The input must be a single CVXR Expression, not a list. Combine Expressions using atoms such as bmat, hstack, and vstack", fixed = TRUE)
+})
+
+test_that("test norm exceptions", {
+  # Test that norm exceptions are raised as expected.
+  xv <- Variable(2)
+  expect_error(norm(xv, "nuc"), 
+               "Unsupported norm option nuc for non-matrix", fixed = TRUE)
+})
+
+test_that("test quad_form function", {
+  P <- Parameter(2, 2, symmetric = TRUE)
+  expr <- quad_form(x, P)
+  expect_false(is_dcp(expr))
+})
+
+test_that("test the power function", {
+  for(a_dim in list(c(1, 1), c(3, 1), c(2, 3))) {
+    # x_pow <- Variable(a_dim)
+    # y_pow <- Variable(a_dim)
+    x_pow <- new("Variable", dim = a_dim)
+    y_pow <- new("Variable", dim = a_dim)
+    exp <- x_pow + y_pow
+    
+    for(p in c(0, 1, 2, 3, 2.7, 0.67, -1, -2.3, 4/5)) {
+      atom <- power(exp, p)
+      expect_equal(dim(atom), a_dim)
+      
+      if(p > 1 || p < 0)
+        expect_equal(curvature(atom), CONVEX)
+      else if(p == 1)
+        expect_equal(curvature(atom), AFFINE)
+      else if(p == 0)
+        expect_equal(curvature(atom), CONSTANT)
+      else
+        expect_equal(curvature(atom), CONCAVE)
+      
+      if(p != 1)
+        expect_equal(sign(atom), NONNEG)
+    }
+  }
+  expect_equal(value(power(-1, 2)), 1)
+  expect_error(value(power(-1, 3)),
+               "Power cannot be applied to negative values", fixed = TRUE)
+  expect_error(value(power(0, -1)),
+               "Power cannot be applied to negative or zero values", fixed = TRUE)
+  
+})
+
+test_that("test the xexp function", {
+  # Test for positive x.
+  xv <- Variable(pos = TRUE)
+  atom <- xexp(x)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  # Test for negative x.
+  xv <- Variable(neg = TRUE)
+  expect_false(curvature(atom) == CONCAVE)
+  expect_equal(sign(atom), NONPOS)
+})
+
+test_that("test the geo_mean function", {
+  atom <- geo_mean(x)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+})
+
+test_that("test the harmonic_mean function", {
+  atom <- harmonic_mean(x)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+})
+
+test_that("test the p_norm function", {
+  atom <- p_norm(x, p = 1.5)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = 1)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = 2)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = Inf)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = 0.5)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = 0.7)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = -0.1)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = -1)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+  
+  atom <- p_norm(x, p = -1.3)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONCAVE)
+  expect_equal(sign(atom), NONNEG)
+})
+
+test_that("test matrix norms", {
+  # Matrix 1-norm, 2-norm (sigma_max), infinity-norm, Frobenius norm, and maximum modulus norm.
+  for(p in c("1", "2", "I", "F", "M")) {
+    for(var in c(A, C)) {
+      atom <- norm(var, p)
+      # expect_equal(dim(atom), NULL)
+      expect_equal(dim(atom), c(1,1))
+      expect_equal(curvature(atom), CONVEX)
+      expect_equal(sign(atom), NONNEG)
+      
+      value(var) <- matrix(rnorm(size(var)), nrow = nrow(var), ncol = ncol(var))
+      expect_equal(value(norm(var, p)), base:::norm(value(var), type = p))
+    }
+  }
+})
+
+test_that("test the quad_over_lin function", {
+  atom <- quad_over_lin(x^2, a)
+  expect_equal(curvature(atom), CONVEX)
+  
+  atom <- quad_over_lin(-x^2, a)
+  expect_equal(curvature(atom), CONVEX)
+  
+  atom <- quad_over_lin(sqrt(x), a)
+  expect_equal(curvature(atom), UNKNOWN)
+  expect_false(is_dcp(atom))
+  
+  expect_error(quad_over_lin(x, x),
+               "The second argument to QuadOverLin must be a scalar.", fixed = TRUE)
+})
+
+test_that("test the arg count for max_elemwise and min_elemwise", {
+  expect_error(max_elemwise(1),
+               "argument \"arg2\" is missing, with no default", fixed = TRUE)
+  expect_error(min_elemwise(1),
+               "argument \"arg2\" is missing, with no default", fixed = TRUE)
+})
+
+test_that("test the matrix_frac function", {
+  atom <- matrix_frac(x, A)
+  # expect_equal(dim(atom), NULL)
+  expect_equal(dim(atom), c(1,1))
+  expect_equal(curvature(atom), CONVEX)
+  
+  # Test matrix_frac dim validation
+  expect_error(matrix_frac(x, C),
+               "The second argument to MatrixFrac must be a square matrix.", fixed = TRUE)
+  expect_error(matrix_frac(Variable(3), A),
+               "The arguments to MatrixFrac have incompatible dimensions.", fixed = TRUE)
+})
+
+test_that("test the sign for max_entries", {
+  # One arg, test sign.
+  expect_equal(sign(max_entries(1)), NONNEG)
+  expect_equal(sign(max_entries(-2)), NONPOS)
+  expect_equal(sign(max_entries(Variable())), UNKNOWN)
+  expect_equal(sign(max_entries(0)), ZERO)
+  
+  # Test with axis argument.
+  expect_equal(dim(max_entries(Variable(2), axis = 1)), c(2, 1))
+  expect_equal(dim(max_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
+  # expect_equal(dim(max_entries(Variable(c(2, 3)), axis = 1)), 2)
+  expect_equal(dim(max_entries(Variable(2, 3), axis = 1)), c(2, 1))
+  expect_equal(dim(max_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
+  
+  # Invalid axis.
+  expect_error(max_entries(x, axis = 4),
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
+  expect_error(max_entries(x, x))   # A common erroneous use-case.
+})
+
+test_that("test the sign for min_entries", {
+  # One arg, test sign.
+  expect_equal(sign(min_entries(1)), NONNEG)
+  expect_equal(sign(min_entries(-2)), NONPOS)
+  expect_equal(sign(min_entries(Variable())), UNKNOWN)
+  expect_equal(sign(min_entries(0)), ZERO)
+  
+  # Test with axis argument.
+  expect_equal(dim(min_entries(Variable(2), axis = 1)), c(2, 1))
+  expect_equal(dim(min_entries(Variable(2), axis = 2, keepdims = TRUE)), c(1, 1))
+  # expect_equal(dim(min_entries(Variable(c(2, 3)), axis = 1)), 2)
+  # expect_equal(dim(min_entries(Variable(2, 3), axis = 2)), 3)
+  expect_equal(dim(min_entries(Variable(2, 3), axis = 1)), c(2, 1))
+  expect_equal(dim(min_entries(Variable(2, 3), axis = 2)), c(3, 1))
+  
+  # Invalid axis.
+  expect_error(min_entries(x, axis = 4),
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
+  expect_error(min_entries(x, x))   # A common erroneous use-case.
+})
+
+test_that("test sign logic for max_elemwise", {
+  # Two args.
+  expect_equal(sign(max_elemwise(1, 2)), NONNEG)
+  expect_equal(sign(max_elemwise(1, Variable())), NONNEG)
+  expect_equal(sign(max_elemwise(1, -2)), NONNEG)
+  expect_equal(sign(max_elemwise(1, 0)), NONNEG)
+  
+  expect_equal(sign(max_elemwise(Variable(), 0)), NONNEG)
+  expect_equal(sign(max_elemwise(Variable(), Variable())), UNKNOWN)
+  expect_equal(sign(max_elemwise(Variable(), -2)), UNKNOWN)
+  
+  expect_equal(sign(max_elemwise(0, 0)), ZERO)
+  expect_equal(sign(max_elemwise(0, -2)), ZERO)
+  
+  expect_equal(sign(max_elemwise(-3, -2)), NONPOS)
+  
+  # Many args.
+  expect_equal(sign(max_elemwise(-2, Variable(), 0, -1, Variable(), -1)), NONNEG)
+  
+  # Promotion.
+  expect_equal(sign(max_elemwise(1, Variable(2))), NONNEG)
+  expect_equal(dim(max_elemwise(1, Variable(2))), c(2, 1))
+})
+
+test_that("test sign logic for min_elemwise", {
+  # Two args.
+  expect_equal(sign(min_elemwise(1, 2)), NONNEG)
+  expect_equal(sign(min_elemwise(1, Variable())), UNKNOWN)
+  expect_equal(sign(min_elemwise(1, -2)), NONPOS)
+  expect_equal(sign(min_elemwise(1, 0)), ZERO)
+  
+  expect_equal(sign(min_elemwise(Variable(), 0)), NONPOS)
+  expect_equal(sign(min_elemwise(Variable(), Variable())), UNKNOWN)
+  expect_equal(sign(min_elemwise(Variable(), -2)), NONPOS)
+  
+  expect_equal(sign(min_elemwise(0, 0)), ZERO)
+  expect_equal(sign(min_elemwise(0, -2)), NONPOS)
+  
+  expect_equal(sign(min_elemwise(-3, -2)), NONPOS)
+  
+  # Many args.
+  expect_equal(sign(min_elemwise(-2, Variable(), 0, -1, Variable(), 1)), NONPOS)
+  
+  # Promotion.
+  expect_equal(sign(min_elemwise(-1, Variable(2))), NONPOS)
+  expect_equal(dim(min_elemwise(-1, Variable(2))), c(2, 1))
+})
+
+test_that("test the sum_entries function", {
+  expect_equal(sign(sum_entries(1)), NONNEG)
+  expect_equal(sign(sum_entries(c(1, -1))), UNKNOWN)
+  expect_equal(curvature(sum_entries(c(1, -1))), CONSTANT)
+  expect_equal(sign(sum_entries(Variable(2))), UNKNOWN)
+  # expect_equal(dim(sum_entries(Variable(2))), NULL)
+  expect_equal(dim(sum_entries(Variable(2))), c(1, 1))
+  expect_equal(curvature(sum_entries(Variable(2))), AFFINE)
+  expect_equal(dim(sum_entries(Variable(2, 1), keepdims = TRUE)), c(1, 1))
+  
+  # Mixed curvature.
+  mat <- matrix(c(1,-1), nrow = 1, ncol = 2)
+  expect_equal(curvature(sum_entries( mat %*% Variable(2)^2 )), UNKNOWN)
+  
+  # Test with axis argument.
+  expect_equal(dim(sum_entries(Variable(2), axis = 1)), c(2, 1))
+  # expect_equal(dim(sum_entries(Variable(2), axis = 2)), NULL)
+  expect_equal(dim(sum_entries(Variable(2), axis = 2)), c(1, 1))
+  # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 1)), 2)
+  # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 2, keepdims = TRUE)), c(1, 3))
+  # expect_equal(dim(sum_entries(Variable(c(2, 3)), axis = 2, keepdims = FALSE)), 3)
+  expect_equal(dim(sum_entries(Variable(2, 3), axis = 1)), c(2, 1))
+  expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = TRUE)), c(1, 3))
+  expect_equal(dim(sum_entries(Variable(2, 3), axis = 2, keepdims = FALSE)), c(3, 1))
+  
+  # Invalid axis
+  expect_error(sum_entries(x, axis = 4),
+               "Invalid argument for axis. Must be either 1 or 2", fixed = TRUE)
+  
+  As <- Matrix(diag(3), sparse = TRUE)
+  expect_equal(value(CVXR::sum_entries(As)), 3)
+  
+  As <- Matrix(diag(3), sparse = TRUE)
+  expect_equal(value(CVXR::sum_entries(As, axis = 2)), c(1, 1, 1))
+  
+})
+
+test_that("test the multiply function", {
+  expect_equal(sign(multiply(c(1, -1), x)), UNKNOWN)
+  expect_equal(curvature(multiply(c(1, -1), x)), AFFINE)
+  expect_equal(dim(multiply(c(1, -1), x)), c(2, 1))
+  pos_param <- Parameter(2, nonneg = TRUE)
+  neg_param <- Parameter(2, nonpos = TRUE)
+  expect_equal(sign(multiply(pos_param, pos_param)), NONNEG)
+  expect_equal(sign(multiply(pos_param, neg_param)), NONPOS)
+  expect_equal(sign(multiply(neg_param, neg_param)), NONNEG)
+  
+  expect_equal(curvature(multiply(neg_param, x^2)), CONCAVE)
+  
+  # Test promotion.
+  expect_equal(dim(multiply(c(1, -1), 1)), c(2, 1))
+  expect_equal(dim(multiply(1, C)), dim(C))
+  # expect_error(multiply(x, c(1, -1)))
+  
+  expect_equal(sign(multiply(x, c(1, -1))), UNKNOWN)
+  expect_equal(curvature(multiply(x, c(1, -1))), AFFINE)
+  expect_equal(dim(multiply(x, c(1, -1))), c(2,1))
+})
+
+test_that("test the vstack function", {
+  atom <- vstack(x, y, x)
+  expect_equal(name(atom), "Vstack(x, y, x)")
+  expect_equal(dim(atom), c(6, 1))
+  
+  atom <- vstack(A, C, B)
+  expect_equal(name(atom), "Vstack(A, C, B)")
+  expect_equal(dim(atom), c(7, 2))
+  
+  entries <- list()
+  for(i in 1:dim(x)[1]) {
+    # for(j in 1:dim(x)[2]) {
+    #   entries <- c(entries, x[i, j])
+    # }
+    entries <- c(entries, x[i])
+  }
+  atom <- do.call(vstack, entries)
+  # atom <- vstack(x[1,1], x[2,1])
+  expect_equal(dim(atom), c(2,1))
+  # expect_equal(name(atom[2,1]), "vstack(x[1,1], x[2,1])[2,1]")
+  
+  expect_error(vstack(C, 1),
+               "All the input dimensions except for axis 2 must match exactly.", fixed = TRUE)
+  expect_error(vstack(x, Variable(3)),
+               "All the input dimensions except for axis 2 must match exactly.", fixed = TRUE)
+  expect_error(vstack())
+  
+  # Test scalars with variables of dimension (1,).
+  expr <- vstack(2, Variable(1))
+  expect_equal(dim(expr), c(2,1))
+})
+
+test_that("test the reshape_expr function", {
+  expr <- reshape_expr(A, c(4, 1))
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  expect_equal(dim(expr), c(4, 1))
+  
+  expr <- reshape_expr(expr, c(2, 2))
+  expect_equal(dim(expr), c(2, 2))
+  
+  expr <- reshape_expr(x^2, c(1, 2))
+  expect_equal(sign(expr), NONNEG)
+  expect_equal(curvature(expr), CONVEX)
+  expect_equal(dim(expr), c(1, 2))
+  
+  expect_error(reshape_expr(C, c(5, 4)),
+               "Invalid reshape dimensions (5, 4)", fixed = TRUE)
+  
+  # Test reshaping by row.
+  ac <- seq(10)
+  A_np <- matrix(ac, nrow = 5, ncol = 2, byrow = TRUE)
+  A_cp <- reshape_expr(ac, new_dim = c(5, 2), byrow = TRUE)
+  expect_equal(A_np, value(A_cp), tolerance = TOL)
+  
+  X <- Variable(5, 2)
+  prob <- Problem(Minimize(0), list(X == A_cp))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(A_np, result$getValue(X))
+  
+  a_np <- matrix(A_np, nrow = length(ac), ncol = 1, byrow = TRUE)
+  a_cp <- reshape_expr(A_cp, new_dim = c(10, 1), byrow = TRUE)
+  expect_equal(a_np, value(a_cp))
+  
+  xv <- Variable(10)
+  prob <- Problem(Minimize(0), list(xv == a_cp))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(a_np, result$getValue(x))
+  
+  # Test more complex by row reshaping: matrix to another matrix.
+  b <- rbind(c(0, 1, 2), c(3, 4, 5), c(6, 7, 8), c(9, 10, 11))
+  b_reshaped <- matrix(b, nrow = 2, ncol = 6, byrow = TRUE)
+  X <- new("Variable", dim = dim(b))
+  X_reshaped <- reshape_expr(X, new_dim = c(2, 6), byrow = TRUE)
+  prob <- Problem(Minimize(0), list(X_reshaped == b_reshaped))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(b_reshaped, result$getValue(X_reshaped))
+  expect_equal(b, result$getValue(X))
+})
+
+test_that("test the vec function", {
+  expr <- vec(C)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  expect_equal(dim(expr), c(6, 1))
+  
+  expr <- vec(x)
+  expect_equal(dim(expr), c(2, 1))
+  
+  expr <- vec(a^2)
+  expect_equal(sign(expr), NONNEG)
+  expect_equal(curvature(expr), CONVEX)
+  expect_equal(dim(expr), c(1, 1))
+})
+
+test_that("test the diag function", {
+  expr <- diag(x)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  expect_equal(dim(expr), c(2,2))
+  
+  expr <- diag(A)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  expect_equal(dim(expr), c(2, 1))
+  
+  expr <- diag(t(x))
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  expect_equal(dim(expr), c(2, 2))
+  
+  psd_matrix <- rbind(c(1, -1), c(-1, 1))
+  expr <- diag(psd_matrix)
+  expect_equal(sign(expr), NONNEG)
+  expect_equal(curvature(expr), CONSTANT)
+  expect_equal(dim(expr), c(2, 1))
+  
+  expect_error(diag(C),
+               "Argument to Diag must be a vector or square matrix.", fixed = TRUE)
+  
+  # Test that diag is PSD.
+  w <- matrix(c(1.0, 2.0))
+  expr <- diag(w)
+  expect_true(is_psd(expr))
+  expr <- diag(-w)
+  expect_true(is_nsd(expr))
+  expr <- diag(matrix(c(1, -1)))
+  expect_false(is_psd(expr))
+  expect_false(is_nsd(expr))
+})
+
+test_that("test the matrix_trace function", {
+  expr <- matrix_trace(A)
+  expect_equal(sign(expr), UNKNOWN)
+  expect_equal(curvature(expr), AFFINE)
+  # expect_equal(dim(expr), NULL)
+  expect_equal(dim(expr), c(1, 1))
+  
+  expect_error(matrix_trace(C),
+               "Argument to Trace must be a square matrix", fixed = TRUE)
+})
+
+test_that("test trace sign psd", {
+  X_psd <- Variable(2, 2, PSD = TRUE)
+  X_nsd <- Variable(2, 2, NSD = TRUE)
+  
+  psd_trace <- matrix_trace(X_psd)
+  nsd_trace <- matrix_trace(X_nsd)
+  
+  expect_true(is_nonneg(psd_trace))
+  expect_true(is_nonpos(nsd_trace))
+})
+
+test_that("test the log1p function", {
+  expr <- log1p(Constant(1))
+  expect_equal(sign(expr), NONNEG)
+  expect_equal(curvature(expr), CONSTANT)
+  expect_equal(dim(expr), c(1, 1))
+  expr <- CVXR::log1p(Constant(-0.5))
+  expect_equal(sign(expr), NONPOS)
+})
+
+test_that("test the upper_tri function", {
+  expect_error(upper_tri(C),
+               "Argument to UpperTri must be a square matrix.", fixed = TRUE)
+})
+
+test_that("test vec_to_upper_tri", {
+  xv <- Variable(3)
+  X <- UpperTri.vec_to_upper_tri(xv)
+  value(xv) <- matrix(c(1,2,3))
+  actual <- value(X)
+  expect <- rbind(c(1,2), c(0,3))
+  expect_true(is.allclose(actual, expect))
+  
+  yv <- Variable(1)
+  value(yv) <- 4
+  Y <- UpperTri.vec_to_upper_tri(y, stric = TRUE)
+  actual <- value(Y)
+  expect <- rbind(c(0, 4), c(0, 0))
+  expect_true(is.allclose(actual, expect))
+  
+  A_expect <- rbind(c(0, 11, 12, 13),
+                    c(0,  0, 16, 17),
+                    c(0,  0,  0, 21),
+                    c(0,  0,  0, 0))
+  ac <- c(11, 12, 13, 16, 17, 21)
+  A_actual <- value(UpperTri.vec_to_upper_tri(ac, strict = TRUE))
+  expect_true(is.allclose(A_actual, A_expect))
+})
+
+test_that("test the huber function", {
+  # Valid.
+  huber(x, 1)
+  
+  expect_error(huber(x, -1),
+               "M must be a non-negative scalar constant", fixed = TRUE)
+  expect_error(huber(x, c(1, 1)),
+               "M must be a non-negative scalar constant", fixed = TRUE)
+  
+  # M parameter.
+  M <- Parameter(nonneg = TRUE)
+  # Valid.
+  huber(x, M)
+  value(M) <- 1
+  expect_equal(value(huber(2, M)), 3, tolerance = TOL)
+  # Invalid.
+  M <- Parameter(nonpos = TRUE)
+  expect_error(huber(x, M),
+               "M must be a non-negative scalar constant", fixed = TRUE)
+})
+
+test_that("test the sum_largest function", {
+  expect_error(sum_largest(x, -1),
+               "[SumLargest: validation] k must be a positive integer", fixed = TRUE)
+  expect_error(lambda_sum_largest(x, 2.4),
+               "First argument must be a square matrix.", fixed = TRUE)
+  expect_error(lambda_sum_largest(Variable(2, 2), 2.4),
+               "Second argument must be a positive integer.", fixed = TRUE)
+  expect_error(value(lambda_sum_largest(rbind(c(1, 2), c(3, 4)), 2)), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
+})
+
+test_that("test the sum_smallest function", {
+  expect_error(sum_smallest(x, -1),
+               "[SumLargest: validation] k must be a positive integer", fixed = TRUE)
+  expect_error(lambda_sum_smallest(Variable(2, 2), 2.4),
+               "Second argument must be a positive integer.", fixed = TRUE)
+})
+
+test_that("test the bmat function", {
+  v_np <- matrix(1, nrow = 3, ncol = 1)
+  v_00 <- matrix(c(0,0), nrow = 2, ncol = 1)
+  v_12 <- matrix(c(1,2), nrow = 2, ncol = 1)
+  expr <- bmat(list(list(v_np, v_np), list(v_00, v_12)))
+  expect_equal(dim(expr), c(5, 2))
+  const <- rbind(cbind(v_np, v_np), cbind(c(0, 0), c(1, 2)))
+  expect_equal(value(expr), const)
+})
+
+test_that("test the conv function", {
+  a <- matrix(1, nrow = 3, ncol = 1)
+  b <- Parameter(2, nonneg = TRUE)
+  expr <- conv(a, b)
+  expect_true(is_nonneg(expr))
+  expect_equal(dim(expr), c(4, 1))
+  b <- Parameter(2, nonpos = TRUE)
+  expr <- conv(a, b)
+  expect_true(is_nonpos(expr))
+  expect_error(conv(x, -1),
+               "The first argument to Conv must be constant.", fixed = TRUE)
+  expect_error(conv(cbind(c(0, 1), c(0, 1)), x),
+               "The arguments to Conv must resolve to vectors.", fixed = TRUE)
+})
+
+test_that("test the kronecker function", {
+  a <- matrix(1, nrow = 3, ncol = 2)
+  b <- Parameter(2, nonneg = TRUE)
+  expr <- kronecker(a, b)
+  expect_true(is_nonneg(expr))
+  expect_equal(dim(expr), c(6, 2))
+  b <- Parameter(2, 1, nonpos = TRUE)
+  expr <- kronecker(a, b)
+  expect_true(is_nonpos(expr))
+  expect_error(kronecker(x, x),
+               "At least one argument to Kron must be constant.", fixed = TRUE)
+})
+
+test_that("test DCP properties of partial optimize", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_equal(curvature(g), CONVEX)
+  
+  p2 <- Problem(Maximize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_equal(curvature(g), CONCAVE)
+  
+  p2 <- Problem(Maximize(t[1]^2), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x))
+  expect_false(is_convex(g))
+  expect_false(is_concave(g))
+})
+
+test_that("test the partial_optimize eval 1-norm", {
+  # Evaluate the 1-norm in the usual way (i.e., in epigraph form)
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  xval <- matrix(rep(-5, dims), nrow = dims, ncol = 1)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= xval, xval <= t))
+  result1 <- solve(p1, solver = "ECOS")
+  
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, list(t), list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+  
+  # Minimize the 1-norm using maximize.
+  p2 <- Problem(Maximize(sum(-t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, opt_vars = list(t), solver = "ECOS")
+  p3 <- Problem(Maximize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, -result2$value, tolerance = TOL)
+  
+  # Try leaving out args
+  
+  # Minimize the 1-norm via partial_optimize
+  p2 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  g <- partial_optimize(p2, opt_vars = list(t), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+  
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p2, dont_opt_vars = list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(g), list(x == xval))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value)
+  
+  expect_error(partial_optimize(p2, solver = "ECOS"),
+               "partial_optimize called with neither opt_vars nor dont_opt_vars", fixed = TRUE)
+  
+  expect_error(partial_optimize(p2, list(), list(x), solver = "ECOS"), 
+               "If opt_vars and new_opt_vars are both specified, they must contain all variables in the problem", fixed = TRUE)
+})
+
+test_that("test partial_optimize min 1-norm", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p1, list(t), list(x), solver = "ECOS")
+  p2 <- Problem(Minimize(g))
+  result2 <- solve(p2, solver = "ECOS")
+  
+  result1 <- solve(p1, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize simple problem", {
+  x <- Variable(1)
+  y <- Variable(1)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "ECOS")
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "ECOS")
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize special var", {
+  if(length(INSTALLED_MI_SOLVERS) == 0) {
+    print("No mixed-integer solver is installed")
+    return()
+  }
+  
+  x <- Variable(boolean = TRUE)
+  y <- Variable(integer =  TRUE)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "ECOS_BB")
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x))
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "ECOS_BB")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize special constr", {
+  x <- Variable(1)
+  y <- Variable(1)
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+exp(y)), list(x+y >= 3, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-9)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(exp(y)), list(x+y >= 3, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-9)
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result3 <- solve(p3, solver = "SCS", eps = 1e-9)
+  expect_equal(result1$value, result2$value, tolerance = 1e-4)
+})
+
+test_that("test partial_optimize with parameters", {
+  x <- Variable(1)
+  y <- Variable(1)
+  gamma <- Parameter()
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
+  value(gamma) <- 3
+  # p1 <- Problem(Minimize(x+y), list(x+y >= gamma, y >= 4, x >= 5))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-6)
+  
+  # Solve the two-stage problem via partial_optimize
+  p2 <- Problem(Minimize(y), list(x+y >= gamma, y >= 4))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-6)
+  p3 <- Problem(Minimize(x+g), list(x >= 5))
+  result2 <- solve(p3, solver = "SCS", eps = 1e-6)
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test partial_optimize numeric function", {
+  x <- Variable()
+  y <- Variable()
+  xval <- 4
+  
+  # Solve the (simple) two-stage problem by "combining" the two stages (i.e., by solving a single linear program)
+  p1 <- Problem(Minimize(y), list(xval+y >= 3))
+  result1 <- solve(p1, solver = "SCS", eps = 1e-6)
+  
+  # Solve the two-stage problem via partial_optimize
+  constr <- list(y >= -100)
+  p2 <- Problem(Minimize(y), c(x+y >= 3, constr))
+  g <- partial_optimize(p2, list(y), list(x), solver = "SCS", eps = 1e-6)
+  value(x) <- xval
+  value(y) <- 42
+  value(constr[[1]]@dual_variables[[1]]) <- 42
+  res <- value(g)
+  expect_equal(res, result1$value, tolerance = TOL)
+  expect_equal(value(y), 42, tolerance = TOL)
+  expect_equal(dual_value(constr[[1]]), 42, tolerance = TOL)
+  
+  # No variables optimized over
+  p2 <- Problem(Minimize(y), list(x+y >= 3))
+  g <- partial_optimize(p2, list(), list(x,y), solver = "SCS", eps = 1e-6)
+  value(x) <- xval
+  value(y) <- 42
+  value(p2@constraints[[1]]@dual_variables[[1]]) <- 42
+  res <- value(g)
+  expect_equal(res, value(y), tolerance = TOL)
+  expect_equal(value(y), 42, tolerance = TOL)
+  expect_equal(dual_value(p2@constraints[[1]]), 42, tolerance = TOL)
+})
+
+test_that("test partial_optimize stacked", {
+  # Minimize the 1-norm in the usual way
+  dims <- 3
+  x <- Variable(dims)
+  t <- Variable(dims)
+  p1 <- Problem(Minimize(sum(t)), list(-t <= x, x <= t))
+  
+  # Minimize the 1-norm via partial_optimize
+  g <- partial_optimize(p1, list(t), list(x), solver = "ECOS")
+  g2 <- partial_optimize(Problem(Minimize(g)), list(x), solver = "ECOS")
+  p2 <- Problem(Minimize(g2))
+  result2 <- solve(p2, solver = "ECOS")
+  
+  result1 <- solve(p1, solver = "ECOS")
+  expect_equal(result1$value, result2$value, tolerance = TOL)
+})
+
+test_that("test the NonNegative Variable class", {
+  x <- Variable(nonneg = TRUE)
+  p <- Problem(Minimize(5 + x), list(x >= 3))
+  result <- solve(p, solver = "SCS", eps = 1e-5)
+  expect_equal(result$value, 8, tolerance = TOL)
+  expect_equal(result$getValue(x), 3, tolerance = TOL)
+})
+
+test_that("test mixed_norm", {
+  y <- Variable(5, 5)
+  obj <- Minimize(mixed_norm(y, Inf, 1))
+  prob <- Problem(obj, list(y == matrix(1, nrow = 5, ncol = 5)))
+  result <- solve(prob, solver = "SCS")
+  expect_equal(result$value, 5, tolerance = TOL)
+})
+
+test_that("test that norm1 and normInf match definition for matrices", {
+  A <- rbind(c(1,2), c(3,4))
+  print(A)
+  X <- Variable(2, 2)
+  obj <- Minimize(norm1(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob, solver = "SCS")
+  print(result$value)
+  expect_equal(result$value, value(norm1(A)), tolerance = 1e-3)
+  
+  obj <- Minimize(norm_inf(X))
+  prob <- Problem(obj, list(X == A))
+  result <- solve(prob, solver = "SCS")
+  print(result$value)
+  expect_equal(result$value, value(norm_inf(A)), tolerance = 1e-3)
+})
+
+test_that("test indicator", {
+  x <- Variable()
+  constraints <- list(0 <= x, x <= 1)
+  expr <- Indicator(constraints)
+  
+  value(x) <- 0.5
+  # constraints <- list(0 <= x, x <= 1)
+  # expr <- Indicator(constraints)
+  expect_equal(value(expr), 0.0)
+  
+  value(x) <- 2
+  # constraints <- list(0 <= x, x <= 1)
+  # expr <- Indicator(constraints)
+  expect_equal(value(expr), Inf)
+})
+
+test_that("test log_det", {
+  # Test malformed input.
+  expect_error(value(log_det(rbind(c(1, 2), c(3, 4)))), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
+})
+
+test_that("test lambda_max", {
+  expect_error(value(lambda_max(rbind(c(1, 2), c(3, 4)))), 
+               "Input matrix was not Hermitian/symmetric.", fixed = TRUE)
+})
+
+test_that("test diff", {
+  Av <- Variable(20, 10)
+  Bc <- matrix(0, nrow = 20, ncol = 10)
+  expect_equal(diff(Av, axis = 1), diff(Bc, axis = 1))
+  expect_equal(diff(Av, axis = 2), diff(Bc, axis = 2))
+  
+  # Issue 1834 in CVXPY.
+  x1 <- matrix(1:5, nrow = 1)
+  x2 <- Variable(1, 5, value = x1)
+  
+  expr <- diff(x1, axis = 1)
+  expect_equal(value(expr), diff(x1, axis = 1))
+  expr <- diff(x2, axis = 1)
+  expect_equal(value(expr), diff(x1, axis = 1))
+  
+  expect_error(value(diff(x1, axis = 2)), "< k elements")
+})
+
+test_that("test log_normcdf", {
+  expect_equal(sign(log_normcdf(x)), NONPOS)
+  expect_equal(curvature(log_normcdf(x)), CONCAVE)
+  
+  for(xv in -4:4) {
+    # expect_equal(plnorm(xv), value(log_normcdf(xv)), tolerance = 1e-2)
+    expect_true(abs(plnorm(xv) - value(log_normcdf(xv))) <= 1e-2)
+  }
+  
+  yv <- Variable(2, 2)
+  obj <- Minimize(sum(-log_normcdf(yv)))
+  prob <- Problem(obj, list(yv == 2))
+  result <- solve(prob, solver = "ECOS")
+  # expect_equal(-result$value, 4*plnorm(2), tolerance = 1e-2)
+  expect_true(abs(-result$value - 4*plnorm(2)) <= 1e-2)
+})
+
+test_that("test scalar_product", {
+  p <- rep(1, 4)
+  v <- Variable(4)
+  
+  obj <- Minimize(scalar_product(v, p))
+  prob <- Problem(obj, list(v >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), p))
+  
+  # With a parameter.
+  p <- Parameter(4)
+  v <- Variable(4)
+  
+  value(p) <- rep(1, 4)
+  obj <- Minimize(scalar_product(v, p))
+  prob <- Problem(obj, list(v >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), value(p)))
+})
+
+test_that("test Conj function", {
+  v <- Variable(4)
+  obj <- Minimize(sum(v))
+  prob <- Problem(obj, list(Conj(v) >= 1))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$getValue(v), matrix(rep(1, 4))))
+})
+
+test_that("test approximation of log-gamma", {
+  # Test evaluation.
+  Ac <- 1:9
+  Ac <- matrix(Ac, nrow = 3, ncol = 3, byrow = TRUE)
+  true_val <- base::lgamma(Ac)   # Note: This returns the natural logarithm of the absolute value of the gamma function.
+  expect_true(is.allclose(value(loggamma(Ac)), true_val, atol = 1e-1))
+  
+  # Test solving a problem.
+  X <- Variable(3, 3)
+  cost <- sum(loggamma(X))
+  prob <- Problem(Minimize(cost), list(X == Ac))
+  result <- solve(prob, solver = "SCS")
+  expect_true(is.allclose(result$value, sum(true_val), atol = 1e0))
+})
+
+test_that("test partial_trace atom", {
+  # rho_ABC = rhoA \otimes rho_B \otimes rho_C.
+  # Here \otimes signifies the Kronecker product.
+  # Each rho_i is normalized, i.e., Tr(rho_i) = 1.
+  
+  # Set random state.
+  set.seed(1)
+  
+  # Generate five test cases.
+  rho_A <- matrix(runif(4*4), nrow = 4, ncol = 4) + 1i*matrix(runif(4*4), nrow = 4, ncol = 4)
+  rho_A <- rho_A/sum(diag(rho_A))
+  rho_B <- matrix(runif(3*3), nrow = 3, ncol = 3) + 1i*matrix(runif(3*3), nrow = 3, ncol = 3)
+  rho_B <- rho_B/sum(diag(rho_B))
+  rho_C <- matrix(runif(2*2), nrow = 2, ncol = 2) + 1i*matrix(runif(2*2), nrow = 2, ncol = 2)
+  rho_C <- rho_C/sum(diag(rho_C))
+  rho_AB <- kronecker(rho_A, rho_B)
+  rho_AC <- kronecker(rho_A, rho_C)
+  
+  # Construct a CVXR Variable with value equal to rho_A \otimes rho_B \otimes rho_C.
+  temp <- kronecker(rho_AB, rho_C)
+  rho_ABC <- new("Variable", dim = dim(temp), complex = TRUE)
+  value(rho_ABC) <- temp
+  
+  # Try to recover simpler tensors products by taking partial traces of more complicated tensors.
+  # TODO: Revisit once partial_trace is implemented to check axis parameter.
+  rho_AB_test <- partial_trace(rho_ABC, c(4, 3, 2), axis = 2)
+  rho_AC_test <- partial_trace(rho_ABC, c(4, 3, 2), axis = 1)
+  rho_A_test <- partial_trace(rho_AB_test, c(4, 3), axis = 1)
+  rho_B_test <- partial_trace(rho_AB_test, c(4, 3), axis = 0)
+  rho_C_test <- partial_trace(rho_AC_test, c(4, 2), axis = 0)
+  
+  # See if the outputs of partial_trace are correct.
+  expect_true(is.allclose(value(rho_AB_test), rho_AB))
+  expect_true(is.allclose(value(rho_AC_test), rho_AC))
+  expect_true(is.allclose(value(rho_A_test)), rho_A)
+  expect_true(is.allclose(value(rho_B_test)), rho_B)
+  expect_true(is.allclose(value(rho_C_test)), rho_C)
+})
+
+test_that("test exceptions raised by partial_trace", {
+  # TODO: Revisit once partial_trace is implemented to check axis and errors.
+  X <- Variable(4, 3)
+  expect_error(partial_trace(X, dims = c(2, 3), axis = 0), 
+               "Only supports square matrices", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_trace(X, dims = c(2, 3), axis = -1), 
+               "Invalid axis argument, should be 0 and 2, got -1", TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_trace(X, dims = c(2, 4), axis = 0), 
+               "Dimension of system doesn't correspond to dimension of subsystems", fixed = TRUE)
+})
+
+test_that("test the partial_transpose atom", {
+  # rho_ABC = rho_A \otimes rho_B \otimes rho_C.
+  # Here \otimes signifies Kronecker product.
+  # Each rho_i is normalized, i.e., Tr(rho_i) = 1.
+  
+  # Set random state.
+  set.seed(1)
+  
+  # Generate three test cases.
+  rho_A <- matrix(runif(8*8), nrow = 8, ncol = 8) + 1i*matrix(runif(8*8), nrow = 8, ncol = 8)
+  rho_A <- rho_A/sum(diag(rho_A))
+  rho_B <- matrix(runif(6*6), nrow = 6, ncol = 6) + 1i*matrix(runif(6*6), nrow = 6, ncol = 6)
+  rho_B <- rho_A/sum(diag(rho_B))
+  rho_C <- matrix(runif(4*4), nrow = 4, ncol = 4) + 1i*matrix(runif(4*4), nrow = 4, ncol = 4)
+  rho_C <- rho_A/sum(diag(rho_C))
+  
+  rho_TC <- kronecker(kronecker(rho_A, rho_B), t(rho_C))
+  rho_TB <- kronecker(kronecker(rho_A, t(rho_B)), rho_C)
+  rho_TA <- kronecker(kronecker(t(rho_A), rho_B), rho_C)
+  
+  # Construct a CVXR Variable with value equal to rho_A \otimes rho_B \otimes rho_C.
+  temp <- kronecker(kronecker(rho_A, rho_B), rho_C)
+  rho_ABC <- new("Variable", dim = dim(temp), complex = TRUE)
+  value(rho_ABC) <- temp
+  
+  # Try to recover simpler tensors products by taking partial transposes of more complicated tensors.
+  # TODO: Revisit once partial_transpose is implemented to check axis parameter.
+  rho_TC_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 2)
+  rho_TB_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 1)
+  rho_TA_test <- partial_transpose(rho_ABC, c(8, 6, 4), axis = 0)
+  
+  # See if the outputs of partial_transpose are correct.
+  expect_true(is.allclose(value(rho_TC_test), rho_TC))
+  expect_true(is.allclose(value(rho_TB_test), rho_TB))
+  expect_true(is.allclose(value(rho_TA_test), rho_TA))
+})
+
+test_that("test exceptions raised by partial_transpose", {
+  # TODO: Revisit once partial_transpose is implemented to check axis and errors.
+  X <- Variable(4, 3)
+  expect_error(partial_transpose(X, dims = c(2, 3), axis = 0), 
+               "Only supports square matrices", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_transpose(X, dims = c(2, 3), axis = -1),
+               "Invalid axis argument, should be between 0 and 2, got -1", fixed = TRUE)
+  
+  X <- Variable(6, 6)
+  expect_error(partial_transpose(X, dims = c(2, 4), axis = 0),
+               "Dimension of system doesn't correspond to dimension of subsystems", fixed = TRUE)
+})
+
+test_that("test log_sum_exp sign", {
+  # Test for nonnegative x.
+  xv <- Variable(nonneg = TRUE)
+  atom <- log_sum_exp(xv)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), NONNEG)
+  
+  # Test for nonpositive x.
+  xv <- Variable(nonpos = TRUE)
+  atom <- log_sum_exp(xv)
+  expect_equal(curvature(atom), CONVEX)
+  expect_equal(sign(atom), UNKNOWN)
+})
+
+test_that("test flatten and vec", {
+  # Constant argument.
+  A <- 0:9
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(reshaped, byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped), byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = TRUE)
+  expr <- vec(reshaped, byrow = TRUE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped), byrow = TRUE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(reshaped, byrow = FALSE)
+  expect_equal(value(expr), A, tolerance = TOL)
+  expr <- flatten(Constant(reshaped))
+  expect_equal(value(expr), A, tolerance = TOL)
+  
+  # Variable argument.
+  x <- Variable(2, 5)
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(x, byrow = FALSE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A), byrow = FALSE)
+  result <- Problem(Minimize(0), list(expr == A))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = TRUE)
+  expr <- vec(x, byrow = TRUE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A), byrow = TRUE)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  
+  reshaped <- matrix(A, nrow = 2, ncol = 5, byrow = FALSE)
+  expr <- vec(x)
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+  expr <- flatten(Constant(A))
+  result <- solve(Problem(Minimize(0), list(expr == A)))
+  expect_equal(result$getValue(x), reshaped, tolerance = TOL)
+})
+
+test_that("test the TrInv atom", {
+  Tnum <- 5
+  # Solves the following SDP problem:
+  #           minimize    trace(inv(X))
+  #               s.t.    X is PSD
+  #                       trace(X) == 1
+  
+  # Create a symmetric matrix variable.
+  X <- Variable(Tnum, Tnum, symmetric = TRUE)
+  
+  # Define and solve the CVXR problem.
+  # X should be a PSD.
+  constraints <- list(X %>>% 0)
+  constraints <- c(constraints, list(matrix_trace(X) == 1))
+  prob <- Problem(Minimize(tr_inv(X)), constraints)
+  result <- solve(prob, verbose = TRUE)
+  
+  # Check result. The best value is T^2.
+  expect_equal(result$value, Tnum^2, tolerance = TOL)
+  X_actual <- value(X)
+  X_expect <- diag(Tnum) / Tnum
+  expect_equal(X_actual, X_expect, tolerance = 1e-4)
+  
+  # Second SDP problem, given a row full-rank matrix M:
+  #           minimize    trace(inv(M * X * M.T))
+  #               s.t.    X is PSD
+  #                       -1 <= X[i][j] <= 1 for all i,j
+  constraints <- list(X %>>% 0)
+  
+  # n should not be greater than T, because the input should be positive definite.
+  n <- 4
+  M <- matrix(rnorm(n*Tnum), nrow = n, ncol = Tnum)
+  constraints <- list(constraints, list(X >= -1, X <= 1))
+  prob <- Problem(Minimize(tr_inv(M %*% X %*% t(M))), constraints)
+  MM <- M %*% t(M)
+  naiveRes <- sum(eigen(MM, only.values = TRUE)$values^-1)
+  result <- solve(prob, verbose = TRUE)
+  
+  # The optimized result should be smaller than the naive result, where X of the naive result is I.
+  expect_true(result$value <- naiveRes)
+})

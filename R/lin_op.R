@@ -4,6 +4,9 @@
 # A variable.
 # Data: var id.
 VARIABLE = "variable"
+# Some function of parameters.
+# Data: CVXPY expression.
+PARAM = "param"
 # Promoting a scalar expression.
 # Data: None
 PROMOTE = "promote"
@@ -50,11 +53,6 @@ UPPER_TRI = "upper_tri"
 # The 1D discrete convolution of two vectors.
 # Data: LinOp evaluating to the left hand term.
 CONV = "conv"
-# The Kronecker product of two matrices.
-# Data: LinOp evaluating to the left hand term (variable in the right-hand term).
-KRON_R = "kron_r"
-# Data: LinOp evaluating to the right hand term (variable in the left-hand term).
-KRON_L = "kron_l"
 # Horizontally concatenating operators.
 # Data: None
 HSTACK = "hstack"
@@ -70,12 +68,18 @@ DENSE_CONST = "dense_const"
 # A sparse matrix constant.
 # Data: SciPy sparse matrix.
 SPARSE_CONST = "sparse_const"
-# Some function of parameters.
-# Data: CVXPY expression.
-PARAM = "param"
 # An expression with no variables.
 # Data: None
 NO_OP = "no_op"
+# The Kronecker product of two matrices.
+# Data: LinOp evaluating to the left hand term (variable in the right-hand term).
+KRON = "kron" ## equivalent to KRON_R, here for backwards compatibility.
+# The Kronecker product of two matrices.
+# Data: LinOp evaluating to the left hand term (variable in the right-hand term).
+KRON_R = "kron_r"
+# Data: LinOp evaluating to the right hand term (variable in the left-hand term).
+KRON_L = "kron_l"
+
 # ID in coefficients for constants.
 CONSTANT_ID = "constant_id"
 
@@ -106,6 +110,7 @@ LINOP_TYPES <-
     DENSE_CONST,
     SPARSE_CONST,
     NO_OP,
+    KRON,
     KRON_R,
     KRON_L
   )

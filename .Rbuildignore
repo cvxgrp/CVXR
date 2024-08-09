@@ -11,4 +11,6 @@
 ^CRAN-RELEASE$
 ^inst/issues/*
 ^\.github$
-R-prev/*
+^R_SAVE$
+^collate_code_files.R$
+^rsrc_tree$

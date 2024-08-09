@@ -86,8 +86,9 @@ public:
 
   /**
    * Returns the row index vector I as a contiguous 1D numpy array.
+   * Note the use of `int *values`, rather than `double *values` in original c++!
    */
-  void getI(double *values, int num_values) {
+  void getI(int *values, int num_values) {
     std::vector<int> I = TensorI[param_id][vec_idx];
     for (int i = 0; i < num_values; i++) {
       values[i] = I[i];
@@ -96,8 +97,9 @@ public:
 
   /**
    * Returns the column index vector J as a contiguous 1D numpy array.
+   * Note the use of `int *values`, rather than `double *values` in original c++!   
    */
-  void getJ(double *values, int num_values) {
+  void getJ(int *values, int num_values) {
     std::vector<int> J = TensorJ[param_id][vec_idx];
     for (int i = 0; i < num_values; i++) {
       values[i] = J[i];

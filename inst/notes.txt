@@ -27,3 +27,20 @@ Zeroconstraint.  See group_constraints in reductions.R
 6.  Also have moved solvers to qp_solver.R plus qp_solver_xxx.R. Same
 for qp_solver
 
+
+
+## ProblemData.cpp
+
+Things to expose:
+        problemData = cvxcore.build_matrix(lin_vec,
+                                           int(var_length),
+                                           id_to_col_C,
+                                           param_to_size_C,
+                                           s.get_num_threads())
+
+            problemData.param_id = param_id
+                problemData.vec_idx = i
+                prob_len = problemData.getLen()
+                tensor_V[param_id].append(problemData.getV(prob_len))
+                tensor_I[param_id].append(problemData.getI(prob_len))
+                tensor_J[param_id].append(problemData.getJ(prob_len))

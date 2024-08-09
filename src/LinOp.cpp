@@ -146,99 +146,16 @@ void LinOp__size_push_back(SEXP xp, int intVal) {
 //' Set the field named \code{type} for the LinOp object
 //'
 //' @param xp the LinOp Object XPtr
-//' @param typeValue an integer value
+//' @param typeValue an integer value (1-based)
 // [[Rcpp::export(.LinOp__set_type)]]
 void LinOp__set_type(SEXP xp, int typeValue) {
-  OperatorType oType;
-  int err = 0; // to signal error
-  switch (typeValue) {
-  case 0:
-    oType = VARIABLE;
-    break;
-  case 1:
-    oType = PROMOTE;
-    break;
-  case 2:
-    oType = MUL_EXPR;
-    break;
-  case 3:
-    oType = RMUL_EXPR;
-    break;
-  case 4:
-    oType = MUL_ELEM;
-    break;
-  case 5:
-    oType = DIV;
-    break;
-  case 6:
-    oType = SUM;
-    break;
-  case 7:
-    oType = NEG;
-    break;
-  case 8:
-    oType = INDEX;
-    break;
-  case 9:
-    oType = TRANSPOSE;
-    break;
-  case 10:
-    oType = SUM_ENTRIES;
-    break;
-  case 11:
-    oType = TRACE;
-    break;
-  case 12:
-    oType = RESHAPE;
-    break;
-  case 13:
-    oType = DIAG_VEC;
-    break;
-  case 14:
-    oType = DIAG_MAT;
-    break;
-  case 15:
-    oType = UPPER_TRI;
-    break;
-  case 16:
-    oType = CONV;
-    break;
-  case 17:
-    oType = HSTACK;
-    break;
-  case 18:
-    oType = VSTACK;
-    break;
-  case 19:
-    oType = SCALAR_CONST;
-    break;
-  case 20:
-    oType = DENSE_CONST;
-    break;
-  case 21:
-    oType = SPARSE_CONST;
-    break;
-  case 22:
-    oType = NO_OP;
-    break;
-  case 23:
-    oType = KRON;
-    break;
-  default:
-    err = 1;
-    // std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
-    Rcpp::stop("LinOp type invalid");
-  }
-  if (err < 1) {
-    // grab the object as a XPtr (smart pointer)
-    Rcpp::XPtr<LinOp> ptr(xp);
-    ptr->type = oType;
-
+  OperatorType oType = to_optype(typeValue);
+  // grab the object as a XPtr (smart pointer)
+  Rcpp::XPtr<LinOp> ptr(xp);
+  ptr->type = oType;
 #ifdef _R_DEBUG_
     Rcpp::Rcout << "LinOp Id " << ptr->id << " type now " << ptr->type << std::endl;
 #endif
-
-  }
 }
 
 //' Get the field named \code{type} for the LinOp object
@@ -247,89 +164,10 @@ void LinOp__set_type(SEXP xp, int typeValue) {
 //' @return an integer value for type
 // [[Rcpp::export(.LinOp__get_type)]]
 int LinOp__get_type(SEXP xp) {
-
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<LinOp> ptr(xp);
-  int oType;
-
-  switch (ptr->type) {
-  case VARIABLE:
-    oType = 0;
-    break;
-  case PROMOTE:
-    oType = 1;
-    break;
-  case MUL_EXPR:
-    oType = 2;
-    break;
-  case RMUL_EXPR:
-    oType = 3;
-    break;
-  case MUL_ELEM:
-    oType = 4;
-    break;
-  case DIV:
-    oType = 5;
-    break;
-  case SUM:
-    oType = 6;
-    break;
-  case NEG:
-    oType = 7;
-    break;
-  case INDEX:
-    oType = 8;
-    break;
-  case TRANSPOSE:
-    oType = 9;
-    break;
-  case SUM_ENTRIES:
-    oType = 10;
-    break;
-  case TRACE:
-    oType = 11;
-    break;
-  case RESHAPE:
-    oType = 12;
-    break;
-  case DIAG_VEC:
-    oType = 13;
-    break;
-  case DIAG_MAT:
-    oType = 14;
-    break;
-  case UPPER_TRI:
-    oType = 15;
-    break;
-  case CONV:
-    oType = 16;
-    break;
-  case HSTACK:
-    oType = 17;
-    break;
-  case VSTACK:
-    oType = 18;
-    break;
-  case SCALAR_CONST:
-    oType = 19;
-    break;
-  case DENSE_CONST:
-    oType = 20;
-    break;
-  case SPARSE_CONST:
-    oType = 21;
-    break;
-  case NO_OP:
-    oType = 22;
-    break;
-  case KRON:
-    oType = 23;
-    break;
-  default:
-    oType = -255;
-    Rcpp::stop("Error: LinOp type invalid");
-  }
-  return oType;
+  int result = from_optype(ptr->type);
+  return(result);
 }
 
 //' Perform a push back operation on the \code{slice} field of LinOp
@@ -369,7 +207,7 @@ void LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > value) {
   ptr->slice = value;
 }
 
-
+#ifdef _R_DEBUG
 //' Get the id field of the LinOp Object
 //'
 //' @param xp the LinOp Object XPtr
@@ -382,6 +220,7 @@ std::string LinOp__get_id(SEXP xp) {
   // Get the result
   return ptr->id;
 }
+#endif
 
 
 

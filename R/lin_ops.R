@@ -1,32 +1,36 @@
 # Types of linear operators
-VARIABLE = "variable"
-PROMOTE = "promote"
-MUL_EXPR = "mul_expr"
-RMUL_EXPR = "rmul_expr"
-MUL_ELEM = "mul_elem"
-DIV = "div"
-SUM = "sum"
-NEG = "neg"
-INDEX = "index"
-TRANSPOSE = "transpose"
-SUM_ENTRIES = "sum_entries"
-TRACE = "trace"
-RESHAPE_EXPR = "reshape_expr"
-DIAG_VEC = "diag_vec"
-DIAG_MAT = "diag_mat"
-UPPER_TRI = "upper_tri"
-CONV = "conv"
-KRON = "kron"
-HSTACK = "hstack"
-VSTACK = "vstack"
-SCALAR_CONST = "scalar_const"
-DENSE_CONST = "dense_const"
-SPARSE_CONST = "sparse_const"
-PARAM = "param"
-NO_OP = "no_op"
-CONSTANT_ID = "constant_id"
+VARIABLE <- "variable"
+PARAM <- "param"
+PROMOTE <- "promote"
+MUL_EXPR <- "mul_expr"
+RMUL_EXPR <- "rmul_expr"
+MUL_ELEM <- "mul_elem"
+DIV <- "div"
+SUM <- "sum"
+NEG <- "neg"
+INDEX <- "index"
+TRANSPOSE <- "transpose"
+SUM_ENTRIES <- "sum_entries"
+TRACE <- "trace"
+RESHAPE_EXPR <- "reshape_expr"
+DIAG_VEC <- "diag_vec"
+DIAG_MAT <- "diag_mat"
+UPPER_TRI <- "upper_tri"
+CONV <- "conv"
+HSTACK <- "hstack"
+VSTACK <- "vstack"
+SCALAR_CONST <- "scalar_const"
+DENSE_CONST <- "dense_const"
+SPARSE_CONST <- "sparse_const"
+NO_OP <- "no_op"
+KRON <- "kron_r"
+KRON_R <- "kron_r"
+KRON_L <- "kron_l"
+
+CONSTANT_ID <- "constant_id"
 
 LINOP_TYPES <- c(VARIABLE = "VARIABLE",
+                 PARAM = "PARAM",
                  PROMOTE = "PROMOTE",
                  MUL_EXPR = "MUL_EXPR",
                  RMUL_EXPR = "RMUL_EXPR",
@@ -49,7 +53,7 @@ LINOP_TYPES <- c(VARIABLE = "VARIABLE",
                  SCALAR_CONST = "SCALAR_CONST",
                  DENSE_CONST = "DENSE_CONST",
                  SPARSE_CONST = "SPARSE_CONST",
-                 PARAM = "PARAM",
+
                  NO_OP = "NO_OP",
                  CONSTANT_ID = "CONSTANT_ID")
 

@@ -1,0 +1,109 @@
+#'
+#' The Canonical class.
+#'
+#' This virtual class represents a canonical expression.
+#'
+#' @rdname Canonical-class
+setClass("Canonical", representation(id = "integer", args = "list", validate = "logical"), 
+                      prototype(id = NA_integer_, args = list(), validate = TRUE), contains = "VIRTUAL")
+
+setMethod("initialize", "Canonical", function(.Object, id = NA_integer_, args = list(), validate = TRUE) {
+  .Object@id <- ifelse(is.na(id), get_id(), id)
+  .Object@args <- args
+  .Object@validate <- validate
+  if(.Object@validate)
+    validObject(.Object)
+  .Object
+})
+
+#' @describeIn Canonical The unique ID of the canonical expression.
+setMethod("id", "Canonical", function(object) { object@id })
+
+#' @param object A \linkS4class{Canonical} object.
+#' @describeIn Canonical The expression associated with the input.
+setMethod("expr", "Canonical", function(object) {
+  if(length(object@args) != 1)
+    stop("'expr' is ambiguous, there should only be one argument.")
+  return(object@args[[1]])
+})
+
+#' @describeIn Canonical The graph implementation of the object stored as a property.
+setMethod("canonical_form", "Canonical", function(object) { canonicalize(object) })
+
+#' @describeIn Canonical List of \linkS4class{Variable} objects in the expression.
+setMethod("variables", "Canonical", function(object) {
+  # TODO: Some code relies on these not being cached, figure out which code and fix it.
+  var_list <- list()
+  for(arg in object@args) {
+    for(var in variables(arg))
+      var_list <- c(var_list, var)
+  }
+  unique_list(var_list)
+})
+
+#' @describeIn Canonical List of \linkS4class{Parameter} objects in the expression.
+setMethod("parameters", "Canonical", function(object) {
+  parm_list <- list()
+  for(arg in object@args) {
+    for(param in parameters(arg))
+      parm_list <- c(parm_list, param)
+  }
+  unique_list(parm_list)
+})
+
+#' @describeIn Canonical List of \linkS4class{Atom} objects in the expression.
+setMethod("atoms", "Canonical", function(object) {
+  atom_list <- list()
+  for(arg in object@args) {
+    for(atom in atoms(arg))
+      atom_list <- c(atom_list, atom)
+  }
+  unique_list(atom_list)
+})
+
+#' @describeIn Canonical List of \linkS4class{Constant} objects in the expression.
+setMethod("constants", "Canonical", function(object) {
+  const_list <- list()
+  for(arg in object@args) {
+    for(const in constants(arg))
+      const_list <- c(const_list, const)
+  }
+  unique_list(const_list)
+})
+
+setMethod("tree_copy", "Canonical", function(object, id_objects = list()) {
+  new_args <- list()
+  for(arg in object@args) {
+    if(is.list(arg)) {
+      arg_list <- lapply(arg, function(elem) { tree_copy(elem, id_objects) })
+      new_args <- c(new_args, arg_list)
+    } else
+      new_args <- c(new_args, tree_copy(arg, id_objects))
+  }
+  return(copy(object, args = new_args, id_objects = id_objects))
+})
+
+setMethod("copy", "Canonical", function(object, args = list(), id_objects = list()) {
+  if(is.null(id_objects))
+    id_objects <- list()
+  
+  obj_id <- id(object)
+  obj_id_char <- as.character(obj_id)
+  if(obj_id_char %in% names(id_objects))
+    return(id_objects[[obj_id_char]])
+  if(is.null(args) || length(args) == 0)
+    args <- object@args
+  else {
+    if(length(args) != length(object@args))
+      stop("args must be same length as object@args")
+  }
+  
+  data <- get_data(object)
+  if(is.null(data) || length(data) == 0)
+    return(do.call(class(object), args))
+  else
+    return(do.call(class(object), c(args, data)))
+})
+
+#' @describeIn Canonical Information needed to reconstruct the expression aside from its arguments.
+setMethod("get_data", "Canonical", function(object) { list() })

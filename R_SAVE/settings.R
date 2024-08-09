@@ -1,0 +1,8 @@
+## Analog of settings.py
+
+# Canonicalization backends
+SCIPY_CANON_BACKEND <- "SCIPY"
+RUST_CANON_BACKEND <- "RUST"
+CPP_CANON_BACKEND <- "CPP"
+
+DEFAULT_CANON_BACKEND <- CPP_CANON_BACKEND

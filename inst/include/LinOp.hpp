@@ -54,31 +54,222 @@ enum operatortype {
 /* linOp TYPE */
 typedef operatortype OperatorType;
 
+#ifdef _R_INTERFACE_
+OperatorType to_optype(int typeValue) {
+  // typeValue starts at 1!
+  OperatorType result;
+  switch (typeValue - 1) {
+  case 0:
+    result = VARIABLE;
+    break;
+  case 1:
+    result = PARAM;
+    break;
+  case 2:
+    result = PROMOTE;
+    break;
+  case 3:
+    result = MUL;
+    break;
+  case 4:
+    result = RMUL;
+    break;
+  case 5:
+    result = MUL_ELEM;
+    break;
+  case 6:
+    result = DIV;
+    break;
+  case 7:
+    result = SUM;
+    break;
+  case 8:
+    result = NEG;
+    break;
+  case 9:
+    result = INDEX;
+    break;
+  case 10:
+    result = TRANSPOSE;
+    break;
+  case 11:
+    result = SUM_ENTRIES;
+    break;
+  case 12:
+    result = TRACE;
+    break;
+  case 13:
+    result = RESHAPE;
+    break;
+  case 14:
+    result = DIAG_VEC;
+    break;
+  case 15:
+    result = DIAG_MAT;
+    break;
+  case 16:
+    result = UPPER_TRI;
+    break;
+  case 17:
+    result = CONV;
+    break;
+  case 18:
+    result = HSTACK;
+    break;
+  case 19:
+    result = VSTACK;
+    break;
+  case 20:
+    result = SCALAR_CONST;
+    break;
+  case 21:
+    result = DENSE_CONST;
+    break;
+  case 22:
+    result = SPARSE_CONST;
+    break;
+  case 23:
+    result = NO_OP;
+    break;
+  case 24:
+    result = KRON_R;  // KRON and KRON_R are same, latter preferred!
+    break;
+  case 25:
+    result = KRON_R;
+    break;
+  case 26:
+    result = KRON_L;
+    break;
+  default:
+    Rcpp::stop("Invalid operator coding specified");
+  }
+  return(result);
+}
+
+int from_optype(OperatorType type) {
+  int result = 0;
+  switch (type) {
+  case VARIABLE:
+    result = 1;
+    break;
+  case PARAM:
+    result = 2;
+    break;
+  case PROMOTE:
+    result = 3;
+    break;
+  case MUL:
+    result = 4;
+    break;
+  case RMUL:
+    result = 5;
+    break;
+  case MUL_ELEM:
+    result = 6;
+    break;
+  case DIV:
+    result = 7;
+    break;
+  case SUM:
+    result = 8;
+    break;
+  case NEG:
+    result = 9;
+    break;
+  case INDEX:
+    result = 10;
+    break;
+  case TRANSPOSE:
+    result = 11;
+    break;
+  case SUM_ENTRIES:
+    result = 12;
+    break;
+  case TRACE:
+    result = 13;
+    break;
+  case RESHAPE:
+    result = 14;
+    break;
+  case DIAG_VEC:
+    result = 15;
+    break;
+  case DIAG_MAT:
+    result = 16;
+    break;
+  case UPPER_TRI:
+    result = 17;
+    break;
+  case CONV:
+    result = 18;
+    break;
+  case HSTACK:
+    result = 19;
+    break;
+  case VSTACK:
+    result = 20;
+    break;
+  case SCALAR_CONST:
+    result = 21;
+    break;
+  case DENSE_CONST:
+    result = 22;
+    break;
+  case SPARSE_CONST:
+    result = 23;
+    break;
+  case NO_OP:
+    result = 24;
+    break;
+  case KRON:
+    result = 25;
+    break;
+  case KRON_R:
+    result = 26;
+    break;
+  case KRON_L:
+    result = 27;
+    break;
+  default:
+    Rcpp::stop("Invalid operator coding specified");
+  }
+  return(result);
+}
+
+#endif  
+
 /* LinOp Class mirrors the CVXPY linOp class. Data fields are determined
          by the TYPE of LinOp. No error checking is performed on the data
    fields,
          and the semantics of SIZE, ARGS, and DATA depends on the linOp TYPE. */
 class LinOp {
 public:
-  LinOp(OperatorType type, const std::vector<int> &shape,
+#ifdef _R_INTERFACE_
+  LinOp(int typeValue,  const std::vector<int> &shape,
+        const std::vector<const LinOp *> &args)
+    : shape_(shape), args_(args), sparse_(false),
+      data_has_been_set_(false) {
+    type_ = to_optype(typeValue);
+#ifdef _R_DEBUG
+    id_ = genRandomId();
+    Rcpp::Rcout << "New LinOp id " << id_ << std::endl;
+#endif
+  }
+#else   
+  LinOp(OperatorType type,  const std::vector<int> &shape,
         const std::vector<const LinOp *> &args)
       : type_(type), shape_(shape), args_(args), sparse_(false),
-        data_has_been_set_(false)
-  {
-#ifdef _R_INTERFACE_  
-          id = genRandomId();
-#ifdef _R_DEBUG
-          Rcpp::Rcout << "New LinOp id " << id_ << std::endl;
+        data_has_been_set_(false) {}
 #endif
-#endif
-  }
 
+#ifdef _R_INTERFACE_  
+#ifdef _R_DEBUG 
   ~LinOp() {
-#ifdef _R_DEBUG
-    Rcpp::Rcout << "LinOp id " << id << "; type " << type_ << " destroyed!!" << std::endl;
-#endif
+    Rcpp::Rcout << "LinOp id " << id_ << "; type " << type_ << " destroyed!!" << std::endl;
   }
-  
+#endif
+#endif
+
   OperatorType get_type() const { return type_; }
   bool is_constant() const {
     return type_ == SCALAR_CONST || type_ == DENSE_CONST ||
@@ -166,9 +357,11 @@ private:
   Matrix sparse_data_;
   Eigen::MatrixXd dense_data_;
   bool data_has_been_set_;
-#ifdef _R_INTERFACE_  
+#ifdef _R_INTERFACE_
+#ifdef _R_DEBUG
   /* almost uuid */
   std::string id_;
+#endif
 #endif
 };
 #endif

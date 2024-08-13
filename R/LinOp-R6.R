@@ -90,7 +90,7 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                               ),
                               public = list(
                                   initialize = function(type = NULL, size = NULL, args = NULL, data = NULL) {
-                                      private$args = R6List$new()
+                                      private$args <- args  ## SAVE to prevent garbage collection of C++ SEXPs
                                       ## Create a new LinOp on the C side
                                       private$ptr <- .Call("_CVXR_LinOp__new", PACKAGE = "CVXR")
                                       ## Associate args on R side with the args on the C side.
@@ -100,16 +100,14 @@ CVXcanon.LinOp <- R6::R6Class("CVXcanon.LinOp",
                                       if (!is.null(size)) {
                                           self$size <- size
                                       }
-                                      if (!is.null(args)) {
-                                          for (x in args) self$args_push_back(x)
-                                      }
+                                      ## make a direct call for efficiency rather than calling self$args_push_back(x)
+                                      for (x in args) .Call("_CVXR_LinOp__args_push_back", private$ptr, x$getXPtr(), PACKAGE = "CVXR")
                                       if (!is.null(data)) {
                                           self$dense_data <- data
                                       }
                                   }
                                  ,
                                   args_push_back = function(R6LinOp) {
-                                      private$args$append(R6LinOp)
                                       .Call("_CVXR_LinOp__args_push_back", private$ptr, R6LinOp$getXPtr(), PACKAGE = "CVXR")
                                   }
                                  ,

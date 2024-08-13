@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-15
+Version: 1.0-16
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -93,6 +93,7 @@ Collate:
     'qp2quad_form.R'
     'qp_solvers.R'
     'utilities.R'
+    'coll_utils.R'
     'solver_utilities.R'
     'transforms.R'
     'exports.R'
@@ -103,7 +104,6 @@ Collate:
     'LinOpVector-R6.R'
     'RcppExports.R'
     'CVXcanon-R6.R'
-    'Deque.R'
     'canonInterface.R'
 RoxygenNote: 7.3.2
 Encoding: UTF-8

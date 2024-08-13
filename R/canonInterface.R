@@ -22,12 +22,12 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
     ##     id_to_col_C$map(key = as.integer(id), value = as.integer(col))
     ## }
 
-    ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- R6List$new()
+    ## tmp is a vector that keeps variables data in scope after build_lin_op_tree returns
+    tmp <- make_vec()
     for (lin in linOps) {
-        tree <- build_lin_op_tree(lin, tmp)
-        tmp$append(tree)
-        lin_vec$push_back(tree)
+      tree <- build_lin_op_tree(lin, tmp)
+      tmp$push_back(tree)
+      lin_vec$push_back(tree)
     }
 
     ## REMOVE this later when we are sure
@@ -146,21 +146,21 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
 }
 
 build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
-    Q <- Deque$new()
+    Q <- make_vec()  ## A deque
     root_linC <- CVXcanon.LinOp$new()
-    Q$append(list(linR = root_linR, linC = root_linC))
+    Q$push_back(list(linR = root_linR, linC = root_linC))
 
-    while(Q$length() > 0) {
-        node <- Q$popleft()
+    while(Q$size() > 0) {
+        node <- Q$pop_front()  ## deque pop_front operation
         linR <- node$linR
         linC <- node$linC
 
         ## Updating the arguments our LinOp
-        ## tmp is a list
+        ## tmp is a vector with reference semantics
         for(argR in linR$args) {
             tree <- CVXcanon.LinOp$new()
-            tmp$append(tree)
-            Q$append(list(linR = argR, linC = tree))
+            tmp$push_back(tree)
+            Q$push_back(list(linR = argR, linC = tree))
             linC$args_push_back(tree)
         }
 

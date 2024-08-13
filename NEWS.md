@@ -7,6 +7,7 @@
   `infeasible_inaccurate` to match [`CVXPY` for gurobi](https://github.com/cvxpy/cvxpy/pull/1270)
 * Add an S3 print method for result from `solve()`.
 * Move `upper_tri_to_full` to C++
+* Drop use of R6 classes
 
 # CVXR 1.0-14
 

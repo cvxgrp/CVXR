@@ -42,7 +42,6 @@ Depends:
     R (>= 3.4.0)
 Imports:
     methods,
-    R6,
     Matrix,
     Rcpp (>= 0.12.12),
     bit64,
@@ -98,12 +97,10 @@ Collate:
     'transforms.R'
     'exports.R'
     'rcppUtils.R'
-    'R6List.R'
-    'ProblemData-R6.R'
-    'LinOp-R6.R'
-    'LinOpVector-R6.R'
+    'LinOp.R'
+    'LinOpVector.R'
     'RcppExports.R'
-    'CVXcanon-R6.R'
+    'CVXcanon.R'
     'canonInterface.R'
 RoxygenNote: 7.3.2
 Encoding: UTF-8

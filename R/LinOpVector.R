@@ -15,7 +15,7 @@ CVXcanon.LinOpVector <- function() {
     result <- paste(result, collapse = ", ")
     sprintf("[ %s ]", result)
   }
-  print <- function() print(self$toString())
+  print <- function() print(toString())
   list(getXPtr = getXPtr,
        getList = getList,
        push_back = push_back,

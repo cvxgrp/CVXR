@@ -116,70 +116,51 @@ LINOP_TYPES <-
   )
 names(LINOP_TYPES) <- toupper(LINOP_TYPES)
 
-#' An R LinOp class as distinguished from a C++ class of the same name
+#' An R LinOp class as distinguished from a C++ class of the same name. Always has a unique id
 #' @param type the type of LinOp, one of the types above
 #' @param dim the shape of the LinOp, a tuple, so for us a vector of integers
 #' @param args the arguments of the LinOp
 #' @param data the data for the LinOp, which is later set to C++ LinOp objects' linOp_data_ field
 #' @importFrom uuid UUIDgenerate
 #' @return an object of class "LinOp"
-LinOp <- function(type, dim, args, data = NULL, uuid = uuid::UUIDgenerate()) {
-  ## if (is.na(match(type, LINOP_TYPES))) stop(sprintf("LinOp: Unknown type: %s", type))
-  self <- environment()
-  class(self) <- c("LinOp", class(self))
-  self$self <- self  
-  ## These checks were in the earlier version. TODO: Need some validation
-  ## if(is.null(dim)) dim <- c(1,1)   # TODO: Get rid of this with proper multi-dimensional handling.
-  ## if(!is.character(type)) stop("type must be a character string")
-  ## if(!is.numeric(dim)) stop("dim must be a numeric vector")
-  ## if(!is.list(args)) stop("args must be a list of arguments")
-  ## list(type = type, dim = dim, args = args, data = data, class = "LinOp")
-  
-  
-  ## Read THIS NOW!!!
-  ## TODO: Not sure if C++ object really needs to be created yet.
-  ## Which means the methods below that iterface to the C++ object may not be needed.
-  ## That would mean a much simpler interface...
-  self
+LinOp <- function(type, dim, args, data = NULL, id = uuid::UUIDgenerate()) {
+  get_type <- function() type
+  set_type <- function(what) type <<- what
+  get_dim <- function() dim
+  set_dim <- function(what) dim <<- what
+  get_args <- function() args
+  set_args <- function(what) args <<- what
+  result <- list(get_type = get_type, set_type = set_type,
+                 get_dim = get_dim, set_dim = set_dim,
+                 get_args = get_args, set_args = set_args,
+                 get_id = function() id)
+  result$self <- result
+  class(result) <- "LinOp"
+  result
 }
 
 #' @method print LinOp
 print.LinOp <- function(x, ...) {
-  comps <- ls(x)
-  methods <- comps[sapply(comps, function(name) is.function(x[[name]]))]
-  others <- setdiff(comps, methods)
-  
-  out <- sprintf("LinOp(%s)", x$type)
-  if (length(others) > 0) {
-    out <- c(
-      out,
-      " " = paste0("Slots: ", paste(others, collapse = ", "))
-    )
-  }
-  if (length(methods) > 0) {
-    out <- c(
-      out,
-      " " = paste0("Methods: ", paste(comps[methods], collapse = ", "))
-    )
-  }
-  cli::cli_bullets(out)
+  sprintf("LinOp(%s, dim = [%s])",
+          x$self$get_type(),
+          paste0(x$self$get_dim(), collapse = ", ")
+          )
 }
 
 #' Make a (R) Linear Constraint
 #' @param expr the expression
 #' @param constr_id the constaint id
 #' @param dim the shape
-#' @param class the class to set this object to
+
 #' @param data the data for the LinOp, which is later set to C++ LinOp objects' linOp_data_ field
 #' @return an object of class "LinOp"
 make_lin_constraint <- function(expr, constr_id, dim, class = "LinConstr") {
-  self <- environment()
-  if(is.null(dim)) dim <- rep(1L, 2L)   # TODO: Get rid of this with proper multi-dimensional handling.
-  if(!is.integer(dim)) stop("dim must be a integer vector")
-  class(self) <- c(class, class(self))
-  rm("class", envir = self)
-  self$self <- self  
-  self
+  result <- list(get_expr = function() expr
+                 get_constr_id = function() constr_id,
+                 get_dim = function() dim)
+  result$self <- result
+  class(result) <- class
+  result
 }
 
 LinConstr <- make_lin_constraint
@@ -187,24 +168,11 @@ LinEqConstr <- function(expr, constr_id, dim) { LinConstr(expr, constr_id, dim, 
 LinLeqConstr <- function(expr, constr_id, dim) { LinConstr(expr, constr_id, dim, class = "LinLeqConstr") }
 
 print_lin_constraint <- function(x, ...) {
-  comps <- ls(x)
-  methods <- comps[sapply(comps, function(name) is.function(x[[name]]))]
-  others <- setdiff(comps, methods)
-  
-  out <- sprintf("%s", class(x)[[1L]])
-  if (length(others) > 0) {
-    out <- c(
-      out,
-      " " = paste0("Slots: ", paste(others, collapse = ", "))
-    )
-  }
-  if (length(methods) > 0) {
-    out <- c(
-      out,
-      " " = paste0("Methods: ", paste(comps[methods], collapse = ", "))
-    )
-  }
-  cli::cli_bullets(out)
+  sprintf("%s(%s, dim = [%s])",
+          class(x),
+          x$self$get_expr(),
+          paste0(x$self$get_dim(), collapse = ", ")
+          )
 }
 
 #' @method print LinConstr

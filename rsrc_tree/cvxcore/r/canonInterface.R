@@ -278,35 +278,41 @@ get_problem_matrix <- function(linOps,
     param_to_size_C <- param_to_col
     ## storage.mode(param_to_size_C) <- "integer"  ## should not be needed if we keep things sane...
     
-    ## A structure to keep the intermediate results in scope and prevent them from being gc'ed.
-    tmp <- vector(length = length(linOps), mode = "list")
-
     # dict to memoize construction of C++ linOps, and to keep R references
     # to them to prevent their deletion
-    linPy_to_linC <- list()
-    count <- 0
+    linR_to_linC <- new.env(parent = empytenv())
+    count <- 0L
     for (lin in linOps) {
       # Add conversion logic for linOps
-      tree <- build_lin_op_tree(lin, linPy_to_linC)
-      count <- count + 1
-      tmp[[count]] <- tree  ## tree will not be gc'ed now
+      build_lin_op_tree(lin, linR_to_linC)
+      tree <- linR_to_linC$get(lin$id)  ## should that be id(lin)?
       lin_vec$push_back(tree)
     }
 
-    problemData = cvxcore.build_matrix
+    problemData = cvxcore.build_matrix(lin_vec,
+                                       var_length,
+                                       id_to_col_C,
+                                       param_to_size_C,
+                                       s$get_num_threads())
 
-
-    tensor_V <- list()
-    tensor_I <- list()
-    tensor_J <- list()
+    tensor_V <- new.env(parent = empytenv())
+    tensor_I <- new.env(parent = empytenv())
+    tensor_J <- new.env(parent = empytenv())
 
     for (param_id in names(param_to_col)) {
-      tensor_V[[param_id]] <- list()
-      tensor_I[[param_id]] <- list()
-      tensor_J[[param_id]] <- list()
+      tensor_V[[param_id]] <- make_vec()
+      tensor_I[[param_id]] <- make_vec()
+      tensor_J[[param_id]] <- make_vec()
       # Add logic to fill tensors
+      problemData$param_id <- param_id  ## CHECK
+      for (i in param_to_size[[param_id]]) {
+        problemData$vec_idx <- i
+        prob_len <- problemData$getLen()
+        tensor_V[[param_id]]$push_back(problemData$getV(prob_len))
+        tensor_I[[param_id]]$push_back(problemData$getI(prob_len))
+        tensor_J[[param_id]]$push_back(problemData$getJ(prob_len))
+      }
     }
-
     V <- c()
     I <- c()
     J <- c()

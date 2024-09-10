@@ -64,8 +64,8 @@ void ProblemData__set_param_id(SEXP xp, int idx) {
 //'
 //' @param xp the ProblemData Object XPtr
 //' @return the length of V, I, J 
-// [[Rcpp::export(.ProblemData__getLen)]]
-std::vector<double> ProblemData__getLen(SEXP xp) {
+// [[Rcpp::export(.ProblemData__get_len)]]
+int ProblemData__get_len(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<ProblemData> ptr(xp);
 
@@ -94,7 +94,7 @@ Rcpp::NumericVector ProblemData__get_V(SEXP xp, int num_values) {
 //' @param num_values the number of values to return
 //' @return an integer vector of the field I from the ProblemData Object
 // [[Rcpp::export(.ProblemData__get_I)]]
-Rcpp::IntVector ProblemData__get_I(SEXP xp, int num_values) {
+Rcpp::IntegerVector ProblemData__get_I(SEXP xp, int num_values) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<ProblemData> ptr(xp);
   Rcpp::IntVector result(num_values);
@@ -109,7 +109,7 @@ Rcpp::IntVector ProblemData__get_I(SEXP xp, int num_values) {
 //' @param num_values the number of values to return
 //' @return an integer vector of the field J from the ProblemData Object
 // [[Rcpp::export(.ProblemData__get_J)]]
-Rcpp::IntVector ProblemData__get_J(SEXP xp, int num_values) {
+Rcpp::IntegerVector ProblemData__get_J(SEXP xp, int num_values) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<ProblemData> ptr(xp);
   Rcpp::IntVector result(num_values);

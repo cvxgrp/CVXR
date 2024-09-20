@@ -97,7 +97,7 @@ Rcpp::NumericVector ProblemData__get_V(SEXP xp, int num_values) {
 Rcpp::IntegerVector ProblemData__get_I(SEXP xp, int num_values) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<ProblemData> ptr(xp);
-  Rcpp::IntVector result(num_values);
+  Rcpp::IntegerVector result(num_values);
   ptr->getI(result.begin(), num_values);
   // return the result to R
   return result;
@@ -112,7 +112,7 @@ Rcpp::IntegerVector ProblemData__get_I(SEXP xp, int num_values) {
 Rcpp::IntegerVector ProblemData__get_J(SEXP xp, int num_values) {
   // grab the object as a XPtr (smart pointer)
   Rcpp::XPtr<ProblemData> ptr(xp);
-  Rcpp::IntVector result(num_values);
+  Rcpp::IntegerVector result(num_values);
   ptr->getJ(result.begin(), num_values);
   // return the result to R
   return result;

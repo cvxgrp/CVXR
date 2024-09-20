@@ -28,7 +28,7 @@
 #include <RcppEigen.h>
 
 std::string genRandomId(); // generate a random id for Linops etc.
-
+typedef Eigen::MappedSparseMatrix< double > MappedSparseMatrix ;
 #endif
 
 #define NULL_MATRIX Eigen::SparseMatrix<double>(0, 0)

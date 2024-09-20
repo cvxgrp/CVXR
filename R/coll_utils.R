@@ -1,7 +1,7 @@
 #### #' Create a vec using a list
 #### #' @return a list that provides a vector as well as a deque
-make_vec <- function() {
-  vec <- vector(mode = "list", length = 128L) ## initial length of 128!
+make_vec <- function(init_size = 128L) {
+  vec <- vector(mode = "list", length = init_size) ## initial length of 128!
   n <- 0L
   push_back <- function(what) { n <<- n + 1L; vec[[n]] <<- what; invisible(what) }
   push_front <- function(what) { vec <<- append(list(what), vec); n <<- n + 1L; invisible(what) }
@@ -18,7 +18,7 @@ make_vec <- function() {
 make_stack <- function() {
   stack <- list()
   n <- 0L
-  append <- function(what) { n <<- n + 1L; stack[[what$get_id()]] <<- what; invisible(what)}
+  append <- function(what) { n <<- n + 1L; stack[[what$id]] <<- what; invisible(what)}
   pop <- function() { result <- stack[[n]]; n <<- n - 1L; result }
   pop_front <- function() { result <- vec[[1L]]; vec <<- vec[-1]; n <<- n - 1L; result }
   get_list <- function() vec[seq_len(n)]
@@ -27,25 +27,26 @@ make_stack <- function() {
        get_list = get_list, size = size)
 }
 
-#### #' Create a dict using a list. Added items must have a unique id field to use for hashing
-#### #' @return a list that is a dict
-#### DEPRECATED. I use an environment directly
-make_dict <- function() {
-  vec <- vector(mode = "list", length = 128L) ## initial length of 128!
-  n <- 0L
-  add <- function(what) {
-    id <- what$id
-    if (!(id %in% names(vec))) {
-      n <<- n + 1L;
-    }
-    vec[[id]] <- what
-    invisible(what)
-  }
-  contains <- function(what) {
-    what$id %in% names(vec)
-  }
-  get <- function(id) vec[[id]]
-  size <- function() n
+#### #' Create a dict using an environment. Added items must have a unique id field to use for hashing
+#### #' @return a that is an environment
+make_dict <- function() new.env(parent = emptyenv())
 
-  list(add = add, contains = contains, get = get, size = size)
-}
+## make_dict <- function() {
+##   vec <- vector(mode = "list", length = 128L) ## initial length of 128!
+##   n <- 0L
+##   add <- function(what) {
+##     id <- what$id
+##     if (!(id %in% names(vec))) {
+##       n <<- n + 1L;
+##     }
+##     vec[[id]] <- what
+##     invisible(what)
+##   }
+##   contains <- function(what) {
+##     what$id %in% names(vec)
+##   }
+##   get <- function(id) vec[[id]]
+##   size <- function() n
+
+##   list(add = add, contains = contains, get = get, size = size)
+## }

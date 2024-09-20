@@ -278,114 +278,65 @@ get_problem_matrix <- function(linOps,
     
     # dict to memoize construction of C++ linOps, and to keep R references
     # to them to prevent their deletion
-    linR_to_linC <- make_vec()
+    linR_to_linC <- make_dict()
     for (lin in linOps) {
       # Add conversion logic for linOps
-      tree <- build_lin_op_tree(lin, linR_to_linC)
-      linR_to_linC$push_back(tree)  ## tree will not be gc'ed now
+      build_lin_op_tree(lin, linR_to_linC)
+      tree <- linR_to_linC[[lin$id]]
       lin_vec$push_back(tree)
     }
 
-    problemData = CVXcanon.build_matrix(lin_vec,
-                                        var_length,
-                                        id_to_col_C,
-                                        param_to_size_C,
-                                        s.get_num_threads())
+    problemData <- CVXcanon.build_matrix(lin_vec,
+                                         var_length,
+                                         id_to_col_C,
+                                         param_to_size_C,
+                                         s.get_num_threads())
 
     # Populate tensors with info from problemData.
-    tensor_I <- tensor_J <- tensor_V <- vector("list", length = length(param_to_size))
+    tensor_I <- make_dict()
+    tensor_J <- make_dict()
+    tensor_V <- make_dict()
     for (param_id in names(param_to_size)) {
       size <- param_to_size[[param_id]]
-      tensor_I[[param_id]] <- tensor_J[[param_id]] <-
-        tensor_V[[param_id]] <- vector("list", length = size)
+      tI <- vector("list", length = size)
+      tJ <- vector("list", length = size)
+      tV <- vector("list", length = size)
       problemData$set_param_id(param_id)
       for (i in seq_len(size)) {
         problemData$set_vec_idx(i)
         prob_len <- problemData$getLen()
-        tensor_V[param_id][[i]] <- problemData$getV(prob_len)
-        tensor_I[param_id][[i]] <- problemData$getI(prob_len)
-        tensor_J[param_id][[i]] <- problemData$getJ(prob_len)
+        tV[[i]] <- problemData$getV(prob_len)
+        tI[[i]] <- problemData$getI(prob_len)
+        tJ[[i]] <- problemData$getJ(prob_len)
       }
+      tensor_V[[param_id]] <- tV
+      tensor_I[[param_id]] <- tJ
+      tensor_J[[param_id]] <- tI
     }
 
     # Reduce tensors to a single sparse CSR matrix.
     ## THIS NEEDS TO BE REWRITTEN IN C++ for speed.
-    V <- c()
-    I <- c()
-    J <- c()
     # one of the 'parameters' in param_to_col is a constant scalar offset,
     # hence 'plus_one'
-    param_size_plus_one <- 0
-    for (param_id in names(param_to_col)) {
+    param_ids <- names(param_to_col)
+    V <- unlist(lapply(param_ids, function(param_id) unlist(tensor_V[[param_id]])))
+    I <- unlist(lapply(param_ids, function(param_id) unlist(tensor_I[[param_id]]) +
+                                                       unlist(tensor_J[[param_id]] * constr_length)))
+    ## LOOKS like this assumes a 0-based index??  TO BE CHECKED
+    ## Print it for a small problem with CVXPY and compare what we get here
+    J <- unlist(lapply(param_ids, function(param_id) {
       size <- param_to_size[[param_id]]
-      param_size_plus_one <- param_size_plus_one + size
-      for (i in 1:size) {
-        V <- c(V, tensor_V[[param_id]][[i]])
-        I <- c(I, tensor_I[[param_id]][[i]] + tensor_J[[param_id]][[i]] * constr_length)
-        J <- c(J, tensor_J[[param_id]][[i]] * 0 + (i + param_to_col[[param_id]]))
-      }
-    }
+      unlist(tensor_J[[param_id]]) * 0 + (seq_len(size) + col)
+    }))
 
+    param_plus_size_one <- sum(sapply(param_ids, function(param_id) param_to_size[[param_id]]))
+    
     output_shape <- c(constr_length * (var_length + 1), param_size_plus_one)
     A <- Matrix::sparseMatrix(i = I, j = J, x = V, dims = output_shape)
     return(A)
   } else {
     stop(sprintf("Unknown backend: %s", canon_backend))
   }
-}
-
-get_problem_matrix <- function(linOps, var_length, id_to_col, param_to_size, param_to_col, constr_length,
-                               canon_backend = DEFAULT_CANNON_BACKEND) {
-  ## We only handle default canon backend, saving others for later
-  lin_vec <- make_ConstLinopVector()
-  id_to_col_C <- id_to_col
-  ## The following ensures that id_to_col_C is an integer vector
-  ## with names retained. This is the C equivalent of map<int, int> in R
-  ## storage.mode(id_to_col_C) <- "integer" 
-
-    ##if (any(is.na(id_to_col)))
-    ##    id_to_col <- c()
-
-    ## Loading the variable offsets from our R list into a C++ map
-
-    ## for (id in names(id_to_col)) {
-    ##     col <- id_to_col[[id]]
-    ##     id_to_col_C$map(key = as.integer(id), value = as.integer(col))
-    ## }
-
-    ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- R6List$new()
-    for (lin in linOps) {
-        tree <- build_lin_op_tree(lin, tmp)
-        tmp$append(tree)
-        lin_vec$push_back(tree)
-    }
-
-    ## REMOVE this later when we are sure
-    if (typeof(constr_offsets) != "integer") {
-        stop("get_problem_matrix: expecting integer vector for constr_offsets")
-    }
-
-    if (length(constr_offsets) == 0)
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
-    else {
-        ## Load constraint offsets into a C++ vector
-        ##constr_offsets_C <- CVXCanon.IntVector$new()
-        ##for (offset in constr_offsets)
-        ##    constr_offsets_C$push_back(as.integer(offset))
-        constr_offsets_C <- constr_offsets
-        storage.mode(constr_offsets_C) <- "integer"
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
-    }
-
-    ## Unpacking
-    ## V <- problemData$getV()
-    ## I <- problemData$getI()
-    ## J <- problemData$getJ()
-    ## const_vec <- problemData$getConstVec()
-
-    list(V = problemData$getV(), I = problemData$getI(), J = problemData$getJ(),
-         const_vec = matrix(problemData$getConstVec(), ncol = 1))
 }
 
 format_matrix <- function(matrix, format='dense') {
@@ -476,144 +427,6 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
     }
 }
 
-#' Construct C++ LinOp tree from Python LinOp tree.
-#'
-#' Constructed C++ linOps are stored in the \code{linPy_to_linC} dict,
-#' which maps Python linOps to their corresponding C++ linOps.
-#'
-#' @param linPy_to_linC A named for memoizing construction and storing
-#'  the C++ LinOps.
-build_lin_op_tree <- function(root_linR, linR_to_linC) {
-  bfs_stack <- make_vec()
-  list(root_linPy)
-    post_order_stack = []
-    while bfs_stack:
-        linPy = bfs_stack.pop()
-        if linPy not in linPy_to_linC:
-            post_order_stack.append(linPy)
-            for arg in linPy.args:
-                bfs_stack.append(arg)
-            if isinstance(linPy.data, lo.LinOp):
-                bfs_stack.append(linPy.data)
-    while post_order_stack:
-        linPy = post_order_stack.pop()
-        make_linC_from_linPy(linPy, linPy_to_linC)
-  
-
-  Q <- Deque$new()
-    root_linC <- CVXcanon.LinOp$new()
-    Q$append(list(linR = root_linR, linC = root_linC))
-
-    while(Q$length() > 0) {
-        node <- Q$popleft()
-        linR <- node$linR
-        linC <- node$linC
-
-        ## Updating the arguments our LinOp
-        ## tmp is a list
-        for(argR in linR$args) {
-            tree <- CVXcanon.LinOp$new()
-            tmp$append(tree)
-            Q$append(list(linR = argR, linC = tree))
-            linC$args_push_back(tree)
-        }
-
-        ## Setting the type of our LinOp; at the C level, it is an ENUM!
-        ## Can we avoid this case conversion and use UPPER CASE to match C?
-        linC$type <- toupper(linR$type) ## Check with Anqi
-
-        ## Setting size
-        linC$size_push_back(as.integer(linR$dim[1]))
-        linC$size_push_back(as.integer(linR$dim[2]))
-
-        ## Loading the problem data into the approriate array format
-        if(!is.null(linR$data)) {
-            ## if(length(linR$data) == 2 && is(linR$data[1], 'slice'))
-            if (length(linR$data) == 3L && linR$data[[3L]] == 'key') {
-                ## ASK Anqi about this
-                set_slice_data(linC, linR)  ## TODO
-            } else if(is.numeric(linR$data) || is.integer(linR$data))
-                linC$dense_data <- format_matrix(linR$data, 'scalar')
-            else if(linR$data$class == 'LinOp' && linR$data$type == 'scalar_const')
-                linC$dense_data <- format_matrix(linR$data$data, 'scalar')
-            else
-                set_matrix_data(linC, linR)
-        }
-    }
-
-    root_linC
-}
-
-#' Construct C++ LinOp tree from Python LinOp tree.
-#'
-#' Constructed C++ linOps are stored in the linR_to_linC list,
-#' which maps Python linOps to their corresponding C++ linOps.
-#'
-#' @param root_linR The root of the Python LinOp tree.
-#' @param linR_to_linC A list for memoizing construction and storing
-#'   the C++ LinOps.
-build_lin_op_tree <- function(root_linR, linR_to_linC) {
-  bfs_stack <- list(root_linR)
-  post_order_stack <- list()
-  
-  while (length(bfs_stack) > 0) {
-    n <- length(bfs_stack)
-    linR <- bfs_stack[[n]]
-    bfs_stack[[n]] <- NULL ## pop off the last element
-    if (linR$uuid %in% names(linR_to_linC)) {
-      n <- length(pos_order_stack)
-      post_order_stack[[n + 1L]] <- linR
-      for (arg in linR$args) {
-        n <- length(bfs_stack)
-        bfs_stack[[n + 1L]] <- arg
-      }
-      if (inherits(linR$data, "LinOp")) {
-        n <- length(bfs_stack)
-        bfs_stack[[n + 1L]] <- linR$data
-      }
-    }
-  }
-  
-  while (length(post_order_stack) > 0) {
-    n <- length(post_order_stack)
-    linR <- post_order_stack[[n]]
-    post_order_stack[[n]] <- NULL ## delete linR
-    make_linC_from_linR(linR, linR_to_linC)
-  }
-}
-
-#' Construct a C++ LinOp corresponding to LinPy.
-#'
-#' Children of linR are retrieved from linR_to_linC.
-#'
-#' @param linR A LinPy object.
-#' @param linR_to_linC A mapping from LinPy objects to LinC objects.
-make_linC_from_linR <- function(linR, linR_to_linC) {
-  if (! (linR$get_id() %in% names(linR_to_linC))) {
-    typ <- linR$get_type()
-    dim <- linR$get_dim()
-    lin_args_vec <- make_ConstLinOpVector()
-    arg <- 
-    for (arg in linR$args) {
-      lin_args_vec$push_back(linR_to_linC[[arg]])
-    }
-    
-    linC <- make_cvxcore_LinOp(type = typ, dim = dim, args = lin_args_vec)
-    linR_to_linC[[linR$uuid]] <- linC
-    
-    if (!is.null(linR$data)) {
-      if (inherits(linR$data, "LinOp")) {
-        linR_data <- linR$data
-        linC_data <- linR_to_linC[[linR_data$uuid]]
-        linC$set_linOp_data(linC_data)
-        linC$set_data_ndim(length(linR_data$dim))
-      } else {
-        set_linC_data(linC, linR)
-      }
-    }
-  }
-}
-
 #' Set numerical data fields in linC
 #'
 #' This function sets numerical data fields in the linC object based on the
@@ -642,4 +455,65 @@ set_linC_data <- function(linC, linR) {
   } else {
     set_matrix_data(linC, linR)
   }
+}
+
+#' Construct a C++ LinOp corresponding to LinR.
+#'
+#' Children of linR are retrieved from linR_to_linC.
+#'
+#' @param linR A LinR object.
+#' @param linR_to_linC A mapping from LinR objects to LinC objects.
+make_linC_from_linR <- function(linR, linR_to_linC) {
+  if (! (linR$id %in% names(linR_to_linC))) {
+    typ <- linR$type
+    dim <- linR$dim
+    lin_args_vec <- make_ConstLinOpVector()
+    for (arg in linR$args) {
+      lin_args_vec$push_back(linR_to_linC[[arg]])
+    }
+    
+    linC <- make_cvxcore_LinOp(type = typ, dim = dim, args = lin_args_vec)
+    linR_to_linC[[linR$id]] <- linC
+    
+    if (!is.null(linR$data)) {
+      if (inherits(linR$data, "LinOp")) {
+        linR_data <- linR$data
+        linC_data <- linR_to_linC[[linR_data$id]]
+        linC$set_linOp_data(linC_data)
+        linC$set_data_ndim(length(linR_data$dim))
+      } else {
+        set_linC_data(linC, linR)
+      }
+    }
+  }
+}
+
+#' Construct C++ LinOp tree from R LinOp tree.
+#'
+#' Constructed C++ linOps are stored in the \code{linR_to_linC} dict,
+#' which maps Python linOps to their corresponding C++ linOps.
+#'
+#' @param linR_to_linC A named for memoizing construction and storing
+#'  the C++ LinOps.
+build_lin_op_tree <- function(root_linR, linR_to_linC) {
+  bfs_stack <- make_stack()
+  bfs_stack$append(root_linR)
+  post_order_stack <- make_stack()
+  while(bfs_stack$size() > 0) {
+    linR <- bfs_stack$pop()
+    if (!(linR %in% names(linR_to_linC))) {
+      post_order_stack$append(linR)
+      for (arg in linR$args) {
+        bfs_stack$append(arg)
+      }
+      if (linR$data$class == "LinOp") {
+        bfs_stack$append(linR$data)
+      }
+    }
+  }
+  while(post_order_stack$size() > 0) {
+    linR <- post_order_stack$pop()
+    make_linC_from_linR(linR, linR_to_linC)
+  }
+  invisible(TRUE)
 }

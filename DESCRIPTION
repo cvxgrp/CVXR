@@ -56,7 +56,8 @@ Imports:
     RSpectra,
     uuid,
     glue,
-    cli
+    cli,
+    cvxcore
 Suggests:
     knitr,
     rmarkdown,
@@ -78,6 +79,7 @@ Collate:
     'constant.R'
     'variable.R'
     'lin_ops.R'
+    'lin_utils.R'
     'transforms.R'    
     'atoms.R'
     'affine.R'
@@ -110,13 +112,7 @@ Collate:
     'utilities.R'
     'solver_utilities.R'
     'exports.R'
-    'R6List.R'
-    'ProblemData-R6.R'
-    'LinOp-R6.R'
-    'LinOpVector-R6.R'
     'RcppExports.R'
-    'CVXcanon-R6.R'
-    'Deque.R'
     'canonInterface.R'
 RoxygenNote: 7.3.2
 Encoding: UTF-8

@@ -91,7 +91,7 @@
 #' Set the field named \code{type} for the LinOp object
 #'
 #' @param xp the LinOp Object XPtr
-#' @param typeValue an integer value
+#' @param typeValue an integer value (1-based)
 .LinOp__set_type <- function(xp, typeValue) {
     invisible(.Call('_CVXR_LinOp__set_type', PACKAGE = 'CVXR', xp, typeValue))
 }
@@ -261,8 +261,8 @@ upper_tri_to_full <- function(n) {
 #'
 #' @param xp the ProblemData Object XPtr
 #' @return the length of V, I, J 
-.ProblemData__getLen <- function(xp) {
-    .Call('_CVXR_ProblemData__getLen', PACKAGE = 'CVXR', xp)
+.ProblemData__get_len <- function(xp) {
+    .Call('_CVXR_ProblemData__get_len', PACKAGE = 'CVXR', xp)
 }
 
 #' Get the V field of the ProblemData Object

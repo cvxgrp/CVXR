@@ -244,23 +244,17 @@ int from_optype(OperatorType type) {
          and the semantics of SIZE, ARGS, and DATA depends on the linOp TYPE. */
 class LinOp {
 public:
-#ifdef _R_INTERFACE_
-  LinOp(int typeValue,  const std::vector<int> &shape,
+  LinOp(OperatorType type,  const std::vector<int> &shape,
         const std::vector<const LinOp *> &args)
-    : shape_(shape), args_(args), sparse_(false),
+    : type_(type), shape_(shape), args_(args), sparse_(false),
       data_has_been_set_(false) {
-    type_ = to_optype(typeValue);
+#ifdef _R_INTERFACE_
 #ifdef _R_DEBUG
     id_ = genRandomId();
     Rcpp::Rcout << "New LinOp id " << id_ << std::endl;
 #endif
-  }
-#else   
-  LinOp(OperatorType type,  const std::vector<int> &shape,
-        const std::vector<const LinOp *> &args)
-      : type_(type), shape_(shape), args_(args), sparse_(false),
-        data_has_been_set_(false) {}
 #endif
+  }
 
 #ifdef _R_INTERFACE_  
 #ifdef _R_DEBUG 
@@ -276,7 +270,6 @@ public:
            type_ == SPARSE_CONST;
   }
   std::vector<int> get_shape() const { return shape_; }
-
   const std::vector<const LinOp *> get_args() const { return args_; }
   const std::vector<std::vector<int> > get_slice() const { return slice_; }
   void push_back_slice_vec(const std::vector<int> &slice_vec) {
@@ -296,6 +289,16 @@ public:
   const Matrix &get_sparse_data() const { return sparse_data_; }
   const Eigen::MatrixXd &get_dense_data() const { return dense_data_; }
 
+#ifdef _R_INTERFACE_
+  /* In R we directly have the dense matrix, so no need to process things.
+   */
+  void set_dense_data(Eigen::Map<Eigen::MatrixXd> dense_data) {
+    assert(!data_has_been_set_);
+    dense_data_ = dense_data;
+    sparse_ = false;
+    data_has_been_set_ = true;
+  }     
+#else
   /* Initializes DENSE_DATA. MATRIX is a pointer to the data of a 2D
    * numpy array, ROWS and COLS are the size of the ARRAY.
    *
@@ -311,7 +314,19 @@ public:
     sparse_ = false;
     data_has_been_set_ = true;
   }
-
+#endif
+  
+#ifdef _R_INTERFACE_
+  /* In R we directly have the sparse matrix, so no need to process things.
+   */
+  void set_sparse_data(Eigen::Map<Eigen::Matrix> sparse_data) {
+    assert(!data_has_been_set_);
+    sparse_data_ = sparse_data;
+    sparse_ = true;
+    data_ndim_ = 2;
+    data_has_been_set_ = true;
+  }     
+#else  
   /* Initializes SPARSE_DATA from a sparse matrix in COO format.
    * DATA, ROW_IDXS, COL_IDXS are assumed to be contiguous 1D numpy arrays
    * where (DATA[i], ROW_IDXS[i], COLS_IDXS[i]) is a (V, I, J) triplet in
@@ -339,9 +354,10 @@ public:
     data_ndim_ = 2;
     data_has_been_set_ = true;
   }
-
+#endif
+  
 private:
-  const OperatorType type_;
+  const OperatorType type_;  
   std::vector<int> shape_;
   // children of this LinOp
   std::vector<const LinOp *> args_;

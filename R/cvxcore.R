@@ -3,13 +3,13 @@
 #' @param dim the shape of the LinOp, a tuple, so for us a vector of integers
 #' @param args the arguments of the LinOp
 #' @param data the data for the LinOp, which is later set to C++ LinOp objects' linOp_data_ field
-make_cvxcore_LinOp <- function(type, dim, args, data = NULL) {
+cvxcore_LinOp <- function(type, dim, args, data = NULL) {
   self <- environment()
   class(self) <- c("cvxcore_LinOp", class(self))
   self$self <- self  
 
   ## Create C++ object
-  self$xptr <- .Call(paste0("_CVXR_LinOp__new"), PACKAGE = "CVXR")
+  self$xptr <- .Call(paste0("_CVXR_LinOp__new"), type, dim, args, PACKAGE = "CVXR")
 
   ## Define Methods
   self$get_type <- function() {

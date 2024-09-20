@@ -388,14 +388,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// ProblemData__getLen
-std::vector<double> ProblemData__getLen(SEXP xp);
-RcppExport SEXP _CVXR_ProblemData__getLen(SEXP xpSEXP) {
+// ProblemData__get_len
+int ProblemData__get_len(SEXP xp);
+RcppExport SEXP _CVXR_ProblemData__get_len(SEXP xpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(ProblemData__getLen(xp));
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_len(xp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -412,7 +412,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // ProblemData__get_I
-Rcpp::IntVector ProblemData__get_I(SEXP xp, int num_values);
+Rcpp::IntegerVector ProblemData__get_I(SEXP xp, int num_values);
 RcppExport SEXP _CVXR_ProblemData__get_I(SEXP xpSEXP, SEXP num_valuesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -424,7 +424,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // ProblemData__get_J
-Rcpp::IntVector ProblemData__get_J(SEXP xp, int num_values);
+Rcpp::IntegerVector ProblemData__get_J(SEXP xp, int num_values);
 RcppExport SEXP _CVXR_ProblemData__get_J(SEXP xpSEXP, SEXP num_valuesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -460,15 +460,7 @@ RcppExport SEXP _CVXR_LinOp__is_sparse(SEXP);
 RcppExport SEXP _CVXR_LinOp__push_back_slice(SEXP, SEXP);
 RcppExport SEXP _CVXR_LinOp__set_data_ndim(SEXP, SEXP);
 RcppExport SEXP _CVXR_LinOp__set_linOp_data(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__get_const_to_row(SEXP);
 RcppExport SEXP _CVXR_ProblemData__get_const_vec(SEXP);
-RcppExport SEXP _CVXR_ProblemData__get_id_to_col(SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_const_to_row(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_const_vec(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_I(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_id_to_col(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_J(SEXP, SEXP);
-RcppExport SEXP _CVXR_ProblemData__set_V(SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_LinOp__new", (DL_FUNC) &_CVXR_LinOp__new, 0},
@@ -505,29 +497,21 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_ProblemData__set_vec_idx", (DL_FUNC) &_CVXR_ProblemData__set_vec_idx, 2},
     {"_CVXR_ProblemData__get_param_id", (DL_FUNC) &_CVXR_ProblemData__get_param_id, 1},
     {"_CVXR_ProblemData__set_param_id", (DL_FUNC) &_CVXR_ProblemData__set_param_id, 2},
-    {"_CVXR_ProblemData__getLen", (DL_FUNC) &_CVXR_ProblemData__getLen, 1},
+    {"_CVXR_ProblemData__get_len", (DL_FUNC) &_CVXR_ProblemData__get_len, 1},
     {"_CVXR_ProblemData__get_V", (DL_FUNC) &_CVXR_ProblemData__get_V, 2},
     {"_CVXR_ProblemData__get_I", (DL_FUNC) &_CVXR_ProblemData__get_I, 2},
     {"_CVXR_ProblemData__get_J", (DL_FUNC) &_CVXR_ProblemData__get_J, 2},
     {"_CVXR_build_matrix_0", (DL_FUNC) &_CVXR_build_matrix_0, 5},
-    {"_CVXR_LinOp__data_has_been_set",      (DL_FUNC) &_CVXR_LinOp__data_has_been_set,      1},
-    {"_CVXR_LinOp__get_args",               (DL_FUNC) &_CVXR_LinOp__get_args,               1},
-    {"_CVXR_LinOp__get_data_ndim",          (DL_FUNC) &_CVXR_LinOp__get_data_ndim,          1},
-    {"_CVXR_LinOp__get_dim",                (DL_FUNC) &_CVXR_LinOp__get_dim,                1},
-    {"_CVXR_LinOp__get_linOp_data",         (DL_FUNC) &_CVXR_LinOp__get_linOp_data,         1},
-    {"_CVXR_LinOp__is_sparse",              (DL_FUNC) &_CVXR_LinOp__is_sparse,              1},
-    {"_CVXR_LinOp__push_back_slice",        (DL_FUNC) &_CVXR_LinOp__push_back_slice,        2},
-    {"_CVXR_LinOp__set_data_ndim",          (DL_FUNC) &_CVXR_LinOp__set_data_ndim,          2},
-    {"_CVXR_LinOp__set_linOp_data",         (DL_FUNC) &_CVXR_LinOp__set_linOp_data,         2},
-    {"_CVXR_ProblemData__get_const_to_row", (DL_FUNC) &_CVXR_ProblemData__get_const_to_row, 1},
-    {"_CVXR_ProblemData__get_const_vec",    (DL_FUNC) &_CVXR_ProblemData__get_const_vec,    1},
-    {"_CVXR_ProblemData__get_id_to_col",    (DL_FUNC) &_CVXR_ProblemData__get_id_to_col,    1},
-    {"_CVXR_ProblemData__set_const_to_row", (DL_FUNC) &_CVXR_ProblemData__set_const_to_row, 2},
-    {"_CVXR_ProblemData__set_const_vec",    (DL_FUNC) &_CVXR_ProblemData__set_const_vec,    2},
-    {"_CVXR_ProblemData__set_I",            (DL_FUNC) &_CVXR_ProblemData__set_I,            2},
-    {"_CVXR_ProblemData__set_id_to_col",    (DL_FUNC) &_CVXR_ProblemData__set_id_to_col,    2},
-    {"_CVXR_ProblemData__set_J",            (DL_FUNC) &_CVXR_ProblemData__set_J,            2},
-    {"_CVXR_ProblemData__set_V",            (DL_FUNC) &_CVXR_ProblemData__set_V,            2},
+    {"_CVXR_LinOp__data_has_been_set",   (DL_FUNC) &_CVXR_LinOp__data_has_been_set,   1},
+    {"_CVXR_LinOp__get_args",            (DL_FUNC) &_CVXR_LinOp__get_args,            1},
+    {"_CVXR_LinOp__get_data_ndim",       (DL_FUNC) &_CVXR_LinOp__get_data_ndim,       1},
+    {"_CVXR_LinOp__get_dim",             (DL_FUNC) &_CVXR_LinOp__get_dim,             1},
+    {"_CVXR_LinOp__get_linOp_data",      (DL_FUNC) &_CVXR_LinOp__get_linOp_data,      1},
+    {"_CVXR_LinOp__is_sparse",           (DL_FUNC) &_CVXR_LinOp__is_sparse,           1},
+    {"_CVXR_LinOp__push_back_slice",     (DL_FUNC) &_CVXR_LinOp__push_back_slice,     2},
+    {"_CVXR_LinOp__set_data_ndim",       (DL_FUNC) &_CVXR_LinOp__set_data_ndim,       2},
+    {"_CVXR_LinOp__set_linOp_data",      (DL_FUNC) &_CVXR_LinOp__set_linOp_data,      2},
+    {"_CVXR_ProblemData__get_const_vec", (DL_FUNC) &_CVXR_ProblemData__get_const_vec, 1},
     {NULL, NULL, 0}
 };
 

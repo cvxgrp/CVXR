@@ -234,9 +234,15 @@ get_matrix_and_offset_from_unparameterized_tensor <- function(problem_data_tenso
   get_matrix_from_tensor(problem_data_tensor, NULL, var_length)
 }
 
+CPP_CANON_BACKEND <- "cvxcore"
 #' Returns the default canonicalization backend, which can be set globally using an environment variable.
 get_default_canon_backend <- function() {
-  Sys.getenv('CVXR_DEFAULT_CANON_BACKEND')
+  env_var <- Sys.getenv('CVXR_DEFAULT_CANON_BACKEND')
+  if (env_var != "") {
+    env_var
+  } else {
+    CPP_CANON_BACKEND
+  }
 }
 
 
@@ -268,7 +274,7 @@ get_problem_matrix <- function(linOps,
   canon_backend <- ifelse(is.null(canon_backend), default_canon_backend, canon_backend)
 
   if (canon_backend == CPP_CANON_BACKEND) {
-    lin_vec <- CVXcanon.LinOpVector() ## Start with one LinOpVector
+    lin_vec <- cvxcore::cvxcore.LinOpVector() ## Start with one LinOpVector
 
     id_to_col_C <- id_to_col
     ## storage.mode(id_to_col_C) <- "integer"  ## should not be needed if we keep things sane...
@@ -286,7 +292,7 @@ get_problem_matrix <- function(linOps,
       lin_vec$push_back(tree)
     }
 
-    problemData <- CVXcanon.build_matrix(lin_vec,
+    problemData <- cvxcore::build_matrix(lin_vec,
                                          var_length,
                                          id_to_col_C,
                                          param_to_size_C,
@@ -305,9 +311,9 @@ get_problem_matrix <- function(linOps,
       for (i in seq_len(size)) {
         problemData$set_vec_idx(i)
         prob_len <- problemData$getLen()
-        tV[[i]] <- problemData$getV(prob_len)
-        tI[[i]] <- problemData$getI(prob_len)
-        tJ[[i]] <- problemData$getJ(prob_len)
+        tV[[i]] <- problemData$get_v(prob_len)
+        tI[[i]] <- problemData$get_i(prob_len)
+        tJ[[i]] <- problemData$get_j(prob_len)
       }
       tensor_V[[param_id]] <- tV
       tensor_I[[param_id]] <- tJ
@@ -467,16 +473,16 @@ make_linC_from_linR <- function(linR, linR_to_linC) {
   if (! (linR$id %in% names(linR_to_linC))) {
     typ <- linR$type
     dim <- linR$dim
-    lin_args_vec <- make_ConstLinOpVector()
+    lin_args_vec <- cvxcore::cvxcore.LinOpVector()
     for (arg in linR$args) {
       lin_args_vec$push_back(linR_to_linC[[arg]])
     }
     
-    linC <- make_cvxcore_LinOp(type = typ, dim = dim, args = lin_args_vec)
+    linC <- cvxcore::cvxcore.LinOp(type = typ, dim = dim, args = lin_args_vec)
     linR_to_linC[[linR$id]] <- linC
     
     if (!is.null(linR$data)) {
-      if (inherits(linR$data, "LinOp")) {
+      if (linR$data$class == "LinOp") {
         linR_data <- linR$data
         linC_data <- linR_to_linC[[linR_data$id]]
         linC$set_linOp_data(linC_data)

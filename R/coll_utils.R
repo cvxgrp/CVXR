@@ -28,7 +28,7 @@ make_stack <- function() {
 }
 
 #### #' Create a dict using an environment. Added items must have a unique id field to use for hashing
-#### #' @return a that is an environment
+#### #' @return a dict that is an environment
 make_dict <- function() new.env(parent = emptyenv())
 
 ## make_dict <- function() {

@@ -8,8 +8,8 @@
 \alias{to_numeric,Kron-method}
 \alias{validate_args,Kron-method}
 \alias{dim_from_args,Kron-method}
-\alias{is_atom_convex,AffAtom-method}
-\alias{is_atom_concave,AffAtom-method}
+\alias{is_atom_convex,Kron-method}
+\alias{is_atom_concave,Kron-method}
 \alias{sign_from_args,Kron-method}
 \alias{is_incr,Kron-method}
 \alias{is_decr,Kron-method}
@@ -26,9 +26,9 @@ Kron(lh_exp, rh_exp)
 
 \S4method{dim_from_args}{Kron}(object)
 
-\S4method{is_atom_convex}{AffAtom}(object)
+\S4method{is_atom_convex}{Kron}(object)
 
-\S4method{is_atom_concave}{AffAtom}(object)
+\S4method{is_atom_concave}{Kron}(object)
 
 \S4method{sign_from_args}{Kron}(object)
 
@@ -70,9 +70,9 @@ This class represents the kronecker product.
 
 \item \code{dim_from_args(Kron)}: The dimensions of the atom.
 
-\item \code{is_atom_convex(AffAtom)}: Is the atom convex?
+\item \code{is_atom_convex(Kron)}: Is the atom convex?
 
-\item \code{is_atom_concave(AffAtom)}: Is the atom concave?
+\item \code{is_atom_concave(Kron)}: Is the atom concave?
 
 \item \code{sign_from_args(Kron)}: The sign of the atom.
 

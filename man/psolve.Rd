@@ -16,6 +16,7 @@ psolve(
   gp = FALSE,
   qcp = FALSE,
   requires_grad = FALSE,
+  enforce_dpp = FALSE,
   ignore_dpp = FALSE,
   canon_backend = NA_character_,
   parallel = FALSE,
@@ -28,7 +29,7 @@ psolve(
   ...
 )
 
-\S4method{solve}{Problem,ANY}(a, b = NA, ...)
+\S4method{solve}{Problem,ANY}(a, b, ...)
 }
 \arguments{
 \item{object, a}{A \linkS4class{Problem} object.}

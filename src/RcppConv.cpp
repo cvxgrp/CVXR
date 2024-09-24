@@ -1,4 +1,5 @@
-#include "cvxcore.hpp"
+#include <Rcpp.h>
+#include <RcppEigen.h>
 
 // Source:  Rcpp Introduction
 
@@ -16,11 +17,11 @@ Rcpp::NumericVector cpp_convolve(Rcpp::NumericVector xa, Rcpp::NumericVector xb)
 }
 
 // [[Rcpp::export(.sweep_dgCmat_in_place)]]
-void multiply_dgCMatrix_vector(S4 A, NumericVector c_part) {
+void multiply_dgCMatrix_vector(Rcpp::S4 A, Rcpp::NumericVector c_part) {
   // Get the slot values from the dgCMatrix object
-  IntegerVector i = A.slot("i");
-  IntegerVector p = A.slot("p");
-  NumericVector x_values = A.slot("x");
+  Rcpp::IntegerVector i = A.slot("i");
+  Rcpp::IntegerVector p = A.slot("p");
+  Rcpp::NumericVector x_values = A.slot("x");
   
   // Get the number of columns in the matrix
   int n = p.length() - 1;
@@ -28,7 +29,7 @@ void multiply_dgCMatrix_vector(S4 A, NumericVector c_part) {
   
   // Check if the length of the vector matches the number of columns or for a scalar
   if (k != n && k != 1) {
-    stop("mutiply_dgCMatrix_vector: Incompatible dimensions");
+    Rcpp::stop("mutiply_dgCMatrix_vector: Incompatible dimensions");
   }
 
   if (k == 1) { // c_part is a scalar

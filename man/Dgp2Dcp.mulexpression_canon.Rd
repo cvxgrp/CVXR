@@ -12,8 +12,8 @@ Dgp2Dcp.mulexpression_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the multiplication expression atom 
-of a DGP expression, where the returned expression is the transformed 
+A canonicalization of the multiplication expression atom
+of a DGP expression, where the returned expression is the transformed
 DCP equivalent.
 }
 \description{

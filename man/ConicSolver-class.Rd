@@ -18,7 +18,7 @@ ConicSolver.format_constr(object, problem)
 \arguments{
 \item{object}{the solver object}
 
-\item{problem}{a `ParamConeProb` object that is problem that is the provenance of the constraint}
+\item{problem}{a \code{ParamConeProb} object that is problem that is the provenance of the constraint}
 
 \item{solution}{A \linkS4class{Solution} object to invert.}
 
@@ -27,27 +27,29 @@ ConicSolver.format_constr(object, problem)
 \item{exp_cone_order}{a list indicating how the exponential cone arguments are ordered}
 }
 \value{
-a `ParamConeProg` with structured A.
+a \code{ParamConeProg} with structured A.
 }
 \description{
 Conic solver class with reduction semantics.
 }
 \details{
-The `ParamConeProg` will have problem data tensors that will yield the
-coefficient `A` and offset `b` for the constraint in the following formats:
-  - Linear equations: `(A, b)` such that `A * x + b == 0`,
-  - Linear inequalities: `(A, b)` such that `A * x + b >= 0`,
-  - Second order cone: `(A, b)` such that `A * x + b` in SOC,
-  - Exponential cone: `(A, b)` such that `A * x + b` in EXP,
-  - Semidefinite cone: `(A, b)` such that `A * x + b` in PSD,
-The `CVXR` standard for the exponential cone is:
-    K_e = closure{(x,y,z) |  z >= y * exp(x/y), y>0}.
+The \code{ParamConeProg} will have problem data tensors that will yield the
+coefficient \code{A} and offset \code{b} for the constraint in the following formats:
+\itemize{
+\item Linear equations: \verb{(A, b)} such that \code{A * x + b == 0},
+\item Linear inequalities: \verb{(A, b)} such that \code{A * x + b >= 0},
+\item Second order cone: \verb{(A, b)} such that \code{A * x + b} in SOC,
+\item Exponential cone: \verb{(A, b)} such that \code{A * x + b} in EXP,
+\item Semidefinite cone: \verb{(A, b)} such that \code{A * x + b} in PSD,
+The \code{CVXR} standard for the exponential cone is:
+K_e = closure{(x,y,z) |  z >= y * exp(x/y), y>0}.
 Whenever a solver uses this convention, exp_cone_order should be
-[0, 1, 2].
-The `CVXR` standard for the second order cone is:
-    SOC(n) = { x : x[0] >= norm(x[1:n], 2)  }.
+\link{0, 1, 2}.
+The \code{CVXR} standard for the second order cone is:
+SOC(n) = { x : x\link{0} >= norm(x\link{1:n}, 2)  }.
 All currently supported solvers use this convention.
 Args:
+}
 }
 \section{Methods (by generic)}{
 \itemize{

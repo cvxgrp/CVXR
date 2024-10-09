@@ -25,20 +25,21 @@ partial_optimize(
 }
 \value{
 An expression representing the partial optimization.
-        Convex for minimization objectives and concave for maximization objectives.
+Convex for minimization objectives and concave for maximization objectives.
 }
 \description{
 Either opt_vars or dont_opt_vars must be given.
-   If both are given, they must contain all the variables in the problem.
+If both are given, they must contain all the variables in the problem.
 }
 \details{
 Partial optimize is useful for two-stage optimization and graph implementations.
-   For example, we can write
+For example, we can write
 
-       x <- Variable(n)
-       t <- Variable(n)
-       abs_x <- partial_optimize(Problem(Minimize(sum(t)),
-                                 list(-t <= x, x <= t)), opt_vars = list(t))
+\if{html}{\out{<div class="sourceCode">}}\preformatted{   x <- Variable(n)
+   t <- Variable(n)
+   abs_x <- partial_optimize(Problem(Minimize(sum(t)),
+                             list(-t <= x, x <= t)), opt_vars = list(t))
+}\if{html}{\out{</div>}}
 
-   to define the entrywise absolute value of x.
+to define the entrywise absolute value of x.
 }

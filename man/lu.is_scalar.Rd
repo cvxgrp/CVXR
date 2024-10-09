@@ -10,7 +10,7 @@ lu.is_scalar(operator)
 \item{operator}{the LinOp to test}
 }
 \value{
-`TRUE` if a scalar, else `FALSE`
+\code{TRUE} if a scalar, else \code{FALSE}
 }
 \description{
 Is the LinOp a scalar?

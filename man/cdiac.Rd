@@ -8,20 +8,20 @@
 \format{
 A data frame with 166 rows and 14 variables:
 \describe{
-  \item{year}{Year}
-  \item{jan}{Anomaly for month of January}
-  \item{feb}{Anomaly for month of February}
-  \item{mar}{Anomaly for month of March}
-  \item{apr}{Anomaly for month of April}
-  \item{may}{Anomaly for month of May}
-  \item{jun}{Anomaly for month of June}
-  \item{jul}{Anomaly for month of July}
-  \item{aug}{Anomaly for month of August}
-  \item{sep}{Anomaly for month of September}
-  \item{oct}{Anomaly for month of October}
-  \item{nov}{Anomaly for month of November}
-  \item{dec}{Anomaly for month of December}
-  \item{annual}{Annual anomaly for the year}
+\item{year}{Year}
+\item{jan}{Anomaly for month of January}
+\item{feb}{Anomaly for month of February}
+\item{mar}{Anomaly for month of March}
+\item{apr}{Anomaly for month of April}
+\item{may}{Anomaly for month of May}
+\item{jun}{Anomaly for month of June}
+\item{jul}{Anomaly for month of July}
+\item{aug}{Anomaly for month of August}
+\item{sep}{Anomaly for month of September}
+\item{oct}{Anomaly for month of October}
+\item{nov}{Anomaly for month of November}
+\item{dec}{Anomaly for month of December}
+\item{annual}{Annual anomaly for the year}
 }
 }
 \source{

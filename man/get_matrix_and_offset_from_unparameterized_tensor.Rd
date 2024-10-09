@@ -15,12 +15,12 @@ get_matrix_and_offset_from_unparameterized_tensor(
 \item{var_length}{the number of variables}
 }
 \value{
-A list containing A (a matrix with `var_length` columns) and b (a flattened array representing the constant offset).
+A list containing A (a matrix with \code{var_length} columns) and b (a flattened array representing the constant offset).
 }
 \description{
 Converts unparameterized tensor to matrix offset representation.
 }
 \details{
-The `problem_data_tensor` must have been obtained from calling
-`get_problem_matrix` on a problem with 0 parameters.
+The \code{problem_data_tensor} must have been obtained from calling
+\code{get_problem_matrix} on a problem with 0 parameters.
 }

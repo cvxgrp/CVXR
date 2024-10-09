@@ -16,7 +16,7 @@ An expression representing the log-norm of \code{x}.
 The elementwise log of the cumulative distribution function of a standard normal random variable.
 }
 \details{
-This implementation is a quadratic approximation with modest accuracy over [-4, 4].
+This implementation is a quadratic approximation with modest accuracy over \link{-4, 4}.
 For details on the nature of the approximation, refer to CVXPY GitHub PR #1224
 https://github.com/cvxpy/cvxpy/pull/1224#issue-793221374.
 

@@ -16,7 +16,7 @@ Complex2Real.op_rel_entr_cone_canon(expr, real_args, imag_args, real2imag)
 \item{real2imag}{A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.}
 }
 \value{
-A canonicalization of the Hermitian input for OpRelEntrConeQuad into equivalent symmetric input for OpRelEntrConeQuad, 
+A canonicalization of the Hermitian input for OpRelEntrConeQuad into equivalent symmetric input for OpRelEntrConeQuad,
 where the returned variables are the real component and the imaginary component.
 }
 \description{

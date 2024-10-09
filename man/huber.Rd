@@ -18,9 +18,9 @@ An \linkS4class{Expression} representing the Huber function evaluated at the inp
 \description{
 The elementwise Huber function, \eqn{Huber(x, M) = }
 \itemize{
-  \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
-   \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
- }
+\item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
+\item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
+}
 }
 \examples{
 set.seed(11)

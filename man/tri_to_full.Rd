@@ -15,7 +15,7 @@ the matrix, stacked in column-major order}
 }
 \value{
 A matrix that is the scaled expansion of the lower
-  triangular matrix.
+triangular matrix.
 }
 \description{
 Expands n*floor((n+1)/2) lower triangular to full matrix and scales

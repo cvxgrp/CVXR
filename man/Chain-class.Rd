@@ -41,7 +41,7 @@ their constraint values.
 \item \code{$}: Returns the reduction of the specified type.
 
 \item \code{accepts(object = Chain, problem = Problem)}: A problem is accepted if the sequence of reductions is valid. In particular, the i-th reduction must accept the output of the i-1th
-reduction, with the first reduction (self.reductions[0]) in the sequence taking as input the supplied problem.
+reduction, with the first reduction (self.reductions\link{0}) in the sequence taking as input the supplied problem.
 
 \item \code{perform(object = Chain, problem = Problem)}: Applies the chain to a problem and returns an equivalent problem.
 

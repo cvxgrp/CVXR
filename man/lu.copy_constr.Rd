@@ -7,7 +7,7 @@
 lu.copy_constr(constr, func)
 }
 \arguments{
-\item{constr}{the `LinConstraint` constraint to modify}
+\item{constr}{the \code{LinConstraint} constraint to modify}
 
 \item{func}{a function to modify the constraint expression}
 }

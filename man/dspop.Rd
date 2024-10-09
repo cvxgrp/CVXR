@@ -7,9 +7,9 @@
 \format{
 A data frame with 1000 rows and 3 variables:
 \describe{
- \item{y}{Response variable}
- \item{sex}{Sex of individual, coded male (0) and female (1)}
- \item{age}{Age of individual}
+\item{y}{Response variable}
+\item{sex}{Sex of individual, coded male (0) and female (1)}
+\item{age}{Age of individual}
 }
 }
 \usage{

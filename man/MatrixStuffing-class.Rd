@@ -27,7 +27,7 @@ This class stuffs a problem into a standard form for a family of solvers.
 \section{Methods (by generic)}{
 \itemize{
 \item \code{perform(object = MatrixStuffing, problem = Problem)}: Returns a stuffed problem. The returned problem is a minimization problem in which every
-constraint in the problem has affine arguments that are expressed in the form A %*% x + b.
+constraint in the problem has affine arguments that are expressed in the form A \%*\% x + b.
 
 \item \code{invert(
   object = MatrixStuffing,

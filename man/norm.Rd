@@ -13,11 +13,11 @@
 
 \item{type}{A character indicating the type of norm desired.
 \itemize{
-   \item "O", "o" or "1" specifies the 1-norm (maximum absolute column sum).
-   \item "I" or "i" specifies the infinity-norm (maximum absolute row sum).
-   \item "F" or "f" specifies the Frobenius norm (Euclidean norm of the vectorized \code{x}).
-   \item "M" or "m" specifies the maximum modulus of all the elements in \code{x}.
-   \item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
+\item "O", "o" or "1" specifies the 1-norm (maximum absolute column sum).
+\item "I" or "i" specifies the infinity-norm (maximum absolute row sum).
+\item "F" or "f" specifies the Frobenius norm (Euclidean norm of the vectorized \code{x}).
+\item "M" or "m" specifies the maximum modulus of all the elements in \code{x}.
+\item "2" specifies the spectral norm, which is the largest singular value of \code{x}.
 }}
 }
 \value{

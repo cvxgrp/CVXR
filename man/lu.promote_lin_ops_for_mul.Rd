@@ -15,9 +15,9 @@ The right-hand operator in the multiplication}
 }
 \value{
 A list containing the following elements:
-  \item{lh_op}{Promoted left-hand operator}
-  \item{rh_op}{Promoted right-hand operator}
-  \item{dim}{Shape of the product}
+\item{lh_op}{Promoted left-hand operator}
+\item{rh_op}{Promoted right-hand operator}
+\item{dim}{Shape of the product}
 }
 \description{
 Promote arguments for multiplication

@@ -32,8 +32,8 @@ compilation time. Defaults to NULL, i.e., selecting the default backend. Options
 }
 \value{
 A sparse (CSC) matrix with constr_length * (var_length + 1) rows and
-  param_size + 1 columns (where param_size is the length of the
-  parameter vector).
+param_size + 1 columns (where param_size is the length of the
+parameter vector).
 }
 \description{
 Build a sparse representation of the problem data.

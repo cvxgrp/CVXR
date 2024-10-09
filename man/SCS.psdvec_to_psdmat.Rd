@@ -2,8 +2,8 @@
 % Please edit documentation in R/conic_solver_scs.R
 \name{SCS.psdvec_to_psdmat}
 \alias{SCS.psdvec_to_psdmat}
-\title{Return `V` so that _vec[indices] belongs to the SCS-standard PSD
-cone_ can be written in natural cvxpy syntax as _V >> 0_.}
+\title{Return \code{V} so that \emph{vec\link{indices} belongs to the SCS-standard PSD
+cone} can be written in natural cvxpy syntax as \emph{V >> 0}.}
 \usage{
 SCS.psdvec_to_psdmat(vec, indices)
 }
@@ -11,16 +11,16 @@ SCS.psdvec_to_psdmat(vec, indices)
 \item{vec}{list of affine expressions}
 
 \item{indices}{contains nonnegative integers, which can index into
-`vec`}
+\code{vec}}
 }
 \description{
-Return `V` so that _vec[indices] belongs to the SCS-standard PSD
-cone_ can be written in natural cvxpy syntax as _V >> 0_.
+Return \code{V} so that \emph{vec\link{indices} belongs to the SCS-standard PSD
+cone} can be written in natural cvxpy syntax as \emph{V >> 0}.
 }
 \details{
-This function is similar to `tri_to_full`, which is also
-  found in this file. The difference is that this function works
-  without indexed assignment `mat[i,j] = expr`. Such indexed
-  assignment cannot be used, because this function builds a CVXR
-  expression, rather than a numeric matrix.
+This function is similar to \code{tri_to_full}, which is also
+found in this file. The difference is that this function works
+without indexed assignment \code{mat[i,j] = expr}. Such indexed
+assignment cannot be used, because this function builds a CVXR
+expression, rather than a numeric matrix.
 }

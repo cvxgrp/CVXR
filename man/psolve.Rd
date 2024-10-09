@@ -59,14 +59,14 @@ psolve(
 \value{
 A list containing the solution to the problem:
 \describe{
-   \item{\code{status}}{The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".}
-   \item{\code{value}}{The optimal value of the objective function.}
-   \item{\code{solver}}{The name of the solver.}
-   \item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
-   \item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
-   \item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
-   \item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
-   \item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
+\item{\code{status}}{The status of the solution. Can be "optimal", "optimal_inaccurate", "infeasible", "infeasible_inaccurate", "unbounded", "unbounded_inaccurate", or "solver_error".}
+\item{\code{value}}{The optimal value of the objective function.}
+\item{\code{solver}}{The name of the solver.}
+\item{\code{solve_time}}{The time (in seconds) it took for the solver to solve the problem.}
+\item{\code{setup_time}}{The time (in seconds) it took for the solver to set up the problem.}
+\item{\code{num_iters}}{The number of iterations the solver had to go through to find a solution.}
+\item{\code{getValue}}{A function that takes a \linkS4class{Variable} object and retrieves its primal value.}
+\item{\code{getDualValue}}{A function that takes a \linkS4class{Constraint} object and retrieves its dual value(s).}
 }
 }
 \description{

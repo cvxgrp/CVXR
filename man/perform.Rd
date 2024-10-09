@@ -15,8 +15,8 @@ perform(object, problem, verbose = FALSE)
 \value{
 A list containing
 \itemize{
-   \item{"problem"}{A \linkS4class{Problem} or list representing the equivalent problem.}
-   \item{"inverse_data"}{A \linkS4class{InverseData} or list containing the data needed to invert this particular reduction.}
+\item{"problem"}{A \linkS4class{Problem} or list representing the equivalent problem.}
+\item{"inverse_data"}{A \linkS4class{InverseData} or list containing the data needed to invert this particular reduction.}
 }
 }
 \description{

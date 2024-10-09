@@ -21,14 +21,14 @@ The partial trace of \code{expr}.
 The partial trace of \code{expr}.
 }
 \description{
-Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product 
-composed of \eqn{n = length(dims)} implicit subsystems. 
-Letting \eqn{k = axis}, this class represents the partial trace of \eqn{expr} 
+Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product
+composed of \eqn{n = length(dims)} implicit subsystems.
+Letting \eqn{k = axis}, this class represents the partial trace of \eqn{expr}
 along its \eqn{k}-th implicit subsystem:
 
-Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product 
-composed of \eqn{n = length(dims)} implicit subsystems. 
-Letting \eqn{k = axis}, this class represents the partial transpose of \eqn{expr}, 
+Assume \eqn{expr = X_1 \otimes \cdots \otimes X_n} is a 2D Kronecker product
+composed of \eqn{n = length(dims)} implicit subsystems.
+Letting \eqn{k = axis}, this class represents the partial transpose of \eqn{expr},
 with the transpose applied to its \eqn{k}-th implicit subsystem:
 }
 \details{

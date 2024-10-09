@@ -39,10 +39,10 @@
 \item{quad_obj:}{(optional) if True, include quadratic objective term.}
 }
 \description{
-minimize   c'x  + d + [(1/2)x'Px]
-subject to cone_constr1(A_1*x + b_1, ...)
+minimize   c'x  + d + \link{(1/2)x'Px}
+subject to cone_constr1(A_1\emph{x + b_1, ...)
 ...
-cone_constrK(A_i*x + b_i, ...)
+cone_constrK(A_i}x + b_i, ...)
 }
 \details{
 The constant offsets d and b are the last column of c and A.

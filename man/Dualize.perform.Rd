@@ -7,8 +7,57 @@
 Dualize.perform(problem)
 }
 \description{
-
+\if{html}{\out{<div class="sourceCode">}}\preformatted{   `(P-Opt) min\{ t(c) \%*\% x : A \%*\% x + b in K \} + d,`
+}\if{html}{\out{</div>}}
 }
 \details{
+where the corresponding dual is
 
+\if{html}{\out{<div class="sourceCode">}}\preformatted{   `(D-Opt) max\{ -b \%*\% y : c = t(A) \%*\% y, y in K^* \} + d.`
+}\if{html}{\out{</div>}}
+
+For some solvers, it is much easier to specify a problem of the form (D-Opt) than it
+is to specify a problem of the form (P-Opt). The purpose of this reduction is to handle
+mapping between (P-Opt) and (D-Opt) so that a solver interface can pretend the original
+problem was stated in terms (D-Opt).
+\subsection{Usage}{
+
+Dualize applies to ParamConeProg problems. It accesses \code{(P-Opt)} data by calling
+\verb{c, d, A, b = apply_parameters(problem)}. It assumes the solver interface
+has already executed its \code{format_constraints} function on the \code{ParamConeProg} problem.
+
+A solver interface is responsible for calling both \code{Dualize.perform} and \code{Dualize.invert}.
+The call to \code{Dualize.perform} should be one of the first things that happens, and the
+call to \code{Dualize.invert} should be one of the last things that happens.
+
+The "data" dict returned by \code{Dualize.perform} is keyed by \code{A_KEY}, \code{B_KEY}, \code{C_KEY}, and \code{K_dir},
+which respectively provide the dual constraint matrix ($t(A)$), the dual constraint
+right-hand-side ($c$), the dual objective vector ($-b$), and the dual cones ($K^\emph{$).
+The solver interface should interpret this data is a new primal problem, just with a
+maximization objective. Given a numerical solution, the solver interface should first
+construct a CVXR Solution object where $y$ is a primal variable, divided into
+several blocks according to the structure of elementary cones appearing in $K^}$. The only
+dual variable we use is that corresponding to the equality constraint \code{c = t(A) \%*\% y}.
+No attempt should be made to map unbounded / infeasible status codes for \code{(D-Opt)} back
+to unbounded / infeasible status codes for \code{(P-Opt)}; all such mappings are handled in
+\code{Dualize.invert}. Refer to \code{Dualize.invert} for detailed documentation.
+}
+
+\subsection{Assumptions}{
+
+The problem has no integer or boolean constraints. This is necessary because strong
+duality does not hold for problems with discrete constraints.
+
+Dualize.perform assumes \code{SOLVER.format_constraints()} has already been called. This
+assumption allows flexibility in how a solver interface chooses to vectorize a
+feasible set (e.g. how to order conic constraints, or how to vectorize the PSD cone).
+}
+
+\subsection{Additional notes}{
+
+\code{Dualize.invert} is written in a way which is agnostic to how a solver formats constraints,
+but it also imposes specific requirements on the input. Providing correct input to
+\code{Dualize.invert} requires consideration to the effect of \code{SOLVER.format_constraints} and
+the output of \code{apply_parameters(problem)}.
+}
 }

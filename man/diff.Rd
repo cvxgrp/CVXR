@@ -23,9 +23,9 @@ An \linkS4class{Expression} representing the \code{k}th order difference.
 \description{
 The lagged and iterated differences of a vector.
 If \code{x} is length \code{n}, this function returns a length \eqn{n-k} vector of the \eqn{k}th order difference between the lagged terms.
-\code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x[2] - x[1], x[3] - x[2], ...].
+\code{diff(x)} returns the vector of differences between adjacent elements in the vector, i.e. [x\link{2} - x\link{1}, x\link{3} - x\link{2}, ...].
 \code{diff(x,1,2)} is the second-order differences vector, equivalently diff(diff(x)). \code{diff(x,1,0)} returns the vector x unchanged.
-\code{diff(x,2)} returns the vector of differences [x[3] - x[1], x[4] - x[2], ...], equivalent to \code{x[(1+lag):n] - x[1:(n-lag)]}.
+\code{diff(x,2)} returns the vector of differences [x\link{3} - x\link{1}, x\link{4} - x\link{2}, ...], equivalent to \code{x[(1+lag):n] - x[1:(n-lag)]}.
 }
 \examples{
 ## Problem data

@@ -24,7 +24,7 @@ Canonicalization of DGPs is a stateful procedure, hence the need for a class.
 \itemize{
 \item \code{names(DgpCanonMethods)}: Returns the name of all the canonicalization methods
 
-\item \code{$}: Returns either a canonicalized variable or 
+\item \code{$}: Returns either a canonicalized variable or
 a corresponding Dgp2Dcp canonicalization method
 
 }}

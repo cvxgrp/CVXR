@@ -93,8 +93,8 @@ This virtual class represents a mathematical constraint.
 
 \item \code{violation(Constraint)}: The numeric residual of a constraint. The violation is defined as the
 distance between the constrained expression's value and its projection onto the domain of the
-constraint: ||\\Pi(v) - v||_2^2, where `v` is the value of the constrained expression and
-`\\Pi` is the projection operator onto the constraint's domain.
+constraint: ||\\Pi(v) - v||_2^2, where \code{v} is the value of the constrained expression and
+\verb{\\\\Pi} is the projection operator onto the constraint's domain.
 
 \item \code{constr_value(Constraint)}: Checks whether the constraint violation is less than a tolerance.
 

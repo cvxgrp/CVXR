@@ -10,7 +10,7 @@ group_constraints(constraints)
 \item{constraints}{A list of \linkS4class{Constraint} objects}
 }
 \value{
-A list keyed by constraint types where list[[cone_type]] maps to a list of exactly those constraints that are of type cone_type.
+A list keyed by constraint types where list[\link{cone_type}] maps to a list of exactly those constraints that are of type cone_type.
 }
 \description{
 Organize the constraints into a list keyed by constraint names.

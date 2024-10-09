@@ -14,11 +14,11 @@ Cone2Cone.DUAL_POW3D <- "dp3"
 #'
 #'    CVXR represents cone programs as
 #'
-#'        (P-Opt) min{ t(c) %*% x : A %*% x + b in K } + d,
+#'        `(P-Opt) min{ t(c) %*% x : A %*% x + b in K } + d,`
 #'
 #'    where the corresponding dual is
 #'
-#'        (D-Opt) max{ -b %*% y : c = t(A) %*% y, y in K^* } + d.
+#'        `(D-Opt) max{ -b %*% y : c = t(A) %*% y, y in K^* } + d.`
 #'
 #'    For some solvers, it is much easier to specify a problem of the form (D-Opt) than it
 #'    is to specify a problem of the form (P-Opt). The purpose of this reduction is to handle
@@ -27,42 +27,42 @@ Cone2Cone.DUAL_POW3D <- "dp3"
 #'
 #'    Usage
 #'    -----
-#'    Dualize applies to ParamConeProg problems. It accesses (P-Opt) data by calling
-#'    ``c, d, A, b = apply_parameters(problem)``. It assumes the solver interface
-#'    has already executed its ``format_constraints`` function on the ParamConeProg problem.
+#'    Dualize applies to ParamConeProg problems. It accesses `(P-Opt)` data by calling
+#'    `c, d, A, b = apply_parameters(problem)`. It assumes the solver interface
+#'    has already executed its `format_constraints` function on the `ParamConeProg` problem.
 #'
-#'    A solver interface is responsible for calling both Dualize.perform and Dualize.invert.
-#'    The call to Dualize.perform should be one of the first things that happens, and the
-#'    call to Dualize.invert should be one of the last things that happens.
+#'    A solver interface is responsible for calling both `Dualize.perform` and `Dualize.invert`.
+#'    The call to `Dualize.perform` should be one of the first things that happens, and the
+#'    call to `Dualize.invert` should be one of the last things that happens.
 #'
-#'    The "data" dict returned by Dualize.perform is keyed by A_KEY, B_KEY, C_KEY, and 'K_dir',
-#'    which respectively provide the dual constraint matrix (t(A)), the dual constraint
-#'    right-hand-side (c), the dual objective vector (-b), and the dual cones (K^*).
+#'    The "data" dict returned by `Dualize.perform` is keyed by `A_KEY`, `B_KEY`, `C_KEY`, and `K_dir`,
+#'    which respectively provide the dual constraint matrix ($t(A)$), the dual constraint
+#'    right-hand-side ($c$), the dual objective vector ($-b$), and the dual cones ($K^*$).
 #'    The solver interface should interpret this data is a new primal problem, just with a
 #'    maximization objective. Given a numerical solution, the solver interface should first
-#'    construct a CVXR Solution object where `y` is a primal variable, divided into
-#'    several blocks according to the structure of elementary cones appearing in K^*. The only
-#'    dual variable we use is that corresponding to the equality constraint `c = A^T y`.
-#'    No attempt should be made to map unbounded / infeasible status codes for (D-Opt) back
-#'    to unbounded / infeasible status codes for (P-Opt); all such mappings are handled in
-#'    Dualize.invert. Refer to Dualize.invert for detailed documentation.
+#'    construct a CVXR Solution object where $y$ is a primal variable, divided into
+#'    several blocks according to the structure of elementary cones appearing in $K^*$. The only
+#'    dual variable we use is that corresponding to the equality constraint `c = t(A) %*% y`.
+#'    No attempt should be made to map unbounded / infeasible status codes for `(D-Opt)` back
+#'    to unbounded / infeasible status codes for `(P-Opt)`; all such mappings are handled in
+#'    `Dualize.invert`. Refer to `Dualize.invert` for detailed documentation.
 #'
 #'    Assumptions
 #'    -----------
 #'    The problem has no integer or boolean constraints. This is necessary because strong
 #'    duality does not hold for problems with discrete constraints.
 #'
-#'    Dualize.perform assumes "SOLVER.format_constraints()" has already been called. This
+#'    Dualize.perform assumes `SOLVER.format_constraints()` has already been called. This
 #'    assumption allows flexibility in how a solver interface chooses to vectorize a
 #'    feasible set (e.g. how to order conic constraints, or how to vectorize the PSD cone).
 #'
 #'    Additional notes
 #'    ----------------
 #'
-#'    Dualize.invert is written in a way which is agnostic to how a solver formats constraints,
+#'    `Dualize.invert` is written in a way which is agnostic to how a solver formats constraints,
 #'    but it also imposes specific requirements on the input. Providing correct input to
-#'    Dualize.invert requires consideration to the effect of ``SOLVER.format_constraints`` and
-#'    the output of ``apply_parameters(problem)``.
+#'    `Dualize.invert` requires consideration to the effect of `SOLVER.format_constraints` and
+#'    the output of `apply_parameters(problem)`.
 #'
 Dualize.perform <- function(problem) {
   tmp <- apply_parameters(problem)

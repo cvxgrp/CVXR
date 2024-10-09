@@ -74,6 +74,7 @@ get_parameter_vector <- function(param_size,
 #' A <- Matrix(c(1, 0, 0, 1), 2, 2, sparse = TRUE)
 #' result <- reduce_problem_data_tensor(A, var_length = 2, quad_form = FALSE)
 #' print(result)
+#' }
 #'
 reduce_problem_data_tensor <- function(A, var_length, quad_form = FALSE) {
   # Ensure the matrix is in triplet form

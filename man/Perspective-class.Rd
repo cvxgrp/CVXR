@@ -57,7 +57,7 @@ the epigraph of the perspective transform of \eqn{f} can be given by
 
 Note that this is the perspective transform of a scalar expression viewed as
 a function of its underlying variables. The perspective atom does not return
-a `Callable`, so you cannot create compositions such as \eqn{p(g(x),s)}, where
+a \code{Callable}, so you cannot create compositions such as \eqn{p(g(x),s)}, where
 \eqn{p(z,s) = sf(z/s)} is the perspective transform of \eqn{f}.
 }
 \section{Methods (by generic)}{

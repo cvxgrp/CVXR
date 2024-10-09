@@ -64,6 +64,11 @@ This class represents a constraint that each entry of an Expression to take a va
 \section{Slots}{
 
 \describe{
+\item{\code{expre}}{The given expression, which must be affine, to be constrained.
+If expre has multiple elements, then the constraint is applied separately to
+each element, i.e., after solving a problem with this constraint, we should have:
+\code{for(e in flatten(expre)) print(value(e) \%in\% vec) # => TRUE }}
+
 \item{\code{vec}}{The finite collection of values to which each entry of expre is to be constrained.}
 
 \item{\code{ineq_form}}{A logical value controlling how this constraint is canonicalized into mixed-integer linear constraints.

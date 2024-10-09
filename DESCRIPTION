@@ -69,7 +69,7 @@ LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true
 Collate:
-    'CVXR.R'
+    'CVXR-package.R'
     'data.R'
     'globals.R'
     'generics.R'
@@ -110,11 +110,17 @@ Collate:
     'qp_solver_osqp.R'
     'qp_solver_gurobi.R'
     'qp_solver_piqp.R'
+    'clarabel.R'
     'utilities.R'
     'solver_utilities.R'
     'exports.R'
     'RcppExports.R'
     'canonInterface.R'
+    'coll_utils.R'
+    'rcppUtils.R'
+    'settings.R'
+    'sparse_utils.R'
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Encoding: UTF-8
 Enhances: 

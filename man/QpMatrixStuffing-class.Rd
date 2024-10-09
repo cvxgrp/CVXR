@@ -11,7 +11,7 @@ outputs a DCP-compliant minimization problem with an objective
 of the form
 }
 \details{
-QuadForm(x, p) + t(q) %*% x
+QuadForm(x, p) + t(q) \%*\% x
 
 and Zero/NonPos constraints, both of which exclusively carry
 affine arguments

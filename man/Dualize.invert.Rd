@@ -2,13 +2,47 @@
 % Please edit documentation in R/cone2cone.R
 \name{Dualize.invert}
 \alias{Dualize.invert}
-\title{``solution`` is a CVXR Solution object, formatted where}
+\title{\code{solution} is a CVXR Solution object, formatted where}
 \usage{
 Dualize.invert(solution, inv_data)
 }
 \description{
-
+(D-Opt) max{ -b \%\emph{\% y : c = t(A) \%}\% y, y in K^* } + d
 }
 \details{
+is the primal problem from the solver's perspective. The purpose of this function
+is to map such a solution back to the format
 
+(P-Opt) min{ t(c) \%\emph{\% x : A \%}\% x + b in K } + d.
+
+This function handles mapping of primal and dual variables, and solver status codes.
+The variable "x" in (P-Opt) is trivially populated from the dual variables to the
+constraint "c = t(A) \%*\% y" in (D-Opt). Status codes also map back in a simple way.
+\subsection{Details on required formatting of solution.primal_vars}{
+
+We assume the dict solution@primal_vars is keyed by string-enums Cone2Cone.FREE ('fr'),
+Cone2Cone.NONNEG ('+'), Cone2Cone.SOC ('s'), Cone2Cone.PSD ('p'), and Cone2Cone.DUAL_EXP ('de').
+The corresponding values are described below.
+
+solution@primal_vars[\link{Cone2Cone.FREE}] should be a single vector. It corresponds to the
+(possibly concatenated) components of "y" which are subject to no conic constraints.
+We map these variables back to dual variables for equality constraints in (P-Opt).
+
+solution@primal_vars[\link{Cone2Cone.NONNEG}] should also be a single vector, this time giving
+the possibly concatenated components of "y" which must be >= 0. We map these variables
+back to dual variables for inequality constraints in (P-Opt).
+
+solution@primal_vars[\link{Cone2Cone.SOC}] is a list of vectors specifying blocks of "y" which
+belong to the second-order-cone under the CVXR standard ({ z : z\link{1} >= || z\link{1 + seq_len(length(z) - 1)} || }).
+We map these variables back to dual variables for SOC constraints in (P-Opt).
+
+solution@primal_vars[\link{Cone2Cone.PSD}] is a list of symmetric positive semidefinite
+matrices which result by lifting the vectorized PSD blocks of "y" back into matrix form.
+We assign these as dual variables to PSD constraints appearing in (P-Opt).
+
+solution@primal_vars[\link{Cone2Cone.DUAL_EXP}] is a vector of concatenated length-3 slices
+of y, where each constituent length-3 slice belongs to dual exponential cone as implied
+by the CVXR standard of the primal exponential cone (see constraints.R:ExpCone).
+We map these back to dual variables for exponential cone constraints in (P-Opt).
+}
 }

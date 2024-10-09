@@ -12,8 +12,8 @@ Dgp2Dcp.constant_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the constant atom of a DGP expression, 
-where the returned expression is the DCP equivalent resulting 
+A canonicalization of the constant atom of a DGP expression,
+where the returned expression is the DCP equivalent resulting
 from the log of the expression.
 }
 \description{

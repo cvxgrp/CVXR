@@ -76,7 +76,7 @@ setMethod("supports_quad_obj", "ConicSolver", function(solver) { solver@SUPPORTS
 #' Can the problem be solved with a conic solver?
 #' @param object A \linkS4class{ConicSolver} object.
 #' @param problem A \linkS4class{Problem} object.
-#' @describeIn ConicSolver
+#' @rdname ConicSolver
 setMethod("accepts", signature(object = "ConicSolver", problem = "Problem"), function(object, problem) {
     is(problem, "ParamConeProg") &&
         (object@MIP_CAPABLE || !is_mixed_integer(problem)) &&

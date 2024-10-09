@@ -7,64 +7,67 @@
 Slacks.perform(prob, affine)
 }
 \description{
-(Aff)   min{ t(c) %*% x : A %*% x + b in K,
-                               x[bools] in {0, 1}, x[ints] in Z } + d.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{ (Aff)   min\{ t(c) \%*\% x : A \%*\% x + b in K,
+                           x[bools] in \{0, 1\}, x[ints] in Z \} + d.
+}\if{html}{\out{</div>}}
 }
 \details{
 Some solvers do not accept input in the form (Aff). A general pattern we find
 across solver types is that the feasible set is represented by
 
-     (Dir)   min{ f %*% y : G %*% y <=_{K_aff} h, y in K_dir
-                            y[bools] in {0, 1}, y[ints] in Z } + d,
+\if{html}{\out{<div class="sourceCode">}}\preformatted{ (Dir)   min\{ f \%*\% y : G \%*\% y <=_\{K_aff\} h, y in K_dir
+                        y[bools] in \{0, 1\}, y[ints] in Z \} + d,
+}\if{html}{\out{</div>}}
 
-   where K_aff is built from a list convex cones which includes the zero cone (ZERO),
-   and K_dir is built from a list of convex cones which includes the free cone (FREE).
+where K_aff is built from a list convex cones which includes the zero cone (ZERO),
+and K_dir is built from a list of convex cones which includes the free cone (FREE).
 
-   This reduction handles mapping back and forth between problems stated in terms
-   of (Aff) and (Dir), by way of adding slack variables.
+This reduction handles mapping back and forth between problems stated in terms
+of (Aff) and (Dir), by way of adding slack variables.
+\subsection{Notes}{
 
-   Notes
-   -----
-   Support for semidefinite constraints has not yet been implemented in this
-   reduction.
+Support for semidefinite constraints has not yet been implemented in this
+reduction.
 
-   If the problem has no integer constraints, then the Dualize reduction should be
-   used instead.
+If the problem has no integer constraints, then the Dualize reduction should be
+used instead.
 
-   Because this reduction is only intended for mixed-integer problems, this reduction
-   makes no attempt to recover dual variables when mapping between (Aff) and (Dir).
+Because this reduction is only intended for mixed-integer problems, this reduction
+makes no attempt to recover dual variables when mapping between (Aff) and (Dir).
 
 ======================================================================================
 
 "prob" is a ParamConeProg which represents
 
-   (Aff)   min{ t(c) %*% x : A %*% x + b in K,
-                          x[bools] in {0, 1}, x[ints] in Z } + d.
+(Aff)   min{ t(c) \%\emph{\% x : A \%}\% x + b in K,
+x\link{bools} in {0, 1}, x\link{ints} in Z } + d.
 
 We return data for an equivalent problem
 
-   (Dir)   min{ f %*% y : G %*% y <=_{K_aff} h, y in K_dir
-                          y[bools] in {0, 1}, y[ints] in Z } + d,
+(Dir)   min{ f \%\emph{\% y : G \%}\% y <=_{K_aff} h, y in K_dir
+y\link{bools} in {0, 1}, y\link{ints} in Z } + d,
 
 where
 
-   (1) K_aff is built from cone types specified in "affine" (a list of strings),
-   (2) a primal solution for (Dir) can be mapped back to a primal solution
-       for (Aff) by selecting the leading ``size(c)`` block of y's components.
+(1) K_aff is built from cone types specified in "affine" (a list of strings),
+(2) a primal solution for (Dir) can be mapped back to a primal solution
+for (Aff) by selecting the leading \code{size(c)} block of y's components.
 
-In the returned dict "data", data[[A_KEY]] = G, data[[B_KEY]] = h, data[[C_KEY]] = f,
-data[['K_aff']] = K_aff, data[['K_dir']] = K_dir, data[[BOOL_IDX]] = bools,
-and data[[INT_IDX]] = ints. The rows of G are ordered according to Cone2Cone.ZERO,
+In the returned dict "data", data[\link{A_KEY}] = G, data[\link{B_KEY}] = h, data[\link{C_KEY}] = f,
+data[\link{'K_aff'}] = K_aff, data[\link{'K_dir'}] = K_dir, data[\link{BOOL_IDX}] = bools,
+and data[\link{INT_IDX}] = ints. The rows of G are ordered according to Cone2Cone.ZERO,
 then (as applicable) Cone2Cone.NONNEG, Cone2Cone.SOC, and Cone2Cone.EXP. If  "c"
-is the objective vector in (Aff), then ``y[seq_len(size(c) - 1)]`` should contain
+is the objective vector in (Aff), then \code{y[seq_len(size(c) - 1)]} should contain
 the optimal solution to (Aff). The columns of G correspond first to variables in
 cones Cone2Cone.FREE, then Cone2Cone.NONNEG, then Cone2Cone.SOC, then Cone2Cone.EXP.
-The length of the free cone is equal to ``size(c)``.
+The length of the free cone is equal to \code{size(c)}.
+}
 
-Assumptions
------------
-The function call ``cdAb = apply_parameters(prob)`` returns (A,b) with
+\subsection{Assumptions}{
+
+The function call \code{cdAb = apply_parameters(prob)} returns (A,b) with
 rows formatted first for the zero cone, then for the nonnegative orthant, then
 second order cones, then the exponential cone. Removing this assumption will
 require adding additional data to ParamConeProg objects.
+}
 }

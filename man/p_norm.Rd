@@ -29,9 +29,9 @@ For \eqn{p \geq 1}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n |x
 For \eqn{p < 1, p \neq 0}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n x_i^p\right)^{1/p}} with domain \eqn{x \in \mathbf{R}^n_+}.
 
 \itemize{
-   \item Note that the "p-norm" is actually a \strong{norm} only when \eqn{p \geq 1} or \eqn{p = +\infty}. For these cases, it is convex.
-   \item The expression is undefined when \eqn{p = 0}.
-   \item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
+\item Note that the "p-norm" is actually a \strong{norm} only when \eqn{p \geq 1} or \eqn{p = +\infty}. For these cases, it is convex.
+\item The expression is undefined when \eqn{p = 0}.
+\item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
 }
 }
 \examples{

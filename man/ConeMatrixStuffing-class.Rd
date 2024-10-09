@@ -35,9 +35,9 @@ which may have zero or more arguments, all of which must be affine.
 }
 \details{
 minimize c^Tx
-subject to cone_constr1(A_1*x + b_1, ...)
-           ...
-           cone_constrK(A_K*x + b_K, ...)
+subject to cone_constr1(A_1\emph{x + b_1, ...)
+...
+cone_constrK(A_K}x + b_K, ...)
 }
 \section{Methods (by generic)}{
 \itemize{

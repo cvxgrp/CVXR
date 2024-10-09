@@ -15,7 +15,7 @@
 An \linkS4class{Expression} representing the square root of the input.
 A <- Variable(2,2)
 val <- cbind(c(2,4), c(16,1))
-prob <- Problem(Maximize(sqrt(A)[1,2]), list(A == val))
+prob <- Problem(Maximize(sqrt(A)\link{1,2}), list(A == val))
 result <- solve(prob)
 result$value
 }

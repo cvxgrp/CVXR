@@ -10,8 +10,8 @@ RelEntrConeQuad_canon(con, args)
 \description{
 We rely on an SOC characterization of 2-by-2 PSD matrices.
 Namely, a matrix
-     [ a, b ]
-     [ b, c ]
+\link{ a, b }
+\link{ b, c }
 is PSD if and only if (a, c) >= 0 and a*c >= b^2.
 That system of constraints can be expressed as
 a >= quad_over_lin(b, c).

@@ -11,26 +11,26 @@ Variable x, consider the convex set
 }
 \details{
 S = \\{ v : \\text{it's possible to satisfy all } \\texttt{constraints}
-               \\text{ when } \\texttt{x.value} = v \\}.
+\\text{ when } \\texttt{x.value} = v \\}.
 
-This object represents the *support function* of :math:`S`.
+This object represents the \emph{support function} of :math:\code{S}.
 This is the convex function
 
-   y \\mapsto \\max\\{ \\langle y, v \\rangle : v \\in S \\}.
+y \\mapsto \\max\\{ \\langle y, v \\rangle : v \\in S \\}.
 
 The support function is a fundamental object in convex analysis.
 It's extremely useful for expressing dual problems using Fenchel duality.
+\subsection{Notes}{
 
- Notes
- -----
- You are allowed to use CVXR Variables other than x to define constraints,
- but the set S only consists of objects (vectors or matrices) with the same
- dimensions as x.
+You are allowed to use CVXR Variables other than x to define constraints,
+but the set S only consists of objects (vectors or matrices) with the same
+dimensions as x.
 
- It's possible for the support function to take the value +Inf for a fixed
- vector y. This is an important point, and it's one reason why support
- functions are actually formally defined with the supremum sup rather than
- the maximum max.
+It's possible for the support function to take the value +Inf for a fixed
+vector y. This is an important point, and it's one reason why support
+functions are actually formally defined with the supremum sup rather than
+the maximum max.
+}
 }
 \section{Slots}{
 

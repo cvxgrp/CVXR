@@ -7,7 +7,7 @@
 lu.replace_params_with_consts(expr)
 }
 \arguments{
-\item{expr}{the `LinOp` expression to replace parameters in}
+\item{expr}{the \code{LinOp} expression to replace parameters in}
 }
 \value{
 an LinOp identical to expr, but with the parameters replaced

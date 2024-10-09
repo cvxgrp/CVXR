@@ -1,4 +1,5 @@
 ## CVXPY SOURCE: cvxpy/expression/constraints/finite_set.py
+
 #'
 #' The FiniteSet class.
 #'
@@ -7,7 +8,7 @@
 #' @slot expre The given expression, which must be affine, to be constrained.
 #' If expre has multiple elements, then the constraint is applied separately to
 #' each element, i.e., after solving a problem with this constraint, we should have:
-#' \code{for(e in flatten(expre)) { print(value(e) %in% vec) # => TRUE }
+#' `for(e in flatten(expre)) print(value(e) %in% vec) # => TRUE `
 #' @slot vec The finite collection of values to which each entry of expre is to be constrained.
 #' @slot ineq_form A logical value controlling how this constraint is canonicalized into mixed-integer linear constraints.
 #' If TRUE, then we use a formulation with (size(vec) - 1) inequality constraints,

@@ -7,7 +7,7 @@
 lu.replace_new_vars(expr, id_to_new_var)
 }
 \arguments{
-\item{expr}{the `LinOp` expression to replace variables in}
+\item{expr}{the \code{LinOp} expression to replace variables in}
 
 \item{id_to_new_var}{a map of id to new variable}
 }

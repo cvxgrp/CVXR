@@ -14,8 +14,8 @@ vectorized_lower_tri_to_mat(v, dim)
 array.}
 }
 \value{
-Return the symmetric 2D array defined by taking `v` to
-  specify its lower triangular matrix.
+Return the symmetric 2D array defined by taking \code{v} to
+specify its lower triangular matrix.
 }
 \description{
 Return the symmetric 2D array defined by taking a vector specifying

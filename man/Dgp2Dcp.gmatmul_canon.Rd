@@ -12,7 +12,7 @@ Dgp2Dcp.gmatmul_canon(expr, args)
 \item{args}{A list of values for the expr variable}
 }
 \value{
-A canonicalization of the geometric matrix multiplier atom of a DGP expression, 
+A canonicalization of the geometric matrix multiplier atom of a DGP expression,
 where the returned expression is the transformed DCP equivalent.
 }
 \description{

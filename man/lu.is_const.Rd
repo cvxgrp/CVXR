@@ -10,7 +10,7 @@ lu.is_const(operator)
 \item{operator}{the LinOp to test}
 }
 \value{
-`TRUE` if a constant, else `FALSE`
+\code{TRUE} if a constant, else \code{FALSE}
 }
 \description{
 Is the LinOp a constant?

@@ -30,10 +30,10 @@
 This class represents a parametrized quadratic program.
 }
 \details{
-minimize   x^T*P*x + q^T*x + d
-subject to (in)equality_constr(A_1*x + b_1, ...)
-           ...
-           (in)equality_constr(A_i*x + b_i, ...)
+minimize   x^T\emph{P}x + q^T\emph{x + d
+subject to (in)equality_constr(A_1}x + b_1, ...)
+...
+(in)equality_constr(A_i*x + b_i, ...)
 
 The constant offsets d and b are the last column of c and A, respectively.
 }

@@ -16,10 +16,10 @@ reduce_problem_data_tensor(A, var_length, quad_form = FALSE)
 \value{
 A list containing:
 \itemize{
-  \item reduced_A: A CSR sparse matrix with redundant rows removed
-  \item indices: CSC indices for the problem data matrix
-  \item indptr: CSC indptr for the problem data matrix
-  \item shape: The shape of the problem data matrix
+\item reduced_A: A CSR sparse matrix with redundant rows removed
+\item indices: CSC indices for the problem data matrix
+\item indptr: CSC indptr for the problem data matrix
+\item shape: The shape of the problem data matrix
 }
 }
 \description{
@@ -29,12 +29,21 @@ from the reduced representation, and the shape of the problem data matrix.
 }
 \details{
 If quad_form=FALSE, the problem data tensor A is a matrix of shape (m, p), where p is the
-length of the parameter vector. The product A %*% param_vec gives the entries of the problem
+length of the parameter vector. The product A \%*\% param_vec gives the entries of the problem
 data matrix for a solver; the solver's problem data matrix has dimensions (n_constr, n_var + 1),
 and n_constr * (n_var + 1) = m.
 
 If quad_form=TRUE, the problem data tensor A is a matrix of shape (m, p), where p is the
-length of the parameter vector. The product A %*% param_vec gives the entries of the quadratic
+length of the parameter vector. The product A \%*\% param_vec gives the entries of the quadratic
 form matrix P for a QP solver; the solver's quadratic matrix P has dimensions (n_var, n_var),
 and n_var * n_var = m.
+}
+\examples{
+\dontrun{
+library(Matrix)
+A <- Matrix(c(1, 0, 0, 1), 2, 2, sparse = TRUE)
+result <- reduce_problem_data_tensor(A, var_length = 2, quad_form = FALSE)
+print(result)
+}
+
 }

@@ -35,8 +35,8 @@
 The class represents the version of CVXR.
 }
 \details{
-It parses strings of the form 'x.y.z+[STUFF]' and tuples of the form (x, y, z).
-In the former case, '+[STUFF]' refers to a local version identifier in the
+It parses strings of the form 'x.y.z+\link{STUFF}' and tuples of the form (x, y, z).
+In the former case, '+\link{STUFF}' refers to a local version identifier in the
 sense of https://www.python.org/dev/peps/pep-0440/#local-version-identifiers.
 We don't actually store the local version identifier for comparisons.
 }

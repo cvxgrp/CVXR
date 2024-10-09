@@ -38,8 +38,8 @@ Determine if an expression is constant, affine, convex, concave, quadratic, piec
 x <- Variable()
 c <- Constant(5)
 
-is_constant(c)
-is_constant(x)
+lu.is_constant(c)
+lu.is_constant(x)
 
 is_affine(c)
 is_affine(x)

@@ -115,7 +115,7 @@ lo.LINOP_TYPES <- c( ## from LinOp.hpp
   lo.DENSE_CONST,
   lo.SPARSE_CONST,
   lo.NO_OP,
-  lo.KRON,
+  ##lo.KRON,
   lo.KRON_R,
   lo.KRON_L
 )

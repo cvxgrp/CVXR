@@ -1,13 +1,13 @@
 ## CVXPY SOURCE: cvxpy/lin_ops/lin_utils.py
 ## NEEDS: lin_op.R
 
-## All items here begin with prefix "lo."
+## All items here begin with prefix "lu."
 
 ## get_id <- function() {
 ##   # sample.int(.Machine$integer.max, 1)
 ##     uuid::UUIDgenerate()
 ## }
-lo.COUNTER <- 0L
+.lu.COUNTER <- 0L
 
 #'
 #' Get ID
@@ -20,9 +20,9 @@ lo.COUNTER <- 0L
 #' \dontrun{
 #'    get_id()
 #' }
-lo.get_id <- function() {
-  new_id <- lo.COUNTER
-  lo.counter <<- lo.COUNTER + 1L
+lu.get_id <- function() {
+  new_id <- .lu.COUNTER
+  .lu.COUNTER <<- .lu.COUNTER + 1L
   new_id
 }
 
@@ -30,7 +30,7 @@ lo.get_id <- function() {
 #' @param dim the rows, cols dimensions of the variable as a vector, in order
 #' @param id the id of the variable, automatically generated if not specified
 #' @return a LinOp representing the new variable
-lo.create_var <- function(dim, var_id = lo.get_id()) {
+lu.create_var <- function(dim, var_id = lu.get_id()) {
   lo.LinOp(lo.VARIABLE, dim, list(), var_id)
 }
 
@@ -38,7 +38,7 @@ lo.create_var <- function(dim, var_id = lo.get_id()) {
 #' @param dim the rows, cols dimensions of the parameter as a vector in order
 #' @param id the id of the parameter, automatically generated if not specified
 #' @return a LinOp wrapping the parameter
-lo.create_param <- function(dim, param_id = lo.get_id()) {
+lu.create_param <- function(dim, param_id = lu.get_id()) {
   lo.LinOp(lo.PARAM, dim, list(), param_id)
 }
 
@@ -47,7 +47,7 @@ lo.create_param <- function(dim, param_id = lo.get_id()) {
 #' @param dim the rows, cols dimensions of the constant as a vector, in order
 #' @param sparse a flag indicating if object is sparse matrix or not
 #' @return a LinOp wrapping the constant
-lo.create_const <- function(value, dim, sparse = FALSE) {
+lu.create_const <- function(value, dim, sparse = FALSE) {
   if(all(dim == c(1L, 1L)))
     op_type <- lo.SCALAR_CONST
   else if (sparse)
@@ -60,14 +60,14 @@ lo.create_const <- function(value, dim, sparse = FALSE) {
 #' Is the LinOp a scalar?
 #' @param operator the LinOp to test
 #' @return `TRUE` if a scalar, else `FALSE`
-lo.is_scalar <- function(operator) {
+lu.is_scalar <- function(operator) {
   length(operator$dim) == 0L || as.integer(prod(operator$dim)) == 1L
 }
 
 #' Is the LinOp a constant?
 #' @param operator the LinOp to test
 #' @return `TRUE` if a constant, else `FALSE`
-lo.is_const <- function(operator) {
+lu.is_const <- function(operator) {
   operator$type %in% c(lo.SCALAR_CONST, lo.SPARSE_CONST, lo.DENSE_CONST)
 }
 
@@ -75,14 +75,14 @@ lo.is_const <- function(operator) {
 #' Add linear operators
 #' @param a list of linear operators to sum
 #' @return a LinOp representing the sum of the operators
-lo.sum_expr <- function(operators) {
+lu.sum_expr <- function(operators) {
   lo.LinOp(lo.SUM, operators[[1L]]$dim, operators)
 }
 
 #' Negate an operator
 #' @param operator the LinOp to negate
 #' @return the negated operator
-lo.neg_expr <- function(operator) {
+lu.neg_expr <- function(operator) {
   lo.LinOp(lo.NEG, operator$dim, list(operator))
 }
 
@@ -90,8 +90,8 @@ lo.neg_expr <- function(operator) {
 #' @param lh_op the LinOp on LHS
 #' @param rh_op the LinOp on RHS
 #' @return the resulting subtracted operator
-lo.sub_expr <- function(lh_op, rh_op) {
-  lo.sum_expr(list(lh_op, lo.neg_expr(rh_op)))
+lu.sub_expr <- function(lh_op, rh_op) {
+  lu.sum_expr(list(lh_op, lu.neg_expr(rh_op)))
 }
 
 #' Promote arguments for multiplication
@@ -103,7 +103,7 @@ lo.sub_expr <- function(lh_op, rh_op) {
 #'   \item{lh_op}{Promoted left-hand operator}
 #'   \item{rh_op}{Promoted right-hand operator}
 #'   \item{dim}{Shape of the product}
-lo.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
+lu.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
   promoted_dims <- u.shape.mul_dims_promote(lh_op$dim, rh_op$dim)
   list(
     lo.LinOp(lh_op$type, promoted_dims[[1L]], lh_op$args, lh_op$data),
@@ -117,7 +117,7 @@ lo.promote_lin_ops_for_mul <- function(lh_op, rh_op) {
 #' @param rh_op the right-hand operator in the product
 #' @param dim the shape of the product
 #' @return a linear operator representing the product
-lo.mul_expr <- function(lh_op, rh_op, dim) {
+lu.mul_expr <- function(lh_op, rh_op, dim) {
   lo.LinOp(lo.MUL_EXPR, dim, list(rh_op), lh_op)
 }
 
@@ -125,7 +125,7 @@ lo.mul_expr <- function(lh_op, rh_op, dim) {
 #' @param lh_op the left-hand operator in the product
 #' @param rh_op the right-hand operator in the product
 #' @return a linear operator representing the product
-lo.rmul_expr <- function(lh_op, rh_op, dim) {
+lu.rmul_expr <- function(lh_op, rh_op, dim) {
   lo.LinOp(lo.RMUL_EXPR, dim, list(lh_op), rh_op)
 }
 
@@ -133,7 +133,7 @@ lo.rmul_expr <- function(lh_op, rh_op, dim) {
 #' @param lh_op the left-hand operator in the product
 #' @param rh_op the right-hand operator in the product
 #' @return a linear operator representing the product
-lo.multiply <- function(lh_op, rh_op) {
+lu.multiply <- function(lh_op, rh_op) {
   lo.LinOp(lo.MUL_ELEM, lh_op$dim, list(rh_op), lh_op)
 }
 
@@ -142,7 +142,7 @@ lo.multiply <- function(lh_op, rh_op) {
 #' @param rh_op the right-hand operator in the product
 #' @param dim the dimension of the product
 #' @return a linear operator representing the Kronecker product
-lo.kron_r <- function(lh_op, rh_op, dim) {
+lu.kron_r <- function(lh_op, rh_op, dim) {
   lo.LinOp(lo.KRON_R, dim, list(rh_op), lh_op)
 }
 
@@ -151,7 +151,7 @@ lo.kron_r <- function(lh_op, rh_op, dim) {
 #' @param rh_op the right-hand operator in the product
 #' @param dim the dimension of the product
 #' @return a linear operator representing the Kronecker product
-lo.kron_l <- function(lh_op, rh_op, dim) {
+lu.kron_l <- function(lh_op, rh_op, dim) {
   lo.LinOp(lo.KRON_L, dim, list(rh_op), lh_op)
 }
 
@@ -159,7 +159,7 @@ lo.kron_l <- function(lh_op, rh_op, dim) {
 #' @param lh_op the left-hand operator in the quotient
 #' @param rh_op the right-hand operator in the quotient
 #' @return a linear operator representing the quotient
-lo.div_expr <- function(lh_op, rh_op) {
+lu.div_expr <- function(lh_op, rh_op) {
   lo.LinOp(lo.DIV, lh_op$dim, list(lh_op), rh_op)
 }
 
@@ -167,7 +167,7 @@ lo.div_expr <- function(lh_op, rh_op) {
 #' @param operator the operator to promote
 #' @param dim the dimensions to promote to
 #' @return a linear operator representing the promotion
-lo.promote <- function(operator, dim) {
+lu.promote <- function(operator, dim) {
   lo.LinOp(lo.PROMOTE, dim, list(operator))
 }
 
@@ -175,14 +175,14 @@ lo.promote <- function(operator, dim) {
 #' @param operator the operator to sum the entries of
 #' @param dim the dimensions of the sum
 #' @return an operator representing the sum
-lo.sum_entries <- function(operator, dim) {
+lu.sum_entries <- function(operator, dim) {
   lo.LinOp(lo.SUM_ENTRIES, dim, list(operator))
 }
 
 #' Sum the diagonal entries of an operator
 #' @param expr the operator to sum the diagonal entries of
 #' @return an operator representing the sum of the diagonal entries
-lo.trace <- function(operator) {
+lu.trace <- function(operator) {
   lo.LinOp(lo.TRACE, c(1L, 1L), list(operator))
 }
 
@@ -191,7 +191,7 @@ lo.trace <- function(operator) {
 #' @param dim the dimensions of the expression after indexing
 #' @param keys a list of row slice, column slice
 #' @return an operator representing the indexing
-lo.index <- function(operator, dim, keys) {
+lu.index <- function(operator, dim, keys) {
   lo.LinOp(lo.INDEX, dim, list(operator), keys)
 }
 
@@ -200,14 +200,14 @@ lo.index <- function(operator, dim, keys) {
 #' @param rh_op the right-hand operator in the convolution
 #' @param dim the dimension of the convolution
 #' @return a linear operator representing the convolution
-lo.conv <- function(lh_op, rh_op, dim) {
+lu.conv <- function(lh_op, rh_op, dim) {
   lo.LinOp(lo.CONV, dim, list(rh_op), lh_op)
 }
 
 #' Transpose an operator
 #' @param operator the operator to sum the entries of
 #' @return an operator representing the transpose
-lo.transpose <- function(operator) {
+lu.transpose <- function(operator) {
   if(length(operator$dim) < 2L)
     operator
   else if(length(operator$dim) > 2L)
@@ -222,14 +222,14 @@ lo.transpose <- function(operator) {
 #' @param operator the operator to reshape
 #' @param dim the dimensions of the reshaped operator
 #' @return an operator representing the reshaping
-lo.reshape <- function(operator, dim) {
+lu.reshape <- function(operator, dim) {
   lo.LinOp(lo.RESHAPE_EXPR, dim, list(operator))
 }
 
 #' Convert a vector to a diagonal matrix
 #' @param operator he operator to convert to a diagonal matrix
 #' @return LinOp representing the diagonal matrix
-lo.diag_vec <- function(operator) {
+lu.diag_vec <- function(operator) {
   new_dim <- c(operator$dim[1L], operator$dim[1L])
   lo.LinOp(lo.DIAG_VEC, new_dim, list(operator))
 }
@@ -237,7 +237,7 @@ lo.diag_vec <- function(operator) {
 #' Convert the diagonal of a matrix to a vector
 #' @param operator the operator to convert to a vector
 #' @return LinOp representing the matrix diagonal
-lo.diag_mat <- function(operator) {
+lu.diag_mat <- function(operator) {
   new_dim <- c(operator$dim[1], 1)
   lo.LinOp(lo.DIAG_MAT, new_dim, list(operator))
 }
@@ -245,7 +245,7 @@ lo.diag_mat <- function(operator) {
 #' Create vectorized upper triangular portion of a square matrix
 #' @param operator the matrix operator
 #' @return LinOp representing the vectorized upper triangle
-lo.upper_tri <- function(operator) {
+lu.upper_tri <- function(operator) {
   entries <- operator$dim[1L] * operator$dim[2L]
   new_dim <- c(floor((entries - operator$dim[1L])/2), 1L)
   lo.LinOp(lo.UPPER_TRI, new_dim, list(operator))
@@ -255,7 +255,7 @@ lo.upper_tri <- function(operator) {
 #' @param operators the operators to concatenate
 #' @param dim the dimensions of the result
 #' @return LinOp representing the horizontally stacked operators
-lo.hstack <- function(operators, dim) {
+lu.hstack <- function(operators, dim) {
   lo.LinOp(lo.HSTACK, dim, operators)
 }
 
@@ -263,7 +263,7 @@ lo.hstack <- function(operators, dim) {
 #' @param operators the operators to concatenate
 #' @param dim the dimensions of the result
 #' @return LinOp representing the vertically stacked operators
-lo.vstack <- function(operators, dim) {
+lu.vstack <- function(operators, dim) {
   lo.LinOp(lo.VSTACK, dim, operators)
 }
 
@@ -271,11 +271,11 @@ lo.vstack <- function(operators, dim) {
 #' @param lh_op the left-hand operator in the constraint
 #' @param rh_op the right-hand operator in the constraint
 #' @return the LinOp representing the constraint
-lo.get_constr_expr <- function(lh_op, rh_op) {
+lu.get_constr_expr <- function(lh_op, rh_op) {
   if(missing(rh_op))
     lh_op
   else
-    lo.sum_expr(list(lh_op, lo.neg_expr(rh_op)))
+    lu.sum_expr(list(lh_op, lu.neg_expr(rh_op)))
 }
 
 #' Create an internal equality constraint as a LinOp
@@ -283,7 +283,7 @@ lo.get_constr_expr <- function(lh_op, rh_op) {
 #' @param rh_op the right-hand operator in the constraint
 #' @param constr_id a id for the constraint, automatically generated if not specified
 #' @return the LinOp representing the equality constraint
-lo.create_eq <- function(lh_op, rh_op, constr_id = lo.get_id()) {
+lu.create_eq <- function(lh_op, rh_op, constr_id = lu.get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
   LinEqConstr(expr, constr_id, lh_op$dim)
 }
@@ -293,7 +293,7 @@ lo.create_eq <- function(lh_op, rh_op, constr_id = lo.get_id()) {
 #' @param rh_op the right-hand operator in the constraint
 #' @param constr_id a id for the constraint, automatically generated if not specified
 #' @return the LinOp representing the less than or equal to constraint
-lo.create_leq <- function(lh_op, rh_op, constr_id = lo.get_id()) {
+lu.create_leq <- function(lh_op, rh_op, constr_id = lu.get_id()) {
   expr <- get_constr_expr(lh_op, rh_op)
   LinLeqConstr(expr, constr_id, lh_op$dim)
 }
@@ -303,16 +303,16 @@ lo.create_leq <- function(lh_op, rh_op, constr_id = lo.get_id()) {
 #' @param rh_op the right-hand operator in the constraint
 #' @param constr_id a id for the constraint, automatically generated if not specified
 #' @return the LinOp representing the greater than or equal to constraint
-lo.create_geq <- function(lh_op, rh_op, constr_id = lo.get_id()) {
+lu.create_geq <- function(lh_op, rh_op, constr_id = lu.get_id()) {
   if (!missing(rh_op))
-    rh_op <- lo.neg_expr(rh_op)
-  create_leq(lo.neg_expr(lh_op), rh_op, constr_id)
+    rh_op <- lu.neg_expr(rh_op)
+  create_leq(lu.neg_expr(lh_op), rh_op, constr_id)
 }
 
 #' Get a list of variables in the operator and their dimensions
 #' @param operator the operator whose variables and dimensions are needed
 #' @return a list of var_id, var dim pairs
-lo.get_expr_vars <- function(operator) {
+lu.get_expr_vars <- function(operator) {
   ## TODO: This is recursive and should be improved
   if(operator$type == lo.VARIABLE)
     list(list(operator$data, operator$dim))
@@ -321,14 +321,14 @@ lo.get_expr_vars <- function(operator) {
     for(arg in operator$args)
       vars_ <- c(vars_, get_expr_vars(arg))
     vars_
-    ## Maybe lapply(operator$args, lo.get_expr_vars) ??
+    ## Maybe lapply(operator$args, lu.get_expr_vars) ??
   }
 }
 
 #' Get a list of parameters in the operator
 #' @param operator the operator whose parameters are needed
 #' @return a list of parameters in the operator
-lo.get_expr_params <- function(operator) {
+lu.get_expr_params <- function(operator) {
   if(operator$type == lo.PARAM)
     parameters(operator$data)
   else {
@@ -345,7 +345,7 @@ lo.get_expr_params <- function(operator) {
 #' @param constr the `LinConstraint` constraint to modify
 #' @param func a function to modify the constraint expression
 #' @return a copy of the constraint with the specified changes
-lo.copy_constr <- function(constr, func) {
+lu.copy_constr <- function(constr, func) {
   expr <- func(constr$expr)
   new(class(constr), expr, constr$constr_id, constr$dim)
 }
@@ -355,7 +355,7 @@ lo.copy_constr <- function(constr, func) {
 #' @param id_to_new_var a map of id to new variable
 #' @return an LinOp identical to expr, but with the given variables replaced
 #' @export
-lo.replace_new_vars <- function(expr, id_to_new_var) {
+lu.replace_new_vars <- function(expr, id_to_new_var) {
   if(expr$type == lo.VARIABLE && expr$data %in% id_to_new_var)
     id_to_new_var[expr$data]
   else {
@@ -369,9 +369,9 @@ lo.replace_new_vars <- function(expr, id_to_new_var) {
 #' Replace parameters with constant nodes
 #' @param expr the `LinOp` expression to replace parameters in
 #' @return an LinOp identical to expr, but with the parameters replaced
-lo.replace_params_with_consts <- function(expr) {
+lu.replace_params_with_consts <- function(expr) {
   if(expr$type == lo.PARAM)
-    create_const(expr$data$value, expr$dim)
+    lu.create_const(expr$data$value, expr$dim)
   else {
     new_args <- list()
     for(arg in expr$args)
@@ -379,7 +379,7 @@ lo.replace_params_with_consts <- function(expr) {
     # Data could also be a parameter
     if(inherits(expr$data, "LinOp") && expr$data$type == lo.PARAM) {
       data_lin_op <- expr$data
-      data <- create_const(data_lin_op$data$value, data_lin_op$dim)
+      data <- lu.create_const(data_lin_op$data$value, data_lin_op$dim)
     } else
       data <- expr$data
     lo.LinOp(expr$type, expr$dim, new_args, data)

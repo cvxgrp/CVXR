@@ -27,9 +27,9 @@ x <- Variable()
 y <- Variable(3)
 z <- Variable(3,2)
 
-is_scalar(x)
-is_scalar(y)
-is_scalar(x + y)
+lu.is_scalar(x)
+lu.is_scalar(y)
+lu.is_scalar(x + y)
 
 is_vector(x)
 is_vector(y)

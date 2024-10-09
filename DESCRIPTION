@@ -78,7 +78,7 @@ Collate:
     'expressions.R'
     'constant.R'
     'variable.R'
-    'lin_ops.R'
+    'lin_op.R'
     'lin_utils.R'
     'lin_constraints.R'
     'transforms.R'    

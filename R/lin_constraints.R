@@ -1,6 +1,6 @@
 ## CVXPY SOURCE: cvxpy/lin_ops/lin_constraints.py
 
-lo.LinConstr <- function(expr, constr_id, class = "LinConstr") {
+LinConstr <- function(expr, constr_id, class = "LinConstr") {
   if (is.null(dim)) dim <- c(1L, 1L)   # TODO: Get rid of this with proper multi-dimensional handling.
   if (!is.character(constr_id)) stop("constr_id must be a character string")
   if (!is.integer(constr_id)) stop("constr_id must be an integer")
@@ -8,11 +8,11 @@ lo.LinConstr <- function(expr, constr_id, class = "LinConstr") {
   list(expr = expr, constr_id = constr_id, dim = dim, class = class)
 }
 
-lo.LinEqConstr <- function(expr, constr_id, dim) {
+LinEqConstr <- function(expr, constr_id, dim) {
   lo.LinConstr(expr, constr_id, dim, class = "LinEqConstr")
 }
 
-lo.LinLeqConstr <- function(expr, constr_id, dim) {
+LinLeqConstr <- function(expr, constr_id, dim) {
   lo.LinConstr(expr, constr_id, dim, class = "LinLeqConstr")
 }
 

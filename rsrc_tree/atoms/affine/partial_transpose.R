@@ -12,7 +12,7 @@
 #' @param expr An \linkS4class{Expression} representing a 2D expression of which to take the partial transpose.
 #' @param dims A vector of integers encoding the dimensions of each subsystem.
 #' @param axis The index of the subsystem to be transposed out from the tensor product that defines \code{expr}.
-#' @return The partial trace of \code{expr}.
+#' @return The partial transpose of \code{expr}.
 PartialTranspose <- function(expr, dims, axis) {
   expr <- as.Constant(expr)
   dims <- as.integer(dims)

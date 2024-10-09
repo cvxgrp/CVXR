@@ -156,7 +156,7 @@ setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
 
   if(is_quasiconvex(lhs) && !is_convex(lhs)) {
     # Quasiconvex <= constant.
-    if(!is_constant(rhs))
+    if(!lu.is_constant(rhs))
       stop("rhs must be a constant")
     if(invertible(lhs)) {
       # Apply inverse to both sides of constraint.
@@ -187,7 +187,7 @@ setMethod("canonicalize_constraint", "Dqcp2Cone", function(object, expr) {
   # Constant <= quasiconcave.
   if(!is_quasiconcave(rhs))
     stop("rhs must be quasiconcave")
-  if(!is_constant(lhs))
+  if(!lu.is_constant(lhs))
     stop("lhs must be constant")
   if(invertible(rhs)) {
     # Apply inverse to both sides of constraint.
@@ -257,14 +257,14 @@ inverse <- function(expr) {
     }
     return(power_inv)
   } else if(class(expr) == "Multiply") {
-    if(is_constant(expr@args[[1]]))
+    if(lu.is_constant(expr@args[[1]]))
       const <- expr@args[[1]]
     else
       const <- expr@args[[2]]
     return(function(t) { t / const })
   } else if(class(expr) == "DivExpression") {
     # Either const / x <= t or x / const <= t.
-    if(is_constant(expr@args[[1]])) {
+    if(lu.is_constant(expr@args[[1]])) {
       # Numerator is constant.
       const <- expr@args[[1]]
       return(function(t) { const / t })
@@ -274,7 +274,7 @@ inverse <- function(expr) {
       return(function(t) { const * t })
     }
   } else if(class(expr) == "AddExpression") {
-    if(is_constant(expr@args[[1]]))
+    if(lu.is_constant(expr@args[[1]]))
       const <- expr@args[[1]]
     else
       const <- expr@args[[2]]

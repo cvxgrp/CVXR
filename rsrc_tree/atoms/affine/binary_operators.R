@@ -143,9 +143,9 @@ MulExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Promote the right-hand side to a diagonal matrix if necessary
   lhs <- arg_objs[[1]]
   rhs <- arg_objs[[2]]
-  if(lo.is_const(lhs))
+  if(lu.is_const(lhs))
     return(list(lo.mul_expr(lhs, rhs, dim), list()))
-  else if(lo.is_const(rhs))
+  else if(lu.is_const(rhs))
     return(list(lo.rmul_expr(lhs, rhs, dim), list()))
   else
     stop("Product of two non-constant expressions is not DCP.")
@@ -224,10 +224,10 @@ setMethod("is_nsd", "Multiply", function(object) {
 Multiply.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   lhs <- arg_objs[[1]]
   rhs <- arg_objs[[2]]
-  if(lo.is_const(lhs))
-    return(list(lo.multiply(lhs, rhs), list()))
-  else if(lo.is_const(rhs))
-    return(list(lo.multiply(rhs, lhs), list()))
+  if(lu.is_const(lhs))
+    return(list(lu.multiply(lhs, rhs), list()))
+  else if(lu.is_const(rhs))
+    return(list(lu.multiply(rhs, lhs), list()))
   else
     stop("Product of two non-constant expressions is not DCP.")
 }
@@ -311,7 +311,7 @@ setMethod("is_decr", "DivExpression", function(object, idx) {
 })
 
 DivExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
+  list(lu.div_expr(arg_objs[[1]], arg_objs[[2]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

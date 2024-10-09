@@ -58,7 +58,7 @@ setMethod("is_atom_log_log_concave", "Promote", function(object) { TRUE })
 setMethod("get_data", "Promote", function(object) { list(object@promoted_dim) })
 
 Promote.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.promote(arg_objs[[1]], dim), list())
+  list(lu.promote(arg_objs[[1]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

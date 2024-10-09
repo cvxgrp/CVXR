@@ -81,7 +81,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
     if(is_constant(arg))
       fake_args <- c(fake_args, list(canonical_form(Constant(value(arg)))[[1]]))
     else {
-      fake_args <- c(fake_args, list(create_var(dim(arg), idx)))
+      fake_args <- c(fake_args, list(lu.create_var(dim(arg), idx)))
       var_offsets <- c(var_offsets, offset)
       var_names <- c(var_names, idx)
       offset <- offset + size(arg)

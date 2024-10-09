@@ -303,7 +303,7 @@ format_axis <- function(t, X, axis) {
   # Make t_mat.
   mat_dim <- c(cone_size, 1)
   t_mat <- sparseMatrix(i = 1, j = 1, x = 1.0, dims = mat_dim)
-  t_mat <- create_const(t_mat, mat_dim, sparse = TRUE)
+  t_mat <- lu.create_const(t_mat, mat_dim, sparse = TRUE)
   t_vec <- t
   if(is.null(dim(t)))   # t is scalar.
     t_vec <- lo.reshape(t, c(1,1))
@@ -320,10 +320,10 @@ format_axis <- function(t, X, axis) {
   row_arr <- 2:cone_size
   col_arr <- 1:(cone_size - 1)
   X_mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = mat_dim)
-  X_mat <- create_const(X_mat, mat_dim, sparse = TRUE)
+  X_mat <- lu.create_const(X_mat, mat_dim, sparse = TRUE)
   mul_dim <- c(cone_size, ncol(X))
   terms <- c(terms, list(lo.mul_expr(X_mat, X, mul_dim)))
-  list(create_geq(lo.sum_expr(terms)))
+  list(create_geq(lu.sum_expr(terms)))
 }
 
 # Formats all the elementwise cones for the solver.
@@ -338,7 +338,7 @@ format_elemwise <- function(vars_) {
 
   mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_dim, spacing, offset) })
   terms <- mapply(function(var, mat) { list(lo.mul_expr(mat, var)) }, vars_, mats)
-  list(create_geq(lo.sum_expr(terms)))
+  list(create_geq(lu.sum_expr(terms)))
 }
 
 # Returns a sparse matrix LinOp that spaces out an expression.
@@ -347,7 +347,7 @@ get_spacing_matrix <- function(dim, spacing, offset) {
   row_arr <- spacing * (col_arr - 1) + 1 + offset
   val_arr <- rep(1.0, dim[2])
   mat <- sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = dim)
-  create_const(mat, dim, sparse = TRUE)
+  lu.create_const(mat, dim, sparse = TRUE)
 }
 
 ###################################

@@ -28,7 +28,7 @@ Dcp2Cone.log_sum_exp_canon <- function(expr, args) {
 
   exp_expr <- Exp(x - promoted_t)
   canon <- Dcp2Cone.exp_canon(exp_expr, exp_expr@args)
-  obj <- sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
+  obj <- lu.sum_entries(canon[[1]], axis = axis, keepdims = keepdims)
   if(is.null(expr_dim))
     ones <- Constant(1)
   else

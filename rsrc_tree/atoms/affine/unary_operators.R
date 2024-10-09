@@ -67,7 +67,7 @@ setMethod("is_symmetric", "NegExpression", function(object) { is_symmetric(objec
 setMethod("is_hermitian", "NegExpression", function(object) { is_hermitian(object@args[[1]]) })
 
 NegExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.neg_expr(arg_objs[[1]]), list())
+  list(lu.neg_expr(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

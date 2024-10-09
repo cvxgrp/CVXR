@@ -86,7 +86,7 @@ setMethod("expr", "Expression", function(object) { object })
 #' @rdname curvature
 #' @export
 setMethod("curvature", "Expression", function(object) {
-  if(is_constant(object))
+  if(lu.is_constant(object))
     curvature_str <- CONSTANT
   else if(is_affine(object))
     curvature_str <- AFFINE
@@ -140,7 +140,7 @@ setMethod("is_constant", "Expression", function(object) { (0 %in% dim(object)) |
 )
 
 #' @describeIn Expression The expression is affine if it is constant or both convex and concave.
-setMethod("is_affine", "Expression", function(object) { is_constant(object) || (is_convex(object) && is_concave(object)) })
+setMethod("is_affine", "Expression", function(object) { lu.is_constant(object) || (is_convex(object) && is_concave(object)) })
 
 #' @describeIn Expression A logical value indicating whether the expression is convex.
 setMethod("is_convex", "Expression", function(object) { stop("Unimplemented") })
@@ -159,7 +159,7 @@ setMethod("is_dcp", "Expression", function(object, dpp = FALSE) {
 
 #' @describeIn Expression Is the expression log-log constant, i.e., elementwise positive?
 setMethod("is_log_log_constant", "Expression", function(object) {
-  if(!is_constant(object))
+  if(!lu.is_constant(object))
     return(FALSE)
 
   if(is(object, "Constant") || is(object, "Parameter"))
@@ -215,19 +215,19 @@ setMethod("is_psd", "Expression", function(object) { FALSE })
 setMethod("is_nsd", "Expression", function(object) { FALSE })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
-setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
+setMethod("is_quadratic", "Expression", function(object) { lu.is_constant(object) })
 
 #' @describeIn Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
-setMethod("has_quadratic_term", "Expression", function(object) { is_constant(object) })
+setMethod("has_quadratic_term", "Expression", function(object) { lu.is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is symmetric.
-setMethod("is_symmetric", "Expression", function(object) { is_scalar(object) })
+setMethod("is_symmetric", "Expression", function(object) { lu.is_scalar(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression \eqn{X} is a real matrix that satisfies \eqn{X + X^T = 0}
 setMethod("is_skew_symmetric", "Expression", function(object) { FALSE })
 
 #' @describeIn Expression A logical value indicating whether the expression is piecewise linear.
-setMethod("is_pwl", "Expression", function(object) { is_constant(object) })
+setMethod("is_pwl", "Expression", function(object) { lu.is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is quadratic of piecewise affine.
 setMethod("is_qpwa", "Expression", function(object) { is_quadratic(object) || is_pwl(object) })
@@ -422,9 +422,9 @@ setMethod("*", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2)
   e1_dim <- dim(e1)
   e2_dim <- dim(e2)
 
-  # if(is.null(e1_dim) || is.null(e2_dim) || is_scalar(e1) || is_scalar(e2))
+  # if(is.null(e1_dim) || is.null(e2_dim) || lu.is_scalar(e1) || lu.is_scalar(e2))
   if(is.null(e1_dim) || is.null(e2_dim) || (e1_dim[length(e1_dim)] != e2_dim[1] || e1_dim[1] != e2_dim[length(e2_dim)]
-                                            && (is_scalar(e1) || is_scalar(e2))) || all(e1_dim == e2_dim))
+                                            && (lu.is_scalar(e1) || lu.is_scalar(e2))) || all(e1_dim == e2_dim))
     Multiply(lh_exp = e1, rh_exp = e2)
   else
     stop("Incompatible dimensions for elementwise multiplication, use '%*%' for matrix multiplication")
@@ -441,7 +441,7 @@ setMethod("*", signature(e1 = "ConstVal", e2 = "Expression"), function(e1, e2) {
 #' @param e1,e2 The \linkS4class{Expression} objects or numeric constants to divide. The denominator, \code{e2}, must be a scalar constant.
 #' @rdname DivExpression-class
 setMethod("/", signature(e1 = "Expression", e2 = "Expression"), function(e1, e2) {
-  if((is_scalar(e1) || is_scalar(e2)) || all(dim(e1) == dim(e2)))
+  if((lu.is_scalar(e1) || lu.is_scalar(e2)) || all(dim(e1) == dim(e2)))
     DivExpression(lh_exp = e1, rh_exp = e2)
   else
     stop("Incompatible dimensions for division")
@@ -518,12 +518,12 @@ setMethod("%*%", signature(x = "Expression", y = "Expression"), function(x, y) {
 
   # if(is.null(x_dim) || is.null(y_dim))
   #  stop("Scalar operands are not allowed,  use '*' instead")
-  # else if(x_dim[length(x_dim)] != y_dim[1] && (is_scalar(x) || is_scalar(y)))
+  # else if(x_dim[length(x_dim)] != y_dim[1] && (lu.is_scalar(x) || lu.is_scalar(y)))
   #   stop("Matrix multiplication is not allowed, use '*' for elementwise multiplication")
-  if(is.null(x_dim) || is.null(y_dim) || is_scalar(x) || is_scalar(y))
+  if(is.null(x_dim) || is.null(y_dim) || lu.is_scalar(x) || lu.is_scalar(y))
     # stop("Scalar operands are not allowed, use '*' instead")
     Multiply(lh_exp = x, rh_exp = y)
-  else if(is_constant(x) || is_constant(y))
+  else if(lu.is_constant(x) || lu.is_constant(y))
     MulExpression(lh_exp = x, rh_exp = y)
   else {
     warning("Forming a non-convex expression")
@@ -783,7 +783,7 @@ setMethod("is_hermitian", "Leaf", function(object) {
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is symmetric.
 setMethod("is_symmetric", "Leaf", function(object) {
-  is_scalar(object) || any(sapply(c("diag", "symmetric", "PSD", "NSD"), function(key) { object@attributes[[key]] }))
+  lu.is_scalar(object) || any(sapply(c("diag", "symmetric", "PSD", "NSD"), function(key) { object@attributes[[key]] }))
 })
 
 #' @describeIn Leaf A logical value indicating whether the leaf node is imaginary.

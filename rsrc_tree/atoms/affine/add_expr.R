@@ -72,11 +72,11 @@ setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = li
 
 AddExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) {
-    if(!all(arg$dim == dim) && lo.is_scalar(arg)) 
-      lo.promote(arg, dim) 
+    if(!all(arg$dim == dim) && lu.is_scalar(arg)) 
+      lu.promote(arg, dim) 
     else 
       arg })
-  list(lo.sum_expr(arg_objs), list())
+  list(lu.sum_expr(arg_objs), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

@@ -91,17 +91,17 @@ setMethod(".grad", "CumSum", function(object, values) {
 CumSum.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Implicit O(n) definition:
   # X = Y[:1,:] - Y[1:,:]
-  Y <- create_var(dim)
+  Y <- lu.create_var(dim)
   axis <- data[[1]]
   collapse <- setdiff(1:length(dim), axis)
   new_dim <- dim[collapse]
   diff_mat <- get_diff_mat(new_dim, axis)
-  diff_mat <- create_const(diff_mat, c(new_dim, new_dim), sparse = TRUE)
+  diff_mat <- lu.create_const(diff_mat, c(new_dim, new_dim), sparse = TRUE)
 
   if(axis == 2)
-    diff <- lo.mul_expr(diff_mat, Y)
+    diff <- lu.mul_expr(diff_mat, Y)
   else
-    diff <- lo.rmul_expr(Y, diff_mat)
+    diff <- lu.rmul_expr(Y, diff_mat)
   list(Y, list(create_eq(arg_objs[[1]], diff)))
 }
 

@@ -51,7 +51,7 @@ Elementwise.elemwise_grad_to_diag <- function(value, rows, cols) {
 # @rdname Elementwise-promote
 Elementwise.promote <- function(arg, dim) {
   if(any(dim(arg) != dim))
-    lo.promote(arg, dim)
+    lu.promote(arg, dim)
   else
     arg
 }

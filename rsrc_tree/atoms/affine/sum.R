@@ -37,7 +37,7 @@ SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   axis <- data[[1]]
   keepdims <- data[[2]]
   if(is.na(axis))
-    obj <- lo.sum_entries(arg_objs[[1]], dim)
+    obj <- lu.sum_entries(arg_objs[[1]], dim)
   else if(axis == 1) {
     # if(keepdims)
     #  const_dim <- c(arg_objs[[1]]$dim[2], 1)
@@ -46,26 +46,26 @@ SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
     
     # Always treat result as a column vector.
     const_dim <- c(arg_objs[[1]]$dim[2], 1)
-    ones <- create_const(array(1, dim = const_dim), const_dim)
-    obj <- lo.rmul_expr(arg_objs[[1]], ones, dim)
+    ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+    obj <- lu.rmul_expr(arg_objs[[1]], ones, dim)
   } else {   # axis == 2
     # if(keepdims)
     #  const_dim <- c(1, arg_objs[[1]]$dim[1])
     # else
     #  const_dim <- c(arg_objs[[1]]$dim[1], NA_integer_)
-    # ones <- create_const(array(1, dim = const_dim), const_dim)
-    # obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
+    # ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+    # obj <- lu.mul_expr(ones, arg_objs[[1]], dim)
     
     if(keepdims) {
       # Keep result as a row vector.
       const_dim <- c(1, arg_objs[[1]]$dim[1])
-      ones <- create_const(array(1, dim = const_dim), const_dim)
-      obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
+      ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+      obj <- lu.mul_expr(ones, arg_objs[[1]], dim)
     } else {
       # Treat collapsed 1-D vector as a column vector.
       const_dim <- c(arg_objs[[1]]$dim[1], 1)
-      ones <- create_const(array(1, dim = const_dim), const_dim)
-      obj <- lo.rmul_expr(lo.transpose(arg_objs[[1]]), ones, dim)
+      ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+      obj <- lu.rmul_expr(lo.transpose(arg_objs[[1]]), ones, dim)
     }
   }
   list(obj, list())

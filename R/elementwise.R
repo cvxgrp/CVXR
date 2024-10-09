@@ -467,7 +467,7 @@ setMethod("get_data", "Huber", function(object) { list(object@M) })
 
 #' @describeIn Huber Check that \code{M} is a non-negative constant.
 setMethod("validate_args", "Huber", function(object) {
-  if(!(is_nonneg(object@M) && is_constant(object@M) && is_scalar(object@M)))
+  if(!(is_nonneg(object@M) && lu.is_constant(object@M) && lu.is_scalar(object@M)))
     stop("M must be a non-negative scalar constant")
   callNextMethod()
 })
@@ -1123,7 +1123,7 @@ setMethod("is_quadratic", "Power", function(object) {
   else if(object@p == 2)
     return(is_affine(object@args[[1]]))
   else
-    return(is_constant(object@args[[1]]))
+    return(lu.is_constant(object@args[[1]]))
 })
 
 #' @describeIn Power A logical value indicating whether the atom is quadratic of piecewise affine.
@@ -1135,7 +1135,7 @@ setMethod("is_qpwa", "Power", function(object) {
   else if(object@p == 2)
     return(is_pwl(object@args[[1]]))
   else
-    return(is_constant(object@args[[1]]))
+    return(lu.is_constant(object@args[[1]]))
 })
 
 #' @param values A list of numeric values for the arguments

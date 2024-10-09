@@ -16,7 +16,7 @@ Dcp2Cone.normNuc_canon <- function(expr, args) {
   n <- A_dim[2]
 
   # Create the equivalent problem:
-  #   minimize (trace(U) + trace(V))/2
+  #   minimize (lo.trace(U) + lo.trace(V))/2
   #   subject to:
   #            [U A; t(A) V] is positive semidefinite
   U <- Variable(m, m, symmetric = TRUE)

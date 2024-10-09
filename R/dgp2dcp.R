@@ -86,12 +86,12 @@ Dgp2Dcp.explicit_sum <- function(expr) {
 #' @return A canonicalization of the addition atom of a DGP expression, 
 #' where the returned expression is the transformed DCP equivalent.
 Dgp2Dcp.add_canon <- function(expr, args) {
-  if(is_scalar(expr))
+  if(lu.is_scalar(expr))
     return(list(log_sum_exp(do.call("HStack", args)), list()))
   expr_dim <- dim(expr)
   
   rows <- list()
-  summands <- lapply(args, function(s) { if(is_scalar(s)) promote(s, dim(expr)) else s })
+  summands <- lapply(args, function(s) { if(lu.is_scalar(s)) promote(s, dim(expr)) else s })
   if(length(expr_dim) == 1) {
     for(i in seq_len(expr_dim[1])) {
       summand_args <- lapply(summands, function(summand) { summand[i] })

@@ -467,8 +467,8 @@ setMethod("is_dpp", "IneqConstraint", function(object, context = "dcp") {
 #' @describeIn IneqConstraint Is the constraing DQCP?
 setMethod("is_dqcp", "IneqConstraint", function(object) {
   is_dcp(object) ||
-  (is_quasiconvex(object@args[[1]]) && is_constant(object@args[[2]])) ||
-  (is_constant(object@args[[1]]) && is_quasiconcave(object@args[[2]]))
+  (is_quasiconvex(object@args[[1]]) && lu.is_constant(object@args[[2]])) ||
+  (lu.is_constant(object@args[[1]]) && is_quasiconcave(object@args[[2]]))
 })
 
 #' @describeIn IneqConstraint The residual of the constraint.
@@ -959,7 +959,7 @@ setMethod("initialize", "PowCone3D", function(.Object, ..., x, y, z, alpha) {
   }
 
   alpha <- as.Constant(alpha)
-  if(is_scalar(alpha))
+  if(lu.is_scalar(alpha))
     alpha <- Promote(alpha, dim(.Object@x))
   .Object@alpha <- alpha
 

@@ -17,7 +17,7 @@ setMethod("initialize", "CoeffExtractor", function(.Object, inverse_data, canon_
 })
 
 setMethod("get_coeffs", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
-  if(is_constant(expr))
+  if(lu.is_constant(expr))
     return(constant(object, expr))
   else if(is_affine(expr))
     return(affine(object, expr))

@@ -39,7 +39,7 @@ special_index_canon <- function(expr, args) {
 
   v <- vec(arg)
   idmat <- matrix(identity[select_vec,], ncol = arg_size)
-  if(is_scalar(v) || is_scalar(as.Constant(idmat)))
+  if(lu.is_scalar(v) || lu.is_scalar(as.Constant(idmat)))
     lowered <- Reshape(idmat * v, final_dim)
   else
     lowered <- Reshape(idmat %*% v, final_dim)
@@ -408,7 +408,7 @@ setMethod("canonicalize_tree", "Canonicalization", function(object, expr) {
 #' @describeIn Canonicalization Canonicalize an expression, w.r.t. canonicalized arguments.
 setMethod("canonicalize_expr", "Canonicalization", function(object, expr, args) {
   expr_parms <- parameters(expr)
-  if(is(expr, "Expression") && is_constant(expr) && (is.null(expr_parms) || length(expr_parms) == 0)) {
+  if(is(expr, "Expression") && lu.is_constant(expr) && (is.null(expr_parms) || length(expr_parms) == 0)) {
     return(list(expr, list()))
   } else if(inherits(expr, names(object@canon_methods)))
     return(object@canon_methods[[class(expr)]](expr, args))   # TODO: Not working for DgpCanonMethods.

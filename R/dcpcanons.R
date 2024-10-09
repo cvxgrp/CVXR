@@ -1019,7 +1019,7 @@ Qp2QuadForm.power_canon <- function(expr, args) {
   else
     p <- value(expr@p)
 
-  if(is_constant(expr))
+  if(lu.is_constant(expr))
     return(list(Constant(value(expr)), list()))
   else if(p == 0)
     return(list(matrix(1, nrow = nrow(affine_expr), ncol = ncol(affine_expr)), list()))

@@ -158,11 +158,11 @@ SpecialIndex.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg <- arg_objs[[1]]
   arg_size <- size(object@args[[1]])
   id_mat <- sparseMatrix(i = seq_len(arg_size), j = seq_len(arg_size), x = rep(1, arg_size))
-  vec_arg <- lu_reshape(arg, c(arg_size, 1))
+  vec_arg <- lu.reshape(arg, c(arg_size, 1))
   mul_mat <- id_mat[select_vec]
-  mul_const <- lu_create_const(mul_mat, dim(mul_mat), sparse = TRUE)
-  mul_expr <- lu_mul_expr(mul_const, vec_arg, c(nrow(mul_mat), 1))
-  obj <- lu_reshape(mul_expr, final_dim)
+  mul_const <- lu.create_const(mul_mat, dim(mul_mat), sparse = TRUE)
+  mul_expr <- lu.mul_expr(mul_const, vec_arg, c(nrow(mul_mat), 1))
+  obj <- lu.reshape(mul_expr, final_dim)
   return(list(obj, list()))
 }
 

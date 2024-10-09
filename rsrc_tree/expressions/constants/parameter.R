@@ -118,7 +118,7 @@ setMethod("parameters", "Parameter", function(object) { list(object) })
 
 #' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
-  obj <- create_param(dim(object), id(object))
+  obj <- lu.create_param(dim(object), id(object))
   list(obj, list())
 })
 

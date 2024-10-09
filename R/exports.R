@@ -641,9 +641,9 @@ quad_form <- function(x, P) {
     stop("Invalid dimensions for arguments.")
 
   # P cannot be a parameter.
-  if(is_constant(x))
+  if(lu.is_constant(x))
     Conj(t(x)) %*% P %*% x
-  else if(is_constant(P))
+  else if(lu.is_constant(P))
     QuadForm(x, P)
   else
     stop("At least one argument to QuadForm must be constant.")

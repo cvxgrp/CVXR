@@ -80,6 +80,7 @@ Collate:
     'variable.R'
     'lin_ops.R'
     'lin_utils.R'
+    'lin_constraints.R'
     'transforms.R'    
     'atoms.R'
     'affine.R'

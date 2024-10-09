@@ -220,7 +220,7 @@ Maximize <- function(expr) { .Maximize(expr = expr) }
 #' @describeIn Maximize Negates the target expression's objective.
 setMethod("canonicalize", "Maximize", function(object) {
   canon <- canonical_form(object@args[[1]])
-  list(lo.neg_expr(canon[[1]]), canon[[2]])
+  list(lu.neg_expr(canon[[1]]), canon[[2]])
 })
 
 #' @describeIn Maximize A logical value indicating whether the objective is concave.

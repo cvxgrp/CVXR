@@ -88,7 +88,7 @@ setMethod("canonicalize_tree", signature(object = "Dcp2Cone", expr = "Expression
 #' @describeIn Dcp2Cone Canonicalize an expression wrt canonicalized arguments.
 setMethod("canonicalize_expr", "Dcp2Cone", function(object, expr, args, affine_above) {
   # Constant trees are collapsed, but parameter trees are preserved.
-  if(is(expr, "Expression") && (is_constant(expr) && (is.null(parameters(expr)) || length(parameters(expr)) == 0)))
+  if(is(expr, "Expression") && (lu.is_constant(expr) && (is.null(parameters(expr)) || length(parameters(expr)) == 0)))
     return(list(expr, list()))
   else if(object@quad_obj && affine_above && class(expr) %in% names(object@quad_canon_methods))
     return(object@quad_canon_methods[[class(expr)]](expr, args))

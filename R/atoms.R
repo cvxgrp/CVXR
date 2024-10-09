@@ -114,7 +114,7 @@ setMethod("is_decr", "Atom", function(object, idx) { stop("Unimplemented") })
 #' @describeIn Atom A logical value indicating whether the atom is convex.
 setMethod("is_convex", "Atom", function(object) {
   # Applies DCP composition rule
-  if(is_constant(object))
+  if(lu.is_constant(object))
     return(TRUE)
   else if(is_atom_convex(object)) {
     idx <- 1
@@ -131,7 +131,7 @@ setMethod("is_convex", "Atom", function(object) {
 #' @describeIn Atom A logical value indicating whether the atom is concave.
 setMethod("is_concave", "Atom", function(object) {
   # Applies DCP composition rule
-  if(is_constant(object))
+  if(lu.is_constant(object))
     return(TRUE)
   else if(is_atom_concave(object)) {
     idx <- 1
@@ -199,7 +199,7 @@ setMethod(".is_real", "Atom", function(object) {
   #    The argument must be a scalar.
   #    The output must be a scalar.
   non_const <- .non_const_idx(object)
-  return(is_scalar(object) && len(non_const) == 1 && is_scalar(object@args[[non_const[1]]]))
+  return(lu.is_scalar(object) && len(non_const) == 1 && lu.is_scalar(object@args[[non_const[1]]]))
 })
 
 #' @describeIn Atom A logical value indicating whether the atom is quasiconvex.
@@ -251,7 +251,7 @@ setMethod("is_quasiconcave", "Atom", function(object) {
 #' @describeIn Atom Represent the atom as an affine objective and conic constraints.
 setMethod("canonicalize", "Atom", function(object) {
   # Constant atoms are treated as a leaf.
-  if(is_constant(object) && !is.na(parameters(object)) && length(parameters(object)) > 0)
+  if(lu.is_constant(object) && !is.na(parameters(object)) && length(parameters(object)) > 0)
       # Non-parameterized expressions are evaluated immediately.
       return(canonical_form(Constant(value(object))))
   else {
@@ -288,7 +288,7 @@ setMethod("value_impl", "Atom", function(object) {
       # An argument without a value makes all higher level values NA.
       # But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
       arg_val <- value_impl(arg)
-      if(any(is.na(arg_val)) && !is_constant(object))
+      if(any(is.na(arg_val)) && !lu.is_constant(object))
         return(NA_real_)
       else
         arg_values <- c(arg_values, list(arg_val))
@@ -308,7 +308,7 @@ setMethod("value", "Atom", function(object) {
 #' @describeIn Atom The (sub/super)-gradient of the atom with respect to each variable.
 setMethod("grad", "Atom", function(object) {
   # Short-circuit to all zeros if known to be constant
-  if(is_constant(object))
+  if(lu.is_constant(object))
     return(constant_grad(object))
 
   # Returns NA if variable values are not supplied
@@ -620,9 +620,9 @@ setMethod("is_decr", "CumMax", function(object, idx) { FALSE })
 #' @rdname DistRatio-class
 .DistRatio <- setClass("DistRatio", representation(x = "ConstValORExpr", a = "numeric", b = "numeric"),
                        validity = function(object) {
-                         if(!is_constant(object@args[[2]]))
+                         if(!lu.is_constant(object@args[[2]]))
                            stop("[DistRatio: a] The argument a must be a constant.")
-                         if(!is_constant(object@args[[3]]))
+                         if(!lu.is_constant(object@args[[3]]))
                            stop("[DistRatio: b] The argument b must be a constant.")
                          return(TRUE)
                        }, contains = "Atom")
@@ -713,7 +713,7 @@ setMethod("initialize", "DotSort", function(.Object, ..., X, W) {
 
 #' @describeIn DotSort Check that the arguments are valid.
 setMethod("validate_args", "DotSort", function(object) {
-  if(!is_constant(object@args[[2]]))
+  if(!lu.is_constant(object@args[[2]]))
     stop("W must be constant")
   if(size(object@args[[1]]) < size(object@args[[2]]))
     stop("The size of W must be less than or equal to the size of X")
@@ -765,7 +765,7 @@ setMethod("is_atom_convex", "DotSort", function(object) {
     # DotSort is convex under DPP if W is parameter affine.
     X <- object@args[[1]]
     W <- object@args[[2]]
-    return(is_constant(X) || is_param_affine(W))
+    return(lu.is_constant(X) || is_param_affine(W))
   } else
     return(TRUE)
 })
@@ -1143,7 +1143,7 @@ setMethod("name", "GmatMul", function(x) {
 #' @describeIn GmatMul Check if the arguments are valid.
 setMethod("validate_args", "GmatMul", function(object) {
   callNextMethod()
-  if(!is_constant(object@A))
+  if(!lu.is_constant(object@A))
     stop("A must be constant")
   if(length(parameters(A)) != 0 && !is(object@A, Parameter))
     stop("A must be of class Constant or Parameter")
@@ -1654,10 +1654,10 @@ setMethod("is_incr", "MatrixFrac", function(object, idx) { FALSE })
 setMethod("is_decr", "MatrixFrac", function(object, idx) { FALSE })
 
 #' @describeIn MatrixFrac True if x is affine and P is constant.
-setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+setMethod("is_quadratic", "MatrixFrac", function(object) { is_affine(object@args[[1]]) && lu.is_constant(object@args[[2]]) })
 
 #' @describeIn MatrixFrac True if x is piecewise linear and P is constant.
-setMethod("is_qpwa", "MatrixFrac", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
+setMethod("is_qpwa", "MatrixFrac", function(object) { is_pwl(object@args[[1]]) && lu.is_constant(object@args[[2]]) })
 
 #' @describeIn MatrixFrac Returns constraints describing the domain of the node
 setMethod(".domain", "MatrixFrac", function(object) { list(object@args[[2]] %>>% 0) })
@@ -2063,7 +2063,7 @@ Norm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE) {
     else
       stop("Unsupported matrix norm.")
   } else {
-    if(p == 1 || is_scalar(x))
+    if(p == 1 || lu.is_scalar(x))
       Norm1(x, axis = axis, keepdims = keepdims)
     else if(p %in% c(Inf, "inf", "Inf"))
       NormInf(x, axis = axis, keepdims = keepdims)
@@ -3000,7 +3000,7 @@ setMethod("to_numeric", "QuadOverLin", function(object, values) { sum(Mod(values
 
 #' @describeIn QuadOverLin Check the dimensions of the arguments.
 setMethod("validate_args",   "QuadOverLin", function(object) {
-  if(!is_scalar(object@args[[2]]))
+  if(!lu.is_scalar(object@args[[2]]))
     stop("The second argument to QuadOverLin must be a scalar.")
   if(is_complex(object@args[[2]]))
     stop("The second argument to QuadOverLin cannot be complex.")
@@ -3033,10 +3033,10 @@ setMethod("is_incr", "QuadOverLin", function(object, idx) { (idx == 1) && is_non
 setMethod("is_decr", "QuadOverLin", function(object, idx) { ((idx == 1) && is_nonpos(object@args[[idx]])) || (idx == 2) })
 
 #' @describeIn QuadOverLin Quadratic if \code{x} is affine and \code{y} is constant.
-setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && is_constant(object@args[[2]]) })
+setMethod("is_quadratic", "QuadOverLin", function(object) { is_affine(object@args[[1]]) && lu.is_constant(object@args[[2]]) })
 
 #' @describeIn QuadOverLin Quadratic of piecewise affine if \code{x} is piecewise linear and \code{y} is constant.
-setMethod("is_qpwa", "QuadOverLin", function(object) { is_pwl(object@args[[1]]) && is_constant(object@args[[2]]) })
+setMethod("is_qpwa", "QuadOverLin", function(object) { is_pwl(object@args[[1]]) && lu.is_constant(object@args[[2]]) })
 
 #' @describeIn QuadOverLin Returns constraints describing the domain of the node
 setMethod(".domain", "QuadOverLin", function(object) { list(object@args[[2]] >= 0) })
@@ -3159,10 +3159,10 @@ setMethod("is_atom_convex", "SignEntries", function(object) { FALSE })
 setMethod("is_atom_concave", "SignEntries", function(object) { FALSE })
 
 #' @describeIn SignEntries Is the atom quasiconvex?
-setMethod("is_atom_quasiconvex", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+setMethod("is_atom_quasiconvex", "SignEntries", function(object) { lu.is_scalar(object@args[[1]]) })
 
 #' @describeIn SignEntries Is the atom quasiconcave?
-setMethod("is_atom_quasiconcave", "SignEntries", function(object) { is_scalar(object@args[[1]]) })
+setMethod("is_atom_quasiconcave", "SignEntries", function(object) { lu.is_scalar(object@args[[1]]) })
 
 #' @param idx An index into the atom.
 #' @describeIn SignEntries Is the atom weakly increasing?

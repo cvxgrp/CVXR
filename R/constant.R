@@ -87,7 +87,7 @@ setMethod("dim", "Constant", function(x) { x@dim })
 
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(value(object), dim(object), object@sparse)
+  obj <- lu.create_const(value(object), dim(object), object@sparse)
   list(obj, list())
 })
 
@@ -117,7 +117,7 @@ setMethod("is_complex", "Constant", function(object) { is.complex(value(object))
 
 #' @describeIn Constant A logical value indicating whether the constant is symmetric.
 setMethod("is_symmetric", "Constant", function(object) {
-  if(is_scalar(object))
+  if(lu.is_scalar(object))
     symm <- TRUE
   else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@symm))
@@ -130,7 +130,7 @@ setMethod("is_symmetric", "Constant", function(object) {
 
 #' @describeIn Constant A logical value indicating whether the constant is a Hermitian matrix.
 setMethod("is_hermitian", "Constant", function(object) {
-  if(is_scalar(object) && is_real(object))
+  if(lu.is_scalar(object) && is_real(object))
     herm <- TRUE
   else if(ndim(object) == 2 && nrow(object) == ncol(object)) {
     if(is.na(object@herm))
@@ -182,9 +182,9 @@ setMethod("is_skew_symmetric", "Constant", function(object) {
 #' @describeIn Constant A logical value indicating whether the constant is a positive semidefinite matrix.
 setMethod("is_psd", "Constant", function(object) {
   # Symbolic only cases.
-  if(is_scalar(object) && is_nonneg(object))
+  if(lu.is_scalar(object) && is_nonneg(object))
     return(TRUE)
-  else if(is_scalar(object))
+  else if(lu.is_scalar(object))
     return(FALSE)
   else if(ndim(object) == 1)
     return(FALSE)
@@ -202,9 +202,9 @@ setMethod("is_psd", "Constant", function(object) {
 #' @describeIn Constant A logical value indicating whether the constant is a negative semidefinite matrix.
 setMethod("is_nsd", "Constant", function(object) {
   # Symbolic only cases.
-  if(is_scalar(object) && is_nonpos(object))
+  if(lu.is_scalar(object) && is_nonpos(object))
     return(TRUE)
-  else if(is_scalar(object))
+  else if(lu.is_scalar(object))
     return(FALSE)
   else if(ndim(object) == 1)
     return(FALSE)
@@ -361,7 +361,7 @@ setMethod("parameters", "Parameter", function(object) { list(object) })
 
 #' @describeIn Parameter The canonical form of the parameter.
 setMethod("canonicalize", "Parameter", function(object) {
-  obj <- create_param(dim(object), id(object))
+  obj <- lu.create_param(dim(object), id(object))
   list(obj, list())
 })
 

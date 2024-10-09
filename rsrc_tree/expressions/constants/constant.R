@@ -87,7 +87,7 @@ setMethod("dim", "Constant", function(x) { x@dim })
 
 #' @describeIn Constant The canonical form of the constant.
 setMethod("canonicalize", "Constant", function(object) {
-  obj <- create_const(value(object), dim(object), object@sparse)
+  obj <- lu.create_const(value(object), dim(object), object@sparse)
   list(obj, list())
 })
 

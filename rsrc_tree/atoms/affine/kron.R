@@ -96,9 +96,9 @@ setMethod("is_nsd", "Kron", function(object) {
 
 Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   if(is_constant(object@args[[1]]))
-    list(lo.kron_r(arg_objs[[1]], arg_objs[[2]], dim), list())
+    list(lu.kron_r(arg_objs[[1]], arg_objs[[2]], dim), list())
   else
-    list(lo.kron_l(arg_objs[[1]], arg_objs[[2]], dim), list())
+    list(lu.kron_l(arg_objs[[1]], arg_objs[[2]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

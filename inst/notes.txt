@@ -1,3 +1,18 @@
+## Linop changes: using lo.x versus x (file lin_ops.R)
+
+create_var is now lo.create_var. No generic function "create_var" is
+defined, so we are safe in replacing create_var by lo.create_var
+everywhere.  Below we list exceptions for all other functions in
+lin_ops.R.
+
+Same for create_param.
+
+
+Note that the exported `sum_entries` is different from `lu.sum_entries`
+
+
+
+
 ## to get to previous cvxpy which we matched
 ## do a git checkout 757c6b38d in the cvxpy tree.
 ## then check master out again

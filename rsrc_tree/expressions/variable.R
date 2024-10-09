@@ -138,7 +138,7 @@ setMethod("variables", "Variable", function(object) { list(object) })
 #' @docType methods
 #' @describeIn Variable The graph implementation of the object
 setMethod("canonicalize", "Variable", function(object) {
-  obj <- create_var(dim(object), id(object))
+  obj <- lu.create_var(dim(object), id(object))
   list(obj, list())
 })
 

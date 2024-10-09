@@ -65,7 +65,7 @@ SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
       # Treat collapsed 1-D vector as a column vector.
       const_dim <- c(arg_objs[[1]]$dim[1], 1)
       ones <- lu.create_const(array(1, dim = const_dim), const_dim)
-      obj <- lu.rmul_expr(lo.transpose(arg_objs[[1]]), ones, dim)
+      obj <- lu.rmul_expr(lu.transpose(arg_objs[[1]]), ones, dim)
     }
   }
   list(obj, list())

@@ -45,7 +45,7 @@ setMethod("is_atom_log_log_concave", "Index", function(object) { TRUE })
 setMethod("get_data", "Index", function(object) { list(object@key) })
 
 Index.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  obj <- lo.index(arg_objs[[1]], dim, data[[1]])
+  obj <- lu.index(arg_objs[[1]], dim, data[[1]])
   list(obj, list())
 }
 

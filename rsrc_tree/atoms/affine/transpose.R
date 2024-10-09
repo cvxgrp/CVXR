@@ -59,7 +59,7 @@ setMethod("is_atom_log_log_concave", "Transpose", function(object) { TRUE })
 setMethod("get_data", "Transpose", function(object) { list(object@axes) })
 
 Transpose.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.transpose(arg_objs[[1]]), list())
+  list(lu.transpose(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

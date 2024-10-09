@@ -74,7 +74,7 @@ setMethod("validate_args", "HStack", function(object) {
 })
 
 HStack.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.hstack(arg_objs, dim), list())
+  list(lu.hstack(arg_objs, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

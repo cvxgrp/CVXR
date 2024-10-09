@@ -67,15 +67,15 @@ setMethod("get_data", "Reshape", function(object) { list(object@new_dim, object@
 Reshape.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg <- arg_objs[[1]]
   if(data[2]) {   # byrow = TRUE
-    arg <- lo.transpose(arg)
+    arg <- lu.transpose(arg)
     if(length(dim) <= 1)
-      list(lo.reshape(arg, dim), list())
+      list(lu.reshape(arg, dim), list())
     else {
-      result <- lo.reshape(arg, c(dim[2], dim[1]))
-      list(lo.transpose(result), list())
+      result <- lu.reshape(arg, c(dim[2], dim[1]))
+      list(lu.transpose(result), list())
     }
   } else   # byrow = FALSE
-    list(lo.reshape(arg, dim), list())
+    list(lu.reshape(arg, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

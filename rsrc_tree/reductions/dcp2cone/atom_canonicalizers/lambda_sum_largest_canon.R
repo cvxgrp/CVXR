@@ -5,19 +5,19 @@
 #' @param expr An \linkS4class{Expression} object
 #' @param args A list of \linkS4class{Constraint} objects
 #' @return A cone program constructed from a lambda sum of the k
-#' largest elements atom where k*t + lo.trace(Z) is the objective function.
+#' largest elements atom where k*t + trace(Z) is the objective function.
 #' t denotes the variable subject to constraints and Z is a PSD matrix variable
 #' whose dimensions consist of the length of the vector at hand. The constraints
 #' require the the diagonal matrix of the vector to be symmetric and PSD.
 Dcp2Cone.lambda_sum_largest_canon <- function(expr, args) {
   # S_k(X) denotes lambda_sum_largest(X, k)
-  # t >= k S_k(X - Z) + lo.trace(Z), Z is PSD
+  # t >= k S_k(X - Z) + trace(Z), Z is PSD
   # implies
-  # t >= ks + lo.trace(Z)
+  # t >= ks + trace(Z)
   # Z is PSD
   # sI >= X - Z (PSD sense)
   # which implies
-  # t >= ks + lo.trace(Z) >= S_k(sI + Z) >= S_k(X)
+  # t >= ks + trace(Z) >= S_k(sI + Z) >= S_k(X)
   # We use the fact that
   # S_k(X) = sup_{sets of k orthonormal vectors u_i}\sum_{i}u_i^T X u_i
   # and if Z >= X in PSD sense then

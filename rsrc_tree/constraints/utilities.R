@@ -1,4 +1,4 @@
-## CVXPY SOURCE: cvxpy/expression/constraints/utilities.py
+## CVXPY SOURCE: cvxpy/constraints/utilities.py
 #####################################
 #                                   #
 # Utility functions for constraints #
@@ -8,7 +8,7 @@
 format_axis <- function(t, X, axis) {
   # Reduce to norms of columns
   if(axis == 1)
-    X <- lo.transpose(X)
+    X <- lu.transpose(X)
 
   # Create matrices Tmat, Xmat such that Tmat*t + Xmat*X
   # gives the format for the elementwise cone constraints.
@@ -21,15 +21,15 @@ format_axis <- function(t, X, axis) {
   t_mat <- lu.create_const(t_mat, mat_dim, sparse = TRUE)
   t_vec <- t
   if(is.null(dim(t)))   # t is scalar.
-    t_vec <- lo.reshape(t, c(1,1))
+    t_vec <- lu.reshape(t, c(1,1))
   else   # t is 1-D.
-    t_vec <- lo.reshape(t, c(1, nrow(t)))
+    t_vec <- lu.reshape(t, c(1, nrow(t)))
   mul_dim <- c(cone_size, ncol(t_vec))
   terms <- c(terms, list(lu.mul_expr(t_mat, t_vec, mul_dim)))
 
   # Make X_mat.
   if(length(dim(X)) == 1)
-    X <- lo.reshape(X, c(nrow(X), 1))
+    X <- lu.reshape(X, c(nrow(X), 1))
   mat_dim <- c(cone_size, nrow(X))
   val_arr <- rep(1.0, cone_size - 1)
   row_arr <- 2:cone_size
@@ -38,7 +38,7 @@ format_axis <- function(t, X, axis) {
   X_mat <- lu.create_const(X_mat, mat_dim, sparse = TRUE)
   mul_dim <- c(cone_size, ncol(X))
   terms <- c(terms, list(lu.mul_expr(X_mat, X, mul_dim)))
-  list(create_geq(lu.sum_expr(terms)))
+  list(lu.create_geq(lu.sum_expr(terms)))
 }
 
 # Formats all the elementwise cones for the solver.
@@ -53,7 +53,7 @@ format_elemwise <- function(vars_) {
 
   mats <- lapply(0:(spacing-1), function(offset) { get_spacing_matrix(mat_dim, spacing, offset) })
   terms <- mapply(function(var, mat) { list(lu.mul_expr(mat, var)) }, vars_, mats)
-  list(create_geq(lu.sum_expr(terms)))
+  list(lu.create_geq(lu.sum_expr(terms)))
 }
 
 # Returns a sparse matrix LinOp that spaces out an expression.

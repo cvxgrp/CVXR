@@ -57,7 +57,7 @@ setMethod("is_atom_log_log_convex", "Trace", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "Trace", function(object) { FALSE })
 
 Trace.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.trace(arg_objs[[1]]), list())
+  list(lu.trace(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

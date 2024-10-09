@@ -63,7 +63,7 @@ setMethod("is_atom_log_log_convex", "VStack", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "VStack", function(object) { TRUE })
 
 VStack.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.vstack(arg_objs, dim), list())
+  list(lu.vstack(arg_objs, dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

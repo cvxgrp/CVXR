@@ -341,7 +341,7 @@ test_that("Test registering other solve methods", {
 #   for(i in 1:num_solves) {
 #     for(idx in seq_along(ineqs_lists[[i]])) {
 #       constr <- ineqs_lists[[i]][[idx]]
-#       var_tmp <- lo.get_expr_vars(constr@expr)[[1]]
+#       var_tmp <- lu.get_expr_vars(constr@expr)[[1]]
 #       var_id <- as.numeric(var_tmp[[1]])
 #       expect_equal(var_ids_order_created[[i]][[idx]], var_id)
 #     }

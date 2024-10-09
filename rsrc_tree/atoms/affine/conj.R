@@ -110,7 +110,7 @@ setMethod("is_incr", "Conv", function(object, idx) { is_nonneg(object@args[[1]])
 setMethod("is_decr", "Conv", function(object, idx) { is_nonpos(object@args[[1]]) })
 
 Conv.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.conv(arg_objs[[1]], arg_objs[[2]], dim), list())
+  list(lu.conv(arg_objs[[1]], arg_objs[[2]], dim), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

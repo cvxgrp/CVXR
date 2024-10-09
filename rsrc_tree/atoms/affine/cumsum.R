@@ -102,7 +102,7 @@ CumSum.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
     diff <- lu.mul_expr(diff_mat, Y)
   else
     diff <- lu.rmul_expr(Y, diff_mat)
-  list(Y, list(create_eq(arg_objs[[1]], diff)))
+  list(Y, list(lu.create_eq(arg_objs[[1]], diff)))
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

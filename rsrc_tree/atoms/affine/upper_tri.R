@@ -51,7 +51,7 @@ setMethod("is_atom_log_log_convex", "UpperTri", function(object) { TRUE })
 setMethod("is_atom_log_log_concave", "UpperTri", function(object) { TRUE })
 
 UpperTri.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.upper_tri(arg_objs[[1]]), list())
+  list(lu.upper_tri(arg_objs[[1]]), list())
 }
 
 UpperTri.vec_to_upper_tri <- function(expr, strict = FALSE) {

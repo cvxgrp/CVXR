@@ -49,7 +49,7 @@ setMethod("is_psd", "DiagVec", function(object) { is_nonneg(object) })
 setMethod("is_nsd", "DiagVec", function(object) { is_nonpos(object) })
 
 DiagVec.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.diag_vec(arg_objs[[1]]), list())
+  list(lu.diag_vec(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
@@ -103,7 +103,7 @@ setMethod("is_nonneg", "DiagMat", function(object) {
 })
 
 DiagMat.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  list(lo.diag_mat(arg_objs[[1]]), list())
+  list(lu.diag_mat(arg_objs[[1]]), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.

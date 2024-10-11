@@ -77,10 +77,10 @@ setMethod(".grad", "AffAtom", function(object, values) {
   offset <- 0
   for(idx in seq_len(length(object@args))) {
     arg <- object@args[[idx]]
-    if(lu.is_constant(arg))
+    if(is_constant(arg))
       fake_args <- c(fake_args, list(canonical_form(Constant(value(arg)))[[1]]))
     else {
-      fake_args <- c(fake_args, list(lu.create_var(dim(arg), idx)))
+      fake_args <- c(fake_args, list(create_var(dim(arg), idx)))
       var_offsets <- c(var_offsets, offset)
       var_names <- c(var_names, idx)
       offset <- offset + size(arg)
@@ -115,7 +115,7 @@ setMethod(".grad", "AffAtom", function(object, values) {
   grad_list <- list()
   start <- 1
   for(arg in object@args) {
-    if(lu.is_constant(arg)) {
+    if(is_constant(arg)) {
       grad_dim <- c(size(arg), dims[2])
       if(all(grad_dim == c(1,1)))
         grad_list <- c(grad_list, list(0))
@@ -206,11 +206,11 @@ setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = li
 
 AddExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg_objs <- lapply(arg_objs, function(arg) {
-    if(!all(arg$dim == dim) && lu.is_scalar(arg)) 
+    if(!all(arg$dim == dim) && is_scalar(arg)) 
       lo.promote(arg, dim) 
     else 
       arg })
-  list(lu.sum_expr(arg_objs), list())
+  list(sum_expr(arg_objs), list())
 }
 
 #' @param arg_objs A list of linear expressions for each argument.
@@ -395,9 +395,9 @@ setMethod("is_atom_convex", "MulExpression", function(object) {
     # other is parameter-free.
     x <- object@args[[1]]
     y <- object@args[[2]]
-    (lu.is_constant(x) || lu.is_constant(y)) || (is_param_affine(x) && is_param_free(y)) || (is_param_affine(y) && is_param_free(x))
+    (is_constant(x) || is_constant(y)) || (is_param_affine(x) && is_param_free(y)) || (is_param_affine(y) && is_param_free(x))
   } else
-    lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]])
+    is_constant(object@args[[1]]) || is_constant(object@args[[2]])
 })
 
 #' @describeIn MulExpression If the multiplication atom is convex, then it is affine.
@@ -419,7 +419,7 @@ setMethod("is_decr", "MulExpression", function(object, idx) { is_nonpos(object@a
 #' @param values A list of numeric values for the arguments
 #' @describeIn MulExpression Gives the (sub/super)gradient of the atom w.r.t. each variable
 setMethod(".grad", "MulExpression", function(object, values) {
-  if(lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]]))
+  if(is_constant(object@args[[1]]) || is_constant(object@args[[2]]))
     return(callNextMethod(object, values))
   
   # TODO: Verify that the following code is correct for non-affine arguments.
@@ -476,9 +476,9 @@ Multiply <- function(lh_exp, rh_exp) { .Multiply(lh_exp = lh_exp, rh_exp = rh_ex
 setMethod("initialize", "Multiply", function(.Object, ..., lh_exp, rh_exp) {
   lh_exp <- as.Constant(lh_exp)
   rh_exp <- as.Constant(rh_exp)
-  if(lu.is_scalar(lh_exp) && !lu.is_scalar(rh_exp))
+  if(is_scalar(lh_exp) && !is_scalar(rh_exp))
     lh_exp <- promote(lh_exp, dim(rh_exp))
-  else if(lu.is_scalar(rh_exp) && !lu.is_scalar(lh_exp))
+  else if(is_scalar(rh_exp) && !is_scalar(lh_exp))
     rh_exp <- promote(rh_exp, dim(lh_exp))
   callNextMethod(.Object, ..., lh_exp = lh_exp, rh_exp = rh_exp)
 })
@@ -499,14 +499,14 @@ setMethod("is_atom_log_log_concave", "Multiply", function(object) { TRUE })
 
 #' @describeIn Multiply Is the atom quasiconvex?
 setMethod("is_atom_quasiconvex", "Multiply", function(object) {
-  (lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]])) ||
+  (is_constant(object@args[[1]]) || is_constant(object@args[[2]])) ||
     (is_nonneg(object@args[[1]]) && is_nonpos(object@args[[2]])) ||
     (is_nonpos(object@args[[1]]) && is_nonneg(object@args[[2]]))
 })
 
 #' @describeIn Multiply Is the atom quasiconcave?
 setMethod("is_atom_quasiconcave", "Multiply", function(object) {
-  lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]]) ||
+  is_constant(object@args[[1]]) || is_constant(object@args[[2]]) ||
     all(sapply(object@args, is_nonneg)) || all(sapply(object@args, is_nonpos))
 })
 
@@ -564,24 +564,24 @@ setMethod("to_numeric", "DivExpression", function(object, values) {
 #' @param object A \linkS4class{DivExpression} object.
 #' @describeIn DivExpression Is the left-hand expression quadratic and the right-hand expression constant?
 setMethod("is_quadratic", "DivExpression", function(object) {
-  is_quadratic(object@args[[1]]) && lu.is_constant(object@args[[2]])
+  is_quadratic(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
 #' @describeIn DivExpression Can be a quadratic term if divisor is constant.
 setMethod("has_quadratic_term", "DivExpression", function(object) {
-  has_quadratic_term(object@args[[1]]) && lu.is_constant(object@args[[2]])
+  has_quadratic_term(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
 #' @describeIn DivExpression Is the expression quadratic of piecewise affine?
 setMethod("is_qpwa", "DivExpression", function(object) {
-  is_qpwa(object@args[[1]]) && lu.is_constant(object@args[[2]])
+  is_qpwa(object@args[[1]]) && is_constant(object@args[[2]])
 })
 
 #' @describeIn DivExpression The (row, col) dimensions of the left-hand expression.
 setMethod("dim_from_args", "DivExpression", function(object) { dim(object@args[[1]]) })
 
 #' @describeIn DivExpression Division is convex (affine) in its arguments only if the denominator is constant.
-setMethod("is_atom_convex", "DivExpression", function(object) { lu.is_constant(object@args[[2]]) })
+setMethod("is_atom_convex", "DivExpression", function(object) { is_constant(object@args[[2]]) })
 
 #' @describeIn DivExpression Division is concave (affine) in its arguments only if the denominator is constant.
 setMethod("is_atom_concave", "DivExpression", function(object) { is_atom_convex(object) })
@@ -718,7 +718,7 @@ setMethod("to_numeric", "Conv", function(object, values) {
 setMethod("validate_args", "Conv", function(object) {
   if(!is_vector(object@args[[1]]) || !is_vector(object@args[[2]]))
     stop("The arguments to Conv must resolve to vectors.")
-  if(!lu.is_constant(object@args[[1]]))
+  if(!is_constant(object@args[[1]]))
     stop("The first argument to Conv must be constant.")
 })
 
@@ -843,12 +843,12 @@ setMethod(".grad", "CumSum", function(object, values) {
 CumSum.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   # Implicit O(n) definition:
   # X = Y[:1,:] - Y[1:,:]
-  Y <- lu.create_var(dim)
+  Y <- create_var(dim)
   axis <- data[[1]]
   collapse <- setdiff(1:length(dim), axis)
   new_dim <- dim[collapse]
   diff_mat <- get_diff_mat(new_dim, axis)
-  diff_mat <- lu.create_const(diff_mat, c(new_dim, new_dim), sparse = TRUE)
+  diff_mat <- create_const(diff_mat, c(new_dim, new_dim), sparse = TRUE)
 
   if(axis == 2)
     diff <- lo.mul_expr(diff_mat, Y)
@@ -1309,7 +1309,7 @@ setMethod(".grad", "SpecialIndex", function(object) {
   identity <- sparseMatrix(i = 1:expr_size, j = 1:expr_size, x = rep(1, expr_size))
   idmat <- matrix(identity[select_vec, ], ncol = expr_size)
   v <- Vec(expr)
-  if(lu.is_scalar(v) || lu.is_scalar(as.Constant(idmat)))
+  if(is_scalar(v) || is_scalar(as.Constant(idmat)))
     lowered <- Reshape(idmat * v, c(final_dim[1], final_dim[2]))
   else
     lowered <- Reshape(idmat %*% v, c(final_dim[1], final_dim[2]))
@@ -1325,11 +1325,11 @@ SpecialIndex.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
   arg <- arg_objs[[1]]
   arg_size <- size(object@args[[1]])
   id_mat <- sparseMatrix(i = seq_len(arg_size), j = seq_len(arg_size), x = rep(1, arg_size))
-  vec_arg <- lu.reshape(arg, c(arg_size, 1))
+  vec_arg <- reshape(arg, c(arg_size, 1))
   mul_mat <- id_mat[select_vec]
-  mul_const <- lu.create_const(mul_mat, dim(mul_mat), sparse = TRUE)
-  mul_expr <- lu.mul_expr(mul_const, vec_arg, c(nrow(mul_mat), 1))
-  obj <- lu.reshape(mul_expr, final_dim)
+  mul_const <- create_const(mul_mat, dim(mul_mat), sparse = TRUE)
+  mul_expr <- mul_expr(mul_const, vec_arg, c(nrow(mul_mat), 1))
+  obj <- reshape(mul_expr, final_dim)
   return(list(obj, list()))
 }
 
@@ -1373,7 +1373,7 @@ setMethod("to_numeric", "Kron", function(object, values) {
 
 #' @describeIn Kron Check both arguments are vectors and the first is a constant.
 setMethod("validate_args", "Kron", function(object) {
-  if(!(lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]])))
+  if(!(is_constant(object@args[[1]]) || is_constant(object@args[[2]])))
     stop("The first argument to Kron must be constant.")
   else if(ndim(object@args[[1]]) != 2 || ndim(object@args[[2]]) != 2)
     stop("Kron requires matrix arguments.")
@@ -1392,9 +1392,9 @@ setMethod("is_atom_convex", "Kron", function(object) {
     # Kron is not DPP if any parameters are present
     x <- object@args[[1]]
     y <- object@args[[2]]
-    return((lu.is_constant(x) || lu.is_constant(y)) && (is_param_free(x) && is_param_free(y)))
+    return((is_constant(x) || is_constant(y)) && (is_param_free(x) && is_param_free(y)))
   } else
-    return(lu.is_constant(object@args[[1]]) || lu.is_constant(object@args[[2]]))
+    return(is_constant(object@args[[1]]) || is_constant(object@args[[2]]))
 })
 
 #' @describeIn Kron Is the atom concave?
@@ -1408,13 +1408,13 @@ setMethod("sign_from_args", "Kron", function(object) { mul_sign(object@args[[1]]
 #' @param idx An index into the atom.
 #' @describeIn Kron Is the composition non-decreasing in argument \code{idx}?
 setMethod("is_incr", "Kron", function(object, idx) {
-  cst_loc <- ifelse(lu.is_constant(object@args[[1]]), 1, 2)
+  cst_loc <- ifelse(is_constant(object@args[[1]]), 1, 2)
   is_nonneg(object@args[[cst_loc]])
 })
 
 #' @describeIn Kron Is the composition non-increasing in argument \code{idx}?
 setMethod("is_decr", "Kron", function(object, idx) {
-  cst_loc <- ifelse(lu.is_constant(object@args[[1]]), 1, 2)
+  cst_loc <- ifelse(is_constant(object@args[[1]]), 1, 2)
   is_nonpos(object@args[[1]])
 })
 
@@ -1437,7 +1437,7 @@ setMethod("is_nsd", "Kron", function(object) {
 })
 
 Kron.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
-  if(lu.is_constant(object@args[[1]]))
+  if(is_constant(object@args[[1]]))
     list(lo.kron_r(arg_objs[[1]], arg_objs[[2]], dim), list())
   else
     list(lo.kron_l(arg_objs[[1]], arg_objs[[2]], dim), list())
@@ -1611,7 +1611,7 @@ Promote <- function(expr, promoted_dim) { .Promote(expr = expr, promoted_dim = p
 promote <- function(expr, promoted_dim) { 
   expr <- as.Constant(expr)
   if(!all(dim(expr) == promoted_dim)) {
-    if(!lu.is_scalar(expr))
+    if(!is_scalar(expr))
       stop("Only scalars may be promoted.")
     return(Promote(expr = expr, promoted_dim = promoted_dim))
   } else
@@ -1856,25 +1856,25 @@ SumEntries.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
     
     # Always treat result as a column vector.
     const_dim <- c(arg_objs[[1]]$dim[2], 1)
-    ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+    ones <- create_const(array(1, dim = const_dim), const_dim)
     obj <- lo.rmul_expr(arg_objs[[1]], ones, dim)
   } else {   # axis == 2
     # if(keepdims)
     #  const_dim <- c(1, arg_objs[[1]]$dim[1])
     # else
     #  const_dim <- c(arg_objs[[1]]$dim[1], NA_integer_)
-    # ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+    # ones <- create_const(array(1, dim = const_dim), const_dim)
     # obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
     
     if(keepdims) {
       # Keep result as a row vector.
       const_dim <- c(1, arg_objs[[1]]$dim[1])
-      ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+      ones <- create_const(array(1, dim = const_dim), const_dim)
       obj <- lo.mul_expr(ones, arg_objs[[1]], dim)
     } else {
       # Treat collapsed 1-D vector as a column vector.
       const_dim <- c(arg_objs[[1]]$dim[1], 1)
-      ones <- lu.create_const(array(1, dim = const_dim), const_dim)
+      ones <- create_const(array(1, dim = const_dim), const_dim)
       obj <- lo.rmul_expr(lo.transpose(arg_objs[[1]]), ones, dim)
     }
   }

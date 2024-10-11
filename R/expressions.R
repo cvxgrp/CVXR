@@ -86,7 +86,7 @@ setMethod("expr", "Expression", function(object) { object })
 #' @rdname curvature
 #' @export
 setMethod("curvature", "Expression", function(object) {
-  if(lu.is_constant(object))
+  if(is_constant(object))
     curvature_str <- CONSTANT
   else if(is_affine(object))
     curvature_str <- AFFINE

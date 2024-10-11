@@ -26,7 +26,7 @@ setMethod("initialize", "Objective", function(.Object, ..., expr) {
   # .Object <- callNextMethod(.Object, ..., args = list(as.Constant(expr)))
 
   # Validate that the objective resolves to a scalar.
-  if(!lu.is_scalar(.Object@args[[1]]))
+  if(!is_scalar(.Object@args[[1]]))
     stop("The objective must resolve to a scalar")
   if(!is_real(.Object@args[[1]]))
     stop("The objective must be real valued")
@@ -1128,14 +1128,14 @@ valuesById <- function(object, results_dict, sym_data, solver) {
         for(arg in objet@args) {
           ## An argument without a value makes all higher level values NA.
           ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
-          arg_val <- if(lu.is_constant(arg))
+          arg_val <- if(is_constant(arg))
                        value(arg)
                      else {
                        ## result[[as.character(id(arg))]]
                        getValue(arg)
                      }
 
-          if(is.null(arg_val) || (any(is.na(arg_val)) && !lu.is_constant(objet)))
+          if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
             return(NA)
           else {
             arg_values[[idx]] <- arg_val
@@ -1422,14 +1422,14 @@ setMethod("unpack_problem", signature(object = "Problem", solution = "Solution")
       for(arg in objet@args) {
         ## An argument without a value makes all higher level values NA.
         ## But if the atom is constant with non-constant arguments, it doesn't depend on its arguments, so it isn't NA.
-        arg_val <- if(lu.is_constant(arg))
+        arg_val <- if(is_constant(arg))
           value(arg)
         else {
           ## result[[as.character(id(arg))]]
           getValue(arg)
         }
 
-        if(is.null(arg_val) || (any(is.na(arg_val)) && !lu.is_constant(objet)))
+        if(is.null(arg_val) || (any(is.na(arg_val)) && !is_constant(objet)))
           return(NA)
         else {
           arg_values[[idx]] <- arg_val
@@ -1752,7 +1752,7 @@ setMethod("grad", "PartialProblem", function(object) {
   # Add PSD constraints in same way.
 
   # Short circuit for constant
-  if(lu.is_constant(object))
+  if(is_constant(object))
     return(constant_grad(object))
 
   old_vals <- list()

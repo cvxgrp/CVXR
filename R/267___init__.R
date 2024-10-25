@@ -1,0 +1,27 @@
+## CVXPY SOURCE: cvxpy/reductions/qp2quad_form/atom_canonicalizers/quad_over_lin_canon.py
+
+# TODO: Remove pwl canonicalize methods, use EliminatePwl reduction instead.
+# NARAS: Seems to be inapplicable here??
+# Conic canonicalization methods.
+Qp2QuadForm.CANON_METHODS <- list(
+  Abs = Dcp2Cone.CANON_METHODS$Abs,
+  CumSum = Dcp2Cone.CANON_METHODS$CumSum,
+  MaxElemwise = Dcp2Cone.CANON_METHODS$MaxElemwise,
+  MinElemwise = Dcp2Cone.CANON_METHODS$MinElemwise,
+  SumLargest = Dcp2Cone.CANON_METHODS$SumLargest,
+  MaxEntries = Dcp2Cone.CANON_METHODS$MaxEntries,
+  MinEntries = Dcp2Cone.CANON_METHODS$MinEntries,
+  Norm1 = Dcp2Cone.CANON_METHODS$Norm1,
+  NormInf = Dcp2Cone.CANON_METHODS$NormInf,
+  Indicator = Dcp2Cone.CANON_METHODS$Indicator,
+  SpecialIndex = Dcp2Cone.CANON_METHODS$SpecialIndex)
+
+# Canonicalizations that are different for QPs.
+Qp2QuadForm.QUAD_CANON_METHODS <- list(
+  QuadOverLin = Qp2QuadForm.quad_over_lin_canon,
+  Power = Qp2QuadForm.power_canon,
+  Huber = Qp2QuadForm.huber_canon,
+  QuadForm = Qp2QuadForm.quad_form_canon)
+
+Qp2QuadForm.CANON_METHODS <- c(Qp2QuadForm.CANON_METHODS, Qp2QuadForm.QUAD_CANON_METHODS)
+

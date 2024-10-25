@@ -1,0 +1,80 @@
+## CVXPY SOURCE: cvxpy/atoms/norm1.py
+
+#'
+#' The Norm1 class.
+#'
+#' This class represents the 1-norm of an expression.
+#'
+#' @slot x An \linkS4class{Expression} object.
+#' @name Norm1-class
+#' @aliases Norm1
+#' @rdname Norm1-class
+.Norm1 <- setClass("Norm1", contains = "AxisAtom")
+
+#' @param x An \linkS4class{Expression} object.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @rdname Norm1-class
+Norm1 <- function(x, axis = NA_real_, keepdims = FALSE) { .Norm1(expr = x, axis = axis, keepdims = keepdims) }
+
+#' @param object A \linkS4class{Norm1} object.
+#' @describeIn Norm1 The name and arguments of the atom.
+setMethod("name", "Norm1", function(x) {
+  paste(class(x), "(", name(x@args[[1]]), ")", sep = "")
+})
+
+#' @param values A list of arguments to the atom.
+#' @describeIn Norm1 Returns the 1-norm of x along the given axis.
+setMethod("to_numeric", "Norm1", function(object, values) {
+  if(is.na(object@axis))
+    # base::norm(values[[1]], type = "O")
+    sum(abs(values[[1]]))
+  else
+    # apply_with_keepdims(values[[1]], function(x) { norm(as.matrix(x), type = "O") }, axis = object@axis, keepdims = object@keepdims)
+    apply_with_keepdims(values[[1]], function(x) { sum(abs(x)) }, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn Norm1 Does the atom handle complex numbers?
+setMethod("allow_complex", "Norm1", function(object) { TRUE })
+
+#' @describeIn Norm1 The atom is always positive.
+setMethod("sign_from_args", "Norm1", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn Norm1 The atom is convex.
+setMethod("is_atom_convex", "Norm1", function(object) { TRUE })
+
+#' @describeIn Norm1 The atom is not concave.
+setMethod("is_atom_concave", "Norm1", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Norm1 Is the composition weakly increasing in argument \code{idx}?
+setMethod("is_incr", "Norm1", function(object, idx) { is_nonneg(object@args[[1]]) })
+
+#' @param idx An index into the atom.
+#' @describeIn Norm1 Is the composition weakly decreasing in argument \code{idx}?
+setMethod("is_decr", "Norm1", function(object, idx) { is_nonpos(object@args[[1]]) })
+
+#' @describeIn Norm1 Is the atom piecewise linear?
+setMethod("is_pwl", "Norm1", function(object) {
+  is_pwl(object@args[[1]]) && (is_real(object@args[[1]]) || is_imag(object@args[[1]]))
+})
+
+#' @describeIn Norm1 Returns the axis.
+setMethod("get_data", "Norm1", function(object) { list(object@axis) })
+
+#' @describeIn Norm1 Returns constraints describing the domain of the node
+setMethod(".domain", "Norm1", function(object) { list() })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Norm1", function(object, values) { .axis_grad(object, values) })
+
+#' @param value A numeric value
+#' @describeIn Norm1 Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "Norm1", function(object, value) {
+  rows <- size(object@args[[1]])
+  D_null <- Matrix(0, nrow = rows, ncol = 1, sparse = TRUE)
+  D_null <- D_null + (value > 0)
+  D_null <- D_null - (value < 0)
+  D_null   # TODO: Check this is same as ravel and transpose command in CVXPY.
+})

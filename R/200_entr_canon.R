@@ -1,0 +1,26 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/entr_canon.py
+
+# Atom canonicalizers.
+#'
+#' Dcp2Cone canonicalizer for the entropy atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from an entropy atom where
+#' the objective function is just the variable t with an ExpCone constraint.
+Dcp2Cone.entr_canon <- function(expr, args) {
+  x <- args[[1]]
+  expr_dim <- dim(expr)
+  # t <- Variable(expr_dim)
+  t <- new("Variable", dim = expr_dim)
+
+  # -x*log(x) >= t is equivalent to x*exp(t/x) <= 1
+  # TODO: ExpCone requires each of its inputs to be a Variable; is this something we want to change?
+  if(is.null(expr_dim))
+    ones <- Constant(1)
+  else
+    ones <- Constant(matrix(1, nrow = expr_dim[1], ncol = expr_dim[2]))
+  constraints <- list(ExpCone(t, x, ones))
+  return(list(t, constraints))
+}
+

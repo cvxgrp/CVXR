@@ -1,0 +1,78 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/suppfunc_canon.py
+
+#'
+#' Dcp2Cone canonicalizer for the support function atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a support function atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
+Dcp2Cone.suppfunc_canon <- function(expr, args) {
+  # The user-supplied argument to the support function:
+  y <- flatten(args[[1]])
+  parent <- expr@.parent
+
+  # This Defines the set "X" associated with this support function:
+  conic <- conic_repr_of_set(parent)
+  A <- conic[[1]]
+  b <- conic[[2]]
+  K_self <- conic[[3]]
+
+  # The main part of the duality trick for representing the epigraph
+  # of this support function:
+  eta <- Variable(size(b))
+  expr@.eta <- eta
+
+  n <- ncol(A)
+  n0 <- size(y)
+  if(n > n0) {
+    # The description of the set "X" used in this support
+    # function included n - n0 > 0 auxiliary variables.
+    # We can pretend these variables were user-defined
+    # by appending a suitable number of zeros to y.
+    y_lift <- HStack(list(y, rep(0, n - n0)))
+  } else
+    y_lift <- y
+  local_cons <- list(t(A) %*% eta + y_lift == 0)
+
+  # Now, the conic constraints on eta.
+  #   nonneg, exp, soc, psd
+  nonnegsel <- K_sels$nonneg
+  if(size(nonnegsel) > 0) {
+    temp_expr <- eta[nonnegsel]
+    local_cons <- c(local_cons, list(temp_expr >= 0))
+  }
+
+  socsels <- K_sels$soc
+  socsels_len <- length(socsels)
+  for(socsel in socsels) {
+    tempsca <- eta[socsel[1]]
+    tempvec <- eta[socsel[seq(2, socsels_len)]]
+    soccon <- SOC(tempsca, tempvec)
+    local_cons <- c(local_cons, list(soccon))
+  }
+
+  psdsels <- K_sels$psd
+  for(psdsel in psdsels) {
+    curmat <- scs_psdvec_to_psdmat(eta, psdsel)
+    local_cons <- c(local_cons, list(curmat %>>% 0))
+  }
+
+  expsel <- K_sels$exp
+  if(size(expsel) > 0) {
+    matexpsel <- matrix(expsel, ncol = 3, byrow = TRUE)
+    curr_u <- eta[matexpsel[,1]]
+    curr_v <- eta[matexpsel[,2]]
+    curr_w <- eta[matexpsel[,3]]
+    # (curr_u, curr_v, curr_w) needs to belong to the dual
+    # exponential cone, as used by the SCS solver. We map
+    # this to a primal exponential cone as follows.
+    ec <- ExpCone(-curr_v, -curr_u, base::exp(1) * curr_w)
+    local_cons.append(ec)
+  }
+
+  epigraph <- b %*% eta
+  return(list(epigraph, local_cons))
+}

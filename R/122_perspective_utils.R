@@ -1,0 +1,39 @@
+## CVXPY SOURCE: cvxpy/utilities/perspective_utils.py
+#########################
+#                       #
+# Perspective utilities #
+#                       #
+#########################
+form_cone_constraint <- function(z, constraint) {
+  # Given a constraint represented as Ax + b in K for K a CVXR cone,
+  # return an instantiated CVXR constraint.
+  if(is(constraint, "SOC")) {
+    # TODO: Figure out how to instantiate Ax + b in SOC where we know which
+    # lines from our ultimate A_pers(x,t,s) + b in K times ... correspond to
+    # this constraint.
+    return(SOC(t = z[1], X = z[2:nrow(z)]))
+  } else if(is(constraint, "NonNegConstraint"))
+    return(NonNegConstraint(z))
+  else if(is(constraint, "ExpCone")) {
+    n <- nrow(z)
+    if(!(length(dim(z)) == 1 || ncol(z) == 1))
+      stop("z must be a vector or matrix with a single column")
+    if(n %% 3 != 0)   # We think this is how the exponential cone works.
+      stop("n needs to be a multiple of 3")
+    step <- floor(n/3)
+    return(ExpCone(z[1:step], z[(step+1):(n-step)], z[(n-step+1):n]))
+  } else if(is(constraint, "ZeroConstraint"))
+    return(ZeroConstraint(z))
+  else if(is(constraint, "PSDConstraint")) {
+    N <- nrow(z)
+    n <- as.integer(N^0.5)
+    if(N != n^2)
+      stop("Argument is not a vectorized square matrix")
+    z_mat <- Reshape(z, c(n, n))
+    return(PSDConstraint(z_mat))   # Do we need constraint_id?
+  } else if(is(constraint, "PowCone3D"))
+    stop("Unimplemented")
+  else
+    stop("Unimplemented")
+}
+

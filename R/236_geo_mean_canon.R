@@ -1,0 +1,18 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/geo_mean_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the geometric mean atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the geometric mean atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.geo_mean_canon <- function(expr, args) {
+  out <- 0.0
+  for(i in seq_along(args[[1]])) {
+    x_i <- args[[1]][i]
+    p_i <- expr@p[i]
+    out <- out + p_i * x_i
+  }
+  return(list((1 / sum(expr@p))*out, list()))
+}
+

@@ -1,0 +1,20 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/rel_entr_canon.py
+
+#'
+#' Dcp2Cone canonicalizer for the relative entropy atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a relative entropy atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
+Dcp2Cone.rel_entr_canon <- function(expr, args) {
+  expr_dim <- dim(expr)
+  x <- promote(args[[1]], expr_dim)
+  y <- promote(args[[2]], expr_dim)
+  t <- new("Variable", dim = expr_dim)
+  constraints <- list(ExpCone(t, x, y))
+  obj <- -t
+  return(list(obj, constraints))
+}

@@ -1,0 +1,69 @@
+## © Copyright, the CVXR authors
+
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+
+##     http://www.apache.org/licenses/LICENSE-2.0
+
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+
+## CVXPY SOURCE: cvxpy/reductions/complex2real/canonicalizers/__init__.py
+
+Complex2Real.CANON_METHODS <- list(AddExpression = Complex2Real.separable_canon,
+                                   Bmat = Complex2Real.separable_canon,
+                                   CumSum = Complex2Real.separable_canon,
+                                   DiagMat = Complex2Real.separable_canon,
+                                   DiagVec = Complex2Real.separable_canon,
+                                   HStack = Complex2Real.separable_canon,
+                                   Index = Complex2Real.separable_canon,
+                                   SpecialIndex = Complex2Real.separable_canon,
+                                   Promote = Complex2Real.separable_canon,
+                                   Reshape = Complex2Real.separable_canon,
+                                   SumEntries = Complex2Real.separable_canon,
+                                   Trace = Complex2Real.separable_canon,
+                                   Transpose = Complex2Real.separable_canon,
+                                   NegExpression = Complex2Real.separable_canon,
+                                   UpperTri = Complex2Real.separable_canon,
+                                   VStack = Complex2Real.separable_canon,
+
+                                   Conv = Complex2Real.binary_canon,
+                                   DivExpression = Complex2Real.binary_canon,
+                                   Kron = Complex2Real.binary_canon,
+                                   MulExpression = Complex2Real.binary_canon,
+                                   Multiply = Complex2Real.binary_canon,
+
+                                   Conjugate = Complex2Real.conj_canon,
+                                   Imag = Complex2Real.imag_canon,
+                                   Real = Complex2Real.real_canon,
+                                   HermitianWrap = Complex2Real.hermitian_wrap_canon,
+                                   Variable = Complex2Real.variable_canon,
+                                   Constant = Complex2Real.constant_canon,
+                                   Parameter = Complex2Real.param_canon,
+                                   IneqConstraint = Complex2Real.inequality_canon,
+                                   NonPosConstraint = Complex2Real.inequality_canon,
+                                   NonNegConstraint = Complex2Real.inequality_canon,
+                                   PSDConstraint = Complex2Real.psd_canon,
+                                   SOC = Complex2Real.soc_canon,
+                                   EqConstraint = Complex2Real.equality_canon,
+                                   ZeroConstraint = Complex2Real.zero_canon,
+
+                                   Abs = Complex2Real.abs_canon,
+                                   Norm1 = Complex2Real.pnorm_canon,
+                                   NormInf = Complex2Real.pnorm_canon,
+                                   Pnorm = Complex2Real.pnorm_canon,
+
+                                   LambdaMax = Complex2Real.hermitian_canon,
+                                   LogDet = Complex2Real.norm_nuc_canon,
+                                   NormNuc = Complex2Real.norm_nuc_canon,
+                                   SigmaMax = Complex2Real.hermitian_canon,
+                                   QuadForm = Complex2Real.quad_canon,
+                                   QuadOverLin = Complex2Real.quad_over_lin_canon,
+                                   MatrixFrac = Complex2Real.matrix_frac_canon,
+                                   LambdaSumLargest = Complex2Real.lambda_sum_largest_canon,
+                                   OpRelEntrConeQuad = Complex2Real.op_rel_entr_cone_canon,
+                                   VonNeumannEntr = Complex2Real.von_neumann_entr_canon)

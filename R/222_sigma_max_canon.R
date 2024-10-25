@@ -1,0 +1,28 @@
+## CVXPY SOURCE: cvxpy/reductions/dcp2cone/atom_canonicalizers/sigma_max_canon.py
+
+#'
+#' Dcp2Cone canonicalizer for the sigma max atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A cone program constructed from a sigma max atom
+#' where the objective function consists of the variable t
+#' that is of the same dimension as the original expression
+#' with specified constraints in the function.
+Dcp2Cone.sigma_max_canon <- function(expr, args) {
+  A <- args[[1]]
+  A_dim <- dim(A)
+  n <- A_dim[1]
+  m <- A_dim[2]
+  expr_dim <- dim(expr)
+  if(prod(expr_dim) != 1)
+    stop("Invalid shape of expr in sigma_max canonicalization")
+
+  t <- new("Variable", dim = expr_dim)
+  tI_n <- sparseMatrix(seq(n), seq(n), x = rep(1, n)) * t
+  tI_m <- sparseMatrix(seq(m), seq(m), x = rep(1, m)) * t
+  X <- bmat(list(list(tI_n, A),
+                 list(t(A), tI_m)))
+  constraints <- list(PSDConstraint(X))
+  return(list(t, constraints))
+}

@@ -1,0 +1,12 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/prod_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the product atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the product atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.prod_canon <- function(expr, args) {
+  return(list(SumEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims), list()))
+}
+

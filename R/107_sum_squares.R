@@ -1,0 +1,10 @@
+## CVXPY SOURCE: cvxpy/atoms/sum_squares.py
+#'
+#' The SumSquares atom.
+#'
+#' The sum of the squares of the entries.
+#'
+#' @param expr An \linkS4class{Expression} or numeric matrix.
+#' @return Sum of the squares of the entries in the expression.
+SumSquares <- function(expr) { QuadOverLin(x = expr, y = 1) }
+

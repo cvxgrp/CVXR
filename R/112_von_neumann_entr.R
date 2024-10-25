@@ -1,0 +1,91 @@
+## CVXPY SOURCE: cvxpy/atoms/von_neumann_entr.py
+#'
+#' The VonNeumannEntr atom.
+#'
+#' The von Neumann entropy of the positive definite matrix \eqn{X \in \mathbb{S}_{+}^n}, \eqn{tr(X logm(X))},
+#' where tr() is the trace and logm() is the matrix logarithm.
+#'
+#' May alternatively be expressed as \eqn{von_neumann_entr(X) = -\sum_{i=1}^n \lambda_i \log \lambda_i},
+#' where \eqn{\lambda_i} are the eigenvalues of \eqn{X}.
+#'
+#' This atom does not enforce \eqn{tr(X) = 1} as is expected in applications from quantum mechanics.
+#'
+#' @slot X An \linkS4class{Expression} representing a positive semidefinite matrix.
+#' @name VonNeumannEntr-class
+#' @aliases VonNeumannEntr
+#' @rdname VonNeumannEntr-class
+.VonNeumannEntr <- setClass("VonNeumannEntr", representation(X = "ConstValORExpr", quad_approx = "numeric"), contains = "Atom")
+
+#' @param X An \linkS4class{Expression} or numeric matrix.
+#' @rdname VonNeumannEntr-class
+VonNeumannEntr <- function(X, quad_approx) { .VonNeumannEntr(X = X, quad_approx = quad_approx) }
+
+setMethod("initialize", "VonNeumannEntr", function(.Object, ..., X, quad_approx) {
+  # TODO: Add a check that X is symmetric/Hermitian.
+  .Object@X <- X
+  .Object@quad_approx <- as.integer(quad_approx)
+  callNextMethod(.Object, ..., atom_args = list(.Object@X))
+})
+
+#' @param object A \linkS4class{VonNeumannEntr} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn VonNeumannEntr The von Neumann entropy of the matrix.
+setMethod("to_numeric", "VonNeumannEntr", function(object, values) {
+  X <- values[[1]]
+  w <- eigen(X, symmetric = TRUE, only.values = TRUE)$values
+
+  # Sum of the entropy of the eigenvalues w.
+  if(any(w < 0))
+    return(-Inf)
+  else if(all(w == 0))
+    return(0)
+  else {
+    w_pos <- w[w > 0]
+    w_entr <- -w_pos*base::log(w_pos)
+    return(base::sum(w_entr))
+  }
+})
+
+#' @describeIn VonNeumannEntr Check that the matrix is positive semidefinite.
+setMethod("validate_args", "VonNeumannEntr", function(object) {
+  X <- object@args[[1]]
+  if(size(X) > 1) {
+    if(ndim(X) != 2 || nrow(X) != ncol(X))
+      stop("Argument must be a square matrix")
+  }
+})
+
+#' @describeIn VonNeumannEntr The (is positive, is negative) sign of the atom.
+setMethod("sign_from_args", "VonNeumannEntr", function(object) { c(FALSE, FALSE) })
+
+#' @describeIn VonNeumannEntr The dimensions of the atom determined from its arguments.
+setMethod("dim_from_args", "VonNeumannEntr", function(object) { c(1,1) })
+
+#' @describeIn VonNeumannEntr Is the atom convex?
+setMethod("is_atom_convex", "VonNeumannEntr", function(object) { FALSE })
+
+#' @describeIn VonNeumannEntr Is the atom concave?
+setMethod("is_atom_concave", "VonNeumannEntr", function(object) { TRUE })
+
+#' @param idx An index into the atom.
+#' @describeIn VonNeumannEntr Is the atom weakly increasing in the index?
+setMethod("is_incr", "VonNeumannEntr", function(object, idx) { FALSE })
+
+#' @describeIn VonNeumannEntr Is the atom weakly decreasing in the index?
+setMethod("is_decr", "VonNeumannEntr", function(object, idx) { FALSE })
+
+#' @describeIn VonNeumannEntr Returns the parameter \code{quad_approx}.
+setMethod("get_data", "VonNeumannEntr", function(object) { list(object@quad_approx) })
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn VonNeumannEntr Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "VonNeumannEntr", function(object, values) {
+  # X <- values[[1]]
+  # L <- cholesky(X)
+  # derivative <- 2*(L + L * logm(dot(t(L), L)))
+  # TODO: Have to wrap derivative around sparse matrix (compare to LogDet atom).
+  stop("Unimplemented")
+})
+
+#' @describeIn VonNeumannEntr Returns constraints describing the domain of the node.
+setMethod(".domain", "VonNeumannEntr", function(object) { list(object@args[[1]] %>>% 0) })

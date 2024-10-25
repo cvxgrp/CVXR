@@ -1,0 +1,14 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/nonpos_constr_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the non-positive constraint atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the non-positive contraint atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.nonpos_constr_canon <- function(expr, args) {
+  if(length(args) != 2)
+    stop("Must have exactly 2 arguments")
+  return(list(NonPosConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+}
+

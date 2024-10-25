@@ -1,0 +1,132 @@
+Package: CVXR
+Type: Package
+Title: Disciplined Convex Optimization
+Version: 1.3-1
+VignetteBuilder: knitr
+Authors@R: c(
+           person("Anqi", "Fu",
+                  role=c("aut", "cre"),
+                   email = "anqif@alumni.stanford.edu"),
+           person("Balasubramanian", "Narasimhan",
+                  role=c("aut"),
+                   email = "naras@stat.stanford.edu"),
+           person("David W", "Kang",
+                  role=c("aut"),
+		   email = "Dkang9503@gmail.com"),
+           person("Steven", "Diamond",
+                  role=c("aut"),
+                   email = "stevend2@stanford.edu"),
+           person("John", "Miller",
+                  role=c("aut"),
+                   email = "miller_john@berkeley.edu"),
+           person("Stephen", "Boyd",
+                  role=c("ctb"),
+                  email = "boyd@stanford.edu"),
+           person("Paul Kunsberg", "Rosenfield",
+                  role=c("ctb"),
+                  email = "prosenfield@farmersbusinessnetwork.com")
+           )
+URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
+BugReports: https://github.com/cvxgrp/CVXR/issues
+Description: An object-oriented modeling language for disciplined
+    convex programming (DCP) as described in Fu, Narasimhan, and Boyd
+    (2020, <doi:10.18637/jss.v094.i14>). It allows the user to
+    formulate convex optimization problems in a natural way following
+    mathematical convention and DCP rules. The system analyzes the
+    problem, verifies its convexity, converts it into a canonical
+    form, and hands it off to an appropriate solver to obtain the
+    solution. Interfaces to solvers on CRAN and elsewhere are
+    provided, both commercial and open source.
+Additional_repositories: https://bnaras.github.io/drat
+Depends:
+    R (>= 3.6.2)
+Imports:
+    methods,
+    R6,
+    Matrix,
+    Rcpp (>= 0.12.12),
+    bit64,
+    gmp,
+    Rmpfr,
+    ECOSolveR (>= 0.5.4),
+    scs (>= 3.0),
+    stats,
+    osqp,
+    geigen,
+    RSpectra,
+    uuid,
+    glue,
+    cli,
+    cvxcore
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat,
+    nnls,
+    slam,
+    covr
+LinkingTo: Rcpp, RcppEigen
+License: Apache License 2.0 | file LICENSE
+LazyData: true
+Collate:
+    'CVXR-package.R'
+    'data.R'
+    'globals.R'
+    'generics.R'
+    'interface.R'
+    'canonical.R'
+    'expressions.R'
+    'constant.R'
+    'variable.R'
+    'lin_op.R'
+    'lin_utils.R'
+    'lin_constraints.R'
+    'transforms.R'    
+    'atoms.R'
+    'affine.R'
+    'problem.R'
+    'constraints.R'
+    'elementwise.R'
+    'reductions.R'
+    'coeff_extractor.R'    
+    'reduction_solvers.R'
+    'complex2real.R'
+    'cone2cone.R'
+    'conic_solver_extra.R'
+    'conic_solver.R'
+    'conic_solver_ecos.R'
+    'conic_solver_scs.R'
+    'conic_solver_mosek.R'	
+    'conic_solvers_to_be.R'
+    'eliminate_pwl.R'
+    'dcpcanons.R'
+    'dcp2cone.R'
+    'dgp2dcp.R'
+    'discrete2mixedint.R'
+    'dqcp2dcp.R'
+    'qp2quad_form.R'
+    'qp_solver.R'
+    'qp_solver_cplex.R'
+    'qp_solver_osqp.R'
+    'qp_solver_gurobi.R'
+    'qp_solver_piqp.R'
+    'clarabel.R'
+    'utilities.R'
+    'solver_utilities.R'
+    'exports.R'
+    'RcppExports.R'
+    'canonInterface.R'
+    'coll_utils.R'
+    'rcppUtils.R'
+    'settings.R'
+    'sparse_utils.R'
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Encoding: UTF-8
+Enhances: 
+    Rcplex,
+    gurobi,
+    rcbc,
+    cccp,
+    Rmosek,
+    Rglpk

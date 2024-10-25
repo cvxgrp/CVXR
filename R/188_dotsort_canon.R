@@ -1,0 +1,39 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/dotsort_canon.py
+#'
+#' EliminatePwl canonicalizer for the dot sort atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-lienar atom
+#' constructed from the dot sort atom where the objective
+#' function consists of the variable t of the same size as
+#' the original expression and the constraints consist of
+#' a vector multiplied by a vector of 1's.
+EliminatePwl.dotsort_canon <- function(expr, args) {
+  x <- args[[1]]
+  w <- args[[2]]
+
+  if(is(w, "Constant")) {
+    w_val <- value(w)
+    w_tab <- base::table(w_val[w_val %in% unique(w_val)])
+    w_unique <- as.numeric(names(w_tab))
+    w_counts <- as.numeric(w_tab)
+    n_unique <- length(w_unique)
+  } else {
+    w_unique <- w
+    w_counts <- rep(1, size(w))
+    n_unique <- size(w_unique)
+  }
+
+  # minimize   sum(t) + q %*% w_counts
+  # subject to x %*% t(w_unique) <= t + t(q)
+  #            0 <= t
+
+  t <- Variable(size(x), 1, nonneg = TRUE)
+  q <- Variable(1, n_unique)
+
+  obj <- sum(t) + q %*% matrix(w_counts)
+  x_w_unique_outer_product <- reshape_expr(x, c(size(x), 1)) %*% reshape_expr(w_unique, c(1, n_unique))
+  constraints <- list(x_w_unique_outer_product <= t + q)
+  return(list(obj, constraints))
+}

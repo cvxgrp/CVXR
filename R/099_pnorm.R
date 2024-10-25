@@ -1,0 +1,188 @@
+## CVXPY SOURCE: cvxpy/atoms/pnorm.py
+
+#'
+#' The Pnorm class.
+#'
+#' This class represents the vector p-norm.
+#'
+#' If given a matrix variable, \code{Pnorm} will treat it as a vector and compute the p-norm of the concatenated columns.
+#'
+#' For \eqn{p \geq 1}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n |x_i|^p\right)^{1/p}} with domain \eqn{x \in \mathbf{R}^n}.
+#' For \eqn{p < 1, p\neq 0}, the p-norm is given by \deqn{\|x\|_p = \left(\sum_{i=1}^n x_i^p\right)^{1/p}} with domain \eqn{x \in \mathbf{R}^n_+}.
+#'
+#' \itemize{
+#'    \item Note that the "p-norm" is actually a \strong{norm} only when \eqn{p \geq 1} or \eqn{p = +\infty}. For these cases, it is convex.
+#'    \item The expression is undefined when \eqn{p = 0}.
+#'    \item Otherwise, when \eqn{p < 1}, the expression is concave, but not a true norm.
+#' }
+#'
+#' @slot x An \linkS4class{Expression} representing a vector or matrix.
+#' @slot p A number greater than or equal to 1, or equal to positive infinity.
+#' @slot max_denom The maximum denominator considered in forming a rational approximation for \eqn{p}.
+#' @slot axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @slot keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @slot .approx_error (Internal) The absolute difference between \eqn{p} and its rational approximation.
+#' @slot .original_p (Internal) The original input \eqn{p}.
+#' @name Pnorm-class
+#' @aliases Pnorm
+#' @rdname Pnorm-class
+.Pnorm <- setClass("Pnorm", representation(p = "numeric", max_denom = "numeric", .approx_error = "numeric", .original_p = "numeric"),
+                  prototype(p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_), contains = "AxisAtom")
+
+#' @param x An \linkS4class{Expression} representing a vector or matrix.
+#' @param p A number greater than or equal to 1, or equal to positive infinity.
+#' @param axis (Optional) The dimension across which to apply the function: \code{1} indicates rows, \code{2} indicates columns, and \code{NA} indicates rows and columns. The default is \code{NA}.
+#' @param keepdims (Optional) Should dimensions be maintained when applying the atom along an axis? If \code{FALSE}, result will be collapsed into an \eqn{n x 1} column vector. The default is \code{FALSE}.
+#' @param max_denom (Optional) The maximum denominator considered in forming a rational approximation for \eqn{p}. The default is 1024.
+#' @rdname Pnorm-class
+Pnorm <- function(x, p = 2, axis = NA_real_, keepdims = FALSE, max_denom = 1024) {
+  if(p == 1)
+    Norm1(x, axis = axis, keepdims = keepdims)
+  else if(p %in% c(Inf, "inf", "Inf"))
+    NormInf(x, axis = axis, keepdims = keepdims)
+  else
+    .Pnorm(expr = x, axis = axis, keepdims = keepdims, p = p, max_denom = max_denom)
+}
+
+setMethod("initialize", "Pnorm", function(.Object, ..., p = 2, max_denom = 1024, .approx_error = NA_real_, .original_p = NA_real_) {
+  if(p == 1)
+    stop("Use the Norm1 class to instantiate a 1-norm.")
+  else if(p %in% c(Inf, "inf", "Inf"))
+    stop("Use the NormInf class to instantiate an infinity-norm.")
+  # else if(p < 0)
+  #  .Object@p <- pow_neg(p, max_denom)
+  # else if(p > 0 && p < 1)
+  #  .Object@p <- pow_mid(p, max_denom)
+  # else if(p > 1)
+  #  .Object@p <- pow_high(p, max_denom)
+  # else
+  #  stop("Invalid value of p.")
+  .Object@p <- p
+
+  .Object@max_denom <- max_denom
+  .Object@.approx_error <- abs(.Object@p - p)
+  .Object@.original_p <- p
+  callNextMethod(.Object, ...)
+})
+
+#'
+#' Internal method for calculating the p-norm
+#'
+#' @param x A matrix
+#' @param p A number grater than or equal to 1, or equal to positive infinity
+#' @return Returns the specified norm of matrix x
+.p_norm <- function(x, p) {
+  if(p == Inf)
+    max(abs(x))
+  else if(p == 0)
+    sum(x != 0)
+  else if(p %% 2 == 0 || p < 1)
+    sum(x^p)^(1/p)
+  else if(p >= 1)
+    sum(abs(x)^p)^(1/p)
+  else
+    stop("Invalid p = ", p)
+}
+
+#' @describeIn Pnorm Does the atom handle complex numbers?
+setMethod("allow_complex", "Pnorm", function(object) { TRUE })
+
+#' @param object A \linkS4class{Pnorm} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Pnorm The p-norm of \code{x}.
+setMethod("to_numeric", "Pnorm", function(object, values) {
+  if(is.na(object@axis))
+    values <- as.vector(values[[1]])
+  else
+    values <- as.matrix(values[[1]])
+
+  if(object@p < 1 && any(values < 0))
+    return(-Inf)
+  if(object@p < 0 && any(values == 0))
+    return(0)
+
+  apply_with_keepdims(values, function(x) { .p_norm(x, object@p) }, axis = object@axis, keepdims = object@keepdims)
+})
+
+#' @describeIn Pnorm Check that the arguments are valid.
+setMethod("validate_args", "Pnorm", function(object) {
+  callNextMethod()
+  if(!is.na(object@axis) && object@p != 2)
+    stop("The axis parameter is only supported for p = 2.")
+  if(object@p < 1 && is_complex(object@args[[1]]))
+    stop("Pnorm(x, p) cannot have x complex for p < 1.")
+})
+
+#' @describeIn Pnorm The atom is positive.
+setMethod("sign_from_args",  "Pnorm", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn Pnorm The atom is convex if \eqn{p \geq 1}.
+setMethod("is_atom_convex", "Pnorm", function(object) { object@p > 1 })
+
+#' @describeIn Pnorm The atom is concave if \eqn{p < 1}.
+setMethod("is_atom_concave", "Pnorm", function(object) { object@p < 1 })
+
+#' @describeIn Pnorm Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "Pnorm", function(object) { TRUE })
+
+#' @describeIn Pnorm Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "Pnorm", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Pnorm The atom is weakly increasing if \eqn{p < 1} or \eqn{p > 1} and \code{x} is positive.
+setMethod("is_incr", "Pnorm", function(object, idx) { object@p < 1 || (object@p > 1 && is_nonneg(object@args[[1]])) })
+
+#' @param idx An index into the atom.
+#' @describeIn Pnorm The atom is weakly decreasing if \eqn{p > 1} and \code{x} is negative.
+setMethod("is_decr", "Pnorm", function(object, idx) { object@p > 1 && is_nonpos(object@args[[1]]) })
+
+#' @describeIn Pnorm The atom is not piecewise linear unless \eqn{p = 1} or \eqn{p = \infty}.
+setMethod("is_pwl", "Pnorm", function(object) { FALSE })
+
+#' @describeIn Pnorm Returns \code{list(p, axis)}.
+setMethod("get_data", "Pnorm", function(object) { list(object@p, object@axis) })
+
+#' @describeIn Pnorm The name and arguments of the atom.
+setMethod("name", "Pnorm", function(x) {
+  sprintf("%s(%s, %s)", class(x), name(x@args[[1]]), x@p)
+})
+
+#' @describeIn Pnorm Returns constraints describing the domain of the node
+setMethod(".domain", "Pnorm", function(object) {
+  if(object@p < 1 && object@p != 0)
+    list(object@args[[1]] >= 0)
+  else
+    list()
+})
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Pnorm", function(object, values) { .axis_grad(object, values) })
+
+#' @param value A numeric value
+#' @describeIn Pnorm Gives the (sub/super)gradient of the atom w.r.t. each column variable
+setMethod(".column_grad", "Pnorm", function(object, value) {
+  rows <- size(object@args[[1]])
+  value <- as.matrix(value)
+
+  # Outside domain
+  if(object@p < 1 && any(value <= 0))
+    return(NA_real_)
+
+  D_null <- sparseMatrix(i = c(), j = c(), dims = c(rows, 1))
+  denominator <- .p_norm(value, object@p)
+  denominator <- denominator^(object@p - 1)
+
+  # Subgrad is 0 when denom is 0 (or undefined)
+  if(denominator == 0) {
+    if(object@p > 1)
+      return(D_null)
+    else
+      return(NA_real_)
+  } else {
+    numerator <- value^(object@p - 1)
+    frac <- numerator / denominator
+    return(matrix(as.vector(frac)))
+  }
+})
+

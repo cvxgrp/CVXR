@@ -1,0 +1,99 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/.py
+
+#'
+#' The UpperTri class.
+#'
+#' The vectorized strictly upper triagonal entries of a matrix.
+#'
+#' @slot expr An \linkS4class{Expression} or numeric matrix.
+#' @name UpperTri-class
+#' @aliases UpperTri
+#' @rdname UpperTri-class
+.UpperTri <- setClass("UpperTri", representation(expr = "ConstValORExpr"), contains = "AffAtom")
+
+#' @param expr An \linkS4class{Expression} or numeric matrix.
+#' @rdname UpperTri-class
+UpperTri <- function(expr) { .UpperTri(expr = expr) }
+
+setMethod("initialize", "UpperTri", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
+})
+
+#' @param object An \linkS4class{UpperTri} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn UpperTri Vectorize the upper triagonal entries.
+setMethod("to_numeric", "UpperTri", function(object, values) {
+  # Vectorize the upper triagonal entries
+  tridx <- upper.tri(values[[1]], diag = FALSE)
+  values[[1]][tridx]
+})
+
+#' @describeIn UpperTri Check the argument is a square matrix.
+setMethod("validate_args", "UpperTri", function(object) {
+  arg_dim <- dim(object@args[[1]])
+  if(ndim(object@args[[1]]) != 2 || arg_dim[1] != arg_dim[2])
+    stop("Argument to UpperTri must be a square matrix.")
+})
+
+#' @describeIn UpperTri The dimensions of the atom.
+setMethod("dim_from_args", "UpperTri", function(object) {
+  arg_dim <- dim(object@args[[1]])
+  rows <- arg_dim[1]
+  cols <- arg_dim[2]
+  c(floor(rows*(cols-1)/2), 1)
+})
+
+#' @describeIn UpperTri Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "UpperTri", function(object) { TRUE })
+
+#' @describeIn UpperTri Is the atom log-log concave?
+setMethod("is_atom_log_log_concave", "UpperTri", function(object) { TRUE })
+
+UpperTri.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  list(lu.upper_tri(arg_objs[[1]]), list())
+}
+
+UpperTri.vec_to_upper_tri <- function(expr, strict = FALSE) {
+  expr <- as.Constant(expr)
+  ell <- dim(expr)[[1]]
+  if(strict) {
+    # n * (n-1)/2 == ell
+    n <- floor(((8*ell + 1)^0.5 + 1)/2)
+  } else {
+    # n * (n+1)/2 == ell
+    n <- floor(((8*ell + 1)^0.5 - 1)/2)
+  }
+  
+  # Form a matrix P of dimensions (n^2, ell).
+  #     the i-th block of n rows of P gives the entries of the i-th row
+  #     of the upper-triangular matrix associated with expr.
+  # Compute expr2 <- P %*% expr
+  # Compute expr3 <- t(reshape(expr2, dim = c(n,n)))
+  #     expr3 is the matrix formed by reading length-n blocks of expr 2,
+  #     and letting each block for a row of expr3.
+  P_rows <- c()
+  P_row <- 1
+  for(mat_row in seq(n)) {
+    entries_in_row <- n - mat_row + 1
+    if(strict)
+      entries_in_row <- entries_in_row - 1
+    P_row <- P_row + n - entries_in_row   # these are zeros
+    P_rows <- c(P_rows, seq(P_row, P_row + entries_in_row))
+    P_row <- P_row + entries_in_row
+  }
+  P_cols <- seq(ell)
+  P_vals <- rep(1, ell)
+  P <- sparseMatrix(P_rows, P_cols, x = P_vals, dims = c(n^2, ell))
+  expr2 <- P @ expr
+  expr3 <- t(Reshape(expr2, c(n, n)))
+  return(expr3)
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn UpperTri The graph implementation of the atom.
+setMethod("graph_implementation", "UpperTri", function(object, arg_objs, dim, data = NA_real_) {
+  UpperTri.graph_implementation(arg_objs, dim, data)
+})

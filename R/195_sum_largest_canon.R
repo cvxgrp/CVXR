@@ -1,0 +1,23 @@
+## CVXPY SOURCE: cvxpy/reductions/eliminate_pwl/sum_largest_canon.py
+#'
+#' EliminatePwl canonicalizer for the largest sum atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of \linkS4class{Constraint} objects
+#' @return A canonicalization of the piecewise-lienar atom
+#' constructed by the k largest sums atom where the objective
+#' function consists of the sum of variables t that is of
+#' the same dimension as the expression plus k
+EliminatePwl.sum_largest_canon <- function(expr, args) {
+  x <- args[[1]]
+  k <- expr@k
+
+  # min sum(t) + kq
+  # s.t. x <= t + q, 0 <= t
+  # t <- Variable(dim(x))
+  t <- new("Variable", dim = dim(x))
+  q <- Variable()
+  obj <- sum(t) + k*q
+  constraints <- list(x <= t + q, t >= 0)
+  return(list(obj, constraints))
+}

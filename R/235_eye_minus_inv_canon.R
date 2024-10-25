@@ -1,0 +1,35 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/eye_minus_inv_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the (I - X)^{-1} atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the (I - X)^{-1} atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.eye_minus_inv_canon <- function(expr, args) {
+  X <- args[[1]]
+  # (I - X)^(-1) <= T iff there exists 0 <= Y <= T s.t. YX + Y <= Y.
+  # This function implements the log-log transformation of these constraints.
+  # We can't use I in DGP, because it has zeros (we'd need to take its log).
+  # Instead, the constraint can be written as
+  #    diag(diff_pos(Y - YX)) >= 1,
+  # or, canonicalized,
+  #    lhs_canon >= 0.
+  # Here, U = log(Y)
+  U <- new("Variable", dim = dim(X))
+
+  # Canonicalization of diag(diff_pos(Y - YX))
+  # Note
+  #    Y - YX = Y \hadamard (\ones\ones^T - YX/Y)
+  #            = Y \hardamard one_minus_pos(YX/Y)
+  # and
+  #    Y \hadamard one_minus_pos(YX/Y) canonicalizes to
+  #    U + one_minus_pos_canon(YX_canon - Y_canon)
+  YX <- U %*% X
+  YX_canon <- Dgp2Dcp.mulexpression_canon(YX, YX@args)[[1]]
+  one_minus <- OneMinusPos(YX_canon - U)
+  canon <- Dgp2Dcp.one_minus_pos_canon(one_minus, one_minus@args)[[1]]
+  lhs_canon <- Diag(U + canon)
+  return(list(Y, list(lhs_canon >= 0)))
+}
+

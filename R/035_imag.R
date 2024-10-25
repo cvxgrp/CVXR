@@ -1,0 +1,37 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/imag.py
+#'
+#' The Imag class.
+#'
+#' This class represents the imaginary part of an expression.
+#'
+#' @slot expr An \linkS4class{Expression} representing a vector or matrix.
+#' @name Imag-class
+#' @aliases Imag
+#' @rdname Imag-class
+.Imag <- setClass("Imag", representation(expr = "Expression"), contains = "AffAtom")
+
+#' @param expr An \linkS4class{Expression} representing a vector or matrix.
+#' @rdname Imag-class
+Imag <- function(expr) { .Imag(expr = expr) }
+
+setMethod("initialize", "Imag", function(.Object, ..., expr) {
+  .Object@expr <- expr
+  callNextMethod(.Object, ..., atom_args = list(.Object@expr))
+})
+
+#' @param object An \linkS4class{Imag} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Imag The imaginary part of the given value.
+setMethod("to_numeric", "Imag", function(object, values) { Im(values[[1]]) })
+
+#' @describeIn Imag The dimensions of the atom.
+setMethod("dim_from_args", "Imag", function(object) { dim(object@args[[1]]) })
+
+#' @describeIn Imag Is the atom imaginary?
+setMethod("is_imag", "Imag", function(object) { FALSE })
+
+#' @describeIn Imag Is the atom complex valued?
+setMethod("is_complex", "Imag", function(object) { FALSE })
+
+#' @describeIn Imag Is the atom symmetric?
+setMethod("is_symmetric", "Imag", function(object) { is_hermitian(object@args[[1]]) })

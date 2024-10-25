@@ -1,0 +1,105 @@
+## CVXPY SOURCE: cvxpy/transforms/scalarize.py
+
+#############
+#           #
+# Scalarize #
+#           #
+#############
+
+weighted_sum <- function(objectives, weights) {
+  num_objs <- length(objectives)
+  weighted_objs <- lapply(seq(num_objs), function(i) { objectives[[i]] * weights[i] })
+  Reduce("+", weighted_objs)
+}
+
+targets_and_priorities <- function(objectives, priorities, targets, limits = list(), off_target = 1e-5) {
+  # Combines objectives with penalties within a range between target and limit.
+  #
+  # Each Minimize objective i has value
+  #
+  #   priorities[i]*objectives[i] when objectives[i] >= targets[i]
+  #
+  #   +infinity when objectives[i] > limits[i]
+  #
+  # Each Maximize objective i has value
+  #
+  #   priorities[i]*objectives[i] when objectives[i] <= targets[i]
+  #
+  #   +infinity when objectives[i] < limits[i]
+  #
+  # Args:
+  #   objectives: A list of Minimize/Maximize objectives.
+  #   priorities: The weight within the range.
+  #   targets: The start (end) of penalty for Minimize (Maximize).
+  #   limits: The hard end (start) of penalty for Minimize (Maximize).
+  #   off_target: Penalty outside of target.
+  #
+  # Returns:
+  #   A Minimize/Maximize objective.
+
+  num_objs <- length(objectives)
+  new_objs <- list()
+
+  for(i in seq(num_objs)) {
+    obj <- objectives[[i]]
+    sign <- ifelse(is_nonneg(as.Constant(priorities[[i]])), 1, -1)
+    off_target <- sign*off_target
+    if(inherits(obj, "Minimize")) {
+      expr <- (priorities[[i]] - off_target)*Pos(obj@args[[1]] - targets[[i]])
+      expr <- expr + off_target*obj@args[[1]]
+      if(!is.null(limits) && length(limits) > 0)
+        expr <- expr + sign*indicator(list(obj@args[[1]] <= limits[[i]]))
+      new_objs <- c(new_objs, expr)
+    } else {   # Maximize
+      expr <- (priorities[[i]] - off_target)*MinElemwise(obj@args[[1]], targets[[i]])
+      expr <- expr + off_target*obj@args[[1]]
+      if(length(limits) > 0)
+        expr <- expr + sign*indicator(list(obj@args[[1]] >= limits[[i]]))
+      new_objs <- c(new_objs, expr)
+    }
+  }
+
+  obj_expr <- Reduce("+", new_objs)
+  if(is_convex(obj_expr))
+    return(Minimize(obj_expr))
+  else
+    return(Maximize(obj_expr))
+}
+
+Scalarize.max <- function(objectives, weights) {
+  # Combines objectives as max of weighted terms.
+  #
+  # Args:
+  #   objectives: A list of Minimize/Maximize objectives.
+  #   weights: A vector of weights.
+  #
+  # Returns:
+  #   A Minimize objective.
+  #
+
+  num_objs <- length(objectives)
+  expr <- .MaxElemwise(atom_args = lapply(seq(num_objs), function(i) { (objectives[[i]]*weights[i])@args[[1]] }))
+  return(Minimize(expr))
+}
+
+Scalarize.log_sum_exp <- function(objectives, weights, gamma) {
+  # Combines objectives as log_sum_exp of weighted terms.
+  #
+  # The objective takes the form
+  #   log(sum_{i=1}^n exp(gamma*weights[i]*objectives[i]))/gamma
+  # As gamma goes to 0, log_sum_exp approaches weighted_sum. As gamma goes to infinity,
+  # log_sum_exp approaches max.
+  #
+  # Args:
+  #   objectives: A list of Minimize/Maximize objectives.
+  #   weights: A vector of weights.
+  #   gamma: Parameter interpolating between weighted_sum and max.
+  #
+  # Returns:
+  #   A Minimize objective.
+
+  num_objs <- length(objectives)
+  terms <- lapply(seq(num_objs), function(i) { (objectives[[i]]*weights[i])@args[[1]] })
+  expr <- LogSumExp(gamma*VStack(terms))/gamma
+  return(Minimize(expr))
+}

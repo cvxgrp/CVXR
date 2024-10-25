@@ -1,0 +1,15 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/norm1_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the 1-norm atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the norm1 atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.norm1_canon <- function(expr, args) {
+  if(length(args) != 1)
+    stop("Must have exactly 1 argument")
+  tmp <- SumEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
+  return(Dgp2Dcp.sum_canon(tmp, tmp@args))
+}
+

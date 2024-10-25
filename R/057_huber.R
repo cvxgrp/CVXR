@@ -1,0 +1,98 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/elementwise/huber.py
+
+#'
+#' The Huber class.
+#'
+#' This class represents the elementwise Huber function, \eqn{Huber(x, M) = }
+#' \itemize{
+#'   \item{\eqn{2M|x|-M^2}}{for \eqn{|x| \geq |M|}}
+#'    \item{\eqn{|x|^2}}{for \eqn{|x| \leq |M|.}}
+#'  }
+#' @slot x An \linkS4class{Expression} or numeric constant.
+#' @slot M A positive scalar value representing the threshold. Defaults to 1.
+#' @name Huber-class
+#' @aliases Huber
+#' @rdname Huber-class
+.Huber <- setClass("Huber", representation(x = "ConstValORExpr", M = "ConstValORExpr"),
+                           prototype(M = 1), contains = "Elementwise")
+
+#' @param x An \linkS4class{Expression} object.
+#' @param M A positive scalar value representing the threshold. Defaults to 1.
+#' @rdname Huber-class
+Huber <- function(x, M = 1) { .Huber(x = x, M = M) }
+
+setMethod("initialize", "Huber", function(.Object, ..., x, M = 1) {
+  .Object@M <- as.Constant(M)
+  .Object@x <- x
+  callNextMethod(.Object, ..., atom_args = list(.Object@x))
+})
+
+#' @param object A \linkS4class{Huber} object.
+#' @param values A list of arguments to the atom.
+#' @describeIn Huber The Huber function evaluted elementwise on the input value.
+setMethod("to_numeric", "Huber", function(object, values) {
+  huber_loss <- function(delta, r) {
+    if(delta < 0)
+      return(Inf)
+    else if(delta >= 0 && abs(r) <= delta)
+      return(r^2/2)
+    else
+      return(delta * (abs(r) - delta/2))
+  }
+
+  M_val <- value(object@M)
+  val <- values[[1]]
+  if(is.null(dim(val)))
+    result <- 2*huber_loss(M_val, val)
+  else if(is.vector(val))
+    result <- 2*sapply(val, function(v) { huber_loss(M_val, v) })
+  else
+    result <- 2*apply(val, 1:length(dim(val)), function(v) { huber_loss(M_val, v) })
+
+  if(all(dim(result) == 1))
+    result <- as.vector(result)
+  return(result)
+})
+
+#' @describeIn Huber The atom is positive.
+setMethod("sign_from_args", "Huber", function(object) { c(TRUE, FALSE) })
+
+#' @describeIn Huber The atom is convex.
+setMethod("is_atom_convex", "Huber", function(object) { TRUE })
+
+#' @describeIn Huber The atom is not concave.
+setMethod("is_atom_concave", "Huber", function(object) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Huber A logical value indicating whether the atom is weakly increasing.
+setMethod("is_incr", "Huber", function(object, idx) { is_nonneg(object@args[[idx]]) })
+
+#' @describeIn Huber A logical value indicating whether the atom is weakly decreasing.
+setMethod("is_decr", "Huber", function(object, idx) { is_nonpos(object@args[[idx]]) })
+
+#' @describeIn Huber The atom is quadratic if \code{x} is affine.
+setMethod("is_quadratic", "Huber", function(object) { is_affine(object@args[[1]]) })
+
+#' @describeIn Huber A list containing the parameter \code{M}.
+setMethod("get_data", "Huber", function(object) { list(object@M) })
+
+#' @describeIn Huber Check that \code{M} is a non-negative constant.
+setMethod("validate_args", "Huber", function(object) {
+  if(!(is_nonneg(object@M) && is_constant(object@M) && is_scalar(object@M)))
+    stop("M must be a non-negative scalar constant")
+  callNextMethod()
+})
+
+#' @param values A list of numeric values for the arguments
+#' @describeIn Huber Gives the (sub/super)gradient of the atom w.r.t. each variable
+setMethod(".grad", "Huber", function(object, values) {
+  rows <- size(object@args[[1]])
+  cols <- size(object)
+
+  val_abs <- abs(values[[1]])
+  M_val <- as.numeric(value(object@M))
+  min_val <- ifelse(val_abs >= M_val, M_val, val_abs)
+
+  grad_vals <- 2*(sign(values[[1]]) * min_val)
+  list(Elementwise.elemwise_grad_to_diag(grad_vals, rows, cols))
+})

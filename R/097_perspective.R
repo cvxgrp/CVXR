@@ -1,0 +1,117 @@
+## CVXPY SOURCE: cvxpy/atoms/perspective.py
+#'
+#' The Perspective class.
+#'
+#' This class represents the perspective transform of a convex or concave scalar expression.
+#' It uses the fact that, given a cone form for the epigraph of \eqn{f} via
+#'
+#' \deqn{\{(t, x) \in \mathbb{R}^{n+1} : t \geq f(x) \} = \{(t, x) : Fx + gt + e \in K\}},
+#'
+#' the epigraph of the perspective transform of \eqn{f} can be given by
+#'
+#' \deqn{\{(t, x, s) \in \mathbb{R}^{n+2} : t \geq sf(x/s) \} = \{ (t, x, s) : Fx + gt + se \in K \}}.
+#'
+#' (See https://web.stanford.edu/~boyd/papers/pdf/sw_aff_ctrl.pdf).
+#'
+#' Note that this is the perspective transform of a scalar expression viewed as
+#' a function of its underlying variables. The perspective atom does not return
+#' a `Callable`, so you cannot create compositions such as \eqn{p(g(x),s)}, where
+#' \eqn{p(z,s) = sf(z/s)} is the perspective transform of \eqn{f}.
+#'
+#' @slot f An \linkS4class{Expression}.
+#' @slot s A \linkS4class{Variable}.
+#' @name Perspective-class
+#' @aliases Perspective
+#' @rdname Perspective-class
+.Perspective <- setClass("Perspective", representation(f = "ConstValORExpr", s = "Variable"), contains = "Atom")
+
+#' @param f An \linkS4class{Expression}.
+#' @param s A \linkS4class{Variable}.
+#' @rdname Perspective-class
+Perspective <- function(f, s) { .Perspective(f = f, s = s) }
+
+setMethod("initialize", "Perspective", function(.Object, ..., f = f, s = s) {
+  .Object@f <- f
+  .Object@s <- s
+  callNextMethod(.Object, ..., atom_args = c(list(s), variables(f)))
+})
+
+#' @describeIn Perspective Checks the dimensions of the arguments.
+setMethod("validate_args", "Perspective", function(object) {
+  if(!(size(object@f) == 1 && size(object@args[[1]]) == 1))
+    stop("Unimplemented")   # Dealing only with scalars for now.
+  if(!is(object@args[[1]], "Variable"))
+    stop("s must be a Variable")
+  if(!is_nonneg(object@args[[1]]))
+    stop("s must be a nonnegative variable")
+  callNextMethod()
+})
+
+#' @param values A list of arguments to the atom.
+#' @describeIn Perspective Returns the perspective sf(x/s).
+setMethod("to_numeric", "Perspective", function(object, values) {
+  if(values[[1]] < 0)
+    stop("s must be nonnegative")
+  if(abs(values[[1]]) <= 1e-8)
+    stop("There are valid cases where s = 0, but we do not handle this yet, e.g., f(x) = x + 1")
+
+  s_val <- values[[1]]
+  f <- object@f
+
+  f_vars <- variables(f)
+  n_vars <- length(f_vars)
+  old_x_vals <- lapply(f_vars, value)
+
+  for(i in seq_len(n_vars))
+    value(f_vars[[i]]) <- values[[i+1]]/values[[1]]
+
+  ret_val <- value(f)*s_val
+
+  for(i in seq_len(n_vars))
+    value(f_vars[[i]]) <- old_x_vals[[i]]
+
+  return(ret_val)
+})
+
+#' @describeIn Perspective Returns the sign (is positive, is negative) of the atom.
+setMethod("sign_from_args", "Perspective", function(object) {
+  f_pos <- is_nonneg(object@f)
+  f_neg <- is_nonpos(object@f)
+  s_pos <- is_nonneg(object@args[[1]])
+
+  if(!s_pos)
+    stop("s must be nonnegative")
+
+  is_positive <- (f_pos && s_pos)
+  is_negative <- (f_neg && s_pos)
+
+  return(c(is_positive, is_negative))
+})
+
+#' @describeIn Perspective Is the atom convex?
+setMethod("is_atom_convex", "Perspective", function(object) {
+  if(dpp_scope_active() && !is_param_free(object@f))
+    return(FALSE)
+  else
+    return(is_convex(object@f) && is_nonneg(object@args[[1]]))
+})
+
+#' @describeIn Perspective Is the atom concave?
+setMethod("is_atom_concave", "Perspective", function(object) {
+  if(dpp_scope_active() && !is_param_free(object@f))
+    return(FALSE)
+  else
+    return(is_concave(object@f) && is_nonneg(object@args[[1]]))
+})
+
+#' @param idx An index into the atom.
+#' @describeIn Perspective Is the atom weakly increasing in the argument \code{idx}?
+setMethod("is_incr", "Perspective", function(object, idx) { FALSE })
+
+#' @param idx An index into the atom.
+#' @describeIn Perspective Is the atom weakly decreasing in the argument \code{idx}?
+setMethod("is_decr", "Perspective", function(object, idx) { FALSE })
+
+#' @describeIn Perspective The dimensions of the atom.
+setMethod("dim_from_args", "Perspective", function(object) { dim(object@f) })
+

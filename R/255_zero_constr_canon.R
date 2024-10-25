@@ -1,0 +1,14 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/zero_const_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the zero constraint atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the zero constraint atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.zero_constr_canon <- function(expr, args) {
+  if(length(args) != 2)
+    stop("Must have exactly 2 arguments")
+  return(list(ZeroConstraint(args[[1]] - args[[2]], constr_id = id(expr)), list()))
+}
+

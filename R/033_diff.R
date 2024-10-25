@@ -1,0 +1,44 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/diff.py
+
+#' 
+#' The Diff atom.
+#' 
+#' Takes the k-th order differences
+#' 
+#' @param lag The degree of lag between differences
+#' @param k The integer value of the order of differences
+#' @param x An \linkS4class{Expression} that represents a vector
+#' @param axis The axis along which to apply the function. For a 2D matrix, \code{1} indicates rows and \code{2} indicates columns.
+#' @return Takes in a vector of length n and returns a vector of length n-k of the kth order differences
+#' @rdname Diff-int
+Diff <- function(x, lag = 1, k = 1, axis = 2) {
+  x <- as.Constant(x)
+  if((axis == 2 && ndim(x) < 2) || ndim(x) == 0)
+    stop("Invalid axis given input dimensions.")
+  else if(axis == 1)
+    x <- t(x)
+  
+  if(ndim(x) == 1)
+    m <- size(x)
+  else
+    m <- dim(x)[setdiff(seq_len(ndim(x)), axis)]
+  
+  if(k < 0 || k >= m)
+    stop("Must have k >= 0 and x must have < k elements along collapsed axis.")
+  if(lag <= 0 || lag >= m)
+    stop("Must have lag > 0 and x must have < lag elements along collapsed axis.")
+
+  d <- x
+  for(i in seq_len(k)) {
+    if(ndim(x) == 2)
+      d <- d[(1+lag):m,] - d[1:(m-lag),]
+    else
+      d <- d[(1+lag):m] - d[1:(m-lag)]
+    m <- m-1
+  }
+
+  if(axis == 1)
+    t(d)
+  else
+    d
+}

@@ -1,0 +1,13 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/trace_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the trace atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the trace atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.trace_canon <- function(expr, args) {
+  diag_sum <- Dgp2Dcp.explicit_sum(Diag(args[[1]]))
+  return(Dgp2Dcp.add_canon(diag_sum, diag_sum@args))
+}
+

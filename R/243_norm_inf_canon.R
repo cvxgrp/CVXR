@@ -1,0 +1,15 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/norm_inf_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the infinity-norm atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the infinity norm atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.norm_inf_canon <- function(expr, args) {
+  if(length(args) != 1)
+    stop("Must have exactly 1 argument")
+  tmp <- MaxEntries(args[[1]], axis = expr@axis, keepdims = expr@keepdims)
+  return(EliminatePwl.max_entries_canon(tmp, tmp@args))
+}
+

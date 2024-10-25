@@ -1,0 +1,19 @@
+## CVXPY SOURCE: cvxpy/reductions/complex2real/canonicalizers/constant_canon.py
+
+#'
+#' Complex canonicalizer for the constant atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param real_args A list of \linkS4class{Constraint} objects for the real part of the expression
+#' @param imag_args A list of \linkS4class{Constraint} objects for the imaginary part of the expression
+#' @param real2imag A list mapping the ID of the real part of a complex expression to the ID of its imaginary part.
+#' @return A canonicalization of a constant atom, where the returned variables are the real component and the imaginary component in the \linkS4class{Constant} atom.
+Complex2Real.constant_canon <- function(expr, real_args, imag_args, real2imag) {
+  if(is_real(expr))
+    return(list(Constant(Re(value(expr))), NULL))
+  else if(is_imag(expr))
+    return(list(NULL, Constant(Im(value(expr)))))
+  else
+    return(list(Constant(Re(value(expr))), Constant(Im(value(expr)))))
+}
+

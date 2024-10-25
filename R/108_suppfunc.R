@@ -1,0 +1,189 @@
+## CVXPY SOURCE: cvxpy/transforms/suppfunc.py
+
+#####################
+#                   #
+# Support Functions #
+#                   #
+#####################
+
+scs_coniclift <- function(x, constraints) {
+  # Return (A, b, K) so that
+  #      {x : x satisfies constraints}
+  # can be written as
+  #      {x : exists y where A @ [x; y] + b in K}.
+  #
+  #  Parameters
+  #  ----------
+  #  x: Variable
+  #  constraints: list of Constraint objects. Each Constraint must be DCP-compatible.
+  #
+  #  Notes
+  #  -----
+  #  This function DOES NOT work when x has attributes, like PSD=TRUE, diag=TRUE,
+  #  symmetric=TRUE, etc...
+
+  # The objective value is only used to make sure that "x" participates in the
+  # problem. So, if constraints is an empty list, then the support function is
+  # the standard support function for R^n.
+  prob <- Problem(Minimize(sum(x)), constraints)
+
+  tmp <- get_problem_data(prob, solver = "SCS")
+  data <- tmp[[1]]
+  chain <- tmp[[2]]
+  invdata <- tmp[[3]]
+  inv <- invdata[length(invdata)-2]
+  x_offset <- inv@var_offsets[as.character(id(x))]
+  x_indices <- seq(x_offset, x_offset + size(x)) + 1
+
+  A <- data$A
+  x_selector <- as.logical(matrix(0, nrow = ncol(A), ncol = 1))
+  x_selector[x_indices] <- TRUE
+  A_x <- A[,x_selector]
+  A_other <- A[,!x_selector]
+  A <- -rbind(A_x, A_other)
+  b <- data$b
+  K <- data$dims
+  return(list(A, b, K))
+}
+
+scs_cone_selectors <- function(K) {
+  # Parse a ConeDims object, as returned from SCS's perform function.
+  #
+  # Return a dictionary which gives row-wise information for the affine operator
+  # returned from SCS's perform function.
+  #
+  # Parameters
+  #   K: ConeDims
+  #
+  # Returns
+  #   selectors: List keyed by strings, which specify cone types. Values are
+  #   R vectors or lists of vectors. The vectors give row indices of the affine
+  #   operator (A, b) returned by SCS's perform function.
+
+  if(K@p3d) {
+    # TODO: Implement this.
+    stop("Unimplemented: SuppFunc doesn't yet support feasible sets represented with power cone constraints")
+  }
+
+  idx <- K@zero + 1
+  nonneg_idxs <- seq(idx, idx + K@nonneg - 1)
+  idx <- idx + K@nonneg
+
+  soc_idxs <- list()
+  for(soc in K@soc) {
+    idxs <- seq(idx, idx + soc - 1)
+    soc_idxs <- c(soc_idxs, list(idxs))
+    idx <- idx + soc
+  }
+
+  psd_idxs <- list()
+  for(psd in K@psd) {
+    veclen <- psd*floor((psd + 1)/2)
+    psd_idxs <- c(psd_idxs, list(seq(idx, idx + veclen - 1)))
+    idx <- idx + veclen
+  }
+
+  expsize <- 3*K@exp
+  exp_idxs <- seq(idx, idx + expsize - 1)
+  selectors <- list(nonneg = nonneg_idxs, exp = exp_idxs, soc = soc_idxs, psd = psd_idxs)
+  return(selectors)
+}
+
+#'
+#' The SuppFunc class
+#'
+#' Given a list of CVXR Constraint objects constraints involving a real CVXR
+#' Variable x, consider the convex set
+#'
+#'
+#'    S = \\{ v : \\text{it's possible to satisfy all } \\texttt{constraints}
+#'                \\text{ when } \\texttt{x.value} = v \\}.
+#'
+#' This object represents the *support function* of :math:`S`.
+#' This is the convex function
+#'
+#'    y \\mapsto \\max\\{ \\langle y, v \\rangle : v \\in S \\}.
+#'
+#' The support function is a fundamental object in convex analysis.
+#' It's extremely useful for expressing dual problems using Fenchel duality.
+#'
+#'  Notes
+#'  -----
+#'  You are allowed to use CVXR Variables other than x to define constraints,
+#'  but the set S only consists of objects (vectors or matrices) with the same
+#'  dimensions as x.
+#'
+#'  It's possible for the support function to take the value +Inf for a fixed
+#'  vector y. This is an important point, and it's one reason why support
+#'  functions are actually formally defined with the supremum sup rather than
+#'  the maximum max.
+#'
+#' @slot x This \linkS4class{Variable} object cannot have any attributes, such as \code{PSD = TRUE}, \code{nonneg = TRUE}, \code{symmetric = TRUE}, etc...
+#' @slot constraints A list of \linkS4class{Constraint}s. Usually, these are constraints over x, and some number of auxiliary CVXR Variables. It is valid to supply \code{constraints = list()}.
+#' @examples
+#' # If h = SuppFunc(x, constraints), then you can use h just like any other
+#' # scalar-valued atom in CVXR. For example, if x was a CVXR Variable with
+#' # ndim(x) == 1, you could do the following:
+#'
+#' z <- Variable(10)
+#' A <- matrix(rnorm(size(x)*10), nrow = size(x), ncol = 10)
+#' c <- matrix(runif(10), nrow = 10, ncol = 1)
+#' objective <- h(A %*% z) - t(c) %*% z
+#' prob <- Problem(Minimize(objective), list())
+#' result <- solve(prob)
+#' @name SuppFunc-class
+#' @aliases SuppFunc
+#' @rdname SuppFunc-class
+SuppFunc <- setClass("SuppFunc", representation(x = "Variable", constraints = "list", A = "numeric", b = "numeric", K_sels = "numeric"),
+                                 prototype(A = NA_real_, b = NA_real_, K_sels = NA_real_))
+
+setMethod("initialize", "SuppFunc", function(.Object, x, constraints, A = NA_real_, b = NA_real_, K_sels = NA_real_) {
+  if(!is(x, "Variable"))
+    stop("The first argument must be an unmodified CVXR Variable object")
+  if(any(sapply(CONVEX_ATTRIBUTES, function(attr) { x@attributes[[attr]] })))
+    stop("The first argument cannot have any declared attributes")
+  for(con in constraints) {
+    con_params <- parameters(con)
+    if(length(con_params) > 0)
+      stop("Convex sets described with Parameter objects are not allowed")
+  }
+
+  .Object@x <- x
+  .Object@constraints <- constraints
+  .Object@A <- NA_real_
+  .Object@b <- NA_real_
+  .Object@K_sels <- NA_real_
+  .Object <- .compute_conic_repr_of_set(.Object)
+  return(.Object)
+})
+
+# TODO: Is a callable S4 object possible to create? E.g., f = SuppFunc(x, cons); f() --> call.
+## NARAS note to Anqi: Yes, indeed, just wrap a function() around it and return the function! See change made below.
+call.SuppFunc <- function(object, y) {
+  ## sigma_at_y <- SuppFuncAtom(y, object) ## Commented out as this would invoke the function at this point
+  sigma_at_y <- function() SuppFuncAtom(y, object)
+  return(sigma_at_y)  #sigma_at_y is a callable function sigma_at_y()
+}
+
+.compute_conic_repr_of_set <- function(object) {
+  if(length(object@constraints) == 0) {
+    dummy <- Variable()
+    constrs <- list(dummy == 1)
+  } else
+    constrs <- object@constraints
+
+  Abk <- scs_coniclift(object@x, constrs)
+  A <- Abk[[1]]
+  b <- Abk[[2]]
+  k <- Abk[[3]]
+  K_sels <- scs_cone_selectors(K)
+
+  object@A <- A
+  object@b <- b
+  object@K_sels <- K_sels
+  return(object)
+}
+
+conic_repr_of_set.SuppFunc <- function(object) {
+  return(list(object@A, object@b, object@K_sels))
+}

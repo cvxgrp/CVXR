@@ -1,0 +1,19 @@
+## CVXPY SOURCE: cvxpy/reductions/dgp2dcp/atom_canonicalizers/quad_form_canon.py
+#'
+#' Dgp2Dcp canonicalizer for the quadratic form atom
+#'
+#' @param expr An \linkS4class{Expression} object
+#' @param args A list of values for the expr variable
+#' @return A canonicalization of the quadratic form atom of a DGP expression,
+#' where the returned expression is the transformed DCP equivalent.
+Dgp2Dcp.quad_form_canon <- function(expr, args) {
+  x <- args[[1]]
+  P <- args[[2]]
+  elems <- list()
+  for(i in seq_len(nrow(P))) {
+    for(j in seq_len(nrow(P)))
+      elems <- c(elems, list(P[i,j] + x[i] + x[j]))
+  }
+  return(list(log_sum_exp(do.call("HStack", elems)), list()))
+}
+

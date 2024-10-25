@@ -1,0 +1,122 @@
+## CVXPY SOURCE: cvxpy/utilities/shape.py
+####################################
+#                                  #
+# Utility functions for dimensions #
+#                                  #
+####################################
+squeezed <- function(dim) {
+  return(dim[dim != 1])
+}
+
+sum_dims <- function(dims) {
+  # Give the dimensions resulting from summing a list of dimensions.
+  if(is.null(dims) || length(dims) == 0)
+    return(NULL)   # Should I return NULL or 0 for scalars?
+  else if(length(dims) == 1)
+    return(dims[[1]])
+
+  dim <- dims[[1]]
+  for(t in dims[2:length(dims)]) {
+    # Only allow broadcasting for 0-D arrays or summation of scalars.
+    if(!(length(dim) == length(t) && all(dim == t)) && length(squeezed(dim)) != 0 && length(squeezed(t)) != 0)
+      stop("Cannot broadcast dimensions")
+
+    if(length(dim) >= length(t))
+      longer <- dim
+    else
+      longer <- t
+
+    if(length(dim) < length(t))
+      shorter <- dim
+    else
+      shorter <- t
+
+    offset <- length(longer) - length(shorter)
+    if(offset == 0)
+      prefix <- c()
+    else
+      prefix <- longer[1:offset]
+    suffix <- c()
+
+    if(length(shorter) > 0) {
+      for(idx in length(shorter):1) {
+        d1 <- longer[offset + idx]
+        d2 <- shorter[idx]
+        if(d1 != d2 && !(d1 == 1 || d2 == 1))
+          stop("Incompatible dimensions")
+        if(d1 >= d2)
+          new_dim <- d1
+        else
+          new_dim <- d2
+        suffix <- c(new_dim, suffix)
+      }
+    }
+    dim <- c(prefix, suffix)
+  }
+  return(dim)
+}
+
+mul_dims_promote <- function(lh_dim, rh_dim) {
+  # Promotes dims as necessary and returns promoted dim of product.
+  # If lh_dim is of length one, prepend a one to it.
+  # If rh_dim is of length one, append a one to it.
+
+  if(is.null(lh_dim) || is.null(rh_dim) || length(lh_dim) == 0 || length(rh_dim) == 0)
+    stop("Multiplication by scalars is not permitted")
+
+  if(length(lh_dim) == 1)
+    lh_dim <- c(1, lh_dim)
+  if(length(rh_dim) == 1)
+    rh_dim <- c(rh_dim, 1)
+
+  lh_mat_dim <- lh_dim[(length(lh_dim)-1):length(lh_dim)]
+  rh_mat_dim <- rh_dim[(length(rh_dim)-1):length(rh_dim)]
+
+  if(length(lh_dim) > 2)
+    lh_head <- lh_dim[1:(length(lh_dim)-2)]
+  else
+    lh_head <- c()
+  if(length(rh_dim) > 2)
+    rh_head <- rh_dim[1:(length(rh_dim)-2)]
+  else
+    rh_head <- c()
+
+  # if(lh_mat_dim[2] != rh_mat_dim[1] || !(length(lh_head) == length(rh_head) && all(lh_head == rh_head)))
+  if(lh_mat_dim[2] != rh_mat_dim[1] || !identical(lh_head, rh_head))
+    stop("Incompatible dimensions")
+  list(lh_dim, rh_dim, c(lh_head, lh_mat_dim[1], rh_mat_dim[2]))
+}
+
+mul_dims <- function(lh_dim, rh_dim) {
+  # Give the dim resulting from multiplying two dims.
+  lh_old <- lh_dim
+  rh_old <- rh_dim
+
+  promoted <- mul_dims_promote(lh_dim, rh_dim)
+  lh_dim <- promoted[[1]]
+  rh_dim <- promoted[[2]]
+  dim <- promoted[[3]]
+
+  # if(!(length(lh_dim) == length(lh_old) && all(lh_dim == lh_old)))
+  if(!identical(lh_dim, lh_old)) {
+    if(length(dim) <= 1)
+      dim <- c()
+    else
+      dim <- dim[2:length(dim)]
+  }
+  # if(!(length(rh_dim) == length(rh_old) && all(rh_dim == rh_old)))
+  if(!identical(rh_dim, rh_old)) {
+    if(length(dim) <= 1)
+      dim <- c()
+    else
+      dim <- dim[1:(length(dim)-1)]
+  }
+  return(dim)
+}
+
+size_from_dim <- function(dim) {
+  # Compute the size of a given shape by multiplying the sizes of each axis.
+  # This is a replacement for as.integer(prod(dim)), which is much slower for
+  # small arrays than the implementation below.
+  return(Reduce("*", dim, 1))
+}

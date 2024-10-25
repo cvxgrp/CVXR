@@ -1,0 +1,192 @@
+## CVXPY SOURCE: cvxpy/reductions/solvers/conic_solvers/cbc_conif.py
+
+#' An interface to the CBC solver
+#'
+#' @name CBC_CONIC-class
+#' @aliases CBC_CONIC
+#' @rdname CBC_CONIC-class
+#' @export
+setClass("CBC_CONIC",
+         prototype = list(MIP_CAPABLE = TRUE,
+                          SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver()),
+                          MI_SUPPORTED_CONSTRAINTS = supported_constraints(ConicSolver())),
+         contains = "SCS")
+
+#' @rdname CBC_CONIC-class
+#' @export
+CBC_CONIC <- function() { new("CBC_CONIC") }
+
+#' @param solver,object,x A \linkS4class{CBC_CONIC} object.
+#' @param status A status code returned by the solver.
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status.
+setMethod("status_map", "CBC_CONIC", function(solver, status) {
+  if(status$is_proven_optimal)
+    OPTIMAL
+  else if(status$is_proven_dual_infeasible || status$is_proven_infeasible)
+    INFEASIBLE
+  else
+    SOLVER_ERROR # probably need to check this the most
+})
+
+# Map of CBC_CONIC MIP/LP status to CVXR status.
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status for mixed integer problems.
+setMethod("status_map_mip", "CBC_CONIC", function(solver, status) {
+  if(status == "solution")
+    OPTIMAL
+  else if(status == "relaxation_infeasible")
+    INFEASIBLE
+  else if(status == "stopped_on_user_event")
+    SOLVER_ERROR
+  else
+    stop("CBC_CONIC MIP status unrecognized: ", status)
+})
+
+#' @describeIn CBC_CONIC Converts status returned by the CBC solver to its respective CVXPY status for linear problems.
+setMethod("status_map_lp", "CBC_CONIC", function(solver, status) {
+  if(status == "optimal")
+    OPTIMAL
+  else if(status == "primal_infeasible")
+    INFEASIBLE
+  else if(status == "stopped_due_to_errors" || status == "stopped_by_event_handler")
+    SOLVER_ERROR
+  else
+    stop("CBC_CONIC LP status unrecognized: ", status)
+})
+
+#' @describeIn CBC_CONIC Returns the name of the solver
+setMethod("name", "CBC_CONIC", function(x) { CBC_NAME })
+
+#' @describeIn CBC_CONIC Imports the solver
+setMethod("import_solver", "CBC_CONIC", function(solver) {
+    requireNamespace("rcbc", quietly = TRUE)
+})
+
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn CBC_CONIC Can CBC_CONIC solve the problem?
+setMethod("accepts", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
+  # Can CBC_CONIC solve the problem?
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!inherits(constr, supported_constraints(object)))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+#' @describeIn CBC_CONIC Returns a new problem and data for inverting the new solution.
+setMethod("perform", signature(object = "CBC_CONIC", problem = "Problem"), function(object, problem) {
+  tmp <- callNextMethod(object, problem)
+  object <- tmp[[1]]
+  data <- tmp[[2]]
+  inv_data <- tmp[[3]]
+  variables <- variables(problem)[[1]]
+  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+  return(list(object, data, inv_data))
+})
+
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
+#' @describeIn CBC_CONIC Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "CBC_CONIC", solution = "list", inverse_data = "list"),  function(object, solution, inverse_data) {
+  solution <- solution[[1]]
+  status <- status_map(object, solution)
+
+  primal_vars <- list()
+  dual_vars <- list()
+  if(status %in% SOLUTION_PRESENT) {
+    opt_val <- solution$objective_value
+    primal_vars[[object@var_id]] <- solution$column_solution
+  } else {
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA_real_
+  }
+
+  return(Solution(status, opt_val, primal_vars, dual_vars, list()))
+})
+
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance.
+#' @param reltol The relative tolerance.
+#' @param abstol The absolute tolerance.
+#' @param num_iter The maximum number of iterations.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CBC_CONIC Solve a problem represented by data returned from apply.
+setMethod("solve_via_data", "CBC_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol, num_iter, solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
+  cvar <- data$c
+  b <- data$b
+  ## Conversion below forced by changes in Matrix package version 1.3.x
+  A <- as(as(data$A, "CsparseMatrix"), "dgTMatrix")
+  dims <- SCS.dims_to_solver_dict(data$dims)
+
+  if(is.null(dim(data$c))){
+    n <- length(cvar) # Should dim be used here?
+  } else {
+    n <- dim(cvar)[1]
+  }
+
+  # Initialize variable constraints
+  var_lb <- rep(-Inf, n)
+  var_ub <- rep(Inf, n)
+  is_integer <- rep.int(FALSE, n)
+  row_ub <- rep(Inf, nrow(A))
+  row_lb <- rep(-Inf, nrow(A))
+
+  #Setting equality constraints
+  if(dims[[EQ_DIM]] > 0){
+    row_ub[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
+    row_lb[1:dims[[EQ_DIM]]] <- b[1:dims[[EQ_DIM]]]
+  }
+
+  #Setting inequality constraints
+  leq_start <- dims[[EQ_DIM]]
+  leq_end <- dims[[EQ_DIM]] + dims[[LEQ_DIM]]
+  if(leq_start != leq_end){
+    row_ub[(leq_start+1):(leq_end)] <- b[(leq_start+1):(leq_end)]
+  }
+
+  # Make boolean constraints
+  if(length(data$bool_vars_idx) > 0){
+    var_lb[unlist(data$bool_vars_idx)] <- 0
+    var_ub[unlist(data$bool_vars_idx)] <- 1
+    is_integer[unlist(data$bool_vars_idx)] <- TRUE
+  }
+
+  if(length(data$int_vars_idx) > 0) {
+    is_integer[unlist(data$int_vars_idx)] <- TRUE
+  }
+
+  #Warnigs for including parameters
+  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol), is.null(num_iter)))) {
+    warning("Ignoring inapplicable parameter feastol/reltol/abstol for CBC.")
+  }
+
+  result <- rcbc::cbc_solve(
+    obj = cvar,
+    mat = A,
+    row_ub = row_ub,
+    row_lb = row_lb,
+    col_lb = var_lb,
+    col_ub = var_ub,
+    is_integer = is_integer,
+    max = FALSE,
+    cbc_args = solver_opts
+  )
+
+  return(list(result))
+})

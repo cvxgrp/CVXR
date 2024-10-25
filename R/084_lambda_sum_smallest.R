@@ -1,0 +1,14 @@
+## CVXPY SOURCE: cvxpy/atoms/lambda_sum_smallest.py
+#'
+#' The LambdaSumSmallest atom.
+#'
+#' This class represents the sum of the \code{k} smallest eigenvalues of a matrix.
+#'
+#' @param A An \linkS4class{Expression} or numeric matrix.
+#' @param k A positive integer.
+#' @return Returns the sum of the k smallest eigenvalues of a matrix.
+LambdaSumSmallest <- function(A, k) {
+  A <- as.Constant(A)
+  -LambdaSumLargest(-A, k)
+}
+

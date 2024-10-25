@@ -1,0 +1,79 @@
+## CVXPY SOURCE: cvxpy/utilities/replace_quad_forms.py
+
+###########################
+#                         #
+# Replace quadratic forms #
+#                         #
+###########################
+
+# These functions are used to handle both S4 class and list inputs to the
+# utility functions for replacing quadratic forms (necessary in e.g. coeff_quad_form).
+# TODO: Change LinOp representation from list to S4 class so we can get rid of
+# these extra checks.
+get_obj_slot <- function(obj, name) {
+  if(is.list(obj))
+    return(obj[[name]])
+  else
+    return(slot(obj, name))
+}
+
+set_obj_slot <- function(obj, name, idx, val) {
+  if(is.list(obj))
+    obj[[name]][[idx]] <- val
+  else
+    slot(obj, name)[[idx]] <- val
+  return(obj)
+}
+
+
+replace_quad_forms <- function(expr, quad_forms) {
+  # for(idx in seq_along(expr@args)) {
+  #   arg <- expr@args[[idx]]
+  for(idx in seq_along(get_obj_slot(expr, "args"))) {
+    arg <- get_obj_slot(expr, "args")[[idx]]
+    if(is(arg, "SymbolicQuadForm") || is(arg, "QuadForm")) {
+      tmp <- replace_quad_form(expr, idx, quad_forms)
+      expr <- tmp[[1]]
+      quad_forms <- tmp[[2]]
+    } else {
+      tmp <- replace_quad_forms(arg, quad_forms)
+      # arg <- tmp[[1]]
+      # TODO: Check this is modifying args correctly and doesn't impede restore_quad_forms.
+      expr <- set_obj_slot(expr, "args", idx, tmp[[1]])
+      quad_forms <- tmp[[2]]
+    }
+  }
+  return(list(expr, quad_forms))
+}
+
+replace_quad_form <- function(expr, idx, quad_forms) {
+  # quad_form <- expr@args[[idx]]
+  quad_form <- get_obj_slot(expr, "args")[[idx]]
+  # placeholder <- do.call("Variable", nrow = nrow(quad_form), ncol = ncol(quad_form), var_id = id(quad_form))
+  placeholder <- new("Variable", dim = dim(quad_form), id = id(quad_form))
+  # expr@args[[idx]] <- placeholder
+  expr <- set_obj_slot(expr, "args", idx, placeholder)
+  placeholder_id_char <- as.character(id(placeholder))
+  quad_forms[[placeholder_id_char]] <- list(expr, idx, quad_form)
+  return(list(expr, quad_forms))
+}
+
+restore_quad_forms <- function(expr, quad_forms) {
+  # TODO: Check recursion is handled correctly by returning expr. (CVXPY modifies expr@args in place).
+  # for(idx in seq_along(expr@args)) {
+  #   arg <- expr@args[[idx]]
+  for(idx in seq_along(get_obj_slot(expr, "args"))) {
+    arg <- get_obj_slot(expr, "args")
+    arg_id_char <- as.character(id(arg))
+    if(is(arg, "Variable") && arg_id_char %in% names(quad_forms)) {
+      # expr@args[[idx]] <- quad_forms[[arg_id_char]][[3]]
+      expr <- set_obj_slot(expr, "args", idx, quad_forms[[arg_id_char]][[3]])
+    } else {
+      # restore_quad_forms(arg, quad_forms)
+      # expr@args[[idx]] <- restore_quad_forms(arg, quad_forms)
+      expr <- set_obj_slot(expr, "args", idx, restore_quad_forms(arg, quad_forms))
+    }
+  }
+  return(expr)
+}
+

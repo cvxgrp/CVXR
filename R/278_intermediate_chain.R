@@ -1,0 +1,54 @@
+
+#'
+#' Construct Intermediate Chain
+#'
+#' Builds a chain that rewrites a problem into an intermediate representation suitable for numeric reductions.
+#'
+#' @param problem The problem for which to build a chain.
+#' @param candidates A list of candidate solvers.
+#' @param gp A logical value indicating whether the problem is a geometric program.
+#' @return A \linkS4class{Chain} object that can be used to convert the problem to an intermediate form.
+setMethod("construct_intermediate_chain", signature(problem = "Problem", candidates = "list"), function(problem, candidates, gp = FALSE) {
+  reductions <- list()
+  if(length(variables(problem)) == 0)
+    return(Chain(reductions = reductions))
+
+  # TODO: Handle boolean constraints.
+  if(Complex2Real.accepts(problem))
+    reductions <- c(reductions, Complex2Real())
+  if(gp)
+    reductions <- c(reductions, Dgp2Dcp())
+
+  if(!gp && !is_dcp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DCP")
+    if(is_dgp(problem))
+      append <- paste(append, "However, the problem does follow DGP rules. Consider calling solve() with gp = TRUE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop(paste("Problem does not follow DCP rules. Specifically:", append, sep = "\n"))
+  } else if(gp && !is_dgp(problem)) {
+    append <- build_non_disciplined_error_msg(problem, "DGP")
+    if(is_dcp(problem))
+      append <- paste(append, "However, the problem does follow DCP rules. Consider calling solve with gp = FALSE", sep = "\n")
+    else if(is_dqcp(problem))
+      append <- paste(append, "However, the problem does follow DQCP rules. Consider calling solve() with qcp = TRUE", sep = "\n")
+    stop(paste("Problem does not follow DGP rules.", append))
+  }
+
+  # Dcp2Cone and Qp2SymbolicQp require problems to minimize their objectives.
+  if(inherits(problem@objective, "Maximize"))
+    reductions <- c(reductions, FlipObjective())
+
+  # First, attempt to canonicalize the problem to a linearly constrained QP.
+  if(length(candidates$qp_solvers) > 0 && Qp2SymbolicQp.accepts(problem)) {
+    reductions <- c(reductions, list(CvxAttr2Constr(), Qp2SymbolicQp()))
+    return(Chain(reductions = reductions))
+  }
+
+  # Canonicalize it to conic problem.
+  if(length(candidates$conic_solvers) == 0)
+    stop("Problem could not be reduced to a QP, and no conic solvers exist among candidate solvers")
+  reductions <- c(reductions, list(Dcp2Cone(), CvxAttr2Constr()))
+  return(Chain(reductions = reductions))
+})
+

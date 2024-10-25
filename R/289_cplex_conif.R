@@ -1,0 +1,280 @@
+## CVXPY SOURCE: cvxpy/reductions/solvers/conic_solvers/cplex_conif.py
+#' An interface for the CPLEX solver
+#'
+#' @name CPLEX_CONIC-class
+#' @aliases CPLEX_CONIC
+#' @rdname CPLEX_CONIC-class
+#' @export
+CPLEX_CONIC <- setClass("CPLEX_CONIC",
+                        prototype = list(MIP_CAPABLE = TRUE,
+                                         SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC"),
+                                         MI_SUPPORTED_CONSTRAINTS = c(supported_constraints(ConicSolver()), "SOC")),
+                        contains = "SCS")
+
+#' @rdname CPLEX_CONIC-class
+#' @export
+CPLEX_CONIC <- function() { new("CPLEX_CONIC") }
+
+#' @param solver,object,x A \linkS4class{CPLEX_CONIC} object.
+#' @describeIn CPLEX_CONIC Returns the name of the solver.
+setMethod("name", "CPLEX_CONIC", function(x) { CPLEX_NAME })
+
+#' @describeIn CPLEX_CONIC Imports the solver.
+setMethod("import_solver", "CPLEX_CONIC", function(solver) { requireNamespace("Rcplex", quietly = TRUE) })
+
+#' @param problem A \linkS4class{Problem} object.
+#' @describeIn CPLEX_CONIC Can CPLEX solve the problem?
+setMethod("accepts", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
+  # Can CPLEX solve the problem?
+  # TODO: Check if the matrix is stuffed.
+  if(!is_affine(problem@objective@args[[1]]))
+    return(FALSE)
+  for(constr in problem@constraints) {
+    if(!inherits(constr, supported_constraints(object)))
+      return(FALSE)
+    for(arg in constr@args) {
+      if(!is_affine(arg))
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+})
+
+# Map of CPLEX status to CVXR status.
+# TODO: Add more!
+#' @param status A status code returned by the solver.
+#' @describeIn CPLEX_CONIC Converts status returned by the CPLEX solver to its respective CVXPY status.
+setMethod("status_map", "CPLEX_CONIC", function(solver, status) {
+  if(status %in% c(1, 101, 102)){
+    OPTIMAL
+  } else if(status %in% c(3, 22, 4, 103)){
+    INFEASIBLE
+  } else if(status %in% c(2, 21, 118)){
+    UNBOUNDED
+  } else if(status %in% c(10, 107)){
+    USER_LIMIT
+  } else
+    stop("CPLEX status unrecognized: ", status)
+})
+
+#' @describeIn CPLEX_CONIC Returns a new problem and data for inverting the new solution.
+setMethod("perform", signature(object = "CPLEX_CONIC", problem = "Problem"), function(object, problem) {
+  #COPIED OVER FROM SCS CONIC, which is what CVXPY does (except they superclass it to a class w the same method)
+
+  # Returns a new problem and data for inverting the new solution.
+  data <- list()
+  inv_data <- list()
+  inv_data[[object@var_id]] <- id(variables(problem)[[1]])
+
+  # Parse the coefficient vector from the objective.
+  offsets <- ConicSolver.get_coeff_offset(problem@objective@args[[1]])
+  data[[C_KEY]] <- offsets[[1]]
+  data[[OFFSET]] <- offsets[[2]]
+  data[[C_KEY]] <- as.vector(data[[C_KEY]])
+  inv_data[[OFFSET]] <- data[[OFFSET]][1]
+
+  # Order and group nonlinear constraints.
+  constr_map <- group_constraints(problem@constraints)
+  data[[ConicSolver()@dims]] <- ConeDims(constr_map)
+  inv_data[[ConicSolver()@dims]] <- data[[ConicSolver()@dims]]
+
+  # SCS requires constraints to be specified in the following order:
+  # 1) Zero cone.
+  # 2) Non-negative orthant.
+  # 3) SOC.
+  # 4) PSD.
+  # 5) Exponential.
+  zero_constr <- constr_map$ZeroConstraint
+  neq_constr <- c(constr_map$NonPosConstraint, constr_map$SOC, constr_map$PSDConstraint, constr_map$ExpCone)
+  inv_data[[object@eq_constr]] <- zero_constr
+  inv_data[[object@neq_constr]] <- neq_constr
+  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+
+  # Obtain A, b such that Ax + s = b, s \in cones.
+  # Note that SCS mandates that the cones MUST be ordered with
+  # zero cones first, then non-negative orthant, then SOC, then
+  # PSD, then exponential.
+  offsets <- group_coeff_offset(object, problem, c(zero_constr, neq_constr), object@exp_cone_order)
+  data[[A_KEY]] <- offsets[[1]]
+  data[[B_KEY]] <- offsets[[2]]
+
+  # Include Boolean and Integer indices
+  variables <- variables(problem)[[1]]
+  data[[BOOL_IDX]] <- lapply(variables@boolean_idx, function(t) { t[1] })
+  data[[INT_IDX]] <- lapply(variables@integer_idx, function(t) { t[1] })
+  inv_data$is_mip <- length(data[[BOOL_IDX]]) > 0 || length(data[[INT_IDX]]) > 0
+
+  return(list(object, data, inv_data))
+})
+
+#' @param solution The raw solution returned by the solver.
+#' @param inverse_data A list containing data necessary for the inversion.
+#' @describeIn CPLEX_CONIC Returns the solution to the original problem given the inverse_data.
+setMethod("invert", signature(object = "CPLEX_CONIC", solution = "list", inverse_data = "list"), function(object, solution, inverse_data) {
+  # Returns the solution to the original problem given the inverse_data.
+  model <- solution$model
+
+  status <- status_map(object, model$status)
+  primal_vars <- list()
+  dual_vars <- list()
+
+  if(status %in% SOLUTION_PRESENT) {
+    #Get objective value
+    opt_val <- model$obj + inverse_data[[OFFSET]]
+
+    #Get solution
+    primal_vars[[as.character(inverse_data[[object@var_id]])]] <- model$xopt
+
+    #Only add duals if not a MIP
+    if(!inverse_data[["is_mip"]]) {
+      #eq and leq constraints all returned at once by CPLEX
+      eq_dual <- get_dual_values(solution$eq_dual, extract_dual_value, inverse_data[[object@eq_constr]])
+      leq_dual <- get_dual_values(solution$ineq_dual, extract_dual_value, inverse_data[[object@neq_constr]])
+      eq_dual <- utils::modifyList(eq_dual, leq_dual)
+      #dual_vars <- get_dual_values(solution$y, extract_dual_value, inverse_data[[object@neq_constr]])
+      dual_vars <- eq_dual
+
+    }
+  } else {
+    primal_vars[[as.character(inverse_data[[object@var_id]])]] <- NA_real_
+    if(!inverse_data[["is_mip"]]) {
+      dual_var_ids <- sapply(c(inverse_data[[object@eq_constr]], inverse_data[[object@neq_constr]]), function(constr) { constr@id })
+      dual_vars <- as.list(rep(NA_real_, length(dual_var_ids)))
+      names(dual_vars) <- dual_var_ids
+    }
+
+    if(status == INFEASIBLE)
+      opt_val <- Inf
+    else if(status == UNBOUNDED)
+      opt_val <- -Inf
+    else
+      opt_val <- NA_real_
+
+  }
+
+  return(Solution(status, opt_val, primal_vars, dual_vars, list()))
+})
+
+#' @param data Data generated via an apply call.
+#' @param warm_start A boolean of whether to warm start the solver.
+#' @param verbose A boolean of whether to enable solver verbosity.
+#' @param feastol The feasible tolerance on the primal and dual residual.
+#' @param reltol The relative tolerance on the duality gap.
+#' @param abstol The absolute tolerance on the duality gap.
+#' @param num_iter The maximum number of iterations.
+#' @param solver_opts A list of Solver specific options
+#' @param solver_cache Cache for the solver.
+#' @describeIn CPLEX_CONIC Solve a problem represented by data returned from apply.
+setMethod("solve_via_data", "CPLEX_CONIC", function(object, data, warm_start, verbose, feastol, reltol, abstol,
+                                                    num_iter,
+                                                    solver_opts, solver_cache) {
+  if (missing(solver_cache)) solver_cache <- new.env(parent=emptyenv())
+  cvar <- data[[C_KEY]]
+  bvec <- data[[B_KEY]]
+  Amat <- data[[A_KEY]]
+  dims <- data[[DIMS]]
+
+  total_soc <- sum(unlist(dims@soc))
+  n_var <- length(cvar)
+  cvar <- c(cvar, rep(0, total_soc))
+
+  #Initializing variable types
+  vtype <- rep("C", n_var + total_soc)
+
+  #Setting Boolean variable types
+  for(i in seq_along(data[BOOL_IDX]$bool_vars_idx)){
+    vtype[data[BOOL_IDX]$bool_vars_idx[[i]]] <- "B"
+  }
+  #Setting Integer variable types
+  for(i in seq_along(data[INT_IDX]$int_vars_idx)){
+    vtype[data[BOOL_IDX]$int_vars_idx[[i]]] <- "I"
+  }
+
+  #Setting sense of the A matrix
+  sense_vec <- rep("E", nrow(Amat))
+
+  #Add inequalities
+  leq_start <- dims@zero
+  leq_end <- dims@zero + dims@nonpos
+
+  for(j in leq_start:leq_end){
+    sense_vec[j + 1] <- "L"
+  }
+
+  #Setting Lower bounds of variables
+  lb <- rep(-Inf, n_var + total_soc)
+
+  qc <- list()
+
+  soc_start <- leq_start + dims@nonpos
+  current_var <- n_var
+
+  for(i in seq_along(dims@soc)){
+    for(j in 1:dims@soc[[i]]){
+      sense_vec[soc_start + dims@soc[[i]][j]] <- "E"
+      if(j == 1){
+        lb[current_var + j] <- 0 #The first variable of every SOC has a 0 lower bound
+      }
+    }
+
+    #Add SOC vars to linear constraints
+    n_soc <- dims@soc[[i]]
+    Asub <- matrix(0, nrow = nrow(Amat), ncol = n_soc)
+    Asub[(soc_start+1):(soc_start + n_soc),] <- diag(rep(1, n_soc))
+    Amat <- cbind(Amat, Asub)
+
+    #Add quadratic constraints
+    qc_mat <- matrix(0, nrow = n_var + total_soc, ncol = n_var + total_soc)
+    qc_mat[current_var + 1, current_var + 1] <- -1
+    for(k in 1:(n_soc-1)){
+      qc_mat[current_var + 1 + k, current_var + 1 + k] <- 1
+    }
+    qc[[i]] <- qc_mat
+
+    soc_start <- soc_start + n_soc
+    current_var <- current_var + n_soc
+  }
+
+  QC <- list(QC = list(Q = qc), dir = rep("L", length(dims@soc)) , b = rep(0.0, length(dims@soc)))
+
+  ## Throw parameter warnings
+  if(!all(c(is.null(feastol), is.null(reltol), is.null(abstol)))) {
+    warning("Ignoring inapplicable parameter feastol/reltol/abstol for CPLEX.")
+  }
+
+  if(is.null(num_iter)) {
+      num_iter <- SOLVER_DEFAULT_PARAM$CPLEX$itlim
+  }
+
+  #Setting verbosity off
+  control <- list(trace = verbose, itlim = num_iter)
+
+  #Setting rest of the parameters
+  control[names(solver_opts)] <- solver_opts
+
+  # Solve problem.
+  results_dict <- list()
+
+  tryCatch({
+    # Define CPLEX problem and solve
+    model <- Rcplex::Rcplex_solve_QCP(cvec=cvar, Amat=Amat, bvec=bvec, QC=QC, lb=lb, ub=Inf,
+                                      sense=sense_vec, objsense="min", vtype=vtype, control=control)
+  }, error = function(e) {
+    results_dict$status <- SOLVER_ERROR
+  })
+
+  #Changing dualvar to include SOC
+  y <- model$extra$lambda
+  soc_start <- leq_start + dims@nonpos
+  for(i in seq_along(dims@soc)){
+    y <- append(y, 0, soc_start)
+    soc_start <- soc_start + dims@soc[[i]] + 1
+  }
+  results_dict$y <- -y
+  results_dict$model <- model
+  results_dict$eq_dual <- results_dict$y[1:dims@zero]
+  results_dict$ineq_dual <- results_dict$y[-(1:dims@zero)]
+
+  return(results_dict)
+
+})

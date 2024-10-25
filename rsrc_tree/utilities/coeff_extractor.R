@@ -1,6 +1,7 @@
 ## CVXPY SOURCE: cvxpy/utilities/coef_extractor.py
 
 # TODO: Find best format for sparse matrices.
+#' A coefficient matrix extractor from InverseData
 .CoeffExtractor <- setClass("CoeffExtractor", representation(inverse_data = "InverseData", canon_backend = "character", id_map = "list", x_length = "numeric", var_dims = "list", param_dims = "list", param_to_size = "list", param_id_map = "list"),
                                               prototype(canon_backend = NA_character_, id_map = list(), x_length = NA_real_, var_dims = list(), param_dims = list(), param_to_size = list(), param_id_map = list()))
 

@@ -1,0 +1,50 @@
+## This file copies the R source files from `CVXR/rsrc_tree` to the `CVXR/R` directory so that
+## they get collated in the correct order
+##
+
+pkg_dir <- here::here()
+
+## files1 <- c(
+##   'rsrc_tree/zzz_R_specific/CVXR-package.R',
+##   'rsrc_tree/zzz_R_specific/data.R',
+##   'rsrc_tree/zzz_R_specific/globals.R',
+##   'rsrc_tree/zzz_R_specific/generics.R',
+##   'rsrc_tree/zzz_R_specific/set_class_unions.R',
+##   'rsrc_tree/zzz_R_specific/set_old_class.R',
+##   'rsrc_tree/zzz_R_specific/utility.R'
+## )
+
+## dirs <- c(
+##   'rsrc_tree/expressions',                                        
+##   'rsrc_tree/atoms',
+##   'rsrc_tree/interface',
+##   'rsrc_tree/utilities',
+##   'rsrc_tree/lin_ops',
+##   'rsrc_tree/transforms',
+##   'rsrc_tree/problems',
+##   'rsrc_tree/constraints',
+##   'rsrc_tree/reductions'
+## )
+
+
+## files2 <- c(
+##   'rsrc_tree/settings.R',
+##   'rsrc_tree/zzz_R_specific/exports.R',
+##   'rsrc_tree/zzz_R_specific/coll_utils.R',
+##   'rsrc_tree/zzz_R_specific/rcppUtils.R',
+##   'rsrc_tree/zzz_R_specific/sparse_utils.R'
+## )
+
+## all_files <- c(
+##   files1,
+##   unlist(lapply(dirs, fs::dir_ls, type = "file", recurse = TRUE)),
+##   files2
+## )
+## readr::write_csv(tibble::tibble(file=all_files), "inst/all_files.csv")
+
+all_files <- readr::read_csv(file = file.path(pkg_dir, "inst/all_files.csv"))$file
+names(all_files) <- sprintf("%03d_%s", seq_along(all_files), basename(all_files))
+fs::dir_delete(file.path(pkg_dir, "R"))
+fs::dir_create(file.path(pkg_dir, "R"))
+fs::file_copy(file.path(pkg_dir, all_files), file.path(pkg_dir, "R", names(all_files)))
+

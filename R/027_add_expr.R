@@ -1,0 +1,88 @@
+## CVXPY SOURCE: cvxpy/atoms/affine/add_expr.py
+#'
+#' The AddExpression class.
+#'
+#' This class represents the sum of any number of expressions.
+#'
+#' @slot arg_groups A \code{list} of \linkS4class{Expression}s and numeric data.frame, matrix, or vector objects.
+#' @name AddExpression-class
+#' @aliases AddExpression
+#' @rdname AddExpression-class
+.AddExpression <- setClass("AddExpression", representation(arg_groups = "list"), prototype(arg_groups = list()), contains = "AffAtom")
+AddExpression <- function(arg_groups = list()) { .AddExpression(arg_groups = arg_groups) }
+
+setMethod("initialize", "AddExpression", function(.Object, ..., arg_groups = list()) {
+  .Object@arg_groups <- arg_groups
+  .Object <- callNextMethod(.Object, ..., atom_args = arg_groups)   # Casts R values to Constant objects
+  .Object@args <- lapply(.Object@args, function(group) { if(is(group,"AddExpression")) group@args else group })
+  .Object@args <- flatten_list(.Object@args)   # Need to flatten list of expressions
+  .Object
+})
+
+#' @param x,object An \linkS4class{AddExpression} object.
+#' @describeIn AddExpression The dimensions of the expression.
+setMethod("dim_from_args", "AddExpression", function(object) { sum_dims(lapply(object@args, dim)) })
+
+setMethod("expand_args", "AddExpression", function(expr) { 
+  if(is(expr, "AddExpression"))
+    return(expr@args)
+  else
+    return(list(expr))
+})
+
+#' @describeIn AddExpression The string form of the expression.
+setMethod("name", "AddExpression", function(x) {
+  paste(sapply(x@args, name), collapse = " + ")
+})
+
+#' @param values A list of arguments to the atom.
+#' @describeIn AddExpression Sum all the values.
+setMethod("to_numeric", "AddExpression", function(object, values) {
+  values <- lapply(values, intf_convert_if_scalar)
+  Reduce("+", values)
+})
+
+#' @describeIn AddExpression Is the atom log-log convex?
+setMethod("is_atom_log_log_convex", "AddExpression", function(object) { TRUE })
+
+#' @describeIn AddExpression Is the atom log-log convex?
+setMethod("is_atom_log_log_concave", "AddExpression", function(object) { FALSE })
+
+#' @describeIn AddExpression Is the atom symmetric?
+setMethod("is_symmetric", "AddExpression", function(object) {
+  symm_args <- all(sapply(object@args, is_symmetric))
+  return(dim(object)[1] == dim(object)[2] && symm_args)
+})
+
+#' @describeIn AddExpression Is the atom hermitian?
+setMethod("is_hermitian", "AddExpression", function(object) {
+  herm_args <- all(sapply(object@args, is_hermitian))
+  return(dim(object)[1] == dim(object)[2] && herm_args)
+})
+
+# As initialize takes in the arg_groups instead of args, we need a special copy function.
+#' @param args An optional list of arguments to reconstruct the atom. Default is to use current args of the atom.
+#' @param id_objects Currently unused.
+#' @describeIn AddExpression Returns a shallow copy of the AddExpression atom
+setMethod("copy", "AddExpression", function(object, args = NULL, id_objects = list()) {
+  if(is.null(args))
+    args <- object@arg_groups
+  do.call(class(object), list(arg_groups = args))
+})
+
+AddExpression.graph_implementation <- function(arg_objs, dim, data = NA_real_) {
+  arg_objs <- lapply(arg_objs, function(arg) {
+    if(!all(arg$dim == dim) && lu.is_scalar(arg)) 
+      lu.promote(arg, dim) 
+    else 
+      arg })
+  list(lu.sum_expr(arg_objs), list())
+}
+
+#' @param arg_objs A list of linear expressions for each argument.
+#' @param dim A vector representing the dimensions of the resulting expression.
+#' @param data A list of additional data required by the atom.
+#' @describeIn AddExpression The graph implementation of the expression.
+setMethod("graph_implementation", "AddExpression", function(object, arg_objs, dim, data = NA_real_) {
+  AddExpression.graph_implementation(arg_objs, dim, data)
+})

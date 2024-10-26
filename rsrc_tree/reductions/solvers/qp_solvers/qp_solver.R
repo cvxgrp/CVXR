@@ -15,16 +15,16 @@ setClass("QpSolver",
            SUPPORTED_CONSTRAINTS = c("ZeroConstraint", "NonPosConstraint")),
          contains = "ReductionSolver")
 
+#' What classes of constraints does the solver support?
 #' @param object A \linkS4class{QpSolver} object.
-#' @describeIn QpSolver What classes of constraints does the solver support?
 setMethod("supported_constraints", "QpSolver", function(solver) { object@SUPPORTED_CONSTRAINTS })
 
-#' @describeIn QPSolver Can the solver solve problems that do not have constraints?
+#' Can the solver solve problems that do not have constraints?
 setMethod("requires_constr", "QpSolver", function(solver) { object@REQUIRES_CONSTR })
 
+#' Is this a QP problem?
 #' @param object A \linkS4class{QpSolver} object.
 #' @param problem A \linkS4class{Problem} object.
-#' @describeIn QpSolver Is this a QP problem?
 setMethod("accepts", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   is(problem, "ParamQuadProg") &&
     (mip_capable(object) || !is_mixed_integer(problem)) &&
@@ -50,7 +50,7 @@ QpSolver.prepare_data_and_inv_data <- function(object, problem) {
   list(problem = problem, data = data, inv_data = inv_data)
 }
 
-#' @describeIn QpSolver Constructs a QP problem data stored in a list
+#' Constructs a QP problem data stored in a list
 setMethod("perform", signature(object = "QpSolver", problem = "Problem"), function(object, problem) {
   # Construct QP problem data stored in a dictionary.
   # The QP has the following form

@@ -90,8 +90,8 @@ setIs("Constraint", "ListORConstr")
 ## End R-specific Code Section
 
 # Helper function since syntax is different for LinOp (list) vs. Constraint object
-#' @param object A list or \linkS4class{Constraint} object.
-#' @describeIn ListORConstr Returns the ID associated with the list or constraint.
+# @param object A list or \linkS4class{Constraint} object.
+# Returns the ID associated with the list or constraint.
 setMethod("id", "ListORConstr", function(object) {
   if(is.list(object))
     object$constr_id

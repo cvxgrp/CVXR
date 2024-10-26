@@ -3,31 +3,7 @@
 \docType{class}
 \name{QpSolver-class}
 \alias{QpSolver-class}
-\alias{supported_constraints,QpSolver-method}
-\alias{accepts,QpSolver,Problem-method}
-\alias{perform,QpSolver,Problem-method}
 \title{An interface for QP solvers}
-\usage{
-\S4method{supported_constraints}{QpSolver}(solver)
-
-\S4method{accepts}{QpSolver,Problem}(object, problem)
-
-\S4method{perform}{QpSolver,Problem}(object, problem)
-}
-\arguments{
-\item{object}{A \linkS4class{QpSolver} object.}
-
-\item{problem}{A \linkS4class{Problem} object.}
-}
 \description{
 An interface for QP solvers
 }
-\section{Methods (by generic)}{
-\itemize{
-\item \code{supported_constraints(QpSolver)}: What classes of constraints does the solver support?
-
-\item \code{accepts(object = QpSolver, problem = Problem)}: Is this a QP problem?
-
-\item \code{perform(object = QpSolver, problem = Problem)}: Constructs a QP problem data stored in a list
-
-}}

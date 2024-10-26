@@ -210,7 +210,7 @@ setMethod("is_nsd", "Expression", function(object) { FALSE })
 #' @describeIn Expression A logical value indicating whether the expression is quadratic.
 setMethod("is_quadratic", "Expression", function(object) { is_constant(object) })
 
-#' @describeIn Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
+#' @describeIn Expression Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
 setMethod("has_quadratic_term", "Expression", function(object) { is_constant(object) })
 
 #' @describeIn Expression A logical value indicating whether the expression is symmetric.

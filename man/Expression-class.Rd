@@ -29,6 +29,7 @@
 \alias{is_psd,Expression-method}
 \alias{is_nsd,Expression-method}
 \alias{is_quadratic,Expression-method}
+\alias{has_quadratic_term,Expression-method}
 \alias{is_symmetric,Expression-method}
 \alias{is_skew_symmetric,Expression-method}
 \alias{is_pwl,Expression-method}
@@ -99,6 +100,8 @@
 \S4method{is_nsd}{Expression}(object)
 
 \S4method{is_quadratic}{Expression}(object)
+
+\S4method{has_quadratic_term}{Expression}(object)
 
 \S4method{is_symmetric}{Expression}(object)
 
@@ -195,6 +198,8 @@ This class represents a mathematical expression. Overloads many operators to all
 \item \code{is_nsd(Expression)}: A logical value indicating whether the expression is a negative semidefinite matrix.
 
 \item \code{is_quadratic(Expression)}: A logical value indicating whether the expression is quadratic.
+
+\item \code{has_quadratic_term(Expression)}: Does the affine head of the expression contain a quadratic term? The affine head is all nodes with a path to the root node that does not pass through any non-affine atom. If the root node is non-affine, then the affine head is the root alone.
 
 \item \code{is_symmetric(Expression)}: A logical value indicating whether the expression is symmetric.
 

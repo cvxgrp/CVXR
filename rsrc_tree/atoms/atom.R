@@ -235,18 +235,33 @@ setMethod("is_log_log_concave", "Atom", function(object) {
     return(FALSE)
 })
 
-setMethod(".non_const_idx", "Atom", function(object) {
-  return(which(sapply(object@args, is_constant)))
-})
+## Begin Naras Fix.
+## These are internal and so should not be methods. The first is also missing a negation.
+## setMethod(".non_const_idx", "Atom", function(object) {
+##   return(which(sapply(object@args, is_constant)))
+## })
+## setMethod(".is_real", "Atom", function(object) {
+##   # Returns TRUE if this atom is a real function:
+##   #    The atom must have exactly one argument that is not a constant.
+##   #    The argument must be a scalar.
+##   #    The output must be a scalar.
+##   non_const <- .non_const_idx(object)
+##   return(is_scalar(object) && len(non_const) == 1 && is_scalar(object@args[[non_const[1]]]))
+## })
+## End Naras Fix.
 
-setMethod(".is_real", "Atom", function(object) {
+.non_const_idx_of_args_in_atom <- function(object) {
+  which(! unlist(apply(object@args, is_constant)) )
+}
+
+.is_atom_real <- function(object) {
   # Returns TRUE if this atom is a real function:
   #    The atom must have exactly one argument that is not a constant.
   #    The argument must be a scalar.
   #    The output must be a scalar.
-  non_const <- .non_const_idx(object)
-  return(is_scalar(object) && len(non_const) == 1 && is_scalar(object@args[[non_const[1]]]))
-})
+  non_const <- .non_const_idx_of_args_in_atom(object)
+  return(is_scalar(object) && len(non_const) == 1L && is_scalar(object@args[[non_const[1L]]]))
+}
 
 #' @describeIn Atom A logical value indicating whether the atom is quasiconvex.
 setMethod("is_quasiconvex", "Atom", function(object) {
@@ -254,10 +269,10 @@ setMethod("is_quasiconvex", "Atom", function(object) {
     return(TRUE)
   if(class(object) == "MaxElemwise" || class(object) == "MaxEntries")
     return(all(sapply(object@args, is_quasiconvex)))
-  non_const <- .non_const_idx(object)
-  if(.is_real(object) && is_incr(object, non_const[[1]]))
+  non_const <- .non_const_idx_of_args_in_atom(object)
+  if(.is_atom_real(object) && is_incr(object, non_const[[1]]))
     return(is_quasiconvex(object@args[[non_const[[1]]]]))
-  if(.is_real(object) && is_decr(object, non_const[[1]]))
+  if(.is_atom_real(object) && is_decr(object, non_const[[1]]))
     return(is_quasiconcave(object@args[[non_const[[1]]]]))
   if(is_atom_quasiconvex(object)) {
     idx <- 1
@@ -277,10 +292,10 @@ setMethod("is_quasiconcave", "Atom", function(object) {
     return(TRUE)
   if(class(object) == "MinElemwise" || class(object) == "MinEntries")
     return(all(sapply(object@args, is_quasiconcave)))
-  non_const <- .non_const_idx(object)
-  if(.is_real(object) && is_incr(object, non_const[[1]]))
+  non_const <- .non_const_idx_of_args_in_atom(object)
+  if(.is_atom_real(object) && is_incr(object, non_const[[1]]))
     return(is_quasiconcave(object@args[[non_const[[1]]]]))
-  if(.is_real(object) && is_decr(object, non_const[[1]]))
+  if(.is_atom_real(object) && is_decr(object, non_const[[1]]))
     return(is_quasiconvex(object@args[[non_const[[1]]]]))
   if(is_atom_quasiconcave(object)) {
     idx <- 1

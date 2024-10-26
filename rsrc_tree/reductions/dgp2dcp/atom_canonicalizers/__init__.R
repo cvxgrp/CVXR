@@ -60,8 +60,30 @@ setMethod("match", signature(x = "character", table = "DgpCanonMethods"), functi
   return(x %in% names(Dgp2Dcp.CANON_METHODS))
 })
 
-# TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
-'[[.DgpCanonMethods' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+## # TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
+## '[[.DgpCanonMethods' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+
+setMethod(f = "[[", signature(x = "DgpCanonMethods", i = "character", j = "missing"),
+          definition = function(x, i, j, ..., exact = TRUE) {
+              # Ensure index 'i' is of character type
+              if (!is.character(i)) {
+                  stop("index 'i' must be of type character")
+              }
+              
+              # Attempt to fetch the value from the .variables slot
+              if (i %in% names(x@.variables)) {
+                  return(x@.variables[[i]])
+              }
+              
+              # If not found, attempt to fetch the value from the .parameters slot
+              if (i %in% names(x@.parameters)) {
+                  return(x@.parameters[[i]])
+              }
+              
+              # If the index is not found in either slots, return NULL or throw an error
+              stop(sprintf("Variable or parameter '%s' not found in 'DgpCanonMethods' object", i))
+          })
+
 
 #' @param name The name of the atom or expression to canonicalize.
 #' @describeIn DgpCanonMethods Returns either a canonicalized variable or

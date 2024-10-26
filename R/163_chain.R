@@ -16,8 +16,24 @@ setMethod("as.character", "Chain", function(x) { paste(sapply(x@reductions, as.c
 
 setMethod("show", "Chain", function(object) { paste("Chain(reductions = (", as.character(object@reductions),"))") })
 
-# TODO: How to implement this with S4 setMethod? Signature is x = "DgpCanonMethods", i = "character", j = "missing".
-'[[.Chain' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+## # TODO: How to implement this with S4 setMethod? Signature is x = "Chain", i = "character", j = "missing".
+## '[[.Chain' <- function(x, i, j, ..., exact = TRUE) { do.call("$", list(x, i)) }
+
+setMethod(f = "[[", signature(x = "Chain", i = "character", j = "missing"),
+          definition = function(x, i, j, ..., exact = TRUE) {
+            # Ensure index 'i' is of character type
+            if (!is.character(i)) {
+              stop("index 'i' must be of type character")
+            }
+            
+            # Attempt to fetch the value from the .variables slot
+            if (i %in% as.character(x@reductions)) {
+              return(x@reductions[[i]])
+            }
+            
+            # If the index is not found in either slots, return NULL or throw an error
+            stop(sprintf("Reduction '%s' not found in 'Chain'", i))
+          })
 
 #' @param name The type of reduction.
 #' @describeIn Chain Returns the reduction of the specified type.

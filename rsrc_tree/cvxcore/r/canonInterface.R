@@ -25,7 +25,7 @@ get_parameter_vector <- function(param_size,
   
   for (param_id in names(param_id_to_col)) {
     col <- param_id_to_col[[param_id]]
-    if (param_id == CONSTANT_ID) {  # Assuming lo.CONSTANT_ID is equivalent to "CONSTANT_ID" in R
+    if (param_id == lo.CONSTANT_ID) { 
       if (!zero_offset) {
         param_vec[col + 1L] <- 1  # R uses 1-based indexing
       }

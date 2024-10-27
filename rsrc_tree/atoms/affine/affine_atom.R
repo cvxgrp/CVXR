@@ -102,8 +102,8 @@ setMethod(".grad", "AffAtom", function(object, values) {
   
   param_to_size <- list()
   param_to_col <- list()
-  param_to_size[[as.character(CONSTANT_ID)]] <- 1
-  param_to_col[[as.character(CONSTANT_ID)]] <- 0
+  param_to_size[[as.character(lo.CONSTANT_ID)]] <- 1
+  param_to_col[[as.character(lo.CONSTANT_ID)]] <- 0
   canon_mat <- get_problem_matrix(list(fake_expr), var_length, var_offsets, param_to_size, param_to_col, size(object))
   
   # HACK TODO Convert tensors back to vectors.

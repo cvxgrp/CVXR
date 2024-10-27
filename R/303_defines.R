@@ -103,7 +103,7 @@ MI_SOCP_SOLVERS <-
   )
 
 ## Global variable for changing behavior
-.CVXR_options <- new.env(parent = emptyenv())
+#.CVXR_options <- new.env(parent = emptyenv())
 .CVXR_options$blacklisted_solvers  <- character(0)
 
 #' @param solvers a character vector of solver names

@@ -152,7 +152,7 @@ setMethod("extract_quadratic_coeffs", "CoeffExtractor", function(object, affine_
 setMethod("coeff_quad_form", signature(object = "CoeffExtractor", expr = "Expression"), function(object, expr) {
   # Extract quadratic, linear constant parts of a quadratic objective.
   # Insert no-op such that root is never a quadratic form, for easier processing.
-  root <- LinOp(NO_OP, dim(expr), list(expr), list())
+  root <- lo.LinOp(lo.NO_OP, dim(expr), list(expr), list())
 
   # Replace quadratic forms with dummy variables.
   tmp <- replace_quad_forms(root, list())

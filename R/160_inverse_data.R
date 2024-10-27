@@ -29,8 +29,8 @@ setMethod("initialize", "InverseData", function(.Object, ..., problem, id_map = 
   .Object@var_dims <- varoffs$var_dims
 
   .Object@param_dims <- list()
-  # Always start with CONSTANT_ID.
-  .Object@param_to_size[[CONSTANT_ID]] <- 1
+  # Always start with lo.CONSTANT_ID.
+  .Object@param_to_size[[lo.CONSTANT_ID]] <- 1
   .Object@param_id_map <- list()
   offset <- 0
   for(param in parameters(problem)) {

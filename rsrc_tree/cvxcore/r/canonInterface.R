@@ -238,39 +238,50 @@ get_matrix_and_offset_from_unparameterized_tensor <- function(problem_data_tenso
 
 #' Returns the default canonicalization backend, which can be set globally using an environment variable.
 get_default_canon_backend <- function() {
-  Sys.getenv('CVXR_DEFAULT_CANON_BACKEND')
+  backend <- Sys.getenv('CVXR_DEFAULT_CANON_BACKEND')
+  if (nchar(backend) == 0L) {
+    CPP_CANON_BACKEND
+  } else {
+    backend
+  }
 }
 
 
 #' Build a sparse representation of the problem data.
 #'
-#' @param linOps A list of R linOp trees representing an affine expression.
+#' This routine is so named with prefix `canonInterface` to highlight
+#' the only api from the canonical backend that is needed.
+#' 
+#' @param linOps A list of R linOp trees representing an affine
+#'   expression.
 #' @param var_length The total length of the variables.
 #' @param id_to_col A map from variable id to column offset.
 #' @param param_to_size A map from parameter id to parameter size.
 #' @param param_to_col A map from parameter id to column in tensor.
 #' @param constr_length Summed sizes of constraints input.
-#' @param canon_backend Specifies which backend to use for canonicalization, which can affect
-#'   compilation time. Defaults to NULL, i.e., selecting the default backend. Options are 'CPP', 'SCIPY'.
+#' @param canon_backend Specifies which backend to use for
+#'   canonicalization, which can affect compilation time. Defaults to
+#'   NULL, i.e., selecting the default backend. Options are 'CPP',
+#'   'SCIPY'.
 #'
 #' @return A sparse (CSC) matrix with constr_length * (var_length + 1) rows and
 #'   param_size + 1 columns (where param_size is the length of the
 #'   parameter vector).
 #' @export
-get_problem_matrix <- function(linOps,
+canonInterface.get_problem_matrix <- function(linOps,
                                var_length,
                                id_to_col,
                                param_to_size,
                                param_to_col,
                                constr_length,
-                               canon_backend = NULL) {
+                               canon_backend = NA) {
 
   # Allow to switch default backends through an environment variable for CI
   default_canon_backend <- get_default_canon_backend()
-  canon_backend <- ifelse(is.null(canon_backend), default_canon_backend, canon_backend)
+  canon_backend <- ifelse(is.na(canon_backend), default_canon_backend, canon_backend)
 
   if (canon_backend == CPP_CANON_BACKEND) {
-    lin_vec <- make_ConstLinOpVector()
+    lin_vec <- cvxcore::cvxcore.LinOpVector()
 
     id_to_col_C <- id_to_col
     ## storage.mode(id_to_col_C) <- "integer"  ## should not be needed if we keep things sane...
@@ -280,7 +291,7 @@ get_problem_matrix <- function(linOps,
     
     # dict to memoize construction of C++ linOps, and to keep R references
     # to them to prevent their deletion
-    linR_to_linC <- new.env(parent = empytenv())
+    linR_to_linC <- new.env(parent = emptyenv())
     count <- 0L
     for (lin in linOps) {
       # Add conversion logic for linOps
@@ -295,9 +306,9 @@ get_problem_matrix <- function(linOps,
                                        param_to_size_C,
                                        s$get_num_threads())
 
-    tensor_V <- new.env(parent = empytenv())
-    tensor_I <- new.env(parent = empytenv())
-    tensor_J <- new.env(parent = empytenv())
+    tensor_V <- new.env(parent = emptyenv())
+    tensor_I <- new.env(parent = emptyenv())
+    tensor_J <- new.env(parent = emptyenv())
 
     for (param_id in names(param_to_col)) {
       tensor_V[[param_id]] <- make_vec()
@@ -349,57 +360,189 @@ get_problem_matrix <- function(linOps,
   }
 }
 
-get_problem_matrix <- function(linOps, var_length, id_to_col, param_to_size, param_to_col, constr_length,
-                               canon_backend = DEFAULT_CANNON_BACKEND) {
-  ## We only handle default canon backend, saving others for later
-  lin_vec <- make_ConstLinopVector()
-  id_to_col_C <- id_to_col
-  ## The following ensures that id_to_col_C is an integer vector
-  ## with names retained. This is the C equivalent of map<int, int> in R
-  ## storage.mode(id_to_col_C) <- "integer" 
+format_matrix <- function(matrix, format='dense') {
+    ## Returns the matrix in the appropriate form,
+    ## so that it can be efficiently loaded with our swig wrapper
 
-    ##if (any(is.na(id_to_col)))
-    ##    id_to_col <- c()
-
-    ## Loading the variable offsets from our R list into a C++ map
-
-    ## for (id in names(id_to_col)) {
-    ##     col <- id_to_col[[id]]
-    ##     id_to_col_C$map(key = as.integer(id), value = as.integer(col))
-    ## }
-
-    ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- R6List$new()
-    for (lin in linOps) {
-        tree <- build_lin_op_tree(lin, tmp)
-        tmp$append(tree)
-        lin_vec$push_back(tree)
+    ## TODO: Should we convert bigq/bigz values? What if it's a sparse matrix?
+    if(is.bigq(matrix) || is.bigz(matrix)) {
+        matdbl <- matrix(sapply(matrix, as.double))
+        dim(matdbl) <- dim(matrix)
+        matrix <- matdbl
     }
 
-    ## REMOVE this later when we are sure
-    if (typeof(constr_offsets) != "integer") {
-        stop("get_problem_matrix: expecting integer vector for constr_offsets")
+    if (format == 'dense') {
+        ## Ensure is 2D.
+        as.matrix(matrix)
+    } else if (format == 'sparse') {
+        Matrix::Matrix(matrix, sparse = TRUE)
+    } else if (format == 'scalar') {
+        ## Should this be a 1x1 matrix?  YESSSSS as I later found out.
+        as.matrix(matrix)
+    } else {
+        stop(sprintf("format_matrix: format %s unknown", format))
     }
+}
 
-    if (length(constr_offsets) == 0)
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
-    else {
-        ## Load constraint offsets into a C++ vector
-        ##constr_offsets_C <- CVXCanon.IntVector$new()
-        ##for (offset in constr_offsets)
-        ##    constr_offsets_C$push_back(as.integer(offset))
-        constr_offsets_C <- constr_offsets
-        storage.mode(constr_offsets_C) <- "integer"
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
+set_matrix_data <- function(linC, linR) {
+    ## Calls the appropriate CVXcanon function to set the matrix
+    ## data field of our C++ linOp.
+
+    if (is.list(linR$data) && linR$data$class == "LinOp") {
+        if (linR$data$type == 'sparse_const') {
+            linC$sparse_data <- format_matrix(linR$data$data, 'sparse')
+        } else if (linR$data$type == 'dense_const') {
+            linC$dense_data <- format_matrix(linR$data$data)
+        } else {
+            stop(sprintf("set_matrix_data: data.type %s unknown", linR$data$type))
+        }
+    } else {
+        if (linR$type == 'sparse_const') {
+            linC$sparse_data <- format_matrix(linR$data, 'sparse')
+        } else {
+            linC$dense_data <- format_matrix(linR$data)
+        }
     }
+}
 
-    ## Unpacking
-    ## V <- problemData$getV()
-    ## I <- problemData$getI()
-    ## J <- problemData$getJ()
-    ## const_vec <- problemData$getConstVec()
+set_slice_data <- function(linC, linR) {  ## What does this do?
+    for (i in seq.int(length(linR$data) - 1L)) {  ## the last element is "class"
+        sl <- linR$data[[i]]
+        ## In R this is just a vector of ints
 
-    list(V = problemData$getV(), I = problemData$getI(), J = problemData$getJ(),
-         const_vec = matrix(problemData$getConstVec(), ncol = 1))
+        ## ## Using zero based indexing throughout
+        ## start_idx <- 0L
+        ## if (!is.na(sl$start_idx))
+        ##     start_idx <- sl$start_idx - 1L  ## Using zero-based indexing
+
+        ## stop_idx <- linR$args[[1]]$dim[i] - 1L
+        ## if (!is.na(sl$stop_idx))
+        ##     stop_idx <- sl$stop_idx - 1L
+
+        ## step <- 1L
+        ## if(!is.na(sl$step))
+        ##     step <- sl$step
+
+        ## ## handle [::-1] case
+        ## if(step < 0 && is.na(sl$start_idx) && is.na(sl$stop_idx)) {
+        ##     tmp <- start
+        ##     start_idx <- stop_idx - 1
+        ##     stop_idx <- tmp
+        ## }
+
+        ##for(var in c(start_idx, stop_idx, step))
+        ##    vec$push_back(var)
+        ## vec <- c(start_idx, stop_idx, step)
+        ## if (length(sl) == 1L) {
+        ##     vec <- c(sl - 1L, sl, 1L)
+        ## } else if (length(sl) == 2L) {
+        ##     vec <- c(sl[1L] - 1L, sl[2L], 1L)  # Using zero-based indexing, and step assumed to be 1.
+        ## } else {
+        ##     r <- range(sl)
+        ##     vec <- c(r[1L] - 1L, r[2L], 1L)
+        ## }
+
+        ##vec <- c(sl, 1L)  # Using 1-based indexing, and step assumed to be 1.
+        linC$slice_push_back(sl - 1L) ## Make indices zero-based for C++
+    }
+}
+
+#' Set numerical data fields in linC
+#'
+#' This function sets numerical data fields in the linC object based on the
+#' linR object's data.
+#'
+#' @param linC An object in which the data fields will be set.
+#' @param linR An object that contains the data to be set in linC.
+#' @return None
+#' @export
+set_linC_data <- function(linC, linR) {
+  ## Assert that linR$data is not NULL
+  if (is.null(linR$data)) stop(sprintf("linR(%s) data is NULL!", linR$uuid))
+  
+  ## If linR$data is a tuple and the first element is a slice, call set_slice_data
+  ## We have to detect a "slice" as a sequence of three items with the last one as 'key'
+  ## RIGHT NOW I AM JUST USING WHAT WE DID BEFORE, NOT SURE IT IS CORRECT!
+  ## ASK ANQI
+  if (length(linR$data) == 3L && linR$data[[3L]] == 'key') {
+    ## ASK Anqi about this
+    set_slice_data(linC, linR)  ## TODO
+    ## If linR$data is a float or an integer, set dense data and data dimension
+  } else if (is.numeric(linR$data) || is.integer(linR$data)) {
+    linC$set_dense_data(format_matrix(linR$data, format='scalar'))
+    linC$set_data_ndim(0)
+  # Otherwise, call set_matrix_data
+  } else {
+    set_matrix_data(linC, linR)
+  }
+}
+
+#' Construct a C++ LinOp corresponding to LinPy.
+#'
+#' Children of linR are retrieved from linR_to_linC.
+#'
+#' @param linR A LinPy object.
+#' @param linR_to_linC A mapping from LinPy objects to LinC objects.
+make_linC_from_linR <- function(linR, linR_to_linC) {
+  if (! (linR$uuid %in% ls(linR_to_linC))) {
+    typ <- linR$type
+    dim <- linR$dim
+    lin_args_vec <- cvxcore::cvxcore.LinOpVector()
+    for (arg in linR$args) {
+      lin_args_vec$push_back(linR_to_linC[[arg]])
+    }
+    
+    linC <- cvxcore::cvxcore.LinOp(type = typ, dim = dim, args = lin_args_vec)
+    linR_to_linC[[linR$uuid]] <- linC
+    
+    if (!is.null(linR$data)) {
+      if (inherits(linR$data, "LinOp")) {
+        linR_data <- linR$data
+        linC_data <- linR_to_linC[[linR_data$uuid]]
+        linC$set_linOp_data(linC_data)
+        linC$set_data_ndim(length(linR_data$dim))
+      } else {
+        set_linC_data(linC, linR)
+      }
+    }
+  }
+}
+
+#' Construct C++ LinOp tree from Python LinOp tree.
+#'
+#' Constructed C++ linOps are stored in the linR_to_linC list,
+#' which maps Python linOps to their corresponding C++ linOps.
+#'
+#' @param root_linR The root of the Python LinOp tree.
+#' @param linR_to_linC A list for memoizing construction and storing
+#'   the C++ LinOps.
+build_lin_op_tree <- function(root_linR, linR_to_linC) {
+  bfs_stack <- list(root_linR)
+  post_order_stack <- list()
+  
+  while (length(bfs_stack) > 0) {
+    n <- length(bfs_stack)
+    linR <- bfs_stack[[n]]
+    bfs_stack[[n]] <- NULL ## pop off the last element
+    if (linR$uuid%in% names(linR_to_linC)) {
+      n <- length(pos_order_stack)
+      post_order_stack[[n + 1L]] <- linR
+      for (arg in linR$args) {
+        n <- length(bfs_stack)
+        bfs_stack[[n + 1L]] <- arg
+      }
+      if (inherits(linR$data, "LinOp")) {
+        n <- length(bfs_stack)
+        bfs_stack[[n + 1L]] <- linR$data
+      }
+    }
+  }
+  
+  while (length(post_order_stack) > 0) {
+    n <- length(post_order_stack)
+    linR <- post_order_stack[[n]]
+    post_order_stack[[n]] <- NULL ## delete linR
+    make_linC_from_linR(linR, linR_to_linC)
+  }
 }
 

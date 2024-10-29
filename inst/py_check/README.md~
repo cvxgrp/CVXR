@@ -1,0 +1,21 @@
+## How to use `pickle`
+
+```{r}
+#' Pickle an R object to load in python
+#' @param x an R object that is transferrable to python
+#' @param fname the name to use for the pickle file
+#' @examples
+#' pickle(list(a = 1.0, b = 2L, x = matrix(1:20, nrow = 5), y = rnorm(5)), "foo.pickle")
+#' ## Then, on the python side
+#' ## import pickle as pk
+#' ## with open("foo.pickle", "rb") as f:
+#' ##    l = pk.load(f)
+#' ## Now l is a dict on the python side with components l['a'], l['x'] etc.
+pickle <- function(x, fname) {
+  io <- reticulate::import("io")
+  f <- io$open(fname, mode = "wb")
+  pk <- reticulate::import("pickle")
+  pk$dump(x, f)
+  f$close()
+}
+```

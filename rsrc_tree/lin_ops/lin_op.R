@@ -6,8 +6,11 @@ lo.LinOp <- function(type, dim, args = list(), data = NULL) {
   if (!is.character(type)) stop("type must be a character string")
   if (!is.numeric(dim)) stop("dim must be a numeric vector")
   if (!is.list(args)) stop("args must be a list of arguments")
-  result <- list(type = type, dim = dim, args = args, data = data)
+  ## We generate a uuid key to use in hashing
+  result <- list(type = type, dim = dim, args = args, data = data,
+                 uuid = uuid::UUIDgenerate())
   class(result) <- c("LinOp", class(result))
+  result
 }
 
 ## Since lin_op often gets imported in python as lo, we will use that naming convention

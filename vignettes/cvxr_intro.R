@@ -10,7 +10,7 @@ ls.model <- lm(Y ~ 0 + X)   # There is no intercept in our model above
 m <- data.frame(ls.est = coef(ls.model))
 rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
 knitr::kable(m)
-
+load_all()
 suppressWarnings(library(CVXR, warn.conflicts=FALSE))
 
 betaHat <- Variable(p)

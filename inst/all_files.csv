@@ -302,6 +302,7 @@ rsrc_tree/reductions/solvers/qp_solvers/osqp_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/zzz_R_rest.R
 rsrc_tree/reductions/solvers/lp_solvers/__init__.R
 rsrc_tree/reductions/solvers/defines.R
+rsrc_tree/cvxcore/r/canonInterface.R
 rsrc_tree/settings.R
 rsrc_tree/zzz_R_specific/exports.R
 rsrc_tree/zzz_R_specific/coll_utils.R

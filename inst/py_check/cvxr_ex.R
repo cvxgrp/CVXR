@@ -1,0 +1,95 @@
+## --------------------------------------------------------------------------------
+n <- 20
+p <- 10
+set.seed(123)
+beta <- -4:5 
+X <- matrix(rnorm(n * p), nrow = n)
+Y <- X %*% beta + rnorm(n)
+ls.model <- lm(Y ~ 0 + X)   # There is no intercept in our model above
+m <- data.frame(ls.est = coef(ls.model))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+##write.csv(cbind(X,Y), "xy.csv", row.names = FALSE)
+##pickle(list(X = X, Y = Y, beta = beta), "./xybeta.pickle")
+
+load_all()
+suppressWarnings(library(CVXR, warn.conflicts=FALSE))
+
+betaHat <- Variable(p)
+
+objective <- Minimize(sum_squares(Y - X %*% betaHat))
+
+problem <- Problem(objective)
+
+result <- solve(problem, verbose = TRUE)
+
+
+## ----echo = FALSE----------------------------------------------------------------
+solution <- result$getValue(betaHat)
+cat(sprintf("Objective value: %f\n", result$value))
+
+
+## --------------------------------------------------------------------------------
+m <- cbind(coef(ls.model), result$getValue(betaHat))
+colnames(m) <- c("lm est.", "CVXR est.")
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+
+
+## --------------------------------------------------------------------------------
+problem <- Problem(objective, constraints = list(betaHat >= 0))
+result <- solve(problem)
+m <- data.frame(CVXR.est = result$getValue(betaHat))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+
+
+## --------------------------------------------------------------------------------
+if (requireNamespace("nnls", quietly = TRUE)) {
+    nnls.fit <- nnls::nnls(X, Y)$x
+} else {
+    nnls.fit <- rep(NA, p)
+}
+
+
+## --------------------------------------------------------------------------------
+m <- cbind(result$getValue(betaHat), nnls.fit)
+colnames(m) <- c("CVXR est.", "nnls est.")
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+
+
+## --------------------------------------------------------------------------------
+A <- matrix(c(0, 1, 1, rep(0, 7)), nrow = 1)
+colnames(A) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(A)
+
+
+## --------------------------------------------------------------------------------
+constraint1 <- A %*% betaHat <= 0
+
+
+## ----eval = FALSE----------------------------------------------------------------
+## constraint1 <- betaHat[2] + betaHat[3] <= 0
+
+
+## --------------------------------------------------------------------------------
+B <- diag(c(1, 0, 0, rep(1, 7)))
+colnames(B) <- rownames(B) <- paste0("$\\beta_{", 1:p, "}$")
+    knitr::kable(B)
+
+
+## --------------------------------------------------------------------------------
+constraint2 <- B %*% betaHat >= 0
+
+
+## --------------------------------------------------------------------------------
+problem <- Problem(objective, constraints = list(constraint1, constraint2))
+result <- solve(problem)
+
+
+## --------------------------------------------------------------------------------
+m <- data.frame(CVXR.soln = result$getValue(betaHat))
+rownames(m) <- paste0("$\\beta_{", 1:p, "}$")
+knitr::kable(m)
+

@@ -57,7 +57,8 @@ Imports:
     uuid,
     glue,
     cli,
-    cvxcore
+    cvxcore,
+    prettyunits
 Suggests:
     knitr,
     rmarkdown,

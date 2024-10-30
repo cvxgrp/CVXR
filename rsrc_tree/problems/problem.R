@@ -47,6 +47,7 @@ setMethod("gp", "Cache", function(object) {
 #' @slot solve_time (Internal) Used internally to hold the solve time.
 #' @slot args (Internal) Used internally to hold the arguments (objective and constraints).
 #' @name Problem-class
+#' @importFrom prettyunits pretty_sec
 #' @aliases Problem
 #' @rdname Problem-class
 .Problem <- setClass("Problem", representation(objective = "Objective", constraints = "list", variables = "list", value = "numeric", status = "character", solution = "ANY", cache = "Cache", solver_cache = "list", size_metrics = "SizeMetricsORNULL", solver_stats = "SolverStatsORNULL", compilation_time = "numeric", solve_time = "numeric", args = "list"),
@@ -297,8 +298,7 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     solving_chain <- object@cache@solving_chain
 
   if(verbose) {
-    divider <- paste(rep("-", 79), collapse = "")
-    cat(paste(divider, sprintf("%45.11s", "Compilation"), divider, sep = "\n"))
+    cli::cli_h2("Compilation")
   }
 
   if(!is.null(object@cache@param_prog)) {
@@ -325,13 +325,13 @@ setMethod("get_problem_data", "Problem", function(object, solver, gp = FALSE, en
     object@compilation_time <- as.numeric(object@compilation_time)
 
     if(verbose)
-      print(paste("Finished problem compilation (took", sprintf("%.3e", object@compilation_time), "seconds"))
+      cli::cli_text("Finished problem compilation {prettyunits::pretty_sec(object@compilation_time)}")
   } else {
     if(verbose) {
       solver_name <- name(solving_chain@reductions[[length(solving_chain@reductions)]])
       reduction_chain_str <- paste(sapply(solving_chain@reductions, class), collapse = " -> ")
-      print(paste("Compiling problem (target solver = ", solver_name, ")", sep = ""))
-      print(paste("Reduction chain:", reduction_chain_str))
+      cli::cli_li("Compiling problem (target solver = {solver_name})")
+      cli::cli_li("Reduction chain: {reduction_chain_str}")
     }
 
     tmp <- perform(solving_chain, object, verbose)
@@ -484,14 +484,12 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
   #   stop("Unimplemented")
 
   if(verbose) {
-    divider <- paste(rep("=", 79), collapse = "")
-    version <- packageVersion("CVXR")
-    cat(paste(divider, sprintf("%38.4s", "CVXR"), sprintf("%39.6s", paste("v", version, sep = "")), divider, sep = "\n"))
+    cli::cli_h1(sprintf("CVXR version %s", packageVersion("CVXR")))
   }
 
   for(parameter in parameters(object)) {
     if(is.na(value(parameter)))
-      stop("A Parameter (whose name is ", name(parameter), " ) does not have a value associated with it; all Parameter objects must have values before solving a problem")
+      cli::cli_abort(sprintf("Parameter %s does not have a value associated with it; all Parameter objects must have values before solving a problem", name(parameter)))
   }
 
   if(verbose) {
@@ -501,7 +499,7 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
     parms_ <- parameters(object)
     n_parameters <- ifelse(length(parms_) > 0, sum(sapply(parms_, function(p) { prod(dim(p)) })), 0)
 
-    print(paste("Your problem has", n_variables, "variables,", length(object@constraints), "constraints, and", n_parameters, "parameters"))
+    cli::cli_text("Your problem has {n_variables} variable{?s}, {length(object@constraints)} constraint{?s} and {n_parameters} parameter{?s}")
 
     curvatures <- c()
     if(is_dcp(object))
@@ -510,11 +508,16 @@ setMethod("psolve", "Problem", function(object, solver = NA_character_, ignore_d
       curvatures <- c(curvatures, "DGP")
     if(is_dqcp(object))
       curvatures <- c(curvatures, "DQCP")
-    print(paste("It is compliant with the following grammars:", paste(curvatures, collapse = ", ")))
+    prob_info <- "It is compliant with {curvatures} grammars"
 
     if(n_parameters == 0)
-      print("(If you need to solve this problem multiple times, but with different data, consider using parameters)")
-    print("CVXR will first compile your problem;, then, it will invoke a numerical solver to obtain a solution")
+      prob_info <- c(prob_info,
+                     "If you need to solve this problem multiple times, but with different data, consider using parameters"
+                     )
+    prob_info <- c(prob_info,
+                   "CVXR will first compile your problem, then invoke a numerical solver to obtain a solution"
+                   )
+    cli::cli_ul(prob_info)
   }
 
   if(requires_grad) {

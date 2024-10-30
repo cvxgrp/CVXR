@@ -67,7 +67,7 @@ setMethod("perform", signature(object = "Chain", problem = "Problem"), function(
   for(i in seq_along(object@reductions)) {
     r <- object@reductions[[i]]
     if(verbose)
-      print(paste("Applying reduction", class(r)))
+      cli::cli_li("Applying reduction {class(r)}")
     res <- perform(r, problem)
 
     object@reductions[[i]] <- res[[1]]

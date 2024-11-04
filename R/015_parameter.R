@@ -136,7 +136,7 @@ setMethod("as.character", "Parameter", function(x) {
 })
 
 setMethod("show", "Parameter", function(object) {
-  cli::text(as.character(object))
+  cli::cli_text(as.character(object))
 })
 
 is_param_affine <- function(expr) {

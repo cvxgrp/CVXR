@@ -50,7 +50,7 @@ setMethod("name", "Atom", function(x) {
 })
 
 setMethod("show", "Atom", function(object) {
-  cli::text(name(object))
+  cli::cli_text(name(object))
 })
 
 #'

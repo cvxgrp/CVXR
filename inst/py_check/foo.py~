@@ -1,4 +1,0 @@
-import pickle
-with open('filename.pkl', 'rb') as file:
-    result = pickle.load(file)
-

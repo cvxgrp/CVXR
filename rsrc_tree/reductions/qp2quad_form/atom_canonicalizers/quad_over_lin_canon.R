@@ -6,7 +6,7 @@ Qp2QuadForm.quad_over_lin_canon <- function(expr, args) {
   if(length(parameters(y)) == 0) {
     affine_expr_size <- size(affine_expr)
     speye <- sparseMatrix(1:affine_expr_size, 1:affine_expr_size, x = rep(1, affine_expr_size))
-    quad_mat <- speye/value(y)
+    quad_mat <- speye/as.numeric(value(y))
   } else {
     # TODO: This code path produces an intermediate dense matrix, but it should be sparse the whole time.
     affine_expr_size <- size(affine_expr)

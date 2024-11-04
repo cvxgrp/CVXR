@@ -180,6 +180,6 @@ setMethod("as.character", "Variable", function(x) {
 })
 
 setMethod("show", "Variable", function(object) {
-  cli::text(as.character(object))
+  cli::cli_text(as.character(object))
 })
 

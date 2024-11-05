@@ -1,7 +1,7 @@
 #### #' Create a vec using a list
 #### #' @return a list that provides a vector as well as a deque
 make_vec <- function() {
-  vec <- vector(mode = "list", length = 128L) ## initial length of 128!
+  vec <- vector(mode = "list", length = 29L) ## initial length of 29!
   n <- 0L
   push_back <- function(what) { n <<- n + 1L; vec[[n]] <<- what; invisible(what) }
   push_front <- function(what) { vec <<- append(list(what), vec); n <<- n + 1L; invisible(what) }

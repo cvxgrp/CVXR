@@ -956,9 +956,9 @@ print.cvxr_result <- function(x, ...) {
            sprintf("Status: %s", x$status),
            sprintf("Objective value: %f\n", x$value),
            sprintf("Solver: %s\n", x$solver),
-           "<this_obj>$getValue(x): get value of variable/constraint x"
+           "<me>$getValue(x) returns value of variable/constraint x"
            )
-  names(out) <- c(mark, mark, " ", "i")
+  names(out) <- c(mark, mark, "i", ">")
   cli_bullets(out)
 }
 

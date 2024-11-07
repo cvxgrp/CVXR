@@ -1,7 +1,7 @@
 ## Added format_matrix and set_matrix_data.
 get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = integer(0)) {
-    cvxCanon <- CVXcanon$new()
-    lin_vec <- CVXcanon.LinOpVector$new()
+    ## cvxCanon <- CVXcanon$new()
+    lin_vec <- CVXcanon.LinOpVector()
 
     ## KLUDGE: Anqi, fix id_to_col to have proper names!
     # if (is.null(names(id_to_col))) names(id_to_col) <- unlist(id_to_col)
@@ -22,12 +22,12 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
     ##     id_to_col_C$map(key = as.integer(id), value = as.integer(col))
     ## }
 
-    ## This array keeps variables data in scope after build_lin_op_tree returns
-    tmp <- R6List$new()
+    ## tmp is a vector that keeps variables data in scope after build_lin_op_tree returns
+    tmp <- make_vec()
     for (lin in linOps) {
-        tree <- build_lin_op_tree(lin, tmp)
-        tmp$append(tree)
-        lin_vec$push_back(tree)
+      tree <- build_lin_op_tree(lin, tmp)
+      tmp$push_back(tree)
+      lin_vec$push_back(tree)
     }
 
     ## REMOVE this later when we are sure
@@ -36,7 +36,7 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
     }
 
     if (length(constr_offsets) == 0)
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C)
+        problemData <- CVXcanon.build_matrix(lin_vec, id_to_col_C)
     else {
         ## Load constraint offsets into a C++ vector
         ##constr_offsets_C <- CVXCanon.IntVector$new()
@@ -44,7 +44,7 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0), constr_offsets = 
         ##    constr_offsets_C$push_back(as.integer(offset))
         constr_offsets_C <- constr_offsets
         storage.mode(constr_offsets_C) <- "integer"
-        problemData <- cvxCanon$build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
+        problemData <- CVXcanon.build_matrix(lin_vec, id_to_col_C, constr_offsets_C)
     }
 
     ## Unpacking
@@ -88,17 +88,17 @@ set_matrix_data <- function(linC, linR) {
 
     if (is.list(linR$data) && linR$data$class == "LinOp") {
         if (linR$data$type == 'sparse_const') {
-            linC$sparse_data <- format_matrix(linR$data$data, 'sparse')
+            linC$set_sparse_data(format_matrix(linR$data$data, 'sparse'))
         } else if (linR$data$type == 'dense_const') {
-            linC$dense_data <- format_matrix(linR$data$data)
+            linC$set_dense_data(format_matrix(linR$data$data))
         } else {
             stop(sprintf("set_matrix_data: data.type %s unknown", linR$data$type))
         }
     } else {
         if (linR$type == 'sparse_const') {
-            linC$sparse_data <- format_matrix(linR$data, 'sparse')
+            linC$set_sparse_data(format_matrix(linR$data, 'sparse'))
         } else {
-            linC$dense_data <- format_matrix(linR$data)
+            linC$set_dense_data(format_matrix(linR$data))
         }
     }
 }
@@ -146,27 +146,27 @@ set_slice_data <- function(linC, linR) {  ## What does this do?
 }
 
 build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
-    Q <- Deque$new()
-    root_linC <- CVXcanon.LinOp$new()
-    Q$append(list(linR = root_linR, linC = root_linC))
+    Q <- make_vec()  ## A deque
+    root_linC <- CVXcanon.LinOp()
+    Q$push_back(list(linR = root_linR, linC = root_linC))
 
-    while(Q$length() > 0) {
-        node <- Q$popleft()
+    while(Q$size() > 0) {
+        node <- Q$pop_front()  ## deque pop_front operation
         linR <- node$linR
         linC <- node$linC
 
         ## Updating the arguments our LinOp
-        ## tmp is a list
+        ## tmp is a vector with reference semantics
         for(argR in linR$args) {
-            tree <- CVXcanon.LinOp$new()
-            tmp$append(tree)
-            Q$append(list(linR = argR, linC = tree))
+            tree <- CVXcanon.LinOp()
+            tmp$push_back(tree)
+            Q$push_back(list(linR = argR, linC = tree))
             linC$args_push_back(tree)
         }
 
         ## Setting the type of our LinOp; at the C level, it is an ENUM!
         ## Can we avoid this case conversion and use UPPER CASE to match C?
-        linC$type <- toupper(linR$type) ## Check with Anqi
+        linC$set_type(toupper(linR$type)) ## Check with Anqi
 
         ## Setting size
         linC$size_push_back(as.integer(linR$dim[1]))
@@ -179,9 +179,9 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
                 ## ASK Anqi about this
                 set_slice_data(linC, linR)  ## TODO
             } else if(is.numeric(linR$data) || is.integer(linR$data))
-                linC$dense_data <- format_matrix(linR$data, 'scalar')
+                linC$set_dense_data(format_matrix(linR$data, 'scalar'))
             else if(linR$data$class == 'LinOp' && linR$data$type == 'scalar_const')
-                linC$dense_data <- format_matrix(linR$data$data, 'scalar')
+                linC$set_dense_data(format_matrix(linR$data$data, 'scalar'))
             else
                 set_matrix_data(linC, linR)
         }

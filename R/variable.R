@@ -121,41 +121,41 @@ NonNegative <- function(rows = 1, cols = 1, name = NA_character_) { Variable(row
 Symmetric <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, symmetric = TRUE) }
 Semidef <- function(n, name = NA_character_) { Variable(rows = n, cols = n, name = name, PSD = TRUE) }
 
-#
-# Upper Triangle to Full Matrix
-#
-# Returns a coefficient matrix to create a symmetric matrix.
-#
-# @param n The width/height of the matrix
-# @return The coefficient matrix.
-upper_tri_to_full <- function(n) {
-  if(n == 0)
-    return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
+## # NOW done in C for performance: SEE  src/RcppConv.cpp
+## # Upper Triangle to Full Matrix
+## #
+## # Returns a coefficient matrix to create a symmetric matrix.
+## #
+## # @param n The width/height of the matrix
+## # @return The coefficient matrix.
+## upper_tri_to_full <- function(n) {
+##   if(n == 0)
+##     return(sparseMatrix(i = c(), j = c(), dims = c(0, 0)))
   
-  entries <- floor(n*(n+1)/2)
+##   entries <- floor(n*(n+1)/2)
   
-  val_arr <- c()
-  row_arr <- c()
-  col_arr <- c()
-  count <- 1
-  for(i in 1:n) {
-    for(j in i:n) {
-      # Index in the original matrix
-      col_arr <- c(col_arr, count)
+##   val_arr <- c()
+##   row_arr <- c()
+##   col_arr <- c()
+##   count <- 1
+##   for(i in 1:n) {
+##     for(j in i:n) {
+##       # Index in the original matrix
+##       col_arr <- c(col_arr, count)
       
-      # Index in the filled matrix
-      row_arr <- c(row_arr, (j-1)*n + i)
-      val_arr <- c(val_arr, 1.0)
-      if(i != j) {
-        # Index in the original matrix
-        col_arr <- c(col_arr, count)
+##       # Index in the filled matrix
+##       row_arr <- c(row_arr, (j-1)*n + i)
+##       val_arr <- c(val_arr, 1.0)
+##       if(i != j) {
+##         # Index in the original matrix
+##         col_arr <- c(col_arr, count)
         
-        # Index in the filled matrix
-        row_arr <- c(row_arr, (i-1)*n + j)
-        val_arr <- c(val_arr, 1.0)
-      }
-      count <- count + 1
-    }
-  }
-  sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
-}
+##         # Index in the filled matrix
+##         row_arr <- c(row_arr, (i-1)*n + j)
+##         val_arr <- c(val_arr, 1.0)
+##       }
+##       count <- count + 1
+##     }
+##   }
+##   sparseMatrix(i = row_arr, j = col_arr, x = val_arr, dims = c(n^2, entries))
+## }

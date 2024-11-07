@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-14
+Version: 1.0-15
 VignetteBuilder: knitr
 Authors@R: c(
            person("Anqi", "Fu",
@@ -42,7 +42,6 @@ Depends:
     R (>= 3.4.0)
 Imports:
     methods,
-    R6,
     Matrix,
     Rcpp (>= 0.12.12),
     bit64,
@@ -52,7 +51,8 @@ Imports:
     scs (>= 3.0),
     stats,
     osqp,
-    clarabel (>= 0.9.0)
+    cli,
+    utils
 Suggests:
     knitr,
     rmarkdown,
@@ -92,19 +92,17 @@ Collate:
     'qp2quad_form.R'
     'qp_solvers.R'
     'utilities.R'
+    'coll_utils.R'
     'solver_utilities.R'
     'transforms.R'
     'exports.R'
     'rcppUtils.R'
-    'R6List.R'
-    'ProblemData-R6.R'
-    'LinOp-R6.R'
-    'LinOpVector-R6.R'
+    'LinOp.R'
+    'LinOpVector.R'
     'RcppExports.R'
-    'CVXcanon-R6.R'
-    'Deque.R'
+    'CVXcanon.R'
     'canonInterface.R'
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Encoding: UTF-8
 Enhances: 
     Rcplex,
@@ -112,4 +110,5 @@ Enhances:
     rcbc,
     cccp,
     Rmosek,
-    Rglpk
+    Rglpk,
+    clarabel (>= 0.9.0)

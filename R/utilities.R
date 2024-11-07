@@ -29,14 +29,14 @@ INFEASIBLE = "infeasible"
 INFEASIBLE_INACCURATE = "infeasible_inaccurate"
 UNBOUNDED = "unbounded"
 UNBOUNDED_INACCURATE = "unbounded_inaccurate"
-USER_LIMIT <- "user_limit"
+USER_LIMIT <- "user_limit" ## This is now mapped to INFEASIBLE_INACCURATE per CVXPY https://github.com/cvxpy/cvxpy/pull/1270
 SOLVER_ERROR = "solver_error"
 # Statuses that indicate a solution was found.
 SOLUTION_PRESENT = c(OPTIMAL, OPTIMAL_INACCURATE)
 # Statuses that indicate the problem is infeasible or unbounded.
 INF_OR_UNB = c(INFEASIBLE, INFEASIBLE_INACCURATE, UNBOUNDED, UNBOUNDED_INACCURATE)
 # Statuses that indicate an error.
-ERROR <- c(USER_LIMIT, SOLVER_ERROR)
+ERROR <- c(SOLVER_ERROR)
 
 ## Codes from lpSolveAPI solver (partial at the moment)
 DEGENERATE = "degenerate"
@@ -46,6 +46,63 @@ BB_FAILED = "branch_and_bound_failure"
 
 ## Codes from GLPK (partial)
 UNDEFINED = "undefined"
+
+## The code below seeks to create a unified solver code interface
+## CVXR has a limited number of classes of solver statuses that need to be
+## mapped to solver-specific codes. That mapping is supplied using a data frame
+## built using solver documentation and store in extdata.
+## First try will be with GUROBI since it was requested some time ago.
+## Then we will slowly convert all others, one by one.
+cvxr_status <- list(
+  optimal = "optimal",
+  optimal_inaccurate = "optimal_inaccurate",
+  infeasible = "infeasible",
+  infeasible_inaccurate = "infeasible_inaccurate",
+  unbounded = "unbounded",
+  unbounded_inaccurate = "unbounded_inaccurate",
+  infeasible_or_unbounded = "infeasible_or_unbounded",
+  user_limit = "user_limit",
+  solver_error = "solver_error")
+
+## Is a solution present, based on a cvxr status?
+solution_present <- function(status) {
+  status %in% c(cvxr_status$optimal,
+                cvxr_status$optimal_inaccurate,
+                cvxr_status$user_limit)
+}
+
+## Is a solution infeasible or unbounded based on a cvxr status?
+solution_inf_or_ub <- function(status) {
+  status %in% c(cvxr_status$infeasible,
+                cvxr_status$infeasible_inaccurate,
+                cvxr_status$unbounded,
+                cvxr_status$unbounded_inaccurate,
+                cvxr_status$infeasible_or_unbounded)
+}
+
+## Is a solution inaccurate based on a cvxr status?
+solution_inaccurate <- function(status) {
+  status %in% c(cvxr_status$optimal_inaccurate,
+                cvxr_status$infeasible_inaccurate,
+                cvxr_status$unbounded_inaccurate,
+                cvxr_status$user_limit)
+}
+
+## Is a solution an error based on a cvxr status?
+solution_error <- function(status) {
+  status %in% c(cvxr_status$solver_error)
+}
+
+## Codes from lpSolveAPI solver (partial at the moment)
+DEGENERATE = "degenerate"
+NUMERICAL_FAILURE = "numerical_failure"
+TIMEOUT = "timeout"
+BB_FAILED = "branch_and_bound_failure"
+
+## Codes from GLPK (partial)
+UNDEFINED = "undefined"
+
+
 
 # Solver names.
 CBC_NAME = "CBC"

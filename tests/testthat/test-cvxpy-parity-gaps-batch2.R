@@ -686,12 +686,13 @@ test_that("MIQP: mixed-integer QP problem", {
   constraints <- list(x >= 0, x <= 10, sum_entries(x) >= 5)
   prob <- Problem(objective, constraints)
 
-  ## Try to solve - might need ECOS_BB, Gurobi, or MOSEK for MIQP
+  ## MIQP requires a solver that supports both QP and integer variables.
+  ## ECOS_BB is conic-only (no QP path), so only GUROBI, CPLEX, or MOSEK work.
   skip_if_not(
-    any(c("ECOS_BB", "GUROBI", "MOSEK") %in% installed_solvers()),
-    "No MIQP solver available"
+    any(c("GUROBI", "CPLEX", "MOSEK") %in% installed_solvers()),
+    "No MIQP solver available (need GUROBI, CPLEX, or MOSEK)"
   )
-  psolve(prob)  # use default solver selection
+  psolve(prob)
   expect_true(status(prob) %in% c("optimal", "optimal_inaccurate"))
 })
 

@@ -35,6 +35,7 @@ jobs:
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
+          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

@@ -45,6 +45,7 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 
       - uses: r-lib/actions/check-r-package@v2
         with:

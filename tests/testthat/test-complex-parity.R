@@ -380,7 +380,7 @@ test_that("test_eigval_atoms: lambda_max, lambda_sum_largest, lambda_sum_smalles
     result <- psolve(prob, solver = "SCS")
     expect_equal(result, lmax_ref, tolerance = 0.1)
 
-    eigs <- sort(Re(eigen(P, only.values = TRUE)$values))
+    eigs <- sort(Re(eigen(P, symmetric = FALSE, only.values = TRUE)$values))
     lsum2_ref <- sum(tail(eigs, 2))
     X <- Variable(dim(P), complex = TRUE)
     prob <- Problem(Minimize(lambda_sum_largest(X, 2)), list(X == Constant(P)))

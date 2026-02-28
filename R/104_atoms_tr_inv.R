@@ -64,7 +64,7 @@ method(numeric_value, TrInv) <- function(x, values, ...) {
   }
   ## Take symmetric part for numerical stability
   symm <- (A + t(A)) / 2
-  eig_vals <- eigen(symm, symmetric = TRUE, only.values = TRUE)$values
+  eig_vals <- .eigvalsh(symm, only_values = TRUE)$values
   if (min(eig_vals) <= 0) {
     return(matrix(Inf, 1L, 1L))
   }

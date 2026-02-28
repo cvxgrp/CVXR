@@ -7,16 +7,16 @@ home:
 
 authors:
   Anqi Fu:
-    href: https://web.stanford.edu/~anqif/
+    href: https://anqif.github.io/
 
   Balasubramanian Narasimhan:
-    href: https://web.stanford.edu/~naras
+    href: https://naras.su.domains
 
   Steven Diamond:
-    href: https://web.stanford.edu/~stevend2/
+    href: https://stevendiamond.me/
 
   John Miller:
-    href: https://people.eecs.berkeley.edu/~miller_john/
+    href: https://millerjohnp.github.io/
 
 template:
   bootstrap: 5
@@ -92,15 +92,23 @@ reference:
   - SOLVER_ERROR
   - USER_LIMIT
 
+- title: Math and standard function dispatch
+  desc: >
+    Standard R functions that work directly on CVXR expressions.
+    abs, exp, log, sqrt, sum, max, min (group generics);
+    norm, mean, diff (S4 generics); sd, var, outer (masking wrappers).
+  contents:
+  - math_atoms
+
 - title: Elementwise atoms
   desc: Functions applied element-by-element
   contents:
   - entr
-  - exp
   - huber
   - inv_pos
   - kl_div
   - log1p_atom
+  - log1p_expr
   - logistic
   - loggamma
   - log_normcdf
@@ -131,6 +139,7 @@ reference:
   - ptp
   - cvxr_mean
   - cvxr_std
+  - std
   - cvxr_var
   - cvar
 
@@ -273,6 +282,15 @@ reference:
   - as_cvxr_expr
   - visualize
   - expr_H
+  - make_sparse_diagonal_matrix
+  - rel_entr
+
+- title: Data
+  desc: Example datasets
+  contents:
+  - cdiac
+  - dspop
+  - dssamp
 
 - title: Deprecated
   desc: Backward-compatible aliases (use the new names instead)

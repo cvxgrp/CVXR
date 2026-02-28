@@ -185,6 +185,6 @@ intf_is_skew_symmetric <- function(val) {
 #' @returns Logical
 #' @keywords internal
 intf_is_psd <- function(val, tol = EIGVAL_TOL) {
-  ev <- eigen(val, symmetric = TRUE, only.values = TRUE)$values
+  ev <- .eigvalsh(val, only_values = TRUE)$values
   all(ev >= -tol)
 }

@@ -58,7 +58,7 @@ method(is_decr, ConditionNumber) <- function(x, idx, ...) FALSE
 ## CVXPY: condition_number.py lines 31-39
 method(numeric_value, ConditionNumber) <- function(x, values, ...) {
   A <- values[[1L]]
-  evals <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+  evals <- .eigvalsh(A, only_values = TRUE)$values
   ## eigenvalues in decreasing order; max is first, min is last
   matrix(evals[1L] / evals[length(evals)], 1L, 1L)
 }

@@ -233,3 +233,9 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
 method(t, Expression) <- function(x) {
   Transpose(x)
 }
+
+# ── mean() dispatch via S3 generic (base::mean is UseMethod) ─────
+# mean(expr, axis=1, keepdims=TRUE) works via ...
+method(mean, Expression) <- function(x, ...) {
+  cvxr_mean(x, ...)
+}

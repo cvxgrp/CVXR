@@ -60,7 +60,7 @@ method(is_decr, LambdaMax) <- function(x, idx, ...) FALSE
 ## CVXPY: lambda_max.py lines 33-39
 method(numeric_value, LambdaMax) <- function(x, values, ...) {
   A <- values[[1L]]
-  evals <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+  evals <- .eigvalsh(A, only_values = TRUE)$values
   ## eigen() returns values in decreasing order; largest is first
   matrix(evals[1L], 1L, 1L)
 }

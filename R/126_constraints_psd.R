@@ -81,7 +81,7 @@ method(residual, PSD) <- function(x) {
 
   ## Symmetric part
   sym <- (X_val + t(X_val)) / 2
-  min_eig <- min(eigen(sym, symmetric = TRUE, only.values = TRUE)$values)
+  min_eig <- min(.eigvalsh(sym, only_values = TRUE)$values)
   max(0, -min_eig)
 }
 

@@ -21,16 +21,28 @@ knitr::opts_chunk$set(
 [![Downloads](https://cranlogs.r-pkg.org/badges/CVXR)](https://CRAN.R-project.org/package=CVXR)
 <!-- badges: end -->
 
-CVXR is an R package for **disciplined convex optimization**. It lets
-you formulate convex problems in natural mathematical syntax ---
-specifying an objective and constraints using variables, parameters,
-and a library of atoms with known curvature --- and then solves them
-automatically via an appropriate backend solver.
+CVXR provides an object-oriented modeling language for convex
+optimization, similar to [CVXPY](https://www.cvxpy.org/),
+[CVX](http://cvxr.com/cvx/), [YALMIP](https://yalmip.github.io/), and
+[Convex.jl](https://jump.dev/Convex.jl/stable/). It allows you to
+formulate convex optimization problems in natural mathematical syntax
+rather than the restrictive standard form required by most solvers. You
+specify an objective and a set of constraints by combining constants,
+variables, and parameters using a library of functions with known
+mathematical properties. CVXR then applies signed [disciplined convex
+programming
+(DCP)](https://web.stanford.edu/~boyd/papers/pdf/disc_cvx_prog.pdf) to
+verify the problem's convexity. Once verified, the problem is converted
+into standard conic form and passed to an appropriate backend solver.
 
-Built on the [S7](https://rconsortium.github.io/S7/) object system
-and designed to mirror [CVXPY](https://www.cvxpy.org/) 1.8, this
-version is a complete rewrite that is **~4--5x faster** than the
-previous S4-based CVXR and supports 13 solvers.
+This version is a ground-up rewrite built on the
+[S7](https://rconsortium.github.io/S7/) object system, designed to
+mirror CVXPY 1.8 closely. It is **~4--5x faster** than the previous
+S4-based release, ships with 13 solvers (4 built-in), and supports DCP,
+DGP, DQCP, complex variables, mixed-integer programming, and warm-starting.
+
+For tutorials, worked examples, and the full story, visit the [CVXR
+website](https://cvxr.rbind.io).
 
 ## Installation
 
@@ -69,47 +81,6 @@ result <- psolve(prob)
 result                          # optimal value
 estimated <- value(beta)        # coefficient estimates
 ```
-
-## Solvers
-
-CVXR ships with four built-in solvers and supports nine more via
-optional packages:
-
-| Solver | Package | Problem types |
-|--------|---------|---------------|
-| **Clarabel** | `clarabel` (built-in) | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| **OSQP** | `osqp` (built-in) | LP, QP |
-| **SCS** | `scs` (built-in) | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| **HiGHS** | `highs` (built-in) | LP, MIP |
-| ECOS / ECOS_BB | `ECOSolveR` | SOCP / MIP-SOCP |
-| GLPK / GLPK_MI | `Rglpk` | LP / MIP-LP |
-| MOSEK | `Rmosek` | LP, QP, SOCP, SDP, ExpCone, MIP |
-| Gurobi | `gurobi` | LP, QP, SOCP, MIP |
-| CPLEX | `Rcplex` | LP, QP, MIP |
-| CVXOPT | `cccp` | LP, SOCP, SDP |
-| PIQP | `piqp` | LP, QP |
-
-```{r, eval = FALSE}
-installed_solvers()             # list available solvers
-psolve(prob, solver = "OSQP")   # choose a specific solver
-```
-
-## Features
-
-- **DCP verification** --- problems are checked for convexity at
-  construction time.
-- **DPP (Disciplined Parameterized Programming)** --- compile once,
-  re-solve efficiently when only `Parameter()` values change.
-- **DGP (Disciplined Geometric Programming)** and **DQCP (Disciplined
-  Quasiconvex Programming)** extensions.
-- **Complex variables** via `Variable(n, complex = TRUE)`.
-- **Mixed-integer** programming with `Variable(n, boolean = TRUE)` or
-  `Variable(n, integer = TRUE)`.
-- **Warm-start** for 7 of 13 solvers.
-- **50+ atoms** covering LP, QP, SOCP, SDP, exponential, and power
-  cone problems.
-- **`visualize()`** for problem introspection (text and interactive
-  HTML output).
 
 ## Documentation
 

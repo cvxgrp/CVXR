@@ -6,6 +6,8 @@
 \alias{CVXR-package}
 \title{CVXR: Disciplined Convex Optimization}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 An object-oriented modeling language for disciplined convex programming (DCP) as described in Fu, Narasimhan, and Boyd (2020, \doi{10.18637/jss.v094.i14}). It allows the user to formulate convex optimization problems in a natural way following mathematical convention and DCP rules. The system analyzes the problem, verifies its convexity, converts it into a canonical form, and hands it off to an appropriate solver to obtain the solution. This version uses the S7 object system for improved performance and maintainability.
 }
 \seealso{
@@ -23,9 +25,8 @@ Useful links:
 Authors:
 \itemize{
   \item Balasubramanian Narasimhan \email{naras@stat.stanford.edu}
-  \item David W Kang \email{Dkang9503@gmail.com}
-  \item Steven Diamond \email{stevend2@stanford.edu}
-  \item John Miller \email{miller_john@berkeley.edu}
+  \item Steven Diamond
+  \item John Miller
 }
 
 Other contributors:

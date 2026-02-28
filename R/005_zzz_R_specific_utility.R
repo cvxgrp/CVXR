@@ -272,3 +272,48 @@ expr_sign_str <- function(x) {
   else if (is_nonpos(x)) NONPOS_SIGN
   else UNKNOWN_SIGN
 }
+
+# ── Safe eigenvalue decomposition for symmetric/Hermitian matrices ────
+## Apple Accelerate's zheev (complex Hermitian eigenvalue) segfaults on
+## macOS ARM64 when R is linked against vecLib.  R's bundled reference
+## LAPACK is not affected.  This helper routes around the bug:
+##   - Real matrix:        eigen(A, symmetric=TRUE) — uses dsyev, safe.
+##   - Complex, Im all 0:  Re(A) then dsyev — avoids zheev entirely.
+##   - Truly complex:      eigen(A, symmetric=FALSE) + sort — uses zgeev.
+## Mirrors numpy.linalg.eigvalsh() semantics.
+
+#' Safe eigenvalues/vectors of a symmetric/Hermitian matrix
+#'
+#' Drop-in replacement for \code{eigen(A, symmetric = TRUE)} that avoids
+#' the \code{zheev} segfault in Apple Accelerate on macOS ARM64.
+#'
+#' @param A A symmetric (real) or Hermitian (complex) matrix.
+#' @param only_values If \code{TRUE}, return only eigenvalues (faster).
+#' @returns When \code{only_values = TRUE}, a list with \code{$values}
+#'   (numeric, decreasing order).
+#'   When \code{only_values = FALSE}, a list with \code{$values} and
+#'   \code{$vectors}, like \code{eigen()}.
+#' @noRd
+.eigvalsh <- function(A, only_values = TRUE) {
+  if (!is.complex(A)) {
+    ## Real matrix — dsyev is safe
+    return(eigen(A, symmetric = TRUE, only.values = only_values))
+  }
+  ## Complex matrix — check if imaginary part is all zero
+  if (all(Im(A) == 0)) {
+    ## Strip +0i to route through dsyev instead of zheev
+    return(eigen(Re(A), symmetric = TRUE, only.values = only_values))
+  }
+  ## Truly complex Hermitian — use zgeev (symmetric=FALSE) to avoid zheev
+  eig <- eigen(A, symmetric = FALSE, only.values = only_values)
+  ## Eigenvalues of a Hermitian matrix are guaranteed real
+  vals <- Re(eig$values)
+  ## symmetric=FALSE returns eigenvalues sorted by decreasing modulus;
+  ## re-sort by decreasing real value to match symmetric=TRUE convention
+  ord <- order(vals, decreasing = TRUE)
+  eig$values <- vals[ord]
+  if (!only_values && !is.null(eig$vectors)) {
+    eig$vectors <- eig$vectors[, ord, drop = FALSE]
+  }
+  eig
+}

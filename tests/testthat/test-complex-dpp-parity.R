@@ -195,14 +195,14 @@ test_that("test_hermitian_param_dpp: DPP with Hermitian parameter, fast path re-
     P@value <- P_val1
 
     psolve(prob, solver = "CLARABEL")
-    lmax1 <- max(Re(eigen(P_val1, only.values = TRUE)$values))
+    lmax1 <- max(Re(eigen(P_val1, symmetric = FALSE, only.values = TRUE)$values))
     expect_equal(as.numeric(value(x)), lmax1, tolerance = 1e-3)
 
     ## Fast path re-solve
     P_val2 <- P_val1 + diag(n)
     P@value <- P_val2
     psolve(prob, solver = "CLARABEL")
-    lmax2 <- max(Re(eigen(P_val2, only.values = TRUE)$values))
+    lmax2 <- max(Re(eigen(P_val2, symmetric = FALSE, only.values = TRUE)$values))
     expect_equal(as.numeric(value(x)), lmax2, tolerance = 1e-3)
   }
 })

@@ -265,7 +265,7 @@ method(project, Leaf) <- function(x, val, ...) {
     if (is.integer(val)) val <- as.double(val)
     val <- (val + t(val)) / 2
     if (isTRUE(a$symmetric)) return(val)
-    ev <- eigen(val, symmetric = TRUE)
+    ev <- .eigvalsh(val, only_values = FALSE)
     w <- ev$values
     V <- ev$vectors
     if (isTRUE(a$PSD)) {

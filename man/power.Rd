@@ -21,3 +21,8 @@ A Power or PowerApprox atom
 \description{
 Create a Power atom
 }
+\note{
+\code{sqrt(x)} on a CVXR expression dispatches to
+\code{Power(x, 0.5)} via the Math group generic.
+See \code{\link{math_atoms}} for all standard R function dispatch.
+}

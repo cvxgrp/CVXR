@@ -69,7 +69,7 @@ method(is_decr, LambdaSumLargest) <- function(x, idx, ...) FALSE
 ## CVXPY: lambda_sum_largest.py lines 42-48
 method(numeric_value, LambdaSumLargest) <- function(x, values, ...) {
   A <- values[[1L]]
-  evals <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+  evals <- .eigvalsh(A, only_values = TRUE)$values
   ## eigen() returns values in decreasing order; sum the k largest
   matrix(sum(evals[seq_len(x@k)]), 1L, 1L)
 }

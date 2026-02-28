@@ -273,6 +273,9 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
 #' @param max_denom Maximum denominator for rational approximation
 #' @param approx If TRUE (default), use SOC approximation. If FALSE, use exact power cone.
 #' @returns A Power or PowerApprox atom
+#' @note \code{sqrt(x)} on a CVXR expression dispatches to
+#'   \code{Power(x, 0.5)} via the Math group generic.
+#'   See \code{\link{math_atoms}} for all standard R function dispatch.
 #' @export
 power <- function(x, p, max_denom = 1024L, approx = TRUE) {
   if (approx) {

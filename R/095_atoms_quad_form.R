@@ -105,7 +105,7 @@ method(graph_implementation, QuadForm) <- function(x, arg_objs, shape, data = NU
 ## Returns list(scale, M1, M2) where P = scale * (M1 %*% t(M1) - M2 %*% t(M2))
 decomp_quad <- function(P, cond = NULL) {
   P <- as.matrix(P)
-  eig <- eigen(P, symmetric = TRUE)
+  eig <- .eigvalsh(P, only_values = FALSE)
   w <- eig$values
   V <- eig$vectors
 

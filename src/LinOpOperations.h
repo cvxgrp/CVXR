@@ -20,8 +20,8 @@
 #include "Utils.h"
 #include "LinOp.h"
 
-std::map<int, Matrix> get_variable_coeffs(LinOp &lin);
-std::map<int, Matrix> get_const_coeffs(LinOp &lin);
-std::vector<Matrix> get_func_coeffs(LinOp& lin);
+/* DPP tensor-based API — mirrors CVXPY LinOpOperations.hpp */
+Tensor get_node_coeffs(LinOp &lin, int arg_idx);
+Tensor lin_to_tensor(LinOp &lin, int depth = 0);
 
 #endif

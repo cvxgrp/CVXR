@@ -2,11 +2,13 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, s7-rewrite]
   pull_request:
     branches: [main, master]
 
 name: R-CMD-check
+
+permissions: read-all
 
 jobs:
   R-CMD-check:
@@ -18,11 +20,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {os: ubuntu-latest,  r: 'release'}
+          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,  r: 'oldrel-1'}
           - {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -41,9 +43,10 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, gurobi=?ignore, rcbc=?ignore, Rcplex=?ignore, Rmosek=?ignore
+          extra-packages: any::rcmdcheck
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          args: '"--no-manual"'

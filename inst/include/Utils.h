@@ -17,6 +17,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <map>
+#include <vector>
+
 #ifndef _R_INTERFACE_
 
 #include "../include/Eigen/Sparse"
@@ -37,5 +40,19 @@ typedef Eigen::Matrix<int, Eigen::Dynamic, 1> Vector;
 typedef Eigen::SparseMatrix<double> Matrix;
 typedef std::map<int, Matrix> CoeffMap;
 typedef Eigen::Triplet<double> Triplet;
+
+/* DPP tensor types — mirrors CVXPY cvxcore/src/Utils.hpp */
+typedef std::map<int, std::map<int, std::vector<Matrix> > > Tensor;
+typedef std::map<int, std::vector<Matrix> > DictMat;
+
+/* ID for all things of CONSTANT_TYPE */
+static const int CONSTANT_ID = -1;
+
+/* Tensor algebra functions */
+int vecprod(const std::vector<int> &vec);
+int vecprod_before(const std::vector<int> &vec, int end);
+Tensor tensor_mul(const Tensor &lh_ten, const Tensor &rh_ten);
+void acc_tensor(Tensor &lh_ten, const Tensor &rh_ten);
+Matrix diagonalize(const Matrix &mat);
 
 #endif

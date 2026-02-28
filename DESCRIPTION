@@ -63,9 +63,9 @@ Enhances:
     Rcplex (>= 0.3.8),
     cccp (>= 0.3.3),
     piqp (>= 0.6.2)
-Remotes:
-    osqp/osqp-r,
-    oxfordcontrol/clarabel-r
+Additional_repositories:
+    https://osqp.r-universe.dev,
+    https://oxfordcontrol.r-universe.dev
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true

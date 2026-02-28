@@ -1,5 +1,8 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+#
+# osqp and clarabel resolved via Additional_repositories in DESCRIPTION
+# (R-universe provides pre-built binaries).
 on:
   push:
     branches: [main, master, s7-rewrite]
@@ -31,23 +34,9 @@ jobs:
         with:
           use-public-rspm: true
 
-      # osqp-r uses git submodules for C sources. pak downloads GitHub
-      # tarballs which exclude submodules, breaking the build. Clone
-      # with --recursive and point pak at the local directory instead.
-      - name: Clone osqp-r with submodules
-        run: |
-          TMPDIR="${RUNNER_TEMP//\\//}"
-          git clone --recursive https://github.com/osqp/osqp-r.git "$TMPDIR/osqp-r"
-          echo "OSQP_R_DIR=$TMPDIR/osqp-r" >> "$GITHUB_ENV"
-        shell: bash
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: >-
-            any::pkgdown,
-            local::.,
-            oxfordcontrol/clarabel-r,
-            local::${{ env.OSQP_R_DIR }}
+          extra-packages: any::pkgdown, local::.
           needs: website
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 

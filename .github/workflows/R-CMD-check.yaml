@@ -1,5 +1,15 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+#
+# osqp (>= 1.0.0) and clarabel (>= 0.11.2) are not yet on CRAN.
+# DESCRIPTION has Additional_repositories pointing to R-universe,
+# which provides pre-built binaries for all platforms.
+#
+# Enhances packages NOT tested in CI:
+#   Rmosek  -- CRAN version is outdated/non-functional
+#   gurobi  -- commercial, not on CRAN
+#   Rcplex  -- CRAN version is outdated/non-functional
+# These are skipped via require_solver() guards in tests.
 on:
   push:
     branches: [main, master, s7-rewrite]
@@ -41,22 +51,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # osqp-r uses git submodules for C sources. pak downloads GitHub
-      # tarballs which exclude submodules, breaking the build. Clone
-      # with --recursive and point pak at the local directory instead.
-      - name: Clone osqp-r with submodules
-        run: |
-          TMPDIR="${RUNNER_TEMP//\\//}"
-          git clone --recursive https://github.com/osqp/osqp-r.git "$TMPDIR/osqp-r"
-          echo "OSQP_R_DIR=$TMPDIR/osqp-r" >> "$GITHUB_ENV"
-        shell: bash
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: >-
             any::rcmdcheck,
-            oxfordcontrol/clarabel-r,
-            local::${{ env.OSQP_R_DIR }},
             any::Rglpk,
             any::ECOSolveR,
             any::cccp,

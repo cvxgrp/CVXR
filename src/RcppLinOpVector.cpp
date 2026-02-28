@@ -1,8 +1,8 @@
 #include "CVXR.h"
 
-//' Create a new LinOpVector object.
-//'
-//' @return an external ptr (Rcpp::XPtr) to a LinOp object instance.
+// Create a new LinOpVector object.
+//
+// @return an external ptr (Rcpp::XPtr) to a LinOp object instance.
 // [[Rcpp::export(.LinOpVector__new)]]
 SEXP LinOpVector__new() {
   // create a pointer to an Uniform object and wrap it
@@ -14,10 +14,10 @@ SEXP LinOpVector__new() {
 }
 
 
-//' Perform a push back operation on the \code{args} field of LinOp
-//'
-//' @param xp the LinOpVector Object XPtr
-//' @param yp the LinOp Object XPtr to push
+// Perform a push back operation on the \code{args} field of LinOp
+//
+// @param xp the LinOpVector Object XPtr
+// @param yp the LinOp Object XPtr to push
 // [[Rcpp::export(.LinOpVector__push_back)]]
 void LinOpVector__push_back(SEXP xp, SEXP yp) {
   // grab the object as a XPtr (smart pointer)
@@ -28,10 +28,10 @@ void LinOpVector__push_back(SEXP xp, SEXP yp) {
 }
 
 
-//' Return the LinOp element at index i (0-based)
-//'
-//' @param lvec the LinOpVector Object XPtr
-//' @param i the index
+// Return the LinOp element at index i (0-based)
+//
+// @param lvec the LinOpVector Object XPtr
+// @param i the index
 // [[Rcpp::export(.LinOp_at_index)]]
 SEXP LinOp_at_index(SEXP lvec, int i) {
   Rcpp::XPtr<LinOpVector> vPtr(lvec);

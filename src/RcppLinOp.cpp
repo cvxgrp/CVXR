@@ -1,8 +1,8 @@
 #include "LinOp.h"
 
-//' Create a new LinOp object.
-//'
-//' @return an external ptr (Rcpp::XPtr) to a LinOp object instance.
+// Create a new LinOp object.
+//
+// @return an external ptr (Rcpp::XPtr) to a LinOp object instance.
 // [[Rcpp::export(.LinOp__new)]]
 SEXP LinOp__new() {
   // create a pointer to an Uniform object and wrap it
@@ -13,10 +13,10 @@ SEXP LinOp__new() {
   return ptr;
 }
 
-//' Get the \code{sparse} flag field for the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return TRUE or FALSE
+// Get the \code{sparse} flag field for the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @return TRUE or FALSE
 // [[Rcpp::export(.LinOp__get_sparse)]]
 bool LinOp__get_sparse(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
@@ -24,10 +24,10 @@ bool LinOp__get_sparse(SEXP xp) {
   return ptr->sparse;
 }
 
-//' Set the flag \code{sparse} of the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param sparseSEXP an R boolean
+// Set the flag \code{sparse} of the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param sparseSEXP an R boolean
 // [[Rcpp::export(.LinOp__set_sparse)]]
 void LinOp__set_sparse(SEXP xp, SEXP sparseSEXP) {
   // grab the object as a XPtr (smart pointer)
@@ -38,10 +38,10 @@ void LinOp__set_sparse(SEXP xp, SEXP sparseSEXP) {
 }
 
 
-//' Get the field named \code{sparse_data} from the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return a \link[Matrix]{dgCMatrix-class} object
+// Get the field named \code{sparse_data} from the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @return a \link[Matrix]{dgCMatrix-class} object
 // [[Rcpp::export(.LinOp__get_sparse_data)]]
 Eigen::SparseMatrix<double> LinOp__get_sparse_data(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
@@ -50,10 +50,10 @@ Eigen::SparseMatrix<double> LinOp__get_sparse_data(SEXP xp) {
   return ptr->sparse_data;
 }
 
-//' Set the field named \code{sparse_data} of the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param sparseMat a \link[Matrix]{dgCMatrix-class} object
+// Set the field named \code{sparse_data} of the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param sparseMat a \link[Matrix]{dgCMatrix-class} object
 // [[Rcpp::export(.LinOp__set_sparse_data)]]
 void LinOp__set_sparse_data(SEXP xp, SEXP sparseMat) {
   // grab the object as a XPtr (smart pointer)
@@ -65,10 +65,10 @@ void LinOp__set_sparse_data(SEXP xp, SEXP sparseMat) {
 
 }
 
-//' Get the field \code{dense_data} for the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return a MatrixXd object
+// Get the field \code{dense_data} for the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @return a MatrixXd object
 // [[Rcpp::export(.LinOp__get_dense_data)]]
 Eigen::MatrixXd LinOp__get_dense_data(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
@@ -77,10 +77,10 @@ Eigen::MatrixXd LinOp__get_dense_data(SEXP xp) {
   return ptr->dense_data;
 }
 
-//' Set the field \code{dense_data} of the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param denseMat a standard matrix object in R
+// Set the field \code{dense_data} of the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param denseMat a standard matrix object in R
 // [[Rcpp::export(.LinOp__set_dense_data)]]
 void LinOp__set_dense_data(SEXP xp, SEXP denseMat) {
   // grab the object as a XPtr (smart pointer)
@@ -90,10 +90,10 @@ void LinOp__set_dense_data(SEXP xp, SEXP denseMat) {
   ptr->dense_data = Rcpp::as<Eigen::MatrixXd >(denseMat);
 }
 
-//' Get the field \code{size} for the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return an integer vector
+// Get the field \code{size} for the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @return an integer vector
 // [[Rcpp::export(.LinOp__get_size)]]
 std::vector<int>  LinOp__get_size(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
@@ -102,10 +102,10 @@ std::vector<int>  LinOp__get_size(SEXP xp) {
   return ptr->size;
 }
 
-//' Set the field \code{size} of the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param value an integer vector object in R
+// Set the field \code{size} of the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param value an integer vector object in R
 // [[Rcpp::export(.LinOp__set_size)]]
 void LinOp__set_size(SEXP xp, Rcpp::IntegerVector value) {
   // grab the object as a XPtr (smart pointer)
@@ -119,10 +119,10 @@ void LinOp__set_size(SEXP xp, Rcpp::IntegerVector value) {
 
 }
 
-//' Perform a push back operation on the \code{args} field of LinOp
-//'
-//' @param xp the LinOp Object XPtr
-//' @param yp the LinOp Object XPtr to push
+// Perform a push back operation on the \code{args} field of LinOp
+//
+// @param xp the LinOp Object XPtr
+// @param yp the LinOp Object XPtr to push
 // [[Rcpp::export(.LinOp__args_push_back)]]
 void LinOp__args_push_back(SEXP xp, SEXP yp) {
   // grab the object as a XPtr (smart pointer)
@@ -132,10 +132,10 @@ void LinOp__args_push_back(SEXP xp, SEXP yp) {
   (ptrX->args).push_back(ptrY);
 }
 
-//' Perform a push back operation on the \code{size} field of LinOp
-//'
-//' @param xp the LinOp Object XPtr
-//' @param intVal the integer value to push back
+// Perform a push back operation on the \code{size} field of LinOp
+//
+// @param xp the LinOp Object XPtr
+// @param intVal the integer value to push back
 // [[Rcpp::export(.LinOp__size_push_back)]]
 void LinOp__size_push_back(SEXP xp, int intVal) {
   // grab the object as a XPtr (smart pointer)
@@ -143,10 +143,10 @@ void LinOp__size_push_back(SEXP xp, int intVal) {
   (ptr->size).push_back(intVal);
 }
 
-//' Set the field named \code{type} for the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param typeValue an integer value
+// Set the field named \code{type} for the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param typeValue an integer value
 // [[Rcpp::export(.LinOp__set_type)]]
 void LinOp__set_type(SEXP xp, int typeValue) {
   OperatorType oType;
@@ -224,6 +224,12 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   case 23:
     oType = KRON;
     break;
+  case 24:
+    oType = KRON_L;
+    break;
+  case 25:
+    oType = PARAM;
+    break;
   default:
     err = 1;
     // std::cerr << "Error: linOp type invalid." << lin.type << std::endl;
@@ -241,10 +247,10 @@ void LinOp__set_type(SEXP xp, int typeValue) {
   }
 }
 
-//' Get the field named \code{type} for the LinOp object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return an integer value for type
+// Get the field named \code{type} for the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @return an integer value for type
 // [[Rcpp::export(.LinOp__get_type)]]
 int LinOp__get_type(SEXP xp) {
 
@@ -325,6 +331,12 @@ int LinOp__get_type(SEXP xp) {
   case KRON:
     oType = 23;
     break;
+  case KRON_L:
+    oType = 24;
+    break;
+  case PARAM:
+    oType = 25;
+    break;
   default:
     oType = -255;
     Rcpp::stop("Error: LinOp type invalid");
@@ -332,10 +344,10 @@ int LinOp__get_type(SEXP xp) {
   return oType;
 }
 
-//' Perform a push back operation on the \code{slice} field of LinOp
-//'
-//' @param xp the LinOp Object XPtr
-//' @param intVec an integer vector to push back
+// Perform a push back operation on the \code{slice} field of LinOp
+//
+// @param xp the LinOp Object XPtr
+// @param intVec an integer vector to push back
 // [[Rcpp::export(.LinOp__slice_push_back)]]
 void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec) {
   // grab the object as a XPtr (smart pointer)
@@ -343,10 +355,10 @@ void LinOp__slice_push_back(SEXP xp, std::vector<int> intVec) {
   (ptr->slice).push_back(intVec);
 }
 
-//' Get the slice field of the LinOp Object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return the value of the slice field of the LinOp Object
+// Get the slice field of the LinOp Object
+//
+// @param xp the LinOp Object XPtr
+// @return the value of the slice field of the LinOp Object
 // [[Rcpp::export(.LinOp__get_slice)]]
 std::vector<std::vector<int> >  LinOp__get_slice(SEXP xp) {
   // grab the object as a XPtr (smart pointer)
@@ -356,11 +368,11 @@ std::vector<std::vector<int> >  LinOp__get_slice(SEXP xp) {
   return ptr->slice;
 }
 
-//' Set the slice field of the LinOp Object
-//'
-//' @param xp the LinOp Object XPtr
-//' @param value a list of integer vectors, e.g. \code{list(1:10, 2L, 11:15)}
-//' @return the value of the slice field of the LinOp Object
+// Set the slice field of the LinOp Object
+//
+// @param xp the LinOp Object XPtr
+// @param value a list of integer vectors, e.g. \code{list(1:10, 2L, 11:15)}
+// @return the value of the slice field of the LinOp Object
 // [[Rcpp::export(.LinOp__set_slice)]]
 void LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > value) {
   // grab the object as a XPtr (smart pointer)
@@ -370,10 +382,31 @@ void LinOp__set_slice(SEXP xp, std::vector<std::vector<int> > value) {
 }
 
 
-//' Get the id field of the LinOp Object
-//'
-//' @param xp the LinOp Object XPtr
-//' @return the value of the id field of the LinOp Object
+// Set the \code{data_ndim} field of the LinOp object
+//
+// @param xp the LinOp Object XPtr
+// @param ndim integer: number of dimensions of data (0=scalar, 1=vector, 2=matrix)
+// [[Rcpp::export(.LinOp__set_data_ndim)]]
+void LinOp__set_data_ndim(SEXP xp, int ndim) {
+  Rcpp::XPtr<LinOp> ptr(xp);
+  ptr->data_ndim = ndim;
+}
+
+// Set the \code{linOp_data} pointer of the LinOp object
+//
+// @param xp the parent LinOp Object XPtr
+// @param yp the data LinOp Object XPtr (sub-tree for MUL/RMUL/MUL_ELEM data)
+// [[Rcpp::export(.LinOp__set_linOp_data)]]
+void LinOp__set_linOp_data(SEXP xp, SEXP yp) {
+  Rcpp::XPtr<LinOp> ptrX(xp);
+  Rcpp::XPtr<LinOp> ptrY(yp);
+  ptrX->linOp_data = ptrY;
+}
+
+// Get the id field of the LinOp Object
+//
+// @param xp the LinOp Object XPtr
+// @return the value of the id field of the LinOp Object
 // [[Rcpp::export(.LinOp__get_id)]]
 std::string LinOp__get_id(SEXP xp) {
   // grab the object as a XPtr (smart pointer)

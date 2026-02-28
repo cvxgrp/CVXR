@@ -1,31 +1,24 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.0-15
-VignetteBuilder: knitr
+Version: 1.8.0.9213
 Authors@R: c(
-           person("Anqi", "Fu",
-                  role=c("aut", "cre"),
-                   email = "anqif@alumni.stanford.edu"),
-           person("Balasubramanian", "Narasimhan",
-                  role=c("aut"),
-                   email = "naras@stat.stanford.edu"),
-           person("David W", "Kang",
-                  role=c("aut"),
-		   email = "Dkang9503@gmail.com"),
-           person("Steven", "Diamond",
-                  role=c("aut"),
-                   email = "stevend2@stanford.edu"),
-           person("John", "Miller",
-                  role=c("aut"),
-                   email = "miller_john@berkeley.edu"),
-           person("Stephen", "Boyd",
-                  role=c("ctb"),
-                  email = "boyd@stanford.edu"),
-           person("Paul Kunsberg", "Rosenfield",
-                  role=c("ctb"),
-                  email = "prosenfield@farmersbusinessnetwork.com")
-           )
+    person("Anqi", "Fu",
+           role = c("aut", "cre"),
+           email = "anqif@alumni.stanford.edu"),
+    person("Balasubramanian", "Narasimhan",
+           role = c("aut"),
+           email = "naras@stat.stanford.edu"),
+    person("Steven", "Diamond",
+           role = c("aut")),
+    person("John", "Miller",
+           role = c("aut")),
+    person("Stephen", "Boyd",
+           role = c("ctb"),
+           email = "boyd@stanford.edu")
+    )
+Author: Anqi Fu [aut, cre], Balasubramanian Narasimhan [aut], David W Kang [aut], Steven Diamond [aut], John Miller [aut], Stephen Boyd [ctb]
+Maintainer: Anqi Fu <anqif@alumni.stanford.edu>
 URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
 BugReports: https://github.com/cvxgrp/CVXR/issues
 Description: An object-oriented modeling language for disciplined
@@ -35,80 +28,44 @@ Description: An object-oriented modeling language for disciplined
     mathematical convention and DCP rules. The system analyzes the
     problem, verifies its convexity, converts it into a canonical
     form, and hands it off to an appropriate solver to obtain the
-    solution. Interfaces to solvers on CRAN and elsewhere are
-    provided, both commercial and open source.
-Additional_repositories: https://bnaras.github.io/drat
+    solution. This version uses the S7 object system for improved
+    performance and maintainability.
 Depends:
-    R (>= 3.4.0)
+    R (>= 4.3.0)
 Imports:
+    S7 (>= 0.2.1),
     methods,
-    Matrix,
-    Rcpp (>= 0.12.12),
-    bit64,
-    gmp,
-    Rmpfr,
-    ECOSolveR (>= 0.5.4),
-    scs (>= 3.0),
-    stats,
-    osqp,
-    cli,
-    utils
+    Matrix (>= 1.7.4),
+    Rcpp (>= 1.1.1),
+    clarabel (>= 0.11.2),
+    cli (>= 3.6.5),
+    gmp (>= 0.7.5),
+    highs (>= 1.12.0.3),
+    osqp (>= 1.0.0),
+    scs (>= 3.2.7),
+    slam (>= 0.1.55)
 Suggests:
+    jsonlite (>= 1.9.0),
     knitr,
     rmarkdown,
-    testthat,
-    nnls,
-    slam,
-    covr
+    testthat (>= 3.3.2),
+    rlang
+Enhances:
+    Rmosek (>= 11.1.1),
+    gurobi (>= 13.0.1),
+    Rglpk (>= 0.6.5.1),
+    ECOSolveR (>= 0.6),
+    Rcplex (>= 0.3.8),
+    cccp (>= 0.3.3),
+    piqp (>= 0.6.2)
+Additional_repositories:
+    https://osqp.r-universe.dev,
+    https://oxfordcontrol.r-universe.dev
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true
-Collate:
-    'CVXR-package.R'
-    'data.R'
-    'globals.R'
-    'generics.R'
-    'interface.R'
-    'canonical.R'
-    'expressions.R'
-    'constant.R'
-    'variable.R'
-    'lin_ops.R'
-    'atoms.R'
-    'affine.R'
-    'problem.R'
-    'constraints.R'
-    'elementwise.R'
-    'coeff_extractor.R'
-    'reductions.R'
-    'reduction_solvers.R'
-    'complex2real.R'
-    'conic_solvers.R'
-    'clarabel.R'
-    'eliminate_pwl.R'
-    'dcp2cone.R'
-    'dgp2dcp.R'
-    'sparse_utils.R'
-    'qp2quad_form.R'
-    'qp_solvers.R'
-    'utilities.R'
-    'coll_utils.R'
-    'solver_utilities.R'
-    'transforms.R'
-    'exports.R'
-    'rcppUtils.R'
-    'LinOp.R'
-    'LinOpVector.R'
-    'RcppExports.R'
-    'CVXcanon.R'
-    'canonInterface.R'
-RoxygenNote: 7.3.2
 Encoding: UTF-8
-Enhances: 
-    Rcplex,
-    gurobi,
-    rcbc,
-    cccp,
-    Rmosek,
-    Rglpk,
-    clarabel (>= 0.9.0)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+VignetteBuilder: knitr
+Config/testthat/edition: 3

@@ -20,8 +20,7 @@
 #include <iostream>
 #include "Utils.h"
 
-/* ID for all coefficient matrices associated with linOps of CONSTANT_TYPE */
-static const int CONSTANT_ID = -1;
+/* CONSTANT_ID is now defined in Utils.h */
 
 /* TYPE of each LinOP */
 enum operatortype {
@@ -48,7 +47,9 @@ enum operatortype {
 	DENSE_CONST,
 	SPARSE_CONST,
 	NO_OP,
-	KRON
+	KRON,
+	KRON_L,
+	PARAM
 };
 
 /* linOp TYPE */
@@ -56,7 +57,7 @@ typedef operatortype OperatorType;
 
 /* LinOp Class mirrors the CVXPY linOp class. Data fields are determined
  	 by the TYPE of LinOp. No error checking is performed on the data fields,
- 	 and the semantics of SIZE, ARGS, and DATA depends on the linop TYPE. */
+ 	 and the semantics of SIZE, ARGS, and DATA depends on the linOp TYPE. */
 class LinOp {
 public:
 	OperatorType type;
@@ -75,7 +76,19 @@ public:
 	 * where slice = (start, end, step_size) */
 	std::vector<std::vector<int> > slice;
 
-#ifdef _R_INTERFACE_  
+	/* Data sub-tree pointer (for DPP parametric data in MUL/RMUL/MUL_ELEM).
+	 * Points to a separate LinOp tree representing the coefficient.
+	 * When non-null, get_mul_mat etc. use lin_to_tensor(*linOp_data)
+	 * instead of get_constant_data(). Matches CVXPY LinOp.linOp_data_. */
+	LinOp* linOp_data;
+
+	/* Number of dimensions of the data (0=scalar, 1=vector, 2=matrix).
+	 * Used by get_mul_mat/get_rmul_mat to determine if coefficient
+	 * matrices need transposing (when data_ndim==1 and arg is not a
+	 * row vector). Matches CVXPY LinOp.data_ndim_. */
+	int data_ndim;
+
+#ifdef _R_INTERFACE_
         /* almost uuid */
         std::string id;
 	/* Constructor */
@@ -85,6 +98,8 @@ public:
           Rcpp::Rcout << "LinOp id " << id << " Created!" << std::endl;
 #endif
 	  sparse = false; // sparse by default
+	  linOp_data = nullptr;
+	  data_ndim = 2; // default: 2D (R shapes are always 2D)
 	}
 
         ~LinOp() {
@@ -97,6 +112,8 @@ public:
 	/* Constructor */
 	LinOp(){
 		sparse = false; // sparse by default
+		linOp_data = nullptr;
+		data_ndim = 2; // default: 2D
 	}
 #endif
 	/* Checks if LinOp is constant type */

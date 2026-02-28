@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVXR Visualization</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+/* ── Reset & base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f8f9fa; color: #212529; line-height: 1.5;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+header {
+  background: #fff; border-bottom: 1px solid #dee2e6;
+  padding: 0.75rem 1.5rem 0;
+}
+.problem-summary {
+  font-size: 0.9rem; color: #495057; margin-bottom: 0.5rem;
+}
+.problem-summary .sense { font-weight: 700; text-transform: uppercase; }
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid #dee2e6; }
+.tabs button {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 0.5rem 1rem; font-size: 0.85rem; color: #6c757d;
+  cursor: pointer; margin-bottom: -2px; transition: all 0.15s;
+}
+.tabs button:hover { color: #212529; background: #f1f3f5; }
+.tabs button.active {
+  color: #1565c0; border-bottom-color: #1565c0; font-weight: 600;
+}
+
+/* ── Main content ──────────────────────────────────────────── */
+main { padding: 1.5rem; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Expression Tree (SVG) ─────────────────────────────────── */
+#tree-panel svg { width: 100%; background: #fff; border: 1px solid #dee2e6; border-radius: 6px; }
+.tree-link { fill: none; stroke: #adb5bd; stroke-width: 1.5px; }
+
+.node-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%; padding: 6px 10px;
+  border-radius: 6px; border: 2px solid; cursor: pointer;
+  text-align: center; overflow: hidden;
+  font-size: 14px;
+}
+.node-card .node-math { margin-bottom: 2px; }
+.node-card .node-meta { font-size: 10px; opacity: 0.7; }
+
+/* Curvature colors */
+.curv-convex  { background: #e3f2fd; border-color: #1565c0; }
+.curv-concave { background: #fce4ec; border-color: #c62828; }
+.curv-affine  { background: #e8f5e9; border-color: #2e7d32; }
+.curv-constant { background: #f5f5f5; border-color: #757575; }
+.curv-unknown { background: #fff8e1; border-color: #ff8f00; }
+.curv-nondcp  { background: #ffebee; border-color: #d32f2f; }
+
+/* Collapsed indicator */
+.node-collapsed .node-card { opacity: 0.7; }
+.node-collapsed .node-card::after {
+  content: " [+]"; font-size: 10px; color: #6c757d;
+}
+
+/* ── Constraint section ────────────────────────────────────── */
+.constraint-section { margin-top: 1.5rem; }
+.constraint-section h3 {
+  font-size: 0.95rem; color: #495057; margin-bottom: 0.75rem;
+  border-bottom: 1px solid #dee2e6; padding-bottom: 0.25rem;
+}
+.constraint-item {
+  margin-bottom: 1rem; padding: 0.5rem 0.75rem;
+  background: #fff; border: 1px solid #dee2e6; border-radius: 4px;
+}
+.constraint-type { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem; }
+.constraint-subtree { padding-left: 1rem; border-left: 2px solid #dee2e6; margin-top: 0.25rem; }
+.constraint-leaf {
+  padding: 0.15rem 0; font-size: 0.85rem;
+}
+
+/* ── Equation panels ───────────────────────────────────────── */
+.equations-panel { max-width: 900px; }
+.equations-panel h2 {
+  font-size: 1.1rem; margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem; border-bottom: 2px solid #dee2e6;
+}
+.eq-header {
+  font-size: 1rem; margin-bottom: 1rem; padding: 0.5rem 0.75rem;
+  background: #fff; border-radius: 4px; border: 1px solid #dee2e6;
+}
+.eq-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.4rem 0.75rem; margin-bottom: 0.25rem;
+  background: #fff; border-radius: 4px; border-left: 4px solid;
+}
+.eq-row .eq-num { font-size: 0.75rem; color: #adb5bd; min-width: 2rem; }
+.eq-row .eq-math { flex: 1; overflow-x: auto; }
+.eq-row.curv-convex  { border-left-color: #1565c0; }
+.eq-row.curv-concave { border-left-color: #c62828; }
+.eq-row.curv-affine  { border-left-color: #2e7d32; }
+.eq-row.curv-constant { border-left-color: #757575; }
+.eq-row.curv-unknown { border-left-color: #ff8f00; }
+.eq-row.curv-nondcp  { border-left-color: #d32f2f; }
+.eq-row.is-stub { opacity: 0.6; }
+
+/* ── Tooltip ───────────────────────────────────────────────── */
+.tooltip {
+  position: fixed; z-index: 999; pointer-events: none;
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 0.75rem 1rem;
+  max-width: 420px; font-size: 0.85rem;
+  display: none;
+}
+.tooltip.visible { display: block; }
+.tooltip .tt-title { font-weight: 700; margin-bottom: 0.35rem; border-bottom: 1px solid #eee; padding-bottom: 0.25rem; }
+.tooltip .tt-row { margin: 0.2rem 0; }
+.tooltip .tt-label { color: #6c757d; display: inline-block; min-width: 5rem; }
+.tooltip .tt-doc { margin-top: 0.35rem; }
+.tooltip .tt-doc a { color: #1565c0; text-decoration: none; font-size: 0.8rem; }
+.tooltip .tt-doc a:hover { text-decoration: underline; }
+
+/* ── Developer panel ───────────────────────────────────────── */
+.dev-panel {
+  margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa;
+  border: 1px solid #e9ecef; border-radius: 4px; font-size: 0.8rem;
+}
+.dev-panel summary { cursor: pointer; color: #6c757d; font-size: 0.75rem; }
+.dev-panel .dev-row { margin: 0.15rem 0; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.75rem; }
+
+/* ── Zoom hint ─────────────────────────────────────────────── */
+.zoom-hint {
+  position: absolute; bottom: 0.5rem; right: 0.75rem;
+  font-size: 0.7rem; color: #adb5bd; pointer-events: none;
+}
+
+/* ── Problem statement ─────────────────────────────────────── */
+.problem-panel { max-width: 900px; }
+.problem-panel h2 {
+  font-size: 1.1rem; margin-bottom: 1rem;
+  padding-bottom: 0.25rem; border-bottom: 2px solid #dee2e6;
+}
+.problem-block {
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  padding: 1.5rem 2rem; margin-bottom: 1rem;
+}
+.problem-block .problem-sense {
+  margin-bottom: 0.75rem;
+}
+.problem-block .problem-st {
+  font-size: 0.9rem; color: #6c757d; margin: 1rem 0 0.5rem 0;
+}
+.problem-block .problem-constr {
+  padding: 0.35rem 0 0.35rem 1.5rem;
+  border-left: 3px solid #dee2e6;
+  margin-bottom: 0.3rem;
+}
+.problem-note {
+  font-size: 0.8rem; color: #adb5bd; margin-top: 1rem;
+}
+
+/* ── DCP Analysis ─────────────────────────────────────────── */
+.dcp-panel { max-width: 900px; }
+.dcp-panel h2 {
+  font-size: 1.1rem; margin-bottom: 1rem;
+  padding-bottom: 0.25rem; border-bottom: 2px solid #d32f2f;
+  color: #d32f2f;
+}
+.dcp-banner {
+  background: #ffebee; border: 1px solid #ef9a9a; border-radius: 6px;
+  padding: 0.75rem 1rem; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.dcp-banner-ok {
+  background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px;
+  padding: 0.75rem 1rem; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.dcp-banner .dcp-icon, .dcp-banner-ok .dcp-icon {
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.dcp-banner .dcp-msg { color: #c62828; font-weight: 600; }
+.dcp-banner-ok .dcp-msg { color: #2e7d32; font-weight: 600; }
+
+.dcp-section {
+  margin-bottom: 1rem; padding: 0.75rem 1rem;
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+}
+.dcp-section-title {
+  font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
+  color: #495057;
+}
+.dcp-ok-badge { color: #2e7d32; font-weight: 600; font-size: 0.85rem; }
+.dcp-fail-badge { color: #c62828; font-weight: 600; font-size: 0.85rem; }
+.dcp-violation {
+  padding: 0.5rem 0.75rem; margin: 0.35rem 0;
+  background: #fff8e1; border-left: 3px solid #d32f2f; border-radius: 2px;
+  font-size: 0.85rem;
+}
+.dcp-violation .dcp-v-title {
+  font-weight: 600; margin-bottom: 0.25rem; color: #c62828;
+}
+.dcp-violation .dcp-v-arg {
+  margin-left: 1rem; font-size: 0.8rem; color: #495057;
+}
+.dcp-violation .dcp-v-reason {
+  margin-top: 0.25rem; font-size: 0.8rem; color: #6c757d; font-style: italic;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+footer {
+  text-align: center; padding: 0.75rem; font-size: 0.75rem; color: #adb5bd;
+  border-top: 1px solid #f1f3f5; margin-top: 2rem;
+}
+footer a { color: #6c757d; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="problem-summary" id="summary"></div>
+  <nav class="tabs" id="tab-bar"></nav>
+</header>
+
+<main id="main"></main>
+
+<div class="tooltip" id="tooltip"></div>
+
+<footer>
+  Generated by <a href="https://cvxr.rbind.io">CVXR</a> &middot; visualize()
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Data (injected by R)
+// ══════════════════════════════════════════════════════════════
+const MODEL = __MODEL_JSON__;
+const CONFIG = { doc_base: "__DOC_BASE__" };
+
+// ══════════════════════════════════════════════════════════════
+// Utilities
+// ══════════════════════════════════════════════════════════════
+
+/** Ensure a value is a flat string (handles R's nested arrays from matrix format) */
+function toStr(v) {
+  while (Array.isArray(v)) v = v[0];
+  return v == null ? "" : String(v);
+}
+
+/** Strip $ delimiters from LaTeX string */
+function stripDollars(s) {
+  s = toStr(s);
+  return s.replace(/^\$+|\$+$/g, "");
+}
+
+/** Render LaTeX into a DOM element, returns the element */
+function renderMath(el, latex, displayMode) {
+  try {
+    katex.render(stripDollars(latex), el, {
+      throwOnError: false,
+      displayMode: displayMode || false
+    });
+  } catch (e) {
+    el.textContent = latex;
+  }
+  return el;
+}
+
+/** Create a DOM element with optional class and text */
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+}
+
+// Build a set of node IDs that violate DCP (from the overlay)
+const DCP_VIOLATIONS = (() => {
+  const dcp = MODEL.dcp_analysis;
+  if (!dcp || dcp.is_dcp !== false || !dcp.violations) return {};
+  const v = dcp.violations;
+  // violations is a named list from R; jsonlite preserves as object
+  const map = {};
+  for (const key of Object.keys(v)) {
+    map[key] = v[key];
+  }
+  return map;
+})();
+
+/** Map curvature string to CSS class; override with curv-nondcp for DCP violators */
+function curvClass(node) {
+  if (DCP_VIOLATIONS[toStr(node.id)]) return "curv-nondcp";
+  const c = toStr(node.curvature).toLowerCase();
+  if (c.includes("convex") && !c.includes("concave")) return "curv-convex";
+  if (c.includes("concave")) return "curv-concave";
+  if (c.includes("affine")) return "curv-affine";
+  if (c.includes("constant")) return "curv-constant";
+  return "curv-unknown";
+}
+
+/** Format shape array as string */
+function fmtShape(shape) {
+  if (!shape || shape.length === 0) return "";
+  return shape.join("\\times ");
+}
+
+/** Ensure equations is an array (jsonlite auto_unbox collapses singletons) */
+function ensureArray(x) {
+  if (x == null) return [];
+  return Array.isArray(x) ? x : [x];
+}
+
+/** Build doc URL for an atom */
+function docUrl(topic) {
+  if (!topic || !CONFIG.doc_base) return null;
+  return CONFIG.doc_base + toStr(topic) + ".html";
+}
+
+// ══════════════════════════════════════════════════════════════
+// Tab management
+// ══════════════════════════════════════════════════════════════
+
+const TABS = [
+  { id: "problem", label: "Problem" },
+  { id: "tree",    label: "Expression Tree" },
+  { id: "smith",   label: "Smith Form" },
+  { id: "relaxed", label: "Relaxed Smith Form" },
+  { id: "conic",   label: "Conic Form" },
+  // { id: "standard", label: "Standard Form" },
+  // { id: "solver",   label: "Solver Data" },
+];
+
+// Add DCP Analysis tab if problem is not DCP
+if (MODEL.dcp_analysis && MODEL.dcp_analysis.is_dcp === false) {
+  TABS.splice(1, 0, { id: "dcp", label: "\u26a0 DCP Analysis" });
+}
+
+let activeTab = "problem";
+
+function initTabs() {
+  const bar = document.getElementById("tab-bar");
+  TABS.forEach(t => {
+    const btn = el("button", t.id === activeTab ? "active" : "", t.label);
+    btn.dataset.tab = t.id;
+    btn.addEventListener("click", () => switchTab(t.id));
+    bar.appendChild(btn);
+  });
+}
+
+function switchTab(id) {
+  activeTab = id;
+  document.querySelectorAll(".tabs button").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === id);
+  });
+  document.querySelectorAll(".tab-panel").forEach(p => {
+    p.classList.toggle("active", p.id === id + "-panel");
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// Problem summary
+// ══════════════════════════════════════════════════════════════
+
+function initSummary() {
+  const s = document.getElementById("summary");
+  const p = MODEL.problem;
+  s.innerHTML = `<span class="sense">${p.sense}</span> &middot;
+    ${p.n_vars} variable${p.n_vars !== 1 ? "s" : ""} &middot;
+    ${p.n_constrs} constraint${p.n_constrs !== 1 ? "s" : ""}`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// Tooltip
+// ══════════════════════════════════════════════════════════════
+
+const tooltip = document.getElementById("tooltip");
+
+function showTooltip(node, event) {
+  const ann = node.annotation || {};
+
+  let html = '<div class="tt-title"></div>';
+  html += '<div class="tt-row"><span class="tt-label">Class:</span> ' + toStr(node.atom_class) + '</div>';
+  html += '<div class="tt-row"><span class="tt-label">Shape:</span> ' + (node.shape || []).join(" × ") + '</div>';
+  html += '<div class="tt-row tt-curv"></div>';
+  html += '<div class="tt-row tt-sign"></div>';
+  if (ann.latex_definition) {
+    html += '<div class="tt-row tt-def"></div>';
+  }
+  if (ann.conic && ann.conic.length > 0) {
+    html += '<div class="tt-row tt-conic"></div>';
+  }
+  const url = docUrl(ann.doc_topic);
+  if (url) {
+    html += '<div class="tt-doc"><a href="' + url + '" target="_blank">&#128214; ' + toStr(ann.doc_topic) + ' docs</a></div>';
+  }
+
+  // Developer info
+  if (ann.developer) {
+    const dev = ann.developer;
+    html += '<details class="dev-panel"><summary>&#128295; Developer</summary>';
+    if (dev.class_file) html += '<div class="dev-row">class: ' + toStr(dev.class_file) + '</div>';
+    if (dev.canon_file) html += '<div class="dev-row">canon: ' + toStr(dev.canon_file) + '</div>';
+    if (dev.parent_class) html += '<div class="dev-row">parent: ' + toStr(dev.parent_class) + '</div>';
+    if (dev.canon_summary) html += '<div class="dev-row tt-canon-summary"></div>';
+    html += '</details>';
+  }
+
+  tooltip.innerHTML = html;
+
+  // Render KaTeX in tooltip
+  const title = tooltip.querySelector(".tt-title");
+  if (ann.latex_name) {
+    renderMath(title, ann.latex_name);
+  } else {
+    title.textContent = toStr(node.atom_class);
+  }
+  const curvEl = tooltip.querySelector(".tt-curv");
+  if (curvEl) renderMath(curvEl, "\\text{Curvature: " + toStr(node.curvature) + "}");
+  const signEl = tooltip.querySelector(".tt-sign");
+  if (signEl) renderMath(signEl, "\\text{Sign: }" + toStr(node.sign));
+  const defEl = tooltip.querySelector(".tt-def");
+  if (defEl && ann.latex_definition) {
+    const lbl = document.createElement("span");
+    lbl.className = "tt-label";
+    lbl.textContent = "Definition:";
+    defEl.appendChild(lbl);
+    const math = document.createElement("span");
+    renderMath(math, ann.latex_definition);
+    defEl.appendChild(math);
+  }
+  const conicEl = tooltip.querySelector(".tt-conic");
+  if (conicEl && ann.conic) {
+    const lbl = document.createElement("span");
+    lbl.className = "tt-label";
+    lbl.textContent = "Conic:";
+    conicEl.appendChild(lbl);
+    ensureArray(ann.conic).forEach(eq => {
+      const span = document.createElement("span");
+      renderMath(span, eq);
+      conicEl.appendChild(span);
+    });
+  }
+  const canonEl = tooltip.querySelector(".tt-canon-summary");
+  if (canonEl && ann.developer && ann.developer.canon_summary) {
+    renderMath(canonEl, ann.developer.canon_summary);
+  }
+
+  // Position
+  tooltip.classList.add("visible");
+  const pad = 12;
+  let left = event.clientX + pad;
+  let top = event.clientY + pad;
+  const rect = tooltip.getBoundingClientRect();
+  if (left + rect.width > window.innerWidth) left = event.clientX - rect.width - pad;
+  if (top + rect.height > window.innerHeight) top = event.clientY - rect.height - pad;
+  tooltip.style.left = left + "px";
+  tooltip.style.top = top + "px";
+}
+
+function hideTooltip() {
+  tooltip.classList.remove("visible");
+}
+
+// ══════════════════════════════════════════════════════════════
+// Expression Tree (D3)
+// ══════════════════════════════════════════════════════════════
+
+const NODE_W = 220, NODE_H = 64, H_GAP = 30, V_GAP = 40;
+
+function initTree() {
+  const panel = document.getElementById("tree-panel");
+
+  // ── Objective tree ───────────────────────────────────────
+  const treeSection = el("div");
+  treeSection.style.position = "relative";
+  panel.appendChild(treeSection);
+
+  const root = d3.hierarchy(MODEL.objective_tree, d => d.children);
+
+  const treeLayout = d3.tree().nodeSize([NODE_W + H_GAP, NODE_H + V_GAP]);
+  treeLayout(root);
+
+  // Compute bounds
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  root.each(d => {
+    if (d.x < x0) x0 = d.x;
+    if (d.x > x1) x1 = d.x;
+    if (d.y < y0) y0 = d.y;
+    if (d.y > y1) y1 = d.y;
+  });
+  const treeW = (x1 - x0) + NODE_W + 80;
+  const treeH = (y1 - y0) + NODE_H + 80;
+  const svgH = Math.max(treeH, 300);
+
+  const svg = d3.select(treeSection).append("svg")
+    .attr("viewBox", `0 0 ${treeW} ${svgH}`)
+    .attr("height", Math.min(svgH, 600))
+    .style("min-height", "200px");
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${-x0 + NODE_W / 2 + 20}, 40)`);
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.25, 3])
+    .on("zoom", (event) => g.attr("transform", event.transform));
+  svg.call(zoom);
+  // Set initial transform
+  svg.call(zoom.transform, d3.zoomIdentity.translate(-x0 + NODE_W / 2 + 20, 40));
+
+  // Links
+  g.selectAll(".tree-link")
+    .data(root.links())
+    .join("path")
+    .attr("class", "tree-link")
+    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+
+  // Nodes
+  const nodes = g.selectAll(".tree-node")
+    .data(root.descendants())
+    .join("g")
+    .attr("class", "tree-node")
+    .attr("transform", d => `translate(${d.x - NODE_W / 2}, ${d.y - NODE_H / 2})`);
+
+  nodes.append("foreignObject")
+    .attr("width", NODE_W)
+    .attr("height", NODE_H)
+    .append("xhtml:div")
+    .attr("class", d => "node-card " + curvClass(d.data))
+    .each(function (d) {
+      const card = this;
+      // Math line
+      const mathDiv = el("div", "node-math");
+      if (d.data.is_leaf) {
+        renderMath(mathDiv, toStr(d.data.id_latex));
+      } else {
+        renderMath(mathDiv, stripDollars(toStr(d.data.annotation.smith)));
+      }
+      card.appendChild(mathDiv);
+
+      // Meta line
+      const metaDiv = el("div", "node-meta");
+      const shapeTxt = (d.data.shape || []).join("×");
+      renderMath(metaDiv,
+        `\\text{${toStr(d.data.curvature)}} \\cdot ${toStr(d.data.sign)} \\cdot ${shapeTxt}`);
+      card.appendChild(metaDiv);
+    })
+    .on("mouseover", (event, d) => showTooltip(d.data, event))
+    .on("mousemove", (event, d) => showTooltip(d.data, event))
+    .on("mouseout", hideTooltip)
+    .on("click", (event, d) => {
+      // Toggle children
+      if (d.data.children && d.data.children.length > 0) {
+        if (d.children) {
+          d._children = d.children;
+          d.children = null;
+        } else if (d._children) {
+          d.children = d._children;
+          d._children = null;
+        }
+        updateTree(svg, g, root, zoom);
+      }
+    });
+
+  // Zoom hint
+  const hint = el("div", "zoom-hint", "Scroll to zoom \u00b7 Drag to pan \u00b7 Click node to collapse");
+  treeSection.appendChild(hint);
+
+  // ── Constraint trees ──────────────────────────────────────
+  const constrs = MODEL.constraint_trees || [];
+  if (constrs.length > 0) {
+    const csec = el("div", "constraint-section");
+    csec.appendChild(el("h3", null, "Constraints"));
+
+    constrs.forEach((ct, i) => {
+      const item = el("div", "constraint-item");
+      const typeStr = toStr(ct.type).replace(/^CVXR::/, "") + "  " + (ct.shape || []).join("×");
+      const label = ct.label ? ` (${toStr(ct.label)})` : "";
+      item.appendChild(el("div", "constraint-type", `[${i + 1}] ${typeStr}${label}`));
+
+      const subtrees = ensureArray(ct.subtrees);
+      subtrees.forEach(st => {
+        const stDiv = el("div", "constraint-subtree");
+        renderConstraintTree(stDiv, st, 0);
+        item.appendChild(stDiv);
+      });
+      csec.appendChild(item);
+    });
+    panel.appendChild(csec);
+  }
+}
+
+/** Render a small constraint subtree as nested HTML (not D3) */
+function renderConstraintTree(container, node, depth) {
+  const row = el("div", "constraint-leaf");
+  row.style.paddingLeft = (depth * 1.2) + "rem";
+
+  const mathSpan = document.createElement("span");
+  if (node.is_leaf) {
+    renderMath(mathSpan, toStr(node.id_latex));
+  } else {
+    renderMath(mathSpan, stripDollars(toStr(node.annotation.smith)));
+  }
+  row.appendChild(mathSpan);
+
+  const meta = document.createElement("span");
+  meta.style.cssText = "margin-left:0.5rem;font-size:0.75rem;color:#6c757d;";
+  meta.textContent = `[${toStr(node.curvature)}, ${(node.shape || []).join("×")}]`;
+  row.appendChild(meta);
+
+  container.appendChild(row);
+
+  const children = node.children || [];
+  children.forEach(ch => renderConstraintTree(container, ch, depth + 1));
+}
+
+/** Update tree after collapse/expand */
+function updateTree(svg, g, root, zoom) {
+  const treeLayout = d3.tree().nodeSize([NODE_W + H_GAP, NODE_H + V_GAP]);
+  treeLayout(root);
+
+  const t = g.transition().duration(300);
+
+  // Update links
+  g.selectAll(".tree-link")
+    .data(root.links(), d => d.target.data.id)
+    .join(
+      enter => enter.append("path").attr("class", "tree-link"),
+      update => update,
+      exit => exit.transition(t).style("opacity", 0).remove()
+    )
+    .transition(t)
+    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+
+  // Update nodes
+  g.selectAll(".tree-node")
+    .data(root.descendants(), d => d.data.id)
+    .join(
+      enter => {
+        const grp = enter.append("g").attr("class", "tree-node");
+        grp.append("foreignObject")
+          .attr("width", NODE_W)
+          .attr("height", NODE_H)
+          .append("xhtml:div")
+          .attr("class", d => "node-card " + curvClass(d.data))
+          .each(function (d) {
+            const card = this;
+            const mathDiv = el("div", "node-math");
+            if (d.data.is_leaf) {
+              renderMath(mathDiv, toStr(d.data.id_latex));
+            } else {
+              renderMath(mathDiv, stripDollars(toStr(d.data.annotation.smith)));
+            }
+            card.appendChild(mathDiv);
+            const metaDiv = el("div", "node-meta");
+            const shapeTxt = (d.data.shape || []).join("×");
+            renderMath(metaDiv,
+              `\\text{${toStr(d.data.curvature)}} \\cdot ${toStr(d.data.sign)} \\cdot ${shapeTxt}`);
+            card.appendChild(metaDiv);
+          });
+        return grp;
+      },
+      update => update,
+      exit => exit.transition(t).style("opacity", 0).remove()
+    )
+    .transition(t)
+    .attr("transform", d => `translate(${d.x - NODE_W / 2}, ${d.y - NODE_H / 2})`)
+    .classed("node-collapsed", d => d._children != null);
+}
+
+// ══════════════════════════════════════════════════════════════
+// Problem statement (mathematical form)
+// ══════════════════════════════════════════════════════════════
+
+function initProblem() {
+  const panel = document.getElementById("problem-panel");
+  const container = el("div", "problem-panel");
+  container.appendChild(el("h2", null, "Original Problem"));
+
+  const block = el("div", "problem-block");
+
+  // Objective: minimize/maximize <expr_latex>
+  const senseDiv = el("div", "problem-sense");
+  const sense = MODEL.problem.sense;
+  const objExpr = toStr(MODEL.objective_tree.expr_latex);
+  renderMath(senseDiv,
+    `\\underset{}{\\operatorname{${sense}}} \\quad ${stripDollars(objExpr)}`,
+    true);
+  block.appendChild(senseDiv);
+
+  // Subject to
+  const constrs = MODEL.constraint_trees || [];
+  if (constrs.length > 0) {
+    const stDiv = el("div", "problem-st");
+    renderMath(stDiv, "\\text{subject to}", false);
+    block.appendChild(stDiv);
+
+    constrs.forEach(ct => {
+      const row = el("div", "problem-constr");
+      const exprLatex = toStr(ct.expr_latex);
+      const label = ct.label ? toStr(ct.label) : null;
+      if (label) {
+        renderMath(row,
+          `\\text{${label}:}\\quad ${stripDollars(exprLatex)}`,
+          true);
+      } else {
+        renderMath(row, stripDollars(exprLatex), true);
+      }
+      block.appendChild(row);
+    });
+  }
+
+  container.appendChild(block);
+
+  // DCP status banner
+  const dcpInfo = MODEL.dcp_analysis || {};
+  if (dcpInfo.is_dcp === false) {
+    const banner = el("div", "dcp-banner");
+    banner.appendChild(el("span", "dcp-icon", "\u26a0\ufe0f"));
+    const msg = el("span", "dcp-msg");
+    msg.textContent = "Problem is NOT DCP compliant. See DCP Analysis tab for details.";
+    banner.appendChild(msg);
+    container.appendChild(banner);
+  } else {
+    const banner = el("div", "dcp-banner-ok");
+    banner.appendChild(el("span", "dcp-icon", "\u2713"));
+    const msg = el("span", "dcp-msg");
+    msg.textContent = "Problem is DCP compliant.";
+    banner.appendChild(msg);
+    container.appendChild(banner);
+  }
+
+  // Variable info note
+  const note = el("div", "problem-note");
+  const nv = MODEL.problem.n_vars;
+  const nc = MODEL.problem.n_constrs;
+  note.textContent = `${nv} variable${nv !== 1 ? "s" : ""}, ${nc} constraint${nc !== 1 ? "s" : ""}`;
+  container.appendChild(note);
+
+  panel.appendChild(container);
+}
+
+// ══════════════════════════════════════════════════════════════
+// Equation panels (Smith, Relaxed, Conic)
+// ══════════════════════════════════════════════════════════════
+
+function initEquations(panelId, title, equations, allNodes) {
+  const panel = document.getElementById(panelId);
+  const container = el("div", "equations-panel");
+  container.appendChild(el("h2", null, title));
+
+  // Header: minimize/maximize root variable
+  const sense = MODEL.problem.sense;
+  const rootNode = MODEL.objective_tree;
+  const headerDiv = el("div", "eq-header");
+  renderMath(headerDiv,
+    `\\operatorname{${sense}} \\quad ${toStr(rootNode.id_latex)}`,
+    true);
+  container.appendChild(headerDiv);
+
+  // Subject-to label
+  const stDiv = el("div");
+  stDiv.style.cssText = "font-size:0.85rem;color:#6c757d;margin:0.5rem 0 0.25rem 0;";
+  stDiv.textContent = "subject to:";
+  container.appendChild(stDiv);
+
+  // Equations
+  const eqs = ensureArray(equations);
+  eqs.forEach((eq, i) => {
+    const row = el("div", "eq-row");
+
+    // Try to find the matching node to get curvature
+    const node = (allNodes && allNodes[i]) ? allNodes[i] : null;
+    if (node) {
+      row.classList.add(curvClass(node));
+      if (!node.annotation || node.annotation.conic == null) {
+        row.classList.add("is-stub");
+      }
+    } else {
+      row.classList.add("curv-unknown");
+    }
+
+    const numSpan = el("span", "eq-num", `(${i + 1})`);
+    row.appendChild(numSpan);
+
+    const mathDiv = el("div", "eq-math");
+    renderMath(mathDiv, eq, true);
+    row.appendChild(mathDiv);
+
+    container.appendChild(row);
+  });
+
+  // Constraint equations (if any from constraint trees)
+  const constrs = MODEL.constraint_trees || [];
+  if (constrs.length > 0) {
+    const cLabel = el("div");
+    cLabel.style.cssText = "font-size:0.85rem;color:#6c757d;margin:1rem 0 0.25rem 0;";
+    cLabel.textContent = "constraints:";
+    container.appendChild(cLabel);
+    constrs.forEach((ct, ci) => {
+      const row = el("div", "eq-row curv-affine");
+      const numSpan = el("span", "eq-num", `[${ci + 1}]`);
+      row.appendChild(numSpan);
+      const mathDiv = el("div", "eq-math");
+      const typeName = toStr(ct.type).replace(/^CVXR::/, "");
+      const shapeTxt = (ct.shape || []).join("\\times ");
+      renderMath(mathDiv,
+        `\\text{${typeName}} \\quad ${shapeTxt}`,
+        true);
+      row.appendChild(mathDiv);
+      container.appendChild(row);
+    });
+  }
+
+  panel.appendChild(container);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DCP Analysis tab
+// ══════════════════════════════════════════════════════════════
+
+function initDcpAnalysis() {
+  const panel = document.getElementById("dcp-panel");
+  if (!panel) return; // tab not present (problem is DCP)
+
+  const dcp = MODEL.dcp_analysis;
+  if (!dcp || dcp.is_dcp !== false) return;
+
+  const container = el("div", "dcp-panel");
+  container.appendChild(el("h2", null, "DCP Analysis"));
+
+  // Banner
+  const banner = el("div", "dcp-banner");
+  banner.appendChild(el("span", "dcp-icon", "\u26a0\ufe0f"));
+  const msg = el("span", "dcp-msg");
+  msg.textContent = "Problem is NOT DCP compliant.";
+  banner.appendChild(msg);
+  container.appendChild(banner);
+
+  // Objective section
+  const objSec = el("div", "dcp-section");
+  const sense = MODEL.problem.sense;
+  const req = sense === "minimize" ? "convex" : "concave";
+  if (dcp.objective_ok === false) {
+    const title = el("div", "dcp-section-title");
+    title.innerHTML = '<span class="dcp-fail-badge">\u2717</span> Objective (' +
+      sense + '): requires ' + req + ' expression';
+    objSec.appendChild(title);
+    if (dcp.objective_issue) {
+      const issue = el("div", "dcp-violation");
+      issue.textContent = toStr(dcp.objective_issue);
+      objSec.appendChild(issue);
+    }
+    // Show violations in objective tree
+    renderDcpViolations(objSec, MODEL.objective_tree);
+  } else {
+    const title = el("div", "dcp-section-title");
+    title.innerHTML = '<span class="dcp-ok-badge">\u2713</span> Objective (' +
+      sense + '): DCP OK';
+    objSec.appendChild(title);
+  }
+  container.appendChild(objSec);
+
+  // Constraint issues
+  const issues = ensureArray(dcp.constraint_issues);
+  if (issues.length > 0) {
+    issues.forEach(ci => {
+      const sec = el("div", "dcp-section");
+      const title = el("div", "dcp-section-title");
+      title.innerHTML = '<span class="dcp-fail-badge">\u2717</span> Constraint [' +
+        ci.index + '] (' + toStr(ci.type) + '): requires ' +
+        toStr(ci.requirement) + ' expression';
+      sec.appendChild(title);
+      const reason = el("div", "dcp-violation");
+      reason.textContent = toStr(ci.reason);
+      sec.appendChild(reason);
+      // Show violations in constraint subtrees
+      const ct = (MODEL.constraint_trees || [])[ci.index - 1];
+      if (ct) {
+        ensureArray(ct.subtrees).forEach(st => renderDcpViolations(sec, st));
+      }
+      container.appendChild(sec);
+    });
+  }
+
+  panel.appendChild(container);
+}
+
+/** Render DCP violations for a subtree into a container */
+function renderDcpViolations(container, node) {
+  const viol = DCP_VIOLATIONS[toStr(node.id)];
+  if (viol && viol.violation) {
+    const v = viol.violation;
+    const box = el("div", "dcp-violation");
+    const title = el("div", "dcp-v-title");
+    title.textContent = "\u2717 " + toStr(viol.atom_class) + ": " +
+      toStr(viol.curvature) + "  [" + (viol.shape || []).join("\u00d7") + "]";
+    box.appendChild(title);
+
+    const args = ensureArray(v.arg_details);
+    args.forEach(ad => {
+      const argDiv = el("div", "dcp-v-arg");
+      const cvxMark = ad.convex_rule_ok ? "\u2713" : "\u2717";
+      const ccvMark = ad.concave_rule_ok ? "\u2713" : "\u2717";
+      argDiv.textContent = "arg " + ad.index + ": " + toStr(ad.curvature) +
+        ", " + toStr(ad.monotonicity) +
+        "  (cvx-rule " + cvxMark + ", ccv-rule " + ccvMark + ")";
+      box.appendChild(argDiv);
+    });
+
+    const reason = el("div", "dcp-v-reason");
+    reason.textContent = "\u21d2 " + toStr(v.reason);
+    box.appendChild(reason);
+    container.appendChild(box);
+  }
+
+  // Recurse
+  const children = node.children || [];
+  children.forEach(ch => renderDcpViolations(container, ch));
+}
+
+// ══════════════════════════════════════════════════════════════
+// Initialize
+// ══════════════════════════════════════════════════════════════
+
+document.addEventListener("DOMContentLoaded", function () {
+  initSummary();
+  initTabs();
+
+  // Create tab panels
+  const main = document.getElementById("main");
+  TABS.forEach(t => {
+    const panel = el("div", "tab-panel" + (t.id === activeTab ? " active" : ""));
+    panel.id = t.id + "-panel";
+    main.appendChild(panel);
+  });
+
+  // Collect non-leaf nodes for equation coloring
+  const nonLeafNodes = (MODEL.all_nodes || []).filter(n => !n.is_leaf);
+
+  // Render each tab
+  initProblem();
+  initDcpAnalysis();
+  initTree();
+  initEquations("smith-panel", "Smith Form",
+    MODEL.stages.smith_form, nonLeafNodes);
+  initEquations("relaxed-panel", "Relaxed Smith Form",
+    MODEL.stages.relaxed_smith_form, nonLeafNodes);
+  initEquations("conic-panel", "Conic Form",
+    MODEL.stages.conic_form, nonLeafNodes);
+});
+</script>
+</body>
+</html>

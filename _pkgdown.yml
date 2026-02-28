@@ -7,13 +7,294 @@ home:
 
 authors:
   Anqi Fu:
-    href: https://web.stanford.edu/~anqif/
+    href: https://anqif.github.io/
 
   Balasubramanian Narasimhan:
-    href: https://web.stanford.edu/~naras
+    href: https://naras.su.domains
 
   Steven Diamond:
-    href: https://web.stanford.edu/~stevend2/
+    href: https://stevendiamond.me/
 
   John Miller:
-    href: https://people.eecs.berkeley.edu/~miller_john/
+    href: https://millerjohnp.github.io/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Core classes
+  desc: Variables, parameters, constants, problems, and constraints
+  contents:
+  - Variable
+  - Parameter
+  - Constant
+  - Problem
+  - Minimize
+  - Maximize
+  - Equality
+  - Inequality
+  - NonNeg
+  - NonPos
+  - Zero
+  - PSD
+  - ExpCone
+  - SOC
+  - PowCone3D
+  - PowConeND
+  - FiniteSet
+
+- title: Solve interface
+  desc: Solving problems and extracting results
+  contents:
+  - psolve
+  - value
+  - "value<-"
+  - dual_value
+  - status
+  - solution
+  - problem_data
+  - solve_via_data
+  - problem_unpack_results
+  - unpack_results
+  - solver_stats
+  - solver_default_param
+  - installed_solvers
+  - residual
+  - violation
+
+- title: Solvers
+  desc: Solver name constants
+  contents:
+  - CLARABEL_SOLVER
+  - OSQP_SOLVER
+  - SCS_SOLVER
+  - HIGHS_SOLVER
+  - ECOS_SOLVER
+  - ECOS_BB_SOLVER
+  - GLPK_SOLVER
+  - GLPK_MI_SOLVER
+  - MOSEK_SOLVER
+  - GUROBI_SOLVER
+  - CPLEX_SOLVER
+  - CVXOPT_SOLVER
+  - PIQP_SOLVER
+
+- title: Status constants
+  desc: Solution status values
+  contents:
+  - OPTIMAL
+  - OPTIMAL_INACCURATE
+  - INFEASIBLE
+  - INFEASIBLE_INACCURATE
+  - INFEASIBLE_OR_UNBOUNDED
+  - UNBOUNDED
+  - UNBOUNDED_INACCURATE
+  - SOLVER_ERROR
+  - USER_LIMIT
+
+- title: Math and standard function dispatch
+  desc: >
+    Standard R functions that work directly on CVXR expressions.
+    abs, exp, log, sqrt, sum, max, min (group generics);
+    norm, mean, diff (S4 generics); sd, var, outer (masking wrappers).
+  contents:
+  - math_atoms
+
+- title: Elementwise atoms
+  desc: Functions applied element-by-element
+  contents:
+  - entr
+  - huber
+  - inv_pos
+  - kl_div
+  - log1p_atom
+  - log1p_expr
+  - logistic
+  - loggamma
+  - log_normcdf
+  - neg
+  - pos
+  - power
+  - scalene
+  - square
+  - xexp
+
+- title: Aggregation atoms
+  desc: Functions that reduce or summarize entries
+  contents:
+  - sum_entries
+  - max_entries
+  - min_entries
+  - max_elemwise
+  - min_elemwise
+  - cumsum_axis
+  - cummax_expr
+  - prod_entries
+  - log_sum_exp
+  - sum_squares
+  - sum_largest
+  - sum_smallest
+  - geo_mean
+  - harmonic_mean
+  - ptp
+  - cvxr_mean
+  - cvxr_std
+  - std
+  - cvxr_var
+  - cvar
+
+- title: Norm and distance atoms
+  desc: Norm functions and related atoms
+  contents:
+  - cvxr_norm
+  - p_norm
+  - norm1
+  - norm2
+  - norm_inf
+  - norm_nuc
+  - mixed_norm
+  - quad_form
+  - quad_over_lin
+  - matrix_frac
+
+- title: Linear algebra atoms
+  desc: Matrix operations and structural atoms
+  contents:
+  - bmat
+  - conv
+  - DiagMat
+  - DiagVec
+  - hstack
+  - vstack
+  - kron
+  - lambda_max
+  - lambda_min
+  - lambda_sum_largest
+  - lambda_sum_smallest
+  - log_det
+  - matrix_trace
+  - partial_trace
+  - partial_transpose
+  - reshape_expr
+  - sigma_max
+  - upper_tri
+  - vec
+  - vec_to_upper_tri
+
+- title: Arithmetic and product atoms
+  desc: Multiplication, dot products, and related
+  contents:
+  - multiply
+  - vdot
+  - scalar_product
+  - cvxr_outer
+  - dotsort
+  - inv_prod
+  - tr_inv
+  - total_variation
+  - tv
+  - cvxr_diff
+
+- title: Special atoms
+  desc: Perspective, DGP, DQCP, and other specialized atoms
+  contents:
+  - perspective
+  - diff_pos
+  - resolvent
+  - one_minus_pos
+  - eye_minus_inv
+  - pf_eigenvalue
+  - gmatmul
+  - ceil_expr
+  - floor_expr
+  - condition_number
+  - gen_lambda_max
+  - dist_ratio
+  - indicator
+
+- title: Logic atoms
+  desc: Boolean logic operations for mixed-integer problems
+  contents:
+  - And
+  - Or
+  - Not
+  - Xor
+  - implies
+  - iff
+
+- title: Constraint operators
+  desc: Operators for creating constraints
+  contents:
+  - "%>>%"
+  - "%<<%"
+
+- title: Expression properties
+  desc: Query properties of CVXR expressions
+  contents:
+  - curvature
+  - expr_sign
+  - is_affine
+  - is_concave
+  - is_constant
+  - is_convex
+  - is_dcp
+  - is_dgp
+  - is_dpp
+  - is_dqcp
+  - is_log_log_affine
+  - is_log_log_concave
+  - is_log_log_convex
+  - is_lp
+  - is_matrix
+  - is_mixed_integer
+  - is_nonneg
+  - is_nonpos
+  - is_nsd
+  - is_psd
+  - is_pwl
+  - is_qp
+  - is_quadratic
+  - is_quasiconcave
+  - is_quasiconvex
+  - is_quasilinear
+  - is_scalar
+  - is_symmetric
+  - is_vector
+  - is_zero
+  - length_expr
+  - size
+  - name
+  - id
+  - set_label
+
+- title: Problem properties
+  desc: Extract components from a Problem object
+  contents:
+  - objective
+  - constraints
+  - variables
+  - parameters
+  - constants
+
+- title: Utilities
+  desc: Helpers and introspection
+  contents:
+  - as_cvxr_expr
+  - visualize
+  - expr_H
+  - make_sparse_diagonal_matrix
+  - rel_entr
+
+- title: Data
+  desc: Example datasets
+  contents:
+  - cdiac
+  - dspop
+  - dssamp
+
+- title: Deprecated
+  desc: Backward-compatible aliases (use the new names instead)
+  contents:
+  - get_problem_data
+  - problem_status
+  - problem_solution

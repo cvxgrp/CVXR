@@ -46,7 +46,7 @@ jobs:
       # Install osqp manually via git clone --recursive.
       - name: Install osqp from source
         run: |
-          Rscript -e 'install.packages("Rcpp", repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("Rcpp", "S7", "cli"), repos = "https://cloud.r-project.org")'
           git clone --recursive https://github.com/osqp/osqp-r.git /tmp/osqp-r
           R CMD INSTALL /tmp/osqp-r
           rm -rf /tmp/osqp-r

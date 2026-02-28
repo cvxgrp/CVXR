@@ -41,20 +41,16 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # osqp-r uses git submodules for C sources. pak downloads tarballs
-      # which exclude submodules, so cmake build fails on all platforms.
-      # Install osqp manually via git clone --recursive.
-      - name: Install osqp from source
-        run: |
-          Rscript -e 'install.packages(c("Rcpp", "S7", "cli"), repos = "https://cloud.r-project.org")'
-          git clone --recursive https://github.com/osqp/osqp-r.git /tmp/osqp-r
-          R CMD INSTALL /tmp/osqp-r
-          rm -rf /tmp/osqp-r
+      # osqp-r uses git submodules for C sources. pak downloads GitHub
+      # tarballs which exclude submodules, breaking the build. Clone
+      # with --recursive and point pak at the local directory instead.
+      - name: Clone osqp-r with submodules
+        run: git clone --recursive https://github.com/osqp/osqp-r.git /tmp/osqp-r
         shell: bash
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, oxfordcontrol/clarabel-r
+          extra-packages: any::rcmdcheck, oxfordcontrol/clarabel-r, local::/tmp/osqp-r
           needs: check
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 

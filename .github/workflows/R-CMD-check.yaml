@@ -43,7 +43,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: any::rcmdcheck, osqp/osqp-r, oxfordcontrol/clarabel-r
           needs: check
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 

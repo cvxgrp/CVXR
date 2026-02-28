@@ -2,8 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 #
 # osqp (>= 1.0.0) and clarabel (>= 0.11.2) are not yet on CRAN.
-# DESCRIPTION has Additional_repositories pointing to R-universe,
-# which provides pre-built binaries for all platforms.
+# Pre-built binaries are available from R-universe.
 #
 # Enhances packages NOT tested in CI:
 #   Rmosek  -- CRAN version is outdated/non-functional
@@ -50,6 +49,22 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+
+      # Add R-universe repos for osqp and clarabel (not yet on CRAN).
+      # RENV_CONFIG_REPOS_OVERRIDE from setup-r overrides Additional_repositories
+      # in DESCRIPTION, so we must add them to .Rprofile explicitly.
+      - name: Add R-universe repos
+        run: |
+          cat('local({',
+              '  r <- getOption("repos")',
+              '  r["osqp"] <- "https://osqp.r-universe.dev"',
+              '  r["clarabel"] <- "https://oxfordcontrol.r-universe.dev"',
+              '  options(repos = r)',
+              '})',
+              sep = "\n",
+              file = "~/.Rprofile",
+              append = TRUE)
+        shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

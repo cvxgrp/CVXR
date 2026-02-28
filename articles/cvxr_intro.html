@@ -67,7 +67,7 @@ Balasubramanian Narasimhan</h4>
             
             <h4 data-toc-skip class="date">2026-02-28</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/s7-rewrite/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/master/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="d-none name"><code>cvxr_intro.Rmd</code></div>
     </div>
 
@@ -203,7 +203,7 @@ are nonnegative:</p>
 <span><span class="co">#&gt; ─────────────────────────────── CVXR v1.8.0.9213 ───────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Problem: 1 variable, 2 constraints (QP)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"OSQP"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::OSQP_QP_Solver</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.03s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.026s</span></span>
 <span><span class="co">#&gt; ─────────────────────────────── Numerical solver ───────────────────────────────</span></span>
 <span><span class="co">#&gt; -----------------------------------------------------------------</span></span>
 <span><span class="co">#&gt;            OSQP v1.0.0  -  Operator Splitting QP Solver</span></span>
@@ -223,10 +223,10 @@ are nonnegative:</p>
 <span><span class="co">#&gt;           scaling: on (10 iterations), scaled_termination: off</span></span>
 <span><span class="co">#&gt;           warm starting: on, polishing: on, </span></span>
 <span><span class="co">#&gt; iter   objective    prim res   dual res   gap        rel kkt    rho         time</span></span>
-<span><span class="co">#&gt;    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    2.19e-04s</span></span>
-<span><span class="co">#&gt;   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   3.77e-04s</span></span>
-<span><span class="co">#&gt;  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    6.27e-04s</span></span>
-<span><span class="co">#&gt; plsh   1.2876e+03   5.82e-15   3.46e-13  -9.09e-13   3.46e-13   --------    7.57e-04s</span></span>
+<span><span class="co">#&gt;    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    1.78e-04s</span></span>
+<span><span class="co">#&gt;   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   3.37e-04s</span></span>
+<span><span class="co">#&gt;  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    5.88e-04s</span></span>
+<span><span class="co">#&gt; plsh   1.2876e+03   5.82e-15   3.46e-13  -9.09e-13   3.46e-13   --------    6.96e-04s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; status:               solved</span></span>
 <span><span class="co">#&gt; solution polishing:   successful</span></span>
@@ -235,13 +235,13 @@ are nonnegative:</p>
 <span><span class="co">#&gt; dual objective:       1287.6297</span></span>
 <span><span class="co">#&gt; duality gap:          -9.0949e-13</span></span>
 <span><span class="co">#&gt; primal-dual integral: 6.8986e+05</span></span>
-<span><span class="co">#&gt; run time:             7.57e-04s</span></span>
+<span><span class="co">#&gt; run time:             6.96e-04s</span></span>
 <span><span class="co">#&gt; optimal rho estimate: 1.41e+01</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Summary ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Status: optimal</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Optimal value: 1287.63</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.03s</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.002s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.026s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.001s</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         [,1]</span></span>
 <span><span class="co">#&gt;  [1,]  0.000</span></span>
@@ -266,8 +266,7 @@ mathematically intuitive.</p>
 <p>CVXR supports multiple solvers:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/installed_solvers.html">installed_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "ECOS"     "ECOS_BB"  "CVXOPT"  </span></span>
-<span><span class="co">#&gt; [8] "PIQP"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"</span></span></code></pre></div>
 <p>You can specify a solver explicitly:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span></code></pre></div>
@@ -315,17 +314,16 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 <span><span class="co">#&gt; [1] CVXR_1.8.0.9213</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Matrix_1.7-4      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.2   </span></span>
-<span><span class="co">#&gt;  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       </span></span>
-<span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      </span></span>
-<span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-7    R6_2.6.1         </span></span>
-<span><span class="co">#&gt; [17] knitr_1.51        backports_1.5.0   checkmate_2.3.4   desc_1.4.3       </span></span>
-<span><span class="co">#&gt; [21] osqp_1.0.0        bslib_0.10.0      rlang_1.1.7       cachem_1.1.0     </span></span>
-<span><span class="co">#&gt; [25] xfun_0.56         fs_1.6.6          sass_0.4.10       S7_0.2.1         </span></span>
-<span><span class="co">#&gt; [29] cli_3.6.5         pkgdown_2.2.0     digest_0.6.39     grid_4.5.2       </span></span>
-<span><span class="co">#&gt; [33] gmp_0.7-5.1       lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7        </span></span>
-<span><span class="co">#&gt; [37] evaluate_1.0.5    codetools_0.2-20  ragg_1.5.0        rmarkdown_2.30   </span></span>
-<span><span class="co">#&gt; [41] tools_4.5.2       htmltools_0.5.9</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] cli_3.6.5         knitr_1.51        rlang_1.1.7       xfun_0.56        </span></span>
+<span><span class="co">#&gt;  [5] clarabel_0.11.2   highs_1.12.0-3    scs_3.2.7         textshaping_1.0.4</span></span>
+<span><span class="co">#&gt;  [9] S7_0.2.1          jsonlite_2.0.0    backports_1.5.0   htmltools_0.5.9  </span></span>
+<span><span class="co">#&gt; [13] gmp_0.7-5.1       ragg_1.5.0        sass_0.4.10       rmarkdown_2.30   </span></span>
+<span><span class="co">#&gt; [17] grid_4.5.2        evaluate_1.0.5    jquerylib_0.1.4   fastmap_1.2.0    </span></span>
+<span><span class="co">#&gt; [21] yaml_2.3.12       lifecycle_1.0.5   compiler_4.5.2    fs_1.6.6         </span></span>
+<span><span class="co">#&gt; [25] Rcpp_1.1.1        osqp_1.0.0        systemfonts_1.3.1 lattice_0.22-7   </span></span>
+<span><span class="co">#&gt; [29] digest_0.6.39     R6_2.6.1          checkmate_2.3.4   bslib_0.10.0     </span></span>
+<span><span class="co">#&gt; [33] Matrix_1.7-4      tools_4.5.2       pkgdown_2.2.0     cachem_1.1.0     </span></span>
+<span><span class="co">#&gt; [37] desc_1.4.3</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

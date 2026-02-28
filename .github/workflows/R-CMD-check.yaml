@@ -45,7 +45,7 @@ jobs:
       # tarballs which exclude submodules, breaking the build. Clone
       # with --recursive and point pak at the local directory instead.
       - name: Clone osqp-r with submodules
-        run: git clone --recursive https://github.com/osqp/osqp-r.git /tmp/osqp-r
+        run: git clone --recursive https://github.com/osqp/osqp-r.git ${{ runner.temp }}/osqp-r
         shell: bash
 
       - uses: r-lib/actions/setup-r-dependencies@v2
@@ -53,7 +53,7 @@ jobs:
           extra-packages: >-
             any::rcmdcheck,
             oxfordcontrol/clarabel-r,
-            local::/tmp/osqp-r,
+            local::${{ runner.temp }}/osqp-r,
             any::Rglpk,
             any::ECOSolveR,
             any::cccp,

@@ -50,7 +50,14 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, oxfordcontrol/clarabel-r, local::/tmp/osqp-r
+          extra-packages: >-
+            any::rcmdcheck,
+            oxfordcontrol/clarabel-r,
+            local::/tmp/osqp-r,
+            any::Rglpk,
+            any::ECOSolveR,
+            any::cccp,
+            any::piqp
           needs: check
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 

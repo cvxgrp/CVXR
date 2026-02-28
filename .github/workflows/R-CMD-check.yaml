@@ -42,28 +42,19 @@ jobs:
           use-public-rspm: true
 
       # osqp-r uses git submodules for C sources. pak downloads tarballs
-      # (no submodules), so the cmake build fails on macOS. Install manually.
-      - name: Install osqp from source (macOS)
-        if: runner.os == 'macOS'
+      # which exclude submodules, so cmake build fails on all platforms.
+      # Install osqp manually via git clone --recursive.
+      - name: Install osqp from source
         run: |
           Rscript -e 'install.packages("Rcpp", repos = "https://cloud.r-project.org")'
           git clone --recursive https://github.com/osqp/osqp-r.git /tmp/osqp-r
           R CMD INSTALL /tmp/osqp-r
           rm -rf /tmp/osqp-r
+        shell: bash
 
-      # macOS: osqp already installed above, so exclude from extra-packages
       - uses: r-lib/actions/setup-r-dependencies@v2
-        if: runner.os == 'macOS'
         with:
           extra-packages: any::rcmdcheck, oxfordcontrol/clarabel-r
-          needs: check
-          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
-
-      # Linux/Windows: pak can build osqp from GitHub tarball
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        if: runner.os != 'macOS'
-        with:
-          extra-packages: any::rcmdcheck, osqp/osqp-r, oxfordcontrol/clarabel-r
           needs: check
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 

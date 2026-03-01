@@ -415,18 +415,36 @@
 # Text renderer
 # ══════════════════════════════════════════════════════════════════════════
 
+## Map curvature string to cli ANSI color for text-mode display
+.viz_curv_color <- function(curv_str) {
+  curv <- tolower(curv_str)
+  if (grepl("convex", curv) && !grepl("concave", curv)) {
+    cli::col_blue(curv_str)
+  } else if (grepl("concave", curv)) {
+    cli::col_red(curv_str)
+  } else if (grepl("affine", curv)) {
+    cli::col_green(curv_str)
+  } else if (grepl("constant", curv)) {
+    cli::col_grey(curv_str)
+  } else {
+    ## unknown / nondcp
+    cli::col_yellow(curv_str)
+  }
+}
+
 ## Print a tree to console with indentation (box-drawing style)
 .viz_print_tree <- function(node, prefix = "", child_prefix = "", is_root = TRUE) {
-  ## Node label
+  ## Node label with curvature coloring
+  colored_curv <- .viz_curv_color(node$curvature)
   if (node$is_leaf) {
-    label <- sprintf("%s  [%s, %s]",
-                     node$id, node$curvature, paste(node$shape, collapse = "x"))
+    label <- paste0(node$id, "  [", colored_curv, ", ",
+                    paste(node$shape, collapse = "x"), "]")
   } else {
-    label <- sprintf("%s = %s(...)  [%s, %s, %s]",
-                     node$id, node$atom_class,
-                     node$curvature, node$sign, paste(node$shape, collapse = "x"))
+    label <- paste0(node$id, " = ", node$atom_class, "(...)  [",
+                    colored_curv, ", ", node$sign, ", ",
+                    paste(node$shape, collapse = "x"), "]")
   }
-  cat(sprintf("%s%s\n", prefix, label))
+  cat(paste0(prefix, label, "\n"))
 
   ## Recurse into children
   n_children <- length(node$children)
@@ -756,9 +774,11 @@ visualize <- function(problem,
         cli_rule("Constraints")
         for (i in seq_along(model$constraint_trees)) {
           ct <- model$constraint_trees[[i]]
+          con <- problem@constraints[[i]]
           con_type <- sub("^CVXR::", "", ct$type)
           lbl <- if (!is.null(ct$label)) paste0(" (", ct$label, ")") else ""
-          cli_text("  [{i}] {con_type} {paste(ct$shape, collapse = 'x')}{lbl}")
+          dcp_mark <- if (is_dcp(con)) cli::col_green("\u2713") else cli::col_red("\u2717")
+          cli_text("  {dcp_mark} [{i}] {con_type} {paste(ct$shape, collapse = 'x')}{lbl}")
           for (st in ct$subtrees) {
             .viz_print_tree(st, prefix = "      ", child_prefix = "      ")
           }

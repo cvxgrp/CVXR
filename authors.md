@@ -15,7 +15,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/cvxgrp/CVXR/blob/s7-rewrite/inst/CITATION)
+[`inst/CITATION`](https://github.com/cvxgrp/CVXR/blob/master/inst/CITATION)
 
 Fu A, Narasimhan B, Boyd S (2020). “CVXR: An R Package for Disciplined
 Convex Optimization.” *Journal of Statistical Software*, **94**(14),

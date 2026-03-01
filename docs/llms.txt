@@ -38,7 +38,6 @@ higher. (`CVXR` is known to work with earlier versions of R too, but we
 don’t check our releases against older versions of R.)
 
 ``` r
-
 install.packages('CVXR', repos = "https://CRAN.R-project.org")
 ```
 
@@ -47,7 +46,6 @@ assuming you have the development tools for R available, including the C
 compilers etc. Execute:
 
 ``` r
-
 library(devtools)
 install_github("cvxgrp/CVXR")
 ```

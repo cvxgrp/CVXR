@@ -290,7 +290,8 @@ CRAN release: 2018-05-26
 ## CVXR 0.98
 
 - Dropped `delay_load` parameter dropped in
-  `reticulate::import_from_path`, per changes in `reticulate`.
+  [`reticulate::import_from_path`](https://rstudio.github.io/reticulate/reference/import.html),
+  per changes in `reticulate`.
 
 - Cleaned up hooks into reticulate for commercial solvers.
 

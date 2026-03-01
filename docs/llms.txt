@@ -38,6 +38,7 @@ higher. (`CVXR` is known to work with earlier versions of R too, but we
 don’t check our releases against older versions of R.)
 
 ``` r
+
 install.packages('CVXR', repos = "https://CRAN.R-project.org")
 ```
 
@@ -46,6 +47,7 @@ assuming you have the development tools for R available, including the C
 compilers etc. Execute:
 
 ``` r
+
 library(devtools)
 install_github("cvxgrp/CVXR")
 ```
@@ -56,6 +58,481 @@ A number of tutorial examples are available on the [CVXR
 website](https://cvxr.rbind.io) along with links to our useR! 2019
 short-course.
 
+# Package index
+
+## Core classes
+
+Variables, parameters, constants, problems, and constraints
+
+- [`Variable()`](https://www.cvxgrp.org/CVXR/reference/Variable.md) :
+  Create an Optimization Variable
+- [`Parameter()`](https://www.cvxgrp.org/CVXR/reference/Parameter.md) :
+  Create a Parameter
+- [`Constant()`](https://www.cvxgrp.org/CVXR/reference/Constant.md) :
+  Create a Constant Expression
+- [`Problem()`](https://www.cvxgrp.org/CVXR/reference/Problem.md) :
+  Create an Optimization Problem
+- [`Minimize()`](https://www.cvxgrp.org/CVXR/reference/Minimize.md) :
+  Create a Minimization Objective
+- [`Maximize()`](https://www.cvxgrp.org/CVXR/reference/Maximize.md) :
+  Create a Maximization Objective
+- [`Equality()`](https://www.cvxgrp.org/CVXR/reference/Equality.md) :
+  Create an Equality Constraint
+- [`Inequality()`](https://www.cvxgrp.org/CVXR/reference/Inequality.md)
+  : Create an Inequality Constraint
+- [`NonNeg()`](https://www.cvxgrp.org/CVXR/reference/NonNeg.md) : Create
+  a Non-Negative Constraint
+- [`NonPos()`](https://www.cvxgrp.org/CVXR/reference/NonPos.md) : Create
+  a Non-Positive Constraint
+- [`Zero()`](https://www.cvxgrp.org/CVXR/reference/Zero.md) : Create a
+  Zero Constraint
+- [`PSD()`](https://www.cvxgrp.org/CVXR/reference/PSD.md) : Create a
+  Positive Semidefinite Constraint
+- [`ExpCone()`](https://www.cvxgrp.org/CVXR/reference/ExpCone.md) :
+  Create an Exponential Cone Constraint
+- [`SOC()`](https://www.cvxgrp.org/CVXR/reference/SOC.md) : Create a
+  Second-Order Cone Constraint
+- [`PowCone3D()`](https://www.cvxgrp.org/CVXR/reference/PowCone3D.md) :
+  Create a 3D Power Cone Constraint
+- [`PowConeND()`](https://www.cvxgrp.org/CVXR/reference/PowConeND.md) :
+  Create an N-Dimensional Power Cone Constraint
+- [`FiniteSet()`](https://www.cvxgrp.org/CVXR/reference/FiniteSet.md) :
+  FiniteSet Constraint
+
+## Solve interface
+
+Solving problems and extracting results
+
+- [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) : Solve
+  a Convex Optimization Problem
+- [`value()`](https://www.cvxgrp.org/CVXR/reference/value.md) : Get the
+  Numeric Value of an Expression
+- [`` `value<-`() ``](https://www.cvxgrp.org/CVXR/reference/value-set.md)
+  : Set the Value of a Leaf Expression
+- [`dual_value()`](https://www.cvxgrp.org/CVXR/reference/dual_value.md)
+  : Get the Dual Value of a Constraint
+- [`status()`](https://www.cvxgrp.org/CVXR/reference/status.md) : Get
+  the Solution Status of a Problem
+- [`solution()`](https://www.cvxgrp.org/CVXR/reference/solution.md) :
+  Get the Raw Solution Object
+- [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
+  : Get Problem Data for a Solver
+- [`solve_via_data()`](https://www.cvxgrp.org/CVXR/reference/solve_via_data.md)
+  : Solve via Raw Data
+- [`problem_unpack_results()`](https://www.cvxgrp.org/CVXR/reference/problem_unpack_results.md)
+  : Unpack Solver Results into a Problem
+- [`unpack_results()`](https://www.cvxgrp.org/CVXR/reference/unpack_results.md)
+  **\[deprecated\]** : Unpack Results (backward-compatible alias)
+- [`solver_stats()`](https://www.cvxgrp.org/CVXR/reference/solver_stats.md)
+  : Get Solver Statistics
+- [`solver_default_param()`](https://www.cvxgrp.org/CVXR/reference/solver_default_param.md)
+  : Standard Solver Parameter Mappings
+- [`installed_solvers()`](https://www.cvxgrp.org/CVXR/reference/installed_solvers.md)
+  : List installed solvers
+- [`residual()`](https://www.cvxgrp.org/CVXR/reference/residual.md) :
+  Get the Residual of a Constraint
+- [`violation()`](https://www.cvxgrp.org/CVXR/reference/violation.md) :
+  Get the Violation of a Constraint
+
+## Solvers
+
+Solver name constants
+
+- [`SCS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`OSQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`CLARABEL_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`HIGHS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`MOSEK_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`GUROBI_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`GLPK_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`GLPK_MI_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`ECOS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`ECOS_BB_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`CPLEX_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`CVXOPT_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`PIQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  : Solver Name Constants
+
+## Status constants
+
+Solution status values
+
+- [`OPTIMAL`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`INFEASIBLE`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`UNBOUNDED`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`SOLVER_ERROR`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`OPTIMAL_INACCURATE`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`INFEASIBLE_INACCURATE`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`UNBOUNDED_INACCURATE`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`USER_LIMIT`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  [`INFEASIBLE_OR_UNBOUNDED`](https://www.cvxgrp.org/CVXR/reference/status-constants.md)
+  : Solution Status Constants
+
+## Math and standard function dispatch
+
+Standard R functions that work directly on CVXR expressions. abs, exp,
+log, sqrt, sum, max, min (group generics); norm, mean, diff (S4
+generics); sd, var, outer (masking wrappers).
+
+- [`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
+  [`sd()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
+  [`var()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
+  [`outer()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) :
+  Standard R Functions for CVXR Expressions
+
+## Elementwise atoms
+
+Functions applied element-by-element
+
+- [`entr()`](https://www.cvxgrp.org/CVXR/reference/entr.md) : Create an
+  entropy atom -x \* log(x)
+- [`huber()`](https://www.cvxgrp.org/CVXR/reference/huber.md) : Create a
+  Huber loss atom
+- [`inv_pos()`](https://www.cvxgrp.org/CVXR/reference/inv_pos.md) :
+  Inverse position: \\x^{-1}\\ (for x \> 0)
+- [`kl_div()`](https://www.cvxgrp.org/CVXR/reference/kl_div.md) : KL
+  Divergence: x\*log(x/y) - x + y
+- [`log1p_atom()`](https://www.cvxgrp.org/CVXR/reference/log1p_atom.md)
+  [`log1p_expr()`](https://www.cvxgrp.org/CVXR/reference/log1p_atom.md)
+  : Log(1 + x) — elementwise
+- [`logistic()`](https://www.cvxgrp.org/CVXR/reference/logistic.md) :
+  Logistic function: log(1 + exp(x)) — elementwise
+- [`loggamma()`](https://www.cvxgrp.org/CVXR/reference/loggamma.md) :
+  Elementwise log of the gamma function
+- [`log_normcdf()`](https://www.cvxgrp.org/CVXR/reference/log_normcdf.md)
+  : Elementwise log of the standard normal CDF
+- [`neg()`](https://www.cvxgrp.org/CVXR/reference/neg.md) : Negative
+  part: -min(x, 0)
+- [`pos()`](https://www.cvxgrp.org/CVXR/reference/pos.md) : Positive
+  part: max(x, 0)
+- [`power()`](https://www.cvxgrp.org/CVXR/reference/power.md) : Create a
+  Power atom
+- [`scalene()`](https://www.cvxgrp.org/CVXR/reference/scalene.md) :
+  Scalene penalty: alpha \* pos(x) + beta \* neg(x)
+- [`square()`](https://www.cvxgrp.org/CVXR/reference/square.md) : Square
+  of an expression: x^2
+- [`xexp()`](https://www.cvxgrp.org/CVXR/reference/xexp.md) : x \*
+  exp(x) — elementwise
+
+## Aggregation atoms
+
+Functions that reduce or summarize entries
+
+- [`sum_entries()`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)
+  : Sum the entries of an expression
+- [`max_entries()`](https://www.cvxgrp.org/CVXR/reference/max_entries.md)
+  : Maximum entry of an expression
+- [`min_entries()`](https://www.cvxgrp.org/CVXR/reference/min_entries.md)
+  : Minimum entry of an expression
+- [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  : Elementwise maximum of expressions
+- [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  : Elementwise minimum of expressions
+- [`cumsum_axis()`](https://www.cvxgrp.org/CVXR/reference/cumsum_axis.md)
+  : Cumulative sum along an axis
+- [`cummax_expr()`](https://www.cvxgrp.org/CVXR/reference/cummax_expr.md)
+  : Cumulative maximum along an axis
+- [`prod_entries()`](https://www.cvxgrp.org/CVXR/reference/prod_entries.md)
+  : Product of entries along an axis
+- [`log_sum_exp()`](https://www.cvxgrp.org/CVXR/reference/log_sum_exp.md)
+  : Log-sum-exp: log(sum(exp(x)))
+- [`sum_squares()`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)
+  : Sum of squares (= quad_over_lin(x, 1))
+- [`sum_largest()`](https://www.cvxgrp.org/CVXR/reference/sum_largest.md)
+  : Sum of k largest entries
+- [`sum_smallest()`](https://www.cvxgrp.org/CVXR/reference/sum_smallest.md)
+  : Sum of k smallest entries
+- [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md) :
+  (Weighted) geometric mean of a vector
+- [`harmonic_mean()`](https://www.cvxgrp.org/CVXR/reference/harmonic_mean.md)
+  : Harmonic mean: n / sum(1/x_i)
+- [`ptp()`](https://www.cvxgrp.org/CVXR/reference/ptp.md) : Peak-to-peak
+  (range): max(x) - min(x)
+- [`cvxr_mean()`](https://www.cvxgrp.org/CVXR/reference/cvxr_mean.md) :
+  Mean of an expression
+- [`cvxr_std()`](https://www.cvxgrp.org/CVXR/reference/cvxr_std.md)
+  [`std()`](https://www.cvxgrp.org/CVXR/reference/cvxr_std.md) :
+  Standard deviation of an expression
+- [`cvxr_var()`](https://www.cvxgrp.org/CVXR/reference/cvxr_var.md) :
+  Variance of an expression
+- [`cvar()`](https://www.cvxgrp.org/CVXR/reference/cvar.md) :
+  Conditional Value at Risk (CVaR)
+
+## Norm and distance atoms
+
+Norm functions and related atoms
+
+- [`cvxr_norm()`](https://www.cvxgrp.org/CVXR/reference/cvxr_norm.md) :
+  Compute a norm of an expression
+- [`p_norm()`](https://www.cvxgrp.org/CVXR/reference/p_norm.md) :
+  General p-norm of an expression
+- [`norm1()`](https://www.cvxgrp.org/CVXR/reference/norm1.md) : L1 norm
+  of an expression
+- [`norm2()`](https://www.cvxgrp.org/CVXR/reference/norm2.md)
+  **\[deprecated\]** : Euclidean norm (deprecated alias)
+- [`norm_inf()`](https://www.cvxgrp.org/CVXR/reference/norm_inf.md) :
+  L-infinity norm of an expression
+- [`norm_nuc()`](https://www.cvxgrp.org/CVXR/reference/norm_nuc.md) :
+  Nuclear norm (sum of singular values)
+- [`mixed_norm()`](https://www.cvxgrp.org/CVXR/reference/mixed_norm.md)
+  : Mixed norm (\\L\_{p,q}\\ norm): column-wise p-norm, then q-norm
+- [`quad_form()`](https://www.cvxgrp.org/CVXR/reference/quad_form.md) :
+  Quadratic form x^T P x
+- [`quad_over_lin()`](https://www.cvxgrp.org/CVXR/reference/quad_over_lin.md)
+  : Sum of squares divided by a scalar
+- [`matrix_frac()`](https://www.cvxgrp.org/CVXR/reference/matrix_frac.md)
+  : Matrix fractional function
+
+## Linear algebra atoms
+
+Matrix operations and structural atoms
+
+- [`bmat()`](https://www.cvxgrp.org/CVXR/reference/bmat.md) : Construct
+  a Block Matrix
+- [`conv()`](https://www.cvxgrp.org/CVXR/reference/conv.md) : 1D
+  discrete convolution
+- [`DiagMat()`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) :
+  Extract Diagonal from a Matrix
+- [`DiagVec()`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) :
+  Vector to Diagonal Matrix
+- [`hstack()`](https://www.cvxgrp.org/CVXR/reference/hstack.md) :
+  Horizontal concatenation of expressions
+- [`vstack()`](https://www.cvxgrp.org/CVXR/reference/vstack.md) :
+  Vertical concatenation of expressions
+- [`kron()`](https://www.cvxgrp.org/CVXR/reference/kron.md) : Kronecker
+  product of two expressions
+- [`lambda_max()`](https://www.cvxgrp.org/CVXR/reference/lambda_max.md)
+  : Maximum eigenvalue
+- [`lambda_min()`](https://www.cvxgrp.org/CVXR/reference/lambda_min.md)
+  : Minimum eigenvalue
+- [`lambda_sum_largest()`](https://www.cvxgrp.org/CVXR/reference/lambda_sum_largest.md)
+  : Sum of largest k eigenvalues
+- [`lambda_sum_smallest()`](https://www.cvxgrp.org/CVXR/reference/lambda_sum_smallest.md)
+  : Sum of smallest k eigenvalues
+- [`log_det()`](https://www.cvxgrp.org/CVXR/reference/log_det.md) :
+  Log-determinant
+- [`matrix_trace()`](https://www.cvxgrp.org/CVXR/reference/matrix_trace.md)
+  : Trace of a square matrix expression
+- [`partial_trace()`](https://www.cvxgrp.org/CVXR/reference/partial_trace.md)
+  : Partial trace of a tensor product expression
+- [`partial_transpose()`](https://www.cvxgrp.org/CVXR/reference/partial_transpose.md)
+  : Partial transpose of a tensor product expression
+- [`reshape_expr()`](https://www.cvxgrp.org/CVXR/reference/reshape_expr.md)
+  : Reshape an expression to a new shape
+- [`sigma_max()`](https://www.cvxgrp.org/CVXR/reference/sigma_max.md) :
+  Maximum singular value
+- [`upper_tri()`](https://www.cvxgrp.org/CVXR/reference/upper_tri.md) :
+  Extract strict upper triangle of a square matrix
+- [`vec()`](https://www.cvxgrp.org/CVXR/reference/vec.md) : Vectorize an
+  expression (column vector)
+- [`vec_to_upper_tri()`](https://www.cvxgrp.org/CVXR/reference/vec_to_upper_tri.md)
+  : Reshape a vector into an upper triangular matrix
+
+## Arithmetic and product atoms
+
+Multiplication, dot products, and related
+
+- [`multiply()`](https://www.cvxgrp.org/CVXR/reference/multiply.md)
+  **\[deprecated\]** : Elementwise multiplication (deprecated)
+- [`vdot()`](https://www.cvxgrp.org/CVXR/reference/vdot.md) : Vector dot
+  product (inner product)
+- [`scalar_product()`](https://www.cvxgrp.org/CVXR/reference/scalar_product.md)
+  : Scalar product (alias for vdot)
+- [`cvxr_outer()`](https://www.cvxgrp.org/CVXR/reference/cvxr_outer.md)
+  : Outer product of two vectors
+- [`dotsort()`](https://www.cvxgrp.org/CVXR/reference/dotsort.md) :
+  Weighted sorted dot product
+- [`inv_prod()`](https://www.cvxgrp.org/CVXR/reference/inv_prod.md) :
+  Reciprocal of product of entries
+- [`tr_inv()`](https://www.cvxgrp.org/CVXR/reference/tr_inv.md) : Trace
+  of matrix inverse
+- [`total_variation()`](https://www.cvxgrp.org/CVXR/reference/total_variation.md)
+  : Total variation of a vector or matrix
+- [`tv()`](https://www.cvxgrp.org/CVXR/reference/tv.md)
+  **\[deprecated\]** : Total variation (deprecated alias)
+- [`cvxr_diff()`](https://www.cvxgrp.org/CVXR/reference/cvxr_diff.md) :
+  Compute kth Order Differences of an Expression
+
+## Special atoms
+
+Perspective, DGP, DQCP, and other specialized atoms
+
+- [`perspective()`](https://www.cvxgrp.org/CVXR/reference/perspective.md)
+  : Perspective Transform
+- [`diff_pos()`](https://www.cvxgrp.org/CVXR/reference/diff_pos.md) :
+  The difference x - y with domain x \> y \> 0
+- [`resolvent()`](https://www.cvxgrp.org/CVXR/reference/resolvent.md) :
+  Resolvent inverse(sI - X)
+- [`one_minus_pos()`](https://www.cvxgrp.org/CVXR/reference/one_minus_pos.md)
+  : The difference 1 - x with domain (0, 1)
+- [`eye_minus_inv()`](https://www.cvxgrp.org/CVXR/reference/eye_minus_inv.md)
+  : Unity resolvent (I - X) inverse for positive square matrix X
+- [`pf_eigenvalue()`](https://www.cvxgrp.org/CVXR/reference/pf_eigenvalue.md)
+  : Perron-Frobenius eigenvalue of a positive matrix
+- [`gmatmul()`](https://www.cvxgrp.org/CVXR/reference/gmatmul.md) :
+  Geometric matrix multiplication A diamond X
+- [`ceil_expr()`](https://www.cvxgrp.org/CVXR/reference/ceil_expr.md) :
+  Elementwise Ceiling
+- [`floor_expr()`](https://www.cvxgrp.org/CVXR/reference/floor_expr.md)
+  : Elementwise Floor
+- [`condition_number()`](https://www.cvxgrp.org/CVXR/reference/condition_number.md)
+  : Condition number of a PSD matrix
+- [`gen_lambda_max()`](https://www.cvxgrp.org/CVXR/reference/gen_lambda_max.md)
+  : Maximum generalized eigenvalue
+- [`dist_ratio()`](https://www.cvxgrp.org/CVXR/reference/dist_ratio.md)
+  : Distance ratio
+- [`indicator()`](https://www.cvxgrp.org/CVXR/reference/indicator.md) :
+  Indicator function for constraints
+
+## Logic atoms
+
+Boolean logic operations for mixed-integer problems
+
+- [`And()`](https://www.cvxgrp.org/CVXR/reference/And.md) : Logical AND
+- [`Or()`](https://www.cvxgrp.org/CVXR/reference/Or.md) : Logical OR
+- [`Not()`](https://www.cvxgrp.org/CVXR/reference/Not.md) : Logical NOT
+- [`Xor()`](https://www.cvxgrp.org/CVXR/reference/Xor.md) : Logical XOR
+- [`implies()`](https://www.cvxgrp.org/CVXR/reference/implies.md) :
+  Logical Implication
+- [`iff()`](https://www.cvxgrp.org/CVXR/reference/iff.md) : Logical
+  Biconditional
+
+## Constraint operators
+
+Operators for creating constraints
+
+- [`` `%>>%` ``](https://www.cvxgrp.org/CVXR/reference/grapes-greater-than-greater-than-grapes.md)
+  : Positive Semidefinite Constraint Operator
+- [`` `%<<%` ``](https://www.cvxgrp.org/CVXR/reference/grapes-less-than-less-than-grapes.md)
+  : Negative Semidefinite Constraint Operator
+
+## Expression properties
+
+Query properties of CVXR expressions
+
+- [`curvature()`](https://www.cvxgrp.org/CVXR/reference/curvature.md) :
+  Get Expression Curvature
+- [`expr_sign()`](https://www.cvxgrp.org/CVXR/reference/expr_sign.md) :
+  Get the DCP Sign of an Expression
+- [`is_affine()`](https://www.cvxgrp.org/CVXR/reference/is_affine.md) :
+  Check if an Expression is Affine
+- [`is_concave()`](https://www.cvxgrp.org/CVXR/reference/is_concave.md)
+  : Check if an Expression is Concave
+- [`is_constant()`](https://www.cvxgrp.org/CVXR/reference/is_constant.md)
+  : Check if an Expression is Constant
+- [`is_convex()`](https://www.cvxgrp.org/CVXR/reference/is_convex.md) :
+  Check if an Expression is Convex
+- [`is_dcp()`](https://www.cvxgrp.org/CVXR/reference/is_dcp.md) : Check
+  if an Expression is DCP-Compliant
+- [`is_dgp()`](https://www.cvxgrp.org/CVXR/reference/is_dgp.md) : Check
+  if a Constraint is DGP-Compliant
+- [`is_dpp()`](https://www.cvxgrp.org/CVXR/reference/is_dpp.md) : Check
+  DPP Compliance
+- [`is_dqcp()`](https://www.cvxgrp.org/CVXR/reference/is_dqcp.md) :
+  Check if Expression is DQCP-Compliant
+- [`is_log_log_affine()`](https://www.cvxgrp.org/CVXR/reference/is_log_log_affine.md)
+  : Check if Expression is Log-Log Affine
+- [`is_log_log_concave()`](https://www.cvxgrp.org/CVXR/reference/is_log_log_concave.md)
+  : Check if Expression is Log-Log Concave
+- [`is_log_log_convex()`](https://www.cvxgrp.org/CVXR/reference/is_log_log_convex.md)
+  : Check if Expression is Log-Log Convex
+- [`is_lp()`](https://www.cvxgrp.org/CVXR/reference/is_lp.md) : Check if
+  a Problem is a Linear Program
+- [`is_matrix()`](https://www.cvxgrp.org/CVXR/reference/is_matrix.md) :
+  Is the Expression a Matrix?
+- [`is_mixed_integer()`](https://www.cvxgrp.org/CVXR/reference/is_mixed_integer.md)
+  : Check if a Problem is Mixed-Integer
+- [`is_nonneg()`](https://www.cvxgrp.org/CVXR/reference/is_nonneg.md) :
+  Check if Expression is Non-Negative
+- [`is_nonpos()`](https://www.cvxgrp.org/CVXR/reference/is_nonpos.md) :
+  Check if Expression is Non-Positive
+- [`is_nsd()`](https://www.cvxgrp.org/CVXR/reference/is_nsd.md) : Check
+  if Expression is Negative Semidefinite
+- [`is_psd()`](https://www.cvxgrp.org/CVXR/reference/is_psd.md) : Check
+  if Expression is Positive Semidefinite
+- [`is_pwl()`](https://www.cvxgrp.org/CVXR/reference/is_pwl.md) : Check
+  if Expression is Piecewise Linear
+- [`is_qp()`](https://www.cvxgrp.org/CVXR/reference/is_qp.md) : Check if
+  a Problem is a Quadratic Program
+- [`is_quadratic()`](https://www.cvxgrp.org/CVXR/reference/is_quadratic.md)
+  : Check if an Expression is Quadratic
+- [`is_quasiconcave()`](https://www.cvxgrp.org/CVXR/reference/is_quasiconcave.md)
+  : Check if Expression is Quasiconcave
+- [`is_quasiconvex()`](https://www.cvxgrp.org/CVXR/reference/is_quasiconvex.md)
+  : Check if Expression is Quasiconvex
+- [`is_quasilinear()`](https://www.cvxgrp.org/CVXR/reference/is_quasilinear.md)
+  : Check if Expression is Quasilinear
+- [`is_scalar()`](https://www.cvxgrp.org/CVXR/reference/is_scalar.md) :
+  Is the Expression a Scalar?
+- [`is_symmetric()`](https://www.cvxgrp.org/CVXR/reference/is_symmetric.md)
+  : Check if Expression is Symmetric
+- [`is_vector()`](https://www.cvxgrp.org/CVXR/reference/is_vector.md) :
+  Is the Expression a Vector?
+- [`is_zero()`](https://www.cvxgrp.org/CVXR/reference/is_zero.md) :
+  Check if Expression is Zero
+- [`length_expr()`](https://www.cvxgrp.org/CVXR/reference/length_expr.md)
+  : Length of a Vector (Last Nonzero Index)
+- [`size()`](https://www.cvxgrp.org/CVXR/reference/size.md) : Get
+  Expression Size
+- [`name()`](https://www.cvxgrp.org/CVXR/reference/name.md) : Get
+  Expression Name
+- [`id()`](https://www.cvxgrp.org/CVXR/reference/id.md) : Get Expression
+  ID
+- [`set_label()`](https://www.cvxgrp.org/CVXR/reference/set_label.md) :
+  Set a Label on a Constraint
+
+## Problem properties
+
+Extract components from a Problem object
+
+- [`objective()`](https://www.cvxgrp.org/CVXR/reference/objective.md) :
+  Get Problem Objective (read-only)
+- [`constraints()`](https://www.cvxgrp.org/CVXR/reference/constraints.md)
+  : Get Problem Constraints (read-only)
+- [`variables()`](https://www.cvxgrp.org/CVXR/reference/variables.md) :
+  Get the Variables in an Expression
+- [`parameters()`](https://www.cvxgrp.org/CVXR/reference/parameters.md)
+  : Get the Parameters in an Expression
+- [`constants()`](https://www.cvxgrp.org/CVXR/reference/constants.md) :
+  Get the Constants in an Expression
+
+## Utilities
+
+Helpers and introspection
+
+- [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md)
+  : Convert a value to a CVXR Expression
+- [`visualize()`](https://www.cvxgrp.org/CVXR/reference/visualize.md) :
+  Visualize the Canonicalization Pipeline of a CVXR Problem
+- [`expr_H()`](https://www.cvxgrp.org/CVXR/reference/expr_H.md) :
+  Conjugate-Transpose of an Expression
+- [`make_sparse_diagonal_matrix()`](https://www.cvxgrp.org/CVXR/reference/make_sparse_diagonal_matrix.md)
+  : Make a CSC sparse diagonal matrix
+- [`rel_entr()`](https://www.cvxgrp.org/CVXR/reference/rel_entr.md) :
+  Relative Entropy: x\*log(x/y)
+
+## Data
+
+Example datasets
+
+- [`cdiac`](https://www.cvxgrp.org/CVXR/reference/cdiac.md) : Global
+  Monthly and Annual Temperature Anomalies (degrees C), 1850-2015
+  (Relative to the 1961-1990 Mean) (May 2016)
+- [`dspop`](https://www.cvxgrp.org/CVXR/reference/dspop.md) : Direct
+  Standardization: Population
+- [`dssamp`](https://www.cvxgrp.org/CVXR/reference/dssamp.md) : Direct
+  Standardization: Sample
+
+## Deprecated
+
+Backward-compatible aliases (use the new names instead)
+
+- [`get_problem_data()`](https://www.cvxgrp.org/CVXR/reference/get_problem_data.md)
+  **\[deprecated\]** : Get Problem Data for a Solver (deprecated)
+- [`problem_status()`](https://www.cvxgrp.org/CVXR/reference/problem_status.md)
+  **\[deprecated\]** : Get the Solution Status of a Problem (deprecated)
+- [`problem_solution()`](https://www.cvxgrp.org/CVXR/reference/problem_solution.md)
+  **\[deprecated\]** : Get the Raw Solution Object (deprecated)
 
 # Articles
 

@@ -64,25 +64,65 @@
 <img src="logo.png" class="logo" alt=""><h1 id="cvxr-">CVXR <a class="anchor" aria-label="anchor" href="#cvxr-"></a>
 </h1>
 </div>
-<p><a href="https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://cran.r-project.org/package=CVXR" class="external-link"><img src="https://www.r-pkg.org/badges/version/CVXR" alt="CRAN_Status_Badge"></a> <a href="https://CRAN.R-project.org/package=CVXR" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/CVXR"></a></p>
-<p>CVXR provides an object-oriented modeling language for convex optimization, similar to <code>CVX</code>, <code>CVXPY</code>, <code>YALMIP</code>, and <code>Convex.jl</code>. It allows the user to formulate convex optimization problems in a natural mathematical syntax rather than the restrictive standard form required by most solvers. The user specifies an objective and set of constraints by combining constants, variables, and parameters using a library of functions with known mathematical properties. <code>CVXR</code> then applies signed <a href="https://web.stanford.edu/~boyd/papers/pdf/disc_cvx_prog.pdf" class="external-link">disciplined convex programming (DCP)</a> to verify the problem’s convexity. Once verified, the problem is converted into standard conic form using graph implementations and passed to a cone solver such as <a href="https://github.com/embotech/ecos" class="external-link">ECOS</a> or <a href="https://github.com/cvxgrp/scs" class="external-link">SCS</a>.</p>
-<p>CVXR includes several open source solvers in addition to the default OSQP, ECOS and SCS. Recent (1.x+) versions also include support for commercial solvers such as <a href="https://www.mosek.com" class="external-link">MOSEK</a>, <a href="https://www.gurobi.com" class="external-link">GUROBI</a> and <a href="https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer" class="external-link">CPLEX</a>.</p>
-<p>For details and examples, we refer you to <a href="https://dx.doi.org/10.18637/jss.v094.i14" class="external-link">Fu, Narasimhan, Boyd</a> (2020). If you use CVXR in your work, please cite this reference. (The R command <code>citation("CVXR", bibtex = TRUE)</code> will also give you a bibtex-formatted entry.)</p>
+<!-- badges: start -->
+
+<p>CVXR provides an object-oriented modeling language for convex optimization, similar to <a href="https://www.cvxpy.org/" class="external-link">CVXPY</a>, <a href="http://cvxr.com/cvx/" class="external-link">CVX</a>, <a href="https://yalmip.github.io/" class="external-link">YALMIP</a>, and <a href="https://jump.dev/Convex.jl/stable/" class="external-link">Convex.jl</a>. It allows you to formulate convex optimization problems in natural mathematical syntax rather than the restrictive standard form required by most solvers. You specify an objective and a set of constraints by combining constants, variables, and parameters using a library of functions with known mathematical properties. CVXR then applies signed <a href="https://web.stanford.edu/~boyd/papers/pdf/disc_cvx_prog.pdf" class="external-link">disciplined convex programming (DCP)</a> to verify the problem’s convexity. Once verified, the problem is converted into standard conic form and passed to an appropriate backend solver.</p>
+<p>This version is a ground-up rewrite built on the <a href="https://rconsortium.github.io/S7/" class="external-link">S7</a> object system, designed to mirror CVXPY 1.8 closely. It is <strong>~4–5x faster</strong> than the previous S4-based release, ships with 13 solvers (4 built-in), and supports DCP, DGP, DQCP, complex variables, mixed-integer programming, and warm-starting.</p>
+<p>For tutorials, worked examples, and the full story, visit the <a href="https://cvxr.rbind.io" class="external-link">CVXR website</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>This package is now released on CRAN, so you can install the current released version as you would any other package for R, version 3.4 and higher. (<code>CVXR</code> is known to work with earlier versions of R too, but we don’t check our releases against older versions of R.)</p>
+<p>Install the released version from CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'CVXR'</span>, repos <span class="op">=</span> <span class="st">"https://CRAN.R-project.org"</span><span class="op">)</span></span></code></pre></div>
-<p>Development versions can be installed from the Github repository assuming you have the development tools for R available, including the C compilers etc. Execute:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"CVXR"</span><span class="op">)</span></span></code></pre></div>
+<p>Or install the development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"cvxgrp/CVXR"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"cvxgrp/CVXR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="tutorial">Tutorial<a class="anchor" aria-label="anchor" href="#tutorial"></a>
+<h2 id="quick-example">Quick example<a class="anchor" aria-label="anchor" href="#quick-example"></a>
 </h2>
-<p>A number of tutorial examples are available on the <a href="https://cvxr.rbind.io" class="external-link">CVXR website</a> along with links to our useR! 2019 short-course.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cvxr.rbind.io" class="external-link">CVXR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">50</span>; <span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">beta_true</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_true</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Problem</span></span>
+<span><span class="va">beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Variable.html">Variable</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">objective</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="fu"><a href="reference/p_norm.html">p_norm</a></span><span class="op">(</span><span class="va">beta</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Solve (Clarabel is the default solver)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<span><span class="va">result</span>                          <span class="co"># optimal value</span></span>
+<span><span class="va">estimated</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/value.html">value</a></span><span class="op">(</span><span class="va">beta</span><span class="op">)</span>        <span class="co"># coefficient estimates</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<ul>
+<li>
+<strong>Tutorials and examples</strong>: <a href="https://cvxr.rbind.io" class="external-link uri">https://cvxr.rbind.io</a>
+</li>
+<li>
+<strong>Package reference</strong>: <a href="https://www.cvxgrp.org/CVXR/" class="uri">https://www.cvxgrp.org/CVXR/</a>
+</li>
+<li>
+<strong>Paper</strong>: Fu, Narasimhan, and Boyd (2020). “CVXR: An R Package for Disciplined Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14), 1–34. <a href="https://doi.org/10.18637/jss.v094.i14" class="external-link">doi:10.18637/jss.v094.i14</a>
+</li>
+</ul>
+<p>If you use CVXR in your work, please cite the paper above (<code>citation("CVXR")</code>).</p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>Apache License 2.0</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -126,7 +166,14 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/cvxgrp/CVXR/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://cran.r-project.org/package=CVXR" class="external-link"><img src="https://www.r-pkg.org/badges/version/CVXR" alt="CRAN status"></a></li>
+<li><a href="https://CRAN.R-project.org/package=CVXR" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/CVXR" alt="Downloads"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>

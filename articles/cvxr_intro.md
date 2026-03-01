@@ -123,7 +123,7 @@ result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
 #> ─────────────────────────────── CVXR v1.8.0.9213 ───────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "OSQP" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::OSQP_QP_Solver
-#> ℹ Compile time: 0.027s
+#> ℹ Compile time: 0.029s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> -----------------------------------------------------------------
 #>            OSQP v1.0.0  -  Operator Splitting QP Solver
@@ -143,10 +143,10 @@ result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
 #>           scaling: on (10 iterations), scaled_termination: off
 #>           warm starting: on, polishing: on, 
 #> iter   objective    prim res   dual res   gap        rel kkt    rho         time
-#>    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    2.10e-04s
-#>   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   3.96e-04s
-#>  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    7.30e-04s
-#> plsh   1.2876e+03   5.82e-15   3.46e-13  -9.09e-13   3.46e-13   --------    9.07e-04s
+#>    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    2.33e-04s
+#>   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   3.92e-04s
+#>  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    6.39e-04s
+#> plsh   1.2876e+03   5.82e-15   3.46e-13  -9.09e-13   3.46e-13   --------    7.71e-04s
 #> 
 #> status:               solved
 #> solution polishing:   successful
@@ -155,12 +155,12 @@ result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
 #> dual objective:       1287.6297
 #> duality gap:          -9.0949e-13
 #> primal-dual integral: 6.8986e+05
-#> run time:             9.07e-04s
+#> run time:             7.71e-04s
 #> optimal rho estimate: 1.41e+01
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.027s
+#> ℹ Compile time: 0.029s
 #> ℹ Solver time: 0.002s
 round(value(betaHat), 3)
 #>         [,1]
@@ -187,7 +187,8 @@ CVXR supports multiple solvers:
 
 ``` r
 installed_solvers()
-#> [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"
+#> [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "ECOS"     "ECOS_BB"  "CVXOPT"  
+#> [8] "PIQP"
 ```
 
 You can specify a solver explicitly:
@@ -233,14 +234,15 @@ sessionInfo()
 #> [1] CVXR_1.8.0.9213
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] cli_3.6.5         knitr_1.51        rlang_1.1.7       xfun_0.56        
-#>  [5] clarabel_0.11.2   highs_1.12.0-3    scs_3.2.7         textshaping_1.0.4
-#>  [9] S7_0.2.1          jsonlite_2.0.0    backports_1.5.0   htmltools_0.5.9  
-#> [13] gmp_0.7-5.1       ragg_1.5.0        sass_0.4.10       rmarkdown_2.30   
-#> [17] grid_4.5.2        evaluate_1.0.5    jquerylib_0.1.4   fastmap_1.2.0    
-#> [21] yaml_2.3.12       lifecycle_1.0.5   compiler_4.5.2    fs_1.6.6         
-#> [25] Rcpp_1.1.1        osqp_1.0.0        systemfonts_1.3.1 lattice_0.22-7   
-#> [29] digest_0.6.39     R6_2.6.1          checkmate_2.3.4   bslib_0.10.0     
-#> [33] Matrix_1.7-4      tools_4.5.2       pkgdown_2.2.0     cachem_1.1.0     
-#> [37] desc_1.4.3
+#>  [1] Matrix_1.7-4      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.2   
+#>  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       
+#>  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      
+#> [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-7    R6_2.6.1         
+#> [17] knitr_1.51        backports_1.5.0   checkmate_2.3.4   desc_1.4.3       
+#> [21] osqp_1.0.0        bslib_0.10.0      rlang_1.1.7       cachem_1.1.0     
+#> [25] xfun_0.56         fs_1.6.6          sass_0.4.10       S7_0.2.1         
+#> [29] cli_3.6.5         pkgdown_2.2.0     digest_0.6.39     grid_4.5.2       
+#> [33] gmp_0.7-5.1       lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7        
+#> [37] evaluate_1.0.5    codetools_0.2-20  ragg_1.5.0        rmarkdown_2.30   
+#> [41] tools_4.5.2       htmltools_0.5.9
 ```

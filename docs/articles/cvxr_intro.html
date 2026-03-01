@@ -65,9 +65,9 @@
                         <h4 data-toc-skip class="author">Anqi Fu and
 Balasubramanian Narasimhan</h4>
             
-            <h4 data-toc-skip class="date">2026-03-01</h4>
+            <h4 data-toc-skip class="date">2026-02-28</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/master/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="d-none name"><code>cvxr_intro.Rmd</code></div>
     </div>
 
@@ -97,11 +97,11 @@ vector,
 is a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mo>×</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">100 \times 10</annotation></semantics></math>
 matrix,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>=</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mo>−</mo><mn>4</mn><mo>,</mo><mo>−</mo><mn>3</mn><mo>,</mo><mi>…</mi><mo>,</mo><mn>5</mn><mo stretchy="true" form="postfix">)</mo></mrow><mi>⊤</mi></msup></mrow><annotation encoding="application/x-tex">\beta = (-4, -3, \ldots, 5)^\top</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mn>4</mn><mo>,</mo><mi>−</mi><mn>3</mn><mo>,</mo><mi>…</mi><mo>,</mo><mn>5</mn><msup><mo stretchy="false" form="postfix">)</mo><mi>⊤</mi></msup></mrow><annotation encoding="application/x-tex">\beta = (-4, -3, \ldots, 5)^\top</annotation></semantics></math>
 is a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">10 \times 1</annotation></semantics></math>
 vector, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>∼</mo><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\epsilon \sim N(0, 1)</annotation></semantics></math>.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\epsilon \sim N(0, 1)</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -203,7 +203,7 @@ are nonnegative:</p>
 <span><span class="co">#&gt; ─────────────────────────────── CVXR v1.8.0.9213 ───────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Problem: 1 variable, 2 constraints (QP)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"OSQP"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::OSQP_QP_Solver</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.026s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.009s</span></span>
 <span><span class="co">#&gt; ─────────────────────────────── Numerical solver ───────────────────────────────</span></span>
 <span><span class="co">#&gt; -----------------------------------------------------------------</span></span>
 <span><span class="co">#&gt;            OSQP v1.0.0  -  Operator Splitting QP Solver</span></span>
@@ -223,10 +223,10 @@ are nonnegative:</p>
 <span><span class="co">#&gt;           scaling: on (10 iterations), scaled_termination: off</span></span>
 <span><span class="co">#&gt;           warm starting: on, polishing: on, </span></span>
 <span><span class="co">#&gt; iter   objective    prim res   dual res   gap        rel kkt    rho         time</span></span>
-<span><span class="co">#&gt;    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    1.79e-04s</span></span>
-<span><span class="co">#&gt;   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   3.57e-04s</span></span>
-<span><span class="co">#&gt;  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    6.08e-04s</span></span>
-<span><span class="co">#&gt; plsh   1.2876e+03   5.82e-15   3.46e-13  -9.09e-13   3.46e-13   --------    7.18e-04s</span></span>
+<span><span class="co">#&gt;    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    6.68e-05s</span></span>
+<span><span class="co">#&gt;   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   1.53e-04s</span></span>
+<span><span class="co">#&gt;  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    2.83e-04s</span></span>
+<span><span class="co">#&gt; plsh   1.2876e+03   4.15e-15   2.52e-13  -9.09e-13   2.52e-13   --------    3.36e-04s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; status:               solved</span></span>
 <span><span class="co">#&gt; solution polishing:   successful</span></span>
@@ -235,12 +235,12 @@ are nonnegative:</p>
 <span><span class="co">#&gt; dual objective:       1287.6297</span></span>
 <span><span class="co">#&gt; duality gap:          -9.0949e-13</span></span>
 <span><span class="co">#&gt; primal-dual integral: 6.8986e+05</span></span>
-<span><span class="co">#&gt; run time:             7.18e-04s</span></span>
+<span><span class="co">#&gt; run time:             3.36e-04s</span></span>
 <span><span class="co">#&gt; optimal rho estimate: 1.41e+01</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Summary ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Status: optimal</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Optimal value: 1287.63</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.026s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.009s</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.001s</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         [,1]</span></span>
@@ -266,7 +266,9 @@ mathematically intuitive.</p>
 <p>CVXR supports multiple solvers:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/installed_solvers.html">installed_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  </span></span>
+<span><span class="co">#&gt;  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  </span></span>
+<span><span class="co">#&gt; [13] "PIQP"</span></span></code></pre></div>
 <p>You can specify a solver explicitly:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span></code></pre></div>
@@ -291,21 +293,18 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>
+<span><span class="co">#&gt; Running under: macOS Tahoe 26.3</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
+<span><span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib </span></span>
+<span><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
-<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
-<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span><span class="co">#&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: UTC</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; time zone: America/Los_Angeles</span></span>
+<span><span class="co">#&gt; tzcode source: internal</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; attached base packages:</span></span>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
@@ -314,16 +313,18 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 <span><span class="co">#&gt; [1] CVXR_1.8.0.9213</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] cli_3.6.5         knitr_1.51        rlang_1.1.7       xfun_0.56        </span></span>
-<span><span class="co">#&gt;  [5] clarabel_0.11.2   highs_1.12.0-3    scs_3.2.7         textshaping_1.0.4</span></span>
-<span><span class="co">#&gt;  [9] S7_0.2.1          jsonlite_2.0.0    backports_1.5.0   htmltools_0.5.9  </span></span>
-<span><span class="co">#&gt; [13] gmp_0.7-5.1       ragg_1.5.0        sass_0.4.10       rmarkdown_2.30   </span></span>
-<span><span class="co">#&gt; [17] grid_4.5.2        evaluate_1.0.5    jquerylib_0.1.4   fastmap_1.2.0    </span></span>
-<span><span class="co">#&gt; [21] yaml_2.3.12       lifecycle_1.0.5   compiler_4.5.2    fs_1.6.6         </span></span>
-<span><span class="co">#&gt; [25] Rcpp_1.1.1        osqp_1.0.0        systemfonts_1.3.1 lattice_0.22-7   </span></span>
-<span><span class="co">#&gt; [29] digest_0.6.39     R6_2.6.1          checkmate_2.3.4   bslib_0.10.0     </span></span>
-<span><span class="co">#&gt; [33] Matrix_1.7-4      tools_4.5.2       pkgdown_2.2.0     cachem_1.1.0     </span></span>
-<span><span class="co">#&gt; [37] desc_1.4.3</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] Matrix_1.7-4      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.2   </span></span>
+<span><span class="co">#&gt;  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       </span></span>
+<span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      </span></span>
+<span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         </span></span>
+<span><span class="co">#&gt; [17] knitr_1.51        htmlwidgets_1.6.4 backports_1.5.0   Rcplex_0.3-8     </span></span>
+<span><span class="co">#&gt; [21] checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3        osqp_1.0.0       </span></span>
+<span><span class="co">#&gt; [25] bslib_0.10.0      rlang_1.1.7       cachem_1.1.0      xfun_0.56        </span></span>
+<span><span class="co">#&gt; [29] fs_1.6.6          sass_0.4.10       S7_0.2.1          otel_0.2.0       </span></span>
+<span><span class="co">#&gt; [33] cli_3.6.5         pkgdown_2.2.0     Rglpk_0.6-5.1     digest_0.6.39    </span></span>
+<span><span class="co">#&gt; [37] grid_4.5.2        gmp_0.7-5.1       lifecycle_1.0.5   ECOSolveR_0.6.1  </span></span>
+<span><span class="co">#&gt; [41] scs_3.2.7         evaluate_1.0.5    codetools_0.2-20  ragg_1.5.0       </span></span>
+<span><span class="co">#&gt; [45] Rmosek_11.1.1     rmarkdown_2.30    tools_4.5.2       htmltools_0.5.9</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

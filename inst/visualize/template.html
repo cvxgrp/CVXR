@@ -85,8 +85,15 @@ main { padding: 1.5rem; }
 .constraint-type { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem; }
 .constraint-subtree { padding-left: 1rem; border-left: 2px solid #dee2e6; margin-top: 0.25rem; }
 .constraint-leaf {
-  padding: 0.15rem 0; font-size: 0.85rem;
+  padding: 0.15rem 0.5rem; font-size: 0.85rem;
+  border-left: 3px solid transparent; margin-bottom: 1px; border-radius: 2px;
 }
+.constraint-leaf.curv-convex  { border-left-color: #1565c0; background: #e3f2fd40; }
+.constraint-leaf.curv-concave { border-left-color: #c62828; background: #fce4ec40; }
+.constraint-leaf.curv-affine  { border-left-color: #2e7d32; background: #e8f5e940; }
+.constraint-leaf.curv-constant { border-left-color: #757575; background: #f5f5f540; }
+.constraint-leaf.curv-unknown { border-left-color: #ff8f00; background: #fff8e140; }
+.constraint-leaf.curv-nondcp  { border-left-color: #d32f2f; background: #ffebee40; }
 
 /* ── Equation panels ───────────────────────────────────────── */
 .equations-panel { max-width: 900px; }
@@ -601,8 +608,8 @@ function initTree() {
 
 /** Render a small constraint subtree as nested HTML (not D3) */
 function renderConstraintTree(container, node, depth) {
-  const row = el("div", "constraint-leaf");
-  row.style.paddingLeft = (depth * 1.2) + "rem";
+  const row = el("div", "constraint-leaf " + curvClass(node));
+  row.style.paddingLeft = (depth * 1.2 + 0.5) + "rem";
 
   const mathSpan = document.createElement("span");
   if (node.is_leaf) {
@@ -807,7 +814,14 @@ function initEquations(panelId, title, equations, allNodes) {
     cLabel.textContent = "constraints:";
     container.appendChild(cLabel);
     constrs.forEach((ct, ci) => {
-      const row = el("div", "eq-row curv-affine");
+      // Derive curvature from constraint subtrees (use the "worst" curvature)
+      const subtrees = ensureArray(ct.subtrees);
+      let conCurvClass = "curv-affine";
+      if (subtrees.length > 0) {
+        // Use curvature of the root node of the first subtree
+        conCurvClass = curvClass(subtrees[0]);
+      }
+      const row = el("div", "eq-row " + conCurvClass);
       const numSpan = el("span", "eq-num", `[${ci + 1}]`);
       row.appendChild(numSpan);
       const mathDiv = el("div", "eq-math");

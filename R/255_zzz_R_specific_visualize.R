@@ -199,9 +199,9 @@
     } else if (!is_psd(P) && !is_nsd(P)) {
       hints <- c(hints, "P must be PSD for convexity, or NSD for concavity")
     } else if (is_psd(P)) {
-      hints <- c(hints, "P is PSD, so quad_form(x, P) is convex — check that x is affine")
+      hints <- c(hints, "P is PSD, so quad_form(x, P) is convex -- check that x is affine")
     } else if (is_nsd(P)) {
-      hints <- c(hints, "P is NSD, so quad_form(x, P) is concave — check that x is affine")
+      hints <- c(hints, "P is NSD, so quad_form(x, P) is concave -- check that x is affine")
     }
   } else if (cls == "SymbolicQuadForm") {
     orig <- expr@original_expression

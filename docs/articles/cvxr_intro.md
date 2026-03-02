@@ -153,10 +153,10 @@ result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
 #>           scaling: on (10 iterations), scaled_termination: off
 #>           warm starting: on, polishing: on, 
 #> iter   objective    prim res   dual res   gap        rel kkt    rho         time
-#>    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    6.56e-05s
-#>   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   1.53e-04s
-#>  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    2.93e-04s
-#> plsh   1.2876e+03   4.15e-15   2.52e-13  -9.09e-13   2.52e-13   --------    3.51e-04s
+#>    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    7.29e-05s
+#>   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   1.61e-04s
+#>  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    3.05e-04s
+#> plsh   1.2876e+03   4.15e-15   2.52e-13  -9.09e-13   2.52e-13   --------    3.63e-04s
 #> 
 #> status:               solved
 #> solution polishing:   successful
@@ -165,7 +165,7 @@ result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
 #> dual objective:       1287.6297
 #> duality gap:          -9.0949e-13
 #> primal-dual integral: 6.8986e+05
-#> run time:             3.51e-04s
+#> run time:             3.63e-04s
 #> optimal rho estimate: 1.41e+01
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal

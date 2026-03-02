@@ -3,7 +3,7 @@
 Displays the Smith form decomposition of a convex optimization problem,
 showing each stage of the DCP canonicalization pipeline: expression
 tree, Smith form, relaxed Smith form, conic form, and (optionally)
-standard cone form.
+standard cone form and solver data.
 
 ## Usage
 
@@ -11,6 +11,7 @@ standard cone form.
 visualize(
   problem,
   output = c("text", "json", "html", "latex", "tikz"),
+  solver = NULL,
   digits = 4L,
   file = NULL,
   open = interactive(),
@@ -48,6 +49,14 @@ visualize(
 
   :   TikZ forest tree diagrams (Phase 3).
 
+- solver:
+
+  Solver specification for matrix stuffing stages (4-5). `NULL`
+  (default) shows only Stages 0-3 with zero overhead. `TRUE` uses the
+  default solver (same as
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md)). A
+  character string (e.g., `"Clarabel"`) uses that specific solver.
+
 - digits:
 
   Integer: significant digits for displaying scalar constants.
@@ -81,8 +90,9 @@ other formats: the rendered output (Phase 2+).
 if (FALSE) { # \dontrun{
 x <- Variable(3, name = "x")
 prob <- Problem(Minimize(p_norm(x, 2)), list(x >= 1))
-visualize(prob)
-visualize(prob, output = "json")
-visualize(prob, output = "html", open = FALSE)
+visualize(prob)                          # Stages 0-3 only
+visualize(prob, solver = TRUE)           # Stages 0-5, default solver
+visualize(prob, solver = "Clarabel")     # Stages 0-5, specific solver
+visualize(prob, output = "html", solver = TRUE)
 } # }
 ```

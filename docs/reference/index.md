@@ -69,6 +69,11 @@ Solving problems and extracting results
   : Standard Solver Parameter Mappings
 - [`installed_solvers()`](https://www.cvxgrp.org/CVXR/reference/installed_solvers.md)
   : List installed solvers
+- [`available_solvers()`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)
+  [`exclude_solvers()`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)
+  [`include_solvers()`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)
+  [`set_excluded_solvers()`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)
+  : List available solvers
 - [`residual()`](https://www.cvxgrp.org/CVXR/reference/residual.md) :
   Get the Residual of a Constraint
 - [`violation()`](https://www.cvxgrp.org/CVXR/reference/violation.md) :

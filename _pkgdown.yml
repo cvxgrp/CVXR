@@ -59,6 +59,7 @@ reference:
   - solver_stats
   - solver_default_param
   - installed_solvers
+  - available_solvers
   - residual
   - violation
 

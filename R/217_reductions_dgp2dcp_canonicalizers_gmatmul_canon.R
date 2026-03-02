@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/gmatmul_canon.py
-## DGP canonicalizer for Gmatmul: A ◇ X → A %*% log(X) in log-space
+## DGP canonicalizer for Gmatmul: A o X -> A %*% log(X) in log-space
 ## Since args[[1]] is already log(X), this is just A %*% args[[1]]
 
 .dgp_gmatmul_canon <- function(expr, args) {

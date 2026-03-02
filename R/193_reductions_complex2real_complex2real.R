@@ -3,18 +3,18 @@
 #####
 
 ## CVXPY SOURCE: reductions/complex2real/complex2real.py
-## Complex2Real — lifts complex numbers to a real representation
+## Complex2Real -- lifts complex numbers to a real representation
 ##
 ## This is NOT a Canonicalization subclass. It extends Reduction directly
 ## and implements its own tree-walking canonicalize_tree() method.
-## Each node returns a (real_part, imag_part) pair — not a single expression.
+## Each node returns a (real_part, imag_part) pair -- not a single expression.
 
 
-## ── S7 generic for complex-to-real canonicalization ──────────────────
+## -- S7 generic for complex-to-real canonicalization ------------------
 ## Replaces COMPLEX_CANON_METHODS environment lookup.
 ## Default: assert no imaginary args, return copy with real args.
 ##
-## INHERITANCE SAFETY: Same invariant as dcp_canonicalize — every subclass
+## INHERITANCE SAFETY: Same invariant as dcp_canonicalize -- every subclass
 ## of a C2R-registered atom must have its own explicit method.
 
 #' Complex-to-real canonicalization dispatch
@@ -48,9 +48,9 @@ has_c2r_canon <- new_generic("has_c2r_canon", "expr",
 
 method(has_c2r_canon, S7_object) <- function(expr) FALSE
 
-## ── C2R method registrations ────────────────────────────────────────
+## -- C2R method registrations ----------------------------------------
 ## Separable (affine) atoms
-## Bmat is a plain function (not a class) — no registration needed; it composes HStack/VStack
+## Bmat is a plain function (not a class) -- no registration needed; it composes HStack/VStack
 method(c2r_canonicalize, AddExpression)  <- c2r_separable_canon
 method(c2r_canonicalize, Cumsum)         <- c2r_separable_canon
 method(c2r_canonicalize, DiagMat)        <- c2r_separable_canon
@@ -154,7 +154,7 @@ method(has_c2r_canon, QuadOverLin)    <- function(expr) TRUE
 method(has_c2r_canon, MatrixFrac)     <- function(expr) TRUE
 method(has_c2r_canon, LambdaSumLargest) <- function(expr) TRUE
 
-# ── complex2real_accepts ───────────────────────────────────────────
+# -- complex2real_accepts -------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 42-44
 
 complex2real_accepts <- function(problem) {
@@ -162,7 +162,7 @@ complex2real_accepts <- function(problem) {
   any(vapply(leaves, is_complex, logical(1L)))
 }
 
-# ── Complex2Real class ─────────────────────────────────────────────
+# -- Complex2Real class ---------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 47-309
 
 Complex2Real <- new_class("Complex2Real", parent = Reduction, package = "CVXR",
@@ -173,12 +173,12 @@ Complex2Real <- new_class("Complex2Real", parent = Reduction, package = "CVXR",
   }
 )
 
-## ── accepts ─────────────────────────────────────────────────────
+## -- accepts -----------------------------------------------------
 method(reduction_accepts, Complex2Real) <- function(x, problem, ...) {
   complex2real_accepts(problem)
 }
 
-## ── apply ───────────────────────────────────────────────────────
+## -- apply -------------------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 162-198
 method(reduction_apply, Complex2Real) <- function(x, problem, ...) {
   ## Build real2imag mapping for all complex variables and constraints
@@ -216,7 +216,7 @@ method(reduction_apply, Complex2Real) <- function(x, problem, ...) {
   ## imag_obj must be NULL for a real-valued objective
   ## (CVXPY asserts this)
 
-  ## Canonicalize constraints — collect chunks, flatten once
+  ## Canonicalize constraints -- collect chunks, flatten once
   n_cons <- length(problem@constraints)
   constr_chunks <- vector("list", 2L * n_cons)
   for (i in seq_len(n_cons)) {
@@ -242,7 +242,7 @@ method(reduction_apply, Complex2Real) <- function(x, problem, ...) {
   list(new_problem, inverse_data)
 }
 
-## ── invert ──────────────────────────────────────────────────────
+## -- invert ------------------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 200-276
 method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ...) {
   pvars <- list()
@@ -252,7 +252,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
   id2cons <- inverse_data$id2cons
 
   if (solution@status %in% SOLUTION_PRESENT) {
-    ## ── Primal variables ──
+    ## -- Primal variables --
     for (vid in ls(id2var)) {
       var <- get(vid, envir = id2var)
       if (is_real(var)) {
@@ -279,7 +279,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
       }
     }
 
-    ## ── Dual variables ──
+    ## -- Dual variables --
     if (length(solution@dual_vars) > 0L) {
       for (cid in ls(id2cons)) {
         con <- get(cid, envir = id2cons)
@@ -309,7 +309,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
             dvars[[cid]] <- dual[1L:n, 1L:n] + 1i * dual[(n + 1L):nn, 1L:n]
           }
         } else if (S7_inherits(con, SOC)) {
-          ## Skip — unimplemented in CVXPY too
+          ## Skip -- unimplemented in CVXPY too
         } else {
           cli_abort("Unknown constraint type {.val {short_class_name(con)}} in Complex2Real invert.")
         }
@@ -324,7 +324,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
            attr = solution@attr)
 }
 
-# ── canonicalize_tree ──────────────────────────────────────────────
+# -- canonicalize_tree ----------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 278-292
 ## Recursive bottom-up walk: each node returns (real_part, imag_part)
 
@@ -341,12 +341,12 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
   .c2r_canonicalize_expr(expr, real_args, imag_args, real2imag, leaf_map)
 }
 
-# ── canonicalize_expr ──────────────────────────────────────────────
+# -- canonicalize_expr ----------------------------------------------
 ## CVXPY SOURCE: complex2real.py lines 294-309
 ## Dispatch to canonicalizer; fallback: assert no imag args, copy with real args
 
 .c2r_canonicalize_expr <- function(expr, real_args, imag_args, real2imag, leaf_map) {
-  ## Cache leaves — only canonicalize once
+  ## Cache leaves -- only canonicalize once
   if (has_c2r_canon(expr) && length(expr@args) == 0L) {
     key <- as.character(expr@id)
     if (exists(key, envir = leaf_map, inherits = FALSE)) {
@@ -356,7 +356,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
     assign(key, result, envir = leaf_map)
     return(result)
   }
-  ## S7 dispatch — default method asserts no imag args and returns copy
+  ## S7 dispatch -- default method asserts no imag args and returns copy
   c2r_canonicalize(expr, real_args, imag_args, real2imag)
 }
 
@@ -364,7 +364,7 @@ method(reduction_invert, Complex2Real) <- function(x, solution, inverse_data, ..
 ## Complex2Real splits complex parameters into real/imaginary parts, so the
 ## chain rule for derivatives requires:
 ##
-## param_backward(x, param, dparams) — recombine real+imag gradients
-## param_forward(x, param, delta) — split delta into real+imag parts
+## param_backward(x, param, dparams) -- recombine real+imag gradients
+## param_forward(x, param, delta) -- split delta into real+imag parts
 ##
 ## Deferred: derivative API depends on diffcp. See notes/derivative_api_deferred.md.

@@ -5,7 +5,7 @@
 ## CVXPY SOURCE: (R-specific utility functions)
 ## Caching helpers and common utilities
 
-# ── Caching ───────────────────────────────────────────────────────────
+# -- Caching -----------------------------------------------------------
 
 ## Sentinel object for cache misses.  Using a dedicated environment avoids
 ## the NULL-sentinel pitfall: if a computation legitimately returns NULL or
@@ -61,13 +61,13 @@ cache_clear <- function(x) {
   invisible(NULL)
 }
 
-# ── Argument predicate helpers ────────────────────────────────────────
+# -- Argument predicate helpers ----------------------------------------
 ## Shorthand for the recurring vapply(x@args, pred, logical(1)) pattern.
 ## @noRd
 .all_args <- function(x, pred) all(vapply(x@args, pred, logical(1)))
 .any_args <- function(x, pred) any(vapply(x@args, pred, logical(1)))
 
-# ── C-order reshape helper ────────────────────────────────────────────
+# -- C-order reshape helper --------------------------------------------
 ## CVXPY's np.reshape() defaults to C-order (row-major). R's matrix()
 ## defaults to column-major (Fortran order). This helper bridges the gap.
 ## Used by save_dual_value methods on cone constraints.
@@ -82,7 +82,7 @@ cache_clear <- function(x) {
   matrix(x, nrow = nrow, ncol = ncol, byrow = TRUE)
 }
 
-# ── Type checking helpers ─────────────────────────────────────────────
+# -- Type checking helpers ---------------------------------------------
 
 #' Convert a value to an expression (promoting scalars/matrices to Constant)
 #' @param x A value: numeric, matrix, or Expression
@@ -106,7 +106,7 @@ as_expr <- function(x) {
 #' [Constant] objects. Values that are already CVXR expressions are returned
 #' unchanged. This is useful when you need to ensure that one operand in an
 #' arithmetic expression is a CVXR type so that CVXR's operator dispatch
-#' takes effect — for example, when multiplying a sparse Matrix by a Variable
+#' takes effect -- for example, when multiplying a sparse Matrix by a Variable
 #' with `%*%`.
 #'
 #' @param x A numeric vector, matrix, [Matrix::Matrix-class] object, or
@@ -121,9 +121,9 @@ as_expr <- function(x) {
 #' @export
 as_cvxr_expr <- function(x) as_expr(x)
 
-# ── Numeric broadcasting (R-specific) ─────────────────────────────────
+# -- Numeric broadcasting (R-specific) ---------------------------------
 ## R's matrix arithmetic does NOT broadcast like numpy.
-## e.g., matrix(1:2, 2, 1) + matrix(1, 1, 1) → "non-conformable arrays"
+## e.g., matrix(1:2, 2, 1) + matrix(1, 1, 1) -> "non-conformable arrays"
 ## This helper broadcasts a value to a target shape for numeric evaluation.
 
 #' Broadcast a numeric value to a target shape
@@ -135,22 +135,22 @@ as_cvxr_expr <- function(x) as_expr(x)
   if (!is.matrix(val)) val <- matrix(val, nrow = length(val), ncol = 1L)
   vdim <- dim(val)
   if (identical(vdim, as.integer(target_shape))) return(val)
-  ## Scalar → full matrix
+  ## Scalar -> full matrix
   if (vdim[1L] == 1L && vdim[2L] == 1L) {
     return(matrix(val[1L, 1L], target_shape[1L], target_shape[2L]))
   }
-  ## Column (n,1) → (n,m)
+  ## Column (n,1) -> (n,m)
   if (vdim[1L] == target_shape[1L] && vdim[2L] == 1L && target_shape[2L] > 1L) {
     return(matrix(val[, 1L], target_shape[1L], target_shape[2L]))
   }
-  ## Row (1,m) → (n,m)
+  ## Row (1,m) -> (n,m)
   if (vdim[1L] == 1L && vdim[2L] == target_shape[2L] && target_shape[1L] > 1L) {
     return(matrix(val[1L, ], target_shape[1L], target_shape[2L], byrow = TRUE))
   }
   val
 }
 
-# ── Shape utilities ───────────────────────────────────────────────────
+# -- Shape utilities ---------------------------------------------------
 
 #' Validate and normalize a shape to integer vector of length 2
 #' @param shape Shape specification (integer vector, single integer, or NULL)
@@ -181,7 +181,7 @@ is_scalar_shape <- function(shape) {
   all(shape == c(1L, 1L))
 }
 
-# ── Dedup utility ─────────────────────────────────────────────────────
+# -- Dedup utility -----------------------------------------------------
 ## CVXPY SOURCE: utilities/deterministic.py::unique_list
 
 #' Deduplicate a list of expression objects by their \code{@id}
@@ -205,7 +205,7 @@ unique_list <- function(lst) {
   result[seq_len(n)]
 }
 
-# ── Shape query helpers (work on Expression objects) ──────────────────
+# -- Shape query helpers (work on Expression objects) ------------------
 ## CVXPY SOURCE: expressions/expression.py
 
 #' Total number of elements in an expression shape
@@ -244,7 +244,7 @@ expr_is_matrix <- function(x) {
   nd == 2L && x@shape[1L] > 1L && x@shape[2L] > 1L
 }
 
-# ── Curvature string helper ──────────────────────────────────────────
+# -- Curvature string helper ------------------------------------------
 ## CVXPY SOURCE: expressions/expression.py::curvature property
 
 #' Get the curvature string for an expression
@@ -259,7 +259,7 @@ expr_curvature <- function(x) {
   else UNKNOWN_CURVATURE
 }
 
-# ── Sign string helper ───────────────────────────────────────────────
+# -- Sign string helper -----------------------------------------------
 ## CVXPY SOURCE: expressions/expression.py::sign property
 
 #' Get the sign string for an expression
@@ -273,13 +273,13 @@ expr_sign_str <- function(x) {
   else UNKNOWN_SIGN
 }
 
-# ── Safe eigenvalue decomposition for symmetric/Hermitian matrices ────
+# -- Safe eigenvalue decomposition for symmetric/Hermitian matrices ----
 ## Apple Accelerate's zheev (complex Hermitian eigenvalue) segfaults on
 ## macOS ARM64 when R is linked against vecLib.  R's bundled reference
 ## LAPACK is not affected.  This helper routes around the bug:
-##   - Real matrix:        eigen(A, symmetric=TRUE) — uses dsyev, safe.
-##   - Complex, Im all 0:  Re(A) then dsyev — avoids zheev entirely.
-##   - Truly complex:      eigen(A, symmetric=FALSE) + sort — uses zgeev.
+##   - Real matrix:        eigen(A, symmetric=TRUE) -- uses dsyev, safe.
+##   - Complex, Im all 0:  Re(A) then dsyev -- avoids zheev entirely.
+##   - Truly complex:      eigen(A, symmetric=FALSE) + sort -- uses zgeev.
 ## Mirrors numpy.linalg.eigvalsh() semantics.
 
 #' Safe eigenvalues/vectors of a symmetric/Hermitian matrix
@@ -296,15 +296,15 @@ expr_sign_str <- function(x) {
 #' @noRd
 .eigvalsh <- function(A, only_values = TRUE) {
   if (!is.complex(A)) {
-    ## Real matrix — dsyev is safe
+    ## Real matrix -- dsyev is safe
     return(eigen(A, symmetric = TRUE, only.values = only_values))
   }
-  ## Complex matrix — check if imaginary part is all zero
+  ## Complex matrix -- check if imaginary part is all zero
   if (all(Im(A) == 0)) {
     ## Strip +0i to route through dsyev instead of zheev
     return(eigen(Re(A), symmetric = TRUE, only.values = only_values))
   }
-  ## Truly complex Hermitian — use zgeev (symmetric=FALSE) to avoid zheev
+  ## Truly complex Hermitian -- use zgeev (symmetric=FALSE) to avoid zheev
   eig <- eigen(A, symmetric = FALSE, only.values = only_values)
   ## Eigenvalues of a Hermitian matrix are guaranteed real
   vals <- Re(eig$values)

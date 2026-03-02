@@ -79,7 +79,7 @@ get_problem_matrix <- function(linOps, id_to_col = integer(0),
          const_vec = matrix(const_vec, ncol = 1))
 }
 
-# ── get_problem_matrix_tensor ─────────────────────────────────────
+# -- get_problem_matrix_tensor -------------------------------------
 ## CVXPY SOURCE: cvxcore/python/cppbackend.py build_matrix() lines 57-99
 ## Extracts the full parameter tensor from C++ ProblemData.
 ##
@@ -282,7 +282,7 @@ build_lin_op_tree <- function(root_linR, tmp, verbose = FALSE) {
                         set_matrix_data(linC, linR)
                 }
             } else if(is.list(linR$data) && !inherits(linR$data, "LinOp_R")) {
-                ## Plain list metadata (e.g., axis/keepdims) — skip.
+                ## Plain list metadata (e.g., axis/keepdims) -- skip.
                 ## C++ doesn't need this; behavior is determined by LinOp type.
             } else if(inherits(linR$data, "Matrix") || is.matrix(linR$data)) {
                 set_matrix_data(linC, linR)

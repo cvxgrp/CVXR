@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/canonicalization.py
-## Canonicalization — recursive expression tree canonicalization
+## Canonicalization -- recursive expression tree canonicalization
 ##
 ## This is the base class for expression-level reductions. It walks the
 ## expression tree bottom-up and dispatches via dcp_canonicalize (S7 generic).
@@ -13,7 +13,7 @@
 ## during recursion.
 
 
-# ── Canonicalization class ──────────────────────────────────────────
+# -- Canonicalization class ------------------------------------------
 ## CVXPY SOURCE: canonicalization.py lines 25-157
 
 Canonicalization <- new_class("Canonicalization", parent = Reduction,
@@ -34,7 +34,7 @@ method(reduction_apply, Canonicalization) <- function(x, problem, ...) {
   obj_result <- .canonicalize_tree(problem@objective)
   canon_objective <- obj_result[[1L]]
 
-  ## Canonicalize each constraint — collect chunks, flatten once
+  ## Canonicalize each constraint -- collect chunks, flatten once
   n_cons <- length(problem@constraints)
   all_chunks <- vector("list", n_cons + 1L)
   all_chunks[[1L]] <- obj_result[[2L]]
@@ -77,12 +77,12 @@ method(reduction_invert, Canonicalization) <- function(x, solution, inverse_data
   solution
 }
 
-# ── Tree walk helpers (plain functions for performance) ─────────────
+# -- Tree walk helpers (plain functions for performance) -------------
 
 ## .canonicalize_tree: recursive bottom-up walk
 ## CVXPY SOURCE: canonicalization.py lines 86-123
 .canonicalize_tree <- function(expr) {
-  ## Recurse into each argument — pre-allocate, flatten once
+  ## Recurse into each argument -- pre-allocate, flatten once
   n_args <- length(expr@args)
   canon_args <- vector("list", n_args)
   constr_chunks <- vector("list", n_args + 1L)
@@ -102,12 +102,12 @@ method(reduction_invert, Canonicalization) <- function(x, solution, inverse_data
 ## .canonicalize_expr: canonicalize a single node
 ## CVXPY SOURCE: canonicalization.py lines 125-157
 .canonicalize_expr <- function(expr, args) {
-  ## Skip constants (no parameters) — collapse them
+  ## Skip constants (no parameters) -- collapse them
   if (S7_inherits(expr, Expression) &&
       is_constant(expr) && length(parameters(expr)) == 0L) {
     return(list(expr, list()))
   }
 
-  ## S7 dispatch — default method returns identity copy
+  ## S7 dispatch -- default method returns identity copy
   dcp_canonicalize(expr, args)
 }

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/bmat.py
-## bmat — construct a block matrix from a list of lists of expressions
+## bmat -- construct a block matrix from a list of lists of expressions
 
 #' Construct a Block Matrix
 #'

@@ -3,14 +3,14 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/wraps.py
-## Wrap — no-op wrapper atoms that assert matrix properties
+## Wrap -- no-op wrapper atoms that assert matrix properties
 ##
 ## These are used by Complex2Real to annotate expressions with properties
 ## (PSD, symmetric, Hermitian, etc.) that are known from the structure
 ## of the real/imaginary decomposition but not inferrable by DCP alone.
 
 
-# ── Wrap base class ──────────────────────────────────────────────────
+# -- Wrap base class --------------------------------------------------
 
 Wrap <- new_class("Wrap", parent = AffAtom, package = "CVXR",
   constructor = function(arg, id = NULL) {
@@ -40,12 +40,12 @@ method(is_complex, Wrap) <- function(x) is_complex(x@args[[1L]])
 ## CVXPY SOURCE: wraps.py lines 43-46
 method(shape_from_args, Wrap) <- function(x) x@args[[1L]]@shape
 
-## CVXPY SOURCE: wraps.py lines 48-67 — identity passthrough
+## CVXPY SOURCE: wraps.py lines 48-67 -- identity passthrough
 method(graph_implementation, Wrap) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(arg_objs[[1L]], list())
 }
 
-# ── nonneg_wrap ──────────────────────────────────────────────────────
+# -- nonneg_wrap ------------------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 70-74
 
 nonneg_wrap <- new_class("nonneg_wrap", parent = Wrap, package = "CVXR",
@@ -64,7 +64,7 @@ nonneg_wrap <- new_class("nonneg_wrap", parent = Wrap, package = "CVXR",
 )
 method(is_nonneg, nonneg_wrap) <- function(x) TRUE
 
-# ── nonpos_wrap ──────────────────────────────────────────────────────
+# -- nonpos_wrap ------------------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 77-81
 
 nonpos_wrap <- new_class("nonpos_wrap", parent = Wrap, package = "CVXR",
@@ -83,7 +83,7 @@ nonpos_wrap <- new_class("nonpos_wrap", parent = Wrap, package = "CVXR",
 )
 method(is_nonpos, nonpos_wrap) <- function(x) TRUE
 
-# ── psd_wrap ─────────────────────────────────────────────────────────
+# -- psd_wrap ---------------------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 84-107
 
 psd_wrap <- new_class("psd_wrap", parent = Wrap, package = "CVXR",
@@ -113,13 +113,13 @@ method(is_psd, psd_wrap) <- function(x) TRUE
 method(is_nsd, psd_wrap) <- function(x) FALSE
 
 ## CVXPY SOURCE: wraps.py lines 102-103
-## "symmetric" means "real symmetric" — complex PSD matrices are Hermitian, not symmetric
+## "symmetric" means "real symmetric" -- complex PSD matrices are Hermitian, not symmetric
 method(is_symmetric, psd_wrap) <- function(x) !is_complex(x@args[[1L]])
 
 ## CVXPY SOURCE: wraps.py lines 105-106
 method(is_hermitian, psd_wrap) <- function(x) TRUE
 
-# ── symmetric_wrap ───────────────────────────────────────────────────
+# -- symmetric_wrap ---------------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 109-121
 
 symmetric_wrap <- new_class("symmetric_wrap", parent = Wrap, package = "CVXR",
@@ -144,7 +144,7 @@ method(validate_arguments, symmetric_wrap) <- function(x) {
 method(is_symmetric, symmetric_wrap) <- function(x) TRUE
 method(is_hermitian, symmetric_wrap) <- function(x) TRUE
 
-# ── hermitian_wrap ───────────────────────────────────────────────────
+# -- hermitian_wrap ---------------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 123-136
 
 hermitian_wrap <- new_class("hermitian_wrap", parent = Wrap, package = "CVXR",
@@ -172,7 +172,7 @@ method(validate_arguments, hermitian_wrap) <- function(x) {
 
 method(is_hermitian, hermitian_wrap) <- function(x) TRUE
 
-# ── skew_symmetric_wrap ──────────────────────────────────────────────
+# -- skew_symmetric_wrap ----------------------------------------------
 ## CVXPY SOURCE: wraps.py lines 139-148
 
 skew_symmetric_wrap <- new_class("skew_symmetric_wrap", parent = Wrap, package = "CVXR",
@@ -196,7 +196,7 @@ method(validate_arguments, skew_symmetric_wrap) <- function(x) {
 
 method(is_skew_symmetric, skew_symmetric_wrap) <- function(x) TRUE
 
-# ── Helper: validate real square matrix ──────────────────────────────
+# -- Helper: validate real square matrix ------------------------------
 ## CVXPY SOURCE: wraps.py lines 150-157
 
 .validate_real_square <- function(arg) {

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/sum_largest.py
-## SumLargest — sum of k largest entries
+## SumLargest -- sum of k largest entries
 
 
 SumLargest <- new_class("SumLargest", parent = Atom, package = "CVXR",
@@ -29,12 +29,12 @@ SumLargest <- new_class("SumLargest", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 method(validate_arguments, SumLargest) <- function(x) {
   if (x@k <= 0) {
     cli_abort("{.arg k} must be positive, got {.val {x@k}}.")
   }
-  ## CVXPY: sum_largest has _allow_complex = False (default) —
+  ## CVXPY: sum_largest has _allow_complex = False (default) --
   ## super().validate_arguments() rejects complex args
   if (.any_args(x, is_complex)) {
     cli_abort("Arguments to {.cls SumLargest} cannot be complex.")
@@ -42,30 +42,30 @@ method(validate_arguments, SumLargest) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
+# -- shape --------------------------------------------------------
 method(shape_from_args, SumLargest) <- function(x) c(1L, 1L)
 
-# ── sign: same as arg ────────────────────────────────────────────
+# -- sign: same as arg --------------------------------------------
 method(sign_from_args, SumLargest) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = is_nonpos(x@args[[1L]]))
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, SumLargest) <- function(x) TRUE
 method(is_atom_concave, SumLargest) <- function(x) FALSE
 
-# ── monotonicity: increasing ─────────────────────────────────────
+# -- monotonicity: increasing -------------------------------------
 method(is_incr, SumLargest) <- function(x, idx, ...) TRUE
 method(is_decr, SumLargest) <- function(x, idx, ...) FALSE
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, SumLargest) <- function(x) is_pwl(x@args[[1L]])
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, SumLargest) <- function(x) list(x@k)
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, SumLargest) <- function(x, values, ...) {
   v <- as.numeric(values[[1L]])
   k <- x@k
@@ -79,7 +79,7 @@ method(numeric_value, SumLargest) <- function(x, values, ...) {
   matrix(result, 1L, 1L)
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, SumLargest) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls SumLargest} not yet implemented.")
 }

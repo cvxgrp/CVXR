@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/kl_div.py
-## KlDiv — elementwise KL divergence: x*log(x/y) - x + y
+## KlDiv -- elementwise KL divergence: x*log(x/y) - x + y
 
 
 KlDiv <- new_class("KlDiv", parent = Elementwise, package = "CVXR",
@@ -23,25 +23,25 @@ KlDiv <- new_class("KlDiv", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, KlDiv) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, KlDiv) <- function(x) TRUE
 method(is_atom_concave, KlDiv) <- function(x) FALSE
 
-# ── monotonicity: not monotone in either argument ────────────────
+# -- monotonicity: not monotone in either argument ----------------
 method(is_incr, KlDiv) <- function(x, idx, ...) FALSE
 method(is_decr, KlDiv) <- function(x, idx, ...) FALSE
 
-# ── domain: x >= 0, y >= 0 ──────────────────────────────────────
+# -- domain: x >= 0, y >= 0 --------------------------------------
 method(atom_domain, KlDiv) <- function(x) {
   list(x@args[[1L]] >= 0, x@args[[2L]] >= 0)
 }
 
-# ── numeric: x*log(x/y) - x + y ─────────────────────────────────
+# -- numeric: x*log(x/y) - x + y ---------------------------------
 ## Matches scipy.special.kl_div(x, y)
 method(numeric_value, KlDiv) <- function(x, values, ...) {
   xv <- as.matrix(values[[1L]])
@@ -58,7 +58,7 @@ method(numeric_value, KlDiv) <- function(x, values, ...) {
   result
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, KlDiv) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls KlDiv} not yet implemented.")
 }

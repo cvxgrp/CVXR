@@ -3,8 +3,8 @@
 #####
 
 ## CVXPY SOURCE: atoms/geo_mean.py
-## GeoMean — (weighted) geometric mean of a vector
-## GeoMeanApprox — SOC-based rational approximation of GeoMean
+## GeoMean -- (weighted) geometric mean of a vector
+## GeoMeanApprox -- SOC-based rational approximation of GeoMean
 ##
 ## The factory function geo_mean() dispatches to GeoMeanApprox (approx=TRUE)
 ## or GeoMean (approx=FALSE).
@@ -72,42 +72,42 @@ GeoMean <- new_class("GeoMean", parent = Atom, package = "CVXR",
   }
 )
 
-# ── sign: always nonneg ────────────────────────────────────────────
+# -- sign: always nonneg --------------------------------------------
 method(sign_from_args, GeoMean) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: concave (affine when single weight) ─────────────────
+# -- curvature: concave (affine when single weight) -----------------
 ## CVXPY geo_mean.py lines 302-312
 method(is_atom_convex, GeoMean) <- function(x) length(x@w) == 1L
 method(is_atom_concave, GeoMean) <- function(x) TRUE
 
-# ── log-log ────────────────────────────────────────────────────────
+# -- log-log --------------------------------------------------------
 method(is_atom_log_log_convex, GeoMean) <- function(x) TRUE
 method(is_atom_log_log_concave, GeoMean) <- function(x) TRUE
 
-# ── monotonicity: always increasing ────────────────────────────────
+# -- monotonicity: always increasing --------------------------------
 method(is_incr, GeoMean) <- function(x, idx, ...) TRUE
 method(is_decr, GeoMean) <- function(x, idx, ...) FALSE
 
-# ── domain: x[w > 0] >= 0 ─────────────────────────────────────────
+# -- domain: x[w > 0] >= 0 -----------------------------------------
 method(atom_domain, GeoMean) <- function(x) {
   selection <- which(x@w > 0)
   list(x@args[[1L]][selection] >= 0)
 }
 
-# ── get_data ───────────────────────────────────────────────────────
+# -- get_data -------------------------------------------------------
 method(get_data, GeoMean) <- function(x) {
   list(x@p, x@max_denom)
 }
 
-# ── name ───────────────────────────────────────────────────────────
+# -- name -----------------------------------------------------------
 method(expr_name, GeoMean) <- function(x) {
   weights <- paste(x@w, collapse = ", ")
   sprintf("%s(%s, (%s))", class(x)[[1L]], expr_name(x@args[[1L]]), weights)
 }
 
-# ── numeric: prod(x^w) ────────────────────────────────────────────
+# -- numeric: prod(x^w) --------------------------------------------
 method(numeric_value, GeoMean) <- function(x, values, ...) {
   v <- as.numeric(values[[1L]])
   w <- as.numeric(x@w)
@@ -115,14 +115,14 @@ method(numeric_value, GeoMean) <- function(x, values, ...) {
   matrix(val, 1L, 1L)
 }
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, GeoMean) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls GeoMean} not yet implemented.")
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# GeoMeanApprox — SOC-based rational approximation of GeoMean
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# GeoMeanApprox -- SOC-based rational approximation of GeoMean
+# ===================================================================
 ## CVXPY SOURCE: atoms/geo_mean.py lines 363-436
 ## Subclass of GeoMean. Overrides w with rational approximation
 ## and adds w_dyad (dyadic completion), tree (decomposition),
@@ -206,7 +206,7 @@ GeoMeanApprox <- new_class("GeoMeanApprox", parent = GeoMean, package = "CVXR",
   }
 )
 
-# ── Factory function ─────────────────────────────────────────────
+# -- Factory function ---------------------------------------------
 #' (Weighted) geometric mean of a vector
 #'
 #' @param x An Expression (vector)

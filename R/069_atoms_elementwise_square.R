@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/square.py
-## Square — convenience wrapper for Power(x, 2)
+## Square -- convenience wrapper for Power(x, 2)
 
 #' Square of an expression: x^2
 #'

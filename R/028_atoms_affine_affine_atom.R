@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/affine_atom.py
-## AffAtom — abstract base class for affine atoms
+## AffAtom -- abstract base class for affine atoms
 ##
 ## Affine atoms are both convex and concave, and allow complex arguments.
 ## Sign propagation follows sum_signs logic by default.
@@ -28,22 +28,22 @@ AffAtom <- new_class("AffAtom", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate_arguments: AffAtom allows complex ──────────────────────
+# -- validate_arguments: AffAtom allows complex ----------------------
 ## CVXPY SOURCE: affine_atom.py inherits from Atom with _allow_complex = True
 
 method(validate_arguments, AffAtom) <- function(x) {
-  ## AffAtom allows complex arguments — no validation needed
+  ## AffAtom allows complex arguments -- no validation needed
   invisible(NULL)
 }
 
-# ── sign: sum_signs of args ─────────────────────────────────────────
+# -- sign: sum_signs of args -----------------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 33-36
 
 method(sign_from_args, AffAtom) <- function(x) {
   sum_signs(x@args)
 }
 
-# ── Complex propagation ─────────────────────────────────────────────
+# -- Complex propagation ---------------------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 38-48
 
 method(is_imag, AffAtom) <- function(x) {
@@ -54,19 +54,19 @@ method(is_complex, AffAtom) <- function(x) {
   .any_args(x, is_complex)
 }
 
-# ── Convexity/concavity: affine is both ─────────────────────────────
+# -- Convexity/concavity: affine is both -----------------------------
 ## CVXPY SOURCE: affine_atom.py lines 50-58
 
 method(is_atom_convex, AffAtom) <- function(x) TRUE
 method(is_atom_concave, AffAtom) <- function(x) TRUE
 
-# ── Monotonicity: default increasing ────────────────────────────────
+# -- Monotonicity: default increasing --------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 60-70
 
 method(is_incr, AffAtom) <- function(x, idx, ...) TRUE
 method(is_decr, AffAtom) <- function(x, idx, ...) FALSE
 
-# ── Quadratic / PWL analysis ───────────────────────────────────────
+# -- Quadratic / PWL analysis ---------------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 72-88
 
 method(is_quadratic, AffAtom) <- function(x) {
@@ -85,7 +85,7 @@ method(is_pwl, AffAtom) <- function(x) {
   .all_args(x, is_pwl)
 }
 
-# ── PSD/NSD propagation ─────────────────────────────────────────────
+# -- PSD/NSD propagation ---------------------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 91-109
 ## For affine atoms, PSD/NSD propagates through monotonicity:
 ## is_psd: all args satisfy (incr(idx) and arg.is_psd()) or (decr(idx) and arg.is_nsd())
@@ -129,10 +129,10 @@ method(is_nsd, AffAtom) <- function(x) {
   TRUE
 }
 
-# ── grad ────────────────────────────────────────────────────────────
+# -- grad ------------------------------------------------------------
 ## CVXPY SOURCE: affine_atom.py lines 111-166
 ## Uses fake LinOp tree + canonInterface to compute gradient matrix.
-## Deferred — requires full canonInterface integration.
+## Deferred -- requires full canonInterface integration.
 
 method(grad, AffAtom) <- function(x) {
   ## Stub: full implementation requires canonInterface.get_problem_matrix

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/reshape.py
-## Reshape — reshape an expression to a new shape
+## Reshape -- reshape an expression to a new shape
 ##
 ## Vectorizes the expression then unvectorizes into the new shape.
 ## Entries are stored in column-major (Fortran) order by default.
@@ -70,28 +70,28 @@ Reshape <- new_class("Reshape", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: reshape.py lines 117-120
 
 method(shape_from_args, Reshape) <- function(x) x@shape
 
-# ── sign_from_args ───────────────────────────────────────────────────
+# -- sign_from_args ---------------------------------------------------
 ## Inherits from AffAtom: sum_signs(args)
 
-# ── is_atom_log_log_convex / concave ─────────────────────────────────
+# -- is_atom_log_log_convex / concave ---------------------------------
 ## CVXPY SOURCE: reshape.py lines 91-99
 
 method(is_atom_log_log_convex, Reshape) <- function(x) TRUE
 method(is_atom_log_log_concave, Reshape) <- function(x) TRUE
 
-# ── get_data ─────────────────────────────────────────────────────────
+# -- get_data ---------------------------------------------------------
 ## CVXPY SOURCE: reshape.py lines 122-125
 
 method(get_data, Reshape) <- function(x) {
   list(x@shape, x@order)
 }
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: reshape.py lines 101-105
 
 method(numeric_value, Reshape) <- function(x, values, ...) {
@@ -109,7 +109,7 @@ method(numeric_value, Reshape) <- function(x, values, ...) {
   }
 }
 
-# ── validate_arguments ──────────────────────────────────────────────
+# -- validate_arguments ----------------------------------------------
 ## CVXPY SOURCE: reshape.py lines 107-115
 ## Already validated in constructor; just re-check sizes
 
@@ -122,7 +122,7 @@ method(validate_arguments, Reshape) <- function(x) {
   invisible(NULL)
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: reshape.py lines 127-155
 
 method(graph_implementation, Reshape) <- function(x, arg_objs, shape, data = NULL, ...) {
@@ -131,7 +131,7 @@ method(graph_implementation, Reshape) <- function(x, arg_objs, shape, data = NUL
   if (order == "F") {
     list(reshape_linop(arg, shape), list())
   } else {
-    ## C-order: transpose → reshape(reversed) → transpose
+    ## C-order: transpose -> reshape(reversed) -> transpose
     arg_t <- transpose_linop(arg)
     if (length(shape) <= 1L) {
       list(reshape_linop(arg_t, shape), list())
@@ -142,14 +142,14 @@ method(graph_implementation, Reshape) <- function(x, arg_objs, shape, data = NUL
   }
 }
 
-# ── expr_name ────────────────────────────────────────────────────────
+# -- expr_name --------------------------------------------------------
 
 method(expr_name, Reshape) <- function(x) {
   sprintf("Reshape(%s, c(%s))", expr_name(x@args[[1L]]),
           paste(x@shape, collapse = ", "))
 }
 
-# ── Convenience function ──────────────────────────────────────────────
+# -- Convenience function ----------------------------------------------
 
 #' Reshape an expression to a new shape
 #'

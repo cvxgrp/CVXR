@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/elementwise.py
-## Elementwise — abstract base class for elementwise atoms
+## Elementwise -- abstract base class for elementwise atoms
 ##
 ## Elementwise atoms operate on each element independently and produce
 ## output with the same shape as the broadcasted arguments.
@@ -29,33 +29,33 @@ Elementwise <- new_class("Elementwise", parent = Atom, package = "CVXR",
   }
 )
 
-# ── shape_from_args: broadcasting ─────────────────────────────────
+# -- shape_from_args: broadcasting ---------------------------------
 ## CVXPY SOURCE: elementwise.py lines 30-33
 method(shape_from_args, Elementwise) <- function(x) {
   sum_shapes(lapply(x@args, function(a) a@shape))
 }
 
-# ── validate_arguments: check broadcastable shapes ────────────────
+# -- validate_arguments: check broadcastable shapes ----------------
 ## CVXPY SOURCE: elementwise.py lines 35-41
 method(validate_arguments, Elementwise) <- function(x) {
   ## Verify shapes are broadcastable (sum_shapes will abort on mismatch)
   sum_shapes(lapply(x@args, function(a) a@shape))
   ## Call Atom's validate_arguments (rejects complex arguments)
-  ## NOTE: Can't use NextMethod() with S7 generics — call Atom's method directly
+  ## NOTE: Can't use NextMethod() with S7 generics -- call Atom's method directly
   if (.any_args(x, is_complex)) {
     cli_abort("Arguments to {.cls {class(x)[[1L]]}} cannot be complex.")
   }
   invisible(NULL)
 }
 
-# ── is_symmetric ──────────────────────────────────────────────────
+# -- is_symmetric --------------------------------------------------
 ## CVXPY SOURCE: elementwise.py lines 43-47
 method(is_symmetric, Elementwise) <- function(x) {
   symm_args <- .all_args(x, is_symmetric)
   x@shape[1L] == x@shape[2L] && symm_args
 }
 
-# ── Helper: promote LinOp if needed ──────────────────────────────
+# -- Helper: promote LinOp if needed ------------------------------
 ## CVXPY SOURCE: elementwise.py lines 63-82
 ## Used by graph_implementation in subclasses
 .elemwise_promote <- function(arg, shape) {

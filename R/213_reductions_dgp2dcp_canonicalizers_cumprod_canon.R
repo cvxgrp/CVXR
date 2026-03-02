@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/cumprod_canon.py
-## DGP canonicalizer for Cumprod: cumulative product → cumulative sum in log-space
+## DGP canonicalizer for Cumprod: cumulative product -> cumulative sum in log-space
 
 .dgp_cumprod_canon <- function(expr, args) {
   list(Cumsum(args[[1L]], axis = expr@axis), list())

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/quad_form.py lines 134-184
-## SymbolicQuadForm — placeholder for quadratic form in QP path
+## SymbolicQuadForm -- placeholder for quadratic form in QP path
 ##
 ## Created by quad canonicalizers when quad_obj=TRUE. Delegates all DCP
 ## queries to original_expression. Replaced by dummy Variable during
@@ -32,23 +32,23 @@ SymbolicQuadForm <- new_class("SymbolicQuadForm", parent = Atom, package = "CVXR
   }
 )
 
-# ── get_data: for expr_copy reconstruction ───────────────────────
+# -- get_data: for expr_copy reconstruction -----------------------
 ## Returns extra constructor args beyond x and P
 method(get_data, SymbolicQuadForm) <- function(x) {
   list(x@original_expression, x@block_indices)
 }
 
-# ── shape: delegate to original expression ──────────────────────
+# -- shape: delegate to original expression ----------------------
 method(shape_from_args, SymbolicQuadForm) <- function(x) {
   shape_from_args(x@original_expression)
 }
 
-# ── sign: delegate to original expression ───────────────────────
+# -- sign: delegate to original expression -----------------------
 method(sign_from_args, SymbolicQuadForm) <- function(x) {
   sign_from_args(x@original_expression)
 }
 
-# ── curvature: delegate to original expression ──────────────────
+# -- curvature: delegate to original expression ------------------
 method(is_atom_convex, SymbolicQuadForm) <- function(x) {
   is_atom_convex(x@original_expression)
 }
@@ -57,7 +57,7 @@ method(is_atom_concave, SymbolicQuadForm) <- function(x) {
   is_atom_concave(x@original_expression)
 }
 
-# ── monotonicity: delegate to original expression ───────────────
+# -- monotonicity: delegate to original expression ---------------
 method(is_incr, SymbolicQuadForm) <- function(x, idx, ...) {
   is_incr(x@original_expression, idx)
 }
@@ -66,15 +66,15 @@ method(is_decr, SymbolicQuadForm) <- function(x, idx, ...) {
   is_decr(x@original_expression, idx)
 }
 
-# ── quadratic analysis ──────────────────────────────────────────
+# -- quadratic analysis ------------------------------------------
 method(is_quadratic, SymbolicQuadForm) <- function(x) TRUE
 
-# ── numeric: not needed (replaced before evaluation) ────────────
+# -- numeric: not needed (replaced before evaluation) ------------
 method(numeric_value, SymbolicQuadForm) <- function(x, values, ...) {
   cli_abort("{.cls SymbolicQuadForm} cannot be evaluated numerically.")
 }
 
-# ── graph_implementation: should never be called ────────────────
+# -- graph_implementation: should never be called ----------------
 method(graph_implementation, SymbolicQuadForm) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("{.cls SymbolicQuadForm} should be replaced before canonicalization.")
 }

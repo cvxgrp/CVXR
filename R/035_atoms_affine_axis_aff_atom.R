@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/sum.py (Sum inherits AxisAtom, AffAtom)
-## AxisAffAtom — resolves multiple inheritance of AxisAtom + AffAtom
+## AxisAffAtom -- resolves multiple inheritance of AxisAtom + AffAtom
 ##
 ## In CVXPY, Sum(AxisAtom, AffAtom) uses Python MI with MRO.
 ## In R/S7, we use single inheritance from AffAtom and compose AxisAtom
@@ -39,21 +39,21 @@ AxisAffAtom <- new_class("AxisAffAtom", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## Delegate to same function used by AxisAtom
 
 method(shape_from_args, AxisAffAtom) <- function(x) {
   .axis_shape(x@args[[1L]]@shape, x@axis, x@keepdims)
 }
 
-# ── get_data ────────────────────────────────────────────────────────
+# -- get_data --------------------------------------------------------
 ## Same as AxisAtom: returns [axis, keepdims]
 
 method(get_data, AxisAffAtom) <- function(x) {
   list(x@axis, x@keepdims)
 }
 
-# ── validate_arguments ──────────────────────────────────────────────
+# -- validate_arguments ----------------------------------------------
 ## Like AxisAtom but allows complex (from AffAtom)
 
 method(validate_arguments, AxisAffAtom) <- function(x) {
@@ -65,11 +65,11 @@ method(validate_arguments, AxisAffAtom) <- function(x) {
       .axis_out_of_bounds_error(x@axis, ndim)
     }
   }
-  ## AffAtom allows complex — no further validation needed
+  ## AffAtom allows complex -- no further validation needed
   invisible(NULL)
 }
 
-# ── expr_name: include axis/keepdims data ───────────────────────────
+# -- expr_name: include axis/keepdims data ---------------------------
 
 method(expr_name, AxisAffAtom) <- function(x) {
   data <- get_data(x)

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/min.py
-## MinEntries — minimum entry of an expression, axis-aware
+## MinEntries -- minimum entry of an expression, axis-aware
 
 
 MinEntries <- new_class("MinEntries", parent = AxisAtom, package = "CVXR",
@@ -25,28 +25,28 @@ MinEntries <- new_class("MinEntries", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign: same as arg ────────────────────────────────────────────
+# -- sign: same as arg --------------------------------------------
 method(sign_from_args, MinEntries) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = is_nonpos(x@args[[1L]]))
 }
 
-# ── curvature: concave ───────────────────────────────────────────
+# -- curvature: concave -------------------------------------------
 method(is_atom_convex, MinEntries) <- function(x) FALSE
 method(is_atom_concave, MinEntries) <- function(x) TRUE
 
-# ── log-log: concave only (CVXPY min.py) ────────────────────────
+# -- log-log: concave only (CVXPY min.py) ------------------------
 method(is_atom_log_log_convex, MinEntries) <- function(x) FALSE
 method(is_atom_log_log_concave, MinEntries) <- function(x) TRUE
 
-# ── monotonicity: always increasing ──────────────────────────────
+# -- monotonicity: always increasing ------------------------------
 method(is_incr, MinEntries) <- function(x, idx, ...) TRUE
 method(is_decr, MinEntries) <- function(x, idx, ...) FALSE
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, MinEntries) <- function(x) is_pwl(x@args[[1L]])
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, MinEntries) <- function(x, values, ...) {
   v <- values[[1L]]
   if (is.null(x@axis)) {
@@ -60,7 +60,7 @@ method(numeric_value, MinEntries) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, MinEntries) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls MinEntries} not yet implemented.")
 }

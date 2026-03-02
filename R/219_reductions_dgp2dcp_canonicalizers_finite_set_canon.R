@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/finite_set_canon.py
-## DGP canonicalizer for FiniteSet — reconstruct after log transform
+## DGP canonicalizer for FiniteSet -- reconstruct after log transform
 ##
 ## After Dgp2Dcp applies log to variables, the set values are already
 ## log-transformed. Simply reconstruct FiniteSet with the new args.

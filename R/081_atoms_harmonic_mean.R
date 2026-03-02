@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/harmonic_mean.py
-## HarmonicMean — n / sum(1/x_i)
+## HarmonicMean -- n / sum(1/x_i)
 
 #' Harmonic mean: n / sum(1/x_i)
 #'

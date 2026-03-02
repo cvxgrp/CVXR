@@ -3,16 +3,16 @@
 #####
 
 ## CVXPY SOURCE: constraints/power.py
-## PowCone3D — 3D Power Cone constraint
-## PowConeND — N-dimensional Power Cone constraint
+## PowCone3D -- 3D Power Cone constraint
+## PowConeND -- N-dimensional Power Cone constraint
 
-# ── Tolerance for PowConeND alpha sum check ──────────────────────
+# -- Tolerance for PowConeND alpha sum check ----------------------
 ## CVXPY SOURCE: power.py line 182
 .POWCONE_TOL <- 1e-6
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # PowCone3D
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Create a 3D Power Cone Constraint
 #'
@@ -46,7 +46,7 @@ PowCone3D <- new_class("PowCone3D", parent = Cone, package = "CVXR",
       }
     }
 
-    ## CVXPY SOURCE: power.py lines 51-61 — alpha promotion
+    ## CVXPY SOURCE: power.py lines 51-61 -- alpha promotion
     alpha <- as_expr(alpha)
     alpha_promoted_to_vec <- FALSE
     if (expr_is_scalar(alpha)) {
@@ -64,7 +64,7 @@ PowCone3D <- new_class("PowCone3D", parent = Cone, package = "CVXR",
       cli_abort("Argument {.arg alpha} must have entries in the open interval (0, 1).")
     }
 
-    ## CVXPY SOURCE: power.py lines 66-73 — shape compatibility
+    ## CVXPY SOURCE: power.py lines 66-73 -- shape compatibility
     if (alpha_promoted_to_vec) {
       arg_shapes <- list(x_expr@shape, y_expr@shape, z_expr@shape)
     } else {
@@ -81,7 +81,7 @@ PowCone3D <- new_class("PowCone3D", parent = Cone, package = "CVXR",
 
     if (is.null(constr_id)) constr_id <- next_expr_id()
 
-    ## CVXPY SOURCE: power.py lines 127-131 — shape override
+    ## CVXPY SOURCE: power.py lines 127-131 -- shape override
     ## shape = (3,) + self.x.shape
     cone_shape <- c(3L, as.integer(prod(x_expr@shape)))
 
@@ -103,7 +103,7 @@ PowCone3D <- new_class("PowCone3D", parent = Cone, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 76-77
 
 method(expr_name, PowCone3D) <- function(x) {
@@ -111,47 +111,47 @@ method(expr_name, PowCone3D) <- function(x) {
     expr_name(x@.x), expr_name(x@.y), expr_name(x@.z), expr_name(x@alpha))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: power.py lines 113-119
 
 method(is_dcp, PowCone3D) <- function(x) {
   .all_args(x, is_affine)
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: power.py lines 121-122
 
 method(is_dgp, PowCone3D) <- function(x) FALSE
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 94-95
 
 method(get_data, PowCone3D) <- function(x) {
   list(x@alpha, x@id)
 }
 
-# ── num_cones ────────────────────────────────────────────────────
+# -- num_cones ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 107-108
 
 method(num_cones, PowCone3D) <- function(x) {
   expr_size(x@.x)
 }
 
-# ── cone_sizes ───────────────────────────────────────────────────
+# -- cone_sizes ---------------------------------------------------
 ## CVXPY SOURCE: power.py lines 110-111
 
 method(cone_sizes, PowCone3D) <- function(x) {
   rep(3L, num_cones(x))
 }
 
-# ── constr_size ──────────────────────────────────────────────────
+# -- constr_size --------------------------------------------------
 ## CVXPY SOURCE: power.py lines 103-105
 
 method(constr_size, PowCone3D) <- function(x) {
   3L * num_cones(x)
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 79-92
 ## TODO: projection should be implemented directly
 
@@ -180,9 +180,9 @@ method(residual, PowCone3D) <- function(x) {
   if (n == 1L) resid[1L] else resid
 }
 
-# ── save_dual_value ──────────────────────────────────────────────
+# -- save_dual_value ----------------------------------------------
 ## CVXPY SOURCE: power.py lines 133-142
-## NOTE: Different reshape order than ExpCone — (3, -1) not (-1, 3)
+## NOTE: Different reshape order than ExpCone -- (3, -1) not (-1, 3)
 ## Uses C-order reshape (CR-1)
 
 method(save_dual_value, PowCone3D) <- function(x, val) {
@@ -198,7 +198,7 @@ method(save_dual_value, PowCone3D) <- function(x, val) {
   invisible(x)
 }
 
-# ── dual_cone ────────────────────────────────────────────────────
+# -- dual_cone ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 144-157
 ## dual = PowCone3D(x/alpha, y/(1-alpha), z, alpha)
 ## NOTE: CVXPY has a missing `return` on the `args is None` branch
@@ -218,16 +218,16 @@ method(dual_cone, PowCone3D) <- function(x, ...) {
   }
 }
 
-# ── is_complex / is_imag ────────────────────────────────────────
+# -- is_complex / is_imag ----------------------------------------
 ## CVXPY SOURCE: power.py lines 97-101
 
 method(is_complex, PowCone3D) <- function(x) FALSE
 method(is_imag, PowCone3D) <- function(x) FALSE
 
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # PowConeND
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Create an N-Dimensional Power Cone Constraint
 #'
@@ -275,7 +275,7 @@ PowConeND <- new_class("PowConeND", parent = Cone, package = "CVXR",
       cli_abort("Invalid second argument. {.arg z} must be affine, real, and at most 1D.")
     }
 
-    ## CVXPY SOURCE: power.py lines 196-201 — dimension compatibility
+    ## CVXPY SOURCE: power.py lines 196-201 -- dimension compatibility
     W_shape <- W@shape
     z_size <- expr_size(z)
     if ((expr_is_vector(W) && z_size > 1L) ||
@@ -311,7 +311,7 @@ PowConeND <- new_class("PowConeND", parent = Cone, package = "CVXR",
 
     if (is.null(constr_id)) constr_id <- next_expr_id()
 
-    ## CVXPY SOURCE: power.py lines 233-247 — shape override
+    ## CVXPY SOURCE: power.py lines 233-247 -- shape override
     if (expr_is_vector(W)) {
       m <- W_shape[1L]
       ncol_val <- 1L
@@ -321,7 +321,7 @@ PowConeND <- new_class("PowConeND", parent = Cone, package = "CVXR",
     }
     cone_shape <- c(m + 1L, ncol_val)
 
-    ## CVXPY SOURCE: power.py lines 217-219 — flatten 0-d z
+    ## CVXPY SOURCE: power.py lines 217-219 -- flatten 0-d z
     if (expr_is_scalar(z)) {
       z <- reshape_expr(z, c(1L, 1L))
     }
@@ -344,7 +344,7 @@ PowConeND <- new_class("PowConeND", parent = Cone, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 221-222
 
 method(expr_name, PowConeND) <- function(x) {
@@ -352,32 +352,32 @@ method(expr_name, PowConeND) <- function(x) {
     expr_name(x@.W), expr_name(x@.z), expr_name(x@alpha))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: power.py lines 276-284
 ## Returns TRUE always (non-DPP mode)
 
 method(is_dcp, PowConeND) <- function(x) TRUE
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: power.py lines 286-287
 
 method(is_dgp, PowConeND) <- function(x) FALSE
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 230-231
 
 method(get_data, PowConeND) <- function(x) {
   list(x@alpha, x@axis, x@id)
 }
 
-# ── num_cones ────────────────────────────────────────────────────
+# -- num_cones ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 264-265
 
 method(num_cones, PowConeND) <- function(x) {
   expr_size(x@.z)
 }
 
-# ── cone_sizes ───────────────────────────────────────────────────
+# -- cone_sizes ---------------------------------------------------
 ## CVXPY SOURCE: power.py lines 272-274
 
 method(cone_sizes, PowConeND) <- function(x) {
@@ -385,7 +385,7 @@ method(cone_sizes, PowConeND) <- function(x) {
   rep(cone_size, num_cones(x))
 }
 
-# ── constr_size ──────────────────────────────────────────────────
+# -- constr_size --------------------------------------------------
 ## CVXPY SOURCE: power.py lines 267-270
 
 method(constr_size, PowConeND) <- function(x) {
@@ -393,7 +393,7 @@ method(constr_size, PowConeND) <- function(x) {
   cone_size * num_cones(x)
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 250-262
 ## TODO: projection should be implemented directly
 
@@ -427,7 +427,7 @@ method(residual, PowConeND) <- function(x) {
   if (n_cones == 1L) resid[1L] else resid
 }
 
-# ── save_dual_value ──────────────────────────────────────────────
+# -- save_dual_value ----------------------------------------------
 ## CVXPY SOURCE: power.py lines 292-305
 ## Value has shape (m+1, k); first m rows are W duals, last row is z duals.
 
@@ -448,7 +448,7 @@ method(save_dual_value, PowConeND) <- function(x, val) {
   invisible(x)
 }
 
-# ── dual_cone ────────────────────────────────────────────────────
+# -- dual_cone ----------------------------------------------------
 ## CVXPY SOURCE: power.py lines 307-320
 ## dual = PowConeND(W/alpha, z, alpha, axis)
 
@@ -465,7 +465,7 @@ method(dual_cone, PowConeND) <- function(x, ...) {
   }
 }
 
-# ── is_complex / is_imag ────────────────────────────────────────
+# -- is_complex / is_imag ----------------------------------------
 ## CVXPY SOURCE: power.py lines 224-228
 
 method(is_complex, PowConeND) <- function(x) FALSE

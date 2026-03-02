@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/cvar.py
-## CVaR — Conditional Value at Risk
+## CVaR -- Conditional Value at Risk
 
 #' Conditional Value at Risk (CVaR)
 #'

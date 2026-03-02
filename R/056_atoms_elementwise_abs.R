@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/abs.py
-## Abs — elementwise absolute value |x|
+## Abs -- elementwise absolute value |x|
 
 
 Abs <- new_class("Abs", parent = Elementwise, package = "CVXR",
@@ -22,36 +22,36 @@ Abs <- new_class("Abs", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── validate: allow complex (CVXPY _allow_complex = True) ──────
+# -- validate: allow complex (CVXPY _allow_complex = True) ------
 method(validate_arguments, Abs) <- function(x) {
   ## Abs allows complex arguments; override Elementwise's complex rejection
   invisible(NULL)
 }
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, Abs) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, Abs) <- function(x) TRUE
 method(is_atom_concave, Abs) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, Abs) <- function(x, idx, ...) is_nonneg(x@args[[idx]])
 method(is_decr, Abs) <- function(x, idx, ...) is_nonpos(x@args[[idx]])
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, Abs) <- function(x) {
   is_pwl(x@args[[1L]])
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Abs) <- function(x, values, ...) {
   abs(values[[1L]])
 }
 
-# ── graph_implementation: stub (uses SOCP in CVXPY) ──────────────
+# -- graph_implementation: stub (uses SOCP in CVXPY) --------------
 method(graph_implementation, Abs) <- function(x, arg_objs, shape, data = NULL, ...) {
   ## Full graph implementation requires SOCP constraints
   ## For now, stub

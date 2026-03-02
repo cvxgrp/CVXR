@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/log_det.py
-## LogDet — log-determinant of a PSD matrix: log(det(A))
+## LogDet -- log-determinant of a PSD matrix: log(det(A))
 
 
 LogDet <- new_class("LogDet", parent = Atom, package = "CVXR",
@@ -24,7 +24,7 @@ LogDet <- new_class("LogDet", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: log_det.py lines 51-53
 method(validate_arguments, LogDet) <- function(x) {
   A <- x@args[[1L]]
@@ -34,29 +34,29 @@ method(validate_arguments, LogDet) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: log_det.py lines 56-59 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: log_det.py lines 56-59 -- returns tuple()
 method(shape_from_args, LogDet) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: log_det.py lines 61-64 — (True, False)
+# -- sign ---------------------------------------------------------
+## CVXPY: log_det.py lines 61-64 -- (True, False)
 ## Note: This is CVXPY's convention. Mathematically log_det can be negative
 ## for 0 < det < 1, but CVXPY reports is_nonneg=TRUE. We replicate.
 method(sign_from_args, LogDet) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: log_det.py lines 66-73 — NOT convex, IS concave
+# -- curvature ----------------------------------------------------
+## CVXPY: log_det.py lines 66-73 -- NOT convex, IS concave
 method(is_atom_convex, LogDet) <- function(x) FALSE
 method(is_atom_concave, LogDet) <- function(x) TRUE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: log_det.py lines 75-83 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: log_det.py lines 75-83 -- not monotone
 method(is_incr, LogDet) <- function(x, idx, ...) FALSE
 method(is_decr, LogDet) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: log_det.py lines 36-48
 ## CVXPY uses np.linalg.slogdet which handles complex Hermitian matrices.
 ## R's determinant() does NOT support complex matrices, so we use
@@ -85,23 +85,23 @@ method(numeric_value, LogDet) <- function(x, values, ...) {
   }
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: log_det.py lines 107-110 — A >> 0
+# -- domain -------------------------------------------------------
+## CVXPY: log_det.py lines 107-110 -- A >> 0
 method(domain, LogDet) <- function(x) {
   list(PSD(x@args[[1L]]))
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, LogDet) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, LogDet) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls LogDet} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Log-determinant
 #'

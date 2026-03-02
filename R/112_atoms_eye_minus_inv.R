@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/eye_minus_inv.py
-## EyeMinusInv — (I - X)^{-1} for positive square matrix X
+## EyeMinusInv -- (I - X)^{-1} for positive square matrix X
 ## Log-log convex (T/F), sign always positive.
 
 
@@ -24,7 +24,7 @@ EyeMinusInv <- new_class("EyeMinusInv", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ───────────────────────────────────────────────────────
+# -- validate -------------------------------------------------------
 method(validate_arguments, EyeMinusInv) <- function(x) {
   X <- x@args[[1L]]
   if (length(X@shape) != 2L || X@shape[1L] != X@shape[2L]) {
@@ -33,36 +33,36 @@ method(validate_arguments, EyeMinusInv) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ──────────────────────────────────────────────────────────
+# -- shape ----------------------------------------------------------
 method(shape_from_args, EyeMinusInv) <- function(x) x@args[[1L]]@shape
 
-# ── sign: always positive ─────────────────────────────────────────
+# -- sign: always positive -----------------------------------------
 method(sign_from_args, EyeMinusInv) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, EyeMinusInv) <- function(x) FALSE
 method(is_atom_concave, EyeMinusInv) <- function(x) FALSE
 
-# ── log-log curvature: convex (T/F) ───────────────────────────────
+# -- log-log curvature: convex (T/F) -------------------------------
 method(is_atom_log_log_convex, EyeMinusInv) <- function(x) TRUE
 method(is_atom_log_log_concave, EyeMinusInv) <- function(x) FALSE
 
-# ── monotonicity: unknown ─────────────────────────────────────────
+# -- monotonicity: unknown -----------------------------------------
 method(is_incr, EyeMinusInv) <- function(x, idx, ...) FALSE
 method(is_decr, EyeMinusInv) <- function(x, idx, ...) FALSE
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, EyeMinusInv) <- function(x, values, ...) {
   n <- x@args[[1L]]@shape[1L]
   solve(diag(n) - values[[1L]])
 }
 
-# ── get_data ───────────────────────────────────────────────────────
+# -- get_data -------------------------------------------------------
 method(get_data, EyeMinusInv) <- function(x) list()
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, EyeMinusInv) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls EyeMinusInv} not yet implemented.")
 }

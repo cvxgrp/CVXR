@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/trace.py
-## Trace — sum of diagonal entries of a square matrix
+## Trace -- sum of diagonal entries of a square matrix
 
 
 Trace <- new_class("Trace", parent = AffAtom, package = "CVXR",
@@ -33,7 +33,7 @@ method(validate_arguments, Trace) <- function(x) {
 
 method(shape_from_args, Trace) <- function(x) c(1L, 1L)
 
-# ── sign: PSD/NSD propagation (CVXPY trace.py lines 54-61) ──────
+# -- sign: PSD/NSD propagation (CVXPY trace.py lines 54-61) ------
 method(sign_from_args, Trace) <- function(x) {
   list(
     is_nonneg = is_nonneg(x@args[[1L]]) || is_psd(x@args[[1L]]),
@@ -41,7 +41,7 @@ method(sign_from_args, Trace) <- function(x) {
   )
 }
 
-# ── log-log: convex, not concave (CVXPY trace.py lines 87-92) ──
+# -- log-log: convex, not concave (CVXPY trace.py lines 87-92) --
 method(is_atom_log_log_convex, Trace) <- function(x) TRUE
 method(is_atom_log_log_concave, Trace) <- function(x) FALSE
 

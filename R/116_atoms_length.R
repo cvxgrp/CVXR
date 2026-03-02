@@ -3,11 +3,11 @@
 #####
 
 ## CVXPY SOURCE: atoms/length.py
-## Length — index of the last nonzero element (1-based), a DQCP atom
+## Length -- index of the last nonzero element (1-based), a DQCP atom
 
-# ═══════════════════════════════════════════════════════════════════
-# Length — quasiconvex atom: last nonzero index of a vector
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Length -- quasiconvex atom: last nonzero index of a vector
+# ===================================================================
 ## CVXPY SOURCE: length.py class length(Atom)
 
 Length <- new_class("Length", parent = Atom, package = "CVXR",
@@ -47,7 +47,7 @@ method(sign_from_args, Length) <- function(x) {
 }
 
 ## numeric: index of last nonzero element (1-based)
-## CVXPY SOURCE: length.py numeric — np.max(np.nonzero(|x| > tol)) + 1
+## CVXPY SOURCE: length.py numeric -- np.max(np.nonzero(|x| > tol)) + 1
 method(numeric_value, Length) <- function(x, values, ...) {
   outside_tol <- abs(values[[1L]]) > ATOM_EVAL_TOL
   nz <- which(outside_tol)
@@ -78,7 +78,7 @@ method(grad, Length) <- function(x) NULL
 ## get_data: no extra data
 method(get_data, Length) <- function(x) NULL
 
-# ── User-facing constructor ──────────────────────────────────────
+# -- User-facing constructor --------------------------------------
 
 #' Length of a Vector (Last Nonzero Index)
 #'

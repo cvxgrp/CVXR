@@ -3,12 +3,12 @@
 #####
 
 ## CVXPY SOURCE: constraints/finite_set.py
-## FiniteSet — constrain each entry of an expression to a finite set of values
+## FiniteSet -- constrain each entry of an expression to a finite set of values
 ##
 ## For each element e of expre: e in vec (a finite set of real numbers).
 ## Canonicalized to MIP constraints via Valinvec2mixedint.
 
-# ── FiniteSet class ─────────────────────────────────────────────
+# -- FiniteSet class ---------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 23-136
 
 #' FiniteSet Constraint
@@ -68,25 +68,25 @@ FiniteSet <- new_class("FiniteSet", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 75-76
 method(expr_name, FiniteSet) <- function(x) {
   paste0("FiniteSet(", expr_name(x@args[[1L]]), ", ", expr_name(x@args[[2L]]), ")")
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 78-79
 method(get_data, FiniteSet) <- function(x) {
   list(x@.ineq_form, x@id)
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 81-88
 method(is_dcp, FiniteSet) <- function(x, ...) {
   is_affine(x@args[[1L]])
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 90-101
 method(is_dgp, FiniteSet) <- function(x, ...) {
   ## Not DGP if vec has parameters
@@ -98,19 +98,19 @@ method(is_dgp, FiniteSet) <- function(x, ...) {
   is_log_log_affine(x@expre)
 }
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 103-104
 method(is_dqcp, FiniteSet) <- function(x, ...) {
   is_dcp(x)
 }
 
-# ── constr_size ──────────────────────────────────────────────────
+# -- constr_size --------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 106-108
 method(constr_size, FiniteSet) <- function(x) {
   expr_size(x@expre)
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 122-135
 method(residual, FiniteSet) <- function(x) {
   expr_val <- as.numeric(value(x@expre))

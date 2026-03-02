@@ -3,10 +3,10 @@
 #####
 
 ## CVXPY SOURCE: reductions/solution.py
-## Solution — holds solver result for inversion through the reduction chain
+## Solution -- holds solver result for inversion through the reduction chain
 
 
-# ── Solution class ────────────────────────────────────────────────
+# -- Solution class ------------------------------------------------
 ## CVXPY SOURCE: solution.py lines 56-94
 
 Solution <- new_class("Solution", package = "CVXR",
@@ -30,7 +30,7 @@ Solution <- new_class("Solution", package = "CVXR",
   }
 )
 
-# ── print ────────────────────────────────────────────────────────
+# -- print --------------------------------------------------------
 
 method(print, Solution) <- function(x, ...) {
   cat(sprintf("Solution(status=%s, opt_val=%s, %d primal, %d dual)\n",
@@ -41,7 +41,7 @@ method(print, Solution) <- function(x, ...) {
   invisible(x)
 }
 
-# ── failure_solution: factory for infeasible/unbounded ───────────
+# -- failure_solution: factory for infeasible/unbounded -----------
 ## CVXPY SOURCE: solution.py lines 30-53
 
 failure_solution <- function(status, attr = list()) {

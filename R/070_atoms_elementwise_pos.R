@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/pos.py
-## Pos — positive part max(x, 0)
+## Pos -- positive part max(x, 0)
 
 #' Positive part: max(x, 0)
 #'

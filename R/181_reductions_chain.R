@@ -3,10 +3,10 @@
 #####
 
 ## CVXPY SOURCE: reductions/chain.py
-## Chain — sequence of reductions applied in order
+## Chain -- sequence of reductions applied in order
 
 
-# ── Chain class ───────────────────────────────────────────────────
+# -- Chain class ---------------------------------------------------
 ## CVXPY SOURCE: chain.py lines 5-85
 
 Chain <- new_class("Chain", parent = Reduction, package = "CVXR",

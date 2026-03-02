@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/lambda_max.py
-## LambdaMax — maximum eigenvalue of a symmetric matrix
+## LambdaMax -- maximum eigenvalue of a symmetric matrix
 ##
 ## Also provides lambda_min() pure function: -lambda_max(-X)
 
@@ -26,7 +26,7 @@ LambdaMax <- new_class("LambdaMax", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: lambda_max.py lines 64-69
 method(validate_arguments, LambdaMax) <- function(x) {
   A <- x@args[[1L]]
@@ -36,27 +36,27 @@ method(validate_arguments, LambdaMax) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: lambda_max.py lines 71-74 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: lambda_max.py lines 71-74 -- returns tuple()
 method(shape_from_args, LambdaMax) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: lambda_max.py lines 76-79 — (False, False)
+# -- sign ---------------------------------------------------------
+## CVXPY: lambda_max.py lines 76-79 -- (False, False)
 method(sign_from_args, LambdaMax) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: lambda_max.py lines 81-89 — convex, not concave
+# -- curvature ----------------------------------------------------
+## CVXPY: lambda_max.py lines 81-89 -- convex, not concave
 method(is_atom_convex, LambdaMax) <- function(x) TRUE
 method(is_atom_concave, LambdaMax) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: lambda_max.py lines 91-99 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: lambda_max.py lines 91-99 -- not monotone
 method(is_incr, LambdaMax) <- function(x, idx, ...) FALSE
 method(is_decr, LambdaMax) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: lambda_max.py lines 33-39
 method(numeric_value, LambdaMax) <- function(x, values, ...) {
   A <- values[[1L]]
@@ -65,17 +65,17 @@ method(numeric_value, LambdaMax) <- function(x, values, ...) {
   matrix(evals[1L], 1L, 1L)
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, LambdaMax) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, LambdaMax) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls LambdaMax} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience functions
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Maximum eigenvalue
 #' @param A A square matrix expression

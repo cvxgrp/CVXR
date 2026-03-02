@@ -5,7 +5,7 @@
 ## CVXPY SOURCE: reductions/solvers/bisection.py
 ## Bisection solver for DQCP problems
 
-## ── Helper: lower problem (evaluate lazy constraints) ──────────
+## -- Helper: lower problem (evaluate lazy constraints) ----------
 ## CVXPY SOURCE: bisection.py _lower_problem()
 .lower_problem <- function(problem) {
   lazy_fns <- problem@.cache$lazy_constraints
@@ -29,9 +29,9 @@
           c(real_constrs, lazy_constrs))
 }
 
-## ── Helper: solve sub-problem ──────────────────────────────────
+## -- Helper: solve sub-problem ----------------------------------
 ## CVXPY SOURCE: bisection.py _solve()
-## CVXPY's problem.solve() does not throw on solver failure — it sets
+## CVXPY's problem.solve() does not throw on solver failure -- it sets
 ## problem.status.  Our psolve() throws via problem_unpack_results.
 ## Catch errors and store the status so status() works.
 .bisect_solve <- function(problem, solver) {
@@ -46,13 +46,13 @@
   )
 }
 
-## ── Helper: check infeasible ───────────────────────────────────
+## -- Helper: check infeasible -----------------------------------
 ## CVXPY SOURCE: bisection.py _infeasible()
 .bisect_infeasible <- function(problem) {
   is.null(problem) || status(problem) %in% c(INFEASIBLE, INFEASIBLE_INACCURATE)
 }
 
-## ── Find bisection interval ───────────────────────────────────
+## -- Find bisection interval -----------------------------------
 ## CVXPY SOURCE: bisection.py _find_bisection_interval()
 .find_bisection_interval <- function(problem, t, solver = NULL,
                                      low = NULL, high = NULL,
@@ -105,7 +105,7 @@
   ))
 }
 
-## ── Core bisection loop ───────────────────────────────────────
+## -- Core bisection loop ---------------------------------------
 ## CVXPY SOURCE: bisection.py _bisect()
 .bisect_loop <- function(problem, solver, t, low, high,
                          tighten_lower, tighten_upper,
@@ -142,7 +142,7 @@
       soln <- solution(lowered)
       high <- tighten_upper(query_pt)
     } else {
-      ## Solver failed — at boundary, this is typically numerical
+      ## Solver failed -- at boundary, this is typically numerical
       ## degeneracy. If we already have a feasible solution, treat
       ## as infeasible and continue narrowing. Otherwise abort.
       if (is.null(soln)) {
@@ -159,7 +159,7 @@
   cli_abort("Max iterations hit during bisection.")
 }
 
-## ── Main bisection entry point ────────────────────────────────
+## -- Main bisection entry point --------------------------------
 ## CVXPY SOURCE: bisection.py bisect()
 bisect <- function(problem, solver = NULL, low = NULL, high = NULL,
                    eps = 1e-6, verbose = FALSE,

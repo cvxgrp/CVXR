@@ -3,8 +3,8 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/diag.py
-## DiagVec — vector to diagonal matrix (with off-diagonal offset k)
-## DiagMat — matrix diagonal to vector (with off-diagonal offset k)
+## DiagVec -- vector to diagonal matrix (with off-diagonal offset k)
+## DiagMat -- matrix diagonal to vector (with off-diagonal offset k)
 
 #' Vector to Diagonal Matrix
 #'
@@ -27,7 +27,7 @@ DiagVec <- new_class("DiagVec", parent = AffAtom, package = "CVXR",
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
     k <- as.integer(k)
-    ## x must be a vector (n, 1) → diagonal (n + abs(k), n + abs(k))
+    ## x must be a vector (n, 1) -> diagonal (n + abs(k), n + abs(k))
     n <- x@shape[1L] + abs(k)
     shape <- c(n, n)
 
@@ -65,11 +65,11 @@ method(is_hermitian, DiagVec) <- function(x) x@k == 0L
 method(is_psd, DiagVec) <- function(x) is_nonneg(x) && x@k == 0L
 method(is_nsd, DiagVec) <- function(x) is_nonpos(x) && x@k == 0L
 
-# ── log-log: affine (CVXPY diag.py) ─────────────────────────────
+# -- log-log: affine (CVXPY diag.py) -----------------------------
 method(is_atom_log_log_convex, DiagVec) <- function(x) TRUE
 method(is_atom_log_log_concave, DiagVec) <- function(x) TRUE
 
-# ── get_data ──────────────────────────────────────────────────────
+# -- get_data ------------------------------------------------------
 ## CVXPY: diag.py lines 64-65
 method(get_data, DiagVec) <- function(x) list(x@k)
 
@@ -91,7 +91,7 @@ method(graph_implementation, DiagVec) <- function(x, arg_objs, shape, data = NUL
   list(diag_vec_linop(arg_objs[[1L]], x@k), list())
 }
 
-# ──────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------
 
 #' Extract Diagonal from a Matrix
 #'
@@ -113,7 +113,7 @@ DiagMat <- new_class("DiagMat", parent = AffAtom, package = "CVXR",
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
     k <- as.integer(k)
-    ## x must be square (n, n) → vector (n - abs(k), 1)
+    ## x must be square (n, n) -> vector (n - abs(k), 1)
     n <- x@shape[1L] - abs(k)
     shape <- c(n, 1L)
 
@@ -150,11 +150,11 @@ method(is_nonneg, DiagMat) <- function(x) {
   (is_nonneg(x@args[[1L]]) || is_psd(x@args[[1L]])) && x@k == 0L
 }
 
-# ── log-log: affine (CVXPY diag.py) ─────────────────────────────
+# -- log-log: affine (CVXPY diag.py) -----------------------------
 method(is_atom_log_log_convex, DiagMat) <- function(x) TRUE
 method(is_atom_log_log_concave, DiagMat) <- function(x) TRUE
 
-# ── get_data ──────────────────────────────────────────────────────
+# -- get_data ------------------------------------------------------
 ## CVXPY: diag.py lines 146-147
 method(get_data, DiagMat) <- function(x) list(x@k)
 

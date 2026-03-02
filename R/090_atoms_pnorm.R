@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/pnorm.py
-## Pnorm — general p-norm, axis-aware
+## Pnorm -- general p-norm, axis-aware
 
 
 Pnorm <- new_class("Pnorm", parent = AxisAtom, package = "CVXR",
@@ -34,7 +34,7 @@ Pnorm <- new_class("Pnorm", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 method(validate_arguments, Pnorm) <- function(x) {
   if (x@p == 0) {
     cli_abort("{.fn p_norm} does not accept p=0.")
@@ -43,23 +43,23 @@ method(validate_arguments, Pnorm) <- function(x) {
   if (!is.null(x@axis) && x@p != 2) {
     cli_abort("The {.arg axis} parameter is only supported for p=2.")
   }
-  ## CVXPY: pnorm.py lines 160-161 — complex not allowed for p < 1
+  ## CVXPY: pnorm.py lines 160-161 -- complex not allowed for p < 1
   if (x@p < 1 && .any_args(x, is_complex)) {
     cli_abort("{.fn p_norm} cannot have complex {.arg x} for p < 1.")
   }
   invisible(NULL)
 }
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, Pnorm) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
+# -- curvature ----------------------------------------------------
 method(is_atom_convex, Pnorm) <- function(x) x@p >= 1
 method(is_atom_concave, Pnorm) <- function(x) x@p < 1
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, Pnorm) <- function(x, idx, ...) {
   x@p < 1 || (x@p >= 1 && is_nonneg(x@args[[1L]]))
 }
@@ -67,7 +67,7 @@ method(is_decr, Pnorm) <- function(x, idx, ...) {
   x@p >= 1 && is_nonpos(x@args[[1L]])
 }
 
-# ── domain ───────────────────────────────────────────────────────
+# -- domain -------------------------------------------------------
 method(atom_domain, Pnorm) <- function(x) {
   if (x@p < 1 && x@p != 0) {
     list(x@args[[1L]] >= 0)
@@ -76,17 +76,17 @@ method(atom_domain, Pnorm) <- function(x) {
   }
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, Pnorm) <- function(x) {
   list(x@p, x@axis, x@keepdims, x@max_denom)
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Pnorm) <- function(x, values, ...) {
   v <- values[[1L]]
   p <- x@p
   if (is.null(x@axis)) {
-    ## Full p-norm → scalar
+    ## Full p-norm -> scalar
     if (p == Inf) return(matrix(max(abs(v)), 1L, 1L))
     if (p == -Inf) return(matrix(min(abs(v)), 1L, 1L))
     matrix(sum(abs(v)^p)^(1/p), 1L, 1L)
@@ -102,7 +102,7 @@ method(numeric_value, Pnorm) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 ## CVXPY SOURCE: pnorm.py lines 179-186
 method(is_atom_log_log_convex, Pnorm) <- function(x) TRUE
 method(is_atom_log_log_concave, Pnorm) <- function(x) FALSE
@@ -111,9 +111,9 @@ method(graph_implementation, Pnorm) <- function(x, arg_objs, shape, data = NULL,
   cli_abort("graph_implementation for {.cls Pnorm} not yet implemented.")
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# PnormApprox — SOC-based rational approximation of Pnorm
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# PnormApprox -- SOC-based rational approximation of Pnorm
+# ===================================================================
 ## CVXPY SOURCE: atoms/pnorm.py lines 272-289
 ## Subclass of Pnorm. Overrides p with rational approximation.
 ## The factory function p_norm() dispatches to PnormApprox when approx=TRUE.
@@ -130,7 +130,7 @@ PnormApprox <- new_class("PnormApprox", parent = Pnorm, package = "CVXR",
     if (!is.null(axis)) .validate_axis(axis, length(x@shape))
     shape <- .axis_shape(x@shape, axis, keepdims)
 
-    ## Rational approximation — override p (convert to numeric for property)
+    ## Rational approximation -- override p (convert to numeric for property)
     p_used <- p_orig
     if (p_orig < 0) {
       p_used <- as.numeric(pow_neg(p_orig, max_denom)[[1L]])

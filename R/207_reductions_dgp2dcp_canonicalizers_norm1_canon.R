@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/norm1_canon.py
-## DGP canonicalizer for Norm1: ||x||_1 → sum(x) in log-space
+## DGP canonicalizer for Norm1: ||x||_1 -> sum(x) in log-space
 ## Since args are already in log-space and all positive, |x_i| = x_i.
 
 .dgp_norm1_canon <- function(expr, args) {

@@ -6,11 +6,11 @@
 ##
 ## Each atom class provides a smith_annotation() method that returns LaTeX-math
 ## descriptions for the Smith form pipeline stages. The null object pattern
-## ensures every atom returns something — atoms without custom annotations
+## ensures every atom returns something -- atoms without custom annotations
 ## get an auto-generated stub.
 ##
 ## Architecture:
-##   smith_annotation(expr) → list(
+##   smith_annotation(expr) -> list(
 ##     latex_name,         # atom symbol: $\varphi^{|\cdot|}$
 ##     latex_definition,   # what it computes: $|x|$
 ##     conic,              # list of LaTeX conic constraints, or NULL (stub)
@@ -19,9 +19,9 @@
 ##   )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # S7 generic
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
 #' Smith Form Annotation for an Expression Node
 #'
@@ -43,9 +43,9 @@ smith_annotation <- new_generic("smith_annotation", "expr",
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # Helpers
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
 ## Clean class name: strip CVXR:: prefix
 .clean_class_name <- function(expr) {
@@ -110,9 +110,9 @@ smith_annotation <- new_generic("smith_annotation", "expr",
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # Default: Atom (null object stub)
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
 method(smith_annotation, Atom) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   cls_latex <- .latex_class_name(expr)
@@ -130,9 +130,9 @@ method(smith_annotation, Atom) <- function(expr, aux_var = "t", child_vars = cha
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # Leaves: Variable, Constant, Parameter
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
 method(smith_annotation, Variable) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   vname <- expr_name(expr)
@@ -204,9 +204,9 @@ method(smith_annotation, Parameter) <- function(expr, aux_var = "t", child_vars 
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # P0 Affine Atoms
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
 method(smith_annotation, AddExpression) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   ## Smart joining: if a term starts with "- " or "-\\", use subtraction
@@ -387,11 +387,11 @@ method(smith_annotation, SumEntries) <- function(expr, aux_var = "t", child_vars
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # P0 Convex Atoms (with full conic annotations)
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 
-## ── Abs ──────────────────────────────────────────────────────────────────
+## -- Abs ------------------------------------------------------------------
 
 method(smith_annotation, Abs) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "x"
@@ -415,7 +415,7 @@ method(smith_annotation, Abs) <- function(expr, aux_var = "t", child_vars = char
 }
 
 
-## ── Pnorm (p=2 special case, general p) ─────────────────────────────────
+## -- Pnorm (p=2 special case, general p) ---------------------------------
 
 method(smith_annotation, Pnorm) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "\\mathbf{x}"
@@ -464,7 +464,7 @@ method(smith_annotation, Pnorm) <- function(expr, aux_var = "t", child_vars = ch
 }
 
 
-## ── Power (covers square as p=2 special case) ───────────────────────────
+## -- Power (covers square as p=2 special case) ---------------------------
 
 method(smith_annotation, Power) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "x"
@@ -519,7 +519,7 @@ method(smith_annotation, Power) <- function(expr, aux_var = "t", child_vars = ch
 }
 
 
-## ── QuadOverLin ─────────────────────────────────────────────────────────
+## -- QuadOverLin ---------------------------------------------------------
 
 method(smith_annotation, QuadOverLin) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "\\mathbf{x}"
@@ -548,7 +548,7 @@ method(smith_annotation, QuadOverLin) <- function(expr, aux_var = "t", child_var
 }
 
 
-## ── QuadForm ────────────────────────────────────────────────────────────
+## -- QuadForm ------------------------------------------------------------
 
 method(smith_annotation, QuadForm) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "\\mathbf{x}"
@@ -579,7 +579,7 @@ method(smith_annotation, QuadForm) <- function(expr, aux_var = "t", child_vars =
 }
 
 
-## ── MaxEntries ──────────────────────────────────────────────────────────
+## -- MaxEntries ----------------------------------------------------------
 
 method(smith_annotation, MaxEntries) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "\\mathbf{x}"
@@ -604,7 +604,7 @@ method(smith_annotation, MaxEntries) <- function(expr, aux_var = "t", child_vars
 }
 
 
-## ── MinEntries ──────────────────────────────────────────────────────────
+## -- MinEntries ----------------------------------------------------------
 
 method(smith_annotation, MinEntries) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "\\mathbf{x}"
@@ -629,7 +629,7 @@ method(smith_annotation, MinEntries) <- function(expr, aux_var = "t", child_vars
 }
 
 
-## ── Maximum (elementwise max of two expressions) ────────────────────────
+## -- Maximum (elementwise max of two expressions) ------------------------
 
 method(smith_annotation, Maximum) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "x"
@@ -655,7 +655,7 @@ method(smith_annotation, Maximum) <- function(expr, aux_var = "t", child_vars = 
 }
 
 
-## ── Minimum (elementwise min of two expressions) ────────────────────────
+## -- Minimum (elementwise min of two expressions) ------------------------
 
 method(smith_annotation, Minimum) <- function(expr, aux_var = "t", child_vars = character(0), ...) {
   x <- if (length(child_vars) >= 1L) child_vars[[1L]] else "x"

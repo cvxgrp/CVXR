@@ -10,14 +10,14 @@
 ## NOT MIP-capable; see glpk_mi_conif.R for MILP support.
 ##
 ## R interface: Rglpk::Rglpk_solve_LP()
-## CRITICAL: Rglpk defaults to bounds [0, Inf) — MUST override to (-Inf, Inf).
+## CRITICAL: Rglpk defaults to bounds [0, Inf) -- MUST override to (-Inf, Inf).
 
 
 # -- GLPK status map (native codes from glpk.h) --------------------------------
 ## With canonicalize_status = FALSE, Rglpk returns GLPK's native status codes:
 ##   1 = GLP_UNDEF  (solution undefined)
 ##   2 = GLP_FEAS   (feasible but not optimal)
-##   3 = GLP_INFEAS (integer infeasible — MIP only)
+##   3 = GLP_INFEAS (integer infeasible -- MIP only)
 ##   4 = GLP_NOFEAS (no feasible solution exists)
 ##   5 = GLP_OPT    (optimal solution found)
 ##   6 = GLP_UNBND  (problem is unbounded)
@@ -126,7 +126,7 @@ method(solve_via_data, GLPK_Solver) <- function(x, data, warm_start = FALSE, ver
 
     rhs <- b_solver
   } else {
-    ## No constraints — create a trivial constraint to avoid Rglpk error
+    ## No constraints -- create a trivial constraint to avoid Rglpk error
     mat <- slam::simple_triplet_matrix(
       i = integer(0), j = integer(0), v = numeric(0),
       nrow = 0L, ncol = nvars
@@ -135,7 +135,7 @@ method(solve_via_data, GLPK_Solver) <- function(x, data, warm_start = FALSE, ver
     rhs <- numeric(0)
   }
 
-  ## Variable bounds: MUST be (-Inf, Inf) — conic pipeline handles bounds
+  ## Variable bounds: MUST be (-Inf, Inf) -- conic pipeline handles bounds
   bounds <- list(
     lower = list(ind = seq_len(nvars), val = rep(-Inf, nvars)),
     upper = list(ind = seq_len(nvars), val = rep(Inf, nvars))

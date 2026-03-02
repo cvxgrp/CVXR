@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/tr_inv.py
-## TrInv — trace of the inverse of a PSD matrix: tr(X^{-1})
+## TrInv -- trace of the inverse of a PSD matrix: tr(X^{-1})
 
 
 TrInv <- new_class("TrInv", parent = Atom, package = "CVXR",
@@ -24,7 +24,7 @@ TrInv <- new_class("TrInv", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: tr_inv.py lines 52-57
 method(validate_arguments, TrInv) <- function(x) {
   A <- x@args[[1L]]
@@ -34,27 +34,27 @@ method(validate_arguments, TrInv) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: tr_inv.py lines 59-62 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: tr_inv.py lines 59-62 -- returns tuple()
 method(shape_from_args, TrInv) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: tr_inv.py lines 64-67 — (True, False)
+# -- sign ---------------------------------------------------------
+## CVXPY: tr_inv.py lines 64-67 -- (True, False)
 method(sign_from_args, TrInv) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: tr_inv.py lines 69-77 — convex, not concave
+# -- curvature ----------------------------------------------------
+## CVXPY: tr_inv.py lines 69-77 -- convex, not concave
 method(is_atom_convex, TrInv) <- function(x) TRUE
 method(is_atom_concave, TrInv) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: tr_inv.py lines 79-87 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: tr_inv.py lines 79-87 -- not monotone
 method(is_incr, TrInv) <- function(x, idx, ...) FALSE
 method(is_decr, TrInv) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: tr_inv.py lines 37-50
 method(numeric_value, TrInv) <- function(x, values, ...) {
   A <- values[[1L]]
@@ -71,23 +71,23 @@ method(numeric_value, TrInv) <- function(x, values, ...) {
   matrix(sum(1 / eig_vals), 1L, 1L)
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: tr_inv.py lines 111-114 — X >> 0
+# -- domain -------------------------------------------------------
+## CVXPY: tr_inv.py lines 111-114 -- X >> 0
 method(domain, TrInv) <- function(x) {
   list(PSD(x@args[[1L]]))
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, TrInv) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, TrInv) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls TrInv} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Trace of matrix inverse
 #'

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/dgp2dcp.py
-## Dgp2Dcp — reduces DGP problems to DCP problems via log-space transformation
+## Dgp2Dcp -- reduces DGP problems to DCP problems via log-space transformation
 ##
 ## Key design:
 ## - Inherits from Canonicalization but uses its own tree walk (G1)
@@ -22,13 +22,13 @@ Dgp2Dcp <- new_class("Dgp2Dcp", parent = Canonicalization, package = "CVXR",
   }
 )
 
-## ── reduction_accepts ─────────────────────────────────────────────
+## -- reduction_accepts ---------------------------------------------
 ## CVXPY SOURCE: dgp2dcp.py line 62-65
 method(reduction_accepts, Dgp2Dcp) <- function(x, problem, ...) {
   is_dgp(problem)
 }
 
-## ── reduction_apply ───────────────────────────────────────────────
+## -- reduction_apply -----------------------------------------------
 ## CVXPY SOURCE: dgp2dcp.py lines 119-128
 ## Creates per-problem DGP methods, then walks tree via own tree walk.
 method(reduction_apply, Dgp2Dcp) <- function(x, problem, ...) {
@@ -51,7 +51,7 @@ method(reduction_apply, Dgp2Dcp) <- function(x, problem, ...) {
   obj_result <- .dgp2dcp_tree(dgp_methods, problem@objective)
   canon_objective <- obj_result[[1L]]
 
-  ## Canonicalize each constraint — collect chunks, flatten once
+  ## Canonicalize each constraint -- collect chunks, flatten once
   n_cons <- length(problem@constraints)
   all_chunks <- vector("list", n_cons + 1L)
   all_chunks[[1L]] <- obj_result[[2L]]
@@ -70,7 +70,7 @@ method(reduction_apply, Dgp2Dcp) <- function(x, problem, ...) {
   list(new_problem, inverse_data)
 }
 
-## ── reduction_invert ──────────────────────────────────────────────
+## -- reduction_invert ----------------------------------------------
 ## CVXPY SOURCE: dgp2dcp.py lines 152-160
 ## Transform solution back from log-space: exp(value) for all primals.
 method(reduction_invert, Dgp2Dcp) <- function(x, solution, inverse_data, ...) {
@@ -91,7 +91,7 @@ method(reduction_invert, Dgp2Dcp) <- function(x, solution, inverse_data, ...) {
   solution
 }
 
-## ── update_parameters ──────────────────────────────────────────────
+## -- update_parameters ----------------------------------------------
 ## CVXPY SOURCE: dgp2dcp.py lines 67-78
 ## Called in DPP fast path: transforms original parameter values to log-space.
 method(update_parameters, Dgp2Dcp) <- function(x, problem, ...) {
@@ -109,9 +109,9 @@ method(update_parameters, Dgp2Dcp) <- function(x, problem, ...) {
 }
 
 
-## ══════════════════════════════════════════════════════════════════
+## ==================================================================
 ## Own tree walk functions (G1)
-## ══════════════════════════════════════════════════════════════════
+## ==================================================================
 
 ## .dgp2dcp_tree: recursive bottom-up walk (same structure as .canonicalize_tree
 ## but calls .dgp2dcp_expr which does NOT skip constants)
@@ -134,15 +134,15 @@ method(update_parameters, Dgp2Dcp) <- function(x, problem, ...) {
 ## .dgp2dcp_expr: canonicalize a single node
 ## NO constant-skipping (G1). Variable/Parameter dispatch via dgp_methods (G2).
 .dgp2dcp_expr <- function(dgp_methods, expr, args) {
-  ## Variable → stateful variable_canon
+  ## Variable -> stateful variable_canon
   if (S7_inherits(expr, Variable)) {
     return(dgp_methods$variable_canon(expr, args))
   }
-  ## Parameter → stateful parameter_canon
+  ## Parameter -> stateful parameter_canon
   if (S7_inherits(expr, Parameter)) {
     return(dgp_methods$parameter_canon(expr, args))
   }
-  ## S7 dispatch via dgp_canonicalize — NULL means no method registered
+  ## S7 dispatch via dgp_canonicalize -- NULL means no method registered
   result <- dgp_canonicalize(expr, args)
   if (!is.null(result)) return(result)
   ## Default: copy with canonicalized args
@@ -150,9 +150,9 @@ method(update_parameters, Dgp2Dcp) <- function(x, problem, ...) {
 }
 
 
-## ══════════════════════════════════════════════════════════════════
+## ==================================================================
 ## Per-problem DGP methods closure (G2)
-## ══════════════════════════════════════════════════════════════════
+## ==================================================================
 
 .make_dgp_methods <- function() {
   ## Per-problem caches for dedup
@@ -196,9 +196,9 @@ method(update_parameters, Dgp2Dcp) <- function(x, problem, ...) {
 ## Dgp2Dcp transforms parameters via log, so the chain rule for derivatives
 ## requires log/exp Jacobian correction:
 ##
-## param_backward(x, param, dparams) — multiply gradient by param.value (exp(log_param))
-## param_forward(x, param, delta) — divide delta by param.value
-## var_backward(x, var, value) — multiply by exp(log_var.value)
-## var_forward(x, var, value) — divide by exp(log_var.value)
+## param_backward(x, param, dparams) -- multiply gradient by param.value (exp(log_param))
+## param_forward(x, param, delta) -- divide delta by param.value
+## var_backward(x, var, value) -- multiply by exp(log_var.value)
+## var_forward(x, var, value) -- divide by exp(log_var.value)
 ##
 ## Deferred: derivative API depends on diffcp. See notes/derivative_api_deferred.md.

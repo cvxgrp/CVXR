@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/power.py
-## Power — elementwise power x^p
+## Power -- elementwise power x^p
 ##
 ## p is stored as a property (NOT as an arg). DCP curvature depends on p.
 ## Uses is_power2() from power_tools.R.
@@ -53,7 +53,7 @@ Power <- new_class("Power", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign ─────────────────────────────────────────────────────────
+# -- sign ---------------------------------------------------------
 ## CVXPY: power.py lines 181-189
 method(sign_from_args, Power) <- function(x) {
   pval <- x@p_used
@@ -67,7 +67,7 @@ method(sign_from_args, Power) <- function(x) {
   }
 }
 
-# ── curvature ────────────────────────────────────────────────────
+# -- curvature ----------------------------------------------------
 ## CVXPY: power.py lines 191-206
 method(is_atom_convex, Power) <- function(x) {
   pval <- x@p_used
@@ -81,7 +81,7 @@ method(is_atom_concave, Power) <- function(x) {
   pval >= 0 && pval <= 1
 }
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 ## CVXPY: power.py lines 258-290
 method(is_incr, Power) <- function(x, idx, ...) {
   pval <- x@p_used
@@ -107,7 +107,7 @@ method(is_decr, Power) <- function(x, idx, ...) {
   FALSE
 }
 
-# ── is_constant: p == 0 makes it constant ────────────────────────
+# -- is_constant: p == 0 makes it constant ------------------------
 method(is_constant, Power) <- function(x) {
   pval <- x@p_used
   if (!is.null(pval) && pval == 0) return(TRUE)
@@ -115,7 +115,7 @@ method(is_constant, Power) <- function(x) {
   (0L %in% x@shape) || .all_args(x, is_constant)
 }
 
-# ── quadratic/PWL ────────────────────────────────────────────────
+# -- quadratic/PWL ------------------------------------------------
 ## CVXPY: power.py lines 292-337
 method(is_quadratic, Power) <- function(x) {
   pval <- x@p_used
@@ -143,7 +143,7 @@ method(is_qpwa, Power) <- function(x) {
   is_constant(x@args[[1L]])
 }
 
-# ── domain ───────────────────────────────────────────────────────
+# -- domain -------------------------------------------------------
 ## CVXPY: power.py lines 376-390
 method(atom_domain, Power) <- function(x) {
   pval <- x@p_used
@@ -154,24 +154,24 @@ method(atom_domain, Power) <- function(x) {
   list()
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, Power) <- function(x) {
   list(x@p_orig, x@max_denom)
 }
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 method(expr_name, Power) <- function(x) {
   pval <- if (!is.null(x@p_used)) x@p_used else "?"
   sprintf("Power(%s, %s)", expr_name(x@args[[1L]]), pval)
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Power) <- function(x, values, ...) {
   pval <- if (!is.null(x@p_used)) as.numeric(x@p_used) else as.numeric(value(x@p))
   values[[1L]]^pval
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 ## CVXPY SOURCE: power.py lines 226-251
 method(is_atom_log_log_convex, Power) <- function(x) {
   if (dpp_scope_active()) {
@@ -191,9 +191,9 @@ method(graph_implementation, Power) <- function(x, arg_objs, shape, data = NULL,
   cli_abort("graph_implementation for {.cls Power} not yet implemented.")
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# PowerApprox — SOC-based rational approximation of Power
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# PowerApprox -- SOC-based rational approximation of Power
+# ===================================================================
 ## CVXPY SOURCE: atoms/elementwise/power.py lines 421-449
 ## Subclass of Power. Overrides p_used with rational approximation
 ## and adds w (dyadic weights) for gm_constrs-based canonicalization.
@@ -226,7 +226,7 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
       p_used <- NULL
     }
 
-    ## Rational approximation — override p_used and compute w
+    ## Rational approximation -- override p_used and compute w
     w <- NULL
     approx_error <- 0.0
     if (!is.null(p_used)) {
@@ -265,7 +265,7 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
   }
 )
 
-# ── Factory function ─────────────────────────────────────────────
+# -- Factory function ---------------------------------------------
 #' Create a Power atom
 #'
 #' @param x An Expression

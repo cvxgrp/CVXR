@@ -3,10 +3,10 @@
 #####
 
 ## CVXPY SOURCE: expressions/leaf.py
-## Leaf — base class for Variable, Constant, Parameter
+## Leaf -- base class for Variable, Constant, Parameter
 
 
-# ── Helper: build leaf attributes list with validation ────────────────
+# -- Helper: build leaf attributes list with validation ----------------
 # Called by Leaf, Variable, and Parameter constructors to avoid
 # duplicating validation logic while each calling new_object() directly.
 
@@ -113,28 +113,28 @@ Leaf <- new_class("Leaf", parent = Expression, package = "CVXR",
   }
 )
 
-# ── is_pos: strictly positive (from attributes) ───────────────────────
+# -- is_pos: strictly positive (from attributes) -----------------------
 ## CVXPY SOURCE: leaf.py lines 271-273
 method(is_pos, Leaf) <- function(x) isTRUE(x@attributes$pos)
 
-# ── Log-log DGP: Leaf is log-log convex/concave iff positive ─────────
+# -- Log-log DGP: Leaf is log-log convex/concave iff positive ---------
 ## CVXPY SOURCE: leaf.py lines 254-260
 method(is_log_log_convex, Leaf) <- function(x) is_pos(x)
 method(is_log_log_concave, Leaf) <- function(x) is_pos(x)
 
-# ── Quadratic / PWL: leaves are always quadratic and piecewise-linear ──
+# -- Quadratic / PWL: leaves are always quadratic and piecewise-linear --
 ## CVXPY SOURCE: leaf.py lines 613-623
 method(is_quadratic, Leaf) <- function(x) TRUE
 method(has_quadratic_term, Leaf) <- function(x) FALSE
 method(is_pwl, Leaf) <- function(x) TRUE
 
-# ── Curvature: Leaves are always convex and concave (affine) ──────────
+# -- Curvature: Leaves are always convex and concave (affine) ----------
 ## CVXPY SOURCE: leaf.py lines 246-252
 
 method(is_convex, Leaf) <- function(x) TRUE
 method(is_concave, Leaf) <- function(x) TRUE
 
-# ── Sign queries from attributes ──────────────────────────────────────
+# -- Sign queries from attributes --------------------------------------
 ## CVXPY SOURCE: leaf.py lines 262-269
 
 method(is_nonneg, Leaf) <- function(x) {
@@ -147,7 +147,7 @@ method(is_nonpos, Leaf) <- function(x) {
   isTRUE(a$nonpos) || isTRUE(a$neg)
 }
 
-# ── Matrix property queries ───────────────────────────────────────────
+# -- Matrix property queries -------------------------------------------
 
 ## is_symmetric: scalar or relevant attributes
 ## CVXPY SOURCE: leaf.py lines 284-287
@@ -179,7 +179,7 @@ method(is_hermitian, Leaf) <- function(x) {
     is_psd(x) || is_nsd(x)
 }
 
-# ── value / value<- ──────────────────────────────────────────────────
+# -- value / value<- --------------------------------------------------
 
 ## Value getter: check .cache first (reference semantics for constraints),
 ## then fall back to @.value (copy semantics).
@@ -192,7 +192,7 @@ method(value, Leaf) <- function(x) {
   x@.value
 }
 
-# ── Shared value validation (used by Leaf and Parameter value<-) ──────
+# -- Shared value validation (used by Leaf and Parameter value<-) ------
 ## Validates shape, projects onto attribute domain, checks tolerance.
 ## Returns the validated (converted) value or NULL.
 .validate_leaf_value <- function(x, value) {
@@ -228,7 +228,7 @@ method(`value<-`, Leaf) <- function(x, value) {
   x
 }
 
-# ── save_leaf_value ──────────────────────────────────────────────────
+# -- save_leaf_value --------------------------------------------------
 ## CVXPY SOURCE: leaf.py lines 454-462
 ## Stores solver output WITHOUT validation/projection.
 ## Used by problem_unpack() after solving.
@@ -238,7 +238,7 @@ save_leaf_value <- function(x, val) {
   invisible(x)
 }
 
-# ── project ──────────────────────────────────────────────────────────
+# -- project ----------------------------------------------------------
 ## CVXPY SOURCE: leaf.py lines 373-451
 
 method(project, Leaf) <- function(x, val, ...) {
@@ -285,10 +285,10 @@ method(project, Leaf) <- function(x, val, ...) {
   } else if (isTRUE(a$hermitian)) {
     return((val + t(Conj(val))) / 2)
   } else if (isTRUE(a$imag)) {
-    ## CVXPY: np.imag(val) * 1j — project onto purely imaginary
+    ## CVXPY: np.imag(val) * 1j -- project onto purely imaginary
     return(Im(val) * 1i)
   } else if (isTRUE(a$complex)) {
-    ## CVXPY: val.astype(complex) — ensure complex type
+    ## CVXPY: val.astype(complex) -- ensure complex type
     if (!is.complex(val)) val <- as.complex(val)
     return(val)
   }
@@ -303,7 +303,7 @@ method(project, Leaf) <- function(x, val, ...) {
   val
 }
 
-# ── Leaf collections default to empty ────────────────────────────────
+# -- Leaf collections default to empty --------------------------------
 ## CVXPY SOURCE: leaf.py lines 234-244
 
 method(variables, Leaf) <- function(x) list()
@@ -311,14 +311,14 @@ method(parameters, Leaf) <- function(x) list()
 method(constants, Leaf) <- function(x) list()
 method(atoms, Leaf) <- function(x) list()
 
-# ── domain: empty list (Constraints don't exist yet) ─────────────────
+# -- domain: empty list (Constraints don't exist yet) -----------------
 ## CVXPY SOURCE: leaf.py lines 357-371
 method(domain, Leaf) <- function(x) list()
 
-# ── grad: default empty list ─────────────────────────────────────────
+# -- grad: default empty list -----------------------------------------
 method(grad, Leaf) <- function(x) list()
 
-# ── Helper to construct attribute error string ────────────────────────
+# -- Helper to construct attribute error string ------------------------
 
 .leaf_attr_str <- function(x) {
   a <- x@attributes

@@ -87,7 +87,7 @@ method(solve_via_data, Gurobi_QP_Solver) <- function(x, data, warm_start = FALSE
   model$rhs <- rhs_model
   model$sense <- sense_model
 
-  ## Quadratic objective: P for 0.5 x'Px + q'x → Q = P/2 for Gurobi's x'Qx + c'x
+  ## Quadratic objective: P for 0.5 x'Px + q'x -> Q = P/2 for Gurobi's x'Qx + c'x
   ## R gurobi reads lower triangle
   if (!is.null(data[[SD_P]])) {
     P <- data[[SD_P]]
@@ -170,7 +170,7 @@ method(solve_via_data, Gurobi_QP_Solver) <- function(x, data, warm_start = FALSE
 
 # -- reduction_invert ----------------------------------------------------------
 ## CVXPY SOURCE: gurobi_qpif.py lines 76-135
-## Dual sign: negate ALL pi duals — matching CVXPY gurobi_qpif.py line 121.
+## Dual sign: negate ALL pi duals -- matching CVXPY gurobi_qpif.py line 121.
 
 method(reduction_invert, Gurobi_QP_Solver) <- function(x, solution, inverse_data, ...) {
   attr_list <- list()

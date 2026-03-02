@@ -31,7 +31,7 @@ power_quad_canon <- function(expr, args, solver_context = NULL) {
   cli_abort("Non-constant quadratic forms can't be raised to power > 2.")
 }
 
-# ── .quadratic_power: helper for Dcp2Cone dispatch ─────────────
+# -- .quadratic_power: helper for Dcp2Cone dispatch -------------
 ## CVXPY SOURCE: power.py lines 339-342
 .quadratic_power <- function(power_expr) {
   p <- power_expr@p_used

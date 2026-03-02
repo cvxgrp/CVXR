@@ -19,7 +19,7 @@ log_sum_exp_canon <- function(expr, args, solver_context = NULL) {
     ## axis=NULL: scalar -> broadcast to x shape
     promoted_t <- cvxr_promote(t, x@shape)
   } else if (axis == 2L) {
-    ## axis=2: shape = (1, ncol) → broadcast rows
+    ## axis=2: shape = (1, ncol) -> broadcast rows
     ones_col <- Constant(matrix(1, nrow = x@shape[1L], ncol = 1L))
     t_row <- reshape_expr(t, c(1L, x@shape[2L]))
     promoted_t <- ones_col %*% t_row

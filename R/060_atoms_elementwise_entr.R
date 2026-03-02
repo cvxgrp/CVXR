@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/entr.py
-## Entr — elementwise entropy -x * log(x)
+## Entr -- elementwise entropy -x * log(x)
 
 
 Entr <- new_class("Entr", parent = Elementwise, package = "CVXR",
@@ -22,25 +22,25 @@ Entr <- new_class("Entr", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: unknown ────────────────────────────────────────────────
+# -- sign: unknown ------------------------------------------------
 method(sign_from_args, Entr) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature: concave ───────────────────────────────────────────
+# -- curvature: concave -------------------------------------------
 method(is_atom_convex, Entr) <- function(x) FALSE
 method(is_atom_concave, Entr) <- function(x) TRUE
 
-# ── monotonicity: not monotone ───────────────────────────────────
+# -- monotonicity: not monotone -----------------------------------
 method(is_incr, Entr) <- function(x, idx, ...) FALSE
 method(is_decr, Entr) <- function(x, idx, ...) FALSE
 
-# ── domain: arg >= 0 ─────────────────────────────────────────────
+# -- domain: arg >= 0 ---------------------------------------------
 method(atom_domain, Entr) <- function(x) {
   list(x@args[[1L]] >= 0)
 }
 
-# ── numeric: -x * log(x) ────────────────────────────────────────
+# -- numeric: -x * log(x) ----------------------------------------
 method(numeric_value, Entr) <- function(x, values, ...) {
   v <- values[[1L]]
   ## -x * log(x), with 0*log(0) = 0
@@ -48,7 +48,7 @@ method(numeric_value, Entr) <- function(x, values, ...) {
   result
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Entr) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Entr} not yet implemented.")
 }

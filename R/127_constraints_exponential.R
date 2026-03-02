@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: constraints/exponential.py
-## ExpCone — Exponential Cone constraint
+## ExpCone -- Exponential Cone constraint
 
 #' Create an Exponential Cone Constraint
 #'
@@ -49,8 +49,8 @@ ExpCone <- new_class("ExpCone", parent = Cone, package = "CVXR",
 
     if (is.null(constr_id)) constr_id <- next_expr_id()
 
-    ## CVXPY SOURCE: exponential.py lines 134-137 — shape override
-    ## shape = (3,) + self.x.shape → R 2D: c(3, prod(x_shape))
+    ## CVXPY SOURCE: exponential.py lines 134-137 -- shape override
+    ## shape = (3,) + self.x.shape -> R 2D: c(3, prod(x_shape))
     cone_shape <- c(3L, as.integer(prod(xs)))
 
     dvars <- lapply(args, function(a) Variable(a@shape))
@@ -69,7 +69,7 @@ ExpCone <- new_class("ExpCone", parent = Cone, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 75-76
 
 method(expr_name, ExpCone) <- function(x) {
@@ -77,40 +77,40 @@ method(expr_name, ExpCone) <- function(x) {
     expr_name(x@.x), expr_name(x@.y), expr_name(x@.z))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 120-126
 
 method(is_dcp, ExpCone) <- function(x) {
   .all_args(x, is_affine)
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 128-129
 
 method(is_dgp, ExpCone) <- function(x) FALSE
 
-# ── num_cones ────────────────────────────────────────────────────
+# -- num_cones ----------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 102-105
 
 method(num_cones, ExpCone) <- function(x) {
   expr_size(x@.x)
 }
 
-# ── cone_sizes ───────────────────────────────────────────────────
+# -- cone_sizes ---------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 110-118
 
 method(cone_sizes, ExpCone) <- function(x) {
   rep(3L, num_cones(x))
 }
 
-# ── constr_size ──────────────────────────────────────────────────
+# -- constr_size --------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 97-100
 
 method(constr_size, ExpCone) <- function(x) {
   3L * num_cones(x)
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 82-94
 ## TODO: The projection should be implemented directly.
 ## For now, return a simple feasibility check.
@@ -141,7 +141,7 @@ method(residual, ExpCone) <- function(x) {
   if (n == 1L) resid[1L] else resid
 }
 
-# ── save_dual_value ──────────────────────────────────────────────
+# -- save_dual_value ----------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 139-147
 ## Uses C-order reshape (CR-1)
 ## CVXPY: np.reshape(value, (-1, 3)) then extracts columns
@@ -159,7 +159,7 @@ method(save_dual_value, ExpCone) <- function(x, val) {
   invisible(x)
 }
 
-# ── dual_cone ────────────────────────────────────────────────────
+# -- dual_cone ----------------------------------------------------
 ## CVXPY SOURCE: exponential.py lines 149-162
 ## dual = ExpCone(-y, -x, e*z)
 

@@ -7,7 +7,7 @@
 ## approx: Uses gm_constrs (SOC constraints via rational approximation)
 
 
-# ── pnorm_exact_canon ─────────────────────────────────────────────
+# -- pnorm_exact_canon ---------------------------------------------
 pnorm_exact_canon <- function(expr, args, solver_context = NULL) {
   p <- expr@p
 
@@ -73,7 +73,7 @@ pnorm_exact_canon <- function(expr, args, solver_context = NULL) {
   }
 }
 
-# ── pnorm_approx_canon ────────────────────────────────────────────
+# -- pnorm_approx_canon --------------------------------------------
 ## CVXPY SOURCE: dcp2cone/canonicalizers/pnorm_canon.py lines 90-139
 ## Uses gm_constrs (SOC constraints via rational approximation)
 pnorm_approx_canon <- function(expr, args, solver_context = NULL) {
@@ -86,7 +86,7 @@ pnorm_approx_canon <- function(expr, args, solver_context = NULL) {
 
   x <- args[[1L]]
   ## Convert to exact rational for weight computation
-  ## NOTE: as.bigq(float) gives huge denominators (e.g., as.bigq(1.6) → 3.6e15/2.3e15).
+  ## NOTE: as.bigq(float) gives huge denominators (e.g., as.bigq(1.6) -> 3.6e15/2.3e15).
   ## Use .limit_denominator() to recover clean rational, matching pow_high/mid/neg pattern.
   p_bigq <- .limit_denominator(as.bigq(p), as.bigz(expr@max_denom))
   shape <- expr@shape

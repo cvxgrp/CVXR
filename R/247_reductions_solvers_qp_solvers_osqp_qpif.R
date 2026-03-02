@@ -7,7 +7,7 @@
 ##
 ## OSQP solves: minimize 0.5 x'Px + q'x  s.t. l <= Ax <= u
 ## Accepts ONLY Zero (equality) and NonNeg (inequality) constraints.
-## Inherits from QpSolver — uses QpSolver.apply() for sign-correct
+## Inherits from QpSolver -- uses QpSolver.apply() for sign-correct
 ## A_eq/b_eq/F_ineq/g_ineq data, then stacks into OSQP format.
 ##
 ## Requires osqp >= 1.0.0 (S7 API with @Solve/@Update/@WarmStart,
@@ -59,7 +59,7 @@ method(solver_name, OSQP_QP_Solver) <- function(x) OSQP_SOLVER
   q_vec <- data[["q"]]
   nvars <- length(q_vec)
 
-  ## P matrix (quadratic objective) — upper-triangular for OSQP
+  ## P matrix (quadratic objective) -- upper-triangular for OSQP
   ## CVXPY SOURCE: osqp_qpif.py line 93
   P <- if (!is.null(data[[SD_P]])) Matrix::triu(data[[SD_P]]) else NULL
 
@@ -136,7 +136,7 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
   cache_key <- OSQP_SOLVER
   used_warm <- FALSE
 
-  ## ── Warm path ────────────────────────────────────────────────────
+  ## -- Warm path ----------------------------------------------------
   ## CVXPY SOURCE: osqp_qpif.py lines 108-136
   if (warm_start && !is.null(solver_cache) && exists(cache_key, envir = solver_cache)) {
     cached <- get(cache_key, envir = solver_cache)
@@ -148,12 +148,12 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     if (length(q_vec) == length(old_data$q) && nrow(A) == nrow(old_data$A)) {
       new_args <- list()
 
-      ## Compare q, l, u — only send changed vectors
+      ## Compare q, l, u -- only send changed vectors
       if (!identical(q_vec, old_data$q)) new_args$q <- q_vec
       if (!identical(l, old_data$l))     new_args$l <- l
       if (!identical(u, old_data$u))     new_args$u <- u
 
-      ## Compare P@x (non-zero values) — if changed, send Px values
+      ## Compare P@x (non-zero values) -- if changed, send Px values
       factorizing <- FALSE
       if (!is.null(P) && !is.null(old_data$P)) {
         if (!identical(P@x, old_data$P@x)) {
@@ -162,7 +162,7 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
         }
       }
 
-      ## Compare A@x (non-zero values) — if changed, send Ax values
+      ## Compare A@x (non-zero values) -- if changed, send Ax values
       if (!identical(A@x, old_data$A@x)) {
         new_args$Ax <- A@x
         factorizing <- TRUE
@@ -191,7 +191,7 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     }
   }
 
-  ## ── Cold path ────────────────────────────────────────────────────
+  ## -- Cold path ----------------------------------------------------
   ## CVXPY SOURCE: osqp_qpif.py lines 137-145
   if (!used_warm) {
     solver_opts[["polishing"]] <- solver_opts[["polishing"]] %||% TRUE
@@ -199,10 +199,10 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     model <- osqp::osqp(P = P, q = q_vec, A = A, l = l, u = u, pars = pars)
   }
 
-  ## ── Solve ────────────────────────────────────────────────────────
+  ## -- Solve --------------------------------------------------------
   result <- model@Solve()
 
-  ## ── Cache for future warm-starts ─────────────────────────────────
+  ## -- Cache for future warm-starts ---------------------------------
   ## CVXPY SOURCE: osqp_qpif.py lines 149-150
   if (!is.null(solver_cache)) {
     assign(cache_key, list(model = model, data = stacked, result = result),
@@ -216,7 +216,7 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
 
 # -- reduction_invert ----------------------------------------------------------
 ## CVXPY SOURCE: osqp_qpif.py lines 46-82
-## Dual sign: use raw y (NO negation) — QpSolver.apply() sign flip handles it.
+## Dual sign: use raw y (NO negation) -- QpSolver.apply() sign flip handles it.
 
 method(reduction_invert, OSQP_QP_Solver) <- function(x, solution, inverse_data, ...) {
   attr_list <- list()
@@ -242,7 +242,7 @@ method(reduction_invert, OSQP_QP_Solver) <- function(x, solution, inverse_data, 
     primal_vars[[as.character(inverse_data[[SOLVER_VAR_ID]])]] <- solution$x
 
     ## Dual variables: OSQP returns y for [eq; ineq] combined
-    ## CVXPY SOURCE: osqp_qpif.py — use raw y, NO negation.
+    ## CVXPY SOURCE: osqp_qpif.py -- use raw y, NO negation.
     ## QpSolver.apply() negated F, so OSQP's duals are already correct.
     y <- solution$y
     len_eq <- solution$.len_eq

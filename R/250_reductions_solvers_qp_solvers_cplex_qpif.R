@@ -9,7 +9,7 @@
 ## MIP_CAPABLE: supports boolean and integer variables.
 ##
 ## Key conventions:
-##   - Rcplex uses 0.5 x'Qx + c'x — matches CVXR's QP path directly (no halving)
+##   - Rcplex uses 0.5 x'Qx + c'x -- matches CVXR's QP path directly (no halving)
 ##   - Rcplex status: 1=optimal, 2=unbounded, 3=infeasible, 4=inf_or_unbd, 101=MIP_optimal, etc.
 ##   - Duals in extra$lambda (absent for MIP). CVXPY negates all: y = -lambda
 ##   - vtype = NULL for continuous (avoids CPLEX MIP mode); set to "B"/"I" vector only for MIP
@@ -111,7 +111,7 @@ method(solve_via_data, CPLEX_QP_Solver) <- function(x, data, warm_start = FALSE,
   }
 
   ## Quadratic objective matrix
-  ## Rcplex uses 0.5 x'Qx + c'x — matches CVXR's P convention directly
+  ## Rcplex uses 0.5 x'Qx + c'x -- matches CVXR's P convention directly
   Qmat <- data[[SD_P]]
   if (!is.null(Qmat)) {
     if (!inherits(Qmat, "dgCMatrix")) {
@@ -193,7 +193,7 @@ method(solve_via_data, CPLEX_QP_Solver) <- function(x, data, warm_start = FALSE,
 
 # -- reduction_invert ----------------------------------------------------------
 ## CVXPY SOURCE: cplex_qpif.py lines 43-89
-## Dual sign: negate ALL lambda duals — matching CVXPY cplex_qpif.py line 72.
+## Dual sign: negate ALL lambda duals -- matching CVXPY cplex_qpif.py line 72.
 
 method(reduction_invert, CPLEX_QP_Solver) <- function(x, solution, inverse_data, ...) {
   attr_list <- list()

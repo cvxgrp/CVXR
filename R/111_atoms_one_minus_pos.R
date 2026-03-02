@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/one_minus_pos.py
-## OneMInusPos — 1 - x with domain {x : 0 < x < 1}
+## OneMInusPos -- 1 - x with domain {x : 0 < x < 1}
 ## Log-log concave (F/T), sign always positive.
 
 
@@ -24,36 +24,36 @@ OneMInusPos <- new_class("OneMInusPos", parent = Atom, package = "CVXR",
   }
 )
 
-# ── shape ──────────────────────────────────────────────────────────
+# -- shape ----------------------------------------------------------
 method(shape_from_args, OneMInusPos) <- function(x) x@args[[1L]]@shape
 
-# ── sign: always positive ─────────────────────────────────────────
+# -- sign: always positive -----------------------------------------
 method(sign_from_args, OneMInusPos) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, OneMInusPos) <- function(x) FALSE
 method(is_atom_concave, OneMInusPos) <- function(x) FALSE
 
-# ── log-log curvature: concave only (F/T) ─────────────────────────
+# -- log-log curvature: concave only (F/T) -------------------------
 method(is_atom_log_log_convex, OneMInusPos) <- function(x) FALSE
 method(is_atom_log_log_concave, OneMInusPos) <- function(x) TRUE
 
-# ── monotonicity: decreasing ──────────────────────────────────────
+# -- monotonicity: decreasing --------------------------------------
 method(is_incr, OneMInusPos) <- function(x, idx, ...) FALSE
 method(is_decr, OneMInusPos) <- function(x, idx, ...) TRUE
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, OneMInusPos) <- function(x, values, ...) {
   ones <- matrix(1, nrow = x@shape[1L], ncol = x@shape[2L])
   ones - values[[1L]]
 }
 
-# ── get_data ───────────────────────────────────────────────────────
+# -- get_data -------------------------------------------------------
 method(get_data, OneMInusPos) <- function(x) list()
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, OneMInusPos) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls OneMInusPos} not yet implemented.")
 }

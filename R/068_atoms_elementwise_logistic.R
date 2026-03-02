@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/logistic.py
-## Logistic — elementwise log(1 + exp(x))
+## Logistic -- elementwise log(1 + exp(x))
 
 
 Logistic <- new_class("Logistic", parent = Elementwise, package = "CVXR",
@@ -22,20 +22,20 @@ Logistic <- new_class("Logistic", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, Logistic) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, Logistic) <- function(x) TRUE
 method(is_atom_concave, Logistic) <- function(x) FALSE
 
-# ── monotonicity: increasing ─────────────────────────────────────
+# -- monotonicity: increasing -------------------------------------
 method(is_incr, Logistic) <- function(x, idx, ...) TRUE
 method(is_decr, Logistic) <- function(x, idx, ...) FALSE
 
-# ── numeric: log(1 + exp(x)) ────────────────────────────────────
+# -- numeric: log(1 + exp(x)) ------------------------------------
 ## Using numerically stable logaddexp(0, x)
 method(numeric_value, Logistic) <- function(x, values, ...) {
   v <- values[[1L]]
@@ -43,12 +43,12 @@ method(numeric_value, Logistic) <- function(x, values, ...) {
   pmax(v, 0) + log1p(exp(-abs(v)))
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Logistic) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Logistic} not yet implemented.")
 }
 
-#' Logistic function: log(1 + exp(x)) — elementwise
+#' Logistic function: log(1 + exp(x)) -- elementwise
 #'
 #' @param x An Expression
 #' @returns A Logistic atom

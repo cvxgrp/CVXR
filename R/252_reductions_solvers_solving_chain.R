@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/solvers/solving_chain.py
-## SolvingChain — a Chain with a terminal solver reduction
+## SolvingChain -- a Chain with a terminal solver reduction
 ##
 ## Dual-interface architecture matching CVXPY:
 ## - SOLVER_MAP_CONIC: conic path solvers (ConicSolver subclasses)
@@ -12,7 +12,7 @@
 ## - construct_solving_chain(): builds the full reduction chain
 
 
-# ── Solver registries ────────────────────────────────────────────
+# -- Solver registries --------------------------------------------
 ## Two registries matching CVXPY defines.py:
 ## SOLVER_MAP_CONIC for conic path, SOLVER_MAP_QP for QP path.
 
@@ -71,7 +71,7 @@ CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
   requireNamespace(pkg, quietly = TRUE)
 }
 
-# ── SolvingChain class ───────────────────────────────────────────
+# -- SolvingChain class -------------------------------------------
 ## CVXPY SOURCE: solving_chain.py lines 20-80
 
 SolvingChain <- new_class("SolvingChain", parent = Chain, package = "CVXR",
@@ -99,7 +99,7 @@ method(print, SolvingChain) <- function(x, ...) {
   invisible(x)
 }
 
-# ── _is_lp() ─────────────────────────────────────────────────────
+# -- _is_lp() -----------------------------------------------------
 ## CVXPY SOURCE: solving_chain.py lines 89-98
 ## Checks if problem is a linear program.
 
@@ -119,7 +119,7 @@ method(print, SolvingChain) <- function(x, ...) {
   is_dcp(problem) && is_pwl(problem@objective@args[[1L]])
 }
 
-# ── _solve_as_qp() ──────────────────────────────────────────────
+# -- _solve_as_qp() ----------------------------------------------
 ## CVXPY SOURCE: solving_chain.py lines 101-113
 ## Decides if we should use the QP path.
 
@@ -133,7 +133,7 @@ method(print, SolvingChain) <- function(x, ...) {
   length(candidates$qp_solvers) > 0L && is_qp(problem)
 }
 
-# ── .build_candidates() ─────────────────────────────────────────
+# -- .build_candidates() -----------------------------------------
 ## CVXPY SOURCE: solving_chain.py construct() (candidate selection logic)
 ## Builds candidate lists of available solvers for both QP and conic paths.
 
@@ -141,7 +141,7 @@ method(print, SolvingChain) <- function(x, ...) {
   is_mip <- is_mixed_integer(problem)
 
   if (!is.null(solver)) {
-    ## User specified a solver — find it in either map
+    ## User specified a solver -- find it in either map
     qp_solvers <- character(0)
     conic_solvers <- character(0)
     if (!is.null(SOLVER_MAP_QP[[solver]])) {
@@ -216,14 +216,14 @@ method(print, SolvingChain) <- function(x, ...) {
   list(qp_solvers = qp_solvers, conic_solvers = conic_solvers)
 }
 
-# ── .required_cone_types() ─────────────────────────────────────
+# -- .required_cone_types() -------------------------------------
 ## Predict which cone types a problem will require after Dcp2Cone.
-## This is a heuristic used for solver selection — exact cones are
+## This is a heuristic used for solver selection -- exact cones are
 ## determined after canonicalization, but we can predict from atoms.
 
 .required_cone_types <- function(problem) {
   ## Returns a list of S7 class objects for the "advanced" cone types required.
-  ## Base types (Zero, NonNeg) are always supported — not returned.
+  ## Base types (Zero, NonNeg) are always supported -- not returned.
   cones <- list()
   cone_seen <- new.env(hash = TRUE, parent = emptyenv())
 
@@ -265,7 +265,7 @@ method(print, SolvingChain) <- function(x, ...) {
   ## Walk all constraints and the objective
   all_exprs <- c(problem@constraints, list(problem@objective@args[[1L]]))
   for (expr_root in all_exprs) {
-    ## BFS over expression tree — index-based to avoid O(n²) c()/queue[-1L]
+    ## BFS over expression tree -- index-based to avoid O(n^2) c()/queue[-1L]
     queue <- list(expr_root)
     qi <- 1L
     while (qi <= length(queue)) {
@@ -282,7 +282,7 @@ method(print, SolvingChain) <- function(x, ...) {
   cones  # list of S7 class objects (may be empty)
 }
 
-# ── .solver_supports_cones() ──────────────────────────────────
+# -- .solver_supports_cones() ----------------------------------
 ## Check if a conic solver supports the required cone types.
 
 .solver_supports_cones <- function(solver_inst, required_cones) {
@@ -293,7 +293,7 @@ method(print, SolvingChain) <- function(x, ...) {
   list(ok = length(unsupported) == 0L, unsupported = unsupported)
 }
 
-# ── construct_solving_chain ──────────────────────────────────────
+# -- construct_solving_chain --------------------------------------
 ## CVXPY SOURCE: solving_chain.py construct() (simplified)
 ## Builds the reduction chain for a given problem and solver.
 
@@ -331,8 +331,8 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
   }
 
   ## 2. DGP path: insert Dgp2Dcp reduction (G7)
-  ## Chain order: [EvalParams] → [Complex2Real] → [Dgp2Dcp] → [FlipObjective]
-  ##              → [Dcp2Cone] → [CvxAttr2Constr] → [ConeMatrixStuffing] → [Solver]
+  ## Chain order: [EvalParams] -> [Complex2Real] -> [Dgp2Dcp] -> [FlipObjective]
+  ##              -> [Dcp2Cone] -> [CvxAttr2Constr] -> [ConeMatrixStuffing] -> [Solver]
   if (gp) {
     if (!is_dgp(problem)) {
       cli_abort(c(
@@ -359,12 +359,12 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
     cli_abort("Problem is not DCP compliant.")
   }
 
-  ## 3. Flip objective if Maximize → Minimize
+  ## 3. Flip objective if Maximize -> Minimize
   if (S7_inherits(problem@objective, Maximize)) {
     reductions <- c(reductions, list(FlipObjective()))
   }
 
-  ## 3a. FiniteSet → MIP reduction (used by both QP and conic pathways)
+  ## 3a. FiniteSet -> MIP reduction (used by both QP and conic pathways)
   ## CVXPY SOURCE: solving_chain.py lines 178-182
   if (any(vapply(problem@constraints, function(c) S7_inherits(c, FiniteSet), logical(1)))) {
     reductions <- c(reductions, list(Valinvec2mixedint()))
@@ -415,7 +415,7 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
       solver_inst
     ))
   } else {
-    ## Conic path — find a solver that accepts the problem's cones
+    ## Conic path -- find a solver that accepts the problem's cones
     solver_name_sel <- NULL
     solver_inst <- NULL
     required_cones <- .required_cone_types(problem)
@@ -464,7 +464,7 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
   SolvingChain(reductions = reductions)
 }
 
-# ── solve_via_data (SolvingChain) ─────────────────────────────────
+# -- solve_via_data (SolvingChain) ---------------------------------
 ## Delegates to the terminal solver, managing the solver_cache.
 ## When `problem` is supplied, uses the problem's solver_cache
 ## (for warm-start state persistence across repeated solves).

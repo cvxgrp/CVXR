@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/upper_tri.py
-## UpperTri — strict upper triangle of a square matrix as a vector
+## UpperTri -- strict upper triangle of a square matrix as a vector
 
 
 UpperTri <- new_class("UpperTri", parent = AffAtom, package = "CVXR",
@@ -39,7 +39,7 @@ method(shape_from_args, UpperTri) <- function(x) {
   c((n * (n - 1L)) %/% 2L, 1L)
 }
 
-# ── log-log: affine (CVXPY upper_tri.py) ────────────────────────
+# -- log-log: affine (CVXPY upper_tri.py) ------------------------
 method(is_atom_log_log_convex, UpperTri) <- function(x) TRUE
 method(is_atom_log_log_concave, UpperTri) <- function(x) TRUE
 
@@ -111,7 +111,7 @@ vec_to_upper_tri <- function(expr, strict = FALSE) {
   ## Build sparse coefficient matrix P
   ## P maps: (P @ expr).reshape((n, n)) is upper triangular
   ## CVXPY: row_idx = n * row + col for (row, col) in triu_indices(n, k)
-  ## This places each vector entry at the correct position in the flattened n×n matrix
+  ## This places each vector entry at the correct position in the flattened nxn matrix
   k <- if (strict) 1L else 0L
   ## Get upper triangular indices (row-major order, matching CVXPY)
   idx <- which(upper.tri(matrix(0, n, n), diag = !strict), arr.ind = TRUE)
@@ -119,7 +119,7 @@ vec_to_upper_tri <- function(expr, strict = FALSE) {
   row_0 <- idx[, 1L] - 1L  # 0-based row
   col_0 <- idx[, 2L] - 1L  # 0-based col
 
-  ## P_rows: flattened position in row-major n×n matrix (0-based)
+  ## P_rows: flattened position in row-major nxn matrix (0-based)
   P_rows <- n * row_0 + col_0
   P_cols <- seq_len(ell) - 1L  # 0-based column indices
   P_vals <- rep(1, ell)

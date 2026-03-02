@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/norm_inf.py
-## NormInf — L-infinity norm (max absolute value), axis-aware
+## NormInf -- L-infinity norm (max absolute value), axis-aware
 
 
 NormInf <- new_class("NormInf", parent = AxisAtom, package = "CVXR",
@@ -25,27 +25,27 @@ NormInf <- new_class("NormInf", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, NormInf) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, NormInf) <- function(x) TRUE
 method(is_atom_concave, NormInf) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, NormInf) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
 method(is_decr, NormInf) <- function(x, idx, ...) is_nonpos(x@args[[1L]])
 
-# ── log-log: convex (CVXPY norm_inf.py) ──────────────────────────
+# -- log-log: convex (CVXPY norm_inf.py) --------------------------
 method(is_atom_log_log_convex, NormInf) <- function(x) TRUE
 method(is_atom_log_log_concave, NormInf) <- function(x) FALSE
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, NormInf) <- function(x) is_pwl(x@args[[1L]])
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, NormInf) <- function(x, values, ...) {
   v <- values[[1L]]
   if (is.null(x@axis)) {
@@ -59,7 +59,7 @@ method(numeric_value, NormInf) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, NormInf) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls NormInf} not yet implemented.")
 }

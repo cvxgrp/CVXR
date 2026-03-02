@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/gmatmul.py
-## Gmatmul — geometric matrix multiplication A ◇ X
+## Gmatmul -- geometric matrix multiplication A o X
 ## A is stored as a property (not an arg) to prevent DGP log-transformation.
 ## Log-log affine (T/T), sign always positive.
 
@@ -31,7 +31,7 @@ Gmatmul <- new_class("Gmatmul", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ───────────────────────────────────────────────────────
+# -- validate -------------------------------------------------------
 method(validate_arguments, Gmatmul) <- function(x) {
   if (!is_constant(x@A)) {
     cli_abort("{.fn gmatmul} requires that {.arg A} be constant.")
@@ -46,41 +46,41 @@ method(validate_arguments, Gmatmul) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ──────────────────────────────────────────────────────────
+# -- shape ----------------------------------------------------------
 method(shape_from_args, Gmatmul) <- function(x) {
   c(x@A@shape[1L], x@args[[1L]]@shape[2L])
 }
 
-# ── sign: always positive ─────────────────────────────────────────
+# -- sign: always positive -----------------------------------------
 method(sign_from_args, Gmatmul) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, Gmatmul) <- function(x) FALSE
 method(is_atom_concave, Gmatmul) <- function(x) FALSE
 
-# ── log-log curvature: affine (T/T) ───────────────────────────────
+# -- log-log curvature: affine (T/T) -------------------------------
 method(is_atom_log_log_convex, Gmatmul) <- function(x) TRUE
 method(is_atom_log_log_concave, Gmatmul) <- function(x) {
   is_atom_log_log_convex(x)
 }
 
-# ── monotonicity ───────────────────────────────────────────────────
+# -- monotonicity ---------------------------------------------------
 method(is_incr, Gmatmul) <- function(x, idx, ...) is_nonneg(x@A)
 method(is_decr, Gmatmul) <- function(x, idx, ...) is_nonpos(x@A)
 
-# ── get_data: A is data, not an arg ───────────────────────────────
+# -- get_data: A is data, not an arg -------------------------------
 method(get_data, Gmatmul) <- function(x) list(x@A)
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, Gmatmul) <- function(x, values, ...) {
   A_val <- as.matrix(value(x@A))
   logX <- log(values[[1L]])
   exp(A_val %*% logX)
 }
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, Gmatmul) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Gmatmul} not yet implemented.")
 }

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/prod.py
-## Prod — product of entries along an axis (AxisAtom)
+## Prod -- product of entries along an axis (AxisAtom)
 ## Log-log affine (T/T), neither convex nor concave.
 
 
@@ -28,24 +28,24 @@ Prod <- new_class("Prod", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign ───────────────────────────────────────────────────────────
+# -- sign -----------------------------------------------------------
 method(sign_from_args, Prod) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]), is_nonpos = FALSE)
 }
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, Prod) <- function(x) FALSE
 method(is_atom_concave, Prod) <- function(x) FALSE
 
-# ── log-log curvature: affine (T/T) ───────────────────────────────
+# -- log-log curvature: affine (T/T) -------------------------------
 method(is_atom_log_log_convex, Prod) <- function(x) TRUE
 method(is_atom_log_log_concave, Prod) <- function(x) TRUE
 
-# ── monotonicity ───────────────────────────────────────────────────
+# -- monotonicity ---------------------------------------------------
 method(is_incr, Prod) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
 method(is_decr, Prod) <- function(x, idx, ...) FALSE
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, Prod) <- function(x, values, ...) {
   v <- values[[1L]]
   ax <- x@axis
@@ -62,7 +62,7 @@ method(numeric_value, Prod) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, Prod) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Prod} not yet implemented.")
 }

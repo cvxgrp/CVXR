@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/cumsum.py
-## Cumsum — cumulative sum along an axis (MI: AxisAtom + AffAtom → AxisAffAtom)
+## Cumsum -- cumulative sum along an axis (MI: AxisAtom + AffAtom -> AxisAffAtom)
 
 
 Cumsum <- new_class("Cumsum", parent = AxisAffAtom, package = "CVXR",
@@ -30,7 +30,7 @@ method(shape_from_args, Cumsum) <- function(x) {
   x@args[[1L]]@shape
 }
 
-# ── log-log: affine (CVXPY cumsum.py) ───────────────────────────
+# -- log-log: affine (CVXPY cumsum.py) ---------------------------
 method(is_atom_log_log_convex, Cumsum) <- function(x) TRUE
 method(is_atom_log_log_concave, Cumsum) <- function(x) TRUE
 

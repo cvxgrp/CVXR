@@ -26,7 +26,7 @@ linop_new <- function() {
 
 #' Set the type of a LinOp
 #' @param ptr External pointer to a LinOp.
-#' @param type Character string — one of \code{.LINOP_TYPES}.
+#' @param type Character string -- one of \code{.LINOP_TYPES}.
 #' @keywords internal
 linop_set_type <- function(ptr, type) {
   index <- match(type, .LINOP_TYPES) - 1L

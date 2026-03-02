@@ -74,7 +74,7 @@ method(solve_via_data, GLPK_MI_Solver) <- function(x, data, warm_start = FALSE, 
     rhs <- numeric(0)
   }
 
-  ## Variable bounds: (-Inf, Inf) — conic pipeline handles bounds
+  ## Variable bounds: (-Inf, Inf) -- conic pipeline handles bounds
   bounds <- list(
     lower = list(ind = seq_len(nvars), val = rep(-Inf, nvars)),
     upper = list(ind = seq_len(nvars), val = rep(Inf, nvars))

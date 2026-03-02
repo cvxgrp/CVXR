@@ -5,9 +5,9 @@
 ## CVXPY SOURCE: constraints/zero.py
 ## Zero (x == 0) and Equality (x == y) constraints
 
-# ═══════════════════════════════════════════════════════════════════
-# Zero — constraint of the form x == 0
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Zero -- constraint of the form x == 0
+# ===================================================================
 
 #' Create a Zero Constraint
 #'
@@ -35,25 +35,25 @@ Zero <- new_class("Zero", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: zero.py line 51-52
 
 method(expr_name, Zero) <- function(x) {
   sprintf("%s == 0", expr_name(x@args[[1L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 54-59
 ## A zero constraint is DCP if its argument is affine.
 
 method(is_dcp, Zero) <- function(x) is_affine(x@args[[1L]])
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 64-65
 
 method(is_dqcp, Zero) <- function(x) is_dcp(x)
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 67-77
 ## Returns abs(expr.value) or NULL.
 
@@ -68,9 +68,9 @@ method(residual, Zero) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Equality — constraint of the form x == y
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Equality -- constraint of the form x == y
+# ===================================================================
 
 #' Create an Equality Constraint
 #'
@@ -108,28 +108,28 @@ Equality <- new_class("Equality", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── constr_expr override ─────────────────────────────────────────
+# -- constr_expr override -----------------------------------------
 ## Equality's expression is lhs - rhs, not args[[1]].
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: zero.py line 126-127
 
 method(expr_name, Equality) <- function(x) {
   sprintf("%s == %s", expr_name(x@args[[1L]]), expr_name(x@args[[2L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 129-134
 ## An equality constraint is DCP if (lhs - rhs) is affine.
 
 method(is_dcp, Equality) <- function(x) is_affine(x@.expr)
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 144-145
 
 method(is_dqcp, Equality) <- function(x) is_dcp(x)
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: zero.py lines 147-157
 ## Returns abs(expr.value) or NULL where expr = lhs - rhs.
 
@@ -145,7 +145,7 @@ method(residual, Equality) <- function(x) {
   abs(val)
 }
 
-# ── expr_copy: special handling for Equality ─────────────────────
-## Equality(lhs, rhs, constr_id) — default expr_copy works via
+# -- expr_copy: special handling for Equality ---------------------
+## Equality(lhs, rhs, constr_id) -- default expr_copy works via
 ## do.call(Equality, c(list(lhs, rhs), list(id))).
 ## No override needed.

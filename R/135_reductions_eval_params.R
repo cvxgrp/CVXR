@@ -3,14 +3,14 @@
 #####
 
 ## CVXPY SOURCE: reductions/eval_params.py
-## EvalParams — replaces symbolic Parameters with their current Constant values
+## EvalParams -- replaces symbolic Parameters with their current Constant values
 ##
 ## This is the non-DPP path: every Parameter is substituted with a Constant
 ## before the rest of the solving chain runs. The problem is fully
 ## re-canonicalized each time.  When DPP support is added later, EvalParams
 ## becomes the fallback for non-DPP-compliant problems.
 
-# ── Helper: replace Parameters with Constants in an expression tree ──
+# -- Helper: replace Parameters with Constants in an expression tree --
 
 ## Walks the expression tree.  Parameter nodes are replaced with
 ## Constant(value(param)).  Expressions with no parameters are
@@ -49,7 +49,7 @@
   expr_copy(expr, args = new_args)
 }
 
-# ── EvalParams reduction class ───────────────────────────────────────
+# -- EvalParams reduction class ---------------------------------------
 ## CVXPY SOURCE: eval_params.py lines 24-78
 
 EvalParams <- new_class("EvalParams", parent = Reduction, package = "CVXR",
@@ -60,20 +60,20 @@ EvalParams <- new_class("EvalParams", parent = Reduction, package = "CVXR",
   }
 )
 
-## accepts: always TRUE — any problem can have its parameters evaluated
+## accepts: always TRUE -- any problem can have its parameters evaluated
 method(reduction_accepts, EvalParams) <- function(x, problem, ...) TRUE
 
-## apply: substitute Parameters → Constants in objective and constraints
+## apply: substitute Parameters -> Constants in objective and constraints
 ## CVXPY SOURCE: eval_params.py lines 30-73
 method(reduction_apply, EvalParams) <- function(x, problem, ...) {
-  ## ── Objective ──────────────────────────────────────────────────
+  ## -- Objective --------------------------------------------------
   obj <- problem@objective
   if (length(parameters(obj)) > 0L) {
     new_obj_expr <- .replace_params_with_consts(obj@args[[1L]])
     obj <- S7_class(obj)(new_obj_expr)
   }
 
-  ## ── Constraints ────────────────────────────────────────────────
+  ## -- Constraints ------------------------------------------------
   new_constraints <- vector("list", length(problem@constraints))
   for (i in seq_along(problem@constraints)) {
     con <- problem@constraints[[i]]
@@ -104,7 +104,7 @@ method(reduction_apply, EvalParams) <- function(x, problem, ...) {
   list(Problem(obj, new_constraints), list())
 }
 
-## invert: pass-through — parameter evaluation doesn't change the solution
+## invert: pass-through -- parameter evaluation doesn't change the solution
 ## CVXPY SOURCE: eval_params.py lines 75-78
 method(reduction_invert, EvalParams) <- function(x, solution, inverse_data, ...) {
   solution

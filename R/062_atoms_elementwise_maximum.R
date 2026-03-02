@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/maximum.py
-## Maximum — elementwise maximum of 2+ expressions
+## Maximum -- elementwise maximum of 2+ expressions
 
 
 Maximum <- new_class("Maximum", parent = Elementwise, package = "CVXR",
@@ -26,8 +26,8 @@ Maximum <- new_class("Maximum", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: maximum.py — nonneg if ANY arg nonneg, nonpos if ALL args nonpos
+# -- sign ---------------------------------------------------------
+## CVXPY: maximum.py -- nonneg if ANY arg nonneg, nonpos if ALL args nonpos
 method(sign_from_args, Maximum) <- function(x) {
   list(
     is_nonneg = .any_args(x, is_nonneg),
@@ -35,29 +35,29 @@ method(sign_from_args, Maximum) <- function(x) {
   )
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, Maximum) <- function(x) TRUE
 method(is_atom_concave, Maximum) <- function(x) FALSE
 
-# ── monotonicity: always increasing ──────────────────────────────
+# -- monotonicity: always increasing ------------------------------
 method(is_incr, Maximum) <- function(x, idx, ...) TRUE
 method(is_decr, Maximum) <- function(x, idx, ...) FALSE
 
-# ── log-log: convex (CVXPY maximum.py lines 64-72) ──────────────
+# -- log-log: convex (CVXPY maximum.py lines 64-72) --------------
 method(is_atom_log_log_convex, Maximum) <- function(x) TRUE
 method(is_atom_log_log_concave, Maximum) <- function(x) FALSE
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, Maximum) <- function(x) {
   .all_args(x, is_pwl)
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Maximum) <- function(x, values, ...) {
   Reduce(pmax, values)
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Maximum) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Maximum} not yet implemented.")
 }

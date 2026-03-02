@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/flip_objective.py
-## FlipObjective — flip Maximize to Minimize and vice versa
+## FlipObjective -- flip Maximize to Minimize and vice versa
 
 
 FlipObjective <- new_class("FlipObjective", parent = Reduction, package = "CVXR",

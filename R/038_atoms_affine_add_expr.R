@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/add_expr.py
-## AddExpression — the sum of any number of expressions
+## AddExpression -- the sum of any number of expressions
 
 
 AddExpression <- new_class("AddExpression", parent = AffAtom, package = "CVXR",
@@ -67,17 +67,17 @@ AddExpression <- new_class("AddExpression", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: add_expr.py lines 38-41
 
 method(shape_from_args, AddExpression) <- function(x) {
   sum_shapes(lapply(x@args, function(a) a@shape))
 }
 
-# ── sign_from_args ──────────────────────────────────────────────────
+# -- sign_from_args --------------------------------------------------
 ## Inherits from AffAtom: sum_signs(args)
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: add_expr.py lines 69-70 (reduce(op.add, values))
 
 method(numeric_value, AddExpression) <- function(x, values, ...) {
@@ -87,7 +87,7 @@ method(numeric_value, AddExpression) <- function(x, values, ...) {
   Reduce(`+`, promoted)
 }
 
-# ── is_symmetric / is_hermitian ─────────────────────────────────────
+# -- is_symmetric / is_hermitian -------------------------------------
 ## CVXPY SOURCE: add_expr.py lines 82-92
 
 method(is_symmetric, AddExpression) <- function(x) {
@@ -100,7 +100,7 @@ method(is_hermitian, AddExpression) <- function(x) {
     .all_args(x, is_hermitian)
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: add_expr.py lines 119-141
 ## Promotes scalars to match result shape before summing.
 
@@ -113,7 +113,7 @@ method(graph_implementation, AddExpression) <- function(x, arg_objs, shape, data
   list(sum_expr_linop(arg_objs), list())
 }
 
-# ── expr_name ───────────────────────────────────────────────────────
+# -- expr_name -------------------------------------------------------
 ## CVXPY SOURCE: add_expr.py lines 51-55
 
 ## CVXPY SOURCE: add_expr.py lines 72-79
@@ -124,7 +124,7 @@ method(expr_name, AddExpression) <- function(x) {
   paste(vapply(x@args, expr_name, character(1)), collapse = " + ")
 }
 
-# ── expr_copy: special handling for AddExpression ───────────────────
+# -- expr_copy: special handling for AddExpression -------------------
 ## CVXPY SOURCE: add_expr.py lines 96-117
 ## AddExpression constructor expects arg_groups (a list), not individual args.
 

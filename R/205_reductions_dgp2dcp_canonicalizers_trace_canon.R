@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/trace_canon.py
-## DGP canonicalizer for Trace: trace(X) → add_canon(explicit_sum(diag(X)))
+## DGP canonicalizer for Trace: trace(X) -> add_canon(explicit_sum(diag(X)))
 
 .dgp_trace_canon <- function(expr, args) {
   diag_sum <- .dgp_explicit_sum(DiagMat(args[[1L]]))

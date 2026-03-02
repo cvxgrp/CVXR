@@ -3,24 +3,24 @@
 #####
 
 ## CVXPY SOURCE: constraints/cones.py
-## Cone — base class for all conic constraints
+## Cone -- base class for all conic constraints
 ##
 ## A thin subclass of Constraint that provides:
-## - dual_cone() — abstract, must be overridden by subclasses
-## - dual_residual() — computed from dual_cone + residual
+## - dual_cone() -- abstract, must be overridden by subclasses
+## - dual_residual() -- computed from dual_cone + residual
 
 
 Cone <- new_class("Cone", parent = Constraint, package = "CVXR")
 
-# ── dual_cone: abstract on Cone ──────────────────────────────────
-## CVXPY SOURCE: cones.py lines 44-56 — _dual_cone (raises NotImplementedError)
+# -- dual_cone: abstract on Cone ----------------------------------
+## CVXPY SOURCE: cones.py lines 44-56 -- _dual_cone (raises NotImplementedError)
 
 method(dual_cone, Cone) <- function(x, ...) {
   cli_abort("{.fn dual_cone} not implemented for {.cls {class(x)[[1L]]}}.")
 }
 
-# ── dual_residual ────────────────────────────────────────────────
-## CVXPY SOURCE: cones.py lines 58-67 — dual_residual property
+# -- dual_residual ------------------------------------------------
+## CVXPY SOURCE: cones.py lines 58-67 -- dual_residual property
 ## Calls _dual_cone with dual variables, then returns residual of that cone.
 
 method(dual_residual, Cone) <- function(x) {
@@ -28,7 +28,7 @@ method(dual_residual, Cone) <- function(x) {
   residual(dc)
 }
 
-# ── print ────────────────────────────────────────────────────────
+# -- print --------------------------------------------------------
 
 method(print, Cone) <- function(x, ...) {
   cat(expr_name(x), "\n")

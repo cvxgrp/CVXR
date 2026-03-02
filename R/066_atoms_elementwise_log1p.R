@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/log1p.py
-## Log1p — elementwise log(1 + x), extends Log
+## Log1p -- elementwise log(1 + x), extends Log
 
 
 Log1p <- new_class("Log1p", parent = Log, package = "CVXR",
@@ -22,34 +22,34 @@ Log1p <- new_class("Log1p", parent = Log, package = "CVXR",
   }
 )
 
-# ── sign: tracks argument sign (unlike Log which is unknown) ─────
+# -- sign: tracks argument sign (unlike Log which is unknown) -----
 method(sign_from_args, Log1p) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = is_nonpos(x@args[[1L]]))
 }
 
-# ── curvature: concave (inherited from Log) ──────────────────────
+# -- curvature: concave (inherited from Log) ----------------------
 # is_atom_convex, is_atom_concave inherited from Log
 
-# ── monotonicity: increasing (inherited from Log) ────────────────
+# -- monotonicity: increasing (inherited from Log) ----------------
 # is_incr, is_decr inherited from Log
 
-# ── domain: x >= -1 (NOT x >= 0 like Log) ───────────────────────
+# -- domain: x >= -1 (NOT x >= 0 like Log) -----------------------
 method(atom_domain, Log1p) <- function(x) {
   list(x@args[[1L]] >= -1)
 }
 
-# ── numeric: log(1 + x) ─────────────────────────────────────────
+# -- numeric: log(1 + x) -----------------------------------------
 method(numeric_value, Log1p) <- function(x, values, ...) {
   log1p(values[[1L]])
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Log1p) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Log1p} not yet implemented.")
 }
 
-#' Log(1 + x) — elementwise
+#' Log(1 + x) -- elementwise
 #'
 #' @param x An Expression
 #' @returns A Log1p atom

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/mixed_norm.py
-## MixedNorm — L_{p,q} norm: column-wise p-norm, then q-norm
+## MixedNorm -- L_{p,q} norm: column-wise p-norm, then q-norm
 
 #' Mixed norm (\eqn{L_{p,q}} norm): column-wise p-norm, then q-norm
 #'

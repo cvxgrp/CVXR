@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: expressions/expression.py
-## Expression — base class for mathematical expressions
+## Expression -- base class for mathematical expressions
 
 
 Expression <- new_class("Expression", parent = Canonical, package = "CVXR",
@@ -16,7 +16,7 @@ Expression <- new_class("Expression", parent = Canonical, package = "CVXR",
 ## Required before using S7::method() for S4 generics like `[`.
 S4_register(Expression)
 
-# ── Curvature methods (cached) ────────────────────────────────────────
+# -- Curvature methods (cached) ----------------------------------------
 ## CVXPY SOURCE: expression.py line 318-322
 
 ## is_constant(): 0 in shape OR all args constant
@@ -41,7 +41,7 @@ method(is_affine, Expression) <- function(x) {
   result
 }
 
-## is_convex() / is_concave() — abstract on Expression, concrete on Leaf/Atom
+## is_convex() / is_concave() -- abstract on Expression, concrete on Leaf/Atom
 ## Default implementation: FALSE (subclasses override)
 method(is_convex, Expression) <- function(x) FALSE
 method(is_concave, Expression) <- function(x) FALSE
@@ -70,8 +70,8 @@ method(is_dpp, Expression) <- function(x) {
   TRUE
 }
 
-# ── Sign methods (cached) ────────────────────────────────────────────
-## is_nonneg() / is_nonpos() — abstract, defaults FALSE
+# -- Sign methods (cached) --------------------------------------------
+## is_nonneg() / is_nonpos() -- abstract, defaults FALSE
 method(is_nonneg, Expression) <- function(x) FALSE
 method(is_nonpos, Expression) <- function(x) FALSE
 
@@ -91,9 +91,9 @@ method(expr_sign, Expression) <- function(x) {
   expr_sign_str(x)
 }
 
-# ── Matrix property defaults ─────────────────────────────────────────
+# -- Matrix property defaults -----------------------------------------
 
-## is_symmetric: default → scalar only
+## is_symmetric: default -> scalar only
 ## CVXPY SOURCE: expression.py line 464-468
 method(is_symmetric, Expression) <- function(x) expr_is_scalar(x)
 
@@ -110,19 +110,19 @@ method(is_pos, Expression) <- function(x) FALSE
 method(is_complex, Expression) <- function(x) FALSE
 method(is_imag, Expression) <- function(x) FALSE
 
-## is_hermitian: default → real AND symmetric
+## is_hermitian: default -> real AND symmetric
 ## CVXPY SOURCE: expression.py line 431-434
 method(is_hermitian, Expression) <- function(x) is_real(x) && is_symmetric(x)
 
-## is_skew_symmetric: default → FALSE
+## is_skew_symmetric: default -> FALSE
 ## CVXPY SOURCE: expression.py line 470-473
 method(is_skew_symmetric, Expression) <- function(x) FALSE
 
-## is_real: default → not complex
+## is_real: default -> not complex
 ## CVXPY SOURCE: expression.py
 method(is_real, Expression) <- function(x) !is_complex(x)
 
-# ── Conjugate-transpose (.H in CVXPY) ──────────────────────────────
+# -- Conjugate-transpose (.H in CVXPY) ------------------------------
 ## CVXPY SOURCE: expression.py lines 604-611
 ## In Python: expr.H property. In R: expr_H(x) function.
 ## For real expressions, this is just t(x).
@@ -162,7 +162,7 @@ method(is_qpwa, Expression) <- function(x) is_quadratic(x) || is_pwl(x)
 
 ## is_log_log_constant: elementwise strictly positive constant
 ## CVXPY SOURCE: expression.py lines 362-371
-## NOT a generic — same logic for all Expression types.
+## NOT a generic -- same logic for all Expression types.
 is_log_log_constant <- function(x) {
   if (!is_constant(x)) return(FALSE)
   ## Constant and Parameter: use is_pos() (attribute-based)
@@ -188,7 +188,7 @@ method(is_dgp, Expression) <- function(x) {
   is_log_log_convex(x) || is_log_log_concave(x)
 }
 
-# ── value / grad / domain — abstract defaults ────────────────────────
+# -- value / grad / domain -- abstract defaults ------------------------
 
 method(value, Expression) <- function(x) {
   cli_abort("value() not implemented for this expression type.")
@@ -200,7 +200,7 @@ method(grad, Expression) <- function(x) {
 
 method(domain, Expression) <- function(x) list()
 
-# ── expr_name default ────────────────────────────────────────────────
+# -- expr_name default ------------------------------------------------
 
 method(expr_name, Expression) <- function(x) {
   sprintf("Expression(%s, %s, (%s))",
@@ -208,7 +208,7 @@ method(expr_name, Expression) <- function(x) {
           paste(x@shape, collapse = ", "))
 }
 
-# ── print method ─────────────────────────────────────────────────────
+# -- print method -----------------------------------------------------
 
 method(print, Expression) <- function(x, ...) {
   cat(sprintf("%s\n", expr_name(x)))

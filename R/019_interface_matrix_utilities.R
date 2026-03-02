@@ -5,13 +5,13 @@
 ## CVXPY SOURCE: interface/matrix_utilities.py
 ## R-side matrix interface utilities
 
-# ── Convert values to canonical R matrix form ─────────────────────────
+# -- Convert values to canonical R matrix form -------------------------
 ## CVXPY equivalent: intf.convert() / DEFAULT_INTF.const_to_matrix()
 
 #' Convert a value to a numeric matrix or sparse matrix
 #'
 #' Normalizes R values so the rest of CVXR can assume a consistent type.
-#' Scalars → 1x1 matrix, vectors → column matrix, logical → numeric.
+#' Scalars -> 1x1 matrix, vectors -> column matrix, logical -> numeric.
 #' Sparse matrices are kept sparse.
 #'
 #' @param val A numeric scalar, vector, matrix, or Matrix object
@@ -43,7 +43,7 @@ intf_convert <- function(val) {
     if (length(val) == 1L) {
       val <- matrix(val, 1L, 1L)
     } else {
-      ## Vector → column matrix (Fortran-order, matching CVXPY)
+      ## Vector -> column matrix (Fortran-order, matching CVXPY)
       val <- matrix(val, ncol = 1L)
     }
   }
@@ -59,7 +59,7 @@ intf_convert <- function(val) {
   cli_abort("Cannot convert object of class {.cls {class(val)}} to a CVXR matrix.")
 }
 
-# ── Shape of a value ──────────────────────────────────────────────────
+# -- Shape of a value --------------------------------------------------
 ## CVXPY equivalent: intf.shape()
 
 #' Get the shape of a value as an integer vector c(nrow, ncol)
@@ -77,7 +77,7 @@ intf_shape <- function(val) {
   c(length(val), 1L)
 }
 
-# ── Sign of a value ──────────────────────────────────────────────────
+# -- Sign of a value --------------------------------------------------
 ## CVXPY equivalent: intf.sign()
 
 #' Determine the sign of a numeric value
@@ -95,7 +95,7 @@ intf_sign <- function(val) {
     return(list(is_nonneg = FALSE, is_nonpos = FALSE))
   }
   if (inherits(val, "sparseMatrix")) {
-    ## Pattern matrices (ngCMatrix etc.) have no @x slot — treat as all zeros
+    ## Pattern matrices (ngCMatrix etc.) have no @x slot -- treat as all zeros
     if (!.hasSlot(val, "x") || length(val@x) == 0L) {
       return(list(is_nonneg = TRUE, is_nonpos = TRUE))
     }
@@ -103,7 +103,7 @@ intf_sign <- function(val) {
   } else {
     vals <- as.numeric(val)
   }
-  ## NaN → treat as unknown sign (neither nonneg nor nonpos)
+  ## NaN -> treat as unknown sign (neither nonneg nor nonpos)
   if (anyNA(vals)) {
     return(list(is_nonneg = FALSE, is_nonpos = FALSE))
   }
@@ -112,7 +112,7 @@ intf_sign <- function(val) {
   list(is_nonneg = (mn >= 0), is_nonpos = (mx <= 0))
 }
 
-# ── Is sparse? ────────────────────────────────────────────────────────
+# -- Is sparse? --------------------------------------------------------
 ## CVXPY equivalent: intf.is_sparse()
 
 #' Check if a value is a sparse matrix
@@ -123,7 +123,7 @@ intf_is_sparse <- function(val) {
   inherits(val, "sparseMatrix")
 }
 
-# ── Hermitian / symmetric check ───────────────────────────────────────
+# -- Hermitian / symmetric check ---------------------------------------
 ## CVXPY equivalent: intf.is_hermitian()
 
 #' Check if a matrix is symmetric (and Hermitian for real case)
@@ -155,7 +155,7 @@ intf_is_hermitian <- function(val) {
   list(is_symmetric = is_symm, is_hermitian = is_symm)
 }
 
-# ── Skew-symmetric check ─────────────────────────────────────────────
+# -- Skew-symmetric check ---------------------------------------------
 ## CVXPY SOURCE: interface/matrix_utilities.py is_skew_symmetric()
 
 #' Check if a matrix is skew-symmetric (A + A^T == 0)
@@ -176,7 +176,7 @@ intf_is_skew_symmetric <- function(val) {
   }
 }
 
-# ── PSD check via eigenvalues ─────────────────────────────────────────
+# -- PSD check via eigenvalues -----------------------------------------
 ## CVXPY equivalent: utilities/linalg.py::is_psd_within_tol
 
 #' Check if a symmetric matrix is PSD within tolerance

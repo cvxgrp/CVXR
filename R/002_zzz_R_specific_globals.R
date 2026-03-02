@@ -12,18 +12,18 @@
 .cvxr_env$next_id <- 1L
 .cvxr_env$excluded_solvers <- character(0)
 
-## ── Class name cache ────────────────────────────────────────────────
+## -- Class name cache ------------------------------------------------
 ## S7 class names are "CVXR::ClassName".  Many hot paths need just "ClassName"
 ## for canon-method lookup, constraint grouping, format_constraints dispatch, etc.
 ## Instead of calling sub("^.*::", "", class(x)[[1L]]) on every access (regex),
-## we cache the mapping.  ~100 distinct classes → tiny env, O(1) amortized.
+## we cache the mapping.  ~100 distinct classes -> tiny env, O(1) amortized.
 .class_name_cache <- new.env(hash = TRUE, parent = emptyenv())
 
 #' Get the short (unqualified) class name of an S7 object
 #'
 #' Strips the "CVXR::" package prefix from S7 class names, with caching.
 #' @param x An S7 object, or a character string (full class name)
-#' @return Character(1) — the bare class name
+#' @return Character(1) -- the bare class name
 #' @noRd
 short_class_name <- function(x) {
   if (is.character(x)) {
@@ -95,7 +95,7 @@ reset_expr_id <- function() {
   registerS3method("Complex", "CVXR::Expression", .cvxr_Complex_handler)
 }
 
-## S3 solve method for Problem — dispatches to psolve(), returns cvxr_result
+## S3 solve method for Problem -- dispatches to psolve(), returns cvxr_result
 .cvxr_solve_Problem <- function(a, b, ...) {
   cli_inform(
     c("i" = "In a future CVXR release, {.fn solve} will return the optimal value directly (like {.fn psolve}).",

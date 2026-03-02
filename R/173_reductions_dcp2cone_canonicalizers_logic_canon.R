@@ -6,13 +6,13 @@
 ## Canonicalizers for boolean logic atoms: Not, And, Or, Xor
 
 
-# ── not_canon ─────────────────────────────────────────────────────
+# -- not_canon -----------------------------------------------------
 # Not(x) -> 1 - x  (pure substitution, no new constraints)
 not_canon <- function(expr, args, solver_context = NULL) {
   list(1 - args[[1L]], list())
 }
 
-# ── and_canon ─────────────────────────────────────────────────────
+# -- and_canon -----------------------------------------------------
 # And(x1, ..., xn) -> y where y <= xi for all i, y >= sum(xi) - (n-1)
 and_canon <- function(expr, args, solver_context = NULL) {
   y <- Variable(shape = expr@shape, boolean = TRUE)
@@ -23,7 +23,7 @@ and_canon <- function(expr, args, solver_context = NULL) {
   list(y, constraints)
 }
 
-# ── or_canon ──────────────────────────────────────────────────────
+# -- or_canon ------------------------------------------------------
 # Or(x1, ..., xn) -> y where y >= xi for all i, y <= sum(xi)
 or_canon <- function(expr, args, solver_context = NULL) {
   y <- Variable(shape = expr@shape, boolean = TRUE)
@@ -34,7 +34,7 @@ or_canon <- function(expr, args, solver_context = NULL) {
   list(y, constraints)
 }
 
-# ── xor_canon ─────────────────────────────────────────────────────
+# -- xor_canon -----------------------------------------------------
 # Xor(x1, ..., xn) -> y (parity: 1 iff odd number of args are 1)
 # 2-arg: y <= x1+x2, y >= x1-x2, y >= x2-x1, y <= 2-x1-x2
 # n-arg: sum(xi) == y + 2*k, k >= 0, k <= n %/% 2
@@ -61,7 +61,7 @@ xor_canon <- function(expr, args, solver_context = NULL) {
   list(y, constraints)
 }
 
-# ── Register S7 method dispatch ─────────────────────────────────────
+# -- Register S7 method dispatch -------------------------------------
 method(dcp_canonicalize, Not) <- not_canon
 method(has_dcp_canon, Not) <- function(expr) TRUE
 method(dcp_canonicalize, And) <- and_canon

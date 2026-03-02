@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/quad_over_lin.py
-## QuadOverLin — sum(x^2) / y, convex, domain y > 0
+## QuadOverLin -- sum(x^2) / y, convex, domain y > 0
 ## CVXPY: inherits AxisAtom (supports axis/keepdims reduction)
 
 
@@ -15,7 +15,7 @@ QuadOverLin <- new_class("QuadOverLin", parent = AxisAtom, package = "CVXR",
     if (!is.null(axis)) axis <- as.integer(axis)
     keepdims <- as.logical(keepdims)
 
-    ## Shape: reduce x along axis, then divide by scalar y → same reduced shape
+    ## Shape: reduce x along axis, then divide by scalar y -> same reduced shape
     if (is.null(axis)) {
       shape <- c(1L, 1L)
     } else {
@@ -35,14 +35,14 @@ QuadOverLin <- new_class("QuadOverLin", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── validate: y must be scalar ───────────────────────────────────
+# -- validate: y must be scalar -----------------------------------
 ## CVXPY: quad_over_lin.py lines 144-152
 method(validate_arguments, QuadOverLin) <- function(x) {
   y <- x@args[[2L]]
   if (!all(y@shape == c(1L, 1L))) {
     cli_abort("{.arg y} must be scalar in {.cls QuadOverLin}.")
   }
-  ## CVXPY: quad_over_lin.py line 149-150 — second arg cannot be complex
+  ## CVXPY: quad_over_lin.py line 149-150 -- second arg cannot be complex
   if (is_complex(y)) {
     cli_abort("The second argument to {.cls QuadOverLin} cannot be complex.")
   }
@@ -53,22 +53,22 @@ method(validate_arguments, QuadOverLin) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: Inherits AxisAtom.shape_from_args → reduce first arg along axis
+# -- shape --------------------------------------------------------
+## CVXPY: Inherits AxisAtom.shape_from_args -> reduce first arg along axis
 method(shape_from_args, QuadOverLin) <- function(x) {
   .axis_shape(x@args[[1L]]@shape, x@axis, x@keepdims)
 }
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, QuadOverLin) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, QuadOverLin) <- function(x) TRUE
 method(is_atom_concave, QuadOverLin) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 ## CVXPY: quad_over_lin.py lines 134-143
 ## Increasing in x when x >= 0, decreasing when x <= 0
 ## Decreasing in y (always)
@@ -79,16 +79,16 @@ method(is_decr, QuadOverLin) <- function(x, idx, ...) {
   if (idx == 1L) is_nonpos(x@args[[1L]]) else TRUE
 }
 
-# ── log-log: convex (CVXPY quad_over_lin.py lines 124-132) ──────
+# -- log-log: convex (CVXPY quad_over_lin.py lines 124-132) ------
 method(is_atom_log_log_convex, QuadOverLin) <- function(x) TRUE
 method(is_atom_log_log_concave, QuadOverLin) <- function(x) FALSE
 
-# ── domain: y >= 0 ───────────────────────────────────────────────
+# -- domain: y >= 0 -----------------------------------------------
 method(atom_domain, QuadOverLin) <- function(x) {
   list(x@args[[2L]] >= 0)
 }
 
-# ── quadratic analysis ───────────────────────────────────────────
+# -- quadratic analysis -------------------------------------------
 ## CVXPY: quad_over_lin.py lines 154-167
 method(is_quadratic, QuadOverLin) <- function(x) {
   is_affine(x@args[[1L]]) && is_constant(x@args[[2L]])
@@ -102,12 +102,12 @@ method(is_qpwa, QuadOverLin) <- function(x) {
   is_pwl(x@args[[1L]]) && is_constant(x@args[[2L]])
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, QuadOverLin) <- function(x) {
   list(x@axis, x@keepdims)
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: quad_over_lin.py lines 51-61
 method(numeric_value, QuadOverLin) <- function(x, values, ...) {
   xv <- values[[1L]]
@@ -125,7 +125,7 @@ method(numeric_value, QuadOverLin) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, QuadOverLin) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls QuadOverLin} not yet implemented.")
 }

@@ -3,13 +3,13 @@
 #####
 
 ## CVXPY SOURCE: reductions/cvx_attr2constr.py
-## CvxAttr2Constr — expand convex variable attributes into constraints
+## CvxAttr2Constr -- expand convex variable attributes into constraints
 ##
 ## Phase 5b scope: handle nonneg, nonpos, PSD, NSD, symmetric.
 ## Deferred: diag, sparsity, bounds.
 
 
-# ── upper_tri_to_full: sparse matrix to fill symmetric from upper-tri ──
+# -- upper_tri_to_full: sparse matrix to fill symmetric from upper-tri --
 ## CVXPY SOURCE: atoms/affine/upper_tri.py lines 147-176
 ## Returns an (n^2 x n*(n+1)/2) sparse matrix A such that
 ## (A %*% v) reshaped as (n, n) is symmetric.
@@ -40,7 +40,7 @@ upper_tri_to_full <- function(n) {
 }
 
 
-# ── CvxAttr2Constr reduction class ───────────────────────────────
+# -- CvxAttr2Constr reduction class -------------------------------
 ## CVXPY SOURCE: cvx_attr2constr.py lines 105-215
 
 CvxAttr2Constr <- new_class("CvxAttr2Constr", parent = Reduction,
@@ -138,7 +138,7 @@ method(reduction_apply, CvxAttr2Constr) <- function(x, problem, ...) {
       assign(as.character(var@id), obj, envir = id2new_obj)
       var_constrs <- list()
     } else {
-      ## No attribute to reduce — keep the variable as-is
+      ## No attribute to reduce -- keep the variable as-is
       obj <- var
       assign(vid, var, envir = id2new_var)
       assign(as.character(var@id), var, envir = id2new_obj)
@@ -146,7 +146,7 @@ method(reduction_apply, CvxAttr2Constr) <- function(x, problem, ...) {
     }
 
     ## Add nonneg/nonpos/bounds constraints independently
-    ## CVXPY SOURCE: leaf.py _bound_domain() — each is a separate `if`
+    ## CVXPY SOURCE: leaf.py _bound_domain() -- each is a separate `if`
     obj <- get(as.character(var@id), envir = id2new_obj)
     if (has_nonneg) {
       var_constrs <- c(var_constrs, list(NonNeg(obj)))

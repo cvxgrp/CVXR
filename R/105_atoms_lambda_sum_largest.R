@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/lambda_sum_largest.py
-## LambdaSumLargest — sum of the k largest eigenvalues of a symmetric matrix
+## LambdaSumLargest -- sum of the k largest eigenvalues of a symmetric matrix
 ##
 ## Inherits from LambdaMax conceptually (in CVXPY).
 ## In S7, no parent delegation, so we replicate structure.
@@ -34,7 +34,7 @@ LambdaSumLargest <- new_class("LambdaSumLargest", parent = Atom, package = "CVXR
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: lambda_sum_largest.py lines 33-40
 method(validate_arguments, LambdaSumLargest) <- function(x) {
   A <- x@args[[1L]]
@@ -47,25 +47,25 @@ method(validate_arguments, LambdaSumLargest) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
+# -- shape --------------------------------------------------------
 method(shape_from_args, LambdaSumLargest) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
+# -- sign ---------------------------------------------------------
 ## Same as lambda_max: (False, False)
 method(sign_from_args, LambdaSumLargest) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
+# -- curvature ----------------------------------------------------
 ## Convex (like lambda_max)
 method(is_atom_convex, LambdaSumLargest) <- function(x) TRUE
 method(is_atom_concave, LambdaSumLargest) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, LambdaSumLargest) <- function(x, idx, ...) FALSE
 method(is_decr, LambdaSumLargest) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: lambda_sum_largest.py lines 42-48
 method(numeric_value, LambdaSumLargest) <- function(x, values, ...) {
   A <- values[[1L]]
@@ -74,18 +74,18 @@ method(numeric_value, LambdaSumLargest) <- function(x, values, ...) {
   matrix(sum(evals[seq_len(x@k)]), 1L, 1L)
 }
 
-# ── get_data ─────────────────────────────────────────────────────
-## CVXPY: lambda_sum_largest.py lines 50-52 — returns [self.k]
+# -- get_data -----------------------------------------------------
+## CVXPY: lambda_sum_largest.py lines 50-52 -- returns [self.k]
 method(get_data, LambdaSumLargest) <- function(x) list(x@k)
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, LambdaSumLargest) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls LambdaSumLargest} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience functions
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Sum of largest k eigenvalues
 #' @param A A square matrix expression

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/geo_mean_canon.py
-## DGP canonicalizer for GeoMean: geo_mean(x, p) → (1/sum(p)) * sum(p_i * x_i)
+## DGP canonicalizer for GeoMean: geo_mean(x, p) -> (1/sum(p)) * sum(p_i * x_i)
 ## In log-space, geometric mean is affine (weighted average of logs).
 
 .dgp_geo_mean_canon <- function(expr, args) {

@@ -8,13 +8,13 @@
 ## HiGHS solves: minimize 0.5 x'Qx + L'x  s.t. lhs <= Ax <= rhs,
 ##               lower <= x <= upper
 ## Accepts ONLY Zero (equality) and NonNeg (inequality) constraints.
-## Inherits from QpSolver — uses QpSolver.apply() for sign-correct data.
+## Inherits from QpSolver -- uses QpSolver.apply() for sign-correct data.
 ##
 ## Key differences from OSQP:
 ##   - Q matrix: full symmetric dgCMatrix (NOT upper-triangle)
 ##   - Dual variables: NEGATE ALL row_duals (matching CVXPY highs_qpif.py line 97)
 ##   - Status codes: integer codes from R highs (not string enum names)
-##   - NOT MIP capable in QP path (MIQP not supported — CVXPY highs_qpif.py line 37)
+##   - NOT MIP capable in QP path (MIQP not supported -- CVXPY highs_qpif.py line 37)
 
 
 # -- HiGHS status map ---------------------------------------------------------
@@ -52,7 +52,7 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
   L_vec <- data[["q"]]
   nvars <- length(L_vec)
 
-  ## Q matrix (quadratic objective) — full symmetric dgCMatrix for HiGHS
+  ## Q matrix (quadratic objective) -- full symmetric dgCMatrix for HiGHS
   ## DIFFERS from OSQP (upper-triangle) and Clarabel/SCS (dsCMatrix)
   if (!is.null(data[[SD_P]])) {
     Q <- methods::as(methods::as(data[[SD_P]], "generalMatrix"), "CsparseMatrix")
@@ -94,7 +94,7 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
     A <- methods::as(A, "dgCMatrix")
   }
 
-  ## Variable bounds: default to (-Inf, Inf) — no MIP handling in QP path
+  ## Variable bounds: default to (-Inf, Inf) -- no MIP handling in QP path
   lower <- rep(-Inf, nvars)
   upper <- rep(Inf, nvars)
 
@@ -132,7 +132,7 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
 
 # -- reduction_invert ----------------------------------------------------------
 ## CVXPY SOURCE: highs_qpif.py lines 76-120
-## Dual sign: negate ALL row_duals — matching CVXPY highs_qpif.py line 97.
+## Dual sign: negate ALL row_duals -- matching CVXPY highs_qpif.py line 97.
 
 method(reduction_invert, HiGHS_QP_Solver) <- function(x, solution, inverse_data, ...) {
   attr_list <- list()

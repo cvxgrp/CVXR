@@ -3,12 +3,12 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/ceil.py
-## Ceil and Floor — elementwise ceiling and floor atoms
+## Ceil and Floor -- elementwise ceiling and floor atoms
 ## These are DQCP-only (quasiconvex AND quasiconcave, but NOT convex or concave)
 
-# ═══════════════════════════════════════════════════════════════════
-# Ceil — elementwise ceiling
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Ceil -- elementwise ceiling
+# ===================================================================
 ## CVXPY SOURCE: ceil.py class ceil(Elementwise)
 
 Ceil <- new_class("Ceil", parent = Elementwise, package = "CVXR",
@@ -28,7 +28,7 @@ Ceil <- new_class("Ceil", parent = Elementwise, package = "CVXR",
 )
 
 ## numeric: ceiling with tolerance rounding
-## CVXPY SOURCE: ceil.py numeric — np.ceil(np.around(values[0], decimals))
+## CVXPY SOURCE: ceil.py numeric -- np.ceil(np.around(values[0], decimals))
 method(numeric_value, Ceil) <- function(x, values, ...) {
   decimals <- as.integer(abs(log10(ATOM_EVAL_TOL)))
   ceiling(round(values[[1L]], digits = decimals))
@@ -74,9 +74,9 @@ method(grad, Ceil) <- function(x) {
 ## get_data: no extra data
 method(get_data, Ceil) <- function(x) NULL
 
-# ═══════════════════════════════════════════════════════════════════
-# Floor — elementwise floor
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Floor -- elementwise floor
+# ===================================================================
 ## CVXPY SOURCE: ceil.py class floor(Elementwise)
 
 Floor <- new_class("Floor", parent = Elementwise, package = "CVXR",
@@ -140,7 +140,7 @@ method(grad, Floor) <- function(x) {
 ## get_data: no extra data
 method(get_data, Floor) <- function(x) NULL
 
-# ── User-facing constructor functions ─────────────────────────────
+# -- User-facing constructor functions -----------------------------
 
 #' Elementwise Ceiling
 #'

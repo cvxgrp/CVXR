@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/inv_prod.py
-## InvProd — reciprocal of product of entries
+## InvProd -- reciprocal of product of entries
 
 #' Reciprocal of product of entries
 #'

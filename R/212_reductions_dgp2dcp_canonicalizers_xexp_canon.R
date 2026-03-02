@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/xexp_canon.py
-## DGP canonicalizer for Xexp: x*exp(x) → log(x) + x = x + exp(x)
+## DGP canonicalizer for Xexp: x*exp(x) -> log(x) + x = x + exp(x)
 ## In log-space: log(x * exp(x)) = log(x) + x
 ## Args are already in log-space (so args[[1]] = log(x)).
 ## Result: args[[1]] + exp(args[[1]])  (matching CVXPY exactly)

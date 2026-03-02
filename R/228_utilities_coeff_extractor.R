@@ -3,13 +3,13 @@
 #####
 
 ## CVXPY SOURCE: utilities/coeff_extractor.py
-## CoeffExtractor — non-parametric coefficient extraction
+## CoeffExtractor -- non-parametric coefficient extraction
 ##
 ## Extracts A matrix and b vector from affine expressions via C++ canonInterface.
 ## Non-parametric simplification: no parameter tensor, just direct A and b.
 
 
-# ── CoeffExtractor class ──────────────────────────────────────────
+# -- CoeffExtractor class ------------------------------------------
 ## CVXPY SOURCE: coeff_extractor.py lines 36-78
 
 CoeffExtractor <- new_class("CoeffExtractor", package = "CVXR",
@@ -33,7 +33,7 @@ CoeffExtractor <- new_class("CoeffExtractor", package = "CVXR",
   }
 )
 
-# ── coeff_affine: extract A, b from a list of affine expressions ──
+# -- coeff_affine: extract A, b from a list of affine expressions --
 ## Returns list(A, b) where:
 ##   A is a sparse Matrix (num_rows x x_length)
 ##   b is a numeric vector (length num_rows)
@@ -84,7 +84,7 @@ coeff_affine <- function(extractor, expr_list) {
   list(A = A, b = const_vec)
 }
 
-# ── coeff_affine_tensor: extract tensor from affine expressions ──
+# -- coeff_affine_tensor: extract tensor from affine expressions --
 ## CVXPY SOURCE: coeff_extractor.py lines 47-78
 ## Returns a sparse tensor matrix (constr*(var+1), param_size_plus_one).
 ## Used by DPP path: parameters are NOT substituted, so the tensor
@@ -96,20 +96,20 @@ coeff_affine_tensor <- function(extractor, expr_list) {
   ## Get LinOp trees from canonical_form
   linop_list <- lapply(expr_list, function(e) canonical_form(e)[[1L]])
 
-  ## Call C++ via canonInterface — returns sparse tensor matrix
+  ## Call C++ via canonInterface -- returns sparse tensor matrix
   get_problem_matrix_tensor(linop_list, extractor@id_to_col,
                              var_length = extractor@x_length,
                              param_to_size = extractor@param_to_size,
                              param_id_map = extractor@param_id_map)
 }
 
-# ── coeff_quad_form: extract P and q from a quadratic expression ──
+# -- coeff_quad_form: extract P and q from a quadratic expression --
 ## CVXPY SOURCE: coeff_extractor.py lines 284-339
 ## Non-parametric simplification of extract_quadratic_coeffs.
 ##
 ## Returns list(P, q) where:
-##   P is a sparse Matrix (x_length x x_length)  — already 2x scaled
-##   q is a numeric vector (length x_length)       — linear term
+##   P is a sparse Matrix (x_length x x_length)  -- already 2x scaled
+##   q is a numeric vector (length x_length)       -- linear term
 ## Solver minimizes 0.5*x'*P*x + q'*x, so P = 2 * (extracted coefficients).
 
 coeff_quad_form <- function(extractor, expr) {
@@ -213,7 +213,7 @@ coeff_quad_form <- function(extractor, expr) {
       if (nrow(P_coo) > 0L) {
         ## Scalar coefficient (most common case: sum of scalar quad forms)
         scalar_coeff <- if (sz == 1L) c_part[1L] else 1.0
-        ## Shift to global indices — collect chunks
+        ## Shift to global indices -- collect chunks
         triplet_i_chunks[[vi]] <- P_coo$i + orig_offset  # already 1-based
         triplet_j_chunks[[vi]] <- P_coo$j + orig_offset
         triplet_x_chunks[[vi]] <- P_coo$x * scalar_coeff
@@ -247,7 +247,7 @@ coeff_quad_form <- function(extractor, expr) {
     )
   }
 
-  ## Step 7: Factor of 2 — solver minimizes 0.5*x'Px + q'x
+  ## Step 7: Factor of 2 -- solver minimizes 0.5*x'Px + q'x
   ## Our extracted P represents x'Px (no 0.5), so multiply by 2.
   P_mat <- 2 * P_mat
 

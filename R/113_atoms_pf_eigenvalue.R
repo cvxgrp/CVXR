@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/pf_eigenvalue.py
-## PfEigenvalue — Perron-Frobenius eigenvalue of a positive matrix
+## PfEigenvalue -- Perron-Frobenius eigenvalue of a positive matrix
 ## Scalar output, log-log convex (T/F), sign always positive.
 
 
@@ -24,7 +24,7 @@ PfEigenvalue <- new_class("PfEigenvalue", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ───────────────────────────────────────────────────────
+# -- validate -------------------------------------------------------
 method(validate_arguments, PfEigenvalue) <- function(x) {
   X <- x@args[[1L]]
   if (length(X@shape) != 2L || X@shape[1L] != X@shape[2L]) {
@@ -33,36 +33,36 @@ method(validate_arguments, PfEigenvalue) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape: scalar ──────────────────────────────────────────────────
+# -- shape: scalar --------------------------------------------------
 method(shape_from_args, PfEigenvalue) <- function(x) c(1L, 1L)
 
-# ── sign: always positive ─────────────────────────────────────────
+# -- sign: always positive -----------------------------------------
 method(sign_from_args, PfEigenvalue) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, PfEigenvalue) <- function(x) FALSE
 method(is_atom_concave, PfEigenvalue) <- function(x) FALSE
 
-# ── log-log curvature: convex (T/F) ───────────────────────────────
+# -- log-log curvature: convex (T/F) -------------------------------
 method(is_atom_log_log_convex, PfEigenvalue) <- function(x) TRUE
 method(is_atom_log_log_concave, PfEigenvalue) <- function(x) FALSE
 
-# ── monotonicity: increasing ──────────────────────────────────────
+# -- monotonicity: increasing --------------------------------------
 method(is_incr, PfEigenvalue) <- function(x, idx, ...) TRUE
 method(is_decr, PfEigenvalue) <- function(x, idx, ...) FALSE
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, PfEigenvalue) <- function(x, values, ...) {
   eigs <- eigen(values[[1L]], only.values = TRUE)$values
   matrix(max(abs(eigs)), 1L, 1L)
 }
 
-# ── get_data ───────────────────────────────────────────────────────
+# -- get_data -------------------------------------------------------
 method(get_data, PfEigenvalue) <- function(x) list()
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, PfEigenvalue) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls PfEigenvalue} not yet implemented.")
 }

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/partial_transpose.py
-## partial_transpose — transpose a subsystem in a tensor product expression
+## partial_transpose -- transpose a subsystem in a tensor product expression
 ##
 ## This is a factory function (not an Atom class). It constructs an Expression
 ## by summing (I kron |i><j| kron I) X (I kron |i><j| kron I) over all i,j
@@ -67,6 +67,6 @@ partial_transpose <- function(expr, dims, axis = 1L) {
       a <- kronecker(a, eye_k)
     }
   }
-  ## a @ expr @ a — same matrix on both sides
+  ## a @ expr @ a -- same matrix on both sides
   Constant(a) %*% expr %*% Constant(a)
 }

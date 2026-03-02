@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/solvers/constant_solver.py
-## ConstantSolver — handles problems with zero variables
+## ConstantSolver -- handles problems with zero variables
 ##
 ## When a problem has no variables, we evaluate constraints directly
 ## without going through the full reduction pipeline.

@@ -5,11 +5,11 @@
 ## CVXPY SOURCE: utilities/replace_quad_forms.py
 ## Replace SymbolicQuadForm nodes with dummy Variables for P extraction.
 ##
-## S7 objects are immutable — cannot mutate expr@args directly.
+## S7 objects are immutable -- cannot mutate expr@args directly.
 ## Instead, we rebuild the tree bottom-up via expr_copy.
 
 
-# ── replace_quad_forms ──────────────────────────────────────────
+# -- replace_quad_forms ------------------------------------------
 ## Walk the expression tree. Replace any SymbolicQuadForm (or QuadForm)
 ## child with a dummy Variable of the same shape and ID.
 ## Returns list(new_expr, quad_forms) where quad_forms is a named list
@@ -48,7 +48,7 @@ replace_quad_forms <- function(expr, quad_forms = list()) {
   list(expr = new_expr, quad_forms = quad_forms)
 }
 
-# ── restore_quad_forms ──────────────────────────────────────────
+# -- restore_quad_forms ------------------------------------------
 ## Restore original SymbolicQuadForm nodes in the expression tree.
 ## Returns the restored expression (again, bottom-up reconstruction).
 

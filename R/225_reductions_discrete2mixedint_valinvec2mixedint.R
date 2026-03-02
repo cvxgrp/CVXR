@@ -3,14 +3,14 @@
 #####
 
 ## CVXPY SOURCE: reductions/discrete2mixedint/valinvec2mixedint.py
-## Valinvec2mixedint — canonicalize FiniteSet constraints to MIP form
+## Valinvec2mixedint -- canonicalize FiniteSet constraints to MIP form
 ##
 ## Two formulations:
 ## 1. Inequality form: sorted differences + binary ordering variables
 ## 2. Equality form (default): one-hot binary indicators (MOSEK cookbook)
 
 
-# ── Inequality formulation ──────────────────────────────────────
+# -- Inequality formulation --------------------------------------
 ## CVXPY SOURCE: valinvec2mixedint.py lines 27-41
 .exprval_in_vec_ineq <- function(expr_flat, vec_val) {
   n_entries <- expr_size(expr_flat)
@@ -19,7 +19,7 @@
   d <- diff(vec_sorted)
   len_d <- length(d)
 
-  ## repeated_d: (n_entries, len_d) matrix — each row is d
+  ## repeated_d: (n_entries, len_d) matrix -- each row is d
   repeated_d <- matrix(rep(d, each = n_entries), nrow = n_entries, ncol = len_d)
   z <- Variable(c(n_entries, len_d), boolean = TRUE)
 
@@ -36,14 +36,14 @@
   list(main_con = main_con, aux_cons = aux_cons)
 }
 
-# ── Equality formulation ────────────────────────────────────────
+# -- Equality formulation ----------------------------------------
 ## CVXPY SOURCE: valinvec2mixedint.py lines 44-54
 ## Reference: https://docs.mosek.com/modeling-cookbook/mio.html#fixed-set-of-values
 .exprval_in_vec_eq <- function(expr_flat, vec_val) {
   n_entries <- expr_size(expr_flat)
   len_vec <- length(vec_val)
 
-  ## repeated_vec: (n_entries, len_vec) matrix — each row is vec_val
+  ## repeated_vec: (n_entries, len_vec) matrix -- each row is vec_val
   repeated_vec <- matrix(rep(vec_val, each = n_entries), nrow = n_entries, ncol = len_vec)
   z <- Variable(c(n_entries, len_vec), boolean = TRUE)
 
@@ -56,7 +56,7 @@
   list(main_con = main_con, aux_cons = aux_cons)
 }
 
-# ── Canonicalizer ───────────────────────────────────────────────
+# -- Canonicalizer -----------------------------------------------
 ## CVXPY SOURCE: valinvec2mixedint.py lines 64-73
 .finite_set_canon <- function(expr, args, ...) {
   vec_val <- as.numeric(value(expr@vec))
@@ -78,7 +78,7 @@
   list(result$main_con, result$aux_cons)
 }
 
-# ── Valinvec2mixedint class ─────────────────────────────────────
+# -- Valinvec2mixedint class -------------------------------------
 ## CVXPY SOURCE: valinvec2mixedint.py lines 76-87
 
 ## Register FiniteSet canonicalizer via S7 dispatch.

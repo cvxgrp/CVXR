@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dcp2cone/dcp2cone.py
-## Dcp2Cone — reduce DCP problems to conic form
+## Dcp2Cone -- reduce DCP problems to conic form
 ##
 ## Uses S7 generic dispatch (dcp_canonicalize, quad_canonicalize, has_dcp_canon)
 ## for expression-level canonicalization. When quad_obj=TRUE, also tries
@@ -11,15 +11,15 @@
 ## This is NOT the same as graph_implementation (which is LinOp-level).
 
 
-## ── S7 generics for canonicalization dispatch ──────────────────────
+## -- S7 generics for canonicalization dispatch ----------------------
 ## These replace the old environment-based CANON_METHODS / QUAD_CANON_METHODS
 ## registries with proper S7 method dispatch.
 ##
 ## INHERITANCE SAFETY INVARIANT: Every atom subclass of a canon atom MUST have
 ## its own explicit method() registration. Without it, S7 would silently dispatch
-## to the parent's canonicalizer — potentially producing incorrect results.
+## to the parent's canonicalizer -- potentially producing incorrect results.
 ## Verified safe pairs: Log/Log1p, Pnorm/PnormApprox, Power/PowerApprox,
-## GeoMean/GeoMeanApprox — all have explicit separate registrations.
+## GeoMean/GeoMeanApprox -- all have explicit separate registrations.
 
 #' DCP cone canonicalization dispatch
 #'
@@ -52,7 +52,7 @@ method(has_dcp_canon, S7_object) <- function(expr) FALSE
 #' Quadratic canonicalization dispatch
 #'
 #' Replaces QUAD_CANON_METHODS environment lookup. Default: NULL sentinel
-#' (meaning "no quad canon for this class" — fall through to dcp_canonicalize).
+#' (meaning "no quad canon for this class" -- fall through to dcp_canonicalize).
 #' Guard logic (.quadratic_power(), is_qpwa()) is inside each method.
 #' @noRd
 quad_canonicalize <- new_generic("quad_canonicalize", "expr",
@@ -63,13 +63,13 @@ quad_canonicalize <- new_generic("quad_canonicalize", "expr",
 
 method(quad_canonicalize, S7_object) <- function(expr, args, ...) NULL
 
-# ── Helper: vectorize an expression (column-major) ─────────────────
+# -- Helper: vectorize an expression (column-major) -----------------
 ## Equivalent to CVXPY vec(x, order='F')
 .cvxr_vec <- function(x) {
   Reshape(x, c(expr_size(x), 1L), order = "F")
 }
 
-# ── Dcp2Cone class ─────────────────────────────────────────────────
+# -- Dcp2Cone class -------------------------------------------------
 ## CVXPY SOURCE: dcp2cone.py lines 31-145
 
 Dcp2Cone <- new_class("Dcp2Cone", parent = Canonicalization,
@@ -104,7 +104,7 @@ method(reduction_apply, Dcp2Cone) <- function(x, problem, ...) {
   obj_result <- .dcp2cone_tree(x@quad_obj, problem@objective, TRUE)
   canon_objective <- obj_result[[1L]]
 
-  ## Canonicalize each constraint — collect chunks, flatten once
+  ## Canonicalize each constraint -- collect chunks, flatten once
   n_cons <- length(problem@constraints)
   all_chunks <- vector("list", n_cons + 1L)
   all_chunks[[1L]] <- obj_result[[2L]]
@@ -122,7 +122,7 @@ method(reduction_apply, Dcp2Cone) <- function(x, problem, ...) {
   list(new_problem, inverse_data)
 }
 
-# ── Dcp2Cone-specific tree walk ────────────────────────────────────
+# -- Dcp2Cone-specific tree walk ------------------------------------
 ## CVXPY SOURCE: dcp2cone.py lines 78-107
 ## The key difference from base Canonicalization is the affine_above tracking:
 ## if the path from root to current node is all affine, we may skip cone canon.
@@ -131,7 +131,7 @@ method(reduction_apply, Dcp2Cone) <- function(x, problem, ...) {
   ## Determine if this atom is affine (no DCP cone canonicalizer registered)
   affine_atom <- !has_dcp_canon(expr)
 
-  ## Recurse into each argument — pre-allocate, flatten once
+  ## Recurse into each argument -- pre-allocate, flatten once
   n_args <- length(expr@args)
   canon_args <- vector("list", n_args)
   constr_chunks <- vector("list", n_args + 1L)
@@ -168,13 +168,13 @@ method(reduction_apply, Dcp2Cone) <- function(x, problem, ...) {
   ## QP path: try quad_canonicalize first when quad_obj=TRUE
   ## and the path above is all affine.
   ## Guard logic (.quadratic_power, is_qpwa) is inside each quad method.
-  ## NULL return = guard failed or no quad method → fall through to DCP.
+  ## NULL return = guard failed or no quad method -> fall through to DCP.
   ## CVXPY SOURCE: dcp2cone.py lines 128-139
   if (quad_obj && affine_above) {
     quad_result <- quad_canonicalize(expr, args)
     if (!is.null(quad_result)) return(quad_result)
   }
 
-  ## DCP cone canonicalization (S7 dispatch — default returns identity copy)
+  ## DCP cone canonicalization (S7 dispatch -- default returns identity copy)
   dcp_canonicalize(expr, args)
 }

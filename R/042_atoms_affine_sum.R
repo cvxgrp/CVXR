@@ -3,12 +3,12 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/sum.py
-## SumEntries — sum the entries of an expression over a given axis
+## SumEntries -- sum the entries of an expression over a given axis
 ##
-## CVXPY: Sum(AxisAtom, AffAtom) — multiple inheritance resolved via AxisAffAtom
-## axis=NULL: sum all entries → scalar (1,1)
-## axis=1: sum over columns (row-wise) → column vector (nrow, 1)
-## axis=2: sum over rows (column-wise) → row vector (1, ncol)
+## CVXPY: Sum(AxisAtom, AffAtom) -- multiple inheritance resolved via AxisAffAtom
+## axis=NULL: sum all entries -> scalar (1,1)
+## axis=1: sum over columns (row-wise) -> column vector (nrow, 1)
+## axis=2: sum over rows (column-wise) -> row vector (1, ncol)
 ## keepdims=TRUE: reduced dimension kept as size 1
 
 
@@ -34,22 +34,22 @@ SumEntries <- new_class("SumEntries", parent = AxisAffAtom, package = "CVXR",
   }
 )
 
-# ── sign_from_args ──────────────────────────────────────────────────
+# -- sign_from_args --------------------------------------------------
 ## Inherits from AffAtom: sum_signs(args)
 
-# ── is_atom_log_log_convex / concave ───────────────────────────────
+# -- is_atom_log_log_convex / concave -------------------------------
 ## CVXPY SOURCE: sum.py lines 69-75
 
 method(is_atom_log_log_convex, SumEntries) <- function(x) TRUE
 method(is_atom_log_log_concave, SumEntries) <- function(x) FALSE
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: sum.py lines 93-101
 
 method(numeric_value, SumEntries) <- function(x, values, ...) {
   val <- values[[1L]]
   if (is.null(x@axis)) {
-    ## Sum all entries → scalar
+    ## Sum all entries -> scalar
     return(matrix(sum(val), 1L, 1L))
   }
   ## Axis-aware sum
@@ -59,7 +59,7 @@ method(numeric_value, SumEntries) <- function(x, values, ...) {
   if (!is.matrix(val)) val <- matrix(val, ncol = 1L)
 
   if (x@axis == 2L) {
-    ## axis=2: Sum over rows (column-wise) → colSums → row vector (1, ncol)
+    ## axis=2: Sum over rows (column-wise) -> colSums -> row vector (1, ncol)
     result <- colSums(val)
     if (x@keepdims) {
       return(matrix(result, nrow = 1L))
@@ -67,7 +67,7 @@ method(numeric_value, SumEntries) <- function(x, values, ...) {
       return(matrix(result, nrow = 1L))
     }
   } else {
-    ## axis=1: sum over columns (row-wise) → rowSums → column vector (nrow, 1)
+    ## axis=1: sum over columns (row-wise) -> rowSums -> column vector (nrow, 1)
     result <- rowSums(val)
     if (x@keepdims) {
       return(matrix(result, ncol = 1L))
@@ -77,12 +77,12 @@ method(numeric_value, SumEntries) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: sum.py lines 103-141
 ## For 2D expressions:
 ##   axis=NULL: sum_entries_linop
-##   axis=1: right-multiply by ones vector (rmul_expr) → column vector (nrow, 1)
-##   axis=2: left-multiply by ones vector (mul_expr) → row vector (1, ncol)
+##   axis=1: right-multiply by ones vector (rmul_expr) -> column vector (nrow, 1)
+##   axis=2: left-multiply by ones vector (mul_expr) -> row vector (1, ncol)
 
 method(graph_implementation, SumEntries) <- function(x, arg_objs, shape, data = NULL, ...) {
   axis <- data[[1L]]
@@ -97,18 +97,18 @@ method(graph_implementation, SumEntries) <- function(x, arg_objs, shape, data = 
     list(rmul_expr_linop(arg_objs[[1L]], ones, shape), list())
   } else {
     ## axis=2: Sum over rows (column-wise): left-multiply by ones vector
-    ## ones(1, nrow) * x(nrow, ncol) → (1, ncol)
+    ## ones(1, nrow) * x(nrow, ncol) -> (1, ncol)
     const_shape <- c(1L, arg_objs[[1L]]$shape[1L])
     ## CRITICAL: Store as matrix(1, 1, nrow), NOT rep(1, nrow).
-    ## format_matrix(rep(1,n)) → as.matrix → column vector (n,1),
+    ## format_matrix(rep(1,n)) -> as.matrix -> column vector (n,1),
     ## but we need row vector (1,n) for the C++ MUL_EXPR block diagonal.
     ones <- create_const(matrix(1.0, nrow = 1L, ncol = const_shape[2L]), const_shape)
-    ## mul_expr gives (1, ncol) — matches axis=2 output shape directly
+    ## mul_expr gives (1, ncol) -- matches axis=2 output shape directly
     list(mul_expr_linop(ones, arg_objs[[1L]], shape), list())
   }
 }
 
-# ── expr_name ─────────────────────────────────────────────────────
+# -- expr_name -----------------------------------------------------
 
 method(expr_name, SumEntries) <- function(x) {
   data <- get_data(x)
@@ -119,7 +119,7 @@ method(expr_name, SumEntries) <- function(x) {
   sprintf("SumEntries(%s)", paste(c(arg_strs, data_str), collapse = ", "))
 }
 
-# ── Convenience function ──────────────────────────────────────────
+# -- Convenience function ------------------------------------------
 
 #' Sum the entries of an expression
 #'

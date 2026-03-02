@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/div_canon.py
-## DGP canonicalizer for DivExpression: x/y = x * y^(-1) → log(x) - log(y)
+## DGP canonicalizer for DivExpression: x/y = x * y^(-1) -> log(x) - log(y)
 
 .dgp_div_canon <- function(expr, args) {
   list(args[[1L]] - args[[2L]], list())

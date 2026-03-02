@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/kron.py
-## Kron — Kronecker product (one arg must be constant)
+## Kron -- Kronecker product (one arg must be constant)
 
 
 Kron <- new_class("Kron", parent = AffAtom, package = "CVXR",
@@ -32,12 +32,12 @@ method(shape_from_args, Kron) <- function(x) {
   c(a@shape[1L] * b@shape[1L], a@shape[2L] * b@shape[2L])
 }
 
-# ── sign: same as multiplication (CVXPY kron.py line 72-75) ──────
+# -- sign: same as multiplication (CVXPY kron.py line 72-75) ------
 method(sign_from_args, Kron) <- function(x) {
   mul_sign(x@args[[1L]], x@args[[2L]])
 }
 
-# ── monotonicity (CVXPY kron.py lines 77-87) ────────────────────
+# -- monotonicity (CVXPY kron.py lines 77-87) --------------------
 method(is_incr, Kron) <- function(x, idx, ...) {
   cst_loc <- if (is_constant(x@args[[1L]])) 1L else 2L
   is_nonneg(x@args[[cst_loc]])
@@ -47,7 +47,7 @@ method(is_decr, Kron) <- function(x, idx, ...) {
   is_nonpos(x@args[[cst_loc]])
 }
 
-# ── log-log: affine (CVXPY kron.py) ─────────────────────────────
+# -- log-log: affine (CVXPY kron.py) -----------------------------
 method(is_atom_log_log_convex, Kron) <- function(x) TRUE
 method(is_atom_log_log_concave, Kron) <- function(x) TRUE
 
@@ -55,7 +55,7 @@ method(numeric_value, Kron) <- function(x, values, ...) {
   kronecker(values[[1L]], values[[2L]])
 }
 
-# ── DPP: kron is NOT DPP when the "data" arg is parametric ──────
+# -- DPP: kron is NOT DPP when the "data" arg is parametric ------
 ## The C++ get_kron_mat/get_kron_l_mat handlers use get_constant_data()
 ## and cannot handle PARAM LinOp nodes. CVXPY has the same limitation
 ## (see comment in get_kronr_mat: "doesn't properly canonicalize ...

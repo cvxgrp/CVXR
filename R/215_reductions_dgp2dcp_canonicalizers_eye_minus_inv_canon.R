@@ -16,7 +16,7 @@
   ## U = log(Y), a new free variable in log-space
   U <- Variable(c(n, n))
 
-  ## YX in log-space: matmul(U, X) — but we need DGP canonicalization
+  ## YX in log-space: matmul(U, X) -- but we need DGP canonicalization
   ## YX = U %*% X (log-space matmul)
   YX <- U %*% X
   YX_canon <- .dgp_mulexpression_canon(YX, YX@args)[[1L]]

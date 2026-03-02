@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/rel_entr.py
-## RelEntr — elementwise relative entropy: x*log(x/y)
+## RelEntr -- elementwise relative entropy: x*log(x/y)
 
 
 RelEntr <- new_class("RelEntr", parent = Elementwise, package = "CVXR",
@@ -23,27 +23,27 @@ RelEntr <- new_class("RelEntr", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: unknown (can be positive or negative) ─────────────────
+# -- sign: unknown (can be positive or negative) -----------------
 method(sign_from_args, RelEntr) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, RelEntr) <- function(x) TRUE
 method(is_atom_concave, RelEntr) <- function(x) FALSE
 
-# ── monotonicity: not incr in either; decr in arg 2 ─────────────
+# -- monotonicity: not incr in either; decr in arg 2 -------------
 method(is_incr, RelEntr) <- function(x, idx, ...) FALSE
 method(is_decr, RelEntr) <- function(x, idx, ...) {
   idx == 2L  # decreasing in second argument (1-indexed: idx==2)
 }
 
-# ── domain: x >= 0, y >= 0 ──────────────────────────────────────
+# -- domain: x >= 0, y >= 0 --------------------------------------
 method(atom_domain, RelEntr) <- function(x) {
   list(x@args[[1L]] >= 0, x@args[[2L]] >= 0)
 }
 
-# ── numeric: x*log(x/y) ─────────────────────────────────────────
+# -- numeric: x*log(x/y) -----------------------------------------
 ## Matches scipy.special.rel_entr(x, y)
 method(numeric_value, RelEntr) <- function(x, values, ...) {
   xv <- as.matrix(values[[1L]])
@@ -60,7 +60,7 @@ method(numeric_value, RelEntr) <- function(x, values, ...) {
   result
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, RelEntr) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls RelEntr} not yet implemented.")
 }

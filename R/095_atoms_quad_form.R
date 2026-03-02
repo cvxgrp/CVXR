@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/quad_form.py
-## QuadForm — quadratic form x^T P x
+## QuadForm -- quadratic form x^T P x
 
 
 QuadForm <- new_class("QuadForm", parent = Atom, package = "CVXR",
@@ -25,7 +25,7 @@ QuadForm <- new_class("QuadForm", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 method(validate_arguments, QuadForm) <- function(x) {
   P <- x@args[[2L]]
   xarg <- x@args[[1L]]
@@ -45,15 +45,15 @@ method(validate_arguments, QuadForm) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
+# -- shape --------------------------------------------------------
 method(shape_from_args, QuadForm) <- function(x) c(1L, 1L)
 
-# ── sign: depends on P definiteness ──────────────────────────────
+# -- sign: depends on P definiteness ------------------------------
 method(sign_from_args, QuadForm) <- function(x) {
   list(is_nonneg = is_atom_convex(x), is_nonpos = is_atom_concave(x))
 }
 
-# ── curvature: depends on P ──────────────────────────────────────
+# -- curvature: depends on P --------------------------------------
 ## CVXPY: convex iff P is constant + PSD; concave iff P constant + NSD
 method(is_atom_convex, QuadForm) <- function(x) {
   P <- x@args[[2L]]
@@ -65,23 +65,23 @@ method(is_atom_concave, QuadForm) <- function(x) {
   is_constant(P) && is_nsd(P)
 }
 
-# ── log-log curvature (CVXPY quad_form.py lines 76-84) ──────────
+# -- log-log curvature (CVXPY quad_form.py lines 76-84) ----------
 method(is_atom_log_log_convex, QuadForm) <- function(x) TRUE
 method(is_atom_log_log_concave, QuadForm) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, QuadForm) <- function(x, idx, ...) FALSE
 method(is_decr, QuadForm) <- function(x, idx, ...) FALSE
 
-# ── quadratic analysis ───────────────────────────────────────────
+# -- quadratic analysis -------------------------------------------
 method(is_quadratic, QuadForm) <- function(x) TRUE
 method(has_quadratic_term, QuadForm) <- function(x) TRUE
 method(is_pwl, QuadForm) <- function(x) FALSE
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, QuadForm) <- function(x) list()
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, QuadForm) <- function(x, values, ...) {
   xv <- values[[1L]]
   Pv <- values[[2L]]
@@ -95,12 +95,12 @@ method(numeric_value, QuadForm) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, QuadForm) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls QuadForm} not yet implemented.")
 }
 
-# ── decomp_quad: eigendecomposition for conic canonicalization ────
+# -- decomp_quad: eigendecomposition for conic canonicalization ----
 ## CVXPY SOURCE: atoms/quad_form.py lines 186-251
 ## Returns list(scale, M1, M2) where P = scale * (M1 %*% t(M1) - M2 %*% t(M2))
 decomp_quad <- function(P, cond = NULL) {

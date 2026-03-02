@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/norm_inf_canon.py
-## DGP canonicalizer for NormInf: ||x||_inf → max(x)
+## DGP canonicalizer for NormInf: ||x||_inf -> max(x)
 ## Since args are positive, ||x||_inf = max(x_i).
 ## Delegates to max_canon directly.
 

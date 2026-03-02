@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/mul_canon.py
-## DGP canonicalizer for Multiply (elementwise): x*y → log(x) + log(y)
+## DGP canonicalizer for Multiply (elementwise): x*y -> log(x) + log(y)
 
 .dgp_mul_canon <- function(expr, args) {
   list(AddExpression(args), list())

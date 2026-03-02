@@ -6,10 +6,10 @@
 ## SCS solver interface
 ##
 ## SCS uses lower-triangular svec format for PSD constraints.
-## Convention: A*x + s = b, s ∈ K
+## Convention: A*x + s = b, s in K
 
 
-# ── SCS status map ────────────────────────────────────────────────
+# -- SCS status map ------------------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 127-135
 
 SCS_STATUS_MAP <- list(
@@ -24,7 +24,7 @@ SCS_STATUS_MAP <- list(
   "-5" = SOLVER_ERROR
 )
 
-# ── tri_to_full (SCS): expand lower-tri svec to full matrix ──────
+# -- tri_to_full (SCS): expand lower-tri svec to full matrix ------
 ## CVXPY SOURCE: scs_conif.py lines 45-76
 ## Scales off-diagonal by 1/sqrt(2) as per SCS spec.
 ## Returns a numeric vector of length n*n (column-major).
@@ -44,7 +44,7 @@ scs_tri_to_full <- function(lower_tri, n) {
   as.vector(full)  # column-major
 }
 
-# ── SCS psd_format_mat ───────────────────────────────────────────
+# -- SCS psd_format_mat -------------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 171-206
 ## Lower-triangular extraction with sqrt(2) off-diagonal scaling
 ## + symmetrization. Returns a sparse matrix (entries x n^2).
@@ -57,7 +57,7 @@ scs_psd_format_mat_fn <- function(constr) {
   row_arr <- seq(0L, length.out = entries)
 
   ## Column indices: lower triangle positions as column-major flat indices
-  ## np.tril_indices(n) → R: which(lower.tri(m, diag=TRUE), arr.ind=TRUE)
+  ## np.tril_indices(n) -> R: which(lower.tri(m, diag=TRUE), arr.ind=TRUE)
   idx <- which(lower.tri(matrix(0, n, n), diag = TRUE), arr.ind = TRUE)
   ## Convert to 0-based column-major flat indices (already sorted)
   col_arr <- (idx[, 2L] - 1L) * n + (idx[, 1L] - 1L)
@@ -89,7 +89,7 @@ scs_psd_format_mat_fn <- function(constr) {
   scaled_lower_tri %*% symm_matrix
 }
 
-# ── dims_to_solver_dict_scs ──────────────────────────────────────
+# -- dims_to_solver_dict_scs --------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 36-42
 ## SCS 3.0+ uses 'z' instead of 'f' for zero cone.
 
@@ -106,7 +106,7 @@ dims_to_solver_dict_scs <- function(cone_dims) {
   cones
 }
 
-# ── SCS_Solver class ─────────────────────────────────────────────
+# -- SCS_Solver class ---------------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 116-155
 
 SCS_Solver <- new_class("SCS_Solver", parent = ConicSolver, package = "CVXR",
@@ -130,7 +130,7 @@ method(solver_psd_format_mat, SCS_Solver) <- function(solver, constr) {
   scs_psd_format_mat_fn(constr)
 }
 
-# ── SCS extract_dual_value ────────────────────────────────────────
+# -- SCS extract_dual_value ----------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 218-233
 ## PSD constraints use lower-tri svec format; expand to full.
 
@@ -147,7 +147,7 @@ scs_extract_dual_value <- function(result_vec, offset, constraint) {
   }
 }
 
-# ── SCS invert ────────────────────────────────────────────────────
+# -- SCS invert ----------------------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 235-278
 ## Parses SCS-specific result format.
 
@@ -205,7 +205,7 @@ method(reduction_invert, SCS_Solver) <- function(x, solution, inverse_data, ...)
   }
 }
 
-# ── SCS solve_via_data ────────────────────────────────────────────
+# -- SCS solve_via_data --------------------------------------------
 ## CVXPY SOURCE: scs_conif.py lines 304-354
 
 method(solve_via_data, SCS_Solver) <- function(x, data, warm_start = FALSE, verbose = FALSE,
@@ -230,7 +230,7 @@ method(solve_via_data, SCS_Solver) <- function(x, data, warm_start = FALSE, verb
     if (is.null(opts[["eps"]])) opts[["eps"]] <- 1e-4
   }
 
-  ## Pass P for QP path — SCS expects symmetric sparse (dsCMatrix)
+  ## Pass P for QP path -- SCS expects symmetric sparse (dsCMatrix)
   if (!is.null(data[[SD_P]])) {
     args[["P"]] <- Matrix::forceSymmetric(Matrix::triu(data[[SD_P]]), uplo = "U")
   }

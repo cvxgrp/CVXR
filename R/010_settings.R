@@ -5,7 +5,7 @@
 ## CVXPY SOURCE: cvxpy/settings.py
 ## Global settings and constants for CVXR
 
-# ── Solver names ──────────────────────────────────────────────────────
+# -- Solver names ------------------------------------------------------
 
 #' Solver Name Constants
 #'
@@ -55,21 +55,21 @@ CVXOPT_SOLVER <- "CVXOPT"
 #' @export
 PIQP_SOLVER <- "PIQP"
 
-# ── DCP curvature strings ────────────────────────────────────────────
+# -- DCP curvature strings --------------------------------------------
 
 AFFINE <- "AFFINE"
 CONVEX <- "CONVEX"
 CONCAVE <- "CONCAVE"
 UNKNOWN_CURVATURE <- "UNKNOWN"
 
-# ── Sign strings ─────────────────────────────────────────────────────
+# -- Sign strings -----------------------------------------------------
 
 ZERO_SIGN <- "ZERO"
 NONNEG_SIGN <- "NONNEGATIVE"
 NONPOS_SIGN <- "NONPOSITIVE"
 UNKNOWN_SIGN <- "UNKNOWN"
 
-# ── Status strings ───────────────────────────────────────────────────
+# -- Status strings ---------------------------------------------------
 
 #' Solution Status Constants
 #'
@@ -103,31 +103,31 @@ INFEASIBLE_INACCURATE <- "infeasible_inaccurate"
 #' @export
 UNBOUNDED_INACCURATE <- "unbounded_inaccurate"
 
-# ── Numerical tolerances ─────────────────────────────────────────────
+# -- Numerical tolerances ---------------------------------------------
 
 EIGVAL_TOL <- 1e-10
 PSD_NSD_PROJECTION_TOL <- 1e-8
 SPARSE_NNZFRAC <- 0.1  # below this fraction, treat as sparse
 ATOM_EVAL_TOL <- 1e-4   # tolerance for atom numeric evaluation (CVXPY settings.py)
 
-# ── Naming prefixes ────────────────────────────────────────────────
+# -- Naming prefixes ------------------------------------------------
 ## CVXPY SOURCE: settings.py lines 37-38
 
 VAR_PREFIX <- "var"
 PARAM_PREFIX <- "param"
 
-# ── Curvature string (extra) ───────────────────────────────────────
+# -- Curvature string (extra) ---------------------------------------
 ## CVXPY SOURCE: settings.py line 173
 
 CONSTANT_CURV <- "CONSTANT"
 
-# ── Projection tolerances ──────────────────────────────────────────
+# -- Projection tolerances ------------------------------------------
 ## CVXPY SOURCE: settings.py lines 204-206
 
 GENERAL_PROJECTION_TOL <- 1e-10
 SPARSE_PROJECTION_TOL <- 1e-10
 
-# ── Constraint type IDs ──────────────────────────────────────────
+# -- Constraint type IDs ------------------------------------------
 ## CVXPY SOURCE: settings.py line 125
 ## EQ, LEQ, SOC, SOC_EW, PSD, EXP, BOOL, INT = range(8)
 
@@ -140,7 +140,7 @@ CONSTR_ID_EXP    <- 5L
 CONSTR_ID_BOOL   <- 6L
 CONSTR_ID_INT    <- 7L
 
-# ── Cone dimension keys ──────────────────────────────────────────
+# -- Cone dimension keys ------------------------------------------
 ## CVXPY SOURCE: settings.py lines 133-137
 
 EQ_DIM  <- "f"
@@ -149,7 +149,7 @@ SOC_DIM <- "q"
 PSD_DIM <- "s"
 EXP_DIM <- "ep"
 
-# ── Status groups ────────────────────────────────────────────────
+# -- Status groups ------------------------------------------------
 ## CVXPY SOURCE: settings.py lines 58-68
 
 #' @rdname status-constants
@@ -166,7 +166,7 @@ INACCURATE_STATUS <- c(OPTIMAL_INACCURATE, INFEASIBLE_INACCURATE,
                         UNBOUNDED_INACCURATE, USER_LIMIT)
 ERROR_STATUS <- c(SOLVER_ERROR)
 
-# ── ECOS exit code → CVXR status ────────────────────────────────
+# -- ECOS exit code -> CVXR status --------------------------------
 ## CVXPY SOURCE: ecos_conif.py lines 45-57
 
 ECOS_STATUS_MAP <- list(
@@ -183,7 +183,7 @@ ECOS_STATUS_MAP <- list(
   "-7" = SOLVER_ERROR
 )
 
-# ── Solver data keys ────────────────────────────────────────────
+# -- Solver data keys --------------------------------------------
 ## CVXPY SOURCE: settings.py lines 159-168
 ## Use SD_ prefix to avoid R namespace collisions (bare A, B, C shadow base R)
 
@@ -197,7 +197,7 @@ SD_PARAM_PROB <- "param_prob"  # parameterized problem
 SD_BOOL_IDX   <- "bool_idx"   # boolean variable indices
 SD_INT_IDX    <- "int_idx"    # integer variable indices
 
-# ── Result keys ─────────────────────────────────────────────────
+# -- Result keys -------------------------------------------------
 ## CVXPY SOURCE: settings.py lines 147-156
 
 RK_STATUS      <- "status"
@@ -211,18 +211,18 @@ RK_SETUP_TIME  <- "setup_time"
 RK_NUM_ITERS   <- "num_iters"
 RK_EXTRA_STATS <- "solver_specific_stats"
 
-# ── Bounds keys ─────────────────────────────────────────────────
+# -- Bounds keys -------------------------------------------------
 ## CVXPY SOURCE: settings.py lines 143-144
 
 LOWER_BOUNDS <- "lower_bounds"
 UPPER_BOUNDS <- "upper_bounds"
 
-# ── Standard solver parameter mappings ────────────────────────────
+# -- Standard solver parameter mappings ----------------------------
 ## Maps standard CVXR parameter names (reltol, abstol, feastol, num_iter)
 ## to solver-specific parameter names and default values.
 ## Used by .apply_std_params() in psolve() for solver-agnostic code.
 
-## Private store — exposed via solver_default_param() (read-only).
+## Private store -- exposed via solver_default_param() (read-only).
 .SOLVER_DEFAULT_PARAM <- list(
   CLARABEL = list(
     reltol   = list(name = "tol_gap_rel", value = 1e-8),

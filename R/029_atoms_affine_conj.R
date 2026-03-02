@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/conj.py
-## Conj_ — elementwise complex conjugate
+## Conj_ -- elementwise complex conjugate
 
 
 Conj_ <- new_class("Conj_", parent = AffAtom, package = "CVXR",
@@ -21,33 +21,33 @@ Conj_ <- new_class("Conj_", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── numeric_value: R's native Conj() ────────────────────────────────
+# -- numeric_value: R's native Conj() --------------------------------
 ## CVXPY SOURCE: conj.py lines 32-35
 
 method(numeric_value, Conj_) <- function(x, values, ...) {
   Conj(values[[1L]])
 }
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: conj.py lines 37-39
 
 method(shape_from_args, Conj_) <- function(x) {
   x@args[[1L]]@shape
 }
 
-# ── Monotonicity: conjugation is NOT monotone ────────────────────────
+# -- Monotonicity: conjugation is NOT monotone ------------------------
 ## CVXPY SOURCE: conj.py lines 41-49
 
 method(is_incr, Conj_) <- function(x, idx, ...) FALSE
 method(is_decr, Conj_) <- function(x, idx, ...) FALSE
 
-# ── Matrix properties: delegate to argument ──────────────────────────
+# -- Matrix properties: delegate to argument --------------------------
 ## CVXPY SOURCE: conj.py lines 51-60
 
 method(is_symmetric, Conj_) <- function(x) is_symmetric(x@args[[1L]])
 method(is_hermitian, Conj_) <- function(x) is_hermitian(x@args[[1L]])
 
-# ── graph_implementation: identity (no-op for real arguments) ────────
+# -- graph_implementation: identity (no-op for real arguments) --------
 ## CVXPY SOURCE: conj.py lines 62-82
 ## Complex2Real handles the actual conjugation; for real args this is a no-op.
 

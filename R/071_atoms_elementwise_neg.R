@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/neg.py
-## Neg — negative part -min(x, 0)
+## Neg -- negative part -min(x, 0)
 
 #' Negative part: -min(x, 0)
 #'

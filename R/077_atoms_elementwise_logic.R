@@ -6,7 +6,7 @@
 ## Boolean logic atoms: Not, And, Or, Xor + implies/iff convenience functions
 
 
-# ── Helper: check if argument is valid boolean logic input ────────
+# -- Helper: check if argument is valid boolean logic input --------
 .is_boolean_arg <- function(arg) {
   if (S7_inherits(arg, LogicExpression)) return(TRUE)
   if (S7_inherits(arg, Leaf) && isTRUE(arg@attributes$boolean)) return(TRUE)
@@ -17,9 +17,9 @@
   FALSE
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# LogicExpression — abstract base class for boolean logic atoms
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# LogicExpression -- abstract base class for boolean logic atoms
+# ===================================================================
 
 LogicExpression <- new_class("LogicExpression", parent = Elementwise,
   package = "CVXR",
@@ -40,7 +40,7 @@ LogicExpression <- new_class("LogicExpression", parent = Elementwise,
   }
 )
 
-# ── validate_arguments ────────────────────────────────────────────
+# -- validate_arguments --------------------------------------------
 method(validate_arguments, LogicExpression) <- function(x) {
   ## Check broadcastable shapes (parent Elementwise validation)
   sum_shapes(lapply(x@args, function(a) a@shape))
@@ -56,22 +56,22 @@ method(validate_arguments, LogicExpression) <- function(x) {
   invisible(NULL)
 }
 
-# ── sign: result is boolean (0 or 1), so nonneg ──────────────────
+# -- sign: result is boolean (0 or 1), so nonneg ------------------
 method(sign_from_args, LogicExpression) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: both convex and concave (affine-like for DCP) ─────
+# -- curvature: both convex and concave (affine-like for DCP) -----
 method(is_atom_convex, LogicExpression) <- function(x) TRUE
 method(is_atom_concave, LogicExpression) <- function(x) TRUE
 
-# ── monotonicity: default FALSE ──────────────────────────────────
+# -- monotonicity: default FALSE ----------------------------------
 method(is_incr, LogicExpression) <- function(x, idx, ...) FALSE
 method(is_decr, LogicExpression) <- function(x, idx, ...) FALSE
 
-# ═══════════════════════════════════════════════════════════════════
-# Not — logical NOT of a boolean expression
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Not -- logical NOT of a boolean expression
+# ===================================================================
 
 #' Logical NOT
 #'
@@ -105,7 +105,7 @@ Not <- new_class("Not", parent = LogicExpression, package = "CVXR",
   }
 )
 
-# ── validate: exactly 1 arg ──────────────────────────────────────
+# -- validate: exactly 1 arg --------------------------------------
 method(validate_arguments, Not) <- function(x) {
   if (length(x@args) != 1L)
     cli_abort("{.cls Not} takes exactly 1 argument.")
@@ -119,15 +119,15 @@ method(validate_arguments, Not) <- function(x) {
   invisible(NULL)
 }
 
-# ── monotonicity: decreasing (flips sign) ────────────────────────
+# -- monotonicity: decreasing (flips sign) ------------------------
 method(is_decr, Not) <- function(x, idx, ...) TRUE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Not) <- function(x, values, ...) {
   1 - values[[1L]]
 }
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 method(expr_name, Not) <- function(x) {
   child <- x@args[[1L]]
   child_name <- expr_name(child)
@@ -138,9 +138,9 @@ method(expr_name, Not) <- function(x) {
   }
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# NaryLogicExpression — shared base for n-ary logic atoms
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# NaryLogicExpression -- shared base for n-ary logic atoms
+# ===================================================================
 
 NaryLogicExpression <- new_class("NaryLogicExpression",
   parent = LogicExpression, package = "CVXR",
@@ -161,7 +161,7 @@ NaryLogicExpression <- new_class("NaryLogicExpression",
   }
 )
 
-# ── validate: at least 2 args ────────────────────────────────────
+# -- validate: at least 2 args ------------------------------------
 method(validate_arguments, NaryLogicExpression) <- function(x) {
   if (length(x@args) < 2L)
     cli_abort("N-ary logic expressions require at least 2 arguments.")
@@ -175,9 +175,9 @@ method(validate_arguments, NaryLogicExpression) <- function(x) {
   invisible(NULL)
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# And — logical AND of boolean expressions
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# And -- logical AND of boolean expressions
+# ===================================================================
 
 #' Logical AND
 #'
@@ -216,15 +216,15 @@ And <- new_class("And", parent = NaryLogicExpression, package = "CVXR",
   }
 )
 
-# ── monotonicity: increasing ─────────────────────────────────────
+# -- monotonicity: increasing -------------------------------------
 method(is_incr, And) <- function(x, idx, ...) TRUE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, And) <- function(x, values, ...) {
   Reduce(pmin, values)
 }
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 method(expr_name, And) <- function(x) {
   parts <- vapply(x@args, function(a) {
     nm <- expr_name(a)
@@ -238,9 +238,9 @@ method(expr_name, And) <- function(x) {
   paste(parts, collapse = " & ")
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# Or — logical OR of boolean expressions
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Or -- logical OR of boolean expressions
+# ===================================================================
 
 #' Logical OR
 #'
@@ -279,24 +279,24 @@ Or <- new_class("Or", parent = NaryLogicExpression, package = "CVXR",
   }
 )
 
-# ── monotonicity: increasing ─────────────────────────────────────
+# -- monotonicity: increasing -------------------------------------
 method(is_incr, Or) <- function(x, idx, ...) TRUE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Or) <- function(x, values, ...) {
   Reduce(pmax, values)
 }
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 method(expr_name, Or) <- function(x) {
   ## Or has lowest precedence; no children need parens
   parts <- vapply(x@args, expr_name, character(1))
   paste(parts, collapse = " | ")
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# Xor — logical XOR of boolean expressions
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Xor -- logical XOR of boolean expressions
+# ===================================================================
 
 #' Logical XOR
 #'
@@ -335,12 +335,12 @@ Xor <- new_class("Xor", parent = NaryLogicExpression, package = "CVXR",
   }
 )
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Xor) <- function(x, values, ...) {
   Reduce(function(a, b) (a + b) %% 2, values)
 }
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 method(expr_name, Xor) <- function(x) {
   parts <- vapply(x@args, function(a) {
     nm <- expr_name(a)
@@ -354,9 +354,9 @@ method(expr_name, Xor) <- function(x) {
   paste(parts, collapse = " XOR ")
 }
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # Convenience functions
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 #' Logical Implication
 #'

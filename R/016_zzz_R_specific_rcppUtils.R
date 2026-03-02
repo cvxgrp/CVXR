@@ -6,5 +6,5 @@
 ## Utility functions for the C++ bridge.
 ##
 ## NOTE: rcppMungedName() and ecos.control() from the prior art branch
-## have been removed — they were dead code using S4 patterns (getPackageName)
+## have been removed -- they were dead code using S4 patterns (getPackageName)
 ## and the ECOS solver (not in scope for v1.0).

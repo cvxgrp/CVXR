@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/atom.py
-## Atom — abstract base class for all atoms (operations on expressions)
+## Atom -- abstract base class for all atoms (operations on expressions)
 ##
 ## An Atom represents a mathematical function applied to one or more
 ## Expression arguments. The DCP composition rules are implemented here.
@@ -28,7 +28,7 @@ Atom <- new_class("Atom", parent = Expression, package = "CVXR",
   }
 )
 
-# ── validate_arguments ──────────────────────────────────────────────
+# -- validate_arguments ----------------------------------------------
 ## CVXPY SOURCE: atom.py lines 91-97
 ## Default: rejects complex arguments unless _allow_complex is TRUE.
 ## Subclasses override via validate_arguments generic.
@@ -40,7 +40,7 @@ method(validate_arguments, Atom) <- function(x) {
   invisible(NULL)
 }
 
-# ── name ─────────────────────────────────────────────────────────────
+# -- name -------------------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 56-63
 
 method(expr_name, Atom) <- function(x) {
@@ -50,7 +50,7 @@ method(expr_name, Atom) <- function(x) {
   sprintf("%s(%s)", class(x)[[1L]], paste(c(arg_strs, data_str), collapse = ", "))
 }
 
-# ── Sign: cached, from sign_from_args ────────────────────────────────
+# -- Sign: cached, from sign_from_args --------------------------------
 ## CVXPY SOURCE: atom.py lines 115-125
 
 method(is_nonneg, Atom) <- function(x) {
@@ -69,19 +69,19 @@ method(is_nonpos, Atom) <- function(x) {
   result
 }
 
-# ── Complex: default FALSE ──────────────────────────────────────────
+# -- Complex: default FALSE ------------------------------------------
 ## CVXPY SOURCE: atom.py lines 127-139
 
 method(is_imag, Atom) <- function(x) FALSE
 method(is_complex, Atom) <- function(x) FALSE
 
-# ── is_atom_affine: plain function ──────────────────────────────────
+# -- is_atom_affine: plain function ----------------------------------
 ## CVXPY SOURCE: atom.py lines 153-156
 
 is_atom_affine <- function(x) is_atom_convex(x) && is_atom_concave(x)
 
-# ── Log-log DGP atom hooks: default FALSE ─────────────────────────
-## CVXPY SOURCE: atom.py — default is False
+# -- Log-log DGP atom hooks: default FALSE -------------------------
+## CVXPY SOURCE: atom.py -- default is False
 method(is_atom_log_log_convex, Atom) <- function(x) FALSE
 method(is_atom_log_log_concave, Atom) <- function(x) FALSE
 
@@ -90,7 +90,7 @@ is_atom_log_log_affine <- function(x) {
   is_atom_log_log_concave(x) && is_atom_log_log_convex(x)
 }
 
-# ── DCP composition: is_convex / is_concave ─────────────────────────
+# -- DCP composition: is_convex / is_concave -------------------------
 ## CVXPY SOURCE: atom.py lines 195-227
 ## idx for is_incr/is_decr: 1-based (R convention)
 
@@ -140,7 +140,7 @@ method(is_concave, Atom) <- function(x) {
   TRUE
 }
 
-# ── DQCP: quasiconvex / quasiconcave composition ──────────────────
+# -- DQCP: quasiconvex / quasiconcave composition ------------------
 ## CVXPY SOURCE: atom.py lines 273-335
 
 ## Helper: indices of non-constant arguments (1-based, R convention)
@@ -242,7 +242,7 @@ method(is_quasiconcave, Atom) <- function(x) {
   FALSE
 }
 
-# ── Log-log DCP ─────────────────────────────────────────────────────
+# -- Log-log DCP -----------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 240-271
 
 method(is_log_log_convex, Atom) <- function(x) {
@@ -291,11 +291,11 @@ method(is_log_log_concave, Atom) <- function(x) {
   TRUE
 }
 
-# ── canonicalize ────────────────────────────────────────────────────
+# -- canonicalize ----------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 337-356
 
 method(canonicalize, Atom) <- function(x) {
-  ## Constant atoms (with no parameters) → wrap as Constant
+  ## Constant atoms (with no parameters) -> wrap as Constant
   if (is_constant(x) && length(parameters(x)) == 0L) {
     return(canonical_form(Constant(value(x))))
   }
@@ -313,7 +313,7 @@ method(canonicalize, Atom) <- function(x) {
   list(gi[[1L]], c(constraints, gi[[2L]]))
 }
 
-# ── value ───────────────────────────────────────────────────────────
+# -- value -----------------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 379-403
 
 method(value, Atom) <- function(x) {
@@ -342,21 +342,21 @@ method(value, Atom) <- function(x) {
   numeric_value(x, arg_values)
 }
 
-# ── grad ────────────────────────────────────────────────────────────
+# -- grad ------------------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 405-453
 ## Chain rule: grad_self * grad_arg for each variable
-## Stub for now — full implementation requires _grad abstract method
+## Stub for now -- full implementation requires _grad abstract method
 
 method(grad, Atom) <- function(x) {
   cli_abort("grad() not yet implemented for {.cls Atom} subclasses.")
 }
 
-# ── domain ──────────────────────────────────────────────────────────
+# -- domain ----------------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 469-474
 ## self._domain() + [con for arg in self.args for con in arg.domain]
 
 ## Default atom_domain: no extra constraints
-## CVXPY SOURCE: atom.py::_domain — default returns []
+## CVXPY SOURCE: atom.py::_domain -- default returns []
 method(atom_domain, Atom) <- function(x) list()
 
 method(domain, Atom) <- function(x) {
@@ -367,7 +367,7 @@ method(domain, Atom) <- function(x) {
   c(my_domain, arg_domains)
 }
 
-# ── atoms ───────────────────────────────────────────────────────────
+# -- atoms -----------------------------------------------------------
 ## CVXPY SOURCE: atom.py lines 496-502
 ## Returns atom types present in the expression tree.
 ## In R, we collect S7 class objects, deduplicated by class name.
@@ -400,7 +400,7 @@ method(atoms, Atom) <- function(x) {
   result[seq_len(ri)]
 }
 
-# ── print ───────────────────────────────────────────────────────────
+# -- print -----------------------------------------------------------
 
 method(print, Atom) <- function(x, ...) {
   cat(sprintf("%s\n", expr_name(x)))

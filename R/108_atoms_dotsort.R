@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/dotsort.py
-## Dotsort — weighted sorted dot product: <sort(vec(X)), sort(vec(W))>
+## Dotsort -- weighted sorted dot product: <sort(vec(X)), sort(vec(W))>
 
 
 Dotsort <- new_class("Dotsort", parent = Atom, package = "CVXR",

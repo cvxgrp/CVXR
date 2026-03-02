@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/vstack.py
-## VStack — vertical concatenation of expressions
+## VStack -- vertical concatenation of expressions
 
 
 VStack <- new_class("VStack", parent = AffAtom, package = "CVXR",
@@ -40,7 +40,7 @@ method(shape_from_args, VStack) <- function(x) {
   c(total_rows, cols)
 }
 
-# ── log-log: affine (CVXPY vstack.py) ───────────────────────────
+# -- log-log: affine (CVXPY vstack.py) ---------------------------
 method(is_atom_log_log_convex, VStack) <- function(x) TRUE
 method(is_atom_log_log_concave, VStack) <- function(x) TRUE
 

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: constraints/second_order.py
-## SOC — Second-Order Cone constraint
+## SOC -- Second-Order Cone constraint
 
 #' Create a Second-Order Cone Constraint
 #'
@@ -44,7 +44,7 @@ SOC <- new_class("SOC", parent = Cone, package = "CVXR",
       )
     }
 
-    ## CVXPY SOURCE: second_order.py line 52 — flatten 0-d t
+    ## CVXPY SOURCE: second_order.py line 52 -- flatten 0-d t
     if (expr_is_scalar(t)) {
       t <- reshape_expr(t, c(1L, 1L))
     }
@@ -68,40 +68,40 @@ SOC <- new_class("SOC", parent = Cone, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: second_order.py line 55-56
 
 method(expr_name, SOC) <- function(x) {
   sprintf("SOC(%s, %s)", expr_name(x@args[[1L]]), expr_name(x@args[[2L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 158-164
 
 method(is_dcp, SOC) <- function(x) {
   .all_args(x, is_affine)
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 166-167
 
 method(is_dgp, SOC) <- function(x) FALSE
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 117-124
 
 method(get_data, SOC) <- function(x) {
   list(x@axis, x@id)
 }
 
-# ── num_cones ────────────────────────────────────────────────────
+# -- num_cones ----------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 126-129
 
 method(num_cones, SOC) <- function(x) {
   expr_size(x@args[[1L]])
 }
 
-# ── .cone_size (internal helper) ─────────────────────────────────
+# -- .cone_size (internal helper) ---------------------------------
 ## CVXPY SOURCE: second_order.py lines 131-140
 
 .soc_cone_size <- function(x) {
@@ -112,27 +112,27 @@ method(num_cones, SOC) <- function(x) {
   if (expr_is_scalar(X)) {
     X_dim <- 1L
   } else {
-    ## X.shape[self.axis] → cone dimension = shape[3 - axis]
+    ## X.shape[self.axis] -> cone dimension = shape[3 - axis]
     X_dim <- X_shape[3L - x@axis]
   }
   1L + X_dim
 }
 
-# ── cone_sizes ───────────────────────────────────────────────────
+# -- cone_sizes ---------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 148-156
 
 method(cone_sizes, SOC) <- function(x) {
   rep(.soc_cone_size(x), num_cones(x))
 }
 
-# ── constr_size ──────────────────────────────────────────────────
+# -- constr_size --------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 142-146
 
 method(constr_size, SOC) <- function(x) {
   .soc_cone_size(x) * num_cones(x)
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 58-115
 ## SOC projection residual: ||(t,X) - proj(t,X)||
 
@@ -165,12 +165,12 @@ method(residual, SOC) <- function(x) {
   t_proj <- numeric(n_cones)
   X_proj <- matrix(0, nrow = nrow(X_val), ncol = ncol(X_val))
 
-  ## Case 1: t >= ||x|| → proj = (t, X)
+  ## Case 1: t >= ||x|| -> proj = (t, X)
   mask1 <- tv >= norms
   t_proj[mask1] <- tv[mask1]
   X_proj[mask1, ] <- X_val[mask1, , drop = FALSE]
 
-  ## Case 2: -||x|| < t < ||x|| → proj = 0.5*(t/||x|| + 1)*(||x||, x)
+  ## Case 2: -||x|| < t < ||x|| -> proj = 0.5*(t/||x|| + 1)*(||x||, x)
   mask2 <- abs(tv) < norms
   avg_coeff <- 0.5 * (1 + tv / norms)
   if (any(mask2)) {
@@ -186,7 +186,7 @@ method(residual, SOC) <- function(x) {
   if (promoted || n_cones == 1L) resid[1L] else resid
 }
 
-# ── save_dual_value ──────────────────────────────────────────────
+# -- save_dual_value ----------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 172-183
 ## Uses C-order reshape (CR-1)
 
@@ -197,7 +197,7 @@ method(save_dual_value, SOC) <- function(x, val) {
   t_dual <- val_mat[, 1L]
   X_dual <- val_mat[, -1L, drop = FALSE]
 
-  ## CVXPY: if len(self.args[1].shape) == 0 → scalar X
+  ## CVXPY: if len(self.args[1].shape) == 0 -> scalar X
   if (expr_is_scalar(x@args[[2L]])) {
     X_dual <- X_dual[1L, 1L]
   } else if (x@axis == 2L) {
@@ -209,7 +209,7 @@ method(save_dual_value, SOC) <- function(x, val) {
   invisible(x)
 }
 
-# ── dual_cone ────────────────────────────────────────────────────
+# -- dual_cone ----------------------------------------------------
 ## CVXPY SOURCE: second_order.py lines 185-196
 ## SOC is self-dual
 

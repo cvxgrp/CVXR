@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/hstack.py
-## HStack — horizontal concatenation of expressions
+## HStack -- horizontal concatenation of expressions
 
 
 HStack <- new_class("HStack", parent = AffAtom, package = "CVXR",
@@ -40,7 +40,7 @@ method(shape_from_args, HStack) <- function(x) {
   c(rows, total_cols)
 }
 
-# ── log-log: affine (CVXPY hstack.py) ───────────────────────────
+# -- log-log: affine (CVXPY hstack.py) ---------------------------
 method(is_atom_log_log_convex, HStack) <- function(x) TRUE
 method(is_atom_log_log_concave, HStack) <- function(x) TRUE
 

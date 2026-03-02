@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: expressions/constants/constant.py
-## Constant — a constant value in the expression tree
+## Constant -- a constant value in the expression tree
 
 #' Create a Constant Expression
 #'
@@ -59,7 +59,7 @@ Constant <- new_class("Constant", parent = Leaf, package = "CVXR",
   }
 )
 
-# ── expr_name ─────────────────────────────────────────────────────────
+# -- expr_name ---------------------------------------------------------
 ## CVXPY SOURCE: constant.py lines 85-97
 
 method(expr_name, Constant) <- function(x) {
@@ -73,17 +73,17 @@ method(expr_name, Constant) <- function(x) {
   }
 }
 
-# ── is_constant: always TRUE ─────────────────────────────────────────
+# -- is_constant: always TRUE -----------------------------------------
 ## CVXPY SOURCE: constant.py line 104-105
 
 method(is_constant, Constant) <- function(x) TRUE
 
-# ── constants: returns self ───────────────────────────────────────────
+# -- constants: returns self -------------------------------------------
 ## CVXPY SOURCE: constant.py lines 99-102
 
 method(constants, Constant) <- function(x) list(x)
 
-# ── value: read-only ──────────────────────────────────────────────────
+# -- value: read-only --------------------------------------------------
 ## CVXPY SOURCE: constant.py lines 107-111
 
 method(value, Constant) <- function(x) x@.value
@@ -92,7 +92,7 @@ method(`value<-`, Constant) <- function(x, value) {
   cli_abort("Cannot set the value of a {.cls Constant}.")
 }
 
-# ── Complex queries: computed from value, cached ──────────────────────
+# -- Complex queries: computed from value, cached ----------------------
 ## CVXPY SOURCE: constant.py lines 179-183, 172-177
 
 method(is_complex, Constant) <- function(x) {
@@ -121,7 +121,7 @@ method(is_imag, Constant) <- function(x) {
   result
 }
 
-# ── Hermitian / skew-symmetric: computed from value, cached ───────────
+# -- Hermitian / skew-symmetric: computed from value, cached -----------
 ## CVXPY SOURCE: constant.py lines 198-235
 
 method(is_hermitian, Constant) <- function(x) {
@@ -149,7 +149,7 @@ method(is_skew_symmetric, Constant) <- function(x) {
   result
 }
 
-# ── Sign queries: computed from value, cached ─────────────────────────
+# -- Sign queries: computed from value, cached -------------------------
 ## CVXPY SOURCE: constant.py lines 158-170, 211-222
 
 method(is_nonneg, Constant) <- function(x) {
@@ -170,7 +170,7 @@ method(is_nonpos, Constant) <- function(x) {
   sgn$is_nonpos
 }
 
-# ── is_pos: strictly positive (all elements > 0), cached ──────────────
+# -- is_pos: strictly positive (all elements > 0), cached --------------
 ## CVXPY SOURCE: constant.py lines 113-123
 method(is_pos, Constant) <- function(x) {
   cached <- cache_get(x, "is_pos")
@@ -189,7 +189,7 @@ method(is_pos, Constant) <- function(x) {
   result
 }
 
-# ── Symmetry: computed from value, cached ─────────────────────────────
+# -- Symmetry: computed from value, cached -----------------------------
 ## CVXPY SOURCE: constant.py lines 186-196
 
 method(is_symmetric, Constant) <- function(x) {
@@ -208,7 +208,7 @@ method(is_symmetric, Constant) <- function(x) {
   herm$is_symmetric
 }
 
-# ── PSD / NSD: computed from value, cached ────────────────────────────
+# -- PSD / NSD: computed from value, cached ----------------------------
 ## CVXPY SOURCE: constant.py lines 237-279
 
 method(is_psd, Constant) <- function(x) {
@@ -225,7 +225,7 @@ method(is_psd, Constant) <- function(x) {
     cache_set(x, "is_psd", FALSE)
     return(FALSE)
   }
-  ## Must be symmetric (real) or Hermitian (complex) — matches CVXPY
+  ## Must be symmetric (real) or Hermitian (complex) -- matches CVXPY
   if (!is_hermitian(x)) {
     cache_set(x, "is_psd", FALSE)
     return(FALSE)
@@ -258,12 +258,12 @@ method(is_nsd, Constant) <- function(x) {
   result
 }
 
-# ── grad: empty (constants have no gradient w.r.t. variables) ─────────
+# -- grad: empty (constants have no gradient w.r.t. variables) ---------
 ## CVXPY SOURCE: constant.py lines 126-134
 
 method(grad, Constant) <- function(x) list()
 
-# ── canonicalize ──────────────────────────────────────────────────────
+# -- canonicalize ------------------------------------------------------
 ## CVXPY SOURCE: constant.py lines 142-149
 
 method(canonicalize, Constant) <- function(x) {
@@ -271,7 +271,7 @@ method(canonicalize, Constant) <- function(x) {
   list(obj, list())
 }
 
-# ── print ─────────────────────────────────────────────────────────────
+# -- print -------------------------------------------------------------
 
 method(print, Constant) <- function(x, ...) {
   cat(sprintf("Constant(%s, %s, (%s))\n",

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/log_normcdf.py
-## LogNormcdf — quadratic approximation of log(Phi(x))
+## LogNormcdf -- quadratic approximation of log(Phi(x))
 
 #' Elementwise log of the standard normal CDF
 #'

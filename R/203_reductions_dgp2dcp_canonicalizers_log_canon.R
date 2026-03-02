@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/log_canon.py
-## DGP canonicalizer for log: log(x) where x=exp(u) → u (identity in log-space)
+## DGP canonicalizer for log: log(x) where x=exp(u) -> u (identity in log-space)
 
 .dgp_log_canon <- function(expr, args) {
   list(args[[1L]], list())

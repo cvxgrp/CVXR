@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/complex2real/canonicalizers/variable_canon.py
-## Canonicalize complex variables → real/imag variable pairs
+## Canonicalize complex variables -> real/imag variable pairs
 
 c2r_variable_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is_real(expr)) {

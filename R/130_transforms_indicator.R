@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: transforms/indicator.py
-## Indicator — indicator function for constraints
+## Indicator -- indicator function for constraints
 ##
 ## An expression that equals 0 if all constraints hold, +Inf otherwise.
 ## This is convex and nonneg by definition.
@@ -29,7 +29,7 @@ Indicator <- new_class("Indicator", parent = Expression, package = "CVXR",
   }
 )
 
-# ── is_constant ──────────────────────────────────────────────────
+# -- is_constant --------------------------------------------------
 ## CVXPY: indicator.py lines 43-48
 ## Indicator is constant if all constraint args are constant.
 method(is_constant, Indicator) <- function(x) {
@@ -37,28 +37,28 @@ method(is_constant, Indicator) <- function(x) {
   all(vapply(all_args, is_constant, logical(1)))
 }
 
-# ── curvature ────────────────────────────────────────────────────
+# -- curvature ----------------------------------------------------
 ## CVXPY: indicator.py lines 50-58
 method(is_convex, Indicator) <- function(x) TRUE
 method(is_concave, Indicator) <- function(x) FALSE
 method(is_log_log_convex, Indicator) <- function(x) FALSE
 method(is_log_log_concave, Indicator) <- function(x) FALSE
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: indicator.py lines 60-75 — always nonneg, never nonpos
+# -- sign ---------------------------------------------------------
+## CVXPY: indicator.py lines 60-75 -- always nonneg, never nonpos
 method(is_nonneg, Indicator) <- function(x) TRUE
 method(is_nonpos, Indicator) <- function(x) FALSE
 
-# ── imaginary / complex ─────────────────────────────────────────
+# -- imaginary / complex -----------------------------------------
 ## CVXPY: indicator.py lines 77-84
 method(is_imag, Indicator) <- function(x) FALSE
 method(is_complex, Indicator) <- function(x) FALSE
 
-# ── get_data ─────────────────────────────────────────────────────
-## CVXPY: indicator.py lines 86-89 — [err_tol]
+# -- get_data -----------------------------------------------------
+## CVXPY: indicator.py lines 86-89 -- [err_tol]
 method(get_data, Indicator) <- function(x) list(x@err_tol)
 
-# ── name ─────────────────────────────────────────────────────────
+# -- name ---------------------------------------------------------
 ## CVXPY: indicator.py lines 102-105
 method(expr_name, Indicator) <- function(x) {
   arg_names <- vapply(x@args, function(c) {
@@ -67,11 +67,11 @@ method(expr_name, Indicator) <- function(x) {
   paste0("Indicator(", paste(arg_names, collapse = ", "), ")")
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: indicator.py lines 107-111 — the constraints themselves
+# -- domain -------------------------------------------------------
+## CVXPY: indicator.py lines 107-111 -- the constraints themselves
 method(domain, Indicator) <- function(x) x@args
 
-# ── value ────────────────────────────────────────────────────────
+# -- value --------------------------------------------------------
 ## CVXPY: indicator.py lines 113-123
 ## Returns 0 if all constraints satisfied (within err_tol), Inf otherwise.
 method(value, Indicator) <- function(x) {
@@ -83,11 +83,11 @@ method(value, Indicator) <- function(x) {
   0.0
 }
 
-# ── is_dpp ───────────────────────────────────────────────────────
+# -- is_dpp -------------------------------------------------------
 ## CVXPY: indicator.py lines 97-100
 method(is_dpp, Indicator) <- function(x, ...) FALSE
 
-# ── variables / parameters / constants ───────────────────────────
+# -- variables / parameters / constants ---------------------------
 ## Collect from all constraint args
 method(variables, Indicator) <- function(x) {
   unique(unlist(lapply(x@args, function(c) {
@@ -107,9 +107,9 @@ method(constants, Indicator) <- function(x) {
   }), recursive = FALSE))
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Indicator function for constraints
 #'

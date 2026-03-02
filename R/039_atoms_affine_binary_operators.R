@@ -6,9 +6,9 @@
 ## BinaryOperator, MulExpression, Multiply, DivExpression
 
 
-# ═══════════════════════════════════════════════════════════════════
-# BinaryOperator — base class for binary operations (other than add)
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# BinaryOperator -- base class for binary operations (other than add)
+# ===================================================================
 
 BinaryOperator <- new_class("BinaryOperator", parent = AffAtom, package = "CVXR",
   constructor = function(lh_exp, rh_exp, shape) {
@@ -26,14 +26,14 @@ BinaryOperator <- new_class("BinaryOperator", parent = AffAtom, package = "CVXR"
   }
 )
 
-# ── sign: multiply sign rules ───────────────────────────────────────
+# -- sign: multiply sign rules ---------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 92-95
 
 method(sign_from_args, BinaryOperator) <- function(x) {
   mul_sign(x@args[[1L]], x@args[[2L]])
 }
 
-# ── Complex propagation ─────────────────────────────────────────────
+# -- Complex propagation ---------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 97-107
 
 method(is_imag, BinaryOperator) <- function(x) {
@@ -47,9 +47,9 @@ method(is_complex, BinaryOperator) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# MulExpression — matrix multiplication (lhs %*% rhs)
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# MulExpression -- matrix multiplication (lhs %*% rhs)
+# ===================================================================
 
 MulExpression <- new_class("MulExpression", parent = BinaryOperator, package = "CVXR",
   constructor = function(lh_exp, rh_exp) {
@@ -67,14 +67,14 @@ MulExpression <- new_class("MulExpression", parent = BinaryOperator, package = "
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 188-191
 
 method(shape_from_args, MulExpression) <- function(x) {
   mul_shapes(x@args[[1L]]@shape, x@args[[2L]]@shape)
 }
 
-# ── Convexity: requires one constant arg (with DPP extension) ────────
+# -- Convexity: requires one constant arg (with DPP extension) --------
 ## CVXPY SOURCE: binary_operators.py lines 193-214
 
 method(is_atom_convex, MulExpression) <- function(x) {
@@ -94,12 +94,12 @@ method(is_atom_concave, MulExpression) <- function(x) {
   is_atom_convex(x)
 }
 
-# ── Monotonicity ────────────────────────────────────────────────────
+# -- Monotonicity ----------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 231-239
 ## idx is 1-based (R convention): is_incr(1) checks args[[2]], is_incr(2) checks args[[1]]
 
 method(is_incr, MulExpression) <- function(x, idx, ...) {
-  ## self.args[1-idx] in Python (0-based) → args[[3L - idx]] in R (1-based)
+  ## self.args[1-idx] in Python (0-based) -> args[[3L - idx]] in R (1-based)
   is_nonneg(x@args[[3L - idx]])
 }
 
@@ -107,7 +107,7 @@ method(is_decr, MulExpression) <- function(x, idx, ...) {
   is_nonpos(x@args[[3L - idx]])
 }
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 180-186
 
 method(numeric_value, MulExpression) <- function(x, values, ...) {
@@ -120,7 +120,7 @@ method(numeric_value, MulExpression) <- function(x, values, ...) {
   lhs %*% rhs
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 295-323
 
 method(graph_implementation, MulExpression) <- function(x, arg_objs, shape, data = NULL, ...) {
@@ -135,7 +135,7 @@ method(graph_implementation, MulExpression) <- function(x, arg_objs, shape, data
   }
 }
 
-# ── expr_name ───────────────────────────────────────────────────────
+# -- expr_name -------------------------------------------------------
 
 ## CVXPY SOURCE: binary_operators.py lines 221-229
 method(is_atom_log_log_convex, MulExpression) <- function(x) TRUE
@@ -146,9 +146,9 @@ method(expr_name, MulExpression) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Multiply — elementwise multiplication (lhs * rhs)
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Multiply -- elementwise multiplication (lhs * rhs)
+# ===================================================================
 
 Multiply <- new_class("Multiply", parent = MulExpression, package = "CVXR",
   constructor = function(lh_exp, rh_exp) {
@@ -171,14 +171,14 @@ Multiply <- new_class("Multiply", parent = MulExpression, package = "CVXR",
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 371-373
 
 method(shape_from_args, Multiply) <- function(x) {
   sum_shapes(list(x@args[[1L]]@shape, x@args[[2L]]@shape))
 }
 
-# ── validate_arguments ──────────────────────────────────────────────
+# -- validate_arguments ----------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 364-369
 ## Broadcast compatibility already checked by sum_shapes in constructor.
 
@@ -186,7 +186,7 @@ method(validate_arguments, Multiply) <- function(x) {
   invisible(NULL)
 }
 
-# ── numeric_value: elementwise ──────────────────────────────────────
+# -- numeric_value: elementwise --------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 355-362
 
 method(numeric_value, Multiply) <- function(x, values, ...) {
@@ -196,7 +196,7 @@ method(numeric_value, Multiply) <- function(x, values, ...) {
   lhs * rhs
 }
 
-# ── PSD/NSD ─────────────────────────────────────────────────────────
+# -- PSD/NSD ---------------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 375-385
 
 method(is_psd, Multiply) <- function(x) {
@@ -209,7 +209,7 @@ method(is_nsd, Multiply) <- function(x) {
     (is_nsd(x@args[[1L]]) && is_psd(x@args[[2L]]))
 }
 
-# ── Quasiconvexity ──────────────────────────────────────────────────
+# -- Quasiconvexity --------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 343-353
 method(is_atom_quasiconvex, Multiply) <- function(x) {
   (is_constant(x@args[[1L]]) || is_constant(x@args[[2L]])) ||
@@ -223,7 +223,7 @@ method(is_atom_quasiconcave, Multiply) <- function(x) {
     (is_nonpos(x@args[[1L]]) && is_nonpos(x@args[[2L]]))
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 416-444
 
 method(graph_implementation, Multiply) <- function(x, arg_objs, shape, data = NULL, ...) {
@@ -238,7 +238,7 @@ method(graph_implementation, Multiply) <- function(x, arg_objs, shape, data = NU
   }
 }
 
-# ── expr_name ───────────────────────────────────────────────────────
+# -- expr_name -------------------------------------------------------
 
 ## CVXPY SOURCE: binary_operators.py lines 335-341
 method(is_atom_log_log_convex, Multiply) <- function(x) TRUE
@@ -249,9 +249,9 @@ method(expr_name, Multiply) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# DivExpression — division (lhs / rhs)
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# DivExpression -- division (lhs / rhs)
+# ===================================================================
 
 DivExpression <- new_class("DivExpression", parent = BinaryOperator, package = "CVXR",
   constructor = function(lh_exp, rh_exp) {
@@ -274,12 +274,12 @@ DivExpression <- new_class("DivExpression", parent = BinaryOperator, package = "
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 478-481
 
 method(shape_from_args, DivExpression) <- function(x) x@args[[1L]]@shape
 
-# ── Convexity: requires constant denominator ────────────────────────
+# -- Convexity: requires constant denominator ------------------------
 ## CVXPY SOURCE: binary_operators.py lines 483-490
 
 method(is_atom_convex, DivExpression) <- function(x) {
@@ -290,7 +290,7 @@ method(is_atom_concave, DivExpression) <- function(x) {
   is_atom_convex(x)
 }
 
-# ── Quasiconvexity ──────────────────────────────────────────────────
+# -- Quasiconvexity --------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 502-506
 method(is_atom_quasiconvex, DivExpression) <- function(x) {
   is_nonneg(x@args[[2L]]) || is_nonpos(x@args[[2L]])
@@ -300,7 +300,7 @@ method(is_atom_quasiconcave, DivExpression) <- function(x) {
   is_atom_quasiconvex(x)
 }
 
-# ── Monotonicity ────────────────────────────────────────────────────
+# -- Monotonicity ----------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 508-522
 ## idx is 1-based (R convention)
 
@@ -324,7 +324,7 @@ method(is_decr, DivExpression) <- function(x, idx, ...) {
   }
 }
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 460-466
 
 method(numeric_value, DivExpression) <- function(x, values, ...) {
@@ -333,14 +333,14 @@ method(numeric_value, DivExpression) <- function(x, values, ...) {
   lhs / rhs
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 524-543
 
 method(graph_implementation, DivExpression) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(div_expr_linop(arg_objs[[1L]], arg_objs[[2L]]), list())
 }
 
-# ── expr_name ───────────────────────────────────────────────────────
+# -- expr_name -------------------------------------------------------
 
 ## CVXPY SOURCE: binary_operators.py lines 492-500
 method(is_atom_log_log_convex, DivExpression) <- function(x) TRUE
@@ -351,9 +351,9 @@ method(expr_name, DivExpression) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # Helper for binary operator names
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 .binop_name <- function(x, op_name) {
   lhs_name <- expr_name(x@args[[1L]])

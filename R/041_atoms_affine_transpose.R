@@ -3,10 +3,10 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/transpose.py
-## Transpose — transpose an expression
+## Transpose -- transpose an expression
 
 
-# ── Transpose class ──────────────────────────────────────────────────
+# -- Transpose class --------------------------------------------------
 ## CVXPY SOURCE: atoms/affine/transpose.py lines 26-111
 
 Transpose <- new_class("Transpose", parent = AffAtom, package = "CVXR",
@@ -23,21 +23,21 @@ Transpose <- new_class("Transpose", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 81-85
 
 method(shape_from_args, Transpose) <- function(x) {
   rev(x@args[[1L]]@shape)
 }
 
-# ── sign_from_args ───────────────────────────────────────────────────
+# -- sign_from_args ---------------------------------------------------
 ## Inherits from AffAtom: sum_signs(args)
 
-# ── log-log curvature: affine (CVXPY transpose.py lines 56-60) ──────
+# -- log-log curvature: affine (CVXPY transpose.py lines 56-60) ------
 method(is_atom_log_log_convex, Transpose) <- function(x) TRUE
 method(is_atom_log_log_concave, Transpose) <- function(x) TRUE
 
-# ── numeric_value ────────────────────────────────────────────────────
+# -- numeric_value ----------------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 52-54
 
 method(numeric_value, Transpose) <- function(x, values, ...) {
@@ -50,7 +50,7 @@ method(numeric_value, Transpose) <- function(x, values, ...) {
   }
 }
 
-# ── is_symmetric ─────────────────────────────────────────────────────
+# -- is_symmetric -----------------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 66-69
 
 method(is_symmetric, Transpose) <- function(x) {
@@ -58,7 +58,7 @@ method(is_symmetric, Transpose) <- function(x) {
     is_symmetric(x@args[[1L]])
 }
 
-# ── is_hermitian ─────────────────────────────────────────────────────
+# -- is_hermitian -----------------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 76-79
 
 method(is_hermitian, Transpose) <- function(x) {
@@ -66,14 +66,14 @@ method(is_hermitian, Transpose) <- function(x) {
     is_hermitian(x@args[[1L]])
 }
 
-# ── graph_implementation ─────────────────────────────────────────────
+# -- graph_implementation ---------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 92-111
 
 method(graph_implementation, Transpose) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(transpose_linop(arg_objs[[1L]]), list())
 }
 
-# ── expr_name ────────────────────────────────────────────────────────
+# -- expr_name --------------------------------------------------------
 ## CVXPY SOURCE: transpose.py lines 37-41
 
 method(expr_name, Transpose) <- function(x) {

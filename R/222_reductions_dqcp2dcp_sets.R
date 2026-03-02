@@ -10,7 +10,7 @@
 ## Returns a list of constraints (some may be lazy closures)
 
 ## CVXPY SOURCE: sets.py mul_sub
-## CVXPY uses: [y <= t * inv_pos(x)] — NOT t/x (DivExpression is not DCP)
+## CVXPY uses: [y <= t * inv_pos(x)] -- NOT t/x (DivExpression is not DCP)
 .mul_sub <- function(expr, t) {
   x <- expr@args[[1L]]
   y <- expr@args[[2L]]
@@ -24,7 +24,7 @@
 }
 
 ## CVXPY SOURCE: sets.py mul_sup
-## CVXPY uses: [x >= t * inv_pos(y)] — NOT t/y
+## CVXPY uses: [x >= t * inv_pos(y)] -- NOT t/y
 .mul_sup <- function(expr, t) {
   x <- expr@args[[1L]]
   y <- expr@args[[2L]]
@@ -38,7 +38,7 @@
 }
 
 ## CVXPY SOURCE: sets.py ratio_sub
-## CVXPY uses: [x <= t * y] — elementwise Multiply, not MulExpression
+## CVXPY uses: [x <= t * y] -- elementwise Multiply, not MulExpression
 .ratio_sub <- function(expr, t) {
   x <- expr@args[[1L]]
   y <- expr@args[[2L]]
@@ -52,7 +52,7 @@
 }
 
 ## CVXPY SOURCE: sets.py ratio_sup
-## CVXPY uses: [x >= t * y] — elementwise Multiply, not MulExpression
+## CVXPY uses: [x >= t * y] -- elementwise Multiply, not MulExpression
 .ratio_sup <- function(expr, t) {
   x <- expr@args[[1L]]
   y <- expr@args[[2L]]
@@ -66,7 +66,7 @@
 }
 
 ## CVXPY SOURCE: sets.py length_sub
-## Sublevel set: {x : length(x) <= t} ⟺ x[floor(t):] == 0
+## Sublevel set: {x : length(x) <= t} <=> x[floor(t):] == 0
 .length_sub <- function(expr, t) {
   arg <- expr@args[[1L]]
   if (S7_inherits(t, Parameter)) {
@@ -90,7 +90,7 @@
 }
 
 ## CVXPY SOURCE: sets.py gen_lambda_max_sub
-## Sublevel set: {(A,B) : lambda_max(A,B) <= t} ⟺ A == A^T, B >> 0, t*B - A >> 0
+## Sublevel set: {(A,B) : lambda_max(A,B) <= t} <=> A == A^T, B >> 0, t*B - A >> 0
 .gen_lambda_max_sub <- function(expr, t) {
   A <- expr@args[[1L]]
   B <- expr@args[[2L]]
@@ -124,7 +124,7 @@
 
 ## CVXPY SOURCE: sets.py dist_ratio_sub
 ## Sublevel set: {x : dist_ratio(x,a,b) <= t}
-## Lazy closure — evaluated at bisection time when t has a value.
+## Lazy closure -- evaluated at bisection time when t has a value.
 .dist_ratio_sub <- function(expr, t) {
   x <- expr@args[[1L]]
   a <- expr@a

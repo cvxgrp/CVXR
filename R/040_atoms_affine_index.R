@@ -3,9 +3,9 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/index.py
-## Index — indexing/slicing into an Expression
+## Index -- indexing/slicing into an Expression
 
-# ── Key validation helpers ─────────────────────────────────────────────
+# -- Key validation helpers ---------------------------------------------
 ## Convert R indexing arguments to validated integer index vectors.
 ## R's `[` can pass: integer, logical, missing (=NULL here), negative, etc.
 ## We normalize to a list of two integer vectors (1-based) or NULL (=all).
@@ -17,7 +17,7 @@
 #' @noRd
 .validate_index_key <- function(idx, dim_len) {
   if (is.null(idx)) {
-    ## NULL means "all" — return full sequence
+    ## NULL means "all" -- return full sequence
     return(seq_len(dim_len))
   }
   if (is.logical(idx)) {
@@ -49,7 +49,7 @@
   c(as.integer(nrow), as.integer(ncol))
 }
 
-# ── Index class ──────────────────────────────────────────────────────
+# -- Index class ------------------------------------------------------
 ## CVXPY SOURCE: atoms/affine/index.py lines 31-115
 
 Index <- new_class("Index", parent = AffAtom, package = "CVXR",
@@ -79,20 +79,20 @@ Index <- new_class("Index", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 
 method(shape_from_args, Index) <- function(x) {
   .index_shape(x@key, x@args[[1L]]@shape)
 }
 
-# ── sign_from_args ───────────────────────────────────────────────────
+# -- sign_from_args ---------------------------------------------------
 ## Inherits from AffAtom: sum_signs(args)
 
-# ── log-log curvature: affine (CVXPY index.py lines 68-72) ──────────
+# -- log-log curvature: affine (CVXPY index.py lines 68-72) ----------
 method(is_atom_log_log_convex, Index) <- function(x) TRUE
 method(is_atom_log_log_concave, Index) <- function(x) TRUE
 
-# ── numeric_value ────────────────────────────────────────────────────
+# -- numeric_value ----------------------------------------------------
 ## CVXPY SOURCE: index.py lines 88-90
 
 method(numeric_value, Index) <- function(x, values, ...) {
@@ -102,21 +102,21 @@ method(numeric_value, Index) <- function(x, values, ...) {
   result
 }
 
-# ── get_data ─────────────────────────────────────────────────────────
+# -- get_data ---------------------------------------------------------
 ## CVXPY SOURCE: index.py lines 96-98
 
 method(get_data, Index) <- function(x) {
   list(x@key, x@orig_key)
 }
 
-# ── graph_implementation ─────────────────────────────────────────────
+# -- graph_implementation ---------------------------------------------
 ## CVXPY SOURCE: index.py lines 100-115
 
 method(graph_implementation, Index) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(index_linop(arg_objs[[1L]], shape, data[[1L]]), list())
 }
 
-# ── expr_name ────────────────────────────────────────────────────────
+# -- expr_name --------------------------------------------------------
 ## CVXPY SOURCE: index.py lines 76-79
 
 method(expr_name, Index) <- function(x) {
@@ -130,7 +130,7 @@ method(expr_name, Index) <- function(x) {
   sprintf("%s[%s, %s]", expr_name(x@args[[1L]]), row_str, col_str)
 }
 
-# ── is_symmetric / is_hermitian ──────────────────────────────────────
+# -- is_symmetric / is_hermitian --------------------------------------
 
 method(is_symmetric, Index) <- function(x) {
   x@shape[1L] == x@shape[2L] && x@shape[1L] == 1L

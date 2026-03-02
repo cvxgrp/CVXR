@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/unary_operators.py
-## NegExpression — negation of an expression: -x
+## NegExpression -- negation of an expression: -x
 
 
 NegExpression <- new_class("NegExpression", parent = AffAtom, package = "CVXR",
@@ -18,12 +18,12 @@ NegExpression <- new_class("NegExpression", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 68-71
 
 method(shape_from_args, NegExpression) <- function(x) x@args[[1L]]@shape
 
-# ── sign: flipped ───────────────────────────────────────────────────
+# -- sign: flipped ---------------------------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 73-76
 
 method(sign_from_args, NegExpression) <- function(x) {
@@ -31,31 +31,31 @@ method(sign_from_args, NegExpression) <- function(x) {
     is_nonpos = is_nonneg(x@args[[1L]]))
 }
 
-# ── monotonicity: always decreasing ─────────────────────────────────
+# -- monotonicity: always decreasing ---------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 78-86
 
 method(is_incr, NegExpression) <- function(x, idx, ...) FALSE
 method(is_decr, NegExpression) <- function(x, idx, ...) TRUE
 
-# ── symmetric / hermitian: delegates to arg ─────────────────────────
+# -- symmetric / hermitian: delegates to arg -------------------------
 ## CVXPY SOURCE: unary_operators.py lines 88-96
 
 method(is_symmetric, NegExpression) <- function(x) is_symmetric(x@args[[1L]])
 method(is_hermitian, NegExpression) <- function(x) is_hermitian(x@args[[1L]])
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 37-38 (OP_FUNC = op.neg)
 
 method(numeric_value, NegExpression) <- function(x, values, ...) -values[[1L]]
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 98-117
 
 method(graph_implementation, NegExpression) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(neg_expr_linop(arg_objs[[1L]]), list())
 }
 
-# ── expr_name ───────────────────────────────────────────────────────
+# -- expr_name -------------------------------------------------------
 ## CVXPY SOURCE: unary_operators.py lines 47-53
 
 method(expr_name, NegExpression) <- function(x) {

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/log_sum_exp.py
-## LogSumExp — log(sum(exp(x))), axis-aware
+## LogSumExp -- log(sum(exp(x))), axis-aware
 
 
 LogSumExp <- new_class("LogSumExp", parent = AxisAtom, package = "CVXR",
@@ -26,21 +26,21 @@ LogSumExp <- new_class("LogSumExp", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign: nonneg when arg is nonneg ──────────────────────────────
+# -- sign: nonneg when arg is nonneg ------------------------------
 method(sign_from_args, LogSumExp) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, LogSumExp) <- function(x) TRUE
 method(is_atom_concave, LogSumExp) <- function(x) FALSE
 
-# ── monotonicity: always increasing ──────────────────────────────
+# -- monotonicity: always increasing ------------------------------
 method(is_incr, LogSumExp) <- function(x, idx, ...) TRUE
 method(is_decr, LogSumExp) <- function(x, idx, ...) FALSE
 
-# ── numeric: log(sum(exp(x))) ────────────────────────────────────
+# -- numeric: log(sum(exp(x))) ------------------------------------
 method(numeric_value, LogSumExp) <- function(x, values, ...) {
   v <- values[[1L]]
   axis <- x@axis
@@ -53,19 +53,19 @@ method(numeric_value, LogSumExp) <- function(x, values, ...) {
     result <- mx + log(sum(exp(v - mx)))
     matrix(result, 1L, 1L)
   } else if (axis == 2L) {
-    ## axis=2: Reduce along rows (column-wise) → one value per column
+    ## axis=2: Reduce along rows (column-wise) -> one value per column
     mx <- apply(v, 2L, max)
     result <- mx + log(colSums(exp(sweep(v, 2L, mx))))
     if (keepdims) matrix(result, nrow = 1L) else matrix(result, nrow = 1L)
   } else {
-    ## axis == 1: Reduce along columns → one value per row
+    ## axis == 1: Reduce along columns -> one value per row
     mx <- apply(v, 1L, max)
     result <- mx + log(rowSums(exp(sweep(v, 1L, mx))))
     if (keepdims) matrix(result, ncol = 1L) else matrix(result, ncol = 1L)
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, LogSumExp) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls LogSumExp} not yet implemented.")
 }

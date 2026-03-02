@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/xexp.py
-## Xexp — elementwise x * exp(x)
+## Xexp -- elementwise x * exp(x)
 
 
 Xexp <- new_class("Xexp", parent = Elementwise, package = "CVXR",
@@ -22,42 +22,42 @@ Xexp <- new_class("Xexp", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: tracks argument sign ───────────────────────────────────
+# -- sign: tracks argument sign -----------------------------------
 method(sign_from_args, Xexp) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = is_nonpos(x@args[[1L]]))
 }
 
-# ── curvature: conditionally convex (only when arg nonneg) ───────
+# -- curvature: conditionally convex (only when arg nonneg) -------
 method(is_atom_convex, Xexp) <- function(x) {
   is_nonneg(x@args[[1L]])
 }
 method(is_atom_concave, Xexp) <- function(x) FALSE
 
-# ── monotonicity: always increasing ──────────────────────────────
+# -- monotonicity: always increasing ------------------------------
 method(is_incr, Xexp) <- function(x, idx, ...) TRUE
 method(is_decr, Xexp) <- function(x, idx, ...) FALSE
 
-# ── log-log curvature ────────────────────────────────────────────
+# -- log-log curvature --------------------------------------------
 method(is_atom_log_log_convex, Xexp) <- function(x) TRUE
 method(is_atom_log_log_concave, Xexp) <- function(x) FALSE
 
-# ── domain: x >= 0 ──────────────────────────────────────────────
+# -- domain: x >= 0 ----------------------------------------------
 method(atom_domain, Xexp) <- function(x) {
   list(x@args[[1L]] >= 0)
 }
 
-# ── numeric: x * exp(x) ─────────────────────────────────────────
+# -- numeric: x * exp(x) -----------------------------------------
 method(numeric_value, Xexp) <- function(x, values, ...) {
   values[[1L]] * exp(values[[1L]])
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Xexp) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Xexp} not yet implemented.")
 }
 
-#' x * exp(x) — elementwise
+#' x * exp(x) -- elementwise
 #'
 #' @param x An Expression
 #' @returns An Xexp atom

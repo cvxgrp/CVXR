@@ -7,21 +7,21 @@
 ##
 ## MOSEK is a commercial conic solver with native support for LP, QP,
 ## SOCP, ExpCone, PowCone, and SDP. Uses the standard ConicSolver pipeline
-## (ConeMatrixStuffing → format_constraints → ConicSolver.reduction_apply).
+## (ConeMatrixStuffing -> format_constraints -> ConicSolver.reduction_apply).
 ##
 ## Key design:
-## - Zero constraints → prob$A + prob$bc (equality bounds, blc = buc = b)
-## - NonNeg constraints → prob$A + prob$bc (inequality bounds, blc = -Inf, buc = b)
-## - Conic cones (SOC, PSD, ExpCone, PowCone3D) → ACC (prob$F + prob$g + prob$cones)
+## - Zero constraints -> prob$A + prob$bc (equality bounds, blc = buc = b)
+## - NonNeg constraints -> prob$A + prob$bc (inequality bounds, blc = -Inf, buc = b)
+## - Conic cones (SOC, PSD, ExpCone, PowCone3D) -> ACC (prob$F + prob$g + prob$cones)
 ## - PSD via SVEC_PSD_CONE in ACC (not bar variables)
-## - SCS's lower-tri column-major with √2 scaling matches MOSEK's SVEC_PSD_CONE
+## - SCS's lower-tri column-major with sqrt2 scaling matches MOSEK's SVEC_PSD_CONE
 ## - ExpCone order: MOSEK PEXP(x,y,z) where x >= y*exp(z/y)
 ##   vs CVXR (x,y,z) where z >= y*exp(x/y), so EXP_CONE_ORDER = c(2,1,0)
 ## - QP via prob$qobj lower-tri triplets
 ## - Rmosek SVEC_PSD_CONE bug workaround: dummy bardim + barc when PSD present
 
 
-# ── MOSEK status map ──────────────────────────────────────────────
+# -- MOSEK status map ----------------------------------------------
 ## Maps MOSEK solution status strings to CVXR status constants.
 
 MOSEK_STATUS_MAP <- list(
@@ -35,8 +35,8 @@ MOSEK_STATUS_MAP <- list(
   "UNKNOWN"                  = SOLVER_ERROR
 )
 
-# ── mosek_tri_to_full: expand lower-tri svec to full matrix ───────
-## Same convention as SCS: lower-tri column-major with √2 off-diag scaling.
+# -- mosek_tri_to_full: expand lower-tri svec to full matrix -------
+## Same convention as SCS: lower-tri column-major with sqrt2 off-diag scaling.
 ## Scales off-diagonal by 1/sqrt(2) to recover the actual matrix entries.
 ## Returns a numeric vector of length n*n (column-major).
 
@@ -44,7 +44,7 @@ mosek_tri_to_full <- function(lower_tri, n) {
   scs_tri_to_full(lower_tri, n)
 }
 
-# ── dims_to_mosek_cones: ConeDims → prob$cones matrix ─────────────
+# -- dims_to_mosek_cones: ConeDims -> prob$cones matrix -------------
 ## Returns a 3-row matrix with one column per cone block.
 ## Row 1: type string, Row 2: dimension, Row 3: conepar.
 ## Also returns the total number of ACC rows (for building F and g).
@@ -54,14 +54,14 @@ dims_to_mosek_cones <- function(cone_dims) {
 
   ## NOTE: NonNeg is handled via prob$A/bc bounds, NOT ACC cones.
 
-  ## SOC → QUAD
+  ## SOC -> QUAD
   if (length(cone_dims@soc) > 0L) {
     for (q in cone_dims@soc) {
       cols <- c(cols, list(list("QUAD", q, NULL)))
     }
   }
 
-  ## PSD → SVEC_PSD_CONE
+  ## PSD -> SVEC_PSD_CONE
   if (length(cone_dims@psd) > 0L) {
     for (d in cone_dims@psd) {
       svec_dim <- (d * (d + 1L)) %/% 2L
@@ -69,14 +69,14 @@ dims_to_mosek_cones <- function(cone_dims) {
     }
   }
 
-  ## ExpCone → PEXP (3 elements each)
+  ## ExpCone -> PEXP (3 elements each)
   if (cone_dims@exp > 0L) {
     for (i in seq_len(cone_dims@exp)) {
       cols <- c(cols, list(list("PEXP", 3L, NULL)))
     }
   }
 
-  ## PowCone3D → PPOW (3 elements each, with alpha parameters)
+  ## PowCone3D -> PPOW (3 elements each, with alpha parameters)
   ## MOSEK PPOW expects conepar = c(alpha, 1-alpha) for x1^alpha * x2^(1-alpha) >= |x3|
   ## CVXR stores single alpha in cone_dims@p3d
   if (length(cone_dims@p3d) > 0L) {
@@ -98,7 +98,7 @@ dims_to_mosek_cones <- function(cone_dims) {
   cones_mat
 }
 
-# ── Mosek_Solver class ────────────────────────────────────────────
+# -- Mosek_Solver class --------------------------------------------
 
 #' @keywords internal
 Mosek_Solver <- new_class("Mosek_Solver", parent = ConicSolver, package = "CVXR",
@@ -117,13 +117,13 @@ Mosek_Solver <- new_class("Mosek_Solver", parent = ConicSolver, package = "CVXR"
 
 method(solver_name, Mosek_Solver) <- function(x) MOSEK_SOLVER
 
-## PSD format: reuse SCS's lower-tri column-major with √2 scaling
+## PSD format: reuse SCS's lower-tri column-major with sqrt2 scaling
 ## (matches MOSEK's SVEC_PSD_CONE convention exactly)
 method(solver_psd_format_mat, Mosek_Solver) <- function(solver, constr) {
   scs_psd_format_mat_fn(constr)
 }
 
-# ── mosek_extract_dual_value ──────────────────────────────────────
+# -- mosek_extract_dual_value --------------------------------------
 ## PSD constraints use lower-tri svec format; expand to full.
 ## Same logic as SCS.
 
@@ -140,7 +140,7 @@ mosek_extract_dual_value <- function(result_vec, offset, constraint) {
   }
 }
 
-# ── MOSEK solve_via_data ──────────────────────────────────────────
+# -- MOSEK solve_via_data ------------------------------------------
 ## Converts CVXR solver data (A, b, c, dims, P) to MOSEK prob list
 ## and calls Rmosek::mosek().
 
@@ -159,19 +159,19 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
   dims   <- data[[SD_DIMS]]
   n      <- length(c_vec)  # number of variables
 
-  ## ── Build MOSEK prob list ──────────────────────────────────────
+  ## -- Build MOSEK prob list --------------------------------------
   prob <- list()
   prob$sense <- "min"
   prob$c     <- c_vec
   prob$bx    <- rbind(blx = rep(-Inf, n), bux = rep(Inf, n))
 
-  ## ── Row splitting ──────────────────────────────────────────────
-  ## Solver convention: data$A * x + s = data$b, s ∈ K
+  ## -- Row splitting ----------------------------------------------
+  ## Solver convention: data$A * x + s = data$b, s in K
   ##
   ## MOSEK row assignment:
-  ##   Zero rows     → prob$A/bc with blc = buc = b  (equality)
-  ##   NonNeg rows   → prob$A/bc with blc = b, buc = Inf (inequality)
-  ##   Conic rows    → ACC: F*x + g ∈ K  where F = -A, g = b
+  ##   Zero rows     -> prob$A/bc with blc = buc = b  (equality)
+  ##   NonNeg rows   -> prob$A/bc with blc = b, buc = Inf (inequality)
+  ##   Conic rows    -> ACC: F*x + g in K  where F = -A, g = b
   ##
   ## NonNeg goes to prob$A/bc (not ACC) because MOSEK does not allow
 
@@ -181,15 +181,15 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
   nonneg_dim <- dims@nonneg
   linear_dim <- zero_dim + nonneg_dim
 
-  ## Linear portion (Zero + NonNeg) → prob$A / prob$bc
+  ## Linear portion (Zero + NonNeg) -> prob$A / prob$bc
   if (linear_dim > 0L) {
     A_linear <- A_full[seq_len(linear_dim), , drop = FALSE]
     b_linear <- b_full[seq_len(linear_dim)]
     prob$A <- A_linear
 
     ## Bounds: Zero rows get equality, NonNeg rows get one-sided
-    ## Zero: A*x + s = b, s = 0  →  A*x = b  →  blc = buc = b
-    ## NonNeg: A*x + s = b, s >= 0  →  A*x <= b  →  blc = -Inf, buc = b
+    ## Zero: A*x + s = b, s = 0  ->  A*x = b  ->  blc = buc = b
+    ## NonNeg: A*x + s = b, s >= 0  ->  A*x <= b  ->  blc = -Inf, buc = b
     blc <- rep(-Inf, linear_dim)
     buc <- b_linear
     if (zero_dim > 0L) {
@@ -202,8 +202,8 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
     prob$bc <- rbind(blc = numeric(0), buc = numeric(0))
   }
 
-  ## ── ACC: conic rows (SOC, PSD, ExpCone, PowCone3D) ────────────
-  ## ACC: F*x + g ∈ K  where s = b - A*x ∈ K  →  F = -A, g = b
+  ## -- ACC: conic rows (SOC, PSD, ExpCone, PowCone3D) ------------
+  ## ACC: F*x + g in K  where s = b - A*x in K  ->  F = -A, g = b
   total_rows <- nrow(A_full)
   conic_rows <- if (linear_dim < total_rows) (linear_dim + 1L):total_rows else integer(0)
 
@@ -218,7 +218,7 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
     }
   }
 
-  ## ── SVEC_PSD_CONE bug workaround ──────────────────────────────
+  ## -- SVEC_PSD_CONE bug workaround ------------------------------
   ## Rmosek 11.1.1 BETA crashes if SVEC_PSD_CONE is used but prob$barc
   ## is not defined. Add dummy 1x1 bar variable with zero objective.
   if (length(dims@psd) > 0L) {
@@ -226,7 +226,7 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
     prob$barc <- list(j = 1L, k = 1L, l = 1L, v = 0)
   }
 
-  ## ── QP: quadratic objective via prob$qobj ──────────────────────
+  ## -- QP: quadratic objective via prob$qobj ----------------------
   if (!is.null(data[[SD_P]])) {
     P <- data[[SD_P]]
     ## Extract lower-triangle triplets (MOSEK wants i >= j, 1-based)
@@ -241,17 +241,17 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
     }
   }
 
-  ## ── Solver options ─────────────────────────────────────────────
+  ## -- Solver options ---------------------------------------------
   opts <- list(verbose = if (verbose) 1L else 0L, soldetail = 1L)
   for (opt_name in names(solver_opts)) {
     opts[[opt_name]] <- solver_opts[[opt_name]]
   }
 
-  ## ── Warm-start: pass previous solution as initial point ───────
+  ## -- Warm-start: pass previous solution as initial point -------
   ## Rmosek supports warm-start via prob$sol: pass the previous
   ## solution structure and MOSEK uses it as initial point.
   ## opts$usesol = TRUE is the Rmosek default.
-  ## NOTE: CVXPY does NOT implement MOSEK warm-start — this is an
+  ## NOTE: CVXPY does NOT implement MOSEK warm-start -- this is an
   ## R-specific enhancement using native Rmosek capabilities.
   cache_key <- MOSEK_SOLVER
   if (warm_start && !is.null(solver_cache) && exists(cache_key, envir = solver_cache)) {
@@ -265,10 +265,10 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
     }
   }
 
-  ## ── Call MOSEK ─────────────────────────────────────────────────
+  ## -- Call MOSEK -------------------------------------------------
   result <- Rmosek::mosek(prob, opts)
 
-  ## ── Cache for future warm-starts ──────────────────────────────
+  ## -- Cache for future warm-starts ------------------------------
   if (!is.null(solver_cache) && result$response$code == 0L &&
       !is.null(result$sol$itr)) {
     assign(cache_key, result, envir = solver_cache)
@@ -277,7 +277,7 @@ method(solve_via_data, Mosek_Solver) <- function(x, data, warm_start = FALSE, ve
   result
 }
 
-# ── MOSEK reduction_invert ────────────────────────────────────────
+# -- MOSEK reduction_invert ----------------------------------------
 ## Parses MOSEK-specific result format into a CVXR Solution.
 
 method(reduction_invert, Mosek_Solver) <- function(x, solution, inverse_data, ...) {
@@ -307,7 +307,7 @@ method(reduction_invert, Mosek_Solver) <- function(x, solution, inverse_data, ..
     primal_vars <- list()
     primal_vars[[as.character(inverse_data[[SOLVER_VAR_ID]])]] <- sol$xx
 
-    ## ── Dual variables ───────────────────────────────────────────
+    ## -- Dual variables -------------------------------------------
     ## Rmosek 11.x does NOT return sol$y directly. Instead, linear
     ## constraint duals come from sol$slc (lower bound slack) and
     ## sol$suc (upper bound slack).
@@ -319,8 +319,8 @@ method(reduction_invert, Mosek_Solver) <- function(x, solution, inverse_data, ..
     ## ACC conic duals come from sol$doty (already in CVXR convention).
     ##
     ## CVXR inverse_data splits:
-    ##   SOLVER_EQ_CONSTR  → Zero constraints
-    ##   SOLVER_NEQ_CONSTR → [NonNeg, SOC, PSD, ExpCone, PowCone3D]
+    ##   SOLVER_EQ_CONSTR  -> Zero constraints
+    ##   SOLVER_NEQ_CONSTR -> [NonNeg, SOC, PSD, ExpCone, PowCone3D]
     ##
     ## We concatenate nonneg portion of linear_y with sol$doty to form
     ## the full ineq_dual vector.
@@ -368,7 +368,7 @@ method(reduction_invert, Mosek_Solver) <- function(x, solution, inverse_data, ..
         }
         for (k in seq_len(dims@exp)) {
           base_idx <- exp_offset + (k - 1L) * 3L
-          ## Swap indices 1 and 3 (MOSEK [z,y,x] → CVXR [x,y,z])
+          ## Swap indices 1 and 3 (MOSEK [z,y,x] -> CVXR [x,y,z])
           tmp <- doty[base_idx + 1L]
           doty[base_idx + 1L] <- doty[base_idx + 3L]
           doty[base_idx + 3L] <- tmp

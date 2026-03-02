@@ -11,7 +11,7 @@
 ##                    x_l <= x <= x_u   (box constraints)
 ##
 ## Accepts ONLY Zero (equality) and NonNeg (inequality) constraints.
-## Inherits from QpSolver — uses QpSolver.apply() for sign-correct
+## Inherits from QpSolver -- uses QpSolver.apply() for sign-correct
 ## A_eq/b_eq/F_ineq/g_ineq data, then converts to PIQP format.
 ##
 ## R piqp package uses integer status codes (not string enums):
@@ -89,7 +89,7 @@ method(solve_via_data, PIQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     F_ineq <- methods::as(F_ineq, "dgCMatrix")
   }
 
-  ## Handle NULL P (LP case) — zero matrix
+  ## Handle NULL P (LP case) -- zero matrix
   if (is.null(P)) {
     P <- Matrix::sparseMatrix(i = integer(0), j = integer(0),
                                dims = c(nvars, nvars))
@@ -113,7 +113,7 @@ method(solve_via_data, PIQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
   used_warm   <- FALSE
   structure_changed <- TRUE
 
-  ## ── Warm path ────────────────────────────────────────────────────
+  ## -- Warm path ----------------------------------------------------
   ## CVXPY SOURCE: piqp_qpif.py lines 105-142
   if (warm_start && !is.null(solver_cache) && exists(cache_key, envir = solver_cache)) {
     cached    <- get(cache_key, envir = solver_cache)
@@ -161,14 +161,14 @@ method(solve_via_data, PIQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
       model     <- old_model
       used_warm <- TRUE
     } else if (!structure_changed) {
-      ## No changes at all — just re-solve
+      ## No changes at all -- just re-solve
       piqp::update_settings(old_model, solver_opts)
       model     <- old_model
       used_warm <- TRUE
     }
   }
 
-  ## ── Cold path ────────────────────────────────────────────────────
+  ## -- Cold path ----------------------------------------------------
   ## CVXPY SOURCE: piqp_qpif.py lines 144-169
   if (!used_warm) {
     model <- piqp::piqp(
@@ -183,10 +183,10 @@ method(solve_via_data, PIQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     )
   }
 
-  ## ── Solve ────────────────────────────────────────────────────────
+  ## -- Solve --------------------------------------------------------
   result <- solve(model)
 
-  ## ── Cache for future warm-starts ─────────────────────────────────
+  ## -- Cache for future warm-starts ---------------------------------
   if (!is.null(solver_cache)) {
     assign(cache_key, list(
       model = model,
@@ -203,7 +203,7 @@ method(solve_via_data, PIQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
 
 # -- reduction_invert -----------------------------------------------------------
 ## CVXPY SOURCE: piqp_qpif.py lines 46-78
-## Dual sign: use raw y and z_u (NO negation) — QpSolver.apply() sign flip
+## Dual sign: use raw y and z_u (NO negation) -- QpSolver.apply() sign flip
 ## handles it, same as OSQP.
 
 method(reduction_invert, PIQP_QP_Solver) <- function(x, solution, inverse_data, ...) {
@@ -232,7 +232,7 @@ method(reduction_invert, PIQP_QP_Solver) <- function(x, solution, inverse_data, 
 
     ## Dual variables: PIQP returns y (eq duals) and z_u (ineq duals)
     ## CVXPY SOURCE: piqp_qpif.py lines 62-73
-    ## Use raw duals, NO negation — same convention as OSQP.
+    ## Use raw duals, NO negation -- same convention as OSQP.
     len_eq   <- solution$.len_eq
     len_ineq <- solution$.len_ineq
 

@@ -5,7 +5,7 @@
 ## CVXPY SOURCE: reductions/complex2real/canonicalizers/aff_canon.py
 ## Affine canonicalizers: separable, binary, conj, real, imag, hermitian_wrap
 
-## ── separable_canon ───────────────────────────────────────────────
+## -- separable_canon -----------------------------------------------
 ## For linear functions that are separable in real/imaginary parts:
 ## f(a + bi) = f(a) + f(b)i
 c2r_separable_canon <- function(expr, real_args, imag_args, real2imag) {
@@ -28,7 +28,7 @@ c2r_separable_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-## ── real_canon ────────────────────────────────────────────────────
+## -- real_canon ----------------------------------------------------
 c2r_real_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(real_args[[1L]])) {
     return(list(0L * imag_args[[1L]], NULL))
@@ -37,7 +37,7 @@ c2r_real_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-## ── imag_canon ────────────────────────────────────────────────────
+## -- imag_canon ----------------------------------------------------
 c2r_imag_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(imag_args[[1L]])) {
     return(list(0L * real_args[[1L]], NULL))
@@ -46,7 +46,7 @@ c2r_imag_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-## ── conj_canon ────────────────────────────────────────────────────
+## -- conj_canon ----------------------------------------------------
 c2r_conj_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(imag_args[[1L]])) {
     imag_arg <- NULL
@@ -56,7 +56,7 @@ c2r_conj_canon <- function(expr, real_args, imag_args, real2imag) {
   list(real_args[[1L]], imag_arg)
 }
 
-## ── hermitian_wrap_canon ──────────────────────────────────────────
+## -- hermitian_wrap_canon ------------------------------------------
 c2r_hermitian_wrap_canon <- function(expr, real_args, imag_args, real2imag) {
   if (!is.null(imag_args[[1L]])) {
     imag_arg <- skew_symmetric_wrap(imag_args[[1L]])
@@ -67,7 +67,7 @@ c2r_hermitian_wrap_canon <- function(expr, real_args, imag_args, real2imag) {
   list(real_arg, imag_arg)
 }
 
-## ── join ──────────────────────────────────────────────────────────
+## -- join ----------------------------------------------------------
 ## Helper: combine two arguments via expr.copy([lh, rh])
 .c2r_join <- function(expr, lh_arg, rh_arg) {
   if (is.null(lh_arg) || is.null(rh_arg)) {
@@ -77,7 +77,7 @@ c2r_hermitian_wrap_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-## ── add ───────────────────────────────────────────────────────────
+## -- add -----------------------------------------------------------
 ## Helper: sum two arguments, negating rh if neg=TRUE
 .c2r_add <- function(lh_arg, rh_arg, neg = FALSE) {
   if (!is.null(rh_arg) && neg) {
@@ -94,7 +94,7 @@ c2r_hermitian_wrap_canon <- function(expr, real_args, imag_args, real2imag) {
   }
 }
 
-## ── binary_canon ──────────────────────────────────────────────────
+## -- binary_canon --------------------------------------------------
 ## For multiplication-like operations:
 ## (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 c2r_binary_canon <- function(expr, real_args, imag_args, real2imag) {

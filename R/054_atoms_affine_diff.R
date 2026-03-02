@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/diff.py
-## diff — kth order differences along an axis
+## diff -- kth order differences along an axis
 ##
 ## In CVXPY, diff is a pure function (not an Atom class).
 ## It uses iterative slicing: x[1:] - x[:-1] repeated k times.

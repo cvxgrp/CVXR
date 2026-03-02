@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/real.py
-## Real_ — extract the real part of an expression
+## Real_ -- extract the real part of an expression
 
 
 Real_ <- new_class("Real_", parent = AffAtom, package = "CVXR",
@@ -21,34 +21,34 @@ Real_ <- new_class("Real_", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── numeric_value: R's native Re() ──────────────────────────────────
+# -- numeric_value: R's native Re() ----------------------------------
 ## CVXPY SOURCE: real.py lines 29-33
 
 method(numeric_value, Real_) <- function(x, values, ...) {
   Re(values[[1L]])
 }
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: real.py lines 35-38
 
 method(shape_from_args, Real_) <- function(x) {
   x@args[[1L]]@shape
 }
 
-# ── Complex queries: real part is always real ────────────────────────
+# -- Complex queries: real part is always real ------------------------
 ## CVXPY SOURCE: real.py lines 40-48
 
 method(is_imag, Real_) <- function(x) FALSE
 method(is_complex, Real_) <- function(x) FALSE
 
-# ── Symmetry: Re(Hermitian) is symmetric ─────────────────────────────
+# -- Symmetry: Re(Hermitian) is symmetric -----------------------------
 ## CVXPY SOURCE: real.py lines 49-53
 
 method(is_symmetric, Real_) <- function(x) {
   is_hermitian(x@args[[1L]])
 }
 
-# ── No graph_implementation: consumed by Complex2Real reduction ──────
+# -- No graph_implementation: consumed by Complex2Real reduction ------
 ## CVXPY real.py has no graph_implementation method.
 ## These atoms are markers for Complex2Real to split into real/imag parts.
 

@@ -9,7 +9,7 @@
 ## They are used by canonicalize() methods on Variable/Constant/Parameter.
 ## The C++ LinOp objects (from LinOp.R) are separate and used by the canon backend.
 
-# ── LinOp type constants ──────────────────────────────────────────────
+# -- LinOp type constants ----------------------------------------------
 ## CVXPY SOURCE: lin_ops/lin_op.py lines 39-119
 
 LINOP_VARIABLE     <- "variable"
@@ -20,7 +20,7 @@ LINOP_SPARSE_CONST <- "sparse_const"
 LINOP_NO_OP        <- "no_op"
 LINOP_CONSTANT_ID  <- -1L
 
-# ── R-level LinOp constructor ─────────────────────────────────────────
+# -- R-level LinOp constructor -----------------------------------------
 ## CVXPY SOURCE: lin_ops/lin_op.py::LinOp class
 
 #' Create an R-level LinOp (plain list)
@@ -37,7 +37,7 @@ LinOp_R <- function(type, shape, args = list(), data = NULL) {
   )
 }
 
-# ── Factory functions ─────────────────────────────────────────────────
+# -- Factory functions -------------------------------------------------
 ## CVXPY SOURCE: lin_ops/lin_utils.py
 
 #' Create a LinOp for a variable
@@ -66,7 +66,7 @@ create_param <- function(shape, param_id) {
 #' @noRd
 create_const <- function(value, shape, sparse = FALSE) {
   if (all(shape == c(1L, 1L))) {
-    ## Scalar constant — always extract to plain numeric
+    ## Scalar constant -- always extract to plain numeric
     op_type <- LINOP_SCALAR_CONST
     if (is.matrix(value) || inherits(value, "Matrix")) {
       value <- value[1L, 1L]
@@ -81,7 +81,7 @@ create_const <- function(value, shape, sparse = FALSE) {
   LinOp_R(op_type, shape, args = list(), data = value)
 }
 
-# ── LinOp type constants (operations) ────────────────────────────────
+# -- LinOp type constants (operations) --------------------------------
 ## CVXPY SOURCE: lin_ops/lin_op.py lines 41-102
 ## These complement the leaf-type constants above (VARIABLE, PARAM, etc.)
 
@@ -112,7 +112,7 @@ LINOP_HSTACK      <- "hstack"
 LINOP_VSTACK      <- "vstack"
 LINOP_BROADCAST_TO <- "broadcast_to"
 
-# ── LinOp operation functions ────────────────────────────────────────
+# -- LinOp operation functions ----------------------------------------
 ## CVXPY SOURCE: lin_ops/lin_utils.py
 ## These create compound LinOp trees used by graph_implementation() methods.
 ## Named with _linop suffix to avoid collision with atom class names.
@@ -257,7 +257,7 @@ reshape_linop <- function(operator, shape) {
   LinOp_R(LINOP_RESHAPE, shape, list(operator), NULL)
 }
 
-# ── Phase 3 LinOp constructors ────────────────────────────────────
+# -- Phase 3 LinOp constructors ------------------------------------
 ## CVXPY SOURCE: lin_ops/lin_utils.py
 
 #' Sum the diagonal entries of a matrix (trace)

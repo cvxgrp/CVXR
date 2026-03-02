@@ -6,7 +6,7 @@
 ## Utility functions for solver dual value extraction
 
 
-# ── extract_dual_value ────────────────────────────────────────────
+# -- extract_dual_value --------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 53-58
 ## Extracts a slice of the dual result vector for a constraint.
 
@@ -18,11 +18,11 @@ extract_dual_value <- function(result_vec, offset, constraint) {
   list(value = value, new_offset = new_offset)
 }
 
-# ── get_dual_values ──────────────────────────────────────────────
+# -- get_dual_values ----------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 61-87
 ## Iterates over constraints, calling parse_func to extract dual values.
 
-# ── expcone_permutor ─────────────────────────────────────────────
+# -- expcone_permutor ---------------------------------------------
 ## CVXPY SOURCE: utilities.py expcone_permutor()
 ## Creates a permutation vector for reordering ExpCone dual variables.
 ## ECOS expects ExpCone args in order (x, z, y) but CVXR standard is (x, y, z).
@@ -33,7 +33,7 @@ expcone_permutor <- function(n_cones, exp_cone_order) {
   order + offsets + 1L  # +1 for R 1-based indexing
 }
 
-# ── get_dual_values ──────────────────────────────────────────────
+# -- get_dual_values ----------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 61-87
 ## Iterates over constraints, calling parse_func to extract dual values.
 

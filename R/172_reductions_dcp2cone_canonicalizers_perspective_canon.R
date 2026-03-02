@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dcp2cone/canonicalizers/perspective_canon.py
-## perspective_canon — reduce perspective atom to cone constraints
+## perspective_canon -- reduce perspective atom to cone constraints
 ##
 ## Algorithm:
 ## 1. Build auxiliary problem: Minimize(f) or Maximize(f)
@@ -48,7 +48,7 @@ perspective_canon <- function(expr, args) {
   ## 4. Extract cone form
   q <- data[[SD_C]]                       # objective vector (x_length)
   d <- data[[SD_OFFSET]]                  # objective constant (scalar)
-  A_mat <- data[[SD_A]]                   # constraint matrix (m × x_length)
+  A_mat <- data[[SD_A]]                   # constraint matrix (m x x_length)
   b_vec <- as.numeric(data[[SD_B]])       # constraint RHS (m)
   ordered_cons <- data[["constraints"]]   # ordered constraint objects
   x_length <- length(q)

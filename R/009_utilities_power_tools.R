@@ -9,11 +9,11 @@
 ## Key functions: fracify, dyad_completion, decompose, gm, gm_constrs,
 ## pow_high, pow_mid, pow_neg, powcone_constrs
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # Pure arithmetic utilities (no CVXR dependencies)
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 
-#' Safe bigq concatenation — prevents silent coercion from mixing types
+#' Safe bigq concatenation -- prevents silent coercion from mixing types
 #' @param ... Values to concatenate as bigq
 #' @returns A bigq vector
 #' @noRd
@@ -34,7 +34,7 @@
 
 #' Get the maximum denominator from a bigq vector
 #' @param tup A bigq vector
-#' @returns Integer — the maximum denominator
+#' @returns Integer -- the maximum denominator
 #' @noRd
 get_max_denom <- function(tup) {
   tup <- as.bigq(tup)
@@ -45,14 +45,14 @@ get_max_denom <- function(tup) {
 #' First power of 2 >= n
 #'
 #' @param n Non-negative integer
-#' @returns Integer — smallest power of 2 that is >= n
+#' @returns Integer -- smallest power of 2 that is >= n
 #' @noRd
 next_pow2 <- function(n) {
   ## CVXPY: next_pow2(n) in power_tools.py
   n <- as.integer(n)
   if (n <= 0L) return(1L)
   if (is_power2(n)) return(n)
-  ## 2^ceil(log2(n)) — safe for n up to ~2^30
+  ## 2^ceil(log2(n)) -- safe for n up to ~2^30
   as.integer(2L^as.integer(ceiling(log2(n))))
 }
 
@@ -81,7 +81,7 @@ is_power2 <- function(num) {
 #' All arithmetic uses gmp bigz/bigq for exactness.
 #'
 #' @param frac A bigq scalar
-#' @param max_denom A bigz or integer — maximum allowed denominator
+#' @param max_denom A bigz or integer -- maximum allowed denominator
 #' @returns A bigq scalar with denominator <= max_denom
 #' @noRd
 .limit_denominator <- function(frac, max_denom) {
@@ -189,7 +189,7 @@ is_dyad_weight <- function(w) {
 #' Uses the largest-remainder method for rounding.
 #'
 #' @param a Numeric vector or list of values
-#' @param denom Integer — the exact denominator to use
+#' @param denom Integer -- the exact denominator to use
 #' @returns A bigq vector summing to 1
 #' @noRd
 make_frac <- function(a, denom) {
@@ -252,8 +252,8 @@ dyad_completion <- function(w) {
 #' fractions suitable for SOC-based geometric mean decomposition.
 #'
 #' @param a Numeric vector, bigq vector, or list of weights (nonneg)
-#' @param max_denom Integer — max denominator (rounded up to power of 2)
-#' @param force_dyad Logical — if TRUE, force w to be dyadic (w == w_dyad)
+#' @param max_denom Integer -- max denominator (rounded up to power of 2)
+#' @param force_dyad Logical -- if TRUE, force w to be dyadic (w == w_dyad)
 #' @returns List with `w` (bigq weight vector) and `w_dyad` (dyadic completion)
 #' @noRd
 fracify <- function(a, max_denom = 1024L, force_dyad = FALSE) {
@@ -433,7 +433,7 @@ check_dyad <- function(w, w_dyad) {
 #'
 #' @param a_orig Numeric vector of original weights
 #' @param w_approx A bigq weight vector (approximation)
-#' @returns Numeric — max absolute difference
+#' @returns Numeric -- max absolute difference
 #' @noRd
 approx_error <- function(a_orig, w_approx) {
   ## CVXPY: approx_error(a_orig, w_approx) in power_tools.py
@@ -518,9 +518,9 @@ prettydict <- function(d) {
   result
 }
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # Power approximation functions (rewritten with gmp)
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 
 #' Rational approximation for p > 1 powers
 #'
@@ -529,7 +529,7 @@ prettydict <- function(d) {
 #'
 #' @param p Numeric exponent (p > 1)
 #' @param max_denom Integer max denominator for approximation
-#' @param approx Logical — if TRUE, use rational approximation (bigq result)
+#' @param approx Logical -- if TRUE, use rational approximation (bigq result)
 #' @returns List with `p` (the power) and `w` (bigq or numeric weight vector of length 2)
 #' @noRd
 pow_high <- function(p, max_denom = 1024L, approx = TRUE) {
@@ -555,7 +555,7 @@ pow_high <- function(p, max_denom = 1024L, approx = TRUE) {
 #'
 #' @param p Numeric exponent (0 < p < 1)
 #' @param max_denom Integer max denominator for approximation
-#' @param approx Logical — if TRUE, use rational approximation (bigq result)
+#' @param approx Logical -- if TRUE, use rational approximation (bigq result)
 #' @returns List with `p` (bigq or numeric) and `w` (bigq or numeric weight vector)
 #' @noRd
 pow_mid <- function(p, max_denom = 1024L, approx = TRUE) {
@@ -573,7 +573,7 @@ pow_mid <- function(p, max_denom = 1024L, approx = TRUE) {
 #'
 #' @param p Numeric exponent (p < 0)
 #' @param max_denom Integer max denominator for approximation
-#' @param approx Logical — if TRUE, use rational approximation (bigq result)
+#' @param approx Logical -- if TRUE, use rational approximation (bigq result)
 #' @returns List with `p` (bigq or numeric) and `w` (bigq or numeric weight vector)
 #' @noRd
 pow_neg <- function(p, max_denom = 1024L, approx = TRUE) {
@@ -593,18 +593,18 @@ pow_neg <- function(p, max_denom = 1024L, approx = TRUE) {
   list(p = p, w = c(p / (p - 1), -1 / (p - 1)))
 }
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # CVXR expression-dependent functions
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 
 #' SOC constraint factory for geometric mean
 #'
 #' Creates the SOC constraint encoding the geometric mean
 #' relation \eqn{t \le \sqrt{x \cdot y}}.
 #'
-#' @param t_var Expression — the epigraph variable
-#' @param x Expression — first argument
-#' @param y Expression — second argument
+#' @param t_var Expression -- the epigraph variable
+#' @param x Expression -- first argument
+#' @param y Expression -- second argument
 #' @returns An SOC constraint
 #' @noRd
 gm <- function(t_var, x, y) {
@@ -625,7 +625,7 @@ gm <- function(t_var, x, y) {
 #' Builds the set of SOC constraints needed to represent t <= x^p
 #' (weighted geometric mean) using the dyadic decomposition of p.
 #'
-#' @param t_var Expression — the epigraph variable
+#' @param t_var Expression -- the epigraph variable
 #' @param x_list List of Expression objects (same length as p)
 #' @param p A bigq weight vector (nonneg, sums to 1)
 #' @returns List of SOC constraints

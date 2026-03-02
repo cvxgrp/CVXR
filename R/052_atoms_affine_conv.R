@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/conv.py
-## Convolve — 1D discrete convolution (one arg must be constant)
+## Convolve -- 1D discrete convolution (one arg must be constant)
 
 
 Convolve <- new_class("Convolve", parent = AffAtom, package = "CVXR",
@@ -37,12 +37,12 @@ method(shape_from_args, Convolve) <- function(x) {
   c(x@args[[1L]]@shape[1L] + x@args[[2L]]@shape[1L] - 1L, 1L)
 }
 
-# ── sign: same as multiplication (CVXPY conv.py lines 100-103) ───
+# -- sign: same as multiplication (CVXPY conv.py lines 100-103) ---
 method(sign_from_args, Convolve) <- function(x) {
   mul_sign(x@args[[1L]], x@args[[2L]])
 }
 
-# ── monotonicity (CVXPY conv.py lines 105-113) ──────────────────
+# -- monotonicity (CVXPY conv.py lines 105-113) ------------------
 method(is_incr, Convolve) <- function(x, idx, ...) {
   is_nonneg(x@args[[1L]])
 }
@@ -50,7 +50,7 @@ method(is_decr, Convolve) <- function(x, idx, ...) {
   is_nonpos(x@args[[1L]])
 }
 
-# ── log-log: affine (CVXPY conv.py) ─────────────────────────────
+# -- log-log: affine (CVXPY conv.py) -----------------------------
 method(is_atom_log_log_convex, Convolve) <- function(x) TRUE
 method(is_atom_log_log_concave, Convolve) <- function(x) TRUE
 
@@ -72,8 +72,8 @@ method(numeric_value, Convolve) <- function(x, values, ...) {
   }
 }
 
-# ── DPP: conv is NOT DPP when the kernel arg is parametric ──────
-## Same as Kron — C++ get_conv_mat uses get_constant_data and cannot
+# -- DPP: conv is NOT DPP when the kernel arg is parametric ------
+## Same as Kron -- C++ get_conv_mat uses get_constant_data and cannot
 ## handle PARAM LinOp nodes. Return FALSE when the kernel has parameters.
 method(is_dpp, Convolve) <- function(x) {
   cst_idx <- if (is_constant(x@args[[1L]])) 1L else 2L

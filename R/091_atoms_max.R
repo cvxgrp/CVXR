@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/max.py
-## MaxEntries — maximum entry of an expression, axis-aware
+## MaxEntries -- maximum entry of an expression, axis-aware
 
 
 MaxEntries <- new_class("MaxEntries", parent = AxisAtom, package = "CVXR",
@@ -26,28 +26,28 @@ MaxEntries <- new_class("MaxEntries", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign: same as arg ────────────────────────────────────────────
+# -- sign: same as arg --------------------------------------------
 method(sign_from_args, MaxEntries) <- function(x) {
   list(is_nonneg = is_nonneg(x@args[[1L]]),
        is_nonpos = is_nonpos(x@args[[1L]]))
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, MaxEntries) <- function(x) TRUE
 method(is_atom_concave, MaxEntries) <- function(x) FALSE
 
-# ── log-log: convex only (CVXPY max.py) ─────────────────────────
+# -- log-log: convex only (CVXPY max.py) -------------------------
 method(is_atom_log_log_convex, MaxEntries) <- function(x) TRUE
 method(is_atom_log_log_concave, MaxEntries) <- function(x) FALSE
 
-# ── monotonicity: always increasing ──────────────────────────────
+# -- monotonicity: always increasing ------------------------------
 method(is_incr, MaxEntries) <- function(x, idx, ...) TRUE
 method(is_decr, MaxEntries) <- function(x, idx, ...) FALSE
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, MaxEntries) <- function(x) is_pwl(x@args[[1L]])
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, MaxEntries) <- function(x, values, ...) {
   v <- values[[1L]]
   if (is.null(x@axis)) {
@@ -61,7 +61,7 @@ method(numeric_value, MaxEntries) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, MaxEntries) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls MaxEntries} not yet implemented.")
 }

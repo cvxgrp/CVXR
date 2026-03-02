@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/log.py
-## Log — elementwise natural logarithm log(x)
+## Log -- elementwise natural logarithm log(x)
 
 
 Log <- new_class("Log", parent = Elementwise, package = "CVXR",
@@ -22,34 +22,34 @@ Log <- new_class("Log", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── sign: unknown ────────────────────────────────────────────────
+# -- sign: unknown ------------------------------------------------
 method(sign_from_args, Log) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature: concave ───────────────────────────────────────────
+# -- curvature: concave -------------------------------------------
 method(is_atom_convex, Log) <- function(x) FALSE
 method(is_atom_concave, Log) <- function(x) TRUE
 
-# ── monotonicity: increasing ─────────────────────────────────────
+# -- monotonicity: increasing -------------------------------------
 method(is_incr, Log) <- function(x, idx, ...) TRUE
 method(is_decr, Log) <- function(x, idx, ...) FALSE
 
-# ── log-log: concave (CVXPY log.py lines 53-61) ─────────────────
+# -- log-log: concave (CVXPY log.py lines 53-61) -----------------
 method(is_atom_log_log_convex, Log) <- function(x) FALSE
 method(is_atom_log_log_concave, Log) <- function(x) TRUE
 
-# ── domain: arg >= 0 ─────────────────────────────────────────────
+# -- domain: arg >= 0 ---------------------------------------------
 method(atom_domain, Log) <- function(x) {
   list(x@args[[1L]] >= 0)
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Log) <- function(x, values, ...) {
   log(values[[1L]])
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Log) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Log} not yet implemented.")
 }

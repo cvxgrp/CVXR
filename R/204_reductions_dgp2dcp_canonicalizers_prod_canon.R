@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/prod_canon.py
-## DGP canonicalizer for Prod: product → sum in log-space
+## DGP canonicalizer for Prod: product -> sum in log-space
 ## prod(x) in original space = sum(log(x)) in log-space
 
 .dgp_prod_canon <- function(expr, args) {

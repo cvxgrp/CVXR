@@ -6,10 +6,10 @@
 ## Clarabel solver interface
 ##
 ## Clarabel uses upper-triangular svec format for PSD constraints.
-## Convention: A*x + s = b, s ∈ K
+## Convention: A*x + s = b, s in K
 
 
-# ── Clarabel status map ───────────────────────────────────────────
+# -- Clarabel status map -------------------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 158-169
 
 CLARABEL_STATUS_MAP <- list(
@@ -25,7 +25,7 @@ CLARABEL_STATUS_MAP <- list(
   "InsufficientProgress" = SOLVER_ERROR
 )
 
-# ── triu_to_full (Clarabel): expand upper-tri svec to full matrix ─
+# -- triu_to_full (Clarabel): expand upper-tri svec to full matrix -
 ## CVXPY SOURCE: clarabel_conif.py lines 65-96
 ## Upper triangle version. Scales off-diagonal by 1/sqrt(2).
 
@@ -44,7 +44,7 @@ clarabel_triu_to_full <- function(upper_tri, n) {
   as.vector(full)  # column-major
 }
 
-# ── Clarabel psd_format_mat ──────────────────────────────────────
+# -- Clarabel psd_format_mat --------------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 190-225
 ## Upper-triangular extraction with sqrt(2) off-diagonal scaling
 ## + symmetrization.
@@ -88,7 +88,7 @@ clarabel_psd_format_mat_fn <- function(constr) {
   scaled_upper_tri %*% symm_matrix
 }
 
-# ── dims_to_solver_dict_clarabel ────────────────────────────────
+# -- dims_to_solver_dict_clarabel --------------------------------
 ## Converts ConeDims to R clarabel's named-list cone format.
 ## R clarabel uses: z (zero), l (nonneg), q (soc), s (psd),
 ## ep (exp), p (power), gp (generalized power).
@@ -117,7 +117,7 @@ dims_to_solver_dict_clarabel <- function(cone_dims) {
   cones
 }
 
-# ── Clarabel_Solver class ────────────────────────────────────────
+# -- Clarabel_Solver class ----------------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 136-173
 
 Clarabel_Solver <- new_class("Clarabel_Solver", parent = ConicSolver,
@@ -142,7 +142,7 @@ method(solver_psd_format_mat, Clarabel_Solver) <- function(solver, constr) {
   clarabel_psd_format_mat_fn(constr)
 }
 
-# ── Clarabel extract_dual_value ──────────────────────────────────
+# -- Clarabel extract_dual_value ----------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 227-243
 
 clarabel_extract_dual_value <- function(result_vec, offset, constraint) {
@@ -158,7 +158,7 @@ clarabel_extract_dual_value <- function(result_vec, offset, constraint) {
   }
 }
 
-# ── Clarabel invert ──────────────────────────────────────────────
+# -- Clarabel invert ----------------------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 245-284
 
 method(reduction_invert, Clarabel_Solver) <- function(x, solution, inverse_data, ...) {
@@ -214,7 +214,7 @@ method(reduction_invert, Clarabel_Solver) <- function(x, solution, inverse_data,
   }
 }
 
-# ── Clarabel solve_via_data ──────────────────────────────────────
+# -- Clarabel solve_via_data --------------------------------------
 ## CVXPY SOURCE: clarabel_conif.py lines 313-388
 ## Warm-start: persistent solver via clarabel_solver() + solver_update().
 ## Follows the same cache pattern as OSQP (osqp_qpif.R).
@@ -234,7 +234,7 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
   cones <- dims_to_solver_dict_clarabel(data[[SD_DIMS]])
 
   ## Build P (quadratic objective)
-  ## CVXPY: clarabel_conif.py line 343 — P = sp.triu(P).tocsc()
+  ## CVXPY: clarabel_conif.py line 343 -- P = sp.triu(P).tocsc()
   ## R clarabel expects a dsCMatrix (symmetric sparse).
   ## forceSymmetric(triu(P)) stores upper triangle as symmetric.
   nvars <- length(q)
@@ -255,7 +255,7 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
   cache_key <- CLARABEL_SOLVER
   used_warm <- FALSE
 
-  ## ── Warm path ──────────────────────────────────────────────────
+  ## -- Warm path --------------------------------------------------
   if (warm_start && !is.null(solver_cache) &&
       exists(cache_key, envir = solver_cache)) {
     cached <- get(cache_key, envir = solver_cache)
@@ -293,7 +293,7 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
     }
   }
 
-  ## ── Cold path ──────────────────────────────────────────────────
+  ## -- Cold path --------------------------------------------------
   if (!used_warm) {
     ## For warm-start-capable solver, disable features that block updates
     if (warm_start) {
@@ -312,7 +312,7 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
     result <- clarabel::solver_solve(solver_obj)
   }
 
-  ## ── Cache for future warm starts ───────────────────────────────
+  ## -- Cache for future warm starts -------------------------------
   if (!is.null(solver_cache)) {
     solver_to_cache <- if (used_warm) old_solver else solver_obj
     assign(cache_key,

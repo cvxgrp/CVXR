@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/sum_canon.py
-## DGP canonicalizer for SumEntries: sum → explicit_sum → add_canon
+## DGP canonicalizer for SumEntries: sum -> explicit_sum -> add_canon
 
 .dgp_sum_canon <- function(expr, args) {
   X <- args[[1L]]

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: constraints/psd.py
-## PSD — Positive Semidefinite constraint
+## PSD -- Positive Semidefinite constraint
 
 #' Create a Positive Semidefinite Constraint
 #'
@@ -41,37 +41,37 @@ PSD <- new_class("PSD", parent = Cone, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: psd.py lines 57-58
 
 method(expr_name, PSD) <- function(x) {
   sprintf("%s >> 0", expr_name(x@args[[1L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: psd.py lines 60-66
 
 method(is_dcp, PSD) <- function(x) {
   is_affine(x@args[[1L]])
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
+# -- is_dgp -------------------------------------------------------
 ## CVXPY SOURCE: psd.py lines 68-69
 
 method(is_dgp, PSD) <- function(x) FALSE
 
-# ── num_cones ────────────────────────────────────────────────────
+# -- num_cones ----------------------------------------------------
 
 method(num_cones, PSD) <- function(x) 1L
 
-# ── cone_sizes ───────────────────────────────────────────────────
-## Returns n (the matrix dimension) — used by solvers for PSD cone
+# -- cone_sizes ---------------------------------------------------
+## Returns n (the matrix dimension) -- used by solvers for PSD cone
 
 method(cone_sizes, PSD) <- function(x) {
   x@args[[1L]]@shape[1L]
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: psd.py lines 74-86
 ## Returns -min(0, eigenvalues of symmetric part)
 
@@ -85,7 +85,7 @@ method(residual, PSD) <- function(x) {
   max(0, -min_eig)
 }
 
-# ── dual_cone ────────────────────────────────────────────────────
+# -- dual_cone ----------------------------------------------------
 ## CVXPY SOURCE: psd.py lines 87-98
 ## PSD is self-dual
 

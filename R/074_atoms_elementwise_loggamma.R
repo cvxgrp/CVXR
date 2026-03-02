@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/loggamma.py
-## Loggamma — piecewise linear approximation of log(gamma(x))
+## Loggamma -- piecewise linear approximation of log(gamma(x))
 
 #' Elementwise log of the gamma function
 #'

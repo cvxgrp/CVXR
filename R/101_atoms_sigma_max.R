@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/sigma_max.py
-## SigmaMax — maximum singular value of a matrix
+## SigmaMax -- maximum singular value of a matrix
 
 
 SigmaMax <- new_class("SigmaMax", parent = Atom, package = "CVXR",
@@ -24,8 +24,8 @@ SigmaMax <- new_class("SigmaMax", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 33-38 — must be 2D
+# -- validate -----------------------------------------------------
+## CVXPY: sigma_max.py lines 33-38 -- must be 2D
 method(validate_arguments, SigmaMax) <- function(x) {
   A <- x@args[[1L]]
   if (length(A@shape) != 2L) {
@@ -34,44 +34,44 @@ method(validate_arguments, SigmaMax) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 64-67 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: sigma_max.py lines 64-67 -- returns tuple()
 method(shape_from_args, SigmaMax) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 69-73 — always nonneg
+# -- sign ---------------------------------------------------------
+## CVXPY: sigma_max.py lines 69-73 -- always nonneg
 method(sign_from_args, SigmaMax) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 75-83 — convex, not concave
+# -- curvature ----------------------------------------------------
+## CVXPY: sigma_max.py lines 75-83 -- convex, not concave
 method(is_atom_convex, SigmaMax) <- function(x) TRUE
 method(is_atom_concave, SigmaMax) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 85-93 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: sigma_max.py lines 85-93 -- not monotone
 method(is_incr, SigmaMax) <- function(x, idx, ...) FALSE
 method(is_decr, SigmaMax) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
-## CVXPY: sigma_max.py lines 41-44 — norm(A, 2) = max singular value
+# -- numeric ------------------------------------------------------
+## CVXPY: sigma_max.py lines 41-44 -- norm(A, 2) = max singular value
 method(numeric_value, SigmaMax) <- function(x, values, ...) {
   A <- values[[1L]]
   matrix(max(svd(A, nu = 0L, nv = 0L)$d), 1L, 1L)
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, SigmaMax) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, SigmaMax) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls SigmaMax} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Maximum singular value
 #' @param A A matrix expression

@@ -7,7 +7,7 @@
 ## lambda_sum_largest_canon, quad_canon, quad_over_lin_canon,
 ## matrix_frac_canon, trace_canon
 
-## ── expand_complex ────────────────────────────────────────────────
+## -- expand_complex ------------------------------------------------
 ## Expand complex matrix A to B = [[Re(A), -Im(A)], [Im(A), Re(A)]]
 ## If A is Hermitian, B is symmetric (2x eigenvalues)
 .c2r_expand_complex <- function(real_part, imag_part) {
@@ -26,7 +26,7 @@
   mat
 }
 
-## ── expand_and_reapply ────────────────────────────────────────────
+## -- expand_and_reapply --------------------------------------------
 .c2r_expand_and_reapply <- function(expr, real_part, imag_part) {
   if (is.null(imag_part)) {
     mat <- real_part
@@ -36,7 +36,7 @@
   expr_copy(expr, list(mat))
 }
 
-## ── at_least_2D ───────────────────────────────────────────────────
+## -- at_least_2D ---------------------------------------------------
 ## Upcast 0D and 1D to 2D
 .c2r_at_least_2D <- function(expr) {
   if (length(expr@shape) < 2L || (expr@shape[2L] == 1L && expr@shape[1L] == 1L)) {
@@ -46,14 +46,14 @@
   }
 }
 
-## ── hermitian_canon ───────────────────────────────────────────────
+## -- hermitian_canon -----------------------------------------------
 ## For functions that take a Hermitian matrix (lambda_max, sigma_max)
 c2r_hermitian_canon <- function(expr, real_args, imag_args, real2imag) {
   expr_canon <- .c2r_expand_and_reapply(expr, real_args[[1L]], imag_args[[1L]])
   list(expr_canon, NULL)
 }
 
-## ── trace_canon ───────────────────────────────────────────────────
+## -- trace_canon ---------------------------------------------------
 c2r_trace_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(real_args[[1L]])) {
     real_part <- NULL
@@ -68,7 +68,7 @@ c2r_trace_canon <- function(expr, real_args, imag_args, real2imag) {
   list(real_part, imag_part)
 }
 
-## ── norm_nuc_canon ────────────────────────────────────────────────
+## -- norm_nuc_canon ------------------------------------------------
 ## Nuclear norm: eigenvalues doubled, so divide by 2
 c2r_norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
   result <- c2r_hermitian_canon(expr, real_args, imag_args, real2imag)
@@ -78,7 +78,7 @@ c2r_norm_nuc_canon <- function(expr, real_args, imag_args, real2imag) {
   result
 }
 
-## ── lambda_sum_largest_canon ──────────────────────────────────────
+## -- lambda_sum_largest_canon --------------------------------------
 ## Each eigenvalue is repeated twice; create new atom with 2*k, divide by 2
 c2r_lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) {
   result <- c2r_hermitian_canon(expr, real_args, imag_args, real2imag)
@@ -92,8 +92,8 @@ c2r_lambda_sum_largest_canon <- function(expr, real_args, imag_args, real2imag) 
   result
 }
 
-## ── quad_canon ────────────────────────────────────────────────────
-## QuadForm: x^H P x → vstack(Re(x), Im(x))^T [[P_r,-P_i],[P_i,P_r]] vstack(...)
+## -- quad_canon ----------------------------------------------------
+## QuadForm: x^H P x -> vstack(Re(x), Im(x))^T [[P_r,-P_i],[P_i,P_r]] vstack(...)
 c2r_quad_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(imag_args[[1L]])) {
     vec_arg <- real_args[[1L]]
@@ -122,7 +122,7 @@ c2r_quad_canon <- function(expr, real_args, imag_args, real2imag) {
   list(expr_copy(expr, list(vec_arg, mat_arg)), NULL)
 }
 
-## ── quad_over_lin_canon ───────────────────────────────────────────
+## -- quad_over_lin_canon -------------------------------------------
 c2r_quad_over_lin_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(imag_args[[1L]])) {
     mat <- real_args[[1L]]
@@ -132,7 +132,7 @@ c2r_quad_over_lin_canon <- function(expr, real_args, imag_args, real2imag) {
   list(expr_copy(expr, list(mat, real_args[[2L]])), NULL)
 }
 
-## ── matrix_frac_canon ─────────────────────────────────────────────
+## -- matrix_frac_canon ---------------------------------------------
 c2r_matrix_frac_canon <- function(expr, real_args, imag_args, real2imag) {
   if (is.null(real_args[[1L]])) {
     real_args[[1L]] <- Constant(matrix(0, imag_args[[1L]]@shape[1L],

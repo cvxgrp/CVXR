@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: utilities/canonical.py
-## Canonical — base class for all canonicalizable objects
+## Canonical -- base class for all canonicalizable objects
 
 
 Canonical <- new_class("Canonical", package = "CVXR",
@@ -20,7 +20,7 @@ Canonical <- new_class("Canonical", package = "CVXR",
   }
 )
 
-# ── Default methods on Canonical ──────────────────────────────────────
+# -- Default methods on Canonical --------------------------------------
 
 ## variables(): recurse over args, dedup by id
 ## CVXPY SOURCE: canonical.py line 58-62
@@ -50,7 +50,7 @@ method(atoms, Canonical) <- function(x) {
 ## CVXPY SOURCE: canonical.py line 154-161
 method(get_data, Canonical) <- function(x) NULL
 
-## canonicalize(): default errors — subclasses must implement
+## canonicalize(): default errors -- subclasses must implement
 method(canonicalize, Canonical) <- function(x) {
   cli_abort("Class {.cls {class(x)[[1L]]}} must implement {.fn canonicalize}.")
 }
@@ -73,7 +73,7 @@ method(expr_copy, Canonical) <- function(x, args = NULL, id_objects = NULL) {
   if (exists(key, envir = id_objects, inherits = FALSE)) {
     return(get(key, envir = id_objects, inherits = FALSE))
   }
-  ## For Leaf nodes (no args), return self — they are immutable
+  ## For Leaf nodes (no args), return self -- they are immutable
   if (length(x@args) == 0L && (is.null(args) || length(args) == 0L)) return(x)
   if (is.null(args)) args <- x@args
   data <- get_data(x)

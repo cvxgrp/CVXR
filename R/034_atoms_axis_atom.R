@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/axis_atom.py
-## AxisAtom — abstract base class for atoms applied along an axis
+## AxisAtom -- abstract base class for atoms applied along an axis
 ##
 ## Atoms that can reduce over an axis (e.g., sum, max, min, norm).
 ## Stores axis and keepdims properties. Shape is reduced along the given axis.
@@ -20,7 +20,7 @@ AxisAtom <- new_class("AxisAtom", parent = Atom, package = "CVXR",
     keepdims <- as.logical(keepdims)
 
     ## Compute shape from args using axis-aware reduction
-    ## CVXPY: AxisAtom.__init__ → super().__init__(expr) → Atom.__init__ → self.shape_from_args()
+    ## CVXPY: AxisAtom.__init__ -> super().__init__(expr) -> Atom.__init__ -> self.shape_from_args()
     shape <- .axis_shape(expr@shape, axis, keepdims)
 
     obj <- new_object(S7_object(),
@@ -36,7 +36,7 @@ AxisAtom <- new_class("AxisAtom", parent = Atom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: axis_atom.py lines 36-60
 ## Returns the shape after reducing along the given axis.
 ## In R, we always maintain 2D shapes: c(nrow, ncol).
@@ -48,21 +48,21 @@ method(shape_from_args, AxisAtom) <- function(x) {
 ## Internal: compute axis-reduced shape
 ## CVXPY uses arbitrary ndim; R is always 2D c(nrow, ncol).
 ## R convention (1-based axis):
-##   axis=1 → reduce cols (row-wise) → like apply(X, 1, FUN)
-##   axis=2 → reduce rows (column-wise) → like apply(X, 2, FUN)
-##   axis=NULL → reduce all
+##   axis=1 -> reduce cols (row-wise) -> like apply(X, 1, FUN)
+##   axis=2 -> reduce rows (column-wise) -> like apply(X, 2, FUN)
+##   axis=NULL -> reduce all
 ##
 ## Shape results for (m, n) input:
-##   axis=1 → c(m, 1)  (column vector of row results)
-##   axis=2 → c(1, n)  (row vector of column results)
-##   axis=NULL → c(1, 1)  (scalar)
+##   axis=1 -> c(m, 1)  (column vector of row results)
+##   axis=2 -> c(1, n)  (row vector of column results)
+##   axis=NULL -> c(1, 1)  (scalar)
 ##
 ## With keepdims:
-##   axis=1, keepdims → c(m, 1)
-##   axis=2, keepdims → c(1, n)
+##   axis=1, keepdims -> c(m, 1)
+##   axis=2, keepdims -> c(1, n)
 .axis_shape <- function(arg_shape, axis, keepdims) {
   if (is.null(axis)) {
-    ## Reduce all → scalar (keepdims: all dims become 1)
+    ## Reduce all -> scalar (keepdims: all dims become 1)
     return(c(1L, 1L))
   }
   ## Normalize negative axis (R 2D: ndim=2, axes are 1 and 2)
@@ -75,9 +75,9 @@ method(shape_from_args, AxisAtom) <- function(x) {
   if (keepdims) {
     shape[3L - axis] <- 1L
   } else {
-    ## Remove axis → result dimension
-    ## axis=1: reduce cols → c(nrow, 1)  (column vector)
-    ## axis=2: reduce rows → c(1, ncol)  (row vector)
+    ## Remove axis -> result dimension
+    ## axis=1: reduce cols -> c(nrow, 1)  (column vector)
+    ## axis=2: reduce rows -> c(1, ncol)  (row vector)
     if (axis == 1L) {
       shape <- c(shape[1L], 1L)
     } else {
@@ -87,7 +87,7 @@ method(shape_from_args, AxisAtom) <- function(x) {
   as.integer(shape)
 }
 
-# ── validate axis helper ────────────────────────────────────────────
+# -- validate axis helper --------------------------------------------
 ## Used by AxisAtom subclasses to validate axis in constructors
 .validate_axis <- function(axis, ndim = 2L) {
   if (!is.null(axis)) {
@@ -100,7 +100,7 @@ method(shape_from_args, AxisAtom) <- function(x) {
   invisible(NULL)
 }
 
-## Informative error for axis out of bounds — helps users migrate
+## Informative error for axis out of bounds -- helps users migrate
 .axis_out_of_bounds_error <- function(axis, ndim) {
   msg <- "axis {axis} is out of bounds for expression with {ndim} dimensions."
   hint <- NULL
@@ -114,14 +114,14 @@ method(shape_from_args, AxisAtom) <- function(x) {
   cli_abort(c(msg, hint))
 }
 
-# ── get_data ────────────────────────────────────────────────────────
+# -- get_data --------------------------------------------------------
 ## CVXPY SOURCE: axis_atom.py lines 62-66
 
 method(get_data, AxisAtom) <- function(x) {
   list(x@axis, x@keepdims)
 }
 
-# ── validate_arguments ──────────────────────────────────────────────
+# -- validate_arguments ----------------------------------------------
 ## CVXPY SOURCE: axis_atom.py lines 68-76
 
 method(validate_arguments, AxisAtom) <- function(x) {
@@ -133,7 +133,7 @@ method(validate_arguments, AxisAtom) <- function(x) {
       .axis_out_of_bounds_error(x@axis, ndim)
     }
   }
-  ## Call parent (Atom) validation — rejects complex unless overridden
+  ## Call parent (Atom) validation -- rejects complex unless overridden
   ## We need to manually call Atom's validate_arguments since NextMethod
   ## dispatches to Atom's method
   if (.any_args(x, is_complex)) {
@@ -142,7 +142,7 @@ method(validate_arguments, AxisAtom) <- function(x) {
   invisible(NULL)
 }
 
-# ── expr_name: include axis/keepdims data ───────────────────────────
+# -- expr_name: include axis/keepdims data ---------------------------
 
 method(expr_name, AxisAtom) <- function(x) {
   data <- get_data(x)

@@ -9,7 +9,7 @@
 ## This allows curvature analysis to determine if a problem is DPP-compliant,
 ## which enables caching the solving chain across parameter value changes.
 
-# ── DPP scope state ─────────────────────────────────────────────────
+# -- DPP scope state -------------------------------------------------
 ## Module-level mutable state for DPP scope (reference semantics via environment).
 ##
 ## Thread Safety:
@@ -18,7 +18,7 @@
 ## with forked workers) would corrupt state. This is acceptable because:
 ## 1. R is single-threaded by default.
 ## 2. CVXR does not support parallel backends.
-## 3. `withr::local_*` would not help — the issue is shared state, not cleanup.
+## 3. `withr::local_*` would not help -- the issue is shared state, not cleanup.
 ## If parallel support is ever added, this would need a per-thread or
 ## per-session scope mechanism.
 
@@ -47,7 +47,7 @@ with_dpp_scope <- function(expr) {
   force(expr)
 }
 
-# ── DPP-aware cache key helper ──────────────────────────────────────
+# -- DPP-aware cache key helper --------------------------------------
 ## Returns "key_dpp" when DPP scope is active, "key" otherwise.
 ## Used by curvature methods to separate normal vs DPP-scope cached results.
 ## Pre-computed lookup table eliminates paste0() on every call.

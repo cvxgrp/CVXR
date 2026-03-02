@@ -6,12 +6,12 @@
 ## Utility functions for constraint lowering and grouping
 
 
-# ── group_constraints ─────────────────────────────────────────────
+# -- group_constraints ---------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 68-84
 ## Group constraints by class name into a named list.
 
 group_constraints <- function(constraints) {
-  ## Named list of S7 class objects — filter constraints by type
+  ## Named list of S7 class objects -- filter constraints by type
   cone_types <- list(Zero = Zero, NonNeg = NonNeg, SOC = SOC,
                      PSD = PSD, ExpCone = ExpCone,
                      PowCone3D = PowCone3D, PowConeND = PowConeND)
@@ -21,18 +21,18 @@ group_constraints <- function(constraints) {
   result
 }
 
-# ── lower_equality ────────────────────────────────────────────────
+# -- lower_equality ------------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 42-45
-## Equality(lhs, rhs) → Zero(lhs - rhs)
+## Equality(lhs, rhs) -> Zero(lhs - rhs)
 ## Our Equality stores .expr = lhs - rhs, args = list(lhs, rhs)
 
 lower_equality <- function(equality) {
   Zero(equality@args[[1L]] - equality@args[[2L]], constr_id = equality@id)
 }
 
-# ── lower_ineq_to_nonneg ─────────────────────────────────────────
+# -- lower_ineq_to_nonneg -----------------------------------------
 ## CVXPY SOURCE: utilities.py lines 36-39
-## Inequality(lhs, rhs) means lhs <= rhs → NonNeg(rhs - lhs)
+## Inequality(lhs, rhs) means lhs <= rhs -> NonNeg(rhs - lhs)
 ## Our Inequality stores args = list(lhs, rhs)
 
 lower_ineq_to_nonneg <- function(inequality) {
@@ -40,22 +40,22 @@ lower_ineq_to_nonneg <- function(inequality) {
          constr_id = inequality@id)
 }
 
-# ── nonpos2nonneg ─────────────────────────────────────────────────
+# -- nonpos2nonneg -------------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 48-49
-## NonPos(expr) → NonNeg(-expr)
+## NonPos(expr) -> NonNeg(-expr)
 
 nonpos2nonneg <- function(nonpos) {
   NonNeg(-(nonpos@args[[1L]]), constr_id = nonpos@id)
 }
 
-# ── are_args_affine ───────────────────────────────────────────────
+# -- are_args_affine -----------------------------------------------
 ## CVXPY SOURCE: utilities.py lines 63-65
 
 are_args_affine <- function(constraints) {
   all(vapply(constraints, function(c) .all_args(c, is_affine), logical(1L)))
 }
 
-# ── convex_attributes ─────────────────────────────────────────────
+# -- convex_attributes ---------------------------------------------
 ## CVXPY SOURCE: cvx_attr2constr.py lines 31-66
 ## Returns a character vector of the convex attributes present in variables.
 

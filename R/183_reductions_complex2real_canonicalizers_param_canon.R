@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/complex2real/canonicalizers/param_canon.py
-## Canonicalize complex Parameters → Real_/Imag_ atom wrappers
+## Canonicalize complex Parameters -> Real_/Imag_ atom wrappers
 ##
 ## Parameters are symbolic leaves whose values are set at solve time.
 ## Complex2Real runs BEFORE EvalParams, so Parameters must be wrapped

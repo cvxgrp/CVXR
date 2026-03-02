@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/power_canon.py
-## DGP canonicalizer for Power/PowerApprox: x^p → p * log(x)
+## DGP canonicalizer for Power/PowerApprox: x^p -> p * log(x)
 
 .dgp_power_canon <- function(expr, args) {
   ## expr@p is a Constant or Expression; use value for numeric multiplication

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/condition_number.py
-## ConditionNumber — condition number of a PSD matrix: lambda_max(A) / lambda_min(A)
+## ConditionNumber -- condition number of a PSD matrix: lambda_max(A) / lambda_min(A)
 
 
 ConditionNumber <- new_class("ConditionNumber", parent = Atom, package = "CVXR",
@@ -23,7 +23,7 @@ ConditionNumber <- new_class("ConditionNumber", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: condition_number.py lines 59-65
 method(validate_arguments, ConditionNumber) <- function(x) {
   A <- x@args[[1L]]
@@ -33,28 +33,28 @@ method(validate_arguments, ConditionNumber) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: condition_number.py lines 67-70 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: condition_number.py lines 67-70 -- returns tuple()
 method(shape_from_args, ConditionNumber) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: condition_number.py lines 72-75 — (True, False) — always nonneg
+# -- sign ---------------------------------------------------------
+## CVXPY: condition_number.py lines 72-75 -- (True, False) -- always nonneg
 method(sign_from_args, ConditionNumber) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: condition_number.py lines 77-89 — not convex, not concave, quasiconvex
+# -- curvature ----------------------------------------------------
+## CVXPY: condition_number.py lines 77-89 -- not convex, not concave, quasiconvex
 method(is_atom_convex, ConditionNumber) <- function(x) FALSE
 method(is_atom_concave, ConditionNumber) <- function(x) FALSE
 method(is_atom_quasiconvex, ConditionNumber) <- function(x) TRUE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: condition_number.py lines 91-99 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: condition_number.py lines 91-99 -- not monotone
 method(is_incr, ConditionNumber) <- function(x, idx, ...) FALSE
 method(is_decr, ConditionNumber) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: condition_number.py lines 31-39
 method(numeric_value, ConditionNumber) <- function(x, values, ...) {
   A <- values[[1L]]
@@ -63,24 +63,24 @@ method(numeric_value, ConditionNumber) <- function(x, values, ...) {
   matrix(evals[1L] / evals[length(evals)], 1L, 1L)
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: condition_number.py lines 41-44 — [A.H == A, A >> 0]
+# -- domain -------------------------------------------------------
+## CVXPY: condition_number.py lines 41-44 -- [A.H == A, A >> 0]
 method(atom_domain, ConditionNumber) <- function(x) {
   A <- x@args[[1L]]
   list(expr_H(A) == A, PSD(A))
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, ConditionNumber) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, ConditionNumber) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls ConditionNumber} not available; use DQCP bisection.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Condition number of a PSD matrix
 #'

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/vec.py
-## Vec — vectorize (flatten to column vector)
+## Vec -- vectorize (flatten to column vector)
 
 #' Vectorize an expression (column vector)
 #'

@@ -3,10 +3,10 @@
 #####
 
 ## CVXPY SOURCE: reductions/solvers/solver.py
-## Solver — abstract base class for solver reductions
+## Solver -- abstract base class for solver reductions
 
 
-# ── Solver constants ──────────────────────────────────────────────
+# -- Solver constants ----------------------------------------------
 ## CVXPY SOURCE: solver.py lines 28-43
 
 SOLVER_VAR_ID    <- "var_id"
@@ -14,7 +14,7 @@ SOLVER_DUAL_VAR_ID <- "dual_var_id"
 SOLVER_EQ_CONSTR <- "eq_constr"
 SOLVER_NEQ_CONSTR <- "other_constr"
 
-# ── Solver base class ────────────────────────────────────────────
+# -- Solver base class --------------------------------------------
 ## CVXPY SOURCE: solver.py lines 24-90
 
 Solver <- new_class("Solver", parent = Reduction, package = "CVXR",

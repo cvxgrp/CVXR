@@ -3,24 +3,24 @@
 #####
 
 ## CVXPY SOURCE: reductions/reduction.py
-## Reduction — abstract base class for reductions
-## Also: InverseData — stores data for solution retrieval
+## Reduction -- abstract base class for reductions
+## Also: InverseData -- stores data for solution retrieval
 
 
-# ── InverseData ─────────────────────────────────────────────────────
+# -- InverseData -----------------------------------------------------
 ## CVXPY SOURCE: reductions/inverse_data.py
 ## Stores variable/constraint ID mappings for inverting a reduction.
 
 InverseData <- new_class("InverseData", package = "CVXR",
   properties = list(
-    id_map       = class_list,    # var.id → (offset, size)
-    var_offsets  = class_list,    # var.id → offset
+    id_map       = class_list,    # var.id -> (offset, size)
+    var_offsets  = class_list,    # var.id -> offset
     x_length     = class_integer, # total variable length
-    var_shapes   = class_list,    # var.id → shape
-    param_shapes = class_list,    # param.id → shape
-    param_to_size = class_list,   # param.id → size (includes CONSTANT_ID → 1)
-    param_id_map = class_list,    # param.id → column offset in tensor
-    cons_id_map  = class_environment, # orig constraint id → canon constraint id
+    var_shapes   = class_list,    # var.id -> shape
+    param_shapes = class_list,    # param.id -> shape
+    param_to_size = class_list,   # param.id -> size (includes CONSTANT_ID -> 1)
+    param_id_map = class_list,    # param.id -> column offset in tensor
+    cons_id_map  = class_environment, # orig constraint id -> canon constraint id
     .extra       = class_environment  # mutable store for ConeMatrixStuffing etc.
   ),
   constructor = function(problem) {
@@ -42,7 +42,7 @@ InverseData <- new_class("InverseData", package = "CVXR",
 
     ## CVXPY SOURCE: inverse_data.py lines 31-43
     ## Build parameter mappings for DPP tensor construction.
-    ## param_to_size always starts with CONSTANT_ID → 1.
+    ## param_to_size always starts with CONSTANT_ID -> 1.
     ## param_id_map: parameter columns are first, CONSTANT_ID is last.
     param_shapes <- list()
     param_to_size <- list()
@@ -72,7 +72,7 @@ InverseData <- new_class("InverseData", package = "CVXR",
   }
 )
 
-# ── Reduction base class ────────────────────────────────────────────
+# -- Reduction base class --------------------------------------------
 ## CVXPY SOURCE: reductions/reduction.py lines 20-253
 
 Reduction <- new_class("Reduction", package = "CVXR",
@@ -102,7 +102,7 @@ method(reduction_invert, Reduction) <- function(x, solution, inverse_data, ...) 
 }
 
 ## update_parameters: default no-op (overridden by Dgp2Dcp for DGP+DPP)
-## CVXPY SOURCE: reduction.py — base class does nothing
+## CVXPY SOURCE: reduction.py -- base class does nothing
 method(update_parameters, Reduction) <- function(x, problem, ...) {
   invisible(NULL)
 }
@@ -112,12 +112,12 @@ method(update_parameters, Reduction) <- function(x, problem, ...) {
 ## through the reduction pipeline. Deferred because the derivative API depends
 ## on diffcp (no R equivalent). See notes/derivative_api_deferred.md.
 ##
-## param_backward(x, param, dparams) — gradient chain rule (backward pass)
-## param_forward(x, param, delta) — delta chain rule (forward pass)
-## var_backward(x, var, value) — transform variable gradient (default: identity)
-## var_forward(x, var, value) — transform variable delta (default: identity)
+## param_backward(x, param, dparams) -- gradient chain rule (backward pass)
+## param_forward(x, param, delta) -- delta chain rule (forward pass)
+## var_backward(x, var, value) -- transform variable gradient (default: identity)
+## var_forward(x, var, value) -- transform variable delta (default: identity)
 
-## reduce: convenience — apply and cache result
+## reduce: convenience -- apply and cache result
 ## CVXPY SOURCE: reduction.py lines 169-192
 reduction_reduce <- function(x, problem) {
   if (!is.null(x@.cache$emitted_problem)) {
@@ -129,7 +129,7 @@ reduction_reduce <- function(x, problem) {
   result[[1L]]
 }
 
-## retrieve: convenience — invert cached result
+## retrieve: convenience -- invert cached result
 ## CVXPY SOURCE: reduction.py lines 194-215
 reduction_retrieve <- function(x, solution) {
   if (is.null(x@.cache$retrieval_data)) {

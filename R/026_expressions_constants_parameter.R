@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: expressions/constants/parameter.py
-## Parameter — a mutable constant whose value can be set after problem creation
+## Parameter -- a mutable constant whose value can be set after problem creation
 
 #' Create a Parameter
 #'
@@ -77,7 +77,7 @@ Parameter <- new_class("Parameter", parent = Leaf, package = "CVXR",
   }
 )
 
-# ── expr_name ─────────────────────────────────────────────────────────
+# -- expr_name ---------------------------------------------------------
 
 method(expr_name, Parameter) <- function(x) {
   nm <- x@.name
@@ -91,12 +91,12 @@ method(expr_name, Parameter) <- function(x) {
   nm
 }
 
-# ── is_constant: TRUE normally, FALSE in DPP scope ────────────────────
+# -- is_constant: TRUE normally, FALSE in DPP scope --------------------
 ## CVXPY SOURCE: parameter.py lines 73-76
 
 method(is_constant, Parameter) <- function(x) !dpp_scope_active()
 
-# ── DPP helper functions (module-level, not generics) ─────────────────
+# -- DPP helper functions (module-level, not generics) -----------------
 ## CVXPY SOURCE: parameter.py lines 24-32
 
 #' Check if Expression is Parameter-Affine
@@ -124,12 +124,12 @@ is_param_free <- function(expr) {
   length(parameters(expr)) == 0L
 }
 
-# ── parameters: returns self ──────────────────────────────────────────
+# -- parameters: returns self ------------------------------------------
 ## CVXPY SOURCE: parameter.py lines 89-92
 
 method(parameters, Parameter) <- function(x) list(x)
 
-# ── value<-: validate, store, and clear cache ─────────────────────────
+# -- value<-: validate, store, and clear cache -------------------------
 ## CVXPY SOURCE: parameter.py (via Leaf.value setter + cache clear)
 
 method(`value<-`, Parameter) <- function(x, value) {
@@ -140,19 +140,19 @@ method(`value<-`, Parameter) <- function(x, value) {
   x
 }
 
-# ── get_data ──────────────────────────────────────────────────────────
+# -- get_data ----------------------------------------------------------
 ## CVXPY SOURCE: parameter.py lines 65-68
 
 method(get_data, Parameter) <- function(x) {
   list(x@shape, expr_name(x), value(x), x@id, x@attributes)
 }
 
-# ── grad: empty (parameters are treated as constants) ─────────────────
+# -- grad: empty (parameters are treated as constants) -----------------
 ## CVXPY SOURCE: parameter.py lines 78-87
 
 method(grad, Parameter) <- function(x) list()
 
-# ── canonicalize ──────────────────────────────────────────────────────
+# -- canonicalize ------------------------------------------------------
 ## CVXPY SOURCE: parameter.py lines 94-101
 
 method(canonicalize, Parameter) <- function(x) {
@@ -160,7 +160,7 @@ method(canonicalize, Parameter) <- function(x) {
   list(obj, list())
 }
 
-# ── print ─────────────────────────────────────────────────────────────
+# -- print -------------------------------------------------------------
 
 method(print, Parameter) <- function(x, ...) {
   cat(sprintf("Parameter((%s), %s)\n",

@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/matrix_frac.py
-## MatrixFrac — trace(X^T * P^{-1} * X)
+## MatrixFrac -- trace(X^T * P^{-1} * X)
 ##
 ## Also provides matrix_frac() convenience function with QuadForm shortcut.
 
@@ -27,7 +27,7 @@ MatrixFrac <- new_class("MatrixFrac", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: matrix_frac.py lines 87-99
 method(validate_arguments, MatrixFrac) <- function(x) {
   X <- x@args[[1L]]
@@ -41,27 +41,27 @@ method(validate_arguments, MatrixFrac) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: matrix_frac.py lines 101-104 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: matrix_frac.py lines 101-104 -- returns tuple()
 method(shape_from_args, MatrixFrac) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: matrix_frac.py lines 106-109 — (True, False)
+# -- sign ---------------------------------------------------------
+## CVXPY: matrix_frac.py lines 106-109 -- (True, False)
 method(sign_from_args, MatrixFrac) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: matrix_frac.py lines 111-119 — convex, not concave
+# -- curvature ----------------------------------------------------
+## CVXPY: matrix_frac.py lines 111-119 -- convex, not concave
 method(is_atom_convex, MatrixFrac) <- function(x) TRUE
 method(is_atom_concave, MatrixFrac) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: matrix_frac.py lines 121-129 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: matrix_frac.py lines 121-129 -- not monotone
 method(is_incr, MatrixFrac) <- function(x, idx, ...) FALSE
 method(is_decr, MatrixFrac) <- function(x, idx, ...) FALSE
 
-# ── quadratic overrides ──────────────────────────────────────────
+# -- quadratic overrides ------------------------------------------
 ## CVXPY: matrix_frac.py lines 131-144
 method(is_quadratic, MatrixFrac) <- function(x) {
   is_affine(x@args[[1L]]) && is_constant(x@args[[2L]])
@@ -75,7 +75,7 @@ method(is_qpwa, MatrixFrac) <- function(x) {
   is_pwl(x@args[[1L]]) && is_constant(x@args[[2L]])
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: matrix_frac.py lines 36-46
 method(numeric_value, MatrixFrac) <- function(x, values, ...) {
   X <- values[[1L]]
@@ -93,23 +93,23 @@ method(numeric_value, MatrixFrac) <- function(x, values, ...) {
   }
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: matrix_frac.py lines 48-51 — P >> 0
+# -- domain -------------------------------------------------------
+## CVXPY: matrix_frac.py lines 48-51 -- P >> 0
 method(domain, MatrixFrac) <- function(x) {
   list(PSD(x@args[[2L]]))
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, MatrixFrac) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, MatrixFrac) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls MatrixFrac} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Matrix fractional function
 #'

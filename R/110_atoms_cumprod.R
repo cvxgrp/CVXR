@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/cumprod.py
-## Cumprod — cumulative product along an axis
+## Cumprod -- cumulative product along an axis
 ## Log-log affine (T/T), neither convex nor concave.
 
 
@@ -27,21 +27,21 @@ Cumprod <- new_class("Cumprod", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── shape: same as input ──────────────────────────────────────────
+# -- shape: same as input ------------------------------------------
 method(shape_from_args, Cumprod) <- function(x) x@args[[1L]]@shape
 
-# ── curvature: neither convex nor concave ──────────────────────────
+# -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, Cumprod) <- function(x) FALSE
 method(is_atom_concave, Cumprod) <- function(x) FALSE
 
-# ── log-log curvature: affine (T/T) ───────────────────────────────
+# -- log-log curvature: affine (T/T) -------------------------------
 method(is_atom_log_log_convex, Cumprod) <- function(x) TRUE
 method(is_atom_log_log_concave, Cumprod) <- function(x) TRUE
 
-# ── get_data ───────────────────────────────────────────────────────
+# -- get_data -------------------------------------------------------
 method(get_data, Cumprod) <- function(x) list(x@axis)
 
-# ── numeric ────────────────────────────────────────────────────────
+# -- numeric --------------------------------------------------------
 method(numeric_value, Cumprod) <- function(x, values, ...) {
   v <- values[[1L]]
   ax <- x@axis
@@ -52,7 +52,7 @@ method(numeric_value, Cumprod) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ─────────────────────────────────────
+# -- graph_implementation: stub -------------------------------------
 method(graph_implementation, Cumprod) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Cumprod} not yet implemented.")
 }

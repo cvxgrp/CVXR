@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/norm1.py
-## Norm1 — L1 norm (sum of absolute values), axis-aware
+## Norm1 -- L1 norm (sum of absolute values), axis-aware
 
 
 Norm1 <- new_class("Norm1", parent = AxisAtom, package = "CVXR",
@@ -25,25 +25,25 @@ Norm1 <- new_class("Norm1", parent = AxisAtom, package = "CVXR",
   }
 )
 
-# ── sign: always nonneg ──────────────────────────────────────────
+# -- sign: always nonneg ------------------------------------------
 method(sign_from_args, Norm1) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, Norm1) <- function(x) TRUE
 method(is_atom_concave, Norm1) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, Norm1) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
 method(is_decr, Norm1) <- function(x, idx, ...) is_nonpos(x@args[[1L]])
 
-# ── PWL ──────────────────────────────────────────────────────────
+# -- PWL ----------------------------------------------------------
 method(is_pwl, Norm1) <- function(x) {
   is_pwl(x@args[[1L]]) && is_real(x@args[[1L]])
 }
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 method(numeric_value, Norm1) <- function(x, values, ...) {
   v <- values[[1L]]
   if (is.null(x@axis)) {
@@ -57,7 +57,7 @@ method(numeric_value, Norm1) <- function(x, values, ...) {
   }
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Norm1) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Norm1} not yet implemented.")
 }

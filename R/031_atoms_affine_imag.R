@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/imag.py
-## Imag_ — extract the imaginary part of an expression
+## Imag_ -- extract the imaginary part of an expression
 
 
 Imag_ <- new_class("Imag_", parent = AffAtom, package = "CVXR",
@@ -21,27 +21,27 @@ Imag_ <- new_class("Imag_", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── numeric_value: R's native Im() ──────────────────────────────────
+# -- numeric_value: R's native Im() ----------------------------------
 ## CVXPY SOURCE: imag.py lines 29-32
 
 method(numeric_value, Imag_) <- function(x, values, ...) {
   Im(values[[1L]])
 }
 
-# ── shape_from_args ──────────────────────────────────────────────────
+# -- shape_from_args --------------------------------------------------
 ## CVXPY SOURCE: imag.py lines 34-37
 
 method(shape_from_args, Imag_) <- function(x) {
   x@args[[1L]]@shape
 }
 
-# ── Complex queries: imaginary part is always real ───────────────────
+# -- Complex queries: imaginary part is always real -------------------
 ## CVXPY SOURCE: imag.py lines 39-47
 
 method(is_imag, Imag_) <- function(x) FALSE
 method(is_complex, Imag_) <- function(x) FALSE
 
-# ── Symmetry: Im(Hermitian) is skew-symmetric, but that's symmetric? ─
+# -- Symmetry: Im(Hermitian) is skew-symmetric, but that's symmetric? -
 ## CVXPY SOURCE: imag.py lines 49-52
 ## CVXPY returns self.args[0].is_hermitian(), meaning
 ## if the argument is Hermitian, then Im(A) is symmetric.
@@ -52,7 +52,7 @@ method(is_symmetric, Imag_) <- function(x) {
   is_hermitian(x@args[[1L]])
 }
 
-# ── No graph_implementation: consumed by Complex2Real reduction ──────
+# -- No graph_implementation: consumed by Complex2Real reduction ------
 ## CVXPY imag.py has no graph_implementation method.
 
 #' Extract Imaginary Part of Expression

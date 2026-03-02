@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/one_minus_pos_canon.py
-## DGP canonicalizer for OneMInusPos: 1-x → log(1 - exp(u)) where u = log(x)
+## DGP canonicalizer for OneMInusPos: 1-x -> log(1 - exp(u)) where u = log(x)
 ## In log-space: args[[1]] = log(x), so x = exp(args[[1]])
 ## Result: log(1 - exp(args[[1]])) = log(ones - exp(args[[1]]))
 

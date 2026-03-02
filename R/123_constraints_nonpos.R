@@ -5,9 +5,9 @@
 ## CVXPY SOURCE: constraints/nonpos.py
 ## NonPos (x <= 0), NonNeg (x >= 0), Inequality (x <= y) constraints
 
-# ═══════════════════════════════════════════════════════════════════
-# NonPos — constraint of the form x <= 0
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# NonPos -- constraint of the form x <= 0
+# ===================================================================
 
 #' Create a Non-Positive Constraint
 #'
@@ -40,25 +40,25 @@ NonPos <- new_class("NonPos", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py line 61-62
 
 method(expr_name, NonPos) <- function(x) {
   sprintf("%s <= 0", expr_name(x@args[[1L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 64-69
 ## A NonPos constraint is DCP if its argument is convex.
 
 method(is_dcp, NonPos) <- function(x) is_convex(x@args[[1L]])
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 74-75
 
 method(is_dqcp, NonPos) <- function(x) is_quasiconvex(x@args[[1L]])
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 77-87
 ## Returns max(expr.value, 0) or NULL.
 
@@ -68,7 +68,7 @@ method(residual, NonPos) <- function(x) {
   pmax(val, 0)
 }
 
-# ── violation: L2 norm of residual ───────────────────────────────
+# -- violation: L2 norm of residual -------------------------------
 ## CVXPY SOURCE: nonpos.py lines 89-95
 
 method(violation, NonPos) <- function(x) {
@@ -80,9 +80,9 @@ method(violation, NonPos) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# NonNeg — constraint of the form x >= 0
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# NonNeg -- constraint of the form x >= 0
+# ===================================================================
 ## CVXPY SOURCE: nonpos.py lines 98-154
 
 #' Create a Non-Negative Constraint
@@ -116,25 +116,25 @@ NonNeg <- new_class("NonNeg", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 120-121
 
 method(expr_name, NonNeg) <- function(x) {
   sprintf("%s >= 0", expr_name(x@args[[1L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 123-128
 ## A NonNeg constraint is DCP if its argument is concave.
 
 method(is_dcp, NonNeg) <- function(x) is_concave(x@args[[1L]])
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 133-134
 
 method(is_dqcp, NonNeg) <- function(x) is_quasiconcave(x@args[[1L]])
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 136-146
 ## Returns abs(min(expr.value, 0)) or NULL.
 
@@ -144,7 +144,7 @@ method(residual, NonNeg) <- function(x) {
   abs(pmin(val, 0))
 }
 
-# ── violation: L2 norm of residual ───────────────────────────────
+# -- violation: L2 norm of residual -------------------------------
 ## CVXPY SOURCE: nonpos.py lines 148-154
 
 method(violation, NonNeg) <- function(x) {
@@ -156,9 +156,9 @@ method(violation, NonNeg) <- function(x) {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Inequality — constraint of the form lhs <= rhs
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
+# Inequality -- constraint of the form lhs <= rhs
+# ===================================================================
 ## CVXPY SOURCE: nonpos.py lines 157-246
 
 #' Create an Inequality Constraint
@@ -202,20 +202,20 @@ Inequality <- new_class("Inequality", parent = Constraint, package = "CVXR",
   }
 )
 
-# ── expr_name ────────────────────────────────────────────────────
+# -- expr_name ----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 193-194
 
 method(expr_name, Inequality) <- function(x) {
   sprintf("%s <= %s", expr_name(x@args[[1L]]), expr_name(x@args[[2L]]))
 }
 
-# ── is_dcp ───────────────────────────────────────────────────────
+# -- is_dcp -------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 206-211
 ## An inequality is DCP if (lhs - rhs) is convex.
 
 method(is_dcp, Inequality) <- function(x) is_convex(x@.expr)
 
-# ── is_dqcp ──────────────────────────────────────────────────────
+# -- is_dqcp ------------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 229-233
 
 method(is_dqcp, Inequality) <- function(x) {
@@ -224,7 +224,7 @@ method(is_dqcp, Inequality) <- function(x) {
     (is_constant(x@args[[1L]]) && is_quasiconcave(x@args[[2L]]))
 }
 
-# ── residual ─────────────────────────────────────────────────────
+# -- residual -----------------------------------------------------
 ## CVXPY SOURCE: nonpos.py lines 235-245
 ## Returns max(expr.value, 0) or NULL where expr = lhs - rhs.
 

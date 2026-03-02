@@ -17,7 +17,7 @@
 ##   Using S3 Ops handler for all arithmetic avoids this limitation.
 
 
-# ── S3 Ops group handler ────────────────────────────────────────────
+# -- S3 Ops group handler --------------------------------------------
 # Handles +, -, *, / for Expression objects (both unary and binary).
 # Registered via registerS3method() in .onLoad().
 
@@ -42,10 +42,10 @@
     "*"  = Multiply(e1, e2),
     "/"  = DivExpression(e1, e2),
     "^"  = power(e1, e2),
-    ## Comparison → Constraint objects
+    ## Comparison -> Constraint objects
     "==" = Equality(e1, e2),
     "<=" = Inequality(e1, e2),         # lhs <= rhs
-    ">=" = Inequality(e2, e1),         # lhs >= rhs  ⟹  rhs <= lhs
+    ">=" = Inequality(e2, e1),         # lhs >= rhs  ==>  rhs <= lhs
     ## Boolean logic
     "&"  = And(e1, e2),
     "|"  = Or(e1, e2),
@@ -53,13 +53,13 @@
   )
 }
 
-# ── chooseOpsMethod ─────────────────────────────────────────────────
+# -- chooseOpsMethod -------------------------------------------------
 # When both operands have Ops methods (e.g., Matrix + Expression),
 # this ensures CVXR's handler wins.  Requires R >= 4.3.
 
 .cvxr_chooseOpsMethod <- function(x, y, mx, my, cl, reverse) TRUE
 
-# ── %*% dispatch via S7 ────────────────────────────────────────────
+# -- %*% dispatch via S7 --------------------------------------------
 # %*% is NOT in the Ops group; S7 method() works directly.
 
 method(`%*%`, list(Expression, class_any)) <- function(x, y) {
@@ -75,19 +75,19 @@ method(`%*%`, list(Expression, Expression)) <- function(x, y) {
   MulExpression(x, y)
 }
 
-# ── [ indexing via S7 ────────────────────────────────────────────────
+# -- [ indexing via S7 ------------------------------------------------
 # S7 method for `[` on Expression objects.
 # Handles:
-#   x[i, j]  — both row and column specified
-#   x[i, ]   — row only (j is missing → all columns)
-#   x[, j]   — column only (i is missing → all rows)
-#   x[i]     — single index for vectors; for matrices, selects rows
+#   x[i, j]  -- both row and column specified
+#   x[i, ]   -- row only (j is missing -> all columns)
+#   x[, j]   -- column only (i is missing -> all rows)
+#   x[i]     -- single index for vectors; for matrices, selects rows
 
 method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   ## Build key: list(row_indices, col_indices)
   ## NULL means "all" for that dimension
   if (missing(i) && missing(j)) {
-    ## x[] — return as-is
+    ## x[] -- return as-is
     return(x)
   }
   ## Determine nargs: were we called as x[i] or x[i, j]?
@@ -97,7 +97,7 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   ## Alternative detection: if called as x[i], j won't be in the call at all
   ## We check nargs() to distinguish x[i] from x[i,]
   if (!has_comma && !missing(i) && missing(j)) {
-    ## x[i] — single subscript
+    ## x[i] -- single subscript
     ## For column vectors (n, 1): select rows
     ## For row vectors (1, m): select columns
     ## For matrices: flatten column-major and select
@@ -119,12 +119,12 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   Index(x, key)
 }
 
-# ── S3 Math group handler ─────────────────────────────────────────
+# -- S3 Math group handler -----------------------------------------
 # Dispatches base R Math generics (abs, exp, log, sqrt, etc.) to CVXR atoms.
 # Registered via registerS3method() in .onLoad().
-# NOTE: H1 — cumsum, cummax, cumprod, cummin are Math group, NOT Summary
-# NOTE: H2 — sign() conflicts with base::sign, must abort
-# NOTE: H3 — log2, log10, log1p routed through Log atom
+# NOTE: H1 -- cumsum, cummax, cumprod, cummin are Math group, NOT Summary
+# NOTE: H2 -- sign() conflicts with base::sign, must abort
+# NOTE: H3 -- log2, log10, log1p routed through Log atom
 
 .cvxr_Math_handler <- function(x, ...) {
   switch(.Generic,
@@ -148,7 +148,7 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   )
 }
 
-# ── S3 Summary group handler ─────────────────────────────────────
+# -- S3 Summary group handler -------------------------------------
 # Dispatches base R Summary generics (sum, max, min, etc.) to CVXR atoms.
 # Registered via registerS3method() in .onLoad().
 
@@ -160,7 +160,7 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
       if (length(args) == 1L) {
         SumEntries(x)
       } else {
-        ## sum(x, y, ...) → SumEntries of addition
+        ## sum(x, y, ...) -> SumEntries of addition
         result <- as_expr(args[[1L]])
         for (i in seq_along(args)[-1L]) {
           result <- AddExpression(list(result, as_expr(args[[i]])))
@@ -172,7 +172,7 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
       if (length(args) == 1L) {
         MaxEntries(x)
       } else {
-        ## max(x, y, ...) → nested MaxEntries of add? No: max of multiple → max_elemwise
+        ## max(x, y, ...) -> nested MaxEntries of add? No: max of multiple -> max_elemwise
         ## Actually, base::max(x, y) finds the max across all values, so
         ## we should construct MaxEntries of the concatenated expression.
         ## For simplicity with Expression objects, use pairwise max_elemwise
@@ -212,7 +212,7 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   )
 }
 
-# ── S3 Complex group handler ─────────────────────────────────────────
+# -- S3 Complex group handler -----------------------------------------
 ## Dispatches Re(), Im(), Conj() to CVXR atom constructors.
 ## R's Complex group generic includes: Arg, Conj, Im, Mod, Re.
 ## We support the three that map to CVXPY atoms.
@@ -228,13 +228,13 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   )
 }
 
-# ── t() via S7 ───────────────────────────────────────────────────────
+# -- t() via S7 -------------------------------------------------------
 
 method(t, Expression) <- function(x) {
   Transpose(x)
 }
 
-# ── mean() dispatch via S3 generic (base::mean is UseMethod) ─────
+# -- mean() dispatch via S3 generic (base::mean is UseMethod) -----
 # mean(expr, axis=1, keepdims=TRUE) works via ...
 method(mean, Expression) <- function(x, ...) {
   cvxr_mean(x, ...)

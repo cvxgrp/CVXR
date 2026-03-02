@@ -14,7 +14,7 @@
 ## R interface: ECOSolveR::ECOS_csolve(bool_vars = ..., int_vars = ...)
 
 
-# ── ECOS_BB_Solver class ──────────────────────────────────────────
+# -- ECOS_BB_Solver class ------------------------------------------
 ## CVXPY SOURCE: ecos_bb_conif.py lines 26-114
 
 ECOS_BB_Solver <- new_class("ECOS_BB_Solver", parent = ECOS_Solver,
@@ -33,7 +33,7 @@ ECOS_BB_Solver <- new_class("ECOS_BB_Solver", parent = ECOS_Solver,
 
 method(solver_name, ECOS_BB_Solver) <- function(x) ECOS_BB_SOLVER
 
-# ── ECOS_BB solve_via_data ────────────────────────────────────────
+# -- ECOS_BB solve_via_data ----------------------------------------
 ## CVXPY SOURCE: ecos_bb_conif.py lines 82-114
 ## Same as ECOS but additionally passes bool_vars and int_vars.
 
@@ -113,7 +113,7 @@ method(solve_via_data, ECOS_BB_Solver) <- function(x, data, warm_start = FALSE, 
   result
 }
 
-# ── ECOS_BB reduction_invert ─────────────────────────────────────
+# -- ECOS_BB reduction_invert -------------------------------------
 ## CVXPY SOURCE: ecos_bb_conif.py lines 49-80
 ## Same as ECOS but no duals for MIP problems.
 
@@ -178,7 +178,7 @@ method(reduction_invert, ECOS_BB_Solver) <- function(x, solution, inverse_data, 
   }
 }
 
-# ── print ─────────────────────────────────────────────────────────
+# -- print ---------------------------------------------------------
 
 method(print, ECOS_BB_Solver) <- function(x, ...) {
   cat("ECOS_BB_Solver()\n")

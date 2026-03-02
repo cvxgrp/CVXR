@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/inv_pos.py
-## InvPos — inverse of positive value x^{-1}
+## InvPos -- inverse of positive value x^{-1}
 
 #' Inverse position: \eqn{x^{-1}} (for x > 0)
 #'

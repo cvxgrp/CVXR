@@ -16,7 +16,7 @@ max_canon <- function(expr, args, solver_context = NULL) {
     ## axis=NULL: scalar output, promote t to match x shape
     promoted_t <- cvxr_promote(t, x@shape)
   } else if (axis == 2L) {
-    ## axis=2: reduce rows (column-wise) → shape (1, ncol)
+    ## axis=2: reduce rows (column-wise) -> shape (1, ncol)
     ## promoted_t = ones(nrow,1) %*% reshape(t, (1, ncol))
     ones_col <- Constant(matrix(1, nrow = x@shape[1L], ncol = 1L))
     t_row <- reshape_expr(t, c(1L, x@shape[2L]))

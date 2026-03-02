@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/quad_form_canon.py
-## DGP canonicalizer for QuadForm: x^T P x → log_sum_exp(P[i,j] + x_i + x_j)
+## DGP canonicalizer for QuadForm: x^T P x -> log_sum_exp(P[i,j] + x_i + x_j)
 ## In log-space: log(sum_ij P_ij * x_i * x_j) = log_sum_exp(log(P_ij) + log(x_i) + log(x_j))
 ## Args are already in log-space, so P[i,j] + x[i] + x[j].
 

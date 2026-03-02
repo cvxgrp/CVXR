@@ -6,7 +6,7 @@
 ## HiGHS conic solver interface for LP/MILP problems
 ##
 ## HiGHS conic path: for LP and MILP problems (Zero + NonNeg only).
-## Uses the standard ConicSolver pipeline (format_constraints → negate A).
+## Uses the standard ConicSolver pipeline (format_constraints -> negate A).
 ## MIP-capable: supports boolean and integer variables.
 ##
 ## QP problems are handled by HiGHS_QP_Solver (qp_solvers/highs_qp_solver.R).
@@ -27,7 +27,7 @@ HIGHS_STATUS_MAP <- list(
   "14" = USER_LIMIT,                 # Iteration limit
   "15" = USER_LIMIT                  # Solution limit
 )
-## Codes 0-6, 16 → SOLVER_ERROR (default fallback)
+## Codes 0-6, 16 -> SOLVER_ERROR (default fallback)
 
 # -- HiGHS_Conic_Solver class -------------------------------------------------
 ## CVXPY SOURCE: highs_conif.py class HIGHS(ConicSolver)
@@ -66,12 +66,12 @@ method(reduction_accepts, HiGHS_Conic_Solver) <- function(x, problem, ...) {
 ## CVXPY SOURCE: highs_conif.py solve_via_data()
 ##
 ## Receives conic data from ConicSolver.apply():
-## A (negated), b, c, dims — format: -A*x + s = b, s in K
+## A (negated), b, c, dims -- format: -A*x + s = b, s in K
 ##
 ## For HiGHS, undo the conic negation since HiGHS expects lhs <= Ax <= rhs:
-##   Zero rows: A_z*x = b_z → lhs = rhs = b_z (A is already un-negated for Zero)
-##   NonNeg rows: solver has -A_raw*x + s = b, s >= 0 → A_raw*x <= b
-##     → A_gurobi = solver_data$A (which is -formatted_A = A_raw for Zero,
+##   Zero rows: A_z*x = b_z -> lhs = rhs = b_z (A is already un-negated for Zero)
+##   NonNeg rows: solver has -A_raw*x + s = b, s >= 0 -> A_raw*x <= b
+##     -> A_gurobi = solver_data$A (which is -formatted_A = A_raw for Zero,
 ##       = -A_raw for NonNeg). For HiGHS: negate NonNeg rows back.
 ##
 ## Actually simpler: use the raw ConeMatrixStuffing data from the conic base.
@@ -79,17 +79,17 @@ method(reduction_accepts, HiGHS_Conic_Solver) <- function(x, problem, ...) {
 ## For Zero: formatted_A = -A_raw, so solver_data$A = A_raw, b = -b_raw
 ## For NonNeg: formatted_A = A_raw, so solver_data$A = -A_raw, b = b_raw
 ## HiGHS needs lhs <= Ax <= rhs where A = original:
-##   Zero: A_raw*x = -b_raw → but -b_raw ≠ what we want. Let's think differently.
+##   Zero: A_raw*x = -b_raw -> but -b_raw != what we want. Let's think differently.
 ##
 ## From ConeMatrixStuffing: A_raw*x + b_raw = 0 (Zero), A_raw*x + b_raw >= 0 (NonNeg)
-## format_constraints: Zero → -I block → formatted_A[Zero] = -A_raw, formatted_b[Zero] = -b_raw
-##                     NonNeg → I block → formatted_A[NonNeg] = A_raw, formatted_b[NonNeg] = b_raw
+## format_constraints: Zero -> -I block -> formatted_A[Zero] = -A_raw, formatted_b[Zero] = -b_raw
+##                     NonNeg -> I block -> formatted_A[NonNeg] = A_raw, formatted_b[NonNeg] = b_raw
 ## ConicSolver.apply: solver_data$A = -formatted_A, solver_data$B = formatted_b
-##   Zero: solver_A = A_raw, solver_b = -b_raw → A_raw*x + s = -b_raw, s=0 → A_raw*x = -b_raw
-##   NonNeg: solver_A = -A_raw, solver_b = b_raw → -A_raw*x + s = b_raw, s>=0 → A_raw*x <= b_raw
+##   Zero: solver_A = A_raw, solver_b = -b_raw -> A_raw*x + s = -b_raw, s=0 -> A_raw*x = -b_raw
+##   NonNeg: solver_A = -A_raw, solver_b = b_raw -> -A_raw*x + s = b_raw, s>=0 -> A_raw*x <= b_raw
 ## HiGHS: lhs <= Ax <= rhs
-##   Zero: A=A_raw, lhs=rhs=-b_raw → already from solver_A, solver_b → A=solver_A, lhs=rhs=solver_b
-##   NonNeg: A=A_raw=-solver_A, lhs=-Inf, rhs=b_raw=solver_b → A=-solver_A, rhs=solver_b
+##   Zero: A=A_raw, lhs=rhs=-b_raw -> already from solver_A, solver_b -> A=solver_A, lhs=rhs=solver_b
+##   NonNeg: A=A_raw=-solver_A, lhs=-Inf, rhs=b_raw=solver_b -> A=-solver_A, rhs=solver_b
 ##
 ## So: for the combined matrix, negate NonNeg rows of solver_A to get original A,
 ##     and use solver_b as the rhs.
@@ -112,11 +112,11 @@ method(solve_via_data, HiGHS_Conic_Solver) <- function(x, data, warm_start = FAL
   b_solver <- data[[SD_B]]  # = formatted_b
 
   ## Build HiGHS constraint matrix and bounds
-  ## From conic convention: A_solver * x + s = b_solver, s ∈ K
-  ## Zero rows (first zero_dim): A_solver * x + 0 = b_solver → A*x = b (equality)
-  ##   → A_highs = A_solver, lhs = rhs = b_solver
-  ## NonNeg rows (next nonneg_dim): A_solver * x + s = b_solver, s >= 0 → A*x <= b
-  ##   → A_highs = A_solver, lhs = -Inf, rhs = b_solver
+  ## From conic convention: A_solver * x + s = b_solver, s in K
+  ## Zero rows (first zero_dim): A_solver * x + 0 = b_solver -> A*x = b (equality)
+  ##   -> A_highs = A_solver, lhs = rhs = b_solver
+  ## NonNeg rows (next nonneg_dim): A_solver * x + s = b_solver, s >= 0 -> A*x <= b
+  ##   -> A_highs = A_solver, lhs = -Inf, rhs = b_solver
 
   if (total_rows > 0L) {
     A_highs <- A_solver
@@ -140,8 +140,8 @@ method(solve_via_data, HiGHS_Conic_Solver) <- function(x, data, warm_start = FAL
     A_highs <- methods::as(A_highs, "dgCMatrix")
   }
 
-  ## Q matrix (quadratic objective) — should be NULL for LP/MILP
-  ## MIQP rejection — HiGHS does not support mixed-integer QP
+  ## Q matrix (quadratic objective) -- should be NULL for LP/MILP
+  ## MIQP rejection -- HiGHS does not support mixed-integer QP
   if (!is.null(data[[SD_P]])) {
     is_mip <- length(data[["bool_idx"]] %||% integer(0)) > 0L ||
               length(data[["int_idx"]] %||% integer(0)) > 0L
@@ -238,7 +238,7 @@ method(reduction_invert, HiGHS_Conic_Solver) <- function(x, solution, inverse_da
 
     if (!is_mip && !is.null(solution$solver_msg) &&
         isTRUE(solution$solver_msg$dual_valid)) {
-      ## Negate ALL row_duals — matching CVXPY highs_conif.py line 182
+      ## Negate ALL row_duals -- matching CVXPY highs_conif.py line 182
       raw_dual <- solution$solver_msg$row_dual
       y <- -raw_dual
 

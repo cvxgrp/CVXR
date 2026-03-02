@@ -3,9 +3,9 @@
 #####
 
 ## CVXPY SOURCE: reductions/dqcp2dcp/dqcp2dcp.py
-## Dqcp2Dcp — reduce DQCP problems to parameterized DCP for bisection
+## Dqcp2Dcp -- reduce DQCP problems to parameterized DCP for bisection
 
-## ── Helper: separate constraints into lazy, real, filtering TRUE/FALSE ──
+## -- Helper: separate constraints into lazy, real, filtering TRUE/FALSE --
 ## CVXPY SOURCE: dqcp2dcp.py _get_lazy_and_real_constraints()
 ## TRUE (redundant) constraints are dropped, FALSE (infeasible) constraints
 ## are replaced with an explicitly infeasible DCP constraint.
@@ -16,7 +16,7 @@
   nl <- 0L; nr <- 0L
   for (i in seq_len(n)) {
     con <- constraints[[i]]
-    if (identical(con, TRUE)) next  # redundant — always satisfied
+    if (identical(con, TRUE)) next  # redundant -- always satisfied
     if (identical(con, FALSE)) {
       ## Infeasible: add a contradiction constraint (1 <= 0)
       nr <- nr + 1L
@@ -38,7 +38,7 @@
   list(lazy = lazy, real = real)
 }
 
-# ── Dqcp2Dcp class ───────────────────────────────────────────────
+# -- Dqcp2Dcp class -----------------------------------------------
 ## Inherits from Canonicalization but uses its own _canonicalize_constraint
 ## CVXPY SOURCE: dqcp2dcp.py class Dqcp2Dcp(Canonicalization)
 
@@ -73,7 +73,7 @@ method(reduction_invert, Dqcp2Dcp) <- function(x, solution, inverse_data, ...) {
 ## apply: the main DQCP reduction
 ## CVXPY SOURCE: dqcp2dcp.py apply()
 method(reduction_apply, Dqcp2Dcp) <- function(x, problem, ...) {
-  ## Canonicalize all constraints — collect chunks, flatten once
+  ## Canonicalize all constraints -- collect chunks, flatten once
   n_cons <- length(problem@constraints)
   constr_chunks <- vector("list", n_cons)
   for (i in seq_len(n_cons)) {

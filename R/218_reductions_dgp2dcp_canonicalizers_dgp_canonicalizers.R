@@ -8,13 +8,13 @@
 ## Variable/Parameter handling is stateful (per-problem), done by dgp_methods closure.
 ## These method() registrations replace the old DGP_CANON_METHODS environment.
 
-## ── S7 generic for DGP canonicalization ──────────────────────────────
+## -- S7 generic for DGP canonicalization ------------------------------
 ## Defined here (not in dgp2dcp.R) because this file loads before dgp2dcp.R
 ## and the method registrations below need the generic to exist.
-## Default: NULL sentinel (no DGP canon for this class → fall through to copy).
+## Default: NULL sentinel (no DGP canon for this class -> fall through to copy).
 ## Variable/Parameter dispatch remains in the tree walker (stateful closures).
 ##
-## INHERITANCE SAFETY: Same invariant as dcp_canonicalize — every subclass
+## INHERITANCE SAFETY: Same invariant as dcp_canonicalize -- every subclass
 ## of a DGP-registered atom must have its own explicit method.
 
 #' DGP canonicalization dispatch

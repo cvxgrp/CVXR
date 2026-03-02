@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/gen_lambda_max.py
-## GenLambdaMax — maximum generalized eigenvalue: lambda_max(A, B)
+## GenLambdaMax -- maximum generalized eigenvalue: lambda_max(A, B)
 
 
 GenLambdaMax <- new_class("GenLambdaMax", parent = Atom, package = "CVXR",
@@ -24,7 +24,7 @@ GenLambdaMax <- new_class("GenLambdaMax", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## CVXPY: gen_lambda_max.py lines 61-71
 method(validate_arguments, GenLambdaMax) <- function(x) {
   A <- x@args[[1L]]
@@ -37,30 +37,30 @@ method(validate_arguments, GenLambdaMax) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: gen_lambda_max.py lines 73-76 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: gen_lambda_max.py lines 73-76 -- returns tuple()
 method(shape_from_args, GenLambdaMax) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: gen_lambda_max.py lines 78-81 — (False, False)
+# -- sign ---------------------------------------------------------
+## CVXPY: gen_lambda_max.py lines 78-81 -- (False, False)
 method(sign_from_args, GenLambdaMax) <- function(x) {
   list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: gen_lambda_max.py lines 83-101 — not convex, not concave,
+# -- curvature ----------------------------------------------------
+## CVXPY: gen_lambda_max.py lines 83-101 -- not convex, not concave,
 ## quasiconvex but NOT quasiconcave
 method(is_atom_convex, GenLambdaMax) <- function(x) FALSE
 method(is_atom_concave, GenLambdaMax) <- function(x) FALSE
 method(is_atom_quasiconvex, GenLambdaMax) <- function(x) TRUE
 method(is_atom_quasiconcave, GenLambdaMax) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: gen_lambda_max.py lines 103-111 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: gen_lambda_max.py lines 103-111 -- not monotone
 method(is_incr, GenLambdaMax) <- function(x, idx, ...) FALSE
 method(is_decr, GenLambdaMax) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: gen_lambda_max.py lines 31-40
 ## Generalized eigenvalue: max eigenvalue of solve(B, A)
 method(numeric_value, GenLambdaMax) <- function(x, values, ...) {
@@ -71,25 +71,25 @@ method(numeric_value, GenLambdaMax) <- function(x, values, ...) {
   matrix(max(evals), 1L, 1L)
 }
 
-# ── domain ───────────────────────────────────────────────────────
-## CVXPY: gen_lambda_max.py lines 42-46 — [A.H == A, B.H == B, B >> 0]
+# -- domain -------------------------------------------------------
+## CVXPY: gen_lambda_max.py lines 42-46 -- [A.H == A, B.H == B, B >> 0]
 method(atom_domain, GenLambdaMax) <- function(x) {
   A <- x@args[[1L]]
   B <- x@args[[2L]]
   list(expr_H(A) == A, expr_H(B) == B, PSD(B))
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, GenLambdaMax) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, GenLambdaMax) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls GenLambdaMax} not available; use DQCP bisection.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Maximum generalized eigenvalue
 #'

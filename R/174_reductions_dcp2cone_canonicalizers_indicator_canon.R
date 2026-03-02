@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/dcp2cone/canonicalizers/indicator_canon.py
-## indicator_canon — canonicalize indicator transform
+## indicator_canon -- canonicalize indicator transform
 ##
 ## Returns Constant(0) for the expression and the constraints as-is.
 

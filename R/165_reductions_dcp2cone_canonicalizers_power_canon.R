@@ -7,7 +7,7 @@
 ## Uses gm_constrs (SOC constraints via rational approximation) (approx)
 
 
-# ── power_exact_canon ──────────────────────────────────────────────
+# -- power_exact_canon ----------------------------------------------
 power_exact_canon <- function(expr, args, solver_context = NULL) {
   x <- args[[1L]]
   p <- expr@p_used
@@ -58,7 +58,7 @@ power_exact_canon <- function(expr, args, solver_context = NULL) {
   }
 }
 
-# ── power_approx_canon ─────────────────────────────────────────────
+# -- power_approx_canon ---------------------------------------------
 ## CVXPY SOURCE: dcp2cone/canonicalizers/power_canon.py lines 60-103
 ## Uses gm_constrs (SOC constraints via rational approximation)
 power_approx_canon <- function(expr, args, solver_context = NULL) {

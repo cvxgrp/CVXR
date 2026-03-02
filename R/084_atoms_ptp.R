@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/ptp.py
-## Ptp — peak-to-peak (range): max(x) - min(x)
+## Ptp -- peak-to-peak (range): max(x) - min(x)
 
 #' Peak-to-peak (range): max(x) - min(x)
 #'

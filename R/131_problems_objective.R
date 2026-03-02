@@ -3,9 +3,9 @@
 #####
 
 ## CVXPY SOURCE: problems/objective.py
-## Objective, Minimize, Maximize — optimization objective wrappers
+## Objective, Minimize, Maximize -- optimization objective wrappers
 
-# ── scalar_value: extract scalar from 1x1 matrix ─────────────────────
+# -- scalar_value: extract scalar from 1x1 matrix ---------------------
 ## CVXPY SOURCE: interface/matrix_utilities.py::scalar_value
 
 scalar_value <- function(v) {
@@ -17,7 +17,7 @@ scalar_value <- function(v) {
   as.double(v[1L])
 }
 
-# ── Objective base class ─────────────────────────────────────────────
+# -- Objective base class ---------------------------------------------
 ## CVXPY SOURCE: objective.py lines 25-116
 
 Objective <- new_class("Objective", parent = Canonical, package = "CVXR",
@@ -43,7 +43,7 @@ Objective <- new_class("Objective", parent = Canonical, package = "CVXR",
   }
 )
 
-# ── Objective value ──────────────────────────────────────────────────
+# -- Objective value --------------------------------------------------
 ## CVXPY SOURCE: objective.py lines 97-105
 
 method(value, Objective) <- function(x) {
@@ -52,24 +52,24 @@ method(value, Objective) <- function(x) {
   scalar_value(v)
 }
 
-# ── Objective print ──────────────────────────────────────────────────
+# -- Objective print --------------------------------------------------
 
 method(print, Objective) <- function(x, ...) {
   cat(sprintf("%s %s\n", x@.name, expr_name(x@args[[1L]])))
   invisible(x)
 }
 
-# ── Objective is_quadratic / is_qpwa ────────────────────────────────
+# -- Objective is_quadratic / is_qpwa --------------------------------
 ## CVXPY SOURCE: objective.py lines 107-115
 
 method(is_quadratic, Objective) <- function(x) is_quadratic(x@args[[1L]])
 method(is_qpwa, Objective) <- function(x) is_qpwa(x@args[[1L]])
 
-# ── Objective is_dcp default ─────────────────────────────────────────
+# -- Objective is_dcp default -----------------------------------------
 
 method(is_dcp, Objective) <- function(x) FALSE
 
-# ── Minimize ─────────────────────────────────────────────────────────
+# -- Minimize ---------------------------------------------------------
 ## CVXPY SOURCE: objective.py lines 118-186
 
 #' Create a Minimization Objective
@@ -132,7 +132,7 @@ method(print, Minimize) <- function(x, ...) {
   invisible(x)
 }
 
-# ── Maximize ─────────────────────────────────────────────────────────
+# -- Maximize ---------------------------------------------------------
 ## CVXPY SOURCE: objective.py lines 188-257
 
 #' Create a Maximization Objective
@@ -200,10 +200,10 @@ method(print, Maximize) <- function(x, ...) {
   invisible(x)
 }
 
-# ── Objective arithmetic ─────────────────────────────────────────────
+# -- Objective arithmetic ---------------------------------------------
 ## CVXPY SOURCE: objective.py lines 61-105 (Objective.__add__, __mul__, etc.)
 
-## Negate: -Minimize(f) → Maximize(-f), -Maximize(f) → Minimize(-f)
+## Negate: -Minimize(f) -> Maximize(-f), -Maximize(f) -> Minimize(-f)
 ## CVXPY SOURCE: objective.py Minimize.__neg__ / Maximize.__neg__
 .negate_objective <- function(obj) {
 

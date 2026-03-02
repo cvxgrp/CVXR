@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: expressions/variable.py
-## Variable — an optimization variable
+## Variable -- an optimization variable
 
 #' Create an Optimization Variable
 #'
@@ -38,7 +38,7 @@ Variable <- new_class("Variable", parent = Leaf, package = "CVXR",
   ),
   constructor = function(shape = c(1L, 1L), name = NULL, var_id = NULL,
                          latex_name = NULL, ...) {
-    ## Normalize scalar shape: Variable(3) → c(3, 1)
+    ## Normalize scalar shape: Variable(3) -> c(3, 1)
     if (is.numeric(shape) && length(shape) == 1L) {
       shape <- c(as.integer(shape), 1L)
     }
@@ -78,7 +78,7 @@ Variable <- new_class("Variable", parent = Leaf, package = "CVXR",
   }
 )
 
-# ── expr_name ─────────────────────────────────────────────────────────
+# -- expr_name ---------------------------------------------------------
 
 method(expr_name, Variable) <- function(x) {
   nm <- x@.name
@@ -92,17 +92,17 @@ method(expr_name, Variable) <- function(x) {
   nm
 }
 
-# ── is_constant: Variables are NOT constant ───────────────────────────
+# -- is_constant: Variables are NOT constant ---------------------------
 ## CVXPY SOURCE: variable.py line 57-58
 
 method(is_constant, Variable) <- function(x) FALSE
 
-# ── variables: returns self ───────────────────────────────────────────
+# -- variables: returns self -------------------------------------------
 ## CVXPY SOURCE: variable.py line 69-71
 
 method(variables, Variable) <- function(x) list(x)
 
-# ── grad: identity sparse matrix ─────────────────────────────────────
+# -- grad: identity sparse matrix -------------------------------------
 ## CVXPY SOURCE: variable.py line 61-67
 
 method(grad, Variable) <- function(x) {
@@ -113,7 +113,7 @@ method(grad, Variable) <- function(x) {
   result
 }
 
-# ── canonicalize: create_var LinOp ────────────────────────────────────
+# -- canonicalize: create_var LinOp ------------------------------------
 ## CVXPY SOURCE: variable.py line 73-76
 
 method(canonicalize, Variable) <- function(x) {
@@ -121,7 +121,7 @@ method(canonicalize, Variable) <- function(x) {
   list(obj, list())
 }
 
-# ── print ─────────────────────────────────────────────────────────────
+# -- print -------------------------------------------------------------
 
 method(print, Variable) <- function(x, ...) {
   cat(sprintf("Variable((%s), %s)\n",

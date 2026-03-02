@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/dist_ratio.py
-## DistRatio — distance ratio: norm(x - a)_2 / norm(x - b)_2
+## DistRatio -- distance ratio: norm(x - a)_2 / norm(x - b)_2
 
 
 DistRatio <- new_class("DistRatio", parent = Atom, package = "CVXR",
@@ -39,30 +39,30 @@ DistRatio <- new_class("DistRatio", parent = Atom, package = "CVXR",
   }
 )
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: dist_ratio.py lines 43-46 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: dist_ratio.py lines 43-46 -- returns tuple()
 method(shape_from_args, DistRatio) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: dist_ratio.py lines 48-52 — (True, False) — always nonneg
+# -- sign ---------------------------------------------------------
+## CVXPY: dist_ratio.py lines 48-52 -- (True, False) -- always nonneg
 method(sign_from_args, DistRatio) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: dist_ratio.py lines 54-72 — not convex, not concave,
+# -- curvature ----------------------------------------------------
+## CVXPY: dist_ratio.py lines 54-72 -- not convex, not concave,
 ## quasiconvex but NOT quasiconcave
 method(is_atom_convex, DistRatio) <- function(x) FALSE
 method(is_atom_concave, DistRatio) <- function(x) FALSE
 method(is_atom_quasiconvex, DistRatio) <- function(x) TRUE
 method(is_atom_quasiconcave, DistRatio) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: dist_ratio.py lines 74-82 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: dist_ratio.py lines 74-82 -- not monotone
 method(is_incr, DistRatio) <- function(x, idx, ...) FALSE
 method(is_decr, DistRatio) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY: dist_ratio.py lines 37-41
 method(numeric_value, DistRatio) <- function(x, values, ...) {
   xv <- values[[1L]]
@@ -71,17 +71,17 @@ method(numeric_value, DistRatio) <- function(x, values, ...) {
   matrix(sqrt(sum((xv - a)^2)) / sqrt(sum((xv - b)^2)), 1L, 1L)
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, DistRatio) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, DistRatio) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls DistRatio} not available; use DQCP bisection.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Distance ratio
 #'

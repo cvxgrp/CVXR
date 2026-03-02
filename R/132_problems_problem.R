@@ -3,9 +3,9 @@
 #####
 
 ## CVXPY SOURCE: problems/problem.py
-## Problem — optimization problem with objective and constraints
+## Problem -- optimization problem with objective and constraints
 
-# ── Problem class ─────────────────────────────────────────────────
+# -- Problem class -------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 156-193
 
 #' Create an Optimization Problem
@@ -48,10 +48,10 @@ Problem <- new_class("Problem", package = "CVXR",
     for (i in seq_along(constraints)) {
       ci <- constraints[[i]]
       if (isTRUE(ci)) {
-        ## TRUE → trivially satisfied: 0 <= 1
+        ## TRUE -> trivially satisfied: 0 <= 1
         constraints[[i]] <- Inequality(Constant(0), Constant(1))
       } else if (identical(ci, FALSE)) {
-        ## FALSE → infeasible: 1 <= 0
+        ## FALSE -> infeasible: 1 <= 0
         constraints[[i]] <- Inequality(Constant(1), Constant(0))
       } else if (!S7_inherits(ci, Constraint)) {
         cli_abort("Element {i} of constraints is not a {.cls Constraint} object.")
@@ -75,7 +75,7 @@ Problem <- new_class("Problem", package = "CVXR",
   problem@.cache$solver_cache
 }
 
-# ── is_dcp ────────────────────────────────────────────────────────
+# -- is_dcp --------------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 273-294
 ## DCP if objective and all constraints are DCP.
 
@@ -131,7 +131,7 @@ method(is_dpp, Problem) <- function(x) {
 }
 
 ## is_dgp_dpp: DGP compliance in DPP scope
-## CVXPY SOURCE: problem.py is_dpp(context='dgp') → is_dgp(dpp=True)
+## CVXPY SOURCE: problem.py is_dpp(context='dgp') -> is_dgp(dpp=True)
 ## Checks log-log convexity/concavity with Parameters treated as positive/affine.
 .is_dgp_dpp <- function(problem) {
   with_dpp_scope({
@@ -140,7 +140,7 @@ method(is_dpp, Problem) <- function(x) {
   })
 }
 
-# ── is_qp ─────────────────────────────────────────────────────────
+# -- is_qp ---------------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 371-393
 ## QP if DCP, all inequality constraints are PWL, no conic constraints,
 ## and objective is QPWA (quadratic or piecewise affine).
@@ -166,7 +166,7 @@ method(is_qp, Problem) <- function(x) {
   is_qpwa(x@objective@args[[1L]])
 }
 
-# ── is_lp ─────────────────────────────────────────────────────────
+# -- is_lp ---------------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 395-422
 ## LP if QP and objective is also PWL (linear, not quadratic).
 
@@ -174,7 +174,7 @@ method(is_lp, Problem) <- function(x) {
   is_qp(x) && is_pwl(x@objective@args[[1L]])
 }
 
-# ── is_mixed_integer ──────────────────────────────────────────────
+# -- is_mixed_integer ----------------------------------------------
 ## CVXPY SOURCE: problem.py lines 473-488
 ## MIP if any variable has boolean or integer attribute.
 
@@ -196,7 +196,7 @@ is_mixed_integer <- function(problem) {
   result
 }
 
-# ── variables ─────────────────────────────────────────────────────
+# -- variables -----------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 425-436
 
 method(variables, Problem) <- function(x) {
@@ -213,7 +213,7 @@ method(variables, Problem) <- function(x) {
   result
 }
 
-# ── parameters ────────────────────────────────────────────────────
+# -- parameters ----------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 438-450
 
 method(parameters, Problem) <- function(x) {
@@ -230,7 +230,7 @@ method(parameters, Problem) <- function(x) {
   result
 }
 
-# ── constants ─────────────────────────────────────────────────────
+# -- constants -----------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 452-468
 
 method(constants, Problem) <- function(x) {
@@ -245,7 +245,7 @@ method(constants, Problem) <- function(x) {
   result
 }
 
-# ── value ─────────────────────────────────────────────────────────
+# -- value ---------------------------------------------------------
 ## CVXPY SOURCE: problem.py lines 216-230
 ## Returns the objective value from last solve (or NULL).
 
@@ -255,7 +255,7 @@ method(value, Problem) <- function(x) {
   scalar_value(v)
 }
 
-# ── status accessor ──────────────────────────────────────────────
+# -- status accessor ----------------------------------------------
 
 #' Get the Solution Status of a Problem
 #'
@@ -292,7 +292,7 @@ problem_status <- function(x) {
   status(x)
 }
 
-# ── print ─────────────────────────────────────────────────────────
+# -- print ---------------------------------------------------------
 
 method(print, Problem) <- function(x, ...) {
   cat(sprintf("Problem(%s, %d constraints)\n",
@@ -300,9 +300,9 @@ method(print, Problem) <- function(x, ...) {
   invisible(x)
 }
 
-# ── Compilation caching ──────────────────────────────────────────
+# -- Compilation caching ------------------------------------------
 ## CVXPY SOURCE: problem.py Cache class (lines 107-125)
-## Cache key: (solver, gp) — matching CVXPY's (solver, gp, ignore_dpp, use_quad_obj).
+## Cache key: (solver, gp) -- matching CVXPY's (solver, gp, ignore_dpp, use_quad_obj).
 
 .compile <- function(problem, solver = NULL, gp = FALSE) {
   ## CVXPY SOURCE: problem.py lines 786-806
@@ -319,7 +319,7 @@ method(print, Problem) <- function(x, ...) {
   problem@.cache$compile_chain
 }
 
-# ── problem_data ──────────────────────────────────────────────────
+# -- problem_data --------------------------------------------------
 ## CVXPY SOURCE: problem.py get_problem_data() (simplified)
 ## Applies the solving chain and returns solver-ready data.
 ##
@@ -334,16 +334,16 @@ method(problem_data, Problem) <- function(x, solver = NULL, ...) {
   list(data = result[[1L]], chain = chain, inverse_data = result[[2L]])
 }
 
-## Deprecated wrapper — delegates to problem_data()
+## Deprecated wrapper -- delegates to problem_data()
 method(get_problem_data, Problem) <- function(x, solver = NULL, ...) {
   cli_warn("{.fn get_problem_data} is deprecated. Use {.fn problem_data} instead.",
            .frequency = "once", .frequency_id = "cvxr_get_problem_data_deprecated")
   problem_data(x, solver = solver, ...)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# SolverStats — miscellaneous solver output
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# SolverStats -- miscellaneous solver output
+# ==================================================================
 ## CVXPY SOURCE: problem.py lines 1637-1687
 
 SolverStats <- new_class("SolverStats", package = "CVXR",
@@ -386,9 +386,9 @@ solver_stats_from_dict <- function(attr, solver_name) {
   )
 }
 
-# ══════════════════════════════════════════════════════════════════
-# problem_unpack — apply solution to variables/constraints
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# problem_unpack -- apply solution to variables/constraints
+# ==================================================================
 ## CVXPY SOURCE: problem.py lines 1482-1518
 
 problem_unpack <- function(problem, solution) {
@@ -423,9 +423,9 @@ problem_unpack <- function(problem, solution) {
   invisible(problem)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# problem_unpack_results — invert through chain, then unpack
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# problem_unpack_results -- invert through chain, then unpack
+# ==================================================================
 ## CVXPY SOURCE: problem.py lines 1520-1558
 
 #' Unpack Solver Results into a Problem
@@ -434,9 +434,9 @@ problem_unpack <- function(problem, solution) {
 #' the original problem's variables and constraints. This is step 3 of
 #' the decomposed solve pipeline:
 #' \enumerate{
-#'   \item \code{\link{problem_data}()} — compile the problem
-#'   \item \code{\link{solve_via_data}(chain, data)} — call the solver
-#'   \item \code{problem_unpack_results()} — invert and unpack
+#'   \item \code{\link{problem_data}()} -- compile the problem
+#'   \item \code{\link{solve_via_data}(chain, data)} -- call the solver
+#'   \item \code{problem_unpack_results()} -- invert and unpack
 #' }
 #'
 #' After calling this function, variable values are available via
@@ -477,13 +477,13 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
   invisible(problem)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# Problem data validation — catch NaN/Inf before solver
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# Problem data validation -- catch NaN/Inf before solver
+# ==================================================================
 
 .check_finite <- function(val, label) {
   if (is.null(val) || length(val) == 0L) return(invisible(NULL))
-  ## Sparse matrices: check @x slot (non-zero entries only — O(nnz) not O(n*m))
+  ## Sparse matrices: check @x slot (non-zero entries only -- O(nnz) not O(n*m))
   nums <- if (inherits(val, "sparseMatrix")) val@x else as.numeric(val)
   if (anyNA(nums))
     cli_abort("Problem data {.val {label}} contains NaN values.")
@@ -501,9 +501,9 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
   .check_finite(data[[SD_P]], SD_P)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# psolve — main solve entry point
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# psolve -- main solve entry point
+# ==================================================================
 ## CVXPY SOURCE: problem.py _solve() (simplified, non-parametric)
 
 #' Solve a Convex Optimization Problem
@@ -565,13 +565,13 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
     cli_abort("{.fn psolve} requires a {.cls Problem} object.")
   }
 
-  ## ── Validate gp/qcp mutual exclusivity ─────────────────────────
+  ## -- Validate gp/qcp mutual exclusivity -------------------------
   ## CVXPY SOURCE: problem.py lines 1186-1187
   if (gp && qcp) {
     cli_abort("At most one of {.arg gp} and {.arg qcp} can be {.val TRUE}.")
   }
 
-  ## ── DQCP path: bisection solver ────────────────────────────────
+  ## -- DQCP path: bisection solver --------------------------------
   ## CVXPY SOURCE: problem.py lines 1188-1213
   if (qcp && !is_dcp(problem)) {
     if (!is_dqcp(problem)) {
@@ -627,7 +627,7 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
 
   pkg_ver <- utils::packageVersion("CVXR")
 
-  ## ── Verbose header ──────────────────────────────────────────────
+  ## -- Verbose header ----------------------------------------------
   if (verbose) {
     cli_rule(center = "CVXR v{pkg_ver}")
     nvars <- length(variables(problem))
@@ -640,7 +640,7 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
     cli_alert_info("Problem: {nvars} variable{?s}, {ncons} constraint{?s} ({prob_type})")
   }
 
-  ## ── Compilation (chain construction + reductions) ───────────────
+  ## -- Compilation (chain construction + reductions) ---------------
   t0 <- proc.time()
   chain <- .compile(problem, solver, gp = gp)
 
@@ -719,7 +719,7 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
   ## Validate solver data before passing to solver
   .validate_problem_data(data)
 
-  ## ── Solver invocation ───────────────────────────────────────────
+  ## -- Solver invocation -------------------------------------------
   if (verbose) cli_rule(center = "Numerical solver")
   t0 <- proc.time()
   solver_nm <- solver_name(chain@solver)
@@ -733,7 +733,7 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
   ## Invert through chain and unpack
   problem_unpack_results(problem, raw_result, chain, inverse_data)
 
-  ## ── Verbose summary ─────────────────────────────────────────────
+  ## -- Verbose summary ---------------------------------------------
   if (verbose) {
     cli_rule(center = "Summary")
     prob_status <- status(problem)
@@ -748,9 +748,9 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
   value(problem)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# .make_cvxr_result — backward-compatible result object
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# .make_cvxr_result -- backward-compatible result object
+# ==================================================================
 ## Returns an S3 "cvxr_result" list mimicking old CVXR's solve() return.
 ## $value and $status work silently; $getValue() and $getDualValue()
 ## emit one-time deprecation warnings pointing to the new API.
@@ -794,7 +794,7 @@ print.cvxr_result <- function(x, ...) {
   invisible(x)
 }
 
-# ── Accessors ────────────────────────────────────────────────────
+# -- Accessors ----------------------------------------------------
 
 #' Get Solver Statistics
 #'
@@ -849,14 +849,14 @@ problem_solution <- function(x) {
 ## DEFERRED: Derivative/sensitivity API (problem.py lines 1258-1470)
 ## These methods enable differentiating through the solution map:
 ##
-## backward() — compute gradients of parameters w.r.t. objective via diffcp
-## derivative() — apply forward derivatives (Jacobian-vector products)
-## requires_grad parameter in psolve() — triggers diffcp solver path
+## backward() -- compute gradients of parameters w.r.t. objective via diffcp
+## derivative() -- apply forward derivatives (Jacobian-vector products)
+## requires_grad parameter in psolve() -- triggers diffcp solver path
 ##
 ## Deferred because the core dependency (diffcp) has no R equivalent.
 ## See notes/derivative_api_deferred.md for rationale and future path.
 
-# ── Problem arithmetic ──────────────────────────────────────────────
+# -- Problem arithmetic ----------------------------------------------
 ## CVXPY SOURCE: problem.py lines 1593-1634
 
 ## Register S3 Ops for Problem so +, -, *, / work

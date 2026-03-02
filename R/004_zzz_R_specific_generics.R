@@ -12,7 +12,7 @@
 ## Additional arguments (like idx for is_incr) are passed through as extra formals.
 ## See: https://rconsortium.github.io/S7/articles/generics-methods.html
 
-# ── Expression interface ──────────────────────────────────────────────
+# -- Expression interface ----------------------------------------------
 
 #' Get the Numeric Value of an Expression
 #'
@@ -144,7 +144,7 @@ constants <- new_generic("constants", "x")
 #' @export
 expr_sign <- new_generic("expr_sign", "x")
 
-# ── Sign/attribute queries (dispatched on Expression, overridden by Leaf) ──
+# -- Sign/attribute queries (dispatched on Expression, overridden by Leaf) --
 
 #' Check if Expression is Non-Negative
 #'
@@ -194,7 +194,7 @@ is_nsd <- new_generic("is_nsd", "x")
 #' @export
 is_symmetric <- new_generic("is_symmetric", "x")
 
-# ── Phase 1: additional generics ─────────────────────────────────────
+# -- Phase 1: additional generics -------------------------------------
 
 #' Get the Name of an Expression
 #' @param x An expression object.
@@ -315,7 +315,7 @@ expr_copy <- new_generic("expr_copy", "x",
 tree_copy <- new_generic("tree_copy", "x",
   function(x, id_objects = NULL) S7_dispatch())
 
-# ── Quadratic / piecewise-linear analysis ──────────────────────────
+# -- Quadratic / piecewise-linear analysis --------------------------
 ## CVXPY SOURCE: expression.py lines 448-484
 ## These are needed by the QP solver path (OSQP) for problem classification.
 
@@ -348,8 +348,8 @@ is_pwl <- new_generic("is_pwl", "x")
 #' @keywords internal
 is_qpwa <- new_generic("is_qpwa", "x")
 
-# ── Strictly positive check ───────────────────────────────────────
-## CVXPY SOURCE: leaf.py::is_pos — checks attributes['pos'] on Leaf,
+# -- Strictly positive check ---------------------------------------
+## CVXPY SOURCE: leaf.py::is_pos -- checks attributes['pos'] on Leaf,
 ## checks actual value > 0 on Constant.
 
 #' Check if Expression is Strictly Positive
@@ -359,7 +359,7 @@ is_qpwa <- new_generic("is_qpwa", "x")
 #' @keywords internal
 is_pos <- new_generic("is_pos", "x")
 
-# ── Domain hook ───────────────────────────────────────────────────
+# -- Domain hook ---------------------------------------------------
 
 #' Get Atom-Specific Domain Constraints
 #' @param x An atom object.
@@ -368,7 +368,7 @@ is_pos <- new_generic("is_pos", "x")
 #' @keywords internal
 atom_domain <- new_generic("atom_domain", "x")
 
-# ── Constraint generics ────────────────────────────────────────────
+# -- Constraint generics --------------------------------------------
 
 #' Get the Residual of a Constraint
 #'
@@ -391,7 +391,7 @@ residual <- new_generic("residual", "x")
 #' @export
 violation <- new_generic("violation", "x")
 
-# ── Cone constraint generics ──────────────────────────────────────
+# -- Cone constraint generics --------------------------------------
 ## CVXPY SOURCE: constraints/cones.py, second_order.py, psd.py, etc.
 
 #' Get the Number of Cones in a Constraint
@@ -445,7 +445,7 @@ is_dgp <- new_generic("is_dgp", "x")
 save_dual_value <- new_generic("save_dual_value", "x",
   function(x, val) S7_dispatch())
 
-# ── Atom validation ─────────────────────────────────────────────────
+# -- Atom validation -------------------------------------------------
 
 #' Validate Arguments to an Atom
 #' @param x An atom object.
@@ -454,7 +454,7 @@ save_dual_value <- new_generic("save_dual_value", "x",
 #' @keywords internal
 validate_arguments <- new_generic("validate_arguments", "x")
 
-# ── Atom hooks ────────────────────────────────────────────────────────
+# -- Atom hooks --------------------------------------------------------
 
 #' Infer Shape from Arguments
 #' @param x An atom object.
@@ -536,7 +536,7 @@ graph_implementation <- new_generic("graph_implementation", "x",
 numeric_value <- new_generic("numeric_value", "x",
   function(x, values, ...) S7_dispatch())
 
-# ── DQCP curvature queries ───────────────────────────────────────
+# -- DQCP curvature queries ---------------------------------------
 ## CVXPY SOURCE: expression.py lines 411-429, atom.py lines 288-335
 
 #' Check if Expression is Quasiconvex
@@ -585,7 +585,7 @@ is_atom_quasiconvex <- new_generic("is_atom_quasiconvex", "x")
 #' @keywords internal
 is_atom_quasiconcave <- new_generic("is_atom_quasiconcave", "x")
 
-# ── Problem classification ───────────────────────────────────────
+# -- Problem classification ---------------------------------------
 
 #' Check if a Problem is a Quadratic Program
 #'
@@ -603,7 +603,7 @@ is_qp <- new_generic("is_qp", "x")
 #' @export
 is_lp <- new_generic("is_lp", "x")
 
-# ── Reduction interface ──────────────────────────────────────────
+# -- Reduction interface ------------------------------------------
 
 #' Check if a Reduction Accepts a Problem
 #' @param x A Reduction object.
@@ -642,7 +642,7 @@ reduction_invert <- new_generic("reduction_invert", "x",
 update_parameters <- new_generic("update_parameters", "x",
   function(x, problem, ...) S7_dispatch())
 
-# ── Solver interface ───────────────────────────────────────────────
+# -- Solver interface -----------------------------------------------
 
 #' Get Solver Name
 #' @param x A Solver object.

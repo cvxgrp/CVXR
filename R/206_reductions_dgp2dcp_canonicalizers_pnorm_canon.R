@@ -3,14 +3,14 @@
 #####
 
 ## CVXPY SOURCE: reductions/dgp2dcp/canonicalizers/pnorm_canon.py
-## DGP canonicalizer for Pnorm: ||x||_p → (1/p) * log_sum_exp(p * x_i)
+## DGP canonicalizer for Pnorm: ||x||_p -> (1/p) * log_sum_exp(p * x_i)
 ## In log-space: log(||x||_p) = (1/p) * log(sum(exp(p * log(x_i))))
 
 .dgp_pnorm_canon <- function(expr, args) {
   x <- args[[1L]]
   p <- expr@p
 
-  ## Scalar → promote
+  ## Scalar -> promote
   if (expr_is_scalar(x)) {
     x <- cvxr_promote(x, c(1L, 1L))
   }
@@ -25,7 +25,7 @@
     return(list(result, list()))
   }
 
-  ## Axis-aware: axis=0 → transpose so we iterate rows
+  ## Axis-aware: axis=0 -> transpose so we iterate rows
   if (!is.null(expr@axis) && expr@axis == 2L) {
     x <- t(x)
   }

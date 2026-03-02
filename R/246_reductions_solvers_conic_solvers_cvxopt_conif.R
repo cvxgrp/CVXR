@@ -10,7 +10,7 @@
 ## Convention: A*x + s = b, s in K
 
 
-# ── CVXOPT status map ─────────────────────────────────────────────
+# -- CVXOPT status map ---------------------------------------------
 ## CVXPY SOURCE: cvxopt_conif.py lines 54-64
 
 CVXOPT_STATUS_MAP <- list(
@@ -27,7 +27,7 @@ CVXOPT_STATUS_MAP <- list(
   "solver_error"                     = SOLVER_ERROR
 )
 
-# ── CVXOPT_Solver class ───────────────────────────────────────────
+# -- CVXOPT_Solver class -------------------------------------------
 ## CVXPY SOURCE: cvxopt_conif.py lines 44-52
 
 CVXOPT_Solver <- new_class("CVXOPT_Solver", parent = ConicSolver,
@@ -46,7 +46,7 @@ CVXOPT_Solver <- new_class("CVXOPT_Solver", parent = ConicSolver,
 
 method(solver_name, CVXOPT_Solver) <- function(x) CVXOPT_SOLVER
 
-# ── CVXOPT solve_via_data ────────────────────────────────────────
+# -- CVXOPT solve_via_data ----------------------------------------
 ## CVXPY SOURCE: cvxopt_conif.py lines 164-246
 ##
 ## cccp does NOT take a single (G, h, dims) matrix. It takes individual
@@ -65,7 +65,7 @@ method(solve_via_data, CVXOPT_Solver) <- function(x, data, warm_start = FALSE, v
   c_obj <- as.numeric(data[[SD_C]])
   nvars <- length(c_obj)
 
-  ## ── Split by cone dimensions ──────────────────────────────────
+  ## -- Split by cone dimensions ----------------------------------
   zero_dim   <- dims@zero
   nonneg_dim <- dims@nonneg
   soc_dims   <- dims@soc   # integer vector of SOC sizes
@@ -139,7 +139,7 @@ method(solve_via_data, CVXOPT_Solver) <- function(x, data, warm_start = FALSE, v
     offset <- offset + n2
   }
 
-  ## ── Build control ─────────────────────────────────────────────
+  ## -- Build control ---------------------------------------------
   ctrl_args <- list(trace = verbose)
   ## Map standard solver_opts to ctrl() args
   ctrl_params <- c("maxiters", "abstol", "reltol", "feastol", "stepadj", "beta")
@@ -152,7 +152,7 @@ method(solve_via_data, CVXOPT_Solver) <- function(x, data, warm_start = FALSE, v
   }
   optctrl <- do.call(cccp::ctrl, ctrl_args)
 
-  ## ── Call cccp ─────────────────────────────────────────────────
+  ## -- Call cccp -------------------------------------------------
   result <- tryCatch(
     cccp::cccp(q = c_obj, A = A_eq, b = b_eq, cList = cList, optctrl = optctrl),
     error = function(e) {
@@ -163,7 +163,7 @@ method(solve_via_data, CVXOPT_Solver) <- function(x, data, warm_start = FALSE, v
   result
 }
 
-# ── CVXOPT reduction_invert ───────────────────────────────────────
+# -- CVXOPT reduction_invert ---------------------------------------
 ## CVXPY SOURCE: cvxopt_conif.py lines 134-137, 211-246
 ## Map cccp result to CVXR Solution object.
 

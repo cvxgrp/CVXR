@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/cummax.py
-## Cummax — cumulative maximum along an axis
+## Cummax -- cumulative maximum along an axis
 
 
 Cummax <- new_class("Cummax", parent = AxisAtom, package = "CVXR",

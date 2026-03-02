@@ -7,7 +7,7 @@
 ## Approx: Uses gm_constrs (SOC constraints via rational approximation)
 
 
-# ── geo_mean_exact_canon ──────────────────────────────────────────
+# -- geo_mean_exact_canon ------------------------------------------
 ## CVXPY SOURCE: dcp2cone/canonicalizers/geo_mean_canon.py lines 29-48
 geo_mean_exact_canon <- function(expr, args, solver_context = NULL) {
   x <- args[[1L]]
@@ -28,7 +28,7 @@ geo_mean_exact_canon <- function(expr, args, solver_context = NULL) {
   list(t, list(PowConeND(W, t, alpha, axis = 2L)))
 }
 
-# ── geo_mean_approx_canon ────────────────────────────────────────
+# -- geo_mean_approx_canon ----------------------------------------
 ## CVXPY SOURCE: dcp2cone/canonicalizers/geo_mean_canon.py lines 51-88
 ## Uses gm_constrs (SOC constraints via rational approximation)
 geo_mean_approx_canon <- function(expr, args, solver_context = NULL) {

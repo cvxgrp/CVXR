@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/sum_smallest.py
-## SumSmallest — sum of k smallest entries
+## SumSmallest -- sum of k smallest entries
 
 #' Sum of k smallest entries
 #'

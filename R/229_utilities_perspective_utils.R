@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: utilities/perspective_utils.py
-## form_cone_constraint — reconstruct cone constraint from vectorized form
+## form_cone_constraint -- reconstruct cone constraint from vectorized form
 ##
 ## Given an expression z (column vector) and an original cone constraint,
 ## construct the corresponding CVXR cone constraint on z.

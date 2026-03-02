@@ -3,13 +3,13 @@
 #####
 
 ## CVXPY SOURCE: reductions/solvers/conic_solvers/conic_solver.py
-## ConicSolver — conic solver base with format_constraints
+## ConicSolver -- conic solver base with format_constraints
 ##
 ## Non-parametric simplification: works directly with A, b matrices
 ## rather than parameter tensors.
 
 
-# ── ConicSolver class ────────────────────────────────────────────
+# -- ConicSolver class --------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 100-401
 
 ConicSolver <- new_class("ConicSolver", parent = Solver, package = "CVXR",
@@ -33,7 +33,7 @@ ConicSolver <- new_class("ConicSolver", parent = Solver, package = "CVXR",
   }
 )
 
-# ── get_spacing_matrix ────────────────────────────────────────────
+# -- get_spacing_matrix --------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 132-160
 ## Static helper that spaces out rows with interleaving.
 ##
@@ -71,7 +71,7 @@ get_spacing_matrix <- function(shape, spacing, streak, num_blocks, offset) {
   )
 }
 
-# ── psd_format_mat (default: identity) ────────────────────────────
+# -- psd_format_mat (default: identity) ----------------------------
 ## CVXPY SOURCE: conic_solver.py lines 162-167
 ## Subclasses (SCS, Clarabel) override with triangle extraction + scaling.
 
@@ -79,7 +79,7 @@ psd_format_mat <- function(constr) {
   Matrix::Diagonal(constr_size(constr))
 }
 
-# ── format_constraints ────────────────────────────────────────────
+# -- format_constraints --------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 169-320
 ## Builds a block-diagonal restructuring matrix and applies to A and b.
 ##
@@ -101,7 +101,7 @@ format_constraints <- function(constraints, A, b, exp_cone_order,
     total_height <- sum(vapply(constr@args, expr_size, integer(1L)))
 
     if (S7_inherits(constr, Zero)) {
-      ## Negate: Ax + b = 0 → -Ax - b = 0 (solver: Ax + s = b, s = 0)
+      ## Negate: Ax + b = 0 -> -Ax - b = 0 (solver: Ax + s = b, s = 0)
       n <- constr_size(constr)
       restruct_blocks[[ci]] <- -Matrix::Diagonal(n)
 
@@ -212,7 +212,7 @@ format_constraints <- function(constraints, A, b, exp_cone_order,
   list(A = formatted_A, b = formatted_b)
 }
 
-# ── reduction_accepts ─────────────────────────────────────────────
+# -- reduction_accepts ---------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 124-130
 ## Checks if solver supports all constraint types in the data.
 
@@ -227,7 +227,7 @@ method(reduction_accepts, ConicSolver) <- function(x, problem, ...) {
   }, logical(1L)))
 }
 
-# ── reduction_apply (non-parametric) ──────────────────────────────
+# -- reduction_apply (non-parametric) ------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 344-401
 ## Non-parametric: receives data dict from ConeMatrixStuffing,
 ## restructures A and b, returns solver-ready data dict.
@@ -260,7 +260,7 @@ method(reduction_apply, ConicSolver) <- function(x, problem, ...) {
   )
 
   ## Build solver data dict
-  ## Convention: solver sees A*x + s = b, s ∈ K
+  ## Convention: solver sees A*x + s = b, s in K
   ## formatted_A encodes: for Zero: -A, for NonNeg: A, etc.
   ## We negate to get solver convention: data[A] = -formatted_A
   solver_data <- list()
@@ -282,7 +282,7 @@ method(reduction_apply, ConicSolver) <- function(x, problem, ...) {
   list(solver_data, inv_data)
 }
 
-# ── solver_psd_format_mat ─────────────────────────────────────────
+# -- solver_psd_format_mat -----------------------------------------
 ## S7 generic for subclass-specific PSD format matrix.
 ## Default: identity (SCS overrides with lower-tri, Clarabel with upper-tri).
 
@@ -293,7 +293,7 @@ method(solver_psd_format_mat, ConicSolver) <- function(solver, constr) {
   psd_format_mat(constr)
 }
 
-# ── reduction_invert ──────────────────────────────────────────────
+# -- reduction_invert ----------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 322-342
 ## Builds Solution from solver result dictionary.
 ##
@@ -327,7 +327,7 @@ method(reduction_invert, ConicSolver) <- function(x, solution, inverse_data, ...
   }
 }
 
-# ── print ─────────────────────────────────────────────────────────
+# -- print ---------------------------------------------------------
 
 method(print, ConicSolver) <- function(x, ...) {
   names <- vapply(x@SUPPORTED_CONSTRAINTS, function(cls) cls@name, character(1L))

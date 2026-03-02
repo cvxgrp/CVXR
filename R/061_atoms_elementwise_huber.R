@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/elementwise/huber.py
-## Huber — Huber loss function
+## Huber -- Huber loss function
 ##
 ## huber(x, M) = 2M|x| - M^2 if |x| >= M
 ##              |x|^2          if |x| <= M
@@ -36,7 +36,7 @@ Huber <- new_class("Huber", parent = Elementwise, package = "CVXR",
   }
 )
 
-# ── validate: M must be nonneg, scalar, constant (CVXPY huber.py lines 94-98)
+# -- validate: M must be nonneg, scalar, constant (CVXPY huber.py lines 94-98)
 method(validate_arguments, Huber) <- function(x) {
   M <- x@M
   if (!(is_nonneg(M) && expr_is_scalar(M) && is_constant(M))) {
@@ -45,32 +45,32 @@ method(validate_arguments, Huber) <- function(x) {
   invisible(NULL)
 }
 
-# ── sign: always nonneg ────────────────────────────────────────
+# -- sign: always nonneg ----------------------------------------
 method(sign_from_args, Huber) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature: convex ────────────────────────────────────────────
+# -- curvature: convex --------------------------------------------
 method(is_atom_convex, Huber) <- function(x) TRUE
 method(is_atom_concave, Huber) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 method(is_incr, Huber) <- function(x, idx, ...) is_nonneg(x@args[[idx]])
 method(is_decr, Huber) <- function(x, idx, ...) is_nonpos(x@args[[idx]])
 
-# ── quadratic ────────────────────────────────────────────────────
+# -- quadratic ----------------------------------------------------
 method(is_quadratic, Huber) <- function(x) {
   is_affine(x@args[[1L]])
 }
 
 method(has_quadratic_term, Huber) <- function(x) TRUE
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, Huber) <- function(x) {
   list(x@M)
 }
 
-# ── numeric: 2 * SciPy Huber ─────────────────────────────────────
+# -- numeric: 2 * SciPy Huber -------------------------------------
 ## CVXPY: 2 * scipy.special.huber(M, x)
 ## scipy.special.huber(delta, r) = { r^2  if |r| <= delta
 ##                                 { 2*delta*|r| - delta^2  if |r| > delta
@@ -83,7 +83,7 @@ method(numeric_value, Huber) <- function(x, values, ...) {
   ifelse(abs_v <= M_val, v^2, 2 * M_val * abs_v - M_val^2)
 }
 
-# ── graph_implementation: stub ───────────────────────────────────
+# -- graph_implementation: stub -----------------------------------
 method(graph_implementation, Huber) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Huber} not yet implemented.")
 }

@@ -7,12 +7,12 @@
 ##
 ## ECOS supports Zero, NonNeg, SOC, and ExpCone constraints.
 ## Uses non-standard ExpCone ordering: (x, z, y) instead of (x, y, z).
-## Convention: min c^T x  s.t.  Ax = b,  h - Gx ∈ K
+## Convention: min c^T x  s.t.  Ax = b,  h - Gx in K
 ##
 ## R interface: ECOSolveR::ECOS_csolve()
 
 
-# ── dims_to_solver_dict_ecos ──────────────────────────────────────
+# -- dims_to_solver_dict_ecos --------------------------------------
 ## CVXPY SOURCE: ecos_conif.py lines 25-31
 ## Convert ConeDims to ECOS's expected format.
 
@@ -24,7 +24,7 @@ dims_to_solver_dict_ecos <- function(cone_dims) {
   )
 }
 
-# ── ECOS_Solver class ─────────────────────────────────────────────
+# -- ECOS_Solver class ---------------------------------------------
 ## CVXPY SOURCE: ecos_conif.py lines 34-153
 
 ECOS_Solver <- new_class("ECOS_Solver", parent = ConicSolver, package = "CVXR",
@@ -42,7 +42,7 @@ ECOS_Solver <- new_class("ECOS_Solver", parent = ConicSolver, package = "CVXR",
 
 method(solver_name, ECOS_Solver) <- function(x) ECOS_SOLVER
 
-# ── ECOS solve_via_data ───────────────────────────────────────────
+# -- ECOS solve_via_data -------------------------------------------
 ## CVXPY SOURCE: ecos_conif.py lines 105-127
 
 method(solve_via_data, ECOS_Solver) <- function(x, data, warm_start = FALSE, verbose = FALSE,
@@ -116,7 +116,7 @@ method(solve_via_data, ECOS_Solver) <- function(x, data, warm_start = FALSE, ver
   result
 }
 
-# ── ECOS reduction_invert ────────────────────────────────────────
+# -- ECOS reduction_invert ----------------------------------------
 ## CVXPY SOURCE: ecos_conif.py lines 129-153
 
 method(reduction_invert, ECOS_Solver) <- function(x, solution, inverse_data, ...) {
@@ -175,7 +175,7 @@ method(reduction_invert, ECOS_Solver) <- function(x, solution, inverse_data, ...
   }
 }
 
-# ── print ─────────────────────────────────────────────────────────
+# -- print ---------------------------------------------------------
 
 method(print, ECOS_Solver) <- function(x, ...) {
   cat("ECOS_Solver()\n")

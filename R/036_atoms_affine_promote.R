@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/promote.py
-## Promote — promote a scalar expression to a vector/matrix shape
+## Promote -- promote a scalar expression to a vector/matrix shape
 ##
 ## Also provides cvxr_promote() (the function) and broadcast_args() helper.
 
@@ -21,42 +21,42 @@ Promote <- new_class("Promote", parent = AffAtom, package = "CVXR",
   }
 )
 
-# ── shape_from_args ─────────────────────────────────────────────────
+# -- shape_from_args -------------------------------------------------
 ## CVXPY SOURCE: promote.py lines 86-89
 
 method(shape_from_args, Promote) <- function(x) x@shape
 
-# ── log-log curvature: affine (CVXPY promote.py lines 52-56) ─────────
+# -- log-log curvature: affine (CVXPY promote.py lines 52-56) ---------
 method(is_atom_log_log_convex, Promote) <- function(x) TRUE
 method(is_atom_log_log_concave, Promote) <- function(x) TRUE
 
-# ── get_data: returns promoted shape for reconstruction ─────────────
+# -- get_data: returns promoted shape for reconstruction -------------
 ## CVXPY SOURCE: promote.py lines 91-94
 
 method(get_data, Promote) <- function(x) list(x@shape)
 
-# ── numeric_value ───────────────────────────────────────────────────
+# -- numeric_value ---------------------------------------------------
 ## CVXPY SOURCE: promote.py lines 67-71 (numpy_numeric wrapper)
 
 method(numeric_value, Promote) <- function(x, values, ...) {
   matrix(as.vector(values[[1L]]), nrow = x@shape[1L], ncol = x@shape[2L])
 }
 
-# ── is_symmetric ────────────────────────────────────────────────────
+# -- is_symmetric ----------------------------------------------------
 ## CVXPY SOURCE: promote.py lines 73-76
 
 method(is_symmetric, Promote) <- function(x) {
   length(x@shape) == 2L && x@shape[1L] == x@shape[2L]
 }
 
-# ── graph_implementation ────────────────────────────────────────────
+# -- graph_implementation --------------------------------------------
 ## CVXPY SOURCE: promote.py lines 96-115
 
 method(graph_implementation, Promote) <- function(x, arg_objs, shape, data = NULL, ...) {
   list(promote_linop(arg_objs[[1L]], shape), list())
 }
 
-# ── cvxr_promote: function to conditionally promote ─────────────────
+# -- cvxr_promote: function to conditionally promote -----------------
 ## CVXPY SOURCE: promote.py lines 27-49 (promote function)
 
 #' Promote a scalar expression to the given shape
@@ -77,7 +77,7 @@ cvxr_promote <- function(expr, shape) {
   }
 }
 
-# ── broadcast_args: promote scalars for binary ops ──────────────────
+# -- broadcast_args: promote scalars for binary ops ------------------
 ## CVXPY SOURCE: expressions/expression.py lines 658-682 (Expression.broadcast)
 ## Simplified to scalar promotion only; full 2D broadcasting deferred.
 

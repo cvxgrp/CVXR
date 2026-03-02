@@ -3,13 +3,13 @@
 #####
 
 ## CVXPY SOURCE: reductions/complex2real/canonicalizers/constant_canon.py
-## Canonicalize complex constants → real/imag Constant pairs
+## Canonicalize complex constants -> real/imag Constant pairs
 
 c2r_constant_canon <- function(expr, real_args, imag_args, real2imag) {
   val <- expr@.value
   if (is_real(expr)) {
     ## Re() fails on sparse Matrix objects (no complex sparse in R).
-    ## Real values don't need Re() — return as-is.
+    ## Real values don't need Re() -- return as-is.
     if (!is.complex(val)) return(list(expr, NULL))
     return(list(Constant(Re(val)), NULL))
   } else if (is_imag(expr)) {

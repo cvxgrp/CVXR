@@ -3,14 +3,14 @@
 #####
 
 ## CVXPY SOURCE: atoms/perspective.py
-## Perspective — perspective transform of convex/concave scalar expression
+## Perspective -- perspective transform of convex/concave scalar expression
 ##
 ## Given a scalar expression f and nonneg variable s, the perspective is
 ## the function t >= s*f(x/s). This exploits the cone representation of
 ## f's epigraph to build a lifted conic program.
 
 
-# ── Perspective class ────────────────────────────────────────────
+# -- Perspective class --------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 30-153
 
 Perspective <- new_class("Perspective", parent = Atom, package = "CVXR",
@@ -37,7 +37,7 @@ Perspective <- new_class("Perspective", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate_arguments ───────────────────────────────────────────
+# -- validate_arguments -------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 56-61
 method(validate_arguments, Perspective) <- function(x) {
   if (expr_size(x@.f) != 1L) {
@@ -55,7 +55,7 @@ method(validate_arguments, Perspective) <- function(x) {
   }
 }
 
-# ── sign ─────────────────────────────────────────────────────────
+# -- sign ---------------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 97-107
 method(sign_from_args, Perspective) <- function(x) {
   f_pos <- is_nonneg(x@.f)
@@ -65,9 +65,9 @@ method(sign_from_args, Perspective) <- function(x) {
        is_nonpos = f_neg && s_pos)
 }
 
-# ── curvature ────────────────────────────────────────────────────
+# -- curvature ----------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 109-123
-## With DPP scope: non-param-free f → not convex/concave (forces EvalParams)
+## With DPP scope: non-param-free f -> not convex/concave (forces EvalParams)
 method(is_atom_convex, Perspective) <- function(x) {
   if (dpp_scope_active() && !is_param_free(x@.f)) return(FALSE)
   is_convex(x@.f) && is_nonneg(x@args[[1L]])
@@ -78,16 +78,16 @@ method(is_atom_concave, Perspective) <- function(x) {
   is_concave(x@.f) && is_nonneg(x@args[[1L]])
 }
 
-# ── monotonicity ─────────────────────────────────────────────────
+# -- monotonicity -------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 125-133
 method(is_incr, Perspective) <- function(x, idx, ...) FALSE
 method(is_decr, Perspective) <- function(x, idx, ...) FALSE
 
-# ── shape ────────────────────────────────────────────────────────
+# -- shape --------------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 135-138
 method(shape_from_args, Perspective) <- function(x) x@.f@shape
 
-# ── numeric ──────────────────────────────────────────────────────
+# -- numeric ------------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 63-95
 ## Compute s * f(x / s) numerically.
 method(numeric_value, Perspective) <- function(x, values, ...) {
@@ -122,12 +122,12 @@ method(numeric_value, Perspective) <- function(x, values, ...) {
   as.numeric(ret)
 }
 
-# ── graph_implementation stub ────────────────────────────────────
+# -- graph_implementation stub ------------------------------------
 method(graph_implementation, Perspective) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Perspective} not implemented; use Dcp2Cone.")
 }
 
-# ── User-facing constructor ──────────────────────────────────────
+# -- User-facing constructor --------------------------------------
 #' Perspective Transform
 #'
 #' Creates the perspective transform of a scalar convex or concave expression.

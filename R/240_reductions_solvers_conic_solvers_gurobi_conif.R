@@ -7,19 +7,19 @@
 ##
 ## Handles LP, SOCP, MI-LP, MI-SOCP via the conic path.
 ## QP/MIQP problems are handled by Gurobi_QP_Solver (qp_solvers/gurobi_qp_solver.R).
-## Uses the standard ConicSolver pipeline (ConeMatrixStuffing →
-## format_constraints → ConicSolver.reduction_apply).
+## Uses the standard ConicSolver pipeline (ConeMatrixStuffing ->
+## format_constraints -> ConicSolver.reduction_apply).
 ##
 ## Key design:
-## - Zero + NonNeg constraints → model$A with sense "="/"<"
-## - SOC constraints → auxiliary variables + model$quadcon
-## - QP via model$Q (lower-tri, NO 1/2 factor — Gurobi uses x'Qx + c'x)
+## - Zero + NonNeg constraints -> model$A with sense "="/"<"
+## - SOC constraints -> auxiliary variables + model$quadcon
+## - QP via model$Q (lower-tri, NO 1/2 factor -- Gurobi uses x'Qx + c'x)
 ## - MIP via model$vtype ("B"=binary, "I"=integer, "C"=continuous)
 ## - R gurobi returns STRING status codes (e.g., "OPTIMAL")
 ## - Dual sign: negate all linear duals (matching CVXPY gurobi_conif.py)
 
 
-# ── Gurobi status map ──────────────────────────────────────────
+# -- Gurobi status map ------------------------------------------
 ## CVXPY SOURCE: gurobi_conif.py STATUS_MAP
 ## R gurobi returns string status codes (not integer like gurobipy).
 
@@ -41,7 +41,7 @@ GUROBI_STATUS_MAP <- list(
   "MEM_LIMIT"       = USER_LIMIT
 )
 
-# ── Gurobi_Conic_Solver class ────────────────────────────────────────
+# -- Gurobi_Conic_Solver class ----------------------------------------
 ## Supports Zero, NonNeg, SOC constraints.
 ## SOC is handled via quadratic constraints (model$quadcon).
 
@@ -61,7 +61,7 @@ Gurobi_Conic_Solver <- new_class("Gurobi_Conic_Solver", parent = ConicSolver, pa
 
 method(solver_name, Gurobi_Conic_Solver) <- function(x) GUROBI_SOLVER
 
-# ── reduction_accepts ────────────────────────────────────────────
+# -- reduction_accepts --------------------------------------------
 ## Override: Gurobi conic only handles Zero + NonNeg + SOC.
 ## Rejects ExpCone, PSD, PowCone3D constraints.
 
@@ -73,7 +73,7 @@ method(reduction_accepts, Gurobi_Conic_Solver) <- function(x, problem, ...) {
   }, logical(1L)))
 }
 
-# ── reduction_apply ──────────────────────────────────────────────
+# -- reduction_apply ----------------------------------------------
 ## Override to add MIP index pass-through and SOC tracking.
 ## Uses standard conic path via format_constraints for
 ## Zero/NonNeg/SOC restructuring.
@@ -121,7 +121,7 @@ method(reduction_apply, Gurobi_Conic_Solver) <- function(x, problem, ...) {
   list(solver_data, inv_data)
 }
 
-# ── solve_via_data ──────────────────────────────────────────────
+# -- solve_via_data ----------------------------------------------
 ## Converts CVXR solver data (A, b, c, dims, P) to Gurobi model
 ## and calls gurobi::gurobi().
 ##
@@ -144,7 +144,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
   dims <- data[[SD_DIMS]]
   n_orig <- length(c_vec)  # original variable count
 
-  ## ── Row splitting ──────────────────────────────────────────────
+  ## -- Row splitting ----------------------------------------------
   ## After format_constraints, rows are ordered:
   ## [Zero (eq)] [NonNeg (ineq)] [SOC blocks]
   zero_dim   <- dims@zero
@@ -153,20 +153,20 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
   soc_total  <- sum(dims@soc)
   total_rows <- linear_dim + soc_total
 
-  ## ── Linear constraints → model$A, sense, rhs ──────────────────
+  ## -- Linear constraints -> model$A, sense, rhs ------------------
   ## After conic path negation: solver_data$A = -formatted_A
-  ## For Zero:   -(-A)*x = b  →  A*x = b  (sense "=")
-  ## For NonNeg: -(A)*x = b   →  -A*x <= b (sense "<")
+  ## For Zero:   -(-A)*x = b  ->  A*x = b  (sense "=")
+  ## For NonNeg: -(A)*x = b   ->  -A*x <= b (sense "<")
   ##
   ## But format_constraints already handles:
-  ##   Zero → -A (negated), NonNeg → A (identity)
+  ##   Zero -> -A (negated), NonNeg -> A (identity)
   ## Then solver_data$A = -formatted_A, so:
   ##   Zero rows of solver_data$A = A (positive)
   ##   NonNeg rows of solver_data$A = -A (negated)
   ##
   ## Gurobi format: A*x sense rhs
   ## For Zero: A_z * x = b_z
-  ## For NonNeg: solver sees -A*x + s = b, s >= 0 → -A*x <= b → A_gurobi*x <= b
+  ## For NonNeg: solver sees -A*x + s = b, s >= 0 -> -A*x <= b -> A_gurobi*x <= b
   ##   solver_data$A for NonNeg rows = -A_raw, so A_gurobi = solver_data$A, sense = "<"
 
   if (linear_dim > 0L) {
@@ -187,7 +187,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     sense <- character(0)
   }
 
-  ## ── SOC constraints → quadcon ──────────────────────────────────
+  ## -- SOC constraints -> quadcon ----------------------------------
   ## For each SOC block of size k = dims@soc[i]:
   ##   SOC rows in A: k rows, first is t, rest are x1..x_{k-1}
   ##   Create k auxiliary variables (aux_t, aux_x1, ..., aux_{k-1})
@@ -274,7 +274,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     }
   }
 
-  ## ── Build Gurobi model ─────────────────────────────────────────
+  ## -- Build Gurobi model -----------------------------------------
   model <- list()
   model$modelsense <- "min"
 
@@ -316,14 +316,14 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     model$quadcon <- quadcon_list
   }
 
-  ## ── Quadratic objective ────────────────────────────────────────
+  ## -- Quadratic objective ----------------------------------------
   ## ConeMatrixStuffing produces P for 0.5 x'Px + c'x
   ## Gurobi minimizes x'Qx + c'x (NO 1/2 factor)
   ## So Q = P / 2, but we pass lower triangle
   ## R gurobi reads lower triangle of Q for quadratic form
   if (!is.null(data[[SD_P]])) {
     P <- data[[SD_P]]
-    Q_half <- P / 2  # 0.5 * P → Q for Gurobi's x'Qx convention
+    Q_half <- P / 2  # 0.5 * P -> Q for Gurobi's x'Qx convention
     ## Use lower triangle (R gurobi reads lower-tri)
     Q_half <- Matrix::tril(Q_half)
     ## Expand to n_total_vars if we have SOC auxiliary vars
@@ -339,7 +339,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     }
   }
 
-  ## ── Variable bounds ────────────────────────────────────────────
+  ## -- Variable bounds --------------------------------------------
   ## CRITICAL: R gurobi defaults lb to 0, NOT -Inf!
   lb <- rep(-Inf, n_total_vars)
   ub <- rep(Inf, n_total_vars)
@@ -354,7 +354,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     }
   }
 
-  ## ── Variable types for MIP ─────────────────────────────────────
+  ## -- Variable types for MIP -------------------------------------
   vtype <- rep("C", n_total_vars)
 
   bool_idx <- data[["bool_idx"]]
@@ -377,7 +377,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
   model$ub <- ub
   model$vtype <- vtype
 
-  ## ── Solver parameters ──────────────────────────────────────────
+  ## -- Solver parameters ------------------------------------------
   params <- list(OutputFlag = if (verbose) 1L else 0L)
   params$QCPDual <- 1L  # Enable SOC dual computation
 
@@ -387,7 +387,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     params[[opt_name]] <- solver_opts[[opt_name]]
   }
 
-  ## ── Warm-start: set initial point from previous solution ───────
+  ## -- Warm-start: set initial point from previous solution -------
   ## CVXPY SOURCE: gurobi_conif.py lines 207-215
   cache_key <- GUROBI_SOLVER
   if (warm_start && !is.null(solver_cache) && exists(cache_key, envir = solver_cache)) {
@@ -399,17 +399,17 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
     }
   }
 
-  ## ── Call Gurobi ────────────────────────────────────────────────
+  ## -- Call Gurobi ------------------------------------------------
   result <- gurobi::gurobi(model, params)
 
-  ## ── Reoptimize on INF_OR_UNBD ──────────────────────────────────
+  ## -- Reoptimize on INF_OR_UNBD ----------------------------------
   if (identical(result$status, "INF_OR_UNBD") &&
       isTRUE(solver_opts[["reoptimize"]])) {
     params$DualReductions <- 0L
     result <- gurobi::gurobi(model, params)
   }
 
-  ## ── Cache for future warm-starts ───────────────────────────────
+  ## -- Cache for future warm-starts -------------------------------
   ## CVXPY SOURCE: gurobi_conif.py lines 306-307
   if (!is.null(solver_cache)) {
     assign(cache_key, result, envir = solver_cache)
@@ -423,7 +423,7 @@ method(solve_via_data, Gurobi_Conic_Solver) <- function(x, data, warm_start = FA
   result
 }
 
-# ── reduction_invert ──────────────────────────────────────────────
+# -- reduction_invert ----------------------------------------------
 ## Parses Gurobi result format into a CVXR Solution.
 
 method(reduction_invert, Gurobi_Conic_Solver) <- function(x, solution, inverse_data, ...) {
@@ -433,11 +433,11 @@ method(reduction_invert, Gurobi_Conic_Solver) <- function(x, solution, inverse_d
   status <- GUROBI_STATUS_MAP[[solution$status]]
   if (is.null(status)) status <- SOLVER_ERROR
 
-  ## Post-adjustment: SOLVER_ERROR with solution → OPTIMAL_INACCURATE
+  ## Post-adjustment: SOLVER_ERROR with solution -> OPTIMAL_INACCURATE
   if (status == SOLVER_ERROR && !is.null(solution$x)) {
     status <- OPTIMAL_INACCURATE
   }
-  ## USER_LIMIT with no solution → INFEASIBLE_INACCURATE
+  ## USER_LIMIT with no solution -> INFEASIBLE_INACCURATE
   if (status == USER_LIMIT && is.null(solution$x)) {
     status <- INFEASIBLE_INACCURATE
   }
@@ -461,7 +461,7 @@ method(reduction_invert, Gurobi_Conic_Solver) <- function(x, solution, inverse_d
     primal_vars[[as.character(inverse_data[[SOLVER_VAR_ID]])]] <-
       solution$x[seq_len(n_orig)]
 
-    ## ── Dual variables ───────────────────────────────────────────
+    ## -- Dual variables -------------------------------------------
     ## Skip duals for MIP problems
     is_mip <- isTRUE(inverse_data[["is_mip"]])
 

@@ -14,8 +14,8 @@ c2r_abs_canon <- function(expr, real_args, imag_args, real2imag) {
     output <- Abs(real_args[[1L]])
   } else {
     ## Complex: |z| = sqrt(Re^2 + Im^2) via pnorm column-wise
-    ## CVXPY: flatten() → shape (n,), vstack → (2, n), pnorm(axis=0) → (n,)
-    ## R: vec → (n, 1), so reshape to (1, n) rows first, VStack → (2, n)
+    ## CVXPY: flatten() -> shape (n,), vstack -> (2, n), pnorm(axis=0) -> (n,)
+    ## R: vec -> (n, 1), so reshape to (1, n) rows first, VStack -> (2, n)
     n <- prod(real_args[[1L]]@shape)
     real_flat <- vec(real_args[[1L]])
     imag_flat <- vec(imag_args[[1L]])

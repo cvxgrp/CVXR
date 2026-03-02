@@ -7,7 +7,7 @@
 ## It will be populated as classes and functions are implemented in each phase.
 
 # Phase 0: Foundation
-# (no user-facing exports yet — generics/settings exported via NAMESPACE)
+# (no user-facing exports yet -- generics/settings exported via NAMESPACE)
 
 # Phase 1: Core Expression System
 # Exported via NAMESPACE: Variable, Constant, Parameter, as_expr,
@@ -27,14 +27,14 @@
 #   Multiply, DivExpression
 
 # Phase 2D: Arithmetic Operator Dispatch
-# No new exports — operators registered via .onLoad()
+# No new exports -- operators registered via .onLoad()
 
 # Phase 2E: Constraint Classes
 # Exported via NAMESPACE: Constraint, Zero, Equality, NonPos, NonNeg,
 #   Inequality, residual, violation, dual_value, save_dual_value, constr_expr
 
 # Phase 2F: Comparison Operator Dispatch
-# No new exports — operators registered via .onLoad() (==, <=, >=)
+# No new exports -- operators registered via .onLoad() (==, <=, >=)
 
 # Phase 2G: Objective Classes
 # Exported via NAMESPACE: Objective, Minimize, Maximize, scalar_value
@@ -57,7 +57,7 @@
 #   SumEntries, Reshape, Trace, HStack, VStack, Kron, UpperTri,
 #   Convolve, Cumsum
 # Dispatch: S3 Math (abs, exp, log, sqrt, cumsum), Summary (sum, max, min),
-#   Ops ^ → power()
+#   Ops ^ -> power()
 
 # Phase 4: Cone Constraints
 # Exported via NAMESPACE: Cone, SOC, PSD, ExpCone, PowCone3D, PowConeND,
@@ -76,7 +76,7 @@
 # Decomposed solve pipeline: solve_via_data (generic), problem_unpack_results,
 # unpack_results (backward-compat alias for speed.Rmd)
 
-# ── Backward-compatibility aliases (v1.8.1) ─────────────────────────
+# -- Backward-compatibility aliases (v1.8.1) -------------------------
 # These aliases help users migrating from old CVXR (1.0-15).
 
 #' Total variation (deprecated alias)
@@ -162,7 +162,7 @@ set_excluded_solvers <- function(solvers) {
   invisible(solvers)
 }
 
-# ── PSD/NSD infix operators ───────────────────────────────────────
+# -- PSD/NSD infix operators ---------------------------------------
 # R equivalent of Python's A >> B (PSD) and A << B (NSD).
 # These existed in old CVXR (1.0-15) and are essential for
 # expressing semidefinite constraints naturally.
@@ -204,12 +204,12 @@ set_excluded_solvers <- function(solvers) {
   PSD(as_expr(e2) - as_expr(e1))
 }
 
-# ═══════════════════════════════════════════════════════════════════════
+# =======================================================================
 # Read-only Problem accessors
 # Problem objects are IMMUTABLE (following CVXPY design).
 # Constraints and objective cannot be modified after construction.
 # Users who need different constraints should create a new Problem().
-# ═══════════════════════════════════════════════════════════════════════
+# =======================================================================
 
 #' Get Problem Constraints (read-only)
 #'
@@ -261,9 +261,9 @@ objective <- function(x) {
   x@objective
 }
 
-# ═══════════════════════════════════════════════════════════════════════
-# Expression introspection — user-facing wrappers for internal helpers
-# ═══════════════════════════════════════════════════════════════════════
+# =======================================================================
+# Expression introspection -- user-facing wrappers for internal helpers
+# =======================================================================
 
 #' Get Expression Name
 #'
@@ -364,7 +364,7 @@ NULL
 # Note: is_pwl is already an S7 generic; we just need to export it.
 # The @export @rdname above will be picked up by roxygen.
 
-# ── S3 methods for dim/as.character ──────────────────────────────
+# -- S3 methods for dim/as.character ------------------------------
 # These are registered in .onLoad() via registerS3method() because
 # S7 class names contain "::" which can't appear in S3 method names.
 # nrow()/ncol() work automatically once dim() is defined.

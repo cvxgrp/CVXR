@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: constraints/constraint.py
-## Constraint — base class for all constraints
+## Constraint -- base class for all constraints
 ##
 ## Constraints inherit from Canonical (NOT Expression).
 ## They have a shape, dual variables, DCP checking, and residual computation.
@@ -30,7 +30,7 @@ Constraint <- new_class("Constraint", parent = Canonical, package = "CVXR",
   }
 )
 
-# ── expr: convenience accessor for single-arg constraints ─────────
+# -- expr: convenience accessor for single-arg constraints ---------
 ## CVXPY SOURCE: utilities/canonical.py lines 41-45
 ## Returns args[[1]] when exactly one arg; errors otherwise.
 ## Equality/Inequality override via constr_expr() to return ._expr.
@@ -42,12 +42,12 @@ constr_expr <- function(x) {
   x@args[[1L]]
 }
 
-# ── get_data ──────────────────────────────────────────────────────
+# -- get_data ------------------------------------------------------
 ## CVXPY SOURCE: constraint.py line 276-279
 
 method(get_data, Constraint) <- function(x) list(x@id)
 
-# ── value: check if constraint is satisfied ───────────────────────
+# -- value: check if constraint is satisfied -----------------------
 ## CVXPY SOURCE: constraint.py lines 240-264
 ## Returns TRUE if all residuals <= tolerance.
 
@@ -59,7 +59,7 @@ method(value, Constraint) <- function(x) {
   all(res <= 1e-8)
 }
 
-# ── violation: base returns residual ──────────────────────────────
+# -- violation: base returns residual ------------------------------
 ## CVXPY SOURCE: constraint.py lines 209-238
 ## Base class returns residual directly. NonPos/NonNeg override with L2 norm.
 
@@ -71,7 +71,7 @@ method(violation, Constraint) <- function(x) {
   res
 }
 
-# ── is_real / is_complex / is_imag ────────────────────────────────
+# -- is_real / is_complex / is_imag --------------------------------
 ## CVXPY SOURCE: constraint.py lines 151-164
 
 method(is_real, Constraint) <- function(x) !is_complex(x)
@@ -101,42 +101,42 @@ dual_value <- function(x) {
   if (length(vals) == 1L) vals[[1L]] else vals
 }
 
-# ── save_dual_value ───────────────────────────────────────────────
+# -- save_dual_value -----------------------------------------------
 ## CVXPY SOURCE: constraint.py lines 311-316
 
 method(save_dual_value, Constraint) <- function(x, val) {
-  ## Use save_leaf_value (no validation) — dual values from solver
+  ## Use save_leaf_value (no validation) -- dual values from solver
   ## may arrive as flat vectors needing no reshape at this level
   save_leaf_value(x@dual_variables[[1L]], val)
   invisible(x)
 }
 
-# ── constr_size ──────────────────────────────────────────────────
-## CVXPY SOURCE: constraint.py lines 147-149 — size property
+# -- constr_size --------------------------------------------------
+## CVXPY SOURCE: constraint.py lines 147-149 -- size property
 
 method(constr_size, Constraint) <- function(x) {
   prod(x@args[[1L]]@shape)
 }
 
-# ── is_dgp ───────────────────────────────────────────────────────
-## CVXPY SOURCE: constraint.py lines 178-186 — abstract, default FALSE
+# -- is_dgp -------------------------------------------------------
+## CVXPY SOURCE: constraint.py lines 178-186 -- abstract, default FALSE
 
 method(is_dgp, Constraint) <- function(x) FALSE
 
-# ── is_dqcp ──────────────────────────────────────────────────────
-## CVXPY SOURCE: constraint.py — no base class default, add fallback
+# -- is_dqcp ------------------------------------------------------
+## CVXPY SOURCE: constraint.py -- no base class default, add fallback
 ## Default: is_dcp() (most cone constraints are DQCP iff DCP)
 
 method(is_dqcp, Constraint) <- function(x) is_dcp(x)
 
-# ── is_dpp ───────────────────────────────────────────────────────
+# -- is_dpp -------------------------------------------------------
 ## CVXPY SOURCE: constraint.py lines 188-194
 
 method(is_dpp, Constraint) <- function(x) {
   with_dpp_scope(is_dcp(x))
 }
 
-# ── print ─────────────────────────────────────────────────────────
+# -- print ---------------------------------------------------------
 
 method(print, Constraint) <- function(x, ...) {
   cat(expr_name(x), "\n")

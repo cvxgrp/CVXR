@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/norm_nuc.py
-## NormNuc — nuclear norm (sum of singular values)
+## NormNuc -- nuclear norm (sum of singular values)
 
 
 NormNuc <- new_class("NormNuc", parent = Atom, package = "CVXR",
@@ -24,7 +24,7 @@ NormNuc <- new_class("NormNuc", parent = Atom, package = "CVXR",
   }
 )
 
-# ── validate ─────────────────────────────────────────────────────
+# -- validate -----------------------------------------------------
 ## Must be 2D (same as sigma_max)
 method(validate_arguments, NormNuc) <- function(x) {
   A <- x@args[[1L]]
@@ -34,44 +34,44 @@ method(validate_arguments, NormNuc) <- function(x) {
   invisible(NULL)
 }
 
-# ── shape ────────────────────────────────────────────────────────
-## CVXPY: norm_nuc.py lines 54-57 — returns tuple()
+# -- shape --------------------------------------------------------
+## CVXPY: norm_nuc.py lines 54-57 -- returns tuple()
 method(shape_from_args, NormNuc) <- function(x) c(1L, 1L)
 
-# ── sign ─────────────────────────────────────────────────────────
-## CVXPY: norm_nuc.py lines 59-62 — always nonneg
+# -- sign ---------------------------------------------------------
+## CVXPY: norm_nuc.py lines 59-62 -- always nonneg
 method(sign_from_args, NormNuc) <- function(x) {
   list(is_nonneg = TRUE, is_nonpos = FALSE)
 }
 
-# ── curvature ────────────────────────────────────────────────────
-## CVXPY: norm_nuc.py lines 64-72 — convex, not concave
+# -- curvature ----------------------------------------------------
+## CVXPY: norm_nuc.py lines 64-72 -- convex, not concave
 method(is_atom_convex, NormNuc) <- function(x) TRUE
 method(is_atom_concave, NormNuc) <- function(x) FALSE
 
-# ── monotonicity ─────────────────────────────────────────────────
-## CVXPY: norm_nuc.py lines 74-82 — not monotone
+# -- monotonicity -------------------------------------------------
+## CVXPY: norm_nuc.py lines 74-82 -- not monotone
 method(is_incr, NormNuc) <- function(x, idx, ...) FALSE
 method(is_decr, NormNuc) <- function(x, idx, ...) FALSE
 
-# ── numeric ──────────────────────────────────────────────────────
-## CVXPY: norm_nuc.py lines 33-36 — sum of singular values
+# -- numeric ------------------------------------------------------
+## CVXPY: norm_nuc.py lines 33-36 -- sum of singular values
 method(numeric_value, NormNuc) <- function(x, values, ...) {
   A <- values[[1L]]
   matrix(sum(svd(A, nu = 0L, nv = 0L)$d), 1L, 1L)
 }
 
-# ── get_data ─────────────────────────────────────────────────────
+# -- get_data -----------------------------------------------------
 method(get_data, NormNuc) <- function(x) list()
 
-# ── graph_implementation ─────────────────────────────────────────
+# -- graph_implementation -----------------------------------------
 method(graph_implementation, NormNuc) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls NormNuc} not available; use Dcp2Cone canonicalization.")
 }
 
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 # Convenience function
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
 
 #' Nuclear norm (sum of singular values)
 #' @param A A matrix expression

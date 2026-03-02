@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: reductions/solvers/qp_solvers/qp_solver.py
-## QpSolver — base class for QP-path solvers
+## QpSolver -- base class for QP-path solvers
 ##
 ## Converts ConeMatrixStuffing data (A, b, c, P, dims) into standard QP form:
 ##   minimize    0.5 x' P x + q' x
@@ -12,12 +12,12 @@
 ##
 ## The KEY difference from ConicSolver: QpSolver NEGATES the inequality rows
 ## of AF (the combined constraint matrix), producing F = -AF[ineq]. This sign
-## flip is what makes all QP solver dual conventions match CVXPY — eliminating
+## flip is what makes all QP solver dual conventions match CVXPY -- eliminating
 ## the ad-hoc per-solver sign hacks that were needed when QP solvers inherited
 ## from ConicSolver.
 
 
-# ── QpSolver class ──────────────────────────────────────────────
+# -- QpSolver class ----------------------------------------------
 ## CVXPY SOURCE: qp_solver.py lines 35-149
 
 QpSolver <- new_class("QpSolver", parent = Solver, package = "CVXR",
@@ -37,7 +37,7 @@ QpSolver <- new_class("QpSolver", parent = Solver, package = "CVXR",
   }
 )
 
-# ── reduction_accepts ──────────────────────────────────────────
+# -- reduction_accepts ------------------------------------------
 ## QP solvers accept only Zero + NonNeg constraints.
 
 method(reduction_accepts, QpSolver) <- function(x, problem, ...) {
@@ -49,7 +49,7 @@ method(reduction_accepts, QpSolver) <- function(x, problem, ...) {
   }, logical(1L)))
 }
 
-# ── reduction_apply ────────────────────────────────────────────
+# -- reduction_apply --------------------------------------------
 ## CVXPY SOURCE: qp_solver.py lines 79-149
 ##
 ## Converts ConeMatrixStuffing output into QP standard form:
@@ -57,7 +57,7 @@ method(reduction_accepts, QpSolver) <- function(x, problem, ...) {
 ##   Inequality: F_ineq x <= g_ineq (next len_ineq rows, NEGATE F)
 ##
 ## The sign flip F = -AF[ineq] is the KEY that makes all QP solver
-## dual conventions match CVXPY — no per-solver sign hacks needed.
+## dual conventions match CVXPY -- no per-solver sign hacks needed.
 
 method(reduction_apply, QpSolver) <- function(x, problem, ...) {
   data <- problem  ## data list from ConeMatrixStuffing
@@ -87,7 +87,7 @@ method(reduction_apply, QpSolver) <- function(x, problem, ...) {
   AF <- data[[SD_A]]
   bg <- data[[SD_B]]
 
-  ## KEY SIGN FLIP — matches CVXPY qp_solver.py lines 122-132
+  ## KEY SIGN FLIP -- matches CVXPY qp_solver.py lines 122-132
   ## ConeMatrixStuffing produces: A*x + b = 0 (Zero), A*x + b >= 0 (NonNeg)
   ## QP form: A_eq*x = b_eq, F_ineq*x <= g_ineq
   ## Equality: A_eq = AF[1:len_eq, ],  b_eq = -bg[1:len_eq]
@@ -133,7 +133,7 @@ method(reduction_apply, QpSolver) <- function(x, problem, ...) {
   list(solver_data, inv_data)
 }
 
-# ── print ──────────────────────────────────────────────────────
+# -- print ------------------------------------------------------
 
 method(print, QpSolver) <- function(x, ...) {
   cat(sprintf("QpSolver(%s)\n", solver_name(x)))

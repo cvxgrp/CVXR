@@ -3,13 +3,13 @@
 #####
 
 ## CVXPY SOURCE: reductions/dcp2cone/cone_matrix_stuffing.py
-## ConeMatrixStuffing — convert affine expressions to sparse matrices
-## ConeDims — summary of cone dimensions
+## ConeMatrixStuffing -- convert affine expressions to sparse matrices
+## ConeDims -- summary of cone dimensions
 
 
-# ══════════════════════════════════════════════════════════════════
-# ConeDims — summary of cone dimensions present in constraints
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# ConeDims -- summary of cone dimensions present in constraints
+# ==================================================================
 ## CVXPY SOURCE: cone_matrix_stuffing.py lines 57-141
 
 ConeDims <- new_class("ConeDims", package = "CVXR",
@@ -85,7 +85,7 @@ method(print, ConeDims) <- function(x, ...) {
   invisible(x)
 }
 
-# ── dims_to_solver_dict ───────────────────────────────────────────
+# -- dims_to_solver_dict -------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 87-97
 
 dims_to_solver_dict <- function(cone_dims) {
@@ -101,7 +101,7 @@ dims_to_solver_dict <- function(cone_dims) {
 }
 
 
-# ── extract_mip_idx ───────────────────────────────────────────────
+# -- extract_mip_idx -----------------------------------------------
 ## CVXPY SOURCE: matrix_stuffing.py lines 79-96
 ## Maps per-variable boolean/integer flags to global flattened variable indices.
 
@@ -130,9 +130,9 @@ dims_to_solver_dict <- function(cone_dims) {
        int_idx  = if (is.null(int_idx))  integer(0) else int_idx)
 }
 
-# ══════════════════════════════════════════════════════════════════
-# ConeMatrixStuffing — reduction from affine expressions to matrices
-# ══════════════════════════════════════════════════════════════════
+# ==================================================================
+# ConeMatrixStuffing -- reduction from affine expressions to matrices
+# ==================================================================
 ## CVXPY SOURCE: cone_matrix_stuffing.py lines 321-470
 
 ConeMatrixStuffing <- new_class("ConeMatrixStuffing", parent = Reduction,
@@ -169,7 +169,7 @@ method(reduction_accepts, ConeMatrixStuffing) <- function(x, problem, ...) {
 method(reduction_apply, ConeMatrixStuffing) <- function(x, problem, ...) {
   inverse_data <- InverseData(problem)
 
-  ## Step 1: Lower constraints — pre-allocate
+  ## Step 1: Lower constraints -- pre-allocate
   n_cons_raw <- length(problem@constraints)
   cons <- vector("list", n_cons_raw)
   for (i in seq_len(n_cons_raw)) {
@@ -181,12 +181,12 @@ method(reduction_apply, ConeMatrixStuffing) <- function(x, problem, ...) {
     } else if (S7_inherits(con, NonPos)) {
       con <- nonpos2nonneg(con)
     } else if (S7_inherits(con, SOC) && con@axis == 1L) {
-      ## Transpose X for axis=1 → axis=2
+      ## Transpose X for axis=1 -> axis=2
       con <- SOC(con@args[[1L]], t(con@args[[2L]]), axis = 2L,
                  constr_id = con@id)
     } else if (S7_inherits(con, PowConeND) && con@axis == 1L) {
       ## CVXPY SOURCE: cone_matrix_stuffing.py lines 382-388
-      ## Transpose W and alpha for axis=1 → axis=2
+      ## Transpose W and alpha for axis=1 -> axis=2
       con <- PowConeND(t(con@.W), con@.z,
                         t(con@alpha), axis = 2L,
                         constr_id = con@id)
@@ -204,7 +204,7 @@ method(reduction_apply, ConeMatrixStuffing) <- function(x, problem, ...) {
                     constr_map[["ExpCone"]], constr_map[["PowCone3D"]],
                     constr_map[["PowConeND"]])
 
-  ## Step 3: Store constraint ID mapping (identity — already lowered)
+  ## Step 3: Store constraint ID mapping (identity -- already lowered)
   ## CVXPY SOURCE: cone_matrix_stuffing.py line 406
   id2cons <- new.env(hash = TRUE, parent = emptyenv())
   for (con in ordered_cons) {

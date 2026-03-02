@@ -3,7 +3,7 @@
 #####
 
 ## CVXPY SOURCE: atoms/affine/partial_trace.py
-## partial_trace — trace out a subsystem from a tensor product expression
+## partial_trace -- trace out a subsystem from a tensor product expression
 ##
 ## This is a factory function (not an Atom class). It constructs an Expression
 ## by summing (I kron <j| kron I) X (I kron |j> kron I) over j in the traced-out
@@ -65,6 +65,6 @@ partial_trace <- function(expr, dims, axis = 1L) {
       b <- kronecker(b, eye_k)
     }
   }
-  ## a @ expr @ b — a and b are numeric sparse matrices
+  ## a @ expr @ b -- a and b are numeric sparse matrices
   Constant(a) %*% expr %*% Constant(b)
 }

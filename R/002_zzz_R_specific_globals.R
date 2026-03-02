@@ -10,6 +10,7 @@
 ## Uses an environment for mutable state (R-idiomatic)
 .cvxr_env <- new.env(parent = emptyenv())
 .cvxr_env$next_id <- 1L
+.cvxr_env$excluded_solvers <- character(0)
 
 ## ── Class name cache ────────────────────────────────────────────────
 ## S7 class names are "CVXR::ClassName".  Many hot paths need just "ClassName"

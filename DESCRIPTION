@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.8.0.9213
+Version: 1.8.0.9214
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -33,34 +33,33 @@ Description: An object-oriented modeling language for disciplined
 Depends:
     R (>= 4.3.0)
 Imports:
-    S7 (>= 0.2.1),
+    S7 (>= 0.2),
     methods,
-    Matrix (>= 1.7.4),
-    Rcpp (>= 1.1.1),
-    clarabel (>= 0.11.2),
-    cli (>= 3.6.5),
-    gmp (>= 0.7.5),
-    highs (>= 1.12.0.3),
-    osqp (>= 1.0.0),
-    scs (>= 3.2.7),
-    slam (>= 0.1.55)
+    Matrix (>= 1.7),
+    Rcpp (>= 1.1),
+    clarabel (>= 0.11),
+    cli (>= 3.6),
+    gmp (>= 0.7),
+    highs (>= 1.12),
+    osqp (>= 1.0),
+    scs (>= 3.2),
+    slam (>= 0.1)
 Suggests:
-    jsonlite (>= 1.9.0),
+    jsonlite (>= 1.9),
     knitr,
     rmarkdown,
-    testthat (>= 3.3.2),
+    testthat (>= 3.3),
     rlang
 Enhances:
-    Rmosek (>= 11.1.1),
-    gurobi (>= 13.0.1),
-    Rglpk (>= 0.6.5.1),
+    Rmosek,
+    gurobi (>= 13.0),
+    Rglpk (>= 0.6),
     ECOSolveR (>= 0.6),
-    Rcplex (>= 0.3.8),
-    cccp (>= 0.3.3),
-    piqp (>= 0.6.2)
+    Rcplex (>= 0.3),
+    cccp (>= 0.3),
+    piqp (>= 0.6)
 Additional_repositories:
-    https://osqp.r-universe.dev,
-    https://oxfordcontrol.r-universe.dev
+    https://bnaras.r-universe.dev
 LinkingTo: Rcpp, RcppEigen
 License: Apache License 2.0 | file LICENSE
 LazyData: true

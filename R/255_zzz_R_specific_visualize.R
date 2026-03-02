@@ -700,7 +700,375 @@
   if (!is.null(dcp_overlay)) {
     json_model$dcp_analysis <- dcp_overlay
   }
+  ## Inject solver data if provided (Stages 4–5)
+  if (!is.null(model$solver_data)) {
+    json_model$solver_data <- model$solver_data
+  }
   jsonlite::toJSON(json_model, auto_unbox = TRUE, pretty = TRUE, null = "null")
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Solver data extraction (Stages 4–5: Standard Form + Solver Data)
+# ══════════════════════════════════════════════════════════════════════════
+## These helpers are only called when visualize(solver = ...) is specified.
+## They run entirely off the hot path — never from solve() or problem_data()
+## in normal usage.
+
+## Build solver data summary for visualization.
+## Calls problem_data() once and extracts a JSON-serializable summary.
+##
+## @param problem A Problem object.
+## @param solver NULL (default solver) or character solver name.
+## @param digits Significant digits for numeric display.
+## @returns A list with solver_name, interface, dims, cone_product,
+##   var_map, blocks, matrices.
+.viz_build_solver_data <- function(problem, solver = NULL, digits = 4L) {
+  pd <- problem_data(problem, solver = solver)
+  data <- pd$data
+  chain <- pd$chain
+  inv_data <- pd$inverse_data
+
+  ## Determine solver interface (conic vs QP)
+  solver_reduction <- chain@reductions[[length(chain@reductions)]]
+  interface <- if (S7_inherits(solver_reduction, QpSolver)) "qp" else "conic"
+  slv_name <- solver_name(solver_reduction)
+
+  ## Find the ConeMatrixStuffing inverse data (second-to-last reduction)
+  cms_idx <- length(inv_data) - 1L
+  cms_inv <- if (cms_idx >= 1L) inv_data[[cms_idx]] else NULL
+
+  ## Build variable mapping table
+  var_map <- .viz_var_mapping(cms_inv, variables(problem))
+
+  ## Build dimension summary
+  dims <- .viz_dims_summary(data, interface)
+
+  ## Build cone product LaTeX
+  cone_product <- .viz_cone_product_latex(data[["dims"]])
+
+  ## Build block structure description
+  blocks <- .viz_block_structure(data[["dims"]])
+
+  ## Matrix summaries
+  matrices <- .viz_matrix_summaries(data, interface, digits)
+
+  list(
+    solver_name  = slv_name,
+    interface    = interface,
+    dims         = dims,
+    cone_product = cone_product,
+    var_map      = var_map,
+    blocks       = blocks,
+    matrices     = matrices
+  )
+}
+
+## Map solver variable indices back to user variables.
+## Returns a list of lists, each with: name, offset, size, shape, origin.
+.viz_var_mapping <- function(cms_inv, orig_vars) {
+  if (is.null(cms_inv)) return(list())
+
+  ## Build set of user variable IDs
+  user_ids <- vapply(orig_vars, function(v) as.character(v@id), character(1))
+  user_names <- vapply(orig_vars, expr_name, character(1))
+  names(user_names) <- user_ids
+
+  var_offsets <- cms_inv@var_offsets
+  var_shapes <- cms_inv@var_shapes
+  all_ids <- names(var_offsets)
+
+  result <- vector("list", length(all_ids))
+  for (i in seq_along(all_ids)) {
+    vid <- all_ids[[i]]
+    offset <- var_offsets[[vid]]
+    shape <- var_shapes[[vid]]
+    sz <- prod(shape)
+    is_user <- vid %in% user_ids
+    nm <- if (is_user) user_names[[vid]] else sprintf("aux_%s", vid)
+    origin <- if (is_user) {
+      sprintf("user variable (%s)", paste(shape, collapse = "x"))
+    } else {
+      "auxiliary (canonicalization)"
+    }
+    result[[i]] <- list(
+      name   = nm,
+      offset = offset,
+      size   = sz,
+      shape  = as.integer(shape),
+      origin = origin
+    )
+  }
+  result
+}
+
+## Build dimension summary from solver data.
+.viz_dims_summary <- function(data, interface) {
+  A <- data[["A"]]
+  if (is.null(A)) {
+    ## QP interface may use different field names
+    A <- data[["A_eq"]]
+  }
+
+  n_vars <- length(data[["c"]])
+  if (n_vars == 0L) n_vars <- length(data[["q"]])
+  n_constraints <- if (!is.null(A)) nrow(A) else 0L
+  nnz_A <- if (!is.null(A)) Matrix::nnzero(A) else 0L
+  total <- as.double(n_vars) * as.double(n_constraints)
+  sparsity <- if (total > 0) nnz_A / total else 0
+
+  result <- list(
+    n_vars        = n_vars,
+    n_constraints = n_constraints,
+    nnz_A         = nnz_A,
+    sparsity      = sparsity
+  )
+
+  ## QP: also report nnz(P)
+  P <- data[["P"]]
+  if (interface == "qp" && !is.null(P)) {
+    result$nnz_P <- Matrix::nnzero(P)
+  }
+  result
+}
+
+## Build LaTeX cone product string.
+.viz_cone_product_latex <- function(cone_dims) {
+  if (is.null(cone_dims)) return("")
+  parts <- character(0)
+
+  if (cone_dims@zero > 0L)
+    parts <- c(parts, sprintf("\\{0\\}^{%d}", cone_dims@zero))
+  if (cone_dims@nonneg > 0L)
+    parts <- c(parts, sprintf("\\mathbb{R}_+^{%d}", cone_dims@nonneg))
+  for (s in cone_dims@soc)
+    parts <- c(parts, sprintf("\\mathcal{Q}^{%d}", s))
+  for (s in cone_dims@psd)
+    parts <- c(parts, sprintf("\\mathcal{S}_+^{%d}", s))
+  if (cone_dims@exp > 0L)
+    parts <- c(parts, sprintf("\\mathcal{K}_{\\exp}^{%d}", cone_dims@exp))
+  for (alpha in cone_dims@p3d)
+    parts <- c(parts, sprintf("\\mathcal{K}_{\\mathrm{pow}}^{%.2g}", alpha))
+  for (alphas in cone_dims@pnd) {
+    a_str <- paste(sprintf("%.2g", alphas), collapse = ",")
+    parts <- c(parts, sprintf("\\mathcal{K}_{\\mathrm{pow}}^{(%s)}", a_str))
+  }
+
+  if (length(parts) == 0L) return("\\mathbb{R}^{0}")
+  paste(parts, collapse = " \\times ")
+}
+
+## Build block structure description from cone dimensions.
+## Returns a list of lists, each with: type, label, n_rows, latex.
+.viz_block_structure <- function(cone_dims) {
+  if (is.null(cone_dims)) return(list())
+  blocks <- list()
+  row <- 0L
+
+  if (cone_dims@zero > 0L) {
+    nr <- cone_dims@zero
+    blocks <- c(blocks, list(list(
+      type = "zero", label = "equalities",
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\{0\\}^{%d}", nr)
+    )))
+    row <- row + nr
+  }
+
+  if (cone_dims@nonneg > 0L) {
+    nr <- cone_dims@nonneg
+    blocks <- c(blocks, list(list(
+      type = "nonneg", label = "inequalities",
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\mathbb{R}_+^{%d}", nr)
+    )))
+    row <- row + nr
+  }
+
+  for (i in seq_along(cone_dims@soc)) {
+    nr <- cone_dims@soc[i]
+    blocks <- c(blocks, list(list(
+      type = "soc", label = sprintf("SOC(%d)", nr),
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\mathcal{Q}^{%d}", nr)
+    )))
+    row <- row + nr
+  }
+
+  for (i in seq_along(cone_dims@psd)) {
+    n <- cone_dims@psd[i]
+    nr <- as.integer(n * (n + 1L) / 2L)
+    blocks <- c(blocks, list(list(
+      type = "psd", label = sprintf("PSD(%d)", n),
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\mathcal{S}_+^{%d}", n)
+    )))
+    row <- row + nr
+  }
+
+  if (cone_dims@exp > 0L) {
+    nr <- 3L * cone_dims@exp
+    blocks <- c(blocks, list(list(
+      type = "exp", label = sprintf("ExpCone x%d", cone_dims@exp),
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\mathcal{K}_{\\exp}^{%d}", cone_dims@exp)
+    )))
+    row <- row + nr
+  }
+
+  if (length(cone_dims@p3d) > 0L) {
+    nr <- 3L * length(cone_dims@p3d)
+    blocks <- c(blocks, list(list(
+      type = "pow3d", label = sprintf("PowCone3D x%d", length(cone_dims@p3d)),
+      start = row + 1L, n_rows = nr,
+      latex = sprintf("\\mathcal{K}_{\\mathrm{pow}}^{%d}", length(cone_dims@p3d))
+    )))
+    row <- row + nr
+  }
+
+  blocks
+}
+
+## Summarize each matrix/vector in the solver data.
+.viz_matrix_summaries <- function(data, interface, digits) {
+  .summarize_mat <- function(M, name) {
+    if (is.null(M)) return(NULL)
+    if (is.numeric(M) && !is.matrix(M)) {
+      ## Vector
+      list(
+        name    = name,
+        type    = "vector",
+        length  = length(M),
+        nnz     = sum(M != 0),
+        range   = if (length(M) > 0L) c(min(M), max(M)) else c(0, 0)
+      )
+    } else {
+      ## Matrix (possibly sparse)
+      nr <- nrow(M)
+      nc <- ncol(M)
+      nnz <- if (inherits(M, "sparseMatrix")) Matrix::nnzero(M) else sum(M != 0)
+      total <- as.double(nr) * as.double(nc)
+      density <- if (total > 0) nnz / total else 0
+
+      res <- list(
+        name    = name,
+        type    = "matrix",
+        nrow    = nr,
+        ncol    = nc,
+        nnz     = nnz,
+        density = density
+      )
+
+      ## For small problems, include sparse triplet for sparsity pattern
+      if (total > 0 && total < 2000 && inherits(M, "sparseMatrix")) {
+        trip <- as(M, "TsparseMatrix")
+        res$triplet <- list(
+          i = as.integer(trip@i + 1L),  # 1-based
+          j = as.integer(trip@j + 1L),
+          x = round(trip@x, digits)
+        )
+      }
+      res
+    }
+  }
+
+  result <- list()
+  if (interface == "conic") {
+    result$A <- .summarize_mat(data[["A"]], "A")
+    result$b <- .summarize_mat(data[["b"]], "b")
+    result$c <- .summarize_mat(data[["c"]], "c")
+    if (!is.null(data[["P"]])) result$P <- .summarize_mat(data[["P"]], "P")
+  } else {
+    ## QP interface
+    result$P <- .summarize_mat(data[["P"]], "P")
+    result$q <- .summarize_mat(data[["q"]], "q")
+    result$A_eq <- .summarize_mat(data[["A_eq"]], "A_eq")
+    result$b_eq <- .summarize_mat(data[["b_eq"]], "b_eq")
+    result$F_ineq <- .summarize_mat(data[["F_ineq"]], "F_ineq")
+    result$g_ineq <- .summarize_mat(data[["g_ineq"]], "g_ineq")
+  }
+  result
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Text renderer for Stages 4–5
+# ══════════════════════════════════════════════════════════════════════════
+
+## Print solver data for text output
+.viz_print_solver_data <- function(sd) {
+  cli_rule("STANDARD CONE FORM ({sd$solver_name})")
+
+  if (sd$interface == "conic") {
+    cat("  minimize  c'x\n")
+    cat("  s.t.      Ax + s = b,  s in K\n\n")
+  } else {
+    cat("  minimize  (1/2)x'Px + q'x\n")
+    cat("  s.t.      A_eq x = b_eq\n")
+    cat("            F x <= g\n\n")
+  }
+
+  ## Dimension table
+  d <- sd$dims
+  cat(sprintf("  Variables (n):     %d\n", d$n_vars))
+  cat(sprintf("  Constraints (m):   %d\n", d$n_constraints))
+  cat(sprintf("  nnz(A):           %d\n", d$nnz_A))
+  cat(sprintf("  Density:          %.1f%%\n", d$sparsity * 100))
+  if (!is.null(d$nnz_P))
+    cat(sprintf("  nnz(P):           %d\n", d$nnz_P))
+
+  ## Cone product (LaTeX-to-text)
+  if (sd$interface == "conic" && nzchar(sd$cone_product)) {
+    kstr <- sd$cone_product
+    kstr <- gsub("\\\\times", "x", kstr)
+    kstr <- gsub("\\\\\\{0\\\\\\}", "{0}", kstr)
+    kstr <- gsub("\\\\mathbb\\{R\\}_\\+", "R+", kstr)
+    kstr <- gsub("\\\\mathcal\\{Q\\}", "Q", kstr)
+    kstr <- gsub("\\\\mathcal\\{S\\}_\\+", "S+", kstr)
+    kstr <- gsub("\\\\mathcal\\{K\\}_\\{\\\\exp\\}", "K_exp", kstr)
+    kstr <- gsub("\\\\mathcal\\{K\\}_\\{\\\\mathrm\\{pow\\}\\}", "K_pow", kstr)
+    kstr <- gsub("\\^\\{([^}]*)\\}", "^\\1", kstr)
+    cat(sprintf("\n  K = %s\n", kstr))
+  }
+
+  ## Variable mapping
+  if (length(sd$var_map) > 0L) {
+    cat("\n  Variable Mapping:\n")
+    for (vm in sd$var_map) {
+      idx_lo <- vm$offset + 1L
+      idx_hi <- vm$offset + vm$size
+      cat(sprintf("    x[%d:%d]  %-12s  %s\n",
+                  idx_lo, idx_hi, vm$name, vm$origin))
+    }
+  }
+
+  ## Block structure
+  if (length(sd$blocks) > 0L) {
+    cat("\n  Block Structure of A:\n")
+    for (blk in sd$blocks) {
+      cat(sprintf("    rows %d-%d  (%d rows)  %s\n",
+                  blk$start, blk$start + blk$n_rows - 1L,
+                  blk$n_rows, blk$label))
+    }
+  }
+
+  ## Matrix summaries
+  if (length(sd$matrices) > 0L) {
+    cli_rule("SOLVER DATA MATRICES")
+    for (ms in sd$matrices) {
+      if (is.null(ms)) next
+      if (ms$type == "vector") {
+        cat(sprintf("  %s: vector, length %d, nnz %d, range [%s, %s]\n",
+                    ms$name, ms$length, ms$nnz,
+                    formatC(ms$range[1], format = "g", digits = 4L),
+                    formatC(ms$range[2], format = "g", digits = 4L)))
+      } else {
+        cat(sprintf("  %s: %d x %d, nnz %d (%.1f%%)\n",
+                    ms$name, ms$nrow, ms$ncol,
+                    ms$nnz, ms$density * 100))
+      }
+    }
+  }
 }
 
 
@@ -713,7 +1081,7 @@
 #' Displays the Smith form decomposition of a convex optimization problem,
 #' showing each stage of the DCP canonicalization pipeline:
 #' expression tree, Smith form, relaxed Smith form, conic form, and
-#' (optionally) standard cone form.
+#' (optionally) standard cone form and solver data.
 #'
 #' @param problem A [Problem] object.
 #' @param output Character: output format.
@@ -724,6 +1092,10 @@
 #'     \item{\code{"latex"}}{LaTeX align* environments (Phase 3).}
 #'     \item{\code{"tikz"}}{TikZ forest tree diagrams (Phase 3).}
 #'   }
+#' @param solver Solver specification for matrix stuffing stages (4-5).
+#'   \code{NULL} (default) shows only Stages 0-3 with zero overhead.
+#'   \code{TRUE} uses the default solver (same as [psolve()]).
+#'   A character string (e.g., \code{"Clarabel"}) uses that specific solver.
 #' @param digits Integer: significant digits for displaying scalar constants.
 #'   Integer-valued constants (0, 1, -3) always display without decimals
 #'   regardless of this setting.  Defaults to 4.
@@ -742,14 +1114,16 @@
 #' \dontrun{
 #' x <- Variable(3, name = "x")
 #' prob <- Problem(Minimize(p_norm(x, 2)), list(x >= 1))
-#' visualize(prob)
-#' visualize(prob, output = "json")
-#' visualize(prob, output = "html", open = FALSE)
+#' visualize(prob)                          # Stages 0-3 only
+#' visualize(prob, solver = TRUE)           # Stages 0-5, default solver
+#' visualize(prob, solver = "Clarabel")     # Stages 0-5, specific solver
+#' visualize(prob, output = "html", solver = TRUE)
 #' }
 #'
 #' @export
 visualize <- function(problem,
                       output = c("text", "json", "html", "latex", "tikz"),
+                      solver = NULL,
                       digits = 4L,
                       file = NULL,
                       open = interactive(),
@@ -759,8 +1133,25 @@ visualize <- function(problem,
   }
   output <- match.arg(output)
 
-  ## Build the data model
+  ## Build the data model (Stages 0–3)
   model <- .viz_build_model(problem, digits = as.integer(digits))
+
+  ## Solver data (Stages 4–5) — only when solver is specified
+  if (!is.null(solver)) {
+    if (!is_dcp(problem)) {
+      cli_warn("Solver data requires a DCP-compliant problem. Skipping Stages 4-5.")
+    } else {
+      effective_solver <- if (isTRUE(solver)) NULL else solver
+      model$solver_data <- tryCatch(
+        .viz_build_solver_data(problem, solver = effective_solver,
+                               digits = as.integer(digits)),
+        error = function(e) {
+          cli_warn("Failed to extract solver data: {conditionMessage(e)}")
+          NULL
+        }
+      )
+    }
+  }
 
   switch(output,
     text = {
@@ -798,6 +1189,11 @@ visualize <- function(problem,
 
       ## Conic form
       .viz_print_stage("CONIC FORM", model$stages$conic_form)
+
+      ## Stages 4–5: solver data (only when solver specified)
+      if (!is.null(model$solver_data)) {
+        .viz_print_solver_data(model$solver_data)
+      }
 
       invisible(model)
     },

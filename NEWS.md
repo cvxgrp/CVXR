@@ -36,8 +36,11 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
 * Decomposed solve API: `problem_data()`, `solve_via_data()`,
   `problem_unpack_results()` for compile-once/solve-many workflows.
 * `visualize()` for problem introspection: text display with Smith
-  form annotations, interactive HTML output (D3 tree + KaTeX), and
-  on-demand DCP violation analysis for non-compliant problems.
+  form annotations, interactive HTML output (D3 tree + KaTeX),
+  on-demand DCP violation analysis for non-compliant problems,
+  curvature coloring on constraint nodes, and matrix stuffing
+  visualization (Stages 4-5: Standard Form + Solver Data) via the
+  new `solver` parameter.
 
 ### Breaking changes from CVXR 1.x
 

@@ -63,8 +63,9 @@ CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
   PIQP     = "piqp"
 )
 
-## Check if a solver package is installed
-.solver_pkg_installed <- function(solver_name) {
+## Check if a solver package is installed and not excluded
+.solver_package_available <- function(solver_name) {
+  if (solver_name %in% .cvxr_env$excluded_solvers) return(FALSE)
   pkg <- .SOLVER_PACKAGES[[solver_name]]
   if (is.null(pkg)) return(FALSE)
   requireNamespace(pkg, quietly = TRUE)
@@ -162,7 +163,7 @@ method(print, SolvingChain) <- function(x, ...) {
         mip_solvers <- character(length(all_s))
         mi <- 0L
         for (s in all_s) {
-          if (!.solver_pkg_installed(s)) next
+          if (!.solver_package_available(s)) next
           qp_inst <- SOLVER_MAP_QP[[s]]
           conic_inst <- SOLVER_MAP_CONIC[[s]]
           if ((!is.null(qp_inst) && qp_inst@MIP_CAPABLE) ||
@@ -191,7 +192,7 @@ method(print, SolvingChain) <- function(x, ...) {
     qi <- 0L
     for (s in QP_SOLVER_PREFERENCE) {
       inst <- SOLVER_MAP_QP[[s]]
-      if (.solver_pkg_installed(s) && (!is_mip || inst@MIP_CAPABLE)) {
+      if (.solver_package_available(s) && (!is_mip || inst@MIP_CAPABLE)) {
         qi <- qi + 1L
         qp_solvers[[qi]] <- s
       }
@@ -201,7 +202,7 @@ method(print, SolvingChain) <- function(x, ...) {
     ci <- 0L
     for (s in CONIC_SOLVER_PREFERENCE) {
       inst <- SOLVER_MAP_CONIC[[s]]
-      if (.solver_pkg_installed(s) && (!is_mip || inst@MIP_CAPABLE)) {
+      if (.solver_package_available(s) && (!is_mip || inst@MIP_CAPABLE)) {
         ci <- ci + 1L
         conic_solvers[[ci]] <- s
       }

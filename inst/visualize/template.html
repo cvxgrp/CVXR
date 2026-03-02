@@ -223,6 +223,93 @@ main { padding: 1.5rem; }
   margin-top: 0.25rem; font-size: 0.8rem; color: #6c757d; font-style: italic;
 }
 
+/* ── Standard Form & Solver Data ──────────────────────────── */
+.std-panel, .solver-panel { max-width: 900px; }
+.std-panel h2, .solver-panel h2 {
+  font-size: 1.1rem; margin-bottom: 1rem;
+  padding-bottom: 0.25rem; border-bottom: 2px solid #dee2e6;
+}
+.formulation-banner {
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; text-align: center;
+}
+.dim-table {
+  width: 100%; border-collapse: collapse; margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+.dim-table th {
+  text-align: left; padding: 0.4rem 0.75rem; background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6; color: #495057; font-weight: 600;
+}
+.dim-table td {
+  padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f3f5;
+}
+.dim-table tr:nth-child(even) td { background: #f8f9fa; }
+
+.cone-product {
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  padding: 1rem 1.5rem; margin-bottom: 1rem; text-align: center;
+}
+.cone-product-label {
+  font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;
+}
+
+.var-map-table {
+  width: 100%; border-collapse: collapse; margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+.var-map-table th {
+  text-align: left; padding: 0.4rem 0.75rem; background: #e3f2fd;
+  border-bottom: 2px solid #1565c0; color: #1565c0; font-weight: 600;
+}
+.var-map-table td {
+  padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f3f5;
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.8rem;
+}
+.var-map-table .user-var { font-weight: 600; color: #1565c0; }
+.var-map-table .aux-var { color: #6c757d; }
+
+.block-structure { margin-bottom: 1rem; }
+.block-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.75rem; margin-bottom: 2px;
+  border-left: 4px solid; border-radius: 2px; font-size: 0.85rem;
+}
+.block-row .block-range {
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.8rem;
+  min-width: 8rem; color: #495057;
+}
+.block-row .block-label { flex: 1; }
+.block-row .block-math { }
+.block-zero   { border-left-color: #2e7d32; background: #e8f5e940; }
+.block-nonneg { border-left-color: #1565c0; background: #e3f2fd40; }
+.block-soc    { border-left-color: #7b1fa2; background: #f3e5f540; }
+.block-psd    { border-left-color: #e65100; background: #fff3e040; }
+.block-exp    { border-left-color: #00695c; background: #e0f2f140; }
+.block-pow3d  { border-left-color: #bf360c; background: #fbe9e740; }
+
+.matrix-card {
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  padding: 0.75rem 1rem; margin-bottom: 0.5rem;
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.8rem;
+}
+.matrix-card .mc-name {
+  font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; color: #212529;
+}
+.matrix-card .mc-row { color: #495057; margin: 0.1rem 0; }
+
+.sparsity-grid {
+  background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+  padding: 0.5rem; margin-bottom: 1rem; overflow-x: auto;
+}
+
+.solver-banner {
+  background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 6px;
+  padding: 0.75rem 1rem; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  font-weight: 600; color: #283593;
+}
+
 /* ── Footer ────────────────────────────────────────────────── */
 footer {
   text-align: center; padding: 0.75rem; font-size: 0.75rem; color: #adb5bd;
@@ -342,9 +429,13 @@ const TABS = [
   { id: "smith",   label: "Smith Form" },
   { id: "relaxed", label: "Relaxed Smith Form" },
   { id: "conic",   label: "Conic Form" },
-  // { id: "standard", label: "Standard Form" },
-  // { id: "solver",   label: "Solver Data" },
 ];
+
+// Add Standard Form + Solver Data tabs when solver data is present
+if (MODEL.solver_data) {
+  TABS.push({ id: "standard", label: "Standard Form" });
+  TABS.push({ id: "solver",   label: "Solver Data" });
+}
 
 // Add DCP Analysis tab if problem is not DCP
 if (MODEL.dcp_analysis && MODEL.dcp_analysis.is_dcp === false) {
@@ -943,6 +1034,241 @@ function renderDcpViolations(container, node) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// Standard Form tab (Stage 4)
+// ══════════════════════════════════════════════════════════════
+
+function initStandardForm() {
+  const panel = document.getElementById("standard-panel");
+  if (!panel || !MODEL.solver_data) return;
+
+  const sd = MODEL.solver_data;
+  const container = el("div", "std-panel");
+  container.appendChild(el("h2", null, "Standard Cone Form"));
+
+  // Formulation banner
+  const banner = el("div", "formulation-banner");
+  if (sd.interface === "conic") {
+    renderMath(banner,
+      "\\min_{\\mathbf{x}} \\; \\mathbf{c}^\\top\\mathbf{x} \\quad \\text{s.t.} \\quad A\\mathbf{x} + \\mathbf{s} = \\mathbf{b}, \\;\\; \\mathbf{s} \\in \\mathcal{K}",
+      true);
+  } else {
+    renderMath(banner,
+      "\\min_{\\mathbf{x}} \\; \\tfrac{1}{2}\\mathbf{x}^\\top P\\mathbf{x} + \\mathbf{q}^\\top\\mathbf{x} \\quad \\text{s.t.} \\quad A_{\\text{eq}}\\mathbf{x} = \\mathbf{b}_{\\text{eq}}, \\;\\; F\\mathbf{x} \\leq \\mathbf{g}",
+      true);
+  }
+  container.appendChild(banner);
+
+  // Dimension summary table
+  const d = sd.dims;
+  const dimTable = document.createElement("table");
+  dimTable.className = "dim-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th>Quantity</th><th>Value</th></tr>";
+  dimTable.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  const rows = [
+    ["Variables (n)", d.n_vars],
+    ["Constraints (m)", d.n_constraints],
+    ["nnz(A)", d.nnz_A],
+    ["Density", (d.sparsity * 100).toFixed(1) + "%"]
+  ];
+  if (d.nnz_P != null) rows.push(["nnz(P)", d.nnz_P]);
+  rows.forEach(([label, val]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${label}</td><td>${val}</td>`;
+    tbody.appendChild(tr);
+  });
+  dimTable.appendChild(tbody);
+  container.appendChild(dimTable);
+
+  // Cone product (conic only)
+  if (sd.interface === "conic" && sd.cone_product) {
+    const cpDiv = el("div", "cone-product");
+    const cpLabel = el("div", "cone-product-label", "Cone product:");
+    cpDiv.appendChild(cpLabel);
+    const cpMath = document.createElement("div");
+    renderMath(cpMath, "\\mathcal{K} = " + sd.cone_product, true);
+    cpDiv.appendChild(cpMath);
+    container.appendChild(cpDiv);
+  }
+
+  // Variable mapping table
+  const varMap = ensureArray(sd.var_map);
+  if (varMap.length > 0) {
+    container.appendChild(el("h3", null, "Variable Mapping"));
+    const vmTable = document.createElement("table");
+    vmTable.className = "var-map-table";
+    const vmHead = document.createElement("thead");
+    vmHead.innerHTML = "<tr><th>Solver indices</th><th>Name</th><th>Origin</th></tr>";
+    vmTable.appendChild(vmHead);
+    const vmBody = document.createElement("tbody");
+    varMap.forEach(vm => {
+      const tr = document.createElement("tr");
+      const lo = vm.offset + 1;
+      const hi = vm.offset + vm.size;
+      const idxStr = lo === hi ? `x[${lo}]` : `x[${lo}:${hi}]`;
+      const isUser = !toStr(vm.origin).includes("auxiliary");
+      tr.innerHTML = `<td>${idxStr}</td><td class="${isUser ? "user-var" : "aux-var"}">${toStr(vm.name)}</td><td>${toStr(vm.origin)}</td>`;
+      vmBody.appendChild(tr);
+    });
+    vmTable.appendChild(vmBody);
+    container.appendChild(vmTable);
+  }
+
+  // Block structure
+  const blocks = ensureArray(sd.blocks);
+  if (blocks.length > 0) {
+    container.appendChild(el("h3", null, "Block Structure of A"));
+    const bsDiv = el("div", "block-structure");
+    blocks.forEach(blk => {
+      const row = el("div", "block-row block-" + toStr(blk.type));
+      const rangeSpan = el("span", "block-range",
+        `rows ${blk.start}\u2013${blk.start + blk.n_rows - 1}`);
+      row.appendChild(rangeSpan);
+      const labelSpan = el("span", "block-label",
+        `${blk.n_rows} rows \u00b7 ${toStr(blk.label)}`);
+      row.appendChild(labelSpan);
+      const mathSpan = el("span", "block-math");
+      if (blk.latex) renderMath(mathSpan, blk.latex);
+      row.appendChild(mathSpan);
+      bsDiv.appendChild(row);
+    });
+    container.appendChild(bsDiv);
+  }
+
+  panel.appendChild(container);
+}
+
+// ══════════════════════════════════════════════════════════════
+// Solver Data tab (Stage 5)
+// ══════════════════════════════════════════════════════════════
+
+function initSolverData() {
+  const panel = document.getElementById("solver-panel");
+  if (!panel || !MODEL.solver_data) return;
+
+  const sd = MODEL.solver_data;
+  const container = el("div", "solver-panel");
+  container.appendChild(el("h2", null, "Solver Data"));
+
+  // Solver banner
+  const banner = el("div", "solver-banner");
+  banner.textContent = "Data as seen by " + toStr(sd.solver_name);
+  container.appendChild(banner);
+
+  // Interface-specific formulation
+  const fDiv = el("div", "formulation-banner");
+  if (sd.interface === "conic") {
+    renderMath(fDiv,
+      "A\\mathbf{x} + \\mathbf{s} = \\mathbf{b}, \\quad \\mathbf{s} \\in \\mathcal{K}",
+      true);
+  } else {
+    renderMath(fDiv,
+      "\\tfrac{1}{2}\\mathbf{x}^\\top P\\mathbf{x} + \\mathbf{q}^\\top\\mathbf{x} \\quad \\text{s.t.} \\quad A_{\\text{eq}}\\mathbf{x} = \\mathbf{b}_{\\text{eq}}, \\;\\; F\\mathbf{x} \\leq \\mathbf{g}",
+      true);
+  }
+  container.appendChild(fDiv);
+
+  // Matrix summary cards
+  const mats = sd.matrices || {};
+  const matNames = Object.keys(mats);
+  if (matNames.length > 0) {
+    container.appendChild(el("h3", null, "Matrix Summaries"));
+    matNames.forEach(key => {
+      const ms = mats[key];
+      if (!ms) return;
+      const card = el("div", "matrix-card");
+      card.appendChild(el("div", "mc-name", toStr(ms.name)));
+      if (ms.type === "vector") {
+        card.appendChild(el("div", "mc-row", `Type: vector, length ${ms.length}`));
+        card.appendChild(el("div", "mc-row", `nnz: ${ms.nnz}`));
+        if (ms.range) {
+          card.appendChild(el("div", "mc-row",
+            `Range: [${ms.range[0].toPrecision(4)}, ${ms.range[1].toPrecision(4)}]`));
+        }
+      } else {
+        card.appendChild(el("div", "mc-row", `Shape: ${ms.nrow} \u00d7 ${ms.ncol}`));
+        card.appendChild(el("div", "mc-row",
+          `nnz: ${ms.nnz} (${(ms.density * 100).toFixed(1)}%)`));
+      }
+      container.appendChild(card);
+    });
+  }
+
+  // Sparsity pattern (SVG) for small A matrices
+  const amat = mats.A || mats.A_eq;
+  if (amat && amat.triplet) {
+    container.appendChild(el("h3", null, "Sparsity Pattern of A"));
+    const gridDiv = el("div", "sparsity-grid");
+    const nr = amat.nrow;
+    const nc = amat.ncol;
+    const cellSize = Math.min(Math.max(4, Math.floor(600 / Math.max(nr, nc))), 16);
+    const svgW = nc * cellSize + 2;
+    const svgH = nr * cellSize + 2;
+
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgEl.setAttribute("width", svgW);
+    svgEl.setAttribute("height", svgH);
+    svgEl.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+
+    // Background
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("width", svgW);
+    bg.setAttribute("height", svgH);
+    bg.setAttribute("fill", "#f8f9fa");
+    bg.setAttribute("stroke", "#dee2e6");
+    svgEl.appendChild(bg);
+
+    // Block shading
+    const blocks = ensureArray(sd.blocks);
+    const blockColors = {
+      zero: "#e8f5e9", nonneg: "#e3f2fd", soc: "#f3e5f5",
+      psd: "#fff3e0", exp: "#e0f2f1", pow3d: "#fbe9e7"
+    };
+    blocks.forEach(blk => {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", 1);
+      rect.setAttribute("y", (blk.start - 1) * cellSize + 1);
+      rect.setAttribute("width", nc * cellSize);
+      rect.setAttribute("height", blk.n_rows * cellSize);
+      rect.setAttribute("fill", blockColors[blk.type] || "#f5f5f5");
+      rect.setAttribute("opacity", "0.5");
+      svgEl.appendChild(rect);
+    });
+
+    // Dots
+    const trip = amat.triplet;
+    const rows = ensureArray(trip.i);
+    const cols = ensureArray(trip.j);
+    for (let k = 0; k < rows.length; k++) {
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      dot.setAttribute("x", (cols[k] - 1) * cellSize + 1);
+      dot.setAttribute("y", (rows[k] - 1) * cellSize + 1);
+      dot.setAttribute("width", Math.max(cellSize - 1, 1));
+      dot.setAttribute("height", Math.max(cellSize - 1, 1));
+      dot.setAttribute("fill", "#1565c0");
+      svgEl.appendChild(dot);
+    }
+
+    gridDiv.appendChild(svgEl);
+    container.appendChild(gridDiv);
+  }
+
+  // MIP info
+  const boolIdx = sd.matrices && sd.matrices.bool_idx;
+  const intIdx = sd.matrices && sd.matrices.int_idx;
+  if (boolIdx || intIdx) {
+    const mipDiv = el("div", "matrix-card");
+    mipDiv.appendChild(el("div", "mc-name", "MIP Variables"));
+    if (boolIdx) mipDiv.appendChild(el("div", "mc-row", "Boolean: " + ensureArray(boolIdx).join(", ")));
+    if (intIdx) mipDiv.appendChild(el("div", "mc-row", "Integer: " + ensureArray(intIdx).join(", ")));
+    container.appendChild(mipDiv);
+  }
+
+  panel.appendChild(container);
+}
+
+// ══════════════════════════════════════════════════════════════
 // Initialize
 // ══════════════════════════════════════════════════════════════
 
@@ -971,6 +1297,8 @@ document.addEventListener("DOMContentLoaded", function () {
     MODEL.stages.relaxed_smith_form, nonLeafNodes);
   initEquations("conic-panel", "Conic Form",
     MODEL.stages.conic_form, nonLeafNodes);
+  initStandardForm();
+  initSolverData();
 });
 </script>
 </body>

@@ -7,6 +7,7 @@
 visualize(
   problem,
   output = c("text", "json", "html", "latex", "tikz"),
+  solver = NULL,
   digits = 4L,
   file = NULL,
   open = interactive(),
@@ -24,6 +25,11 @@ visualize(
 \item{\code{"latex"}}{LaTeX align* environments (Phase 3).}
 \item{\code{"tikz"}}{TikZ forest tree diagrams (Phase 3).}
 }}
+
+\item{solver}{Solver specification for matrix stuffing stages (4-5).
+\code{NULL} (default) shows only Stages 0-3 with zero overhead.
+\code{TRUE} uses the default solver (same as \code{\link[=psolve]{psolve()}}).
+A character string (e.g., \code{"Clarabel"}) uses that specific solver.}
 
 \item{digits}{Integer: significant digits for displaying scalar constants.
 Integer-valued constants (0, 1, -3) always display without decimals
@@ -48,15 +54,16 @@ For other formats: the rendered output (Phase 2+).
 Displays the Smith form decomposition of a convex optimization problem,
 showing each stage of the DCP canonicalization pipeline:
 expression tree, Smith form, relaxed Smith form, conic form, and
-(optionally) standard cone form.
+(optionally) standard cone form and solver data.
 }
 \examples{
 \dontrun{
 x <- Variable(3, name = "x")
 prob <- Problem(Minimize(p_norm(x, 2)), list(x >= 1))
-visualize(prob)
-visualize(prob, output = "json")
-visualize(prob, output = "html", open = FALSE)
+visualize(prob)                          # Stages 0-3 only
+visualize(prob, solver = TRUE)           # Stages 0-5, default solver
+visualize(prob, solver = "Clarabel")     # Stages 0-5, specific solver
+visualize(prob, output = "html", solver = TRUE)
 }
 
 }

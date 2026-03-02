@@ -122,6 +122,46 @@ installed_solvers <- function() {
   names(Filter(function(pkg) requireNamespace(pkg, quietly = TRUE), .SOLVER_PACKAGES))
 }
 
+#' List available solvers
+#'
+#' Returns the names of installed solvers that are not currently excluded.
+#' Use [exclude_solvers()] to temporarily disable solvers.
+#'
+#' @returns A character vector of solver names.
+#' @seealso [installed_solvers()], [exclude_solvers()], [include_solvers()], [set_excluded_solvers()]
+#' @export
+available_solvers <- function() {
+  setdiff(installed_solvers(), .cvxr_env$excluded_solvers)
+}
+
+#' @param solvers A character vector of solver names.
+#' @returns The current exclusion list (character vector), invisibly.
+#' @describeIn available_solvers Add solvers to the exclusion list
+#' @export
+exclude_solvers <- function(solvers) {
+  stopifnot(is.character(solvers))
+  result <- unique(c(.cvxr_env$excluded_solvers, solvers))
+  .cvxr_env$excluded_solvers <- result
+  invisible(result)
+}
+
+#' @describeIn available_solvers Remove solvers from the exclusion list
+#' @export
+include_solvers <- function(solvers) {
+  stopifnot(is.character(solvers))
+  result <- setdiff(.cvxr_env$excluded_solvers, solvers)
+  .cvxr_env$excluded_solvers <- result
+  invisible(result)
+}
+
+#' @describeIn available_solvers Replace the entire exclusion list
+#' @export
+set_excluded_solvers <- function(solvers) {
+  stopifnot(is.character(solvers))
+  .cvxr_env$excluded_solvers <- solvers
+  invisible(solvers)
+}
+
 # ── PSD/NSD infix operators ───────────────────────────────────────
 # R equivalent of Python's A >> B (PSD) and A << B (NSD).
 # These existed in old CVXR (1.0-15) and are essential for

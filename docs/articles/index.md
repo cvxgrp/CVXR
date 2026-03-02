@@ -4,4 +4,5 @@
 
 - [Introduction to
   CVXR](https://www.cvxgrp.org/CVXR/articles/cvxr_intro.md):
-- [Version 1.0](https://www.cvxgrp.org/CVXR/articles/version1.md):
+- [What's New in CVXR
+  1.8](https://www.cvxgrp.org/CVXR/articles/whats_new.md):

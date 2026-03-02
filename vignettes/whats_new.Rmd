@@ -1,0 +1,301 @@
+---
+title: "What's New in CVXR 1.8"
+author: "Anqi Fu, Balasubramanian Narasimhan, and Stephen Boyd"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{What's New in CVXR 1.8}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+CVXR 1.8 is a ground-up rewrite using R's
+[S7](https://rconsortium.github.io/S7/) object system, designed to
+mirror [CVXPY 1.8](https://www.cvxpy.org/) for long-term
+maintainability. It is approximately 4--5x faster than the previous
+S4-based release and adds many new features.
+
+This vignette summarizes the key changes from CVXR 1.x that may
+affect existing users. For the introductory tutorial, see
+`vignette("cvxr_intro")`. For worked examples, visit the
+[CVXR website](https://cvxr.rbind.io).
+
+## New Solve Interface
+
+The primary solve function is now `psolve()`, which returns the
+optimal value directly. Variable values are extracted with `value()`
+and problem status with `status()`:
+
+```{r}
+library(CVXR)
+x <- Variable(2, name = "x")
+prob <- Problem(Minimize(sum_squares(x)), list(x >= 1))
+opt_val <- psolve(prob)
+opt_val
+value(x)
+status(prob)
+```
+
+The old `solve()` still works and returns a backward-compatible list:
+
+```{r}
+result <- solve(prob)
+result$value
+result$status
+```
+
+## API Changes
+
+| Old (CVXR 1.x) | New (CVXR 1.8) |
+|-----------------|----------------|
+| `solve(problem)` | `psolve(problem)` |
+| `result$getValue(x)` | `value(x)` |
+| `result$value` | return value of `psolve()` |
+| `result$status` | `status(problem)` |
+| `result$getDualValue(con)` | `dual_value(con)` |
+| `get_problem_data(prob, solver)` | `problem_data(prob, solver)` |
+
+Old function names still work but emit once-per-session deprecation
+warnings.
+
+## 13 Solvers
+
+CVXR 1.8 ships with four built-in solvers and supports nine additional
+solvers via optional packages:
+
+```{r}
+installed_solvers()
+```
+
+| Solver | R Package | Problem Classes |
+|--------|-----------|-----------------|
+| CLARABEL | `clarabel` | LP, QP, SOCP, SDP, ExpCone, PowCone |
+| SCS | `scs` | LP, QP, SOCP, SDP, ExpCone, PowCone |
+| OSQP | `osqp` | LP, QP |
+| HIGHS | `highs` | LP, QP, MILP |
+| MOSEK | `Rmosek` | LP, QP, SOCP, SDP, ExpCone, PowCone |
+| GUROBI | `gurobi` | LP, QP, SOCP, MIP |
+| ECOS / ECOS_BB | `ECOSolveR` | LP, SOCP, ExpCone (+ MIP) |
+| GLPK / GLPK_MI | `Rglpk` | LP (+ MILP) |
+| CPLEX | `Rcplex` | LP, QP, MIP |
+| CVXOPT | `cccp` | LP, SOCP, SDP |
+| PIQP | `piqp` | LP, QP |
+
+CLARABEL is the default solver and handles the widest range of problem
+types among the built-in solvers. You can specify a solver explicitly:
+
+```{r, eval = FALSE}
+psolve(prob, solver = "SCS")
+```
+
+### Solver exclusion
+
+You can temporarily exclude solvers from automatic selection without
+uninstalling them:
+
+```{r}
+available_solvers()
+exclude_solvers("SCS")
+available_solvers()
+include_solvers("SCS")
+```
+
+## Disciplined Programming Extensions
+
+### DGP (Geometric Programming)
+
+Geometric programs are solved by converting to convex form via
+log-log transformation:
+
+```{r}
+x <- Variable(pos = TRUE, name = "x")
+y <- Variable(pos = TRUE, name = "y")
+obj <- Minimize(x * y)
+constr <- list(x * y >= 40, x <= 20, y >= 2)
+prob <- Problem(obj, constr)
+cat("Is DGP:", is_dgp(prob), "\n")
+opt_val <- psolve(prob, gp = TRUE)
+cat("Optimal:", opt_val, " x =", value(x), " y =", value(y), "\n")
+```
+
+### DQCP (Quasiconvex Programming)
+
+Quasiconvex problems are solved via bisection:
+
+```{r}
+x <- Variable(name = "x")
+prob <- Problem(Minimize(ceil_expr(x)), list(x >= 0.7, x <= 1.5))
+cat("Is DQCP:", is_dqcp(prob), "\n")
+opt_val <- psolve(prob, qcp = TRUE)
+cat("Optimal:", opt_val, " x =", value(x), "\n")
+```
+
+### DPP (Parameterized Programming)
+
+Parameters allow efficient re-solving when only data changes:
+
+```{r}
+n <- 5
+x <- Variable(n, name = "x")
+lam <- Parameter(nonneg = TRUE, name = "lambda", value = 1.0)
+
+set.seed(42)
+A <- matrix(rnorm(10 * n), 10, n)
+b <- rnorm(10)
+
+prob <- Problem(Minimize(sum_squares(A %*% x - b) + lam * p_norm(x, 1)))
+cat("Is DPP:", is_dpp(prob), "\n")
+psolve(prob)
+value(x)
+```
+
+Changing the parameter and re-solving reuses the cached compilation:
+
+```{r}
+value(lam) <- 10.0
+psolve(prob)
+value(x)
+```
+
+## Mixed-Integer Programming
+
+Variables can be declared boolean or integer:
+
+```{r}
+x <- Variable(3, integer = TRUE, name = "x")
+prob <- Problem(Minimize(sum(x)), list(x >= 0.5, x <= 3.5))
+psolve(prob, solver = "HIGHS")
+value(x)
+```
+
+## Complex Variables
+
+CVXR supports complex-valued optimization:
+
+```{r}
+z <- Variable(2, complex = TRUE, name = "z")
+prob <- Problem(Minimize(p_norm(z, 2)), list(z[1] == 1 + 2i))
+psolve(prob)
+value(z)
+```
+
+## Boolean Logic
+
+For mixed-integer formulations, boolean logic atoms are available:
+
+```{r}
+b1 <- Variable(boolean = TRUE, name = "b1")
+b2 <- Variable(boolean = TRUE, name = "b2")
+## implies() returns an Expression; compare with == 1 to make a constraint
+prob <- Problem(Maximize(b1 + b2),
+                list(implies(b1, b2) == 1, b1 + b2 <= 1))
+psolve(prob, solver = "HIGHS")
+cat("b1 =", value(b1), " b2 =", value(b2), "\n")
+```
+
+## Decomposed Solve API
+
+For bootstrapping or simulation, you can compile once and solve many
+times:
+
+```{r, eval = FALSE}
+pd <- problem_data(prob, solver = "CLARABEL")
+chain <- pd$chain
+
+# In a loop:
+raw <- solve_via_data(chain, warm_start = FALSE, verbose = FALSE)
+result <- problem_unpack_results(prob, raw$solution, chain, raw$inverse_data)
+```
+
+## Visualization
+
+`visualize()` provides problem introspection in text or interactive
+HTML:
+
+```{r}
+x <- Variable(3, name = "x")
+prob <- Problem(Minimize(p_norm(x, 1) + sum_squares(x)),
+                list(x >= -1, sum(x) == 1))
+visualize(prob)
+```
+
+For interactive HTML output with collapsible expression trees, DCP
+analysis, and curvature coloring:
+
+```{r, eval = FALSE}
+visualize(prob, html = "my_problem.html")
+```
+
+## New Atoms
+
+### Convenience atoms
+
+| Function | Description |
+|----------|-------------|
+| `ptp(x)` | Peak-to-peak (range): `max(x) - min(x)` |
+| `cvxr_mean(x)` | Arithmetic mean along an axis |
+| `cvxr_std(x)` | Standard deviation |
+| `cvxr_var(x)` | Variance |
+| `vdot(x, y)` | Vector dot product |
+| `cvxr_outer(x, y)` | Outer product |
+| `inv_prod(x)` | Reciprocal of product |
+| `loggamma(x)` | Log of gamma function |
+| `log_normcdf(x)` | Log of standard normal CDF |
+| `cummax_expr(x)` | Cumulative maximum |
+| `dotsort(X, W)` | Weighted sorted dot product |
+
+### Math function dispatch
+
+Standard R math functions work directly on CVXR expressions:
+
+```{r}
+x <- Variable(3, name = "x")
+abs(x)     # elementwise absolute value
+sqrt(x)    # elementwise square root
+sum(x)     # sum of entries
+max(x)     # maximum entry
+norm(x, "2")  # Euclidean norm
+```
+
+### Boolean logic atoms
+
+`Not()`, `And()`, `Or()`, `Xor()`, `implies()`, `iff()` — for
+mixed-integer programming with boolean variables.
+
+### Other new atoms
+
+- `perspective(f, s)` for perspective functions
+- `FiniteSet(expr, values)` constraint for discrete optimization
+- `ceil_expr()`, `floor_expr()` for DQCP problems
+- `condition_number()`, `gen_lambda_max()`, `dist_ratio()` for DQCP
+
+## Migration Guide
+
+To migrate code from CVXR 1.x to 1.8:
+
+1. Replace `result <- solve(problem)` with `opt_val <- psolve(problem)`
+2. Replace `result$getValue(x)` with `value(x)`
+3. Replace `result$status` with `status(problem)`
+4. Replace `result$getDualValue(con)` with `dual_value(con)`
+5. Replace `axis = NA` with `axis = NULL` (axis values 1 and 2 are unchanged)
+6. Update solver preferences: the default is now CLARABEL (was ECOS)
+
+All old function names continue to work with deprecation warnings.
+
+## Further Reading
+
+- [CVXR website](https://cvxr.rbind.io) — worked examples
+- [Package reference](https://www.cvxgrp.org/CVXR/) — full API documentation
+- [CVXPY documentation](https://www.cvxpy.org/) — mathematical framework
+- Fu, Narasimhan, and Boyd (2020). "CVXR: An R Package for Disciplined
+  Convex Optimization." _Journal of Statistical Software_, 94(14).
+  doi:10.18637/jss.v094.i14

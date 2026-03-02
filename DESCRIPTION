@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.8.0.9214
+Version: 1.8.0.9215
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),

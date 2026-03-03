@@ -552,7 +552,7 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
 #' @examples
 #' x <- Variable()
 #' prob <- Problem(Minimize(x), list(x >= 5))
-#' result <- psolve(prob)
+#' result <- psolve(prob, solver = "CLARABEL")
 #'
 #' @seealso \code{\link{Problem}}, \code{\link{status}},
 #'   \code{\link{solver_stats}}, \code{\link{solver_default_param}}

@@ -76,7 +76,7 @@ dual values with \code{\link{dual_value}}, and solver information with
 \examples{
 x <- Variable()
 prob <- Problem(Minimize(x), list(x >= 5))
-result <- psolve(prob)
+result <- psolve(prob, solver = "CLARABEL")
 
 }
 \seealso{

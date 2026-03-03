@@ -171,6 +171,16 @@ test_that("to_latex: indexing", {
 })
 
 ## @cvxpy NONE
+test_that("to_latex: chained indexing avoids double subscript", {
+  x <- Variable(10, name = "x")
+  ## diff(x, differences=2) creates Index(Index(x, ...), ...)
+  expr <- diff(x, differences = 2)
+  ltx <- to_latex(expr)
+  ## Must not contain bare }_{...}_{...} (double subscript)
+  expect_no_match(ltx, "\\}_\\{[^}]+\\}_\\{")
+})
+
+## @cvxpy NONE
 test_that("to_latex: sum_entries of column vector", {
   x <- Variable(3, name = "x")
   expr <- sum_entries(x)

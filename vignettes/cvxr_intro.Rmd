@@ -69,7 +69,7 @@ library(CVXR)
 betaHat <- Variable(p)
 objective <- Minimize(sum((Y - X %*% betaHat)^2))
 problem <- Problem(objective)
-result <- psolve(problem)
+result <- psolve(problem, solver = "CLARABEL")
 ```
 
 The optimal value and estimated coefficients:
@@ -90,7 +90,7 @@ Suppose we know the $\beta$s should be nonnegative:
 
 ```{r}
 problem <- Problem(objective, constraints = list(betaHat >= 0))
-result <- psolve(problem)
+result <- psolve(problem, solver = "CLARABEL")
 round(value(betaHat), 3)
 ```
 
@@ -107,7 +107,7 @@ constraint1 <- A %*% betaHat <= 0
 constraint2 <- B %*% betaHat >= 0
 
 problem <- Problem(objective, constraints = list(constraint1, constraint2))
-result <- psolve(problem, verbose = TRUE) ## verbose = TRUE for details
+result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE for details
 round(value(betaHat), 3)
 ```
 

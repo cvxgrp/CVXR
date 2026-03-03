@@ -19,7 +19,7 @@ A character string containing LaTeX code.
 Renders a CVXR \code{Problem}, \code{Expression}, or \code{Constraint}
 as a LaTeX string.  Problem-level output uses the \code{optidef} package
 (\code{mini*}/\code{maxi*} environments) and atom macros from
-\code{dcp.sty} (shipped in \code{inst/latex/dcp.sty}).
+\code{dcp.sty} (shipped as \code{system.file("sty", "dcp.sty", package = "CVXR")}).
 }
 \examples{
 x <- Variable(3, name = "x")

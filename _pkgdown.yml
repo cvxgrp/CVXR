@@ -282,7 +282,6 @@ reference:
   contents:
   - as_cvxr_expr
   - visualize
-  - to_latex
   - expr_H
   - make_sparse_diagonal_matrix
   - rel_entr

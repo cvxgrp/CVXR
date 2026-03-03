@@ -39,7 +39,7 @@ and problem status with `status()`:
 library(CVXR)
 x <- Variable(2, name = "x")
 prob <- Problem(Minimize(sum_squares(x)), list(x >= 1))
-opt_val <- psolve(prob)
+opt_val <- psolve(prob, solver = "CLARABEL")
 opt_val
 value(x)
 status(prob)
@@ -48,7 +48,7 @@ status(prob)
 The old `solve()` still works and returns a backward-compatible list:
 
 ```{r}
-result <- solve(prob)
+result <- solve(prob, solver = "CLARABEL")
 result$value
 result$status
 ```
@@ -123,7 +123,7 @@ obj <- Minimize(x * y)
 constr <- list(x * y >= 40, x <= 20, y >= 2)
 prob <- Problem(obj, constr)
 cat("Is DGP:", is_dgp(prob), "\n")
-opt_val <- psolve(prob, gp = TRUE)
+opt_val <- psolve(prob, gp = TRUE, solver = "CLARABEL")
 cat("Optimal:", opt_val, " x =", value(x), " y =", value(y), "\n")
 ```
 
@@ -135,7 +135,7 @@ Quasiconvex problems are solved via bisection:
 x <- Variable(name = "x")
 prob <- Problem(Minimize(ceil_expr(x)), list(x >= 0.7, x <= 1.5))
 cat("Is DQCP:", is_dqcp(prob), "\n")
-opt_val <- psolve(prob, qcp = TRUE)
+opt_val <- psolve(prob, qcp = TRUE, solver = "CLARABEL")
 cat("Optimal:", opt_val, " x =", value(x), "\n")
 ```
 
@@ -154,7 +154,7 @@ b <- rnorm(10)
 
 prob <- Problem(Minimize(sum_squares(A %*% x - b) + lam * p_norm(x, 1)))
 cat("Is DPP:", is_dpp(prob), "\n")
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 value(x)
 ```
 
@@ -162,7 +162,7 @@ Changing the parameter and re-solving reuses the cached compilation:
 
 ```{r}
 value(lam) <- 10.0
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 value(x)
 ```
 
@@ -184,7 +184,7 @@ CVXR supports complex-valued optimization:
 ```{r}
 z <- Variable(2, complex = TRUE, name = "z")
 prob <- Problem(Minimize(p_norm(z, 2)), list(z[1] == 1 + 2i))
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 value(z)
 ```
 

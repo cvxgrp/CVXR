@@ -4,10 +4,10 @@ Title: Disciplined Convex Optimization
 Version: 1.8.1
 Authors@R: c(
     person("Anqi", "Fu",
-           role = c("aut"),
+           role = c("aut", "cre"),
            email = "anqif@alumni.stanford.edu"),
     person("Balasubramanian", "Narasimhan",
-           role = c("aut", "cre"),
+           role = c("aut"),
            email = "naras@stat.stanford.edu"),
     person("Steven", "Diamond",
            role = c("aut")),

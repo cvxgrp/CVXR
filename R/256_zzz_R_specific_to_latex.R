@@ -424,6 +424,15 @@ method(.to_latex_prec, Index) <- function(x, names_map = NULL, ...) {
   inner <- .to_latex_prec(x@args[[1L]], names_map)
   orig_shape <- x@args[[1L]]@shape
 
+  ## Guard against double subscripts and ambiguous subscript scope:
+  ## If the inner expression is compound (not ATOM-level), wrapping _{...}
+  ## would only subscript the last token. Wrap in parens first.
+  base <- if (inner$prec < .LATEX_PREC$ATOM) {
+    paste0("\\left(", inner$latex, "\\right)")
+  } else {
+    inner$latex
+  }
+
   ## Format row index
   row_idx <- x@key[[1L]]
   col_idx <- x@key[[2L]]
@@ -447,21 +456,21 @@ method(.to_latex_prec, Index) <- function(x, names_map = NULL, ...) {
   if (length(row_idx) == 1L && length(col_idx) == 1L) {
     sub <- paste0(row_str, col_str)
     if (nchar(sub) <= 2L) {
-      ltx <- paste0(inner$latex, "_{", sub, "}")
+      ltx <- paste0(base, "_{", sub, "}")
     } else {
-      ltx <- paste0(inner$latex, "_{", row_str, ",", col_str, "}")
+      ltx <- paste0(base, "_{", row_str, ",", col_str, "}")
     }
     return(list(latex = ltx, prec = .LATEX_PREC$ATOM))
   }
 
   ## Column vector: x_{i:j} or x_{:}
   if (orig_shape[2L] == 1L) {
-    ltx <- paste0(inner$latex, "_{", row_str, "}")
+    ltx <- paste0(base, "_{", row_str, "}")
     return(list(latex = ltx, prec = .LATEX_PREC$ATOM))
   }
 
   ## General slice
-  ltx <- paste0(inner$latex, "_{", row_str, ",", col_str, "}")
+  ltx <- paste0(base, "_{", row_str, ",", col_str, "}")
   list(latex = ltx, prec = .LATEX_PREC$ATOM)
 }
 

@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.8.0.9215
+Version: 1.8.1
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -17,7 +17,6 @@ Authors@R: c(
            role = c("ctb"),
            email = "boyd@stanford.edu")
     )
-Author: Anqi Fu [aut, cre], Balasubramanian Narasimhan [aut], David W Kang [aut], Steven Diamond [aut], John Miller [aut], Stephen Boyd [ctb]
 Maintainer: Anqi Fu <anqif@alumni.stanford.edu>
 URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
 BugReports: https://github.com/cvxgrp/CVXR/issues

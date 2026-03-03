@@ -2,7 +2,7 @@
 % Please edit documentation in R/067_atoms_elementwise_xexp.R
 \name{xexp}
 \alias{xexp}
-\title{x * exp(x) — elementwise}
+\title{x * exp(x) -- elementwise}
 \usage{
 xexp(x)
 }
@@ -13,5 +13,5 @@ xexp(x)
 An Xexp atom
 }
 \description{
-x * exp(x) — elementwise
+x * exp(x) -- elementwise
 }

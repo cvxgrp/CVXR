@@ -1,0 +1,67 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{dcp}[2026/03/03 v1.0 CVXR convex optimization macros]
+
+%% ======================================================================
+%% Foundation packages
+%% ======================================================================
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mathtools}     % \DeclarePairedDelimiter
+\RequirePackage{optidef}       % \begin{mini*}, \begin{maxi*}, \addConstraint
+
+%% ======================================================================
+%% Paired delimiters (mathtools)
+%% ======================================================================
+\DeclarePairedDelimiter{\cvxabs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\cvxnorm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\cvxceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\cvxfloor}{\lfloor}{\rfloor}
+
+%% ======================================================================
+%% Operators (amsmath \DeclareMathOperator)
+%% ======================================================================
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\Rank}{rank}
+\DeclareMathOperator{\logdet}{log\,det}
+\DeclareMathOperator{\lambdamax}{\lambda_{\max}}
+\DeclareMathOperator{\lambdamin}{\lambda_{\min}}
+\DeclareMathOperator{\sigmamax}{\sigma_{\max}}
+\DeclareMathOperator{\huber}{huber}
+\DeclareMathOperator{\logsumexp}{log\,sum\,exp}
+\DeclareMathOperator{\condnum}{\kappa}
+\DeclareMathOperator{\cvxvec}{vec}
+\DeclareMathOperator{\cumsum}{cumsum}
+
+%% ======================================================================
+%% Sets (Boyd & Vandenberghe conventions)
+%% ======================================================================
+\newcommand{\reals}{\mathbf{R}}
+\newcommand{\integers}{\mathbf{Z}}
+\newcommand{\complexes}{\mathbf{C}}
+\newcommand{\symm}{\mathbf{S}}
+\newcommand{\herm}{\mathbf{H}}
+\newcommand{\ones}{\mathbf{1}}
+\newcommand{\zeros}{\mathbf{0}}
+
+%% ======================================================================
+%% Cones
+%% ======================================================================
+\newcommand{\Kexp}{\mathcal{K}_{\mathrm{exp}}}
+\newcommand{\Kpow}[1]{\mathcal{K}_{\mathrm{pow}}^{#1}}
+\newcommand{\SOCone}{\mathcal{Q}}
+
+%% ======================================================================
+%% Matrix ordering
+%% ======================================================================
+\newcommand{\psd}{\succeq}
+\newcommand{\nsd}{\preceq}
+\newcommand{\pd}{\succ}
+\newcommand{\nd}{\prec}
+
+%% ======================================================================
+%% Convenience
+%% ======================================================================
+\newcommand{\T}{^\top}
+
+\endinput

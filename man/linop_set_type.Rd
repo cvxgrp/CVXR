@@ -9,7 +9,7 @@ linop_set_type(ptr, type)
 \arguments{
 \item{ptr}{External pointer to a LinOp.}
 
-\item{type}{Character string — one of \code{.LINOP_TYPES}.}
+\item{type}{Character string -- one of \code{.LINOP_TYPES}.}
 }
 \description{
 Set the type of a LinOp

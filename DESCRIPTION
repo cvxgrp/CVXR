@@ -17,7 +17,6 @@ Authors@R: c(
            role = c("ctb"),
            email = "boyd@stanford.edu")
     )
-Maintainer: Anqi Fu <anqif@alumni.stanford.edu>
 URL: https://cvxr.rbind.io, https://www.cvxgrp.org/CVXR/
 BugReports: https://github.com/cvxgrp/CVXR/issues
 Description: An object-oriented modeling language for disciplined

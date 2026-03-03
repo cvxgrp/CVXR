@@ -14,7 +14,7 @@ A matrix or dgCMatrix
 }
 \description{
 Normalizes R values so the rest of CVXR can assume a consistent type.
-Scalars → 1x1 matrix, vectors → column matrix, logical → numeric.
+Scalars -> 1x1 matrix, vectors -> column matrix, logical -> numeric.
 Sparse matrices are kept sparse.
 }
 \keyword{internal}

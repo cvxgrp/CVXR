@@ -2,7 +2,7 @@
 % Please edit documentation in R/068_atoms_elementwise_logistic.R
 \name{logistic}
 \alias{logistic}
-\title{Logistic function: log(1 + exp(x)) — elementwise}
+\title{Logistic function: log(1 + exp(x)) -- elementwise}
 \usage{
 logistic(x)
 }
@@ -13,5 +13,5 @@ logistic(x)
 A Logistic atom
 }
 \description{
-Logistic function: log(1 + exp(x)) — elementwise
+Logistic function: log(1 + exp(x)) -- elementwise
 }

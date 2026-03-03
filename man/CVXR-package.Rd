@@ -20,11 +20,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Anqi Fu \email{anqif@alumni.stanford.edu}
+\strong{Maintainer}: Balasubramanian Narasimhan \email{naras@stat.stanford.edu}
 
 Authors:
 \itemize{
-  \item Balasubramanian Narasimhan \email{naras@stat.stanford.edu}
+  \item Anqi Fu \email{anqif@alumni.stanford.edu}
   \item Steven Diamond
   \item John Miller
 }

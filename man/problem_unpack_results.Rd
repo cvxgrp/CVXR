@@ -23,9 +23,9 @@ Inverts the reduction chain and unpacks the raw solver solution into
 the original problem's variables and constraints. This is step 3 of
 the decomposed solve pipeline:
 \enumerate{
-\item \code{\link{problem_data}()} — compile the problem
-\item \code{\link{solve_via_data}(chain, data)} — call the solver
-\item \code{problem_unpack_results()} — invert and unpack
+\item \code{\link{problem_data}()} -- compile the problem
+\item \code{\link{solve_via_data}(chain, data)} -- call the solver
+\item \code{problem_unpack_results()} -- invert and unpack
 }
 }
 \details{

@@ -337,8 +337,8 @@ CRAN release: 2018-02-20
   ECOSolveR now.
 
 - Updated `unpack_results` to behave exactly like in CVXPY. Added
-  documentation and testthat tests. Documented in [Getting Faster
-  Results article](https://cvxr.rbind.io/cvxr_examples/cvxr_speed/).
+  documentation and testthat tests. Documented in the
+  [Speed](https://cvxr.rbind.io/examples/solvers/speed).
 
 ## CVXR 0.94-4
 

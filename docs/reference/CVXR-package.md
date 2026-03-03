@@ -22,11 +22,11 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Anqi Fu <anqif@alumni.stanford.edu>
+**Maintainer**: Balasubramanian Narasimhan <naras@stat.stanford.edu>
 
 Authors:
 
-- Balasubramanian Narasimhan <naras@stat.stanford.edu>
+- Anqi Fu <anqif@alumni.stanford.edu>
 
 - Steven Diamond
 

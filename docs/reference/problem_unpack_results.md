@@ -5,12 +5,12 @@ original problem's variables and constraints. This is step 3 of the
 decomposed solve pipeline:
 
 1.  [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
-    — compile the problem
+    – compile the problem
 
 2.  [`solve_via_data`](https://www.cvxgrp.org/CVXR/reference/solve_via_data.md)`(chain, data)`
-    — call the solver
+    – call the solver
 
-3.  `problem_unpack_results()` — invert and unpack
+3.  `problem_unpack_results()` – invert and unpack
 
 ## Usage
 

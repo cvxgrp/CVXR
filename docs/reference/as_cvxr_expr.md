@@ -5,7 +5,7 @@ Wraps numeric vectors, matrices, and Matrix package objects as CVXR
 Values that are already CVXR expressions are returned unchanged. This is
 useful when you need to ensure that one operand in an arithmetic
 expression is a CVXR type so that CVXR's operator dispatch takes effect
-— for example, when multiplying a sparse Matrix by a Variable with
+– for example, when multiplying a sparse Matrix by a Variable with
 `%*%`.
 
 ## Usage

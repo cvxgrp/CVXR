@@ -16,4 +16,4 @@ linop_set_type(ptr, type)
 
 - type:
 
-  Character string — one of `.LINOP_TYPES`.
+  Character string – one of `.LINOP_TYPES`.

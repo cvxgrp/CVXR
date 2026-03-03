@@ -1,6 +1,6 @@
-# x \* exp(x) — elementwise
+# x \* exp(x) – elementwise
 
-x \* exp(x) — elementwise
+x \* exp(x) – elementwise
 
 ## Usage
 

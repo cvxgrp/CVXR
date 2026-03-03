@@ -222,9 +222,9 @@ Functions applied element-by-element
   Divergence: x\*log(x/y) - x + y
 - [`log1p_atom()`](https://www.cvxgrp.org/CVXR/reference/log1p_atom.md)
   [`log1p_expr()`](https://www.cvxgrp.org/CVXR/reference/log1p_atom.md)
-  : Log(1 + x) — elementwise
+  : Log(1 + x) – elementwise
 - [`logistic()`](https://www.cvxgrp.org/CVXR/reference/logistic.md) :
-  Logistic function: log(1 + exp(x)) — elementwise
+  Logistic function: log(1 + exp(x)) – elementwise
 - [`loggamma()`](https://www.cvxgrp.org/CVXR/reference/loggamma.md) :
   Elementwise log of the gamma function
 - [`log_normcdf()`](https://www.cvxgrp.org/CVXR/reference/log_normcdf.md)
@@ -240,7 +240,7 @@ Functions applied element-by-element
 - [`square()`](https://www.cvxgrp.org/CVXR/reference/square.md) : Square
   of an expression: x^2
 - [`xexp()`](https://www.cvxgrp.org/CVXR/reference/xexp.md) : x \*
-  exp(x) — elementwise
+  exp(x) – elementwise
 
 ## Aggregation atoms
 
@@ -532,6 +532,8 @@ Helpers and introspection
   : Convert a value to a CVXR Expression
 - [`visualize()`](https://www.cvxgrp.org/CVXR/reference/visualize.md) :
   Visualize the Canonicalization Pipeline of a CVXR Problem
+- [`to_latex()`](https://www.cvxgrp.org/CVXR/reference/to_latex.md) :
+  Convert CVXR Object to LaTeX
 - [`expr_H()`](https://www.cvxgrp.org/CVXR/reference/expr_H.md) :
   Conjugate-Transpose of an Expression
 - [`make_sparse_diagonal_matrix()`](https://www.cvxgrp.org/CVXR/reference/make_sparse_diagonal_matrix.md)

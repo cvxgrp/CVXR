@@ -1,6 +1,6 @@
-# Log(1 + x) — elementwise
+# Log(1 + x) – elementwise
 
-Log(1 + x) — elementwise
+Log(1 + x) – elementwise
 
 ## Usage
 

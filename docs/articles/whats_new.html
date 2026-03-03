@@ -102,7 +102,7 @@ returns the optimal value directly. Variable values are extracted with
 <span><span class="co">#&gt;     norm, outer</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span>, name <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="va">opt_val</span></span>
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
@@ -114,7 +114,7 @@ returns the optimal value directly. Variable values are extracted with
 <p>The old <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code> still works and returns a
 backward-compatible list:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> In a future CVXR release, `solve()` will return the optimal value directly</span></span>
 <span><span class="co">#&gt;   (like `psolve()`).</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The `$getValue()`/`$getDualValue()` interface will be removed.</span></span>
@@ -277,9 +277,9 @@ log-log transformation:</p>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">obj</span>, <span class="va">constr</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Is DGP:"</span>, <span class="fu"><a href="../reference/is_dgp.html">is_dgp</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Is DGP: TRUE</span></span>
-<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, gp <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, gp <span class="op">=</span> <span class="cn">TRUE</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal:"</span>, <span class="va">opt_val</span>, <span class="st">" x ="</span>, <span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="st">" y ="</span>, <span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Optimal: 40  x = 20  y = 2</span></span></code></pre></div>
+<span><span class="co">#&gt; Optimal: 40  x = 9.96834  y = 4.012704</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dqcp-quasiconvex-programming">DQCP (Quasiconvex Programming)<a class="anchor" aria-label="anchor" href="#dqcp-quasiconvex-programming"></a>
@@ -290,9 +290,9 @@ log-log transformation:</p>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/ceil_expr.html">ceil_expr</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;=</span> <span class="fl">0.7</span>, <span class="va">x</span> <span class="op">&lt;=</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Is DQCP:"</span>, <span class="fu"><a href="../reference/is_dqcp.html">is_dqcp</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Is DQCP: TRUE</span></span>
-<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, qcp <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, qcp <span class="op">=</span> <span class="cn">TRUE</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal:"</span>, <span class="va">opt_val</span>, <span class="st">" x ="</span>, <span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Optimal: 1  x = 0.7</span></span></code></pre></div>
+<span><span class="co">#&gt; Optimal: 1  x = 0.8812532</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dpp-parameterized-programming">DPP (Parameterized Programming)<a class="anchor" aria-label="anchor" href="#dpp-parameterized-programming"></a>
@@ -310,7 +310,7 @@ log-log transformation:</p>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">A</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">x</span> <span class="op">-</span> <span class="va">b</span><span class="op">)</span> <span class="op">+</span> <span class="va">lam</span> <span class="op">*</span> <span class="fu"><a href="../reference/p_norm.html">p_norm</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Is DPP:"</span>, <span class="fu"><a href="../reference/is_dpp.html">is_dpp</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Is DPP: TRUE</span></span>
-<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 9.741033</span></span>
 <span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           [,1]</span></span>
@@ -323,7 +323,7 @@ log-log transformation:</p>
 compilation:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">lam</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fl">10.0</span></span>
-<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 26.58717</span></span>
 <span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           [,1]</span></span>
@@ -356,7 +356,7 @@ compilation:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span>, complex <span class="op">=</span> <span class="cn">TRUE</span>, name <span class="op">=</span> <span class="st">"z"</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/p_norm.html">p_norm</a></span><span class="op">(</span><span class="va">z</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">z</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">2i</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2.236068</span></span>
 <span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">z</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      [,1]</span></span>

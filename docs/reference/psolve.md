@@ -108,5 +108,5 @@ infeasible / unbounded problems.
 ``` r
 x <- Variable()
 prob <- Problem(Minimize(x), list(x >= 5))
-result <- psolve(prob)
+result <- psolve(prob, solver = "CLARABEL")
 ```

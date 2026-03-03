@@ -2,10 +2,9 @@
 
 ## Authors
 
-- **[Anqi Fu](https://anqif.github.io/)**. Author.
+- **[Anqi Fu](https://anqif.github.io/)**. Author, maintainer.
 
-- **[Balasubramanian Narasimhan](https://naras.su.domains)**. Author,
-  maintainer.
+- **[Balasubramanian Narasimhan](https://naras.su.domains)**. Author.
 
 - **[Steven Diamond](https://stevendiamond.me/)**. Author.
 

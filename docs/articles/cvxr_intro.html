@@ -137,7 +137,7 @@ via <code>lm</code>:</p>
 <span><span class="va">betaHat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="va">objective</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">Y</span> <span class="op">-</span> <span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">betaHat</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span></code></pre></div>
 <p>The optimal value and estimated coefficients:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal value:"</span>, <span class="va">result</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -169,7 +169,7 @@ via <code>lm</code>:</p>
 should be nonnegative:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">betaHat</span> <span class="op">&gt;=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        [,1]</span></span>
 <span><span class="co">#&gt;  [1,] 0.000</span></span>
@@ -199,48 +199,16 @@ are nonnegative:</p>
 <span><span class="va">constraint2</span> <span class="op">&lt;-</span> <span class="va">B</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">betaHat</span> <span class="op">&gt;=</span> <span class="fl">0</span></span>
 <span></span>
 <span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">constraint1</span>, <span class="va">constraint2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co">## verbose = TRUE for details</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co">## verbose = TRUE for details</span></span>
 <span><span class="co">#&gt; ────────────────────────────────── CVXR v1.8.1 ─────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Problem: 1 variable, 2 constraints (QP)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"OSQP"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::OSQP_QP_Solver</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.009s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"CLARABEL"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::Clarabel_Solver</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.015s</span></span>
 <span><span class="co">#&gt; ─────────────────────────────── Numerical solver ───────────────────────────────</span></span>
-<span><span class="co">#&gt; -----------------------------------------------------------------</span></span>
-<span><span class="co">#&gt;            OSQP v1.0.0  -  Operator Splitting QP Solver</span></span>
-<span><span class="co">#&gt;               (c) The OSQP Developer Team</span></span>
-<span><span class="co">#&gt; -----------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; problem:  variables n = 110, constraints m = 111</span></span>
-<span><span class="co">#&gt;           nnz(P) + nnz(A) = 1210</span></span>
-<span><span class="co">#&gt; settings: algebra = Built-in,</span></span>
-<span><span class="co">#&gt;           OSQPInt = 4 bytes, OSQPFloat = 8 bytes,</span></span>
-<span><span class="co">#&gt;           linear system solver = QDLDL v0.1.8,</span></span>
-<span><span class="co">#&gt;           eps_abs = 1.0e-05, eps_rel = 1.0e-05,</span></span>
-<span><span class="co">#&gt;           eps_prim_inf = 1.0e-04, eps_dual_inf = 1.0e-04,</span></span>
-<span><span class="co">#&gt;           rho = 1.00e-01 (adaptive: 50 iterations),</span></span>
-<span><span class="co">#&gt;           sigma = 1.00e-06, alpha = 1.60, max_iter = 10000</span></span>
-<span><span class="co">#&gt;           check_termination: on (interval 25, duality gap: on),</span></span>
-<span><span class="co">#&gt;           time_limit: 1.00e+10 sec,</span></span>
-<span><span class="co">#&gt;           scaling: on (10 iterations), scaled_termination: off</span></span>
-<span><span class="co">#&gt;           warm starting: on, polishing: on, </span></span>
-<span><span class="co">#&gt; iter   objective    prim res   dual res   gap        rel kkt    rho         time</span></span>
-<span><span class="co">#&gt;    1   0.0000e+00   2.47e+01   4.44e+04  -6.89e+05   4.44e+04   1.00e-01    7.23e-05s</span></span>
-<span><span class="co">#&gt;   50   1.1424e+02   3.47e+00   2.78e-04  -2.46e+02   3.47e+00   7.70e+00*   1.64e-04s</span></span>
-<span><span class="co">#&gt;  125   1.2876e+03   6.48e-06   3.21e-06  -3.10e-03   6.48e-06   7.70e+00    3.04e-04s</span></span>
-<span><span class="co">#&gt; plsh   1.2876e+03   4.15e-15   2.52e-13  -9.09e-13   2.52e-13   --------    3.64e-04s</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; status:               solved</span></span>
-<span><span class="co">#&gt; solution polishing:   successful</span></span>
-<span><span class="co">#&gt; number of iterations: 125</span></span>
-<span><span class="co">#&gt; optimal objective:    1287.6297</span></span>
-<span><span class="co">#&gt; dual objective:       1287.6297</span></span>
-<span><span class="co">#&gt; duality gap:          -9.0949e-13</span></span>
-<span><span class="co">#&gt; primal-dual integral: 6.8986e+05</span></span>
-<span><span class="co">#&gt; run time:             3.64e-04s</span></span>
-<span><span class="co">#&gt; optimal rho estimate: 1.41e+01</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Summary ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Status: optimal</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Optimal value: 1287.63</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.009s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.015s</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.001s</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         [,1]</span></span>
@@ -313,7 +281,7 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 <span><span class="co">#&gt; [1] CVXR_1.8.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Matrix_1.7-4      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.2   </span></span>
+<span><span class="co">#&gt;  [1] piqp_0.6.2        Matrix_1.7-4      jsonlite_2.0.0    compiler_4.5.2   </span></span>
 <span><span class="co">#&gt;  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       </span></span>
 <span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      </span></span>
 <span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         </span></span>

@@ -35,7 +35,7 @@ library(CVXR)
 #>     norm, outer
 x <- Variable(2, name = "x")
 prob <- Problem(Minimize(sum_squares(x)), list(x >= 1))
-opt_val <- psolve(prob)
+opt_val <- psolve(prob, solver = "CLARABEL")
 opt_val
 #> [1] 2
 value(x)
@@ -51,7 +51,7 @@ returns a backward-compatible list:
 
 ``` r
 
-result <- solve(prob)
+result <- solve(prob, solver = "CLARABEL")
 #> ℹ In a future CVXR release, `solve()` will return the optimal value directly
 #>   (like `psolve()`).
 #> ℹ The `$getValue()`/`$getDualValue()` interface will be removed.
@@ -147,9 +147,9 @@ constr <- list(x * y >= 40, x <= 20, y >= 2)
 prob <- Problem(obj, constr)
 cat("Is DGP:", is_dgp(prob), "\n")
 #> Is DGP: TRUE
-opt_val <- psolve(prob, gp = TRUE)
+opt_val <- psolve(prob, gp = TRUE, solver = "CLARABEL")
 cat("Optimal:", opt_val, " x =", value(x), " y =", value(y), "\n")
-#> Optimal: 40  x = 20  y = 2
+#> Optimal: 40  x = 9.96834  y = 4.012704
 ```
 
 ### DQCP (Quasiconvex Programming)
@@ -162,9 +162,9 @@ x <- Variable(name = "x")
 prob <- Problem(Minimize(ceil_expr(x)), list(x >= 0.7, x <= 1.5))
 cat("Is DQCP:", is_dqcp(prob), "\n")
 #> Is DQCP: TRUE
-opt_val <- psolve(prob, qcp = TRUE)
+opt_val <- psolve(prob, qcp = TRUE, solver = "CLARABEL")
 cat("Optimal:", opt_val, " x =", value(x), "\n")
-#> Optimal: 1  x = 0.7
+#> Optimal: 1  x = 0.8812532
 ```
 
 ### DPP (Parameterized Programming)
@@ -184,7 +184,7 @@ b <- rnorm(10)
 prob <- Problem(Minimize(sum_squares(A %*% x - b) + lam * p_norm(x, 1)))
 cat("Is DPP:", is_dpp(prob), "\n")
 #> Is DPP: TRUE
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 #> [1] 9.741033
 value(x)
 #>           [,1]
@@ -200,7 +200,7 @@ Changing the parameter and re-solving reuses the cached compilation:
 ``` r
 
 value(lam) <- 10.0
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 #> [1] 26.58717
 value(x)
 #>           [,1]
@@ -236,7 +236,7 @@ CVXR supports complex-valued optimization:
 
 z <- Variable(2, complex = TRUE, name = "z")
 prob <- Problem(Minimize(p_norm(z, 2)), list(z[1] == 1 + 2i))
-psolve(prob)
+psolve(prob, solver = "CLARABEL")
 #> [1] 2.236068
 value(z)
 #>      [,1]

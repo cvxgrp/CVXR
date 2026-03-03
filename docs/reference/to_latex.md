@@ -2,8 +2,8 @@
 
 Renders a CVXR `Problem`, `Expression`, or `Constraint` as a LaTeX
 string. Problem-level output uses the `optidef` package (`mini*`/`maxi*`
-environments) and atom macros from `dcp.sty` (shipped in
-`inst/latex/dcp.sty`).
+environments) and atom macros from `dcp.sty` (shipped as
+`system.file("sty", "dcp.sty", package = "CVXR")`).
 
 ## Usage
 

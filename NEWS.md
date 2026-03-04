@@ -41,6 +41,12 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
   curvature coloring on constraint nodes, and matrix stuffing
   visualization (Stages 4-5: Standard Form + Solver Data) via the
   new `solver` parameter.
+* Matrix package interoperability via `as_cvxr_expr()`. Sparse Matrix
+  objects (`dgCMatrix`, `dgeMatrix`, etc.) use S4 dispatch which
+  preempts S7/S3, so direct arithmetic like `sparseA %*% x` fails.
+  Wrapping with `as_cvxr_expr(sparseA) %*% x` converts to a CVXR
+  Constant while preserving sparsity. Base R `matrix` and `numeric`
+  work natively without wrapping.
 
 ### Breaking changes from CVXR 1.x
 

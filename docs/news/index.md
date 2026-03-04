@@ -51,6 +51,13 @@ faster than CVXR 1.0-15 on typical problems.
   analysis for non-compliant problems, curvature coloring on constraint
   nodes, and matrix stuffing visualization (Stages 4-5: Standard Form +
   Solver Data) via the new `solver` parameter.
+- Matrix package interoperability via
+  [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md).
+  Sparse Matrix objects (`dgCMatrix`, `dgeMatrix`, etc.) use S4 dispatch
+  which preempts S7/S3, so direct arithmetic like `sparseA %*% x` fails.
+  Wrapping with `as_cvxr_expr(sparseA) %*% x` converts to a CVXR
+  Constant while preserving sparsity. Base R `matrix` and `numeric` work
+  natively without wrapping.
 
 #### Breaking changes from CVXR 1.x
 
@@ -158,7 +165,11 @@ faster than CVXR 1.0-15 on typical problems.
   [`iff()`](https://www.cvxgrp.org/CVXR/reference/iff.md).
 - `%>>%` and `%<<%` operators for PSD and NSD constraints.
 - [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md)
-  helper for wrapping R objects as CVXR constants.
+  helper for wrapping R objects as CVXR constants. Required for Matrix
+  package objects (`dgCMatrix`, `dgeMatrix`, etc.) which use S4 dispatch
+  that preempts S7/S3. Preserves sparsity (unlike
+  [`as.matrix()`](https://rdrr.io/r/base/matrix.html)). Base R
+  `matrix`/`numeric` work natively without wrapping.
 
 #### Bug fixes
 
@@ -174,6 +185,12 @@ faster than CVXR 1.0-15 on typical problems.
 
 #### Known limitations
 
+- Matrix package objects (`dgCMatrix`, `dgeMatrix`, `ddiMatrix`,
+  `sparseVector`) cannot be used directly with CVXR operators due to S4
+  dispatch preempting S7/S3. Wrap with
+  [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md)
+  first. Base R `matrix`/`numeric` work natively. This is an R dispatch
+  limitation requiring upstream changes in S7 and/or Matrix.
 - Warm-start for HiGHS is blocked (R `highs` package lacks
   `setSolution()` API).
 - Derivative/sensitivity API deferred (requires `diffcp`, no R

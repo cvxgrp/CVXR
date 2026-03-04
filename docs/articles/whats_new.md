@@ -398,6 +398,14 @@ To migrate code from CVXR 1.x to 1.8:
 5.  Replace `axis = NA` with `axis = NULL` (axis values 1 and 2 are
     unchanged)
 6.  Update solver preferences: the default is now CLARABEL (was ECOS)
+7.  Wrap Matrix package objects with
+    [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md)
+    before using them with CVXR operators (e.g.,
+    `as_cvxr_expr(A_sparse) %*% x` instead of `A_sparse %*% x`). This
+    preserves sparsity — unlike
+    [`as.matrix()`](https://rdrr.io/r/base/matrix.html), which
+    densifies. Base R `matrix` and `numeric` objects work natively
+    without wrapping.
 
 All old function names continue to work with deprecation warnings.
 

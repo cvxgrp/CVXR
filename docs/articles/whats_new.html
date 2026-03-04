@@ -65,7 +65,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan, and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2026-03-03</h4>
+            <h4 data-toc-skip class="date">2026-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/whats_new.Rmd" class="external-link"><code>vignettes/whats_new.Rmd</code></a></small>
       <div class="d-none name"><code>whats_new.Rmd</code></div>
@@ -561,6 +561,12 @@ problems</li>
 values 1 and 2 are unchanged)</li>
 <li>Update solver preferences: the default is now CLARABEL (was
 ECOS)</li>
+<li>Wrap Matrix package objects with <code><a href="../reference/as_cvxr_expr.html">as_cvxr_expr()</a></code> before
+using them with CVXR operators (e.g.,
+<code>as_cvxr_expr(A_sparse) %*% x</code> instead of
+<code>A_sparse %*% x</code>). This preserves sparsity — unlike
+<code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code>, which densifies. Base R <code>matrix</code>
+and <code>numeric</code> objects work natively without wrapping.</li>
 </ol>
 <p>All old function names continue to work with deprecation
 warnings.</p>

@@ -113,6 +113,10 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
 * Boolean logic atoms: `Not()`, `And()`, `Or()`, `Xor()`, `implies()`, `iff()`.
 * `%>>%` and `%<<%` operators for PSD and NSD constraints.
 * `as_cvxr_expr()` helper for wrapping R objects as CVXR constants.
+  Required for Matrix package objects (`dgCMatrix`, `dgeMatrix`, etc.)
+  which use S4 dispatch that preempts S7/S3. Preserves sparsity
+  (unlike `as.matrix()`). Base R `matrix`/`numeric` work natively
+  without wrapping.
 
 ### Bug fixes
 
@@ -127,6 +131,11 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
 
 ### Known limitations
 
+* Matrix package objects (`dgCMatrix`, `dgeMatrix`, `ddiMatrix`,
+  `sparseVector`) cannot be used directly with CVXR operators due to
+  S4 dispatch preempting S7/S3. Wrap with `as_cvxr_expr()` first.
+  Base R `matrix`/`numeric` work natively. This is an R dispatch
+  limitation requiring upstream changes in S7 and/or Matrix.
 * Warm-start for HiGHS is blocked (R `highs` package lacks `setSolution()` API).
 * Derivative/sensitivity API deferred (requires `diffcp`, no R equivalent).
 * Deferred to a future release: RelEntrConeQuad, quantum atoms, MOSEK MIP.

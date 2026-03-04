@@ -18,6 +18,14 @@
 #' @returns A matrix or dgCMatrix
 #' @keywords internal
 intf_convert <- function(val) {
+  if (inherits(val, "sparseVector")) {
+    ## Convert sparseVector to sparse column matrix
+    n <- length(val)
+    idx <- val@i
+    vals <- val@x
+    return(Matrix::sparseMatrix(i = idx, j = rep(1L, length(idx)),
+                                x = vals, dims = c(n, 1L)))
+  }
   if (inherits(val, "sparseMatrix")) {
     ## Keep sparse matrices sparse, but ensure numeric (not logical)
     if (is.logical(val@x)) {

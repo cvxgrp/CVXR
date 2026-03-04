@@ -288,6 +288,11 @@ To migrate code from CVXR 1.x to 1.8:
 4. Replace `result$getDualValue(con)` with `dual_value(con)`
 5. Replace `axis = NA` with `axis = NULL` (axis values 1 and 2 are unchanged)
 6. Update solver preferences: the default is now CLARABEL (was ECOS)
+7. Wrap Matrix package objects with `as_cvxr_expr()` before using them
+   with CVXR operators (e.g., `as_cvxr_expr(A_sparse) %*% x` instead
+   of `A_sparse %*% x`). This preserves sparsity --- unlike
+   `as.matrix()`, which densifies. Base R `matrix` and `numeric`
+   objects work natively without wrapping.
 
 All old function names continue to work with deprecation warnings.
 

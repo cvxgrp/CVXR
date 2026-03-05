@@ -47,6 +47,11 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
   Wrapping with `as_cvxr_expr(sparseA) %*% x` converts to a CVXR
   Constant while preserving sparsity. Base R `matrix` and `numeric`
   work natively without wrapping.
+* Full 2D broadcasting for `+` and `-` operators, matching CVXPY's
+  `Expression.broadcast()`. Expressions with compatible but different
+  shapes (e.g., `(1, n) + (m, 1)` → `(m, n)`) now work correctly in
+  constraints and objectives. Previously only scalar promotion was
+  supported.
 
 ### Breaking changes from CVXR 1.x
 

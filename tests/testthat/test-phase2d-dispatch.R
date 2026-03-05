@@ -103,7 +103,11 @@ test_that("Subtraction: Variable - scalar", {
   x <- Variable(3)
   result <- x - 1
   expect_true(S7_inherits(result, AddExpression))
-  expect_true(S7_inherits(result@args[[2L]], NegExpression))
+  ## After broadcast_args, scalar NegExpression is wrapped in Promote
+  ## (matches CVXPY: Expression.broadcast() promotes scalars before AddExpression)
+  neg_arg <- result@args[[2L]]
+  if (S7_inherits(neg_arg, Promote)) neg_arg <- neg_arg@args[[1L]]
+  expect_true(S7_inherits(neg_arg, NegExpression))
 })
 
 ## @cvxpy NONE

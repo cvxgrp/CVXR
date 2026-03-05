@@ -37,8 +37,8 @@
   e2 <- as_expr(e2)
   switch(.Generic,
     ## Arithmetic
-    "+"  = AddExpression(list(e1, e2)),
-    "-"  = AddExpression(list(e1, NegExpression(e2))),
+    "+"  = { bcast <- broadcast_args(e1, e2); AddExpression(list(bcast[[1L]], bcast[[2L]])) },
+    "-"  = { bcast <- broadcast_args(e1, NegExpression(e2)); AddExpression(list(bcast[[1L]], bcast[[2L]])) },
     "*"  = Multiply(e1, e2),
     "/"  = DivExpression(e1, e2),
     "^"  = power(e1, e2),
@@ -163,7 +163,9 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
         ## sum(x, y, ...) -> SumEntries of addition
         result <- as_expr(args[[1L]])
         for (i in seq_along(args)[-1L]) {
-          result <- AddExpression(list(result, as_expr(args[[i]])))
+          ai <- as_expr(args[[i]])
+          bcast <- broadcast_args(result, ai)
+          result <- AddExpression(list(bcast[[1L]], bcast[[2L]]))
         }
         SumEntries(result)
       }

@@ -373,7 +373,6 @@ test_that("Negative index handling (R convention: exclude)", {
 
 ## @cvxpy test_expressions.py::TestExpressions::test_broadcast_mul
 test_that("Broadcasting in multiply (CVXPY parity)", {
-  ## R broadcasting via .broadcast_numeric or multiply
   set.seed(0)
   m <- 3L
   n <- 4L
@@ -388,6 +387,18 @@ test_that("Broadcasting in multiply (CVXPY parity)", {
   row_scale <- Variable(c(m, 1L))
   R_expr <- multiply(A, row_scale)
   expect_equal(R_expr@shape, c(m, n))
+
+  ## Solve: Constant(3,1) * Variable(1,3) => (3,3)
+  ## CVXPY: y=Parameter((3,1)), z=Variable((1,3)), solve with SCS
+  y_val <- matrix(0:2, 3, 1)
+  z <- Variable(c(1L, 3L))
+  z_val <- matrix(c(-1, 0, 1), 1, 3)
+  expr <- multiply(Constant(y_val), z)
+  expect_equal(expr@shape, c(3L, 3L))
+  prob <- Problem(Minimize(sum(expr)), list(z == z_val))
+  psolve(prob, solver = "CLARABEL")
+  expected <- y_val[, 1] %o% z_val[1, ]  ## outer product
+  expect_equal(value(expr), expected, tolerance = 1e-5)
 })
 
 # ── 13. test_broadcast_add ───────────────────────────────────────────
@@ -408,6 +419,26 @@ test_that("Broadcasting in addition (CVXPY parity)", {
   row_scale <- Variable(c(m, 1L))
   R_expr <- A + row_scale
   expect_equal(R_expr@shape, c(m, n))
+
+  ## Solve: Constant(3,1) + Variable(1,3) => (3,3)
+  ## CVXPY: y=Parameter((3,1)), z=Variable((1,3)), solve with SCS
+  y_val <- matrix(0:2, 3, 1)
+  z <- Variable(c(1L, 3L))
+  z_val <- matrix(c(-1, 0, 1), 1, 3)
+  expr <- Constant(y_val) + z
+  expect_equal(expr@shape, c(3L, 3L))
+  prob <- Problem(Minimize(sum(expr)), list(z == z_val))
+  psolve(prob, solver = "CLARABEL")
+  expected <- outer(y_val[, 1], z_val[1, ], "+")
+  expect_equal(value(expr), expected, tolerance = 1e-5)
+
+  ## Subtraction: (1,3) - (3,1) => (3,3)
+  expr2 <- z - Constant(y_val)
+  expect_equal(expr2@shape, c(3L, 3L))
+  prob2 <- Problem(Minimize(sum(expr2)), list(z == z_val))
+  psolve(prob2, solver = "CLARABEL")
+  expected2 <- outer(z_val[1, ], y_val[, 1], "-") |> t()
+  expect_equal(value(expr2), expected2, tolerance = 1e-5)
 })
 
 # ── 14. test_curvatures ─────────────────────────────────────────────
@@ -2003,25 +2034,54 @@ test_that("constraints: boolean variable violation (CVXPY parity)", {
 
 ## @cvxpy test_constraints.py::TestConstraints::test_broadcasting
 test_that("constraints: broadcasting in constraints (CVXPY parity)", {
-  ## CVXPY: x(3,1) == Constant(ones(3)) with shape (3,) => shape (3,3)
-  ## In CVXR, Constant(rep(1,3)) is shape (3,1), same as x(3,1).
-  ## To get actual broadcasting we need shapes that differ.
-  ## We test with compatible shapes (3,1) == (1,3) => (3,3).
+  ## CVXPY: x(3,1) == Constant(ones(3)) broadcasts to (3,3)
+  ## In CVXR: x(3,1) == Constant(1x3) => (3,3)
 
-  ## Equality constraint with broadcasting
+  ## Equality constraint with broadcasting — shape + solve
   x <- Variable(c(3, 1))
   c_val <- Constant(matrix(1, nrow = 1, ncol = 3))
   con <- (x == c_val)
   expect_equal(con@shape, c(3L, 3L))
 
-  ## Inequality constraint with broadcasting
+  prob <- Problem(Minimize(0), list(con))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.vector(value(x)), rep(1, 3), tolerance = 1e-5)
+
+  ## Inequality constraint with broadcasting — shape + solve
   x2 <- Variable(c(3, 1))
   con2 <- (x2 >= c_val)
   expect_equal(con2@shape, c(3L, 3L))
 
-  ## Note: CVXPY also tests solving these, but solving broadcast constraints
-  ## fails in both CVXPY's CPP backend and CVXR's C++ canonicalization.
-  ## We verify shape construction only.
+  prob2 <- Problem(Minimize(sum(x2)), list(con2))
+  psolve(prob2, solver = "CLARABEL")
+  expect_equal(as.vector(value(x2)), rep(1, 3), tolerance = 1e-5)
+})
+
+# ── test_broadcast_sum_entries (wdnet repro) ─────────────────────
+
+## @r_specific broadcast regression from wdnet::get_eta_directed
+test_that("Broadcasting with sum_entries and matrix constant (wdnet repro)", {
+  ## sum_entries(x, axis=2) has shape (1, ncol)
+  ## matrix(1, nrow, 1) has shape (nrow, 1)
+  ## Their difference broadcasts to (nrow, ncol)
+  nr <- 10L
+  nc <- 8L
+  x <- Variable(c(nr, nc), nonneg = TRUE)
+
+  se <- sum_entries(x, axis = 2)
+  expect_equal(se@shape, c(1L, nc))
+
+  bc <- se - matrix(1, nr, 1)
+  expect_equal(bc@shape, c(nr, nc))
+
+  ## Solve: constrain broadcasted expression to zero
+  prob <- Problem(Minimize(0), list(x >= 0, bc == 0))
+  result <- psolve(prob, solver = "CLARABEL")
+  expect_true(result < Inf)  ## feasible
+
+  ## Each column of x sums to 1 (replicated across all rows of the constraint)
+  col_sums <- colSums(value(x))
+  expect_equal(col_sums, rep(1, nc), tolerance = 1e-4)
 })
 
 # ── test_nsd_constraint ───────────────────────────────────────────

@@ -56,6 +56,11 @@ method(graph_implementation, Promote) <- function(x, arg_objs, shape, data = NUL
   list(promote_linop(arg_objs[[1L]], shape), list())
 }
 
+# -- expr_name: suppress shape data in display -------------------------
+method(expr_name, Promote) <- function(x) {
+  expr_name(x@args[[1L]])
+}
+
 # -- cvxr_promote: function to conditionally promote -----------------
 ## CVXPY SOURCE: promote.py lines 27-49 (promote function)
 
@@ -77,9 +82,10 @@ cvxr_promote <- function(expr, shape) {
   }
 }
 
-# -- broadcast_args: promote scalars for binary ops ------------------
-## CVXPY SOURCE: expressions/expression.py lines 658-682 (Expression.broadcast)
-## Simplified to scalar promotion only; full 2D broadcasting deferred.
+# -- broadcast_args: broadcast expressions for binary ops ------------
+## CVXPY SOURCE: expressions/expression.py lines 658-690 (Expression.broadcast)
+## Scalar promotion + full 2D broadcasting via ones-matrix multiplication.
+## Called from +, -, *, / operators before atom construction.
 
 #' Broadcast two expressions for binary operations
 #' @param lh_expr Left-hand expression
@@ -87,13 +93,40 @@ cvxr_promote <- function(expr, shape) {
 #' @returns List of two expressions with compatible shapes
 #' @keywords internal
 broadcast_args <- function(lh_expr, rh_expr) {
+  ## Fast path: shapes already match (the common case)
+  if (identical(lh_expr@shape, rh_expr@shape)) return(list(lh_expr, rh_expr))
+
   lh_expr <- as_expr(lh_expr)
   rh_expr <- as_expr(rh_expr)
-  ## Promote scalars
+
+  ## Promote scalars (CVXPY expression.py lines 663-669)
   if (expr_is_scalar(lh_expr) && !expr_is_scalar(rh_expr)) {
     lh_expr <- cvxr_promote(lh_expr, rh_expr@shape)
   } else if (expr_is_scalar(rh_expr) && !expr_is_scalar(lh_expr)) {
     rh_expr <- cvxr_promote(rh_expr, lh_expr@shape)
+  } else if (expr_is_scalar(lh_expr) && expr_is_scalar(rh_expr)) {
+    return(list(lh_expr, rh_expr))
+  }
+
+  ## Full 2D broadcasting (CVXPY expression.py lines 671-682)
+  ## Expand dimension-1 axes via matrix multiplication with ones vectors,
+  ## e.g. (1,n) -> (m,n) via ones(m,1) %*% expr
+  if (length(lh_expr@shape) == 2L && length(rh_expr@shape) == 2L) {
+    dims <- pmax(lh_expr@shape, rh_expr@shape)
+    ## Broadcast along dim 1 (rows)
+    if (lh_expr@shape[1L] == 1L && lh_expr@shape[1L] < dims[1L]) {
+      lh_expr <- Constant(matrix(1, dims[1L], 1L)) %*% lh_expr
+    }
+    if (rh_expr@shape[1L] == 1L && rh_expr@shape[1L] < dims[1L]) {
+      rh_expr <- Constant(matrix(1, dims[1L], 1L)) %*% rh_expr
+    }
+    ## Broadcast along dim 2 (cols)
+    if (lh_expr@shape[2L] == 1L && lh_expr@shape[2L] < dims[2L]) {
+      lh_expr <- lh_expr %*% Constant(matrix(1, 1L, dims[2L]))
+    }
+    if (rh_expr@shape[2L] == 1L && rh_expr@shape[2L] < dims[2L]) {
+      rh_expr <- rh_expr %*% Constant(matrix(1, 1L, dims[2L]))
+    }
   }
   list(lh_expr, rh_expr)
 }

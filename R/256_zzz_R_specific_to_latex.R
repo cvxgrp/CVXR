@@ -347,8 +347,13 @@ method(.to_latex_prec, AddExpression) <- function(x, names_map = NULL, ...) {
       parts[i] <- res$latex
     } else {
       ## Check if this arg is a negation: render as " - ..." instead of " + -..."
-      if (S7_inherits(x@args[[i]], NegExpression)) {
-        inner <- .to_latex_prec(x@args[[i]]@args[[1L]], names_map)
+      ## After broadcast_args, NegExpression may be wrapped in Promote
+      ai <- x@args[[i]]
+      neg_inner <- if (S7_inherits(ai, NegExpression)) ai@args[[1L]]
+        else if (S7_inherits(ai, Promote) && S7_inherits(ai@args[[1L]], NegExpression)) ai@args[[1L]]@args[[1L]]
+        else NULL
+      if (!is.null(neg_inner)) {
+        inner <- .to_latex_prec(neg_inner, names_map)
         parts[i] <- paste0(" - ", .paren_if(inner$latex, inner$prec, .LATEX_PREC$ADD))
       } else if (startsWith(res$latex, "-")) {
         parts[i] <- paste0(" - ", substring(res$latex, 2L))
@@ -1232,10 +1237,19 @@ method(.to_latex_prec, PSD) <- function(x, names_map = NULL, ...) {
   arg <- x@args[[1L]]
 
   ## Detect A + (-B) pattern from %>>%: PSD(A - B)
-  if (S7_inherits(arg, AddExpression) && length(arg@args) == 2L &&
-      S7_inherits(arg@args[[2L]], NegExpression)) {
+  ## After broadcast_args, the NegExpression may be wrapped in Promote
+  .unwrap_neg <- function(e) {
+    if (S7_inherits(e, NegExpression)) return(e)
+    if (S7_inherits(e, Promote) && S7_inherits(e@args[[1L]], NegExpression)) return(e@args[[1L]])
+    NULL
+  }
+  neg_node <- if (S7_inherits(arg, AddExpression) && length(arg@args) == 2L)
+    .unwrap_neg(arg@args[[2L]]) else NULL
+  if (!is.null(neg_node)) {
     lhs_expr <- arg@args[[1L]]
-    rhs_expr <- arg@args[[2L]]@args[[1L]]  # unwrap NegExpression
+    ## Unwrap Promote on LHS too (scalar LHS promoted by broadcast_args)
+    if (S7_inherits(lhs_expr, Promote)) lhs_expr <- lhs_expr@args[[1L]]
+    rhs_expr <- neg_node@args[[1L]]  # unwrap NegExpression
     lhs <- .to_latex_prec(lhs_expr, names_map)
 
     if (.is_zero_constant(rhs_expr)) {

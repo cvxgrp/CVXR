@@ -36,5 +36,5 @@ after construction. To change the objective, create a new
 x <- Variable(2)
 prob <- Problem(Minimize(sum_entries(x)), list(x >= 1))
 objective(prob)
-#> minimize SumEntries(var74, NULL, FALSE)
+#> minimize SumEntries(var79, NULL, FALSE)
 ```

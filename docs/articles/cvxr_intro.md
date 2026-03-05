@@ -133,13 +133,13 @@ result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE
 #> ────────────────────────────────── CVXR v1.8.1 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
-#> ℹ Compile time: 0.011s
+#> ℹ Compile time: 0.01s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.011s
-#> ℹ Solver time: 0.001s
+#> ℹ Compile time: 0.01s
+#> ℹ Solver time: 0s
 round(value(betaHat), 3)
 #>         [,1]
 #>  [1,]  0.000
@@ -194,7 +194,7 @@ psolve(problem, solver = "CLARABEL")
 sessionInfo()
 #> R version 4.5.2 (2025-10-31)
 #> Platform: aarch64-apple-darwin20
-#> Running under: macOS Tahoe 26.3
+#> Running under: macOS Tahoe 26.3.1
 #> 
 #> Matrix products: default
 #> BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 

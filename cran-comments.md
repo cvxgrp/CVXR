@@ -36,6 +36,7 @@ All failures stem from intentional API changes in this major version:
 | `CVXR::diff` no longer exported (use bare `diff()` or `cvxr_diff()`) | 2 | Warnings |
 | `sd`/`var`/`outer` export masking | 3 | Warnings |
 | Matrix S4 `%*%` CVXR S7 dispatch conflict (fix: `as_cvxr_expr()`) | 6 | 3 confirmed crashes (rclsp, tramnet, glmmrOptim) + 3 conditional (scpi, PlackettLuce, PortfolioAnalytics) |
+| `sum_entries(x, axis=2)` shape `(1,n)` vs old 1D (needs `t()` on target) | 1 | Runtime infeasibility (wdnet) |
 | `getValue()` deprecation | 1 | Warning |
 
 ### Migration path
@@ -58,7 +59,7 @@ excluded — needs additional Matrix interop fix):
 | migest | PASS | PASS | |
 | Riemann | PASS | PASS | Also needed `Variable(m,n)` → `Variable(c(m,n))` |
 | spBPS | PASS | PASS | |
-| wdnet | PASS | 67/67 | Broadcasting fix resolved the 1 remaining failure |
+| wdnet | PASS | 74/74 | Also needed Variable sig + `t()` on `sum_entries` axis=2 target |
 
 All 30 affected maintainers have been notified with specific,
 per-package migration instructions including exact file:line
@@ -74,7 +75,8 @@ DebiasInfer, filling, mlr3fairness, portfolioBacktest, SIHR
 
 **Install failures** (7 — all `importFrom(CVXR, solve)`):
 ANCOMBC, fungible, migest, PlackettLuce (also Matrix S4 %*% risk),
-Riemann (also Variable sig), spBPS, wdnet (also Variable sig)
+Riemann (also Variable sig), spBPS, wdnet (also Variable sig +
+axis shape)
 
 **Runtime errors** (17):
 aramappings (Variable sig + solve), ccar3 (Variable sig + solve),

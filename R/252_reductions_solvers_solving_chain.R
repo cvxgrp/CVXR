@@ -235,7 +235,10 @@ method(print, SolvingChain) <- function(x, ...) {
     }
   }
 
-  ## Walk constraint tree to detect atom types that require specific cones
+  ## Walk constraint tree to detect atom types that require specific cones.
+  ## Classifications match CVXPY's SOC_ATOMS, PSD_ATOMS, EXP_ATOMS,
+  ## POWCONE_ATOMS, POWCONE_ND_ATOMS (cvxpy/atoms/__init__.py).
+  ## Approx subclasses checked BEFORE exact parents (S7_inherits is TRUE for both).
   .check_expr <- function(expr) {
     ## Direct cone constraint types
     if (S7_inherits(expr, SOC))       return(SOC)
@@ -243,22 +246,30 @@ method(print, SolvingChain) <- function(x, ...) {
     if (S7_inherits(expr, ExpCone))   return(ExpCone)
     if (S7_inherits(expr, PowCone3D)) return(PowCone3D)
     if (S7_inherits(expr, PowConeND)) return(PowConeND)
-    ## Atoms that canonicalize to specific cones
-    if (S7_inherits(expr, Pnorm) || S7_inherits(expr, PnormApprox)) return(SOC)
+    ## SOC_ATOMS: Approx variants (SOC via rational approx), QuadForm, QuadOverLin, Huber
+    if (S7_inherits(expr, PnormApprox))  return(SOC)
+    if (S7_inherits(expr, PowerApprox))  return(SOC)
+    if (S7_inherits(expr, GeoMeanApprox)) return(SOC)
     if (S7_inherits(expr, QuadOverLin) || S7_inherits(expr, QuadForm) ||
         S7_inherits(expr, SymbolicQuadForm)) return(SOC)
-    if (S7_inherits(expr, SigmaMax) || S7_inherits(expr, NormNuc) ||
-        S7_inherits(expr, MatrixFrac) || S7_inherits(expr, TrInv)) return(SOC)
-    if (S7_inherits(expr, SumLargest) || S7_inherits(expr, LambdaSumLargest)) return(SOC)
+    if (S7_inherits(expr, Huber)) return(SOC)
+    ## POWCONE_ATOMS: exact Pnorm, Power (PowCone3D)
+    if (S7_inherits(expr, Pnorm))  return(PowCone3D)
+    if (S7_inherits(expr, Power))  return(PowCone3D)
+    ## POWCONE_ND_ATOMS: exact GeoMean (PowConeND)
+    if (S7_inherits(expr, GeoMean)) return(PowConeND)
+    ## PSD_ATOMS
+    if (S7_inherits(expr, SigmaMax) || S7_inherits(expr, NormNuc)) return(PSD)
+    if (S7_inherits(expr, MatrixFrac) || S7_inherits(expr, TrInv)) return(PSD)
+    if (S7_inherits(expr, LambdaMax) || S7_inherits(expr, LambdaSumLargest)) return(PSD)
+    if (S7_inherits(expr, LogDet)) return(PSD)
+    if (S7_inherits(expr, ConditionNumber)) return(PSD)
+    ## EXP_ATOMS
     if (S7_inherits(expr, LogSumExp) || S7_inherits(expr, Exp) ||
         S7_inherits(expr, Log) || S7_inherits(expr, Entr) ||
         S7_inherits(expr, KlDiv) || S7_inherits(expr, RelEntr) ||
         S7_inherits(expr, Logistic) || S7_inherits(expr, Xexp) ||
         S7_inherits(expr, Log1p)) return(ExpCone)
-    if (S7_inherits(expr, LambdaMax)) return(PSD)
-    if (S7_inherits(expr, LogDet)) return(PSD)
-    if (S7_inherits(expr, Power) || S7_inherits(expr, PowerApprox)) return(SOC)
-    if (S7_inherits(expr, GeoMean) || S7_inherits(expr, GeoMeanApprox)) return(SOC)
     NULL
   }
 

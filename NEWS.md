@@ -52,6 +52,14 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
   shapes (e.g., `(1, n) + (m, 1)` → `(m, n)`) now work correctly in
   constraints and objectives. Previously only scalar promotion was
   supported.
+* Correct solver-cone routing matching CVXPY's atom classifications.
+  Atoms that canonicalize to PSD cones (`MatrixFrac`, `TrInv`,
+  `SigmaMax`, `NormNuc`, `LambdaSumLargest`) are now correctly
+  classified, ensuring solvers like ECOS that don't support SDP are
+  rejected with a clear error message instead of a cryptic dimension
+  mismatch. Approximate variants (`PnormApprox`, `PowerApprox`,
+  `GeoMeanApprox`) correctly route to SOC; exact variants route to
+  their native cone types (`PowCone3D`, `PowConeND`).
 
 ### Breaking changes from CVXR 1.x
 

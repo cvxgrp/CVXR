@@ -392,12 +392,18 @@ mixed-integer programming with boolean variables.
 To migrate code from CVXR 1.x to 1.8:
 
 1.  Replace `result <- solve(problem)` with `opt_val <- psolve(problem)`
+
 2.  Replace `result$getValue(x)` with `value(x)`
+
 3.  Replace `result$status` with `status(problem)`
+
 4.  Replace `result$getDualValue(con)` with `dual_value(con)`
+
 5.  Replace `axis = NA` with `axis = NULL` (axis values 1 and 2 are
     unchanged)
+
 6.  Update solver preferences: the default is now CLARABEL (was ECOS)
+
 7.  Wrap Matrix package objects with
     [`as_cvxr_expr()`](https://www.cvxgrp.org/CVXR/reference/as_cvxr_expr.md)
     before using them with CVXR operators (e.g.,
@@ -406,6 +412,27 @@ To migrate code from CVXR 1.x to 1.8:
     [`as.matrix()`](https://rdrr.io/r/base/matrix.html), which
     densifies. Base R `matrix` and `numeric` objects work natively
     without wrapping.
+
+8.  **Dimension-preserving operations.** CVXR 1.8 preserves 2D shapes
+    throughout, matching CVXPY. In particular, axis reductions like
+    `sum_entries(X, axis = 2)` now return a proper row vector of shape
+    `(1, n)` rather than collapsing to a 1D vector. When comparing such
+    a result with an R numeric vector (which CVXR treats as a column
+    vector), you may need to use [`t()`](https://rdrr.io/r/base/t.html)
+    or `matrix(..., nrow = 1)` to match shapes. For example:
+
+    ``` r
+
+    ## Old (worked in CVXR 1.x because axis reductions were 1D):
+    sum_entries(X, axis = 2) == target_vec
+    ## New (wrap target as row vector to match the (1, n) shape):
+    sum_entries(X, axis = 2) == t(target_vec)
+    ```
+
+    Similarly, if you extract a scalar from a CVXR result and need a
+    plain numeric value, use
+    [`as.numeric()`](https://rdrr.io/r/base/numeric.html) to drop the
+    matrix dimensions.
 
 All old function names continue to work with deprecation warnings.
 

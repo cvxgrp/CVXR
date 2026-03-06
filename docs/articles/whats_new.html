@@ -545,28 +545,43 @@ problems</li>
 </h2>
 <p>To migrate code from CVXR 1.x to 1.8:</p>
 <ol style="list-style-type: decimal">
-<li>Replace <code>result &lt;- solve(problem)</code> with
-<code>opt_val &lt;- psolve(problem)</code>
-</li>
-<li>Replace <code>result$getValue(x)</code> with
-<code>value(x)</code>
-</li>
-<li>Replace <code>result$status</code> with
-<code>status(problem)</code>
-</li>
-<li>Replace <code>result$getDualValue(con)</code> with
-<code>dual_value(con)</code>
-</li>
-<li>Replace <code>axis = NA</code> with <code>axis = NULL</code> (axis
-values 1 and 2 are unchanged)</li>
-<li>Update solver preferences: the default is now CLARABEL (was
-ECOS)</li>
-<li>Wrap Matrix package objects with <code><a href="../reference/as_cvxr_expr.html">as_cvxr_expr()</a></code> before
-using them with CVXR operators (e.g.,
+<li><p>Replace <code>result &lt;- solve(problem)</code> with
+<code>opt_val &lt;- psolve(problem)</code></p></li>
+<li><p>Replace <code>result$getValue(x)</code> with
+<code>value(x)</code></p></li>
+<li><p>Replace <code>result$status</code> with
+<code>status(problem)</code></p></li>
+<li><p>Replace <code>result$getDualValue(con)</code> with
+<code>dual_value(con)</code></p></li>
+<li><p>Replace <code>axis = NA</code> with <code>axis = NULL</code>
+(axis values 1 and 2 are unchanged)</p></li>
+<li><p>Update solver preferences: the default is now CLARABEL (was
+ECOS)</p></li>
+<li><p>Wrap Matrix package objects with <code><a href="../reference/as_cvxr_expr.html">as_cvxr_expr()</a></code>
+before using them with CVXR operators (e.g.,
 <code>as_cvxr_expr(A_sparse) %*% x</code> instead of
 <code>A_sparse %*% x</code>). This preserves sparsity — unlike
 <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code>, which densifies. Base R <code>matrix</code>
-and <code>numeric</code> objects work natively without wrapping.</li>
+and <code>numeric</code> objects work natively without
+wrapping.</p></li>
+<li>
+<p><strong>Dimension-preserving operations.</strong> CVXR 1.8
+preserves 2D shapes throughout, matching CVXPY. In particular, axis
+reductions like <code>sum_entries(X, axis = 2)</code> now return a
+proper row vector of shape <code>(1, n)</code> rather than collapsing to
+a 1D vector. When comparing such a result with an R numeric vector
+(which CVXR treats as a column vector), you may need to use
+<code><a href="https://rdrr.io/r/base/t.html" class="external-link">t()</a></code> or <code>matrix(..., nrow = 1)</code> to match shapes.
+For example:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Old (worked in CVXR 1.x because axis reductions were 1D):</span></span>
+<span><span class="fu"><a href="../reference/sum_entries.html">sum_entries</a></span><span class="op">(</span><span class="va">X</span>, axis <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">==</span> <span class="va">target_vec</span></span>
+<span><span class="co">## New (wrap target as row vector to match the (1, n) shape):</span></span>
+<span><span class="fu"><a href="../reference/sum_entries.html">sum_entries</a></span><span class="op">(</span><span class="va">X</span>, axis <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">target_vec</span><span class="op">)</span></span></code></pre></div>
+<p>Similarly, if you extract a scalar from a CVXR result and need a
+plain numeric value, use <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> to drop the matrix
+dimensions.</p>
+</li>
 </ol>
 <p>All old function names continue to work with deprecation
 warnings.</p>

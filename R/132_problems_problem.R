@@ -565,6 +565,11 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
     cli_abort("{.fn psolve} requires a {.cls Problem} object.")
   }
 
+  ## Normalize solver name to uppercase (CVXPY accepts case-insensitive names)
+  if (!is.null(solver)) {
+    solver <- toupper(solver)
+  }
+
   ## -- Validate gp/qcp mutual exclusivity -------------------------
   ## CVXPY SOURCE: problem.py lines 1186-1187
   if (gp && qcp) {

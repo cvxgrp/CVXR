@@ -64,8 +64,11 @@ excluded — needs additional Matrix interop fix):
 All 30 affected maintainers have been notified with specific,
 per-package migration instructions including exact file:line
 references and code diffs. The changes required are minimal (typically
-1-5 lines per package). Per-package details are in
-`notes/revdep_messages/`.
+1-5 lines per package). Two maintainers (tramnet, SLSEdesign) have
+confirmed they will update their packages once CVXR 1.8.1 is on CRAN.
+Per-package details are in `notes/revdep_messages_v1/` (initial
+notifications) and `notes/revdep_messages_v2/` (follow-up with
+specific fix details).
 
 ### Unaffected packages (5)
 

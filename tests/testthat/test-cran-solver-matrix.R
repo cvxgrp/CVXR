@@ -549,7 +549,7 @@ test_that("AllSolvers: installed_solvers returns character vector of known solve
   expect_true("CLARABEL" %in% solvers)
   ## All returned names must be valid solver constants
   known <- c("CLARABEL", "SCS", "OSQP", "HIGHS", "MOSEK", "GUROBI",
-             "GLPK", "GLPK_MI", "ECOS", "ECOS_BB", "CPLEX", "CVXOPT", "PIQP")
+             "GLPK", "GLPK_MI", "ECOS", "ECOS_BB", "CPLEX", "CVXOPT", "PIQP", "SCIP")
   expect_true(all(solvers %in% known))
 })
 

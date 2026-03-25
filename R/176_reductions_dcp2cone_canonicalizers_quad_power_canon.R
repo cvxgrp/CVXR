@@ -19,12 +19,15 @@ power_quad_canon <- function(expr, args, solver_context = NULL) {
     return(list(affine_expr, list()))
   } else if (p == 2) {
     n <- prod(affine_expr@shape)
-    I_mat <- Matrix::Diagonal(n)
+    ## Keep P sparse: ddiMatrix has implicit unit diagonal that
+    ## Matrix::summary() doesn't report; convert to dgCMatrix for
+    ## explicit entries. Avoids O(n^2) dense matrix from as.matrix().
+    I_mat <- as(as(Matrix::Diagonal(n), "generalMatrix"), "CsparseMatrix")
     if (S7_inherits(affine_expr, Variable)) {
-      return(list(SymbolicQuadForm(affine_expr, Constant(as.matrix(I_mat)), expr), list()))
+      return(list(SymbolicQuadForm(affine_expr, Constant(I_mat), expr), list()))
     } else {
       t <- Variable(shape = affine_expr@shape)
-      return(list(SymbolicQuadForm(t, Constant(as.matrix(I_mat)), expr),
+      return(list(SymbolicQuadForm(t, Constant(I_mat), expr),
                   list(affine_expr == t)))
     }
   }

@@ -16,8 +16,11 @@
 \alias{CPLEX_SOLVER}
 \alias{CVXOPT_SOLVER}
 \alias{PIQP_SOLVER}
+\alias{SCIP_SOLVER}
 \title{Solver Name Constants}
 \format{
+An object of class \code{character} of length 1.
+
 An object of class \code{character} of length 1.
 
 An object of class \code{character} of length 1.
@@ -70,6 +73,8 @@ CPLEX_SOLVER
 CVXOPT_SOLVER
 
 PIQP_SOLVER
+
+SCIP_SOLVER
 }
 \value{
 A character string.

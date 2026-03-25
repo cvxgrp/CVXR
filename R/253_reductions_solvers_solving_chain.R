@@ -40,11 +40,12 @@ delayedAssign(GLPK_MI_SOLVER,  GLPK_MI_Solver(),       assign.env = SOLVER_MAP_C
 delayedAssign(ECOS_SOLVER,     ECOS_Solver(),           assign.env = SOLVER_MAP_CONIC)
 delayedAssign(ECOS_BB_SOLVER,  ECOS_BB_Solver(),        assign.env = SOLVER_MAP_CONIC)
 delayedAssign(CVXOPT_SOLVER,   CVXOPT_Solver(),         assign.env = SOLVER_MAP_CONIC)
+delayedAssign(SCIP_SOLVER,     SCIP_Solver(),           assign.env = SOLVER_MAP_CONIC)
 
 CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
-                              ECOS_SOLVER, GUROBI_SOLVER, GLPK_SOLVER,
-                              GLPK_MI_SOLVER, CVXOPT_SOLVER, HIGHS_SOLVER,
-                              ECOS_BB_SOLVER)
+                              ECOS_SOLVER, GUROBI_SOLVER, SCIP_SOLVER,
+                              GLPK_SOLVER, GLPK_MI_SOLVER, CVXOPT_SOLVER,
+                              HIGHS_SOLVER, ECOS_BB_SOLVER)
 
 ## Package names for solver availability checks
 .SOLVER_PACKAGES <- list(
@@ -60,7 +61,8 @@ CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
   ECOS_BB  = "ECOSolveR",
   CPLEX    = "Rcplex",
   CVXOPT   = "cccp",
-  PIQP     = "piqp"
+  PIQP     = "piqp",
+  SCIP     = "scip"
 )
 
 ## Check if a solver package is installed and not excluded

@@ -1,3 +1,25 @@
+# CVXR 1.8.1.9301
+
+## SCIP solver support
+
+* Added SCIP solver (14th solver) via the R `scip` package. Supports
+  LP, SOCP, MI-LP, and MI-SOCP problems. SCIP is registered in the
+  conic solver path with `SUPPORTED_CONSTRAINTS = list(Zero, NonNeg,
+  SOC)` and `MIP_CAPABLE = TRUE`.
+* SCIP solver parameters can be passed via `scip_params` sub-list
+  (matching CVXPY convention) for path-style parameter names like
+  `"limits/time"`, `"limits/gap"`.
+* Duals are not currently extracted (R `scip` package lacks dual API).
+* 29 tests mirroring CVXPY's `TestSCIP` class.
+
+## Bug Fixes
+
+* Fixed O(n²) memory usage in `sum_squares()`, `power(x, 2)`,
+  `quad_over_lin()`, and `huber()` when the first argument has many
+  elements (e.g., regression residuals with thousands of observations).
+  The quadratic canonicalizer was converting a sparse identity matrix
+  to dense form. Memory now scales linearly with problem size.
+
 # CVXR 1.8.1
 
 ## Complete rewrite using S7 object system

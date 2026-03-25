@@ -54,6 +54,9 @@ CVXOPT_SOLVER <- "CVXOPT"
 #' @rdname solver-constants
 #' @export
 PIQP_SOLVER <- "PIQP"
+#' @rdname solver-constants
+#' @export
+SCIP_SOLVER <- "SCIP"
 
 # -- DCP curvature strings --------------------------------------------
 
@@ -183,6 +186,27 @@ ECOS_STATUS_MAP <- list(
   "-7" = SOLVER_ERROR
 )
 
+# -- SCIP status -> CVXR status ----------------------------------
+## CVXPY SOURCE: scip_conif.py STATUS_MAP
+
+SCIP_STATUS_MAP <- list(
+  "optimal"          = OPTIMAL,
+  "timelimit"        = OPTIMAL_INACCURATE,
+  "gaplimit"         = OPTIMAL_INACCURATE,
+  "nodelimit"        = OPTIMAL_INACCURATE,
+  "totalnodelimit"   = OPTIMAL_INACCURATE,
+  "bestsollimit"     = USER_LIMIT,
+  "infeasible"       = INFEASIBLE,
+  "unbounded"        = UNBOUNDED,
+  "inforunbd"        = INFEASIBLE_OR_UNBOUNDED,
+  "userinterrupt"    = SOLVER_ERROR,
+  "memlimit"         = SOLVER_ERROR,
+  "sollimit"         = SOLVER_ERROR,
+  "stallnodelimit"   = SOLVER_ERROR,
+  "restartlimit"     = SOLVER_ERROR,
+  "unknown"          = SOLVER_ERROR
+)
+
 # -- Solver data keys --------------------------------------------
 ## CVXPY SOURCE: settings.py lines 159-168
 ## Use SD_ prefix to avoid R namespace collisions (bare A, B, C shadow base R)
@@ -276,6 +300,10 @@ UPPER_BOUNDS <- "upper_bounds"
     reltol   = list(name = "eps_rel", value = 1e-9),
     abstol   = list(name = "eps_abs", value = 1e-8),
     num_iter = list(name = "max_iter", value = 250L)
+  ),
+  SCIP = list(
+    feastol  = list(name = "numerics/feastol", value = 1e-6),
+    num_iter = list(name = "lp/iterlim",       value = 2147483647L)
   )
   ## GLPK, GLPK_MI: no standard parameter mappings
 )

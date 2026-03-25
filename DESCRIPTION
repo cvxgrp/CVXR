@@ -1,7 +1,7 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.8.1
+Version: 1.8.1.9301
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -55,7 +55,8 @@ Enhances:
     ECOSolveR (>= 0.6),
     Rcplex (>= 0.3),
     cccp (>= 0.3),
-    piqp (>= 0.6)
+    piqp (>= 0.6),
+    scip
 Additional_repositories:
     https://bnaras.r-universe.dev
 LinkingTo: Rcpp, RcppEigen

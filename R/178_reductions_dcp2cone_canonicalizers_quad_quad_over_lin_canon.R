@@ -13,13 +13,16 @@ qol_quad_canon <- function(expr, args, solver_context = NULL) {
   ## y must be constant scalar (guaranteed by is_qpwa guard)
   y_val <- as.numeric(value(y))
   n <- prod(affine_expr@shape)
-  quad_mat <- Matrix::Diagonal(n) / y_val
+  ## Keep P sparse: ddiMatrix has implicit unit diagonal that
+  ## Matrix::summary() doesn't report; convert to dgCMatrix for
+  ## explicit entries. Avoids O(n^2) dense matrix from as.matrix().
+  quad_mat <- as(as(Matrix::Diagonal(n) / y_val, "generalMatrix"), "CsparseMatrix")
 
   if (S7_inherits(affine_expr, Variable)) {
-    list(SymbolicQuadForm(affine_expr, Constant(as.matrix(quad_mat)), expr), list())
+    list(SymbolicQuadForm(affine_expr, Constant(quad_mat), expr), list())
   } else {
     t <- Variable(shape = affine_expr@shape)
-    list(SymbolicQuadForm(t, Constant(as.matrix(quad_mat)), expr), list(affine_expr == t))
+    list(SymbolicQuadForm(t, Constant(quad_mat), expr), list(affine_expr == t))
   }
 }
 

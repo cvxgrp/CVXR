@@ -1,4 +1,4 @@
-# CVXR 1.8.1.9301
+# CVXR 1.8.2
 
 ## SCIP solver support
 
@@ -11,6 +11,35 @@
   `"limits/time"`, `"limits/gap"`.
 * Duals are not currently extracted (R `scip` package lacks dual API).
 * 29 tests mirroring CVXPY's `TestSCIP` class.
+
+## `diag()` and `norm()` dispatch fixes
+
+* `diag()` now works on CVXR expressions: `diag(vector_expr)` creates
+  a diagonal matrix (`DiagVec`), `diag(square_matrix_expr)` extracts
+  the diagonal (`DiagMat`). Falls through to `Matrix::diag()` for
+  non-Expression inputs, correctly handling both Matrix S4 objects
+  and base R matrices.
+* `norm()` fallthrough now delegates to `Matrix::norm()` instead of
+  `base::norm()`, fixing `norm(sparse_matrix)` when CVXR is loaded.
+* `t()` and `mean()` switched from S7 `method()` to
+  `registerS3method()` to avoid demoting Matrix's S4 generics.
+
+## CVXPY 1.8.2 parity
+
+All applicable bug fixes from CVXPY v1.8.2 have been ported, each
+annotated with `## CVXPY v1.8.2 fix:` in the source.
+
+## `solver_opts()` and `use_quad_obj`
+
+* New `solver_opts()` constructor for unified solver options. Standard
+  tolerance parameters (`feastol`, `reltol`, `abstol`, `num_iter`) and
+  solver-specific parameters now flow through `psolve(...)` via the
+  `solver_opts()` constructor.
+* New `use_quad_obj` option (default `TRUE`): when `FALSE`, forces
+  conic decomposition path instead of QP, enabling `quad_form_canon`
+  to detect indefinite P matrices.
+* New `supports_quad_obj()` generic on conic solvers (Clarabel and SCS
+  return `TRUE`, others `FALSE`).
 
 ## Bug Fixes
 

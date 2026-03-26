@@ -7,6 +7,7 @@
 \alias{sd}
 \alias{var}
 \alias{outer}
+\alias{diag}
 \title{Standard R Functions for CVXR Expressions}
 \usage{
 norm(x, type = "2", ...)
@@ -16,9 +17,11 @@ sd(x, ...)
 var(x, ...)
 
 outer(X, Y, ...)
+
+diag(x, nrow, ncol, names = TRUE, k = 0L)
 }
 \arguments{
-\item{x}{An Expression or numeric.}
+\item{x}{An Expression, matrix, vector, or scalar.}
 
 \item{type}{Norm type: \code{"1"}, \code{"2"} (default), \code{"I"}/\code{"i"}
 (infinity), \code{"F"}/\code{"f"} (Frobenius).}
@@ -28,6 +31,15 @@ outer(X, Y, ...)
 \item{X}{An Expression or numeric.}
 
 \item{Y}{An Expression or numeric.}
+
+\item{nrow}{For non-Expression: passed to \code{Matrix::diag}.}
+
+\item{ncol}{For non-Expression: passed to \code{Matrix::diag}.}
+
+\item{names}{For non-Expression: passed to \code{Matrix::diag}.}
+
+\item{k}{Integer diagonal offset for Expressions only. \code{k = 0}
+(default) is the main diagonal.}
 }
 \value{
 An Expression or numeric value.
@@ -37,13 +49,16 @@ An Expression or numeric value.
 An Expression or numeric value.
 
 An Expression or matrix.
+
+An Expression, matrix, or vector.
 }
 \description{
 CVXR registers methods so that standard R functions create the
 appropriate atoms when applied to \code{Expression} objects.
 
 For CVXR expressions, computes the matrix/vector norm atom.
-For other inputs, falls through to \code{\link[base]{norm}}.
+For other inputs, falls through to \code{Matrix::norm} which
+dispatches via S4 for both Matrix and base matrix objects.
 
 For CVXR expressions, computes the standard deviation atom (ddof=0 by default,
 matching CVXPY/numpy convention). For numeric inputs, falls through to
@@ -54,6 +69,18 @@ For numeric inputs, falls through to \code{\link[stats]{var}}.
 
 For CVXR expressions, computes the outer product of two vectors.
 For other inputs, falls through to \code{\link[base]{outer}}.
+
+For CVXR expressions, dispatches to \code{\link{DiagVec}} (vector to
+diagonal matrix) or \code{\link{DiagMat}} (extract diagonal from matrix),
+matching CVXPY's \code{cp.diag()} behavior. For other inputs, falls
+through to \code{Matrix::diag} which dispatches via S4 for both Matrix
+and base matrix objects.
+}
+\details{
+The \code{k} parameter (off-diagonal offset) is only available for
+Expression inputs. For the full-featured version with \code{k} on
+non-Expression inputs, use \code{\link{DiagVec}} or \code{\link{DiagMat}}
+directly.
 }
 \section{Math group (elementwise, via S3 group generic)}{
 
@@ -119,4 +146,6 @@ through the standard interface, use the explicit functions:
 \code{\link{cvxr_var}} for the full-featured version
 
 \code{\link{cvxr_outer}} for the CVXR-specific version
+
+\code{\link{DiagVec}}, \code{\link{DiagMat}}
 }

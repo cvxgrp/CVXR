@@ -93,6 +93,10 @@ reset_expr_id <- function() {
   registerS3method("as.character", "CVXR::Expression", .cvxr_as_character_Expression)
   ## Register Complex S3 group handler for Re(), Im(), Conj()
   registerS3method("Complex", "CVXR::Expression", .cvxr_Complex_handler)
+  ## t() and mean() — registered here (not via S7 method()) to avoid
+  ## demoting the S4 generic that Matrix creates. See conflicts/README.md.
+  registerS3method("t", "CVXR::Expression", function(x) Transpose(x))
+  registerS3method("mean", "CVXR::Expression", function(x, ...) cvxr_mean(x, ...))
 }
 
 ## S3 solve method for Problem -- dispatches to psolve(), returns cvxr_result

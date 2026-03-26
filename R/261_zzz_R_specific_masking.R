@@ -5,14 +5,18 @@
 ## R-SPECIFIC: Type-dispatching wrappers that mask base/stats functions
 ## These give CVXR its DSL feel: norm(x), sd(x), var(x), outer(x, y) Just Work.
 ##
-## norm() cannot use S7 method() because base::norm is a plain function
-## (not S3 generic). It becomes S4 only when Matrix loads, but S7's method<-
-## requires an S3 generic at source-evaluation time.
+## norm() and diag() are plain functions in base R, promoted to S4 by Matrix.
+## We use masking wrappers with Matrix::fn() fallthrough (not base::fn())
+## because base::fn fails on S4 Matrix objects. See conflicts/README.md.
+##
+## sd(), var(), outer() use base/stats fallthrough because base::fn works
+## on Matrix objects for these functions.
 
 #' Matrix norm
 #'
 #' For CVXR expressions, computes the matrix/vector norm atom.
-#' For other inputs, falls through to \code{\link[base]{norm}}.
+#' For other inputs, falls through to \code{Matrix::norm} which
+#' dispatches via S4 for both Matrix and base matrix objects.
 #'
 #' @param x An Expression or matrix.
 #' @param type Norm type: \code{"1"}, \code{"2"} (default), \code{"I"}/\code{"i"}
@@ -31,7 +35,8 @@ norm <- function(x, type = "2", ...) {
     )
     cvxr_norm(x, p = p)
   } else {
-    base::norm(x, type, ...)
+    ## Matrix::norm dispatches via S4 — handles dgCMatrix, dgeMatrix, base matrix
+    Matrix::norm(x, type, ...)
   }
 }
 
@@ -85,5 +90,55 @@ outer <- function(X, Y, ...) {
     cvxr_outer(X, Y)
   } else {
     base::outer(X, Y, ...)
+  }
+}
+
+#' Diagonal matrix creation / extraction
+#'
+#' For CVXR expressions, dispatches to \code{\link{DiagVec}} (vector to
+#' diagonal matrix) or \code{\link{DiagMat}} (extract diagonal from matrix),
+#' matching CVXPY's \code{cp.diag()} behavior. For other inputs, falls
+#' through to \code{Matrix::diag} which dispatches via S4 for both Matrix
+#' and base matrix objects.
+#'
+#' The \code{k} parameter (off-diagonal offset) is only available for
+#' Expression inputs. For the full-featured version with \code{k} on
+#' non-Expression inputs, use \code{\link{DiagVec}} or \code{\link{DiagMat}}
+#' directly.
+#'
+#' @param x An Expression, matrix, vector, or scalar.
+#' @param nrow For non-Expression: passed to \code{Matrix::diag}.
+#' @param ncol For non-Expression: passed to \code{Matrix::diag}.
+#' @param names For non-Expression: passed to \code{Matrix::diag}.
+#' @param k Integer diagonal offset for Expressions only. \code{k = 0}
+#'   (default) is the main diagonal.
+#' @returns An Expression, matrix, or vector.
+#' @seealso \code{\link{DiagVec}}, \code{\link{DiagMat}}
+#' @rdname math_atoms
+#' @export
+diag <- function(x, nrow, ncol, names = TRUE, k = 0L) {
+  if (inherits(x, "CVXR::Expression")) {
+    k <- as.integer(k)
+    if (is_vector(x)) {
+      ## Vector -> diagonal matrix (CVXPY: diag_vec)
+      DiagVec(.cvxr_vec(x), k = k)
+    } else if (x@shape[1L] == x@shape[2L]) {
+      ## Square matrix -> extract diagonal (CVXPY: diag_mat)
+      DiagMat(x, k = k)
+    } else {
+      cli_abort("Argument to {.fn diag} must be a vector or square matrix Expression.")
+    }
+  } else {
+    ## Matrix::diag dispatches via S4 — handles ddiMatrix, dgCMatrix, base matrix.
+    ## Pass arguments only when explicitly provided; Matrix::diag(x) without
+    ## extra args preserves base R semantics (scalar → identity, vector → diag matrix).
+    if (missing(nrow) && missing(ncol))
+      Matrix::diag(x)
+    else if (missing(ncol))
+      Matrix::diag(x, nrow = nrow)
+    else if (missing(nrow))
+      Matrix::diag(x, ncol = ncol)
+    else
+      Matrix::diag(x, nrow = nrow, ncol = ncol)
   }
 }

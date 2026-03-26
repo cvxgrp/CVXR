@@ -230,14 +230,9 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   )
 }
 
-# -- t() via S7 -------------------------------------------------------
-
-method(t, Expression) <- function(x) {
-  Transpose(x)
-}
-
-# -- mean() dispatch via S3 generic (base::mean is UseMethod) -----
-# mean(expr, axis=1, keepdims=TRUE) works via ...
-method(mean, Expression) <- function(x, ...) {
-  cvxr_mean(x, ...)
-}
+# -- t() and mean() ----------------------------------------------------
+## These are S3 generics (UseMethod) in base R, promoted to S4 by Matrix.
+## S7 method() demotes them from S4 standardGeneric back to S3, breaking
+## Matrix's S4 dispatch (t(dgeMatrix), mean(dgCMatrix) fail).
+## Fix: use registerS3method() in .onLoad() instead — see globals.R.
+## See conflicts/03_s7_method_demotes_s4.R and conflicts/04_registerS3method_safe.R.

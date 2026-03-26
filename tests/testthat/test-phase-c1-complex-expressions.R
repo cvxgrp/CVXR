@@ -148,10 +148,15 @@ test_that("Imag_ is never complex or imaginary", {
 })
 
 ## @cvxpy NONE
-test_that("Imag_ is_symmetric delegates to arg is_hermitian", {
+test_that("Imag_ is_symmetric: Im(Hermitian) is skew-symmetric, not symmetric", {
+  ## CVXPY v1.8.2 fix: is_symmetric now delegates to arg is_symmetric (not is_hermitian).
+  ## Im(Hermitian) is skew-symmetric. Im(symmetric real) is zero (symmetric).
   h <- Variable(c(3L, 3L), hermitian = TRUE)
   ix <- Imag_(h)
-  expect_true(is_symmetric(ix))
+  expect_false(is_symmetric(ix))  # skew-symmetric, not symmetric
+
+  s <- Variable(c(3L, 3L), symmetric = TRUE)
+  expect_true(is_symmetric(Imag_(s)))  # Im of real symmetric is zero (symmetric)
 })
 
 ## @cvxpy NONE

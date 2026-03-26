@@ -113,6 +113,8 @@ method(constr_size, FiniteSet) <- function(x) {
 # -- residual -----------------------------------------------------
 ## CVXPY SOURCE: finite_set.py lines 122-135
 method(residual, FiniteSet) <- function(x) {
+  ## CVXPY v1.8.2 fix: guard against NULL (unset variable)
+  if (is.null(value(x@expre))) return(NULL)
   expr_val <- as.numeric(value(x@expre))
   vec_val <- as.numeric(value(x@vec))
   resids <- vapply(expr_val, function(val) min(abs(val - vec_val)), numeric(1))

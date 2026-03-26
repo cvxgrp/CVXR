@@ -70,8 +70,30 @@ method(is_atom_log_log_convex, QuadForm) <- function(x) TRUE
 method(is_atom_log_log_concave, QuadForm) <- function(x) FALSE
 
 # -- monotonicity -------------------------------------------------
-method(is_incr, QuadForm) <- function(x, idx, ...) FALSE
-method(is_decr, QuadForm) <- function(x, idx, ...) FALSE
+## CVXPY v1.8.2 fix: per-argument monotonicity (previously returned FALSE
+## unconditionally, losing DCP composition information).
+## idx=1 -> x (1-based; CVXPY idx=0), idx=2 -> P (CVXPY idx=1)
+method(is_incr, QuadForm) <- function(x, idx, ...) {
+  if (idx == 1L) {
+    ## nabla_x f = 2Px: nonneg when (x>=0, P>=0) or (x<=0, P<=0)
+    (is_nonneg(x@args[[1L]]) && is_nonneg(x@args[[2L]])) ||
+      (is_nonpos(x@args[[1L]]) && is_nonpos(x@args[[2L]]))
+  } else if (idx == 2L) {
+    ## d f / d P_ij = x_i * x_j: nonneg when x has definite sign
+    is_nonneg(x@args[[1L]]) || is_nonpos(x@args[[1L]])
+  } else {
+    FALSE
+  }
+}
+method(is_decr, QuadForm) <- function(x, idx, ...) {
+  if (idx == 1L) {
+    ## nabla_x f = 2Px: nonpos when (x>=0, P<=0) or (x<=0, P>=0)
+    (is_nonneg(x@args[[1L]]) && is_nonpos(x@args[[2L]])) ||
+      (is_nonpos(x@args[[1L]]) && is_nonneg(x@args[[2L]]))
+  } else {
+    FALSE
+  }
+}
 
 # -- quadratic analysis -------------------------------------------
 method(is_quadratic, QuadForm) <- function(x) TRUE

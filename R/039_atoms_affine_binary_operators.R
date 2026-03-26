@@ -209,6 +209,12 @@ method(is_nsd, Multiply) <- function(x) {
     (is_nsd(x@args[[1L]]) && is_psd(x@args[[2L]]))
 }
 
+## CVXPY v1.8.2: is_hermitian for elementwise multiply
+## Enables trace(A@B) optimization to detect Hermitian products.
+method(is_hermitian, Multiply) <- function(x) {
+  is_hermitian(x@args[[1L]]) && is_hermitian(x@args[[2L]])
+}
+
 # -- Quasiconvexity --------------------------------------------------
 ## CVXPY SOURCE: binary_operators.py lines 343-353
 method(is_atom_quasiconvex, Multiply) <- function(x) {

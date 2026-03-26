@@ -41,15 +41,13 @@ method(shape_from_args, Imag_) <- function(x) {
 method(is_imag, Imag_) <- function(x) FALSE
 method(is_complex, Imag_) <- function(x) FALSE
 
-# -- Symmetry: Im(Hermitian) is skew-symmetric, but that's symmetric? -
-## CVXPY SOURCE: imag.py lines 49-52
-## CVXPY returns self.args[0].is_hermitian(), meaning
-## if the argument is Hermitian, then Im(A) is symmetric.
-## (For Hermitian A, Im(A) is skew-symmetric, i.e. Im(A)^T = -Im(A),
-## but CVXPY defines is_symmetric for Imag the same way as Real.)
-
+# -- Symmetry --------------------------------------------------------
+## CVXPY v1.8.2 fix: Im(Hermitian) is skew-symmetric, not symmetric.
+## Im(A) is symmetric only when A is symmetric (real), because then
+## Im(A) is the zero matrix. Prior to v1.8.2, this incorrectly
+## returned is_hermitian(arg).
 method(is_symmetric, Imag_) <- function(x) {
-  is_hermitian(x@args[[1L]])
+  is_symmetric(x@args[[1L]])
 }
 
 # -- No graph_implementation: consumed by Complex2Real reduction ------

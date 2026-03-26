@@ -103,9 +103,10 @@ method(numeric_value, Pnorm) <- function(x, values, ...) {
 }
 
 # -- graph_implementation: stub -----------------------------------
-## CVXPY SOURCE: pnorm.py lines 179-186
-method(is_atom_log_log_convex, Pnorm) <- function(x) TRUE
-method(is_atom_log_log_concave, Pnorm) <- function(x) FALSE
+## CVXPY v1.8.2 fix: log-log curvature depends on sign of p.
+## For p > 0, pnorm is log-log convex; for p < 0, log-log concave.
+method(is_atom_log_log_convex, Pnorm) <- function(x) x@p > 0
+method(is_atom_log_log_concave, Pnorm) <- function(x) x@p < 0
 
 method(graph_implementation, Pnorm) <- function(x, arg_objs, shape, data = NULL, ...) {
   cli_abort("graph_implementation for {.cls Pnorm} not yet implemented.")

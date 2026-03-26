@@ -256,6 +256,7 @@ rsrc_tree/zzz_R_specific/visualize_annotations.R
 rsrc_tree/zzz_R_specific/visualize_html.R
 rsrc_tree/zzz_R_specific/visualize.R
 rsrc_tree/zzz_R_specific/to_latex.R
+rsrc_tree/zzz_R_specific/solver_opts.R
 rsrc_tree/zzz_R_specific/exports.R
 rsrc_tree/zzz_R_specific/math_atoms.R
 rsrc_tree/zzz_R_specific/masking.R

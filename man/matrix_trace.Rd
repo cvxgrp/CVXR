@@ -10,8 +10,10 @@ matrix_trace(x)
 \item{x}{An Expression (square matrix)}
 }
 \value{
-A Trace atom (scalar)
+A Trace atom or equivalent expression (scalar)
 }
 \description{
-Trace of a square matrix expression
+For \code{matrix_trace(A \%*\% B)}, uses the O(n^2) identity
+\code{trace(A \%*\% B) = sum(A * t(B))} instead of forming the
+full matrix product.
 }

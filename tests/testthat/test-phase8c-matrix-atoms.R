@@ -629,11 +629,11 @@ test_that("LogDet: shape is scalar", {
 })
 
 ## @cvxpy NONE
-test_that("LogDet: sign is nonneg (CVXPY convention)", {
+test_that("LogDet: sign is unknown (CVXPY v1.8.2 fix)", {
   X <- Variable(c(3, 3), symmetric = TRUE)
   expr <- log_det(X)
-  ## CVXPY returns (True, False) — mathematically questionable but compatible
-  expect_true(is_nonneg(expr))
+  ## CVXPY v1.8.2 fix: log_det can be negative (log(det) < 0 when 0 < det < 1)
+  expect_false(is_nonneg(expr))
   expect_false(is_nonpos(expr))
 })
 

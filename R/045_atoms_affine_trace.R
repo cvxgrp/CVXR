@@ -55,9 +55,23 @@ method(graph_implementation, Trace) <- function(x, arg_objs, shape, data = NULL,
 
 #' Trace of a square matrix expression
 #'
+#' For \code{matrix_trace(A \%*\% B)}, uses the O(n^2) identity
+#' \code{trace(A \%*\% B) = sum(A * t(B))} instead of forming the
+#' full matrix product.
+#'
 #' @param x An Expression (square matrix)
-#' @returns A Trace atom (scalar)
+#' @returns A Trace atom or equivalent expression (scalar)
 #' @export
 matrix_trace <- function(x) {
+  ## CVXPY v1.8.2 fix: trace(A@B) = sum(A * B.T) avoids O(n^3) matmul.
+  ## Also detects Hermitian products and wraps with Real_() so
+  ## is_real() propagates correctly for complex problems.
+  if (S7_inherits(x, MulExpression)) {
+    result <- SumEntries(Multiply(x@args[[1L]], t(x@args[[2L]])))
+    if (is_hermitian(x)) {
+      return(Real_(result))
+    }
+    return(result)
+  }
   Trace(x)
 }

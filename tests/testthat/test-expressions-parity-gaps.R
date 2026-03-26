@@ -1188,9 +1188,10 @@ test_that("expressions: Hermitian variable properties (extended)", {
   expect_true(CVXR:::is_hermitian(-v2))
   expect_true(CVXR:::is_hermitian(t(v2)))
 
-  ## Re, Im, Conj preserve hermitian
+  ## Re, Conj preserve hermitian; Im(Hermitian) is skew-Hermitian
+  ## CVXPY v1.8.2 fix: Im(Hermitian) is NOT hermitian
   expect_true(CVXR:::is_hermitian(Re(v2)))
-  expect_true(CVXR:::is_hermitian(Im(v2)))
+  expect_false(CVXR:::is_hermitian(Im(v2)))
   expect_true(CVXR:::is_hermitian(Conj(v2)))
 })
 

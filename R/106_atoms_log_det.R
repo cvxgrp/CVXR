@@ -39,11 +39,10 @@ method(validate_arguments, LogDet) <- function(x) {
 method(shape_from_args, LogDet) <- function(x) c(1L, 1L)
 
 # -- sign ---------------------------------------------------------
-## CVXPY: log_det.py lines 61-64 -- (True, False)
-## Note: This is CVXPY's convention. Mathematically log_det can be negative
-## for 0 < det < 1, but CVXPY reports is_nonneg=TRUE. We replicate.
+## CVXPY v1.8.2 fix: log_det can be negative (log(det(A)) < 0 when 0 < det(A) < 1).
+## Prior to v1.8.2, CVXPY incorrectly returned is_nonneg=TRUE.
 method(sign_from_args, LogDet) <- function(x) {
-  list(is_nonneg = TRUE, is_nonpos = FALSE)
+  list(is_nonneg = FALSE, is_nonpos = FALSE)
 }
 
 # -- curvature ----------------------------------------------------
@@ -64,6 +63,8 @@ method(is_decr, LogDet) <- function(x, idx, ...) FALSE
 ## for Hermitian/symmetric PSD matrices.
 method(numeric_value, LogDet) <- function(x, values, ...) {
   A <- values[[1L]]
+  ## CVXPY v1.8.2 fix: guard against NULL (unset Variable)
+  if (is.null(A)) return(NULL)
   ## Take Hermitian part for numerical stability (conj transpose, not just transpose)
   symm <- (A + Conj(t(A))) / 2
   if (is.complex(symm)) {

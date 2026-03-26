@@ -137,6 +137,9 @@ Clarabel_Solver <- new_class("Clarabel_Solver", parent = ConicSolver,
 
 method(solver_name, Clarabel_Solver) <- function(x) CLARABEL_SOLVER
 
+## CVXPY v1.8.2: Clarabel supports quadratic objective with any conic constraints
+method(supports_quad_obj, Clarabel_Solver) <- function(x) TRUE
+
 ## Override PSD format for Clarabel (upper-triangular + sqrt(2))
 method(solver_psd_format_mat, Clarabel_Solver) <- function(solver, constr) {
   clarabel_psd_format_mat_fn(constr)
@@ -281,15 +284,20 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
       if (!identical(b, old_data$b)) new_b <- b
 
       ## Send incremental updates
-      if (!is.null(new_P) || !is.null(new_q) ||
-          !is.null(new_A) || !is.null(new_b)) {
-        clarabel::solver_update(old_solver,
-                                P = new_P, q = new_q,
-                                A = new_A, b = new_b)
-      }
-
-      result <- clarabel::solver_solve(old_solver)
-      used_warm <- TRUE
+      ## CVXPY v1.8.2 fix: wrap in tryCatch — if sparsity pattern changed,
+      ## solver_update() fails; fall back to cold path re-initialization.
+      tryCatch({
+        if (!is.null(new_P) || !is.null(new_q) ||
+            !is.null(new_A) || !is.null(new_b)) {
+          clarabel::solver_update(old_solver,
+                                  P = new_P, q = new_q,
+                                  A = new_A, b = new_b)
+        }
+        result <- clarabel::solver_solve(old_solver)
+        used_warm <- TRUE
+      }, error = function(e) {
+        ## Sparsity pattern or dimensions changed; cold path will handle it
+      })
     }
   }
 

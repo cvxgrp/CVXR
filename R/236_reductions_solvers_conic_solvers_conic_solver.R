@@ -33,6 +33,11 @@ ConicSolver <- new_class("ConicSolver", parent = Solver, package = "CVXR",
   }
 )
 
+## CVXPY v1.8.2: supports_quad_obj — default FALSE for conic solvers.
+## Solvers that can handle a quadratic objective (P matrix) in the conic
+## path override this to TRUE (Clarabel, SCS >= 3.0).
+method(supports_quad_obj, ConicSolver) <- function(x) FALSE
+
 # -- get_spacing_matrix --------------------------------------------
 ## CVXPY SOURCE: conic_solver.py lines 132-160
 ## Static helper that spaces out rows with interleaving.

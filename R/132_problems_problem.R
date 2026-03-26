@@ -302,15 +302,15 @@ method(print, Problem) <- function(x, ...) {
 
 # -- Compilation caching ------------------------------------------
 ## CVXPY SOURCE: problem.py Cache class (lines 107-125)
-## Cache key: (solver, gp) -- matching CVXPY's (solver, gp, ignore_dpp, use_quad_obj).
+## CVXPY v1.8.2: cache key includes use_quad_obj (from solver_opts).
 
-.compile <- function(problem, solver = NULL, gp = FALSE) {
+.compile <- function(problem, solver = NULL, gp = FALSE, opts = solver_opts()) {
   ## CVXPY SOURCE: problem.py lines 786-806
-  cache_key <- list(solver, gp)  # (solver, gp)
+  cache_key <- list(solver, gp, opts$use_quad_obj)
   if (!identical(cache_key, problem@.cache$compile_key)) {
     problem@.cache$compile_key <- cache_key
     problem@.cache$compile_chain <- construct_solving_chain(problem, solver,
-                                                            gp = gp)
+                                                            gp = gp, opts = opts)
     problem@.cache$param_prog <- NULL
     problem@.cache$compile_inverse_data <- NULL
     ## Clear solver-specific cache when chain changes
@@ -329,7 +329,8 @@ method(print, Problem) <- function(x, ...) {
 ##   inverse_data: list of inverse data from each reduction
 
 method(problem_data, Problem) <- function(x, solver = NULL, ...) {
-  chain <- .compile(x, solver)
+  opts <- solver_opts(...)
+  chain <- .compile(x, solver, opts = opts)
   result <- reduction_apply(chain, x)
   list(data = result[[1L]], chain = chain, inverse_data = result[[2L]])
 }
@@ -523,26 +524,11 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
 #' @param verbose Logical; if \code{TRUE}, print solver output.
 #' @param warm_start Logical; if \code{TRUE}, use the current variable
 #'   values as a warm-start point for the solver.
-#' @param feastol Numeric or \code{NULL}; feasibility tolerance. Mapped to
-#'   the solver-specific parameter name (e.g., \code{tol_feas} for Clarabel,
-#'   \code{eps_prim_inf} for OSQP). If \code{NULL} (default), the solver's
-#'   own default is used.
-#' @param reltol Numeric or \code{NULL}; relative tolerance. Mapped to the
-#'   solver-specific parameter name (e.g., \code{tol_gap_rel} for Clarabel,
-#'   \code{eps_rel} for OSQP/SCS). If \code{NULL} (default), the solver's
-#'   own default is used.
-#' @param abstol Numeric or \code{NULL}; absolute tolerance. Mapped to the
-#'   solver-specific parameter name (e.g., \code{tol_gap_abs} for Clarabel,
-#'   \code{eps_abs} for OSQP/SCS). If \code{NULL} (default), the solver's
-#'   own default is used.
-#' @param num_iter Integer or \code{NULL}; maximum number of solver
-#'   iterations. Mapped to the solver-specific parameter name (e.g.,
-#'   \code{max_iter} for Clarabel/OSQP, \code{max_iters} for SCS). If
-#'   \code{NULL} (default), the solver's own default is used.
-#' @param ... Additional solver-specific options passed directly to the
-#'   solver. If a solver-native parameter name conflicts with a standard
-#'   parameter (e.g., both \code{feastol = 1e-3} and \code{tol_feas = 1e-6}
-#'   are given), the solver-native name in \code{...} takes priority.
+#' @param ... Solver options passed to \code{\link{solver_opts}()}.
+#'   Includes chain-construction options (\code{use_quad_obj}), standard
+#'   tolerances (\code{feastol}, \code{reltol}, \code{abstol}, \code{num_iter}),
+#'   and solver-specific parameters (e.g., \code{eps_abs}, \code{scip_params}).
+#'   See \code{\link{solver_opts}} for details.
 #'   For DQCP problems (\code{qcp = TRUE}), additional arguments include
 #'   \code{low}, \code{high}, \code{eps}, \code{max_iters}, and
 #'   \code{max_iters_interval_search}.
@@ -558,9 +544,7 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
 #'   \code{\link{solver_stats}}, \code{\link{solver_default_param}}
 #' @export
 psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
-                   verbose = FALSE, warm_start = FALSE,
-                   feastol = NULL, reltol = NULL, abstol = NULL,
-                   num_iter = NULL, ...) {
+                   verbose = FALSE, warm_start = FALSE, ...) {
   if (!S7_inherits(problem, Problem)) {
     cli_abort("{.fn psolve} requires a {.cls Problem} object.")
   }
@@ -645,9 +629,10 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
     cli_alert_info("Problem: {nvars} variable{?s}, {ncons} constraint{?s} ({prob_type})")
   }
 
-  ## -- Compilation (chain construction + reductions) ---------------
+  ## -- Build solver opts and compile --------------------------------
+  opts <- solver_opts(...)
   t0 <- proc.time()
-  chain <- .compile(problem, solver, gp = gp)
+  chain <- .compile(problem, solver, gp = gp, opts = opts)
 
   ## DPP fast path: if we have a cached param_prog, skip full chain apply.
   ## On first solve, we split the chain into pre-solver + solver so we can
@@ -728,9 +713,8 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
   if (verbose) cli_rule(center = "Numerical solver")
   t0 <- proc.time()
   solver_nm <- solver_name(chain@solver)
-  solver_opts <- .apply_std_params(solver_nm, list(...),
-                                   feastol, reltol, abstol, num_iter)
-  raw_result <- solve_via_data(chain, data, warm_start, verbose, solver_opts,
+  solver_params <- .build_solver_params(solver_nm, opts)
+  raw_result <- solve_via_data(chain, data, warm_start, verbose, solver_params,
                                problem = problem)
   solve_elapsed <- (proc.time() - t0)[["elapsed"]]
   problem@.cache$solve_time <- solve_elapsed

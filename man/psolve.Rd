@@ -11,10 +11,6 @@ psolve(
   qcp = FALSE,
   verbose = FALSE,
   warm_start = FALSE,
-  feastol = NULL,
-  reltol = NULL,
-  abstol = NULL,
-  num_iter = NULL,
   ...
 )
 }
@@ -35,30 +31,11 @@ via bisection. Only needed for non-DCP DQCP problems.}
 \item{warm_start}{Logical; if \code{TRUE}, use the current variable
 values as a warm-start point for the solver.}
 
-\item{feastol}{Numeric or \code{NULL}; feasibility tolerance. Mapped to
-the solver-specific parameter name (e.g., \code{tol_feas} for Clarabel,
-\code{eps_prim_inf} for OSQP). If \code{NULL} (default), the solver's
-own default is used.}
-
-\item{reltol}{Numeric or \code{NULL}; relative tolerance. Mapped to the
-solver-specific parameter name (e.g., \code{tol_gap_rel} for Clarabel,
-\code{eps_rel} for OSQP/SCS). If \code{NULL} (default), the solver's
-own default is used.}
-
-\item{abstol}{Numeric or \code{NULL}; absolute tolerance. Mapped to the
-solver-specific parameter name (e.g., \code{tol_gap_abs} for Clarabel,
-\code{eps_abs} for OSQP/SCS). If \code{NULL} (default), the solver's
-own default is used.}
-
-\item{num_iter}{Integer or \code{NULL}; maximum number of solver
-iterations. Mapped to the solver-specific parameter name (e.g.,
-\code{max_iter} for Clarabel/OSQP, \code{max_iters} for SCS). If
-\code{NULL} (default), the solver's own default is used.}
-
-\item{...}{Additional solver-specific options passed directly to the
-solver. If a solver-native parameter name conflicts with a standard
-parameter (e.g., both \code{feastol = 1e-3} and \code{tol_feas = 1e-6}
-are given), the solver-native name in \code{...} takes priority.
+\item{...}{Solver options passed to \code{\link{solver_opts}()}.
+Includes chain-construction options (\code{use_quad_obj}), standard
+tolerances (\code{feastol}, \code{reltol}, \code{abstol}, \code{num_iter}),
+and solver-specific parameters (e.g., \code{eps_abs}, \code{scip_params}).
+See \code{\link{solver_opts}} for details.
 For DQCP problems (\code{qcp = TRUE}), additional arguments include
 \code{low}, \code{high}, \code{eps}, \code{max_iters}, and
 \code{max_iters_interval_search}.}

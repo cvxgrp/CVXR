@@ -17,14 +17,24 @@ quad_form_canon <- function(expr, args, solver_context = NULL) {
     return(list(Constant(0), list()))
   }
 
+  ## CVXPY v1.8.2 fix: reject indefinite P (both M1 and M2 non-empty).
+  ## Previously, the M2 block silently overwrote qexpr from M1, dropping
+  ## the positive eigenvalue contribution entirely.
+  if (ncol(M1) > 0L && ncol(M2) > 0L) {
+    cli_abort(c(
+      "{.fn quad_form} canonicalization does not support indefinite matrices.",
+      "i" = "P must be positive or negative semidefinite.",
+      "i" = "If P is intended to be PSD, check for numerical errors in its construction (e.g., use {.code P <- (P + t(P)) / 2} and clip negative eigenvalues)."
+    ))
+  }
+
   if (ncol(M1) > 0L) {
     qexpr <- sum_squares(Constant(t(M1)) %*% args[[1L]])
-  }
-  if (ncol(M2) > 0L) {
+  } else {
     scale <- -scale
     qexpr <- sum_squares(Constant(t(M2)) %*% args[[1L]])
   }
-  qol_result <- quad_over_lin_canon(qexpr, qexpr@args)
+  qol_result <- quad_over_lin_canon(qexpr, qexpr@args, solver_context)
   list(scale * qol_result[[1L]], qol_result[[2L]])
 }
 

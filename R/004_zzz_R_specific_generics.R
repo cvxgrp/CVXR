@@ -651,6 +651,15 @@ update_parameters <- new_generic("update_parameters", "x",
 #' @keywords internal
 solver_name <- new_generic("solver_name", "x")
 
+#' Does Solver Support Quadratic Objectives?
+#'
+#' CVXPY v1.8.2: controls whether the conic path keeps the quadratic
+#' objective as a P matrix or decomposes it into cones.
+#' @param x A solver object.
+#' @returns Logical scalar.
+#' @keywords internal
+supports_quad_obj <- new_generic("supports_quad_obj", "x")
+
 #' Solve via Raw Data
 #'
 #' Calls the solver on pre-compiled problem data (step 2 of the

@@ -125,6 +125,9 @@ SCS_Solver <- new_class("SCS_Solver", parent = ConicSolver, package = "CVXR",
 
 method(solver_name, SCS_Solver) <- function(x) SCS_SOLVER
 
+## CVXPY v1.8.2: SCS >= 3.0 supports quadratic objective
+method(supports_quad_obj, SCS_Solver) <- function(x) TRUE
+
 ## Override PSD format for SCS (lower-triangular + sqrt(2))
 method(solver_psd_format_mat, SCS_Solver) <- function(solver, constr) {
   scs_psd_format_mat_fn(constr)

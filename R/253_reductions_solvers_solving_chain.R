@@ -310,7 +310,8 @@ method(print, SolvingChain) <- function(x, ...) {
 ## CVXPY SOURCE: solving_chain.py construct() (simplified)
 ## Builds the reduction chain for a given problem and solver.
 
-construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
+construct_solving_chain <- function(problem, solver = NULL, gp = FALSE,
+                                     opts = solver_opts()) {
   ## CVXPY SOURCE: solving_chain.py line 245-246
   ## Zero-variable problems: use ConstantSolver (evaluates constraints directly)
   if (length(variables(problem)) == 0L) {
@@ -416,7 +417,10 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
   }
 
   ## 4. Route: QP path or conic path
-  if (.solve_as_qp(problem, candidates)) {
+  ## CVXPY v1.8.2: respect opts$use_quad_obj — when FALSE, skip QP path
+  ## entirely so quadratic objectives go through conic decomposition
+  ## (where quad_form_canon can catch indefinite P).
+  if (.solve_as_qp(problem, candidates) && opts$use_quad_obj) {
     ## QP path
     solver_name_sel <- candidates$qp_solvers[1L]
     solver_inst <- SOLVER_MAP_QP[[solver_name_sel]]
@@ -465,7 +469,11 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE) {
       }
     }
 
-    quad_obj <- has_quadratic_term(problem@objective@args[[1L]])
+    ## CVXPY v1.8.2: quad_obj in conic path depends on use_quad_obj,
+    ## solver capability, and whether objective has a quadratic term.
+    quad_obj <- opts$use_quad_obj &&
+                supports_quad_obj(solver_inst) &&
+                has_quadratic_term(problem@objective@args[[1L]])
     reductions <- c(reductions, list(
       Dcp2Cone(quad_obj = quad_obj),
       CvxAttr2Constr(),

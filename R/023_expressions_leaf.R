@@ -57,6 +57,18 @@
     }
   }
 
+  ## CVXPY v1.8.2 fix: reject combining sign attributes (pos/neg) with
+  ## sparsity attributes (sparsity/diag). Sparsity forces zeros, which
+  ## contradicts strict positivity/negativity.
+  sign_attrs <- c(if (pos) "pos", if (neg) "neg")
+  sparse_attrs <- c(if (sparsity) "sparsity", if (diag) "diag")
+  if (length(sign_attrs) > 0L && length(sparse_attrs) > 0L) {
+    cli_abort(c(
+      "Cannot combine {.val {sign_attrs}} with {.val {sparse_attrs}}.",
+      "i" = "Sparsity and diag attributes force zeros, which contradicts strict positivity/negativity."
+    ))
+  }
+
   ## Build attributes list (mirrors CVXPY leaf.py line 124-130)
   list(
     nonneg = nonneg, nonpos = nonpos,

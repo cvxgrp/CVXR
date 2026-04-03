@@ -17,8 +17,11 @@
 \alias{CVXOPT_SOLVER}
 \alias{PIQP_SOLVER}
 \alias{SCIP_SOLVER}
+\alias{XPRESS_SOLVER}
 \title{Solver Name Constants}
 \format{
+An object of class \code{character} of length 1.
+
 An object of class \code{character} of length 1.
 
 An object of class \code{character} of length 1.
@@ -75,6 +78,8 @@ CVXOPT_SOLVER
 PIQP_SOLVER
 
 SCIP_SOLVER
+
+XPRESS_SOLVER
 }
 \value{
 A character string.

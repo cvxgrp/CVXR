@@ -133,13 +133,13 @@ result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE
 #> ────────────────────────────────── CVXR v1.8.2 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
-#> ℹ Compile time: 0.017s
+#> ℹ Compile time: 0.018s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.017s
-#> ℹ Solver time: 0.012s
+#> ℹ Compile time: 0.018s
+#> ℹ Solver time: 0.013s
 round(value(betaHat), 3)
 #>         [,1]
 #>  [1,]  0.000

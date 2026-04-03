@@ -99,6 +99,7 @@ Solver name constants
   [`CVXOPT_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`PIQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`SCIP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`XPRESS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   : Solver Name Constants
 
 ## Status constants

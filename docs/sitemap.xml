@@ -235,6 +235,7 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/solver-constants.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/solver_default_param.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/solver_name.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/solver_opts.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/solver_stats.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/square.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/status-constants.html</loc></url>
@@ -244,6 +245,7 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/sum_signs.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/sum_smallest.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/sum_squares.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/supports_quad_obj.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/to_latex.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/total_variation.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/tr_inv.html</loc></url>

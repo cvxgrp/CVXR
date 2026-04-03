@@ -69,7 +69,7 @@ library(CVXR)
 betaHat <- Variable(p)
 objective <- Minimize(sum((Y - X %*% betaHat)^2))
 problem <- Problem(objective)
-result <- psolve(problem, solver = "CLARABEL")
+result <- psolve(problem) ## use default solver
 ```
 
 The optimal value and estimated coefficients:
@@ -118,7 +118,9 @@ mathematically intuitive.
 
 ## Available Solvers
 
-CVXR supports multiple solvers:
+CVXR 1.8.2 supports 15 solvers, both open source and commercial:
+Clarabel, SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS,
+ECOS_BB, CPLEX, CVXOPT, PIQP, SCIP, and XPRESS.
 
 ```{r}
 installed_solvers()
@@ -130,14 +132,29 @@ You can specify a solver explicitly:
 psolve(problem, solver = "CLARABEL")
 ```
 
+## What's New in 1.8.2
+
+- **15 solvers**: SCIP and XPRESS added (up from 13 in 1.8.1).
+- **Element-wise matrix indexing**: Constrain specific entries of a
+  matrix variable using R's native indexing idioms:
+  ```r
+  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+  ```
+  Also supports logical matrix indexing (`X[mask]`) and linear
+  integer indexing (`X[c(1, 5, 9)]`).
+- **CVXPY 1.8.2 parity**: All applicable bug fixes ported.
+- **Unified solver options** via `solver_opts()`.
+
+See `NEWS.md` for full details.
+
 ## Further Reading
 
 - The [CVXR website](https://cvxr.rbind.io) has many worked examples
 - The [CVXPY documentation](https://www.cvxpy.org/) covers the
   underlying mathematical framework
-- Fu, Narasimhan, and Boyd (2020). "CVXR: An R Package for Disciplined
-  Convex Optimization." _Journal of Statistical Software_, 94(14).
-  doi:10.18637/jss.v094.i14
+- [The published paper](https://doi.org/10.18637/jss.v094.i14): Fu, Narasimhan, and Boyd (2020). "CVXR: An R Package for Disciplined
+  Convex Optimization." _Journal of Statistical Software_, 94(14), DOI:10.18637/jss.v094.i14.
 
 ## Session Info
 

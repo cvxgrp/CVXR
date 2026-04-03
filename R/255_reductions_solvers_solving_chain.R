@@ -24,8 +24,9 @@ delayedAssign(GUROBI_SOLVER, Gurobi_QP_Solver(),  assign.env = SOLVER_MAP_QP)
 delayedAssign(CPLEX_SOLVER,  CPLEX_QP_Solver(),   assign.env = SOLVER_MAP_QP)
 delayedAssign(HIGHS_SOLVER,  HiGHS_QP_Solver(),   assign.env = SOLVER_MAP_QP)
 delayedAssign(PIQP_SOLVER,   PIQP_QP_Solver(),    assign.env = SOLVER_MAP_QP)
+delayedAssign(XPRESS_SOLVER, XPRESS_QP_Solver(),  assign.env = SOLVER_MAP_QP)
 
-QP_SOLVER_PREFERENCE <- c(OSQP_SOLVER, GUROBI_SOLVER, CPLEX_SOLVER, HIGHS_SOLVER, PIQP_SOLVER)
+QP_SOLVER_PREFERENCE <- c(OSQP_SOLVER, GUROBI_SOLVER, XPRESS_SOLVER, CPLEX_SOLVER, HIGHS_SOLVER, PIQP_SOLVER)
 
 ## Conic solver preference order (matches CVXPY defines.py CONIC_SOLVERS)
 ## Lazy-init via delayedAssign: solver objects constructed on first access.
@@ -41,9 +42,11 @@ delayedAssign(ECOS_SOLVER,     ECOS_Solver(),           assign.env = SOLVER_MAP_
 delayedAssign(ECOS_BB_SOLVER,  ECOS_BB_Solver(),        assign.env = SOLVER_MAP_CONIC)
 delayedAssign(CVXOPT_SOLVER,   CVXOPT_Solver(),         assign.env = SOLVER_MAP_CONIC)
 delayedAssign(SCIP_SOLVER,     SCIP_Solver(),           assign.env = SOLVER_MAP_CONIC)
+delayedAssign(XPRESS_SOLVER,   XPRESS_Conic_Solver(),   assign.env = SOLVER_MAP_CONIC)
 
 CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
-                              ECOS_SOLVER, GUROBI_SOLVER, SCIP_SOLVER,
+                              ECOS_SOLVER, GUROBI_SOLVER, XPRESS_SOLVER,
+                              SCIP_SOLVER,
                               GLPK_SOLVER, GLPK_MI_SOLVER, CVXOPT_SOLVER,
                               HIGHS_SOLVER, ECOS_BB_SOLVER)
 
@@ -62,7 +65,8 @@ CONIC_SOLVER_PREFERENCE <- c(MOSEK_SOLVER, CLARABEL_SOLVER, SCS_SOLVER,
   CPLEX    = "Rcplex",
   CVXOPT   = "cccp",
   PIQP     = "piqp",
-  SCIP     = "scip"
+  SCIP     = "scip",
+  XPRESS   = "xpress"
 )
 
 ## Check if a solver package is installed and not excluded

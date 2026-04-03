@@ -98,16 +98,36 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
   ## We check nargs() to distinguish x[i] from x[i,]
   if (!has_comma && !missing(i) && missing(j)) {
     ## x[i] -- single subscript
-    ## For column vectors (n, 1): select rows
-    ## For row vectors (1, m): select columns
-    ## For matrices: flatten column-major and select
+    ## Step 1: Detect special indexing FIRST (before vector-shape branches)
+    ## 2-col matrix and logical matrix work on vectors AND matrices
+    if (is.matrix(i) && ncol(i) == 2L && (is.integer(i) || is.double(i))) {
+      ## 2-column matrix indexing: each row is a (row, col) pair
+      return(SpecialIndex(x, i))
+    }
+    if (is.matrix(i) && is.logical(i)) {
+      ## Logical matrix indexing: select where TRUE
+      return(SpecialIndex(x, i))
+    }
+    ## Step 2: For non-matrix index types, vectors use standard Index
     if (x@shape[2L] == 1L) {
       key <- list(i, NULL)
     } else if (x@shape[1L] == 1L) {
       key <- list(NULL, i)
     } else {
-      ## Matrix with single index: not supported for now (like CVXPY)
-      cli_abort("Single-index selection on matrices not supported. Use {.code x[i, j]}.")
+      ## Matrix with scalar/vector single subscript
+      if (is.logical(i) && !is.matrix(i)) {
+        ## Logical vector on matrix: convert to logical matrix
+        if (length(i) != prod(x@shape))
+          cli_abort("Logical index length ({length(i)}) must match expression size ({prod(x@shape)}).")
+        i_mat <- matrix(i, nrow = x@shape[1L], ncol = x@shape[2L])
+        return(SpecialIndex(x, i_mat))
+      }
+      if ((is.integer(i) || is.double(i)) && !is.matrix(i)) {
+        ## Linear integer indexing on matrix (column-major)
+        if (is.double(i)) i <- as.integer(i)
+        return(SpecialIndex(x, i))
+      }
+      cli_abort("Unsupported single-index type for matrix expressions.")
     }
   } else {
     ## x[i, j] or x[i, ] or x[, j]

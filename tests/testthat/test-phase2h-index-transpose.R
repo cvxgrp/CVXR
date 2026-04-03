@@ -142,9 +142,12 @@ test_that("Index out of bounds", {
 })
 
 ## @cvxpy NONE
-test_that("Index on matrix with single subscript errors", {
+test_that("Linear indexing on matrix creates SpecialIndex", {
   x <- Variable(c(3, 4))
-  expect_error(x[5], "not supported")
+  si <- x[5L]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(1L, 1L))
+  expect_equal(si@select_vec, 5L)
 })
 
 # ── Index naming ──────────────────────────────────────────────────────
@@ -360,4 +363,265 @@ test_that("Logical indexing on vector", {
   x <- Variable(3)
   idx <- x[c(TRUE, FALSE, TRUE)]
   expect_equal(idx@shape, c(2L, 1L))
+})
+
+# ════════════════════════════════════════════════════════════════════════
+# SpecialIndex — element-wise matrix indexing
+# ════════════════════════════════════════════════════════════════════════
+
+# ── Construction: 2-column matrix ─────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: 2-col matrix on matrix variable", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(c(1L, 3L, 2L), c(1L, 2L, 3L))
+  si <- x[ind]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(3L, 1L))
+  expect_equal(si@select_vec, c(1L, 6L, 8L))
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: 2-col matrix on column vector", {
+  ## Blocker #1 fix: must route to SpecialIndex, not Index
+  x <- Variable(5)
+  ind <- cbind(c(1L, 3L), c(1L, 1L))
+  si <- x[ind]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(2L, 1L))
+  expect_equal(si@select_vec, c(1L, 3L))
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: 2-col matrix on row vector", {
+  x <- Variable(c(1, 5))
+  ind <- cbind(c(1L, 1L), c(2L, 4L))
+  si <- x[ind]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(2L, 1L))
+  expect_equal(si@select_vec, c(2L, 4L))
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: 2-col numeric (double) matrix coerced to integer", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(c(1, 2), c(1, 2))  # double, not integer
+  si <- x[ind]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(2L, 1L))
+  expect_equal(si@select_vec, c(1L, 5L))
+})
+
+# ── Construction: logical matrix ─────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: logical matrix on matrix variable", {
+  x <- Variable(c(3, 3))
+  mask <- matrix(c(TRUE, FALSE, TRUE,
+                   FALSE, FALSE, FALSE,
+                   TRUE, TRUE, FALSE), 3, 3)
+  si <- x[mask]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(4L, 1L))
+  ## TRUE positions: (1,1)=1, (3,1)=3, (1,3)=7, (2,3)=8
+  expect_equal(si@select_vec, c(1L, 3L, 7L, 8L))
+})
+
+# ── Construction: linear integer vector ──────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: linear integer indexing on matrix", {
+  x <- Variable(c(3, 3))
+  si <- x[c(1L, 5L, 9L)]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(3L, 1L))
+  expect_equal(si@select_vec, c(1L, 5L, 9L))
+})
+
+# ── Construction: logical vector on matrix ───────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: logical vector on matrix", {
+  x <- Variable(c(2, 2))
+  mask_vec <- c(TRUE, FALSE, FALSE, TRUE)
+  si <- x[mask_vec]
+  expect_s3_class(si, "CVXR::SpecialIndex")
+  expect_equal(si@shape, c(2L, 1L))
+  ## TRUE at positions 1 and 4 → linear indices 1 and 4
+  expect_equal(si@select_vec, c(1L, 4L))
+})
+
+# ── Validation errors ────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: out-of-bounds 2-col matrix errors", {
+  x <- Variable(c(3, 3))
+  expect_error(x[cbind(5L, 1L)], "Row index out of bounds")
+  expect_error(x[cbind(1L, 5L)], "Column index out of bounds")
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: NA in key errors", {
+  x <- Variable(c(3, 3))
+  expect_error(x[cbind(1L, NA_integer_)], "NA")
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: logical matrix wrong dimensions errors", {
+  x <- Variable(c(3, 3))
+  bad_mask <- matrix(TRUE, 4, 4)
+  expect_error(x[bad_mask], "must match expression shape")
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: linear index out of bounds errors", {
+  x <- Variable(c(3, 3))
+  expect_error(x[15L], "out of bounds")
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: logical vector wrong length errors", {
+  x <- Variable(c(3, 3))
+  expect_error(x[c(TRUE, FALSE)], "must match expression size")
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: negative linear index errors", {
+  x <- Variable(c(3, 3))
+  expect_error(x[-1L], "Negative and zero")
+})
+
+# ── numeric_value ────────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: numeric_value with 2-col matrix", {
+  m <- matrix(1:9, 3, 3)
+  ind <- cbind(c(1L, 3L, 2L), c(1L, 2L, 3L))
+  c_expr <- Constant(m)
+  si <- c_expr[ind]
+  result <- value(si)
+  expected <- matrix(m[ind], ncol = 1L)
+  expect_equal(result, expected)
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: numeric_value with logical matrix", {
+  m <- matrix(1:9, 3, 3)
+  mask <- m > 5
+  c_expr <- Constant(m)
+  si <- c_expr[mask]
+  result <- value(si)
+  expected <- matrix(m[mask], ncol = 1L)
+  expect_equal(result, expected)
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: numeric_value with linear indices", {
+  m <- matrix(1:9, 3, 3)
+  c_expr <- Constant(m)
+  si <- c_expr[c(1L, 5L, 9L)]
+  result <- value(si)
+  expected <- matrix(m[c(1, 5, 9)], ncol = 1L)
+  expect_equal(result, expected)
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: duplicate indices work", {
+  m <- matrix(1:9, 3, 3)
+  ind <- cbind(c(1L, 1L, 1L), c(1L, 1L, 1L))
+  c_expr <- Constant(m)
+  si <- c_expr[ind]
+  expect_equal(si@shape, c(3L, 1L))
+  result <- value(si)
+  expect_equal(result, matrix(c(1, 1, 1), ncol = 1L))
+})
+
+# ── DCP properties ───────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: DCP properties", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(c(1L, 2L), c(1L, 2L))
+  si <- x[ind]
+  expect_true(is_affine(si))
+  expect_true(is_convex(si))
+  expect_true(is_concave(si))
+})
+
+# ── Value propagation ────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: value propagation through variable", {
+  x <- Variable(c(3, 3))
+  m <- matrix(as.double(1:9), 3, 3)
+  value(x) <- m
+  ind <- cbind(c(1L, 3L), c(1L, 3L))
+  si <- x[ind]
+  result <- value(si)
+  expected <- matrix(m[ind], ncol = 1L)
+  expect_equal(result, expected)
+})
+
+# ── End-to-end solve ─────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: end-to-end solve constraining partial entries", {
+  ## Primary use case: constrain known entries of a matrix
+  var1 <- Variable(c(3, 3))
+  Rmiss <- matrix(c(1, NA, 2, NA, NA, NA, 3, 1, 2), 3, 3)
+  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+  prob <- Problem(Minimize(sum_entries(var1)),
+                  list(var1[ind] == Rmiss[ind], var1 >= 0))
+  ## Solver named explicitly: this file ships to CRAN (cran_tests.csv) where
+  ## Rmosek may be installed but broken, causing bare psolve() to fail.
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  sol <- value(var1)
+  ## Fixed entries must match
+  expect_equal(sol[ind], Rmiss[ind], tolerance = 1e-4)
+  ## Free entries should be 0 (minimizing sum with >= 0 constraint)
+  na_ind <- which(is.na(Rmiss))
+  expect_equal(sol[na_ind], rep(0, length(na_ind)), tolerance = 1e-4)
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: end-to-end solve with column vector and 2-col matrix", {
+  x <- Variable(5)
+  ind <- cbind(c(1L, 3L, 5L), c(1L, 1L, 1L))
+  prob <- Problem(Minimize(sum_entries(x)),
+                  list(x[ind] == c(10, 20, 30), x >= 0))
+  ## Solver named explicitly: see comment above.
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  sol <- value(x)
+  expect_equal(sol[c(1, 3, 5)], c(10, 20, 30), tolerance = 1e-4)
+  expect_equal(sol[c(2, 4)], c(0, 0), tolerance = 1e-4)
+})
+
+# ── Edge cases ───────────────────────────────────────────────────────
+
+## @cvxpy NONE
+test_that("SpecialIndex: empty selection", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(integer(0), integer(0))
+  si <- x[ind]
+  expect_equal(si@shape, c(0L, 1L))
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: single element selection", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(2L, 3L)
+  si <- x[ind]
+  expect_equal(si@shape, c(1L, 1L))
+  expect_equal(si@select_vec, 8L)
+})
+
+## @cvxpy NONE
+test_that("SpecialIndex: all elements selected equals vec", {
+  x <- Variable(c(3, 3))
+  ind <- cbind(rep(1:3, 3), rep(1:3, each = 3))
+  si <- x[ind]
+  expect_equal(si@shape, c(9L, 1L))
+  expect_equal(si@select_vec, 1:9)
 })

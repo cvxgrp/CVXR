@@ -479,6 +479,19 @@ method(.to_latex_prec, Index) <- function(x, names_map = NULL, ...) {
   list(latex = ltx, prec = .LATEX_PREC$ATOM)
 }
 
+## -- SpecialIndex --
+method(.to_latex_prec, SpecialIndex) <- function(x, names_map = NULL, ...) {
+  inner <- .to_latex_prec(x@args[[1L]], names_map)
+  base <- if (inner$prec < .LATEX_PREC$ATOM) {
+    paste0("\\left(", inner$latex, "\\right)")
+  } else {
+    inner$latex
+  }
+  k <- length(x@select_vec)
+  ltx <- paste0(base, "_{\\mathcal{I}_{", k, "}}")
+  list(latex = ltx, prec = .LATEX_PREC$ATOM)
+}
+
 ## -- SumEntries --
 method(.to_latex_prec, SumEntries) <- function(x, names_map = NULL, ...) {
   inner <- .to_latex_prec(x@args[[1L]], names_map)

@@ -748,7 +748,8 @@ test_that("AllSolvers: installed_solvers returns character vector of known solve
   expect_true("CLARABEL" %in% solvers)
   ## All returned names must be valid solver constants
   known <- c("CLARABEL", "SCS", "OSQP", "HIGHS", "MOSEK", "GUROBI",
-             "GLPK", "GLPK_MI", "ECOS", "ECOS_BB", "CPLEX", "CVXOPT", "PIQP", "SCIP")
+             "GLPK", "GLPK_MI", "ECOS", "ECOS_BB", "CPLEX", "CVXOPT", "PIQP", "SCIP",
+             "XPRESS")
   expect_true(all(solvers %in% known))
 })
 
@@ -760,8 +761,8 @@ test_that("AllSolvers: MIP solvers handle integer variables correctly", {
   prob <- Problem(Maximize(x), list(x <= 3.5, x >= 0))
   ## Try each MI solver that is installed
   ## MOSEK MIP not supported in CVXR (Post-v1.0)
-  mi_solvers <- c("ECOS_BB", "GLPK_MI", "GUROBI", "CPLEX")
-  mi_pkgs <- c("ECOSolveR", "Rglpk", "gurobi", "Rcplex")
+  mi_solvers <- c("ECOS_BB", "GLPK_MI", "GUROBI", "CPLEX", "XPRESS")
+  mi_pkgs <- c("ECOSolveR", "Rglpk", "gurobi", "Rcplex", "xpress")
   tested <- FALSE
   for (i in seq_along(mi_solvers)) {
     if (requireNamespace(mi_pkgs[i], quietly = TRUE)) {

@@ -1,6 +1,6 @@
 # CVXR 1.8.2
 
-## SCIP solver support
+## New solvers: SCIP and XPRESS (15 total)
 
 * Added SCIP solver (14th solver) via the R `scip` package. Supports
   LP, SOCP, MI-LP, and MI-SOCP problems. SCIP is registered in the
@@ -11,6 +11,11 @@
   `"limits/time"`, `"limits/gap"`.
 * Duals are not currently extracted (R `scip` package lacks dual API).
 * 29 tests mirroring CVXPY's `TestSCIP` class.
+* Added XPRESS solver (15th solver) via the R `xpress` package with
+  dual-interface architecture: QP path (`XPRESS_QP_Solver`) for LP/QP
+  and conic path (`XPRESS_Conic_Solver`) for SOCP/MI-LP/MI-SOCP.
+  Both paths support Zero and NonNeg constraints; the conic path also
+  supports SOC. MIP warm-start is supported.
 
 ## `diag()` and `norm()` dispatch fixes
 
@@ -41,6 +46,26 @@ annotated with `## CVXPY v1.8.2 fix:` in the source.
 * New `supports_quad_obj()` generic on conic solvers (Clarabel and SCS
   return `TRUE`, others `FALSE`).
 
+## Element-wise matrix indexing (`SpecialIndex`)
+
+* New `SpecialIndex` atom (mirroring CVXPY's `special_index`) enables
+  R-idiomatic element-wise selection on matrix expressions:
+    - 2-column matrix indexing: `x[cbind(rows, cols)]`
+    - Logical matrix indexing: `x[mask]`
+    - Linear integer indexing: `x[c(1, 5, 9)]`
+    - Logical vector indexing: `x[c(TRUE, FALSE, ...)]`
+* This makes it natural to constrain specific entries of a matrix
+  variable, e.g., fixing observed entries of a partially-known matrix:
+  ```r
+  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+  ```
+* Previously, `x[i]` on a matrix expression errored with "Single-index
+  selection on matrices not supported." The workaround required an
+  element-wise multiply with a binary mask, which was unintuitive.
+* Internally uses sparse selection matrix multiplication (reshape →
+  sparse matmul), requiring no C++ changes.
+
 ## Bug Fixes
 
 * Fixed O(n²) memory usage in `sum_squares()`, `power(x, 2)`,
@@ -62,8 +87,8 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
 * S7 class system replaces S4 for all expression, constraint, and
   problem classes. Significantly faster construction and method
   dispatch.
-* 13 solvers: Clarabel (default), SCS, OSQP, HiGHS, MOSEK, Gurobi,
-  GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.
+* 13 solvers at initial release: Clarabel (default), SCS, OSQP, HiGHS,
+  MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.
 * Mixed-integer programming via GLPK_MI, ECOS_BB, Gurobi, or HiGHS
   (`boolean = TRUE` or `integer = TRUE` in `Variable()`).
 * Parameter support via `Parameter()` class with DPP (Disciplined

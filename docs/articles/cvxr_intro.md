@@ -60,12 +60,12 @@ library(CVXR)
 #>     power, sd, var
 #> The following objects are masked from 'package:base':
 #> 
-#>     norm, outer
+#>     diag, norm, outer
 
 betaHat <- Variable(p)
 objective <- Minimize(sum((Y - X %*% betaHat)^2))
 problem <- Problem(objective)
-result <- psolve(problem, solver = "CLARABEL")
+result <- psolve(problem) ## use default solver
 ```
 
 The optimal value and estimated coefficients:
@@ -130,16 +130,16 @@ constraint2 <- B %*% betaHat >= 0
 
 problem <- Problem(objective, constraints = list(constraint1, constraint2))
 result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE for details
-#> ────────────────────────────────── CVXR v1.8.1 ─────────────────────────────────
+#> ────────────────────────────────── CVXR v1.8.2 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
-#> ℹ Compile time: 0.01s
+#> ℹ Compile time: 0.018s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.01s
-#> ℹ Solver time: 0s
+#> ℹ Compile time: 0.018s
+#> ℹ Solver time: 0.013s
 round(value(betaHat), 3)
 #>         [,1]
 #>  [1,]  0.000
@@ -161,14 +161,16 @@ mathematically intuitive.
 
 ## Available Solvers
 
-CVXR supports multiple solvers:
+CVXR 1.8.2 supports 15 solvers, both open source and commercial:
+Clarabel, SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB,
+CPLEX, CVXOPT, PIQP, SCIP, and XPRESS.
 
 ``` r
 
 installed_solvers()
 #>  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  
 #>  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  
-#> [13] "PIQP"
+#> [13] "PIQP"     "SCIP"     "XPRESS"
 ```
 
 You can specify a solver explicitly:
@@ -178,21 +180,45 @@ You can specify a solver explicitly:
 psolve(problem, solver = "CLARABEL")
 ```
 
+## What’s New in 1.8.2
+
+- **15 solvers**: SCIP and XPRESS added (up from 13 in 1.8.1).
+
+- **Element-wise matrix indexing**: Constrain specific entries of a
+  matrix variable using R’s native indexing idioms:
+
+  ``` r
+
+  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+  ```
+
+  Also supports logical matrix indexing (`X[mask]`) and linear integer
+  indexing (`X[c(1, 5, 9)]`).
+
+- **CVXPY 1.8.2 parity**: All applicable bug fixes ported.
+
+- **Unified solver options** via
+  [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md).
+
+See `NEWS.md` for full details.
+
 ## Further Reading
 
 - The [CVXR website](https://cvxr.rbind.io) has many worked examples
 - The [CVXPY documentation](https://www.cvxpy.org/) covers the
   underlying mathematical framework
-- Fu, Narasimhan, and Boyd (2020). “CVXR: An R Package for Disciplined
-  Convex Optimization.” *Journal of Statistical Software*, 94(14).
-  <doi:10.18637/jss.v094.i14>
+- [The published paper](https://doi.org/10.18637/jss.v094.i14): Fu,
+  Narasimhan, and Boyd (2020). “CVXR: An R Package for Disciplined
+  Convex Optimization.” *Journal of Statistical Software*, 94(14),
+  <DOI:10.18637/jss.v094.i14>.
 
 ## Session Info
 
 ``` r
 
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
+#> R version 4.5.3 (2026-03-11)
 #> Platform: aarch64-apple-darwin20
 #> Running under: macOS Tahoe 26.3.1
 #> 
@@ -210,19 +236,20 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] CVXR_1.8.1
+#> [1] CVXR_1.8.2
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] piqp_0.6.2        Matrix_1.7-4      jsonlite_2.0.0    compiler_4.5.2   
-#>  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       
-#>  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      
+#>  [1] Matrix_1.7-5      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.3   
+#>  [5] highs_1.13.1-1    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       
+#>  [9] jquerylib_0.1.4   systemfonts_1.3.2 textshaping_1.0.5 yaml_2.3.12      
 #> [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         
-#> [17] knitr_1.51        htmlwidgets_1.6.4 backports_1.5.0   Rcplex_0.3-8     
-#> [21] checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3        osqp_1.0.0       
-#> [25] bslib_0.10.0      rlang_1.1.7       cachem_1.1.0      xfun_0.56        
-#> [29] fs_1.6.6          sass_0.4.10       S7_0.2.1          otel_0.2.0       
-#> [33] cli_3.6.5         pkgdown_2.2.0     Rglpk_0.6-5.1     digest_0.6.39    
-#> [37] grid_4.5.2        gmp_0.7-5.1       lifecycle_1.0.5   ECOSolveR_0.6.1  
-#> [41] scs_3.2.7         evaluate_1.0.5    codetools_0.2-20  ragg_1.5.0       
-#> [45] Rmosek_11.1.1     rmarkdown_2.30    tools_4.5.2       htmltools_0.5.9
+#> [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  
+#> [21] Rcplex_0.3-8      checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3       
+#> [25] osqp_1.0.0        bslib_0.10.0      rlang_1.1.7       cachem_1.1.0     
+#> [29] xfun_0.57         fs_2.0.1          sass_0.4.10       S7_0.2.1         
+#> [33] otel_0.2.0        cli_3.6.5         pkgdown_2.2.0     Rglpk_0.6-5.1    
+#> [37] digest_0.6.39     grid_4.5.3        xpress_9.8.1      gmp_0.7-5.1      
+#> [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         evaluate_1.0.5   
+#> [45] codetools_0.2-20  Rmosek_11.1.1     ragg_1.5.2        rmarkdown_2.31   
+#> [49] tools_4.5.3       htmltools_0.5.9
 ```

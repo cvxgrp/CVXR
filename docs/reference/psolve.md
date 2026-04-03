@@ -18,10 +18,6 @@ psolve(
   qcp = FALSE,
   verbose = FALSE,
   warm_start = FALSE,
-  feastol = NULL,
-  reltol = NULL,
-  abstol = NULL,
-  num_iter = NULL,
   ...
 )
 ```
@@ -56,40 +52,17 @@ psolve(
   Logical; if `TRUE`, use the current variable values as a warm-start
   point for the solver.
 
-- feastol:
-
-  Numeric or `NULL`; feasibility tolerance. Mapped to the
-  solver-specific parameter name (e.g., `tol_feas` for Clarabel,
-  `eps_prim_inf` for OSQP). If `NULL` (default), the solver's own
-  default is used.
-
-- reltol:
-
-  Numeric or `NULL`; relative tolerance. Mapped to the solver-specific
-  parameter name (e.g., `tol_gap_rel` for Clarabel, `eps_rel` for
-  OSQP/SCS). If `NULL` (default), the solver's own default is used.
-
-- abstol:
-
-  Numeric or `NULL`; absolute tolerance. Mapped to the solver-specific
-  parameter name (e.g., `tol_gap_abs` for Clarabel, `eps_abs` for
-  OSQP/SCS). If `NULL` (default), the solver's own default is used.
-
-- num_iter:
-
-  Integer or `NULL`; maximum number of solver iterations. Mapped to the
-  solver-specific parameter name (e.g., `max_iter` for Clarabel/OSQP,
-  `max_iters` for SCS). If `NULL` (default), the solver's own default is
-  used.
-
 - ...:
 
-  Additional solver-specific options passed directly to the solver. If a
-  solver-native parameter name conflicts with a standard parameter
-  (e.g., both `feastol = 1e-3` and `tol_feas = 1e-6` are given), the
-  solver-native name in `...` takes priority. For DQCP problems
-  (`qcp = TRUE`), additional arguments include `low`, `high`, `eps`,
-  `max_iters`, and `max_iters_interval_search`.
+  Solver options passed to
+  [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md).
+  Includes chain-construction options (`use_quad_obj`), standard
+  tolerances (`feastol`, `reltol`, `abstol`, `num_iter`), and
+  solver-specific parameters (e.g., `eps_abs`, `scip_params`). See
+  [`solver_opts`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md)
+  for details. For DQCP problems (`qcp = TRUE`), additional arguments
+  include `low`, `high`, `eps`, `max_iters`, and
+  `max_iters_interval_search`.
 
 ## Value
 

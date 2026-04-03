@@ -65,6 +65,8 @@ Solving problems and extracting results
   **\[deprecated\]** : Unpack Results (backward-compatible alias)
 - [`solver_stats()`](https://www.cvxgrp.org/CVXR/reference/solver_stats.md)
   : Get Solver Statistics
+- [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md)
+  : Create Solver Options
 - [`solver_default_param()`](https://www.cvxgrp.org/CVXR/reference/solver_default_param.md)
   : Standard Solver Parameter Mappings
 - [`installed_solvers()`](https://www.cvxgrp.org/CVXR/reference/installed_solvers.md)
@@ -96,6 +98,8 @@ Solver name constants
   [`CPLEX_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`CVXOPT_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`PIQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`SCIP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`XPRESS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   : Solver Name Constants
 
 ## Status constants
@@ -122,7 +126,8 @@ generics); sd, var, outer (masking wrappers).
 - [`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
   [`sd()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
   [`var()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
-  [`outer()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) :
+  [`outer()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
+  [`diag()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) :
   Standard R Functions for CVXR Expressions
 
 ## Elementwise atoms

@@ -4,7 +4,9 @@ CVXR registers methods so that standard R functions create the
 appropriate atoms when applied to `Expression` objects.
 
 For CVXR expressions, computes the matrix/vector norm atom. For other
-inputs, falls through to [`norm`](https://rdrr.io/r/base/norm.html).
+inputs, falls through to
+[`Matrix::norm`](https://rdrr.io/pkg/Matrix/man/norm-methods.html) which
+dispatches via S4 for both Matrix and base matrix objects.
 
 For CVXR expressions, computes the standard deviation atom (ddof=0 by
 default, matching CVXPY/numpy convention). For numeric inputs, falls
@@ -18,6 +20,14 @@ For CVXR expressions, computes the outer product of two vectors. For
 other inputs, falls through to
 [`outer`](https://rdrr.io/r/base/outer.html).
 
+For CVXR expressions, dispatches to
+[`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) (vector to
+diagonal matrix) or
+[`DiagMat`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) (extract
+diagonal from matrix), matching CVXPY's `cp.diag()` behavior. For other
+inputs, falls through to `Matrix::diag` which dispatches via S4 for both
+Matrix and base matrix objects.
+
 ## Usage
 
 ``` r
@@ -28,13 +38,15 @@ sd(x, ...)
 var(x, ...)
 
 outer(X, Y, ...)
+
+diag(x, nrow, ncol, names = TRUE, k = 0L)
 ```
 
 ## Arguments
 
 - x:
 
-  An Expression or numeric.
+  An Expression, matrix, vector, or scalar.
 
 - type:
 
@@ -54,6 +66,23 @@ outer(X, Y, ...)
 
   An Expression or numeric.
 
+- nrow:
+
+  For non-Expression: passed to `Matrix::diag`.
+
+- ncol:
+
+  For non-Expression: passed to `Matrix::diag`.
+
+- names:
+
+  For non-Expression: passed to `Matrix::diag`.
+
+- k:
+
+  Integer diagonal offset for Expressions only. `k = 0` (default) is the
+  main diagonal.
+
 ## Value
 
 An Expression or numeric value.
@@ -63,6 +92,15 @@ An Expression or numeric value.
 An Expression or numeric value.
 
 An Expression or matrix.
+
+An Expression, matrix, or vector.
+
+## Details
+
+The `k` parameter (off-diagonal offset) is only available for Expression
+inputs. For the full-featured version with `k` on non-Expression inputs,
+use [`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) or
+[`DiagMat`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) directly.
 
 ## Math group (elementwise, via S3 group generic)
 
@@ -182,3 +220,6 @@ full-featured version
 
 [`cvxr_outer`](https://www.cvxgrp.org/CVXR/reference/cvxr_outer.md) for
 the CVXR-specific version
+
+[`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md),
+[`DiagMat`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md)

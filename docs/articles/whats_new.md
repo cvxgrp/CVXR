@@ -1,10 +1,10 @@
-# What's New in CVXR 1.8
+# What's New in CVXR 1.8.2
 
 ## Overview
 
-CVXR 1.8 is a ground-up rewrite using R’s
+CVXR 1.8.2 is a ground-up rewrite using R’s
 [S7](https://rconsortium.github.io/S7/) object system, designed to
-mirror [CVXPY 1.8](https://www.cvxpy.org/) for long-term
+mirror [CVXPY 1.8.2](https://www.cvxpy.org/) for long-term
 maintainability. It is approximately 4–5x faster than the previous
 S4-based release and adds many new features.
 
@@ -32,7 +32,7 @@ library(CVXR)
 #>     power, sd, var
 #> The following objects are masked from 'package:base':
 #> 
-#>     norm, outer
+#>     diag, norm, outer
 x <- Variable(2, name = "x")
 prob <- Problem(Minimize(sum_squares(x)), list(x >= 1))
 opt_val <- psolve(prob, solver = "CLARABEL")
@@ -78,32 +78,36 @@ result$status
 Old function names still work but emit once-per-session deprecation
 warnings.
 
-## 13 Solvers
+## 15 Solvers
 
-CVXR 1.8 ships with four built-in solvers and supports nine additional
-solvers via optional packages:
+CVXR 1.8.2 ships with four built-in solvers and supports eleven
+additional solvers via optional packages:
 
 ``` r
 
 installed_solvers()
 #>  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  
 #>  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  
-#> [13] "PIQP"
+#> [13] "PIQP"     "SCIP"     "XPRESS"
 ```
 
-| Solver         | R Package   | Problem Classes                     |
-|----------------|-------------|-------------------------------------|
-| CLARABEL       | `clarabel`  | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| SCS            | `scs`       | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| OSQP           | `osqp`      | LP, QP                              |
-| HIGHS          | `highs`     | LP, QP, MILP                        |
-| MOSEK          | `Rmosek`    | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| GUROBI         | `gurobi`    | LP, QP, SOCP, MIP                   |
-| ECOS / ECOS_BB | `ECOSolveR` | LP, SOCP, ExpCone (+ MIP)           |
-| GLPK / GLPK_MI | `Rglpk`     | LP (+ MILP)                         |
-| CPLEX          | `Rcplex`    | LP, QP, MIP                         |
-| CVXOPT         | `cccp`      | LP, SOCP, SDP                       |
-| PIQP           | `piqp`      | LP, QP                              |
+| Solver   |  Package  | LP  | QP  | SOCP | SDP | EXP | MIP |
+|:---------|:---------:|:---:|:---:|:----:|:---:|:---:|:---:|
+| CLARABEL | clarabel  |  ✓  |  ✓  |  ✓   |  ✓  |  ✓  |     |
+| SCS      |    scs    |  ✓  |  ✓  |  ✓   |  ✓  |  ✓  |  ✓  |
+| OSQP     |   osqp    |  ✓  |  ✓  |      |     |     |     |
+| HIGHS    |   highs   |  ✓  |  ✓  |      |     |     |  ✓  |
+| ECOS     | ECOSolveR |  ✓  |  ✓  |  ✓   |     |     |     |
+| ECOS_BB  | ECOSolveR |     |     |      |     |     |  ✓  |
+| GLPK     |   Rglpk   |  ✓  |     |      |     |     |     |
+| GLPK_MI  |   Rglpk   |  ✓  |     |      |     |     |  ✓  |
+| CPLEX    |  Rcplex   |  ✓  |  ✓  |  ✓   |     |     |     |
+| GUROBI   |  gurobi   |  ✓  |  ✓  |  ✓   |     |     |  ✓  |
+| MOSEK    |  Rmosek   |  ✓  |  ✓  |  ✓   |  ✓  |  ✓  |  ✓  |
+| CVXOPT   |   cccp    |  ✓  |     |  ✓   |     |     |     |
+| PIQP     |   piqp    |  ✓  |  ✓  |      |     |     |     |
+| SCIP     |   scip    |  ✓  |     |  ✓   |     |     |  ✓  |
+| XPRESS   |  xpress   |  ✓  |  ✓  |  ✓   |     |     |  ✓  |
 
 CLARABEL is the default solver and handles the widest range of problem
 types among the built-in solvers. You can specify a solver explicitly:
@@ -123,11 +127,12 @@ uninstalling them:
 available_solvers()
 #>  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  
 #>  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  
-#> [13] "PIQP"
+#> [13] "PIQP"     "SCIP"     "XPRESS"
 exclude_solvers("SCS")
 available_solvers()
 #>  [1] "CLARABEL" "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"   "GLPK"    
-#>  [7] "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"   "PIQP"
+#>  [7] "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"   "PIQP"    
+#> [13] "SCIP"     "XPRESS"
 include_solvers("SCS")
 ```
 

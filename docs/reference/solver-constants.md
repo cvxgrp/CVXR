@@ -30,9 +30,17 @@ CPLEX_SOLVER
 CVXOPT_SOLVER
 
 PIQP_SOLVER
+
+SCIP_SOLVER
+
+XPRESS_SOLVER
 ```
 
 ## Format
+
+An object of class `character` of length 1.
+
+An object of class `character` of length 1.
 
 An object of class `character` of length 1.
 

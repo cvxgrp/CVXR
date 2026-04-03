@@ -56,7 +56,8 @@ Enhances:
     Rcplex (>= 0.3),
     cccp (>= 0.3),
     piqp (>= 0.6),
-    scip
+    scip,
+    xpress
 Additional_repositories:
     https://bnaras.r-universe.dev
 LinkingTo: Rcpp, RcppEigen

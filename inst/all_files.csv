@@ -246,11 +246,13 @@ rsrc_tree/reductions/solvers/conic_solvers/ecos_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/ecos_bb_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/cvxopt_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/scip_conif.R
+rsrc_tree/reductions/solvers/conic_solvers/xpress_conif.R
 rsrc_tree/reductions/solvers/qp_solvers/osqp_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/highs_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/gurobi_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/cplex_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/piqp_qpif.R
+rsrc_tree/reductions/solvers/qp_solvers/xpress_qpif.R
 rsrc_tree/reductions/solvers/solving_chain.R
 rsrc_tree/zzz_R_specific/visualize_annotations.R
 rsrc_tree/zzz_R_specific/visualize_html.R

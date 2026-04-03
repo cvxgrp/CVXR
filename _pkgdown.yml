@@ -57,6 +57,7 @@ reference:
   - problem_unpack_results
   - unpack_results
   - solver_stats
+  - solver_opts
   - solver_default_param
   - installed_solvers
   - available_solvers

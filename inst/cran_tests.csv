@@ -2,3 +2,4 @@ file
 helper-solver-test-problems.R
 helper-solvers.R
 test-cran-solver-matrix.R
+test-phase2h-index-transpose.R

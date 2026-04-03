@@ -572,7 +572,9 @@ test_that("SpecialIndex: end-to-end solve constraining partial entries", {
   ind <- which(!is.na(Rmiss), arr.ind = TRUE)
   prob <- Problem(Minimize(sum_entries(var1)),
                   list(var1[ind] == Rmiss[ind], var1 >= 0))
-  psolve(prob)
+  ## Solver named explicitly: this file ships to CRAN (cran_tests.csv) where
+  ## Rmosek may be installed but broken, causing bare psolve() to fail.
+  psolve(prob, solver = "CLARABEL")
   expect_equal(status(prob), "optimal")
   sol <- value(var1)
   ## Fixed entries must match
@@ -588,7 +590,8 @@ test_that("SpecialIndex: end-to-end solve with column vector and 2-col matrix", 
   ind <- cbind(c(1L, 3L, 5L), c(1L, 1L, 1L))
   prob <- Problem(Minimize(sum_entries(x)),
                   list(x[ind] == c(10, 20, 30), x >= 0))
-  psolve(prob)
+  ## Solver named explicitly: see comment above.
+  psolve(prob, solver = "CLARABEL")
   expect_equal(status(prob), "optimal")
   sol <- value(x)
   expect_equal(sol[c(1, 3, 5)], c(10, 20, 30), tolerance = 1e-4)
